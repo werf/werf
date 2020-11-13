@@ -151,7 +151,7 @@ func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, re
 		if len(s.reachedStageIDList()) == *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
 			return s.reachedStageIDList(), s.stopCommitList, s.stageIDHitCommitList(), nil
 		} else if len(s.reachedStageIDList()) > *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
-			logboek.Context(ctx).Info().LogF("Reached more content digests than expected by last (%d/%d)\n", len(s.reachedStageIDList()), *s.referenceScanOptions.imagesCleanupKeepPolicy.Last)
+			logboek.Context(ctx).Info().LogF("Reached more tags than expected by last (%d/%d)\n", len(s.reachedStageIDList()), *s.referenceScanOptions.imagesCleanupKeepPolicy.Last)
 
 			latestCommitStageIDs := s.latestCommitStageIDs()
 			var latestCommitList []*object.Commit
@@ -238,7 +238,7 @@ func (s *commitHistoryScanner) handleExtraStageIDsByLastWithIn(ctx context.Conte
 	for _, latestCommit := range resultLatestCommitList {
 		stageIDs := latestCommitStageIDs[latestCommit]
 		if len(stageIDs) > 1 {
-			logboek.Context(ctx).Info().LogBlock("Counted content digests as one due to common related commit %s", latestCommit.Hash.String()).Do(func() {
+			logboek.Context(ctx).Info().LogBlock("Counted tags as one due to identical related commit %s", latestCommit.Hash.String()).Do(func() {
 				for _, stageID := range stageIDs {
 					logboek.Context(ctx).Info().LogLn(stageID)
 				}
@@ -266,7 +266,7 @@ latestCommitStageIDLoop:
 	}
 
 	if len(skippedStageIDList) != 0 {
-		logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped content digests by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
+		logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped tags by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
 			for _, stageID := range skippedStageIDList {
 				logboek.Context(ctx).Info().LogLn(stageID)
 			}
@@ -285,7 +285,7 @@ func (s *commitHistoryScanner) handleExtraStageIDsByLast(ctx context.Context, la
 		stageIDs := latestCommitStageIDs[latestCommit]
 		if ind < *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
 			if len(stageIDs) > 1 {
-				logboek.Context(ctx).Info().LogBlock("Counted content digests as one due to common related commit %s", latestCommit.Hash.String()).Do(func() {
+				logboek.Context(ctx).Info().LogBlock("Counted tags as one due to identical related commit %s", latestCommit.Hash.String()).Do(func() {
 					for _, stageID := range stageIDs {
 						logboek.Context(ctx).Info().LogLn(stageID)
 					}
@@ -302,7 +302,7 @@ func (s *commitHistoryScanner) handleExtraStageIDsByLast(ctx context.Context, la
 	}
 
 	if len(skippedStageIDList) != 0 {
-		logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped content digests by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
+		logboek.Context(ctx).Info().LogBlock(fmt.Sprintf("Skipped tags by keep policy (%s)", s.imagesCleanupKeepPolicy.String())).Do(func() {
 			for _, stageID := range skippedStageIDList {
 				logboek.Context(ctx).Info().LogLn(stageID)
 			}
@@ -340,7 +340,7 @@ func (s *commitHistoryScanner) scanCommitHistory(ctx context.Context, commit str
 			}
 
 			if len(s.expectedStageIDCommitList) == len(s.reachedStageIDCommitList) {
-				logboek.Context(ctx).Debug().LogLn("Stop scanning due to all expected content digests reached")
+				logboek.Context(ctx).Debug().LogLn("Stop scanning due to all expected tags reached")
 				break
 			}
 
