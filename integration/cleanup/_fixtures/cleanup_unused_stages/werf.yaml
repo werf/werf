@@ -16,4 +16,4 @@ artifact: artifact
 from: alpine
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}{{ env "ARTIFACT_FROM_CACHE_VERSION" }}
 shell:
-  install: echo "123" > /artifact
+  install: echo "123{{ env "ARTIFACT_INSTALL_DATA" }}" > /artifact

@@ -326,7 +326,7 @@ jobs:
       shell: bash
 
     - name: Test
-      run: WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p --flakeAttempts=3 -keepGoing --focus="(${{ matrix.implementation }})" integration/cleanup/cleanup.test
+      run: WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p --flakeAttempts=3 -keepGoing --focus="\[${{ matrix.implementation }}\]" integration/cleanup/cleanup.test
       shell: bash
 
     - name: Upload coverage artifact

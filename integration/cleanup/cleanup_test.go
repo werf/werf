@@ -23,63 +23,95 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 			cleanupBeforeEachBase()
 		})
 
-		Context("stage IDs cleanup", func() {
-			It("should work only with remote references", func() {
-				stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
+		It("should work only with remote references", func() {
+			stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
 
-				utils.RunSucceedCommand(
-					testDirPath,
-					"git",
-					"checkout", "-b", "test",
-				)
+			utils.RunSucceedCommand(
+				testDirPath,
+				"git",
+				"checkout", "-b", "test",
+			)
 
-				utils.RunSucceedCommand(
-					testDirPath,
-					"git",
-					"push", "--set-upstream", "origin", "test",
-				)
+			utils.RunSucceedCommand(
+				testDirPath,
+				"git",
+				"push", "--set-upstream", "origin", "test",
+			)
 
-				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
-					"build",
-				)
+			utils.RunSucceedCommand(
+				testDirPath,
+				werfBinPath,
+				"build",
+			)
 
-				gitHistoryBasedCleanupCheck(imageName, 1, 1)
+			gitHistoryBasedCleanupCheck(imageName, 1, 1)
 
-				utils.RunSucceedCommand(
-					testDirPath,
-					"git",
-					"push", "origin", "--delete", "test",
-				)
+			utils.RunSucceedCommand(
+				testDirPath,
+				"git",
+				"push", "origin", "--delete", "test",
+			)
 
-				gitHistoryBasedCleanupCheck(imageName, 1, 0)
-			})
+			gitHistoryBasedCleanupCheck(imageName, 1, 0)
+		})
 
-			It("should remove image from untracked branch", func() {
-				stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
+		It("should remove image from untracked branch", func() {
+			stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
 
-				utils.RunSucceedCommand(
-					testDirPath,
-					"git",
-					"checkout", "-b", "some_branch",
-				)
+			utils.RunSucceedCommand(
+				testDirPath,
+				"git",
+				"checkout", "-b", "some_branch",
+			)
 
-				utils.RunSucceedCommand(
-					testDirPath,
-					"git",
-					"push", "--set-upstream", "origin", "some_branch",
-				)
+			utils.RunSucceedCommand(
+				testDirPath,
+				"git",
+				"push", "--set-upstream", "origin", "some_branch",
+			)
 
-				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
-					"build",
-				)
+			utils.RunSucceedCommand(
+				testDirPath,
+				werfBinPath,
+				"build",
+			)
 
-				gitHistoryBasedCleanupCheck(imageName, 1, 0)
-			})
+			gitHistoryBasedCleanupCheck(imageName, 1, 0)
+		})
 
+		It("should keep several images that are related to one commit regardless of the keep policies (imagesPerReference.last=1)", func() {
+			stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "9")
+
+			utils.RunSucceedCommand(
+				testDirPath,
+				"git",
+				"checkout", "-b", "test",
+			)
+
+			utils.RunSucceedCommand(
+				testDirPath,
+				"git",
+				"push", "--set-upstream", "origin", "test",
+			)
+
+			stubs.SetEnv("FROM_CACHE_VERSION", "1")
+			utils.RunSucceedCommand(
+				testDirPath,
+				werfBinPath,
+				"build",
+			)
+
+			stubs.SetEnv("FROM_CACHE_VERSION", "2")
+			utils.RunSucceedCommand(
+				testDirPath,
+				werfBinPath,
+				"build",
+			)
+
+			gitHistoryBasedCleanupCheck(imageName, 2, 2)
+		})
+
+		Context("keep policies", func() {
 			It("should remove image by imagesPerReference.last", func() {
 				stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "2")
 
@@ -381,38 +413,6 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					)
 				})
 			})
-
-			XIt("should keep all stages that are related to one commit regardless of the keep policies", func() {
-				stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "9")
-
-				utils.RunSucceedCommand(
-					testDirPath,
-					"git",
-					"checkout", "-b", "test",
-				)
-
-				utils.RunSucceedCommand(
-					testDirPath,
-					"git",
-					"push", "--set-upstream", "origin", "test",
-				)
-
-				stubs.SetEnv("FROM_CACHE_VERSION", "1")
-				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
-					"build",
-				)
-
-				stubs.SetEnv("FROM_CACHE_VERSION", "2")
-				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
-					"build",
-				)
-
-				gitHistoryBasedCleanupCheck(imageName, 2, 2)
-			})
 		})
 
 		Context("images metadata cleanup", func() {
@@ -437,7 +437,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					)
 				}
 
-				It("should remove all image metadata except the latest (one branch)", func() {
+				It("should keep image metadata only for the latest commit (one branch)", func() {
 					for i := 0; i < 3; i++ {
 						utils.RunSucceedCommand(
 							testDirPath,
@@ -506,7 +506,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 			stubs.SetEnv("FROM_CACHE_VERSION", "x")
 		})
 
-		It("should work properly with non-existent/empty stages storage", func() {
+		It("should work properly with non-existent/empty repo", func() {
 			utils.RunSucceedCommand(
 				testDirPath,
 				werfBinPath,
@@ -514,14 +514,115 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 			)
 		})
 
-		for _, disableStageCleanupDatePeriodPolicy := range []string{"0", "1"} {
+		When("KeepStageSetsBuiltWithinLastNHours policy is disabled", func() {
 			BeforeEach(func() {
-				value := disableStageCleanupDatePeriodPolicy
-				stubs.SetEnv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY", value)
+				stubs.SetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS", "0")
 			})
 
-			if disableStageCleanupDatePeriodPolicy == "1" {
-				It("should not remove stages that are related with image metadata (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)", func() {
+			It("should remove unused stages", func() {
+				utils.RunSucceedCommand(
+					testDirPath,
+					werfBinPath,
+					"build",
+				)
+
+				utils.RunSucceedCommand(
+					testDirPath,
+					"git",
+					"push", "--set-upstream", "origin", "master",
+				)
+
+				countAfterFirstBuild := StagesCount()
+				Ω(countAfterFirstBuild).Should(Equal(4))
+
+				utils.RunSucceedCommand(
+					testDirPath,
+					"git",
+					"commit", "--allow-empty", "-m", "test",
+				)
+
+				stubs.SetEnv("FROM_CACHE_VERSION", "full rebuild")
+				stubs.SetEnv("ARTIFACT_INSTALL_DATA", "1")
+
+				utils.RunSucceedCommand(
+					testDirPath,
+					werfBinPath,
+					"build",
+				)
+
+				countAfterSecondBuild := StagesCount()
+
+				utils.RunSucceedCommand(
+					testDirPath,
+					werfBinPath,
+					"cleanup",
+				)
+
+				if testImplementation != docker_registry.QuayImplementationName {
+					Ω(StagesCount()).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
+				}
+			})
+
+			It("should not remove used stages", func() {
+				utils.RunSucceedCommand(
+					testDirPath,
+					werfBinPath,
+					"build",
+				)
+
+				utils.RunSucceedCommand(
+					testDirPath,
+					"git",
+					"push", "--set-upstream", "origin", "master",
+				)
+
+				count := StagesCount()
+				Ω(count).Should(Equal(4))
+
+				utils.RunSucceedCommand(
+					testDirPath,
+					werfBinPath,
+					"cleanup",
+				)
+
+				Ω(StagesCount()).Should(Equal(count))
+			})
+
+			When("there is running container based on werf stage", func() {
+				BeforeEach(func() {
+					if stagesStorage.Address() != ":local" {
+						Skip(fmt.Sprintf("to test :local storage (%s)", stagesStorage.Address()))
+					}
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build",
+					)
+
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"run", "--docker-options", "-d", "--", "/bin/sleep", "30",
+					)
+				})
+
+				It("should skip stage with related running container", func() {
+					stubs.SetEnv("WERF_LOG_PRETTY", "0")
+
+					out, err := utils.RunCommand(
+						testDirPath,
+						werfBinPath,
+						"cleanup",
+					)
+					Ω(err).Should(Succeed())
+					Ω(string(out)).Should(ContainSubstring("Skip image "))
+					Ω(string(out)).Should(ContainSubstring("used by container"))
+				})
+			})
+
+			Context("imports metadata", func() {
+				It("should keep used artifact", func() {
 					utils.RunSucceedCommand(
 						testDirPath,
 						werfBinPath,
@@ -534,8 +635,8 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 						"push", "--set-upstream", "origin", "master",
 					)
 
-					count := StagesCount()
-					Ω(count).Should(Equal(4))
+					countAfterFirstBuild := StagesCount()
+					Ω(countAfterFirstBuild).Should(Equal(4))
 
 					utils.RunSucceedCommand(
 						testDirPath,
@@ -543,148 +644,98 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 						"cleanup",
 					)
 
-					Ω(StagesCount()).Should(Equal(count))
+					countAfterCleanup := StagesCount()
+					Ω(countAfterCleanup).Should(Equal(4))
+					Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(1))
 				})
 
-				Context("when there is running container that is based on werf image", func() {
-					BeforeEach(func() {
-						if stagesStorage.Address() != ":local" {
-							Skip(fmt.Sprintf("to test :local storage (%s)", stagesStorage.Address()))
-						}
-					})
+				It("should keep both artifacts by identical import checksum", func() {
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build",
+					)
 
-					BeforeEach(func() {
-						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
-							"build",
-						)
+					countAfterFirstBuild := StagesCount()
+					Ω(countAfterFirstBuild).Should(Equal(4))
 
-						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
-							"run", "--docker-options", "-d", "--", "/bin/sleep", "30",
-						)
-					})
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"commit", "--allow-empty", "-m", "test",
+					)
 
-					It("should skip stage with related running container", func() {
-						stubs.SetEnv("WERF_LOG_PRETTY", "0")
+					stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "full rebuild")
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build",
+					)
 
-						out, err := utils.RunCommand(
-							testDirPath,
-							werfBinPath,
-							"cleanup",
-						)
-						Ω(err).Should(Succeed())
-						Ω(string(out)).Should(ContainSubstring("Skip image "))
-						Ω(string(out)).Should(ContainSubstring("used by container"))
-					})
-				})
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "--set-upstream", "origin", "master",
+					)
 
-				Context("imports metadata (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)", func() {
-					It("should keep used artifact", func() {
-						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
-							"build",
-						)
-
-						utils.RunSucceedCommand(
-							testDirPath,
-							"git",
-							"push", "--set-upstream", "origin", "master",
-						)
-
-						countAfterFirstBuild := StagesCount()
-						Ω(countAfterFirstBuild).Should(Equal(4))
-
-						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
-							"cleanup",
-						)
-
-						countAfterCleanup := StagesCount()
-						Ω(countAfterCleanup).Should(Equal(4))
-						Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(1))
-					})
-
-					It("should keep both artifacts by identical import checksum", func() {
-						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
-							"build",
-						)
-
-						countAfterFirstBuild := StagesCount()
-						Ω(countAfterFirstBuild).Should(Equal(4))
-
-						stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "full rebuild")
-						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
-							"build",
-						)
-
-						utils.RunSucceedCommand(
-							testDirPath,
-							"git",
-							"push", "--set-upstream", "origin", "master",
-						)
-
-						countAfterSecondBuild := StagesCount()
+					countAfterSecondBuild := StagesCount()
+					if testImplementation != docker_registry.QuayImplementationName {
 						Ω(countAfterSecondBuild).Should(Equal(6))
+					}
 
-						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
-							"cleanup",
-						)
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"cleanup",
+					)
 
+					if testImplementation != docker_registry.QuayImplementationName {
 						countAfterCleanup := StagesCount()
 						Ω(countAfterCleanup).Should(Equal(countAfterSecondBuild))
 						Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(2))
-					})
+					}
+				})
 
-					It("should remove unused artifact (without related import metadata)", func() {
-						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
-							"build",
-						)
+				It("should remove unused artifact which does not have related import metadata", func() {
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"build",
+					)
 
-						utils.RunSucceedCommand(
-							testDirPath,
-							"git",
-							"push", "--set-upstream", "origin", "master",
-						)
+					utils.RunSucceedCommand(
+						testDirPath,
+						"git",
+						"push", "--set-upstream", "origin", "master",
+					)
 
-						countAfterFirstBuild := StagesCount()
-						Ω(countAfterFirstBuild).Should(Equal(4))
-						Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(1))
+					countAfterFirstBuild := StagesCount()
+					Ω(countAfterFirstBuild).Should(Equal(4))
+					Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(1))
 
-						RmImportMetadata(ImportMetadataIDs()[0])
+					RmImportMetadata(ImportMetadataIDs()[0])
 
-						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
-							"cleanup",
-						)
+					utils.RunSucceedCommand(
+						testDirPath,
+						werfBinPath,
+						"cleanup",
+					)
 
+					if testImplementation != docker_registry.QuayImplementationName {
 						countAfterCleanup := StagesCount()
 						Ω(countAfterCleanup).Should(Equal(3))
-					})
+						Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(0))
+					}
 				})
-			}
+			})
+		})
 
-			var itMsg string
-			if disableStageCleanupDatePeriodPolicy == "0" {
-				itMsg = fmt.Sprintf("should not remove unused stages (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=0)")
-			} else {
-				itMsg = fmt.Sprintf("should remove unused stages (WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY=1)")
-			}
+		When("KeepStageSetsBuiltWithinLastNHours policy is 2 hours (default)", func() {
+			BeforeEach(func() {
+				stubs.UnsetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
+			})
 
-			It(itMsg, func() {
+			It("should not remove unused stages that was built within 2 hours", func() {
 				utils.RunSucceedCommand(
 					testDirPath,
 					werfBinPath,
@@ -715,6 +766,9 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				)
 
 				countAfterSecondBuild := StagesCount()
+				if testImplementation != docker_registry.QuayImplementationName {
+					Ω(countAfterSecondBuild).Should(Equal(8))
+				}
 
 				utils.RunSucceedCommand(
 					testDirPath,
@@ -723,10 +777,10 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				)
 
 				if testImplementation != docker_registry.QuayImplementationName {
-					Ω(StagesCount()).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
+					Ω(StagesCount()).Should(Equal(countAfterSecondBuild))
 				}
 			})
-		}
+		})
 	})
 })
 
@@ -785,8 +839,8 @@ func getHeadCommit() string {
 	return strings.TrimSpace(out)
 }
 
-func gitHistoryBasedCleanupCheck(imageName string, expectedNumberOfTagsBefore, expectedNumberOfTagsAfter int, afterCleanupChecks ...func(map[string][]string)) {
-	Ω(ImageMetadata(imageName)).Should(HaveLen(expectedNumberOfTagsBefore))
+func gitHistoryBasedCleanupCheck(imageName string, expectedNumberOfMetadataTagsBefore, expectedNumberOfMetadataTagsAfter int, afterCleanupChecks ...func(map[string][]string)) {
+	Ω(ImageMetadata(imageName)).Should(HaveLen(expectedNumberOfMetadataTagsBefore))
 
 	utils.RunSucceedCommand(
 		testDirPath,
@@ -796,7 +850,7 @@ func gitHistoryBasedCleanupCheck(imageName string, expectedNumberOfTagsBefore, e
 
 	if testImplementation != docker_registry.QuayImplementationName {
 		imageMetadata := ImageMetadata(imageName)
-		Ω(imageMetadata).Should(HaveLen(expectedNumberOfTagsAfter))
+		Ω(imageMetadata).Should(HaveLen(expectedNumberOfMetadataTagsAfter))
 
 		if afterCleanupChecks != nil {
 			for _, check := range afterCleanupChecks {
