@@ -31,7 +31,7 @@ func NewGetReleaseCmd() *cobra.Command {
 	common.SetupDir(&getReleaseCmdData, cmd)
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigPath(&getReleaseCmdData, cmd)
-	common.SetupConfigTemplatesDir(&getReleaseCmdData, cmd)
+
 	common.SetupTmpDir(&getReleaseCmdData, cmd)
 	common.SetupHomeDir(&getReleaseCmdData, cmd)
 	common.SetupEnvironment(&getReleaseCmdData, cmd)

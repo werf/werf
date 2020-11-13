@@ -78,8 +78,9 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupSSHKey(&commonCmdData, cmd)
@@ -103,7 +104,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
-	common.SetupHelmChartDir(&commonCmdData, cmd)
+
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
@@ -179,11 +180,6 @@ func runMain(ctx context.Context) error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	chartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %s", err)
-	}
-
 	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
@@ -209,14 +205,14 @@ func runMain(ctx context.Context) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context) error {
-			return run(ctx, projectDir, chartDir)
+			return run(ctx, projectDir)
 		})
 	} else {
-		return run(ctx, projectDir, chartDir)
+		return run(ctx, projectDir)
 	}
 }
 
-func run(ctx context.Context, projectDir, chartDir string) error {
+func run(ctx context.Context, projectDir string) error {
 	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
 	if err != nil {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
@@ -225,6 +221,11 @@ func run(ctx context.Context, projectDir, chartDir string) error {
 	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
+	}
+
+	chartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData, werfConfig)
+	if err != nil {
+		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
 
 	projectName := werfConfig.Meta.Project

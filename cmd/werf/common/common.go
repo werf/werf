@@ -132,7 +132,8 @@ func SetupConfigPath(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupConfigTemplatesDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ConfigTemplatesDir = new(string)
-	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Change to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
+	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Chan
+ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
 }
 
 func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -217,11 +218,6 @@ environLoop:
 	}
 
 	return result
-}
-
-func SetupHelmChartDir(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.HelmChartDir = new(string)
-	cmd.Flags().StringVarP(cmdData.HelmChartDir, "helm-chart-dir", "", os.Getenv("WERF_HELM_CHART_DIR"), "Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
@@ -959,23 +955,13 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	return currentDir, nil
 }
 
-func GetHelmChartDir(projectDir string, cmdData *CmdData) (string, error) {
+func GetHelmChartDir(projectDir string, cmdData *CmdData, werfConfig *config.WerfConfig) (string, error) {
 	var helmChartDir string
 
-	customHelmChartDir := *cmdData.HelmChartDir
-	if customHelmChartDir != "" {
-		helmChartDir = customHelmChartDir
+	if werfConfig.Meta.MetaDeploy.HelmChartDir != nil && *werfConfig.Meta.MetaDeploy.HelmChartDir != "" {
+		helmChartDir = *werfConfig.Meta.MetaDeploy.HelmChartDir
 	} else {
 		helmChartDir = filepath.Join(projectDir, ".helm")
-	}
-
-	exist, err := util.FileExists(helmChartDir)
-	if err != nil {
-		return "", err
-	}
-
-	if !exist {
-		return "", fmt.Errorf("helm chart dir %s not found", helmChartDir)
 	}
 
 	return helmChartDir, nil
