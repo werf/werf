@@ -34,48 +34,7 @@ func (cache *FileStagesStorageCache) String() string {
 	return fmt.Sprintf("%s", cache.CacheDir)
 }
 
-func (cache *FileStagesStorageCache) invalidateIfOldCacheExists(ctx context.Context, projectName string) error {
-	if lock, err := cache.lock(ctx); err != nil {
-		return err
-	} else {
-		defer cache.unlock(lock)
-	}
-
-	oldCacheDir := filepath.Join(werf.GetLocalCacheDir(), "stages_storage_01")
-	if _, lock, err := werf.AcquireHostLock(ctx, oldCacheDir, lockgate.AcquireOptions{}); err != nil {
-		return err
-	} else {
-		defer werf.ReleaseHostLock(lock)
-	}
-
-	currentProjectCacheDir := filepath.Join(cache.CacheDir, projectName)
-	oldProjectCacheDir := filepath.Join(oldCacheDir, projectName)
-
-	if _, err := os.Stat(oldProjectCacheDir); os.IsNotExist(err) {
-		// ok
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("error accessing %s: %s", oldProjectCacheDir, err)
-	} else {
-		// remove old cache and new cache as well
-		logboek.Context(ctx).Default().LogF("Removing current stages storage project cache dir: %s\n", currentProjectCacheDir)
-		if err := os.RemoveAll(currentProjectCacheDir); err != nil {
-			return fmt.Errorf("error removing %s: %s", currentProjectCacheDir, err)
-		}
-		logboek.Context(ctx).Default().LogF("Removing old stages storage project cache dir: %s\n", oldProjectCacheDir)
-		if err := os.RemoveAll(oldProjectCacheDir); err != nil {
-			return fmt.Errorf("error removing %s: %s", oldProjectCacheDir, err)
-		}
-
-		return nil
-	}
-}
-
 func (cache *FileStagesStorageCache) GetAllStages(ctx context.Context, projectName string) (bool, []image.StageID, error) {
-	if err := cache.invalidateIfOldCacheExists(ctx, projectName); err != nil {
-		return false, nil, err
-	}
-
 	sigDir := filepath.Join(cache.CacheDir, projectName)
 
 	if _, err := os.Stat(sigDir); os.IsNotExist(err) {
@@ -110,10 +69,6 @@ func (cache *FileStagesStorageCache) DeleteAllStages(_ context.Context, projectN
 }
 
 func (cache *FileStagesStorageCache) GetStagesByDigest(ctx context.Context, projectName, digest string) (bool, []image.StageID, error) {
-	if err := cache.invalidateIfOldCacheExists(ctx, projectName); err != nil {
-		return false, nil, err
-	}
-
 	sigFile := filepath.Join(cache.CacheDir, projectName, digest)
 
 	if _, err := os.Stat(sigFile); os.IsNotExist(err) {
@@ -139,10 +94,6 @@ func (cache *FileStagesStorageCache) GetStagesByDigest(ctx context.Context, proj
 }
 
 func (cache *FileStagesStorageCache) StoreStagesByDigest(ctx context.Context, projectName, digest string, stages []image.StageID) error {
-	if err := cache.invalidateIfOldCacheExists(ctx, projectName); err != nil {
-		return err
-	}
-
 	if lock, err := cache.lock(ctx); err != nil {
 		return err
 	} else {
@@ -168,10 +119,6 @@ func (cache *FileStagesStorageCache) StoreStagesByDigest(ctx context.Context, pr
 }
 
 func (cache *FileStagesStorageCache) DeleteStagesByDigest(ctx context.Context, projectName, digest string) error {
-	if err := cache.invalidateIfOldCacheExists(ctx, projectName); err != nil {
-		return err
-	}
-
 	if lock, err := cache.lock(ctx); err != nil {
 		return err
 	} else {
