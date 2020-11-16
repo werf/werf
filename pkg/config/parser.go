@@ -40,7 +40,7 @@ func RenderWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDi
 	}
 
 	if len(imagesToProcess) == 0 {
-		werfConfigRenderContent, err := parseWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.DisableDeterminism)
+		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.DisableDeterminism)
 		if err != nil {
 			return fmt.Errorf("cannot parse config: %s", err)
 		}
@@ -70,7 +70,7 @@ func RenderWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDi
 }
 
 func GetWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, opts WerfConfigOptions) (*WerfConfig, error) {
-	werfConfigRenderContent, err := parseWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.DisableDeterminism)
+	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.DisableDeterminism)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
 	}
@@ -94,7 +94,7 @@ func GetWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir s
 		return nil, err
 	}
 
-	meta, rawStapelImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs)
+	meta, rawStapelImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs, opts.DisableDeterminism)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func parseWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, disableDeterminism bool) (string, error) {
+func renderWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, disableDeterminism bool) (string, error) {
 	var commit string
 	if localGitRepo != nil {
 		if c, err := localGitRepo.HeadCommit(ctx); err != nil {
@@ -695,7 +695,7 @@ func prepareWerfConfig(rawImages []*rawStapelImage, rawImagesFromDockerfile []*r
 	return werfConfig, nil
 }
 
-func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImageFromDockerfile, error) {
+func splitByMetaAndRawImages(docs []*doc, disableDeterminism bool) (*Meta, []*rawStapelImage, []*rawImageFromDockerfile, error) {
 	var rawStapelImages []*rawStapelImage
 	var rawImagesFromDockerfile []*rawImageFromDockerfile
 	var resultMeta *Meta
@@ -729,7 +729,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImage
 
 			rawImagesFromDockerfile = append(rawImagesFromDockerfile, imageFromDockerfile)
 		} else if isImageDoc(raw) {
-			image := &rawStapelImage{doc: doc}
+			image := &rawStapelImage{doc: doc, DisableDeterminism: disableDeterminism}
 			err := yaml.UnmarshalStrict(doc.Content, &image)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)

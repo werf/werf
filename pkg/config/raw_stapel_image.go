@@ -22,7 +22,8 @@ type rawStapelImage struct {
 	RawImport                                           []*rawImport `yaml:"import,omitempty"`
 	AsLayers                                            bool         `yaml:"asLayers,omitempty"`
 
-	doc *doc `yaml:"-"` // parent
+	doc                *doc `yaml:"-"` // parent
+	DisableDeterminism bool `yaml:"-"` // parser option
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
