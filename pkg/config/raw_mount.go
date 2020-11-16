@@ -1,7 +1,5 @@
 package config
 
-import "fmt"
-
 type rawMount struct {
 	To       string `yaml:"to,omitempty"`
 	From     string `yaml:"from,omitempty"`
@@ -50,15 +48,7 @@ func (c *rawMount) toDirective() (mount *Mount, err error) {
 }
 
 func (c *rawMount) validateDirective(mount *Mount) (err error) {
-	if !c.rawStapelImage.DisableDeterminism {
-		return fmt.Errorf("'mount' directive is forbidden, to use mounts disable werf determinism mode with option --disable-determinism (or WERF_DISABLE_DETERMINISM=1 environment variable)")
-	}
-
-	if c.From != "" && c.FromPath != "" {
-		return newDetailedConfigError(fmt.Sprintf("cannot use `from: %s` and `fromPath: %s` at the same time for mount!", c.From, c.FromPath), c, c.rawStapelImage.doc)
-	}
-
-	if err := mount.validate(); err != nil {
+	if err := mount.validate(c.rawStapelImage.DisableDeterminism); err != nil {
 		return err
 	}
 

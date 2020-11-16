@@ -744,6 +744,10 @@ func splitByMetaAndRawImages(docs []*doc, disableDeterminism bool) (*Meta, []*ra
 	return resultMeta, rawStapelImages, rawImagesFromDockerfile, nil
 }
 
+func newForbiddenDirectiveByDeterminism(directiveName string) error {
+	return fmt.Errorf("%q directive is forbidden, it is recommended to avoid this directive, otherwise disable werf determinism mode with option --disable-determinism (or WERF_DISABLE_DETERMINISM=1 environment variable)", directiveName)
+}
+
 func isMetaDoc(h map[string]interface{}) bool {
 	if _, ok := h["configVersion"]; ok {
 		return true
