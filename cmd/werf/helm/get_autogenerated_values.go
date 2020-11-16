@@ -69,8 +69,8 @@ These values includes project name, docker images ids and other`),
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
-	common.SetupGitUnshallow(&commonCmdData, cmd)
-	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
+	
+	
 
 	common.SetupNamespace(&commonCmdData, cmd)
 

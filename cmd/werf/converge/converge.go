@@ -129,8 +129,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
-	common.SetupGitUnshallow(&commonCmdData, cmd)
-	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
+	
+	
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)

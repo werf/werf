@@ -80,8 +80,6 @@ type ConveyorOptions struct {
 	Parallel                        bool
 	ParallelTasksLimit              int64
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
-	GitUnshallow                    bool
-	AllowGitShallowClone            bool
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, localGitRepo *git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
@@ -895,20 +893,21 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 			return nil, errors.New("local git mapping is used but project git repository is not found")
 		}
 
-		if !c.AllowGitShallowClone {
+		if !c.werfConfig.Meta.GitWorktree.GetAllowShallowClone() {
 			isShallowClone, err := localGitRepo.IsShallowClone()
 			if err != nil {
 				return nil, fmt.Errorf("check shallow clone failed: %s", err)
 			}
 
 			if isShallowClone {
-				if c.GitUnshallow {
+				if c.werfConfig.Meta.GitWorktree.GetAutoUnshallow() {
 					if err := localGitRepo.FetchOrigin(ctx); err != nil {
 						return nil, err
 					}
 				} else {
 					logboek.Context(ctx).Warn().LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
-					logboek.Context(ctx).Warn().LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
+					logboek.Context(ctx).Warn().LogLn("It is recommended to enable automatic unshallow of the git worktree with gitWorktree.autoUnshallow=true werf.yaml directive (which is enabled by default, TODO: link).")
+					logboek.Context(ctx).Warn().LogLn("If you still want to use shallow clone, then add gitWorktree.allowShallowClone=true werf.yaml directive (TODO: link).")
 
 					return nil, fmt.Errorf("shallow git clone is not allowed")
 				}

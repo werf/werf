@@ -33,8 +33,8 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 	}
 
 	var releaseTemplate string
-	if werfConfig.Meta.MetaDeploy.HelmRelease != nil {
-		releaseTemplate = *werfConfig.Meta.MetaDeploy.HelmRelease
+	if werfConfig.Meta.Deploy.HelmRelease != nil {
+		releaseTemplate = *werfConfig.Meta.Deploy.HelmRelease
 	} else if environmentOption == "" {
 		releaseTemplate = "[[ project ]]"
 	} else {
@@ -51,8 +51,8 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 	}
 
 	var helmReleaseSlug bool
-	if werfConfig.Meta.MetaDeploy.HelmReleaseSlug != nil {
-		helmReleaseSlug = *werfConfig.Meta.MetaDeploy.HelmReleaseSlug
+	if werfConfig.Meta.Deploy.HelmReleaseSlug != nil {
+		helmReleaseSlug = *werfConfig.Meta.Deploy.HelmReleaseSlug
 	} else {
 		helmReleaseSlug = true
 	}
@@ -79,8 +79,8 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	}
 
 	var namespaceTemplate string
-	if werfConfig.Meta.MetaDeploy.Namespace != nil {
-		namespaceTemplate = *werfConfig.Meta.MetaDeploy.Namespace
+	if werfConfig.Meta.Deploy.Namespace != nil {
+		namespaceTemplate = *werfConfig.Meta.Deploy.Namespace
 	} else if environmentOption == "" {
 		namespaceTemplate = "[[ project ]]"
 	} else {
@@ -97,8 +97,8 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	}
 
 	var namespaceSlug bool
-	if werfConfig.Meta.MetaDeploy.NamespaceSlug != nil {
-		namespaceSlug = *werfConfig.Meta.MetaDeploy.NamespaceSlug
+	if werfConfig.Meta.Deploy.NamespaceSlug != nil {
+		namespaceSlug = *werfConfig.Meta.Deploy.NamespaceSlug
 	} else {
 		namespaceSlug = true
 	}

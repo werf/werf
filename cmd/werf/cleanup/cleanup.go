@@ -3,6 +3,8 @@ package cleanup
 import (
 	"fmt"
 
+	"github.com/werf/werf/pkg/git_repo"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -65,9 +67,6 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-
-	common.SetupGitHistorySynchronization(&commonCmdData, cmd)
-	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
 
 	common.SetupScanContextNamespaceOnly(&commonCmdData, cmd)
 	common.SetupDryRun(&commonCmdData, cmd)
@@ -140,14 +139,35 @@ func runCleanup() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	localGitRepo, err := common.GetLocalGitRepoForImagesCleanup(projectDir, &commonCmdData)
+	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
 	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism, Env: *commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
+	}
+
+	if !werfConfig.Meta.GitWorktree.GetAllowShallowClone() && !werfConfig.Meta.GitWorktree.GetAutoFetchOriginBranchesAndTags() {
+		isShallow, err := localGitRepo.IsShallowClone()
+		if err != nil {
+			return fmt.Errorf("check shallow clone failed: %s", err)
+		}
+
+		if isShallow {
+			logboek.Warn().LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
+			logboek.Warn().LogLn("It is recommended to enable automatic fetch of origin git branches and tags during cleanup process with the gitWorktree.autoFetchOriginBranchesAndTags=true werf.yaml directive (which is enabled by default, TODO: link).")
+			logboek.Warn().LogLn("If you still want to use shallow clone, add gitWorktree.allowShallowClone=true directive into werf.yaml (TODO: link).")
+
+			return fmt.Errorf("git shallow clone is not allowed")
+		}
+	}
+
+	if werfConfig.Meta.GitWorktree.GetAutoFetchOriginBranchesAndTags() {
+		if err := localGitRepo.SyncWithOrigin(ctx); err != nil {
+			return fmt.Errorf("synchronization failed: %s", err)
+		}
 	}
 
 	projectName := werfConfig.Meta.Project

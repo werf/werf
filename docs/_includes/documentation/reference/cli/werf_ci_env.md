@@ -38,11 +38,12 @@ werf ci-env CI_SYSTEM [options]
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
-            Change to the custom configuration templates directory (default                         
-            $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
+            Chan
+            ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR  
+            or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-determinism=true
+      --disable-determinism=false
             Disable werf deterministic mode (more info                                              
             https://werf.io/documentation/advanced/configuration/determinism.html, default          
             $WERF_DISABLE_DETERMINISM)
@@ -51,6 +52,8 @@ werf ci-env CI_SYSTEM [options]
             ~/.docker (in the order of priority)
             Command will copy specified or default (~/.docker) config to the temporary directory    
             and may perform additional login with new config.
+      --env=''
+            Use specified environment (default $WERF_ENV)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto'

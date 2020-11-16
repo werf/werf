@@ -31,19 +31,17 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 {{ header }} Options
 
 ```shell
-      --allow-git-shallow-clone=false
-            Sign the intention of using shallow clone despite restrictions (default                 
-            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --bash=false
             Use predefined docker options and command for debug
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
-            Change to the custom configuration templates directory (default                         
-            $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
+            Chan
+            ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR  
+            or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-determinism=true
+      --disable-determinism=false
             Disable werf deterministic mode (more info                                              
             https://werf.io/documentation/advanced/configuration/determinism.html, default          
             $WERF_DISABLE_DETERMINISM)
@@ -55,10 +53,10 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Define docker run options (default $WERF_DOCKER_OPTIONS)
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
+      --env=''
+            Use specified environment (default $WERF_ENV)
       --follow=false
             Follow git HEAD and run command for each new commit (default $WERF_FOLLOW)
-      --git-unshallow=false
-            Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false

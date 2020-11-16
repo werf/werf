@@ -38,9 +38,6 @@ werf render [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
             $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
-      --allow-git-shallow-clone=false
-            Sign the intention of using shallow clone despite restrictions (default                 
-            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --atomic=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_ATOMIC by default)
@@ -50,11 +47,12 @@ werf render [options]
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
-            Change to the custom configuration templates directory (default                         
-            $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
+            Chan
+            ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR  
+            or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-determinism=true
+      --disable-determinism=false
             Disable werf deterministic mode (more info                                              
             https://werf.io/documentation/advanced/configuration/determinism.html, default          
             $WERF_DISABLE_DETERMINISM)
@@ -65,10 +63,6 @@ werf render [options]
             and to pull base images
       --env=''
             Use specified environment (default $WERF_ENV)
-      --git-unshallow=false
-            Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)
-      --helm-chart-dir=''
-            Use custom helm chart dir (default $WERF_HELM_CHART_DIR or .helm in working directory)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --hooks-status-progress-period=5

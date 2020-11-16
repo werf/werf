@@ -64,12 +64,9 @@ type CmdData struct {
 	SkipBuild *bool
 	StubTags  *bool
 
-	Synchronization           *string
-	GitHistorySynchronization *bool
-	GitUnshallow              *bool
-	AllowGitShallowClone      *bool
-	Parallel                  *bool
-	ParallelTasksLimit        *int64
+	Synchronization    *string
+	Parallel           *bool
+	ParallelTasksLimit *int64
 
 	DockerConfig          *string
 	InsecureRegistry      *bool
@@ -652,11 +649,6 @@ func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
 }
 
-func SetupAllowGitShallowClone(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.AllowGitShallowClone = new(bool)
-	cmd.Flags().BoolVarP(cmdData.AllowGitShallowClone, "allow-git-shallow-clone", "", GetBoolEnvironmentDefaultFalse("WERF_ALLOW_GIT_SHALLOW_CLONE"), "Sign the intention of using shallow clone despite restrictions (default $WERF_ALLOW_GIT_SHALLOW_CLONE)")
-}
-
 func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
 	SetupParallel(cmdData, cmd)
 	SetupParallelTasksLimit(cmdData, cmd, defaultValue)
@@ -670,16 +662,6 @@ func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
 func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
 	cmdData.ParallelTasksLimit = new(int64)
 	cmd.Flags().Int64VarP(cmdData.ParallelTasksLimit, "parallel-tasks-limit", "", defaultValue, "Parallel tasks limit, set -1 to remove the limitation (default $WERF_PARALLEL_TASKS_LIMIT or 5)")
-}
-
-func SetupGitUnshallow(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.GitUnshallow = new(bool)
-	cmd.Flags().BoolVarP(cmdData.GitUnshallow, "git-unshallow", "", GetBoolEnvironmentDefaultFalse("WERF_GIT_UNSHALLOW"), "Convert project git clone to full one (default $WERF_GIT_UNSHALLOW)")
-}
-
-func SetupGitHistorySynchronization(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.GitHistorySynchronization = new(bool)
-	cmd.Flags().BoolVarP(cmdData.GitHistorySynchronization, "git-history-synchronization", "", GetBoolEnvironmentDefaultFalse("WERF_GIT_HISTORY_SYNCHRONIZATION"), "Synchronize git branches and tags with remote origin (default $WERF_GIT_HISTORY_SYNCHRONIZATION)")
 }
 
 func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -993,8 +975,8 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 func GetHelmChartDir(projectDir string, cmdData *CmdData, werfConfig *config.WerfConfig) (string, error) {
 	var helmChartDir string
 
-	if werfConfig.Meta.MetaDeploy.HelmChartDir != nil && *werfConfig.Meta.MetaDeploy.HelmChartDir != "" {
-		helmChartDir = *werfConfig.Meta.MetaDeploy.HelmChartDir
+	if werfConfig.Meta.Deploy.HelmChartDir != nil && *werfConfig.Meta.Deploy.HelmChartDir != "" {
+		helmChartDir = *werfConfig.Meta.Deploy.HelmChartDir
 	} else {
 		helmChartDir = filepath.Join(projectDir, ".helm")
 	}
@@ -1245,43 +1227,6 @@ func SetupVirtualMergeFromCommit(cmdData *CmdData, cmd *cobra.Command) {
 func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.VirtualMergeIntoCommit = new(string)
 	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
-}
-
-func GetLocalGitRepoForImagesCleanup(projectDir string, cmdData *CmdData) (*git_repo.Local, error) {
-	gitDir := filepath.Join(projectDir, ".git")
-	if exist, err := util.DirExists(gitDir); err != nil {
-		return nil, err
-	} else if exist {
-		logboek.LogOptionalLn()
-		localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
-		if err != nil {
-			return nil, fmt.Errorf("get local git repo failed: %s", err)
-		}
-
-		if !*cmdData.AllowGitShallowClone && !*cmdData.GitHistorySynchronization {
-			isShallow, err := localGitRepo.IsShallowClone()
-			if err != nil {
-				return nil, fmt.Errorf("check shallow clone failed: %s", err)
-			}
-
-			if isShallow {
-				logboek.Warn().LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
-				logboek.Warn().LogLn("If you still want to use shallow clone, add --allow-git-shallow-clone option (WERF_ALLOW_GIT_SHALLOW_CLONE=1).")
-
-				return nil, fmt.Errorf("git shallow clone is not allowed")
-			}
-		}
-
-		if *cmdData.GitHistorySynchronization {
-			if err := localGitRepo.SyncWithOrigin(BackgroundContext()); err != nil {
-				return nil, fmt.Errorf("synchronization failed: %s", err)
-			}
-		}
-
-		return localGitRepo, nil
-	} else {
-		return nil, nil
-	}
 }
 
 func BackgroundContext() context.Context {

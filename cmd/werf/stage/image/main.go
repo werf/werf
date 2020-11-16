@@ -80,8 +80,8 @@ func NewCmd() *cobra.Command {
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
-	common.SetupGitUnshallow(&commonCmdData, cmd)
-	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
+	
+	
 
 	return cmd
 }
