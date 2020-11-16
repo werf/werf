@@ -10,7 +10,6 @@ summary: |
 
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">from</span><span class="pi">:</span> <span class="s">&lt;image[:&lt;tag&gt;]&gt;</span>
   <span class="na">fromLatest</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
-  <span class="na">herebyIAdmitThatFromLatestMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
   <span class="na">fromCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
   <span class="na">fromImage</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
   <span class="na">fromArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
@@ -49,7 +48,6 @@ from: <image>[:<tag>]
 
 ```yaml
 fromLatest: true
-herebyIAdmitThatFromLatestMightBreakReproducibility: true
 ```
 
 > Обратите внимание, что если вы включаете _fromLatest_, то werf начинает использовать digest актуального _базового образа_ при подсчете дайджеста стадии _from_.
@@ -59,7 +57,7 @@ herebyIAdmitThatFromLatestMightBreakReproducibility: true
 > * Сборка прошла успешно, но затем обновляется _базовый образ_, и **следующие задания pipeline** (например, деплой) уже не работают. Это происходит потому, что еще не существует конечного образа, собранного с учетом обновленного _базового образа_.
 > * Собранное приложение успешно развернуто, но затем обновляется _базовый образ_, и **повторный запуск** деплоя уже не работает. Это также происходит потому, что еще не существует конечного образа, собранного с учетом обновленного _базового образа_.
 >
-> Если вы всё же хотите использовать функционал данной директивы, добавьте также параметр _herebyIAdmitThatFromLatestMightBreakReproducibility: true_ рядом с параметром _fromLatest_.
+> Если вы всё же хотите использовать функционал данной директивы, то необходимо выключить режим детерминизма в werf с помощью опции --disable-determinism.
 >
 > **Крайне не рекомендуется использовать актуальный базовый образ таким способом**. Используйте конкретный неизменный tag или периодически обновляйте значение [fromCacheVersion](#fromcacheversion) для обеспечения предсказуемого и контролируемого жизненного цикла приложения
 

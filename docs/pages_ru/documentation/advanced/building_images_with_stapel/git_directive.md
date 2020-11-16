@@ -36,7 +36,6 @@ summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="na">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
     <span class="na">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
-    <span class="na">herebyIAdmitThatBranchMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
     <span class="na">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
     <span class="na">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
     <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
@@ -120,7 +119,7 @@ git:
 > * Сборка прошла успешно, но затем в соответствующую ветку удаленного git-репозиторий добавляют новые коммиты, и **следующие задания pipeline** (например, деплой) уже не работают. Это происходит потому, что еще не существует конечного образа, собранного с учетом обновленной ветки удаленного git-репозитория.
 > * Собранное приложение успешно развернуто, но затем в соответствующую ветку удаленного git-репозиторий добавляют новые коммиты, и **повторный запуск** деплоя уже не работает. Это также происходит потому, что еще не существует конечного образа, собранного с учетом обновленной ветки удаленного git-репозитория.
 >
-> Если вы хотите использовать функционал данной директивы, добавьте также параметр _herebyIAdmitThatBranchMightBreakReproducibility: true_ в секцию конфигурации удаленного git-репозитория.
+> Если вы хотите использовать функционал данной директивы, то выключите режим детерминизма в werf с помощью опции --disable-determinism.
 >
 > **Крайне не рекомендуется использовать удаленного git-репозитория таким образом**. Используйте конкретный перманентный reference, tag, или commit для обеспечения предсказуемого и контролируемого жизненного цикла приложения
 

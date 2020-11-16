@@ -36,7 +36,6 @@ summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="na">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
     <span class="na">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
-    <span class="na">herebyIAdmitThatBranchMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
     <span class="na">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
     <span class="na">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
     <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
@@ -115,7 +114,7 @@ The configuration of a _git mapping_ for a remote repository has some additional
 > * The existing pipeline jobs (e.g., deploy) would not run and would require the rebuilding of an image if a remote git branch has been changed.
 > * Unplanned commits to a remote git branch might lead to the pipeline failing seemingly for no apparent reasons. For instance, changes may occur after the build process is completed successfully. In this case, the related pipeline jobs will fail due to changes in stage digests along with the branch HEAD.
 >
-> If you want to use branches for a remote git mapping instead of a commit or tag, add the _herebyIAdmitThatBranchMightBreakReproducibility: true_ parameter into the remote git mapping section.
+> If you want to use branches for a remote git mapping instead of a commit or tag, use --disable-determinism option.
 >
 > **We advise you against using the remote git mapping that way**. Use the specific unchangeable reference, tag, or commit to guarantee the controllable and predictable life cycle of a software
 
