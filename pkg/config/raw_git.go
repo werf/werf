@@ -159,7 +159,6 @@ func (c *rawGit) toGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport,
 	}
 
 	gitRemoteExport.Branch = c.Branch
-	gitRemoteExport.HerebyIAdmitThatBranchMightBreakReproducibility = c.HerebyIAdmitThatBranchMightBreakReproducibility
 	gitRemoteExport.Tag = c.Tag
 	gitRemoteExport.Commit = c.Commit
 
@@ -173,7 +172,7 @@ func (c *rawGit) toGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport,
 }
 
 func (c *rawGit) validateGitRemoteExportDirective(gitRemoteExport *GitRemoteExport) (err error) {
-	if err := gitRemoteExport.validate(); err != nil {
+	if err := gitRemoteExport.validate(c.rawStapelImage.DisableDeterminism); err != nil {
 		return err
 	}
 
