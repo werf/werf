@@ -21,7 +21,7 @@ func init() {
 	}
 }
 
-var _ = Describe("persistent stage digests", func() {
+var _ = XDescribe("persistent stage digests", func() {
 	BeforeEach(func() {
 		utils.RunSucceedCommand(
 			testDirPath,

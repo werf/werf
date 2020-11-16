@@ -1,6 +1,7 @@
 package mount_test
 
 import (
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
@@ -45,7 +46,11 @@ var itBody = func(e entry) {
 	docker.RunSucceedContainerCommandWithStapel(werfBinPath, testDirPath, []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})
 }
 
-var _ = DescribeTable("base", itBody,
+var _ = BeforeEach(func() {
+	stubs.SetEnv("WERF_DISABLE_DETERMINISM", "1")
+})
+
+var _ = DescribeTable("base (non-deterministic)", itBody,
 	Entry("tmp_dir", entry{
 		fixturePath: utils.FixturePath("tmp_dir"),
 		expectedFirstBuildOutputMatchers: []types.GomegaMatcher{

@@ -39,7 +39,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 	extraAfterBuildChecks(appConfigName, fromImageConfigName)
 }
 
-var _ = Describe("fromImage", func() {
+var _ = XDescribe("fromImage", func() {
 	BeforeEach(func() {
 		testDirPath = utils.FixturePath("from_image")
 	})
@@ -63,7 +63,7 @@ var _ = Describe("fromImage", func() {
 	})
 })
 
-var _ = Describe("fromArtifact", func() {
+var _ = XDescribe("fromArtifact", func() {
 	BeforeEach(func() {
 		testDirPath = utils.FixturePath("from_artifact")
 	})

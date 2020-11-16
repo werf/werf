@@ -1,0 +1,8 @@
+project: none
+configVersion: 1
+---
+image: ~
+from: alpine
+docker:
+  LABEL:
+    test_name: "test_value"

@@ -153,10 +153,9 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         extra-find-args:
-        - "-name 'guides.test'"
         - "-name 'git.test'"
         - "-name 'ansible.test'"
-        - "! -name 'git.test' ! -name 'guides.test' ! -name 'ansible.test'"
+        - "! -name 'git.test' ! -name 'ansible.test'"
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -168,13 +167,13 @@ jobs:
 
     - name: Checkout code
       uses: actions/checkout@v2
-      if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
+      if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''ansible.test'''
 
     - name: Checkout code (git history as fixtures for tests)
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-      if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
+      if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''ansible.test'''
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -416,10 +415,9 @@ jobs:
 #      matrix:
 #        os: [macOS, windows]
 #        extra-find-args:
-#        - "-name 'guides.test*'"
 #        - "-name 'git.test*'"
 #        - "-name 'ansible.test*'"
-#        - "! -name 'git.test*' ! -name 'guides.test*' ! -name 'ansible.test*'"
+#        - "! -name 'git.test*' ! -name 'ansible.test*'"
 #    runs-on: [self-hosted, "${{ matrix.os }}"]
 #    steps:
 #
@@ -431,13 +429,13 @@ jobs:
 #
 #    - name: Checkout code
 #      uses: actions/checkout@v2
-#      if: matrix.extra-find-args != '! -name ''git.test*'' ! -name ''guides.test*'' ! -name ''ansible.test*'''
+#      if: matrix.extra-find-args != '! -name ''git.test*'' ! -name ''ansible.test*'''
 #
 #    - name: Checkout code (git history as fixtures for tests)
 #      uses: actions/checkout@v2
 #      with:
 #        fetch-depth: 0
-#      if: matrix.extra-find-args == '! -name ''git.test*'' ! -name ''guides.test*'' ! -name ''ansible.test*'''
+#      if: matrix.extra-find-args == '! -name ''git.test*'' ! -name ''ansible.test*'''
 #
 #    - name: Download integration tests binaries
 #      uses: actions/download-artifact@master

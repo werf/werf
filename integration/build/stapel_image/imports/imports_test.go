@@ -25,7 +25,7 @@ func werfRunOutput(dir string, extraArgs ...string) string {
 }
 
 func werfPurge(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"stages", "purge"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"purge"}, extraArgs...)...)...)
 }
 
 var _ = Describe("Stapel imports", func() {
@@ -83,8 +83,7 @@ var _ = Describe("Stapel imports", func() {
 		})
 
 		It("should cache image when import source checksum was not changed", func() {
-			stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "1")
-			stubs.SetEnv("INSTALL_FILE_CONTENT", "1")
+			stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
 
 			utils.RunSucceedCommand(
 				"import_metadata",
@@ -94,7 +93,7 @@ var _ = Describe("Stapel imports", func() {
 
 			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName("import_metadata", werfBinPath, "image")
 
-			stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "2")
+			stubs.SetEnv("WERF_CONFIG", "werf_2.yaml")
 
 			utils.RunSucceedCommand(
 				"import_metadata",
@@ -108,8 +107,7 @@ var _ = Describe("Stapel imports", func() {
 		})
 
 		It("should rebuild image when import source checksum was changed", func() {
-			stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "1")
-			stubs.SetEnv("INSTALL_FILE_CONTENT", "1")
+			stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
 
 			utils.RunSucceedCommand(
 				"import_metadata",
@@ -119,7 +117,7 @@ var _ = Describe("Stapel imports", func() {
 
 			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName("import_metadata", werfBinPath, "image")
 
-			stubs.SetEnv("INSTALL_FILE_CONTENT", "2")
+			stubs.SetEnv("WERF_CONFIG", "werf_3.yaml")
 
 			utils.RunSucceedCommand(
 				"import_metadata",

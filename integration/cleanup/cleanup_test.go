@@ -19,6 +19,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 	Describe("git history-based cleanup", func() {
 		BeforeEach(func() {
+			stubs.SetEnv("WERF_DISABLE_DETERMINISM", "1") // FIXME
 			utils.CopyIn(utils.FixturePath("git_history_based_cleanup"), testDirPath)
 			cleanupBeforeEachBase()
 		})
@@ -500,10 +501,8 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 	Describe("cleanup unused stages", func() {
 		BeforeEach(func() {
 			utils.CopyIn(utils.FixturePath("cleanup_unused_stages"), testDirPath)
-
+			stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
 			cleanupBeforeEachBase()
-
-			stubs.SetEnv("FROM_CACHE_VERSION", "x")
 		})
 
 		It("should work properly with non-existent/empty repo", func() {
@@ -541,8 +540,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					"commit", "--allow-empty", "-m", "test",
 				)
 
-				stubs.SetEnv("FROM_CACHE_VERSION", "full rebuild")
-				stubs.SetEnv("ARTIFACT_INSTALL_DATA", "1")
+				stubs.SetEnv("WERF_CONFIG", "werf_2a.yaml") // full rebuild
 
 				utils.RunSucceedCommand(
 					testDirPath,
@@ -665,7 +663,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 						"commit", "--allow-empty", "-m", "test",
 					)
 
-					stubs.SetEnv("ARTIFACT_FROM_CACHE_VERSION", "full rebuild")
+					stubs.SetEnv("WERF_CONFIG", "werf_2b.yaml") // full artifact rebuild
 					utils.RunSucceedCommand(
 						testDirPath,
 						werfBinPath,
@@ -757,7 +755,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					"commit", "--allow-empty", "-m", "test",
 				)
 
-				stubs.SetEnv("FROM_CACHE_VERSION", "full rebuild")
+				stubs.SetEnv("WERF_CONFIG", "werf_2a.yaml") // full rebuild
 
 				utils.RunSucceedCommand(
 					testDirPath,
@@ -817,7 +815,7 @@ func cleanupBeforeEachBase() {
 	utils.RunSucceedCommand(
 		testDirPath,
 		"git",
-		"add", "werf.yaml",
+		"add", "werf*.yaml",
 	)
 
 	utils.RunSucceedCommand(
@@ -825,8 +823,6 @@ func cleanupBeforeEachBase() {
 		"git",
 		"commit", "-m", "Initial commit",
 	)
-
-	stubs.SetEnv("WERF_SKIP_GIT_FETCH", "1")
 }
 
 func getHeadCommit() string {

@@ -14,7 +14,7 @@ import (
 	utilsDocker "github.com/werf/werf/pkg/testing/utils/docker"
 )
 
-var _ = Describe("from and fromLatest", func() {
+var _ = XDescribe("from and fromLatest", func() {
 	var fromBaseRepoImageState1ID, fromBaseRepoImageState2ID string
 	var fromImage string
 
@@ -343,7 +343,7 @@ var _ = Describe("from and fromLatest", func() {
 	})
 })
 
-var _ = Describe("fromCacheVersion", func() {
+var _ = XDescribe("fromCacheVersion", func() {
 	BeforeEach(func() {
 		testDirPath = utils.FixturePath("from_cache_version")
 	})

@@ -22,7 +22,7 @@ var _ = Describe("Helm hooks deleter", func() {
 			utils.RunCommand("helm_hooks_deleter_app1", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should delete hook when hook succeeded and wait till it is deleted without timeout https://github.com/werf/werf/issues/1885", func() {
+		XIt("should delete hook when hook succeeded and wait till it is deleted without timeout https://github.com/werf/werf/issues/1885", func() {
 			gotDeletingHookLine := false
 
 			Expect(werfDeploy("helm_hooks_deleter_app1", liveexec.ExecCommandOptions{
@@ -55,7 +55,7 @@ var _ = Describe("Helm hooks deleter", func() {
 			utils.RunCommand("helm_hooks_deleter_app2", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should create hook on release install, delete hook on next release upgrade due to before-hook-creation delete policy", func() {
+		XIt("should create hook on release install, delete hook on next release upgrade due to before-hook-creation delete policy", func() {
 			hookName := "myhook"
 
 			Expect(werfDeploy("helm_hooks_deleter_app2", liveexec.ExecCommandOptions{})).Should(Succeed())

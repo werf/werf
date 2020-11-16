@@ -33,7 +33,7 @@ var _ = Describe("Helm releases manager", func() {
 			utils.RunCommand("helm_releases_manager_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should keep no more than specified number of releases", func() {
+		XIt("should keep no more than specified number of releases", func() {
 			for i := 0; i < 20; i++ {
 				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{
 					Env: map[string]string{"WERF_RELEASES_HISTORY_MAX": "5"},
@@ -49,7 +49,7 @@ var _ = Describe("Helm releases manager", func() {
 			utils.RunCommand("helm_releases_manager_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should keep no more than specified number of releases", func() {
+		XIt("should keep no more than specified number of releases", func() {
 			for i := 0; i < 20; i++ {
 				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{})).Should(Succeed())
 			}

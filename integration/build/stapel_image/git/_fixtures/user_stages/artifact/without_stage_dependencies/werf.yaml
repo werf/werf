@@ -14,10 +14,6 @@ from: ubuntu
 git:
 - to: /app
 shell:
-  beforeInstallCacheVersion: {{ env "BEFORE_INSTALL_CACHE_VERSION" }}
-  installCacheVersion: {{ env "INSTALL_CACHE_VERSION" }}
-  beforeSetupCacheVersion: {{ env "BEFORE_SETUP_CACHE_VERSION" }}
-  setupCacheVersion: {{ env "SETUP_CACHE_VERSION" }}
   beforeInstall: date
   install: date
   beforeSetup: date

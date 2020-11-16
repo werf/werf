@@ -18,7 +18,7 @@ type StageInfo struct {
 	ImageID               string
 	Repository            string
 	Tag                   string
-	Digest             string
+	Digest                string
 	UniqueID              string
 	CreatedAtUnixMillisec int64
 }
@@ -35,8 +35,10 @@ func ExtractStageInfoFromOutputLine(stageInfo *StageInfo, line string) *StageInf
 	if strings.Contains(line, "repository: ") {
 		stageInfo.Repository = fields[len(fields)-1]
 	}
-	if strings.Contains(line, "tag: ") {
-		stageInfo.Tag = fields[len(fields)-1]
+	if strings.Contains(line, "name: ") {
+		nameParts := strings.Split(fields[len(fields)-1], ":")
+		stageInfo.Repository = nameParts[0]
+		stageInfo.Tag = nameParts[1]
 
 		sigAndID := strings.SplitN(stageInfo.Tag, "-", 2)
 		stageInfo.Digest = sigAndID[0]
@@ -53,6 +55,10 @@ func ExtractStageInfoFromOutputLine(stageInfo *StageInfo, line string) *StageInf
 
 var _ = Describe("Build phase", func() {
 	Context("when building the same stage for two commits at the same time", func() {
+		BeforeEach(func() {
+			stubs.SetEnv("WERF_VERBOSE", "1")
+		})
+
 		AfterEach(func() {
 			werfPurge("build_phase-001", liveexec.ExecCommandOptions{})
 
@@ -67,6 +73,7 @@ var _ = Describe("Build phase", func() {
 			Expect(copy.Copy("build_phase_repo1", "build_phase_repo2")).To(Succeed())
 			Expect(setGitRepoState("build_phase-002", "build_phase_repo2", "two")).To(Succeed())
 
+			stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
 			Expect(werfBuild("build_phase-001", liveexec.ExecCommandOptions{})).To(Succeed())
 
 			var wg sync.WaitGroup
@@ -87,7 +94,7 @@ var _ = Describe("Build phase", func() {
 				Expect(werfBuild("build_phase-001", liveexec.ExecCommandOptions{
 					Env: map[string]string{
 						"WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE": "9",
-						"BUILD_PHASE_INSTALL_CACHE_VERSION":                             "1",
+						"WERF_CONFIG": "werf_2.yaml",
 					},
 					OutputLineHandler: func(line string) {
 						if strings.Contains(line, "Building stage ~/install") {
@@ -100,7 +107,7 @@ var _ = Describe("Build phase", func() {
 						switch stageParserState {
 						case "buildingInstall":
 							firstCommitInstallStage = ExtractStageInfoFromOutputLine(firstCommitInstallStage, line)
-							if firstCommitInstallStage.Tag != "" {
+							if firstCommitInstallStage.ImageID != "" {
 								stageParserState = ""
 							}
 						}
@@ -122,7 +129,7 @@ var _ = Describe("Build phase", func() {
 					Env: map[string]string{
 						"WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_BUILD": "1", // make sure this stage docker-image is created after build_phase-001 install stage docker-image, and despite this fact in the end of the test exactly this stage should be used as a cache
 						"WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE":  "3",
-						"BUILD_PHASE_INSTALL_CACHE_VERSION":                              "1",
+						"WERF_CONFIG": "werf_2.yaml",
 					},
 					OutputLineHandler: func(line string) {
 						if strings.Contains(line, "Building stage ~/install") {
@@ -135,7 +142,7 @@ var _ = Describe("Build phase", func() {
 						switch stageParserState {
 						case "buildingInstall":
 							secondCommitInstallStage = ExtractStageInfoFromOutputLine(secondCommitInstallStage, line)
-							if secondCommitInstallStage.Tag != "" {
+							if secondCommitInstallStage.ImageID != "" {
 								stageParserState = ""
 							}
 						}
@@ -161,7 +168,7 @@ var _ = Describe("Build phase", func() {
 			stageParserState := ""
 			Expect(werfBuild("build_phase-002", liveexec.ExecCommandOptions{
 				Env: map[string]string{
-					"BUILD_PHASE_INSTALL_CACHE_VERSION": "1",
+					"WERF_CONFIG": "werf_2.yaml",
 				},
 				OutputLineHandler: func(line string) {
 					if strings.Contains(line, "Use cache image for ~/install") {
@@ -174,7 +181,7 @@ var _ = Describe("Build phase", func() {
 					switch stageParserState {
 					case "usingCachedInstall":
 						secondCommitInstallStageOnRetry = ExtractStageInfoFromOutputLine(secondCommitInstallStageOnRetry, line)
-						if secondCommitInstallStageOnRetry.Tag != "" {
+						if secondCommitInstallStageOnRetry.ImageID != "" {
 							stageParserState = ""
 						}
 					}

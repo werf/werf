@@ -52,7 +52,7 @@ var _ = AfterEach(func() {
 	utils.RunSucceedCommand(
 		testDirPath,
 		werfBinPath,
-		"stages", "purge", "--force",
+		"purge", "--force",
 	)
 
 	err := os.RemoveAll(tmpDir)
@@ -77,7 +77,7 @@ func commonBeforeEach(testDirPath, fixturePath string) {
 	utils.RunSucceedCommand(
 		testDirPath,
 		"git",
-		"add", "werf.yaml",
+		"add", "werf*.yaml",
 	)
 
 	utils.RunSucceedCommand(

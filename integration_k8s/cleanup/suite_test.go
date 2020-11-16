@@ -61,7 +61,7 @@ var _ = BeforeEach(func() {
 
 	utils.BeforeEachOverrideWerfProjectName(stubs)
 
-	stagesStorageRepoAddress := fmt.Sprintf("%s/%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName(), "stages")
+	stagesStorageRepoAddress := fmt.Sprintf("%s/%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), utils.ProjectName(), "repo")
 	stagesStorage = utils.NewStagesStorage(stagesStorageRepoAddress, "default", docker_registry.DockerRegistryOptions{})
 
 	stubs.SetEnv("WERF_REPO", stagesStorageRepoAddress)
