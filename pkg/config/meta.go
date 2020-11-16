@@ -3,6 +3,7 @@ package config
 type Meta struct {
 	ConfigVersion int
 	Project       string
-	MetaDeploy    MetaDeploy
+	Deploy        MetaDeploy
 	Cleanup       MetaCleanup
+	GitWorktree   MetaGitWorktree
 }

@@ -140,8 +140,8 @@ func NewCmd() *cobra.Command {
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
-	common.SetupGitUnshallow(&commonCmdData, cmd)
-	common.SetupAllowGitShallowClone(&commonCmdData, cmd)
+	
+	
 
 	cmd.Flags().BoolVarP(&cmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
 	cmd.Flags().BoolVarP(&cmdData.Bash, "bash", "", false, "Use predefined docker options and command for debug")

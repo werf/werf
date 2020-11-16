@@ -8,11 +8,12 @@ import (
 )
 
 type rawMeta struct {
-	ConfigVersion      *int            `yaml:"configVersion,omitempty"`
-	Project            *string         `yaml:"project,omitempty"`
-	ConfigTempaltesDir *string         `yaml:"templatesDir,omitempty"`
-	MetaDeploy         *rawMetaDeploy  `yaml:"deploy,omitempty"`
-	Cleanup            *rawMetaCleanup `yaml:"cleanup,omitempty"`
+	ConfigVersion      *int                `yaml:"configVersion,omitempty"`
+	Project            *string             `yaml:"project,omitempty"`
+	ConfigTempaltesDir *string             `yaml:"templatesDir,omitempty"`
+	Deploy             *rawMetaDeploy      `yaml:"deploy,omitempty"`
+	Cleanup            *rawMetaCleanup     `yaml:"cleanup,omitempty"`
+	GitWorktree        *rawMetaGitWorktree `yaml:"gitWorktree,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -71,8 +72,12 @@ func (c *rawMeta) toMeta() *Meta {
 		meta.Cleanup = c.Cleanup.toMetaCleanup()
 	}
 
-	if c.MetaDeploy != nil {
-		meta.MetaDeploy = c.MetaDeploy.toMetaDeploy()
+	if c.Deploy != nil {
+		meta.Deploy = c.Deploy.toMetaDeploy()
+	}
+
+	if c.GitWorktree != nil {
+		meta.GitWorktree = c.GitWorktree.toMetaGitWorktree()
 	}
 
 	return meta
