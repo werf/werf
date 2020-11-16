@@ -26,17 +26,15 @@ werf cleanup [options]
 {{ header }} Options
 
 ```shell
-      --allow-git-shallow-clone=false
-            Sign the intention of using shallow clone despite restrictions (default                 
-            $WERF_ALLOW_GIT_SHALLOW_CLONE)
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
-            Change to the custom configuration templates directory (default                         
-            $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
+            Chan
+            ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR  
+            or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-determinism=true
+      --disable-determinism=false
             Disable werf deterministic mode (more info                                              
             https://werf.io/documentation/advanced/configuration/determinism.html, default          
             $WERF_DISABLE_DETERMINISM)
@@ -47,9 +45,8 @@ werf cleanup [options]
             repo
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
-      --git-history-synchronization=false
-            Synchronize git branches and tags with remote origin (default                           
-            $WERF_GIT_HISTORY_SYNCHRONIZATION)
+      --env=''
+            Use specified environment (default $WERF_ENV)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false

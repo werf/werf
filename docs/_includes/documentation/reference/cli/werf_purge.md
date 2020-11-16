@@ -21,11 +21,12 @@ werf purge [options]
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
-            Change to the custom configuration templates directory (default                         
-            $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)
+            Chan
+            ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR  
+            or .werf in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-determinism=true
+      --disable-determinism=false
             Disable werf deterministic mode (more info                                              
             https://werf.io/documentation/advanced/configuration/determinism.html, default          
             $WERF_DISABLE_DETERMINISM)
@@ -35,6 +36,8 @@ werf purge [options]
             Command needs granted permissions to delete images from the specified repo
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
+      --env=''
+            Use specified environment (default $WERF_ENV)
       --force=false
             First remove containers that use werf docker images which are going to be deleted
       --home-dir=''
