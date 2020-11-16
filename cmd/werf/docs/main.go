@@ -1,12 +1,9 @@
 package docs
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -14,22 +11,7 @@ import (
 	"github.com/werf/werf/cmd/werf/common/templates"
 )
 
-var cmdData struct {
-	readmePath  string
-	splitReadme bool
-	destination string
-}
-
 var commonCmdData common.CmdData
-
-func initDefaultHelmCmd(cmd *cobra.Command) {
-	cmd.InitDefaultHelpCmd()
-	cmd.InitDefaultHelpFlag()
-
-	for _, c := range cmd.Commands() {
-		initDefaultHelmCmd(c)
-	}
-}
 
 func NewCmd(cmdGroups *templates.CommandGroups) *cobra.Command {
 	cmd := &cobra.Command{
@@ -43,43 +25,35 @@ func NewCmd(cmdGroups *templates.CommandGroups) *cobra.Command {
 				return err
 			}
 
-			if cmdData.splitReadme {
-				if err := GenReadmePartials(cmdData.destination); err != nil {
+			projectDir, err := common.GetProjectDir(&commonCmdData)
+			if err != nil {
+				return err
+			}
+
+			partialsDir := filepath.Join(projectDir, "docs/_includes/documentation/reference/cli")
+			pagesDir := filepath.Join(projectDir, "docs/pages/documentation/reference/cli")
+			sidebarPath := filepath.Join(projectDir, "docs/_data/sidebars/_cli.yml")
+
+			for _, path := range []string{partialsDir, pagesDir} {
+				if err := createEmptyFolder(path); err != nil {
 					return err
 				}
-			} else {
-				//initDefaultHelmCmd(cmd.Root())
+			}
 
-				projectDir, err := common.GetProjectDir(&commonCmdData)
-				if err != nil {
-					return err
-				}
+			if err := GenCliPartials(cmd.Root(), partialsDir); err != nil {
+				return err
+			}
 
-				partialsDir := filepath.Join(projectDir, "docs/_includes/documentation/reference/cli")
-				pagesDir := filepath.Join(projectDir, "docs/pages/documentation/reference/cli")
-				sidebarPath := filepath.Join(projectDir, "docs/_data/sidebars/_cli.yml")
+			if err := GenCliOverview(*cmdGroups, pagesDir); err != nil {
+				return err
+			}
 
-				for _, path := range []string{partialsDir, pagesDir} {
-					if err := createEmptyFolder(path); err != nil {
-						return err
-					}
-				}
+			if err := GenCliPages(*cmdGroups, pagesDir); err != nil {
+				return err
+			}
 
-				if err := GenCliPartials(cmd.Root(), partialsDir); err != nil {
-					return err
-				}
-
-				if err := GenCliOverview(*cmdGroups, pagesDir); err != nil {
-					return err
-				}
-
-				if err := GenCliPages(*cmdGroups, pagesDir); err != nil {
-					return err
-				}
-
-				if err := GenCliSidebar(*cmdGroups, sidebarPath); err != nil {
-					return err
-				}
+			if err := GenCliSidebar(*cmdGroups, sidebarPath); err != nil {
+				return err
 			}
 
 			return nil
@@ -89,104 +63,7 @@ func NewCmd(cmdGroups *templates.CommandGroups) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
 
-	f := cmd.Flags()
-	f.StringVar(&cmdData.readmePath, "readme", "README.md", "Path to README.md")
-	f.BoolVar(&cmdData.splitReadme, "split-readme", false, "To split README.md by top headers")
-	f.StringVar(&cmdData.destination, "dest", "", "The destination of readme partials")
-
 	return cmd
-}
-
-type SplitState string
-
-const (
-	noPartial     SplitState = "noDoc"
-	insidePartial SplitState = "docFound"
-)
-
-const (
-	docsPartialBeginLeft  = "<!-- WERF DOCS PARTIAL BEGIN: "
-	docsPartialBeginRight = " -->"
-	docsPartialEnd        = "<!-- WERF DOCS PARTIAL END -->"
-)
-
-func GenReadmePartials(partialsDir string) error {
-	file, err := os.Open(cmdData.readmePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	isPartialBegin := func(line string) bool {
-		return strings.HasPrefix(line, docsPartialBeginLeft) && strings.HasSuffix(line, docsPartialBeginRight)
-	}
-	getPartialTitle := func(line string) string {
-		res := strings.TrimPrefix(line, docsPartialBeginLeft)
-		res = strings.TrimSuffix(res, docsPartialBeginRight)
-		return res
-	}
-	isPartialEnd := func(line string) bool {
-		return line == docsPartialEnd
-	}
-
-	state := noPartial
-	currentPartialTitle := ""
-	partialsData := map[string][]string{}
-
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		switch state {
-		case noPartial:
-			if isPartialBegin(line) {
-				currentPartialTitle = getPartialTitle(line)
-				state = insidePartial
-			}
-
-		case insidePartial:
-			if isPartialBegin(line) {
-				currentPartialTitle = getPartialTitle(line)
-				state = insidePartial
-			} else if isPartialEnd(line) {
-				state = noPartial
-			} else {
-				partialsData[currentPartialTitle] = append(partialsData[currentPartialTitle], line)
-			}
-		}
-	}
-
-	for header, data := range partialsData {
-		basename := strings.ToLower(header)
-		basename = strings.Replace(basename, " ", "_", -1)
-		basename = strings.Replace(basename, "-", "_", -1)
-		basename = basename + ".md"
-
-		filename := filepath.Join(partialsDir, basename)
-		f, err := os.Create(filename)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		preambleStr := "<!-- THIS FILE IS AUTOGENERATED BY werf docs COMMAND! DO NOT EDIT! -->\n\n"
-
-		dataStr := strings.Join(data, "\n")
-		dataStr = strings.TrimSpace(dataStr)
-
-		partialDataStr := preambleStr + dataStr + "\n"
-
-		if _, err := io.WriteString(f, partialDataStr); err != nil {
-			return err
-		}
-
-		if err := f.Close(); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func createEmptyFolder(path string) error {

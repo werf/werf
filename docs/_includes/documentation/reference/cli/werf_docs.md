@@ -14,8 +14,6 @@ werf docs [options]
 {{ header }} Options
 
 ```shell
-      --dest=''
-            The destination of readme partials
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
   -h, --help=false
@@ -39,9 +37,5 @@ werf docs [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --readme='README.md'
-            Path to README.md
-      --split-readme=false
-            To split README.md by top headers
 ```
 
