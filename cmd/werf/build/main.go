@@ -68,6 +68,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
 
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
@@ -148,7 +149,7 @@ func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, commonCmdData, localGitRepo, config.WerfConfigOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, LogRenderedFilePath: true})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, commonCmdData, localGitRepo, config.WerfConfigOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, Env: *commonCmdData.Environment, LogRenderedFilePath: true})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
