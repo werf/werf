@@ -24,6 +24,15 @@ Werf cannot automatically resolve project name change. Described issues must be 
 
 ## Deploy
 
+### Helm chart dir
+
+Specify custom directory to the helm chart of the project, for example `.deploy/chart`:
+
+```yaml
+deploy:
+  helmChartDir: .deploy/chart
+```
+
 ### Release name
 
 werf allows to define a custom release name template, which [used during deploy process]({{ "documentation/advanced/helm/basics.html#release-name" | relative_url }}) to generate a release name:
@@ -174,6 +183,27 @@ Let us examine each policy individually:
 1. Keep an image for the last 10 tags (by date of creation).
 2. Keep no more than two images published over the past week, for no more than 10 branches active over the past week.
 3. Keep the 10 latest images for master, staging, and production branches.
+
+## Git worktree
+
+Werf stapel builder needs a full git history of the project to perform in the most efficient way. Based on this the default behaviour of the werf is to fetch full history for current git clone worktree when needed. This means werf will automatically convert shallow clone to the full one and download all latest branches and tags from origin during cleanup process. 
+
+Default behaviour described by the following settings:
+
+```yaml
+gitWorktree:
+  forceShallowClone: false
+  allowUnshallow: true
+  allowFetchOriginBranchesAndTags: true
+```
+
+For example to disable automatic unshallow of git clone use following settings:
+
+```yaml
+gitWorktree:
+  forceShallowClone: true
+  allowUnshallow: false
+```
 
 ## Image section
 

@@ -22,6 +22,12 @@ en:
           collapsible: true
           isCollapsedByDefault: true
           directives:
+            - &meta-section-deploy-helmChartDir
+              name: helmChartDir
+              value: "string"
+              description: Path to the helm chart directory of the project
+              default: ".helm"
+              detailsAnchor: "#helm-chart-dir"
             - &meta-section-deploy-helmRelease
               name: helmRelease
               value: "string"
@@ -104,6 +110,30 @@ en:
                       value: "And || Or"
                       default: And
                       description: Check both conditions or any of them
+        - &meta-section-git-worktree
+          name: gitWorktree
+          description: Configure how werf handles git worktree of the project
+          detailsAnchor: "#git-worktree"
+          collapsible: true
+          isCollapsedByDefault: true
+          directives:
+            - &meta-section-gitWorktree-forceShallowClone
+              name: forceShallowClone
+              value: "bool"
+              description: Force werf to use shallow clone despite restrictions
+              default: false
+              detailsAnchor: "#git-worktree"
+            - &meta-section-gitWorktree-allowUnshallow
+              name: allowUnshallow
+              value: "bool"
+              description: Allow werf to automatically convert project shallow git clone to full one during build process when needed
+              default: true
+            - &meta-section-gitWorktree-allowFetchOriginBranchesAndTags
+              name: namespace
+              value: "bool"
+              description: Allow werf to synchronize git branches and tags with remote origin during cleanup process when needed
+              default: true
+              detailsAnchor: "#git-worktree"
     - &dockerfile-image-section
       id: dockerfile-image-section
       description: "Dockerfile image section: optional, define as many image sections as you need"
@@ -508,6 +538,9 @@ ru:
           description: Настройка выката
           detailsAnchor: "#выкат"
           directives:
+            - << : *meta-section-deploy-helmChartDir
+              description: Путь до директории helm чарта проекта
+              detailsAnchor: "#директория-helm-chart"
             - << : *meta-section-deploy-helmRelease
               description: Шаблон имени релиза
               detailsAnchor: "#имя-релиза"
@@ -553,6 +586,16 @@ ru:
                       description: Период, в рамках которого необходимо выполнять поиск образов
                     - << : *meta-section-cleanup-keepPolicies-imagesPerReference-operator
                       description: Определяет какие образы сохранятся после применения политики, те которые удовлетворяют оба условия или любое из них
+        - << : *meta-section-git-worktree
+          description: Настройки связанные с работой werf с рабочей директорией git проекта
+          directives:
+            - << : *meta-section-gitWorktree-forceShallowClone
+              description: Принудительно позволить werf использовать shallow clone несмотря на ограничения данного подхода
+            - << : *meta-section-gitWorktree-allowUnshallow
+              description: Разрешить процессу werf автоматически преобразовать shallow clone проекта в полный clone в процессе сборки по необходимости
+            - << : *meta-section-gitWorktree-allowFetchOriginBranchesAndTags
+              description: Разрешить процессу werf автоматически скачать новые ветки и теги из origin в процессе cleanup по необходимости
+              detailsAnchor: "#git-worktree"
     - << : *dockerfile-image-section
       description: "Cекция Dockerfile image: может использоваться произвольное количество секций"
       directives:

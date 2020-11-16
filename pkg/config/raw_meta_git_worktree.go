@@ -1,9 +1,9 @@
 package config
 
 type rawMetaGitWorktree struct {
-	AllowShallowClone              *bool `yaml:"allowShallowClone,omitempty"`
-	AutoUnshallow                  *bool `yaml:"autoUnshallow,omitempty"`
-	AutoFetchOriginBranchesAndTags *bool `yaml:"autoFetchOriginBranchesAndTags,omitempty"`
+	ForceShallowClone                  *bool `yaml:"forceShallowClone,omitempty"`
+	AllowUnshallow                     *bool `yaml:"allowUnshallow,omitempty"`
+	AllowFetchingOriginBranchesAndTags *bool `yaml:"allowFetchOriginBranchesAndTags,omitempty"`
 
 	rawMeta *rawMeta
 
@@ -32,8 +32,8 @@ func (c *rawMetaGitWorktree) UnmarshalYAML(unmarshal func(interface{}) error) er
 
 func (c *rawMetaGitWorktree) toMetaGitWorktree() MetaGitWorktree {
 	obj := MetaGitWorktree{}
-	obj.AllowShallowClone = c.AllowShallowClone
-	obj.AutoUnshallow = c.AutoUnshallow
-	obj.AutoFetchOriginBranchesAndTags = c.AutoFetchOriginBranchesAndTags
+	obj.ForceShallowClone = c.ForceShallowClone
+	obj.AllowUnshallow = c.AllowUnshallow
+	obj.AllowFetchingOriginBranchesAndTags = c.AllowFetchingOriginBranchesAndTags
 	return obj
 }

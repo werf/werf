@@ -893,21 +893,21 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 			return nil, errors.New("local git mapping is used but project git repository is not found")
 		}
 
-		if !c.werfConfig.Meta.GitWorktree.GetAllowShallowClone() {
+		if !c.werfConfig.Meta.GitWorktree.GetForceShallowClone() {
 			isShallowClone, err := localGitRepo.IsShallowClone()
 			if err != nil {
 				return nil, fmt.Errorf("check shallow clone failed: %s", err)
 			}
 
 			if isShallowClone {
-				if c.werfConfig.Meta.GitWorktree.GetAutoUnshallow() {
+				if c.werfConfig.Meta.GitWorktree.GetAllowUnshallow() {
 					if err := localGitRepo.FetchOrigin(ctx); err != nil {
 						return nil, err
 					}
 				} else {
 					logboek.Context(ctx).Warn().LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
-					logboek.Context(ctx).Warn().LogLn("It is recommended to enable automatic unshallow of the git worktree with gitWorktree.autoUnshallow=true werf.yaml directive (which is enabled by default, TODO: link).")
-					logboek.Context(ctx).Warn().LogLn("If you still want to use shallow clone, then add gitWorktree.allowShallowClone=true werf.yaml directive (TODO: link).")
+					logboek.Context(ctx).Warn().LogLn("It is recommended to enable automatic unshallow of the git worktree with gitWorktree.allowUnshallow=true werf.yaml directive (which is enabled by default, http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
+					logboek.Context(ctx).Warn().LogLn("If you still want to use shallow clone, then add gitWorktree.forceShallowClone=true werf.yaml directive (http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
 
 					return nil, fmt.Errorf("shallow git clone is not allowed")
 				}
