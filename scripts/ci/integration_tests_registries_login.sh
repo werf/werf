@@ -16,7 +16,7 @@
   base64config=$(printenv WERF_TEST_"$name"_BASE64_CONFIG || true)
 
   if [[ "$name" == "ECR" ]]; then
-    $(aws ecr get-login --no-include-email)
+    $(aws ecr get-login-password)
   elif [[ "$name" == "DOCKERHUB" ]]; then
     echo "$password" | docker login -u "$username" --password-stdin
   elif [[ -n "$username" ]] && [[ -n "$password" ]]; then
