@@ -144,7 +144,7 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupDisableDeterminism(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DisableDeterminism = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisableDeterminism, "disable-determinism", "", GetBoolEnvironmentDefaultTrue("WERF_DISABLE_DETERMINISM"), "Disable werf deterministic mode (more info https://werf.io/documentation/advanced/configuration/determinism.html, default $WERF_DISABLE_DETERMINISM)")
+	cmd.Flags().BoolVarP(cmdData.DisableDeterminism, "disable-determinism", "", GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DETERMINISM"), "Disable werf deterministic mode (more info https://werf.io/documentation/advanced/configuration/determinism.html, default $WERF_DISABLE_DETERMINISM)")
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
