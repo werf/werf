@@ -53,6 +53,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
 
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
@@ -144,7 +145,7 @@ func runCleanup() error {
 		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism, Env: *commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

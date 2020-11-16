@@ -38,7 +38,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 			}
 
-			configOpts := config.WerfConfigOptions{DisableDeterminism: *commonCmdData.DisableDeterminism}
+			configOpts := config.WerfConfigOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, Env: *commonCmdData.Environment}
 
 			// TODO disable logboek only for this action
 			werfConfigPath, err := common.GetWerfConfigPath(projectDir, &commonCmdData, true, localGitRepo, configOpts)
@@ -56,6 +56,7 @@ func NewCmd() *cobra.Command {
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
 
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
