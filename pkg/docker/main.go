@@ -38,7 +38,7 @@ func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool) erro
 		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %s", dockerConfigDir, err)
 	}
 
-	isDebug = debug
+	isDebug = os.Getenv("WERF_DEBUG_DOCKER") == "1"
 	liveCliOutputEnabled = verbose || debug
 
 	defaultCLi, err = newDockerCli(defaultCliOptions(ctx))
