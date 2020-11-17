@@ -10,7 +10,6 @@ import (
 type rawMeta struct {
 	ConfigVersion      *int                `yaml:"configVersion,omitempty"`
 	Project            *string             `yaml:"project,omitempty"`
-	ConfigTempaltesDir *string             `yaml:"templatesDir,omitempty"`
 	Deploy             *rawMetaDeploy      `yaml:"deploy,omitempty"`
 	Cleanup            *rawMetaCleanup     `yaml:"cleanup,omitempty"`
 	GitWorktree        *rawMetaGitWorktree `yaml:"gitWorktree,omitempty"`
@@ -31,10 +30,6 @@ func (c *rawMeta) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if err := checkOverflow(c.UnsupportedAttributes, nil, c.doc); err != nil {
 		return err
-	}
-
-	if c.ConfigTempaltesDir != nil && *c.ConfigTempaltesDir == "" {
-		return newDetailedConfigError("'templatesDir' field cannot be empty!", nil, c.doc)
 	}
 
 	if c.ConfigVersion == nil || *c.ConfigVersion != 1 {
