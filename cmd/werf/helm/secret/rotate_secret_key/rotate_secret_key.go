@@ -50,9 +50,14 @@ Command will extract data with the old key, generate new secret data and rewrite
 		},
 	}
 
-	common.SetupDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
+
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
+	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 

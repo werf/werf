@@ -130,8 +130,7 @@ func SetupConfigPath(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupConfigTemplatesDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ConfigTemplatesDir = new(string)
-	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Chan
-ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
+	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
 }
 
 func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
