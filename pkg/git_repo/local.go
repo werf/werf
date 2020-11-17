@@ -40,7 +40,7 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 		return nil, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
 	}
 
-	localRepo := &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}
+	localRepo := &Local{Base: Base{Name: name, GitDataManager: NewCommonGitDataManager()}, Path: path, GitDir: gitDir}
 
 	return localRepo, nil
 }
@@ -114,7 +114,7 @@ func (repo *Local) IsShallowClone() (bool, error) {
 }
 
 func (repo *Local) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
-	return repo.createDetachedMergeCommit(ctx, repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit)
+	return repo.createDetachedMergeCommit(ctx, repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), fromCommit, toCommit)
 }
 
 func (repo *Local) GetMergeCommitParents(_ context.Context, commit string) ([]string, error) {
@@ -194,16 +194,16 @@ func (repo *Local) IsHeadReferenceExist(ctx context.Context) (bool, error) {
 }
 
 func (repo *Local) CreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
-	return repo.createPatch(ctx, repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+	return repo.createPatch(ctx, repo.Path, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
 func (repo *Local) CreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(ctx, repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+	return repo.createArchive(ctx, repo.Path, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
 func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, err error) {
 	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
-		checksum, err = repo.checksumWithLsTree(ctx, repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(), opts)
+		checksum, err = repo.checksumWithLsTree(ctx, repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 	})
 
 	return checksum, err
@@ -221,16 +221,18 @@ func (repo *Local) RemoteBranchesList(ctx context.Context) ([]string, error) {
 	return repo.remoteBranchesList(repo.Path)
 }
 
-func (repo *Local) getRepoWorkTreeCacheDir() string {
+func (repo *Local) getRepoID() string {
 	absPath, err := filepath.Abs(repo.Path)
 	if err != nil {
 		panic(err) // stupid interface of filepath.Abs
 	}
 
 	fullPath := filepath.Clean(absPath)
-	repoId := util.Sha256Hash(fullPath)
+	return util.Sha256Hash(fullPath)
+}
 
-	return filepath.Join(GetWorkTreeCacheDir(), "local", repoId)
+func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
+	return filepath.Join(GetWorkTreeCacheDir(), "local", repoID)
 }
 
 func (repo *Local) IsFileExists(commit, path string) (bool, error) {
