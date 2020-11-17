@@ -31,7 +31,7 @@ type Remote struct {
 
 func OpenRemoteRepo(name, url string) (*Remote, error) {
 	repo := &Remote{
-		Base: Base{Name: name},
+		Base: Base{Name: name, GitDataManager: NewCommonGitDataManager()},
 		Url:  url,
 	}
 	return repo, repo.ValidateEndpoint()
@@ -47,7 +47,7 @@ func (repo *Remote) ValidateEndpoint() error {
 }
 
 func (repo *Remote) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
-	return repo.createDetachedMergeCommit(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), fromCommit, toCommit)
+	return repo.createDetachedMergeCommit(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), fromCommit, toCommit)
 }
 
 func (repo *Remote) GetMergeCommitParents(_ context.Context, commit string) ([]string, error) {
@@ -277,16 +277,16 @@ func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 }
 
 func (repo *Remote) CreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
-	return repo.createPatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
+	return repo.createPatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
 func (repo *Remote) CreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
+	return repo.createArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
 func (repo *Remote) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, err error) {
 	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
-		checksum, err = repo.checksumWithLsTree(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(), opts)
+		checksum, err = repo.checksumWithLsTree(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 	})
 
 	return checksum, err
@@ -296,8 +296,12 @@ func (repo *Remote) IsCommitExists(ctx context.Context, commit string) (bool, er
 	return repo.isCommitExists(ctx, repo.GetClonePath(), repo.GetClonePath(), commit)
 }
 
-func (repo *Remote) getWorkTreeCacheDir() string {
-	return filepath.Join(GetWorkTreeCacheDir(), repo.getFilesystemRelativePathByEndpoint())
+func (repo *Remote) getRepoID() string {
+	return repo.getFilesystemRelativePathByEndpoint()
+}
+
+func (repo *Remote) getWorkTreeCacheDir(repoID string) string {
+	return filepath.Join(GetWorkTreeCacheDir(), repoID)
 }
 
 func (repo *Remote) withRemoteRepoLock(ctx context.Context, f func() error) error {

@@ -27,6 +27,8 @@ var (
 type Base struct {
 	Name   string
 	TmpDir string
+
+	GitDataManager *GitDataManager
 }
 
 func (repo *Base) HeadCommit(ctx context.Context) (string, error) {
@@ -102,7 +104,13 @@ func (repo *Base) GetName() string {
 	return repo.Name
 }
 
-func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
+func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
+	if patch, err := repo.GitDataManager.GetPatchFile(repoID, opts.FromCommit, opts.ToCommit); err != nil {
+		return nil, err
+	} else if patch != nil {
+		return patch, err
+	}
+
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -133,7 +141,10 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, workTreeCac
 		return nil, err
 	}
 
-	patch := NewTmpPatchFile()
+	patch, err := repo.GitDataManager.NewTmpPatchFile()
+	if err != nil {
+		return nil, err
+	}
 
 	fileHandler, err := os.OpenFile(patch.GetFilePath(), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
@@ -169,6 +180,10 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, workTreeCac
 	err = fileHandler.Close()
 	if err != nil {
 		return nil, fmt.Errorf("error creating patch file `%s`: %s", patch.GetFilePath(), err)
+	}
+
+	if err := repo.GitDataManager.PutPatchFile(repoID, opts.FromCommit, opts.ToCommit, patch); err != nil {
+		return nil, err
 	}
 
 	return patch, nil
@@ -229,7 +244,13 @@ func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error)
 	return res, nil
 }
 
-func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
+func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
+	if archive, err := repo.GitDataManager.GetArchiveFile(repoID, opts.Commit); err != nil {
+		return nil, err
+	} else if archive != nil {
+		return archive, nil
+	}
+
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -250,7 +271,10 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, workTreeC
 		return nil, err
 	}
 
-	archive := NewTmpArchiveFile()
+	archive, err := repo.GitDataManager.NewTmpArchiveFile()
+	if err != nil {
+		return nil, err
+	}
 
 	fileHandler, err := os.OpenFile(archive.GetFilePath(), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
@@ -279,6 +303,10 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, workTreeC
 	}
 
 	archive.Descriptor = desc
+
+	if err := repo.GitDataManager.PutArchiveFile(repoID, opts.Commit, archive); err != nil {
+		return nil, err
+	}
 
 	return archive, nil
 }
