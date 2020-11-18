@@ -177,7 +177,7 @@ func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = &sshKeys
 	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", sshKeys, `Use only specific ssh key(s).
 Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa", $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
-Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
+Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}`)
 }
 
 func SetupPublishReportPath(cmdData *CmdData, cmd *cobra.Command) {
@@ -391,7 +391,7 @@ func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), fmt.Sprintf("Docker Repo to store stages or %[1]s for non-distributed build (only %[1]s is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html", storage.LocalStorageAddress))
+	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), fmt.Sprintf("Docker Repo to store stages or %[1]s for non-distributed build (only %[1]s is supported for now; default $WERF_STAGES_STORAGE environment)", storage.LocalStorageAddress))
 }
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
@@ -821,7 +821,7 @@ func SetupThreeWayMergeMode(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	cmd.Flags().StringVarP(cmdData.ThreeWayMergeMode, "three-way-merge-mode", "", defaultValue, `Set three way merge mode for release.
-Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info https://werf.io/documentation/reference/deploy_process/experimental_three_way_merge.html`)
+Supported 'enabled', 'disabled' and 'onlyNewReleases'`)
 }
 
 func GetThreeWayMergeMode(threeWayMergeModeParam string) (helm.ThreeWayMergeModeType, error) {
@@ -1017,9 +1017,9 @@ func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, 
 		commitDays != CiEnvGitCommitStrategyExpiryDaysDefault && commitDays != -1 ||
 		stagesSignatureLimit != CiEnvStagesSignatureStrategyLimitDefault ||
 		stagesSignatureDays != CiEnvStagesSignatureStrategyExpiryDaysDefault {
-		logboek.Warn().LogLn(`WARNING: Detected custom settings for cleanup based on tagging schemes (https://werf.io/documentation/reference/cleaning_process.html#tagging-scheme-based-cleanup-algorithm) which is not used by default anymore and will not be supported since version v1.2. However, you can switch to old algorithm with option --git-history-based-cleanup=false.
+		logboek.Warn().LogLn(`WARNING: Detected custom settings for cleanup based on tagging schemes which is not used by default anymore and will not be supported since version v1.2. However, you can switch to old algorithm with option --git-history-based-cleanup=false.
 
-Now werf uses the git history-based cleanup algorithm (https://werf.io/documentation/reference/cleaning_process.html#git-history-based-cleanup-algorithm) with the following default policies (https://werf.io/documentation/configuration/cleanup.html#default-policies).`)
+Now werf uses the git history-based cleanup algorithm with the following default policies.`)
 	}
 
 	res := cleanup.ImagesCleanupPolicies{}

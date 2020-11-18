@@ -9,9 +9,9 @@
             {%- if folderitem.external_url %}
                 <li class="sidebar__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
             {%- elsif page.url == folderitem.url %}
-                <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                <li class="sidebar__submenu-item active"><a href="{{ folderitem.url | relative_url }}">{{folderitem.title}}</a></li>
             {%- else %}
-                <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                <li class="sidebar__submenu-item"><a href="{{ folderitem.url | relative_url }}">{{folderitem.title}}</a></li>
             {%- endif %}
         {%- endfor %}
         </ul>
@@ -29,9 +29,9 @@
                   {%- if subfolderitem.external_url %}
                   <li class="sidebar__submenu-item"><a href="{{ subfolderitem.external_url }}" target="_blank">{{subfolderitem.title}}</a></li>
                   {%- elsif page.url == subfolderitem.url %}
-                  <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ subfolderitem.url }}">{{subfolderitem.title}}</a></li>
+                  <li class="sidebar__submenu-item active"><a href="{{ subfolderitem.url | relative_url }}">{{subfolderitem.title}}</a></li>
                   {%- else %}
-                  <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ subfolderitem.url }}">{{subfolderitem.title}}</a></li>
+                  <li class="sidebar__submenu-item"><a href="{{ subfolderitem.url | relative_url }}">{{subfolderitem.title}}</a></li>
                   {%- endif %}
                   {%- endfor %}
                 </ul>
@@ -39,9 +39,9 @@
             {%- elsif subfolders.external_url %}
               <li class="sidebar__submenu-item"><a href="{{ subfolders.external_url }}" target="_blank">{{subfolders.title}}</a></li>
             {%- elsif page.url == subfolders.url %}
-              <li class="sidebar__submenu-item active"><a href="{{ site.baseurl }}{{ subfolders.url }}">{{subfolders.title}}</a></li>
+              <li class="sidebar__submenu-item active"><a href="{{ subfolders.url | relative_url }}">{{subfolders.title}}</a></li>
             {%- else %}
-              <li class="sidebar__submenu-item"><a href="{{ site.baseurl }}{{ subfolders.url }}">{{subfolders.title}}</a></li>
+              <li class="sidebar__submenu-item"><a href="{{ subfolders.url | relative_url }}">{{subfolders.title}}</a></li>
             {%- endif %}
             {%- endfor %}
             </ul>
@@ -49,9 +49,9 @@
     {%- elsif folder.external_url %}
         <li class="sidebar__item"><a href="{{ folder.external_url }}" target="_blank">{{folder.title}}</a></li>
     {%- elsif page.url == folder.url %}
-        <li class="sidebar__item active"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
+        <li class="sidebar__item active"><a href="{{ folder.url | relative_url }}">{{folder.title}}</a></li>
     {%- else %}
-        <li class="sidebar__item"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
+        <li class="sidebar__item"><a href="{{ folder.url | relative_url }}">{{folder.title}}</a></li>
     {%- endif %}
   {%- endfor %}
 </ul>

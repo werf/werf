@@ -59,7 +59,7 @@ gitlab.ci.werf.io/job-url=$CI_PROJECT_URL/-/jobs/$CI_JOB_ID
 
 ### WERF_ENV
 
-GitLab supports [environments](https://docs.gitlab.com/ce/ci/environments.html). werf will detect the current environment for the GitLab pipeline and use it as an environment parameter.
+GitLab supports [environments](https://docs.gitlab.com/ce/ci/environments/index.html). werf will detect the current environment for the GitLab pipeline and use it as an environment parameter.
 
 The value of [`WERF_ENV`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_env) is extracted from the [`CI_ENVIRONMENT_SLUG`](https://docs.gitlab.com/ee/ci/variables/) gitlab environment variable.
 
