@@ -5,11 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -587,12 +585,34 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) PrepareImage(_ context.Context, c Conveyor, prevBuiltImage, img container_runtime.ImageInterface) error {
-	img.DockerfileImageBuilder().AppendBuildArgs(s.DockerBuildArgs()...)
+func (s *DockerfileStage) PrepareImage(ctx context.Context, _ Conveyor, _, img container_runtime.ImageInterface) error {
+	dockerBuildArgs, err := s.DockerBuildArgs()
+	if err != nil {
+		return err
+	}
+
+	commit, err := s.localGitRepo.HeadCommit(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to get head commit %s", err)
+	}
+
+	archive, err := s.localGitRepo.CreateArchive(ctx, git_repo.ArchiveOptions{
+		FilterOptions: git_repo.FilterOptions{
+			BasePath: s.context,
+		},
+		Commit: commit,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to create archive: %s", err)
+	}
+
+	img.DockerfileImageBuilder().AppendBuildArgs(dockerBuildArgs...)
+	img.DockerfileImageBuilder().SetFilePathToStdin(archive.GetFilePath())
+
 	return nil
 }
 
-func (s *DockerfileStage) DockerBuildArgs() []string {
+func (s *DockerfileStage) DockerBuildArgs() ([]string, error) {
 	var result []string
 
 	if s.dockerfilePath != "" {
@@ -621,9 +641,7 @@ func (s *DockerfileStage) DockerBuildArgs() []string {
 		result = append(result, fmt.Sprintf("--ssh=%s", s.ssh))
 	}
 
-	result = append(result, s.context)
-
-	return result
+	return result, nil
 }
 
 func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards []string) (string, error) {
@@ -634,17 +652,8 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 
 	logProcess := logboek.Context(ctx).Debug().LogProcess("Calculating files checksum (%v)", normalizedWildcards)
 	logProcess.Start()
-	if s.localGitRepo != nil {
-		checksum, err = s.calculateFilesChecksumWithGit(ctx, normalizedWildcards)
-	} else {
-		projectFilesPaths, err := s.getProjectFilesByWildcards(ctx, normalizedWildcards)
-		if err != nil {
-			return "", err
-		}
 
-		checksum, err = s.calculateProjectFilesChecksum(ctx, projectFilesPaths)
-	}
-
+	checksum, err = s.calculateFilesChecksumWithGit(ctx, normalizedWildcards)
 	if err != nil {
 		logProcess.Fail()
 		return "", err
@@ -731,64 +740,74 @@ entryNotFoundInGitRepository:
 		logProcess.End()
 	}
 
-	var statusResultChecksum string
 	if !statusResult.IsEmpty() {
-		if err := logboek.Context(ctx).Debug().LogBlock("Status result checksum (%s)", wildcardsPathMatcher.String()).
+		if err := logboek.Context(ctx).Debug().LogBlock("Checking status result (%s)", wildcardsPathMatcher.String()).
 			DoError(func() error {
-				statusResultChecksum, err = statusResult.Checksum(ctx)
+				list, err := statusResult.FilePathList()
 				if err != nil {
 					return err
 				}
 
-				logboek.Context(ctx).Debug().LogOptionalLn()
-				logboek.Context(ctx).Debug().LogLn(statusResultChecksum)
+				if len(list) != 0 {
+					logboek.Context(ctx).Warn().LogLn("WARNING: Uncommitted changes were not taken into account:")
+					logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(list, "\n - "))
+				}
+
 				return nil
 			}); err != nil {
-			return "", fmt.Errorf("status result checksum failed: %s", err)
+			return "", fmt.Errorf("unable to check status result: %s", err)
 		}
 	}
 
-	logProcess = logboek.Context(ctx).Debug().LogProcess("ignored files by .gitignore files checksum (%s)", s.dockerignorePathMatcher.String())
-	logProcess.Start()
-	gitIgnoredFilesChecksum, err := s.calculateGitIgnoredFilesChecksum(ctx, wildcards)
-	if err != nil {
-		logProcess.Fail()
-		return "", err
-	} else {
-		if gitIgnoredFilesChecksum != "" {
-			logboek.Context(ctx).Debug().LogOptionalLn()
-			logboek.Context(ctx).Debug().LogLn(gitIgnoredFilesChecksum)
-		}
+	if err := logboek.Context(ctx).Debug().LogProcess("Checking ignored files by .gitignore files (%s)", s.dockerignorePathMatcher.String()).
+		DoError(func() error {
+			list, err := s.getIgnoredFilePathList(ctx, wildcards)
+			if err != nil {
+				return err
+			}
 
-		logProcess.End()
+			if len(list) != 0 {
+				logboek.Context(ctx).Warn().LogLn("WARNING: Ignored files by .gitignore files were not taken into account:")
+				logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(list, "\n - "))
+			}
+
+			return nil
+		}); err != nil {
+		return "", fmt.Errorf("unable to check ignored files by .gitignore files: %s", err)
 	}
 
-	return util.Sha256Hash(lsTreeResultChecksum, statusResultChecksum, gitIgnoredFilesChecksum), nil
+	return util.Sha256Hash(lsTreeResultChecksum), nil
 }
 
-func (s *DockerfileStage) calculateGitIgnoredFilesChecksum(ctx context.Context, wildcards []string) (string, error) {
+func (s *DockerfileStage) getIgnoredFilePathList(ctx context.Context, wildcards []string) ([]string, error) {
 	projectFilesPaths, err := s.getProjectFilesByWildcards(ctx, wildcards)
 	if err != nil {
-		return "", err
-	}
-
-	if len(projectFilesPaths) == 0 {
-		return "", nil
+		return nil, err
 	}
 
 	result, err := s.localGitRepo.CheckIgnore(ctx, projectFilesPaths)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return s.calculateProjectFilesChecksum(ctx, result.IgnoredFilesPaths())
+	var list []string
+	for _, p := range result.IgnoredFilesPaths() {
+		relPath, err := filepath.Rel(s.projectPath, p)
+		if err != nil {
+			panic(fmt.Sprintf(p, err))
+		}
+
+		list = append(list, relPath)
+	}
+
+	return list, nil
 }
 
 func (s *DockerfileStage) getProjectFilesByWildcards(ctx context.Context, wildcards []string) ([]string, error) {
 	var paths []string
 
 	for _, wildcard := range wildcards {
-		contextWildcard := filepath.Join(s.context, wildcard)
+		contextWildcard := filepath.Join(s.projectPath, s.context, wildcard)
 
 		relContextWildcard, err := filepath.Rel(s.projectPath, contextWildcard)
 		if err != nil || relContextWildcard == ".." || strings.HasPrefix(relContextWildcard, ".."+string(os.PathSeparator)) {
@@ -832,56 +851,6 @@ func (s *DockerfileStage) getProjectFilesByWildcards(ctx context.Context, wildca
 	return paths, nil
 }
 
-func (s *DockerfileStage) calculateProjectFilesChecksum(ctx context.Context, paths []string) (checksum string, err error) {
-	var dependencies []string
-
-	sort.Strings(paths)
-	paths = uniquePaths(paths)
-
-	for _, path := range paths {
-		relPath, err := filepath.Rel(s.projectPath, path)
-		if err != nil || relPath == "." || relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
-			panic(fmt.Sprintf("unexpected condition: project (%s) file (%s)", s.projectPath, path))
-		}
-
-		dependencies = append(dependencies, relPath)
-		logboek.Context(ctx).Debug().LogF("File %s was added:\n", relPath)
-
-		stat, err := os.Lstat(path)
-		if err != nil {
-			return "", fmt.Errorf("os stat %s failed: %s", path, err)
-		}
-
-		dependencies = append(dependencies, stat.Mode().String())
-		logboek.Context(ctx).Debug().LogF("  mode: %s\n", stat.Mode().String())
-
-		if stat.Mode()&os.ModeSymlink != 0 {
-			linkTo, err := os.Readlink(path)
-			if err != nil {
-				return "", fmt.Errorf("read link %s failed: %s", path, err)
-			}
-
-			dependencies = append(dependencies, linkTo)
-			logboek.Context(ctx).Debug().LogF("  linkTo: %s\n", linkTo)
-		} else {
-			data, err := ioutil.ReadFile(path)
-			if err != nil {
-				return "", fmt.Errorf("read file %s failed: %s", path, err)
-			}
-
-			dataHash := util.Sha256Hash(string(data))
-			dependencies = append(dependencies, dataHash)
-			logboek.Context(ctx).Debug().LogF("  content hash: %s\n", dataHash)
-		}
-	}
-
-	if len(dependencies) != 0 {
-		checksum = util.Sha256Hash(dependencies...)
-	}
-
-	return checksum, nil
-}
-
 func normalizeCopyAddSources(wildcards []string) []string {
 	var result []string
 	for _, wildcard := range wildcards {
@@ -893,20 +862,6 @@ func normalizeCopyAddSources(wildcards []string) []string {
 		}
 
 		result = append(result, normalizedWildcard)
-	}
-
-	return result
-}
-
-func uniquePaths(paths []string) []string {
-	var result []string
-	keys := make(map[string]bool)
-
-	for _, p := range paths {
-		if _, exist := keys[p]; !exist {
-			keys[p] = true
-			result = append(result, p)
-		}
 	}
 
 	return result

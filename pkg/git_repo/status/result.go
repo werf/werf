@@ -112,6 +112,19 @@ func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatche
 	return res, nil
 }
 
+func (r *Result) FilePathList() ([]string, error) {
+	if r.IsEmpty() {
+		return []string{}, nil
+	}
+
+	var result []string
+	for fileStatusPath := range r.fileStatusList {
+		result = append(result, fileStatusPath)
+	}
+
+	return result, nil
+}
+
 func (r *Result) Checksum(ctx context.Context) (string, error) {
 	if r.IsEmpty() {
 		return "", nil

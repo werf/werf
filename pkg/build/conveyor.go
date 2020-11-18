@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/docker/cli/cli/command/image/build"
+	"github.com/docker/docker/builder/dockerignore"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -1150,36 +1150,58 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	img.name = imageFromDockerfileConfig.Name
 	img.isDockerfileImage = true
 
-	contextDir := filepath.Join(c.projectDir, imageFromDockerfileConfig.Context)
-
-	relContextDir, err := filepath.Rel(c.projectDir, contextDir)
-	if err != nil || relContextDir == ".." || strings.HasPrefix(relContextDir, ".."+string(os.PathSeparator)) {
-		return nil, fmt.Errorf("unsupported context folder %s.\nOnly context folder specified inside project directory %s supported", contextDir, c.projectDir)
+	localGitRepo := c.GetLocalGitRepo()
+	if localGitRepo == nil {
+		return nil, fmt.Errorf("local git repository was not found")
 	}
 
-	exist, err := util.DirExists(contextDir)
+	exist, err := localGitRepo.IsHeadReferenceExist(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to get git head reference: %s", err)
 	} else if !exist {
-		return nil, fmt.Errorf("context folder %s is not found", contextDir)
+		return nil, fmt.Errorf("local git repository reference was not found")
 	}
 
-	dockerfilePath := filepath.Join(c.projectDir, imageFromDockerfileConfig.Dockerfile)
-	relDockerfilePath, err := filepath.Rel(c.projectDir, dockerfilePath)
-	if err != nil || relDockerfilePath == "." || relDockerfilePath == ".." || strings.HasPrefix(relDockerfilePath, ".."+string(os.PathSeparator)) {
-		return nil, fmt.Errorf("unsupported dockerfile %s.\n Only dockerfile specified inside project directory %s supported", dockerfilePath, c.projectDir)
+	headCommit, err := localGitRepo.HeadCommit(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get head commit: %s", err)
 	}
 
-	exist, err = util.FileExists(dockerfilePath)
+	if err := checkPathRelativity(c.projectDir, imageFromDockerfileConfig.Context); err != nil {
+		return nil, fmt.Errorf("unsupported context: %s", err)
+	}
+
+	if err := checkPathRelativity(c.projectDir, imageFromDockerfileConfig.Dockerfile); err != nil {
+		return nil, fmt.Errorf("unsupported dockerfile: %s", err)
+	}
+
+	exists, err := localGitRepo.IsFileExists(headCommit, imageFromDockerfileConfig.Dockerfile)
+	if err != nil {
+		return nil, fmt.Errorf("unable to check file %s existence in local git repository: %s", imageFromDockerfileConfig.Dockerfile, err)
+	} else if !exists {
+		return nil, fmt.Errorf("%s was not found in local git repository", imageFromDockerfileConfig.Dockerfile)
+	}
+
+	dockerfileData, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, imageFromDockerfileConfig.Dockerfile)
 	if err != nil {
 		return nil, err
-	} else if !exist {
-		return nil, fmt.Errorf("dockerfile %s is not found", dockerfilePath)
 	}
 
-	dockerignorePatterns, err := build.ReadDockerignore(contextDir)
+	var dockerignorePatterns []string
+	exists, err = localGitRepo.IsFileExists(headCommit, ".dockerignore")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to check file .dockerignore existence in local git repository: %s", err)
+	} else if exists {
+		dockerignoreData, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, ".dockerignore")
+		if err != nil {
+			return nil, err
+		}
+
+		r := bytes.NewReader(dockerignoreData)
+		dockerignorePatterns, err = dockerignore.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	dockerignorePatternMatcher, err := fileutils.NewPatternMatcher(dockerignorePatterns)
@@ -1187,33 +1209,9 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		return nil, err
 	}
 
-	if relContextDir == "." {
-		relContextDir = ""
-	}
-	dockerignorePathMatcher := path_matcher.NewDockerfileIgnorePathMatcher(relContextDir, dockerignorePatternMatcher, false)
+	dockerignorePathMatcher := path_matcher.NewDockerfileIgnorePathMatcher(imageFromDockerfileConfig.Context, dockerignorePatternMatcher, false)
 
-	localGitRepo := c.GetLocalGitRepo()
-	if localGitRepo != nil {
-		exist, err = localGitRepo.IsHeadReferenceExist(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("git head reference failed: %s", err)
-		}
-
-		if !exist {
-			logboek.Context(ctx).Debug().LogLnWithCustomStyle(
-				style.Get(style.FailName),
-				"git repository reference is not found",
-			)
-			localGitRepo = nil
-		}
-	}
-
-	data, err := ioutil.ReadFile(dockerfilePath)
-	if err != nil {
-		return nil, err
-	}
-
-	p, err := parser.Parse(bytes.NewReader(data))
+	p, err := parser.Parse(bytes.NewReader(dockerfileData))
 	if err != nil {
 		return nil, err
 	}
@@ -1258,9 +1256,9 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 
 	dockerfileStage := stage.GenerateDockerfileStage(
 		stage.NewDockerRunArgs(
-			dockerfilePath,
+			imageFromDockerfileConfig.Dockerfile,
 			imageFromDockerfileConfig.Target,
-			contextDir,
+			imageFromDockerfileConfig.Context,
 			imageFromDockerfileConfig.Args,
 			imageFromDockerfileConfig.AddHost,
 			imageFromDockerfileConfig.Network,
@@ -1276,6 +1274,46 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())
 
 	return img, nil
+}
+
+func checkPathRelativity(projectDir string, path string) error {
+	relPath, err := filepath.Rel(projectDir, filepath.Join(projectDir, path))
+	if err != nil || relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
+		return fmt.Errorf("the path %s must be relative to the project root", path)
+	}
+
+	return nil
+}
+
+func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, headCommit, relPath string) ([]byte, error) {
+	repoData, err := localGitRepo.ReadFile(headCommit, relPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file %s in local git repository: %s", relPath, err)
+	}
+
+	var localData []byte
+	absPath := filepath.Join(projectDir, relPath)
+	exist, err := util.FileExists(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to check file existance: %s", err)
+	} else if exist {
+		localData, err = ioutil.ReadFile(absPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read file: %s", err)
+		}
+	}
+
+	isDataIdentical := bytes.Equal(repoData, localData)
+	localdatax := bytes.ReplaceAll(localData, []byte("\r\n"), []byte("\n"))
+	if !isDataIdentical {
+		isDataIdentical = bytes.Equal(repoData, localdatax)
+	}
+
+	if !isDataIdentical {
+		logboek.Context(ctx).Warn().LogF("WARNING: Uncommited file %s was not taken into account\n", relPath)
+	}
+
+	return repoData, nil
 }
 
 func resolveDockerStagesFromValue(stages []instructions.Stage) {
