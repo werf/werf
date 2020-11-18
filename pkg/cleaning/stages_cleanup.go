@@ -257,8 +257,7 @@ func handleDeleteStageOrImageError(ctx context.Context, err error, imageName str
 		return fmt.Errorf(`%s
 You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
 Check --repo-docker-hub-token/username/password --stages-storage-repo-docker-hub-token/username/password options.
-Be aware that access to the resource is forbidden with personal access token.
-Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#docker-hub`, err)
+Be aware that access to the resource is forbidden with personal access token`, err)
 	case docker_registry.GitHubPackagesUnauthorizedError:
 		return fmt.Errorf(`%s
 You should specify a token with the read:packages, write:packages, delete:packages and repo scopes to remove package versions.

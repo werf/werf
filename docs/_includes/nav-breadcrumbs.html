@@ -1,5 +1,5 @@
 <ol class="breadcrumbs">
-   <li><a href="{{ site.baseurl }}/">{{ site.breadcrumbs.hometext | default: "Home" }}</a></li>
+   <li><a data-proofer-ignore href="{{ "/" | relative_url }}">{{ site.breadcrumbs.hometext | default: "Home" }}</a></li>
 
    {%- capture page_url_without_index_html %}{{ page.url | remove: "/index.html" }}{% endcapture %}
    {%- assign splitted_url_parts = page_url_without_index_html | split: '/' %}
@@ -16,7 +16,7 @@
 
       {%- if breadcrumb %}
       <li>
-         <a href="{{ site.baseurl }}{{ breadcrumb.url }}">{{ breadcrumb.title }}</a>
+         <a href="{{ breadcrumb.url | relative_url }}">{{ breadcrumb.title }}</a>
       </li>
       {%- endif %}
    {%- endfor %}
