@@ -2,8 +2,11 @@ package util
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/werf/lockgate/pkg/util"
 
 	"github.com/spaolacci/murmur3"
 	"golang.org/x/crypto/sha3"
@@ -28,4 +31,12 @@ func Sha256Hash(args ...string) string {
 
 func prepareHashArgs(args ...string) string {
 	return strings.Join(args, ":::")
+}
+
+func ObjectToHashKey(obj interface{}) string {
+	data, err := json.Marshal(obj)
+	if err != nil {
+		panic(fmt.Sprintf("unable to marshal object %#v: %s", obj, err))
+	}
+	return util.Sha256Hash(string(data))
 }

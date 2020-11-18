@@ -254,12 +254,6 @@ func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
 func (c *Conveyor) Terminate(ctx context.Context) error {
 	var terminateErrors []error
 
-	for gitRepoName, gitRepoCache := range c.GetGitRepoCaches() {
-		if err := gitRepoCache.Terminate(); err != nil {
-			terminateErrors = append(terminateErrors, fmt.Errorf("unable to terminate cache of git repo '%s': %s", gitRepoName, err))
-		}
-	}
-
 	for _, onTerminateFunc := range c.onTerminateFuncs {
 		if err := onTerminateFunc(); err != nil {
 			terminateErrors = append(terminateErrors, err)
@@ -825,15 +819,12 @@ func initStages(ctx context.Context, image *Image, imageInterfaceConfig config.S
 	}
 
 	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{
-		ArchivesDir:          getImageArchivesDir(imageName, c),
 		ScriptsDir:           getImageScriptsDir(imageName, c),
 		ContainerArchivesDir: getImageArchivesContainerDir(c),
 		ContainerScriptsDir:  getImageScriptsContainerDir(c),
 	}
 
 	gitPatchStageOptions := &stage.NewGitPatchStageOptions{
-		PatchesDir:           getImagePatchesDir(imageName, c),
-		ArchivesDir:          getImageArchivesDir(imageName, c),
 		ScriptsDir:           getImageScriptsDir(imageName, c),
 		ContainerPatchesDir:  getImagePatchesContainerDir(c),
 		ContainerArchivesDir: getImageArchivesContainerDir(c),
@@ -1084,9 +1075,7 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 
 	gitMapping := stage.NewGitMapping()
 
-	gitMapping.PatchesDir = getImagePatchesDir(imageName, c)
 	gitMapping.ContainerPatchesDir = getImagePatchesContainerDir(c)
-	gitMapping.ArchivesDir = getImageArchivesDir(imageName, c)
 	gitMapping.ContainerArchivesDir = getImageArchivesContainerDir(c)
 	gitMapping.ScriptsDir = getImageScriptsDir(imageName, c)
 	gitMapping.ContainerScriptsDir = getImageScriptsContainerDir(c)
@@ -1102,16 +1091,8 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 	return gitMapping
 }
 
-func getImagePatchesDir(imageName string, c *Conveyor) string {
-	return filepath.Join(c.tmpDir, imageName, "patch")
-}
-
 func getImagePatchesContainerDir(c *Conveyor) string {
 	return path.Join(c.containerWerfDir, "patch")
-}
-
-func getImageArchivesDir(imageName string, c *Conveyor) string {
-	return filepath.Join(c.tmpDir, imageName, "archive")
 }
 
 func getImageArchivesContainerDir(c *Conveyor) string {

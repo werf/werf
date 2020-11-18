@@ -8,6 +8,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/werf/pkg/deploy/werf_chart"
@@ -36,6 +37,10 @@ func NewUpgradeCmd(actionConfig *action.Configuration) *cobra.Command {
 	oldRunE := cmd.RunE
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if err := werf.Init(*upgradeCmdData.TmpDir, *upgradeCmdData.HomeDir); err != nil {
+			return err
+		}
+
+		if err := git_repo.Init(); err != nil {
 			return err
 		}
 

@@ -80,9 +80,6 @@ func NewCmd() *cobra.Command {
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
-	
-	
-
 	return cmd
 }
 
@@ -91,6 +88,10 @@ func run(imageName string) error {
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := git_repo.Init(); err != nil {
+		return err
 	}
 
 	if err := image.Init(); err != nil {

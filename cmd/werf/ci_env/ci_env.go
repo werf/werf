@@ -85,6 +85,10 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
+	if err := git_repo.Init(); err != nil {
+		return err
+	}
+
 	if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
 		return err
 	}
