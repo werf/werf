@@ -140,12 +140,10 @@ werf stages build [IMAGE_NAME...] [options]
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
-            Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
-            supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
+            supported for now; default $WERF_STAGES_STORAGE environment)
       --stages-storage-repo-docker-hub-password='':
             Docker Hub password for stages storage (default                                         
             $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD, $WERF_REPO_DOCKER_HUB_PASSWORD)

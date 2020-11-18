@@ -48,9 +48,7 @@ Command combines 'werf stages build', 'werf images publish' and 'werf deploy'.
 
 The result of converge command is an application deployed into Kubernetes for current git state. Command will create release and wait until all resources of the release will become ready.
 
-Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
-
-Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: https://werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html`),
+Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command`),
 		Example: `# Build and deploy current application state into production environment
 werf converge --stages-storage registry.mydomain.com/web/back/stages --images-repo registry.mydomain.com/web/back --env production`,
 		DisableFlagsInUseLine: true,

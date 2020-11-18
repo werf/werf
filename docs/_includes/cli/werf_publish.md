@@ -6,8 +6,7 @@
 Build final images using each specified tag with the tagging strategy and push into images repo.
 
 New docker layer with service info about tagging strategy will be built for each tag of each image  
-from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG.   
-See more info about publish process: [https://werf.io/documentation/reference/publish_process.html](https://werf.io/documentation/reference/publish_process.html).
+from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG.
 
 If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml.
 
@@ -133,12 +132,10 @@ werf publish [IMAGE_NAME...] [options]
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
-            Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
-            supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
+            supported for now; default $WERF_STAGES_STORAGE environment)
       --stages-storage-repo-docker-hub-password='':
             Docker Hub password for stages storage (default                                         
             $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD, $WERF_REPO_DOCKER_HUB_PASSWORD)

@@ -572,9 +572,7 @@ func (phase *BuildPhase) printShouldBeBuiltError(img *Image, stg stage.Interface
 - auto-generated file content (e.g. {{ .Files.Get "hash_sum_of_something" }})`)
 		logboek.LogWarnLn()
 
-		logboek.LogWarnLn(`Stage signature dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
-
-To quickly find the problem compare current and previous rendered werf configurations.
+		logboek.LogWarnLn(`To quickly find the problem compare current and previous rendered werf configurations.
 Get the path at the beginning of command output by the following prefix 'Using werf config render file: '.
 E.g.:
 

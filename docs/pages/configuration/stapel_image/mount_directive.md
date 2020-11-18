@@ -4,8 +4,8 @@ sidebar: documentation
 permalink: documentation/configuration/stapel_image/mount_directive.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
-  <a class="google-drawings" href="../../../../images/configuration/mount_directive1.png" data-featherlight="image">
-      <img src="../../../../images/configuration/mount_directive1_preview.png">
+  <a class="google-drawings" href="../../../images/configuration/mount_directive1.png" data-featherlight="image">
+      <img src="../../../images/configuration/mount_directive1_preview.png">
   </a>
 
   <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">mount</span><span class="pi">:</span>
