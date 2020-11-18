@@ -2,17 +2,19 @@ package docker
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
 	"strings"
 	"time"
 
 	"github.com/docker/cli/cli/command"
-
 	"github.com/docker/cli/cli/command/image"
+	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/werf/logboek"
 	"golang.org/x/net/context"
+
+	"github.com/werf/logboek"
 )
 
 func CreateImage(ctx context.Context, ref string, labels map[string]string) error {
@@ -252,6 +254,17 @@ func doCliBuild(c command.Cli, args ...string) error {
 func CliBuild(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliBuild(c, args...)
+	})
+}
+
+func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args ...string) error {
+	return cliWithCustomOptions(ctx, []command.DockerCliOption{
+		func(cli *command.DockerCli) error {
+			cli.SetIn(streams.NewIn(rc))
+			return nil
+		},
+	}, func(cli command.Cli) error {
+		return doCliBuild(cli, args...)
 	})
 }
 
