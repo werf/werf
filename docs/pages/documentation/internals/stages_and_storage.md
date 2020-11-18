@@ -24,19 +24,19 @@ The werf assembly process involves a sequential build of stages using the _stage
 
 <div id="dockerfile-image-tab" class="tabs__content active">
 <a class="google-drawings" href="{{ "images/reference/stages_and_images1.png" | relative_url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images1_preview.png" | relative_url }}>"
+<img src="{{ "images/reference/stages_and_images1_preview.png" | relative_url }}">
 </a>
 </div>
 
 <div id="stapel-image-tab" class="tabs__content">
 <a class="google-drawings" href="{{ "images/reference/stages_and_images2.png" | relative_url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images2_preview.png" | relative_url }} >"
+<img src="{{ "images/reference/stages_and_images2_preview.png" | relative_url }}">
 </a>
 </div>
 
 <div id="stapel-artifact-tab" class="tabs__content">
 <a class="google-drawings" href="{{ "images/reference/stages_and_images3.png" | relative_url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images3_preview.png" | relative_url }}>"
+<img src="{{ "images/reference/stages_and_images3_preview.png" | relative_url }}">
 </a>
 </div>
 
@@ -58,7 +58,7 @@ being reused for totally different branches, [see stage selection algorithm]({{ 
 It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
 
 <a class="google-drawings" href="{{ "images/reference/stages_and_images4.png" | relative_url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images4_preview.png" | relative_url }}>"
+<img src="{{ "images/reference/stages_and_images4_preview.png" | relative_url }}">
 </a>
 
 ## Stage dependencies

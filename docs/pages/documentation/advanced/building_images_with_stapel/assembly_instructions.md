@@ -441,9 +441,9 @@ In other words, the contents of assembly instructions will change with each subs
 
 ## Dependency on changes in the git repo
 
-<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
-    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Dependency on git repo changes">
-  </a>
+<a class="google-drawings" href="{{ "images/configuration/assembly_instructions3.png" | relative_url }}" data-featherlight="image">
+    <img src="{{ "images/configuration/assembly_instructions3_preview.png" | relative_url }}" alt="Dependency on git repo changes">
+</a>
 
 The _git mapping reference_ states that there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ runs after the _beforeInstall_ user stage, and _gitLatestPatch_ runs after the _setup_ user stage if there are changes in the local git repository. Thus, in order to execute assembly instructions using the latest version of the source code, you can initiate the rebuilding of the _beforeInstall_ stage (by changing _cacheVersion_ or its instructions).
 

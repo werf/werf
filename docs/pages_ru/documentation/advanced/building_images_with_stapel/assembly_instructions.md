@@ -469,8 +469,8 @@ echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290
 
 ## Зависимость от изменений в git-репозитории
 
-<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
-    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Зависимость от изменений в git-репозитории">
+<a class="google-drawings" href="{{ "images/configuration/assembly_instructions3.png" | relative_url }}" data-featherlight="image">
+    <img src="{{ "images/configuration/assembly_instructions3_preview.png" | relative_url }}" alt="Зависимость от изменений в git-репозитории">
   </a>
 
 Как описывалось в статье про [_git mapping_]({{ "documentation/advanced/building_images_with_stapel/git_directive.html" | relative_url }}), существуют специальные стадии _gitArchive_ и _gitLatestPatch_. 

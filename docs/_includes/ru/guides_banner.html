@@ -6,7 +6,7 @@
         width: 1160px;
         height: 150px;
         background-color: #0066FF;
-        background-image: url('/images/backgrounds/guides_banner.svg');
+        background-image: url({{ "images/backgrounds/guides_banner.svg" | relative_url }});
         background-position: top right;
         background-repeat: no-repeat;
         color: #FFFFFF;
@@ -23,7 +23,7 @@
 </style>
 
 <div class="page__container">
-    <a data-proofer-ignore href="https://ru.werf.io/applications_guide_ru/?utm_campaign=werf_site"
+    <a data-proofer-ignore href="{{ site.site_urls.ru }}/applications_guide_ru/?utm_campaign=werf_site"
         target="_blank" class="guides-banner">
         <span class="guides-banner__title">
             Онлайн-самоучитель по werf<br/>
