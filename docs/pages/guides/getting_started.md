@@ -83,11 +83,11 @@ Add a special file called `werf.yaml` to the source code and define application 
 ## What's next?
 
 Firstly, you can plunge into the relevant documentation:
-* [werf configuration file]({{ site.base_url}}/documentation/configuration/introduction.html).
-* [Dockerfile Image: complete directive list]({{ site.base_url}}/documentation/configuration/dockerfile_image.html).
-* [Build procedure]({{ site.base_url}}/documentation/reference/build_process.html).
-* [Publish procedure]({{ site.base_url}}/documentation/reference/publish_process.html).
+* [werf configuration file]({{ site.baseurl }}/documentation/configuration/introduction.html).
+* [Dockerfile Image: complete directive list]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html).
+* [Build procedure]({{ site.baseurl }}/documentation/reference/build_process.html).
+* [Publish procedure]({{ site.baseurl }}/documentation/reference/publish_process.html).
 
 Or go further:
-* [Deploy an application to a Kubernetes cluster]({{ site.base_url}}/documentation/guides/deploy_into_kubernetes.html).
-* [Advanced build with Stapel image]({{ site.base_url}}/documentation/guides/advanced_build/first_application.html).
+* [Deploy an application to a Kubernetes cluster]({{ site.baseurl }}/documentation/guides/deploy_into_kubernetes.html).
+* [Advanced build with Stapel image]({{ site.baseurl }}/documentation/guides/advanced_build/first_application.html).

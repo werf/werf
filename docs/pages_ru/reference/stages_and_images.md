@@ -107,7 +107,11 @@ _Зависимости стадии_ — это данные, которые н
     References:
     <ul>
     {% for reference in stage.references %}
-        <li><a href="{{ reference.link }}">{{ reference.name }}</a></li>
+        {% if reference.nonexistentRuAnchor %}
+        <li><a data-proofer-ignore href="{{ reference.link | relative_url }}">{{ reference.name }}</a></li>
+        {% else %}
+        <li><a href="{{ reference.link | relative_url }}">{{ reference.name }}</a></li>
+        {% endif %}
     {% endfor %}
     </ul>
 </div>

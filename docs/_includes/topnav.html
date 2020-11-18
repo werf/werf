@@ -1,8 +1,8 @@
 <div class="header">
     <div class="page__container">
         <div class="header__content">
-            <a href="/">
-                <img src="{{ site.baseurl }}/images/werf-logo.svg" alt="werf"/>
+            <a data-proofer-ignore href="/">
+                <img src="{{ "/images/werf-logo.svg" | relative_url }}" alt="werf"/>
             </a>
 
             <ul class="header__menu">
@@ -28,9 +28,11 @@
                             and folder.url == '/publications.html' %} header__menu-item_active{% endif %}
                             {%- if folder.url.size<2 and page.url.size<2 %} header__menu-item_active{% endif %}">
                             {%- if folder.title == 'Документация' or folder.title == 'Documentation' %}
-                            <a href="{{ site.baseurl}}{{ folder.url }}">{{ folder.title }}</a>
+                            <a href="{{ folder.url | relative_url }}">{{ folder.title }}</a>
+                            {%- else if jekyll.environment == "production" %}
+                            <a data-proofer-ignore href="{{ folder.url }}">{{ folder.title }}</a>
                             {%- else %}
-                            <a href="{{ folder.url }}">{{ folder.title }}</a>
+                            <a href="{{ folder.url | relative_url }}">{{ folder.title }}</a>
                             {%- endif %}
                             {%- if folder.folderitems %}
                             <div class="header__submenu-container">
@@ -38,10 +40,8 @@
                                     {% for folderitem in folder.folderitems %}
                                         {%- if folderitem.external_url %}
                                             <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
-                                        {%- elsif page.url contains folderitem.url %}
-                                            <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
                                         {%- else %}
-                                            <li class="header__submenu-item"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                                            <li class="header__submenu-item"><a href="{{ folderitem.url | relative_url }}">{{folderitem.title}}</a></li>
                                         {%- endif %}
                                     {%- endfor %}
                                 </ul>
@@ -60,9 +60,9 @@
                         {%- if folderitem.external_url %}
                         <li><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
                         {%- elsif page.url contains folderitem.url %}
-                        <li class="dropdownActive"><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                        <li class="dropdownActive"><a href="{{ folderitem.url | relative_url }}">{{folderitem.title}}</a></li>
                         {%- else %}
-                        <li><a href="{{ site.baseurl }}{{ folderitem.url }}">{{folderitem.title}}</a></li>
+                        <li><a href="{{ folderitem.url | relative_url }}">{{folderitem.title}}</a></li>
                         {%- endif %}
                         {%- endfor %}
                     </ul>

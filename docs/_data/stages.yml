@@ -26,9 +26,9 @@ entries:
       - mounts
     references:
       - name: "Base image"
-        link: "https://werf.io/documentation/configuration/stapel_image/base_image.html"
+        link: "/documentation/configuration/stapel_image/base_image.html"
       - name: "Reducing image size and speeding up a build by mounts"
-        link: "https://werf.io/documentation/configuration/stapel_image/mount_directive.html"
+        link: "/documentation/configuration/stapel_image/mount_directive.html"
     werf_config: |
       from: <image[:<tag>]>
       fromLatest: <bool>
@@ -50,7 +50,7 @@ entries:
       - beforeInstallCacheVersion
     references:
       - name: "Running assembly instructions"
-        link: "https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html"
+        link: "/documentation/configuration/stapel_image/assembly_instructions.html"
     werf_config: |
       shell:
         beforeInstall:
@@ -71,7 +71,7 @@ entries:
       - imports before install
     references:
       - name: "Importing from images and artifacts"
-        link: "https://werf.io/documentation/configuration/stapel_image/import_directive.html"
+        link: "/documentation/configuration/stapel_image/import_directive.html"
     werf_config: |
       import:
       - artifact: <artifact name>
@@ -90,7 +90,7 @@ entries:
       - git mappings
     references:
       - name: "Adding source code from git repositories"
-        link: "https://werf.io/documentation/configuration/stapel_image/git_directive.html"
+        link: "/documentation/configuration/stapel_image/git_directive.html"
     werf_config: |
       git:
       - add: <absolute path>
@@ -121,9 +121,10 @@ entries:
       - git files hashsum by install stageDependency
     references:
       - name: "Running assembly instructions"
-        link: "https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html"
+        link: "/documentation/configuration/stapel_image/assembly_instructions.html"
       - name: "Dependency on git repo changes"
-        link: "https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-git-repo-changes"
+        link: "/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-git-repo-changes"
+        nonexistentRuAnchor: true
     werf_config: |
       git:
       - stageDependencies:
@@ -159,7 +160,7 @@ entries:
         - <relative path or glob>
     references:
       - name: "Importing from images and artifacts"
-        link: "https://werf.io/documentation/configuration/stapel_image/import_directive.html"
+        link: "/documentation/configuration/stapel_image/import_directive.html"
   - name: beforeSetup
     type: "image artifact"
     dependencies:
@@ -168,9 +169,10 @@ entries:
       - git files hashsum by beforeSetup stageDependency
     references:
       - name: "Running assembly instructions"
-        link: "https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html"
+        link: "/documentation/configuration/stapel_image/assembly_instructions.html"
       - name: "Dependency on git repo changes"
-        link: "https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-git-repo-changes"
+        link: "/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-git-repo-changes"
+        nonexistentRuAnchor: true
     werf_config: |
       git:
       - stageDependencies:
@@ -206,7 +208,7 @@ entries:
         - <relative path or glob>
     references:
       - name: "Importing from images and artifacts"
-        link: "https://werf.io/documentation/configuration/stapel_image/import_directive.html"
+        link: "/documentation/configuration/stapel_image/import_directive.html"
   - name: setup
     type: "image artifact"
     dependencies:
@@ -215,9 +217,10 @@ entries:
       - git files hashsum by setup stageDependency
     references:
       - name: "Running assembly instructions"
-        link: "https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html"
+        link: "/documentation/configuration/stapel_image/assembly_instructions.html"
       - name: "Dependency on git repo changes"
-        link: "https://werf.io/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-git-repo-changes"
+        link: "/documentation/configuration/stapel_image/assembly_instructions.html#dependency-on-git-repo-changes"
+        nonexistentRuAnchor: true
     werf_config: |
       git:
       - stageDependencies:
@@ -241,7 +244,8 @@ entries:
       - size of git diff between last used commit and actual
     references:
       - name: "More details: gitArchive, gitCache, gitLatestPatch"
-        link: "https://werf.io/documentation/configuration/stapel_image/git_directive.html#more-details-gitarchive-gitcache-gitlatestpatch"
+        link: "/documentation/configuration/stapel_image/git_directive.html#more-details-gitarchive-gitcache-gitlatestpatch"
+        nonexistentRuAnchor: true
   - name: importsAfterSetup
     type: "image artifact"
     dependencies:
@@ -260,21 +264,22 @@ entries:
         - <relative path or glob>
     references:
       - name: "Importing from images and artifacts"
-        link: "https://werf.io/documentation/configuration/stapel_image/import_directive.html"
+        link: "/documentation/configuration/stapel_image/import_directive.html"
   - name: gitLatestPatch
     type: "image"
     dependencies:
       - presence of git diff changes between last used commit and actual
     references:
       - name: "More details: gitArchive, gitCache, gitLatestPatch"
-        link: "https://werf.io/documentation/configuration/stapel_image/git_directive.html#more-details-gitarchive-gitcache-gitlatestpatch"
+        link: "/documentation/configuration/stapel_image/git_directive.html#more-details-gitarchive-gitcache-gitlatestpatch"
+        nonexistentRuAnchor: true
   - name: dockerInstructions
     type: "image"
     dependencies:
       - docker instructions
     references:
       - name: Adding docker instructions
-        link: "https://werf.io/documentation/configuration/stapel_image/docker_directive.html"
+        link: "/documentation/configuration/stapel_image/docker_directive.html"
     werf_config: |
       docker:
         VOLUME:
