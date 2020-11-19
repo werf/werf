@@ -62,9 +62,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
-            Chan
-            ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR  
-            or .werf in working directory)
+            Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
+            in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --disable-determinism=false
@@ -189,8 +188,12 @@ werf converge --repo registry.mydomain.com/web --env production
             	  }
             	}
             envfile:
-            	WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME=<REPO>:<TAG>
+            	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
             	...
+            <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the 
+            following rules: 
+            - all characters are uppercase (app -> APP);
+            - charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND)
       --report-path=''
             Report save path ($WERF_REPORT_PATH by default)
       --secondary-repo=[]

@@ -5,8 +5,12 @@
 {% endif %}
 Run docker-compose up command with forwarded image names
 
-Image environment name format: $WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME ($WERF_IMAGE_NAME for   
-nameless image)
+Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME                  
+($WERF_DOCKER_IMAGE_NAME for nameless image).
+<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following   
+rules: 
+- all characters are uppercase (app -> APP);
+- charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND).
 
 {{ header }} Syntax
 
@@ -25,7 +29,7 @@ werf compose up [options] [--docker-compose-options="OPTIONS"] [--docker-compose
 
   # Print docker-compose command without executing
   $ werf compose up --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="--abort-on-container-exit -t 20" --dry-run --quiet
-  export WERF_IMAGE_APP_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
+  export WERF_APP_DOCKER_IMAGE_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
   docker-compose -f docker-compose-test.yml up --abort-on-container-exit -t 20
 ```
 
@@ -35,9 +39,8 @@ werf compose up [options] [--docker-compose-options="OPTIONS"] [--docker-compose
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
-            Chan
-            ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR  
-            or .werf in working directory)
+            Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
+            in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --disable-determinism=false
