@@ -11,6 +11,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/werf/werf/pkg/context_manager"
+
+	"github.com/werf/werf/pkg/tmp_manager"
+
 	"github.com/bmatcuk/doublestar"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -49,11 +53,12 @@ type DockerfileStage struct {
 	*BaseStage
 }
 
-func NewDockerRunArgs(dockerfilePath, target, context string, buildArgs map[string]interface{}, addHost []string, network, ssh string) *DockerRunArgs {
+func NewDockerRunArgs(dockerfilePath, target, context string, contextAddFile []string, buildArgs map[string]interface{}, addHost []string, network, ssh string) *DockerRunArgs {
 	return &DockerRunArgs{
 		dockerfilePath: dockerfilePath,
 		target:         target,
 		context:        context,
+		contextAddFile: contextAddFile,
 		buildArgs:      buildArgs,
 		addHost:        addHost,
 		network:        network,
@@ -65,6 +70,7 @@ type DockerRunArgs struct {
 	dockerfilePath string
 	target         string
 	context        string
+	contextAddFile []string
 	buildArgs      map[string]interface{}
 	addHost        []string
 	network        string
@@ -606,8 +612,21 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, _ Conveyor, _, img c
 		return fmt.Errorf("unable to create archive: %s", err)
 	}
 
+	var archivePath = archive.GetFilePath()
+	if len(s.contextAddFile) > 0 {
+		if path, err := tmp_manager.CreateTmpContextArchive(ctx, archive.GetFilePath()); err != nil {
+			return fmt.Errorf("unable to create tmp archive: %s", err)
+		} else {
+			archivePath = path
+		}
+
+		if err := context_manager.ApplyContextAddFileToArchive(archivePath, s.context, s.contextAddFile, s.projectPath); err != nil {
+			return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
+		}
+	}
+
 	img.DockerfileImageBuilder().AppendBuildArgs(dockerBuildArgs...)
-	img.DockerfileImageBuilder().SetFilePathToStdin(archive.GetFilePath())
+	img.DockerfileImageBuilder().SetFilePathToStdin(archivePath)
 
 	return nil
 }

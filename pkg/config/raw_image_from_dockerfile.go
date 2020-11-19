@@ -6,14 +6,15 @@ import (
 )
 
 type rawImageFromDockerfile struct {
-	Images     []string               `yaml:"-"`
-	Dockerfile string                 `yaml:"dockerfile,omitempty"`
-	Context    string                 `yaml:"context,omitempty"`
-	Target     string                 `yaml:"target,omitempty"`
-	Args       map[string]interface{} `yaml:"args,omitempty"`
-	AddHost    interface{}            `yaml:"addHost,omitempty"`
-	Network    string                 `yaml:"network,omitempty"`
-	SSH        string                 `yaml:"ssh,omitempty"`
+	Images         []string               `yaml:"-"`
+	Dockerfile     string                 `yaml:"dockerfile,omitempty"`
+	Context        string                 `yaml:"context,omitempty"`
+	ContextAddFile []string               `yaml:"contextAddFile,omitempty"`
+	Target         string                 `yaml:"target,omitempty"`
+	Args           map[string]interface{} `yaml:"args,omitempty"`
+	AddHost        interface{}            `yaml:"addHost,omitempty"`
+	Network        string                 `yaml:"network,omitempty"`
+	SSH            string                 `yaml:"ssh,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -81,6 +82,11 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(imageName string
 	image.Name = imageName
 	image.Dockerfile = filepath.FromSlash(c.Dockerfile)
 	image.Context = filepath.FromSlash(c.Context)
+
+	for _, path := range c.ContextAddFile {
+		image.ContextAddFile = append(image.ContextAddFile, filepath.FromSlash(path))
+	}
+
 	image.Target = c.Target
 	image.Args = c.Args
 
