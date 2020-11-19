@@ -52,13 +52,13 @@ jobs:
         if: matrix.lang == 'ru'
         run: |
           cd docs
-          bundle exec jekyll build --config _config.yml,_config_ru.yml
+          bundle exec jekyll build -d _site/baseurl --baseurl /baseurl --config _config.yml,_config_ru.yml
 
       - name: Build (en)
         if: matrix.lang == 'en'
         run: |
           cd docs
-          bundle exec jekyll build --config _config.yml
+          bundle exec jekyll build -d _site/baseurl --baseurl /baseurl --config _config.yml
 
       - name: Check links
         run: |
@@ -68,4 +68,5 @@ jobs:
             --empty-alt-ignore \
             --check_html \
             --url_ignore "/localhost/,/bintray.com/,/t.me/,/slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.(ru)|(com)/,/twitter.com/,/example.com/,/dothings.sh/,/172.17.0.3/,/applications_guide_ru/,/werf_yaml.html#configuring-cleanup-policies/" \
+            --http-status-ignore 0 \
             ./_site/
