@@ -59,7 +59,7 @@ func NewConfigCmd() *cobra.Command {
 
   # Print docker-compose command without executing
   $ werf compose config --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="--resolve-image-digests" --dry-run --quiet
-  export WERF_IMAGE_APP_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
+  export WERF_APP_DOCKER_IMAGE_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
   docker-compose -f docker-compose-test.yml config --resolve-image-digests`,
 		FollowSupport: false,
 		ArgsSupport:   false,
@@ -77,7 +77,7 @@ func NewUpCmd() *cobra.Command {
 
   # Print docker-compose command without executing
   $ werf compose up --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="--abort-on-container-exit -t 20" --dry-run --quiet
-  export WERF_IMAGE_APP_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
+  export WERF_APP_DOCKER_IMAGE_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
   docker-compose -f docker-compose-test.yml up --abort-on-container-exit -t 20`,
 		FollowSupport: true,
 		ArgsSupport:   true,
@@ -92,7 +92,7 @@ func NewDownCmd() *cobra.Command {
 
   # Print docker-compose command without executing
   $ werf compose down --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="--rmi=all --remove-orphans" --dry-run --quiet
-  export WERF_IMAGE_APP_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
+  export WERF_APP_IMAGE_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
   docker-compose -f docker-compose-test.yml down --rmi=all --remove-orphans`,
 		FollowSupport: false,
 		ArgsSupport:   false,
@@ -107,7 +107,10 @@ func newCmd(composeCmdName string, options *newCmdOptions) *cobra.Command {
 	long := short
 	long += `
 
-Image environment name format: $WERF_IMAGE_<UPPERCASE_WERF_IMAGE_NAME>_NAME ($WERF_IMAGE_NAME for nameless image)`
+Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME ($WERF_DOCKER_IMAGE_NAME for nameless image).
+<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules: 
+- all characters are uppercase (app -> APP);
+- charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND).`
 	long = common.GetLongCommandDescription(long)
 	cmd := &cobra.Command{
 		Use:                   options.Use,

@@ -119,7 +119,7 @@ func (report *ImagesReport) ToEnvFileData() []byte {
 
 	buf := bytes.NewBuffer([]byte{})
 	for img, record := range report.Images {
-		buf.WriteString(generateImageEnv(img, record.WerfImageName))
+		buf.WriteString(generateImageEnv(img, record.DockerImageName))
 		buf.WriteString("\n")
 	}
 
@@ -129,10 +129,14 @@ func (report *ImagesReport) ToEnvFileData() []byte {
 func generateImageEnv(werfImageName, imageName string) string {
 	var imageEnvName string
 	if werfImageName == "" {
-		imageEnvName = "WERF_IMAGE_NAME"
+		imageEnvName = "WERF_DOCKER_IMAGE_NAME"
 	} else {
-		werfImageName := strings.ToUpper(strings.ReplaceAll(werfImageName, "/", "_"))
-		imageEnvName = fmt.Sprintf("WERF_IMAGE_%s_NAME", werfImageName)
+		werfImageName := strings.ToUpper(werfImageName)
+		for _, l := range []string{"/", "-"} {
+			werfImageName = strings.ReplaceAll(werfImageName, l, "_")
+		}
+
+		imageEnvName = fmt.Sprintf("WERF_%s_DOCKER_IMAGE_NAME", werfImageName)
 	}
 
 	return fmt.Sprintf("%s=%s", imageEnvName, imageName)

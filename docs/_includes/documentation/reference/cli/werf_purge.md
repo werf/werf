@@ -21,9 +21,8 @@ werf purge [options]
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
-            Chan
-            ge to the custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR  
-            or .werf in working directory)
+            Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
+            in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --disable-determinism=false
