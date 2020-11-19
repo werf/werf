@@ -249,7 +249,7 @@ func renderWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplat
 			werfConfigsTemplates = templates
 		}
 	} else {
-		if paths, err := localGitRepo.GetFilePathList(commit); err != nil {
+		if paths, err := localGitRepo.GetFilePathList(ctx, commit); err != nil {
 			return "", fmt.Errorf("unable to get files list from local git repo: %s", err)
 		} else {
 			for _, path := range paths {
@@ -471,13 +471,14 @@ func (f files) doGlobFromFilesystem(pattern string) (map[string]interface{}, err
 	return result, nil
 }
 
-func (f files) doGlobFromGitRepo(pattern string) (map[string]interface{}, error) {
-	if paths, err := f.LocalGitRepo.GetFilePathList(f.Commit); err != nil {
+func (f files) doGlobFromGitRepo(ctx context.Context, pattern string) (map[string]interface{}, error) {
+	if paths, err := f.LocalGitRepo.GetFilePathList(ctx, f.Commit); err != nil {
 		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
 	} else {
 		result := make(map[string]interface{})
 
 		for _, path := range paths {
+			// FIXME: use ls-tree path matcher
 			if matched, err := doublestar.PathMatch(pattern, path); err != nil {
 				return nil, fmt.Errorf("path match failed: %s", err)
 			} else if matched {
@@ -494,14 +495,14 @@ func (f files) doGlobFromGitRepo(pattern string) (map[string]interface{}, error)
 	}
 }
 
-func (f files) doGlob(pattern string) (map[string]interface{}, error) {
+func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface{}, error) {
 	var res map[string]interface{}
 	var err error
 
 	if f.DisableDeterminism {
 		res, err = f.doGlobFromFilesystem(pattern)
 	} else {
-		res, err = f.doGlobFromGitRepo(pattern)
+		res, err = f.doGlobFromGitRepo(ctx, pattern)
 	}
 
 	if len(res) == 0 {
@@ -514,7 +515,7 @@ func (f files) doGlob(pattern string) (map[string]interface{}, error) {
 // Glob returns the hash of regular files and their contents for the paths that are matched pattern
 // This function follows only symlinks pointed to a regular file (not to a directory)
 func (f files) Glob(pattern string) map[string]interface{} {
-	if res, err := f.doGlob(pattern); err != nil {
+	if res, err := f.doGlob(f.ctx, pattern); err != nil {
 		panic(err.Error())
 	} else {
 		return res

@@ -20,7 +20,7 @@ func LoadFilesFromGit(ctx context.Context, localGitRepo *git_repo.Local, project
 
 	logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit projectDir=%s loadDir=%s commit=%s\n", loadDir, projectDir, commit)
 
-	repoPaths, err := localGitRepo.GetFilePathList(commit)
+	repoPaths, err := localGitRepo.GetFilePathList(ctx, commit)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get local repo paths for commit %s: %s", commit, err)
 	}
