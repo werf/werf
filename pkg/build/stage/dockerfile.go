@@ -616,7 +616,12 @@ func (s *DockerfileStage) DockerBuildArgs() ([]string, error) {
 	var result []string
 
 	if s.dockerfilePath != "" {
-		result = append(result, fmt.Sprintf("--file=%s", s.dockerfilePath))
+		dockerfilePath := s.dockerfilePath
+		if s.context != "" {
+			dockerfilePath = util.GetRelativeToBaseFilepath(s.context, dockerfilePath)
+		}
+
+		result = append(result, fmt.Sprintf("--file=%s", dockerfilePath))
 	}
 
 	if s.target != "" {
