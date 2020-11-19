@@ -31,7 +31,7 @@ type Remote struct {
 
 func OpenRemoteRepo(name, url string) (*Remote, error) {
 	repo := &Remote{
-		Base: Base{Name: name, GitDataManager: NewCommonGitDataManager()},
+		Base: Base{Name: name},
 		Url:  url,
 	}
 	return repo, repo.ValidateEndpoint()

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/werf/werf/pkg/git_repo"
+
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
@@ -71,7 +73,7 @@ func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, prevBuil
 		}
 	}
 
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ArchivesDir, s.ContainerArchivesDir))
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.ArchivesCacheDir, s.ContainerArchivesDir))
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 
 	return nil

@@ -3,7 +3,6 @@ package stage
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,12 +13,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/werf/werf/pkg/util"
+
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/stapel"
-	"github.com/werf/werf/pkg/util"
 )
 
 type GitRepoCache struct {
@@ -30,24 +30,6 @@ type GitRepoCache struct {
 	patchesMutex   sync.Mutex
 	checksumsMutex sync.Mutex
 	archivesMutex  sync.Mutex
-}
-
-func objectToHashKey(obj interface{}) string {
-	data, err := json.Marshal(obj)
-	if err != nil {
-		panic(fmt.Sprintf("unable to marshal object %#v: %s", obj, err))
-	}
-	return util.Sha256Hash(string(data))
-}
-
-func (cache *GitRepoCache) Terminate() error {
-	for _, patch := range cache.Patches {
-		_ = os.RemoveAll(patch.GetFilePath())
-	}
-	for _, archive := range cache.Archives {
-		_ = os.RemoveAll(archive.GetFilePath())
-	}
-	return nil
 }
 
 type GitMapping struct {
@@ -69,9 +51,7 @@ type GitMapping struct {
 	ExcludePaths       []string
 	StagesDependencies map[StageName][]string
 
-	PatchesDir           string
 	ContainerPatchesDir  string
-	ArchivesDir          string
 	ContainerArchivesDir string
 	ScriptsDir           string
 	ContainerScriptsDir  string
@@ -138,28 +118,28 @@ func (gm *GitMapping) getOrCreateChecksum(ctx context.Context, opts git_repo.Che
 	gm.GitRepoCache.checksumsMutex.Lock()
 	defer gm.GitRepoCache.checksumsMutex.Unlock()
 
-	if _, hasKey := gm.GitRepoCache.Checksums[objectToHashKey(opts)]; !hasKey {
+	if _, hasKey := gm.GitRepoCache.Checksums[util.ObjectToHashKey(opts)]; !hasKey {
 		checksum, err := gm.GitRepo().Checksum(ctx, opts)
 		if err != nil {
 			return nil, err
 		}
-		gm.GitRepoCache.Checksums[objectToHashKey(opts)] = checksum
+		gm.GitRepoCache.Checksums[util.ObjectToHashKey(opts)] = checksum
 	}
-	return gm.GitRepoCache.Checksums[objectToHashKey(opts)], nil
+	return gm.GitRepoCache.Checksums[util.ObjectToHashKey(opts)], nil
 }
 
 func (gm *GitMapping) getOrCreateArchive(ctx context.Context, opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
 	gm.GitRepoCache.archivesMutex.Lock()
 	defer gm.GitRepoCache.archivesMutex.Unlock()
 
-	if _, hasKey := gm.GitRepoCache.Archives[objectToHashKey(opts)]; !hasKey {
+	if _, hasKey := gm.GitRepoCache.Archives[util.ObjectToHashKey(opts)]; !hasKey {
 		archive, err := gm.createArchive(ctx, opts)
 		if err != nil {
 			return nil, err
 		}
-		gm.GitRepoCache.Archives[objectToHashKey(opts)] = archive
+		gm.GitRepoCache.Archives[util.ObjectToHashKey(opts)] = archive
 	}
-	return gm.GitRepoCache.Archives[objectToHashKey(opts)], nil
+	return gm.GitRepoCache.Archives[util.ObjectToHashKey(opts)], nil
 }
 
 func (gm *GitMapping) createArchive(ctx context.Context, opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
@@ -187,14 +167,14 @@ func (gm *GitMapping) getOrCreatePatch(ctx context.Context, opts git_repo.PatchO
 	gm.GitRepoCache.patchesMutex.Lock()
 	defer gm.GitRepoCache.patchesMutex.Unlock()
 
-	if _, hasKey := gm.GitRepoCache.Patches[objectToHashKey(opts)]; !hasKey {
+	if _, hasKey := gm.GitRepoCache.Patches[util.ObjectToHashKey(opts)]; !hasKey {
 		patch, err := gm.createPatch(ctx, opts)
 		if err != nil {
 			return nil, err
 		}
-		gm.GitRepoCache.Patches[objectToHashKey(opts)] = patch
+		gm.GitRepoCache.Patches[util.ObjectToHashKey(opts)] = patch
 	}
-	return gm.GitRepoCache.Patches[objectToHashKey(opts)], nil
+	return gm.GitRepoCache.Patches[util.ObjectToHashKey(opts)], nil
 }
 
 func (gm *GitMapping) createPatch(ctx context.Context, opts git_repo.PatchOptions) (git_repo.Patch, error) {
@@ -891,42 +871,23 @@ func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
 	return archive.IsEmpty(), nil
 }
 
-func (gm *GitMapping) getArchiveFileDescriptor(archiveOpts git_repo.ArchiveOptions) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s.tar", objectToHashKey(archiveOpts))
-
-	return &ContainerFileDescriptor{
-		FilePath:          filepath.Join(gm.ArchivesDir, fileName),
-		ContainerFilePath: path.Join(gm.ContainerArchivesDir, fileName),
-	}
-}
-
 func (gm *GitMapping) prepareArchiveFile(archiveOpts git_repo.ArchiveOptions, archive git_repo.Archive) (*ContainerFileDescriptor, error) {
-	fileDesc := gm.getArchiveFileDescriptor(archiveOpts)
-
-	fileExists := true
-	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
-		fileExists = false
-	} else if err != nil {
-		return nil, fmt.Errorf("unable to get stat of path %s: %s", fileDesc.FilePath, err)
-	}
-
-	if fileExists {
-		return fileDesc, nil
-	}
-
-	if err := os.MkdirAll(filepath.Dir(fileDesc.FilePath), os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %s: %s", filepath.Dir(fileDesc.FilePath), err)
-	}
-
-	if err := os.Link(archive.GetFilePath(), fileDesc.FilePath); err != nil {
-		return nil, fmt.Errorf("unable to create hardlink %s to %s: %s", fileDesc.FilePath, archive.GetFilePath(), err)
-	}
-
-	return fileDesc, nil
+	return &ContainerFileDescriptor{
+		FilePath:          archive.GetFilePath(),
+		ContainerFilePath: path.Join(gm.ContainerArchivesDir, filepath.Base(archive.GetFilePath())),
+	}, nil
 }
 
 func (gm *GitMapping) preparePatchPathsListFile(patchOpts git_repo.PatchOptions, patch git_repo.Patch) (*ContainerFileDescriptor, error) {
-	fileDesc := gm.getPatchPathsListFileDescriptor(patchOpts)
+	fileName := fmt.Sprintf("%s.paths_list", filepath.Base(patch.GetFilePath()))
+	filePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fileName)
+
+	//FIXME: create this file using GitDataManager
+
+	fileDesc := &ContainerFileDescriptor{
+		FilePath:          filePath,
+		ContainerFilePath: path.Join(gm.ContainerPatchesDir, fileName),
+	}
 
 	fileExists := true
 	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
@@ -964,46 +925,10 @@ func (gm *GitMapping) preparePatchPathsListFile(patchOpts git_repo.PatchOptions,
 }
 
 func (gm *GitMapping) preparePatchFile(patchOpts git_repo.PatchOptions, patch git_repo.Patch) (*ContainerFileDescriptor, error) {
-	fileDesc := gm.getPatchFileDescriptor(patchOpts)
-
-	fileExists := true
-	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
-		fileExists = false
-	} else if err != nil {
-		return nil, fmt.Errorf("unable to get stat of path %s: %s", fileDesc.FilePath, err)
-	}
-
-	if fileExists {
-		return fileDesc, nil
-	}
-
-	if err := os.MkdirAll(filepath.Dir(fileDesc.FilePath), os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %s: %s", filepath.Dir(fileDesc.FilePath), err)
-	}
-
-	if err := os.Link(patch.GetFilePath(), fileDesc.FilePath); err != nil {
-		return nil, fmt.Errorf("unable to create hardlink %s to %s: %s", fileDesc.FilePath, patch.GetFilePath(), err)
-	}
-
-	return fileDesc, nil
-}
-
-func (gm *GitMapping) getPatchPathsListFileDescriptor(patchOpts git_repo.PatchOptions) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s.paths_list", objectToHashKey(patchOpts))
-
 	return &ContainerFileDescriptor{
-		FilePath:          filepath.Join(gm.PatchesDir, fileName),
-		ContainerFilePath: path.Join(gm.ContainerPatchesDir, fileName),
-	}
-}
-
-func (gm *GitMapping) getPatchFileDescriptor(patchOpts git_repo.PatchOptions) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s.patch", objectToHashKey(patchOpts))
-
-	return &ContainerFileDescriptor{
-		FilePath:          filepath.Join(gm.PatchesDir, fileName),
-		ContainerFilePath: path.Join(gm.ContainerPatchesDir, fileName),
-	}
+		FilePath:          patch.GetFilePath(),
+		ContainerFilePath: path.Join(gm.ContainerPatchesDir, filepath.Base(patch.GetFilePath())),
+	}, nil
 }
 
 func (gm *GitMapping) makeCredentialsOpts() string {

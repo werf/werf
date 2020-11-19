@@ -69,6 +69,10 @@ func run() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
+	if err := git_repo.Init(); err != nil {
+		return err
+	}
+
 	if err := image.Init(); err != nil {
 		return err
 	}

@@ -27,8 +27,6 @@ var (
 type Base struct {
 	Name   string
 	TmpDir string
-
-	GitDataManager *GitDataManager
 }
 
 func (repo *Base) HeadCommit(ctx context.Context) (string, error) {
@@ -105,7 +103,7 @@ func (repo *Base) GetName() string {
 }
 
 func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
-	if patch, err := repo.GitDataManager.GetPatchFile(repoID, opts.FromCommit, opts.ToCommit); err != nil {
+	if patch, err := CommonGitDataManager.GetPatchFile(ctx, repoID, opts); err != nil {
 		return nil, err
 	} else if patch != nil {
 		return patch, err
@@ -141,14 +139,14 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		return nil, err
 	}
 
-	patch, err := repo.GitDataManager.NewTmpPatchFile()
+	tmpFile, err := CommonGitDataManager.NewTmpFile()
 	if err != nil {
 		return nil, err
 	}
 
-	fileHandler, err := os.OpenFile(patch.GetFilePath(), os.O_RDWR|os.O_CREATE, 0755)
+	fileHandler, err := os.OpenFile(tmpFile, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open patch file `%s`: %s", patch.GetFilePath(), err)
+		return nil, fmt.Errorf("cannot open file %s: %s", tmpFile, err)
 	}
 
 	patchOpts := true_git.PatchOptions{
@@ -175,18 +173,16 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		return nil, fmt.Errorf("error creating patch between `%s` and `%s` commits: %s", opts.FromCommit, opts.ToCommit, err)
 	}
 
-	patch.Descriptor = desc
-
 	err = fileHandler.Close()
 	if err != nil {
-		return nil, fmt.Errorf("error creating patch file `%s`: %s", patch.GetFilePath(), err)
+		return nil, fmt.Errorf("error creating patch file %s: %s", tmpFile, err)
 	}
 
-	if err := repo.GitDataManager.PutPatchFile(repoID, opts.FromCommit, opts.ToCommit, patch); err != nil {
+	if patch, err := CommonGitDataManager.CreatePatchFile(ctx, repoID, opts, tmpFile, desc); err != nil {
 		return nil, err
+	} else {
+		return patch, nil
 	}
-
-	return patch, nil
 }
 
 func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
@@ -245,7 +241,7 @@ func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error)
 }
 
 func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
-	if archive, err := repo.GitDataManager.GetArchiveFile(repoID, opts.Commit); err != nil {
+	if archive, err := CommonGitDataManager.GetArchiveFile(ctx, repoID, opts); err != nil {
 		return nil, err
 	} else if archive != nil {
 		return archive, nil
@@ -271,12 +267,12 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 		return nil, err
 	}
 
-	archive, err := repo.GitDataManager.NewTmpArchiveFile()
+	tmpPath, err := CommonGitDataManager.NewTmpFile()
 	if err != nil {
 		return nil, err
 	}
 
-	fileHandler, err := os.OpenFile(archive.GetFilePath(), os.O_RDWR|os.O_CREATE, 0755)
+	fileHandler, err := os.OpenFile(tmpPath, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open archive file: %s", err)
 	}
@@ -302,13 +298,11 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 		return nil, fmt.Errorf("error creating archive for commit `%s`: %s", opts.Commit, err)
 	}
 
-	archive.Descriptor = desc
-
-	if err := repo.GitDataManager.PutArchiveFile(repoID, opts.Commit, archive); err != nil {
+	if archive, err := CommonGitDataManager.CreateArchiveFile(ctx, repoID, opts, tmpPath, desc); err != nil {
 		return nil, err
+	} else {
+		return archive, nil
 	}
-
-	return archive, nil
 }
 
 func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, commit string) (bool, error) {

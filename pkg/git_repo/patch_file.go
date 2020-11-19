@@ -1,22 +1,12 @@
 package git_repo
 
 import (
-	"fmt"
-	"path/filepath"
-
 	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/werf"
-	uuid "github.com/satori/go.uuid"
 )
 
 type PatchFile struct {
 	FilePath   string
 	Descriptor *true_git.PatchDescriptor
-}
-
-func NewTmpPatchFile() *PatchFile {
-	path := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-%s.patch", uuid.NewV4().String()))
-	return &PatchFile{FilePath: path}
 }
 
 func (p *PatchFile) GetFilePath() string {

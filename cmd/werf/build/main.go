@@ -100,8 +100,6 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
-	
-	
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	return cmd
@@ -113,6 +111,10 @@ func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := git_repo.Init(); err != nil {
+		return err
 	}
 
 	if err := image.Init(); err != nil {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/werf/logboek"
 
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/werf/pkg/storage"
@@ -18,6 +19,10 @@ import (
 
 func doMain() error {
 	if err := werf.Init("", ""); err != nil {
+		return err
+	}
+
+	if err := git_repo.Init(); err != nil {
 		return err
 	}
 

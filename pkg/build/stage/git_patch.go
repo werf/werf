@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/werf/pkg/git_repo"
+
 	"github.com/werf/werf/pkg/container_runtime"
 )
 
 type NewGitPatchStageOptions struct {
-	PatchesDir           string
-	ArchivesDir          string
 	ScriptsDir           string
 	ContainerPatchesDir  string
 	ContainerArchivesDir string
@@ -18,8 +18,6 @@ type NewGitPatchStageOptions struct {
 
 func newGitPatchStage(name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GitPatchStage {
 	s := &GitPatchStage{
-		PatchesDir:           gitPatchStageOptions.PatchesDir,
-		ArchivesDir:          gitPatchStageOptions.ArchivesDir,
 		ScriptsDir:           gitPatchStageOptions.ScriptsDir,
 		ContainerPatchesDir:  gitPatchStageOptions.ContainerPatchesDir,
 		ContainerArchivesDir: gitPatchStageOptions.ContainerArchivesDir,
@@ -32,8 +30,6 @@ func newGitPatchStage(name StageName, gitPatchStageOptions *NewGitPatchStageOpti
 type GitPatchStage struct {
 	*GitStage
 
-	PatchesDir           string
-	ArchivesDir          string
 	ScriptsDir           string
 	ContainerPatchesDir  string
 	ContainerArchivesDir string
@@ -89,8 +85,8 @@ func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, prevBuiltI
 		}
 	}
 
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.PatchesDir, s.ContainerPatchesDir))
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ArchivesDir, s.ContainerArchivesDir))
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.PatchesCacheDir, s.ContainerPatchesDir))
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.ArchivesCacheDir, s.ContainerArchivesDir))
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 
 	return nil

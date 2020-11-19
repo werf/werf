@@ -25,7 +25,7 @@ type Local struct {
 	GitDir string
 }
 
-func OpenLocalRepo(name string, path string) (*Local, error) {
+func OpenLocalRepo(name, path string) (*Local, error) {
 	_, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		if err == git.ErrRepositoryNotExists {
@@ -40,7 +40,7 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 		return nil, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
 	}
 
-	localRepo := &Local{Base: Base{Name: name, GitDataManager: NewCommonGitDataManager()}, Path: path, GitDir: gitDir}
+	localRepo := &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}
 
 	return localRepo, nil
 }

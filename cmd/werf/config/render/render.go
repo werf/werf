@@ -28,6 +28,10 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("initialization error: %s", err)
 			}
 
+			if err := git_repo.Init(); err != nil {
+				return err
+			}
+
 			projectDir, err := common.GetProjectDir(&commonCmdData)
 			if err != nil {
 				return fmt.Errorf("getting project dir failed: %s", err)

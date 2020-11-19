@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/kubeutils"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/synchronization_server"
@@ -87,6 +88,10 @@ func runSynchronization() error {
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := git_repo.Init(); err != nil {
+		return err
 	}
 
 	host, port := cmdData.Host, cmdData.Port

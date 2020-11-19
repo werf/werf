@@ -92,6 +92,10 @@ func runCleanup() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
+	if err := git_repo.Init(); err != nil {
+		return err
+	}
+
 	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
