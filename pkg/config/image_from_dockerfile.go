@@ -1,14 +1,15 @@
 package config
 
 type ImageFromDockerfile struct {
-	Name       string
-	Dockerfile string
-	Context    string
-	Target     string
-	Args       map[string]interface{}
-	AddHost    []string
-	Network    string
-	SSH        string
+	Name           string
+	Dockerfile     string
+	Context        string
+	ContextAddFile []string
+	Target         string
+	Args           map[string]interface{}
+	AddHost        []string
+	Network        string
+	SSH            string
 
 	raw *rawImageFromDockerfile
 }

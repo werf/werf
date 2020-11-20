@@ -1240,6 +1240,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 			imageFromDockerfileConfig.Dockerfile,
 			imageFromDockerfileConfig.Target,
 			imageFromDockerfileConfig.Context,
+			imageFromDockerfileConfig.ContextAddFile,
 			imageFromDockerfileConfig.Args,
 			imageFromDockerfileConfig.AddHost,
 			imageFromDockerfileConfig.Network,
