@@ -2,60 +2,7 @@
 title: Adding source code from git repositories
 sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/git_directive.html
-summary: |
-  <a class="google-drawings" href="../../../images/configuration/git_directive1.png" data-featherlight="image">
-      <img src="../../../images/configuration/git_directive1_preview.png">
-  </a>
-
-  <div class="tabs">
-    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'local_tab')">Local</a>
-    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'remote_tab')">Remote</a>
-  </div>
-
-  <div id="local_tab" class="tabs__content active">
-  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
-    <span class="na">to</span><span class="pi">:</span> <span class="s">&lt;absolute path inside image&gt;</span>
-    <span class="na">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
-    <span class="na">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
-    <span class="na">includePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-    <span class="na">excludePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-    <span class="na">stageDependencies</span><span class="pi">:</span>
-      <span class="na">install</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-      <span class="na">beforeSetup</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-      <span class="na">setup</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span></code></pre>
-  </div></div>     
-  </div>
-
-  <div id="remote_tab" class="tabs__content">
-  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">git</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
-    <span class="na">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
-    <span class="na">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
-    <span class="na">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
-    <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path in git repository&gt;</span>
-    <span class="na">to</span><span class="pi">:</span> <span class="s">&lt;absolute path inside image&gt;</span>
-    <span class="na">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
-    <span class="na">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
-    <span class="na">includePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-    <span class="na">excludePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-    <span class="na">stageDependencies</span><span class="pi">:</span>
-      <span class="na">install</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-      <span class="na">beforeSetup</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-      <span class="na">setup</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">&lt;path or glob relative to path in add&gt;</span>
-  </code></pre>
-  </div></div>
-  </div>
+directive_summary: git
 ---
 
 ## What is git mapping?

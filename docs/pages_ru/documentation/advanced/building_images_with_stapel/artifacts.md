@@ -3,10 +3,7 @@ title: Артефакты
 sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/artifacts.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
-summary: |
-  <a class="google-drawings" href="../../../images/configuration/stapel_artifact1.png" data-featherlight="image">
-      <img src="../../../images/configuration/stapel_artifact1_preview.png">
-  </a>
+directive_summary: artifact
 ---
 
 ## Что такое артефакты?
