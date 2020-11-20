@@ -2,20 +2,48 @@ package context_manager
 
 import (
 	"archive/tar"
+	"context"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/werf/logboek"
+
 	"github.com/werf/werf/pkg/util"
 )
 
-func LsTree(gitLsTreeResult, contextAddFile []string) error {
-	return nil
+func ContextAddFileChecksum(ctx context.Context, contextAddFile []string, projectDir string) (string, error) {
+	logboek.Context(ctx).Debug().LogF("-- ContextAddFileChecksum %q %q\n", projectDir, contextAddFile)
+
+	h := sha256.New()
+
+	for _, addFile := range contextAddFile {
+		h.Write([]byte(addFile))
+
+		path := filepath.Join(projectDir, addFile)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			continue
+		} else if err != nil {
+			return "", fmt.Errorf("error accessing %q: %s", path, err)
+		}
+
+		if f, err := os.Open(path); err != nil {
+			return "", fmt.Errorf("unable to open %q: %s", path, err)
+		} else {
+			defer f.Close()
+			if _, err := io.Copy(h, f); err != nil {
+				return "", fmt.Errorf("error reading %q: %s", path, err)
+			}
+		}
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func ApplyContextAddFileToArchive(archivePath string, context string, contextAddFile []string, projectDir string) error {
-	fmt.Printf("-- ApplyContextAddFileToArchive %q %q %v %q\n", archivePath, context, contextAddFile, projectDir)
+func ApplyContextAddFileToArchive(ctx context.Context, archivePath string, context string, contextAddFile []string, projectDir string) error {
+	logboek.Context(ctx).Debug().LogF("-- ApplyContextAddFileToArchive %q %q %v %q\n", archivePath, context, contextAddFile, projectDir)
 
 	file, err := os.OpenFile(archivePath, os.O_RDWR, os.ModePerm)
 	if err != nil {
@@ -28,13 +56,13 @@ func ApplyContextAddFileToArchive(archivePath string, context string, contextAdd
 	tw := tar.NewWriter(file)
 
 	for _, addFile := range contextAddFile {
-		// TODO: raise an error when specified addfile is out of context
-		// TODO: check addfile is not a directory, raise an error in this case
-
 		sourceFilePath := filepath.Join(projectDir, addFile)
 
 		var destFilePath string
 		if context != "" {
+			if !util.IsSubpathOfBasePath(context, addFile) {
+				return fmt.Errorf("specified contextAddFile %q is out of context %q", addFile, context)
+			}
 			destFilePath = util.GetRelativeToBaseFilepath(context, addFile)
 		} else {
 			destFilePath = addFile
@@ -66,7 +94,7 @@ func ApplyContextAddFileToArchive(archivePath string, context string, contextAdd
 			}); err != nil {
 				return fmt.Errorf("unable to write tar symlink header for file %s: %s", tarEntryName, err)
 			}
-		} else {
+		} else if sourceFileStat.Mode().IsRegular() {
 			if err := tw.WriteHeader(&tar.Header{
 				Format:     tar.FormatGNU,
 				Name:       tarEntryName,
@@ -91,6 +119,8 @@ func ApplyContextAddFileToArchive(archivePath string, context string, contextAdd
 			if err := f.Close(); err != nil {
 				return fmt.Errorf("error closing file %q: %s", sourceFilePath, err)
 			}
+		} else {
+			return fmt.Errorf("unexpected contextAddFile %q file type %x: only regular files or symlinks are supported", addFile, sourceFileStat.Mode())
 		}
 	}
 

@@ -620,7 +620,7 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, _ Conveyor, _, img c
 			archivePath = path
 		}
 
-		if err := context_manager.ApplyContextAddFileToArchive(archivePath, s.context, s.contextAddFile, s.projectPath); err != nil {
+		if err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.context, s.contextAddFile, s.projectPath); err != nil {
 			return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
 		}
 	}
@@ -674,7 +674,7 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 
 	normalizedWildcards := normalizeCopyAddSources(wildcards)
 
-	logProcess := logboek.Context(ctx).Debug().LogProcess("Calculating files checksum (%v)", normalizedWildcards)
+	logProcess := logboek.Context(ctx).Debug().LogProcess("Calculating files checksum (%v) from local git repo", normalizedWildcards)
 	logProcess.Start()
 
 	checksum, err = s.calculateFilesChecksumWithGit(ctx, normalizedWildcards)
@@ -683,6 +683,19 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 		return "", err
 	} else {
 		logProcess.End()
+	}
+
+	if len(s.contextAddFile) > 0 {
+		logProcess = logboek.Context(ctx).Debug().LogProcess("Calculating contextAddFile checksum")
+		logProcess.Start()
+
+		if contextAddChecksum, err := context_manager.ContextAddFileChecksum(ctx, s.contextAddFile, s.projectPath); err != nil {
+			logProcess.Fail()
+			return "", fmt.Errorf("unable to calculate checksum for contextAddFile files list: %s", err)
+		} else {
+			logProcess.End()
+			checksum = util.Sha256Hash(checksum, contextAddChecksum)
+		}
 	}
 
 	logboek.Context(ctx).Debug().LogF("Result checksum: %s\n", checksum)
