@@ -3,22 +3,7 @@ title: Dockerfile-образ
 sidebar: documentation
 permalink: documentation/configuration/dockerfile_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
-summary: |
-  <a class="google-drawings" href="../../images/configuration/dockerfile_image1.png" data-featherlight="image">
-    <img src="../../images/configuration/dockerfile_image1_preview.png">
-  </a>
-
-  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name... || ~&gt;</span>
-  <span class="na">dockerfile</span><span class="pi">:</span> <span class="s">&lt;relative path&gt;</span>
-  <span class="na">context</span><span class="pi">:</span> <span class="s">&lt;relative path&gt;</span>
-  <span class="na">target</span><span class="pi">:</span> <span class="s">&lt;docker stage name&gt;</span>
-  <span class="na">args</span><span class="pi">:</span>
-    <span class="s">&lt;build arg name&gt;</span><span class="pi">:</span> <span class="s">&lt;value&gt;</span>
-  <span class="na">addHost</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">&lt;host:ip&gt;</span>
-  <span class="na">network</span><span class="pi">:</span> <span class="s">&lt;string&gt;</span>
-  <span class="na">ssh</span><span class="pi">:</span> <span class="s">&lt;string&gt;</span>
-  </code></pre></div></div>
+directive_summary: dockerfile
 ---
 
 Сборка образа с использованием имеющегося Dockerfile — самый простой путь начать использовать werf в существующем проекте. Ниже приведен пример минимального файла `werf.yaml`, описывающего образ `example` проекта:
