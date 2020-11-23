@@ -40,7 +40,7 @@ jobs:
 #    - name: Install upx (windows-latest)
 #      run: |
 #        mkdir bin
-#        echo "::add-path::$GITHUB_WORKSPACE/bin"
+#        echo $GITHUB_WORKSPACE/bin >> $GITHUB_PATH
 #
 #        curl -LO https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win64.zip
 #        unzip upx-3.95-win64.zip
@@ -125,7 +125,7 @@ jobs:
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/unit_tests/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
         find . -type f \( -name '*.test' -or -name '*.test.exe' \) -exec chmod +x {} \;
       shell: bash
@@ -192,7 +192,7 @@ jobs:
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
         ./scripts/ci/git.sh
 
@@ -314,7 +314,7 @@ jobs:
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests_cleanup_implementations/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
         ./scripts/ci/git.sh
         ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.implementation }}
@@ -372,7 +372,7 @@ jobs:
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
         ./scripts/ci/git.sh
 
@@ -381,7 +381,7 @@ jobs:
         chmod +x werf_with_coverage
         find integration_k8s -type f -name '*.test' -exec chmod +x {} \;
 
-        echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
+        echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
       shell: bash
       env:
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
@@ -455,7 +455,7 @@ jobs:
 #      run: |
 #        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
 #        mkdir -p $WERF_TEST_COVERAGE_DIR
-#        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+#        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 #
 #        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
 #        git clone https://github.com/werf/ginkgo.git fork
@@ -470,7 +470,7 @@ jobs:
 #
 #        export DOCKER_CONFIG=$(mktemp -d)
 #        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
-#        echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
+#        echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
 #      shell: bash
 #
 #    - name: Test (macos)
@@ -529,7 +529,7 @@ jobs:
 #      run: |
 #        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
 #        mkdir -p $WERF_TEST_COVERAGE_DIR
-#        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+#        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 #
 #        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
 #        git clone https://github.com/werf/ginkgo.git fork
@@ -542,11 +542,11 @@ jobs:
 #        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
 #        for test_binary in $test_binaries; do chmod +x $test_binary; done
 #
-#        echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
+#        echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
 #
 #        export DOCKER_CONFIG=$(mktemp -d)
 #        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
-#        echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
+#        echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
 #      shell: bash
 #      env:
 #        WERF_TEST_K8S_BASE64_KUBECONFIG_1_11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
@@ -621,7 +621,7 @@ jobs:
         go build github.com/wadey/gocovmerge
         chmod +x ./gocovmerge
 
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::tests_coverage
+        echo WERF_TEST_COVERAGE_DIR=tests_coverage >> $GITHUB_ENV
 
     - name: Prepare coverage file
       run: |
