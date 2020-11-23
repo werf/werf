@@ -20,6 +20,13 @@ import (
 	"github.com/werf/werf/pkg/slug"
 )
 
+func GetEnvironmentOrStub(environmentOption string) string {
+	if environmentOption == "" {
+		return "env"
+	}
+	return environmentOption
+}
+
 func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *config.WerfConfig) (string, error) {
 	if releaseOption != "" {
 		err := slug.ValidateHelmRelease(releaseOption)

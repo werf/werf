@@ -12,7 +12,6 @@ import (
 	"unicode"
 
 	"github.com/werf/logboek"
-	"github.com/Masterminds/sprig/v3"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
