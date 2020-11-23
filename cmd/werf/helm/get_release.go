@@ -29,8 +29,8 @@ func NewGetReleaseCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&getReleaseCmdData, cmd)
-	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&getReleaseCmdData, cmd)
+	common.SetupConfigTemplatesDir(&getReleaseCmdData, cmd)
 	common.SetupConfigPath(&getReleaseCmdData, cmd)
 
 	common.SetupTmpDir(&getReleaseCmdData, cmd)
@@ -62,7 +62,7 @@ func runGetRelease() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getReleaseCmdData, localGitRepo, config.WerfConfigOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getReleaseCmdData, localGitRepo, config.WerfConfigOptions{DisableDeterminism: *getReleaseCmdData.DisableDeterminism, Env: *getReleaseCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
