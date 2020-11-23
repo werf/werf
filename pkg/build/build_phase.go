@@ -187,6 +187,8 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 		}
 	case ReportEnvFile:
 		data = phase.ImagesReport.ToEnvFileData()
+	default:
+		panic(fmt.Sprintf("unknown report format %q", phase.ReportFormat))
 	}
 
 	logboek.Context(ctx).Debug().LogF("ImagesReport:\n%s", data)
