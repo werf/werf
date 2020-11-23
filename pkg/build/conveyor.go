@@ -1286,9 +1286,9 @@ func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir strin
 	}
 
 	isDataIdentical := bytes.Equal(repoData, localData)
-	localdatax := bytes.ReplaceAll(localData, []byte("\r\n"), []byte("\n"))
+	localDataWithForcedUnixLineBreak := bytes.ReplaceAll(localData, []byte("\r\n"), []byte("\n"))
 	if !isDataIdentical {
-		isDataIdentical = bytes.Equal(repoData, localdatax)
+		isDataIdentical = bytes.Equal(repoData, localDataWithForcedUnixLineBreak)
 	}
 
 	if !isDataIdentical {

@@ -524,7 +524,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 			return nil, nil, err
 		}
 
-		checksum, err := s.calculateFilesChecksum(ctx, resolvedSources)
+		checksum, err := s.calculateFilesChecksum(ctx, resolvedSources, c.String())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -537,7 +537,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 				return nil, nil, err
 			}
 
-			checksum, err := s.calculateFilesChecksum(ctx, resolvedSources)
+			checksum, err := s.calculateFilesChecksum(ctx, resolvedSources, c.String())
 			if err != nil {
 				return nil, nil, err
 			}
@@ -662,7 +662,7 @@ func (s *DockerfileStage) DockerBuildArgs() ([]string, error) {
 	return result, nil
 }
 
-func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards []string) (string, error) {
+func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards []string, dockerfileLine string) (string, error) {
 	var checksum string
 	var err error
 
@@ -671,7 +671,7 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 	logProcess := logboek.Context(ctx).Debug().LogProcess("Calculating files checksum (%v) from local git repo", normalizedWildcards)
 	logProcess.Start()
 
-	checksum, err = s.calculateFilesChecksumWithGit(ctx, normalizedWildcards)
+	checksum, err = s.calculateFilesChecksumWithGit(ctx, normalizedWildcards, dockerfileLine)
 	if err != nil {
 		logProcess.Fail()
 		return "", err
@@ -698,7 +698,7 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 	return checksum, nil
 }
 
-func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, wildcards []string) (string, error) {
+func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, wildcards []string, dockerfileLine string) (string, error) {
 	if s.mainLsTreeResult == nil {
 		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", s.dockerignorePathMatcher.String())
 		logProcess.Start()
@@ -779,9 +779,10 @@ entryNotFoundInGitRepository:
 					return err
 				}
 
-				if len(list) != 0 {
-					logboek.Context(ctx).Warn().LogLn("WARNING: Uncommitted changes were not taken into account:")
-					logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(list, "\n - "))
+				unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFile...)
+				if len(unusedFiles) != 0 {
+					logboek.Context(ctx).Warn().LogF("WARNING: Uncommitted changes were not taken into account: (%s)\n", dockerfileLine)
+					logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(unusedFiles, "\n - "))
 				}
 
 				return nil
@@ -797,9 +798,10 @@ entryNotFoundInGitRepository:
 				return err
 			}
 
-			if len(list) != 0 {
-				logboek.Context(ctx).Warn().LogLn("WARNING: Ignored files by .gitignore files were not taken into account:")
-				logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(list, "\n - "))
+			unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFile...)
+			if len(unusedFiles) != 0 {
+				logboek.Context(ctx).Warn().LogF("WARNING: Ignored files by .gitignore files were not taken into account: (%s)\n", dockerfileLine)
+				logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(unusedFiles, "\n - "))
 			}
 
 			return nil
