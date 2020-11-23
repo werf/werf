@@ -13,8 +13,6 @@ import (
 
 	"github.com/werf/werf/pkg/context_manager"
 
-	"github.com/werf/werf/pkg/tmp_manager"
-
 	"github.com/bmatcuk/doublestar"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -614,14 +612,10 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, _ Conveyor, _, img c
 
 	var archivePath = archive.GetFilePath()
 	if len(s.contextAddFile) > 0 {
-		if path, err := tmp_manager.CreateTmpContextArchive(ctx, archive.GetFilePath()); err != nil {
-			return fmt.Errorf("unable to create tmp archive: %s", err)
+		if path, err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.context, s.contextAddFile, s.projectPath); err != nil {
+			return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
 		} else {
 			archivePath = path
-		}
-
-		if err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.context, s.contextAddFile, s.projectPath); err != nil {
-			return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
 		}
 	}
 
