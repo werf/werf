@@ -29,8 +29,8 @@ func NewGetNamespaceCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&getNamespaceCmdData, cmd)
-	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupDisableDeterminism(&getNamespaceCmdData, cmd)
+	common.SetupConfigTemplatesDir(&getNamespaceCmdData, cmd)
 	common.SetupConfigPath(&getNamespaceCmdData, cmd)
 
 	common.SetupTmpDir(&getNamespaceCmdData, cmd)
@@ -62,7 +62,7 @@ func runGetNamespace() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getNamespaceCmdData, localGitRepo, config.WerfConfigOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getNamespaceCmdData, localGitRepo, config.WerfConfigOptions{DisableDeterminism: *getNamespaceCmdData.DisableDeterminism, Env: *getNamespaceCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
