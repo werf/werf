@@ -8,17 +8,14 @@ import (
 	"text/template"
 	"time"
 
-	"helm.sh/helm/v3/pkg/cli"
-
-	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/Masterminds/sprig/v3"
 
 	"helm.sh/helm/v3/pkg/chart/loader"
-
-	"github.com/werf/werf/pkg/git_repo"
-
-	"github.com/Masterminds/sprig"
+	"helm.sh/helm/v3/pkg/cli"
 
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 )
