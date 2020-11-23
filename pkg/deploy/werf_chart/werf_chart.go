@@ -12,6 +12,10 @@ import (
 	"unicode"
 
 	"github.com/werf/logboek"
+	"github.com/Masterminds/sprig/v3"
+
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -21,8 +25,6 @@ import (
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/secretvalues"
 	"github.com/werf/werf/pkg/werf"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
 )
 
 const (

@@ -6,10 +6,9 @@ require (
 	bou.ke/monkey v1.0.1
 	github.com/Masterminds/goutils v1.1.0
 	github.com/Masterminds/semver v1.5.0
-	github.com/Masterminds/sprig v2.20.0+incompatible
+	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/alessio/shellescape v0.0.0-20190409004728-b115ca0f9053
-	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect
 	github.com/aws/aws-sdk-go v1.31.6
 	github.com/bitly/go-hostpool v0.1.0 // indirect
 	github.com/bmatcuk/doublestar v1.1.5
@@ -37,7 +36,6 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
-	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/mailru/easyjson v0.7.2 // indirect
 	github.com/miekg/pkcs11 v1.0.3 // indirect
@@ -52,7 +50,6 @@ require (
 	github.com/otiai10/curr v1.0.0 // indirect
 	github.com/prashantv/gostub v1.0.0
 	github.com/rodaine/table v1.0.0
-	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spaolacci/murmur3 v1.1.0
@@ -65,7 +62,6 @@ require (
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.4.6
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
-	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
