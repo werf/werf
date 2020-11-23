@@ -178,21 +178,25 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 		})
 	}
 
-	var data []byte
-	var err error
-	switch phase.ReportFormat {
-	case ReportJSON:
-		if data, err = phase.ImagesReport.ToJsonData(); err != nil {
-			return fmt.Errorf("unable to prepare report json: %s", err)
-		}
-	case ReportEnvFile:
-		data = phase.ImagesReport.ToEnvFileData()
-	default:
-		panic(fmt.Sprintf("unknown report format %q", phase.ReportFormat))
-	}
+	debugJsonData, err := phase.ImagesReport.ToJsonData()
+	logboek.Context(ctx).Debug().LogF("ImagesReport: (err: %s)\n%s", err, debugJsonData)
 
-	logboek.Context(ctx).Debug().LogF("ImagesReport:\n%s", data)
 	if phase.ReportPath != "" {
+		var data []byte
+		var err error
+		switch phase.ReportFormat {
+		case ReportJSON:
+			if data, err = phase.ImagesReport.ToJsonData(); err != nil {
+				return fmt.Errorf("unable to prepare report json: %s", err)
+			}
+			logboek.Context(ctx).Debug().LogF("Writing json report to the %q:\n%s", phase.ReportPath, data)
+		case ReportEnvFile:
+			data = phase.ImagesReport.ToEnvFileData()
+			logboek.Context(ctx).Debug().LogF("Writing envfile report to the %q:\n%s", phase.ReportPath, data)
+		default:
+			panic(fmt.Sprintf("unknown report format %q", phase.ReportFormat))
+		}
+
 		if err := ioutil.WriteFile(phase.ReportPath, data, 0644); err != nil {
 			return fmt.Errorf("unable to write report to %s: %s", phase.ReportPath, err)
 		}
