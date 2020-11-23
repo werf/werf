@@ -156,20 +156,39 @@ Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see http
 
 func SetupReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.ReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "Report contains image info: full docker repo, tag, ID — for each image ($WERF_REPORT_PATH by default)")
+	cmd.Flags().StringVarP(cmdData.ReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "Report save path ($WERF_REPORT_PATH by default)")
 }
 
 func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ReportFormat = new(string)
-	cmd.Flags().StringVarP(cmdData.ReportFormat, "report-format", "", "json", "Report format (only json available for now, $WERF_REPORT_FORMAT by default)")
+	cmd.Flags().StringVarP(cmdData.ReportFormat, "report-format", "", string(build.ReportJSON), fmt.Sprintf(`Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default)
+%[1]s: 
+	{
+	  "Images": {
+		"<WERF_IMAGE_NAME>": {
+			"WerfImageName": "<WERF_IMAGE_NAME>", 
+			"DockerRepo": "<REPO>",
+			"DockerTag": "<TAG>"
+			"DockerImageName": "<REPO>:<TAG>",
+			"DockerImageID": "<SHA256>",
+		},
+		...
+	  }
+	}
+%[2]s:
+	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
+	...
+<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules: 
+- all characters are uppercase (app -> APP);
+- charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
 }
 
 func GetReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
 	switch format := build.ReportFormat(*cmdData.ReportFormat); format {
-	case build.ReportJSON:
+	case build.ReportJSON, build.ReportEnvFile:
 		return format, nil
 	default:
-		return "", fmt.Errorf("bad --report-format given %q, expected: \"json\"", format)
+		return "", fmt.Errorf("bad --report-format given %q, expected: \"%s\"", format, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
 	}
 }
 
