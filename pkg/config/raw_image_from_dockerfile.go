@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"path/filepath"
 )
 
 type rawImageFromDockerfile struct {
@@ -80,11 +79,11 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives() (images []*Im
 func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(imageName string) (image *ImageFromDockerfile, err error) {
 	image = &ImageFromDockerfile{}
 	image.Name = imageName
-	image.Dockerfile = filepath.FromSlash(c.Dockerfile)
-	image.Context = filepath.FromSlash(c.Context)
+	image.Dockerfile = c.Dockerfile
+	image.Context = c.Context
 
 	for _, path := range c.ContextAddFile {
-		image.ContextAddFile = append(image.ContextAddFile, filepath.FromSlash(path))
+		image.ContextAddFile = append(image.ContextAddFile, path)
 	}
 
 	image.Target = c.Target
@@ -100,6 +99,10 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(imageName string
 	image.SSH = c.SSH
 
 	image.raw = c
+
+	if err := image.validate(); err != nil {
+		return nil, err
+	}
 
 	return image, nil
 }

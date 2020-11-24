@@ -1152,6 +1152,18 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		return nil, fmt.Errorf("unsupported context: %s", err)
 	}
 
+	for _, contextAddFile := range imageFromDockerfileConfig.ContextAddFile {
+		absPath := filepath.Join(c.projectDir, contextAddFile)
+		exist, err := util.FileExists(absPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to check existance of file %s: %s", absPath, err)
+		}
+
+		if !exist {
+			return nil, fmt.Errorf("contextAddFile %s was not found", contextAddFile)
+		}
+	}
+
 	if err := checkPathRelativity(c.projectDir, imageFromDockerfileConfig.Dockerfile); err != nil {
 		return nil, fmt.Errorf("unsupported dockerfile: %s", err)
 	}
@@ -1160,7 +1172,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	if err != nil {
 		return nil, fmt.Errorf("unable to check file %s existence in local git repository: %s", imageFromDockerfileConfig.Dockerfile, err)
 	} else if !exists {
-		return nil, fmt.Errorf("%s was not found in local git repository", imageFromDockerfileConfig.Dockerfile)
+		return nil, fmt.Errorf("dockerfile %s was not found in local git repository", imageFromDockerfileConfig.Dockerfile)
 	}
 
 	dockerfileData, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, imageFromDockerfileConfig.Dockerfile)
