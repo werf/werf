@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -1279,35 +1278,17 @@ func checkPathRelativity(projectDir string, path string) error {
 	return nil
 }
 
-func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, headCommit, relPath string) ([]byte, error) {
-	repoData, err := localGitRepo.ReadFile(headCommit, relPath)
+func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, commit, relPath string) ([]byte, error) {
+	data, isDataIndentical, err := git_repo.GetFileDataFromGitAndCompareWithLocal(localGitRepo, commit, projectDir, relPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file %s in local git repository: %s", relPath, err)
+		return nil, fmt.Errorf("unable to get file %s data from local git repo and compare with local: %s", relPath, err)
 	}
 
-	var localData []byte
-	absPath := filepath.Join(projectDir, relPath)
-	exist, err := util.FileExists(absPath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to check file existance: %s", err)
-	} else if exist {
-		localData, err = ioutil.ReadFile(absPath)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read file: %s", err)
-		}
+	if !isDataIndentical {
+		logboek.Context(ctx).Warn().LogF("WARNING: Uncommitted file %s was not taken into account\n", relPath)
 	}
 
-	isDataIdentical := bytes.Equal(repoData, localData)
-	localDataWithForcedUnixLineBreak := bytes.ReplaceAll(localData, []byte("\r\n"), []byte("\n"))
-	if !isDataIdentical {
-		isDataIdentical = bytes.Equal(repoData, localDataWithForcedUnixLineBreak)
-	}
-
-	if !isDataIdentical {
-		logboek.Context(ctx).Warn().LogF("WARNING: Uncommited file %s was not taken into account\n", relPath)
-	}
-
-	return repoData, nil
+	return data, nil
 }
 
 func resolveDockerStagesFromValue(stages []instructions.Stage) {
