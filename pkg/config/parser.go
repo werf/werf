@@ -34,14 +34,14 @@ type WerfConfigOptions struct {
 	Env                 string
 }
 
-func RenderWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string, localGitRepo *git_repo.Local, opts WerfConfigOptions) error {
-	werfConfig, err := GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
+func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string, localGitRepo *git_repo.Local, opts WerfConfigOptions) error {
+	werfConfig, err := GetWerfConfig(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 	if err != nil {
 		return err
 	}
 
 	if len(imagesToProcess) == 0 {
-		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env, opts.DisableDeterminism)
+		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env, opts.DisableDeterminism)
 		if err != nil {
 			return fmt.Errorf("cannot parse config: %s", err)
 		}
@@ -70,8 +70,8 @@ func RenderWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDi
 	return nil
 }
 
-func GetWerfConfig(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, opts WerfConfigOptions) (*WerfConfig, error) {
-	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env, opts.DisableDeterminism)
+func GetWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, opts WerfConfigOptions) (*WerfConfig, error) {
+	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env, opts.DisableDeterminism)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
 	}
@@ -211,7 +211,7 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func renderWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, env string, disableDeterminism bool) (string, error) {
+func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, env string, disableDeterminism bool) (string, error) {
 	var commit string
 	if localGitRepo != nil {
 		if c, err := localGitRepo.HeadCommit(ctx); err != nil {
@@ -260,10 +260,10 @@ func renderWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplat
 		}
 	}
 
-	for _, templatePath := range werfConfigsTemplates {
+	for _, relTemplatePath := range werfConfigsTemplates {
 		var templateData []byte
 		if disableDeterminism || localGitRepo == nil {
-			if d, err := ioutil.ReadFile(templatePath); err != nil {
+			if d, err := ioutil.ReadFile(relTemplatePath); err != nil {
 				return "", err
 			} else {
 				templateData = d
@@ -274,14 +274,19 @@ func renderWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplat
 				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
 			}
 
-			if d, err := localGitRepo.ReadFile(commit, templatePath); err != nil {
-				return "", fmt.Errorf("unable to read file %s from local git repo: %s", templatePath, err)
-			} else {
-				templateData = d
+			data, isDataIdentical, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(localGitRepo, commit, projectDir, relTemplatePath)
+			if err != nil {
+				return "", fmt.Errorf("unable to read local git repo file %s and compare with project file: %s", relTemplatePath, err)
 			}
+
+			if !isDataIdentical {
+				logboek.Context(ctx).Warn().LogF("WARNING: In deterministic mode uncommitted file %s was not taken into account\n", relTemplatePath)
+			}
+
+			templateData = data
 		}
 
-		templateName, err := filepath.Rel(werfConfigTemplatesDir, templatePath)
+		templateName, err := filepath.Rel(werfConfigTemplatesDir, relTemplatePath)
 		if err != nil {
 			return "", err
 		}
@@ -296,7 +301,7 @@ func renderWerfConfigYaml(ctx context.Context, werfConfigPath, werfConfigTemplat
 	}
 
 	templateData := make(map[string]interface{})
-	templateData["Files"] = files{ctx: ctx, ProjectDir: filepath.Dir(werfConfigPath), DisableDeterminism: disableDeterminism, Commit: commit, LocalGitRepo: localGitRepo}
+	templateData["Files"] = files{ctx: ctx, ProjectDir: projectDir, DisableDeterminism: disableDeterminism, Commit: commit, LocalGitRepo: localGitRepo}
 	templateData["Env"] = env
 
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)

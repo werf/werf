@@ -886,7 +886,7 @@ func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 
 	if werfConfigPath != "" {
 		werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
-		return config.GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
+		return config.GetWerfConfig(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 	}
 
 	return nil, nil
@@ -900,7 +900,7 @@ func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 
 	werfConfigTemplatesDir := GetWerfConfigTemplatesDir(projectDir, cmdData)
 
-	return config.GetWerfConfig(ctx, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
+	return config.GetWerfConfig(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 }
 
 func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (string, error) {
