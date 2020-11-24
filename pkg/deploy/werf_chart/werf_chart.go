@@ -42,13 +42,14 @@ type WerfChartOptions struct {
 	SecretsManager secret.Manager
 }
 
-func NewWerfChart(ctx context.Context, localGitRepo *git_repo.Local, disableDeterminism bool, opts WerfChartOptions) *WerfChart {
+func NewWerfChart(ctx context.Context, localGitRepo *git_repo.Local, disableDeterminism bool, projectDir string, opts WerfChartOptions) *WerfChart {
 	wc := &WerfChart{
 		Ctx:                ctx,
 		DisableDeterminism: disableDeterminism,
 
 		ReleaseName: opts.ReleaseName,
 		ChartDir:    opts.ChartDir,
+		ProjectDir:  projectDir,
 
 		SecretValueFiles: opts.SecretValueFiles,
 		ExtraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(
@@ -75,6 +76,7 @@ type WerfChart struct {
 
 	ReleaseName      string
 	ChartDir         string
+	ProjectDir       string
 	SecretValueFiles []string
 
 	ExtraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
@@ -191,7 +193,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 			return fmt.Errorf("unable to get local repo head commit: %s", err)
 		}
 
-		if vals, err := DecodeSecretValuesFileFromGitCommit(wc.Ctx, path, commit, wc.LocalGitRepo, wc.SecretsManager); err != nil {
+		if vals, err := DecodeSecretValuesFileFromGitCommit(wc.Ctx, path, commit, wc.LocalGitRepo, wc.SecretsManager, wc.ProjectDir); err != nil {
 			return fmt.Errorf("unable to decode secret values file %q: %s", path, err)
 		} else {
 			decodedValues = vals

@@ -230,8 +230,8 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 			data = d
 		}
 	} else {
-		if d, err := localGitRepo.ReadFile(ctx, commit, werfConfigPath); err != nil {
-			return "", fmt.Errorf("unable to read werf config %s from local git repo: %s", werfConfigPath, err)
+		if d, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, werfConfigPath); err != nil {
+			return "", err
 		} else {
 			data = d
 		}
@@ -274,16 +274,11 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
 			}
 
-			data, isDataIdentical, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath)
-			if err != nil {
+			if d, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath); err != nil {
 				return "", err
+			} else {
+				templateData = d
 			}
-
-			if !isDataIdentical {
-				logboek.Context(ctx).Warn().LogF("WARNING: In deterministic mode uncommitted file %s was not taken into account\n", relTemplatePath)
-			}
-
-			templateData = data
 		}
 
 		templateName, err := filepath.Rel(werfConfigTemplatesDir, relTemplatePath)
@@ -366,7 +361,7 @@ func funcMap(tmpl *template.Template, disableDeterminism bool) template.FuncMap 
 	if !disableDeterminism {
 		restrictedFunc := func(name string) func(interface{}) (string, error) {
 			return func(interface{}) (string, error) {
-				return "", fmt.Errorf("function \"%s\" is restricted in the determinism mode (disable with --disable-determinism)", name)
+				return "", fmt.Errorf("function \"%s\" is restricted due to enabled determinism mode (more info https://werf.io/documentation/advanced/configuration/determinism.html)", name)
 			}
 		}
 
@@ -756,10 +751,6 @@ func splitByMetaAndRawImages(docs []*doc, disableDeterminism bool) (*Meta, []*ra
 	}
 
 	return resultMeta, rawStapelImages, rawImagesFromDockerfile, nil
-}
-
-func newForbiddenDirectiveByDeterminism(directiveName string) error {
-	return fmt.Errorf("%q directive is forbidden, it is recommended to avoid this directive, otherwise disable werf determinism mode with option --disable-determinism (or WERF_DISABLE_DETERMINISM=1 environment variable)", directiveName)
 }
 
 func isMetaDoc(h map[string]interface{}) bool {

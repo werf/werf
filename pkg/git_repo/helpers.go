@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/werf/werf/pkg/determinism_inspector"
+
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/werf/werf/pkg/util"
 )
@@ -24,23 +26,22 @@ func newHash(s string) (plumbing.Hash, error) {
 	return h, nil
 }
 
-func ReadGitRepoFileAndCompareWithProjectFile(ctx context.Context, localGitRepo *Local, commit, projectDir, relPath string) ([]byte, bool, error) {
+func ReadGitRepoFileAndCompareWithProjectFile(ctx context.Context, localGitRepo *Local, commit, projectDir, relPath string) ([]byte, error) {
 	repoData, err := localGitRepo.ReadFile(ctx, commit, relPath)
 	if err != nil {
-		return nil, false, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", relPath, commit, err)
+		return nil, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", relPath, commit, err)
 	}
 
 	isDataIdentical, err := compareGitRepoFileWithProjectFile(repoData, projectDir, relPath)
 	if err != nil {
-		return nil, false, fmt.Errorf("error comparing repo file %q with the local project file: %s", err)
+		return nil, fmt.Errorf("error comparing repo file %q with the local project file: %s", err)
 	}
 
-	return repoData, isDataIdentical, err
-}
+	if !isDataIdentical {
+		determinism_inspector.ReportUncommittedFile(ctx, relPath)
+	}
 
-func CompareLocalGitRepoFileWithProjectFile(ctx context.Context, localGitRepo *Local, commit, projectDir, relPath string) (bool, error) {
-	_, isDataIdentical, err := ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
-	return isDataIdentical, err
+	return repoData, err
 }
 
 func compareGitRepoFileWithProjectFile(repoFileData []byte, projectDir, relPath string) (bool, error) {

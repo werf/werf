@@ -1279,16 +1279,7 @@ func checkPathRelativity(projectDir string, path string) error {
 }
 
 func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, commit, relPath string) ([]byte, error) {
-	data, isDataIdentical, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if !isDataIdentical {
-		logboek.Context(ctx).Warn().LogF("WARNING: Uncommitted file %s was not taken into account\n", relPath)
-	}
-
-	return data, nil
+	return git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
 }
 
 func resolveDockerStagesFromValue(stages []instructions.Stage) {

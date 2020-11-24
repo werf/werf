@@ -254,11 +254,6 @@ func MakeHelmReadFileFunc(ctx context.Context, localGitRepo *git_repo.Local, pro
 		}
 
 		relativeFilePath := util.GetRelativeToBaseFilepath(projectDir, filePath)
-
-		if data, err := localGitRepo.ReadFile(ctx, commit, relativeFilePath); err != nil {
-			return nil, fmt.Errorf("error reading %q from the local git repo commit %s: %s", relativeFilePath, commit, err)
-		} else {
-			return data, nil
-		}
+		return git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relativeFilePath)
 	}
 }

@@ -26,12 +26,12 @@ var templateCmdData cmd_werf_common.CmdData
 func NewTemplateCmd(actionConfig *action.Configuration) *cobra.Command {
 	ctx := common.BackgroundContext()
 
-	wc := werf_chart.NewWerfChart(ctx, nil, false, werf_chart.WerfChartOptions{})
+	wc := werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
 
 	cmd, helmAction := cmd_helm.NewTemplateCmd(actionConfig, os.Stdout, cmd_helm.TemplateCmdOptions{
 		LoadOptions: loader.LoadOptions{
 			ChartExtender:               wc,
-			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(ctx, nil, false, werf_chart.WerfChartOptions{}) },
+			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{}) },
 		},
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 	})
