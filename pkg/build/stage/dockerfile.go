@@ -683,12 +683,17 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 		logProcess = logboek.Context(ctx).Debug().LogProcess("Calculating contextAddFile checksum")
 		logProcess.Start()
 
-		if contextAddChecksum, err := context_manager.ContextAddFileChecksum(ctx, s.contextAddFile, s.projectPath); err != nil {
+		wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BaseFilepath(), wildcards, false)
+		if contextAddChecksum, err := context_manager.ContextAddFileChecksum(ctx, s.contextAddFile, s.projectPath, wildcardsPathMatcher); err != nil {
 			logProcess.Fail()
 			return "", fmt.Errorf("unable to calculate checksum for contextAddFile files list: %s", err)
 		} else {
+			if contextAddChecksum != "" {
+				logboek.Context(ctx).Debug().LogLn("Result:", contextAddChecksum)
+				checksum = util.Sha256Hash(checksum, contextAddChecksum)
+			}
+
 			logProcess.End()
-			checksum = util.Sha256Hash(checksum, contextAddChecksum)
 		}
 	}
 
