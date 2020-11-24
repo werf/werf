@@ -792,7 +792,7 @@ entryNotFoundInGitRepository:
 
 				unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFile...)
 				if len(unusedFiles) != 0 {
-					logboek.Context(ctx).Warn().LogF("WARNING: Uncommitted changes were not taken into account: (%s)\n", dockerfileLine)
+					logboek.Context(ctx).Warn().LogF("WARNING: Uncommitted changes were not taken into account (%s):\n", dockerfileLine)
 					logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(unusedFiles, "\n - "))
 				}
 
@@ -811,7 +811,7 @@ entryNotFoundInGitRepository:
 
 			unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFile...)
 			if len(unusedFiles) != 0 {
-				logboek.Context(ctx).Warn().LogF("WARNING: Ignored files by .gitignore files were not taken into account: (%s)\n", dockerfileLine)
+				logboek.Context(ctx).Warn().LogF("WARNING: Ignored files by .gitignore files were not taken into account (%s):\n", dockerfileLine)
 				logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(unusedFiles, "\n - "))
 			}
 

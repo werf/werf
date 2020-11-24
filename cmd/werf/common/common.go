@@ -923,7 +923,8 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 				return werfConfigPath, nil
 			}
 		} else {
-			commit, err := localGitRepo.HeadCommit(context.Background())
+			ctx := BackgroundContext()
+			commit, err := localGitRepo.HeadCommit(ctx)
 			if err != nil {
 				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
 			}
@@ -932,6 +933,15 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 			if exists, err := localGitRepo.IsFileExists(commit, relPath); err != nil {
 				return "", fmt.Errorf("unable to check %s existance in the local git repo: %s", relPath, err)
 			} else if exists {
+				isDataIdentical, err := git_repo.CompareLocalGitRepoFileWithProjectFile(localGitRepo, commit, projectDir, relPath)
+				if err != nil {
+					return "", fmt.Errorf("unable to compare local git repo file %s with project file: %s", relPath, err)
+				}
+
+				if !isDataIdentical {
+					logboek.Context(ctx).Warn().LogF("WARNING: In deterministic mode uncommitted file %s was not taken into account\n", relPath)
+				}
+
 				return relPath, nil
 			}
 		}

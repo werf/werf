@@ -1,9 +1,13 @@
 package git_repo
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -80,4 +84,49 @@ type Checksum interface {
 
 func GetGitRepoCacheDir() string {
 	return filepath.Join(werf.GetLocalCacheDir(), "git_repos", GitRepoCacheVersion)
+}
+
+func ReadGitRepoFileAndCompareWithProjectFile(localGitRepo *Local, commit, projectDir, relPath string) ([]byte, bool, error) {
+	repoData, err := localGitRepo.ReadFile(commit, relPath)
+	if err != nil {
+		return nil, false, fmt.Errorf("unable to read file %s in local git repository: %s", relPath, err)
+	}
+
+	isDataIdentical, err := compareGitRepoFileWithProjectFile(repoData, projectDir, relPath)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return repoData, isDataIdentical, err
+}
+
+func CompareLocalGitRepoFileWithProjectFile(localGitRepo *Local, commit, projectDir, relPath string) (bool, error) {
+	repoData, err := localGitRepo.ReadFile(commit, relPath)
+	if err != nil {
+		return false, fmt.Errorf("unable to read file %s in local git repository: %s", relPath, err)
+	}
+
+	return compareGitRepoFileWithProjectFile(repoData, projectDir, relPath)
+}
+
+func compareGitRepoFileWithProjectFile(repoFileData []byte, projectDir, relPath string) (bool, error) {
+	var localData []byte
+	absPath := filepath.Join(projectDir, relPath)
+	exist, err := util.FileExists(absPath)
+	if err != nil {
+		return false, fmt.Errorf("unable to check file existance: %s", err)
+	} else if exist {
+		localData, err = ioutil.ReadFile(absPath)
+		if err != nil {
+			return false, fmt.Errorf("unable to read file: %s", err)
+		}
+	}
+
+	isDataIdentical := bytes.Equal(repoFileData, localData)
+	localDataWithForcedUnixLineBreak := bytes.ReplaceAll(localData, []byte("\r\n"), []byte("\n"))
+	if !isDataIdentical {
+		isDataIdentical = bytes.Equal(repoFileData, localDataWithForcedUnixLineBreak)
+	}
+
+	return isDataIdentical, nil
 }
