@@ -612,10 +612,16 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, _ Conveyor, _, img c
 
 	var archivePath = archive.GetFilePath()
 	if len(s.contextAddFile) > 0 {
-		if path, err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.context, s.contextAddFile, s.projectPath); err != nil {
-			return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
-		} else {
-			archivePath = path
+		if err := logboek.Context(ctx).Debug().LogProcess("Apply contextAddFile directive to the archive %s", archivePath).DoError(func() error {
+			if path, err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.context, s.contextAddFile, s.projectPath); err != nil {
+				return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
+			} else {
+				archivePath = path
+				logboek.Context(ctx).Debug().LogF("Created temporary archive %s\n", archivePath)
+				return nil
+			}
+		}); err != nil {
+			return err
 		}
 	}
 

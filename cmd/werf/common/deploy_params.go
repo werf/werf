@@ -4,9 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/werf/logboek"
+
+	"github.com/werf/werf/pkg/util"
 
 	"helm.sh/helm/v3/pkg/cli"
 
@@ -228,12 +233,19 @@ func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, proj
 			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
 		}
 
-		if exist, err := localGitRepo.IsFileExists(commit, name); err != nil {
-			return "", fmt.Errorf("unable to check existance of chart path %q in the local git repo commit %s: %s", name, commit, err)
-		} else if !exist {
-			return "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
+		if paths, err := localGitRepo.GetFilePathList(ctx, commit); err != nil {
+			return "", fmt.Errorf("unable to get file path list from the local git repo commit %s: %s", commit, err)
 		} else {
-			return name, nil
+			cleanChartPath := filepath.ToSlash(filepath.Clean(name))
+			for _, path := range paths {
+				isSubpath := util.IsSubpathOfBasePath(cleanChartPath, path)
+				logboek.Context(ctx).Debug().LogF("Chart location procedure: check %s is the part of the base path %s => %v\n", path, cleanChartPath, isSubpath)
+				if isSubpath {
+					return name, nil
+				}
+			}
 		}
+
+		return "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
 	}
 }

@@ -181,7 +181,7 @@ func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 %[2]s:
 	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
 	...
-<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules: 
+<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
 - all characters are uppercase (app -> APP);
 - charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
 }
@@ -980,7 +980,7 @@ func GetHelmChartDir(projectDir string, cmdData *CmdData, werfConfig *config.Wer
 	if werfConfig.Meta.Deploy.HelmChartDir != nil && *werfConfig.Meta.Deploy.HelmChartDir != "" {
 		helmChartDir = *werfConfig.Meta.Deploy.HelmChartDir
 	} else {
-		helmChartDir = filepath.Join(projectDir, ".helm")
+		helmChartDir = ".helm"
 	}
 
 	return helmChartDir, nil
