@@ -1,9 +1,15 @@
 package git_repo
 
 import (
+	"bytes"
+	"context"
 	"encoding/hex"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/werf/werf/pkg/util"
 )
 
 func newHash(s string) (plumbing.Hash, error) {
@@ -16,4 +22,45 @@ func newHash(s string) (plumbing.Hash, error) {
 
 	copy(h[:], b)
 	return h, nil
+}
+
+func ReadGitRepoFileAndCompareWithProjectFile(ctx context.Context, localGitRepo *Local, commit, projectDir, relPath string) ([]byte, bool, error) {
+	repoData, err := localGitRepo.ReadFile(ctx, commit, relPath)
+	if err != nil {
+		return nil, false, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", relPath, commit, err)
+	}
+
+	isDataIdentical, err := compareGitRepoFileWithProjectFile(repoData, projectDir, relPath)
+	if err != nil {
+		return nil, false, fmt.Errorf("error comparing repo file %q with the local project file: %s", err)
+	}
+
+	return repoData, isDataIdentical, err
+}
+
+func CompareLocalGitRepoFileWithProjectFile(ctx context.Context, localGitRepo *Local, commit, projectDir, relPath string) (bool, error) {
+	_, isDataIdentical, err := ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
+	return isDataIdentical, err
+}
+
+func compareGitRepoFileWithProjectFile(repoFileData []byte, projectDir, relPath string) (bool, error) {
+	var localData []byte
+	absPath := filepath.Join(projectDir, relPath)
+	exist, err := util.FileExists(absPath)
+	if err != nil {
+		return false, fmt.Errorf("unable to check file existance: %s", err)
+	} else if exist {
+		localData, err = ioutil.ReadFile(absPath)
+		if err != nil {
+			return false, fmt.Errorf("unable to read file: %s", err)
+		}
+	}
+
+	isDataIdentical := bytes.Equal(repoFileData, localData)
+	localDataWithForcedUnixLineBreak := bytes.ReplaceAll(localData, []byte("\r\n"), []byte("\n"))
+	if !isDataIdentical {
+		isDataIdentical = bytes.Equal(repoFileData, localDataWithForcedUnixLineBreak)
+	}
+
+	return isDataIdentical, nil
 }

@@ -1167,7 +1167,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		return nil, fmt.Errorf("unsupported dockerfile: %s", err)
 	}
 
-	exists, err := localGitRepo.IsFileExists(headCommit, imageFromDockerfileConfig.Dockerfile)
+	exists, err := localGitRepo.IsFileExists(ctx, headCommit, imageFromDockerfileConfig.Dockerfile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to check file %s existence in local git repository: %s", imageFromDockerfileConfig.Dockerfile, err)
 	} else if !exists {
@@ -1180,7 +1180,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	}
 
 	var dockerignorePatterns []string
-	exists, err = localGitRepo.IsFileExists(headCommit, ".dockerignore")
+	exists, err = localGitRepo.IsFileExists(ctx, headCommit, ".dockerignore")
 	if err != nil {
 		return nil, fmt.Errorf("unable to check file .dockerignore existence in local git repository: %s", err)
 	} else if exists {
@@ -1279,9 +1279,9 @@ func checkPathRelativity(projectDir string, path string) error {
 }
 
 func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, commit, relPath string) ([]byte, error) {
-	data, isDataIdentical, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(localGitRepo, commit, projectDir, relPath)
+	data, isDataIdentical, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read local git repo file %s and compare with project file: %s", relPath, err)
+		return nil, err
 	}
 
 	if !isDataIdentical {

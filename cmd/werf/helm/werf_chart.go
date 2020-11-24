@@ -24,7 +24,7 @@ func SetupWerfChartParams(cmd *cobra.Command, commonCmdData *cmd_werf_common.Cmd
 	cmd_werf_common.SetupIgnoreSecretKey(commonCmdData, cmd)
 }
 
-func InitWerfChartParams(commonCmdData *cmd_werf_common.CmdData, wc *werf_chart.WerfChart, chartDir string) error {
+func InitWerfChartParams(ctx context.Context, commonCmdData *cmd_werf_common.CmdData, wc *werf_chart.WerfChart, chartDir string) error {
 	wc.SecretValueFiles = *commonCmdData.SecretValues
 
 	if extraAnnotations, err := cmd_werf_common.GetUserExtraAnnotations(commonCmdData); err != nil {
@@ -41,7 +41,7 @@ func InitWerfChartParams(commonCmdData *cmd_werf_common.CmdData, wc *werf_chart.
 
 	// NOTE: project-dir is the same as chart-dir for werf helm install/upgrade commands
 	// NOTE: project-dir is werf-project dir only for werf converge/dismiss commands
-	if m, err := deploy.GetSafeSecretManager(context.Background(), chartDir, chartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
+	if m, err := deploy.GetSafeSecretManager(ctx, chartDir, chartDir, *commonCmdData.SecretValues, wc.LocalGitRepo, *commonCmdData.DisableDeterminism, *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {
 		wc.SecretsManager = m

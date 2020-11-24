@@ -1,7 +1,6 @@
 package helm
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 
 	"github.com/spf13/cobra"
+	"github.com/werf/werf/cmd/werf/common"
 	cmd_werf_common "github.com/werf/werf/cmd/werf/common"
 
 	"helm.sh/helm/v3/pkg/action"
@@ -24,12 +24,14 @@ import (
 var templateCmdData cmd_werf_common.CmdData
 
 func NewTemplateCmd(actionConfig *action.Configuration) *cobra.Command {
-	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{})
+	ctx := common.BackgroundContext()
+
+	wc := werf_chart.NewWerfChart(ctx, nil, false, werf_chart.WerfChartOptions{})
 
 	cmd, helmAction := cmd_helm.NewTemplateCmd(actionConfig, os.Stdout, cmd_helm.TemplateCmdOptions{
 		LoadOptions: loader.LoadOptions{
 			ChartExtender:               wc,
-			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
+			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(ctx, nil, false, werf_chart.WerfChartOptions{}) },
 		},
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 	})
@@ -53,17 +55,17 @@ func NewTemplateCmd(actionConfig *action.Configuration) *cobra.Command {
 			wc.ChartDir = chartDir
 		}
 
-		if err := InitWerfChartParams(&templateCmdData, wc, wc.ChartDir); err != nil {
+		if err := InitWerfChartParams(ctx, &templateCmdData, wc, wc.ChartDir); err != nil {
 			return fmt.Errorf("unable to init werf chart: %s", err)
 		}
 
-		if vals, err := werf_chart.GetServiceValues(context.Background(), "PROJECT", "REPO", "NAMESPACE", nil, werf_chart.ServiceValuesOptions{IsStub: true}); err != nil {
+		if vals, err := werf_chart.GetServiceValues(ctx, "PROJECT", "REPO", "NAMESPACE", nil, werf_chart.ServiceValuesOptions{IsStub: true}); err != nil {
 			return fmt.Errorf("error creating service values: %s", err)
 		} else if err := wc.SetServiceValues(vals); err != nil {
 			return err
 		}
 
-		return wc.WrapTemplate(context.Background(), func() error {
+		return wc.WrapTemplate(ctx, func() error {
 			return oldRunE(cmd, args)
 		})
 	}

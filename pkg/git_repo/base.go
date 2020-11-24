@@ -7,7 +7,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/werf/werf/pkg/util"
+
+	"github.com/go-git/go-git/v5/plumbing/filemode"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -323,6 +328,139 @@ func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, c
 		return false, fmt.Errorf("bad commit `%s`: %s", commit, err)
 	}
 
+	return true, nil
+}
+
+func (repo *Base) doCheckAndReadSymlink(ctx context.Context, repoPath, gitDir string, commit string, path string) (bool, []byte, error) {
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return false, nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return false, nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return false, nil, fmt.Errorf("cannot get commit %q object: %s", commit, err)
+	}
+
+	if f, err := commitObj.File(path); err == object.ErrFileNotFound {
+		return false, nil, nil
+	} else if err != nil {
+		return false, nil, err
+	} else if f.Mode == filemode.Symlink {
+		if content, err := f.Contents(); err != nil {
+			return false, nil, err
+		} else {
+			return true, []byte(content), nil
+		}
+	}
+
+	return false, nil, nil
+}
+
+func (repo *Base) checkAndReadSymlink(ctx context.Context, repoPath, gitDir string, commit string, path string) (bool, []byte, error) {
+	var symlinkFound bool
+	var queue []string = []string{path}
+
+	for len(queue) > 0 {
+		var p string
+		p, queue = queue[0], queue[1:]
+
+		if isSymlink, linkDest, err := repo.doCheckAndReadSymlink(ctx, repoPath, gitDir, commit, p); err != nil {
+			return false, nil, fmt.Errorf("error checking %q: %s", p, err)
+		} else if isSymlink {
+			symlinkFound = true
+			queue = append(queue, string(linkDest))
+		} else {
+			return symlinkFound, []byte(p), nil
+		}
+	}
+
+	panic("unexpected condition")
+}
+
+func (repo *Base) readFile(ctx context.Context, repoPath, gitDir, commit, path string) ([]byte, error) {
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get commit %q object: %s", commit, err)
+	}
+
+	realpath, err := repo.realpath(ctx, repoPath, gitDir, commit, path)
+	if err != nil {
+		return nil, fmt.Errorf("error getting realpath for %q path: %s", path, err)
+	}
+
+	file, err := commitObj.File(realpath)
+	if err != nil {
+		return nil, fmt.Errorf("error getting repo file %q from commit %q: %s", realpath, commit, err)
+	}
+
+	content, err := file.Contents()
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(content), nil
+}
+
+func (repo *Base) realpath(ctx context.Context, repoPath, gitDir, commit, path string) (string, error) {
+	parts := util.SplitPath(path)
+
+	var resolvedBasePath string
+
+	for _, part := range parts {
+		pathToResolve := filepath.Join(resolvedBasePath, part)
+
+		if _, resolvedPath, err := repo.checkAndReadSymlink(ctx, repoPath, gitDir, commit, pathToResolve); err != nil {
+			return "", fmt.Errorf("error reading link %q: %s", pathToResolve, err)
+		} else {
+			resolvedBasePath = string(resolvedPath)
+		}
+	}
+
+	return resolvedBasePath, nil
+}
+
+func (repo *Base) isFileExists(ctx context.Context, repoPath, gitDir, commit, path string) (bool, error) {
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return false, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return false, fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return false, fmt.Errorf("cannot get commit %q object: %s", commit, err)
+	}
+
+	realpath, err := repo.realpath(ctx, repoPath, gitDir, commit, path)
+	if err != nil {
+		return false, fmt.Errorf("error getting realpath for %q path: %s", path, err)
+	}
+
+	if _, err := commitObj.File(realpath); err == object.ErrFileNotFound {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("error getting repo file %q from commit %q: %s", realpath, commit, err)
+	}
 	return true, nil
 }
 

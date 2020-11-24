@@ -230,7 +230,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 			data = d
 		}
 	} else {
-		if d, err := localGitRepo.ReadFile(commit, werfConfigPath); err != nil {
+		if d, err := localGitRepo.ReadFile(ctx, commit, werfConfigPath); err != nil {
 			return "", fmt.Errorf("unable to read werf config %s from local git repo: %s", werfConfigPath, err)
 		} else {
 			data = d
@@ -274,9 +274,9 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
 			}
 
-			data, isDataIdentical, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(localGitRepo, commit, projectDir, relTemplatePath)
+			data, isDataIdentical, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath)
 			if err != nil {
-				return "", fmt.Errorf("unable to read local git repo file %s and compare with project file: %s", relTemplatePath, err)
+				return "", err
 			}
 
 			if !isDataIdentical {
@@ -366,7 +366,7 @@ func funcMap(tmpl *template.Template, disableDeterminism bool) template.FuncMap 
 	if !disableDeterminism {
 		restrictedFunc := func(name string) func(interface{}) (string, error) {
 			return func(interface{}) (string, error) {
-				return "", fmt.Errorf("in deterministic mode function \"%s\" is restricted", name)
+				return "", fmt.Errorf("function \"%s\" is restricted in the determinism mode (disable with --disable-determinism)", name)
 			}
 		}
 
@@ -410,13 +410,13 @@ func (f files) doGet(path string) (string, error) {
 		}
 	}
 
-	if exists, err := f.LocalGitRepo.IsFileExists(f.Commit, path); err != nil {
+	if exists, err := f.LocalGitRepo.IsFileExists(f.ctx, f.Commit, path); err != nil {
 		return "", fmt.Errorf("unable to check existance of %s in the local git repo commit %s: %s", path, f.Commit, err)
 	} else if !exists {
 		return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
 	}
 
-	if b, err := f.LocalGitRepo.ReadFile(f.Commit, path); err != nil {
+	if b, err := f.LocalGitRepo.ReadFile(f.ctx, f.Commit, path); err != nil {
 		return "", fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
 	} else {
 		return string(b), nil
@@ -493,7 +493,7 @@ func (f files) doGlobFromGitRepo(ctx context.Context, pattern string) (map[strin
 			if matched, err := doublestar.PathMatch(pattern, path); err != nil {
 				return nil, fmt.Errorf("path match failed: %s", err)
 			} else if matched {
-				if b, err := f.LocalGitRepo.ReadFile(f.Commit, path); err != nil {
+				if b, err := f.LocalGitRepo.ReadFile(ctx, f.Commit, path); err != nil {
 					return nil, fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
 				} else {
 					resultPath := filepath.ToSlash(path)

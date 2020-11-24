@@ -915,6 +915,7 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 		}
 	}
 
+	var commit string
 	for _, werfConfigPath := range configPathToCheck {
 		if opts.DisableDeterminism || localGitRepo == nil {
 			if exists, err := util.FileExists(werfConfigPath); err != nil {
@@ -924,18 +925,19 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 			}
 		} else {
 			ctx := BackgroundContext()
-			commit, err := localGitRepo.HeadCommit(ctx)
-			if err != nil {
+			if c, err := localGitRepo.HeadCommit(ctx); err != nil {
 				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+			} else {
+				commit = c
 			}
 
 			relPath := util.GetRelativeToBaseFilepath(projectDir, werfConfigPath)
-			if exists, err := localGitRepo.IsFileExists(commit, relPath); err != nil {
-				return "", fmt.Errorf("unable to check %s existance in the local git repo: %s", relPath, err)
+			if exists, err := localGitRepo.IsFileExists(ctx, commit, relPath); err != nil {
+				return "", fmt.Errorf("unable to check %q existance in the local git repo commit %s: %s", relPath, commit, err)
 			} else if exists {
-				isDataIdentical, err := git_repo.CompareLocalGitRepoFileWithProjectFile(localGitRepo, commit, projectDir, relPath)
+				isDataIdentical, err := git_repo.CompareLocalGitRepoFileWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
 				if err != nil {
-					return "", fmt.Errorf("unable to compare local git repo file %s with project file: %s", relPath, err)
+					return "", err
 				}
 
 				if !isDataIdentical {
@@ -951,7 +953,7 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 		if opts.DisableDeterminism || localGitRepo == nil {
 			return "", fmt.Errorf("werf configuration file not found (%s)", strings.Join(configPathToCheck, ", "))
 		} else {
-			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo", strings.Join(configPathToCheck, ", "))
+			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo commit %s", strings.Join(configPathToCheck, ", "), commit)
 		}
 	}
 

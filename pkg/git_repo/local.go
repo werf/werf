@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/go-git/go-git/v5/plumbing/object"
-
 	"github.com/go-git/go-git/v5"
 
 	"github.com/werf/logboek"
@@ -209,6 +207,10 @@ func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum
 	return checksum, err
 }
 
+func (repo *Local) CheckAndReadSymlink(ctx context.Context, path string, commit string) (bool, []byte, error) {
+	return repo.checkAndReadSymlink(ctx, repo.Path, repo.GitDir, commit, path)
+}
+
 func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, error) {
 	return repo.isCommitExists(ctx, repo.Path, repo.GitDir, commit)
 }
@@ -235,8 +237,8 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoID)
 }
 
-func (repo *Local) IsFileExists(commit, path string) (bool, error) {
-	return isFileExists(repo.Path, commit, path)
+func (repo *Local) IsFileExists(ctx context.Context, commit, path string) (bool, error) {
+	return repo.isFileExists(ctx, repo.Path, repo.GitDir, commit, path)
 }
 
 func (repo *Local) GetFilePathList(ctx context.Context, commit string) ([]string, error) {
@@ -259,59 +261,22 @@ func (repo *Local) GetFilePathList(ctx context.Context, commit string) ([]string
 	return res, nil
 }
 
-func (repo *Local) ReadFile(commit, path string) ([]byte, error) {
-	return readFile(repo.Path, commit, path)
-}
+func (repo *Local) IsDirectoryExists(ctx context.Context, dir string, commit string) (bool, error) {
+	if paths, err := repo.GetFilePathList(ctx, commit); err != nil {
+		return false, fmt.Errorf("unable to get file path list from the local git repo commit %s: %s", commit, err)
+	} else {
+		cleanDirPath := filepath.ToSlash(filepath.Clean(dir))
+		for _, path := range paths {
+			isSubpath := util.IsSubpathOfBasePath(cleanDirPath, path)
+			if isSubpath {
+				return true, nil
+			}
+		}
 
-func isFileExists(repoPath, commit, path string) (bool, error) {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
-	if err != nil {
-		return false, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
-	}
-
-	commitHash, err := newHash(commit)
-	if err != nil {
-		return false, fmt.Errorf("bad commit hash %q: %s", commit, err)
-	}
-
-	commitObj, err := repository.CommitObject(commitHash)
-	if err != nil {
-		return false, fmt.Errorf("cannot get commit %q object: %s", commit, err)
-	}
-
-	if _, err := commitObj.File(path); err == object.ErrFileNotFound {
 		return false, nil
-	} else if err != nil {
-		return false, fmt.Errorf("error getting repo file %q from commit %q: %s", path, commit, err)
 	}
-	return true, nil
 }
 
-func readFile(repoPath, commit, filePath string) ([]byte, error) {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
-	if err != nil {
-		return nil, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
-	}
-
-	commitHash, err := newHash(commit)
-	if err != nil {
-		return nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
-	}
-
-	commitObj, err := repository.CommitObject(commitHash)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get commit %q object: %s", commit, err)
-	}
-
-	file, err := commitObj.File(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("error getting repo file %q from commit %q: %s", filePath, commit, err)
-	}
-
-	content, err := file.Contents()
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(content), nil
+func (repo *Local) ReadFile(ctx context.Context, commit, path string) ([]byte, error) {
+	return repo.readFile(ctx, repo.Path, repo.GitDir, commit, path)
 }
