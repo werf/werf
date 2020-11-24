@@ -12,6 +12,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/werf/logboek"
+
+	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -20,12 +22,16 @@ func GetContextTmpDir() string {
 	return filepath.Join(werf.GetServiceDir(), "tmp", "context")
 }
 
-func ContextAddFileChecksum(ctx context.Context, contextAddFile []string, projectDir string) (string, error) {
+func ContextAddFileChecksum(ctx context.Context, contextAddFile []string, projectDir string, matcher path_matcher.PathMatcher) (string, error) {
 	logboek.Context(ctx).Debug().LogF("-- ContextAddFileChecksum %q %q\n", projectDir, contextAddFile)
 
 	h := sha256.New()
 
 	for _, addFile := range contextAddFile {
+		if !matcher.MatchPath(addFile) {
+			continue
+		}
+
 		h.Write([]byte(addFile))
 
 		path := filepath.Join(projectDir, addFile)
@@ -35,17 +41,28 @@ func ContextAddFileChecksum(ctx context.Context, contextAddFile []string, projec
 			return "", fmt.Errorf("error accessing %q: %s", path, err)
 		}
 
-		if f, err := os.Open(path); err != nil {
-			return "", fmt.Errorf("unable to open %q: %s", path, err)
-		} else {
-			defer f.Close()
-			if _, err := io.Copy(h, f); err != nil {
-				return "", fmt.Errorf("error reading %q: %s", path, err)
+		if err := func() error {
+			f, err := os.Open(path)
+			if err != nil {
+				return fmt.Errorf("unable to open %q: %s", path, err)
 			}
+			defer f.Close()
+
+			if _, err := io.Copy(h, f); err != nil {
+				return fmt.Errorf("error reading %q: %s", path, err)
+			}
+
+			return nil
+		}(); err != nil {
+			return "", err
 		}
 	}
 
-	return fmt.Sprintf("%x", h.Sum(nil)), nil
+	if h.Size() == 0 {
+		return "", nil
+	} else {
+		return fmt.Sprintf("%x", h.Sum(nil)), nil
+	}
 }
 
 type contextAddFileDescriptor struct {

@@ -14,6 +14,15 @@ type ImageFromDockerfile struct {
 	raw *rawImageFromDockerfile
 }
 
+func (c *ImageFromDockerfile) validate() error {
+	if c.Dockerfile == "" || !isRelativePath(c.Dockerfile) {
+		return newDetailedConfigError("`dockerfile: PATH` required and should be relative path!", nil, c.raw.doc)
+	} else if !allRelativePaths(c.ContextAddFile) {
+		return newDetailedConfigError("`contextAddFile: [PATH, ...]|PATH` should be relative paths!", nil, c.raw.doc)
+	}
+	return nil
+}
+
 func (c *ImageFromDockerfile) GetName() string {
 	return c.Name
 }
