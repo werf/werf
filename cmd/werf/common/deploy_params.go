@@ -4,12 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
-
-	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/util"
 
@@ -233,19 +230,35 @@ func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, proj
 			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
 		}
 
-		if paths, err := localGitRepo.GetFilePathList(ctx, commit); err != nil {
-			return "", fmt.Errorf("unable to get file path list from the local git repo commit %s: %s", commit, err)
+		if exists, err := localGitRepo.IsDirectoryExists(ctx, name, commit); err != nil {
+			return "", fmt.Errorf("error checking existance of %q in the local git repo commit %s: %s", name, commit, err)
+		} else if exists {
+			return name, nil
 		} else {
-			cleanChartPath := filepath.ToSlash(filepath.Clean(name))
-			for _, path := range paths {
-				isSubpath := util.IsSubpathOfBasePath(cleanChartPath, path)
-				logboek.Context(ctx).Debug().LogF("Chart location procedure: check %s is the part of the base path %s => %v\n", path, cleanChartPath, isSubpath)
-				if isSubpath {
-					return name, nil
-				}
-			}
+			return "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
 		}
 
 		return "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
+	}
+}
+
+func MakeHelmReadFileFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableDeterminism bool) func(filePath string) ([]byte, error) {
+	if disableDeterminism || localGitRepo == nil {
+		return nil
+	}
+
+	return func(filePath string) ([]byte, error) {
+		commit, err := localGitRepo.HeadCommit(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get local repo head commit: %s", err)
+		}
+
+		relativeFilePath := util.GetRelativeToBaseFilepath(projectDir, filePath)
+
+		if data, err := localGitRepo.ReadFile(ctx, commit, relativeFilePath); err != nil {
+			return nil, fmt.Errorf("error reading %q from the local git repo commit %s: %s", relativeFilePath, commit, err)
+		} else {
+			return data, nil
+		}
 	}
 }

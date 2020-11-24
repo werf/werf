@@ -37,6 +37,8 @@ import (
 var _commonCmdData cmd_werf_common.CmdData
 
 func NewCmd() *cobra.Command {
+	ctx := common.BackgroundContext()
+
 	var namespace string
 	actionConfig := new(action.Configuration)
 
@@ -75,8 +77,10 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewSearchCmd(os.Stdout),
 		cmd_helm.NewShowCmd(os.Stdout, cmd_helm.ShowCmdOptions{
 			LoadOptions: loader.LoadOptions{
-				ChartExtender:               werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}),
-				SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
+				ChartExtender: werf_chart.NewWerfChart(ctx, nil, false, werf_chart.WerfChartOptions{}),
+				SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+					return werf_chart.NewWerfChart(ctx, nil, false, werf_chart.WerfChartOptions{})
+				},
 			},
 		}),
 		cmd_helm.NewStatusCmd(actionConfig, os.Stdout),

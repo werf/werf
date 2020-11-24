@@ -1,7 +1,6 @@
 package render
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -310,13 +309,13 @@ func runRender() error {
 	}
 
 	var secretsManager secret.Manager
-	if m, err := deploy.GetSafeSecretManager(context.Background(), projectDir, chartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
+	if m, err := deploy.GetSafeSecretManager(ctx, projectDir, chartDir, *commonCmdData.SecretValues, localGitRepo, *commonCmdData.DisableDeterminism, *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {
 		secretsManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{
+	wc := werf_chart.NewWerfChart(ctx, localGitRepo, *commonCmdData.DisableDeterminism, werf_chart.WerfChartOptions{
 		ReleaseName: releaseName,
 		ChartDir:    chartDir,
 
@@ -362,8 +361,13 @@ func runRender() error {
 
 	helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, output, cmd_helm.TemplateCmdOptions{
 		LoadOptions: loader.LoadOptions{
-			ChartExtender:               wc,
-			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
+			ChartExtender: wc,
+			SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+				return werf_chart.NewWerfChart(ctx, nil, *commonCmdData.DisableDeterminism, werf_chart.WerfChartOptions{})
+			},
+			LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
+			LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
+			ReadFileFunc:    common.MakeHelmReadFileFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
 		},
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 		ValueOpts: &values.Options{
@@ -373,7 +377,7 @@ func runRender() error {
 			FileValues:   *commonCmdData.SetFile,
 		},
 	})
-	return wc.WrapUpgrade(context.Background(), func() error {
+	return wc.WrapUpgrade(ctx, func() error {
 		return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, chartDir})
 	})
 }

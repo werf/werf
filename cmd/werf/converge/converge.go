@@ -307,7 +307,7 @@ func run(ctx context.Context, projectDir string) error {
 	}
 
 	var secretsManager secret.Manager
-	if m, err := deploy.GetSafeSecretManager(context.Background(), projectDir, chartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
+	if m, err := deploy.GetSafeSecretManager(ctx, projectDir, chartDir, *commonCmdData.SecretValues, localGitRepo, *commonCmdData.DisableDeterminism, *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {
 		secretsManager = m
@@ -340,7 +340,7 @@ func run(ctx context.Context, projectDir string) error {
 		lockManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(werf_chart.WerfChartOptions{
+	wc := werf_chart.NewWerfChart(ctx, localGitRepo, *commonCmdData.DisableDeterminism, werf_chart.WerfChartOptions{
 		ReleaseName: releaseName,
 		ChartDir:    chartDir,
 
@@ -373,10 +373,13 @@ func run(ctx context.Context, projectDir string) error {
 
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
 		LoadOptions: loader.LoadOptions{
-			ChartExtender:               wc,
-			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(werf_chart.WerfChartOptions{}) },
-			LoadDirFunc:                 common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
-			LocateChartFunc:             common.MakeLocateChartFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
+			ChartExtender: wc,
+			SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+				return werf_chart.NewWerfChart(ctx, nil, *commonCmdData.DisableDeterminism, werf_chart.WerfChartOptions{})
+			},
+			LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
+			LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
+			ReadFileFunc:    common.MakeHelmReadFileFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
 		},
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 		ValueOpts: &values.Options{
@@ -391,7 +394,7 @@ func run(ctx context.Context, projectDir string) error {
 		Atomic:          NewBool(cmdData.AutoRollback),
 		Timeout:         NewDuration(time.Duration(cmdData.Timeout)),
 	})
-	return wc.WrapUpgrade(context.Background(), func() error {
+	return wc.WrapUpgrade(ctx, func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
 	})
 }
