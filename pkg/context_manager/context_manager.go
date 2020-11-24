@@ -35,13 +35,20 @@ func ContextAddFileChecksum(ctx context.Context, contextAddFile []string, projec
 			return "", fmt.Errorf("error accessing %q: %s", path, err)
 		}
 
-		if f, err := os.Open(path); err != nil {
-			return "", fmt.Errorf("unable to open %q: %s", path, err)
-		} else {
-			defer f.Close()
-			if _, err := io.Copy(h, f); err != nil {
-				return "", fmt.Errorf("error reading %q: %s", path, err)
+		if err := func() error {
+			f, err := os.Open(path)
+			if err != nil {
+				return fmt.Errorf("unable to open %q: %s", path, err)
 			}
+			defer f.Close()
+
+			if _, err := io.Copy(h, f); err != nil {
+				return fmt.Errorf("error reading %q: %s", path, err)
+			}
+
+			return nil
+		}(); err != nil {
+			return "", err
 		}
 	}
 
