@@ -76,7 +76,7 @@ func ApplyContextAddFileToArchive(ctx context.Context, originalArchivePath strin
 		return "", fmt.Errorf("unable to create dir %q: %s", filepath.Dir(path), err)
 	}
 
-	logboek.Context(ctx).Default().LogF("Will copy %q archive to %q\n", originalArchivePath, path)
+	logboek.Context(ctx).Debug().LogF("Will copy %q archive to %q\n", originalArchivePath, path)
 
 	source, err := os.Open(originalArchivePath)
 	if err != nil {
@@ -123,7 +123,7 @@ CopyArchive:
 
 		for _, addFileDesc := range contextAddFileDescriptors {
 			if hdr.Name == filepath.ToSlash(addFileDesc.PathInsideContext) {
-				logboek.Context(ctx).Default().LogF("Matched file %q for replacement in the archive %q by contextAddFile=%q directive\n", hdr.Name, path, addFileDesc.AddFile)
+				logboek.Context(ctx).Debug().LogF("Matched file %q for replacement in the archive %q by contextAddFile=%q directive\n", hdr.Name, path, addFileDesc.AddFile)
 				continue CopyArchive
 			}
 		}
@@ -134,7 +134,7 @@ CopyArchive:
 			return "", fmt.Errorf("error copying %q from %q archive to %q: %s", hdr.Name, originalArchivePath, path, err)
 		}
 
-		logboek.Context(ctx).Default().LogF("Copied %s from %q archive to %q\n", hdr.Name, originalArchivePath, path)
+		logboek.Context(ctx).Debug().LogF("Copied %s from %q archive to %q\n", hdr.Name, originalArchivePath, path)
 	}
 
 	for _, addFileDesc := range contextAddFileDescriptors {
@@ -143,7 +143,7 @@ CopyArchive:
 		if err := copyFileIntoTar(sourceFilePath, tarEntryName, tw); err != nil {
 			return "", fmt.Errorf("unable to copy %q from workinto archive %q: %s", sourceFilePath, path, err)
 		}
-		logboek.Context(ctx).Default().LogF("Copied file %q in the archive %q with %q file from working directory (contextAddFile=%s directive)\n", tarEntryName, path, sourceFilePath, addFileDesc.AddFile)
+		logboek.Context(ctx).Debug().LogF("Copied file %q in the archive %q with %q file from working directory (contextAddFile=%s directive)\n", tarEntryName, path, sourceFilePath, addFileDesc.AddFile)
 	}
 
 	return path, nil
