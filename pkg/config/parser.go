@@ -238,7 +238,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	}
 
 	tmpl := template.New("werfConfig")
-	tmpl.Funcs(funcMap(tmpl, env, disableDeterminism))
+	tmpl.Funcs(funcMap(tmpl, disableDeterminism))
 
 	var werfConfigsTemplates []string
 
@@ -349,7 +349,7 @@ func getWerfConfigTemplatesFromFilesystem(path string) ([]string, error) {
 	return templates, nil
 }
 
-func funcMap(tmpl *template.Template, env string, disableDeterminism bool) template.FuncMap {
+func funcMap(tmpl *template.Template, disableDeterminism bool) template.FuncMap {
 	funcMap := sprig.TxtFuncMap()
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
 		return executeTemplate(tmpl, name, data)
@@ -364,8 +364,14 @@ func funcMap(tmpl *template.Template, env string, disableDeterminism bool) templ
 	}
 
 	if !disableDeterminism {
-		delete(funcMap, "env")
-		delete(funcMap, "expandenv")
+		restrictedFunc := func(name string) func(interface{}) (string, error) {
+			return func(interface{}) (string, error) {
+				return "", fmt.Errorf("in deterministic mode function \"%s\" is restricted", name)
+			}
+		}
+
+		funcMap["env"] = restrictedFunc("env")
+		funcMap["expandenv"] = restrictedFunc("expandenv")
 	}
 
 	return funcMap
