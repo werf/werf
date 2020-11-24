@@ -179,7 +179,7 @@ func runDismiss() error {
 		lockManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, localGitRepo, *commonCmdData.DisableDeterminism, werf_chart.WerfChartOptions{
+	wc := werf_chart.NewWerfChart(ctx, localGitRepo, *commonCmdData.DisableDeterminism, projectDir, werf_chart.WerfChartOptions{
 		ReleaseName: releaseName,
 		LockManager: lockManager,
 	})

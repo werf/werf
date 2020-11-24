@@ -77,9 +77,9 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewSearchCmd(os.Stdout),
 		cmd_helm.NewShowCmd(os.Stdout, cmd_helm.ShowCmdOptions{
 			LoadOptions: loader.LoadOptions{
-				ChartExtender: werf_chart.NewWerfChart(ctx, nil, false, werf_chart.WerfChartOptions{}),
+				ChartExtender: werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{}),
 				SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-					return werf_chart.NewWerfChart(ctx, nil, false, werf_chart.WerfChartOptions{})
+					return werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
 				},
 			},
 		}),

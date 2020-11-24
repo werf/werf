@@ -3,6 +3,8 @@ package werf
 import (
 	"context"
 
+	"github.com/werf/werf/pkg/determinism_inspector"
+
 	"github.com/werf/logboek"
 )
 
@@ -14,6 +16,8 @@ func PrintGlobalWarnings(ctx context.Context) {
 	for _, line := range GlobalWarningLines {
 		printGlobalWarningLn(ctx, line)
 	}
+
+	determinism_inspector.PrintInspectionDebrief(ctx)
 }
 
 func GlobalWarningLn(ctx context.Context, line string) {

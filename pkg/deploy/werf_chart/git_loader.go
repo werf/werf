@@ -38,19 +38,12 @@ func LoadFilesFromGit(ctx context.Context, localGitRepo *git_repo.Local, project
 
 	for _, repoPath := range repoPaths {
 		if util.IsSubpathOfBasePath(relativeLoadDir, repoPath) {
-			data, isDataIdentical, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, repoPath)
-			if err != nil {
+			if d, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, repoPath); err != nil {
 				return nil, err
+			} else {
+				logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, repoPath, d)
+				res = append(res, &loader.BufferedFile{Name: util.GetRelativeToBaseFilepath(relativeLoadDir, repoPath), Data: d})
 			}
-
-			logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, repoPath, data)
-
-			if !isDataIdentical {
-				logboek.Context(ctx).Warn().LogF("WARNING: In deterministic mode uncommitted file %s was not taken into account\n", repoPath)
-			}
-
-			logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, repoPath, data)
-			res = append(res, &loader.BufferedFile{Name: util.GetRelativeToBaseFilepath(relativeLoadDir, repoPath), Data: data})
 		}
 	}
 

@@ -11,10 +11,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func DecodeSecretValuesFileFromGitCommit(ctx context.Context, path string, commit string, localGitRepo *git_repo.Local, m secret.Manager) (map[string]interface{}, error) {
+func DecodeSecretValuesFileFromGitCommit(ctx context.Context, path string, commit string, localGitRepo *git_repo.Local, m secret.Manager, projectDir string) (map[string]interface{}, error) {
 	var data []byte
-	if d, err := localGitRepo.ReadFile(ctx, commit, path); err != nil {
-		return nil, fmt.Errorf("error reading %q from the local git repo commit %s: %s", path, commit, err)
+
+	if d, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, path); err != nil {
+		return nil, err
 	} else {
 		data = d
 	}

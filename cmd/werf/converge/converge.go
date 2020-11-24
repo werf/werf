@@ -340,7 +340,7 @@ func run(ctx context.Context, projectDir string) error {
 		lockManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, localGitRepo, *commonCmdData.DisableDeterminism, werf_chart.WerfChartOptions{
+	wc := werf_chart.NewWerfChart(ctx, localGitRepo, *commonCmdData.DisableDeterminism, projectDir, werf_chart.WerfChartOptions{
 		ReleaseName: releaseName,
 		ChartDir:    chartDir,
 
@@ -375,7 +375,7 @@ func run(ctx context.Context, projectDir string) error {
 		LoadOptions: loader.LoadOptions{
 			ChartExtender: wc,
 			SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-				return werf_chart.NewWerfChart(ctx, nil, *commonCmdData.DisableDeterminism, werf_chart.WerfChartOptions{})
+				return werf_chart.NewWerfChart(ctx, nil, *commonCmdData.DisableDeterminism, projectDir, werf_chart.WerfChartOptions{})
 			},
 			LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),
 			LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableDeterminism),

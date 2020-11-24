@@ -140,7 +140,7 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupDisableDeterminism(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DisableDeterminism = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisableDeterminism, "disable-determinism", "", GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DETERMINISM"), "Disable werf deterministic mode (more info https://werf.io/documentation/advanced/configuration/determinism.html, default $WERF_DISABLE_DETERMINISM)")
+	cmd.Flags().BoolVarP(cmdData.DisableDeterminism, "disable-determinism", "", GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DETERMINISM"), "Disable werf determinism mode (more info https://werf.io/documentation/advanced/configuration/determinism.html, default $WERF_DISABLE_DETERMINISM)")
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -935,15 +935,6 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 			if exists, err := localGitRepo.IsFileExists(ctx, commit, relPath); err != nil {
 				return "", fmt.Errorf("unable to check %q existance in the local git repo commit %s: %s", relPath, commit, err)
 			} else if exists {
-				isDataIdentical, err := git_repo.CompareLocalGitRepoFileWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
-				if err != nil {
-					return "", err
-				}
-
-				if !isDataIdentical {
-					logboek.Context(ctx).Warn().LogF("WARNING: In deterministic mode uncommitted file %s was not taken into account\n", relPath)
-				}
-
 				return relPath, nil
 			}
 		}
