@@ -52,7 +52,7 @@ func NewCmd() *cobra.Command {
 
 			werfConfigTemplatesDir := common.GetWerfConfigTemplatesDir(projectDir, &commonCmdData)
 
-			return config.RenderWerfConfig(common.BackgroundContext(), werfConfigPath, werfConfigTemplatesDir, args, localGitRepo, configOpts)
+			return config.RenderWerfConfig(common.BackgroundContext(), projectDir, werfConfigPath, werfConfigTemplatesDir, args, localGitRepo, configOpts)
 		},
 	}
 
