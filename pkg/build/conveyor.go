@@ -1147,44 +1147,38 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		return nil, fmt.Errorf("unable to get head commit: %s", err)
 	}
 
-	if err := checkPathRelativity(c.projectDir, imageFromDockerfileConfig.Context); err != nil {
-		return nil, fmt.Errorf("unsupported context: %s", err)
-	}
-
 	for _, contextAddFile := range imageFromDockerfileConfig.ContextAddFile {
-		absPath := filepath.Join(c.projectDir, contextAddFile)
-		exist, err := util.FileExists(absPath)
+		absContextAddFile := filepath.Join(c.projectDir, imageFromDockerfileConfig.Context, contextAddFile)
+		exist, err := util.FileExists(absContextAddFile)
 		if err != nil {
-			return nil, fmt.Errorf("unable to check existance of file %s: %s", absPath, err)
+			return nil, fmt.Errorf("unable to check existance of file %s: %s", absContextAddFile, err)
 		}
 
 		if !exist {
-			return nil, fmt.Errorf("contextAddFile %s was not found", contextAddFile)
+			return nil, fmt.Errorf("contextAddFile '%s' was not found (the path must be relative to the context '%s')", contextAddFile, imageFromDockerfileConfig.Context)
 		}
 	}
 
-	if err := checkPathRelativity(c.projectDir, imageFromDockerfileConfig.Dockerfile); err != nil {
-		return nil, fmt.Errorf("unsupported dockerfile: %s", err)
-	}
-
-	exists, err := localGitRepo.IsFileExists(ctx, headCommit, imageFromDockerfileConfig.Dockerfile)
+	relDockerfilePath := filepath.Join(imageFromDockerfileConfig.Context, imageFromDockerfileConfig.Dockerfile)
+	exists, err := localGitRepo.IsFileExists(ctx, headCommit, relDockerfilePath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to check file %s existence in local git repository: %s", imageFromDockerfileConfig.Dockerfile, err)
+		return nil, fmt.Errorf("unable to check file %s existence in local git repository: %s", relDockerfilePath, err)
 	} else if !exists {
-		return nil, fmt.Errorf("dockerfile %s was not found in local git repository", imageFromDockerfileConfig.Dockerfile)
+		return nil, fmt.Errorf("dockerfile '%s' was not found in local git repository", relDockerfilePath)
 	}
 
-	dockerfileData, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, imageFromDockerfileConfig.Dockerfile)
+	dockerfileData, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, relDockerfilePath)
 	if err != nil {
 		return nil, err
 	}
 
+	relDockerignorePath := filepath.Join(imageFromDockerfileConfig.Context, ".dockerignore")
 	var dockerignorePatterns []string
-	exists, err = localGitRepo.IsFileExists(ctx, headCommit, ".dockerignore")
+	exists, err = localGitRepo.IsFileExists(ctx, headCommit, relDockerignorePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to check file .dockerignore existence in local git repository: %s", err)
 	} else if exists {
-		dockerignoreData, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, ".dockerignore")
+		dockerignoreData, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, relDockerignorePath)
 		if err != nil {
 			return nil, err
 		}
@@ -1267,15 +1261,6 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())
 
 	return img, nil
-}
-
-func checkPathRelativity(projectDir string, path string) error {
-	relPath, err := filepath.Rel(projectDir, filepath.Join(projectDir, path))
-	if err != nil || relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
-		return fmt.Errorf("the path %s must be relative to the project root", path)
-	}
-
-	return nil
 }
 
 func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, commit, relPath string) ([]byte, error) {

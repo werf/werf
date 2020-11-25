@@ -14,7 +14,6 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -22,34 +21,35 @@ func GetContextTmpDir() string {
 	return filepath.Join(werf.GetServiceDir(), "tmp", "context")
 }
 
-func ContextAddFileChecksum(ctx context.Context, contextAddFile []string, projectDir string, matcher path_matcher.PathMatcher) (string, error) {
+func ContextAddFileChecksum(ctx context.Context, projectDir string, contextDir string, contextAddFile []string, matcher path_matcher.PathMatcher) (string, error) {
 	logboek.Context(ctx).Debug().LogF("-- ContextAddFileChecksum %q %q\n", projectDir, contextAddFile)
 
 	h := sha256.New()
 
-	for _, addFile := range contextAddFile {
-		if !matcher.MatchPath(addFile) {
+	for _, addFileRelativeToContext := range contextAddFile {
+		addFileRelativeToProject := filepath.Join(contextDir, addFileRelativeToContext)
+		if !matcher.MatchPath(addFileRelativeToProject) {
 			continue
 		}
 
-		h.Write([]byte(addFile))
+		h.Write([]byte(addFileRelativeToContext))
 
-		path := filepath.Join(projectDir, addFile)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
+		addFileAbsolute := filepath.Join(projectDir, addFileRelativeToProject)
+		if _, err := os.Stat(addFileAbsolute); os.IsNotExist(err) {
 			continue
 		} else if err != nil {
-			return "", fmt.Errorf("error accessing %q: %s", path, err)
+			return "", fmt.Errorf("error accessing %q: %s", addFileAbsolute, err)
 		}
 
 		if err := func() error {
-			f, err := os.Open(path)
+			f, err := os.Open(addFileAbsolute)
 			if err != nil {
-				return fmt.Errorf("unable to open %q: %s", path, err)
+				return fmt.Errorf("unable to open %q: %s", addFileAbsolute, err)
 			}
 			defer f.Close()
 
 			if _, err := io.Copy(h, f); err != nil {
-				return fmt.Errorf("error reading %q: %s", path, err)
+				return fmt.Errorf("error reading %q: %s", addFileAbsolute, err)
 			}
 
 			return nil
@@ -70,7 +70,7 @@ type contextAddFileDescriptor struct {
 	PathInsideContext string
 }
 
-func ApplyContextAddFileToArchive(ctx context.Context, originalArchivePath string, contextPath string, contextAddFile []string, projectDir string) (string, error) {
+func ApplyContextAddFileToArchive(ctx context.Context, originalArchivePath string, projectDir string, contextDir string, contextAddFile []string) (string, error) {
 	path := filepath.Join(GetContextTmpDir(), uuid.NewV4().String())
 	if err := os.MkdirAll(filepath.Dir(path), 0777); err != nil {
 		return "", fmt.Errorf("unable to create dir %q: %s", filepath.Dir(path), err)
@@ -95,20 +95,11 @@ func ApplyContextAddFileToArchive(ctx context.Context, originalArchivePath strin
 	defer tw.Close()
 
 	var contextAddFileDescriptors []*contextAddFileDescriptor
-	for _, addFile := range contextAddFile {
-		var destFilePath string
-		if contextPath != "" {
-			if !util.IsSubpathOfBasePath(contextPath, addFile) {
-				return "", fmt.Errorf("specified contextAddFile %q is out of context %q", addFile, contextPath)
-			}
-			destFilePath = util.GetRelativeToBaseFilepath(contextPath, addFile)
-		} else {
-			destFilePath = addFile
-		}
-
+	for _, addFileRelativeToContext := range contextAddFile {
+		addFileRelativeToProject := filepath.Join(contextDir, addFileRelativeToContext)
 		contextAddFileDescriptors = append(contextAddFileDescriptors, &contextAddFileDescriptor{
-			AddFile:           addFile,
-			PathInsideContext: destFilePath,
+			AddFile:           addFileRelativeToProject,
+			PathInsideContext: addFileRelativeToContext,
 		})
 	}
 

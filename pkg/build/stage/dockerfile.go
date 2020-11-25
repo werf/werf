@@ -75,6 +75,15 @@ type DockerRunArgs struct {
 	ssh            string
 }
 
+func (d *DockerRunArgs) contextAddFileRelativeToProject() []string {
+	var result []string
+	for _, addFile := range d.contextAddFile {
+		result = append(result, filepath.Join(d.context, addFile))
+	}
+
+	return result
+}
+
 type DockerStages struct {
 	dockerStages           []instructions.Stage
 	dockerTargetStageIndex int
@@ -613,10 +622,10 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, _ Conveyor, _, img c
 	var archivePath = archive.GetFilePath()
 	if len(s.contextAddFile) > 0 {
 		if err := logboek.Context(ctx).Debug().LogProcess("Apply contextAddFile directive to the archive %s", archivePath).DoError(func() error {
-			if path, err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.context, s.contextAddFile, s.projectPath); err != nil {
+			if p, err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.projectPath, s.context, s.contextAddFile); err != nil {
 				return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
 			} else {
-				archivePath = path
+				archivePath = p
 				logboek.Context(ctx).Debug().LogF("Created temporary archive %s\n", archivePath)
 				return nil
 			}
@@ -635,12 +644,7 @@ func (s *DockerfileStage) DockerBuildArgs() ([]string, error) {
 	var result []string
 
 	if s.dockerfilePath != "" {
-		dockerfilePath := s.dockerfilePath
-		if s.context != "" {
-			dockerfilePath = util.GetRelativeToBaseFilepath(s.context, dockerfilePath)
-		}
-
-		result = append(result, fmt.Sprintf("--file=%s", dockerfilePath))
+		result = append(result, fmt.Sprintf("--file=%s", s.dockerfilePath))
 	}
 
 	if s.target != "" {
@@ -690,7 +694,7 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 		logProcess.Start()
 
 		wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BaseFilepath(), wildcards, false)
-		if contextAddChecksum, err := context_manager.ContextAddFileChecksum(ctx, s.contextAddFile, s.projectPath, wildcardsPathMatcher); err != nil {
+		if contextAddChecksum, err := context_manager.ContextAddFileChecksum(ctx, s.projectPath, s.context, s.contextAddFile, wildcardsPathMatcher); err != nil {
 			logProcess.Fail()
 			return "", fmt.Errorf("unable to calculate checksum for contextAddFile files list: %s", err)
 		} else {
@@ -790,7 +794,7 @@ entryNotFoundInGitRepository:
 					return err
 				}
 
-				unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFile...)
+				unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFileRelativeToProject()...)
 				if len(unusedFiles) != 0 {
 					logboek.Context(ctx).Warn().LogF("WARNING: Uncommitted changes were not taken into account (%s):\n", dockerfileLine)
 					logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(unusedFiles, "\n - "))
@@ -809,7 +813,7 @@ entryNotFoundInGitRepository:
 				return err
 			}
 
-			unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFile...)
+			unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFileRelativeToProject()...)
 			if len(unusedFiles) != 0 {
 				logboek.Context(ctx).Warn().LogF("WARNING: Ignored files by .gitignore files were not taken into account (%s):\n", dockerfileLine)
 				logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(unusedFiles, "\n - "))
