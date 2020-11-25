@@ -3,19 +3,7 @@ title: Base image
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/base_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
-summary: |
-  <a class="google-drawings" href="../../../images/configuration/base_image1.png" data-featherlight="image">
-      <img src="../../../images/configuration/base_image1_preview.png" alt="Base image">
-  </a>
-
-  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">from</span><span class="pi">:</span> <span class="s">&lt;image[:&lt;tag&gt;]&gt;</span>
-  <span class="na">fromLatest</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
-  <span class="na">herebyIAdmitThatFromLatestMightBreakReproducibility</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
-  <span class="na">fromCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-  <span class="na">fromImage</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
-  <span class="na">fromImageArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
-  </code></pre></div>
-  </div>
+directive_summary: base_image
 ---
 
 Here's a minimal `werf.yaml`. It describes a _image_ named `example` that is based on a _base image_ named `alpine`:

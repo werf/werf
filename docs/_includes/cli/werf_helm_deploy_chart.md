@@ -106,8 +106,7 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
       --three-way-merge-mode='':
             Set three way merge mode for release.
-            Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info           
-            https://werf.io/documentation/reference/deploy_process/experimental_three_way_merge.html
+            Supported 'enabled', 'disabled' and 'onlyNewReleases'
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':

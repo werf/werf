@@ -107,7 +107,6 @@ func GetWerfConfig(werfConfigPath, werfConfigTemplatesDir string, logRenderedFil
 			"###           WARNING! Project name cannot be changed later without rebuilding and redeploying your application!           ###\n" +
 			"###       Project name should be unique within group of projects that shares build hosts and deployed into the same        ###\n" +
 			"###                    Kubernetes clusters (i.e. unique across all groups within the same gitlab).                         ###\n" +
-			"### Read more about meta config section: https://werf.io/documentation/configuration/introduction.html#meta-config-section ###\n" +
 			"##############################################################################################################################"
 
 		return nil, fmt.Errorf(format, defaultProjectName)

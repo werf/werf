@@ -3,25 +3,7 @@ title: Использование Docker-инструкций
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/docker_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
-summary: |
-  <a class="google-drawings" href="../../../images/configuration/docker_directive1.png" data-featherlight="image">
-      <img src="../../../images/configuration/docker_directive1_preview.png">
-  </a>
-
-    <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">docker</span><span class="pi">:</span>
-    <span class="na">VOLUME</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;volume&gt;</span>
-    <span class="na">EXPOSE</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;expose&gt;</span>
-    <span class="na">ENV</span><span class="pi">:</span>
-      <span class="s">&lt;env_name&gt;</span><span class="pi">:</span> <span class="s">&lt;env_value&gt;</span>
-    <span class="na">LABEL</span><span class="pi">:</span>
-      <span class="s">&lt;label_name&gt;</span><span class="pi">:</span> <span class="s">&lt;label_value&gt;</span>
-    <span class="na">ENTRYPOINT</span><span class="pi">:</span> <span class="s">&lt;entrypoint&gt;</span>
-    <span class="na">CMD</span><span class="pi">:</span> <span class="s">&lt;cmd&gt;</span>
-    <span class="na">WORKDIR</span><span class="pi">:</span> <span class="s">&lt;workdir&gt;</span>
-    <span class="na">USER</span><span class="pi">:</span> <span class="s">&lt;user&gt;</span>
-    <span class="na">HEALTHCHECK</span><span class="pi">:</span> <span class="s">&lt;healthcheck&gt;</span></code></pre></div></div>
+directive_summary: docker
 ---
 
 Инструкции в [Dockerfile](https://docs.docker.com/engine/reference/builder/) можно условно разделить на две группы: сборочные инструкции и инструкции, которые влияют на manifest Docker-образа. 

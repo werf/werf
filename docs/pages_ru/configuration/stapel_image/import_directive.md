@@ -3,26 +3,7 @@ title: Импорт из артефактов и образов
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/import_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
-summary: |
-  <a class="google-drawings" href="../../../images/configuration/import_directive1.png" data-featherlight="image">
-  <img src="../../../images/configuration/import_directive1_preview.png" alt="Импорт из артефактов и образов">
-  </a>
-
-  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">import</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">artifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
-    <span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
-    <span class="na">stage</span><span class="pi">:</span> <span class="s">&lt;stage name&gt;</span>
-    <span class="na">before</span><span class="pi">:</span> <span class="s">&lt;install || setup&gt;</span>
-    <span class="na">after</span><span class="pi">:</span> <span class="s">&lt;install || setup&gt;</span>
-    <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
-    <span class="na">to</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
-    <span class="na">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
-    <span class="na">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
-    <span class="na">includePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
-    <span class="na">excludePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
-  </code></pre></div></div>
+directive_summary: import
 ---
 
 Из-за используемых инструментов сборки, либо просто из-за исходных файлов, размер конечного образа может увеличиваться в несколько раз. Зачастую эти файлы не нужны в конечном образе. Для решения таких проблем, сообщество Docker предлагает выполнять установки инструментов, сборку и удаление ненужных файлов за один шаг.

@@ -35,8 +35,8 @@ layout: sidebar
 
     <div class="post-content">
 
-    {%- if page.summary %}
-        <div class="summary">{{page.summary}}</div>
+    {%- if page.directive_summary %}
+    {%- include directive_summary.html directive=page.directive_summary %}
     {%- endif %}
 
         {%- unless page.toc == false %}

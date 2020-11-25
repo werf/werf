@@ -90,8 +90,6 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 		werf.GlobalWarningLn(`##      export WERF_SYNCHRONIZATION=kubernetes://werf-synchronization:mycontext@/root/.kube/custom-config`)
 		werf.GlobalWarningLn(`##  `)
 		werf.GlobalWarningLn(`##  — these same settings required to be used in every werf invocation for your project.`)
-		werf.GlobalWarningLn(`##  `)
-		werf.GlobalWarningLn(`##  More info about synchronization: https://werf.io/documentation/reference/stages_and_images.html#synchronization-locks-and-stages-storage-cache`)
 		werf.GlobalWarningLn(`###`)
 	}
 }
