@@ -1,5 +1,11 @@
 <ol class="breadcrumbs">
-   <li><a href="{{ relative_url }}/">{{ site.breadcrumbs.hometext | default: "Home" }}</a></li>
+   <li>
+   {%- if jekyll.environment == "production" %}
+   <a data-proofer-ignore href="/">{{ site.breadcrumbs.hometext | default: "Home" }}</a>
+   {%- else %}
+   <a href="{{ "/" | relative_url }}">{{ site.breadcrumbs.hometext | default: "Home" }}</a>
+   {%- endif %}
+   </li>
 
    {%- assign page_url_parts = page.url | split: '/' -%}
    {%- assign max_ind = page_url_parts.size | minus: 1 -%}

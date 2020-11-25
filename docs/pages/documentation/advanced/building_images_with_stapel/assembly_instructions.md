@@ -2,58 +2,7 @@
 title: Running assembly instructions
 sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/assembly_instructions.html
-summary: |
-  <a class="google-drawings" href="../../../images/configuration/assembly_instructions1.png" data-featherlight="image">
-      <img src="../../../images/configuration/assembly_instructions1_preview.png" alt="Assembly instructions">
-  </a>
-
-  <div class="tabs">
-    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell_tab')">Shell</a>
-    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible_tab')">Ansible</a>
-  </div>
-
-  <div id="shell_tab" class="tabs__content active">
-    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">shell</span><span class="pi">:</span>
-    <span class="na">beforeInstall</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
-    <span class="na">install</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
-    <span class="na">beforeSetup</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
-    <span class="na">setup</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
-    <span class="na">cacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">beforeInstallCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">installCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">beforeSetupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">setupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span></code></pre>
-    </div>
-  </div>
-
-  <div id="ansible_tab" class="tabs__content">
-    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">ansible</span><span class="pi">:</span>
-    <span class="na">beforeInstall</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
-    <span class="na">install</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
-    <span class="na">beforeSetup</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
-    <span class="na">setup</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
-    <span class="na">cacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">beforeInstallCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">installCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">beforeSetupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">setupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span></code></pre>
-      </div>
-  </div>
-
-  <br/>
-  <b>Running assembly instructions with git</b>
-
-  <a class="google-drawings" href="../../../images/configuration/assembly_instructions2.png" data-featherlight="image">
-    <img src="../../../images/configuration/assembly_instructions2_preview.png" alt="Running assembly instructions with git">
-  </a>
+directive_summary: shell_and_ansible
 ---
 
 ## What are user stages?
@@ -441,9 +390,9 @@ In other words, the contents of assembly instructions will change with each subs
 
 ## Dependency on changes in the git repo
 
-<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
-    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Dependency on git repo changes">
-  </a>
+<a class="google-drawings" href="{{ "images/configuration/assembly_instructions3.png" | relative_url }}" data-featherlight="image">
+    <img src="{{ "images/configuration/assembly_instructions3_preview.png" | relative_url }}" alt="Dependency on git repo changes">
+</a>
 
 The _git mapping reference_ states that there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ runs after the _beforeInstall_ user stage, and _gitLatestPatch_ runs after the _setup_ user stage if there are changes in the local git repository. Thus, in order to execute assembly instructions using the latest version of the source code, you can initiate the rebuilding of the _beforeInstall_ stage (by changing _cacheVersion_ or its instructions).
 

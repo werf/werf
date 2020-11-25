@@ -3,18 +3,7 @@ title: Base image
 sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/base_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
-summary: |
-  <a class="google-drawings" href="../../../images/configuration/base_image1.png" data-featherlight="image">
-      <img src="../../../images/configuration/base_image1_preview.png" alt="Base image">
-  </a>
-
-  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">from</span><span class="pi">:</span> <span class="s">&lt;image[:&lt;tag&gt;]&gt;</span>
-  <span class="na">fromLatest</span><span class="pi">:</span> <span class="s">&lt;bool&gt;</span>
-  <span class="na">fromCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-  <span class="na">fromImage</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
-  <span class="na">fromArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
-  </code></pre></div>
-  </div>
+directive_summary: base_image
 ---
 
 Here's a minimal `werf.yaml`. It describes a _image_ named `example` that is based on a _base image_ named `alpine`:
@@ -70,8 +59,8 @@ it is reasonable to store its description with _images_ and _artifacts_ which ar
 
 Also, this method can be useful if the stages of _stage conveyor_ are not enough for building the image. You can design your _stage conveyor_.
 
-<a class="google-drawings" href="../../../images/configuration/base_image2.png" data-featherlight="image">
-<img src="../../../images/configuration/base_image2_preview.png" alt="Conveyor with fromImage and fromArtifact stages">
+<a class="google-drawings" href="{{ "images/configuration/base_image2.png" | relative_url }}" data-featherlight="image">
+    <img src="{{ "images/configuration/base_image2_preview.png" | relative_url }}" alt="Conveyor with fromImage and fromArtifact stages">
 </a>
 
 ## fromCacheVersion
