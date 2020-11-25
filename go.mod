@@ -6,10 +6,9 @@ require (
 	bou.ke/monkey v1.0.1
 	github.com/Masterminds/goutils v1.1.0
 	github.com/Masterminds/semver v1.5.0
-	github.com/Masterminds/sprig v2.20.0+incompatible
+	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/alessio/shellescape v0.0.0-20190409004728-b115ca0f9053
-	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect
 	github.com/aws/aws-sdk-go v1.31.6
 	github.com/bitly/go-hostpool v0.1.0 // indirect
 	github.com/bmatcuk/doublestar v1.1.5
@@ -37,7 +36,6 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
-	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/mailru/easyjson v0.7.2 // indirect
 	github.com/miekg/pkcs11 v1.0.3 // indirect
@@ -52,7 +50,6 @@ require (
 	github.com/otiai10/curr v1.0.0 // indirect
 	github.com/prashantv/gostub v1.0.0
 	github.com/rodaine/table v1.0.0
-	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spaolacci/murmur3 v1.1.0
@@ -65,7 +62,6 @@ require (
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.4.6
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
-	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
@@ -79,7 +75,6 @@ require (
 	k8s.io/apimachinery v0.19.2
 	k8s.io/cli-runtime v0.19.2
 	k8s.io/client-go v0.19.2
-	k8s.io/helm v0.0.0-00010101000000-000000000000
 	k8s.io/klog v1.0.0
 	k8s.io/kubectl v0.19.2
 	mvdan.cc/xurls v1.1.0
@@ -98,50 +93,18 @@ replace k8s.io/client-go => k8s.io/client-go v0.19.2
 
 replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.19.2
 
-replace k8s.io/apiserver => k8s.io/apiserver v0.19.2
-
-replace k8s.io/cloud-provider => k8s.io/cloud-provider v0.19.2
-
-replace k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.19.2
-
 replace k8s.io/code-generator => k8s.io/code-generator v0.16.8-beta.0
 
 replace k8s.io/component-base => k8s.io/component-base v0.19.2
 
-replace k8s.io/cri-api => k8s.io/cri-api v0.19.2
-
-replace k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.19.2
-
-replace k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.19.2
-
-replace k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.19.2
-
-replace k8s.io/kube-proxy => k8s.io/kube-proxy v0.19.2
-
-replace k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.19.2
-
-replace k8s.io/kubelet => k8s.io/kubelet v0.19.2
-
 replace k8s.io/kubectl => k8s.io/kubectl v0.19.2
-
-replace k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.19.2
-
-replace k8s.io/metrics => k8s.io/metrics v0.19.2
-
-replace k8s.io/node-api => k8s.io/node-api v0.19.2
-
-replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.19.2
-
-replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.19.2
-
-replace k8s.io/sample-controller => k8s.io/sample-controller v0.19.2
-
-replace k8s.io/helm => github.com/werf/helm v0.0.0-20200729113816-b42ef1ec3fd7
 
 replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
 
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.3.1-0.20200508210449-c80284d4b529
 
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
+
+replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
 
 replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20201124163146-c2bd249981df

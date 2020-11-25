@@ -8,22 +8,24 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/werf/werf/pkg/util"
-
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 
-	"github.com/werf/werf/pkg/deploy/werf_chart"
-
-	"helm.sh/helm/v3/pkg/chart/loader"
-
-	"github.com/werf/werf/pkg/git_repo"
-
-	"github.com/Masterminds/sprig"
-
+	"github.com/Masterminds/sprig/v3"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 )
+
+func GetEnvironmentOrStub(environmentOption string) string {
+	if environmentOption == "" {
+		return "env"
+	}
+	return environmentOption
+}
 
 func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *config.WerfConfig) (string, error) {
 	if releaseOption != "" {
