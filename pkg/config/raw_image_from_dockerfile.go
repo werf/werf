@@ -8,7 +8,7 @@ type rawImageFromDockerfile struct {
 	Images         []string               `yaml:"-"`
 	Dockerfile     string                 `yaml:"dockerfile,omitempty"`
 	Context        string                 `yaml:"context,omitempty"`
-	ContextAddFile []string               `yaml:"contextAddFile,omitempty"`
+	ContextAddFile interface{}            `yaml:"contextAddFile,omitempty"`
 	Target         string                 `yaml:"target,omitempty"`
 	Args           map[string]interface{} `yaml:"args,omitempty"`
 	AddHost        interface{}            `yaml:"addHost,omitempty"`
@@ -82,8 +82,9 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(imageName string
 	image.Dockerfile = c.Dockerfile
 	image.Context = c.Context
 
-	for _, path := range c.ContextAddFile {
-		image.ContextAddFile = append(image.ContextAddFile, path)
+	image.ContextAddFile, err = InterfaceToStringArray(c.ContextAddFile, nil, c.doc)
+	if err != nil {
+		return nil, err
 	}
 
 	image.Target = c.Target

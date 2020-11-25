@@ -15,10 +15,12 @@ type ImageFromDockerfile struct {
 }
 
 func (c *ImageFromDockerfile) validate() error {
-	if c.Dockerfile == "" || !isRelativePath(c.Dockerfile) {
-		return newDetailedConfigError("`dockerfile: PATH` required and should be relative path!", nil, c.raw.doc)
+	if !isRelativePath(c.Context) {
+		return newDetailedConfigError("`context: PATH` should be relative to project directory!", nil, c.raw.doc)
+	} else if c.Dockerfile != "" && !isRelativePath(c.Dockerfile) {
+		return newDetailedConfigError("`dockerfile: PATH` required and should be relative to context!", nil, c.raw.doc)
 	} else if !allRelativePaths(c.ContextAddFile) {
-		return newDetailedConfigError("`contextAddFile: [PATH, ...]|PATH` should be relative paths!", nil, c.raw.doc)
+		return newDetailedConfigError("`contextAddFile: [PATH, ...]|PATH` each path should be relative to context!", nil, c.raw.doc)
 	}
 	return nil
 }

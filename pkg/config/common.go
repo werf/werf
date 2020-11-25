@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/werf/werf/pkg/util"
@@ -46,7 +48,14 @@ func allRelativePaths(paths []string) bool {
 }
 
 func isRelativePath(path string) bool {
-	return !isAbsolutePath(path)
+	return !isAbsolutePath(path) && func() bool {
+		relPath, err := filepath.Rel("dir", filepath.Join("dir", path))
+		if err != nil || relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
+			return false
+		}
+
+		return true
+	}()
 }
 
 func isAbsolutePath(p string) bool {
