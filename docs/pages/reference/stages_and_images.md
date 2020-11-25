@@ -114,7 +114,7 @@ Left column contains a short description of dependencies, right column includes 
     References:
     <ul>
     {% for reference in stage.references %}
-        <li><a href="{{ reference.link }}">{{ reference.name }}</a></li>
+        <li><a href="{{ reference.link | relative_url }}">{{ reference.name }}</a></li>
     {% endfor %}
     </ul>
 </div>

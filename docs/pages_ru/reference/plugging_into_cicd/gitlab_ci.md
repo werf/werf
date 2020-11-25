@@ -59,7 +59,7 @@ gitlab.ci.werf.io/job-url=$CI_PROJECT_URL/-/jobs/$CI_JOB_ID
 
 ### WERF_ENV
 
-В GitLab реализована [поддержка окружений](https://docs.gitlab.com/ce/ci/environments.html). werf определяет название текущего окружения из CI-задания GitLab.
+В GitLab реализована [поддержка окружений](https://docs.gitlab.com/ce/ci/environments/index.html). werf определяет название текущего окружения из CI-задания GitLab.
 
 Значение для установки переменной окружения [`WERF_ENV`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_env) формируется на основе переменной окружения GitLab [`CI_ENVIRONMENT_SLUG`](https://docs.gitlab.com/ee/ci/variables/).
 

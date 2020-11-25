@@ -4,16 +4,16 @@
 <meta name="description" content="{% if page.summary %}{{ page.summary | strip_html | strip_newlines | truncate: 160 }}{% endif %}">
 <meta name="keywords" content="{{page.tags}}{% if page.tags %}, {% endif %} {{page.keywords}}">
 {%- if page.multilang %}
-<link rel="alternate" hreflang="ru" href="{{ site.site_urls["ru"] }}{{ site.baseurl}}{{ page.url }}" />
-<link rel="alternate" hreflang="en" href="{{ site.site_urls["en"] }}{{ site.baseurl}}{{ page.url }}" />
+<link data-proofer-ignore rel="alternate" hreflang="ru" href="{{ site.site_urls.ru }}{{ site.baseurl}}{{ page.url }}" />
+<link data-proofer-ignore rel="alternate" hreflang="en" href="{{ site.site_urls.en }}{{ site.baseurl}}{{ page.url }}" />
 {%- endif %}
 <title>{{ page.title }} | {{ site.site_title }}</title>
 
-<link rel="apple-touch-icon" sizes="180x180" href="{{ site.baseurl }}/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="{{ site.baseurl }}/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="{{ site.baseurl }}/favicon-16x16.png">
-<link rel="manifest" href="{{ site.baseurl }}/site.webmanifest">
-<link rel="mask-icon" href="{{ site.baseurl }}/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ "apple-touch-icon.png" | relative_url }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ "favicon-32x32.png" | relative_url }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ "favicon-16x16.png" | relative_url }}">
+<link rel="manifest" href="{{ "site.webmanifest" | relative_url }}">
+<link rel="mask-icon" href="{{ "safari-pinned-tab.svg" | relative_url }}" color="#5bbad5">
 <meta name="msapplication-TileColor" content="#ffc40d">
 <meta name="theme-color" content="#ffffff">
 
