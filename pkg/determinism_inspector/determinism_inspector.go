@@ -29,7 +29,6 @@ func PrintInspectionDebrief(ctx context.Context) {
 			logboek.Context(ctx).Warn().LogF(" - %s\n", path)
 		}
 		logboek.Context(ctx).Warn().LogLn()
-		logboek.Context(ctx).Warn().LogF("More info about determinism in the werf avaiable on the page: https://werf.io/documentation/advanced/configuration/determinism.html")
-		logboek.Context(ctx).Warn().LogF("######################################\n")
+		logboek.Context(ctx).Warn().LogF("More info about determinism in the werf avaiable on the page: https://werf.io/documentation/advanced/configuration/determinism.html\n")
 	}
 }
