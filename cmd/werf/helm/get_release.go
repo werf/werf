@@ -3,6 +3,8 @@ package helm
 import (
 	"fmt"
 
+	"github.com/werf/werf/pkg/determinism_inspector"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
@@ -30,6 +32,7 @@ func NewGetReleaseCmd() *cobra.Command {
 
 	common.SetupDir(&getReleaseCmdData, cmd)
 	common.SetupDisableDeterminism(&getReleaseCmdData, cmd)
+	common.SetupNonStrictDeterminismInspection(&getReleaseCmdData, cmd)
 	common.SetupConfigTemplatesDir(&getReleaseCmdData, cmd)
 	common.SetupConfigPath(&getReleaseCmdData, cmd)
 
@@ -46,6 +49,10 @@ func NewGetReleaseCmd() *cobra.Command {
 func runGetRelease() error {
 	if err := werf.Init(*getReleaseCmdData.TmpDir, *getReleaseCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{NonStrict: *getReleaseCmdData.NonStrictDeterminismInspection}); err != nil {
+		return err
 	}
 
 	if err := git_repo.Init(); err != nil {

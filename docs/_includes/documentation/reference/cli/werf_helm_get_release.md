@@ -22,7 +22,7 @@ werf helm get-release [options]
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --disable-determinism=false
-            Disable werf deterministic mode (more info                                              
+            Disable werf determinism mode (more info                                                
             https://werf.io/documentation/advanced/configuration/determinism.html, default          
             $WERF_DISABLE_DETERMINISM)
       --docker-config=''
@@ -32,6 +32,10 @@ werf helm get-release [options]
             Use specified environment (default $WERF_ENV)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --non-strict-determinism-inspection=false
+            Change some errors to warnings during determinism inspection (more info                 
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_NON_STRICT_DETERMINISM_INSPECTION)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

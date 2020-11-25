@@ -22,7 +22,7 @@ werf managed-images rm [options]
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --disable-determinism=false
-            Disable werf deterministic mode (more info                                              
+            Disable werf determinism mode (more info                                                
             https://werf.io/documentation/advanced/configuration/determinism.html, default          
             $WERF_DISABLE_DETERMINISM)
       --docker-config=''
@@ -64,6 +64,10 @@ werf managed-images rm [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --non-strict-determinism-inspection=false
+            Change some errors to warnings during determinism inspection (more info                 
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_NON_STRICT_DETERMINISM_INSPECTION)
   -N, --project-name=''
             Use custom project name (default $WERF_PROJECT_NAME)
       --repo=''

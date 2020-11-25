@@ -38,7 +38,9 @@ func ReadGitRepoFileAndCompareWithProjectFile(ctx context.Context, localGitRepo 
 	}
 
 	if !isDataIdentical {
-		determinism_inspector.ReportUncommittedFile(ctx, relPath)
+		if err := determinism_inspector.ReportUncommittedFile(ctx, relPath); err != nil {
+			return nil, err
+		}
 	}
 
 	return repoData, err

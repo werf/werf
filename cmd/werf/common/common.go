@@ -68,12 +68,12 @@ type CmdData struct {
 	Parallel           *bool
 	ParallelTasksLimit *int64
 
-	DockerConfig          *string
-	InsecureRegistry      *bool
-	SkipTlsVerifyRegistry *bool
-	DryRun                *bool
-	DisableDeterminism    *bool
-
+	DockerConfig                    *string
+	InsecureRegistry                *bool
+	SkipTlsVerifyRegistry           *bool
+	DryRun                          *bool
+	DisableDeterminism              *bool
+	NonStrictDeterminismInspection  *bool
 	KeepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
 
@@ -141,6 +141,11 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 func SetupDisableDeterminism(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DisableDeterminism = new(bool)
 	cmd.Flags().BoolVarP(cmdData.DisableDeterminism, "disable-determinism", "", GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DETERMINISM"), "Disable werf determinism mode (more info https://werf.io/documentation/advanced/configuration/determinism.html, default $WERF_DISABLE_DETERMINISM)")
+}
+
+func SetupNonStrictDeterminismInspection(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.NonStrictDeterminismInspection = new(bool)
+	cmd.Flags().BoolVarP(cmdData.NonStrictDeterminismInspection, "non-strict-determinism-inspection", "", GetBoolEnvironmentDefaultFalse("WERF_NON_STRICT_DETERMINISM_INSPECTION"), "Change some errors to warnings during determinism inspection (more info https://werf.io/documentation/advanced/configuration/determinism.html, default $WERF_NON_STRICT_DETERMINISM_INSPECTION)")
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {

@@ -52,7 +52,7 @@ werf render [options]
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --disable-determinism=false
-            Disable werf deterministic mode (more info                                              
+            Disable werf determinism mode (more info                                                
             https://werf.io/documentation/advanced/configuration/determinism.html, default          
             $WERF_DISABLE_DETERMINISM)
       --docker-config=''
@@ -123,6 +123,10 @@ werf render [options]
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+      --non-strict-determinism-inspection=false
+            Change some errors to warnings during determinism inspection (more info                 
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_NON_STRICT_DETERMINISM_INSPECTION)
       --output=''
             Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
             default)
@@ -177,7 +181,7 @@ werf render [options]
             	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
             	...
             <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the 
-            following rules: 
+            following rules:
             - all characters are uppercase (app -> APP);
             - charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND)
       --report-path=''

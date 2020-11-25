@@ -1,7 +1,10 @@
 package config
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/werf/werf/pkg/determinism_inspector"
 )
 
 type Mount struct {
@@ -14,7 +17,9 @@ type Mount struct {
 
 func (c *Mount) validate(disableDeterminism bool) error {
 	if !disableDeterminism {
-		return fmt.Errorf("'mount' directive is forbidden, it is recommended to avoid this directive, otherwise disable werf determinism mode with option --disable-determinism (or WERF_DISABLE_DETERMINISM=1 environment variable)")
+		if err := determinism_inspector.ReportMountDirectiveUsage(context.Background()); err != nil {
+			return err
+		}
 	}
 
 	if c.raw.From != "" && c.raw.FromPath != "" {

@@ -13,6 +13,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/werf/werf/pkg/determinism_inspector"
+
 	"github.com/Masterminds/sprig/v3"
 	"github.com/bmatcuk/doublestar"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -360,7 +362,7 @@ func funcMap(tmpl *template.Template, disableDeterminism bool) template.FuncMap 
 	if !disableDeterminism {
 		restrictedFunc := func(name string) func(interface{}) (string, error) {
 			return func(interface{}) (string, error) {
-				return "", fmt.Errorf("function \"%s\" is restricted due to enabled determinism mode (more info https://werf.io/documentation/advanced/configuration/determinism.html)", name)
+				return "", determinism_inspector.ReportGoTemplateEnvFunctionUsage(context.Background(), name)
 			}
 		}
 

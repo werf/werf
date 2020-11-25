@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/determinism_inspector"
 
 	"github.com/werf/werf/pkg/git_repo"
 
@@ -155,6 +156,7 @@ Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NA
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupDisableDeterminism(&commonCmdData, cmd)
+	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -246,6 +248,10 @@ func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData com
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
+		return err
 	}
 
 	if err := git_repo.Init(); err != nil {
