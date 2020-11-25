@@ -8,6 +8,7 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/determinism_inspector"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/host_cleaning"
@@ -69,6 +70,10 @@ func runReset() error {
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
+		return err
 	}
 
 	if err := git_repo.Init(); err != nil {

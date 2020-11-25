@@ -3,6 +3,8 @@ package helm
 import (
 	"fmt"
 
+	"github.com/werf/werf/pkg/determinism_inspector"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
@@ -30,6 +32,7 @@ func NewGetNamespaceCmd() *cobra.Command {
 
 	common.SetupDir(&getNamespaceCmdData, cmd)
 	common.SetupDisableDeterminism(&getNamespaceCmdData, cmd)
+	common.SetupNonStrictDeterminismInspection(&getNamespaceCmdData, cmd)
 	common.SetupConfigTemplatesDir(&getNamespaceCmdData, cmd)
 	common.SetupConfigPath(&getNamespaceCmdData, cmd)
 
@@ -46,6 +49,10 @@ func NewGetNamespaceCmd() *cobra.Command {
 func runGetNamespace() error {
 	if err := werf.Init(*getNamespaceCmdData.TmpDir, *getNamespaceCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{NonStrict: *getNamespaceCmdData.NonStrictDeterminismInspection}); err != nil {
+		return err
 	}
 
 	if err := git_repo.Init(); err != nil {
