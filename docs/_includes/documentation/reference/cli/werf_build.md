@@ -49,7 +49,7 @@ werf build [IMAGE_NAME...] [options]
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --disable-determinism=false
-            Disable werf deterministic mode (more info                                              
+            Disable werf determinism mode (more info                                                
             https://werf.io/documentation/advanced/configuration/determinism.html, default          
             $WERF_DISABLE_DETERMINISM)
       --docker-config=''
@@ -112,6 +112,10 @@ werf build [IMAGE_NAME...] [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --non-strict-determinism-inspection=false
+            Change some errors to warnings during determinism inspection (more info                 
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_NON_STRICT_DETERMINISM_INSPECTION)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL)
       --parallel-tasks-limit=5
@@ -157,7 +161,7 @@ werf build [IMAGE_NAME...] [options]
             	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
             	...
             <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the 
-            following rules: 
+            following rules:
             - all characters are uppercase (app -> APP);
             - charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND)
       --report-path=''
