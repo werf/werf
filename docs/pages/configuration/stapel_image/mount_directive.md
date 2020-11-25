@@ -3,19 +3,7 @@ title: Reducing image size and speeding up a build by mounts
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/mount_directive.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
-summary: |
-  <a class="google-drawings" href="../../../../images/configuration/mount_directive1.png" data-featherlight="image">
-      <img src="../../../../images/configuration/mount_directive1_preview.png">
-  </a>
-
-  <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">mount</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">from</span><span class="pi">:</span> <span class="s">tmp_dir</span>
-    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span>
-  <span class="pi">-</span> <span class="s">from</span><span class="pi">:</span> <span class="s">build_dir</span>
-    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span>
-  <span class="pi">-</span> <span class="s">fromPath</span><span class="pi">:</span> <span class="s">&lt;absolute_or_relative_path&gt;</span>
-    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span></code></pre>
-  </div>
+directive_summary: mount
 ---
 
 Quite often when you build an image, you have auxiliary files that should be excluded from the image:

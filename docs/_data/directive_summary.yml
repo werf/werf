@@ -1,0 +1,175 @@
+en:
+  base_image: &base_image
+    link: "images/configuration/base_image1.png"
+    preview_link: "images/configuration/base_image1_preview.png"
+    link_alt: "from stage"
+    yaml: |
+      from: <image[:<tag>]>
+      fromLatest: <bool>
+      fromCacheVersion: <arbitrary string>
+      fromImage: <image name>
+      fromImageArtifact: <artifact name>
+  docker: &docker
+    link: "images/configuration/docker_directive1.png"
+    preview_link: "images/configuration/docker_directive1_preview.png"
+    link_alt: "dockerInstructions stage"
+    yaml: |
+      docker:
+        VOLUME:
+        - <volume>
+        EXPOSE:
+        - <expose>
+        ENV:
+          <env_name>: <env_value>
+        LABEL:
+          <label_name>: <label_value>
+        ENTRYPOINT: <entrypoint>
+        CMD: <cmd>
+        WORKDIR: <workdir>
+        USER: <user>
+        HEALTHCHECK: <healthcheck>
+  git: &git
+    link: "images/configuration/git_directive1.png"
+    preview_link: "images/configuration/git_directive1_preview.png"
+    link_alt: "Git stages"
+    yamls:
+    - name: local
+      data: |
+        git:
+        - add: <absolute path in git repository>
+          to: <absolute path inside image>
+          owner: <owner>
+          group: <group>
+          includePaths:
+          - <path or glob relative to path in add>
+          excludePaths:
+          - <path or glob relative to path in add>
+          stageDependencies:
+            install:
+            - <path or glob relative to path in add>
+            beforeSetup:
+            - <path or glob relative to path in add>
+            setup:
+            - <path or glob relative to path in add>
+    - name: remote
+      data: |
+        git:
+        - url: <git repo url>
+          branch: <branch name>
+          commit: <commit>
+          tag: <tag>
+          add: <absolute path in git repository>
+          to: <absolute path inside image>
+          owner: <owner>
+          group: <group>
+          includePaths:
+          - <path or glob relative to path in add>
+          excludePaths:
+          - <path or glob relative to path in add>
+          stageDependencies:
+            install:
+            - <path or glob relative to path in add>
+            beforeSetup:
+            - <path or glob relative to path in add>
+            setup:
+            - <path or glob relative to path in add>
+  shell_and_ansible: &shell_and_ansible
+    link: "images/configuration/assembly_instructions1.png"
+    preview_link: "images/configuration/assembly_instructions1_preview.png"
+    link_alt: "User stages"
+    yamls:
+    - name: shell
+      data: |
+        shell:
+          beforeInstall:
+          - <bash command>
+          install:
+          - <bash command>
+          beforeSetup:
+          - <bash command>
+          setup:
+          - <bash command>
+          cacheVersion: <arbitrary string>
+          beforeInstallCacheVersion: <arbitrary string>
+          installCacheVersion: <arbitrary string>
+          beforeSetupCacheVersion: <arbitrary string>
+          setupCacheVersion: <arbitrary string>
+    - name: ansible
+      data: |
+        ansible:
+          beforeInstall:
+          - <task>
+          install:
+          - <task>
+          beforeSetup:
+          - <task>
+          setup:
+          - <task>
+          cacheVersion: <arbitrary string>
+          beforeInstallCacheVersion: <arbitrary string>
+          installCacheVersion: <arbitrary string>
+          beforeSetupCacheVersion: <arbitrary string>
+          setupCacheVersion: <arbitrary string>
+    extra: &shell_and_ansible_extra
+      text: "Running assembly instructions with git"
+      link: "images/configuration/assembly_instructions2.png"
+      preview_link: "images/configuration/assembly_instructions2_preview.png"
+  mount: &mount
+    link: "images/configuration/mount_directive1.png"
+    preview_link: "images/configuration/mount_directive1_preview.png"
+    link_alt: "from stage"
+    yaml: |
+      mount:
+      - from: tmp_dir
+        to: <absolute_path>
+      - from: build_dir
+        to: <absolute_path>
+      - fromPath: <absolute_or_relative_path>
+        to: <absolute_path>
+  import: &import
+    link: "images/configuration/import_directive1.png"
+    preview_link: "images/configuration/import_directive1_preview.png"
+    link_alt: "Import stages"
+    yaml: |
+      import:
+      - artifact: <artifact name>
+        image: <image name>
+        before: <install  setup>
+        after: <install  setup>
+        add: <absolute path>
+        to: <absolute path>
+        owner: <owner>
+        group: <group>
+        includePaths:
+        - <relative path or glob>
+        excludePaths:
+        - <relative path or glob>
+  artifact: &artifact
+    link: "images/configuration/stapel_artifact1.png"
+    preview_link: "images/configuration/stapel_artifact1_preview.png"
+    link_alt: "Artifact stages"
+ru:
+  base_image:
+    << : *base_image
+    link_alt: "Стадия from"
+  docker:
+    << : *docker
+    link_alt: "Стадия dockerInstructions"
+  git:
+    << : *git
+    link_alt: "Стадии git"
+  shell_and_ansible:
+    << : *shell_and_ansible
+    link_alt: "Пользовательские стадии"
+    extra:
+      << : *shell_and_ansible_extra
+      text: "Запуск инструкций сборки при изменениях в git-репозитории"
+  mount:
+    << : *mount
+    link_alt: "Стадия from"
+  import:
+    << : *import
+    link_alt: "Стадии импорта"
+  artifact:
+    << : *artifact
+    link_alt: "Стадии артефакта"

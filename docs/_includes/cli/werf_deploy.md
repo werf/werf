@@ -14,10 +14,7 @@ ids from Docker repo. So images should be published prior running deploy.
 Helm chart directory .helm should exists and contain valid Helm chart.
 
 Environment is a required param for the deploy by default, because it is needed to construct Helm   
-Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
-
-Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to       
-change it: [https://werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html](https://werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html)
+Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command
 
 {{ header }} Syntax
 
@@ -198,12 +195,10 @@ werf deploy [options]
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
-            Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -s, --stages-storage=''
             Docker Repo to store stages or :local for non-distributed build (only :local is         
-            supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
+            supported for now; default $WERF_STAGES_STORAGE environment)
       --stages-storage-repo-docker-hub-password=''
             Docker Hub password for stages storage (default                                         
             $WERF_STAGES_STORAGE_REPO_DOCKER_HUB_PASSWORD, $WERF_REPO_DOCKER_HUB_PASSWORD)
@@ -251,8 +246,7 @@ werf deploy [options]
             specifying git tag in the $WERF_TAG_GIT_TAG)
       --three-way-merge-mode=''
             Set three way merge mode for release.
-            Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info           
-            https://werf.io/documentation/reference/deploy_process/experimental_three_way_merge.html
+            Supported 'enabled', 'disabled' and 'onlyNewReleases'
   -t, --timeout=0
             Resources tracking timeout in seconds
       --tmp-dir=''
