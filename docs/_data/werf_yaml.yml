@@ -147,12 +147,15 @@ en:
         - &dockerfile-image-section-dockerfile
           name: dockerfile
           value: "string"
-          description: Dockerfile path relative to the project directory
+          description: Dockerfile path relative to the context PATH
         - &dockerfile-image-section-context
           name: context
           value: "string"
-          default: "."
           description: Build context PATH inside project directory
+        - &dockerfile-image-section-contextFileAdd
+          name: contextAddFile
+          value: "[ string, ... ]"
+          description: Untracked files for adding to build context. The paths must be relative to context PATH
         - &dockerfile-image-section-target
           name: target
           value: "string"
@@ -160,7 +163,7 @@ en:
         - &dockerfile-image-section-args
           name: args
           value: "{ name string: value string, ... }"
-          description: Build-time variables (see docker build --build-arg option)
+          description: Variables for ARG dockerfile instructions (see docker build --build-arg option)
         - &dockerfile-image-section-addHost
           name: addHost
           value: "[ string, ... ]"
@@ -593,15 +596,15 @@ ru:
           description: Одно или несколько уникальных имён для образа
           detailsAnchor: "#секция-image"
         - << : *dockerfile-image-section-dockerfile
-          name: dockerfile
-          description: Путь к Dockerfile относительно папки проекта
+          description: Путь к Dockerfile относительно директории контекста
         - << : *dockerfile-image-section-context
-          name: context
           description: Путь к контексту внутри папки проекта
+        - << : *dockerfile-image-section-contextFileAdd
+          description: Добавление нехранящихся в git файлов в сборочный контекст. Пути должны быть относительно директории контекста
         - << : *dockerfile-image-section-target
           description: Конкретная стадия Dockerfile (по умолчанию — последняя, подобно docker build --target)
         - << : *dockerfile-image-section-args
-          description: Переменные окружения на время сборки (подобно docker build --build-arg)
+          description: Переменные для ARG Dockerfile-инструкций (подобно docker build --build-arg)
         - << : *dockerfile-image-section-addHost
           description: Установить связь host-to-IP (host:ip) (подобно docker build --add-host)
         - << : *dockerfile-image-section-network
