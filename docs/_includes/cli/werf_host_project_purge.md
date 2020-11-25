@@ -44,8 +44,7 @@ werf host project purge [PROJECT_NAME ...] [options]
             * interactive terminal width or 140
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is         
-            supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://werf.io/documentation/reference/stages_and_images.html
+            supported for now; default $WERF_STAGES_STORAGE environment)
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

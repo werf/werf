@@ -88,9 +88,6 @@ layout: default
             </div>
         </li>
     </ul>
-    <a href="https://github.com/flant/werf/blob/master/README_ru.md#полный-список-возможностей" target="_blank" class="page__btn page__btn_o intro__btn">
-        Узнайте полный список возможностей
-    </a>
 </div>
 
 <div class="stats">

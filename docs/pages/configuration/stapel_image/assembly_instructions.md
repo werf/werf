@@ -2,58 +2,7 @@
 title: Running assembly instructions
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/assembly_instructions.html
-summary: |
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=2031&amp;h=144" data-featherlight="image">
-      <img src="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=1016&amp;h=72" alt="Assembly instructions">
-  </a>
-
-  <div class="tabs">
-    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
-    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
-  </div>
-
-  <div id="shell" class="tabs__content active">
-    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">shell</span><span class="pi">:</span>
-    <span class="na">beforeInstall</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
-    <span class="na">install</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
-    <span class="na">beforeSetup</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
-    <span class="na">setup</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
-    <span class="na">cacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">beforeInstallCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">installCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">beforeSetupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">setupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span></code></pre>
-    </div>
-  </div>
-
-  <div id="ansible" class="tabs__content">
-    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">ansible</span><span class="pi">:</span>
-    <span class="na">beforeInstall</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
-    <span class="na">install</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
-    <span class="na">beforeSetup</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
-    <span class="na">setup</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
-    <span class="na">cacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">beforeInstallCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">installCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">beforeSetupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
-    <span class="na">setupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span></code></pre>
-      </div>
-  </div>
-
-  <br/>
-  <b>Running assembly instructions with git</b>
-
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
-    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206" alt="Running assembly instructions with git">
-  </a>
+directive_summary: shell_and_ansible
 ---
 
 ## What is user stages?

@@ -3,25 +3,7 @@ title: Importing from images and artifacts
 sidebar: documentation
 permalink: documentation/configuration/stapel_image/import_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
-summary: |
-  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vSHlip8uqKZ7Wh00abw6kuh0_3raMr-g1LcLjgRDgztHVIHbY2V-_qp7zZ0GPeN46LKoqb-yMhfaG-l/pub?w=2031&amp;h=144" data-featherlight="image">
-  <img src="https://docs.google.com/drawings/d/e/2PACX-1vSHlip8uqKZ7Wh00abw6kuh0_3raMr-g1LcLjgRDgztHVIHbY2V-_qp7zZ0GPeN46LKoqb-yMhfaG-l/pub?w=1016&amp;h=72">
-  </a>
-
-  <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">import</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">artifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
-    <span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
-    <span class="na">before</span><span class="pi">:</span> <span class="s">&lt;install || setup&gt;</span>
-    <span class="na">after</span><span class="pi">:</span> <span class="s">&lt;install || setup&gt;</span>
-    <span class="na">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
-    <span class="na">to</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
-    <span class="na">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
-    <span class="na">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
-    <span class="na">includePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
-    <span class="na">excludePaths</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
-  </code></pre></div></div>
+directive_summary: import
 ---
 
 The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them.

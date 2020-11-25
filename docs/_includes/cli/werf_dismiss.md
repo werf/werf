@@ -8,10 +8,7 @@ Delete application from Kubernetes.
 Helm Release will be purged and optionally Kubernetes Namespace.
 
 Environment is a required param for the dismiss by default, because it is needed to construct Helm  
-Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
-
-Read more info about Helm Release name, Kubernetes Namespace and how to change it:                  
-[https://werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html](https://werf.io/documentation/reference/deploy_process/deploy_into_kubernetes.html)
+Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command
 
 {{ header }} Syntax
 

@@ -106,7 +106,7 @@ func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html).\nOption can be specified multiple times to use multiple keys")
+	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}).\nOption can be specified multiple times to use multiple keys")
 }
 
 func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
@@ -218,7 +218,7 @@ func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/documentation/reference/stages_and_images.html")
+	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment)")
 }
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
@@ -454,7 +454,7 @@ func SetupThreeWayMergeMode(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	cmd.Flags().StringVarP(cmdData.ThreeWayMergeMode, "three-way-merge-mode", "", defaultValue, `Set three way merge mode for release.
-Supported 'enabled', 'disabled' and 'onlyNewReleases', see docs for more info https://werf.io/documentation/reference/deploy_process/experimental_three_way_merge.html`)
+Supported 'enabled', 'disabled' and 'onlyNewReleases'`)
 }
 
 func GetThreeWayMergeMode(threeWayMergeModeParam string) (helm.ThreeWayMergeModeType, error) {
