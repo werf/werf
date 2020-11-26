@@ -46,6 +46,10 @@ werf helm secret values decrypt [FILE_PATH] [options]
             Use custom working directory (default $WERF_DIR or current directory)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --non-strict-determinism-inspection=false
+            Change some errors to warnings during determinism inspection (more info                 
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_NON_STRICT_DETERMINISM_INSPECTION)
   -o, --output-file-path=''
             Write to file instead of stdout
       --tmp-dir=''
