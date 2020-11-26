@@ -14,6 +14,10 @@ werf synchronization [options]
 {{ header }} Options
 
 ```shell
+      --disable-determinism=false
+            Disable werf determinism mode (more info                                                
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --host=''

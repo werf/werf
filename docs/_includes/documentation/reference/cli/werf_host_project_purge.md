@@ -16,6 +16,10 @@ werf host project purge [PROJECT_NAME ...] [options]
 ```shell
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --disable-determinism=false
+            Disable werf determinism mode (more info                                                
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
