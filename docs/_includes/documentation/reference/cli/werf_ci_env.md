@@ -44,8 +44,8 @@ werf ci-env CI_SYSTEM [options]
             Use custom working directory (default $WERF_DIR or current directory)
       --disable-determinism=false
             Disable werf determinism mode (more info                                                
-            https://werf.io/documentation/advanced/configuration/determinism.html, default          
-            $WERF_DISABLE_DETERMINISM)
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
+            default $WERF_DISABLE_DETERMINISM)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -76,8 +76,8 @@ werf ci-env CI_SYSTEM [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --non-strict-determinism-inspection=false
             Change some errors to warnings during determinism inspection (more info                 
-            https://werf.io/documentation/advanced/configuration/determinism.html, default          
-            $WERF_NON_STRICT_DETERMINISM_INSPECTION)
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
+            default $WERF_NON_STRICT_DETERMINISM_INSPECTION)
   -o, --output-file-path=''
             Write to custom file (default $WERF_OUTPUT_FILE_PATH).
       --shell=''

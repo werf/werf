@@ -42,8 +42,8 @@ werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compo
             Use custom working directory (default $WERF_DIR or current directory)
       --disable-determinism=false
             Disable werf determinism mode (more info                                                
-            https://werf.io/documentation/advanced/configuration/determinism.html, default          
-            $WERF_DISABLE_DETERMINISM)
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
+            default $WERF_DISABLE_DETERMINISM)
       --docker-compose-bin-path=''
             Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)
       --docker-compose-command-options=''
@@ -93,8 +93,8 @@ werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compo
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --non-strict-determinism-inspection=false
             Change some errors to warnings during determinism inspection (more info                 
-            https://werf.io/documentation/advanced/configuration/determinism.html, default          
-            $WERF_NON_STRICT_DETERMINISM_INSPECTION)
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
+            default $WERF_NON_STRICT_DETERMINISM_INSPECTION)
       --repo=''
             Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password=''
