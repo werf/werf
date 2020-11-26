@@ -60,6 +60,7 @@ WARNING: Do not run this command during any other werf command is working on the
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
@@ -75,7 +76,7 @@ func runReset() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
+	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
 		return err
 	}
 
