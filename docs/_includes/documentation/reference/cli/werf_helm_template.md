@@ -49,6 +49,10 @@ werf helm template [NAME] [CHART] [flags] [options]
       --devel=false
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored
+      --disable-determinism=false
+            Disable werf determinism mode (more info                                                
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --disable-openapi-validation=false
             if set, the installation process will not validate rendered templates against the       
             Kubernetes OpenAPI Schema
