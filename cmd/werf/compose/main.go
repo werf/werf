@@ -9,6 +9,7 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/determinism_inspector"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/werf/werf/pkg/git_repo"
 
@@ -124,7 +125,7 @@ Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NA
 		Example: options.Example,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := common.BackgroundContext()
-			defer werf.PrintGlobalWarnings(ctx)
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)

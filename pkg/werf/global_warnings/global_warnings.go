@@ -1,4 +1,4 @@
-package werf
+package global_warnings
 
 import (
 	"context"

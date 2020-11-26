@@ -10,6 +10,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/determinism_inspector"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -66,7 +67,7 @@ func NewCmd() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := common.BackgroundContext()
-			defer werf.PrintGlobalWarnings(ctx)
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)

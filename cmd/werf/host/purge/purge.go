@@ -14,6 +14,7 @@ import (
 	"github.com/werf/werf/pkg/host_cleaning"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -39,7 +40,7 @@ The data include:
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings(common.BackgroundContext())
+			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)

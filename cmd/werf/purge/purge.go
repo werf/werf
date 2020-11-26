@@ -19,6 +19,7 @@ import (
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -36,7 +37,7 @@ func NewCmd() *cobra.Command {
 
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually. Images from repo, that are being used in Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings(common.BackgroundContext())
+			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)

@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/pkg/determinism_inspector"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/werf/werf/pkg/deploy/helm"
 
@@ -60,7 +61,7 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings(common.BackgroundContext())
+			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
 
 			logboek.Streams().Mute()
 			logboek.SetAcceptedLevel(level.Error)

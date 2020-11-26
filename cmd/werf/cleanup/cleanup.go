@@ -5,6 +5,7 @@ import (
 
 	"github.com/werf/werf/pkg/determinism_inspector"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/spf13/cobra"
 
@@ -38,7 +39,7 @@ The command works according to special rules called cleanup policies, which the 
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, converge and host cleanup.`),
 		Example: `  $ werf cleanup --repo registry.mydomain.com/myproject/werf`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer werf.PrintGlobalWarnings(common.BackgroundContext())
+			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)

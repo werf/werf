@@ -7,18 +7,21 @@ import (
 	"github.com/werf/logboek"
 )
 
-const determinismDocPageURL = "https://werf.io/v1.2-alpha/ documentation/advanced/configuration/determinism.html"
+const determinismDocPageURL = "https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html"
 
 var (
+	DisableDeterminism       bool
 	NonStrict                bool
 	ReportedUncommittedPaths []string
 )
 
 type InspectionOptions struct {
-	NonStrict bool
+	DisableDeterminism bool
+	NonStrict          bool
 }
 
 func Init(opts InspectionOptions) error {
+	DisableDeterminism = opts.DisableDeterminism
 	NonStrict = opts.NonStrict
 	return nil
 }
@@ -32,10 +35,10 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 	ReportedUncommittedPaths = append(ReportedUncommittedPaths, path)
 
 	if NonStrict {
-		logboek.Context(ctx).Warn().LogF("WARNING: Uncommitted file %s was not taken into account due to enabled determinism mode (more info %s)\n", path, determinismDocPageURL)
+		logboek.Context(ctx).Warn().LogF("WARNING: Uncommitted file %s was not taken into account (more info %s)\n", path, determinismDocPageURL)
 		return nil
 	} else {
-		return fmt.Errorf("restricted usage of uncommitted file %s due to enabled determinism mode (more info %s)", path, determinismDocPageURL)
+		return fmt.Errorf("restricted usage of uncommitted file %s (more info %s)", path, determinismDocPageURL)
 	}
 }
 
@@ -53,7 +56,7 @@ func PrintInspectionDebrief(ctx context.Context) {
 			logboek.Context(ctx).Warn().LogLn()
 			logboek.Context(ctx).Warn().LogF("### Determinism inspection debrief ###\n")
 			logboek.Context(ctx).Warn().LogLn()
-			logboek.Context(ctx).Warn().LogF("Following uncommitted files were not taken into account due to enabled determinism mode:\n")
+			logboek.Context(ctx).Warn().LogF("Following uncommitted files were not taken into account:\n")
 			for _, path := range ReportedUncommittedPaths {
 				logboek.Context(ctx).Warn().LogF(" - %s\n", path)
 			}
