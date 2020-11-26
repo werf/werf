@@ -303,6 +303,10 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 		return nil, fmt.Errorf("error creating archive for commit `%s`: %s", opts.Commit, err)
 	}
 
+	if err := fileHandler.Close(); err != nil {
+		return nil, fmt.Errorf("unable to close file %s: %s", tmpPath, err)
+	}
+
 	if archive, err := CommonGitDataManager.CreateArchiveFile(ctx, repoID, opts, tmpPath, desc); err != nil {
 		return nil, err
 	} else {
