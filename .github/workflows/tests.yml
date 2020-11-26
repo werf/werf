@@ -183,7 +183,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
+        k8s_version: [1.16, 1.17, 1.18, 1.19]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -222,12 +222,10 @@ jobs:
         echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
       shell: bash
       env:
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_12: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_13: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_13 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_14: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_14 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_15: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
 
     - name: Test
       run: |
