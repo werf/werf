@@ -16,8 +16,8 @@ werf synchronization [options]
 ```shell
       --disable-determinism=false
             Disable werf determinism mode (more info                                                
-            https://werf.io/documentation/advanced/configuration/determinism.html, default          
-            $WERF_DISABLE_DETERMINISM)
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
+            default $WERF_DISABLE_DETERMINISM)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --host=''
@@ -67,8 +67,8 @@ werf synchronization [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --non-strict-determinism-inspection=false
             Change some errors to warnings during determinism inspection (more info                 
-            https://werf.io/documentation/advanced/configuration/determinism.html, default          
-            $WERF_NON_STRICT_DETERMINISM_INSPECTION)
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
+            default $WERF_NON_STRICT_DETERMINISM_INSPECTION)
       --port=''
             Bind synchronization server to the specified port (default 55581 or $WERF_PORT)
       --tmp-dir=''
