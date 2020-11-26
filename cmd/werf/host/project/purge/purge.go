@@ -67,6 +67,7 @@ func NewCmd() *cobra.Command {
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
+	common.SetupDisableDeterminism(&commonCmdData, cmd)
 	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
@@ -82,7 +83,7 @@ func run(projectNames ...string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
+	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
 		return err
 	}
 

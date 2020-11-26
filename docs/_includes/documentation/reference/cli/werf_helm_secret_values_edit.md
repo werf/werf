@@ -35,6 +35,10 @@ werf helm secret values edit FILE_PATH [options]
 ```shell
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
+      --disable-determinism=false
+            Disable werf determinism mode (more info                                                
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --non-strict-determinism-inspection=false

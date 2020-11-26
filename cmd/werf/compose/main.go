@@ -251,7 +251,7 @@ func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData com
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
+	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
 		return err
 	}
 

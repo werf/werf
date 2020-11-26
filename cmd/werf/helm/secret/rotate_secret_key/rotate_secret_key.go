@@ -71,7 +71,7 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
+	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictDeterminismInspection, DisableDeterminism: *commonCmdData.DisableDeterminism}); err != nil {
 		return err
 	}
 

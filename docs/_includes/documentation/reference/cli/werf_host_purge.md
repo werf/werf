@@ -25,6 +25,10 @@ werf host purge [options]
 {{ header }} Options
 
 ```shell
+      --disable-determinism=false
+            Disable werf determinism mode (more info                                                
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_DISABLE_DETERMINISM)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
