@@ -173,7 +173,7 @@ layout: default
                     <div class="stats__list-item-subtitle">for large and small projects</div>
                 </li>
                 <li class="stats__list-item">
-                    <div class="stats__list-item-num gh_counter">1470</div>
+                    <div class="stats__list-item-num gh_counter">2100</div>
                     <div class="stats__list-item-title">stars on GitHub</div>
                     <div class="stats__list-item-subtitle">let’s make it more ;)</div>
                 </li>
