@@ -126,6 +126,11 @@ func NewCmd() *cobra.Command {
 				helm.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
 					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 					HooksStatusProgressPeriod: time.Duration(*_commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+					KubeConfigOptions: kube.KubeConfigOptions{
+						Context:          *_commonCmdData.KubeContext,
+						ConfigPath:       *_commonCmdData.KubeConfig,
+						ConfigDataBase64: *_commonCmdData.KubeConfigBase64,
+					},
 				})
 
 				if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{

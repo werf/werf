@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/werf/kubedog/pkg/kube"
+
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/determinism_inspector"
 	"github.com/werf/werf/pkg/git_repo"
@@ -347,6 +349,11 @@ func runRender() error {
 	if err := helm.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+		KubeConfigOptions: kube.KubeConfigOptions{
+			Context:          *commonCmdData.KubeContext,
+			ConfigPath:       *commonCmdData.KubeConfig,
+			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+		},
 	}); err != nil {
 		return err
 	}
