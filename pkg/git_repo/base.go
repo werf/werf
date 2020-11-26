@@ -281,6 +281,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	if err != nil {
 		return nil, fmt.Errorf("cannot open archive file: %s", err)
 	}
+	defer fileHandler.Close()
 
 	archiveOpts := true_git.ArchiveOptions{
 		Commit: opts.Commit,
