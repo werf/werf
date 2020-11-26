@@ -47,6 +47,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
+	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
+
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "")

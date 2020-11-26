@@ -50,6 +50,10 @@ werf host cleanup [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --non-strict-determinism-inspection=false
+            Change some errors to warnings during determinism inspection (more info                 
+            https://werf.io/documentation/advanced/configuration/determinism.html, default          
+            $WERF_NON_STRICT_DETERMINISM_INSPECTION)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

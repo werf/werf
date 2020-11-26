@@ -60,6 +60,8 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
+	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
+
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", "", "Write to file instead of stdout")

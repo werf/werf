@@ -60,6 +60,8 @@ WARNING: Do not run this command during any other werf command is working on the
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
+	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
+
 	common.SetupDryRun(&commonCmdData, cmd)
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
 

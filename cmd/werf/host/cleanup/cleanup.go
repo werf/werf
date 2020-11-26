@@ -55,6 +55,8 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
+	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
+
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
