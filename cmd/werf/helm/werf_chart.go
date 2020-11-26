@@ -17,6 +17,8 @@ func SetupWerfChartParams(cmd *cobra.Command, commonCmdData *cmd_werf_common.Cmd
 	cmd_werf_common.SetupTmpDir(commonCmdData, cmd)
 	cmd_werf_common.SetupHomeDir(commonCmdData, cmd)
 
+	cmd_werf_common.SetupDisableDeterminism(commonCmdData, cmd)
+
 	cmd_werf_common.SetupAddAnnotations(commonCmdData, cmd)
 	cmd_werf_common.SetupAddLabels(commonCmdData, cmd)
 
