@@ -42,6 +42,9 @@ entries:
               - title: Organizing configuration
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
+              - title: Determinism
+                url: /documentation/advanced/configuration/determinism.html
+
           - title: Helm
             f:
 
@@ -187,6 +190,9 @@ entries:
 
               - title: Организация конфигурации
                 url: /documentation/advanced/configuration/organizing_configuration.html
+
+              - title: Детерминизм
+                url: /documentation/advanced/configuration/determinism.html
 
           - title: Helm
             f:
