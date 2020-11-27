@@ -27,17 +27,3 @@ func (g CommandGroups) Has(c *cobra.Command) bool {
 	}
 	return false
 }
-
-func AddAdditionalCommands(g CommandGroups, message string, cmds []*cobra.Command) CommandGroups {
-	group := CommandGroup{Message: message}
-	for _, c := range cmds {
-		// Don't show commands that have no short description
-		if !g.Has(c) && len(c.Short) != 0 {
-			group.Commands = append(group.Commands, c)
-		}
-	}
-	if len(group.Commands) == 0 {
-		return g
-	}
-	return append(g, group)
-}

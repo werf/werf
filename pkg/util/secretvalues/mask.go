@@ -7,13 +7,6 @@ import (
 	"strings"
 )
 
-func MaskSecretValuesInString(secretValues []string, targetStr string) string {
-	for _, secretValue := range secretValues {
-		targetStr = strings.ReplaceAll(targetStr, secretValue, "***")
-	}
-	return targetStr
-}
-
 func ExtractSecretValuesFromMap(data map[string]interface{}) []string {
 	queue := []interface{}{data}
 	maskedValues := []string{}

@@ -31,7 +31,7 @@ func PerformPost(client *http.Client, url string, request, response interface{})
 		return fmt.Errorf("got bad response %s by url %q request:\n%s", resp.Status, url, body)
 	} else {
 		if err := json.Unmarshal(body, response); err != nil {
-			return fmt.Errorf("unable to unmarshal json body by url %q request: %s", err)
+			return fmt.Errorf("unable to unmarshal json body by url %q request: %s", url, err)
 		}
 	}
 

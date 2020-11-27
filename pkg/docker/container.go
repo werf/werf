@@ -53,16 +53,6 @@ func CliCreate(ctx context.Context, args ...string) error {
 	})
 }
 
-func CliCreate_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliCreate(cli(ctx), args...)
-}
-
-func CliCreate_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliCreate(c, args...)
-	})
-}
-
 func doCliRun(c command.Cli, args ...string) error {
 	return prepareCliCmd(container.NewRunCommand(c), args...).Execute()
 }
@@ -91,10 +81,6 @@ func CliRm(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
 		return doCliRm(c, args...)
 	})
-}
-
-func CliRm_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliRm(cli(ctx), args...)
 }
 
 func CliRm_RecordedOutput(ctx context.Context, args ...string) (string, error) {

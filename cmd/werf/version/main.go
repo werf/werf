@@ -3,8 +3,9 @@ package version
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/werf"
 	"github.com/spf13/cobra"
+
+	"github.com/werf/werf/pkg/werf"
 )
 
 func NewCmd() *cobra.Command {

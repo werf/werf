@@ -508,11 +508,6 @@ func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool)
 	return nil
 }
 
-type goResult struct {
-	buff *bytes.Buffer
-	err  error
-}
-
 func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logImages bool) error {
 	blockMsg := "Concurrent builds plan"
 	if c.ParallelTasksLimit > 0 {

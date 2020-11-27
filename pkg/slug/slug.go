@@ -66,10 +66,6 @@ func DockerTag(name string) string {
 	return name
 }
 
-func ValidateDockerTag(name string) error {
-	return validateDockerTag(name)
-}
-
 func validateDockerTag(name string) error {
 	if shouldNotBeSlugged(name, dockerTagRegexp, dockerTagMaxSize) {
 		return nil

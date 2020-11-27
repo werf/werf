@@ -740,22 +740,6 @@ func GetBoolEnvironmentDefaultTrue(environmentName string) bool {
 	}
 }
 
-func ConvertInt32Value(v string) (int32, error) {
-	res, err := ConvertIntValue(v, 32)
-	if err != nil {
-		return 0, err
-	}
-	return int32(res), nil
-}
-
-func ConvertIntValue(v string, bitSize int) (int64, error) {
-	vInt, err := strconv.ParseInt(v, 10, bitSize)
-	if err != nil {
-		return 0, fmt.Errorf("bad integer value '%s': %s", v, err)
-	}
-	return vInt, nil
-}
-
 func getInt64EnvVar(varName string) (*int64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vInt, err := strconv.ParseInt(v, 10, 64)
@@ -1174,15 +1158,6 @@ func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error 
 	if len(args) < minArgs {
 		PrintHelp(cmd)
 		return fmt.Errorf("requires at least %d arg(s), received %d", minArgs, len(args))
-	}
-
-	return nil
-}
-
-func ValidateMaximumNArgs(maxArgs int, args []string, cmd *cobra.Command) error {
-	if len(args) > maxArgs {
-		PrintHelp(cmd)
-		return fmt.Errorf("accepts at most %d arg(s), received %d", maxArgs, len(args))
 	}
 
 	return nil

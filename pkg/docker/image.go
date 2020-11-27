@@ -72,16 +72,6 @@ func CliPull(ctx context.Context, args ...string) error {
 	})
 }
 
-func CliPull_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliPull(cli(ctx), args...)
-}
-
-func CliPull_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliPull(c, args...)
-	})
-}
-
 const cliPullMaxAttempts = 5
 
 func doCliPullWithRetries(ctx context.Context, c command.Cli, args ...string) error {
@@ -123,34 +113,8 @@ func CliPullWithRetries(ctx context.Context, args ...string) error {
 	})
 }
 
-func CliPullWithRetries_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliPullWithRetries(ctx, cli(ctx), args...)
-}
-
-func CliPullWithRetries_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliPullWithRetries(ctx, c, args...)
-	})
-}
-
 func doCliPush(c command.Cli, args ...string) error {
 	return prepareCliCmd(image.NewPushCommand(c), args...).Execute()
-}
-
-func CliPush(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliPush(c, args...)
-	})
-}
-
-func CliPush_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliPush(cli(ctx), args...)
-}
-
-func CliPush_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliPush(c, args...)
-	})
 }
 
 const cliPushMaxAttempts = 10
@@ -197,32 +161,12 @@ func CliPushWithRetries(ctx context.Context, args ...string) error {
 	})
 }
 
-func CliPushWithRetries_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliPushWithRetries(cli(ctx), args...)
-}
-
-func CliPushWithRetries_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliPushWithRetries(c, args...)
-	})
-}
-
 func doCliTag(c command.Cli, args ...string) error {
 	return prepareCliCmd(image.NewTagCommand(c), args...).Execute()
 }
 
 func CliTag(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliTag(c, args...)
-	})
-}
-
-func CliTag_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliTag(cli(ctx), args...)
-}
-
-func CliTag_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliTag(c, args...)
 	})
 }
@@ -241,20 +185,8 @@ func CliRmi_LiveOutput(ctx context.Context, args ...string) error {
 	return doCliRmi(cli(ctx), args...)
 }
 
-func CliRmiOutput_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliRmi(c, args...)
-	})
-}
-
 func doCliBuild(c command.Cli, args ...string) error {
 	return prepareCliCmd(image.NewBuildCommand(c), args...).Execute()
-}
-
-func CliBuild(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliBuild(c, args...)
-	})
 }
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args ...string) error {
@@ -270,10 +202,4 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 
 func CliBuild_LiveOutput(ctx context.Context, args ...string) error {
 	return doCliBuild(cli(ctx), args...)
-}
-
-func CliBuild_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliBuild(c, args...)
-	})
 }
