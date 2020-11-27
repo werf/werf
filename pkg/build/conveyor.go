@@ -1151,7 +1151,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		absContextAddFile := filepath.Join(c.projectDir, imageFromDockerfileConfig.Context, contextAddFile)
 		exist, err := util.FileExists(absContextAddFile)
 		if err != nil {
-			return nil, fmt.Errorf("unable to check existance of file %s: %s", absContextAddFile, err)
+			return nil, fmt.Errorf("unable to check existence of file %s: %s", absContextAddFile, err)
 		}
 
 		if !exist {

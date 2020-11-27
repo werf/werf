@@ -51,7 +51,7 @@ func compareGitRepoFileWithProjectFile(repoFileData []byte, projectDir, relPath 
 	absPath := filepath.Join(projectDir, relPath)
 	exist, err := util.FileExists(absPath)
 	if err != nil {
-		return false, fmt.Errorf("unable to check file existance: %s", err)
+		return false, fmt.Errorf("unable to check file existence: %s", err)
 	} else if exist {
 		localData, err = ioutil.ReadFile(absPath)
 		if err != nil {

@@ -101,7 +101,7 @@ func (wc *WerfChart) loadSecretsFromFilesystem() error {
 	secretValuesFiles := []string{}
 	defaultSecretValuesFile := filepath.Join(wc.ChartDir, DefaultSecretValuesFileName)
 	if exists, err := util.RegularFileExists(defaultSecretValuesFile); err != nil {
-		return fmt.Errorf("unable to check file %s existance: %s", defaultSecretValuesFile, err)
+		return fmt.Errorf("unable to check file %s existence: %s", defaultSecretValuesFile, err)
 	} else if exists {
 		secretValuesFiles = append(secretValuesFiles, defaultSecretValuesFile)
 	}
@@ -119,7 +119,7 @@ func (wc *WerfChart) loadSecretsFromFilesystem() error {
 
 	secretDir := filepath.Join(wc.ChartDir, SecretDirName)
 	if exists, err := util.DirExists(secretDir); err != nil {
-		return fmt.Errorf("unable to check dir %s existance: %s", secretDir, err)
+		return fmt.Errorf("unable to check dir %s existence: %s", secretDir, err)
 	} else if exists {
 		if err := filepath.Walk(secretDir, func(path string, info os.FileInfo, accessErr error) error {
 			if accessErr != nil {
@@ -176,7 +176,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 
 	defaultSecretValuesFile := filepath.Join(chartDir, DefaultSecretValuesFileName)
 	if exists, err := wc.LocalGitRepo.IsFileExists(wc.Ctx, commit, defaultSecretValuesFile); err != nil {
-		return fmt.Errorf("error checking existance of the file %q in the local git repo commit %s: %s", defaultSecretValuesFile, err)
+		return fmt.Errorf("error checking existence of the file %q in the local git repo commit %s: %s", defaultSecretValuesFile, err)
 	} else if exists {
 		logboek.Context(wc.Ctx).Debug().LogF("Check %s exists in the local git repo commit %s: FOUND\n", defaultSecretValuesFile, commit)
 		secretValuesFiles = append(secretValuesFiles, defaultSecretValuesFile)
@@ -210,7 +210,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 
 	secretDir := filepath.Join(wc.ChartDir, SecretDirName)
 	if exists, err := wc.LocalGitRepo.IsDirectoryExists(wc.Ctx, secretDir, commit); err != nil {
-		return fmt.Errorf("error checking existance of directory %s in the local git repo commit %s: %s", secretDir, commit, err)
+		return fmt.Errorf("error checking existence of directory %s in the local git repo commit %s: %s", secretDir, commit, err)
 	} else if exists {
 		var secretFilesToDecode []string
 

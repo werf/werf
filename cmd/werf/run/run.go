@@ -407,7 +407,7 @@ func run(ctx context.Context, projectDir string) error {
 
 func safeDockerCliRmFunc(ctx context.Context, containerName string) error {
 	if exist, err := docker.ContainerExist(ctx, containerName); err != nil {
-		return fmt.Errorf("unable to check container %s existance: %s", containerName, err)
+		return fmt.Errorf("unable to check container %s existence: %s", containerName, err)
 	} else if exist {
 		logboek.Context(ctx).LogF("Removing container %s ...\n", containerName)
 		if err := docker.CliRm(ctx, "-f", containerName); err != nil {
