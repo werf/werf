@@ -257,7 +257,7 @@ func GetRealRepoDir(repoDir string) (string, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("'%s' failed: %s:\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), repoDir, err, output)
+		return "", fmt.Errorf("'%s' failed (%s): %s:\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), repoDir, err, output)
 	}
 
 	return strings.TrimSpace(string(output)), nil
@@ -276,7 +276,7 @@ func GetWorkTreeList(repoDir string) ([]WorktreeDescriptor, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("'%s' failed: %s:\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), repoDir, err, output)
+		return nil, fmt.Errorf("'%s' failed (%s): %s:\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), repoDir, err, output)
 	}
 
 	var worktreeDesc *WorktreeDescriptor

@@ -34,7 +34,7 @@ func ReadGitRepoFileAndCompareWithProjectFile(ctx context.Context, localGitRepo 
 
 	isDataIdentical, err := compareGitRepoFileWithProjectFile(repoData, projectDir, relPath)
 	if err != nil {
-		return nil, fmt.Errorf("error comparing repo file %q with the local project file: %s", err)
+		return nil, fmt.Errorf("error comparing repo file %q with the local project file: %s", relPath, err)
 	}
 
 	if !isDataIdentical {

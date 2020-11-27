@@ -176,7 +176,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 
 	defaultSecretValuesFile := filepath.Join(chartDir, DefaultSecretValuesFileName)
 	if exists, err := wc.LocalGitRepo.IsFileExists(wc.Ctx, commit, defaultSecretValuesFile); err != nil {
-		return fmt.Errorf("error checking existence of the file %q in the local git repo commit %s: %s", defaultSecretValuesFile, err)
+		return fmt.Errorf("error checking existence of the file %q in the local git repo commit %s: %s", defaultSecretValuesFile, commit, err)
 	} else if exists {
 		logboek.Context(wc.Ctx).Debug().LogF("Check %s exists in the local git repo commit %s: FOUND\n", defaultSecretValuesFile, commit)
 		secretValuesFiles = append(secretValuesFiles, defaultSecretValuesFile)
