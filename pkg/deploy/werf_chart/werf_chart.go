@@ -100,7 +100,9 @@ func (wc *WerfChart) SetupChart(c *chart.Chart) error {
 func (wc *WerfChart) loadSecretsFromFilesystem() error {
 	secretValuesFiles := []string{}
 	defaultSecretValuesFile := filepath.Join(wc.ChartDir, DefaultSecretValuesFileName)
-	if _, err := os.Stat(defaultSecretValuesFile); !os.IsNotExist(err) {
+	if exists, err := util.RegularFileExists(defaultSecretValuesFile); err != nil {
+		return fmt.Errorf("unable to check file %s existance: %s", defaultSecretValuesFile, err)
+	} else if exists {
 		secretValuesFiles = append(secretValuesFiles, defaultSecretValuesFile)
 	}
 	for _, path := range wc.SecretValueFiles {
@@ -116,7 +118,9 @@ func (wc *WerfChart) loadSecretsFromFilesystem() error {
 	}
 
 	secretDir := filepath.Join(wc.ChartDir, SecretDirName)
-	if _, err := os.Stat(secretDir); !os.IsNotExist(err) {
+	if exists, err := util.DirExists(secretDir); err != nil {
+		return fmt.Errorf("unable to check dir %s existance: %s", secretDir, err)
+	} else if exists {
 		if err := filepath.Walk(secretDir, func(path string, info os.FileInfo, accessErr error) error {
 			if accessErr != nil {
 				return fmt.Errorf("error accessing file %s: %s", path, accessErr)
