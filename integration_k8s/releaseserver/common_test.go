@@ -6,7 +6,7 @@ import (
 )
 
 func werfDeploy(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"deploy", "--env", "dev"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"converge", "--env", "dev"}, extraArgs...)...)...)
 }
 
 func werfDismiss(dir string, opts liveexec.ExecCommandOptions) error {

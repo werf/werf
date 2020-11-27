@@ -14,7 +14,7 @@ import (
 var _ = Describe("Stapel builder with ansible", func() {
 	Context("when building image based on alpine, ubuntu or centos", func() {
 		AfterEach(func() {
-			werfPurge("general", liveexec.ExecCommandOptions{})
+			werfPurge("general", liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("should successfully build image using arbitrary ansible modules", func() {
@@ -24,7 +24,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when building stapel image based on centos 6 and 7", func() {
 		AfterEach(func() {
-			werfPurge("yum1", liveexec.ExecCommandOptions{})
+			werfPurge("yum1", liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("successfully installs packages using yum module", func() {
@@ -34,7 +34,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when building stapel image based on centos 8", func() {
 		AfterEach(func() {
-			werfPurge("yum2", liveexec.ExecCommandOptions{})
+			werfPurge("yum2", liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("successfully installs packages using yum module", func() {
@@ -45,7 +45,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when become_user task option used", func() {
 		AfterEach(func() {
-			werfPurge("become_user", liveexec.ExecCommandOptions{})
+			werfPurge("become_user", liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("successfully installs packages using yum module", func() {
@@ -56,7 +56,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when using apt_key module used (1)", func() {
 		AfterEach(func() {
-			werfPurge("apt_key1-001", liveexec.ExecCommandOptions{})
+			werfPurge("apt_key1-001", liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("should fail to install package without a key and succeed with the key", func() {
@@ -87,7 +87,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when using apt_key module used (2)", func() {
 		AfterEach(func() {
-			werfPurge("apt_key2", liveexec.ExecCommandOptions{})
+			werfPurge("apt_key2", liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("should fail to install package without a key and succeed with the key", func() {
@@ -99,7 +99,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when apt-mark from apt module used (https://github.com/werf/werf/issues/1820)", func() {
 		AfterEach(func() {
-			werfPurge("apt_mark_panic_1820", liveexec.ExecCommandOptions{})
+			werfPurge("apt_mark_panic_1820", liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("should not panic in all supported ubuntu versions", func() {
@@ -114,7 +114,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		AfterEach(func() {
-			werfPurge("yarn", liveexec.ExecCommandOptions{})
+			werfPurge("yarn", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("yarn/.git")
 			os.RemoveAll("yarn_repo")
 		})
@@ -132,7 +132,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		AfterEach(func() {
-			werfPurge("python_encoding", liveexec.ExecCommandOptions{})
+			werfPurge("python_encoding", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("python_encoding/.git")
 			os.RemoveAll("python_encoding_repo")
 		})
@@ -149,7 +149,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("Non standard PATH used in the base image (https://github.com/werf/werf/issues/1836) ", func() {
 		AfterEach(func() {
-			werfPurge("path_redefined_in_stapel_1836", liveexec.ExecCommandOptions{})
+			werfPurge("path_redefined_in_stapel_1836", liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("PATH should not be redefined in stapel build container", func() {

@@ -1,5 +1,7 @@
 project: none
 configVersion: 1
+gitWorktree:
+  allowFetchOriginBranchesAndTags: false
 ---
 image: ~
 from: python:alpine

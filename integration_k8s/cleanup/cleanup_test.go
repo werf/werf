@@ -23,7 +23,7 @@ var _ = Describe("cleaning images and stages", func() {
 		utils.RunSucceedCommand(
 			testDirPath,
 			"git",
-			"add", "werf.yaml",
+			"add", "-A",
 		)
 
 		utils.RunSucceedCommand(
@@ -31,9 +31,6 @@ var _ = Describe("cleaning images and stages", func() {
 			"git",
 			"commit", "-m", "Initial commit",
 		)
-
-		stubs.SetEnv("WERF_SKIP_GIT_FETCH", "1")
-		stubs.SetEnv("WERF_GIT_HISTORY_BASED_CLEANUP", "0")
 	})
 
 	Context("with deployed image", func() {

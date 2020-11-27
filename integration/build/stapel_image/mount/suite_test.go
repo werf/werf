@@ -54,7 +54,7 @@ var _ = AfterEach(func() {
 	utils.RunSucceedCommand(
 		testDirPath,
 		werfBinPath,
-		"stages", "purge", "--force",
+		"purge", "--force",
 	)
 
 	err := os.RemoveAll(tmpDir)

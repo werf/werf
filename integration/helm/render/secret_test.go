@@ -7,7 +7,7 @@ import (
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
-var _ = Describe("helm render with secrets", func() {
+var _ = XDescribe("helm render with secrets", func() {
 	BeforeEach(func() {
 		utils.CopyIn(utils.FixturePath("secret"), testDirPath)
 	})
@@ -16,7 +16,7 @@ var _ = Describe("helm render with secrets", func() {
 		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
-			"helm", "render",
+			"render",
 		)
 
 		for _, substr := range []string{

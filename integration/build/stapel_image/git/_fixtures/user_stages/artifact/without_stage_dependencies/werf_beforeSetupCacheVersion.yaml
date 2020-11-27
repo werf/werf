@@ -1,0 +1,21 @@
+project: none
+configVersion: 1
+---
+image: image
+from: ubuntu
+import:
+- artifact: artifact
+  add: /app
+  to: /app
+  after: setup
+---
+artifact: artifact
+from: ubuntu
+git:
+- to: /app
+shell:
+  beforeSetupCacheVersion: 1 # +
+  beforeInstall: date
+  install: date
+  beforeSetup: date
+  setup: date

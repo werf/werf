@@ -9,7 +9,7 @@ import (
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
-var _ = Describe("helm render", func() {
+var _ = XDescribe("helm render", func() {
 	BeforeEach(func() {
 		utils.CopyIn(utils.FixturePath("base"), testDirPath)
 	})
@@ -18,7 +18,7 @@ var _ = Describe("helm render", func() {
 		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
-			"helm", "render",
+			"render",
 		)
 
 		for _, substrFormat := range []string{

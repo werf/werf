@@ -166,7 +166,7 @@ var _ = Describe("file lifecycle", func() {
 			}),
 		)
 
-		Context("when gitArchive stage with file is built"+pathLogFunc(relPathToAdd), func() {
+		When("gitArchive stage with file is built"+pathLogFunc(relPathToAdd), func() {
 			BeforeEach(func() {
 				createFileFunc(relPathToAddAndModify, fileDataToAdd, gitExecutableFilePerm)
 				addAndCommitFile(testDirPath, relPathToAddAndModify, "Add file "+relPathToAddAndModify)
@@ -212,7 +212,7 @@ var _ = Describe("file lifecycle", func() {
 			)
 		})
 
-		Context("when file is symlink"+pathLogFunc(relPathToAdd), func() {
+		When("file is symlink"+pathLogFunc(relPathToAdd), func() {
 			linkToAdd := "werf.yaml"
 			linkToModify := "none"
 
@@ -288,7 +288,7 @@ var _ = Describe("file lifecycle", func() {
 				}),
 			)
 
-			Context("when gitArchive stage with file is built", func() {
+			When("gitArchive stage with file is built", func() {
 				BeforeEach(func() {
 					symlinkFileLifecycleEntryItBody(symlinkFileLifecycleEntry{
 						relPath: relPathToAddAndModify,

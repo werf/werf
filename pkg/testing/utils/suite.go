@@ -15,6 +15,8 @@ import (
 
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+
+	"github.com/werf/werf/pkg/slug"
 )
 
 func GetTempDir() string {
@@ -75,6 +77,8 @@ func BeforeEachOverrideWerfProjectName(stubs *gostub.Stubs) {
 		strconv.Itoa(os.Getpid()),
 		GetRandomString(10),
 	}, "-")
+
+	projectName = slug.LimitedSlug(projectName, 30)
 
 	stubs.SetEnv("WERF_PROJECT_NAME", projectName)
 }

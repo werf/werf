@@ -36,7 +36,7 @@ var _ = Describe("Resources adopter", func() {
 			utils.RunCommand("resources_adopter_app1-003", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should fail to deploy release when resources already exist; should adopt already existing resources when adoption annotation is set", func() {
+		XIt("should fail to deploy release when resources already exist; should adopt already existing resources when adoption annotation is set", func() {
 			By("Installing release first time without mydeploy2 and mydeploy4")
 
 			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{})).To(Succeed())

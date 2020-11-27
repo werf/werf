@@ -16,7 +16,9 @@
   base64config=$(printenv WERF_TEST_"$name"_BASE64_CONFIG || true)
 
   if [[ "$name" == "ECR" ]]; then
-    $(aws ecr get-login-password)
+    aws ecr get-login-password | docker login \
+      --username AWS \
+      --password-stdin "$registry"
   elif [[ "$name" == "DOCKERHUB" ]]; then
     echo "$password" | docker login -u "$username" --password-stdin
   elif [[ -n "$username" ]] && [[ -n "$password" ]]; then

@@ -29,7 +29,7 @@ var _ = Describe("Three way merge patches creator", func() {
 			utils.RunCommand("three_way_merge_patches_creator_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should use 3wm patches during release update", func() {
+		XIt("should use 3wm patches during release update", func() {
 			By("initial release installation with disabled 3wm mode")
 			gotCorrect3wmModeLine := false
 			Expect(werfDeploy("three_way_merge_patches_creator_app1-001", liveexec.ExecCommandOptions{
@@ -183,7 +183,7 @@ var _ = Describe("Three way merge patches creator", func() {
 			utils.RunCommand("three_way_merge_patches_creator_app2-002", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
 		})
 
-		It("should stop changing replicas and resources on redeploy when user sets set-replicas/resources-only-on-creation annotation to the resource", func() {
+		XIt("should stop changing replicas and resources on redeploy when user sets set-replicas/resources-only-on-creation annotation to the resource", func() {
 			By("deploying chart initially")
 
 			Expect(werfDeploy("three_way_merge_patches_creator_app2-001", liveexec.ExecCommandOptions{

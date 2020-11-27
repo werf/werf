@@ -12,7 +12,7 @@ func werfBuild(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string
 }
 
 func werfPurge(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"stages", "purge"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, werfBinPath, opts, utils.WerfBinArgs(append([]string{"purge"}, extraArgs...)...)...)
 }
 
 func setGitRepoState(workTreeDir, repoDir string, commitMessage string) error {

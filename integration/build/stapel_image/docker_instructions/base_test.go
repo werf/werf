@@ -1,6 +1,7 @@
 package docker_instruction_test
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -14,16 +15,13 @@ import (
 )
 
 type entry struct {
-	envs         map[string]string
+	werfYaml     string
 	inspectCheck func(inspect *types.ImageInspect)
 }
 
 var itBody = func(e entry) {
 	testDirPath = utils.FixturePath("base")
-
-	for envName, envValue := range e.envs {
-		stubs.SetEnv(envName, envValue)
-	}
+	stubs.SetEnv("WERF_CONFIG", filepath.Join(testDirPath, e.werfYaml))
 
 	utils.RunSucceedCommand(
 		testDirPath,
@@ -44,75 +42,55 @@ var itBody = func(e entry) {
 
 var _ = DescribeTable("docker instructions", itBody,
 	Entry("volume", entry{
-		envs: map[string]string{
-			"DOCKER_VOLUME": "/test",
-		},
+		werfYaml: "werf_volume.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
 			Ω(inspect.Config.Volumes).Should(HaveKey("/test"))
 		},
 	}),
 	Entry("expose", entry{
-		envs: map[string]string{
-			"DOCKER_EXPOSE": "80/udp",
-		},
+		werfYaml: "werf_expose.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
 			Ω(inspect.Config.ExposedPorts).Should(HaveKey(nat.Port("80/udp")))
 		},
 	}),
 	Entry("env", entry{
-		envs: map[string]string{
-			"DOCKER_ENV_NAME":  "TEST_NAME",
-			"DOCKER_ENV_VALUE": "test_value",
-		},
+		werfYaml: "werf_env.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
 			Ω(inspect.Config.Env).Should(ContainElement("TEST_NAME=test_value"))
 		},
 	}),
 	Entry("label", entry{
-		envs: map[string]string{
-			"DOCKER_LABEL_NAME":  "test_name",
-			"DOCKER_LABEL_VALUE": "test_value",
-		},
+		werfYaml: "werf_label.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
 			Ω(inspect.Config.Labels).Should(HaveKeyWithValue("test_name", "test_value"))
 		},
 	}),
 	Entry("entrypoint", entry{
-		envs: map[string]string{
-			"DOCKER_ENTRYPOINT": "[\"command\", \"param1\", \"param2\"]",
-		},
+		werfYaml: "werf_entrypoint.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
 			Ω([]string(inspect.Config.Entrypoint)).Should(Equal([]string{"command", "param1", "param2"}))
 		},
 	}),
 	Entry("cmd", entry{
-		envs: map[string]string{
-			"DOCKER_CMD": "[\"command\", \"param1\", \"param2\"]",
-		},
+		werfYaml: "werf_cmd.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
 			Ω([]string(inspect.Config.Cmd)).Should(Equal([]string{"command", "param1", "param2"}))
 		},
 	}),
 	Entry("workdir", entry{
-		envs: map[string]string{
-			"DOCKER_WORKDIR": "/test",
-		},
+		werfYaml: "werf_workdir.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
 			Ω(inspect.Config.WorkingDir).Should(Equal("/test"))
 		},
 	}),
 	Entry("user", entry{
-		envs: map[string]string{
-			"DOCKER_USER": "test",
-		},
+		werfYaml: "werf_user.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
 			Ω(inspect.Config.User).Should(Equal("test"))
 		},
 	}),
 	Entry("healthcheck", entry{
-		envs: map[string]string{
-			"DOCKER_HEALTHCHECK": "CMD true",
-		},
+		werfYaml: "werf_healthcheck.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
 			Ω(inspect.Config.Healthcheck.Test).Should(Equal([]string{"CMD-SHELL", "true"}))
 		},

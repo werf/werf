@@ -149,7 +149,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
   run: |
     pr_id=${{ github.event.number }}
     github_repository_id=$(echo ${GITHUB_REPOSITORY} | sed -r s/[^a-zA-Z0-9]+/-/g | sed -r s/^-+\|-+$//g | tr A-Z a-z)
-    echo ::set-env name=WERF_SET_ENV_URL::global.env_url=http://${github_repository_id}-${pr_id}.kube.DOMAIN
+    echo WERF_SET_ENV_URL=global.env_url=http://${github_repository_id}-${pr_id}.kube.DOMAIN >> $GITHUB_ENV
 ```
 {% endraw %}
 

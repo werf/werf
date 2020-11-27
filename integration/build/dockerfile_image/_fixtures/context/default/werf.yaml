@@ -1,6 +1,0 @@
-configVersion: 1
-project: werf-future
----
-
-image: ~
-dockerfile: Dockerfile

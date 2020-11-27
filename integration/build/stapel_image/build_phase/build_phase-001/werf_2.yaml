@@ -1,0 +1,12 @@
+configVersion: 1
+project: none
+---
+image: ~
+from: ubuntu:18.04
+shell:
+  installCacheVersion: 1 # +
+  install:
+  - echo done
+git:
+- add: /
+  to: /app

@@ -40,7 +40,7 @@ jobs:
 #    - name: Install upx (windows-latest)
 #      run: |
 #        mkdir bin
-#        echo "::add-path::$GITHUB_WORKSPACE/bin"
+#        echo $GITHUB_WORKSPACE/bin >> $GITHUB_PATH
 #
 #        curl -LO https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win64.zip
 #        unzip upx-3.95-win64.zip
@@ -125,7 +125,7 @@ jobs:
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/unit_tests/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
         find . -type f \( -name '*.test' -or -name '*.test.exe' \) -exec chmod +x {} \;
       shell: bash
@@ -153,10 +153,9 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         extra-find-args:
-        - "-name 'guides.test'"
         - "-name 'git.test'"
         - "-name 'ansible.test'"
-        - "! -name 'git.test' ! -name 'guides.test' ! -name 'ansible.test'"
+        - "! -name 'git.test' ! -name 'ansible.test'"
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -168,13 +167,13 @@ jobs:
 
     - name: Checkout code
       uses: actions/checkout@v2
-      if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
+      if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''ansible.test'''
 
     - name: Checkout code (git history as fixtures for tests)
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-      if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
+      if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''ansible.test'''
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -192,7 +191,7 @@ jobs:
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
         ./scripts/ci/git.sh
 
@@ -247,7 +246,7 @@ jobs:
       WERF_TEST_DOCKERHUB_REGISTRY: ${{ secrets.WERF_TEST_DOCKERHUB_REGISTRY }}
       WERF_TEST_DOCKERHUB_USERNAME: ${{ secrets.WERF_TEST_DOCKERHUB_USERNAME }}
 
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: 1
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: 0
       WERF_TEST_ECR_REGISTRY: ${{ secrets.WERF_TEST_ECR_REGISTRY }}
       WERF_TEST_ECR_PASSWORD: ${{ secrets.WERF_TEST_ECR_PASSWORD }}
       WERF_TEST_ECR_USERNAME: ${{ secrets.WERF_TEST_ECR_USERNAME }}
@@ -314,7 +313,7 @@ jobs:
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests_cleanup_implementations/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
         ./scripts/ci/git.sh
         ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.implementation }}
@@ -342,7 +341,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
+        k8s_version: [1.16, 1.17, 1.18, 1.19]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -372,7 +371,7 @@ jobs:
       run: |
         export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
         mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
         ./scripts/ci/git.sh
 
@@ -381,15 +380,13 @@ jobs:
         chmod +x werf_with_coverage
         find integration_k8s -type f -name '*.test' -exec chmod +x {} \;
 
-        echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
+        echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
       shell: bash
       env:
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_12: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_13: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_13 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_14: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_14 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_15: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
 
     - name: Test
       run: |
@@ -416,10 +413,9 @@ jobs:
 #      matrix:
 #        os: [macOS, windows]
 #        extra-find-args:
-#        - "-name 'guides.test*'"
 #        - "-name 'git.test*'"
 #        - "-name 'ansible.test*'"
-#        - "! -name 'git.test*' ! -name 'guides.test*' ! -name 'ansible.test*'"
+#        - "! -name 'git.test*' ! -name 'ansible.test*'"
 #    runs-on: [self-hosted, "${{ matrix.os }}"]
 #    steps:
 #
@@ -431,13 +427,13 @@ jobs:
 #
 #    - name: Checkout code
 #      uses: actions/checkout@v2
-#      if: matrix.extra-find-args != '! -name ''git.test*'' ! -name ''guides.test*'' ! -name ''ansible.test*'''
+#      if: matrix.extra-find-args != '! -name ''git.test*'' ! -name ''ansible.test*'''
 #
 #    - name: Checkout code (git history as fixtures for tests)
 #      uses: actions/checkout@v2
 #      with:
 #        fetch-depth: 0
-#      if: matrix.extra-find-args == '! -name ''git.test*'' ! -name ''guides.test*'' ! -name ''ansible.test*'''
+#      if: matrix.extra-find-args == '! -name ''git.test*'' ! -name ''ansible.test*'''
 #
 #    - name: Download integration tests binaries
 #      uses: actions/download-artifact@master
@@ -455,7 +451,7 @@ jobs:
 #      run: |
 #        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
 #        mkdir -p $WERF_TEST_COVERAGE_DIR
-#        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+#        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 #
 #        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
 #        git clone https://github.com/werf/ginkgo.git fork
@@ -470,7 +466,7 @@ jobs:
 #
 #        export DOCKER_CONFIG=$(mktemp -d)
 #        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
-#        echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
+#        echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
 #      shell: bash
 #
 #    - name: Test (macos)
@@ -500,7 +496,7 @@ jobs:
 #      fail-fast: false
 #      matrix:
 #        os: [macOS, windows]
-#        k8s_version: [1.11, 1.12, 1.13, 1.14, 1.15, 1.16]
+#        k8s_version: [1.16, 1.17, 1.18, 1.19]
 #    runs-on: [self-hosted, "${{ matrix.os }}"]
 #    steps:
 #
@@ -529,7 +525,7 @@ jobs:
 #      run: |
 #        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
 #        mkdir -p $WERF_TEST_COVERAGE_DIR
-#        echo ::set-env name=WERF_TEST_COVERAGE_DIR::$WERF_TEST_COVERAGE_DIR
+#        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 #
 #        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
 #        git clone https://github.com/werf/ginkgo.git fork
@@ -542,19 +538,17 @@ jobs:
 #        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
 #        for test_binary in $test_binaries; do chmod +x $test_binary; done
 #
-#        echo ::set-env name=WERF_TEST_K8S_BASE64_KUBECONFIG::$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _))
+#        echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
 #
 #        export DOCKER_CONFIG=$(mktemp -d)
 #        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
-#        echo ::set-env name=DOCKER_CONFIG::$DOCKER_CONFIG
+#        echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
 #      shell: bash
 #      env:
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_11: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_11 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_12: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_12 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_13: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_13 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_14: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_14 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_15: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_15 }}
 #        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
+#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
+#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
+#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
 #
 #    - name: Test (macos)
 #      run: |
@@ -621,7 +615,7 @@ jobs:
         go build github.com/wadey/gocovmerge
         chmod +x ./gocovmerge
 
-        echo ::set-env name=WERF_TEST_COVERAGE_DIR::tests_coverage
+        echo WERF_TEST_COVERAGE_DIR=tests_coverage >> $GITHUB_ENV
 
     - name: Prepare coverage file
       run: |
