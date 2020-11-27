@@ -428,9 +428,6 @@ entries:
               - title: Stage Introspection
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
 
-              - title: As layers
-                url: /documentation/advanced/development_and_debug/as_layers.html
-
               - title: Lint and render chart
                 url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
 
@@ -576,9 +573,6 @@ entries:
 
               - title: Интроспекция стадий
                 url: /documentation/advanced/development_and_debug/stage_introspection.html
-
-              - title: Директива asLayers и раздельное кэширование инструкций
-                url: /documentation/advanced/development_and_debug/as_layers.html
 
               - title: Рендеринг и проверка конфигурации
                 url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
