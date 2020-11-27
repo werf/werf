@@ -2,7 +2,6 @@ package helm
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -24,23 +23,8 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 
-	"github.com/spf13/pflag"
 	"helm.sh/helm/v3/pkg/action"
-	"k8s.io/klog"
 )
-
-type InitOptions struct {
-	Debug bool
-}
-
-func Init(opts InitOptions) error {
-	gofs := flag.NewFlagSet("klog", flag.ExitOnError)
-	klog.InitFlags(gofs)
-	pflag.CommandLine.AddGoFlagSet(gofs)
-	pflag.CommandLine.Set("logtostderr", "true")
-
-	return nil
-}
 
 func withEnvs(envsMap map[string]string, do func()) {
 	for k, v := range envsMap {
