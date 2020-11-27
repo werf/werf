@@ -407,7 +407,7 @@ func (f files) doGet(path string) (string, error) {
 	}
 
 	if exists, err := f.LocalGitRepo.IsFileExists(f.ctx, f.Commit, path); err != nil {
-		return "", fmt.Errorf("unable to check existance of %s in the local git repo commit %s: %s", path, f.Commit, err)
+		return "", fmt.Errorf("unable to check existence of %s in the local git repo commit %s: %s", path, f.Commit, err)
 	} else if !exists {
 		return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
 	}

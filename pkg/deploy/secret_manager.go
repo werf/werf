@@ -3,24 +3,31 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 
+	"github.com/werf/logboek"
+
+	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/git_repo"
-
-	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/util"
 )
 
 func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, secretValues []string, localGitRepo *git_repo.Local, disableDeterminism bool, ignoreSecretKey bool) (secret.Manager, error) {
 	isSecretsExists := false
 
+	secretDirPath := filepath.Join(helmChartDir, werf_chart.SecretDirName)
+	defaultSecretValuesFilePath := filepath.Join(helmChartDir, werf_chart.DefaultSecretValuesFileName)
 	if disableDeterminism || localGitRepo == nil {
-		if _, err := os.Stat(filepath.Join(helmChartDir, werf_chart.SecretDirName)); !os.IsNotExist(err) {
+		if exists, err := util.DirExists(secretDirPath); err != nil {
+			return nil, fmt.Errorf("unable to check directory %s existence: %s", secretDirPath, err)
+		} else if exists {
 			isSecretsExists = true
 		}
-		if _, err := os.Stat(filepath.Join(helmChartDir, werf_chart.DefaultSecretValuesFileName)); !os.IsNotExist(err) {
+
+		if exists, err := util.RegularFileExists(defaultSecretValuesFilePath); err != nil {
+			return nil, fmt.Errorf("unable to check file %s existence: %s", defaultSecretValuesFilePath, err)
+		} else if exists {
 			isSecretsExists = true
 		}
 	} else {
@@ -29,14 +36,14 @@ func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, 
 			return nil, fmt.Errorf("unable to get local repo head commit: %s", err)
 		}
 
-		if exists, err := localGitRepo.IsDirectoryExists(ctx, filepath.Join(helmChartDir, werf_chart.SecretDirName), commit); err != nil {
-			return nil, fmt.Errorf("error checking existance of the directory %q in the local git repo commit %s: %s", filepath.Join(helmChartDir, werf_chart.SecretDirName), err)
+		if exists, err := localGitRepo.IsDirectoryExists(ctx, secretDirPath, commit); err != nil {
+			return nil, fmt.Errorf("error checking existence of the directory %q in the local git repo commit %s: %s", secretDirPath, err)
 		} else if exists {
 			isSecretsExists = true
 		}
 
-		if exists, err := localGitRepo.IsFileExists(ctx, commit, filepath.Join(helmChartDir, werf_chart.DefaultSecretValuesFileName)); err != nil {
-			return nil, fmt.Errorf("error checking existance of the file %q in the local git repo commit %s: %s", filepath.Join(helmChartDir, werf_chart.DefaultSecretValuesFileName), err)
+		if exists, err := localGitRepo.IsFileExists(ctx, commit, defaultSecretValuesFilePath); err != nil {
+			return nil, fmt.Errorf("error checking existence of the file %q in the local git repo commit %s: %s", defaultSecretValuesFilePath, err)
 		} else if exists {
 			isSecretsExists = true
 		}

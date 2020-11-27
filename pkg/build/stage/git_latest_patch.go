@@ -34,7 +34,7 @@ func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuilt
 		}
 
 		if exist, err := gitMapping.GitRepo().IsCommitExists(ctx, commit); err != nil {
-			return false, fmt.Errorf("unable to check existance of commit %q in the repo %s: %s", commit, gitMapping.GitRepo().GetName(), err)
+			return false, fmt.Errorf("unable to check existence of commit %q in the repo %s: %s", commit, gitMapping.GitRepo().GetName(), err)
 		} else if !exist {
 			return false, fmt.Errorf("commit %q is not exist in the repo %s", commit, gitMapping.GitRepo().GetName())
 		}

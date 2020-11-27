@@ -20,6 +20,19 @@ func FileExists(path string) (bool, error) {
 	return true, nil
 }
 
+func RegularFileExists(path string) (bool, error) {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		if isNotExistError(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return fileInfo.Mode().IsRegular(), nil
+}
+
 func DirExists(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
