@@ -667,10 +667,10 @@ func prepareWerfConfig(rawImages []*rawStapelImage, rawImagesFromDockerfile []*r
 				stapelImages = append(stapelImages, sameImages...)
 			}
 		} else {
-			if imageArtifacts, err := rawImage.toStapelImageArtifactDirectives(); err != nil {
+			if imageArtifact, err := rawImage.toStapelImageArtifactDirectives(); err != nil {
 				return nil, err
 			} else {
-				artifacts = append(artifacts, imageArtifacts...)
+				artifacts = append(artifacts, imageArtifact)
 			}
 		}
 	}
