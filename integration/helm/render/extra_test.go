@@ -9,12 +9,12 @@ import (
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
-var _ = XDescribe("helm render with extra annotations and labels", func() {
+var _ = Describe("helm render with extra annotations and labels", func() {
 	BeforeEach(func() {
 		utils.CopyIn(utils.FixturePath("base"), testDirPath)
 	})
 
-	It("should be rendered with extra annotations", func() {
+	It("should be rendered with extra annotations (except hooks)", func() {
 		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
@@ -23,10 +23,10 @@ var _ = XDescribe("helm render with extra annotations and labels", func() {
 
 		Ω(strings.Count(output, `annotations:
     anno1: value1
-    anno2: value2`)).Should(Equal(4))
+    anno2: value2`)).Should(Equal(3))
 	})
 
-	It("should be rendered with extra labels", func() {
+	It("should be rendered with extra labels (except hooks)", func() {
 		output := utils.SucceedCommandOutputString(
 			testDirPath,
 			werfBinPath,
@@ -35,6 +35,6 @@ var _ = XDescribe("helm render with extra annotations and labels", func() {
 
 		Ω(strings.Count(output, `labels:
     label1: value1
-    label2: value2`)).Should(Equal(4))
+    label2: value2`)).Should(Equal(3))
 	})
 })

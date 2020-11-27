@@ -49,7 +49,7 @@ var _ = Describe("deploy and rollback chart", func() {
 				)
 			})
 
-			XIt("should get release templates and values", func() {
+			It("should get release templates and values", func() {
 				output := utils.SucceedCommandOutputString(
 					testDirPath,
 					werfBinPath,
@@ -83,7 +83,7 @@ var _ = Describe("deploy and rollback chart", func() {
 					)
 				})
 
-				XIt("should get release templates and values", func() {
+				It("should get release templates and values", func() {
 					output := utils.SucceedCommandOutputString(
 						testDirPath,
 						werfBinPath,
