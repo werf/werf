@@ -7,8 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/werf/werf/pkg/werf"
-
 	"github.com/werf/logboek"
 
 	"github.com/ghodss/yaml"
@@ -17,10 +15,6 @@ import (
 
 	"helm.sh/helm/v3/pkg/releaseutil"
 )
-
-var DefaultExtraAnnotations = map[string]string{
-	"werf.io/version": werf.Version,
-}
 
 func NewExtraAnnotationsAndLabelsPostRenderer(extraAnnotations, extraLabels map[string]string) *ExtraAnnotationsAndLabelsPostRenderer {
 	return &ExtraAnnotationsAndLabelsPostRenderer{

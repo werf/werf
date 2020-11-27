@@ -25,7 +25,6 @@ import (
 )
 
 var (
-	errNotABranch   = errors.New("cannot get branch name: HEAD refers to a specific revision that is not associated with a branch name")
 	errHeadNotFound = errors.New("HEAD not found")
 )
 

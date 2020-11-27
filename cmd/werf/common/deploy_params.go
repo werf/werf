@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
-	"text/template"
-	"time"
-
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
+	"strings"
+	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/werf/werf/pkg/config"
@@ -110,14 +108,6 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	}
 
 	return renderedNamespace, nil
-}
-
-func GetStatusProgressPeriod(cmdData *CmdData) time.Duration {
-	return time.Second * time.Duration(*cmdData.StatusProgressPeriodSeconds)
-}
-
-func GetHooksStatusProgressPeriod(cmdData *CmdData) time.Duration {
-	return time.Second * time.Duration(*cmdData.HooksStatusProgressPeriodSeconds)
 }
 
 func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
@@ -232,8 +222,6 @@ func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, proj
 		} else {
 			return "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
 		}
-
-		return "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
 	}
 }
 

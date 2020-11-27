@@ -10,11 +10,6 @@ import (
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
-type entry struct {
-	fixturesDir   string
-	extraArgsFunc func() []string
-}
-
 var _ = Describe("docs", func() {
 	BeforeEach(func() {
 		if runtime.GOOS == "windows" {

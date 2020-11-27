@@ -9,51 +9,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/werf/kubedog/pkg/kube"
+	"gopkg.in/yaml.v2"
 
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
-
-	"github.com/werf/logboek"
-
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
 	helm_kube "helm.sh/helm/v3/pkg/kube"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
-
-	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 
-	"helm.sh/helm/v3/pkg/action"
+	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/logboek"
 )
-
-func withEnvs(envsMap map[string]string, do func()) {
-	for k, v := range envsMap {
-		oldV := os.Getenv(k)
-		os.Setenv(k, v)
-		defer func(resetValue string) { os.Setenv(k, resetValue) }(oldV)
-	}
-	do()
-}
-
-func NewEnvSettings(ctx context.Context, namespace string) (res *cli.EnvSettings) {
-	withEnvs(map[string]string{
-		"HELM_NAMESPACE":         namespace,
-		"HELM_KUBECONTEXT":       "",
-		"HELM_KUBETOKEN":         "",
-		"HELM_KUBEAPISERVER":     "",
-		"HELM_PLUGINS":           "",
-		"HELM_REGISTRY_CONFIG":   "",
-		"HELM_REPOSITORY_CONFIG": "",
-		"HELM_REPOSITORY_CACHE":  "",
-		"HELM_DEBUG":             "",
-	}, func() {
-		res = cli.New()
-	})
-
-	res.Debug = logboek.Context(ctx).Debug().IsAccepted()
-
-	return
-}
 
 type InitActionConfigOptions struct {
 	StatusProgressPeriod      time.Duration

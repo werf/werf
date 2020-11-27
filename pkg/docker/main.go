@@ -3,7 +3,6 @@ package docker
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -153,14 +152,6 @@ func callCliWithRecordedOutput(ctx context.Context, commandCaller func(c command
 	}
 
 	return output.String(), nil
-}
-
-func getRecordingOutputCli(stdoutWriter, stderrWriter io.Writer) (command.Cli, error) {
-	return newDockerCli([]command.DockerCliOption{
-		command.WithOutputStream(stdoutWriter),
-		command.WithErrorStream(stderrWriter),
-		command.WithContentTrust(false),
-	})
 }
 
 func prepareCliCmd(cmd *cobra.Command, args ...string) *cobra.Command {

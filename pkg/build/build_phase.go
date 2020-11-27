@@ -424,8 +424,6 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 					return nil
 				}
-
-				return nil
 			})
 		}
 	}
