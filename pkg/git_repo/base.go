@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/werf/werf/pkg/util"
@@ -421,13 +421,13 @@ func (repo *Base) readFile(ctx context.Context, repoPath, gitDir, commit, path s
 	return []byte(content), nil
 }
 
-func (repo *Base) realpath(ctx context.Context, repoPath, gitDir, commit, path string) (string, error) {
-	parts := util.SplitPath(path)
+func (repo *Base) realpath(ctx context.Context, repoPath, gitDir, commit, filePath string) (string, error) {
+	parts := util.SplitPath(filePath)
 
 	var resolvedBasePath string
 
 	for _, part := range parts {
-		pathToResolve := filepath.Join(resolvedBasePath, part)
+		pathToResolve := path.Join(resolvedBasePath, part)
 
 		if _, resolvedPath, err := repo.checkAndReadSymlink(ctx, repoPath, gitDir, commit, pathToResolve); err != nil {
 			return "", fmt.Errorf("error reading link %q: %s", pathToResolve, err)
