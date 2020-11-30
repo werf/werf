@@ -224,9 +224,9 @@ jobs:
         - acr
         - default
         - dockerhub
-        - ecr
+#        - ecr
         - gcr
-        - github
+#        - github
         - harbor
         - quay
     runs-on: ${{ matrix.os }}
@@ -246,7 +246,7 @@ jobs:
       WERF_TEST_DOCKERHUB_REGISTRY: ${{ secrets.WERF_TEST_DOCKERHUB_REGISTRY }}
       WERF_TEST_DOCKERHUB_USERNAME: ${{ secrets.WERF_TEST_DOCKERHUB_USERNAME }}
 
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: 0
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: 1
       WERF_TEST_ECR_REGISTRY: ${{ secrets.WERF_TEST_ECR_REGISTRY }}
       WERF_TEST_ECR_PASSWORD: ${{ secrets.WERF_TEST_ECR_PASSWORD }}
       WERF_TEST_ECR_USERNAME: ${{ secrets.WERF_TEST_ECR_USERNAME }}
@@ -255,7 +255,7 @@ jobs:
       WERF_TEST_GCR_BASE64_CONFIG: ${{ secrets.WERF_TEST_GCR_BASE64_CONFIG }}
       WERF_TEST_GCR_REGISTRY: ${{ secrets.WERF_TEST_GCR_REGISTRY }}
 
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: 0
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: 1
       WERF_TEST_GITHUB_PASSWORD: ${{ secrets.WERF_TEST_GITHUB_PASSWORD }}
       WERF_TEST_GITHUB_REGISTRY: ${{ secrets.WERF_TEST_GITHUB_REGISTRY }}
       WERF_TEST_GITHUB_TOKEN: ${{ secrets.WERF_TEST_GITHUB_TOKEN }}
