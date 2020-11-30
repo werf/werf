@@ -9,7 +9,7 @@ import (
 	"github.com/werf/werf/pkg/testing/utils"
 )
 
-var _ = XDescribe("helm render", func() {
+var _ = Describe("helm render", func() {
 	BeforeEach(func() {
 		utils.CopyIn(utils.FixturePath("base"), testDirPath)
 	})

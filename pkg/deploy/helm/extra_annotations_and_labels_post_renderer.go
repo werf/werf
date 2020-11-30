@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -39,8 +40,10 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 
 	splitModifiedManifests := make([]string, 0)
 
+	manifestNameRegex := regexp.MustCompile("# Source: .*")
 	for _, manifestKey := range manifestsKeys {
 		manifestContent := splitManifestsByKeys[manifestKey]
+		manifestSource := manifestNameRegex.FindString(manifestContent)
 
 		if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
 			fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- original manifest BEGIN\n")
@@ -57,7 +60,7 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 		}
 
 		if obj.GetKind() == "" {
-			logboek.Debug().LogF("Skipping emty object\n")
+			logboek.Debug().LogF("Skipping empty object\n")
 			continue
 		}
 
@@ -86,7 +89,7 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 		if modifiedManifestContent, err := yaml.Marshal(obj.Object); err != nil {
 			return nil, fmt.Errorf("unable to modify manifest: %s\n%s\n---\n", err, manifestContent)
 		} else {
-			splitModifiedManifests = append(splitModifiedManifests, string(modifiedManifestContent))
+			splitModifiedManifests = append(splitModifiedManifests, manifestSource+"\n"+string(modifiedManifestContent))
 
 			if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
 				fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifest BEGIN\n")
