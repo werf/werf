@@ -32,7 +32,7 @@ bitsadmin.exe /transfer "multiwerf" https://flant.bintray.com/multiwerf/v1.3.0/m
 setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
 ```
 
-После этого можно открыть новую сессию `cmd.exe` и начать пользоваться multiwerf.
+После этого **необходимо открыть новую сессию `cmd.exe`**, чтобы начать пользоваться werf.
 
 ###### Использование werf в текущей сессии shell
 

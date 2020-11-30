@@ -30,9 +30,9 @@ set MULTIWERF_BIN_PATH="C:\ProgramData\multiwerf\bin"
 mkdir %MULTIWERF_BIN_PATH%
 bitsadmin.exe /transfer "multiwerf" https://flant.bintray.com/multiwerf/v1.3.0/multiwerf-windows-amd64-v1.3.0.exe %MULTIWERF_BIN_PATH%\multiwerf.exe
 setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
-
-# after that open new cmd.exe session and start using multiwerf
 ```
+
+Next it is required to open **new cmd.exe session** to start using werf.
 
 ###### Using werf in the current shell
 
