@@ -224,9 +224,9 @@ jobs:
         - acr
         - default
         - dockerhub
-        - ecr
+#        - ecr
         - gcr
-        - github
+#        - github
         - harbor
         - quay
     runs-on: ${{ matrix.os }}
@@ -246,7 +246,7 @@ jobs:
       WERF_TEST_DOCKERHUB_REGISTRY: ${{ secrets.WERF_TEST_DOCKERHUB_REGISTRY }}
       WERF_TEST_DOCKERHUB_USERNAME: ${{ secrets.WERF_TEST_DOCKERHUB_USERNAME }}
 
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: 0
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: 1
       WERF_TEST_ECR_REGISTRY: ${{ secrets.WERF_TEST_ECR_REGISTRY }}
       WERF_TEST_ECR_PASSWORD: ${{ secrets.WERF_TEST_ECR_PASSWORD }}
       WERF_TEST_ECR_USERNAME: ${{ secrets.WERF_TEST_ECR_USERNAME }}
@@ -255,7 +255,7 @@ jobs:
       WERF_TEST_GCR_BASE64_CONFIG: ${{ secrets.WERF_TEST_GCR_BASE64_CONFIG }}
       WERF_TEST_GCR_REGISTRY: ${{ secrets.WERF_TEST_GCR_REGISTRY }}
 
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: 0
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: 1
       WERF_TEST_GITHUB_PASSWORD: ${{ secrets.WERF_TEST_GITHUB_PASSWORD }}
       WERF_TEST_GITHUB_REGISTRY: ${{ secrets.WERF_TEST_GITHUB_REGISTRY }}
       WERF_TEST_GITHUB_TOKEN: ${{ secrets.WERF_TEST_GITHUB_TOKEN }}
@@ -405,180 +405,180 @@ jobs:
         name: tests_coverage
         path: tests_coverage
 
-#  integration_tests_on_self_hosted_runners:
-#    name: Integration tests
-#    needs: precompiled_tests_binaries
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os: [macOS, windows]
-#        extra-find-args:
-#        - "-name 'git.test*'"
-#        - "-name 'ansible.test*'"
-#        - "! -name 'git.test*' ! -name 'ansible.test*'"
-#    runs-on: [self-hosted, "${{ matrix.os }}"]
-#    steps:
-#
-#    - name: Set up Go 1.14
-#      uses: actions/setup-go@v1
-#      with:
-#        go-version: 1.14
-#      id: go
-#
-#    - name: Checkout code
-#      uses: actions/checkout@v2
-#      if: matrix.extra-find-args != '! -name ''git.test*'' ! -name ''ansible.test*'''
-#
-#    - name: Checkout code (git history as fixtures for tests)
-#      uses: actions/checkout@v2
-#      with:
-#        fetch-depth: 0
-#      if: matrix.extra-find-args == '! -name ''git.test*'' ! -name ''ansible.test*'''
-#
-#    - name: Download integration tests binaries
-#      uses: actions/download-artifact@master
-#      with:
-#        name: "${{ matrix.os }}-latest_integration_tests_binaries"
-#        path: .
-#
-#    - name: Download werf with coverage binary
-#      uses: actions/download-artifact@master
-#      with:
-#        name: "${{ matrix.os }}-latest_werf_with_coverage"
-#        path: .
-#
-#    - name: Prepare environment
-#      run: |
-#        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
-#        mkdir -p $WERF_TEST_COVERAGE_DIR
-#        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
-#
-#        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-#        git clone https://github.com/werf/ginkgo.git fork
-#        cd fork/ginkgo
-#        go build .
-#        mv ginkgo $GITHUB_WORKSPACE
-#        cd $GITHUB_WORKSPACE
-#
-#        chmod +x werf_with_coverage
-#        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
-#        for test_binary in $test_binaries; do chmod +x $test_binary; done
-#
-#        export DOCKER_CONFIG=$(mktemp -d)
-#        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
-#        echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
-#      shell: bash
-#
-#    - name: Test (macos)
-#      run: |
-#        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
-#        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-#      shell: bash
-#      if: matrix.os == 'macos'
-#
-#    - name: Test (windows)
-#      run: |
-#        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
-#        WERF_DISABLE_AUTO_GC=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-#      shell: bash
-#      if: matrix.os == 'windows'
-#
-#    - name: Upload coverage artifact
-#      uses: actions/upload-artifact@master
-#      with:
-#        name: tests_coverage
-#        path: tests_coverage
-#
-#  integration_k8s_tests_on_self_hosted_runners:
-#    name: Integration k8s tests
-#    needs: precompiled_tests_binaries
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os: [macOS, windows]
-#        k8s_version: [1.16, 1.17, 1.18, 1.19]
-#    runs-on: [self-hosted, "${{ matrix.os }}"]
-#    steps:
-#
-#    - name: Set up Go 1.14
-#      uses: actions/setup-go@v1
-#      with:
-#        go-version: 1.14
-#      id: go
-#
-#    - name: Checkout code
-#      uses: actions/checkout@v2
-#
-#    - name: Download integration k8s tests binaries
-#      uses: actions/download-artifact@master
-#      with:
-#        name: "${{ matrix.os }}-latest_integration_k8s_tests_binaries"
-#        path: .
-#
-#    - name: Download werf with coverage binary
-#      uses: actions/download-artifact@master
-#      with:
-#        name: "${{ matrix.os }}-latest_werf_with_coverage"
-#        path: .
-#
-#    - name: Prepare environment
-#      run: |
-#        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
-#        mkdir -p $WERF_TEST_COVERAGE_DIR
-#        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
-#
-#        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-#        git clone https://github.com/werf/ginkgo.git fork
-#        cd fork/ginkgo
-#        go build .
-#        mv ginkgo $GITHUB_WORKSPACE
-#        cd $GITHUB_WORKSPACE
-#
-#        chmod +x werf_with_coverage
-#        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
-#        for test_binary in $test_binaries; do chmod +x $test_binary; done
-#
-#        echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
-#
-#        export DOCKER_CONFIG=$(mktemp -d)
-#        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
-#        echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
-#      shell: bash
-#      env:
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
-#        WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
-#
-#    - name: Test (macos)
-#      run: |
-#        source ./scripts/ci/integration_k8s_tests_before_hook.sh
-#        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
-#        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-#      shell: bash
-#      env:
-#        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
-#        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-#        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-#      if: matrix.os == 'macos'
-#
-#    - name: Test (windows)
-#      run: |
-#        source ./scripts/ci/integration_k8s_tests_before_hook.sh
-#        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
-#        WERF_DISABLE_AUTO_GC=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-#      shell: bash
-#      env:
-#        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
-#        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-#        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-#      if: matrix.os == 'windows'
-#
-#    - name: Upload coverage artifact
-#      uses: actions/upload-artifact@master
-#      with:
-#        name: tests_coverage
-#        path: tests_coverage
+  integration_tests_on_self_hosted_runners:
+    name: Integration tests
+    needs: precompiled_tests_binaries
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows]
+        extra-find-args:
+        - "-name 'git.test*'"
+        - "-name 'ansible.test*'"
+        - "! -name 'git.test*' ! -name 'ansible.test*'"
+    runs-on: [self-hosted, "${{ matrix.os }}"]
+    steps:
+
+    - name: Set up Go 1.14
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.14
+      id: go
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      if: matrix.extra-find-args != '! -name ''git.test*'' ! -name ''ansible.test*'''
+
+    - name: Checkout code (git history as fixtures for tests)
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+      if: matrix.extra-find-args == '! -name ''git.test*'' ! -name ''ansible.test*'''
+
+    - name: Download integration tests binaries
+      uses: actions/download-artifact@master
+      with:
+        name: "${{ matrix.os }}-latest_integration_tests_binaries"
+        path: .
+
+    - name: Download werf with coverage binary
+      uses: actions/download-artifact@master
+      with:
+        name: "${{ matrix.os }}-latest_werf_with_coverage"
+        path: .
+
+    - name: Prepare environment
+      run: |
+        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
+        mkdir -p $WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
+
+        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
+        git clone https://github.com/werf/ginkgo.git fork
+        cd fork/ginkgo
+        go build .
+        mv ginkgo $GITHUB_WORKSPACE
+        cd $GITHUB_WORKSPACE
+
+        chmod +x werf_with_coverage
+        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
+        for test_binary in $test_binaries; do chmod +x $test_binary; done
+
+        export DOCKER_CONFIG=$(mktemp -d)
+        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
+        echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
+      shell: bash
+
+    - name: Test (macos)
+      run: |
+        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+      shell: bash
+      if: matrix.os == 'macos'
+
+    - name: Test (windows)
+      run: |
+        test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
+        WERF_DISABLE_AUTO_GC=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+      shell: bash
+      if: matrix.os == 'windows'
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: tests_coverage
+        path: tests_coverage
+
+  integration_k8s_tests_on_self_hosted_runners:
+    name: Integration k8s tests
+    needs: precompiled_tests_binaries
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows]
+        k8s_version: [1.16, 1.17, 1.18, 1.19]
+    runs-on: [self-hosted, "${{ matrix.os }}"]
+    steps:
+
+    - name: Set up Go 1.14
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.14
+      id: go
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Download integration k8s tests binaries
+      uses: actions/download-artifact@master
+      with:
+        name: "${{ matrix.os }}-latest_integration_k8s_tests_binaries"
+        path: .
+
+    - name: Download werf with coverage binary
+      uses: actions/download-artifact@master
+      with:
+        name: "${{ matrix.os }}-latest_werf_with_coverage"
+        path: .
+
+    - name: Prepare environment
+      run: |
+        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
+        mkdir -p $WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
+
+        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
+        git clone https://github.com/werf/ginkgo.git fork
+        cd fork/ginkgo
+        go build .
+        mv ginkgo $GITHUB_WORKSPACE
+        cd $GITHUB_WORKSPACE
+
+        chmod +x werf_with_coverage
+        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
+        for test_binary in $test_binaries; do chmod +x $test_binary; done
+
+        echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
+
+        export DOCKER_CONFIG=$(mktemp -d)
+        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
+        echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
+      shell: bash
+      env:
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
+
+    - name: Test (macos)
+      run: |
+        source ./scripts/ci/integration_k8s_tests_before_hook.sh
+        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+      shell: bash
+      env:
+        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+      if: matrix.os == 'macos'
+
+    - name: Test (windows)
+      run: |
+        source ./scripts/ci/integration_k8s_tests_before_hook.sh
+        test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
+        WERF_DISABLE_AUTO_GC=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+      shell: bash
+      env:
+        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+      if: matrix.os == 'windows'
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: tests_coverage
+        path: tests_coverage
 
   upload_coverage:
     name: Upload coverage
@@ -587,8 +587,8 @@ jobs:
     - integration_tests
     - integration_tests_cleanup_implementations
     - integration_k8s_tests
-#    - integration_tests_on_self_hosted_runners
-#    - integration_k8s_tests_on_self_hosted_runners
+    - integration_tests_on_self_hosted_runners
+    - integration_k8s_tests_on_self_hosted_runners
     runs-on: ubuntu-latest
     steps:
 

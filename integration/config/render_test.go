@@ -1,6 +1,8 @@
 package config_test
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
@@ -24,15 +26,13 @@ var renderItBody = func(entry renderEntry) {
 		werfArgs...,
 	)
 
-	Ω(output).Should(Equal(entry.expectedOutput))
+	Ω(output).Should(Equal(strings.ReplaceAll(entry.expectedOutput, "\n", utils.LineBreak)))
 }
 
 var _ = DescribeTable("config render", renderItBody,
 	Entry("all", renderEntry{
 		extraArgs: []string{},
-		expectedOutput: `
-
-project: none
+		expectedOutput: `project: none
 configVersion: 1.0
 ---
 image: image_a
