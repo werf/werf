@@ -3,6 +3,7 @@ package werf_chart
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/werf/logboek"
 
@@ -42,7 +43,7 @@ func LoadFilesFromGit(ctx context.Context, localGitRepo *git_repo.Local, project
 				return nil, err
 			} else {
 				logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, repoPath, d)
-				res = append(res, &loader.BufferedFile{Name: util.GetRelativeToBaseFilepath(relativeLoadDir, repoPath), Data: d})
+				res = append(res, &loader.BufferedFile{Name: filepath.ToSlash(util.GetRelativeToBaseFilepath(relativeLoadDir, repoPath)), Data: d})
 			}
 		}
 	}
