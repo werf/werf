@@ -7,7 +7,16 @@ sidebar: documentation
 
 In this article we will show you how to set up the deployment of an [example application](https://github.com/werf/quickstart-application) (a cool voting app in our case) using werf. It is better to start with a [short introduction]({{ "introduction.html" | relative_url }}) first if you haven't read it yet.
 
-You have to [install werf]({{ "installation.html" | relative_url }}) to use this quick-start guide.
+## Prepare your host
+
+ 1. Install [dependencies]({{ "installation.html#install-dependencies" | relative_url }}) (Docker and Git).
+ 2. Install [multiwerf and werf]({{ "installation.html#install-werf" | relative_url }}).
+
+Make sure you have `werf` command available in your shell before proceeding to the next step:
+   
+```
+werf version
+```
 
 ## Prepare your Kubernetes and Docker Registry
 
@@ -20,17 +29,21 @@ If your Kubernetes and Docker Registry are running already:
 
 <br>
 
+Or use one of the following instructions to set up the local Kubernetes cluster and Docker Registry in your OS:
+
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">Or follow these steps to set up the local Kubernetes cluster and Docker Registry.</a>
+<a href="javascript:void(0)" class="details__summary">Windows</a>
 <div class="details__content" markdown="1">
  1. Install [minikube](https://github.com/kubernetes/minikube#installation).
  2. Start minikube:
 
     {% raw %}
     ```shell
-    minikube start
+    minikube start --driver=docker
     ```
     {% endraw %}
+    
+    **IMPORTANT:** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
 
  3. Enable the minikube registry addon:
 
@@ -39,20 +52,116 @@ If your Kubernetes and Docker Registry are running already:
     minikube addons enable registry
     ```
     {% endraw %}
+    
+    Output should contain a line like:
+ 
+    ```
+    ...
+    * Registry addon on with docker uses 32769 please use that instead of default 5000
+    ...
+    ```
+    
+    Remember the port `32769`.
+    
+ 4. Run the following port forwarder in the separate terminal replacing `32769` port with the port from the previous step:
 
- 4. Run a service with a binding to 5000 port:
+    ```shell
+    docker run -ti --rm --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769"
+    ```
+
+ 5. Run a service with a binding to 5000 port:
 
     {% raw %}
     ```shell
-    kubectl -n kube-system expose rc/registry --type=ClusterIP --port=5000 --target-port=5000 --name=werf-registry --selector='actual-registry=true'
+    kubectl -n kube-system expose rc/registry --type=ClusterIP --port=5000 --target-port=5000 --name=werf-registry --selector=actual-registry=true
     ```
     {% endraw %}
 
- 5. Run a port forwarder on the host system in a separate terminal:
+ 6. Run the following port forwarder in the separate terminal:
 
     {% raw %}
     ```shell
     kubectl port-forward --namespace kube-system service/werf-registry 5000
+    ```
+    {% endraw %}
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">MacOS</a>
+<div class="details__content" markdown="1">
+ 1. Install [minikube](https://github.com/kubernetes/minikube#installation).
+ 2. Start minikube:
+
+    {% raw %}
+    ```shell
+    minikube start --driver=docker
+    ```
+    {% endraw %}
+    
+    **IMPORTANT:** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and then start command shown above).
+
+ 3. Enable the minikube registry addon:
+
+    {% raw %}
+    ```shell
+    minikube addons enable registry
+    ```
+    {% endraw %}
+    
+    Output should contain a line like:
+ 
+    ```
+    ...
+    * Registry addon on with docker uses 32769 please use that instead of default 5000
+    ...
+    ```
+    
+    Remember the port `32769`.
+    
+ 4. Run the following port forwarder in the separate terminal replacing `32769` port with the port from the step 3:
+
+    ```shell
+    docker run -ti --rm --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769"
+    ```
+
+ 5. Run the following port forwarder in the separate terminal replacing `32769` port with the port from the step 3:
+ 
+    ```shell
+    brew install socat
+    socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769
+    ```
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">Linux</a>
+<div class="details__content" markdown="1">
+ 1. Install [minikube](https://github.com/kubernetes/minikube#installation).
+ 2. Start minikube:
+
+    {% raw %}
+    ```shell
+    minikube start --driver=docker
+    ```
+    {% endraw %}
+    
+    **IMPORTANT:** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and then start command shown above).
+
+ 3. Enable the minikube registry addon:
+
+    {% raw %}
+    ```shell
+    minikube addons enable registry
+    ```
+    {% endraw %}
+ 
+ 4. Run the following port forwarder in the separate terminal:
+
+    {% raw %}
+    ```shell
+    sudo apt-get install -y socat
+    socat -d -d TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip):5000
     ```
     {% endraw %}
 </div>
@@ -83,7 +192,7 @@ _NOTE: `werf` uses the same settings to connect to the Kubernetes cluster as the
 
 When the converge command is successfully completed, it is safe to assume that our application is up and running. Let’s check it!
 
-Our application is a basic voting system. Go to the following URL to vote ([http://172.17.0.3:31000](http://172.17.0.3:31000) in our case):
+Our application is a basic voting system. Go to the following URL to vote:
 
 {% raw %}
 ```
@@ -91,7 +200,7 @@ minikube service --namespace quickstart-application --url vote
 ```
 {% endraw %}
 
-Go to the following URL to check the result of voting ([http://172.17.0.3:31001](http://172.17.0.3:31001) in our case):
+Go to the following URL to check the result of voting:
 
 {% raw %}
 ```

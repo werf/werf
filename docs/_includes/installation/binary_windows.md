@@ -21,6 +21,4 @@ set WERF_BIN_PATH="C:\ProgramData\werf\bin"
 mkdir %WERF_BIN_PATH%
 bitsadmin.exe /transfer "werf" https://dl.bintray.com/flant/werf/v1.1.21+fix22/werf-windows-amd64-v1.1.21+fix22.exe %WERF_BIN_PATH%\werf.exe
 setx /M PATH "%PATH%;%WERF_BIN_PATH%"
-
-# open new cmd.exe session and start using werf
 ```
