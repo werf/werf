@@ -4,12 +4,30 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/integration/utils"
 )
 
-var _ = XDescribe("helm render with secrets", func() {
+var _ = Describe("helm render with secrets", func() {
 	BeforeEach(func() {
 		utils.CopyIn(utils.FixturePath("secret"), testDirPath)
+
+		utils.RunSucceedCommand(
+			testDirPath,
+			"git",
+			"init",
+		)
+
+		utils.RunSucceedCommand(
+			testDirPath,
+			"git",
+			"add", "-A",
+		)
+
+		utils.RunSucceedCommand(
+			testDirPath,
+			"git",
+			"commit", "-m", "Initial commit",
+		)
 	})
 
 	It("should be rendered", func() {

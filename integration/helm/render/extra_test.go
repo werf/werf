@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/integration/utils"
 )
 
 var _ = Describe("helm render with extra annotations and labels", func() {

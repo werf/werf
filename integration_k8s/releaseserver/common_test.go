@@ -1,8 +1,8 @@
 package releaseserver_test
 
 import (
-	"github.com/werf/werf/pkg/testing/utils"
-	"github.com/werf/werf/pkg/testing/utils/liveexec"
+	"github.com/werf/werf/integration/utils"
+	"github.com/werf/werf/integration/utils/liveexec"
 )
 
 func werfDeploy(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {

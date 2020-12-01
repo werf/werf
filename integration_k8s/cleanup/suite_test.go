@@ -12,9 +12,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
+	"github.com/werf/werf/integration/utils"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/testing/utils"
 )
 
 const imageName = ""

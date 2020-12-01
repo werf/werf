@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/integration/utils"
 )
 
 var werfRepositoryDir string
