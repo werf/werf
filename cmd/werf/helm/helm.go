@@ -55,6 +55,7 @@ func NewCmd() *cobra.Command {
 	cmd_werf_common.SetupKubeContext(&_commonCmdData, cmd)
 	cmd_werf_common.SetupStatusProgressPeriod(&_commonCmdData, cmd)
 	cmd_werf_common.SetupHooksStatusProgressPeriod(&_commonCmdData, cmd)
+	cmd_werf_common.SetupReleasesHistoryMax(&_commonCmdData, cmd)
 	cmd_werf_common.SetupLogOptions(&_commonCmdData, cmd)
 
 	cmd.AddCommand(
@@ -131,6 +132,7 @@ func NewCmd() *cobra.Command {
 						ConfigPath:       *_commonCmdData.KubeConfig,
 						ConfigDataBase64: *_commonCmdData.KubeConfigBase64,
 					},
+					ReleasesHistoryMax: *_commonCmdData.ReleasesHistoryMax,
 				})
 
 				if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{

@@ -379,6 +379,7 @@ func run(ctx context.Context, projectDir string) error {
 			ConfigPath:       *commonCmdData.KubeConfig,
 			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
 		},
+		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 	}); err != nil {
 		return err
 	}
