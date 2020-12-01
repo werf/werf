@@ -79,14 +79,14 @@ channels:
       </h1>
       <div class="docs">
 <div class="details">
-<h2 name="install-dependencies"><a href="javascript:void(0)" class="details__summary">Install dependencies</a></h2>
+<h2 id="install-dependencies"><a href="javascript:void(0)" class="details__summary">Install dependencies</a></h2>
 <div class="details__content" markdown="1">
 {% include en/installation/multiwerf_dependencies.md %}
 </div>
 </div>
 <h2 id="install-werf">Install werf</h2>
 <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="multiwerf">
-<h3>Installing multiwerf</h3>
+<h3 id="install-multiwerf">Installing multiwerf</h3>
 <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
   {% for version in page.versions %}
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
@@ -169,7 +169,7 @@ The latest release can be found [at this page](https://bintray.com/flant/werf/we
   </div>
 
   <div class="installation-channels">
-    <h2 class="installation-channels__title" name="all-changes-in-werf-go-through-all-stability-channels">
+    <h2 class="installation-channels__title" id="all-changes-in-werf-go-through-all-stability-channels">
       All changes in werf<br>
       go through all stability channels
     </h2>
@@ -240,7 +240,7 @@ The latest release can be found [at this page](https://bintray.com/flant/werf/we
     </div>
   </div>
   <div class="installation-compatibility">
-    <h2 class="installation-compatibility__title" name="backward-compatibility-promise">Backward compatibility promise</h2>
+    <h2 class="installation-compatibility__title" id="backward-compatibility-promise">Backward compatibility promise</h2>
 <div markdown="1" class="docs">
 {% include en/installation/backward-compatibility.md %}
 </div>
