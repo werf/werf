@@ -84,7 +84,7 @@ channels:
 {% include en/installation/multiwerf_dependencies.md %}
 </div>
 </div>
-<h2>Install werf</h2>
+<h2 id="install-werf">Install werf</h2>
 <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="multiwerf">
 <h3>Installing multiwerf</h3>
 <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
