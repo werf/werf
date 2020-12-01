@@ -224,7 +224,7 @@ jobs:
         - acr
         - default
         - dockerhub
-#        - ecr
+        - ecr
         - gcr
 #        - github
         - harbor

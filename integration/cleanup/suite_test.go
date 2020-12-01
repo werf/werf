@@ -138,10 +138,10 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 				initStagesStorage(stagesStorageAddress, stagesStorageImplementationName, stagesStorageDockerRegistryOptions)
 
 				stubs.SetEnv("WERF_REPO", stagesStorageAddress)
+			})
 
-				if implementationName == docker_registry.QuayImplementationName {
-					stubs.SetEnv("WERF_PARALLEL", "0")
-				}
+			BeforeEach(func() {
+				implementationBeforeEach(implementationName)
 			})
 
 			AfterEach(func() {
@@ -323,6 +323,17 @@ func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) do
 			InsecureRegistry:      false,
 			SkipTlsVerifyRegistry: false,
 		}
+	}
+}
+
+func implementationBeforeEach(implementationName string) {
+	switch implementationName {
+	case docker_registry.AwsEcrImplementationName:
+		err := stagesStorage.CreateRepo(context.Background())
+		Ω(err).Should(Succeed())
+	case docker_registry.QuayImplementationName:
+		stubs.SetEnv("WERF_PARALLEL", "0")
+	default:
 	}
 }
 
