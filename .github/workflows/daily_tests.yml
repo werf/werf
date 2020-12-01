@@ -411,7 +411,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows]
+        os: [macos, windows]
         extra-find-args:
         - "-name 'git.test*'"
         - "-name 'ansible.test*'"
@@ -495,7 +495,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows]
+        os: [macos, windows]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
