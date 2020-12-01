@@ -130,41 +130,6 @@ func (r *dockerHub) getToken(ctx context.Context) (string, error) {
 	return r.dockerHubCredentials.token, nil
 }
 
-func (r *dockerHub) ResolveRepoMode(_ context.Context, registryOrRepositoryAddress, repoMode string) (string, error) {
-	account, repository, err := r.parseReference(registryOrRepositoryAddress)
-	if err != nil {
-		return "", err
-	}
-
-	if account == "library" {
-		account = repository
-		repository = ""
-	}
-
-	switch repoMode {
-	case MonorepoRepoMode:
-		if repository != "" {
-			return MonorepoRepoMode, nil
-		}
-
-		return "", fmt.Errorf("docker registry implementation %[1]s and repo mode %[2]s cannot be used with %[4]s (add repository to address or use %[3]s repo mode)", r.String(), MonorepoRepoMode, MultirepoRepoMode, registryOrRepositoryAddress)
-	case MultirepoRepoMode:
-		if repository == "" {
-			return MultirepoRepoMode, nil
-		}
-
-		return "", fmt.Errorf("docker registry implementation %[1]s and repo mode %[3]s cannot be used with %[4]s (exclude repository from address or use %[2]s repo mode)", r.String(), MonorepoRepoMode, MultirepoRepoMode, registryOrRepositoryAddress)
-	case "auto", "":
-		if repository == "" {
-			return MultirepoRepoMode, nil
-		} else {
-			return MonorepoRepoMode, nil
-		}
-	default:
-		return "", fmt.Errorf("docker registry implementation %s does not support repo mode %s", r.String(), repoMode)
-	}
-}
-
 func (r *dockerHub) String() string {
 	return DockerHubImplementationName
 }
