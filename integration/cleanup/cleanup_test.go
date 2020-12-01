@@ -8,8 +8,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/integration/utils"
 	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/testing/utils"
 )
 
 var _ = forEachDockerRegistryImplementation("cleanup command", func() {

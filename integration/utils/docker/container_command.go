@@ -12,7 +12,8 @@ import (
 
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/stapel"
-	"github.com/werf/werf/pkg/testing/utils"
+
+	"github.com/werf/werf/integration/utils"
 )
 
 func init() {

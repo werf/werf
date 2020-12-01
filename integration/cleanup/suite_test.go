@@ -17,8 +17,8 @@ import (
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/storage"
 
-	"github.com/werf/werf/pkg/testing/utils"
-	utilsDocker "github.com/werf/werf/pkg/testing/utils/docker"
+	"github.com/werf/werf/integration/utils"
+	utilsDocker "github.com/werf/werf/integration/utils/docker"
 )
 
 // Environment implementation variables

@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/werf/werf/pkg/testing/utils/liveexec"
+	"github.com/werf/werf/integration/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

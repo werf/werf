@@ -9,7 +9,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/integration/utils"
 )
 
 func TestSuite(t *testing.T) {

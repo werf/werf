@@ -12,8 +12,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"github.com/werf/werf/pkg/testing/utils"
-	utilsDocker "github.com/werf/werf/pkg/testing/utils/docker"
+	"github.com/werf/werf/integration/utils"
+	utilsDocker "github.com/werf/werf/integration/utils/docker"
 )
 
 func TestIntegration(t *testing.T) {

@@ -8,9 +8,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/pkg/testing/utils"
-	"github.com/werf/werf/pkg/testing/utils/liveexec"
-	"github.com/werf/werf/pkg/testing/utils/resourcesfactory"
+	"github.com/werf/werf/integration/utils"
+	"github.com/werf/werf/integration/utils/liveexec"
+	"github.com/werf/werf/integration/utils/resourcesfactory"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 

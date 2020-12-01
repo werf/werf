@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/integration/utils"
 )
 
 var werfRepositoryDir string

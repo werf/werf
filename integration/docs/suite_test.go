@@ -9,7 +9,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 	"github.com/prashantv/gostub"
 
-	"github.com/werf/werf/pkg/testing/utils"
+	"github.com/werf/werf/integration/utils"
 )
 
 func TestIntegration(t *testing.T) {
