@@ -126,36 +126,6 @@ func (r *gitHubPackages) deleteRepo(ctx context.Context, reference string) error
 	return nil
 }
 
-func (r *gitHubPackages) ResolveRepoMode(ctx context.Context, registryOrRepositoryAddress, repoMode string) (string, error) {
-	_, _, packageName, err := r.parseReference(registryOrRepositoryAddress)
-	if err != nil {
-		return "", err
-	}
-
-	switch repoMode {
-	case MonorepoRepoMode:
-		if packageName != "" {
-			return MonorepoRepoMode, nil
-		}
-
-		return "", fmt.Errorf("docker registry implementation %[1]s and repo mode %[2]s cannot be used with %[4]s (add repository to address or use %[3]s repo mode)", r.String(), MonorepoRepoMode, MultirepoRepoMode, registryOrRepositoryAddress)
-	case MultirepoRepoMode:
-		if packageName == "" {
-			return MultirepoRepoMode, nil
-		}
-
-		return "", fmt.Errorf("docker registry implementation %[1]s and repo mode %[3]s cannot be used with %[4]s (exclude repository from address or use %[2]s repo mode)", r.String(), MonorepoRepoMode, MultirepoRepoMode, registryOrRepositoryAddress)
-	case "auto", "":
-		if packageName == "" {
-			return MultirepoRepoMode, nil
-		} else {
-			return MonorepoRepoMode, nil
-		}
-	default:
-		return "", fmt.Errorf("docker registry implementation %s does not support repo mode %s", r.String(), repoMode)
-	}
-}
-
 func (r *gitHubPackages) String() string {
 	return GitHubPackagesImplementationName
 }

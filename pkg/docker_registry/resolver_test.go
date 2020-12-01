@@ -1,119 +1,53 @@
 package docker_registry_test
 
 import (
-	"context"
-
-	"github.com/werf/werf/pkg/docker_registry"
-
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/pkg/docker_registry"
 )
 
 type entry struct {
-	imagesRepoAddress          string
-	expectedImplementationName string
-	expectedRepoMode           string
+	imagesRepoAddress string
+	expectation       string
 }
 
-var _ = DescribeTable("resolve implementation name and repo mode", func(entry entry) {
+var _ = DescribeTable("resolve implementation name", func(entry entry) {
 	resolvedImplementation, err := docker_registry.ResolveImplementation(entry.imagesRepoAddress, "")
 	Ω(err).ShouldNot(HaveOccurred())
 
-	Ω(resolvedImplementation).Should(Equal(entry.expectedImplementationName))
-
-	dockerRegistry, err := docker_registry.NewDockerRegistry(entry.imagesRepoAddress, resolvedImplementation, docker_registry.DockerRegistryOptions{})
-	Ω(err).ShouldNot(HaveOccurred())
-
-	resolvedRepoMode, err := dockerRegistry.ResolveRepoMode(context.Background(), entry.imagesRepoAddress, "")
-	Ω(err).ShouldNot(HaveOccurred())
-
-	Ω(resolvedRepoMode).Should(Equal(entry.expectedRepoMode))
+	Ω(resolvedImplementation).Should(Equal(entry.expectation))
 },
-	Entry("[ecr] registry -> multirepo", entry{
-		imagesRepoAddress:          "123456789012.dkr.ecr.test.amazonaws.com",
-		expectedImplementationName: "ecr",
-		expectedRepoMode:           "multirepo",
+	Entry("ecr", entry{
+		imagesRepoAddress: "123456789012.dkr.ecr.test.amazonaws.com/repo",
+		expectation:       "ecr",
 	}),
-	Entry("[ecr] repository -> multirepo", entry{
-		imagesRepoAddress:          "123456789012.dkr.ecr.test.amazonaws.com/test",
-		expectedImplementationName: "ecr",
-		expectedRepoMode:           "multirepo",
+	Entry("acr", entry{
+		imagesRepoAddress: "test.azurecr.io/repo",
+		expectation:       "acr",
 	}),
-
-	Entry("[acr] registry -> multirepo", entry{
-		imagesRepoAddress:          "test.azurecr.io",
-		expectedImplementationName: "acr",
-		expectedRepoMode:           "multirepo",
+	Entry("default", entry{
+		imagesRepoAddress: "localhost:5000/repo",
+		expectation:       "default",
 	}),
-	Entry("[acr] repository -> multirepo", entry{
-		imagesRepoAddress:          "test.azurecr.io/test",
-		expectedImplementationName: "acr",
-		expectedRepoMode:           "multirepo",
+	Entry("dockerhub", entry{
+		imagesRepoAddress: "account/repo",
+		expectation:       "dockerhub",
 	}),
-
-	Entry("[default] registry -> multirepo", entry{
-		imagesRepoAddress:          "localhost:5000",
-		expectedImplementationName: "default",
-		expectedRepoMode:           "multirepo",
+	Entry("gcr", entry{
+		imagesRepoAddress: "container.cloud.google.com/registry/repo",
+		expectation:       "gcr",
 	}),
-	Entry("[default] repository -> multirepo", entry{
-		imagesRepoAddress:          "localhost:5000/test",
-		expectedImplementationName: "default",
-		expectedRepoMode:           "multirepo",
+	Entry("github", entry{
+		imagesRepoAddress: "docker.pkg.github.com/account/project/package",
+		expectation:       "github",
 	}),
-
-	Entry("[dockerhub] account -> multirepo", entry{
-		imagesRepoAddress:          "account",
-		expectedImplementationName: "dockerhub",
-		expectedRepoMode:           "multirepo",
+	Entry("harbor", entry{
+		imagesRepoAddress: "harbor.company.com/project/repo",
+		expectation:       "harbor",
 	}),
-	Entry("[dockerhub] repository -> monorepo", entry{
-		imagesRepoAddress:          "account/repo",
-		expectedImplementationName: "dockerhub",
-		expectedRepoMode:           "monorepo",
-	}),
-
-	Entry("[gcr] registry -> multirepo", entry{
-		imagesRepoAddress:          "container.cloud.google.com/registry",
-		expectedImplementationName: "gcr",
-		expectedRepoMode:           "multirepo",
-	}),
-	Entry("[gcr] repository -> multirepo", entry{
-		imagesRepoAddress:          "container.cloud.google.com/registry/repo",
-		expectedImplementationName: "gcr",
-		expectedRepoMode:           "multirepo",
-	}),
-
-	Entry("[github] registry -> multirepo", entry{
-		imagesRepoAddress:          "docker.pkg.github.com/account/project",
-		expectedImplementationName: "github",
-		expectedRepoMode:           "multirepo",
-	}),
-	Entry("[github] repository -> monorepo", entry{
-		imagesRepoAddress:          "docker.pkg.github.com/account/project/package",
-		expectedImplementationName: "github",
-		expectedRepoMode:           "monorepo",
-	}),
-
-	Entry("[harbor] registry -> multirepo", entry{
-		imagesRepoAddress:          "harbor.company.com/project",
-		expectedImplementationName: "harbor",
-		expectedRepoMode:           "multirepo",
-	}),
-	Entry("[harbor] repository -> multirepo", entry{
-		imagesRepoAddress:          "harbor.company.com/project/repo",
-		expectedImplementationName: "harbor",
-		expectedRepoMode:           "multirepo",
-	}),
-
-	Entry("[quay] registry -> multirepo", entry{
-		imagesRepoAddress:          "quay.io/account",
-		expectedImplementationName: "quay",
-		expectedRepoMode:           "multirepo",
-	}),
-	Entry("[quay] repository -> monorepo", entry{
-		imagesRepoAddress:          "quay.io/account/repo",
-		expectedImplementationName: "quay",
-		expectedRepoMode:           "monorepo",
+	Entry("quay", entry{
+		imagesRepoAddress: "quay.io/account/repo",
+		expectation:       "quay",
 	}),
 )

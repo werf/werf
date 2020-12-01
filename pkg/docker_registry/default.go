@@ -37,17 +37,6 @@ func (r *defaultImplementation) DeleteRepoImage(_ context.Context, repoImage *im
 	return r.api.deleteImageByReference(reference)
 }
 
-func (r *defaultImplementation) ResolveRepoMode(_ context.Context, _, repoMode string) (string, error) {
-	switch repoMode {
-	case MonorepoRepoMode, MultirepoRepoMode:
-		return repoMode, nil
-	case "auto", "":
-		return MultirepoRepoMode, nil
-	default:
-		return "", fmt.Errorf("docker registry implementation %s does not support repo mode %s", r.String(), repoMode)
-	}
-}
-
 func (r *defaultImplementation) String() string {
 	return DefaultImplementationName
 }

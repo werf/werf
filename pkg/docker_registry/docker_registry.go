@@ -12,11 +12,6 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-const (
-	MultirepoRepoMode = "multirepo"
-	MonorepoRepoMode  = "monorepo"
-)
-
 type DockerRegistry interface {
 	CreateRepo(ctx context.Context, reference string) error
 	DeleteRepo(ctx context.Context, reference string) error
@@ -27,7 +22,6 @@ type DockerRegistry interface {
 	DeleteRepoImage(ctx context.Context, repoImage *image.Info) error
 	PushImage(ctx context.Context, reference string, opts *PushImageOptions) error
 
-	ResolveRepoMode(ctx context.Context, registryOrRepositoryAddress, repoMode string) (string, error)
 	String() string
 }
 
