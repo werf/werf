@@ -40,6 +40,9 @@ Manage application deployment with helm
             Enable verbose output (default $WERF_LOG_VERBOSE).
   -n, --namespace=''
             namespace scope for this request
+      --releases-history-max=0
+            Max releases to keep in release storage. Can be set by environment variable             
+            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds

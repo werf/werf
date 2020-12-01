@@ -94,6 +94,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
@@ -206,6 +207,7 @@ func runDismiss() error {
 			ConfigPath:       *commonCmdData.KubeConfig,
 			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
 		},
+		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 	}); err != nil {
 		return err
 	}

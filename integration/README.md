@@ -157,7 +157,7 @@ var _ = Describe("COMPONENT", func() {
 
 ```
 func werfDeploy(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, werfBinPath, opts, append([]string{"deploy", "--env", "dev"}, extraArgs...)...)
+	return liveexec.ExecCommand(dir, werfBinPath, opts, append([]string{"deploy"}, extraArgs...)...)
 }
 
 It("Should ...", func(done Done) {

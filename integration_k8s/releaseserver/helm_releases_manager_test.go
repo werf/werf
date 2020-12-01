@@ -30,7 +30,7 @@ var _ = Describe("Helm releases manager", func() {
 
 	Context("when releases-history-max option has been specified from the beginning", func() {
 		AfterEach(func() {
-			utils.RunCommand("helm_releases_manager_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
+			utils.RunCommand("helm_releases_manager_app1-001", werfBinPath, "dismiss", "--with-namespace")
 		})
 
 		XIt("should keep no more than specified number of releases", func() {
@@ -38,40 +38,40 @@ var _ = Describe("Helm releases manager", func() {
 				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{
 					Env: map[string]string{"WERF_RELEASES_HISTORY_MAX": "5"},
 				})).Should(Succeed())
-				Expect(len(getReleasesHistory(releaseName)) <= 5).To(BeTrue())
+				Expect(len(getReleasesHistory(releaseName, releaseName)) <= 5).To(BeTrue())
 			}
-			Expect(len(getReleasesHistory(releaseName))).To(Equal(5))
+			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(5))
 		})
 	})
 
 	Context("when releases-history-max was not specified initially and then specified", func() {
 		AfterEach(func() {
-			utils.RunCommand("helm_releases_manager_app1-001", werfBinPath, "dismiss", "--env", "dev", "--with-namespace")
+			utils.RunCommand("helm_releases_manager_app1-001", werfBinPath, "dismiss", "--with-namespace")
 		})
 
-		XIt("should keep no more than specified number of releases", func() {
+		It("should keep no more than specified number of releases", func() {
 			for i := 0; i < 20; i++ {
 				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{})).Should(Succeed())
 			}
-			Expect(len(getReleasesHistory(releaseName))).To(Equal(20))
+			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(20))
 
 			for i := 0; i < 5; i++ {
 				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{}, "--releases-history-max=5")).Should(Succeed())
-				Expect(len(getReleasesHistory(releaseName))).To(Equal(5))
+				Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(5))
 			}
 		})
 	})
 })
 
-func getReleasesHistory(releaseName string) []*corev1.ConfigMap {
-	cmList, err := kube.Kubernetes.CoreV1().ConfigMaps("kube-system").List(context.Background(), metav1.ListOptions{})
+func getReleasesHistory(namespace, releaseName string) []*corev1.Secret {
+	resourceList, err := kube.Kubernetes.CoreV1().Secrets(namespace).List(context.Background(), metav1.ListOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
-	var releases []*corev1.ConfigMap
+	var releases []*corev1.Secret
 
-	for i := range cmList.Items {
-		item := cmList.Items[i]
-		if strings.HasPrefix(item.Name, fmt.Sprintf("%s.v", releaseName)) {
+	for i := range resourceList.Items {
+		item := resourceList.Items[i]
+		if strings.HasPrefix(item.Name, fmt.Sprintf("sh.helm.release.v1.%s.v", releaseName)) {
 			releases = append(releases, &item)
 			_, _ = fmt.Fprintf(GinkgoWriter, "[DEBUG] RELEASE LISTING ITEM: cm/%s\n", item.Name)
 		}
