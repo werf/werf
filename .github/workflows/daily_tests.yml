@@ -1,5 +1,7 @@
 name: Daily Tests
 on:
+  pull_request:
+    types: [labeled]
   schedule:
   - cron:  '0 8 * * *'
   repository_dispatch:
@@ -9,12 +11,23 @@ env:
 
 jobs:
 
+  unlabel:
+    name: Label taking off
+    if: github.event_name == 'pull_request' && github.event.label.name == 'run tests'
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/github-script@v1
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: "github.issues.removeLabel({...context.issue, name: '${{ github.event.label.name }}' })"
+
   precompiled_tests_binaries:
     name: Precompiled tests binaries
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [macOS-latest]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -102,7 +115,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [macOS-latest]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -145,273 +158,13 @@ jobs:
         name: tests_coverage
         path: tests_coverage
 
-  integration_tests:
-    name: Integration tests
-    needs: precompiled_tests_binaries
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        extra-find-args:
-        - "-name 'git.test'"
-        - "-name 'ansible.test'"
-        - "! -name 'git.test' ! -name 'ansible.test'"
-    runs-on: ${{ matrix.os }}
-    steps:
-
-    - name: Set up Go 1.14
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.14
-      id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v2
-      if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''ansible.test'''
-
-    - name: Checkout code (git history as fixtures for tests)
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-      if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''ansible.test'''
-
-    - name: Download integration tests binaries
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}_integration_tests_binaries"
-        path: .
-
-    - name: Download werf with coverage binary
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}_werf_with_coverage"
-        path: .
-
-    - name: Prepare environment
-      run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests/${{ matrix.os }}
-        mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
-
-        ./scripts/ci/git.sh
-
-        go build github.com/onsi/ginkgo/ginkgo
-
-        chmod +x werf_with_coverage
-        find integration -type f -name '*.test' -exec chmod +x {} \;
-      shell: bash
-
-    - name: Test
-      run: |
-        test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-      shell: bash
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
-
-  integration_tests_cleanup_implementations:
-    name: "Integration tests: cleanup implementations"
-    needs: precompiled_tests_binaries
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        implementation:
-        - acr
-        - default
-        - dockerhub
-        - ecr
-        - gcr
-#        - github
-        - harbor
-        - quay
-    runs-on: ${{ matrix.os }}
-    env:
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
-      WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
-      WERF_TEST_ACR_REGISTRY: ${{ secrets.WERF_TEST_ACR_REGISTRY }}
-      WERF_TEST_ACR_USERNAME: ${{ secrets.WERF_TEST_ACR_USERNAME }}
-
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DEFAULT: 1
-      WERF_TEST_DEFAULT_PASSWORD: ${{ secrets.WERF_TEST_DEFAULT_PASSWORD }}
-      WERF_TEST_DEFAULT_REGISTRY: ${{ secrets.WERF_TEST_DEFAULT_REGISTRY }}
-      WERF_TEST_DEFAULT_USERNAME: ${{ secrets.WERF_TEST_DEFAULT_USERNAME }}
-
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DOCKERHUB: 1
-      WERF_TEST_DOCKERHUB_PASSWORD: ${{ secrets.WERF_TEST_DOCKERHUB_PASSWORD }}
-      WERF_TEST_DOCKERHUB_REGISTRY: ${{ secrets.WERF_TEST_DOCKERHUB_REGISTRY }}
-      WERF_TEST_DOCKERHUB_USERNAME: ${{ secrets.WERF_TEST_DOCKERHUB_USERNAME }}
-
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: 1
-      WERF_TEST_ECR_REGISTRY: ${{ secrets.WERF_TEST_ECR_REGISTRY }}
-      WERF_TEST_ECR_PASSWORD: ${{ secrets.WERF_TEST_ECR_PASSWORD }}
-      WERF_TEST_ECR_USERNAME: ${{ secrets.WERF_TEST_ECR_USERNAME }}
-
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GCR: 1
-      WERF_TEST_GCR_BASE64_CONFIG: ${{ secrets.WERF_TEST_GCR_BASE64_CONFIG }}
-      WERF_TEST_GCR_REGISTRY: ${{ secrets.WERF_TEST_GCR_REGISTRY }}
-
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: 1
-      WERF_TEST_GITHUB_PASSWORD: ${{ secrets.WERF_TEST_GITHUB_PASSWORD }}
-      WERF_TEST_GITHUB_REGISTRY: ${{ secrets.WERF_TEST_GITHUB_REGISTRY }}
-      WERF_TEST_GITHUB_TOKEN: ${{ secrets.WERF_TEST_GITHUB_TOKEN }}
-      WERF_TEST_GITHUB_USERNAME: ${{ secrets.WERF_TEST_GITHUB_USERNAME }}
-
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR: 1
-      WERF_TEST_HARBOR_PASSWORD: ${{ secrets.WERF_TEST_HARBOR_PASSWORD }}
-      WERF_TEST_HARBOR_REGISTRY: ${{ secrets.WERF_TEST_HARBOR_REGISTRY }}
-      WERF_TEST_HARBOR_USERNAME: ${{ secrets.WERF_TEST_HARBOR_USERNAME }}
-
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_QUAY: 1
-      WERF_TEST_QUAY_PASSWORD: ${{ secrets.WERF_TEST_QUAY_PASSWORD }}
-      WERF_TEST_QUAY_REGISTRY: ${{ secrets.WERF_TEST_QUAY_REGISTRY }}
-      WERF_TEST_QUAY_TOKEN: ${{ secrets.WERF_TEST_QUAY_TOKEN }}
-      WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
-
-    steps:
-
-    - name: Set up Go 1.14
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.14
-      id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Download integration tests binaries
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}_integration_tests_binaries"
-        path: .
-
-    - name: Download werf with coverage binary
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}_werf_with_coverage"
-        path: .
-
-    - name: Login (acr)
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-      if: matrix.implementation == 'acr'
-
-    - name: Login (ecr)
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-      if: matrix.implementation == 'ecr'
-
-    - name: Prepare environment
-      run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_tests_cleanup_implementations/${{ matrix.os }}
-        mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
-
-        ./scripts/ci/git.sh
-        ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.implementation }}
-
-        go build github.com/onsi/ginkgo/ginkgo
-
-        chmod +x werf_with_coverage
-        find integration -type f -name '*.test' -exec chmod +x {} \;
-      shell: bash
-
-    - name: Test
-      run: WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p --flakeAttempts=3 -keepGoing --focus="\[${{ matrix.implementation }}\]" integration/cleanup/cleanup.test
-      shell: bash
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
-
-  integration_k8s_tests:
-    name: Integration k8s tests
-    needs: precompiled_tests_binaries
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        k8s_version: [1.16, 1.17, 1.18, 1.19]
-
-    runs-on: ${{ matrix.os }}
-    steps:
-
-    - name: Set up Go 1.14
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.14
-      id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Download integration k8s tests binaries
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}_integration_k8s_tests_binaries"
-        path: .
-
-    - name: Download werf with coverage binary
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}_werf_with_coverage"
-        path: .
-
-    - name: Prepare environment
-      run: |
-        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
-        mkdir -p $WERF_TEST_COVERAGE_DIR
-        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
-
-        ./scripts/ci/git.sh
-
-        go build github.com/onsi/ginkgo/ginkgo
-
-        chmod +x werf_with_coverage
-        find integration_k8s -type f -name '*.test' -exec chmod +x {} \;
-
-        echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
-      shell: bash
-      env:
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
-
-    - name: Test
-      run: |
-        source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        test_binaries=$(find integration_k8s -type f -name '*.test')
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
-      shell: bash
-      env:
-        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
-
   integration_tests_on_self_hosted_runners:
     name: Integration tests
     needs: precompiled_tests_binaries
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, windows]
+        os: [macOS]
         extra-find-args:
         - "-name 'git.test*'"
         - "-name 'ansible.test*'"
@@ -465,16 +218,15 @@ jobs:
         for test_binary in $test_binaries; do chmod +x $test_binary; done
 
         export DOCKER_CONFIG=$(mktemp -d)
-        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
         echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
       shell: bash
 
-    - name: Test (macos)
+    - name: Test (macOS)
       run: |
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
-      if: matrix.os == 'macos'
+      if: matrix.os == 'macOS'
 
     - name: Test (windows)
       run: |
@@ -495,7 +247,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, windows]
+        os: [macOS]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
@@ -541,7 +293,6 @@ jobs:
         echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
 
         export DOCKER_CONFIG=$(mktemp -d)
-        [ -d ~/.docker ] && cp -R ~/.docker/. $DOCKER_CONFIG
         echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
       shell: bash
       env:
@@ -550,7 +301,7 @@ jobs:
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
 
-    - name: Test (macos)
+    - name: Test (macOS)
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
@@ -560,7 +311,7 @@ jobs:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
         WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
         WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-      if: matrix.os == 'macos'
+      if: matrix.os == 'macOS'
 
     - name: Test (windows)
       run: |
@@ -579,69 +330,3 @@ jobs:
       with:
         name: tests_coverage
         path: tests_coverage
-
-  upload_coverage:
-    name: Upload coverage
-    needs:
-    - unit_tests
-    - integration_tests
-    - integration_tests_cleanup_implementations
-    - integration_k8s_tests
-    - integration_tests_on_self_hosted_runners
-    - integration_k8s_tests_on_self_hosted_runners
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Set up Go 1.14
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.14
-      id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Download coverage artifact
-      uses: actions/download-artifact@master
-      with:
-        name: tests_coverage
-        path: tests_coverage
-
-    - name: Prepare environment
-      run: |
-        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-        chmod +x ./cc-test-reporter
-
-        go build github.com/wadey/gocovmerge
-        chmod +x ./gocovmerge
-
-        echo WERF_TEST_COVERAGE_DIR=tests_coverage >> $GITHUB_ENV
-
-    - name: Prepare coverage file
-      run: |
-        # FIXME: determine problems with coverage records and remove seds
-        find $WERF_TEST_COVERAGE_DIR -type f -exec \
-          sed -i -e "s|/home/runner/work/werf/werf|github.com/werf/werf|g" {} +
-
-        find $WERF_TEST_COVERAGE_DIR -type f -exec \
-          sed -i -e "s|/Users/runner/runners/[0-9.]*/work/werf/werf|github.com/werf/werf|g" {} +
-
-        find $WERF_TEST_COVERAGE_DIR -type f -exec \
-          sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/werf/werf/cmd/werf/main.go|g' {} +
-
-        coverage_files=$(find $WERF_TEST_COVERAGE_DIR -name '*.out')
-        ./gocovmerge ${coverage_files[@]} > coverage.out
-
-    - name: Format and upload
-      run: |
-        export GIT_BRANCH=${GITHUB_REF:11}
-        export GIT_COMMIT_SHA=$GITHUB_SHA
-
-        ./cc-test-reporter format-coverage \
-            -t=gocov \
-            -p=github.com/werf/werf/ \
-            coverage.out
-
-        ./cc-test-reporter upload-coverage
-      env:
-        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
