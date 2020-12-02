@@ -9,8 +9,8 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
 	"github.com/werf/werf/pkg/deploy/secret"
-	"github.com/werf/werf/pkg/determinism_inspector"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/gitermenism_inspector"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -69,8 +69,8 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
+	common.SetupDisableGitermenism(&commonCmdData, cmd)
+	common.SetupNonStrictGitermenismInspection(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -84,7 +84,7 @@ func runSecretDecrypt(filePath string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
+	if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{DisableGitermenism: *commonCmdData.DisableGitermenism, NonStrict: *commonCmdData.NonStrictGitermenismInspection}); err != nil {
 		return err
 	}
 

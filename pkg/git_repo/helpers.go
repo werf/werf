@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/determinism_inspector"
+	"github.com/werf/werf/pkg/gitermenism_inspector"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/werf/werf/pkg/util"
@@ -40,7 +40,7 @@ func ReadGitRepoFileAndCompareWithProjectFile(ctx context.Context, localGitRepo 
 	}
 
 	if !isDataIdentical {
-		if err := determinism_inspector.ReportUncommittedFile(ctx, relPath); err != nil {
+		if err := gitermenism_inspector.ReportUncommittedFile(ctx, relPath); err != nil {
 			return nil, err
 		}
 	}

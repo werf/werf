@@ -3,7 +3,7 @@ package global_warnings
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/determinism_inspector"
+	"github.com/werf/werf/pkg/gitermenism_inspector"
 
 	"github.com/werf/logboek"
 )
@@ -17,7 +17,7 @@ func PrintGlobalWarnings(ctx context.Context) {
 		printGlobalWarningLn(ctx, line)
 	}
 
-	determinism_inspector.PrintInspectionDebrief(ctx)
+	gitermenism_inspector.PrintInspectionDebrief(ctx)
 }
 
 func GlobalWarningLn(ctx context.Context, line string) {
