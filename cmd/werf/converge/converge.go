@@ -384,16 +384,17 @@ func run(ctx context.Context, projectDir string) error {
 		return err
 	}
 
-	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
-		LoadOptions: loader.LoadOptions{
-			ChartExtender: wc,
-			SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-				return werf_chart.NewWerfChart(ctx, nil, *commonCmdData.DisableGitermenism, projectDir, werf_chart.WerfChartOptions{})
-			},
-			LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableGitermenism),
-			LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableGitermenism),
-			ReadFileFunc:    common.MakeHelmReadFileFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableGitermenism),
+	loader.GlobalLoadOptions = &loader.LoadOptions{
+		ChartExtender: wc,
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+			return werf_chart.NewWerfChart(ctx, nil, *commonCmdData.DisableGitermenism, projectDir, werf_chart.WerfChartOptions{})
 		},
+		LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableGitermenism),
+		LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableGitermenism),
+		ReadFileFunc:    common.MakeHelmReadFileFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableGitermenism),
+	}
+
+	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   *commonCmdData.Values,

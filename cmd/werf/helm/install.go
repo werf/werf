@@ -28,11 +28,14 @@ func NewInstallCmd(actionConfig *action.Configuration) *cobra.Command {
 
 	wc := werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
 
-	cmd, helmAction := cmd_helm.NewInstallCmd(actionConfig, os.Stdout, cmd_helm.InstallCmdOptions{
-		LoadOptions: loader.LoadOptions{
-			ChartExtender:               wc,
-			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{}) },
+	loader.GlobalLoadOptions = &loader.LoadOptions{
+		ChartExtender: wc,
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+			return werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
 		},
+	}
+
+	cmd, helmAction := cmd_helm.NewInstallCmd(actionConfig, os.Stdout, cmd_helm.InstallCmdOptions{
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 	})
 

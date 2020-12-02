@@ -47,6 +47,13 @@ func NewCmd() *cobra.Command {
 		Short: "Manage application deployment with helm",
 	}
 
+	loader.GlobalLoadOptions = &loader.LoadOptions{
+		ChartExtender: werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{}),
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+			return werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
+		},
+	}
+
 	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
 
 	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", *cmd_helm.Settings.GetNamespaceP(), "namespace scope for this request")
@@ -76,14 +83,7 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewPluginCmd(os.Stdout),
 		cmd_helm.NewPullCmd(os.Stdout),
 		cmd_helm.NewSearchCmd(os.Stdout),
-		cmd_helm.NewShowCmd(os.Stdout, cmd_helm.ShowCmdOptions{
-			LoadOptions: loader.LoadOptions{
-				ChartExtender: werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{}),
-				SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-					return werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
-				},
-			},
-		}),
+		cmd_helm.NewShowCmd(os.Stdout),
 		cmd_helm.NewStatusCmd(actionConfig, os.Stdout),
 		cmd_helm.NewTestCmd(actionConfig, os.Stdout),
 		cmd_helm.NewVerifyCmd(os.Stdout),
