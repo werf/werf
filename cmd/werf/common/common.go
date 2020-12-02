@@ -72,8 +72,8 @@ type CmdData struct {
 	InsecureRegistry                *bool
 	SkipTlsVerifyRegistry           *bool
 	DryRun                          *bool
-	DisableDeterminism              *bool
-	NonStrictDeterminismInspection  *bool
+	DisableGitermenism              *bool
+	NonStrictGitermenismInspection  *bool
 	KeepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
 
@@ -138,14 +138,14 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)")
 }
 
-func SetupDisableDeterminism(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DisableDeterminism = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisableDeterminism, "disable-determinism", "", GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DETERMINISM"), "Disable werf determinism mode (more info https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html, default $WERF_DISABLE_DETERMINISM)")
+func SetupDisableGitermenism(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DisableGitermenism = new(bool)
+	cmd.Flags().BoolVarP(cmdData.DisableGitermenism, "disable-gitermenism", "", GetBoolEnvironmentDefaultFalse("WERF_DISABLE_GITERMENISM"), "Disable werf gitermenism mode (more info https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html, default $WERF_DISABLE_GITERMENISM)")
 }
 
-func SetupNonStrictDeterminismInspection(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.NonStrictDeterminismInspection = new(bool)
-	cmd.Flags().BoolVarP(cmdData.NonStrictDeterminismInspection, "non-strict-determinism-inspection", "", GetBoolEnvironmentDefaultFalse("WERF_NON_STRICT_DETERMINISM_INSPECTION"), "Change some errors to warnings during determinism inspection (more info https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html, default $WERF_NON_STRICT_DETERMINISM_INSPECTION)")
+func SetupNonStrictGitermenismInspection(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.NonStrictGitermenismInspection = new(bool)
+	cmd.Flags().BoolVarP(cmdData.NonStrictGitermenismInspection, "non-strict-gitermenism-inspection", "", GetBoolEnvironmentDefaultFalse("WERF_NON_STRICT_GITERMENISM_INSPECTION"), "Change some errors to warnings during gitermenism inspection (more info https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html, default $WERF_NON_STRICT_GITERMENISM_INSPECTION)")
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -906,7 +906,7 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 
 	var commit string
 	for _, werfConfigPath := range configPathToCheck {
-		if opts.DisableDeterminism || localGitRepo == nil {
+		if opts.DisableGitermenism || localGitRepo == nil {
 			if exists, err := util.FileExists(werfConfigPath); err != nil {
 				return "", err
 			} else if exists {
@@ -930,7 +930,7 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 	}
 
 	if required {
-		if opts.DisableDeterminism || localGitRepo == nil {
+		if opts.DisableGitermenism || localGitRepo == nil {
 			return "", fmt.Errorf("werf configuration file not found (%s)", strings.Join(configPathToCheck, ", "))
 		} else {
 			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo commit %s", strings.Join(configPathToCheck, ", "), commit)

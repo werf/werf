@@ -28,7 +28,7 @@ en:
     img: "/images/publications/en_211020.png"
     created: 2020-10-21
     comment: |
-      <p>GitOps is a modern way to make better IaC for delivering apps in Kubernetes. It is all about determinism, idempotence, automation, observability… and many other exciting features! However, are you sure all this happens in the real world using existing approach and tools? Here’s our comprehensive analysis of GitOps and its features, comparison with CIOps as well as insights on how this all should be done to actually get what each DevOps engineer dreams of.</p>
+      <p>GitOps is a modern way to make better IaC for delivering apps in Kubernetes. It is all about gitermenism, idempotence, automation, observability… and many other exciting features! However, are you sure all this happens in the real world using existing approach and tools? Here’s our comprehensive analysis of GitOps and its features, comparison with CIOps as well as insights on how this all should be done to actually get what each DevOps engineer dreams of.</p>
   - title: "Delivering cloud-native apps to Kubernetes using werf"
     youtube_url: "https://www.youtube.com/watch?v=oh4N2wBJCc8"
     custom_urls:

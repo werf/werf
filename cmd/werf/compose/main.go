@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/determinism_inspector"
+	"github.com/werf/werf/pkg/gitermenism_inspector"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/werf/werf/pkg/git_repo"
@@ -110,7 +110,7 @@ func newCmd(composeCmdName string, options *newCmdOptions) *cobra.Command {
 	long += `
 
 Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME ($WERF_DOCKER_IMAGE_NAME for nameless image).
-<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules: 
+<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
 - all characters are uppercase (app -> APP);
 - charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND).`
 	long = common.GetLongCommandDescription(long)
@@ -156,8 +156,8 @@ Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NA
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
+	common.SetupDisableGitermenism(&commonCmdData, cmd)
+	common.SetupNonStrictGitermenismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -251,7 +251,7 @@ func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData com
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
+	if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{DisableGitermenism: *commonCmdData.DisableGitermenism, NonStrict: *commonCmdData.NonStrictGitermenismInspection}); err != nil {
 		return err
 	}
 
@@ -317,7 +317,7 @@ func run(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableDeterminism: *commonCmdData.DisableDeterminism, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableGitermenism: *commonCmdData.DisableGitermenism, Env: *commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

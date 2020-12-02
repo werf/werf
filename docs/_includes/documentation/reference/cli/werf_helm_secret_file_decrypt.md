@@ -39,16 +39,16 @@ werf helm secret file decrypt [FILE_PATH] [options]
 ```shell
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-determinism=false
-            Disable werf determinism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
-            default $WERF_DISABLE_DETERMINISM)
+      --disable-gitermenism=false
+            Disable werf gitermenism mode (more info                                                
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
+            default $WERF_DISABLE_GITERMENISM)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --non-strict-determinism-inspection=false
-            Change some errors to warnings during determinism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
-            default $WERF_NON_STRICT_DETERMINISM_INSPECTION)
+      --non-strict-gitermenism-inspection=false
+            Change some errors to warnings during gitermenism inspection (more info                 
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
+            default $WERF_NON_STRICT_GITERMENISM_INSPECTION)
   -o, --output-file-path=''
             Write to file instead of stdout
       --tmp-dir=''

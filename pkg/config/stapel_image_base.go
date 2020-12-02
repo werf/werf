@@ -72,14 +72,14 @@ func (c *StapelImageBase) exports() []autoExcludeExport {
 	return exports
 }
 
-func (c *StapelImageBase) validate(disableDeterminism bool) error {
-	if c.FromLatest && !disableDeterminism {
+func (c *StapelImageBase) validate(disableGitermenism bool) error {
+	if c.FromLatest && !disableGitermenism {
 		msg := `Pay attention, werf uses actual base image digest in stage digest if 'fromLatest' is specified. Thus, the usage of this directive might break the reproducibility of previous builds. If the base image is changed in the registry, all previously built stages become not usable.
 
 * Previous pipeline jobs (e.g. deploy) cannot be retried without the image rebuild after changing base image in the registry.
 * If base image is modified unexpectedly it might lead to the inexplicably failed pipeline. For instance, the modification occurs after successful build and the following jobs will be failed due to changing of stages digests alongside base image digest.
 
-If you still want to use this directive, then disable werf determinism mode with option --disable-determinism (or WERF_DISABLE_DETERMINISM=1 env var). However it is NOT RECOMMENDED to use the actual base image in a such way. Use a particular unchangeable tag or periodically change 'fromCacheVersion' value to provide controllable and predictable lifecycle of software.`
+If you still want to use this directive, then disable werf gitermenism mode with option --disable-gitermenism (or WERF_DISABLE_GITERMENISM=1 env var). However it is NOT RECOMMENDED to use the actual base image in a such way. Use a particular unchangeable tag or periodically change 'fromCacheVersion' value to provide controllable and predictable lifecycle of software.`
 
 		msg = "\n\n" + msg
 

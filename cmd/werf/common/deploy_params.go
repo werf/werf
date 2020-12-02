@@ -194,8 +194,8 @@ func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGett
 	return list
 }
 
-func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableDeterminism bool) func(dir string) ([]*loader.BufferedFile, error) {
-	if disableDeterminism || localGitRepo == nil {
+func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableGitermenism bool) func(dir string) ([]*loader.BufferedFile, error) {
+	if disableGitermenism || localGitRepo == nil {
 		return nil
 	}
 
@@ -204,8 +204,8 @@ func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, pro
 	}
 }
 
-func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableDeterminism bool) func(name string, settings *cli.EnvSettings) (string, error) {
-	if disableDeterminism || localGitRepo == nil {
+func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableGitermenism bool) func(name string, settings *cli.EnvSettings) (string, error) {
+	if disableGitermenism || localGitRepo == nil {
 		return nil
 	}
 
@@ -225,8 +225,8 @@ func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, proj
 	}
 }
 
-func MakeHelmReadFileFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableDeterminism bool) func(filePath string) ([]byte, error) {
-	if disableDeterminism || localGitRepo == nil {
+func MakeHelmReadFileFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableGitermenism bool) func(filePath string) ([]byte, error) {
+	if disableGitermenism || localGitRepo == nil {
 		return nil
 	}
 

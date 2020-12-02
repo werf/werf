@@ -13,12 +13,12 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, secretValues []string, localGitRepo *git_repo.Local, disableDeterminism bool, ignoreSecretKey bool) (secret.Manager, error) {
+func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, secretValues []string, localGitRepo *git_repo.Local, disableGitermenism bool, ignoreSecretKey bool) (secret.Manager, error) {
 	isSecretsExists := false
 
 	secretDirPath := filepath.Join(helmChartDir, werf_chart.SecretDirName)
 	defaultSecretValuesFilePath := filepath.Join(helmChartDir, werf_chart.DefaultSecretValuesFileName)
-	if disableDeterminism || localGitRepo == nil {
+	if disableGitermenism || localGitRepo == nil {
 		if exists, err := util.DirExists(secretDirPath); err != nil {
 			return nil, fmt.Errorf("unable to check directory %s existence: %s", secretDirPath, err)
 		} else if exists {

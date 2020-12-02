@@ -8,7 +8,7 @@ Run docker-compose down command with forwarded image names
 Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME                  
 ($WERF_DOCKER_IMAGE_NAME for nameless image).
 <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following   
-rules: 
+rules:
 - all characters are uppercase (app -> APP);
 - charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND).
 
@@ -40,10 +40,10 @@ werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compo
             in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-determinism=false
-            Disable werf determinism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
-            default $WERF_DISABLE_DETERMINISM)
+      --disable-gitermenism=false
+            Disable werf gitermenism mode (more info                                                
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
+            default $WERF_DISABLE_GITERMENISM)
       --docker-compose-bin-path=''
             Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)
       --docker-compose-command-options=''
@@ -91,10 +91,10 @@ werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compo
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --non-strict-determinism-inspection=false
-            Change some errors to warnings during determinism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/determinism.html,       
-            default $WERF_NON_STRICT_DETERMINISM_INSPECTION)
+      --non-strict-gitermenism-inspection=false
+            Change some errors to warnings during gitermenism inspection (more info                 
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
+            default $WERF_NON_STRICT_GITERMENISM_INSPECTION)
       --repo=''
             Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password=''

@@ -7,8 +7,8 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/determinism_inspector"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/gitermenism_inspector"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -29,7 +29,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("initialization error: %s", err)
 			}
 
-			if err := determinism_inspector.Init(determinism_inspector.InspectionOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, NonStrict: *commonCmdData.NonStrictDeterminismInspection}); err != nil {
+			if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{DisableGitermenism: *commonCmdData.DisableGitermenism, NonStrict: *commonCmdData.NonStrictGitermenismInspection}); err != nil {
 				return err
 			}
 
@@ -47,7 +47,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 			}
 
-			configOpts := config.WerfConfigOptions{DisableDeterminism: *commonCmdData.DisableDeterminism, Env: *commonCmdData.Environment}
+			configOpts := config.WerfConfigOptions{DisableGitermenism: *commonCmdData.DisableGitermenism, Env: *commonCmdData.Environment}
 
 			// TODO disable logboek only for this action
 			werfConfigPath, err := common.GetWerfConfigPath(projectDir, &commonCmdData, true, localGitRepo, configOpts)
@@ -62,8 +62,8 @@ func NewCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupDisableDeterminism(&commonCmdData, cmd)
-	common.SetupNonStrictDeterminismInspection(&commonCmdData, cmd)
+	common.SetupDisableGitermenism(&commonCmdData, cmd)
+	common.SetupNonStrictGitermenismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)

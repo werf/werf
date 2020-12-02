@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/determinism_inspector"
+	"github.com/werf/werf/pkg/gitermenism_inspector"
 )
 
 type Mount struct {
@@ -15,9 +15,9 @@ type Mount struct {
 	raw *rawMount
 }
 
-func (c *Mount) validate(disableDeterminism bool) error {
-	if !disableDeterminism {
-		if err := determinism_inspector.ReportMountDirectiveUsage(context.Background()); err != nil {
+func (c *Mount) validate(disableGitermenism bool) error {
+	if !disableGitermenism {
+		if err := gitermenism_inspector.ReportMountDirectiveUsage(context.Background()); err != nil {
 			return err
 		}
 	}
