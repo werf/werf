@@ -41,18 +41,18 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
             in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-gitermenism=false
-            Disable werf gitermenism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_DISABLE_GITERMENISM)
+      --disable-giterminism=false
+            Disable werf giterminism mode (more info                                                
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_DISABLE_GITERMINISM)
       --env=''
             Use specified environment (default $WERF_ENV)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --non-strict-gitermenism-inspection=false
-            Change some errors to warnings during gitermenism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_NON_STRICT_GITERMENISM_INSPECTION)
+      --non-strict-giterminism-inspection=false
+            Change some errors to warnings during giterminism inspection (more info                 
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

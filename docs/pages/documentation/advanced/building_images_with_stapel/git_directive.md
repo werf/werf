@@ -61,7 +61,7 @@ The configuration of a _git mapping_ for a remote repository has some additional
 > * The existing pipeline jobs (e.g., deploy) would not run and would require the rebuilding of an image if a remote git branch has been changed.
 > * Unplanned commits to a remote git branch might lead to the pipeline failing seemingly for no apparent reasons. For instance, changes may occur after the build process is completed successfully. In this case, the related pipeline jobs will fail due to changes in stage digests along with the branch HEAD.
 >
-> If you want to use branches for a remote git mapping instead of a commit or tag, use --disable-gitermenism option.
+> If you want to use branches for a remote git mapping instead of a commit or tag, use --disable-giterminism option.
 >
 > **We advise you against using the remote git mapping that way**. Use the specific unchangeable reference, tag, or commit to guarantee the controllable and predictable life cycle of a software
 

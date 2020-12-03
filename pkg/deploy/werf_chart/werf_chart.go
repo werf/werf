@@ -43,10 +43,10 @@ type WerfChartOptions struct {
 	SecretsManager secret.Manager
 }
 
-func NewWerfChart(ctx context.Context, localGitRepo *git_repo.Local, disableGitermenism bool, projectDir string, opts WerfChartOptions) *WerfChart {
+func NewWerfChart(ctx context.Context, localGitRepo *git_repo.Local, disableGiterminism bool, projectDir string, opts WerfChartOptions) *WerfChart {
 	wc := &WerfChart{
 		Ctx:                ctx,
-		DisableGitermenism: disableGitermenism,
+		DisableGiterminism: disableGiterminism,
 
 		ReleaseName: opts.ReleaseName,
 		ChartDir:    opts.ChartDir,
@@ -72,7 +72,7 @@ func NewWerfChart(ctx context.Context, localGitRepo *git_repo.Local, disableGite
 
 type WerfChart struct {
 	Ctx                context.Context
-	DisableGitermenism bool
+	DisableGiterminism bool
 	HelmChart          *chart.Chart
 
 	ReleaseName      string
@@ -249,7 +249,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 }
 
 func (wc *WerfChart) AfterLoad() error {
-	if wc.DisableGitermenism || wc.LocalGitRepo == nil {
+	if wc.DisableGiterminism || wc.LocalGitRepo == nil {
 		if err := wc.loadSecretsFromFilesystem(); err != nil {
 			return err
 		}

@@ -40,10 +40,10 @@ werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compo
             in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-gitermenism=false
-            Disable werf gitermenism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_DISABLE_GITERMENISM)
+      --disable-giterminism=false
+            Disable werf giterminism mode (more info                                                
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_DISABLE_GITERMINISM)
       --docker-compose-bin-path=''
             Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)
       --docker-compose-command-options=''
@@ -91,10 +91,10 @@ werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compo
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --non-strict-gitermenism-inspection=false
-            Change some errors to warnings during gitermenism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_NON_STRICT_GITERMENISM_INSPECTION)
+      --non-strict-giterminism-inspection=false
+            Change some errors to warnings during giterminism inspection (more info                 
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --repo=''
             Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password=''

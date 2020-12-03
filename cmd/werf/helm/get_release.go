@@ -3,7 +3,7 @@ package helm
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/gitermenism_inspector"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 
 	"github.com/spf13/cobra"
 
@@ -31,8 +31,8 @@ func NewGetReleaseCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&getReleaseCmdData, cmd)
-	common.SetupDisableGitermenism(&getReleaseCmdData, cmd)
-	common.SetupNonStrictGitermenismInspection(&getReleaseCmdData, cmd)
+	common.SetupDisableGiterminism(&getReleaseCmdData, cmd)
+	common.SetupNonStrictGiterminismInspection(&getReleaseCmdData, cmd)
 	common.SetupConfigTemplatesDir(&getReleaseCmdData, cmd)
 	common.SetupConfigPath(&getReleaseCmdData, cmd)
 
@@ -51,7 +51,7 @@ func runGetRelease() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{NonStrict: *getReleaseCmdData.NonStrictGitermenismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{NonStrict: *getReleaseCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 
@@ -69,7 +69,7 @@ func runGetRelease() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getReleaseCmdData, localGitRepo, config.WerfConfigOptions{DisableGitermenism: *getReleaseCmdData.DisableGitermenism, Env: *getReleaseCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getReleaseCmdData, localGitRepo, config.WerfConfigOptions{DisableGiterminism: *getReleaseCmdData.DisableGiterminism, Env: *getReleaseCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

@@ -19,7 +19,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 	Describe("git history-based cleanup", func() {
 		BeforeEach(func() {
-			stubs.SetEnv("WERF_DISABLE_GITERMENISM", "1") // FIXME
+			stubs.SetEnv("WERF_DISABLE_GITERMINISM", "1") // FIXME
 			utils.CopyIn(utils.FixturePath("git_history_based_cleanup"), testDirPath)
 			cleanupBeforeEachBase()
 		})

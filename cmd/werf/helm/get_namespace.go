@@ -3,7 +3,7 @@ package helm
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/gitermenism_inspector"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 
 	"github.com/spf13/cobra"
 
@@ -31,8 +31,8 @@ func NewGetNamespaceCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&getNamespaceCmdData, cmd)
-	common.SetupDisableGitermenism(&getNamespaceCmdData, cmd)
-	common.SetupNonStrictGitermenismInspection(&getNamespaceCmdData, cmd)
+	common.SetupDisableGiterminism(&getNamespaceCmdData, cmd)
+	common.SetupNonStrictGiterminismInspection(&getNamespaceCmdData, cmd)
 	common.SetupConfigTemplatesDir(&getNamespaceCmdData, cmd)
 	common.SetupConfigPath(&getNamespaceCmdData, cmd)
 
@@ -51,7 +51,7 @@ func runGetNamespace() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{NonStrict: *getNamespaceCmdData.NonStrictGitermenismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{NonStrict: *getNamespaceCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 
@@ -69,7 +69,7 @@ func runGetNamespace() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getNamespaceCmdData, localGitRepo, config.WerfConfigOptions{DisableGitermenism: *getNamespaceCmdData.DisableGitermenism, Env: *getNamespaceCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getNamespaceCmdData, localGitRepo, config.WerfConfigOptions{DisableGiterminism: *getNamespaceCmdData.DisableGiterminism, Env: *getNamespaceCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

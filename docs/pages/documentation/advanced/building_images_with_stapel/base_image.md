@@ -41,7 +41,7 @@ fromLatest: true
 > * Previous pipeline jobs (e.g. deploy) cannot be retried without the image rebuild after changing base image in the registry.
 > * If base image is modified unexpectedly it might lead to the inexplicably failed pipeline. For instance, the modification occurs after successful build and the following jobs will be failed due to changing of stages digests alongside base image digest.
 >
-> If you want to use this directive, you need to disable gitermenism mode with `--disable-gitermenism` option.
+> If you want to use this directive, you need to disable giterminism mode with `--disable-giterminism` option.
 >
 > **We do not recommend using the actual base image such way**. Use a particular unchangeable tag or periodically change [fromCacheVersion](#fromcacheversion) value to provide controllable and predictable lifecycle of software       
 
