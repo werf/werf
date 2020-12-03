@@ -365,8 +365,8 @@ entries:
               - title: Organizing configuration
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
-              - title: Gitermenism
-                url: /documentation/advanced/configuration/gitermenism.html
+              - title: Giterminism
+                url: /documentation/advanced/configuration/giterminism.html
 
           - title: Helm
             f:
@@ -512,7 +512,7 @@ entries:
                 url: /documentation/advanced/configuration/organizing_configuration.html
 
               - title: Детерминизм
-                url: /documentation/advanced/configuration/gitermenism.html
+                url: /documentation/advanced/configuration/giterminism.html
 
           - title: Helm
             f:

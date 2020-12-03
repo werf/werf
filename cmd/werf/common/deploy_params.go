@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
 	"strings"
 	"text/template"
+
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/cli"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/util"
@@ -194,8 +196,8 @@ func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGett
 	return list
 }
 
-func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableGitermenism bool) func(dir string) ([]*loader.BufferedFile, error) {
-	if disableGitermenism || localGitRepo == nil {
+func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string) func(dir string) ([]*loader.BufferedFile, error) {
+	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 		return nil
 	}
 
@@ -204,8 +206,8 @@ func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, pro
 	}
 }
 
-func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableGitermenism bool) func(name string, settings *cli.EnvSettings) (string, error) {
-	if disableGitermenism || localGitRepo == nil {
+func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string) func(name string, settings *cli.EnvSettings) (string, error) {
+	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 		return nil
 	}
 
@@ -225,8 +227,8 @@ func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, proj
 	}
 }
 
-func MakeHelmReadFileFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, disableGitermenism bool) func(filePath string) ([]byte, error) {
-	if disableGitermenism || localGitRepo == nil {
+func MakeHelmReadFileFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string) func(filePath string) ([]byte, error) {
+	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 		return nil
 	}
 

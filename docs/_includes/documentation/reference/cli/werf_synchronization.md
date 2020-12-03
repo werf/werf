@@ -14,10 +14,6 @@ werf synchronization [options]
 {{ header }} Options
 
 ```shell
-      --disable-gitermenism=false
-            Disable werf gitermenism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_DISABLE_GITERMENISM)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --host=''
@@ -65,10 +61,15 @@ werf synchronization [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --non-strict-gitermenism-inspection=false
-            Change some errors to warnings during gitermenism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_NON_STRICT_GITERMENISM_INSPECTION)
+      --loose-giterminism=false
+            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
+            more info                                                                               
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_LOOSE_GITERMINISM)
+      --non-strict-giterminism-inspection=false
+            Change some errors to warnings during giterminism inspection (more info                 
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --port=''
             Bind synchronization server to the specified port (default 55581 or $WERF_PORT)
       --tmp-dir=''

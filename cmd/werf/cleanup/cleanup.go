@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/gitermenism_inspector"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/spf13/cobra"
@@ -54,8 +54,8 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupDisableGitermenism(&commonCmdData, cmd)
-	common.SetupNonStrictGitermenismInspection(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
+	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -95,7 +95,7 @@ func runCleanup() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{DisableGitermenism: *commonCmdData.DisableGitermenism, NonStrict: *commonCmdData.NonStrictGitermenismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 
@@ -155,7 +155,7 @@ func runCleanup() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableGitermenism: *commonCmdData.DisableGitermenism, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

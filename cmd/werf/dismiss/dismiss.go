@@ -8,7 +8,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/gitermenism_inspector"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
@@ -72,8 +72,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	}
 
 	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupDisableGitermenism(&commonCmdData, cmd)
-	common.SetupNonStrictGitermenismInspection(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
+	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -115,7 +115,7 @@ func runDismiss() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{DisableGitermenism: *commonCmdData.DisableGitermenism, NonStrict: *commonCmdData.NonStrictGitermenismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 
@@ -151,7 +151,7 @@ func runDismiss() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableGitermenism: *commonCmdData.DisableGitermenism, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -187,7 +187,7 @@ func runDismiss() error {
 		lockManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, localGitRepo, *commonCmdData.DisableGitermenism, projectDir, werf_chart.WerfChartOptions{
+	wc := werf_chart.NewWerfChart(ctx, localGitRepo, projectDir, werf_chart.WerfChartOptions{
 		ReleaseName: releaseName,
 		LockManager: lockManager,
 	})

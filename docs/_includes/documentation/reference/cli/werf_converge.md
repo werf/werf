@@ -66,10 +66,6 @@ werf converge --repo registry.mydomain.com/web --env production
             in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-gitermenism=false
-            Disable werf gitermenism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_DISABLE_GITERMENISM)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -137,13 +133,18 @@ werf converge --repo registry.mydomain.com/web --env production
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --loose-giterminism=false
+            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
+            more info                                                                               
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_LOOSE_GITERMINISM)
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
-      --non-strict-gitermenism-inspection=false
-            Change some errors to warnings during gitermenism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_NON_STRICT_GITERMENISM_INSPECTION)
+      --non-strict-giterminism-inspection=false
+            Change some errors to warnings during giterminism inspection (more info                 
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL)
       --parallel-tasks-limit=5

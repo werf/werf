@@ -21,10 +21,6 @@ werf config render [IMAGE_NAME...] [options]
             in working directory)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-gitermenism=false
-            Disable werf gitermenism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_DISABLE_GITERMENISM)
       --env=''
             Use specified environment (default $WERF_ENV)
       --home-dir=''
@@ -48,10 +44,15 @@ werf config render [IMAGE_NAME...] [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --non-strict-gitermenism-inspection=false
-            Change some errors to warnings during gitermenism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/gitermenism.html,       
-            default $WERF_NON_STRICT_GITERMENISM_INSPECTION)
+      --loose-giterminism=false
+            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
+            more info                                                                               
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_LOOSE_GITERMINISM)
+      --non-strict-giterminism-inspection=false
+            Change some errors to warnings during giterminism inspection (more info                 
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

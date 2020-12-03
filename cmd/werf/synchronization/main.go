@@ -14,7 +14,7 @@ import (
 	"github.com/werf/kubedog/pkg/kube"
 
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/gitermenism_inspector"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/kubeutils"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/synchronization_server"
@@ -64,8 +64,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupDisableGitermenism(&commonCmdData, cmd)
-	common.SetupNonStrictGitermenismInspection(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
+	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -94,7 +94,7 @@ func runSynchronization() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{DisableGitermenism: *commonCmdData.DisableGitermenism, NonStrict: *commonCmdData.NonStrictGitermenismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 

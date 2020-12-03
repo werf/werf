@@ -19,8 +19,7 @@ type rawStapelImage struct {
 	RawDocker        *rawDocker   `yaml:"docker,omitempty"`
 	RawImport        []*rawImport `yaml:"import,omitempty"`
 
-	doc                *doc `yaml:"-"` // parent
-	DisableGitermenism bool `yaml:"-"` // parser option
+	doc *doc `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -260,7 +259,7 @@ func (c *rawStapelImage) toStapelImageBaseDirective(name string) (imageBase *Sta
 }
 
 func (c *rawStapelImage) validateStapelImageBaseDirective(imageBase *StapelImageBase) (err error) {
-	if err := imageBase.validate(c.DisableGitermenism); err != nil {
+	if err := imageBase.validate(); err != nil {
 		return err
 	}
 

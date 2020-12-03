@@ -27,7 +27,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/gitermenism_inspector"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -79,8 +79,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupDisableGitermenism(&commonCmdData, cmd)
-	common.SetupNonStrictGitermenismInspection(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
+	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -152,7 +152,7 @@ func runMain(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{DisableGitermenism: *commonCmdData.DisableGitermenism, NonStrict: *commonCmdData.NonStrictGitermenismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 
@@ -227,7 +227,7 @@ func run(ctx context.Context, projectDir string) error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableGitermenism: *commonCmdData.DisableGitermenism, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -314,7 +314,7 @@ func run(ctx context.Context, projectDir string) error {
 	}
 
 	var secretsManager secret.Manager
-	if m, err := deploy.GetSafeSecretManager(ctx, projectDir, chartDir, *commonCmdData.SecretValues, localGitRepo, *commonCmdData.DisableGitermenism, *commonCmdData.IgnoreSecretKey); err != nil {
+	if m, err := deploy.GetSafeSecretManager(ctx, projectDir, chartDir, *commonCmdData.SecretValues, localGitRepo, *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {
 		secretsManager = m
@@ -347,7 +347,7 @@ func run(ctx context.Context, projectDir string) error {
 		lockManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, localGitRepo, *commonCmdData.DisableGitermenism, projectDir, werf_chart.WerfChartOptions{
+	wc := werf_chart.NewWerfChart(ctx, localGitRepo, projectDir, werf_chart.WerfChartOptions{
 		ReleaseName: releaseName,
 		ChartDir:    chartDir,
 
@@ -387,11 +387,11 @@ func run(ctx context.Context, projectDir string) error {
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender: wc,
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-			return werf_chart.NewWerfChart(ctx, nil, *commonCmdData.DisableGitermenism, projectDir, werf_chart.WerfChartOptions{})
+			return werf_chart.NewWerfChart(ctx, nil, projectDir, werf_chart.WerfChartOptions{})
 		},
-		LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableGitermenism),
-		LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableGitermenism),
-		ReadFileFunc:    common.MakeHelmReadFileFunc(ctx, localGitRepo, projectDir, *commonCmdData.DisableGitermenism),
+		LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir),
+		LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir),
+		ReadFileFunc:    common.MakeHelmReadFileFunc(ctx, localGitRepo, projectDir),
 	}
 
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{

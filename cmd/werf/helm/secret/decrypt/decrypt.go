@@ -12,7 +12,7 @@ import (
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/gitermenism_inspector"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -54,8 +54,8 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupDisableGitermenism(&commonCmdData, cmd)
-	common.SetupNonStrictGitermenismInspection(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
+	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -69,7 +69,7 @@ func runSecretDecrypt() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := gitermenism_inspector.Init(gitermenism_inspector.InspectionOptions{DisableGitermenism: *commonCmdData.DisableGitermenism, NonStrict: *commonCmdData.NonStrictGitermenismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 
