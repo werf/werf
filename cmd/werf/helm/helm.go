@@ -66,7 +66,7 @@ func NewCmd() *cobra.Command {
 	cmd_werf_common.SetupLogOptions(&_commonCmdData, cmd)
 
 	cmd.AddCommand(
-		cmd_helm.NewUninstallCmd(actionConfig, os.Stdout),
+		cmd_helm.NewUninstallCmd(actionConfig, os.Stdout, cmd_helm.UninstallCmdOptions{}),
 		cmd_helm.NewDependencyCmd(os.Stdout),
 		cmd_helm.NewGetCmd(actionConfig, os.Stdout),
 		cmd_helm.NewHistoryCmd(actionConfig, os.Stdout),

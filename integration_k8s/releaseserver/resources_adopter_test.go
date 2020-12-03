@@ -278,7 +278,7 @@ spec:
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, fmt.Sprintf(`Deployment "mydeploy5" in namespace "%s" exists and cannot be imported into the current release`, namespace)) != -1 {
 						gotMydeploy5AlreadyExists = true
-					}	
+					}
 				},
 			})).NotTo(Succeed())
 			Expect(gotMydeploy5AlreadyExists).To(BeTrue())
@@ -323,7 +323,7 @@ spec:
 			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy5", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy5 should return not found error, got %v", err))
 
-			// FIXME: --with-namespace not working
+			// FIXME: --with-namespace should wait until ns really terminated
 			// _, err = kube.Client.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
 			// Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get ns/%s should return not found error, got %v", namespace, err))
 		})

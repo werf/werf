@@ -212,7 +212,10 @@ func runDismiss() error {
 		return err
 	}
 
-	helmUninstallCmd := cmd_helm.NewUninstallCmd(actionConfig, logboek.ProxyOutStream())
+	helmUninstallCmd := cmd_helm.NewUninstallCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UninstallCmdOptions{
+		DeleteNamespace: &cmdData.WithNamespace,
+		DeleteHooks:     &cmdData.WithHooks,
+	})
 	return wc.WrapUninstall(context.Background(), func() error {
 		return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
 	})
