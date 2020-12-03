@@ -18,6 +18,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
+
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/status"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git/ls_tree"
 	"github.com/werf/werf/pkg/util"
@@ -639,6 +641,10 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img c
 
 	img.DockerfileImageBuilder().AppendBuildArgs(s.DockerBuildArgs()...)
 	img.DockerfileImageBuilder().SetFilePathToStdin(archivePath)
+
+	if c.IsDevMode() {
+		img.DockerfileImageBuilder().AppendBuildArgs(fmt.Sprintf("--label=%s=true", image.WerfDevLabel))
+	}
 
 	return nil
 }
