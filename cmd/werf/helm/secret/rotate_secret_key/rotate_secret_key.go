@@ -55,7 +55,7 @@ Command will extract data with the old key, generate new secret data and rewrite
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupDisableGiterminism(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
 	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
@@ -71,7 +71,7 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictGiterminismInspection, DisableGiterminism: *commonCmdData.DisableGiterminism}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictGiterminismInspection, LooseGiterminism: *commonCmdData.LooseGiterminism}); err != nil {
 		return err
 	}
 
@@ -89,7 +89,7 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(context.Background(), projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableGiterminism: *commonCmdData.DisableGiterminism, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(context.Background(), projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

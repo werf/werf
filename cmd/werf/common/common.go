@@ -22,6 +22,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
@@ -72,7 +73,7 @@ type CmdData struct {
 	InsecureRegistry                *bool
 	SkipTlsVerifyRegistry           *bool
 	DryRun                          *bool
-	DisableGiterminism              *bool
+	LooseGiterminism                *bool
 	NonStrictGiterminismInspection  *bool
 	KeepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
@@ -138,9 +139,9 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)")
 }
 
-func SetupDisableGiterminism(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DisableGiterminism = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisableGiterminism, "disable-giterminism", "", GetBoolEnvironmentDefaultFalse("WERF_DISABLE_GITERMINISM"), "Disable werf giterminism mode (more info https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html, default $WERF_DISABLE_GITERMINISM)")
+func SetupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LooseGiterminism = new(bool)
+	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html, default $WERF_LOOSE_GITERMINISM)")
 }
 
 func SetupNonStrictGiterminismInspection(cmdData *CmdData, cmd *cobra.Command) {
@@ -906,7 +907,7 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 
 	var commit string
 	for _, werfConfigPath := range configPathToCheck {
-		if opts.DisableGiterminism || localGitRepo == nil {
+		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 			if exists, err := util.FileExists(werfConfigPath); err != nil {
 				return "", err
 			} else if exists {
@@ -930,7 +931,7 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 	}
 
 	if required {
-		if opts.DisableGiterminism || localGitRepo == nil {
+		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 			return "", fmt.Errorf("werf configuration file not found (%s)", strings.Join(configPathToCheck, ", "))
 		} else {
 			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo commit %s", strings.Join(configPathToCheck, ", "), commit)

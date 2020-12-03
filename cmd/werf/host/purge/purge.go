@@ -60,7 +60,7 @@ WARNING: Do not run this command during any other werf command is working on the
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
-	common.SetupDisableGiterminism(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
 	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
@@ -76,7 +76,7 @@ func runReset() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{DisableGiterminism: *commonCmdData.DisableGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 

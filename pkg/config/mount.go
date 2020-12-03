@@ -15,8 +15,8 @@ type Mount struct {
 	raw *rawMount
 }
 
-func (c *Mount) validate(disableGiterminism bool) error {
-	if !disableGiterminism {
+func (c *Mount) validate() error {
+	if !giterminism_inspector.LooseGiterminism {
 		if err := giterminism_inspector.ReportMountDirectiveUsage(context.Background()); err != nil {
 			return err
 		}

@@ -10,15 +10,16 @@ import (
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/util"
 )
 
-func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, secretValues []string, localGitRepo *git_repo.Local, disableGiterminism bool, ignoreSecretKey bool) (secret.Manager, error) {
+func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, secretValues []string, localGitRepo *git_repo.Local, ignoreSecretKey bool) (secret.Manager, error) {
 	isSecretsExists := false
 
 	secretDirPath := filepath.Join(helmChartDir, werf_chart.SecretDirName)
 	defaultSecretValuesFilePath := filepath.Join(helmChartDir, werf_chart.DefaultSecretValuesFileName)
-	if disableGiterminism || localGitRepo == nil {
+	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 		if exists, err := util.DirExists(secretDirPath); err != nil {
 			return nil, fmt.Errorf("unable to check directory %s existence: %s", secretDirPath, err)
 		} else if exists {

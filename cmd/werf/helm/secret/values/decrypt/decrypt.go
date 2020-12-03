@@ -69,7 +69,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupDisableGiterminism(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
 	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -84,7 +84,7 @@ func runSecretDecrypt(filePath string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{DisableGiterminism: *commonCmdData.DisableGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 

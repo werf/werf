@@ -41,12 +41,13 @@ werf helm secret decrypt [options]
 ```shell
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
-      --disable-giterminism=false
-            Disable werf giterminism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_DISABLE_GITERMINISM)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --loose-giterminism=false
+            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
+            more info                                                                               
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_LOOSE_GITERMINISM)
       --non-strict-giterminism-inspection=false
             Change some errors to warnings during giterminism inspection (more info                 
             https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       

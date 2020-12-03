@@ -35,7 +35,7 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.imagesOnly, "images-only", "", false, "Show image names without artifacts")
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupDisableGiterminism(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
 	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
@@ -54,7 +54,7 @@ func run() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{DisableGiterminism: *commonCmdData.DisableGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 
@@ -72,7 +72,7 @@ func run() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{DisableGiterminism: *commonCmdData.DisableGiterminism, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{Env: *commonCmdData.Environment})
 	if err != nil {
 		return err
 	}

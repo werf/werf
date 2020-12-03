@@ -10,18 +10,18 @@ import (
 const giterminismDocPageURL = "https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html"
 
 var (
-	DisableGiterminism       bool
+	LooseGiterminism         bool
 	NonStrict                bool
 	ReportedUncommittedPaths []string
 )
 
 type InspectionOptions struct {
-	DisableGiterminism bool
-	NonStrict          bool
+	LooseGiterminism bool
+	NonStrict        bool
 }
 
 func Init(opts InspectionOptions) error {
-	DisableGiterminism = opts.DisableGiterminism
+	LooseGiterminism = opts.LooseGiterminism
 	NonStrict = opts.NonStrict
 	return nil
 }

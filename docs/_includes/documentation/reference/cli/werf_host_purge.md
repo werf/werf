@@ -25,10 +25,6 @@ werf host purge [options]
 {{ header }} Options
 
 ```shell
-      --disable-giterminism=false
-            Disable werf giterminism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_DISABLE_GITERMINISM)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -57,6 +53,11 @@ werf host purge [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --loose-giterminism=false
+            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
+            more info                                                                               
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_LOOSE_GITERMINISM)
       --non-strict-giterminism-inspection=false
             Change some errors to warnings during giterminism inspection (more info                 
             https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       

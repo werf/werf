@@ -47,7 +47,7 @@ var itBody = func(e entry) {
 }
 
 var _ = BeforeEach(func() {
-	stubs.SetEnv("WERF_DISABLE_GITERMINISM", "1")
+	stubs.SetEnv("WERF_LOOSE_GITERMINISM", "1")
 })
 
 var _ = DescribeTable("base (non-deterministic)", itBody,

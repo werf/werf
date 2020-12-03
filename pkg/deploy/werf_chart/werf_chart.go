@@ -21,6 +21,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/secretvalues"
 	"github.com/werf/werf/pkg/werf"
@@ -43,10 +44,9 @@ type WerfChartOptions struct {
 	SecretsManager secret.Manager
 }
 
-func NewWerfChart(ctx context.Context, localGitRepo *git_repo.Local, disableGiterminism bool, projectDir string, opts WerfChartOptions) *WerfChart {
+func NewWerfChart(ctx context.Context, localGitRepo *git_repo.Local, projectDir string, opts WerfChartOptions) *WerfChart {
 	wc := &WerfChart{
-		Ctx:                ctx,
-		DisableGiterminism: disableGiterminism,
+		Ctx: ctx,
 
 		ReleaseName: opts.ReleaseName,
 		ChartDir:    opts.ChartDir,
@@ -71,9 +71,8 @@ func NewWerfChart(ctx context.Context, localGitRepo *git_repo.Local, disableGite
 }
 
 type WerfChart struct {
-	Ctx                context.Context
-	DisableGiterminism bool
-	HelmChart          *chart.Chart
+	Ctx       context.Context
+	HelmChart *chart.Chart
 
 	ReleaseName      string
 	ChartDir         string
@@ -249,7 +248,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 }
 
 func (wc *WerfChart) AfterLoad() error {
-	if wc.DisableGiterminism || wc.LocalGitRepo == nil {
+	if giterminism_inspector.LooseGiterminism || wc.LocalGitRepo == nil {
 		if err := wc.loadSecretsFromFilesystem(); err != nil {
 			return err
 		}

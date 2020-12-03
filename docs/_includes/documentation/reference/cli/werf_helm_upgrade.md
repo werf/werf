@@ -66,10 +66,6 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
       --devel=false
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored
-      --disable-giterminism=false
-            Disable werf giterminism mode (more info                                                
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_DISABLE_GITERMINISM)
       --disable-openapi-validation=false
             if set, the upgrade process will not validate rendered templates against the Kubernetes 
             OpenAPI Schema
@@ -91,6 +87,11 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg'
             location of public keys used for verification
+      --loose-giterminism=false
+            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
+            more info                                                                               
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_LOOSE_GITERMINISM)
       --no-hooks=false
             disable pre/post upgrade hooks
   -o, --output=table

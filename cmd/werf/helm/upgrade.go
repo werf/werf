@@ -24,12 +24,12 @@ var upgradeCmdData cmd_werf_common.CmdData
 func NewUpgradeCmd(actionConfig *action.Configuration) *cobra.Command {
 	ctx := common.BackgroundContext()
 
-	wc := werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
+	wc := werf_chart.NewWerfChart(ctx, nil, "", werf_chart.WerfChartOptions{})
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender: wc,
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-			return werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
+			return werf_chart.NewWerfChart(ctx, nil, "", werf_chart.WerfChartOptions{})
 		},
 	}
 

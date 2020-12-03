@@ -171,7 +171,7 @@ func (c *rawGit) toGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport,
 }
 
 func (c *rawGit) validateGitRemoteExportDirective(gitRemoteExport *GitRemoteExport) (err error) {
-	if err := gitRemoteExport.validate(c.rawStapelImage.DisableGiterminism); err != nil {
+	if err := gitRemoteExport.validate(); err != nil {
 		return err
 	}
 

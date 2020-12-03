@@ -31,7 +31,6 @@ import (
 
 type WerfConfigOptions struct {
 	LogRenderedFilePath bool
-	DisableGiterminism  bool
 	Env                 string
 }
 
@@ -42,7 +41,7 @@ func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfi
 	}
 
 	if len(imagesToProcess) == 0 {
-		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env, opts.DisableGiterminism)
+		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env)
 		if err != nil {
 			return fmt.Errorf("cannot parse config: %s", err)
 		}
@@ -72,7 +71,7 @@ func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfi
 }
 
 func GetWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, opts WerfConfigOptions) (*WerfConfig, error) {
-	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env, opts.DisableGiterminism)
+	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
 	}
@@ -96,7 +95,7 @@ func GetWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTe
 		return nil, err
 	}
 
-	meta, rawStapelImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs, opts.DisableGiterminism)
+	meta, rawStapelImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +211,7 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, env string, disableGiterminism bool) (string, error) {
+func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, env string) (string, error) {
 	var commit string
 	if localGitRepo != nil {
 		if c, err := localGitRepo.HeadCommit(ctx); err != nil {
@@ -224,7 +223,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 
 	var data []byte
 
-	if disableGiterminism || localGitRepo == nil {
+	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 		if d, err := ioutil.ReadFile(werfConfigPath); err != nil {
 			return "", fmt.Errorf("error reading %q: %s", werfConfigPath, err)
 		} else {
@@ -239,11 +238,11 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	}
 
 	tmpl := template.New("werfConfig")
-	tmpl.Funcs(funcMap(tmpl, disableGiterminism))
+	tmpl.Funcs(funcMap(tmpl))
 
 	var werfConfigsTemplates []string
 
-	if disableGiterminism || localGitRepo == nil {
+	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 		if templates, err := getWerfConfigTemplatesFromFilesystem(werfConfigTemplatesDir); err != nil {
 			return "", err
 		} else {
@@ -263,7 +262,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 
 	for _, relTemplatePath := range werfConfigsTemplates {
 		var templateData []byte
-		if disableGiterminism || localGitRepo == nil {
+		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 			if d, err := ioutil.ReadFile(relTemplatePath); err != nil {
 				return "", err
 			} else {
@@ -297,7 +296,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	}
 
 	templateData := make(map[string]interface{})
-	templateData["Files"] = files{ctx: ctx, ProjectDir: projectDir, DisableGiterminism: disableGiterminism, Commit: commit, LocalGitRepo: localGitRepo}
+	templateData["Files"] = files{ctx: ctx, ProjectDir: projectDir, Commit: commit, LocalGitRepo: localGitRepo}
 	templateData["Env"] = env
 
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)
@@ -345,7 +344,7 @@ func getWerfConfigTemplatesFromFilesystem(path string) ([]string, error) {
 	return templates, nil
 }
 
-func funcMap(tmpl *template.Template, disableGiterminism bool) template.FuncMap {
+func funcMap(tmpl *template.Template) template.FuncMap {
 	funcMap := sprig.TxtFuncMap()
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
 		return executeTemplate(tmpl, name, data)
@@ -359,7 +358,7 @@ func funcMap(tmpl *template.Template, disableGiterminism bool) template.FuncMap 
 		return executeTemplate(tmpl, templateName, data)
 	}
 
-	if !disableGiterminism {
+	if !giterminism_inspector.LooseGiterminism {
 		restrictedFunc := func(name string) func(interface{}) (string, error) {
 			return func(interface{}) (string, error) {
 				return "", giterminism_inspector.ReportGoTemplateEnvFunctionUsage(context.Background(), name)
@@ -382,15 +381,14 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 }
 
 type files struct {
-	ctx                context.Context
-	ProjectDir         string
-	DisableGiterminism bool
-	LocalGitRepo       *git_repo.Local
-	Commit             string
+	ctx          context.Context
+	ProjectDir   string
+	LocalGitRepo *git_repo.Local
+	Commit       string
 }
 
 func (f files) doGet(path string) (string, error) {
-	if f.DisableGiterminism || f.LocalGitRepo == nil {
+	if giterminism_inspector.LooseGiterminism || f.LocalGitRepo == nil {
 		filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
 
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -506,7 +504,7 @@ func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface
 	var res map[string]interface{}
 	var err error
 
-	if f.DisableGiterminism {
+	if giterminism_inspector.LooseGiterminism {
 		res, err = f.doGlobFromFilesystem(pattern)
 	} else {
 		res, err = f.doGlobFromGitRepo(ctx, pattern)
@@ -705,7 +703,7 @@ func prepareWerfConfig(rawImages []*rawStapelImage, rawImagesFromDockerfile []*r
 	return werfConfig, nil
 }
 
-func splitByMetaAndRawImages(docs []*doc, disableGiterminism bool) (*Meta, []*rawStapelImage, []*rawImageFromDockerfile, error) {
+func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImageFromDockerfile, error) {
 	var rawStapelImages []*rawStapelImage
 	var rawImagesFromDockerfile []*rawImageFromDockerfile
 	var resultMeta *Meta
@@ -739,7 +737,7 @@ func splitByMetaAndRawImages(docs []*doc, disableGiterminism bool) (*Meta, []*ra
 
 			rawImagesFromDockerfile = append(rawImagesFromDockerfile, imageFromDockerfile)
 		} else if isImageDoc(raw) {
-			image := &rawStapelImage{doc: doc, DisableGiterminism: disableGiterminism}
+			image := &rawStapelImage{doc: doc}
 			err := yaml.UnmarshalStrict(doc.Content, &image)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)

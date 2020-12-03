@@ -48,7 +48,7 @@ func (c *rawMount) toDirective() (mount *Mount, err error) {
 }
 
 func (c *rawMount) validateDirective(mount *Mount) (err error) {
-	if err := mount.validate(c.rawStapelImage.DisableGiterminism); err != nil {
+	if err := mount.validate(); err != nil {
 		return err
 	}
 

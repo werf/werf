@@ -72,7 +72,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	}
 
 	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupDisableGiterminism(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
 	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
@@ -115,7 +115,7 @@ func runDismiss() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{DisableGiterminism: *commonCmdData.DisableGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
+	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 		return err
 	}
 
@@ -151,7 +151,7 @@ func runDismiss() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, DisableGiterminism: *commonCmdData.DisableGiterminism, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -187,7 +187,7 @@ func runDismiss() error {
 		lockManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, localGitRepo, *commonCmdData.DisableGiterminism, projectDir, werf_chart.WerfChartOptions{
+	wc := werf_chart.NewWerfChart(ctx, localGitRepo, projectDir, werf_chart.WerfChartOptions{
 		ReleaseName: releaseName,
 		LockManager: lockManager,
 	})

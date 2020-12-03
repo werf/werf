@@ -29,7 +29,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("initialization error: %s", err)
 			}
 
-			if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{DisableGiterminism: *commonCmdData.DisableGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
+			if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
 				return err
 			}
 
@@ -47,7 +47,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 			}
 
-			configOpts := config.WerfConfigOptions{DisableGiterminism: *commonCmdData.DisableGiterminism, Env: *commonCmdData.Environment}
+			configOpts := config.WerfConfigOptions{Env: *commonCmdData.Environment}
 
 			// TODO disable logboek only for this action
 			werfConfigPath, err := common.GetWerfConfigPath(projectDir, &commonCmdData, true, localGitRepo, configOpts)
@@ -62,7 +62,7 @@ func NewCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupDisableGiterminism(&commonCmdData, cmd)
+	common.SetupLooseGiterminism(&commonCmdData, cmd)
 	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
