@@ -85,11 +85,11 @@ type WerfChart struct {
 	SecretsManager                        secret.Manager
 	LocalGitRepo                          *git_repo.Local
 
-	chartMetadataFromWerfConfig *chart.Metadata
-	decodedSecretValues         map[string]interface{}
-	decodedSecretFilesData      map[string]string
-	secretValuesToMask          []string
-	serviceValues               map[string]interface{}
+	werfConfig             *config.WerfConfig
+	decodedSecretValues    map[string]interface{}
+	decodedSecretFilesData map[string]string
+	secretValuesToMask     []string
+	serviceValues          map[string]interface{}
 }
 
 func (wc *WerfChart) SetupChart(c *chart.Chart) error {
@@ -259,8 +259,22 @@ func (wc *WerfChart) AfterLoad() error {
 		}
 	}
 
-	if wc.HelmChart.Metadata == nil && wc.chartMetadataFromWerfConfig != nil {
-		wc.HelmChart.Metadata = wc.chartMetadataFromWerfConfig
+	if wc.HelmChart.Metadata == nil {
+		wc.HelmChart.Metadata = &chart.Metadata{
+			APIVersion: chart.APIVersionV2,
+		}
+	}
+
+	if wc.HelmChart.Metadata.Name == "" {
+		wc.HelmChart.Metadata.Name = "stub_name"
+	}
+
+	if wc.werfConfig != nil {
+		wc.HelmChart.Metadata.Name = wc.werfConfig.Meta.Project
+	}
+
+	if wc.HelmChart.Metadata.Version == "" {
+		wc.HelmChart.Metadata.Version = "1.0.0"
 	}
 
 	wc.HelmChart.Templates = append(wc.HelmChart.Templates, &chart.File{
@@ -316,11 +330,7 @@ func (wc *WerfChart) SetWerfConfig(werfConfig *config.WerfConfig) error {
 		"project.werf.io/name": werfConfig.Meta.Project,
 	}, nil)
 
-	wc.chartMetadataFromWerfConfig = &chart.Metadata{
-		APIVersion: "v1",
-		Name:       werfConfig.Meta.Project,
-		Version:    "1.0.0",
-	}
+	wc.werfConfig = werfConfig
 
 	return nil
 }

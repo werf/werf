@@ -26,11 +26,14 @@ func NewUpgradeCmd(actionConfig *action.Configuration) *cobra.Command {
 
 	wc := werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
 
-	cmd, helmAction := cmd_helm.NewUpgradeCmd(actionConfig, os.Stdout, cmd_helm.UpgradeCmdOptions{
-		LoadOptions: loader.LoadOptions{
-			ChartExtender:               wc,
-			SubchartExtenderFactoryFunc: func() chart.ChartExtender { return werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{}) },
+	loader.GlobalLoadOptions = &loader.LoadOptions{
+		ChartExtender: wc,
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+			return werf_chart.NewWerfChart(ctx, nil, false, "", werf_chart.WerfChartOptions{})
 		},
+	}
+
+	cmd, helmAction := cmd_helm.NewUpgradeCmd(actionConfig, os.Stdout, cmd_helm.UpgradeCmdOptions{
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 	})
 
