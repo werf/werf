@@ -248,7 +248,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS]
-        k8s_version: [1.16, 1.17, 1.18, 1.19]
+        k8s_version: [1.19]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
 
