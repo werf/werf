@@ -359,7 +359,13 @@ func (wc *WerfChart) WrapUpgrade(ctx context.Context, upgradeFunc func() error) 
 	return wc.lockReleaseWrapper(ctx, upgradeFunc)
 }
 
-func (wc *WerfChart) WrapUninstall(ctx context.Context, uninstallFunc func() error) error {
+func (wc *WerfChart) WrapUninstall(ctx context.Context, uninstallFunc func() error, withNamespace bool) error {
+	if withNamespace {
+		// FIXME: Maybe store deploy locks in the namespace object itself.
+		// FIXME: The problem is: werf cannot delete namespace while it holds a lock for current release, which stored in this same namespace.
+		return uninstallFunc()
+	}
+
 	return wc.lockReleaseWrapper(ctx, uninstallFunc)
 }
 

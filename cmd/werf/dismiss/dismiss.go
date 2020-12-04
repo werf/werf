@@ -218,5 +218,5 @@ func runDismiss() error {
 	})
 	return wc.WrapUninstall(context.Background(), func() error {
 		return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
-	})
+	}, cmdData.WithNamespace)
 }
