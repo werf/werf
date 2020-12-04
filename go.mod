@@ -58,7 +58,7 @@ require (
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20200724193237-c3ed55f3b481 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
-	github.com/werf/kubedog v0.4.1-0.20201125180623-08ad3ea6f58c
+	github.com/werf/kubedog v0.4.1-0.20201204135937-131bf56dddf5
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.4.6
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
@@ -108,4 +108,4 @@ replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402
 
 replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20201203183258-0e5c0db41f79
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20201204131657-147592495d8e

@@ -323,9 +323,8 @@ spec:
 			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy5", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy5 should return not found error, got %v", err))
 
-			// FIXME: --with-namespace should wait until ns really terminated
-			// _, err = kube.Client.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
-			// Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get ns/%s should return not found error, got %v", namespace, err))
+			_, err = kube.Client.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
+			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get ns/%s should return not found error, got %v", namespace, err))
 		})
 	})
 })
