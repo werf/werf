@@ -28,16 +28,6 @@ func (manager *GenericLockManager) LockStageCache(ctx context.Context, projectNa
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 
-func (manager *GenericLockManager) LockImage(ctx context.Context, projectName, imageName string) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericImageLockName(imageName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
-	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
-}
-
-func (manager *GenericLockManager) LockStagesAndImages(ctx context.Context, projectName string, opts LockStagesAndImagesOptions) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericStagesAndImagesLockName(projectName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{Shared: opts.GetOrCreateImagesOnly}))
-	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
-}
-
 func (manager *GenericLockManager) Unlock(ctx context.Context, lock LockHandle) error {
 	err := manager.Locker.Release(lock.LockgateHandle)
 	if err != nil {
@@ -52,12 +42,4 @@ func genericStageLockName(projectName, digest string) string {
 
 func genericStageCacheLockName(projectName, digest string) string {
 	return fmt.Sprintf("%s.%s.cache", projectName, digest)
-}
-
-func genericImageLockName(imageName string) string {
-	return fmt.Sprintf("%s.image", imageName)
-}
-
-func genericStagesAndImagesLockName(projectName string) string {
-	return fmt.Sprintf("%s.stages_and_images", projectName)
 }

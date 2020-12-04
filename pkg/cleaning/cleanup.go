@@ -37,15 +37,7 @@ type CleanupOptions struct {
 }
 
 func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options CleanupOptions) error {
-	m := newCleanupManager(projectName, storageManager, options)
-
-	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
-		return fmt.Errorf("unable to lock stages and images: %s", err)
-	} else {
-		defer storageLockManager.Unlock(ctx, lock)
-	}
-
-	return m.run(ctx)
+	return newCleanupManager(projectName, storageManager, options).run(ctx)
 }
 
 func newCleanupManager(projectName string, storageManager *manager.StorageManager, options CleanupOptions) *cleanupManager {

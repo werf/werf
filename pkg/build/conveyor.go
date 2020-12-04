@@ -456,14 +456,6 @@ func (c *Conveyor) doDetermineStages(ctx context.Context) error {
 }
 
 func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool) error {
-	if lock, err := c.StorageLockManager.LockStagesAndImages(ctx, c.projectName(), storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
-		return fmt.Errorf("unable to lock stages and images (to get or create stages and images only): %s", err)
-	} else {
-		c.AppendOnTerminateFunc(func() error {
-			return c.StorageLockManager.Unlock(ctx, lock)
-		})
-	}
-
 	for _, phase := range phases {
 		logProcess := logboek.Context(ctx).Debug().LogProcess("Phase %s -- BeforeImages()", phase.Name())
 		logProcess.Start()
