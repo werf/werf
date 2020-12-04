@@ -43,8 +43,6 @@ func InitActionConfig(ctx context.Context, namespace string, envSettings *cli.En
 
 	if opts.ReleasesHistoryMax != 0 {
 		envSettings.MaxHistory = opts.ReleasesHistoryMax
-	} else {
-		envSettings.MaxHistory = 0 // unlimited
 	}
 
 	helmDriver := os.Getenv("HELM_DRIVER")

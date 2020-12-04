@@ -21,7 +21,7 @@ var _ = Describe("Helm releases manager", func() {
 
 	BeforeEach(func() {
 		projectName = utils.ProjectName()
-		releaseName = fmt.Sprintf("%s-dev", projectName)
+		releaseName = projectName
 	})
 
 	BeforeEach(func() {
@@ -33,8 +33,8 @@ var _ = Describe("Helm releases manager", func() {
 			utils.RunCommand("helm_releases_manager_app1-001", werfBinPath, "dismiss", "--with-namespace")
 		})
 
-		XIt("should keep no more than specified number of releases", func() {
-			for i := 0; i < 20; i++ {
+		It("should keep no more than specified number of releases", func() {
+			for i := 0; i < 9; i++ {
 				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{
 					Env: map[string]string{"WERF_RELEASES_HISTORY_MAX": "5"},
 				})).Should(Succeed())
@@ -50,10 +50,10 @@ var _ = Describe("Helm releases manager", func() {
 		})
 
 		It("should keep no more than specified number of releases", func() {
-			for i := 0; i < 20; i++ {
+			for i := 0; i < 9; i++ {
 				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{})).Should(Succeed())
 			}
-			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(20))
+			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(9))
 
 			for i := 0; i < 5; i++ {
 				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{}, "--releases-history-max=5")).Should(Succeed())
@@ -71,6 +71,7 @@ func getReleasesHistory(namespace, releaseName string) []*corev1.Secret {
 
 	for i := range resourceList.Items {
 		item := resourceList.Items[i]
+
 		if strings.HasPrefix(item.Name, fmt.Sprintf("sh.helm.release.v1.%s.v", releaseName)) {
 			releases = append(releases, &item)
 			_, _ = fmt.Fprintf(GinkgoWriter, "[DEBUG] RELEASE LISTING ITEM: cm/%s\n", item.Name)
