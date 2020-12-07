@@ -45,6 +45,8 @@ werf compose config [options] [--docker-compose-options="OPTIONS"] [--docker-com
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --dev=false
+            Enable developer mode (default $WERF_DEV)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --docker-compose-bin-path=''
