@@ -158,6 +158,22 @@ func (r *Result) FilePathList(options FilterOptions) []string {
 	return result
 }
 
+// DeletedStagedFilePathList method returns file paths relative to the main repository
+func (r *Result) DeletedStagedFilePathList() []string {
+	var result []string
+	for filePath, fileStatus := range r.fileStatusList {
+		if fileStatus.Staging == git.Deleted {
+			result = append(result, filepath.Join(r.repositoryFullFilepath, filePath))
+		}
+	}
+
+	for _, submoduleResult := range r.submoduleResults {
+		result = append(result, submoduleResult.DeletedStagedFilePathList()...)
+	}
+
+	return result
+}
+
 // filteredFilePathList method returns file paths relative to the repository except submodules
 func (r *Result) filteredFilePathList(options FilterOptions) []string {
 	var result []string

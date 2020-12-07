@@ -659,9 +659,13 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, devMode boo
 		return "", fmt.Errorf("unable to create archive: %s", err)
 	}
 
+	pathsToExcludeFromSourceArchive, err := s.getPathsToExcludeFromSourceArchive(ctx, devMode)
+	if err != nil {
+		return "", err
+	}
+
 	var sourceArchivePath = archive.GetFilePath()
 	destinationArchivePath := context_manager.GetTmpArchivePath()
-	pathsToExcludeFromSourceArchive := s.contextAddFile
 	if err := util.CreateArchiveBasedOnAnotherOne(ctx, sourceArchivePath, destinationArchivePath, pathsToExcludeFromSourceArchive, func(tw *tar.Writer) error {
 		for _, contextAddFile := range s.contextAddFile {
 			sourceFilePath := filepath.Join(s.projectPath, s.context, contextAddFile)
@@ -698,6 +702,24 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, devMode boo
 	}
 
 	return destinationArchivePath, nil
+}
+
+func (s *DockerfileStage) getPathsToExcludeFromSourceArchive(ctx context.Context, devMode bool) ([]string, error) {
+	result := s.contextAddFile
+
+	if devMode {
+		mainStatusResult, err := s.GetMainStatusResult(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, filePath := range mainStatusResult.DeletedStagedFilePathList() {
+			relFilePath := util.GetRelativeToBaseFilepath(s.context, filePath)
+			result = append(result, relFilePath)
+		}
+	}
+
+	return result, nil
 }
 
 func (s *DockerfileStage) DockerBuildArgs() []string {
