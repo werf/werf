@@ -25,6 +25,8 @@ type Conveyor interface {
 	GetLocalGitRepoVirtualMergeOptions() VirtualMergeOptions
 
 	GetProjectRepoCommit(ctx context.Context) (string, error)
+
+	IsDevMode() bool
 }
 
 type VirtualMergeOptions struct {

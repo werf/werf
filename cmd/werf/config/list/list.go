@@ -46,6 +46,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
+	common.SetupDev(&commonCmdData, cmd)
+
 	return cmd
 }
 

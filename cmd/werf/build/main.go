@@ -105,6 +105,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
+	common.SetupDev(&commonCmdData, cmd)
+
 	return cmd
 }
 

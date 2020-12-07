@@ -43,6 +43,8 @@ func NewGetNamespaceCmd() *cobra.Command {
 
 	common.SetupLogOptions(&getNamespaceCmdData, cmd)
 
+	common.SetupDev(&getNamespaceCmdData, cmd)
+
 	return cmd
 }
 

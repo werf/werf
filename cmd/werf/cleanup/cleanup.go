@@ -73,6 +73,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 
 	common.SetupScanContextNamespaceOnly(&commonCmdData, cmd)
 	common.SetupDryRun(&commonCmdData, cmd)
+	common.SetupDev(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)

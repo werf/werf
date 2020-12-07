@@ -63,6 +63,8 @@ func NewCmd() *cobra.Command {
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
+	common.SetupDev(&commonCmdData, cmd)
+
 	return cmd
 }
 

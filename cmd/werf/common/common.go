@@ -83,6 +83,7 @@ type CmdData struct {
 	StagesToIntrospect    *[]string
 
 	Follow *bool
+	Dev    *bool
 
 	LogDebug         *bool
 	LogPretty        *bool
@@ -712,6 +713,11 @@ func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
 func SetupFollow(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Follow = new(bool)
 	cmd.Flags().BoolVarP(cmdData.Follow, "follow", "", GetBoolEnvironmentDefaultFalse("WERF_FOLLOW"), "Follow git HEAD and run command for each new commit (default $WERF_FOLLOW)")
+}
+
+func SetupDev(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Dev = new(bool)
+	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), "Enable developer mode (default $WERF_DEV)")
 }
 
 func allStagesNames() []string {

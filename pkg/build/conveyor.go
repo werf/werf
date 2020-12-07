@@ -76,6 +76,7 @@ type Conveyor struct {
 }
 
 type ConveyorOptions struct {
+	DevMode                         bool
 	Parallel                        bool
 	ParallelTasksLimit              int64
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
@@ -387,6 +388,10 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	}
 
 	return c.runPhases(ctx, phases, true)
+}
+
+func (c *Conveyor) IsDevMode() bool {
+	return c.DevMode
 }
 
 func (c *Conveyor) determineStages(ctx context.Context) error {

@@ -63,6 +63,8 @@ Command will extract data with the old key, generate new secret data and rewrite
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
+	common.SetupDev(&commonCmdData, cmd)
+
 	return cmd
 }
 

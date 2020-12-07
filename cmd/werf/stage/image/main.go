@@ -72,6 +72,7 @@ func NewCmd() *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
+	common.SetupDev(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)

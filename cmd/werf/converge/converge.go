@@ -137,6 +137,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
 	common.SetupFollow(&commonCmdData, cmd)
+	common.SetupDev(&commonCmdData, cmd)
 
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", common.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
