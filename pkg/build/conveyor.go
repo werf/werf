@@ -1256,7 +1256,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 }
 
 func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, commit, relPath string) ([]byte, error) {
-	return git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
+	return git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
 }
 
 func resolveDockerStagesFromValue(stages []instructions.Stage) {

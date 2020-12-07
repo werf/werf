@@ -102,7 +102,7 @@ func LoadFilesFromGit(ctx context.Context, localGitRepo *git_repo.Local, project
 
 	for _, repoPath := range repoPaths {
 		if util.IsSubpathOfBasePath(relativeLoadDir, repoPath) {
-			if d, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, repoPath); err != nil {
+			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, repoPath); err != nil {
 				return nil, err
 			} else {
 				logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, repoPath, d)

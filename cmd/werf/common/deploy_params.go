@@ -238,6 +238,6 @@ func MakeHelmReadFileFunc(ctx context.Context, localGitRepo *git_repo.Local, pro
 		}
 
 		relativeFilePath := util.GetRelativeToBaseFilepath(projectDir, filePath)
-		return git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relativeFilePath)
+		return git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relativeFilePath)
 	}
 }

@@ -26,7 +26,7 @@ func newHash(s string) (plumbing.Hash, error) {
 	return h, nil
 }
 
-func ReadGitRepoFileAndCompareWithProjectFile(ctx context.Context, localGitRepo *Local, commit, projectDir, relPath string) ([]byte, error) {
+func ReadCommitFileAndCompareWithProjectFile(ctx context.Context, localGitRepo *Local, commit, projectDir, relPath string) ([]byte, error) {
 	fileRepoPath := filepath.ToSlash(relPath)
 
 	repoData, err := localGitRepo.ReadCommitFile(ctx, commit, fileRepoPath)

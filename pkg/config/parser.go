@@ -231,7 +231,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 			data = d
 		}
 	} else {
-		if d, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, werfConfigPath); err != nil {
+		if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, werfConfigPath); err != nil {
 			return "", err
 		} else {
 			data = d
@@ -275,7 +275,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
 			}
 
-			if d, err := git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath); err != nil {
+			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath); err != nil {
 				return "", err
 			} else {
 				templateData = d
