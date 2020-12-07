@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"errors"
@@ -12,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/bmatcuk/doublestar"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
@@ -628,15 +631,22 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) PrepareImage(ctx context.Context, _ Conveyor, _, img container_runtime.ImageInterface) error {
-	dockerBuildArgs, err := s.DockerBuildArgs()
+func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img container_runtime.ImageInterface) error {
+	archivePath, err := s.prepareContextArchive(ctx, c.IsDevMode())
 	if err != nil {
 		return err
 	}
 
+	img.DockerfileImageBuilder().AppendBuildArgs(s.DockerBuildArgs()...)
+	img.DockerfileImageBuilder().SetFilePathToStdin(archivePath)
+
+	return nil
+}
+
+func (s *DockerfileStage) prepareContextArchive(ctx context.Context, devMode bool) (string, error) {
 	commit, err := s.localGitRepo.HeadCommit(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to get head commit %s", err)
+		return "", fmt.Errorf("unable to get head commit %s", err)
 	}
 
 	archive, err := s.localGitRepo.CreateArchive(ctx, git_repo.ArchiveOptions{
@@ -646,31 +656,51 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, _ Conveyor, _, img c
 		Commit: commit,
 	})
 	if err != nil {
-		return fmt.Errorf("unable to create archive: %s", err)
+		return "", fmt.Errorf("unable to create archive: %s", err)
 	}
 
-	var archivePath = archive.GetFilePath()
-	if len(s.contextAddFile) > 0 {
-		if err := logboek.Context(ctx).Debug().LogProcess("Apply contextAddFile directive to the archive %s", archivePath).DoError(func() error {
-			if p, err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.projectPath, s.context, s.contextAddFile); err != nil {
-				return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
-			} else {
-				archivePath = p
-				logboek.Context(ctx).Debug().LogF("Created temporary archive %s\n", archivePath)
-				return nil
+	var sourceArchivePath = archive.GetFilePath()
+	destinationArchivePath := context_manager.GetTmpArchivePath()
+	pathsToExcludeFromSourceArchive := s.contextAddFile
+	if err := util.CreateArchiveBasedOnAnotherOne(ctx, sourceArchivePath, destinationArchivePath, pathsToExcludeFromSourceArchive, func(tw *tar.Writer) error {
+		for _, contextAddFile := range s.contextAddFile {
+			sourceFilePath := filepath.Join(s.projectPath, s.context, contextAddFile)
+			tarEntryName := filepath.ToSlash(contextAddFile)
+			if err := util.CopyFileIntoTar(tw, tarEntryName, sourceFilePath); err != nil {
+				return fmt.Errorf("unable to add contextAddFile %q to archive %q: %s", sourceFilePath, destinationArchivePath, err)
 			}
-		}); err != nil {
-			return err
+
+			logboek.Context(ctx).Debug().LogF("Extra file was added: %q\n", tarEntryName)
 		}
+
+		if devMode {
+			mainStatusResult, err := s.GetMainStatusResult(ctx)
+			if err != nil {
+				return err
+			}
+
+			if err := mainStatusResult.ForEachStagedFile(func(entry *index.Entry, obj plumbing.EncodedObject) error {
+				tarEntryName := util.GetRelativeToBaseFilepath(s.context, entry.Name)
+				if err := util.CopyGitIndexEntryIntoTar(tw, tarEntryName, entry, obj); err != nil {
+					return fmt.Errorf("unable to add git index entry %s data to archive %q: %s", entry.Name, destinationArchivePath, err)
+				}
+				logboek.Context(ctx).Debug().LogF("Extra file was added: %q\n", tarEntryName)
+
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return "", err
 	}
 
-	img.DockerfileImageBuilder().AppendBuildArgs(dockerBuildArgs...)
-	img.DockerfileImageBuilder().SetFilePathToStdin(archivePath)
-
-	return nil
+	return destinationArchivePath, nil
 }
 
-func (s *DockerfileStage) DockerBuildArgs() ([]string, error) {
+func (s *DockerfileStage) DockerBuildArgs() []string {
 	var result []string
 
 	if s.dockerfilePath != "" {
@@ -699,7 +729,7 @@ func (s *DockerfileStage) DockerBuildArgs() ([]string, error) {
 		result = append(result, fmt.Sprintf("--ssh=%s", s.ssh))
 	}
 
-	return result, nil
+	return result
 }
 
 func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards []string, dockerfileLine string, devMode bool) (string, error) {
@@ -729,7 +759,8 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 			return "", fmt.Errorf("unable to calculate checksum for contextAddFile files list: %s", err)
 		} else {
 			if contextAddChecksum != "" {
-				logboek.Context(ctx).Debug().LogLn("Result:", contextAddChecksum)
+				logboek.Context(ctx).Debug().LogLn()
+				logboek.Context(ctx).Debug().LogLn(contextAddChecksum)
 				checksum = util.Sha256Hash(checksum, contextAddChecksum)
 			}
 
