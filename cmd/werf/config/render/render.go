@@ -50,7 +50,7 @@ func NewCmd() *cobra.Command {
 			configOpts := common.GetWerfConfigOptions(&commonCmdData, false)
 
 			// TODO disable logboek only for this action
-			werfConfigPath, err := common.GetWerfConfigPath(projectDir, &commonCmdData, true, localGitRepo, configOpts)
+			werfConfigPath, err := common.GetWerfConfigPath(projectDir, *commonCmdData.ConfigPath, true, localGitRepo, configOpts)
 			if err != nil {
 				return err
 			}

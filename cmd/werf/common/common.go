@@ -875,7 +875,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 }
 
 func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, false, localGitRepo, opts)
+	werfConfigPath, err := GetWerfConfigPath(projectDir, *cmdData.ConfigPath, false, localGitRepo, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -889,7 +889,7 @@ func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 }
 
 func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir, cmdData, true, localGitRepo, opts)
+	werfConfigPath, err := GetWerfConfigPath(projectDir, *cmdData.ConfigPath, true, localGitRepo, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -899,10 +899,9 @@ func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 	return config.GetWerfConfig(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 }
 
-func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (string, error) {
+func GetWerfConfigPath(projectDir string, customConfigPath string, required bool, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (string, error) {
 	var configPathToCheck []string
 
-	customConfigPath := *cmdData.ConfigPath
 	if customConfigPath != "" {
 		configPathToCheck = append(configPathToCheck, customConfigPath)
 	} else {
