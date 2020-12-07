@@ -32,6 +32,7 @@ import (
 type WerfConfigOptions struct {
 	LogRenderedFilePath bool
 	Env                 string
+	DevMode             bool
 }
 
 func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string, localGitRepo *git_repo.Local, opts WerfConfigOptions) error {

@@ -47,7 +47,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 			}
 
-			configOpts := config.WerfConfigOptions{Env: *commonCmdData.Environment}
+			configOpts := common.GetWerfConfigOptions(&commonCmdData, false)
 
 			// TODO disable logboek only for this action
 			werfConfigPath, err := common.GetWerfConfigPath(projectDir, &commonCmdData, true, localGitRepo, configOpts)

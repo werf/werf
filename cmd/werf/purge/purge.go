@@ -9,7 +9,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
-	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
@@ -130,7 +129,7 @@ func runPurge() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

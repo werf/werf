@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
@@ -117,7 +116,7 @@ func run(imageName string) error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

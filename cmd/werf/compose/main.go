@@ -7,12 +7,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/giterminism_inspector"
-	"github.com/werf/werf/pkg/werf/global_warnings"
-
-	"github.com/werf/werf/pkg/git_repo"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -21,12 +15,15 @@ import (
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 type newCmdOptions struct {
@@ -318,7 +315,7 @@ func run(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

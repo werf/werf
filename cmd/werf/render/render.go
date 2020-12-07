@@ -6,41 +6,36 @@ import (
 	"os"
 	"time"
 
-	"github.com/werf/kubedog/pkg/kube"
+	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/werf/global_warnings"
-
-	"github.com/werf/werf/pkg/deploy/helm"
-
-	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/secret"
-
-	"github.com/werf/werf/pkg/deploy/werf_chart"
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
 
-	"github.com/spf13/cobra"
-
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/deploy"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
+	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -196,7 +191,7 @@ func runRender() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

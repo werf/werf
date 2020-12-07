@@ -947,6 +947,14 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 	return "", nil
 }
 
+func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.WerfConfigOptions {
+	return config.WerfConfigOptions{
+		LogRenderedFilePath: LogRenderedFilePath,
+		Env:                 *cmdData.Environment,
+		DevMode:             *cmdData.Dev,
+	}
+}
+
 func GetWerfConfigTemplatesDir(projectDir string, cmdData *CmdData) string {
 	customConfigTemplatesDir := *cmdData.ConfigTemplatesDir
 	if customConfigTemplatesDir != "" {
