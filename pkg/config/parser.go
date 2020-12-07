@@ -249,7 +249,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 			werfConfigsTemplates = templates
 		}
 	} else {
-		if paths, err := localGitRepo.GetFilePathList(ctx, commit); err != nil {
+		if paths, err := localGitRepo.GetCommitFilePathList(ctx, commit); err != nil {
 			return "", fmt.Errorf("unable to get files list from local git repo: %s", err)
 		} else {
 			for _, path := range paths {
@@ -404,13 +404,13 @@ func (f files) doGet(path string) (string, error) {
 		}
 	}
 
-	if exists, err := f.LocalGitRepo.IsFileExists(f.ctx, f.Commit, path); err != nil {
+	if exists, err := f.LocalGitRepo.IsCommitFileExists(f.ctx, f.Commit, path); err != nil {
 		return "", fmt.Errorf("unable to check existence of %s in the local git repo commit %s: %s", path, f.Commit, err)
 	} else if !exists {
 		return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
 	}
 
-	if b, err := f.LocalGitRepo.ReadFile(f.ctx, f.Commit, path); err != nil {
+	if b, err := f.LocalGitRepo.ReadCommitFile(f.ctx, f.Commit, path); err != nil {
 		return "", fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
 	} else {
 		return string(b), nil
@@ -477,7 +477,7 @@ func (f files) doGlobFromFilesystem(pattern string) (map[string]interface{}, err
 }
 
 func (f files) doGlobFromGitRepo(ctx context.Context, pattern string) (map[string]interface{}, error) {
-	if paths, err := f.LocalGitRepo.GetFilePathList(ctx, f.Commit); err != nil {
+	if paths, err := f.LocalGitRepo.GetCommitFilePathList(ctx, f.Commit); err != nil {
 		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
 	} else {
 		result := make(map[string]interface{})
@@ -487,7 +487,7 @@ func (f files) doGlobFromGitRepo(ctx context.Context, pattern string) (map[strin
 			if matched, err := doublestar.PathMatch(pattern, path); err != nil {
 				return nil, fmt.Errorf("path match failed: %s", err)
 			} else if matched {
-				if b, err := f.LocalGitRepo.ReadFile(ctx, f.Commit, path); err != nil {
+				if b, err := f.LocalGitRepo.ReadCommitFile(ctx, f.Commit, path); err != nil {
 					return nil, fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
 				} else {
 					resultPath := filepath.ToSlash(path)

@@ -1152,7 +1152,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	}
 
 	relDockerfilePath := filepath.Join(imageFromDockerfileConfig.Context, imageFromDockerfileConfig.Dockerfile)
-	exists, err := localGitRepo.IsFileExists(ctx, headCommit, relDockerfilePath)
+	exists, err := localGitRepo.IsCommitFileExists(ctx, headCommit, relDockerfilePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to check file %s existence in local git repository: %s", relDockerfilePath, err)
 	} else if !exists {
@@ -1166,7 +1166,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 
 	relDockerignorePath := filepath.Join(imageFromDockerfileConfig.Context, ".dockerignore")
 	var dockerignorePatterns []string
-	exists, err = localGitRepo.IsFileExists(ctx, headCommit, relDockerignorePath)
+	exists, err = localGitRepo.IsCommitFileExists(ctx, headCommit, relDockerignorePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to check file .dockerignore existence in local git repository: %s", err)
 	} else if exists {

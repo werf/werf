@@ -29,7 +29,7 @@ func newHash(s string) (plumbing.Hash, error) {
 func ReadGitRepoFileAndCompareWithProjectFile(ctx context.Context, localGitRepo *Local, commit, projectDir, relPath string) ([]byte, error) {
 	fileRepoPath := filepath.ToSlash(relPath)
 
-	repoData, err := localGitRepo.ReadFile(ctx, commit, fileRepoPath)
+	repoData, err := localGitRepo.ReadCommitFile(ctx, commit, fileRepoPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", fileRepoPath, commit, err)
 	}

@@ -216,7 +216,7 @@ func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, proj
 			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
 		}
 
-		if exists, err := localGitRepo.IsDirectoryExists(ctx, name, commit); err != nil {
+		if exists, err := localGitRepo.IsCommitDirectoryExists(ctx, name, commit); err != nil {
 			return "", fmt.Errorf("error checking existence of %q in the local git repo commit %s: %s", name, commit, err)
 		} else if exists {
 			return name, nil

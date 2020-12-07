@@ -207,7 +207,7 @@ func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum
 	return checksum, err
 }
 
-func (repo *Local) CheckAndReadSymlink(ctx context.Context, path string, commit string) (bool, []byte, error) {
+func (repo *Local) CheckAndReadCommitSymlink(ctx context.Context, path string, commit string) (bool, []byte, error) {
 	return repo.checkAndReadSymlink(ctx, repo.Path, repo.GitDir, commit, path)
 }
 
@@ -237,11 +237,27 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoID)
 }
 
-func (repo *Local) IsFileExists(ctx context.Context, commit, path string) (bool, error) {
+func (repo *Local) IsCommitFileExists(ctx context.Context, commit, path string) (bool, error) {
 	return repo.isFileExists(ctx, repo.Path, repo.GitDir, commit, path)
 }
 
-func (repo *Local) GetFilePathList(ctx context.Context, commit string) ([]string, error) {
+func (repo *Local) IsCommitDirectoryExists(ctx context.Context, dir string, commit string) (bool, error) {
+	if paths, err := repo.GetCommitFilePathList(ctx, commit); err != nil {
+		return false, fmt.Errorf("unable to get file path list from the local git repo commit %s: %s", commit, err)
+	} else {
+		cleanDirPath := filepath.ToSlash(filepath.Clean(dir))
+		for _, path := range paths {
+			isSubpath := util.IsSubpathOfBasePath(cleanDirPath, path)
+			if isSubpath {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	}
+}
+
+func (repo *Local) GetCommitFilePathList(ctx context.Context, commit string) ([]string, error) {
 	result, err := repo.LsTree(ctx, path_matcher.NewGitMappingPathMatcher("", nil, nil, true), LsTreeOptions{
 		Commit: commit,
 		Strict: true,
@@ -261,22 +277,6 @@ func (repo *Local) GetFilePathList(ctx context.Context, commit string) ([]string
 	return res, nil
 }
 
-func (repo *Local) IsDirectoryExists(ctx context.Context, dir string, commit string) (bool, error) {
-	if paths, err := repo.GetFilePathList(ctx, commit); err != nil {
-		return false, fmt.Errorf("unable to get file path list from the local git repo commit %s: %s", commit, err)
-	} else {
-		cleanDirPath := filepath.ToSlash(filepath.Clean(dir))
-		for _, path := range paths {
-			isSubpath := util.IsSubpathOfBasePath(cleanDirPath, path)
-			if isSubpath {
-				return true, nil
-			}
-		}
-
-		return false, nil
-	}
-}
-
-func (repo *Local) ReadFile(ctx context.Context, commit, path string) ([]byte, error) {
+func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) ([]byte, error) {
 	return repo.readFile(ctx, repo.Path, repo.GitDir, commit, path)
 }

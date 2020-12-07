@@ -928,7 +928,7 @@ func GetWerfConfigPath(projectDir string, cmdData *CmdData, required bool, local
 			}
 
 			relPath := util.GetRelativeToBaseFilepath(projectDir, werfConfigPath)
-			if exists, err := localGitRepo.IsFileExists(ctx, commit, relPath); err != nil {
+			if exists, err := localGitRepo.IsCommitFileExists(ctx, commit, relPath); err != nil {
 				return "", fmt.Errorf("unable to check %q existence in the local git repo commit %s: %s", relPath, commit, err)
 			} else if exists {
 				return relPath, nil
