@@ -200,9 +200,8 @@ func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, pro
 	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 		return nil
 	}
-
 	return func(dir string) ([]*loader.BufferedFile, error) {
-		return werf_chart.LoadFilesFromGit(ctx, localGitRepo, projectDir, dir)
+		return werf_chart.GiterministicFilesLoader(ctx, localGitRepo, projectDir, dir)
 	}
 }
 
