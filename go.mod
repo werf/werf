@@ -48,6 +48,7 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc8.0.20190926000215-3e425f80a8c9 // indirect
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/prashantv/gostub v1.0.0
 	github.com/rodaine/table v1.0.0
 	github.com/satori/go.uuid v1.2.0
@@ -108,4 +109,4 @@ replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402
 
 replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20201204131657-147592495d8e
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20201207143115-ea7631bd21e6
