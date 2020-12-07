@@ -15,15 +15,15 @@ import (
 	"github.com/werf/werf/pkg/path_matcher"
 )
 
-var fileStatusMapping = map[rune]string{
-	' ': "Unmodified",
-	'?': "Untracked",
-	'M': "Modified",
-	'A': "Added",
-	'D': "Deleted",
-	'R': "Renamed",
-	'C': "Copied",
-	'U': "Updated",
+var fileStatusMapping = map[git.StatusCode]string{
+	git.Unmodified:         "Unmodified",
+	git.Untracked:          "Untracked",
+	git.Modified:           "Modified",
+	git.Added:              "Added",
+	git.Deleted:            "Deleted",
+	git.Renamed:            "Renamed",
+	git.Copied:             "Copied",
+	git.UpdatedButUnmerged: "Updated",
 }
 
 func Status(ctx context.Context, repository *git.Repository, repositoryAbsFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
@@ -82,8 +82,8 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 				logboek.Context(ctx).Debug().LogF(
 					"File was added:         %s (worktree: %s, staging: %s)\n",
 					fileStatusFullFilepath,
-					fileStatusMapping[rune(fileStatus.Worktree)],
-					fileStatusMapping[rune(fileStatus.Staging)],
+					fileStatusMapping[fileStatus.Worktree],
+					fileStatusMapping[fileStatus.Staging],
 				)
 			}
 		}
@@ -150,7 +150,7 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 
 			submoduleResult.Result = sResult
 
-			if !submoduleResult.isEmpty() {
+			if !submoduleResult.isEmpty(FilterOptions{}) {
 				result.submoduleResults = append(result.submoduleResults, submoduleResult)
 			}
 		}
