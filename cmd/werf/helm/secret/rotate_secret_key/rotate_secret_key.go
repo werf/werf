@@ -15,7 +15,6 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -53,15 +52,13 @@ Command will extract data with the old key, generate new secret data and rewrite
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupLooseGiterminism(&commonCmdData, cmd)
-	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
 
-	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupGiterminismInspectorOptions(&commonCmdData, cmd)
 
-	common.SetupDev(&commonCmdData, cmd)
+	common.SetupLogOptions(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -71,7 +68,7 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{NonStrict: *commonCmdData.NonStrictGiterminismInspection, LooseGiterminism: *commonCmdData.LooseGiterminism}); err != nil {
+	if err := common.InitGiterminismInspector(&commonCmdData); err != nil {
 		return err
 	}
 

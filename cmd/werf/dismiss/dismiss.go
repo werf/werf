@@ -19,7 +19,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"
@@ -69,11 +68,11 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	}
 
 	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupLooseGiterminism(&commonCmdData, cmd)
-	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
+
+	common.SetupGiterminismInspectorOptions(&commonCmdData, cmd)
 
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
@@ -98,8 +97,6 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupDev(&commonCmdData, cmd)
-
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", common.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
 	cmd.Flags().BoolVarP(&cmdData.WithHooks, "with-hooks", "", common.GetBoolEnvironmentDefaultTrue("WERF_WITH_HOOKS"), "Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or true)")
 
@@ -114,7 +111,7 @@ func runDismiss() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
+	if err := common.InitGiterminismInspector(&commonCmdData); err != nil {
 		return err
 	}
 

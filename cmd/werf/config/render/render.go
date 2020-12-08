@@ -8,7 +8,6 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -29,7 +28,7 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("initialization error: %s", err)
 			}
 
-			if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
+			if err := common.InitGiterminismInspector(&commonCmdData); err != nil {
 				return err
 			}
 
@@ -50,7 +49,7 @@ func NewCmd() *cobra.Command {
 			configOpts := common.GetWerfConfigOptions(&commonCmdData, false)
 
 			// TODO disable logboek only for this action
-			werfConfigPath, err := common.GetWerfConfigPath(projectDir, *commonCmdData.ConfigPath, true, localGitRepo, configOpts)
+			werfConfigPath, err := common.GetWerfConfigPath(projectDir, *commonCmdData.ConfigPath, true, localGitRepo)
 			if err != nil {
 				return err
 			}
@@ -62,18 +61,16 @@ func NewCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupLooseGiterminism(&commonCmdData, cmd)
-	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
+
+	common.SetupGiterminismInspectorOptions(&commonCmdData, cmd)
 
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
-
-	common.SetupDev(&commonCmdData, cmd)
 
 	return cmd
 }

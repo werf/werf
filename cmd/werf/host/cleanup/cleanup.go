@@ -3,20 +3,18 @@ package cleanup
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/werf/global_warnings"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/host_cleaning"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var commonCmdData common.CmdData
@@ -55,8 +53,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
-	common.SetupLooseGiterminism(&commonCmdData, cmd)
-	common.SetupNonStrictGiterminismInspection(&commonCmdData, cmd)
+	common.SetupGiterminismInspectorOptions(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -72,7 +69,7 @@ func runGC() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
+	if err := common.InitGiterminismInspector(&commonCmdData); err != nil {
 		return err
 	}
 

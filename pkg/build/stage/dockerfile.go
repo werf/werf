@@ -27,6 +27,7 @@ import (
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/status"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git/ls_tree"
@@ -398,7 +399,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 		onBuildInstructions, ok := s.imageOnBuildInstructions[resolvedBaseName]
 		if ok {
 			for _, instruction := range onBuildInstructions {
-				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, ind, instruction, true, c.IsDevMode())
+				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, ind, instruction, true)
 				if err != nil {
 					return "", err
 				}
@@ -408,7 +409,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 		}
 
 		for _, cmd := range stage.Commands {
-			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(ctx, ind, cmd, false, false, c.IsDevMode())
+			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(ctx, ind, cmd, false, false)
 			if err != nil {
 				return "", err
 			}
@@ -455,7 +456,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 	return util.Sha256Hash(dockerfileStageDependencies...), nil
 }
 
-func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, dockerStageID int, cmd interface{}, isOnbuildInstruction bool, isBaseImageOnbuildInstruction bool, devMode bool) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, dockerStageID int, cmd interface{}, isOnbuildInstruction bool, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
 	var dependencies []string
 	var onBuildDependencies []string
 
@@ -568,7 +569,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 			return nil, nil, err
 		}
 
-		checksum, err := s.calculateFilesChecksum(ctx, resolvedSources, c.String(), devMode)
+		checksum, err := s.calculateFilesChecksum(ctx, resolvedSources, c.String())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -581,14 +582,14 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 				return nil, nil, err
 			}
 
-			checksum, err := s.calculateFilesChecksum(ctx, resolvedSources, c.String(), devMode)
+			checksum, err := s.calculateFilesChecksum(ctx, resolvedSources, c.String())
 			if err != nil {
 				return nil, nil, err
 			}
 			dependencies = append(dependencies, checksum)
 		}
 	case *instructions.OnbuildCommand:
-		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, dockerStageID, c.Expression, false, devMode)
+		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, dockerStageID, c.Expression, false)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -609,7 +610,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	return dependencies, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool, devMode bool) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
 	p, err := parser.Parse(bytes.NewReader([]byte(expression)))
 	if err != nil {
 		return nil, nil, err
@@ -625,7 +626,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 		return nil, nil, err
 	}
 
-	onBuildDependencies, _, err := s.dockerfileInstructionDependencies(ctx, dockerStageID, cmd, true, isBaseImageOnbuildInstruction, devMode)
+	onBuildDependencies, _, err := s.dockerfileInstructionDependencies(ctx, dockerStageID, cmd, true, isBaseImageOnbuildInstruction)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -634,7 +635,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 }
 
 func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img container_runtime.ImageInterface) error {
-	archivePath, err := s.prepareContextArchive(ctx, c.IsDevMode())
+	archivePath, err := s.prepareContextArchive(ctx)
 	if err != nil {
 		return err
 	}
@@ -642,14 +643,14 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img c
 	img.DockerfileImageBuilder().AppendBuildArgs(s.DockerBuildArgs()...)
 	img.DockerfileImageBuilder().SetFilePathToStdin(archivePath)
 
-	if c.IsDevMode() {
+	if giterminism_inspector.DevMode {
 		img.DockerfileImageBuilder().AppendBuildArgs(fmt.Sprintf("--label=%s=true", image.WerfDevLabel))
 	}
 
 	return nil
 }
 
-func (s *DockerfileStage) prepareContextArchive(ctx context.Context, devMode bool) (string, error) {
+func (s *DockerfileStage) prepareContextArchive(ctx context.Context) (string, error) {
 	commit, err := s.localGitRepo.HeadCommit(ctx)
 	if err != nil {
 		return "", fmt.Errorf("unable to get head commit %s", err)
@@ -665,7 +666,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, devMode boo
 		return "", fmt.Errorf("unable to create archive: %s", err)
 	}
 
-	pathsToExcludeFromSourceArchive, err := s.getPathsToExcludeFromSourceArchive(ctx, devMode)
+	pathsToExcludeFromSourceArchive, err := s.getPathsToExcludeFromSourceArchive(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -683,7 +684,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, devMode boo
 			logboek.Context(ctx).Debug().LogF("Extra file was added: %q\n", tarEntryName)
 		}
 
-		if devMode {
+		if giterminism_inspector.DevMode {
 			mainStatusResult, err := s.GetMainStatusResult(ctx)
 			if err != nil {
 				return err
@@ -710,10 +711,10 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, devMode boo
 	return destinationArchivePath, nil
 }
 
-func (s *DockerfileStage) getPathsToExcludeFromSourceArchive(ctx context.Context, devMode bool) ([]string, error) {
+func (s *DockerfileStage) getPathsToExcludeFromSourceArchive(ctx context.Context) ([]string, error) {
 	result := s.contextAddFile
 
-	if devMode {
+	if giterminism_inspector.DevMode {
 		mainStatusResult, err := s.GetMainStatusResult(ctx)
 		if err != nil {
 			return nil, err
@@ -760,7 +761,7 @@ func (s *DockerfileStage) DockerBuildArgs() []string {
 	return result
 }
 
-func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards []string, dockerfileLine string, devMode bool) (string, error) {
+func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards []string, dockerfileLine string) (string, error) {
 	var checksum string
 	var err error
 
@@ -769,7 +770,7 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 	logProcess := logboek.Context(ctx).Debug().LogProcess("Calculating files checksum (%v) from local git repo", normalizedWildcards)
 	logProcess.Start()
 
-	checksum, err = s.calculateFilesChecksumWithGit(ctx, normalizedWildcards, dockerfileLine, devMode)
+	checksum, err = s.calculateFilesChecksumWithGit(ctx, normalizedWildcards, dockerfileLine)
 	if err != nil {
 		logProcess.Fail()
 		return "", err
@@ -802,7 +803,7 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, wildcards 
 	return checksum, nil
 }
 
-func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, wildcards []string, dockerfileLine string, devMode bool) (string, error) {
+func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, wildcards []string, dockerfileLine string) (string, error) {
 	if s.mainLsTreeResult == nil {
 		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", s.dockerignorePathMatcher.String())
 		logProcess.Start()
@@ -870,7 +871,7 @@ entryNotFoundInGitRepository:
 	if !statusResult.IsEmpty(status.FilterOptions{}) {
 		if err := logboek.Context(ctx).Debug().LogBlock("Checking status result (%s)", wildcardsPathMatcher.String()).
 			DoError(func() error {
-				if devMode {
+				if giterminism_inspector.DevMode {
 					unusedFiles := statusResult.FilePathList(status.FilterOptions{ExceptStaged: true})
 					if len(unusedFiles) != 0 {
 						logboek.Context(ctx).Warn().LogF("WARNING: Not staged changes were not taken into account (%s):\n", dockerfileLine)
@@ -925,7 +926,7 @@ entryNotFoundInGitRepository:
 		return "", fmt.Errorf("unable to check ignored files by .gitignore files: %s", err)
 	}
 
-	if devMode && devModeStatusChecksum != "" {
+	if giterminism_inspector.DevMode && devModeStatusChecksum != "" {
 		return util.Sha256Hash(lsTreeResultChecksum, devModeStatusChecksum), nil
 	} else {
 		return util.Sha256Hash(lsTreeResultChecksum), nil

@@ -14,6 +14,8 @@ werf host project purge [PROJECT_NAME ...] [options]
 {{ header }} Options
 
 ```shell
+      --dev=false
+            Enable developer mode (default $WERF_DEV)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --docker-config=''

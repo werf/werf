@@ -27,6 +27,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -76,7 +77,6 @@ type Conveyor struct {
 }
 
 type ConveyorOptions struct {
-	DevMode                         bool
 	Parallel                        bool
 	ParallelTasksLimit              int64
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
@@ -388,10 +388,6 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	}
 
 	return c.runPhases(ctx, phases, true)
-}
-
-func (c *Conveyor) IsDevMode() bool {
-	return c.DevMode
 }
 
 func (c *Conveyor) determineStages(ctx context.Context) error {
@@ -1155,7 +1151,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	var dockerignoreData []byte
 	relDockerfilePath := filepath.Join(imageFromDockerfileConfig.Context, imageFromDockerfileConfig.Dockerfile)
 	relDockerignorePath := filepath.Join(imageFromDockerfileConfig.Context, ".dockerignore")
-	if c.DevMode {
+	if giterminism_inspector.DevMode {
 		if exists, err := localGitRepo.IsIndexFileExists(ctx, relDockerfilePath); err != nil {
 			return nil, fmt.Errorf("unable to check file %s existence in local git repo index: %s", relDockerfilePath, err)
 		} else if !exists {
