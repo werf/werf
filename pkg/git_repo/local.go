@@ -3,9 +3,13 @@ package git_repo
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
+	"github.com/go-git/go-git/v5/plumbing/format/index"
 
 	"github.com/werf/logboek"
 
@@ -207,7 +211,7 @@ func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum
 	return checksum, err
 }
 
-func (repo *Local) CheckAndReadSymlink(ctx context.Context, path string, commit string) (bool, []byte, error) {
+func (repo *Local) CheckAndReadCommitSymlink(ctx context.Context, path string, commit string) (bool, []byte, error) {
 	return repo.checkAndReadSymlink(ctx, repo.Path, repo.GitDir, commit, path)
 }
 
@@ -237,11 +241,27 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoID)
 }
 
-func (repo *Local) IsFileExists(ctx context.Context, commit, path string) (bool, error) {
+func (repo *Local) IsCommitFileExists(ctx context.Context, commit, path string) (bool, error) {
 	return repo.isFileExists(ctx, repo.Path, repo.GitDir, commit, path)
 }
 
-func (repo *Local) GetFilePathList(ctx context.Context, commit string) ([]string, error) {
+func (repo *Local) IsCommitDirectoryExists(ctx context.Context, dir string, commit string) (bool, error) {
+	if paths, err := repo.GetCommitFilePathList(ctx, commit); err != nil {
+		return false, fmt.Errorf("unable to get file path list from the local git repo commit %s: %s", commit, err)
+	} else {
+		cleanDirPath := filepath.ToSlash(filepath.Clean(dir))
+		for _, path := range paths {
+			isSubpath := util.IsSubpathOfBasePath(cleanDirPath, path)
+			if isSubpath {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	}
+}
+
+func (repo *Local) GetCommitFilePathList(ctx context.Context, commit string) ([]string, error) {
 	result, err := repo.LsTree(ctx, path_matcher.NewGitMappingPathMatcher("", nil, nil, true), LsTreeOptions{
 		Commit: commit,
 		Strict: true,
@@ -261,22 +281,113 @@ func (repo *Local) GetFilePathList(ctx context.Context, commit string) ([]string
 	return res, nil
 }
 
-func (repo *Local) IsDirectoryExists(ctx context.Context, dir string, commit string) (bool, error) {
-	if paths, err := repo.GetFilePathList(ctx, commit); err != nil {
-		return false, fmt.Errorf("unable to get file path list from the local git repo commit %s: %s", commit, err)
-	} else {
-		cleanDirPath := filepath.ToSlash(filepath.Clean(dir))
-		for _, path := range paths {
-			isSubpath := util.IsSubpathOfBasePath(cleanDirPath, path)
-			if isSubpath {
-				return true, nil
-			}
-		}
-
-		return false, nil
-	}
+func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) ([]byte, error) {
+	return repo.readFile(ctx, repo.Path, repo.GitDir, commit, path)
 }
 
-func (repo *Local) ReadFile(ctx context.Context, commit, path string) ([]byte, error) {
-	return repo.readFile(ctx, repo.Path, repo.GitDir, commit, path)
+func (repo *Local) IsIndexFileExists(_ context.Context, path string) (bool, error) {
+	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return false, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
+	}
+
+	realpath, err := repo.getIndexEntryRealpath(repository, path)
+	if err != nil {
+		return false, fmt.Errorf("error getting realpath for %q path: %s", path, err)
+	}
+
+	if _, err := repo.getIndexEntry(repository, path); err == index.ErrEntryNotFound {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("error getting repo index file %q: %s", realpath, err)
+	}
+
+	return true, nil
+}
+
+// TODO submodules are not supported
+func (repo *Local) GetIndexFilePathList(_ context.Context) ([]string, error) {
+	var res []string
+
+	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
+	}
+
+	i, err := repository.Storer.Index()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get repo index: %s", err)
+	}
+
+	for _, entry := range i.Entries {
+		res = append(res, entry.Name)
+	}
+
+	return res, nil
+}
+
+func (repo *Local) ReadIndexFile(_ context.Context, path string) ([]byte, error) {
+	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
+	}
+
+	realpath, err := repo.getIndexEntryRealpath(repository, path)
+	if err != nil {
+		return nil, fmt.Errorf("error getting realpath for %q path: %s", path, err)
+	}
+
+	return repo.readIndexEntryData(repository, realpath)
+}
+
+func (repo *Local) getIndexEntryRealpath(repository *git.Repository, path string) (string, error) {
+	if entry, err := repo.getIndexEntry(repository, path); err != nil {
+		if err == index.ErrEntryNotFound {
+			return path, nil
+		}
+
+		return "", err
+	} else if entry.Mode == filemode.Symlink {
+		data, err := repo.readIndexEntryData(repository, path)
+		if err != nil {
+			return "", err
+		}
+
+		return string(data), err
+	}
+
+	return path, nil
+}
+
+func (repo *Local) readIndexEntryData(repository *git.Repository, path string) ([]byte, error) {
+	entry, err := repo.getIndexEntry(repository, path)
+	if err != nil {
+		return nil, err
+	}
+
+	obj, err := repository.Storer.EncodedObject(plumbing.BlobObject, entry.Hash)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode repo blob object: %s", err)
+	}
+
+	r, err := obj.Reader()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get reader: %s", err)
+	}
+
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (repo *Local) getIndexEntry(repository *git.Repository, path string) (*index.Entry, error) {
+	i, err := repository.Storer.Index()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get repo index: %s", err)
+	}
+
+	return i.Entry(path)
 }

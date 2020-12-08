@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/werf"
@@ -46,6 +45,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
+	common.SetupDev(&commonCmdData, cmd)
+
 	return cmd
 }
 
@@ -72,7 +73,7 @@ func run() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{Env: *commonCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return err
 	}

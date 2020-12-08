@@ -165,7 +165,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 	}
 
 	var chartDir string
-	if isSymlink, linkDest, err := wc.LocalGitRepo.CheckAndReadSymlink(wc.Ctx, wc.ChartDir, commit); err != nil {
+	if isSymlink, linkDest, err := wc.LocalGitRepo.CheckAndReadCommitSymlink(wc.Ctx, wc.ChartDir, commit); err != nil {
 		return fmt.Errorf("error checking %q is symlink in the local git repo commit %s: %s", wc.ChartDir, commit, err)
 	} else if isSymlink {
 		chartDir = string(linkDest)
@@ -174,7 +174,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 	}
 
 	defaultSecretValuesFile := filepath.Join(chartDir, DefaultSecretValuesFileName)
-	if exists, err := wc.LocalGitRepo.IsFileExists(wc.Ctx, commit, defaultSecretValuesFile); err != nil {
+	if exists, err := wc.LocalGitRepo.IsCommitFileExists(wc.Ctx, commit, defaultSecretValuesFile); err != nil {
 		return fmt.Errorf("error checking existence of the file %q in the local git repo commit %s: %s", defaultSecretValuesFile, commit, err)
 	} else if exists {
 		logboek.Context(wc.Ctx).Debug().LogF("Check %s exists in the local git repo commit %s: FOUND\n", defaultSecretValuesFile, commit)
@@ -208,12 +208,12 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 	}
 
 	secretDir := filepath.Join(wc.ChartDir, SecretDirName)
-	if exists, err := wc.LocalGitRepo.IsDirectoryExists(wc.Ctx, secretDir, commit); err != nil {
+	if exists, err := wc.LocalGitRepo.IsCommitDirectoryExists(wc.Ctx, secretDir, commit); err != nil {
 		return fmt.Errorf("error checking existence of directory %s in the local git repo commit %s: %s", secretDir, commit, err)
 	} else if exists {
 		var secretFilesToDecode []string
 
-		if paths, err := wc.LocalGitRepo.GetFilePathList(wc.Ctx, commit); err != nil {
+		if paths, err := wc.LocalGitRepo.GetCommitFilePathList(wc.Ctx, commit); err != nil {
 			return fmt.Errorf("error getting file path list for the local git repo commit %s: %s", commit, err)
 		} else {
 			for _, path := range paths {
@@ -224,7 +224,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 		}
 
 		for _, path := range secretFilesToDecode {
-			data, err := wc.LocalGitRepo.ReadFile(wc.Ctx, commit, path)
+			data, err := wc.LocalGitRepo.ReadCommitFile(wc.Ctx, commit, path)
 			if err != nil {
 				return fmt.Errorf("error reading file %s from the local git repo commit %s: %s", path, commit, err)
 			}

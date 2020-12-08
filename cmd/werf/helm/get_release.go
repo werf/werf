@@ -3,13 +3,11 @@ package helm
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/giterminism_inspector"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -43,6 +41,8 @@ func NewGetReleaseCmd() *cobra.Command {
 
 	common.SetupLogOptions(&getReleaseCmdData, cmd)
 
+	common.SetupDev(&getNamespaceCmdData, cmd)
+
 	return cmd
 }
 
@@ -69,7 +69,7 @@ func runGetRelease() error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getReleaseCmdData, localGitRepo, config.WerfConfigOptions{Env: *getReleaseCmdData.Environment})
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getReleaseCmdData, localGitRepo, common.GetWerfConfigOptions(&getReleaseCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

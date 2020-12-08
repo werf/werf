@@ -9,7 +9,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
@@ -105,6 +104,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
+	common.SetupDev(&commonCmdData, cmd)
+
 	return cmd
 }
 
@@ -158,7 +159,7 @@ func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, commonCmdData, localGitRepo, config.WerfConfigOptions{Env: *commonCmdData.Environment, LogRenderedFilePath: true})
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, commonCmdData, localGitRepo, common.GetWerfConfigOptions(commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

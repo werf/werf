@@ -5,6 +5,7 @@ const (
 	WerfVersionLabel              = "werf-version"
 	WerfCacheVersionLabel         = "werf-cache-version"
 	WerfImageLabel                = "werf-image"
+	WerfDevLabel                  = "werf-dev"
 	WerfDockerImageName           = "werf-docker-image-name"
 	WerfStageDigestLabel          = "werf-stage-digest"
 	WerfStageContentDigestLabel   = "werf-stage-content-digest"

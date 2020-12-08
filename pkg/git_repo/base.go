@@ -335,7 +335,7 @@ func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, c
 	return true, nil
 }
 
-func (repo *Base) doCheckAndReadSymlink(ctx context.Context, repoPath, gitDir string, commit string, path string) (bool, []byte, error) {
+func (repo *Base) doCheckAndReadCommitSymlink(ctx context.Context, repoPath, gitDir string, commit string, path string) (bool, []byte, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return false, nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
@@ -374,7 +374,7 @@ func (repo *Base) checkAndReadSymlink(ctx context.Context, repoPath, gitDir stri
 		var p string
 		p, queue = queue[0], queue[1:]
 
-		if isSymlink, linkDest, err := repo.doCheckAndReadSymlink(ctx, repoPath, gitDir, commit, p); err != nil {
+		if isSymlink, linkDest, err := repo.doCheckAndReadCommitSymlink(ctx, repoPath, gitDir, commit, p); err != nil {
 			return false, nil, fmt.Errorf("error checking %q: %s", p, err)
 		} else if isSymlink {
 			symlinkFound = true

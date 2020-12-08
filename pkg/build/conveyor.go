@@ -76,6 +76,7 @@ type Conveyor struct {
 }
 
 type ConveyorOptions struct {
+	DevMode                         bool
 	Parallel                        bool
 	ParallelTasksLimit              int64
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
@@ -387,6 +388,10 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	}
 
 	return c.runPhases(ctx, phases, true)
+}
+
+func (c *Conveyor) IsDevMode() bool {
+	return c.DevMode
 }
 
 func (c *Conveyor) determineStages(ctx context.Context) error {
@@ -1119,14 +1124,14 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 
 	localGitRepo := c.GetLocalGitRepo()
 	if localGitRepo == nil {
-		return nil, fmt.Errorf("local git repository was not found")
+		return nil, fmt.Errorf("local git repo was not found")
 	}
 
 	exist, err := localGitRepo.IsHeadReferenceExist(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get git head reference: %s", err)
 	} else if !exist {
-		return nil, fmt.Errorf("local git repository reference was not found")
+		return nil, fmt.Errorf("local git repo reference was not found")
 	}
 
 	headCommit, err := localGitRepo.HeadCommit(ctx)
@@ -1146,34 +1151,58 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		}
 	}
 
+	var dockerfileData []byte
+	var dockerignoreData []byte
 	relDockerfilePath := filepath.Join(imageFromDockerfileConfig.Context, imageFromDockerfileConfig.Dockerfile)
-	exists, err := localGitRepo.IsFileExists(ctx, headCommit, relDockerfilePath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to check file %s existence in local git repository: %s", relDockerfilePath, err)
-	} else if !exists {
-		return nil, fmt.Errorf("dockerfile '%s' was not found in local git repository", relDockerfilePath)
-	}
-
-	dockerfileData, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, relDockerfilePath)
-	if err != nil {
-		return nil, err
-	}
-
 	relDockerignorePath := filepath.Join(imageFromDockerfileConfig.Context, ".dockerignore")
-	var dockerignorePatterns []string
-	exists, err = localGitRepo.IsFileExists(ctx, headCommit, relDockerignorePath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to check file .dockerignore existence in local git repository: %s", err)
-	} else if exists {
-		dockerignoreData, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, relDockerignorePath)
-		if err != nil {
-			return nil, err
+	if c.DevMode {
+		if exists, err := localGitRepo.IsIndexFileExists(ctx, relDockerfilePath); err != nil {
+			return nil, fmt.Errorf("unable to check file %s existence in local git repo index: %s", relDockerfilePath, err)
+		} else if !exists {
+			return nil, fmt.Errorf("dockerfile '%s' was not found in local git repo index", relDockerfilePath)
 		}
 
+		dockerfileData, err = git_repo.ReadIndexFileAndCompareWithProjectFile(ctx, localGitRepo, c.projectDir, relDockerfilePath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read file %s data in local git repo index: %s", relDockerfilePath, err)
+		}
+
+		if exists, err := localGitRepo.IsIndexFileExists(ctx, relDockerignorePath); err != nil {
+			return nil, fmt.Errorf("unable to check file %s existence in local git repo index: %s", relDockerignorePath, err)
+		} else if exists {
+			dockerignoreData, err = git_repo.ReadIndexFileAndCompareWithProjectFile(ctx, localGitRepo, c.projectDir, relDockerignorePath)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read file %s data in local git repo index: %s", relDockerignorePath, err)
+			}
+		}
+	} else {
+		if exists, err := localGitRepo.IsCommitFileExists(ctx, headCommit, relDockerfilePath); err != nil {
+			return nil, fmt.Errorf("unable to check file %s existence in local git repo commit %s: %s", relDockerfilePath, headCommit, err)
+		} else if !exists {
+			return nil, fmt.Errorf("dockerfile '%s' was not found in local git repo commit %s", relDockerfilePath, headCommit)
+		}
+
+		dockerfileData, err = git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, headCommit, c.projectDir, relDockerfilePath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read file %s data in local git repo commit %s: %s", relDockerfilePath, headCommit, err)
+		}
+
+		if exists, err := localGitRepo.IsCommitFileExists(ctx, headCommit, relDockerignorePath); err != nil {
+			return nil, fmt.Errorf("unable to check file %s existence in local git repo commit %s: %s", relDockerignorePath, headCommit, err)
+		} else if exists {
+			dockerignoreData, err = git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, headCommit, c.projectDir, relDockerignorePath)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read file %s data in local git repo commit %s: %s", relDockerignorePath, headCommit, err)
+			}
+		}
+	}
+
+	var dockerignorePatterns []string
+	if len(dockerfileData) != 0 {
 		r := bytes.NewReader(dockerignoreData)
 		dockerignorePatterns, err = dockerignore.ReadAll(r)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to read docker ignore patters: %s", err)
 		}
 	}
 
@@ -1248,10 +1277,6 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())
 
 	return img, nil
-}
-
-func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, commit, relPath string) ([]byte, error) {
-	return git_repo.ReadGitRepoFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
 }
 
 func resolveDockerStagesFromValue(stages []instructions.Stage) {

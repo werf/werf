@@ -18,7 +18,6 @@ import (
 	"github.com/werf/logboek/pkg/level"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
@@ -69,6 +68,8 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config.")
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+
+	common.SetupDev(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", common.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
 	cmd.Flags().BoolVarP(&cmdData.AsEnvFile, "as-env-file", "", common.GetBoolEnvironmentDefaultFalse("WERF_AS_ENV_FILE"), "Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).")
@@ -193,7 +194,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 				return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 			}
 
-			werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
+			werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, true))
 			if err != nil {
 				return fmt.Errorf("unable to load werf config: %s", err)
 			}
@@ -305,7 +306,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 			return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 		}
 
-		werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
+		werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, true))
 		if err != nil {
 			return fmt.Errorf("unable to load werf config: %s", err)
 		}

@@ -37,13 +37,13 @@ func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, 
 			return nil, fmt.Errorf("unable to get local repo head commit: %s", err)
 		}
 
-		if exists, err := localGitRepo.IsDirectoryExists(ctx, secretDirPath, commit); err != nil {
+		if exists, err := localGitRepo.IsCommitDirectoryExists(ctx, secretDirPath, commit); err != nil {
 			return nil, fmt.Errorf("error checking existence of the directory %q in the local git repo commit %s: %s", secretDirPath, commit, err)
 		} else if exists {
 			isSecretsExists = true
 		}
 
-		if exists, err := localGitRepo.IsFileExists(ctx, commit, defaultSecretValuesFilePath); err != nil {
+		if exists, err := localGitRepo.IsCommitFileExists(ctx, commit, defaultSecretValuesFilePath); err != nil {
 			return nil, fmt.Errorf("error checking existence of the file %q in the local git repo commit %s: %s", defaultSecretValuesFilePath, commit, err)
 		} else if exists {
 			isSecretsExists = true
