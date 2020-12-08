@@ -30,7 +30,7 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.1.23+fix5"
+          "version": "v1.1.23+fix6"
         },
         {
           "name": "beta",
@@ -46,8 +46,7 @@
         },
         {
           "name": "rock-solid",
-          "version": "v1.1.21+fix32",
-          "_candidate": "v1.1.22+fix36"
+          "version": "v1.1.22+fix37"
         }
       ]
     },
