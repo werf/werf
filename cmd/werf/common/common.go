@@ -73,17 +73,18 @@ type CmdData struct {
 	InsecureRegistry                *bool
 	SkipTlsVerifyRegistry           *bool
 	DryRun                          *bool
-	LooseGiterminism                *bool
-	NonStrictGiterminismInspection  *bool
 	KeepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
+
+	LooseGiterminism               *bool
+	NonStrictGiterminismInspection *bool
+	Dev                            *bool
 
 	IntrospectBeforeError *bool
 	IntrospectAfterError  *bool
 	StagesToIntrospect    *[]string
 
 	Follow *bool
-	Dev    *bool
 
 	LogDebug         *bool
 	LogPretty        *bool
@@ -140,14 +141,25 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)")
 }
 
-func SetupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
+func SetupGiterminismInspectorOptions(cmdData *CmdData, cmd *cobra.Command) {
+	setupLooseGiterminism(cmdData, cmd)
+	setupNonStrictGiterminismInspection(cmdData, cmd)
+	setupDev(cmdData, cmd)
+}
+
+func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LooseGiterminism = new(bool)
 	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html, default $WERF_LOOSE_GITERMINISM)")
 }
 
-func SetupNonStrictGiterminismInspection(cmdData *CmdData, cmd *cobra.Command) {
+func setupNonStrictGiterminismInspection(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.NonStrictGiterminismInspection = new(bool)
 	cmd.Flags().BoolVarP(cmdData.NonStrictGiterminismInspection, "non-strict-giterminism-inspection", "", GetBoolEnvironmentDefaultFalse("WERF_NON_STRICT_GITERMINISM_INSPECTION"), "Change some errors to warnings during giterminism inspection (more info https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html, default $WERF_NON_STRICT_GITERMINISM_INSPECTION)")
+}
+
+func setupDev(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Dev = new(bool)
+	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), "Enable developer mode (default $WERF_DEV)")
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -715,11 +727,6 @@ func SetupFollow(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.Follow, "follow", "", GetBoolEnvironmentDefaultFalse("WERF_FOLLOW"), "Follow git HEAD and run command for each new commit (default $WERF_FOLLOW)")
 }
 
-func SetupDev(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Dev = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), "Enable developer mode (default $WERF_DEV)")
-}
-
 func allStagesNames() []string {
 	var stageNames []string
 	for _, stageName := range stage.AllStages {
@@ -875,7 +882,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 }
 
 func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir, *cmdData.ConfigPath, false, localGitRepo, opts)
+	werfConfigPath, err := GetWerfConfigPath(projectDir, *cmdData.ConfigPath, false, localGitRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -889,7 +896,7 @@ func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 }
 
 func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
-	werfConfigPath, err := GetWerfConfigPath(projectDir, *cmdData.ConfigPath, true, localGitRepo, opts)
+	werfConfigPath, err := GetWerfConfigPath(projectDir, *cmdData.ConfigPath, true, localGitRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -899,7 +906,7 @@ func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 	return config.GetWerfConfig(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 }
 
-func GetWerfConfigPath(projectDir string, customConfigPath string, required bool, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (string, error) {
+func GetWerfConfigPath(projectDir string, customConfigPath string, required bool, localGitRepo *git_repo.Local) (string, error) {
 	var configPathToCheck []string
 
 	if customConfigPath != "" {
@@ -961,8 +968,15 @@ func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.Wer
 	return config.WerfConfigOptions{
 		LogRenderedFilePath: LogRenderedFilePath,
 		Env:                 *cmdData.Environment,
-		DevMode:             *cmdData.Dev,
 	}
+}
+
+func InitGiterminismInspector(cmdData *CmdData) error {
+	return giterminism_inspector.Init(giterminism_inspector.InspectionOptions{
+		LooseGiterminism: *cmdData.LooseGiterminism,
+		NonStrict:        *cmdData.NonStrictGiterminismInspection,
+		DevMode:          *cmdData.Dev,
+	})
 }
 
 func GetWerfConfigTemplatesDir(projectDir string, cmdData *CmdData) string {
