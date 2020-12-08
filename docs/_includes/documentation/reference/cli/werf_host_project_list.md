@@ -14,6 +14,8 @@ werf host project list [options]
 {{ header }} Options
 
 ```shell
+      --dev=false
+            Enable developer mode (default $WERF_DEV)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

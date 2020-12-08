@@ -42,6 +42,8 @@ werf helm secret values decrypt [FILE_PATH] [options]
 {{ header }} Options
 
 ```shell
+      --dev=false
+            Enable developer mode (default $WERF_DEV)
       --dir=''
             Use custom working directory (default $WERF_DIR or current directory)
       --home-dir=''

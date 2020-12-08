@@ -46,6 +46,8 @@ werf helm template [NAME] [CHART] [flags] [options]
             run helm dependency update before installing the chart
       --description=''
             add a custom description
+      --dev=false
+            Enable developer mode (default $WERF_DEV)
       --devel=false
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored
@@ -79,6 +81,10 @@ werf helm template [NAME] [CHART] [flags] [options]
             specify template used to name the release
       --no-hooks=false
             prevent hooks from running during install
+      --non-strict-giterminism-inspection=false
+            Change some errors to warnings during giterminism inspection (more info                 
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --output-dir=''
             writes the executed templates to files in output-dir instead of stdout
       --password=''

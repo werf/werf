@@ -63,6 +63,8 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             if --install is set, create the release namespace if not present
       --description=''
             add a custom description
+      --dev=false
+            Enable developer mode (default $WERF_DEV)
       --devel=false
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored
@@ -94,6 +96,10 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             default $WERF_LOOSE_GITERMINISM)
       --no-hooks=false
             disable pre/post upgrade hooks
+      --non-strict-giterminism-inspection=false
+            Change some errors to warnings during giterminism inspection (more info                 
+            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
+            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
   -o, --output=table
             prints the output in the specified format. Allowed values: table, json, yaml
       --password=''

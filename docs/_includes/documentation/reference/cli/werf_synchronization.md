@@ -14,6 +14,8 @@ werf synchronization [options]
 {{ header }} Options
 
 ```shell
+      --dev=false
+            Enable developer mode (default $WERF_DEV)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --host=''
