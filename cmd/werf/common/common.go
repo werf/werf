@@ -923,7 +923,7 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 			ctx := BackgroundContext()
 
 			relPath := util.GetRelativeToBaseFilepath(projectDir, werfConfigPath)
-			if opts.DevMode {
+			if giterminism_inspector.DevMode {
 				if exists, err := localGitRepo.IsIndexFileExists(ctx, relPath); err != nil {
 					return "", fmt.Errorf("unable to check %q existence in the local git repo index: %s", relPath, err)
 				} else if exists {
@@ -947,7 +947,7 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 	if required {
 		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 			return "", fmt.Errorf("werf configuration file not found (%s)", strings.Join(configPathToCheck, ", "))
-		} else if opts.DevMode {
+		} else if giterminism_inspector.DevMode {
 			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo index", strings.Join(configPathToCheck, ", "))
 		} else {
 			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo commit %s", strings.Join(configPathToCheck, ", "), commit)

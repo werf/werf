@@ -32,7 +32,6 @@ import (
 type WerfConfigOptions struct {
 	LogRenderedFilePath bool
 	Env                 string
-	DevMode             bool
 }
 
 func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string, localGitRepo *git_repo.Local, opts WerfConfigOptions) error {
@@ -226,7 +225,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 		if data, err = ioutil.ReadFile(werfConfigPath); err != nil {
 			return "", fmt.Errorf("unable to read file %q: %s", werfConfigPath, err)
 		}
-	} else if opts.DevMode {
+	} else if giterminism_inspector.DevMode {
 		if data, err = git_repo.ReadIndexFileAndCompareWithProjectFile(ctx, localGitRepo, projectDir, werfConfigPath); err != nil {
 			return "", fmt.Errorf("unable to read file %q from local git repo index: %s", werfConfigPath, err)
 		}
@@ -249,7 +248,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 		}
 	} else {
 		var paths []string
-		if opts.DevMode {
+		if giterminism_inspector.DevMode {
 			if paths, err = localGitRepo.GetIndexFilePathList(ctx); err != nil {
 				return "", fmt.Errorf("unable to get files list from local git repo index: %s", err)
 			}
@@ -272,7 +271,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 			if templateData, err = ioutil.ReadFile(relTemplatePath); err != nil {
 				return "", err
 			}
-		} else if opts.DevMode {
+		} else if giterminism_inspector.DevMode {
 			if templateData, err = git_repo.ReadIndexFileAndCompareWithProjectFile(ctx, localGitRepo, projectDir, relTemplatePath); err != nil {
 				return "", fmt.Errorf("unable to read file %s from local git repo index: %s", relTemplatePath, err)
 			}
@@ -297,7 +296,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	}
 
 	templateData := make(map[string]interface{})
-	templateData["Files"] = files{ctx: ctx, ProjectDir: projectDir, Commit: commit, LocalGitRepo: localGitRepo, DevMode: opts.DevMode}
+	templateData["Files"] = files{ctx: ctx, ProjectDir: projectDir, Commit: commit, LocalGitRepo: localGitRepo}
 	templateData["Env"] = opts.Env
 
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)
@@ -386,7 +385,6 @@ type files struct {
 	ProjectDir   string
 	LocalGitRepo *git_repo.Local
 	Commit       string
-	DevMode      bool
 }
 
 func (f files) doGet(path string) (string, error) {
@@ -404,7 +402,7 @@ func (f files) doGet(path string) (string, error) {
 		if data, err = ioutil.ReadFile(filePath); err != nil {
 			return "", fmt.Errorf("error reading %s: %s", filePath, err)
 		}
-	} else if f.DevMode {
+	} else if giterminism_inspector.DevMode {
 		if exists, err := f.LocalGitRepo.IsIndexFileExists(f.ctx, path); err != nil {
 			return "", fmt.Errorf("unable to check existence of %s in the local git repo index: %s", path, err)
 		} else if !exists {
@@ -491,7 +489,7 @@ func (f files) doGlobFromFilesystem(pattern string) (map[string]interface{}, err
 func (f files) doGlobFromGitRepo(ctx context.Context, pattern string) (map[string]interface{}, error) {
 	var paths []string
 	var err error
-	if f.DevMode {
+	if giterminism_inspector.DevMode {
 		if paths, err = f.LocalGitRepo.GetIndexFilePathList(ctx); err != nil {
 			return nil, fmt.Errorf("unable to get files list from local git repo index: %s", err)
 		}
@@ -510,7 +508,7 @@ func (f files) doGlobFromGitRepo(ctx context.Context, pattern string) (map[strin
 			resultPath := filepath.ToSlash(p)
 
 			var data []byte
-			if f.DevMode {
+			if giterminism_inspector.DevMode {
 				if data, err = f.LocalGitRepo.ReadIndexFile(ctx, p); err != nil {
 					return nil, fmt.Errorf("error reading %s from local git repo index: %s", p, err)
 				}

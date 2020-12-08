@@ -11,7 +11,6 @@ import (
 
 func GetConveyorOptions(commonCmdData *CmdData) build.ConveyorOptions {
 	return build.ConveyorOptions{
-		DevMode: *commonCmdData.Dev,
 		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
 			VirtualMerge:           *commonCmdData.VirtualMerge,
 			VirtualMergeFromCommit: *commonCmdData.VirtualMergeFromCommit,
