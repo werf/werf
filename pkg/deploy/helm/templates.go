@@ -65,7 +65,6 @@ type Template struct {
 		UID         string                 `yaml:"uid,omitempty"`
 		OtherFields map[string]interface{} `yaml:",inline"`
 	} `yaml:"metadata,omitempty"`
-	Status      string                 `yaml:"status,omitempty"`
 	OtherFields map[string]interface{} `yaml:",inline"`
 }
 
