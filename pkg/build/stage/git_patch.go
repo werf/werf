@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/git_repo"
-
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
+	imagePkg "github.com/werf/werf/pkg/image"
 )
 
 type NewGitPatchStageOptions struct {
@@ -61,28 +62,47 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Contex
 		if commit != latestCommitInfo.Commit {
 			return false, nil
 		}
+
+		if giterminism_inspector.DevMode && prevBuiltImage.GetStageDescription().Info.Labels[imagePkg.WerfDevLabel] != "true" {
+			empty, err := gitMapping.IsStagingStatusResultEmpty(ctx)
+			if err != nil {
+				return false, err
+			}
+
+			if !empty {
+				return false, nil
+			}
+		}
 	}
 
 	return true, nil
 }
 
-func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface, withIndexPatch bool) error {
 	if err := s.GitStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}
 
-	if err := s.prepareImage(ctx, c, prevBuiltImage, image); err != nil {
+	if err := s.prepareImage(ctx, c, prevBuiltImage, image, withIndexPatch); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface, withStagingPatch bool) error {
 	for _, gitMapping := range s.gitMappings {
 		if err := gitMapping.ApplyPatchCommand(ctx, c, prevBuiltImage, image); err != nil {
 			return err
 		}
+
+		if withStagingPatch {
+			// TODO gitMapping.ApplyStagingPatchCommand
+		}
+	}
+
+	if withStagingPatch {
+		image.Container().RunOptions().AddLabel(map[string]string{imagePkg.WerfDevLabel: "true"})
 	}
 
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.PatchesCacheDir, s.ContainerPatchesDir))

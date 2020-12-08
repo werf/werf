@@ -13,13 +13,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/werf/werf/pkg/util"
-
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/status"
+	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/util"
 )
 
 type GitRepoCache struct {
@@ -57,6 +58,8 @@ type GitMapping struct {
 	ContainerScriptsDir  string
 
 	BaseCommitByPrevBuiltImageName map[string]string
+
+	mainStatusResult *status.Result
 
 	mutexes map[string]*sync.Mutex
 	mutex   sync.Mutex
@@ -702,6 +705,122 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 	}
 
 	return checksum.String(), nil
+}
+
+func (gm *GitMapping) StageDependenciesStagingStatusChecksum(ctx context.Context, stageName StageName) (string, error) {
+	if gm.LocalGitRepo == nil {
+		return "", nil
+	}
+
+	depsPaths := gm.StagesDependencies[stageName]
+	if len(depsPaths) == 0 {
+		return "", nil
+	}
+
+	mainStatusResult, err := gm.getStagingStatusResult(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	if mainStatusResult.IsEmpty(status.FilterOptions{OnlyStaged: true}) {
+		return "", err
+	}
+
+	stageDependenciesPathMatcher := path_matcher.NewSimplePathMatcher(gm.Add, depsPaths, false)
+	logProcess := logboek.Context(ctx).Debug().LogProcess("staging status (%s)", stageDependenciesPathMatcher.String())
+	logProcess.Start()
+	depsStatusResult, err := mainStatusResult.Status(ctx, stageDependenciesPathMatcher)
+	if err != nil {
+		logProcess.Fail()
+		return "", err
+	} else {
+		logProcess.End()
+	}
+
+	var checksum string
+	if err := logboek.Context(ctx).Debug().LogProcess("staging status checksum").DoError(func() error {
+		resultChecksum, err := depsStatusResult.Checksum(ctx, status.ChecksumOptions{FilterOptions: status.FilterOptions{OnlyStaged: true}})
+		if err != nil {
+			return err
+		}
+
+		logboek.Context(ctx).Debug().LogOptionalLn()
+		logboek.Context(ctx).Debug().LogLn(resultChecksum)
+
+		checksum = resultChecksum
+
+		return nil
+	}); err != nil {
+		return "", err
+	}
+
+	return checksum, nil
+}
+
+func (gm *GitMapping) StagingStatusResultChecksum(ctx context.Context) (string, error) {
+	if gm.LocalGitRepo == nil {
+		return "", nil
+	}
+
+	mainStatusResult, err := gm.getStagingStatusResult(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	var checksum string
+	if err := logboek.Context(ctx).Debug().LogProcess("staging status result checksum").DoError(func() error {
+		resultChecksum, err := mainStatusResult.Checksum(ctx, status.ChecksumOptions{FilterOptions: status.FilterOptions{OnlyStaged: true}})
+		if err != nil {
+			return err
+		}
+
+		logboek.Context(ctx).Debug().LogOptionalLn()
+		logboek.Context(ctx).Debug().LogLn(resultChecksum)
+
+		checksum = resultChecksum
+
+		return nil
+	}); err != nil {
+		return "", err
+	}
+
+	return checksum, nil
+}
+
+func (gm *GitMapping) getStagingStatusResult(ctx context.Context) (*status.Result, error) {
+	if gm.LocalGitRepo == nil {
+		return nil, nil
+	}
+
+	if gm.mainStatusResult == nil {
+		gitMappingPathMatcher := path_matcher.NewGitMappingPathMatcher(gm.Add, gm.IncludePaths, gm.ExcludePaths, false)
+		logProcess := logboek.Context(ctx).Debug().LogProcess("staging status (%s)", gitMappingPathMatcher.String())
+		logProcess.Start()
+		result, err := gm.LocalGitRepo.Status(ctx, gitMappingPathMatcher)
+		if err != nil {
+			logProcess.Fail()
+			return nil, err
+		} else {
+			logProcess.End()
+		}
+
+		gm.mainStatusResult = result
+	}
+
+	return gm.mainStatusResult, nil
+}
+
+func (gm *GitMapping) IsStagingStatusResultEmpty(ctx context.Context) (bool, error) {
+	if gm.LocalGitRepo == nil {
+		return true, nil
+	}
+
+	mainStatusResult, err := gm.getStagingStatusResult(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return mainStatusResult.IsEmpty(status.FilterOptions{OnlyStaged: true}), nil
 }
 
 func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit string) (int64, error) {

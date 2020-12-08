@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
 )
@@ -41,6 +42,10 @@ func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage 
 		return false, err
 	}
 
+	//if giterminism_inspector.DevMode && prevBuiltImage.GetStageDescription().Info.Labels[image.WerfDevLabel] != "true" {
+	// TODO: s.gitMappingsStagingPatchSize
+	//}
+
 	isEmpty := patchSize < patchSizeStep
 
 	return isEmpty, nil
@@ -52,7 +57,25 @@ func (s *GitCacheStage) GetDependencies(ctx context.Context, c Conveyor, _, prev
 		return "", err
 	}
 
+	//if giterminism_inspector.DevMode && prevBuiltImage.GetStageDescription().Info.Labels[image.WerfDevLabel] != "true" {
+	// TODO: s.gitMappingsStagingPatchSize
+	//}
+
 	return util.Sha256Hash(fmt.Sprintf("%d", patchSize/patchSizeStep)), nil
+}
+
+func (s *GitCacheStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, i container_runtime.ImageInterface) error {
+	var withStagingPatch bool
+	if giterminism_inspector.DevMode && prevBuiltImage.GetStageDescription().Info.Labels[image.WerfDevLabel] != "true" {
+		empty, err := s.isGitMappingStagingStatusChecksumEmpty(ctx)
+		if err != nil {
+			return err
+		}
+
+		withStagingPatch = !empty
+	}
+
+	return s.GitPatchStage.PrepareImage(ctx, c, prevBuiltImage, i, withStagingPatch)
 }
 
 func (s *GitCacheStage) gitMappingsPatchSize(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (int64, error) {

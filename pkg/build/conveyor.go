@@ -1047,7 +1047,7 @@ func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo *git_
 
 	gitMapping.Name = "own"
 
-	gitMapping.GitRepoInterface = localGitRepo
+	gitMapping.LocalGitRepo = localGitRepo
 
 	gitMapping.GitRepoCache = c.GetOrCreateGitRepoCache(localGitRepo.GetName())
 

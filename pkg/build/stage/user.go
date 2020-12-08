@@ -47,11 +47,53 @@ func (s *UserStage) getStageDependenciesChecksum(ctx context.Context, c Conveyor
 		if debugUserStageChecksum() {
 			logboek.Context(ctx).Debug().LogFHighlight(
 				"DEBUG: %s stage git mapping %s checksum %v\n",
-				name, gitMapping.Name, checksum,
+				s.name, gitMapping.Name, checksum,
 			)
 		}
 
-		args = append(args, checksum)
+		if checksum != "" {
+			args = append(args, checksum)
+		}
+	}
+
+	if len(args) == 0 {
+		return "", nil
+	}
+
+	return util.Sha256Hash(args...), nil
+}
+
+func (s *UserStage) isStageDependenciesStagingStatusChecksumEmpty(ctx context.Context, c Conveyor, name StageName) (bool, error) {
+	checksum, err := s.getStageDependenciesStagingStatusChecksum(ctx, c, name)
+	if err != nil {
+		return false, err
+	}
+
+	return checksum == "", nil
+}
+
+func (s *UserStage) getStageDependenciesStagingStatusChecksum(ctx context.Context, c Conveyor, name StageName) (string, error) {
+	var args []string
+	for _, gm := range s.gitMappings {
+		checksum, err := gm.StageDependenciesStagingStatusChecksum(ctx, c, name)
+		if err != nil {
+			return "", err
+		}
+
+		if debugUserStageChecksum() {
+			logboek.Context(ctx).Debug().LogFHighlight(
+				"DEBUG: %s stage git mapping %s staging status checksum %v\n",
+				s.name, gm.Name, checksum,
+			)
+		}
+
+		if checksum != "" {
+			args = append(args, checksum)
+		}
+	}
+
+	if len(args) == 0 {
+		return "", nil
 	}
 
 	return util.Sha256Hash(args...), nil

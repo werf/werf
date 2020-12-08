@@ -161,6 +161,35 @@ func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDe
 	return oldestStage, nil
 }
 
+func (s *BaseStage) gitMappingStagingStatusChecksum(ctx context.Context) (string, error) {
+	var args []string
+	for _, gm := range s.gitMappings {
+		checksum, err := gm.StagingStatusResultChecksum(ctx)
+		if err != nil {
+			return "", err
+		}
+
+		if checksum != "" {
+			args = append(args, checksum)
+		}
+	}
+
+	if len(args) == 0 {
+		return "", nil
+	}
+
+	return util.Sha256Hash(args...), nil
+}
+
+func (s *BaseStage) isGitMappingStagingStatusChecksumEmpty(ctx context.Context) (bool, error) {
+	checksum, err := s.gitMappingStagingStatusChecksum(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return checksum == "", nil
+}
+
 func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Conveyor, stages []*image.StageDescription) ([]*image.StageDescription, error) {
 	var suitableStages []*image.StageDescription
 	var currentCommitsByIndex []string

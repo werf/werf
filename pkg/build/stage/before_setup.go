@@ -6,6 +6,8 @@ import (
 	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/giterminism_inspector"
+	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -28,13 +30,29 @@ type BeforeSetupStage struct {
 	*UserWithGitPatchStage
 }
 
-func (s *BeforeSetupStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *BeforeSetupStage) GetDependencies(ctx context.Context, c Conveyor, prevBuiltImage, _ container_runtime.ImageInterface) (string, error) {
 	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(ctx, c, BeforeSetup)
 	if err != nil {
 		return "", err
 	}
 
-	return util.Sha256Hash(s.builder.BeforeSetupChecksum(ctx), stageDependenciesChecksum), nil
+	var devModeChecksum string
+	if giterminism_inspector.DevMode && prevBuiltImage.GetStageDescription().Info.Labels[imagePkg.WerfDevLabel] != "true" {
+		devModeChecksum, err = s.getStageDependenciesStagingStatusChecksum(ctx, c, BeforeSetup)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	var args []string
+	args = append(args, s.builder.BeforeSetupChecksum(ctx))
+	args = append(args, stageDependenciesChecksum)
+
+	if devModeChecksum != "" {
+		args = append(args, devModeChecksum)
+	}
+
+	return util.Sha256Hash(args...), nil
 }
 
 func (s *BeforeSetupStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {

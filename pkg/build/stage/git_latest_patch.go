@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
 )
@@ -27,23 +28,35 @@ func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuilt
 	}
 
 	isEmpty := true
-	for _, gitMapping := range s.gitMappings {
-		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
+	for _, gm := range s.gitMappings {
+		commit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 		if err != nil {
-			return false, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
+			return false, fmt.Errorf("unable to get base commit for git mapping %s: %s", gm.GitRepo().GetName(), err)
 		}
 
-		if exist, err := gitMapping.GitRepo().IsCommitExists(ctx, commit); err != nil {
-			return false, fmt.Errorf("unable to check existence of commit %q in the repo %s: %s", commit, gitMapping.GitRepo().GetName(), err)
+		if exist, err := gm.GitRepo().IsCommitExists(ctx, commit); err != nil {
+			return false, fmt.Errorf("unable to check existence of commit %q in the repo %s: %s", commit, gm.GitRepo().GetName(), err)
 		} else if !exist {
-			return false, fmt.Errorf("commit %q is not exist in the repo %s", commit, gitMapping.GitRepo().GetName())
+			return false, fmt.Errorf("commit %q is not exist in the repo %s", commit, gm.GitRepo().GetName())
 		}
 
-		if empty, err := gitMapping.IsPatchEmpty(ctx, c, prevBuiltImage); err != nil {
+		if empty, err := gm.IsPatchEmpty(ctx, c, prevBuiltImage); err != nil {
 			return false, err
 		} else if !empty {
 			isEmpty = false
 			break
+		}
+
+		if giterminism_inspector.DevMode && prevBuiltImage.GetStageDescription().Info.Labels[image.WerfDevLabel] != "true" {
+			empty, err := gm.IsStagingStatusResultEmpty(ctx)
+			if err != nil {
+				return false, err
+			}
+
+			if !empty {
+				isEmpty = false
+				break
+			}
 		}
 	}
 
@@ -53,16 +66,39 @@ func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuilt
 func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
 	var args []string
 
-	for _, gitMapping := range s.gitMappings {
-		patchContent, err := gitMapping.GetPatchContent(ctx, c, prevBuiltImage)
+	for _, gm := range s.gitMappings {
+		patchContent, err := gm.GetPatchContent(ctx, c, prevBuiltImage)
 		if err != nil {
-			return "", fmt.Errorf("error getting patch between previous built image %s and current commit for git mapping %s: %s", prevBuiltImage.Name(), gitMapping.Name, err)
+			return "", fmt.Errorf("error getting patch between previous built image %s and current commit for git mapping %s: %s", prevBuiltImage.Name(), gm.Name, err)
 		}
 
 		args = append(args, patchContent)
 	}
 
+	if giterminism_inspector.DevMode && prevBuiltImage.GetStageDescription().Info.Labels[image.WerfDevLabel] != "true" {
+		devModeChecksum, err := s.gitMappingStagingStatusChecksum(ctx)
+		if err != nil {
+			return "", err
+		}
+
+		args = append(args, devModeChecksum)
+	}
+
 	return util.Sha256Hash(args...), nil
+}
+
+func (s *GitLatestPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, i container_runtime.ImageInterface) error {
+	var withStagingPatch bool
+	if giterminism_inspector.DevMode && prevBuiltImage.GetStageDescription().Info.Labels[image.WerfDevLabel] != "true" {
+		empty, err := s.isGitMappingStagingStatusChecksumEmpty(ctx)
+		if err != nil {
+			return err
+		}
+
+		withStagingPatch = !empty
+	}
+
+	return s.GitPatchStage.PrepareImage(ctx, c, prevBuiltImage, i, withStagingPatch)
 }
 
 func (s *GitLatestPatchStage) SelectSuitableStage(ctx context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
