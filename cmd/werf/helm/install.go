@@ -4,11 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
-
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/deploy/lock_manager"
 
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 
@@ -23,33 +19,15 @@ import (
 
 var installCmdData cmd_werf_common.CmdData
 
-func NewInstallCmd(actionConfig *action.Configuration) *cobra.Command {
-	ctx := common.BackgroundContext()
-
-	wc := werf_chart.NewWerfChart(ctx, nil, "", werf_chart.WerfChartOptions{})
-
-	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender: wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-			return werf_chart.NewWerfChart(ctx, nil, "", werf_chart.WerfChartOptions{})
-		},
-	}
-
+func NewInstallCmd(actionConfig *action.Configuration, wc *werf_chart.WerfChart) *cobra.Command {
 	cmd, helmAction := cmd_helm.NewInstallCmd(actionConfig, os.Stdout, cmd_helm.InstallCmdOptions{
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 	})
-
-	SetupWerfChartParams(cmd, &installCmdData)
+	SetupRenderRelatedWerfChartParams(cmd, &installCmdData)
 
 	oldRunE := cmd.RunE
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if err := werf.Init(*installCmdData.TmpDir, *installCmdData.HomeDir); err != nil {
-			return err
-		}
-
-		if err := git_repo.Init(); err != nil {
-			return err
-		}
+		ctx := common.BackgroundContext()
 
 		if releaseName, chartDir, err := helmAction.NameAndChart(args); err != nil {
 			return err
@@ -58,14 +36,14 @@ func NewInstallCmd(actionConfig *action.Configuration) *cobra.Command {
 			wc.ChartDir = chartDir
 		}
 
-		if err := InitWerfChartParams(ctx, &installCmdData, wc, wc.ChartDir); err != nil {
+		if err := InitRenderRelatedWerfChartParams(ctx, &installCmdData, wc, wc.ChartDir); err != nil {
 			return fmt.Errorf("unable to init werf chart: %s", err)
 		}
 
-		if vals, err := werf_chart.GetServiceValues(ctx, "PROJECT", "REPO", "NAMESPACE", nil, werf_chart.ServiceValuesOptions{IsStub: true}); err != nil {
-			return fmt.Errorf("error creating service values: %s", err)
-		} else if err := wc.SetServiceValues(vals); err != nil {
-			return err
+		if m, err := lock_manager.NewLockManager(cmd_helm.Settings.Namespace()); err != nil {
+			return fmt.Errorf("unable to create lock manager: %s", err)
+		} else {
+			wc.LockManager = m
 		}
 
 		return wc.WrapInstall(ctx, func() error {

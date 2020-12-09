@@ -2,23 +2,15 @@ package helm
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
 
 	"github.com/spf13/cobra"
 	cmd_werf_common "github.com/werf/werf/cmd/werf/common"
 )
 
-func SetupWerfChartParams(cmd *cobra.Command, commonCmdData *cmd_werf_common.CmdData) {
-	cmd_werf_common.SetupTmpDir(commonCmdData, cmd)
-	cmd_werf_common.SetupHomeDir(commonCmdData, cmd)
-
-	cmd_werf_common.SetupGiterminismInspectorOptions(commonCmdData, cmd)
-
+func SetupRenderRelatedWerfChartParams(cmd *cobra.Command, commonCmdData *cmd_werf_common.CmdData) {
 	cmd_werf_common.SetupAddAnnotations(commonCmdData, cmd)
 	cmd_werf_common.SetupAddLabels(commonCmdData, cmd)
 
@@ -26,9 +18,7 @@ func SetupWerfChartParams(cmd *cobra.Command, commonCmdData *cmd_werf_common.Cmd
 	cmd_werf_common.SetupIgnoreSecretKey(commonCmdData, cmd)
 }
 
-func InitWerfChartParams(ctx context.Context, commonCmdData *cmd_werf_common.CmdData, wc *werf_chart.WerfChart, chartDir string) error {
-	wc.SecretValueFiles = *commonCmdData.SecretValues
-
+func InitRenderRelatedWerfChartParams(ctx context.Context, commonCmdData *cmd_werf_common.CmdData, wc *werf_chart.WerfChart, chartDir string) error {
 	if extraAnnotations, err := cmd_werf_common.GetUserExtraAnnotations(commonCmdData); err != nil {
 		return err
 	} else {
@@ -41,18 +31,13 @@ func InitWerfChartParams(ctx context.Context, commonCmdData *cmd_werf_common.Cmd
 		wc.ExtraAnnotationsAndLabelsPostRenderer.Add(nil, extraLabels)
 	}
 
+	wc.SecretValueFiles = *commonCmdData.SecretValues
 	// NOTE: project-dir is the same as chart-dir for werf helm install/upgrade commands
 	// NOTE: project-dir is werf-project dir only for werf converge/dismiss commands
 	if m, err := deploy.GetSafeSecretManager(ctx, chartDir, chartDir, *commonCmdData.SecretValues, wc.LocalGitRepo, *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {
 		wc.SecretsManager = m
-	}
-
-	if m, err := lock_manager.NewLockManager(cmd_helm.Settings.Namespace()); err != nil {
-		return fmt.Errorf("unable to create lock manager: %s", err)
-	} else {
-		wc.LockManager = m
 	}
 
 	return nil

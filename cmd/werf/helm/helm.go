@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/werf/werf/pkg/werf"
+
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 
 	helm_secret_decrypt "github.com/werf/werf/cmd/werf/helm/secret/decrypt"
@@ -47,8 +49,10 @@ func NewCmd() *cobra.Command {
 		Short: "Manage application deployment with helm",
 	}
 
+	wc := werf_chart.NewWerfChart(ctx, nil, "", werf_chart.WerfChartOptions{})
+
 	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender: werf_chart.NewWerfChart(ctx, nil, "", werf_chart.WerfChartOptions{}),
+		ChartExtender: wc,
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
 			return werf_chart.NewWerfChart(ctx, nil, "", werf_chart.WerfChartOptions{})
 		},
@@ -57,6 +61,8 @@ func NewCmd() *cobra.Command {
 	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
 
 	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", *cmd_helm.Settings.GetNamespaceP(), "namespace scope for this request")
+	cmd_werf_common.SetupTmpDir(&_commonCmdData, cmd)
+	cmd_werf_common.SetupHomeDir(&_commonCmdData, cmd)
 	cmd_werf_common.SetupKubeConfig(&_commonCmdData, cmd)
 	cmd_werf_common.SetupKubeConfigBase64(&_commonCmdData, cmd)
 	cmd_werf_common.SetupKubeContext(&_commonCmdData, cmd)
@@ -72,11 +78,11 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewHistoryCmd(actionConfig, os.Stdout),
 		cmd_helm.NewLintCmd(os.Stdout),
 		cmd_helm.NewListCmd(actionConfig, os.Stdout),
-		NewTemplateCmd(actionConfig),
+		NewTemplateCmd(actionConfig, wc),
 		cmd_helm.NewRepoCmd(os.Stdout),
 		cmd_helm.NewRollbackCmd(actionConfig, os.Stdout),
-		NewInstallCmd(actionConfig),
-		NewUpgradeCmd(actionConfig),
+		NewInstallCmd(actionConfig, wc),
+		NewUpgradeCmd(actionConfig, wc),
 		cmd_helm.NewCreateCmd(os.Stdout),
 		cmd_helm.NewEnvCmd(os.Stdout),
 		cmd_helm.NewPackageCmd(os.Stdout),
@@ -109,9 +115,12 @@ func NewCmd() *cobra.Command {
 		if cmd.Runnable() {
 			oldRunE := cmd.RunE
 			oldRun := cmd.Run
-
 			cmd.RunE = func(cmd *cobra.Command, args []string) error {
 				// NOTE: Common init block for all runnable commands.
+
+				if err := werf.Init(*_commonCmdData.TmpDir, *_commonCmdData.HomeDir); err != nil {
+					return err
+				}
 
 				if err := common.ProcessLogOptions(&_commonCmdData); err != nil {
 					common.PrintHelp(cmd)
@@ -119,10 +128,15 @@ func NewCmd() *cobra.Command {
 				}
 
 				// FIXME: setup namespace env var for helm diff plugin
-
 				os.Setenv("WERF_HELM3_MODE", "1")
 
 				ctx := common.BackgroundContext()
+
+				if vals, err := werf_chart.GetServiceValues(ctx, "PROJECT", "REPO", namespace, nil, werf_chart.ServiceValuesOptions{IsStub: true}); err != nil {
+					return fmt.Errorf("error creating service values: %s", err)
+				} else if err := wc.SetServiceValues(vals); err != nil {
+					return err
+				}
 
 				helm.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
 					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
@@ -135,7 +149,8 @@ func NewCmd() *cobra.Command {
 					ReleasesHistoryMax: *_commonCmdData.ReleasesHistoryMax,
 				})
 
-				if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+				// FIXME: not all `werf helm *` commands may need a kubernetes connection
+				if err := kube.Init(kube.InitOptions{KubeConfigOptions: kube.KubeConfigOptions{
 					Context:          *_commonCmdData.KubeContext,
 					ConfigPath:       *_commonCmdData.KubeConfig,
 					ConfigDataBase64: *_commonCmdData.KubeConfigBase64,
