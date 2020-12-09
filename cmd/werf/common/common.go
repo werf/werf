@@ -1253,6 +1253,10 @@ func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
 }
 
+func OpenLocalGitRepo(projectDir string) (*git_repo.Local, error) {
+	return git_repo.OpenLocalRepo("own", projectDir)
+}
+
 func BackgroundContext() context.Context {
 	return logboek.NewContext(context.Background(), logboek.DefaultLogger())
 }
