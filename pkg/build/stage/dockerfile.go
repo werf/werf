@@ -1,7 +1,6 @@
 package stage
 
 import (
-	"archive/tar"
 	"bytes"
 	"context"
 	"errors"
@@ -15,8 +14,6 @@ import (
 	"github.com/werf/werf/pkg/context_manager"
 
 	"github.com/bmatcuk/doublestar"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
@@ -635,67 +632,22 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context) (string, er
 		return "", fmt.Errorf("unable to create archive: %s", err)
 	}
 
-	pathsToExcludeFromSourceArchive, err := s.getPathsToExcludeFromSourceArchive(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	var sourceArchivePath = archive.GetFilePath()
-	destinationArchivePath := context_manager.GetTmpArchivePath()
-	if err := util.CreateArchiveBasedOnAnotherOne(ctx, sourceArchivePath, destinationArchivePath, pathsToExcludeFromSourceArchive, func(tw *tar.Writer) error {
-		for _, contextAddFile := range s.contextAddFile {
-			sourceFilePath := filepath.Join(s.projectPath, s.context, contextAddFile)
-			tarEntryName := filepath.ToSlash(contextAddFile)
-			if err := util.CopyFileIntoTar(tw, tarEntryName, sourceFilePath); err != nil {
-				return fmt.Errorf("unable to add contextAddFile %q to archive %q: %s", sourceFilePath, destinationArchivePath, err)
-			}
-
-			logboek.Context(ctx).Debug().LogF("Extra file was added: %q\n", tarEntryName)
-		}
-
-		if giterminism_inspector.DevMode {
-			mainStatusResult, err := s.GetMainStatusResult(ctx)
-			if err != nil {
-				return err
-			}
-
-			if err := mainStatusResult.ForEachStagedFile(func(entry *index.Entry, obj plumbing.EncodedObject) error {
-				tarEntryName := util.GetRelativeToBaseFilepath(s.context, entry.Name)
-				if err := util.CopyGitIndexEntryIntoTar(tw, tarEntryName, entry, obj); err != nil {
-					return fmt.Errorf("unable to add git index entry %s data to archive %q: %s", entry.Name, destinationArchivePath, err)
-				}
-				logboek.Context(ctx).Debug().LogF("Extra file was added: %q\n", tarEntryName)
-
+	var archivePath = archive.GetFilePath()
+	if len(s.contextAddFile) > 0 {
+		if err := logboek.Context(ctx).Debug().LogProcess("Apply contextAddFile directive to the archive %s", archivePath).DoError(func() error {
+			if path, err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.projectPath, s.context, s.contextAddFile); err != nil {
+				return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
+			} else {
+				archivePath = path
+				logboek.Context(ctx).Debug().LogF("Created temporary archive %s\n", archivePath)
 				return nil
-			}); err != nil {
-				return err
 			}
-		}
-
-		return nil
-	}); err != nil {
-		return "", err
-	}
-
-	return destinationArchivePath, nil
-}
-
-func (s *DockerfileStage) getPathsToExcludeFromSourceArchive(ctx context.Context) ([]string, error) {
-	result := s.contextAddFile
-
-	if giterminism_inspector.DevMode {
-		mainStatusResult, err := s.GetMainStatusResult(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, filePath := range mainStatusResult.DeletedStagedFilePathList() {
-			relFilePath := util.GetRelativeToBaseFilepath(s.context, filePath)
-			result = append(result, relFilePath)
+		}); err != nil {
+			return "", err
 		}
 	}
 
-	return result, nil
+	return archivePath, nil
 }
 
 func (s *DockerfileStage) DockerBuildArgs() []string {

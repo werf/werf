@@ -5,9 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/format/index"
-
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 
@@ -105,43 +102,6 @@ func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatche
 	}
 
 	return res, nil
-}
-
-func (r *Result) ForEachStagedFile(f func(entry *index.Entry, obj plumbing.EncodedObject) error) error {
-	s := r.repository.Storer
-
-	i, err := s.Index()
-	if err != nil {
-		return err
-	}
-
-	for _, path := range r.filteredFilePathList(FilterOptions{OnlyStaged: true}) {
-		entry, err := i.Entry(path)
-		if err != nil {
-			if err == index.ErrEntryNotFound {
-				return nil
-			}
-
-			return err
-		}
-
-		obj, err := s.EncodedObject(plumbing.BlobObject, entry.Hash)
-		if err != nil {
-			return err
-		}
-
-		if err := f(entry, obj); err != nil {
-			return err
-		}
-	}
-
-	for _, submoduleResult := range r.submoduleResults {
-		if err := submoduleResult.ForEachStagedFile(f); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // FilePathList method returns file paths relative to the main repository
