@@ -918,7 +918,6 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 	}
 
 	var commit string
-	var err error
 	for _, werfConfigPath := range configPathToCheck {
 		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 			if exists, err := util.FileExists(werfConfigPath); err != nil {
@@ -928,25 +927,17 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 			}
 		} else {
 			ctx := BackgroundContext()
+			if c, err := localGitRepo.HeadCommit(ctx); err != nil {
+				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+			} else {
+				commit = c
+			}
 
 			relPath := util.GetRelativeToBaseFilepath(projectDir, werfConfigPath)
-			if giterminism_inspector.DevMode {
-				if exists, err := localGitRepo.IsIndexFileExists(ctx, relPath); err != nil {
-					return "", fmt.Errorf("unable to check %q existence in the local git repo index: %s", relPath, err)
-				} else if exists {
-					return relPath, nil
-				}
-			} else {
-				commit, err = localGitRepo.HeadCommit(ctx)
-				if err != nil {
-					return "", fmt.Errorf("unable to get local repo head commit: %s", err)
-				}
-
-				if exists, err := localGitRepo.IsCommitFileExists(ctx, commit, relPath); err != nil {
-					return "", fmt.Errorf("unable to check %q existence in the local git repo commit %s: %s", relPath, commit, err)
-				} else if exists {
-					return relPath, nil
-				}
+			if exists, err := localGitRepo.IsCommitFileExists(ctx, commit, relPath); err != nil {
+				return "", fmt.Errorf("unable to check %q existence in the local git repo commit %s: %s", relPath, commit, err)
+			} else if exists {
+				return relPath, nil
 			}
 		}
 	}
@@ -954,8 +945,6 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 	if required {
 		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 			return "", fmt.Errorf("werf configuration file not found (%s)", strings.Join(configPathToCheck, ", "))
-		} else if giterminism_inspector.DevMode {
-			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo index", strings.Join(configPathToCheck, ", "))
 		} else {
 			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo commit %s", strings.Join(configPathToCheck, ", "), commit)
 		}
