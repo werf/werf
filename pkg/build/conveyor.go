@@ -1123,13 +1123,6 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		return nil, fmt.Errorf("local git repo was not found")
 	}
 
-	exist, err := localGitRepo.IsHeadReferenceExist(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get git head reference: %s", err)
-	} else if !exist {
-		return nil, fmt.Errorf("local git repo reference was not found")
-	}
-
 	headCommit, err := localGitRepo.HeadCommit(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get head commit: %s", err)

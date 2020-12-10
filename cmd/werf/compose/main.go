@@ -308,7 +308,7 @@ func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData com
 }
 
 func run(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.CmdData, ctx context.Context, projectDir string) error {
-	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
 	if err != nil {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}

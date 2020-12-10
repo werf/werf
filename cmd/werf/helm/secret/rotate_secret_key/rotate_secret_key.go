@@ -81,7 +81,7 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
 	if err != nil {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}

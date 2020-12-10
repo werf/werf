@@ -25,6 +25,8 @@ type Local struct {
 	Base
 	Path   string
 	GitDir string
+
+	headCommit string
 }
 
 func OpenLocalRepo(name, path string) (*Local, error) {
@@ -42,9 +44,28 @@ func OpenLocalRepo(name, path string) (*Local, error) {
 		return nil, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
 	}
 
-	localRepo := &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}
+	localRepo, err := newLocal(name, path, gitDir)
+	if err != nil {
+		return nil, err
+	}
 
 	return localRepo, nil
+}
+
+func newLocal(name, path, gitDir string) (*Local, error) {
+	headCommit, err := getHeadCommit(path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get git repo head commit: %s", err)
+	}
+
+	local := &Local{
+		Base:       Base{Name: name},
+		Path:       path,
+		GitDir:     gitDir,
+		headCommit: headCommit,
+	}
+
+	return local, nil
 }
 
 func (repo *Local) PlainOpen() (*git.Repository, error) {
@@ -137,11 +158,7 @@ func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatc
 
 	var commit string
 	if opts.UseHeadCommit {
-		if headCommit, err := repo.HeadCommit(ctx); err != nil {
-			return nil, fmt.Errorf("unable to get repo head commit: %s", err)
-		} else {
-			commit = headCommit
-		}
+		commit = repo.headCommit
 	} else if opts.Commit == "" {
 		panic(fmt.Sprintf("no commit specified for LsTree procedure: specify Commit or HeadCommit"))
 	} else {
@@ -181,18 +198,8 @@ func (repo *Local) RemoteOriginUrl(ctx context.Context) (string, error) {
 	return repo.remoteOriginUrl(repo.Path)
 }
 
-func (repo *Local) HeadCommit(ctx context.Context) (string, error) {
-	return repo.getHeadCommit(repo.Path)
-}
-
-func (repo *Local) IsHeadReferenceExist(ctx context.Context) (bool, error) {
-	_, err := repo.getHeadCommit(repo.Path)
-	if err == errHeadNotFound {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	}
-	return true, nil
+func (repo *Local) HeadCommit(_ context.Context) (string, error) {
+	return repo.headCommit, nil
 }
 
 func (repo *Local) CreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
