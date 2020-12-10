@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/git_repo"
-
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/git_repo"
 )
 
 type NewGitPatchStageOptions struct {
