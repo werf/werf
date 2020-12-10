@@ -1243,7 +1243,7 @@ func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func OpenLocalGitRepo(projectDir string) (*git_repo.Local, error) {
-	return git_repo.OpenLocalRepo("own", projectDir)
+	return git_repo.OpenLocalRepo("own", projectDir, giterminism_inspector.DevMode)
 }
 
 func BackgroundContext() context.Context {
