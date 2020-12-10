@@ -41,7 +41,7 @@ func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfi
 	}
 
 	if len(imagesToProcess) == 0 {
-		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
+		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env)
 		if err != nil {
 			return fmt.Errorf("cannot parse config: %s", err)
 		}
@@ -71,7 +71,7 @@ func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfi
 }
 
 func GetWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, opts WerfConfigOptions) (*WerfConfig, error) {
-	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
+	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
 	}
@@ -211,27 +211,29 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, opts WerfConfigOptions) (string, error) {
+func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, env string) (string, error) {
 	var commit string
-	var err error
 	if localGitRepo != nil {
-		if commit, err = localGitRepo.HeadCommit(ctx); err != nil {
+		if c, err := localGitRepo.HeadCommit(ctx); err != nil {
 			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+		} else {
+			commit = c
 		}
 	}
 
 	var data []byte
+
 	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
-		if data, err = ioutil.ReadFile(werfConfigPath); err != nil {
-			return "", fmt.Errorf("unable to read file %q: %s", werfConfigPath, err)
-		}
-	} else if giterminism_inspector.DevMode {
-		if data, err = git_repo.ReadIndexFileAndCompareWithProjectFile(ctx, localGitRepo, projectDir, werfConfigPath); err != nil {
-			return "", fmt.Errorf("unable to read file %q from local git repo index: %s", werfConfigPath, err)
+		if d, err := ioutil.ReadFile(werfConfigPath); err != nil {
+			return "", fmt.Errorf("error reading %q: %s", werfConfigPath, err)
+		} else {
+			data = d
 		}
 	} else {
-		if data, err = git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, werfConfigPath); err != nil {
-			return "", fmt.Errorf("unable to read file %q from local git repo commit %s: %s", werfConfigPath, commit, err)
+		if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, werfConfigPath); err != nil {
+			return "", err
+		} else {
+			data = d
 		}
 	}
 
@@ -247,20 +249,13 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 			werfConfigsTemplates = templates
 		}
 	} else {
-		var paths []string
-		if giterminism_inspector.DevMode {
-			if paths, err = localGitRepo.GetIndexFilePathList(ctx); err != nil {
-				return "", fmt.Errorf("unable to get files list from local git repo index: %s", err)
-			}
+		if paths, err := localGitRepo.GetCommitFilePathList(ctx, commit); err != nil {
+			return "", fmt.Errorf("unable to get files list from local git repo: %s", err)
 		} else {
-			if paths, err = localGitRepo.GetCommitFilePathList(ctx, commit); err != nil {
-				return "", fmt.Errorf("unable to get files list from local git repo: %s", err)
-			}
-		}
-
-		for _, p := range paths {
-			if util.IsSubpathOfBasePath(werfConfigTemplatesDir, p) {
-				werfConfigsTemplates = append(werfConfigsTemplates, p)
+			for _, path := range paths {
+				if util.IsSubpathOfBasePath(werfConfigTemplatesDir, path) {
+					werfConfigsTemplates = append(werfConfigsTemplates, path)
+				}
 			}
 		}
 	}
@@ -268,16 +263,21 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	for _, relTemplatePath := range werfConfigsTemplates {
 		var templateData []byte
 		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
-			if templateData, err = ioutil.ReadFile(relTemplatePath); err != nil {
+			if d, err := ioutil.ReadFile(relTemplatePath); err != nil {
 				return "", err
-			}
-		} else if giterminism_inspector.DevMode {
-			if templateData, err = git_repo.ReadIndexFileAndCompareWithProjectFile(ctx, localGitRepo, projectDir, relTemplatePath); err != nil {
-				return "", fmt.Errorf("unable to read file %s from local git repo index: %s", relTemplatePath, err)
+			} else {
+				templateData = d
 			}
 		} else {
-			if templateData, err = git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath); err != nil {
-				return "", fmt.Errorf("unable to read file %s from local git repo commit %s: %s", relTemplatePath, commit, err)
+			commit, err := localGitRepo.HeadCommit(ctx)
+			if err != nil {
+				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+			}
+
+			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath); err != nil {
+				return "", err
+			} else {
+				templateData = d
 			}
 		}
 
@@ -297,7 +297,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 
 	templateData := make(map[string]interface{})
 	templateData["Files"] = files{ctx: ctx, ProjectDir: projectDir, Commit: commit, LocalGitRepo: localGitRepo}
-	templateData["Env"] = opts.Env
+	templateData["Env"] = env
 
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)
 
@@ -388,8 +388,6 @@ type files struct {
 }
 
 func (f files) doGet(path string) (string, error) {
-	var data []byte
-	var err error
 	if giterminism_inspector.LooseGiterminism || f.LocalGitRepo == nil {
 		filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
 
@@ -399,32 +397,24 @@ func (f files) doGet(path string) (string, error) {
 			return "", fmt.Errorf("error accessing %s: %s", filePath, err)
 		}
 
-		if data, err = ioutil.ReadFile(filePath); err != nil {
+		if b, err := ioutil.ReadFile(filePath); err != nil {
 			return "", fmt.Errorf("error reading %s: %s", filePath, err)
-		}
-	} else if giterminism_inspector.DevMode {
-		if exists, err := f.LocalGitRepo.IsIndexFileExists(f.ctx, path); err != nil {
-			return "", fmt.Errorf("unable to check existence of %s in the local git repo index: %s", path, err)
-		} else if !exists {
-			return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
-		}
-
-		if data, err = f.LocalGitRepo.ReadIndexFile(f.ctx, path); err != nil {
-			return "", fmt.Errorf("error reading %s from local git repo index: %s", path, err)
-		}
-	} else {
-		if exists, err := f.LocalGitRepo.IsCommitFileExists(f.ctx, f.Commit, path); err != nil {
-			return "", fmt.Errorf("unable to check existence of %s in the local git repo commit %s: %s", path, f.Commit, err)
-		} else if !exists {
-			return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
-		}
-
-		if data, err = f.LocalGitRepo.ReadCommitFile(f.ctx, f.Commit, path); err != nil {
-			return "", fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
+		} else {
+			return string(b), nil
 		}
 	}
 
-	return string(data), nil
+	if exists, err := f.LocalGitRepo.IsCommitFileExists(f.ctx, f.Commit, path); err != nil {
+		return "", fmt.Errorf("unable to check existence of %s in the local git repo commit %s: %s", path, f.Commit, err)
+	} else if !exists {
+		return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
+	}
+
+	if b, err := f.LocalGitRepo.ReadCommitFile(f.ctx, f.Commit, path); err != nil {
+		return "", fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
+	} else {
+		return string(b), nil
+	}
 }
 
 func (f files) Get(path string) string {
@@ -487,42 +477,27 @@ func (f files) doGlobFromFilesystem(pattern string) (map[string]interface{}, err
 }
 
 func (f files) doGlobFromGitRepo(ctx context.Context, pattern string) (map[string]interface{}, error) {
-	var paths []string
-	var err error
-	if giterminism_inspector.DevMode {
-		if paths, err = f.LocalGitRepo.GetIndexFilePathList(ctx); err != nil {
-			return nil, fmt.Errorf("unable to get files list from local git repo index: %s", err)
-		}
+	if paths, err := f.LocalGitRepo.GetCommitFilePathList(ctx, f.Commit); err != nil {
+		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
 	} else {
-		if paths, err = f.LocalGitRepo.GetCommitFilePathList(ctx, f.Commit); err != nil {
-			return nil, fmt.Errorf("unable to get files list from local git repo commit %s: %s", f.Commit, err)
-		}
-	}
+		result := make(map[string]interface{})
 
-	result := make(map[string]interface{})
-	for _, p := range paths {
-		// FIXME: use ls-tree path matcher
-		if matched, err := doublestar.PathMatch(pattern, p); err != nil {
-			return nil, fmt.Errorf("path match failed: %s", err)
-		} else if matched {
-			resultPath := filepath.ToSlash(p)
-
-			var data []byte
-			if giterminism_inspector.DevMode {
-				if data, err = f.LocalGitRepo.ReadIndexFile(ctx, p); err != nil {
-					return nil, fmt.Errorf("error reading %s from local git repo index: %s", p, err)
-				}
-			} else {
-				if data, err = f.LocalGitRepo.ReadCommitFile(ctx, f.Commit, p); err != nil {
-					return nil, fmt.Errorf("error reading %s from local git repo commit %s: %s", p, f.Commit, err)
+		for _, path := range paths {
+			// FIXME: use ls-tree path matcher
+			if matched, err := doublestar.PathMatch(pattern, path); err != nil {
+				return nil, fmt.Errorf("path match failed: %s", err)
+			} else if matched {
+				if b, err := f.LocalGitRepo.ReadCommitFile(ctx, f.Commit, path); err != nil {
+					return nil, fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
+				} else {
+					resultPath := filepath.ToSlash(path)
+					result[resultPath] = string(b)
 				}
 			}
-
-			result[resultPath] = string(data)
 		}
-	}
 
-	return result, nil
+		return result, nil
+	}
 }
 
 func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface{}, error) {
