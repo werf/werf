@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -49,7 +50,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -59,7 +61,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				return run(&commonCmdData, args)
+				return runMain(ctx, args)
 			})
 		},
 	}
@@ -102,19 +104,19 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
+	common.SetupFollow(&commonCmdData, cmd)
 
 	return cmd
 }
 
-func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
+func runMain(ctx context.Context, args []string) error {
 	tmp_manager.AutoGCEnabled = true
-	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := common.InitGiterminismInspector(commonCmdData); err != nil {
+	if err := common.InitGiterminismInspector(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -130,7 +132,7 @@ func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
 		return err
 	}
 
-	if err := common.DockerRegistryInit(commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
 	}
 
@@ -144,19 +146,40 @@ func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
 	}
 	ctx = ctxWithDockerCli
 
-	projectDir, err := common.GetProjectDir(commonCmdData)
+	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	common.ProcessLogProjectDir(commonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
+	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
+		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+	}
+	defer func() {
+		err := ssh_agent.Terminate()
+		if err != nil {
+			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
+		}
+	}()
+
+	if *commonCmdData.Follow {
+		logboek.LogOptionalLn()
+		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context) error {
+			return run(ctx, projectDir, args)
+		})
+	} else {
+		return run(ctx, projectDir, args)
+	}
+}
+
+func run(ctx context.Context, projectDir string, imagesToProcess []string) error {
 	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
 	if err != nil {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, commonCmdData, localGitRepo, common.GetWerfConfigOptions(commonCmdData, true))
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -177,13 +200,13 @@ func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	stagesStorageAddress := common.GetOptionalStagesStorageAddress(commonCmdData)
-	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, commonCmdData)
+	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	synchronization, err := common.GetSynchronization(ctx, commonCmdData, projectName, stagesStorage)
+	synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 	if err != nil {
 		return err
 	}
@@ -195,29 +218,19 @@ func run(commonCmdData *common.CmdData, imagesToProcess []string) error {
 	if err != nil {
 		return err
 	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, commonCmdData)
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
-	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %s", err)
-	}
-	defer func() {
-		err := ssh_agent.Terminate()
-		if err != nil {
-			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
-		}
-	}()
-
-	buildOptions, err := common.GetBuildOptions(commonCmdData, werfConfig)
+	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	conveyorOptions, err := common.GetConveyorOptionsWithParallel(commonCmdData, buildOptions)
+	conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
 	if err != nil {
 		return err
 	}

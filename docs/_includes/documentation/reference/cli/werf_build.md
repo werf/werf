@@ -57,6 +57,8 @@ werf build [IMAGE_NAME...] [options]
             repo, to pull base images
       --env=''
             Use specified environment (default $WERF_ENV)
+      --follow=false
+            Follow git HEAD and run command for each new commit (default $WERF_FOLLOW)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false
