@@ -63,8 +63,6 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             if --install is set, create the release namespace if not present
       --description=''
             add a custom description
-      --dev=false
-            Enable developer mode (default $WERF_DEV)
       --devel=false
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored
@@ -77,8 +75,6 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             force resource updates through a replacement strategy
       --history-max=10
             limit the maximum number of revisions saved per release. Use 0 for no limit
-      --home-dir=''
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-skip-tls-verify=false
@@ -89,17 +85,8 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg'
             location of public keys used for verification
-      --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info                                                                               
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_LOOSE_GITERMINISM)
       --no-hooks=false
             disable pre/post upgrade hooks
-      --non-strict-giterminism-inspection=false
-            Change some errors to warnings during giterminism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
   -o, --output=table
             prints the output in the specified format. Allowed values: table, json, yaml
       --password=''
@@ -136,8 +123,6 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             performed with install flag enabled
       --timeout=5m0s
             time to wait for any individual Kubernetes operation (like Jobs for hooks)
-      --tmp-dir=''
-            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --username=''
             chart repository username where to locate the requested chart
   -f, --values=[]

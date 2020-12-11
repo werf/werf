@@ -46,8 +46,6 @@ werf helm template [NAME] [CHART] [flags] [options]
             run helm dependency update before installing the chart
       --description=''
             add a custom description
-      --dev=false
-            Enable developer mode (default $WERF_DEV)
       --devel=false
             use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
             this is ignored
@@ -58,8 +56,6 @@ werf helm template [NAME] [CHART] [flags] [options]
             simulate an install
   -g, --generate-name=false
             generate the name (and omit the NAME parameter)
-      --home-dir=''
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --include-crds=false
@@ -72,19 +68,10 @@ werf helm template [NAME] [CHART] [flags] [options]
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg'
             location of public keys used for verification
-      --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info                                                                               
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_LOOSE_GITERMINISM)
       --name-template=''
             specify template used to name the release
       --no-hooks=false
             prevent hooks from running during install
-      --non-strict-giterminism-inspection=false
-            Change some errors to warnings during giterminism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --output-dir=''
             writes the executed templates to files in output-dir instead of stdout
       --password=''
@@ -121,8 +108,6 @@ werf helm template [NAME] [CHART] [flags] [options]
             if set, no CRDs will be installed. By default, CRDs are installed if not already present
       --timeout=5m0s
             time to wait for any individual Kubernetes operation (like Jobs for hooks)
-      --tmp-dir=''
-            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --username=''
             chart repository username where to locate the requested chart
       --validate=false
