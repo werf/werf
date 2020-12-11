@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-git/go-git/v5"
-
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
@@ -18,22 +16,22 @@ func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx cont
 		return fmt.Errorf("unable to get project dir: %s", err)
 	}
 
-	repo, err := git.PlainOpen(projectDir)
-	if err != nil {
-		return fmt.Errorf("unable to get project git repository: %s", err)
-	}
-
-	var refHash string
+	var savedHeadCommit string
 	iterFunc := func() error {
-		ref, err := repo.Head()
+		l, err := OpenLocalGitRepo(projectDir)
 		if err != nil {
 			return err
 		}
 
-		if refHash != ref.Hash().String() {
-			refHash = ref.Hash().String()
+		currentHeadCommit, err := l.HeadCommit(ctx)
+		if err != nil {
+			return err
+		}
 
-			if err := logboek.Context(ctx).LogProcess("Commit %s", refHash).
+		if savedHeadCommit != currentHeadCommit {
+			savedHeadCommit = currentHeadCommit
+
+			if err := logboek.Context(ctx).LogProcess("Commit %s", savedHeadCommit).
 				Options(func(options types.LogProcessOptionsInterface) {
 					options.Style(style.Highlight())
 				}).
