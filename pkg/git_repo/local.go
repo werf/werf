@@ -25,7 +25,7 @@ type Local struct {
 	headCommit string
 }
 
-func OpenLocalRepo(name, path string) (*Local, error) {
+func OpenLocalRepo(name, path string, dev bool) (*Local, error) {
 	_, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		if err == git.ErrRepositoryNotExists {
@@ -43,6 +43,20 @@ func OpenLocalRepo(name, path string) (*Local, error) {
 	localRepo, err := newLocal(name, path, gitDir)
 	if err != nil {
 		return nil, err
+	}
+
+	if dev {
+		devHeadCommit, err := true_git.SyncDevBranchWithCommit(
+			context.Background(),
+			localRepo.GitDir,
+			localRepo.getRepoWorkTreeCacheDir(localRepo.getRepoID()),
+			localRepo.headCommit,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		localRepo.headCommit = devHeadCommit
 	}
 
 	return localRepo, nil
