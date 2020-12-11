@@ -154,7 +154,9 @@ var _ = Describe("deploy and rollback chart", func() {
 
 	When("deploy by chart reference", func() {
 		BeforeEach(func() {
-			stubs.SetEnv("WERF_HELM_HOME", testDirPath)
+			stubs.SetEnv("XDG_DATA_HOME", testDirPath)
+			stubs.SetEnv("XDG_CACHE_HOME", testDirPath)
+			stubs.SetEnv("XDG_CONFIG_HOME", testDirPath)
 
 			utils.RunSucceedCommand(
 				testDirPath,
