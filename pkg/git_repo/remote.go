@@ -198,7 +198,7 @@ func (repo *Remote) Fetch(ctx context.Context) error {
 }
 
 func (repo *Remote) HeadCommit(_ context.Context) (string, error) {
-	return repo.getHeadCommit(repo.GetClonePath())
+	return getHeadCommit(repo.GetClonePath())
 }
 
 func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (string, error) {

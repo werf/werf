@@ -174,7 +174,7 @@ func runMain(ctx context.Context, args []string) error {
 }
 
 func run(ctx context.Context, projectDir string, imagesToProcess []string) error {
-	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir)
+	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
 	if err != nil {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}

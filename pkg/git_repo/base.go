@@ -3,7 +3,6 @@ package git_repo
 import (
 	"context"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -24,13 +23,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-var (
-	errHeadNotFound = errors.New("HEAD not found")
-)
-
 type Base struct {
-	Name   string
-	TmpDir string
+	Name string
 }
 
 func (repo *Base) HeadCommit(ctx context.Context) (string, error) {
@@ -84,18 +78,19 @@ func (repo *Base) isEmpty(ctx context.Context, repoPath string) (bool, error) {
 	return false, nil
 }
 
-func (repo *Base) getHeadCommit(repoPath string) (string, error) {
-	if res, err := true_git.ShowRef(repoPath); err != nil {
-		return "", errHeadNotFound
-	} else {
-		for _, ref := range res.Refs {
-			if ref.IsHEAD {
-				return ref.Commit, nil
-			}
+func getHeadCommit(repoPath string) (string, error) {
+	res, err := true_git.ShowRef(repoPath)
+	if err != nil {
+		return "", err
+	}
+
+	for _, ref := range res.Refs {
+		if ref.IsHEAD {
+			return ref.Commit, nil
 		}
 	}
 
-	return "", errHeadNotFound
+	return "", err
 }
 
 func (repo *Base) String() string {

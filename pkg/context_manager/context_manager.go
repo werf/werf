@@ -1,6 +1,7 @@
 package context_manager
 
 import (
+	"archive/tar"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -17,58 +18,77 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-func GetTmpDir() string {
+func GetContextTmpDir() string {
 	return filepath.Join(werf.GetServiceDir(), "tmp", "context")
 }
 
 func GetTmpArchivePath() string {
-	return filepath.Join(GetTmpDir(), uuid.NewV4().String())
+	return filepath.Join(GetContextTmpDir(), uuid.NewV4().String())
 }
 
 func ContextAddFileChecksum(ctx context.Context, projectDir string, contextDir string, contextAddFile []string, matcher path_matcher.PathMatcher) (string, error) {
-	var filePathListRelativeToContextToCalculate []string
+	logboek.Context(ctx).Debug().LogF("-- ContextAddFileChecksum %q %q\n", projectDir, contextAddFile)
+
+	h := sha256.New()
+
 	for _, addFileRelativeToContext := range contextAddFile {
 		addFileRelativeToProject := filepath.Join(contextDir, addFileRelativeToContext)
 		if !matcher.MatchPath(addFileRelativeToProject) {
 			continue
 		}
 
-		filePathListRelativeToContextToCalculate = append(filePathListRelativeToContextToCalculate, addFileRelativeToProject)
-	}
+		h.Write([]byte(addFileRelativeToContext))
 
-	if len(filePathListRelativeToContextToCalculate) == 0 {
-		return "", nil
-	}
-
-	h := sha256.New()
-	for _, pathRelativeToContext := range filePathListRelativeToContextToCalculate {
-		h.Write([]byte(pathRelativeToContext))
-
-		absolutePath := filepath.Join(projectDir, pathRelativeToContext)
-		if exists, err := util.RegularFileExists(absolutePath); err != nil {
-			return "", fmt.Errorf("error accessing %q: %s", absolutePath, err)
-		} else if !exists {
+		addFileAbsolute := filepath.Join(projectDir, addFileRelativeToProject)
+		if _, err := os.Stat(addFileAbsolute); os.IsNotExist(err) {
 			continue
+		} else if err != nil {
+			return "", fmt.Errorf("error accessing %q: %s", addFileAbsolute, err)
 		}
 
 		if err := func() error {
-			f, err := os.Open(absolutePath)
+			f, err := os.Open(addFileAbsolute)
 			if err != nil {
-				return fmt.Errorf("unable to open %q: %s", absolutePath, err)
+				return fmt.Errorf("unable to open %q: %s", addFileAbsolute, err)
 			}
 			defer f.Close()
 
 			if _, err := io.Copy(h, f); err != nil {
-				return fmt.Errorf("error reading %q: %s", absolutePath, err)
+				return fmt.Errorf("error reading %q: %s", addFileAbsolute, err)
 			}
 
 			return nil
 		}(); err != nil {
 			return "", err
 		}
-
-		logboek.Context(ctx).Debug().LogF("File was added: %q\n", pathRelativeToContext)
 	}
 
-	return fmt.Sprintf("%x", h.Sum(nil)), nil
+	if h.Size() == 0 {
+		return "", nil
+	} else {
+		return fmt.Sprintf("%x", h.Sum(nil)), nil
+	}
+}
+
+func AddContextAddFileToContextArchive(ctx context.Context, originalArchivePath string, projectDir string, contextDir string, contextAddFile []string) (string, error) {
+	destinationArchivePath := GetTmpArchivePath()
+
+	pathsToExcludeFromSourceArchive := contextAddFile
+	if err := util.CreateArchiveBasedOnAnotherOne(ctx, originalArchivePath, destinationArchivePath, pathsToExcludeFromSourceArchive, func(tw *tar.Writer) error {
+		for _, contextAddFile := range contextAddFile {
+			sourceFilePath := filepath.Join(projectDir, contextDir, contextAddFile)
+			tarEntryName := filepath.ToSlash(contextAddFile)
+			if err := util.CopyFileIntoTar(tw, tarEntryName, sourceFilePath); err != nil {
+				return fmt.Errorf("unable to add contextAddFile %q to archive %q: %s", sourceFilePath, destinationArchivePath, err)
+			}
+
+			logboek.Context(ctx).Debug().LogF("Extra file was added: %q\n", tarEntryName)
+		}
+
+		return nil
+	}); err != nil {
+		return "", err
+	}
+
+	return destinationArchivePath, nil
 }

@@ -48,28 +48,6 @@ func ReadCommitFileAndCompareWithProjectFile(ctx context.Context, localGitRepo *
 	return repoData, err
 }
 
-func ReadIndexFileAndCompareWithProjectFile(ctx context.Context, localGitRepo *Local, projectDir, relPath string) ([]byte, error) {
-	fileRepoPath := filepath.ToSlash(relPath)
-
-	repoData, err := localGitRepo.ReadIndexFile(ctx, fileRepoPath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read file %q from the local git repo index: %s", fileRepoPath, err)
-	}
-
-	isDataIdentical, err := compareGitRepoFileWithProjectFile(repoData, projectDir, relPath)
-	if err != nil {
-		return nil, fmt.Errorf("error comparing repo file %q with the local project file: %s", fileRepoPath, err)
-	}
-
-	if !isDataIdentical {
-		if err := giterminism_inspector.ReportUncommittedFile(ctx, relPath); err != nil {
-			return nil, err
-		}
-	}
-
-	return repoData, err
-}
-
 func compareGitRepoFileWithProjectFile(repoFileData []byte, projectDir, relPath string) (bool, error) {
 	var localData []byte
 	absPath := filepath.Join(projectDir, relPath)
