@@ -632,16 +632,17 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context) (string, er
 		return "", fmt.Errorf("unable to create archive: %s", err)
 	}
 
-	var archivePath = archive.GetFilePath()
-	if len(s.contextAddFile) > 0 {
-		if err := logboek.Context(ctx).Debug().LogProcess("Apply contextAddFile directive to the archive %s", archivePath).DoError(func() error {
-			if path, err := context_manager.ApplyContextAddFileToArchive(ctx, archivePath, s.projectPath, s.context, s.contextAddFile); err != nil {
-				return fmt.Errorf("unable to apply contextAddFile directive for archive %q: %s", archivePath, err)
-			} else {
-				archivePath = path
-				logboek.Context(ctx).Debug().LogF("Created temporary archive %s\n", archivePath)
-				return nil
+	archivePath := archive.GetFilePath()
+	if len(s.contextAddFile) != 0 {
+		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFile to build context archive %s", archivePath).DoError(func() error {
+			var sourceArchivePath = archivePath
+			destinationArchivePath, err := context_manager.AddContextAddFileToContextArchive(ctx, sourceArchivePath, s.projectPath, s.context, s.contextAddFile)
+			if err != nil {
+				return err
 			}
+
+			archivePath = destinationArchivePath
+			return nil
 		}); err != nil {
 			return "", err
 		}
