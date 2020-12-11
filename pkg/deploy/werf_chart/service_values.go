@@ -16,19 +16,20 @@ type ServiceValuesOptions struct {
 }
 
 func GetServiceValues(ctx context.Context, projectName string, repo, namespace string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+	globalInfo := map[string]interface{}{
+		"env": opts.Env,
+	}
+
 	werfInfo := map[string]interface{}{
 		"name":      projectName,
 		"repo":      repo,
 		"namespace": namespace,
 		"is_stub":   opts.IsStub,
+		"env":       opts.Env,
 	}
 
 	if opts.IsStub {
 		werfInfo["stub_image"] = fmt.Sprintf("%s:TAG", repo)
-	}
-
-	if opts.Env != "" {
-		werfInfo["env"] = opts.Env
 	}
 
 	for _, imageInfoGetter := range imageInfoGetters {
@@ -43,7 +44,10 @@ func GetServiceValues(ctx context.Context, projectName string, repo, namespace s
 		}
 	}
 
-	res := map[string]interface{}{"werf": werfInfo}
+	res := map[string]interface{}{
+		"werf":   werfInfo,
+		"global": globalInfo,
+	}
 
 	data, err := yaml.Marshal(res)
 	logboek.Context(ctx).Debug().LogF("GetServiceValues result (err=%s):\n%s\n", err, data)
