@@ -411,7 +411,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, windows]
+        os: [macOS, windows]
         extra-find-args:
         - "-name 'git.test*'"
         - "-name 'ansible.test*'"
@@ -469,12 +469,12 @@ jobs:
         echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
       shell: bash
 
-    - name: Test (macos)
+    - name: Test (macOS)
       run: |
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
-      if: matrix.os == 'macos'
+      if: matrix.os == 'macOS'
 
     - name: Test (windows)
       run: |
@@ -495,7 +495,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos, windows]
+        os: [macOS, windows]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
     runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
@@ -550,7 +550,7 @@ jobs:
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
 
-    - name: Test (macos)
+    - name: Test (macOS)
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration_k8s -type f \( -name '*.test' -or -name '*.test.exe' \))
@@ -560,7 +560,7 @@ jobs:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
         WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
         WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-      if: matrix.os == 'macos'
+      if: matrix.os == 'macOS'
 
     - name: Test (windows)
       run: |
