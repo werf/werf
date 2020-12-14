@@ -181,24 +181,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 		werfRepoEnv := os.Getenv("WERF_REPO")
 
 		if werfRepoEnv == "" {
-			projectDir, err := common.GetProjectDir(&commonCmdData)
-			if err != nil {
-				return fmt.Errorf("getting project dir failed: %s", err)
-			}
-
-			localGitRepo, err := common.OpenLocalGitRepo(projectDir)
-			if err != nil {
-				return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
-			}
-
-			werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, true))
-			if err != nil {
-				return fmt.Errorf("unable to load werf config: %s", err)
-			}
-
-			if werfConfig != nil {
-				repo = fmt.Sprintf("%s/werf", ciRegistryImageEnv)
-			}
+			repo = ciRegistryImageEnv
 		}
 
 		if werfRepoEnv == "" || strings.HasPrefix(werfRepoEnv, ciRegistryEnv) {
@@ -310,7 +293,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 		if werfConfig != nil {
 			projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubDockerPackage)
-			repo = fmt.Sprintf("%s/%s-werf", projectRepo, werfConfig.Meta.Project)
+			repo = fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
 		}
 	}
 
