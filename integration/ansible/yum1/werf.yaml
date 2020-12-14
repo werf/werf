@@ -1,13 +1,11 @@
 configVersion: 1
-project: ansible-yum1
-{{- range $_, $centosVersion := (list "6" "7") }}
+project: none
 ---
-image: centos-{{ $centosVersion }}
-from: centos:{{ $centosVersion }}
+image: centos-7
+from: centos:7
 ansible:
   install:
   - name: "Install a package using yum"
     yum:
       name: httpd
       state: latest
-{{- end }}
