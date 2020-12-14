@@ -38,14 +38,14 @@
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="{{ site.url }}{{ page.url }}">
+<meta property="og:url" content="{{ page.url | absolute_url }}">
 <meta property="og:title" content="{{ generated_title }} | {{ site.site_title }}">
 <meta property="og:description" content="{{ description }}">
 <meta property="og:image" content="/images/share.png">
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="{{ site.url }}{{ page.url }}">
+<meta property="twitter:url" content="{{ page.url | absolute_url }}">
 <meta property="twitter:title" content="{{ generated_title }} | {{ site.site_title }}">
 <meta property="twitter:description" content="{{ description }}">
 <meta property="twitter:image" content="/images/share.png">
