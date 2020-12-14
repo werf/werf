@@ -46,7 +46,7 @@ func OpenLocalRepo(name, path string, dev bool) (*Local, error) {
 	}
 
 	if dev {
-		devHeadCommit, err := true_git.SyncDevBranchWithCommit(
+		devHeadCommit, err := true_git.SyncDevBranchWithStagedFiles(
 			context.Background(),
 			localRepo.GitDir,
 			localRepo.getRepoWorkTreeCacheDir(localRepo.getRepoID()),

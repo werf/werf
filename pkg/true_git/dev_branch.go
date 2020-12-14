@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func SyncDevBranchWithCommit(ctx context.Context, gitDir, workTreeCacheDir, commit string) (string, error) {
+func SyncDevBranchWithStagedFiles(ctx context.Context, gitDir, workTreeCacheDir, commit string) (string, error) {
 	var resCommit string
 
 	if err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
