@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
+	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
@@ -94,6 +95,10 @@ func runPurge() error {
 	}
 
 	if err := git_repo.Init(); err != nil {
+		return err
+	}
+
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 

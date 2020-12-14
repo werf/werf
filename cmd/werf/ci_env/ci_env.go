@@ -22,6 +22,7 @@ import (
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/tmp_manager"
+	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -90,6 +91,10 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := git_repo.Init(); err != nil {
+		return err
+	}
+
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 

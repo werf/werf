@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/tmp_manager"
+	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -77,6 +78,10 @@ func run(imageNames []string) error {
 	}
 
 	if err := git_repo.Init(); err != nil {
+		return err
+	}
+
+	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
