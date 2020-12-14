@@ -2,6 +2,7 @@
 title: Giterminism
 sidebar: documentation
 permalink: documentation/advanced/configuration/giterminism.html
+change_canonical: true
 ---
 
 Since v1.2 version werf introduces so called _giterminism mode_ by default (this word constructed from `git` and `determinism`, which means "determined by the git").
