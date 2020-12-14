@@ -22,7 +22,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 	})
 
-	Context("when building stapel image based on centos 6 and 7", func() {
+	Context("when building stapel image based on centos 7", func() {
 		AfterEach(func() {
 			werfPurge("yum1", liveexec.ExecCommandOptions{}, "--force")
 		})
