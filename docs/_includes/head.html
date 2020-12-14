@@ -38,17 +38,17 @@
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="{{ page.url | absolute_url }}">
+<meta property="og:url" content="{% if page.change_canonical %}{{ page.url | absolute_url }}{% else %}{{ site.url }}{{ page.url }}{% endif %}">
 <meta property="og:title" content="{{ generated_title }} | {{ site.site_title }}">
 <meta property="og:description" content="{{ description }}">
-<meta property="og:image" content="/images/share.png">
+<meta property="og:image" content="{{ site.url }}/images/share.png">
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="{{ page.url | absolute_url }}">
+<meta property="twitter:url" content="{% if page.change_canonical %}{{ page.url | absolute_url }}{% else %}{{ site.url }}{{ page.url }}{% endif %}">
 <meta property="twitter:title" content="{{ generated_title }} | {{ site.site_title }}">
 <meta property="twitter:description" content="{{ description }}">
-<meta property="twitter:image" content="/images/share.png">
+<meta property="twitter:image" content="{{ site.url }}/images/share.png">
 
 <link rel="apple-touch-icon" sizes="180x180" href="{{ "apple-touch-icon.png" | relative_url }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ "favicon-32x32.png" | relative_url }}">

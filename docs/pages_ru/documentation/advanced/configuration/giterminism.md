@@ -2,6 +2,7 @@
 title: Гитерминизм
 sidebar: documentation
 permalink: documentation/advanced/configuration/giterminism.html
+change_canonical: true
 ---
 
 Начиная с версии v1.2 werf вводит так называемый _режим гитерминизма_ по умолчанию (примечание: название происходит от совмещения слов `git` и `determinism`, что можно понимать как "детерминированный гитом").
