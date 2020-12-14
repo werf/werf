@@ -14,6 +14,7 @@ var (
 	NonStrict                bool
 	DevMode                  bool
 	ReportedUncommittedPaths []string
+	ReportedUntrackedPaths   []string
 )
 
 type InspectionOptions struct {
@@ -27,6 +28,22 @@ func Init(opts InspectionOptions) error {
 	NonStrict = opts.NonStrict
 	DevMode = opts.DevMode
 	return nil
+}
+
+func ReportUntrackedFile(ctx context.Context, path string) error {
+	for _, p := range ReportedUntrackedPaths {
+		if p == path {
+			return nil
+		}
+	}
+	ReportedUntrackedPaths = append(ReportedUntrackedPaths, path)
+
+	if NonStrict {
+		logboek.Context(ctx).Warn().LogF("WARNING: Untracked file %s was not taken into account (more info %s)\n", path, giterminismDocPageURL)
+		return nil
+	} else {
+		return fmt.Errorf("restricted usage of untracked file %s (more info %s)", path, giterminismDocPageURL)
+	}
 }
 
 func ReportUncommittedFile(ctx context.Context, path string) error {
@@ -55,15 +72,27 @@ func ReportGoTemplateEnvFunctionUsage(ctx context.Context, functionName string) 
 
 func PrintInspectionDebrief(ctx context.Context) {
 	if NonStrict {
-		if len(ReportedUncommittedPaths) > 0 {
+		if len(ReportedUncommittedPaths) > 0 || len(ReportedUntrackedPaths) > 0 {
 			logboek.Context(ctx).Warn().LogLn()
 			logboek.Context(ctx).Warn().LogF("### Giterminism inspection debrief ###\n")
 			logboek.Context(ctx).Warn().LogLn()
-			logboek.Context(ctx).Warn().LogF("Following uncommitted files were not taken into account:\n")
-			for _, path := range ReportedUncommittedPaths {
-				logboek.Context(ctx).Warn().LogF(" - %s\n", path)
+
+			if len(ReportedUncommittedPaths) > 0 {
+				logboek.Context(ctx).Warn().LogF("Following uncommitted files were not taken into account:\n")
+				for _, path := range ReportedUncommittedPaths {
+					logboek.Context(ctx).Warn().LogF(" - %s\n", path)
+				}
+				logboek.Context(ctx).Warn().LogLn()
 			}
-			logboek.Context(ctx).Warn().LogLn()
+
+			if len(ReportedUntrackedPaths) > 0 {
+				logboek.Context(ctx).Warn().LogF("Following untracked files were not taken into account:\n")
+				for _, path := range ReportedUntrackedPaths {
+					logboek.Context(ctx).Warn().LogF(" - %s\n", path)
+				}
+				logboek.Context(ctx).Warn().LogLn()
+			}
+
 			logboek.Context(ctx).Warn().LogF("More info about giterminism in the werf avaiable on the page: %s\n", giterminismDocPageURL)
 			logboek.Context(ctx).Warn().LogLn()
 		}

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/werf/werf/pkg/giterminism_inspector"
+
 	"github.com/pkg/errors"
 	"github.com/werf/logboek"
 	"helm.sh/helm/v3/pkg/chart"
@@ -21,32 +23,50 @@ func GiterministicFilesLoader(ctx context.Context, localGitRepo *git_repo.Local,
 	var res []*loader.BufferedFile
 	var lock *chart.Lock
 
-	if gitFiles, err := LoadFilesFromGit(ctx, localGitRepo, projectDir, loadDir); err != nil {
+	gitFiles, err := LoadFilesFromGit(ctx, localGitRepo, projectDir, loadDir)
+	if err != nil {
 		return nil, err
-	} else {
-		for _, f := range gitFiles {
-			switch {
-			case f.Name == "Chart.lock":
-				lock = new(chart.Lock)
-				if err := yaml.Unmarshal(f.Data, &lock); err != nil {
-					return nil, errors.Wrap(err, "cannot load Chart.lock")
-				}
-				break
-			case f.Name == "requirements.lock":
-				lock = new(chart.Lock)
-				if err := yaml.Unmarshal(f.Data, &lock); err != nil {
-					return nil, errors.Wrap(err, "cannot load requirements.lock")
-				}
-				break
-			}
-		}
-
-		res = gitFiles
 	}
+
+	for _, f := range gitFiles {
+		switch {
+		case f.Name == "Chart.lock":
+			lock = new(chart.Lock)
+			if err := yaml.Unmarshal(f.Data, &lock); err != nil {
+				return nil, errors.Wrap(err, "cannot load Chart.lock")
+			}
+			break
+		case f.Name == "requirements.lock":
+			lock = new(chart.Lock)
+			if err := yaml.Unmarshal(f.Data, &lock); err != nil {
+				return nil, errors.Wrap(err, "cannot load requirements.lock")
+			}
+			break
+		}
+	}
+
+	res = gitFiles
 
 	localFiles, err := loader.GetFilesFromLocalFilesystem(loadDir)
 	if err != nil {
 		return nil, err
+	}
+
+CheckUncommittedChartYaml:
+	for _, f := range localFiles {
+		if f.Name == "Chart.yaml" {
+			for _, gf := range gitFiles {
+				if gf.Name == "Chart.yaml" {
+					break CheckUncommittedChartYaml
+				}
+			}
+
+			if err := giterminism_inspector.ReportUntrackedFile(ctx, filepath.Join(loadDir, f.Name)); err != nil {
+				return nil, err
+			}
+
+			break CheckUncommittedChartYaml
+		}
 	}
 
 	if lock != nil {
