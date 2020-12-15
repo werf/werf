@@ -6,6 +6,7 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 )
@@ -115,7 +116,7 @@ func (m *purgeManager) deleteImportsMetadata(ctx context.Context, importsMetadat
 func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []string) error {
 	if m.DryRun {
 		for _, managedImage := range managedImages {
-			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", managedImage)
+			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage, false))
 			logboek.Context(ctx).LogOptionalLn()
 		}
 		return nil
@@ -132,7 +133,7 @@ func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []
 			return nil
 		}
 
-		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", managedImage)
+		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage, false))
 
 		return nil
 	})
