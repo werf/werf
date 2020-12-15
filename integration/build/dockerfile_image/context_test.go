@@ -1,10 +1,12 @@
 package common_test
 
 import (
+	"path/filepath"
+	"runtime"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"path/filepath"
 
 	"github.com/werf/werf/integration/utils"
 )
@@ -43,8 +45,10 @@ var _ = Describe("context", func() {
 	})
 
 	type entry struct {
-		prepareFixturesFunc func()
-		expectedDigest      string
+		prepareFixturesFunc   func()
+		expectedWindowsDigest string
+		expectedUnixDigest    string
+		expectedDigest        string
 	}
 
 	var itBody = func(entry entry) {
@@ -57,7 +61,13 @@ var _ = Describe("context", func() {
 		)
 		Ω(err).ShouldNot(HaveOccurred())
 
-		Ω(string(output)).Should(ContainSubstring(entry.expectedDigest))
+		if runtime.GOOS == "windows" && entry.expectedWindowsDigest != "" {
+			Ω(string(output)).Should(ContainSubstring(entry.expectedWindowsDigest))
+		} else if entry.expectedUnixDigest != "" {
+			Ω(string(output)).Should(ContainSubstring(entry.expectedUnixDigest))
+		} else {
+			Ω(string(output)).Should(ContainSubstring(entry.expectedDigest))
+		}
 	}
 
 	var _ = DescribeTable("checksum", itBody,
@@ -95,7 +105,8 @@ var _ = Describe("context", func() {
 					"commit", "-m", "+",
 				)
 			},
-			expectedDigest: "26d19298c5565d81f8559fa8683f708924482831b17904671738fd64",
+			expectedWindowsDigest: "f4f979dc59d00427ae092d7b98a082143504e3fafbe5e01ef913e5a5",
+			expectedUnixDigest:    "4d168006f579e786eb009927a517582ddb40ad2199aa4ad806e38d0b",
 		}),
 	)
 })
