@@ -555,12 +555,16 @@ func createAndCommitFile(dirPath string, filename string, contentSize int) {
 	addAndCommitFile(dirPath, filename, "Add file "+filename)
 }
 
-func addAndCommitFile(dirPath string, filename string, commitMsg string) {
+func addFile(dirPath string, filename string) {
 	utils.RunSucceedCommand(
 		dirPath,
 		"git",
 		"add", filename,
 	)
+}
+
+func addAndCommitFile(dirPath string, filename string, commitMsg string) {
+	addFile(dirPath, filename)
 
 	utils.RunSucceedCommand(
 		dirPath,
