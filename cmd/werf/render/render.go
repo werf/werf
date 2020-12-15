@@ -386,7 +386,7 @@ func runRender() error {
 			FileValues:   *commonCmdData.SetFile,
 		},
 	})
-	return wc.WrapUpgrade(ctx, func() error {
+	return wc.WrapTemplate(ctx, func() error {
 		return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, chartDir})
 	})
 }
