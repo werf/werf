@@ -2,7 +2,6 @@ package stage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/giterminism_inspector"
@@ -33,7 +32,7 @@ func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage,
 	}
 
 	if giterminism_inspector.DevMode {
-		image.DockerfileImageBuilder().AppendBuildArgs(fmt.Sprintf("--label=%s=true", imagePkg.WerfDevLabel))
+		image.BuilderContainer().AddLabel(map[string]string{imagePkg.WerfDevLabel: "true"})
 	}
 
 	return nil
