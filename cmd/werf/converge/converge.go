@@ -362,7 +362,7 @@ func run(ctx context.Context, projectDir string) error {
 	if err := wc.SetWerfConfig(werfConfig); err != nil {
 		return err
 	}
-	if vals, err := werf_chart.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, namespace, imagesInfoGetters, werf_chart.ServiceValuesOptions{Env: *commonCmdData.Environment}); err != nil {
+	if vals, err := werf_chart.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, werf_chart.ServiceValuesOptions{Namespace: namespace, Env: *commonCmdData.Environment}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else if err := wc.SetServiceValues(vals); err != nil {
 		return err

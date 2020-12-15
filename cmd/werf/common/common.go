@@ -102,6 +102,8 @@ type CmdData struct {
 	VirtualMergeIntoCommit *string
 
 	ScanContextNamespaceOnly *bool
+
+	Tag *string
 }
 
 const (

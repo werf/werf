@@ -2,6 +2,7 @@ package werf_chart
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"text/template"
 	"unicode"
+
+	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/werf/logboek"
 
@@ -24,7 +27,6 @@ import (
 	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/secretvalues"
-	"github.com/werf/werf/pkg/werf"
 )
 
 const (
@@ -52,11 +54,8 @@ func NewWerfChart(ctx context.Context, localGitRepo *git_repo.Local, projectDir 
 		ChartDir:    opts.ChartDir,
 		ProjectDir:  projectDir,
 
-		SecretValueFiles: opts.SecretValueFiles,
-		ExtraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(
-			map[string]string{"werf.io/version": werf.Version},
-			nil,
-		),
+		SecretValueFiles:                      opts.SecretValueFiles,
+		ExtraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
 
 		LockManager:    opts.LockManager,
 		SecretsManager: opts.SecretsManager,
@@ -89,6 +88,10 @@ type WerfChart struct {
 	decodedSecretFilesData map[string]string
 	secretValuesToMask     []string
 	serviceValues          map[string]interface{}
+}
+
+func (wc *WerfChart) GetPostRenderer() (postrender.PostRenderer, error) {
+	return wc.ExtraAnnotationsAndLabelsPostRenderer, nil
 }
 
 func (wc *WerfChart) SetupChart(c *chart.Chart) error {
@@ -378,4 +381,85 @@ func (wc *WerfChart) lockReleaseWrapper(ctx context.Context, commandFunc func() 
 		}
 	}
 	return commandFunc()
+}
+
+/*
+ * CreateNewBundle creates new Bundle object with werf chart extensions taken into account.
+ * inputVals could contain any custom values, which should be stored in the bundle.
+ */
+func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputVals map[string]interface{}) (*Bundle, error) {
+	if err := os.RemoveAll(destDir); err != nil {
+		return nil, fmt.Errorf("unable to remove %q: %s", destDir, err)
+	}
+	if err := os.MkdirAll(destDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %q: %s", destDir, err)
+	}
+
+	if vals, err := wc.MakeValues(inputVals); err != nil {
+		return nil, fmt.Errorf("unable to coalesce input values: %s", err)
+	} else if valsData, err := json.Marshal(vals); err != nil {
+		return nil, fmt.Errorf("unable to prepare values: %s", err)
+	} else {
+		valuesFile := filepath.Join(destDir, "values.yaml")
+		if err := ioutil.WriteFile(valuesFile, append(valsData, []byte("\n")...), os.ModePerm); err != nil {
+			return nil, fmt.Errorf("unable to write %q: %s", valuesFile, err)
+		}
+	}
+
+	if wc.HelmChart.Metadata != nil {
+		bundleMetadata := *wc.HelmChart.Metadata
+		// Force api v2
+		bundleMetadata.APIVersion = chart.APIVersionV2
+
+		chartYamlFile := filepath.Join(destDir, "Chart.yaml")
+		if data, err := json.Marshal(bundleMetadata); err != nil {
+			return nil, fmt.Errorf("unable to prepare Chart.yaml data: %s", err)
+		} else if err := ioutil.WriteFile(chartYamlFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
+			return nil, fmt.Errorf("unable to write %q: %s", chartYamlFile, err)
+		}
+	}
+
+	if wc.HelmChart.Lock != nil {
+		chartLockFile := filepath.Join(destDir, "Chart.lock")
+		if data, err := json.Marshal(wc.HelmChart.Lock); err != nil {
+			return nil, fmt.Errorf("unable to prepare Chart.lock data: %s", err)
+		} else if err := ioutil.WriteFile(chartLockFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
+			return nil, fmt.Errorf("unable to write %q: %s", chartLockFile, err)
+		}
+	}
+
+	templatesDir := filepath.Join(destDir, "templates")
+	if err := os.MkdirAll(templatesDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %q: %s", templatesDir, err)
+	}
+
+	for _, f := range wc.HelmChart.Templates {
+		p := filepath.Join(destDir, f.Name)
+		if err := ioutil.WriteFile(p, append(f.Data, []byte("\n")...), os.ModePerm); err != nil {
+			return nil, fmt.Errorf("unable to write %q: %s", p, err)
+		}
+	}
+
+	if wc.HelmChart.Schema != nil {
+		schemaFile := filepath.Join(destDir, "values.schema.json")
+		if data, err := json.Marshal(wc.HelmChart.Schema); err != nil {
+			return nil, fmt.Errorf("unable to prepare values.schema.json data: %s", err)
+		} else if err := ioutil.WriteFile(schemaFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
+			return nil, fmt.Errorf("unable to write %q: %s", schemaFile, err)
+		}
+	}
+
+	if wc.ExtraAnnotationsAndLabelsPostRenderer.ExtraAnnotations != nil {
+		if err := writeBundleJsonMap(wc.ExtraAnnotationsAndLabelsPostRenderer.ExtraAnnotations, filepath.Join(destDir, "extra_annotations.json")); err != nil {
+			return nil, err
+		}
+	}
+
+	if wc.ExtraAnnotationsAndLabelsPostRenderer.ExtraLabels != nil {
+		if err := writeBundleJsonMap(wc.ExtraAnnotationsAndLabelsPostRenderer.ExtraLabels, filepath.Join(destDir, "extra_labels.json")); err != nil {
+			return nil, err
+		}
+	}
+
+	return NewBundle(destDir), nil
 }

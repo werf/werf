@@ -210,7 +210,7 @@ func runGetServiceValues() error {
 		}
 	}
 
-	serviceValues, err := werf_chart.GetServiceValues(ctx, projectName, imagesRepository, namespace, imagesInfoGetters, werf_chart.ServiceValuesOptions{Env: environment})
+	serviceValues, err := werf_chart.GetServiceValues(ctx, projectName, imagesRepository, imagesInfoGetters, werf_chart.ServiceValuesOptions{Namespace: namespace, Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

@@ -11,24 +11,28 @@ import (
 )
 
 type ServiceValuesOptions struct {
-	Env    string
-	IsStub bool
+	Namespace string
+	Env       string
+	IsStub    bool
 }
 
-func GetServiceValues(ctx context.Context, projectName string, repo, namespace string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+func GetServiceValues(ctx context.Context, projectName string, repo string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	globalInfo := map[string]interface{}{
 		"env": opts.Env,
 	}
 
 	werfInfo := map[string]interface{}{
-		"name":      projectName,
-		"repo":      repo,
-		"namespace": namespace,
-		"is_stub":   opts.IsStub,
-		"env":       opts.Env,
+		"name": projectName,
+		"repo": repo,
+		"env":  opts.Env,
+	}
+
+	if opts.Namespace != "" {
+		werfInfo["namespace"] = opts.Namespace
 	}
 
 	if opts.IsStub {
+		werfInfo["is_stub"] = true
 		werfInfo["stub_image"] = fmt.Sprintf("%s:TAG", repo)
 	}
 

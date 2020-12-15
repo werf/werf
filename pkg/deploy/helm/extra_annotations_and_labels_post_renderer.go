@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/werf/werf/pkg/werf"
+
 	"github.com/werf/logboek"
 
 	"github.com/ghodss/yaml"
@@ -16,6 +18,12 @@ import (
 
 	"helm.sh/helm/v3/pkg/releaseutil"
 )
+
+var WerfRuntimeAnnotations = map[string]string{
+	"werf.io/version": werf.Version,
+}
+
+var WerfRuntimeLabels = map[string]string{}
 
 func NewExtraAnnotationsAndLabelsPostRenderer(extraAnnotations, extraLabels map[string]string) *ExtraAnnotationsAndLabelsPostRenderer {
 	return &ExtraAnnotationsAndLabelsPostRenderer{
@@ -30,6 +38,22 @@ type ExtraAnnotationsAndLabelsPostRenderer struct {
 }
 
 func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
+	extraAnnotations := map[string]string{}
+	for k, v := range WerfRuntimeAnnotations {
+		extraAnnotations[k] = v
+	}
+	for k, v := range pr.ExtraAnnotations {
+		extraAnnotations[k] = v
+	}
+
+	extraLabels := map[string]string{}
+	for k, v := range WerfRuntimeLabels {
+		extraLabels[k] = v
+	}
+	for k, v := range pr.ExtraLabels {
+		extraLabels[k] = v
+	}
+
 	splitManifestsByKeys := releaseutil.SplitManifests(renderedManifests.String())
 
 	manifestsKeys := make([]string, 0, len(splitManifestsByKeys))
@@ -64,23 +88,23 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 			continue
 		}
 
-		if len(pr.ExtraAnnotations) > 0 {
+		if len(extraAnnotations) > 0 {
 			annotations := obj.GetAnnotations()
 			if annotations == nil {
 				annotations = make(map[string]string)
 			}
-			for k, v := range pr.ExtraAnnotations {
+			for k, v := range extraAnnotations {
 				annotations[k] = v
 			}
 			obj.SetAnnotations(annotations)
 		}
 
-		if len(pr.ExtraLabels) > 0 {
+		if len(extraLabels) > 0 {
 			labels := obj.GetLabels()
 			if labels == nil {
 				labels = make(map[string]string)
 			}
-			for k, v := range pr.ExtraLabels {
+			for k, v := range extraLabels {
 				labels[k] = v
 			}
 			obj.SetLabels(labels)
