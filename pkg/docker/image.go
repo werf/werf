@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
@@ -190,6 +191,10 @@ func doCliBuild(c command.Cli, args ...string) error {
 }
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args ...string) error {
+	if err := os.Setenv("DOCKER_BUILDKIT", "0"); err != nil {
+		return err
+	}
+
 	return cliWithCustomOptions(ctx, []command.DockerCliOption{
 		func(cli *command.DockerCli) error {
 			cli.SetIn(streams.NewIn(rc))
