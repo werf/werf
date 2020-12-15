@@ -9,7 +9,7 @@ env:
 jobs:
   publish_release:
     name: Publish werf release
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, linux, builder]
     steps:
     - name: Set up Go 1.14
       uses: actions/setup-go@v1
