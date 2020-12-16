@@ -72,11 +72,7 @@ func SyncDevBranchWithStagedFiles(ctx context.Context, gitDir, workTreeCacheDir,
 		} else if len(diffOutput.Bytes()) == 0 {
 			resCommit = devHeadCommit
 		} else {
-			if _, err := runGitCmd(ctx, []string{"apply"}, workTreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {
-				return err
-			}
-
-			if _, err := runGitCmd(ctx, []string{"add", "-A"}, workTreeDir, runGitCmdOptions{}); err != nil {
+			if _, err := runGitCmd(ctx, []string{"apply", "--index"}, workTreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {
 				return err
 			}
 
