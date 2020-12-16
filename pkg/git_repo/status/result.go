@@ -26,6 +26,11 @@ type SubmoduleResult struct {
 	currentCommit    string
 }
 
+type FilterOptions struct {
+	StagingOnly  bool
+	WorktreeOnly bool
+}
+
 func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	res := &Result{
 		repository:             r.repository,
@@ -147,13 +152,13 @@ func (sr *SubmoduleResult) isEmpty(options FilterOptions) bool {
 }
 
 func isFileStatusAccepted(fileStatus *git.FileStatus, options FilterOptions) bool {
-	if (options.OnlyStaged && !isFileStatusForStagedFile(fileStatus)) || (options.ExceptStaged && isFileStatusForStagedFile(fileStatus)) {
+	if (options.StagingOnly && !isFileStatusCodeExpected(fileStatus.Staging)) || (options.WorktreeOnly && !isFileStatusCodeExpected(fileStatus.Worktree)) {
 		return false
 	}
 
 	return true
 }
 
-func isFileStatusForStagedFile(fileStatus *git.FileStatus) bool {
-	return !(fileStatus.Staging == git.Unmodified || fileStatus.Staging == git.Untracked)
+func isFileStatusCodeExpected(code git.StatusCode) bool {
+	return !(code == git.Unmodified || code == git.Untracked)
 }

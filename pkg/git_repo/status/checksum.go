@@ -24,11 +24,6 @@ type ChecksumOptions struct {
 	FilterOptions
 }
 
-type FilterOptions struct {
-	OnlyStaged   bool
-	ExceptStaged bool
-}
-
 func (r *Result) Checksum(ctx context.Context, options ChecksumOptions) (string, error) {
 	if r.IsEmpty(options.FilterOptions) {
 		return "", nil
