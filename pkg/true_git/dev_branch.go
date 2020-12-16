@@ -89,7 +89,7 @@ func SyncDevBranchWithStagedFiles(ctx context.Context, gitDir, workTreeCacheDir,
 			}
 		}
 
-		if _, err := runGitCmd(ctx, []string{"checkout", "--detach", resCommit}, workTreeDir, runGitCmdOptions{}); err != nil {
+		if _, err := runGitCmd(ctx, []string{"checkout", "--force", "--detach", resCommit}, workTreeDir, runGitCmdOptions{}); err != nil {
 			return err
 		}
 
