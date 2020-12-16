@@ -606,7 +606,13 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img c
 		return err
 	}
 
+	commit, err := s.localGitRepo.HeadCommit(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to get head commit %s", err)
+	}
+
 	img.DockerfileImageBuilder().AppendBuildArgs(s.DockerBuildArgs()...)
+	img.DockerfileImageBuilder().AppendBuildArgs(fmt.Sprintf("--label=%s=%s", image.WerfProjectRepoCommitLabel, commit))
 	img.DockerfileImageBuilder().SetFilePathToStdin(archivePath)
 
 	if giterminism_inspector.DevMode {
