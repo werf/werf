@@ -30,12 +30,11 @@ var _ = Describe("file lifecycle", func() {
 	gitOrdinaryFilePerm := os.FileMode(0644)
 
 	type fileLifecycleEntry struct {
-		relPath       string
-		data          []byte
-		perm          os.FileMode
-		delete        bool
-		devMode       bool
-		skipOnWindows bool
+		relPath string
+		data    []byte
+		perm    os.FileMode
+		delete  bool
+		devMode bool
 	}
 
 	createFileFunc := func(fileName string, fileData []byte, filePerm os.FileMode) {
@@ -62,10 +61,6 @@ var _ = Describe("file lifecycle", func() {
 	}
 
 	fileLifecycleEntryItBody := func(entry fileLifecycleEntry) {
-		if entry.skipOnWindows {
-			Skip("skip on windows")
-		}
-
 		var commitMsg string
 		filePath := filepath.Join(testDirPath, entry.relPath)
 		if entry.delete {
@@ -166,11 +161,10 @@ var _ = Describe("file lifecycle", func() {
 			DescribeTable("processing file with archive apply"+extraDescription+pathLogFunc(relPathToAdd),
 				fileLifecycleEntryItBody,
 				Entry("should add file (0755)", fileLifecycleEntry{
-					relPath:       relPathToAdd,
-					data:          fileDataToAdd,
-					perm:          gitExecutableFilePerm,
-					devMode:       devMode,
-					skipOnWindows: devMode,
+					relPath: relPathToAdd,
+					data:    fileDataToAdd,
+					perm:    gitExecutableFilePerm,
+					devMode: devMode,
 				}),
 				Entry("should add file (0644)", fileLifecycleEntry{
 					relPath: relPathToAdd,
@@ -195,11 +189,10 @@ var _ = Describe("file lifecycle", func() {
 				DescribeTable("processing file with patch apply"+extraDescription,
 					fileLifecycleEntryItBody,
 					Entry("should add file (0755)", fileLifecycleEntry{
-						relPath:       relPathToAdd,
-						data:          fileDataToAdd,
-						perm:          gitExecutableFilePerm,
-						devMode:       devMode,
-						skipOnWindows: devMode,
+						relPath: relPathToAdd,
+						data:    fileDataToAdd,
+						perm:    gitExecutableFilePerm,
+						devMode: devMode,
 					}),
 					Entry("should add file (0644)", fileLifecycleEntry{
 						relPath: relPathToAdd,
@@ -214,18 +207,16 @@ var _ = Describe("file lifecycle", func() {
 						devMode: devMode,
 					}),
 					Entry("should change file permission (0755->0644)", fileLifecycleEntry{
-						relPath:       relPathToAddAndModify,
-						data:          fileDataToAdd,
-						perm:          gitOrdinaryFilePerm,
-						devMode:       devMode,
-						skipOnWindows: devMode,
+						relPath: relPathToAddAndModify,
+						data:    fileDataToAdd,
+						perm:    gitOrdinaryFilePerm,
+						devMode: devMode,
 					}),
 					Entry("should modify and change file permission (0755->0644)", fileLifecycleEntry{
-						relPath:       relPathToAddAndModify,
-						data:          fileDataToModify,
-						perm:          gitOrdinaryFilePerm,
-						devMode:       devMode,
-						skipOnWindows: devMode,
+						relPath: relPathToAddAndModify,
+						data:    fileDataToModify,
+						perm:    gitOrdinaryFilePerm,
+						devMode: devMode,
 					}),
 					Entry("should delete file", fileLifecycleEntry{
 						relPath: relPathToAddAndModify,
@@ -240,18 +231,13 @@ var _ = Describe("file lifecycle", func() {
 				linkToModify := "none"
 
 				type symlinkFileLifecycleEntry struct {
-					relPath       string
-					link          string
-					delete        bool
-					devMode       bool
-					skipOnWindows bool
+					relPath string
+					link    string
+					delete  bool
+					devMode bool
 				}
 
 				symlinkFileLifecycleEntryItBody := func(entry symlinkFileLifecycleEntry) {
-					if entry.skipOnWindows {
-						Skip("skip on windows")
-					}
-
 					var commitMsg string
 					filePath := filepath.Join(testDirPath, entry.relPath)
 					if entry.delete {
@@ -316,10 +302,9 @@ var _ = Describe("file lifecycle", func() {
 				DescribeTable("processing symlink file with archive apply"+extraDescription,
 					symlinkFileLifecycleEntryItBody,
 					Entry("should add symlink", symlinkFileLifecycleEntry{
-						relPath:       relPathToAdd,
-						link:          linkToAdd,
-						devMode:       devMode,
-						skipOnWindows: devMode,
+						relPath: relPathToAdd,
+						link:    linkToAdd,
+						devMode: devMode,
 					}),
 				)
 
@@ -334,22 +319,19 @@ var _ = Describe("file lifecycle", func() {
 					DescribeTable("processing symlink file with patch apply"+extraDescription,
 						symlinkFileLifecycleEntryItBody,
 						Entry("should add symlink", symlinkFileLifecycleEntry{
-							relPath:       relPathToAdd,
-							link:          linkToAdd,
-							devMode:       devMode,
-							skipOnWindows: devMode,
+							relPath: relPathToAdd,
+							link:    linkToAdd,
+							devMode: devMode,
 						}),
 						Entry("should modify file", symlinkFileLifecycleEntry{
-							relPath:       relPathToAddAndModify,
-							link:          linkToModify,
-							devMode:       devMode,
-							skipOnWindows: devMode,
+							relPath: relPathToAddAndModify,
+							link:    linkToModify,
+							devMode: devMode,
 						}),
 						Entry("should delete file", symlinkFileLifecycleEntry{
-							relPath:       relPathToAddAndModify,
-							delete:        true,
-							devMode:       devMode,
-							skipOnWindows: devMode,
+							relPath: relPathToAddAndModify,
+							delete:  true,
+							devMode: devMode,
 						}))
 				})
 			})
