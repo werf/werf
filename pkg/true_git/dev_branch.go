@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -100,10 +99,6 @@ func SyncDevBranchWithStagedFiles(ctx context.Context, gitDir, workTreeCacheDir,
 
 		if _, err := runGitCmd(ctx, []string{"checkout", "--force", "--detach", resCommit}, workTreeDir, runGitCmdOptions{}); err != nil {
 			return err
-		}
-
-		if err := ioutil.WriteFile(currentCommitPath, []byte(resCommit+"\n"), 0644); err != nil {
-			return fmt.Errorf("unable to write %s: %s", currentCommitPath, err)
 		}
 
 		return nil
