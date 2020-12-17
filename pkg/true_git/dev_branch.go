@@ -67,12 +67,21 @@ func SyncDevBranchWithStagedFiles(ctx context.Context, gitDir, workTreeCacheDir,
 			devHeadCommit = commit
 		}
 
-		if diffOutput, err := runGitCmd(ctx, []string{"diff", "--cached", devHeadCommit}, gitDir, runGitCmdOptions{}); err != nil {
+		gitDiffArgs := []string{
+			"-c", "diff.renames=false",
+			"-c", "core.quotePath=false",
+			"diff",
+			"--full-index",
+			"--binary",
+			"--cached",
+			devHeadCommit,
+		}
+		if diffOutput, err := runGitCmd(ctx, gitDiffArgs, gitDir, runGitCmdOptions{}); err != nil {
 			return err
 		} else if len(diffOutput.Bytes()) == 0 {
 			resCommit = devHeadCommit
 		} else {
-			if _, err := runGitCmd(ctx, []string{"apply", "--index"}, workTreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {
+			if _, err := runGitCmd(ctx, []string{"apply", "--binary", "--index"}, workTreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {
 				return err
 			}
 
