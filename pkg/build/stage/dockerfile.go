@@ -804,10 +804,10 @@ entryNotFoundInGitRepository:
 		logProcess.End()
 	}
 
-	if !statusResult.IsEmpty(status.FilterOptions{ExceptStaged: giterminism_inspector.DevMode}) {
+	if !statusResult.IsEmpty(status.FilterOptions{WorktreeOnly: giterminism_inspector.DevMode}) {
 		if err := logboek.Context(ctx).Debug().LogBlock("Checking status result (%s)", wildcardsPathMatcher.String()).
 			DoError(func() error {
-				list := statusResult.FilePathList(status.FilterOptions{ExceptStaged: giterminism_inspector.DevMode})
+				list := statusResult.FilePathList(status.FilterOptions{WorktreeOnly: giterminism_inspector.DevMode})
 				unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFileRelativeToProject()...)
 				if len(unusedFiles) != 0 {
 					logboek.Context(ctx).Warn().LogF("WARNING: Uncommitted changes were not taken into account (%s):\n", dockerfileLine)
