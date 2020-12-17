@@ -9,7 +9,6 @@ import (
 
 	"github.com/werf/logboek"
 
-	"github.com/werf/werf/pkg/git_repo/check_ignore"
 	"github.com/werf/werf/pkg/git_repo/status"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git"
@@ -185,15 +184,6 @@ func (repo *Local) Status(ctx context.Context, pathMatcher path_matcher.PathMatc
 	}
 
 	return status.Status(ctx, repository, repo.Path, pathMatcher)
-}
-
-func (repo *Local) CheckIgnore(ctx context.Context, paths []string) (*check_ignore.Result, error) {
-	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
-	if err != nil {
-		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
-	}
-
-	return check_ignore.CheckIgnore(ctx, repository, repo.Path, paths)
 }
 
 func (repo *Local) IsEmpty(ctx context.Context) (bool, error) {

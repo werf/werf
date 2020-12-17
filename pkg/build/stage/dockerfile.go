@@ -13,7 +13,6 @@ import (
 
 	"github.com/werf/werf/pkg/context_manager"
 
-	"github.com/bmatcuk/doublestar"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
@@ -820,97 +819,7 @@ entryNotFoundInGitRepository:
 		}
 	}
 
-	if err := logboek.Context(ctx).Debug().LogProcess("Checking ignored files by .gitignore files (%s)", s.dockerignorePathMatcher.String()).
-		DoError(func() error {
-			list, err := s.getIgnoredFilePathList(ctx, wildcards)
-			if err != nil {
-				return err
-			}
-
-			unusedFiles := util.ExcludeFromStringArray(list, s.contextAddFileRelativeToProject()...)
-			if len(unusedFiles) != 0 {
-				logboek.Context(ctx).Warn().LogF("WARNING: Ignored files by .gitignore files were not taken into account (%s):\n", dockerfileLine)
-				logboek.Context(ctx).Warn().LogLn(" - " + strings.Join(unusedFiles, "\n - "))
-			}
-
-			return nil
-		}); err != nil {
-		return "", fmt.Errorf("unable to check ignored files by .gitignore files: %s", err)
-	}
-
 	return util.Sha256Hash(lsTreeResultChecksum), nil
-}
-
-func (s *DockerfileStage) getIgnoredFilePathList(ctx context.Context, wildcards []string) ([]string, error) {
-	projectFilesPaths, err := s.getProjectFilesByWildcards(ctx, wildcards)
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := s.localGitRepo.CheckIgnore(ctx, projectFilesPaths)
-	if err != nil {
-		return nil, err
-	}
-
-	var list []string
-	for _, p := range result.IgnoredFilesPaths() {
-		relPath, err := filepath.Rel(s.projectPath, p)
-		if err != nil {
-			panic(fmt.Sprintf(p, err))
-		}
-
-		list = append(list, relPath)
-	}
-
-	return list, nil
-}
-
-func (s *DockerfileStage) getProjectFilesByWildcards(ctx context.Context, wildcards []string) ([]string, error) {
-	var paths []string
-
-	for _, wildcard := range wildcards {
-		contextWildcard := filepath.Join(s.projectPath, s.context, wildcard)
-
-		relContextWildcard, err := filepath.Rel(s.projectPath, contextWildcard)
-		if err != nil || relContextWildcard == ".." || strings.HasPrefix(relContextWildcard, ".."+string(os.PathSeparator)) {
-			logboek.Context(ctx).Warn().LogF("Outside the build context wildcard %s is not supported and skipped\n", wildcard)
-			continue
-		}
-
-		matches, err := doublestar.Glob(contextWildcard)
-		if err != nil {
-			return nil, fmt.Errorf("glob %s failed: %s", contextWildcard, err)
-		}
-
-		for _, match := range matches {
-			err := filepath.Walk(match, func(path string, f os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-
-				if f.IsDir() {
-					return nil
-				}
-
-				relPath, err := filepath.Rel(s.projectPath, path)
-				if err != nil || relPath == "." || relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
-					panic(fmt.Sprintf("unexpected condition: project (%s) file (%s)", s.projectPath, path))
-				}
-
-				if s.dockerignorePathMatcher.MatchPath(relPath) {
-					paths = append(paths, path)
-				}
-
-				return nil
-			})
-
-			if err != nil {
-				return nil, fmt.Errorf("filepath walk failed: %s", err)
-			}
-		}
-	}
-
-	return paths, nil
 }
 
 func normalizeCopyAddSources(wildcards []string) []string {
