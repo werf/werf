@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
+
+	"github.com/docker/go-connections/tlsconfig"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -64,6 +67,20 @@ func newDockerCli(opts []command.DockerCliOption) (command.Cli, error) {
 	}
 
 	clientOpts := flags.NewClientOptions()
+
+	dockerCertPath := os.Getenv("DOCKER_CERT_PATH")
+	if dockerCertPath == "" {
+		dockerCertPath = cliconfig.Dir()
+	}
+
+	clientOpts.Common.TLS = os.Getenv("DOCKER_TLS") != ""
+	clientOpts.Common.TLSVerify = os.Getenv("DOCKER_TLS_VERIFY") != ""
+	clientOpts.Common.TLSOptions = &tlsconfig.Options{
+		CAFile:   filepath.Join(dockerCertPath, flags.DefaultCaFile),
+		CertFile: filepath.Join(dockerCertPath, flags.DefaultCertFile),
+		KeyFile:  filepath.Join(dockerCertPath, flags.DefaultKeyFile),
+	}
+
 	if isDebug {
 		clientOpts.Common.LogLevel = "debug"
 	} else {
