@@ -132,7 +132,7 @@ func NewCmd() *cobra.Command {
 
 				ctx := common.BackgroundContext()
 
-				if vals, err := werf_chart.GetServiceValues(ctx, "PROJECT", "REPO", namespace, nil, werf_chart.ServiceValuesOptions{IsStub: true}); err != nil {
+				if vals, err := werf_chart.GetServiceValues(ctx, "PROJECT", "REPO", nil, werf_chart.ServiceValuesOptions{Namespace: namespace, IsStub: true}); err != nil {
 					return fmt.Errorf("error creating service values: %s", err)
 				} else if err := wc.SetServiceValues(vals); err != nil {
 					return err

@@ -32,6 +32,8 @@ import (
 	host_project_purge "github.com/werf/werf/cmd/werf/host/project/purge"
 	host_purge "github.com/werf/werf/cmd/werf/host/purge"
 
+	bundle_publish "github.com/werf/werf/cmd/werf/bundle/publish"
+
 	config_list "github.com/werf/werf/cmd/werf/config/list"
 	config_render "github.com/werf/werf/cmd/werf/config/render"
 	"github.com/werf/werf/cmd/werf/render"
@@ -85,6 +87,7 @@ Find more information at https://werf.io`),
 			Commands: []*cobra.Command{
 				converge.NewCmd(),
 				dismiss.NewCmd(),
+				bundleCmd(),
 			},
 		},
 		{
@@ -145,6 +148,18 @@ func dockerComposeCmd() *cobra.Command {
 
 	return cmd
 
+}
+
+func bundleCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bundle",
+		Short: "Work with werf bundles: publish bundles into container registry and deploy bundles into Kubernetes cluster",
+	}
+	cmd.AddCommand(
+		bundle_publish.NewCmd(),
+	)
+
+	return cmd
 }
 
 func configCmd() *cobra.Command {

@@ -20,6 +20,12 @@ cli: &cli
     - title: werf dismiss
       url: /documentation/reference/cli/werf_dismiss.html
 
+    - title: werf bundle
+      f:
+
+      - title: werf bundle publish
+        url: /documentation/reference/cli/werf_bundle_publish.html
+
   - title: Cleaning commands
     f:
 

@@ -108,21 +108,6 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 }
 
 func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
-	var defaultKubernetesSynchronization string
-	if *cmdData.Synchronization == "" {
-		defaultKubernetesSynchronization = storage.DefaultKubernetesStorageAddress
-
-		if *cmdData.KubeContext != "" {
-			defaultKubernetesSynchronization += fmt.Sprintf(":%s", *cmdData.KubeContext)
-		}
-
-		if *cmdData.KubeConfigBase64 != "" {
-			defaultKubernetesSynchronization += fmt.Sprintf("@base64:%s", *cmdData.KubeConfigBase64)
-		} else if *cmdData.KubeConfig != "" {
-			defaultKubernetesSynchronization += fmt.Sprintf("@%s", *cmdData.KubeConfig)
-		}
-	}
-
 	getKubeParamsFunc := func(address string) (*SynchronizationParams, error) {
 		res := &SynchronizationParams{}
 		res.SynchronizationType = KubernetesSynchronization
