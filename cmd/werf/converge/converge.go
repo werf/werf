@@ -400,28 +400,13 @@ func run(ctx context.Context, projectDir string) error {
 			Values:       *commonCmdData.Set,
 			FileValues:   *commonCmdData.SetFile,
 		},
-		CreateNamespace: NewBool(true),
-		Install:         NewBool(true),
-		Wait:            NewBool(true),
-		Atomic:          NewBool(cmdData.AutoRollback),
-		Timeout:         NewDuration(time.Duration(cmdData.Timeout)),
+		CreateNamespace: common.NewBool(true),
+		Install:         common.NewBool(true),
+		Wait:            common.NewBool(true),
+		Atomic:          common.NewBool(cmdData.AutoRollback),
+		Timeout:         common.NewDuration(time.Duration(cmdData.Timeout)),
 	})
 	return wc.WrapUpgrade(ctx, func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
 	})
-}
-
-func NewDuration(value time.Duration) *time.Duration {
-	if value != 0 {
-		res := new(time.Duration)
-		*res = value
-		return res
-	}
-	return nil
-}
-
-func NewBool(value bool) *bool {
-	res := new(bool)
-	*res = value
-	return res
 }

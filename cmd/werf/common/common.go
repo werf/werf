@@ -1008,6 +1008,20 @@ func GetHelmChartDir(projectDir string, cmdData *CmdData, werfConfig *config.Wer
 	return helmChartDir, nil
 }
 
+func GetNamespace(cmdData *CmdData) string {
+	if *cmdData.Namespace == "" {
+		return "default"
+	}
+	return *cmdData.Namespace
+}
+
+func GetRequiredRelease(cmdData *CmdData) (string, error) {
+	if *cmdData.Release == "" {
+		return "", fmt.Errorf("--release=RELEASE param required")
+	}
+	return *cmdData.Release, nil
+}
+
 func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
 	isStageExist := func(sName string) bool {
 		for _, stageName := range allStagesNames() {
