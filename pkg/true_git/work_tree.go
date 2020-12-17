@@ -174,7 +174,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 	} else if err != nil {
 		return fmt.Errorf("error accessing %s: %s", workTreeDir, err)
 	} else {
-		cmd = exec.Command("git", "checkout", "--detach", commit)
+		cmd = exec.Command("git", "checkout", "--force", "--detach", commit)
 		cmd.Dir = workTreeDir
 		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
