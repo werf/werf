@@ -8,6 +8,7 @@ toc: false
 Delivery commands:
  - [werf converge]({{ "/documentation/reference/cli/werf_converge.html" | relative_url }}) — {% include /documentation/reference/cli/werf_converge.short.md %}.
  - [werf dismiss]({{ "/documentation/reference/cli/werf_dismiss.html" | relative_url }}) — {% include /documentation/reference/cli/werf_dismiss.short.md %}.
+ - [werf bundle]({{ "/documentation/reference/cli/werf_bundle_publish.html" | relative_url }}) — {% include /documentation/reference/cli/werf_bundle_publish.short.md %}.
 
 Cleaning commands:
  - [werf cleanup]({{ "/documentation/reference/cli/werf_cleanup.html" | relative_url }}) — {% include /documentation/reference/cli/werf_cleanup.short.md %}.

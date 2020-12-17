@@ -1,0 +1,1 @@
+publish werf chart bundle
