@@ -108,7 +108,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := docker.Init(ctx, dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
-		return err
+		return fmt.Errorf("docker init failed in dir %q: %s", dockerConfig, err)
 	}
 
 	ctxWithDockerCli, err := docker.NewContext(ctx)

@@ -75,10 +75,13 @@ func newDockerCli(opts []command.DockerCliOption) (command.Cli, error) {
 
 	clientOpts.Common.TLS = os.Getenv("DOCKER_TLS") != ""
 	clientOpts.Common.TLSVerify = os.Getenv("DOCKER_TLS_VERIFY") != ""
-	clientOpts.Common.TLSOptions = &tlsconfig.Options{
-		CAFile:   filepath.Join(dockerCertPath, flags.DefaultCaFile),
-		CertFile: filepath.Join(dockerCertPath, flags.DefaultCertFile),
-		KeyFile:  filepath.Join(dockerCertPath, flags.DefaultKeyFile),
+
+	if clientOpts.Common.TLSVerify {
+		clientOpts.Common.TLSOptions = &tlsconfig.Options{
+			CAFile:   filepath.Join(dockerCertPath, flags.DefaultCaFile),
+			CertFile: filepath.Join(dockerCertPath, flags.DefaultCertFile),
+			KeyFile:  filepath.Join(dockerCertPath, flags.DefaultKeyFile),
+		}
 	}
 
 	if isDebug {
