@@ -461,5 +461,5 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputV
 		}
 	}
 
-	return NewBundle(destDir), nil
+	return NewBundle(destDir, wc.LockManager), nil
 }

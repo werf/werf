@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Publish werf bundle into the container registry. Werf bundle contains built images defined in the   
+Publish bundle into the container registry. Werf bundle contains built images defined in the        
 werf.yaml, helm chart, service values which contain built images tags, any custom values and set    
 values params provided during publish invocation, werf addon templates (like werf_image).
 

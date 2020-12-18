@@ -23,6 +23,9 @@ cli: &cli
     - title: werf bundle
       f:
 
+      - title: werf bundle apply
+        url: /documentation/reference/cli/werf_bundle_apply.html
+
       - title: werf bundle publish
         url: /documentation/reference/cli/werf_bundle_publish.html
 

@@ -109,4 +109,4 @@ replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402
 
 replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20201217130132-273559fb7084
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20201218191930-00bc897eeee5
