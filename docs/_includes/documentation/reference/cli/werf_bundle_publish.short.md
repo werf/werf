@@ -1,1 +1,1 @@
-publish werf chart bundle
+publish bundle
