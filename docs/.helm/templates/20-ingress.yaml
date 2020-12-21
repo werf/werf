@@ -1,0 +1,85 @@
+{{- $_ := set . "Version" ( splitList "/" .Values.global.github_ref | last ) }}
+{{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
+{{- $_ := set . "VersionDNSNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" ) }}
+{{- $host := .Values.global.ci_url }}
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      ssi on;
+{{- if eq .Values.global.env "production" }}
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+    # DELETE b4 prod
+    nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio-ng
+{{- else }}
+    nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio-ng
+{{- end }}
+spec:
+  tls:
+  - hosts:
+      - {{ $host }}
+      - ru.{{ $host }}
+{{- if eq .Values.global.env "production" }}
+      - www.{{ $host }}
+{{- end }}
+    secretName: tls-{{ $host }}
+  rules:
+  - host: {{ $host }}
+    http:
+      paths:
+{{- if eq .Version "master" }}
+      - path: /
+{{- else }}
+      - path: /{{ .VersionURLNormalized }}
+{{- end }}
+        backend:
+          serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+          servicePort: http
+  - host: ru.{{ $host }}
+    http:
+      paths:
+{{- if eq .Version "master" }}
+      - path: /
+{{- else }}
+      - path: /{{ .VersionURLNormalized }}
+{{- end }}
+        backend:
+          serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+          servicePort: 80
+---
+{{- if eq .Version "master" }}
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: {{ .Chart.Name }}-cert
+spec:
+  secretName: tls-{{ $host }}
+  issuerRef:
+    kind: ClusterIssuer
+{{- if eq .Values.global.env "production" }}
+    name: letsencrypt
+{{- else }}
+    name: letsencrypt-staging
+{{- end }}
+  commonName: {{ $host }}
+  dnsNames:
+  - {{ $host }}
+  - ru.{{ $host }}
+{{- if eq .Values.global.env "production" }}
+  - www.{{ $host }}
+{{- end }}
+  acme:
+    config:
+    - http01:
+        ingressClass: nginx
+      domains:
+      - {{ $host }}
+      - ru.{{ $host }}
+{{- if eq .Values.global.env "production" }}
+      - www.{{ $host }}
+{{- end }}
+{{- end }}
