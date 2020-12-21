@@ -251,13 +251,15 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 }
 
 func (wc *WerfChart) AfterLoad() error {
-	if giterminism_inspector.LooseGiterminism || wc.LocalGitRepo == nil {
-		if err := wc.loadSecretsFromFilesystem(); err != nil {
-			return err
-		}
-	} else {
-		if err := wc.loadSecretsFromLocalGitRepo(); err != nil {
-			return err
+	if wc.SecretsManager != nil {
+		if giterminism_inspector.LooseGiterminism || wc.LocalGitRepo == nil {
+			if err := wc.loadSecretsFromFilesystem(); err != nil {
+				return err
+			}
+		} else {
+			if err := wc.loadSecretsFromLocalGitRepo(); err != nil {
+				return err
+			}
 		}
 	}
 
