@@ -33,6 +33,7 @@ import (
 	host_purge "github.com/werf/werf/cmd/werf/host/purge"
 
 	bundle_apply "github.com/werf/werf/cmd/werf/bundle/apply"
+	bundle_export "github.com/werf/werf/cmd/werf/bundle/export"
 	bundle_publish "github.com/werf/werf/cmd/werf/bundle/publish"
 
 	config_list "github.com/werf/werf/cmd/werf/config/list"
@@ -159,6 +160,7 @@ func bundleCmd() *cobra.Command {
 	cmd.AddCommand(
 		bundle_publish.NewCmd(),
 		bundle_apply.NewCmd(),
+		bundle_export.NewCmd(),
 	)
 
 	return cmd
