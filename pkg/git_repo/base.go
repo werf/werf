@@ -393,12 +393,44 @@ func (repo *Base) doCheckAndReadCommitSymlinkInRepository(ctx context.Context, r
 	return false, nil, nil
 }
 
-func (repo *Base) checkAndReadSymlink(ctx context.Context, repoPath, gitDir, commit, path string) (bool, []byte, error) {
+func (repo *Base) checkAndReadSymlink(ctx context.Context, workTreeCacheDir, repoPath, gitDir, commit, path string) (bool, []byte, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return false, nil, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
 	}
-	return repo.checkAndReadSymlinkInRepository(ctx, repository, commit, path)
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return false, nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return false, nil, fmt.Errorf("bad commit %s: %s", commit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
+	if err != nil {
+		return false, nil, err
+	}
+
+	if hasSubmodules {
+		var isSymlink bool
+		var linkDest []byte
+
+		err = true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, commit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(worktreeDir string) error {
+			if repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(gitDir, worktreeDir); err != nil {
+				return err
+			} else {
+				isSymlink, linkDest, err = repo.checkAndReadSymlinkInRepository(ctx, repositoryWithPreparedWorktree, commit, path)
+				return err
+			}
+		})
+
+		return isSymlink, linkDest, err
+	} else {
+		return repo.checkAndReadSymlinkInRepository(ctx, repository, commit, path)
+	}
 }
 
 var (

@@ -219,7 +219,7 @@ func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum
 }
 
 func (repo *Local) CheckAndReadCommitSymlink(ctx context.Context, path string, commit string) (bool, []byte, error) {
-	return repo.checkAndReadSymlink(ctx, repo.Path, repo.GitDir, commit, path)
+	return repo.checkAndReadSymlink(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.Path, repo.GitDir, commit, path)
 }
 
 func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, error) {
