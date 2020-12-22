@@ -249,7 +249,7 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 }
 
 func (repo *Local) IsCommitFileExists(ctx context.Context, commit, path string) (bool, error) {
-	return repo.isFileExists(ctx, repo.Path, repo.GitDir, commit, path)
+	return repo.isCommitFileExists(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.Path, repo.GitDir, commit, path)
 }
 
 func (repo *Local) IsCommitDirectoryExists(ctx context.Context, dir string, commit string) (bool, error) {
@@ -289,5 +289,5 @@ func (repo *Local) GetCommitFilePathList(ctx context.Context, commit string) ([]
 }
 
 func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) ([]byte, error) {
-	return repo.readFile(ctx, repo.Path, repo.GitDir, commit, path)
+	return repo.readFile(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.Path, repo.GitDir, commit, path)
 }

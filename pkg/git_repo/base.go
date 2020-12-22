@@ -3,11 +3,15 @@ package git_repo
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
+
+	"github.com/go-git/go-git/v5/config"
 
 	"github.com/werf/werf/pkg/util"
 
@@ -330,10 +334,38 @@ func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, c
 	return true, nil
 }
 
-func (repo *Base) doCheckAndReadCommitSymlink(ctx context.Context, repoPath, gitDir string, commit string, path string) (bool, []byte, error) {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
-	if err != nil {
-		return false, nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+func (repo *Base) doCheckAndReadCommitSymlinkInRepository(ctx context.Context, repository *git.Repository, commit, path string) (bool, []byte, error) {
+	var result *struct {
+		IsSymlink bool
+		LinkDest  []byte
+		Err       error
+	}
+
+	if err := YieldEachSubmoduleRepository(ctx, repository, func(ctx context.Context, submoduleRepository *git.Repository, submoduleConfig *config.Submodule, submoduleStatus *git.SubmoduleStatus) error {
+		if !util.IsSubpathOfBasePath(submoduleConfig.Path, path) {
+			return nil
+		}
+
+		pathInsideSubmodule := util.GetRelativeToBaseFilepath(submoduleConfig.Path, path)
+
+		result = &struct {
+			IsSymlink bool
+			LinkDest  []byte
+			Err       error
+		}{}
+
+		isSymlink, linkDest, err := repo.doCheckAndReadCommitSymlinkInRepository(ctx, submoduleRepository, submoduleStatus.Current.String(), pathInsideSubmodule)
+		if isSymlink {
+			linkDest = []byte(filepath.Clean(filepath.Join(submoduleConfig.Path, string(linkDest))))
+		}
+
+		result.IsSymlink, result.LinkDest, result.Err = isSymlink, linkDest, err
+
+		return stopYield
+	}); err != nil {
+		return false, nil, err
+	} else if result != nil {
+		return result.IsSymlink, result.LinkDest, result.Err
 	}
 
 	commitHash, err := newHash(commit)
@@ -361,7 +393,53 @@ func (repo *Base) doCheckAndReadCommitSymlink(ctx context.Context, repoPath, git
 	return false, nil, nil
 }
 
-func (repo *Base) checkAndReadSymlink(ctx context.Context, repoPath, gitDir string, commit string, path string) (bool, []byte, error) {
+func (repo *Base) checkAndReadSymlink(ctx context.Context, repoPath, gitDir, commit, path string) (bool, []byte, error) {
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return false, nil, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
+	}
+	return repo.checkAndReadSymlinkInRepository(ctx, repository, commit, path)
+}
+
+var (
+	stopYield = errors.New("stop yield")
+)
+
+func YieldEachSubmoduleRepository(ctx context.Context, repository *git.Repository, f func(ctx context.Context, submoduleRepository *git.Repository, submoduleConfig *config.Submodule, submoduleStatus *git.SubmoduleStatus) error) error {
+	worktree, err := repository.Worktree()
+	if err != nil {
+		return fmt.Errorf("error getting worktree of repository: %s", err)
+	}
+
+	submodules, err := worktree.Submodules()
+	if err != nil {
+		return fmt.Errorf("error getting submodules of repository worktree: %s", err)
+	}
+	if len(submodules) == 0 {
+		return nil
+	}
+
+	for _, submodule := range submodules {
+		submoduleStatus, err := submodule.Status()
+		if err != nil {
+			return fmt.Errorf("error getting submodule %q status: %s", submodule.Config().Name, err)
+		}
+
+		if submoduleRepository, err := submodule.Repository(); err != nil {
+			return fmt.Errorf("error getting submodule %q repository handle: %s", submodule.Config().Name, err)
+		} else {
+			if err := f(ctx, submoduleRepository, submodule.Config(), submoduleStatus); err == stopYield {
+				return nil
+			} else if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (repo *Base) checkAndReadSymlinkInRepository(ctx context.Context, repository *git.Repository, commit, path string) (bool, []byte, error) {
 	var symlinkFound bool
 	var queue []string = []string{path}
 
@@ -369,7 +447,7 @@ func (repo *Base) checkAndReadSymlink(ctx context.Context, repoPath, gitDir stri
 		var p string
 		p, queue = queue[0], queue[1:]
 
-		if isSymlink, linkDest, err := repo.doCheckAndReadCommitSymlink(ctx, repoPath, gitDir, commit, p); err != nil {
+		if isSymlink, linkDest, err := repo.doCheckAndReadCommitSymlinkInRepository(ctx, repository, commit, p); err != nil {
 			return false, nil, fmt.Errorf("error checking %q: %s", p, err)
 		} else if isSymlink {
 			symlinkFound = true
@@ -382,7 +460,7 @@ func (repo *Base) checkAndReadSymlink(ctx context.Context, repoPath, gitDir stri
 	panic("unexpected condition")
 }
 
-func (repo *Base) readFile(ctx context.Context, repoPath, gitDir, commit, path string) ([]byte, error) {
+func (repo *Base) readFile(ctx context.Context, workTreeCacheDir, repoPath, gitDir, commit, path string) ([]byte, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
@@ -395,17 +473,77 @@ func (repo *Base) readFile(ctx context.Context, repoPath, gitDir, commit, path s
 
 	commitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
+		return nil, fmt.Errorf("bad commit %s: %s", commit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
+	if err != nil {
+		return nil, err
+	}
+
+	if hasSubmodules {
+		var res []byte
+
+		err = true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, commit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(worktreeDir string) error {
+			if repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(gitDir, worktreeDir); err != nil {
+				return err
+			} else {
+				res, err = repo.readFileInRepository(ctx, repositoryWithPreparedWorktree, commit, path)
+				return err
+			}
+		})
+
+		return res, err
+	} else {
+		return repo.readFileInRepository(ctx, repository, commit, path)
+	}
+}
+
+func (repo *Base) readFileInRepository(ctx context.Context, repository *git.Repository, commit, path string) ([]byte, error) {
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
 		return nil, fmt.Errorf("cannot get commit %q object: %s", commit, err)
 	}
 
-	realpath, err := repo.realpath(ctx, repoPath, gitDir, commit, path)
+	realpath, err := repo.realpathInRepository(ctx, repository, commit, path)
 	if err != nil {
 		return nil, fmt.Errorf("error getting realpath for %q path: %s", path, err)
 	}
 
+	var result *struct {
+		Data []byte
+		Err  error
+	}
+
+	if err := YieldEachSubmoduleRepository(ctx, repository, func(ctx context.Context, submoduleRepository *git.Repository, submoduleConfig *config.Submodule, submoduleStatus *git.SubmoduleStatus) error {
+		if !util.IsSubpathOfBasePath(submoduleConfig.Path, realpath) {
+			return nil
+		}
+
+		pathInsideSubmodule := util.GetRelativeToBaseFilepath(submoduleConfig.Path, realpath)
+
+		result = &struct {
+			Data []byte
+			Err  error
+		}{}
+
+		result.Data, result.Err = repo.readFileInRepository(ctx, submoduleRepository, submoduleStatus.Current.String(), pathInsideSubmodule)
+
+		return stopYield
+	}); err != nil {
+		return nil, err
+	} else if result != nil {
+		return result.Data, result.Err
+	}
+
 	file, err := commitObj.File(realpath)
 	if err != nil {
-		return nil, fmt.Errorf("error getting repo file %q from commit %q: %s", realpath, commit, err)
+		return nil, fmt.Errorf("error getting repo file handle %q from commit %q: %s", realpath, commit, err)
 	}
 
 	content, err := file.Contents()
@@ -416,7 +554,7 @@ func (repo *Base) readFile(ctx context.Context, repoPath, gitDir, commit, path s
 	return []byte(content), nil
 }
 
-func (repo *Base) realpath(ctx context.Context, repoPath, gitDir, commit, filePath string) (string, error) {
+func (repo *Base) realpathInRepository(ctx context.Context, repository *git.Repository, commit, filePath string) (string, error) {
 	parts := util.SplitPath(filePath)
 
 	var resolvedBasePath string
@@ -424,7 +562,7 @@ func (repo *Base) realpath(ctx context.Context, repoPath, gitDir, commit, filePa
 	for _, part := range parts {
 		pathToResolve := path.Join(resolvedBasePath, part)
 
-		if _, resolvedPath, err := repo.checkAndReadSymlink(ctx, repoPath, gitDir, commit, pathToResolve); err != nil {
+		if _, resolvedPath, err := repo.checkAndReadSymlinkInRepository(ctx, repository, commit, pathToResolve); err != nil {
 			return "", fmt.Errorf("error reading link %q: %s", pathToResolve, err)
 		} else {
 			resolvedBasePath = string(resolvedPath)
@@ -434,7 +572,7 @@ func (repo *Base) realpath(ctx context.Context, repoPath, gitDir, commit, filePa
 	return resolvedBasePath, nil
 }
 
-func (repo *Base) isFileExists(ctx context.Context, repoPath, gitDir, commit, path string) (bool, error) {
+func (repo *Base) isCommitFileExists(ctx context.Context, workTreeCacheDir, repoPath, gitDir, commit, path string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return false, fmt.Errorf("cannot open repo %s: %s", repoPath, err)
@@ -447,12 +585,72 @@ func (repo *Base) isFileExists(ctx context.Context, repoPath, gitDir, commit, pa
 
 	commitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
+		return false, fmt.Errorf("bad commit %s: %s", commit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
+	if err != nil {
+		return false, err
+	}
+
+	if hasSubmodules {
+		var res bool
+
+		err = true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, commit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(worktreeDir string) error {
+			if repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(gitDir, worktreeDir); err != nil {
+				return err
+			} else {
+				res, err = repo.isCommitFileExistsInRepository(ctx, repositoryWithPreparedWorktree, commit, path)
+				return err
+			}
+		})
+
+		return res, err
+	} else {
+		return repo.isCommitFileExistsInRepository(ctx, repository, commit, path)
+	}
+}
+
+func (repo *Base) isCommitFileExistsInRepository(ctx context.Context, repository *git.Repository, commit, path string) (bool, error) {
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return false, fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
 		return false, fmt.Errorf("cannot get commit %q object: %s", commit, err)
 	}
 
-	realpath, err := repo.realpath(ctx, repoPath, gitDir, commit, path)
+	realpath, err := repo.realpathInRepository(ctx, repository, commit, path)
 	if err != nil {
 		return false, fmt.Errorf("error getting realpath for %q path: %s", path, err)
+	}
+
+	var result *struct {
+		IsExists bool
+		Err      error
+	}
+
+	if err := YieldEachSubmoduleRepository(ctx, repository, func(ctx context.Context, submoduleRepository *git.Repository, submoduleConfig *config.Submodule, submoduleStatus *git.SubmoduleStatus) error {
+		if !util.IsSubpathOfBasePath(submoduleConfig.Path, realpath) {
+			return nil
+		}
+
+		pathInsideSubmodule := util.GetRelativeToBaseFilepath(submoduleConfig.Path, realpath)
+
+		result = &struct {
+			IsExists bool
+			Err      error
+		}{}
+
+		result.IsExists, result.Err = repo.isCommitFileExistsInRepository(ctx, submoduleRepository, submoduleStatus.Current.String(), pathInsideSubmodule)
+
+		return stopYield
+	}); err != nil {
+		return false, err
+	} else if result != nil {
+		return result.IsExists, result.Err
 	}
 
 	if _, err := commitObj.File(realpath); err == object.ErrFileNotFound {
