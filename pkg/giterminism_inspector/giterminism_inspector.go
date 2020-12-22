@@ -3,8 +3,9 @@ package giterminism_inspector
 import (
 	"context"
 	"fmt"
-
 	"github.com/werf/logboek"
+
+	"github.com/werf/werf/pkg/giterminism_inspector/config"
 )
 
 const giterminismDocPageURL = "https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html"
@@ -15,6 +16,8 @@ var (
 	DevMode                  bool
 	ReportedUncommittedPaths []string
 	ReportedUntrackedPaths   []string
+
+	giterminismConfig config.GiterminismConfig
 )
 
 type InspectionOptions struct {
@@ -23,10 +26,17 @@ type InspectionOptions struct {
 	DevMode          bool
 }
 
-func Init(opts InspectionOptions) error {
+func Init(projectPath string, opts InspectionOptions) error {
 	LooseGiterminism = opts.LooseGiterminism
 	NonStrict = opts.NonStrict
 	DevMode = opts.DevMode
+
+	if c, err := config.PrepareConfig(projectPath); err != nil {
+		return err
+	} else {
+		giterminismConfig = c
+	}
+
 	return nil
 }
 

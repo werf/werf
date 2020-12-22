@@ -963,7 +963,12 @@ func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.Wer
 }
 
 func InitGiterminismInspector(cmdData *CmdData) error {
-	return giterminism_inspector.Init(giterminism_inspector.InspectionOptions{
+	projectPath, err := GetProjectDir(cmdData)
+	if err != nil {
+		return fmt.Errorf("unable to get project dir: %s", err)
+	}
+
+	return giterminism_inspector.Init(projectPath, giterminism_inspector.InspectionOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		NonStrict:        *cmdData.NonStrictGiterminismInspection,
 		DevMode:          *cmdData.Dev,

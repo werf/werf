@@ -1,0 +1,8 @@
+type: object
+required:
+  - giterminismConfigVersion
+additionalProperties: {}
+properties:
+  giterminismConfigVersion:
+    type: string
+    enum: ["1"]

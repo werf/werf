@@ -134,7 +134,7 @@ func runExport() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := giterminism_inspector.Init(giterminism_inspector.InspectionOptions{LooseGiterminism: *commonCmdData.LooseGiterminism, NonStrict: *commonCmdData.NonStrictGiterminismInspection}); err != nil {
+	if err := common.InitGiterminismInspector(&commonCmdData); err != nil {
 		return err
 	}
 
