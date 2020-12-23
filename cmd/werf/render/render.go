@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -14,7 +13,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 
@@ -99,14 +97,6 @@ func NewCmd() *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
-
-	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
-	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupRelease(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
@@ -341,15 +331,7 @@ func runRender() error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
-		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
-		KubeConfigOptions: kube.KubeConfigOptions{
-			Context:          *commonCmdData.KubeContext,
-			ConfigPath:       *commonCmdData.KubeConfig,
-			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-		},
-	}); err != nil {
+	if err := helm.InitActionConfig(ctx, nil, namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
 		return err
 	}
 

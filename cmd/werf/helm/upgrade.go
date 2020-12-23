@@ -26,6 +26,10 @@ func NewUpgradeCmd(actionConfig *action.Configuration, wc *werf_chart.WerfChart)
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		ctx := common.BackgroundContext()
 
+		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+			return err
+		}
+
 		if chartDir, err := helmAction.ChartPathOptions.LocateChart(args[1], cmd_helm.Settings); err != nil {
 			return err
 		} else {

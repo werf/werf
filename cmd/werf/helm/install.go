@@ -29,6 +29,10 @@ func NewInstallCmd(actionConfig *action.Configuration, wc *werf_chart.WerfChart)
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		ctx := common.BackgroundContext()
 
+		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+			return err
+		}
+
 		if releaseName, chartDir, err := helmAction.NameAndChart(args); err != nil {
 			return err
 		} else {

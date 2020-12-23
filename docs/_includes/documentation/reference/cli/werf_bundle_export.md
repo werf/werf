@@ -3,13 +3,15 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Render Kubernetes templates. This command will calculate digests and build (if needed) all images   
-defined in the werf.yaml.
+Export bundle into the provided directory (or into directory named as a resulting chart in the      
+current working directory). Werf bundle contains built images defined in the werf.yaml, helm chart, 
+service values which contain built images tags, any custom values and set values params provided    
+during publish invocation, werf addon templates (like werf_image).
 
 {{ header }} Syntax
 
 ```shell
-werf render [options]
+werf bundle export [options]
 ```
 
 {{ header }} Environments
@@ -38,17 +40,13 @@ werf render [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
             $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
-      --atomic=false
-            Enable auto rollback of the failed release to the previous deployed release version     
-            when current deploy process have failed ($WERF_ATOMIC by default)
-  -R, --auto-rollback=false
-            Enable auto rollback of the failed release to the previous deployed release version     
-            when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+  -d, --destination=''
+            Export bundle into the provided directory ($WERF_DESTINATION or chart-name by default)
       --dev=false
             Enable developer mode (default $WERF_DEV)
       --dir=''
@@ -98,7 +96,7 @@ werf render [options]
             true).
       --log-project-dir=false
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
-      --log-quiet=true
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1
             Set log terminal width.
@@ -112,24 +110,15 @@ werf render [options]
             more info                                                                               
             https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
             default $WERF_LOOSE_GITERMINISM)
-      --namespace=''
-            Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
-            deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --non-strict-giterminism-inspection=false
             Change some errors to warnings during giterminism inspection (more info                 
             https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
             default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
-      --output=''
-            Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
-            default)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL)
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
-      --release=''
-            Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
-            deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
       --repo=''
             Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password=''
@@ -219,8 +208,6 @@ werf render [options]
             
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
-  -t, --timeout=0
-            Resources tracking timeout in seconds
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]
