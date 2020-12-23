@@ -3,8 +3,8 @@ package giterminism_inspector
 import (
 	"context"
 	"fmt"
-	"github.com/werf/logboek"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/giterminism_inspector/config"
 )
 
@@ -76,8 +76,22 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 	}
 }
 
-func ReportMountDirectiveUsage(ctx context.Context) error {
-	return fmt.Errorf("'mount' directive is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", giterminismDocPageURL)
+func ReportConfigStapelMountBuildDir(_ context.Context) error {
+	if giterminismConfig.Config.Stapel.Mount.AllowBuildDir {
+		return nil
+	}
+
+	return fmt.Errorf("'mount { from: build_dir, ... }' is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", giterminismDocPageURL)
+}
+
+func ReportConfigStapelMountFromPath(_ context.Context, fromPath string) error {
+	if isAccepted, err := giterminismConfig.Config.Stapel.Mount.IsFromPathAccepted(fromPath); err != nil {
+		return err
+	} else if isAccepted {
+		return nil
+	}
+
+	return fmt.Errorf("'mount { fromPath: %s, ... }' is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", fromPath, giterminismDocPageURL)
 }
 
 func ReportGoTemplateEnvFunctionUsage(ctx context.Context, functionName string) error {

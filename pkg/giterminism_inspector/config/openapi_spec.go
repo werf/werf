@@ -31,6 +31,24 @@ definitions:
     properties:
       allowUncommitted:
         type: boolean
+      stapel:
+        $ref: '#/definitions/ConfigStapel'
+  ConfigStapel:
+    type: object
+    additionalProperties: {}
+    properties:
+      mount:
+        $ref: '#/definitions/ConfigStapelMount'
+  ConfigStapelMount:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowBuildDir:
+        type: boolean
+      allowFromPaths:
+        type: array
+        items:
+          type: string
 `
 )
 
