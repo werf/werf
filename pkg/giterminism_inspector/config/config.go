@@ -11,6 +11,7 @@ import (
 
 type GiterminismConfig struct {
 	Config config `json:"config"`
+	Helm   helm   `json:"helm"`
 }
 
 type config struct {
@@ -59,11 +60,21 @@ func (m mount) IsFromPathAccepted(path string) (bool, error) {
 }
 
 type dockerfile struct {
-	AllowContextAddFile []string `json:"allowContextAddFile"`
+	AllowUncommitted                  []string `json:"allowUncommitted"`
+	AllowUncommittedDockerignoreFiles []string `json:"allowUncommittedDockerignoreFiles"`
+	AllowContextAddFile               []string `json:"allowContextAddFile"`
 }
 
 func (d dockerfile) IsContextAddFileAccepted(path string) (bool, error) {
 	return isPathMatched(d.AllowContextAddFile, path, true)
+}
+
+func (d dockerfile) IsUncommittedAccepted(path string) (bool, error) {
+	return isPathMatched(d.AllowUncommitted, path, true)
+}
+
+func (d dockerfile) IsUncommittedDockerignoreAccepted(path string) (bool, error) {
+	return isPathMatched(d.AllowUncommittedDockerignoreFiles, path, true)
 }
 
 type helm struct {
@@ -74,8 +85,10 @@ func isPathMatched(patterns []string, path string, withGlobs bool) (bool, error)
 	path = filepath.ToSlash(path)
 	for _, pattern := range patterns {
 		pattern = filepath.ToSlash(pattern)
+
 		var matchFunc func(string, string) (bool, error)
-		if withGlobs {
+		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") && withGlobs {
+			pattern = pattern[1 : len(pattern)-1]
 			matchFunc = doublestar.Match
 		} else {
 			matchFunc = func(pattern string, path string) (bool, error) {

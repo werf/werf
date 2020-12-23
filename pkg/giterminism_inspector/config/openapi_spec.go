@@ -24,6 +24,8 @@ properties:
     enum: ["1"]
   config:
     $ref: '#/definitions/Config'
+  helm:
+    $ref: '#/definitions/Helm'
 definitions:
   Config:
     type: object
@@ -65,7 +67,23 @@ definitions:
     type: object
     additionalProperties: {}
     properties:
+      allowUncommitted:
+        type: array
+        items:
+          type: string
+      allowUncommittedDockerignoreFiles:
+        type: array
+        items:
+          type: string
       allowContextAddFile:
+        type: array
+        items:
+          type: string
+  Helm:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowUncommittedFiles:
         type: array
         items:
           type: string

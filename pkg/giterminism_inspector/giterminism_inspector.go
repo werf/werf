@@ -44,6 +44,14 @@ func IsUncommittedConfigAccepted() bool {
 	return giterminismConfig.Config.AllowUncommitted
 }
 
+func IsUncommittedDockerfileAccepted(path string) (bool, error) {
+	return giterminismConfig.Config.Dockerfile.IsUncommittedAccepted(path)
+}
+
+func IsUncommittedDockerignoreAccepted(path string) (bool, error) {
+	return giterminismConfig.Config.Dockerfile.IsUncommittedDockerignoreAccepted(path)
+}
+
 func ReportUntrackedFile(ctx context.Context, path string) error {
 	for _, p := range ReportedUntrackedPaths {
 		if p == path {
