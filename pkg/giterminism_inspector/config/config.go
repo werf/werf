@@ -17,6 +17,7 @@ type config struct {
 	AllowUncommitted    bool                `json:"allowUncommitted"`
 	GoTemplateRendering goTemplateRendering `json:"goTemplateRendering"`
 	Stapel              stapel              `json:"stapel"`
+	Dockerfile          dockerfile          `json:"dockerfile"`
 }
 
 type goTemplateRendering struct {
@@ -55,6 +56,18 @@ type mount struct {
 
 func (m mount) IsFromPathAccepted(path string) (bool, error) {
 	return isPathMatched(m.AllowFromPaths, path, true)
+}
+
+type dockerfile struct {
+	AllowContextAddFile []string `json:"allowContextAddFile"`
+}
+
+func (d dockerfile) IsContextAddFileAccepted(path string) (bool, error) {
+	return isPathMatched(d.AllowContextAddFile, path, true)
+}
+
+type helm struct {
+	AllowUncommittedFiles []string `json:"allowUncommittedFiles"`
 }
 
 func isPathMatched(patterns []string, path string, withGlobs bool) (bool, error) {

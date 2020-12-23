@@ -35,6 +35,8 @@ definitions:
         $ref: '#/definitions/ConfigGoTemplateRendering'
       stapel:
         $ref: '#/definitions/ConfigStapel'
+      dockerfile:
+        $ref: '#/definitions/ConfigDockerfile'
   ConfigGoTemplateRendering:
     type: object
     additionalProperties: {}
@@ -56,6 +58,14 @@ definitions:
       allowBuildDir:
         type: boolean
       allowFromPaths:
+        type: array
+        items:
+          type: string
+  ConfigDockerfile:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowContextAddFile:
         type: array
         items:
           type: string

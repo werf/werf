@@ -27,6 +27,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -1128,7 +1129,12 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	}
 
 	for _, contextAddFile := range imageFromDockerfileConfig.ContextAddFile {
-		absContextAddFile := filepath.Join(c.projectDir, imageFromDockerfileConfig.Context, contextAddFile)
+		relContextAddFile := filepath.Join(imageFromDockerfileConfig.Context, contextAddFile)
+		if err := giterminism_inspector.ReportConfigDockerfileContextAddFile(ctx, relContextAddFile); err != nil {
+			return nil, err
+		}
+
+		absContextAddFile := filepath.Join(c.projectDir, relContextAddFile)
 		exist, err := util.FileExists(absContextAddFile)
 		if err != nil {
 			return nil, fmt.Errorf("unable to check existence of file %s: %s", absContextAddFile, err)
