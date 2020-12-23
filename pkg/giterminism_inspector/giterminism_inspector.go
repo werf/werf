@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/giterminism_inspector/config"
 )
 
 const giterminismDocPageURL = "https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html"
@@ -15,6 +16,8 @@ var (
 	DevMode                  bool
 	ReportedUncommittedPaths []string
 	ReportedUntrackedPaths   []string
+
+	giterminismConfig config.GiterminismConfig
 )
 
 type InspectionOptions struct {
@@ -23,11 +26,30 @@ type InspectionOptions struct {
 	DevMode          bool
 }
 
-func Init(opts InspectionOptions) error {
+func Init(projectPath string, opts InspectionOptions) error {
 	LooseGiterminism = opts.LooseGiterminism
 	NonStrict = opts.NonStrict
 	DevMode = opts.DevMode
+
+	if c, err := config.PrepareConfig(projectPath); err != nil {
+		return err
+	} else {
+		giterminismConfig = c
+	}
+
 	return nil
+}
+
+func IsUncommittedConfigAccepted() bool {
+	return giterminismConfig.Config.AllowUncommitted
+}
+
+func IsUncommittedDockerfileAccepted(path string) (bool, error) {
+	return giterminismConfig.Config.Dockerfile.IsUncommittedAccepted(path)
+}
+
+func IsUncommittedDockerignoreAccepted(path string) (bool, error) {
+	return giterminismConfig.Config.Dockerfile.IsUncommittedDockerignoreAccepted(path)
 }
 
 func ReportUntrackedFile(ctx context.Context, path string) error {
@@ -62,12 +84,42 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 	}
 }
 
-func ReportMountDirectiveUsage(ctx context.Context) error {
-	return fmt.Errorf("'mount' directive is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", giterminismDocPageURL)
+func ReportConfigStapelMountBuildDir(_ context.Context) error {
+	if giterminismConfig.Config.Stapel.Mount.AllowBuildDir {
+		return nil
+	}
+
+	return fmt.Errorf("'mount { from: build_dir, ... }' is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", giterminismDocPageURL)
 }
 
-func ReportGoTemplateEnvFunctionUsage(ctx context.Context, functionName string) error {
-	return fmt.Errorf("go templates function %q is forbidden due to enabled giterminism mode (more info %s)", functionName, giterminismDocPageURL)
+func ReportConfigStapelMountFromPath(_ context.Context, fromPath string) error {
+	if isAccepted, err := giterminismConfig.Config.Stapel.Mount.IsFromPathAccepted(fromPath); err != nil {
+		return err
+	} else if isAccepted {
+		return nil
+	}
+
+	return fmt.Errorf("'mount { fromPath: %s, ... }' is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", fromPath, giterminismDocPageURL)
+}
+
+func ReportConfigDockerfileContextAddFile(_ context.Context, contextAddFile string) error {
+	if isAccepted, err := giterminismConfig.Config.Dockerfile.IsContextAddFileAccepted(contextAddFile); err != nil {
+		return err
+	} else if isAccepted {
+		return nil
+	}
+
+	return fmt.Errorf("'contextAddFile %s' is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", contextAddFile, giterminismDocPageURL)
+}
+
+func ReportConfigGoTemplateRenderingEnv(_ context.Context, envName string) error {
+	if isAccepted, err := giterminismConfig.Config.GoTemplateRendering.IsEnvNameAccepted(envName); err != nil {
+		return err
+	} else if isAccepted {
+		return nil
+	}
+
+	return fmt.Errorf("env name %s is forbidden due to enabled giterminism mode (more info %s)", envName, giterminismDocPageURL)
 }
 
 func PrintInspectionDebrief(ctx context.Context) {

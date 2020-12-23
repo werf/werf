@@ -17,8 +17,14 @@ type Mount struct {
 
 func (c *Mount) validate() error {
 	if !giterminism_inspector.LooseGiterminism {
-		if err := giterminism_inspector.ReportMountDirectiveUsage(context.Background()); err != nil {
-			return err
+		if c.raw.FromPath != "" {
+			if err := giterminism_inspector.ReportConfigStapelMountFromPath(context.Background(), c.raw.FromPath); err != nil {
+				return err
+			}
+		} else if c.Type == "build_dir" {
+			if err := giterminism_inspector.ReportConfigStapelMountBuildDir(context.Background()); err != nil {
+				return err
+			}
 		}
 	}
 

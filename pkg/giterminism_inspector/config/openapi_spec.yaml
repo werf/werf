@@ -1,0 +1,73 @@
+type: object
+required:
+  - giterminismConfigVersion
+additionalProperties: {}
+properties:
+  giterminismConfigVersion:
+    type: string
+    enum: ["1"]
+  config:
+    $ref: '#/definitions/Config'
+  helm:
+    $ref: '#/definitions/Helm'
+definitions:
+  Config:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowUncommitted:
+        type: boolean
+      goTemplateRendering:
+        $ref: '#/definitions/ConfigGoTemplateRendering'
+      stapel:
+        $ref: '#/definitions/ConfigStapel'
+      dockerfile:
+        $ref: '#/definitions/ConfigDockerfile'
+  ConfigGoTemplateRendering:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowEnvVariables:
+        type: array
+        items:
+          type: string
+  ConfigStapel:
+    type: object
+    additionalProperties: {}
+    properties:
+      mount:
+        $ref: '#/definitions/ConfigStapelMount'
+  ConfigStapelMount:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowBuildDir:
+        type: boolean
+      allowFromPaths:
+        type: array
+        items:
+          type: string
+  ConfigDockerfile:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowUncommitted:
+        type: array
+        items:
+          type: string
+      allowUncommittedDockerignoreFiles:
+        type: array
+        items:
+          type: string
+      allowContextAddFile:
+        type: array
+        items:
+          type: string
+  Helm:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowUncommittedFiles:
+        type: array
+        items:
+          type: string

@@ -921,7 +921,7 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 
 	var commit string
 	for _, werfConfigPath := range configPathToCheck {
-		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
+		if giterminism_inspector.LooseGiterminism || localGitRepo == nil || giterminism_inspector.IsUncommittedConfigAccepted() {
 			if exists, err := util.FileExists(werfConfigPath); err != nil {
 				return "", err
 			} else if exists {
@@ -963,7 +963,12 @@ func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.Wer
 }
 
 func InitGiterminismInspector(cmdData *CmdData) error {
-	return giterminism_inspector.Init(giterminism_inspector.InspectionOptions{
+	projectPath, err := GetProjectDir(cmdData)
+	if err != nil {
+		return fmt.Errorf("unable to get project dir: %s", err)
+	}
+
+	return giterminism_inspector.Init(projectPath, giterminism_inspector.InspectionOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		NonStrict:        *cmdData.NonStrictGiterminismInspection,
 		DevMode:          *cmdData.Dev,
