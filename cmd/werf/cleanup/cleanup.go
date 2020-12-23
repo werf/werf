@@ -5,7 +5,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
@@ -122,16 +121,9 @@ func runCleanup() error {
 	}
 	ctx = ctxWithDockerCli
 
-	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kube.KubeConfigOptions{
-		Context:          *commonCmdData.KubeContext,
-		ConfigPath:       *commonCmdData.KubeConfig,
-		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-	}}); err != nil {
-		return fmt.Errorf("cannot initialize kube: %s", err)
-	}
-
-	if err := common.InitKubedog(ctx); err != nil {
-		return fmt.Errorf("cannot init kubedog: %s", err)
+	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64)
+	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+		return err
 	}
 
 	projectDir, err := common.GetProjectDir(&commonCmdData)

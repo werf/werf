@@ -197,16 +197,9 @@ func runMain(ctx context.Context) error {
 		}
 	}()
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
-		Context:          *commonCmdData.KubeContext,
-		ConfigPath:       *commonCmdData.KubeConfig,
-		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-	}}); err != nil {
-		return fmt.Errorf("cannot initialize kube: %s", err)
-	}
-
-	if err := common.InitKubedog(ctx); err != nil {
-		return fmt.Errorf("cannot init kubedog: %s", err)
+	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64)
+	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+		return err
 	}
 
 	if *commonCmdData.Follow {
@@ -369,7 +362,7 @@ func run(ctx context.Context, projectDir string) error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{

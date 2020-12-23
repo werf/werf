@@ -138,7 +138,9 @@ func NewCmd() *cobra.Command {
 					return err
 				}
 
-				helm.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64)
+
+				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
 					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 					HooksStatusProgressPeriod: time.Duration(*_commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 					KubeConfigOptions: kube.KubeConfigOptions{
@@ -148,19 +150,6 @@ func NewCmd() *cobra.Command {
 					},
 					ReleasesHistoryMax: *_commonCmdData.ReleasesHistoryMax,
 				})
-
-				// FIXME: not all `werf helm *` commands may need a kubernetes connection
-				if err := kube.Init(kube.InitOptions{KubeConfigOptions: kube.KubeConfigOptions{
-					Context:          *_commonCmdData.KubeContext,
-					ConfigPath:       *_commonCmdData.KubeConfig,
-					ConfigDataBase64: *_commonCmdData.KubeConfigBase64,
-				}}); err != nil {
-					return fmt.Errorf("cannot initialize kube: %s", err)
-				}
-
-				if err := common.InitKubedog(ctx); err != nil {
-					return fmt.Errorf("cannot init kubedog: %s", err)
-				}
 
 				if oldRun != nil {
 					oldRun(cmd, args)

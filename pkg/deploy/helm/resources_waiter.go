@@ -29,14 +29,16 @@ import (
 )
 
 type ResourcesWaiter struct {
+	KubeInitializer           KubeInitializer
 	Client                    *helm_kube.Client
 	LogsFromTime              time.Time
 	StatusProgressPeriod      time.Duration
 	HooksStatusProgressPeriod time.Duration
 }
 
-func NewResourcesWaiter(client *helm_kube.Client, logsFromTime time.Time, statusProgressPeriod, hooksStatusProgressPeriod time.Duration) *ResourcesWaiter {
+func NewResourcesWaiter(kubeInitializer KubeInitializer, client *helm_kube.Client, logsFromTime time.Time, statusProgressPeriod, hooksStatusProgressPeriod time.Duration) *ResourcesWaiter {
 	return &ResourcesWaiter{
+		KubeInitializer:           kubeInitializer,
 		Client:                    client,
 		LogsFromTime:              logsFromTime,
 		StatusProgressPeriod:      statusProgressPeriod,
@@ -52,6 +54,12 @@ func extractSpecReplicas(specReplicas *int32) int {
 }
 
 func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resources helm_kube.ResourceList, timeout time.Duration) error {
+	if waiter.KubeInitializer != nil {
+		if err := waiter.KubeInitializer.Init(ctx); err != nil {
+			return fmt.Errorf("kube initializer failed: %s", err)
+		}
+	}
+
 	specs := multitrack.MultitrackSpecs{}
 
 	for _, v := range resources {
@@ -320,6 +328,12 @@ mainLoop:
 }
 
 func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, namespace string, resources helm_kube.ResourceList, timeout time.Duration) error {
+	if waiter.KubeInitializer != nil {
+		if err := waiter.KubeInitializer.Init(ctx); err != nil {
+			return fmt.Errorf("kube initializer failed: %s", err)
+		}
+	}
+
 	for _, info := range resources {
 		name := info.Name
 		kind := info.Mapping.GroupVersionKind.Kind
@@ -368,6 +382,12 @@ func asVersioned(info *resource.Info) runtime.Object {
 }
 
 func (waiter *ResourcesWaiter) WaitUntilDeleted(ctx context.Context, specs []*helm_kube.ResourcesWaiterDeleteResourceSpec, timeout time.Duration) error {
+	if waiter.KubeInitializer != nil {
+		if err := waiter.KubeInitializer.Init(ctx); err != nil {
+			return fmt.Errorf("kube initializer failed: %s", err)
+		}
+	}
+
 	var eliminationSpecs []*elimination.EliminationTrackerSpec
 	for _, spec := range specs {
 		eliminationSpecs = append(eliminationSpecs, &elimination.EliminationTrackerSpec{

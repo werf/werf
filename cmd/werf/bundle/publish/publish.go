@@ -325,7 +325,7 @@ func runPublish() error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
+	if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
 		return err
 	}
 

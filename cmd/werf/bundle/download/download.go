@@ -96,7 +96,7 @@ func runApply() error {
 	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
+	if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
 		return err
 	}
 
