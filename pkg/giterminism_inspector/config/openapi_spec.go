@@ -22,6 +22,15 @@ properties:
   giterminismConfigVersion:
     type: string
     enum: ["1"]
+  config:
+    $ref: '#/definitions/Config'
+definitions:
+  Config:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowUncommitted:
+        type: boolean
 `
 )
 

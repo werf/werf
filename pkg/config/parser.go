@@ -222,8 +222,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	}
 
 	var data []byte
-
-	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
+	if giterminism_inspector.LooseGiterminism || localGitRepo == nil || giterminism_inspector.IsUncommittedConfigAccepted() {
 		if d, err := ioutil.ReadFile(werfConfigPath); err != nil {
 			return "", fmt.Errorf("error reading %q: %s", werfConfigPath, err)
 		} else {
@@ -241,7 +240,6 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	tmpl.Funcs(funcMap(tmpl))
 
 	var werfConfigsTemplates []string
-
 	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 		if templates, err := getWerfConfigTemplatesFromFilesystem(werfConfigTemplatesDir); err != nil {
 			return "", err

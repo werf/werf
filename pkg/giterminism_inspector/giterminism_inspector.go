@@ -40,6 +40,10 @@ func Init(projectPath string, opts InspectionOptions) error {
 	return nil
 }
 
+func IsUncommittedConfigAccepted() bool {
+	return giterminismConfig.Config.AllowUncommitted
+}
+
 func ReportUntrackedFile(ctx context.Context, path string) error {
 	for _, p := range ReportedUntrackedPaths {
 		if p == path {

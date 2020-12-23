@@ -921,7 +921,7 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 
 	var commit string
 	for _, werfConfigPath := range configPathToCheck {
-		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
+		if giterminism_inspector.LooseGiterminism || localGitRepo == nil || giterminism_inspector.IsUncommittedConfigAccepted() {
 			if exists, err := util.FileExists(werfConfigPath); err != nil {
 				return "", err
 			} else if exists {
