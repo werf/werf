@@ -344,6 +344,8 @@ func getWerfConfigTemplatesFromFilesystem(path string) ([]string, error) {
 
 func funcMap(tmpl *template.Template) template.FuncMap {
 	funcMap := sprig.TxtFuncMap()
+	delete(funcMap, "expandenv")
+
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
 		return executeTemplate(tmpl, name, data)
 	}
@@ -356,15 +358,17 @@ func funcMap(tmpl *template.Template) template.FuncMap {
 		return executeTemplate(tmpl, templateName, data)
 	}
 
-	if !giterminism_inspector.LooseGiterminism {
-		restrictedFunc := func(name string) func(interface{}) (string, error) {
-			return func(interface{}) (string, error) {
-				return "", giterminism_inspector.ReportGoTemplateEnvFunctionUsage(context.Background(), name)
+	envFunc := funcMap["env"].(func(string) string)
+	funcMap["env"] = func(value interface{}) (string, error) {
+		envName := fmt.Sprint(value)
+
+		if !giterminism_inspector.LooseGiterminism {
+			if err := giterminism_inspector.ReportConfigGoTemplateRenderingEnv(context.Background(), envName); err != nil {
+				return "", err
 			}
 		}
 
-		funcMap["env"] = restrictedFunc("env")
-		funcMap["expandenv"] = restrictedFunc("expandenv")
+		return envFunc(envName), nil
 	}
 
 	return funcMap

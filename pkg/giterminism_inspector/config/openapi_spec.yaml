@@ -15,8 +15,18 @@ definitions:
     properties:
       allowUncommitted:
         type: boolean
+      goTemplateRendering:
+        $ref: '#/definitions/ConfigGoTemplateRendering'
       stapel:
         $ref: '#/definitions/ConfigStapel'
+  ConfigGoTemplateRendering:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowEnvVariables:
+        type: array
+        items:
+          type: string
   ConfigStapel:
     type: object
     additionalProperties: {}

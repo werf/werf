@@ -94,8 +94,14 @@ func ReportConfigStapelMountFromPath(_ context.Context, fromPath string) error {
 	return fmt.Errorf("'mount { fromPath: %s, ... }' is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", fromPath, giterminismDocPageURL)
 }
 
-func ReportGoTemplateEnvFunctionUsage(ctx context.Context, functionName string) error {
-	return fmt.Errorf("go templates function %q is forbidden due to enabled giterminism mode (more info %s)", functionName, giterminismDocPageURL)
+func ReportConfigGoTemplateRenderingEnv(_ context.Context, envName string) error {
+	if isAccepted, err := giterminismConfig.Config.GoTemplateRendering.IsEnvNameAccepted(envName); err != nil {
+		return err
+	} else if isAccepted {
+		return nil
+	}
+
+	return fmt.Errorf("env name %s is forbidden due to enabled giterminism mode (more info %s)", envName, giterminismDocPageURL)
 }
 
 func PrintInspectionDebrief(ctx context.Context) {

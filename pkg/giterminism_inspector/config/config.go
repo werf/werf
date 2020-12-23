@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/bmatcuk/doublestar"
 )
@@ -12,8 +14,34 @@ type GiterminismConfig struct {
 }
 
 type config struct {
-	AllowUncommitted bool   `json:"allowUncommitted"`
-	Stapel           stapel `json:"stapel"`
+	AllowUncommitted    bool                `json:"allowUncommitted"`
+	GoTemplateRendering goTemplateRendering `json:"goTemplateRendering"`
+	Stapel              stapel              `json:"stapel"`
+}
+
+type goTemplateRendering struct {
+	AllowEnvVariables []string `json:"allowEnvVariables"`
+}
+
+func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
+	for _, pattern := range r.AllowEnvVariables {
+		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
+			r, err := regexp.Compile(pattern[1 : len(pattern)-1])
+			if err != nil {
+				return false, err
+			}
+
+			if r.MatchString(name) {
+				return true, nil
+			}
+		} else {
+			if pattern == name {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
 
 type stapel struct {

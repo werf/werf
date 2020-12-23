@@ -156,6 +156,8 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 	tmpl := template.New(templateName).Delims("[[", "]]")
 
 	funcMap := sprig.TxtFuncMap()
+	delete(funcMap, "env")
+	delete(funcMap, "expandenv")
 
 	funcMap["project"] = func() string {
 		return werfConfig.Meta.Project
