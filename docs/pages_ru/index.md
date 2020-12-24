@@ -18,13 +18,13 @@ layout: default
                     <li>Open Source CLI-инструмент. <a href="https://github.com/werf/werf" target="_blank">Написан на Go</a>.</li>
                 </ul>
                 <div class="presentation__btns page__btn-group">
-                    <a href="{{ "introduction.html" | relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
+                    <a href="{{ "introduction.html" | true_relative_url: page.url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Введение
                     </a>
-                    <a href="{{ "documentation/quickstart.html" | relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
+                    <a href="{{ "documentation/quickstart.html" | true_relative_url: page.url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Быстрый старт
                     </a>
-                    <a href="{{ "documentation/index.html" | relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
+                    <a href="{{ "documentation/index.html" | true_relative_url: page.url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Документация
                     </a>
                 </div>
@@ -122,7 +122,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Простая в использовании</div>
                 <div class="features__list-item-text">
-                    werf работает «из коробки» с минимальной конфигурацией. Вам не нужно быть DevOps/SRE-инженером, чтобы использовать werf. Доступно <a href="{{ "documentation/guides.html" | relative_url }}"><b>множество гайдов</b></a>, которые помогут быстро организовать деплой приложений в Kubernetes.
+                    werf работает «из коробки» с минимальной конфигурацией. Вам не нужно быть DevOps/SRE-инженером, чтобы использовать werf. Доступно <a href="{{ "documentation/guides.html" | true_relative_url: page.url }}"><b>множество гайдов</b></a>, которые помогут быстро организовать деплой приложений в Kubernetes.
                 </div>
             </li>
             <li class="features__list-item">
@@ -196,7 +196,7 @@ layout: default
                     werf — это зрелый, надежный<br>
                     инструмент, которому можно доверять
                 </div>
-                <a href="{{ "installation.html#все-изменения-в-werf-проходят-через-цепочку-каналов-стабильности" | relative_url }}" class="page__btn page__btn_b page__btn_small page__btn_inline">
+                <a href="{{ "installation.html#все-изменения-в-werf-проходят-через-цепочку-каналов-стабильности" | true_relative_url: page.url }}" class="page__btn page__btn_b page__btn_small page__btn_inline">
                     Подробнее об уровнях стабильности и релизах
                 </a>
             </div>
@@ -239,17 +239,17 @@ layout: default
                 Исчерпывающая документация
             </div>
             <div class="documentation__info-text">
-              <a href="{{ "documentation/index.html" | relative_url }}">Документация</a> содержит более 100 статей, включающих описание частых случаев (первые шаги, деплой в Kubernetes, интеграция с CI/CD-системами и другое), полное описание функций, архитектуры и CLI-команд.
+              <a href="{{ "documentation/index.html" | true_relative_url: page.url }}">Документация</a> содержит более 100 статей, включающих описание частых случаев (первые шаги, деплой в Kubernetes, интеграция с CI/CD-системами и другое), полное описание функций, архитектуры и CLI-команд.
             </div>
         </div>
         <div class="documentation__btns">
-            <a href="{{ "introduction.html" | relative_url }}" class="page__btn page__btn_b documentation__btn">
+            <a href="{{ "introduction.html" | true_relative_url: page.url }}" class="page__btn page__btn_b documentation__btn">
                 Введение
             </a>
-            <a href="{{ "documentation/quickstart.html" | relative_url }}" class="page__btn page__btn_o documentation__btn">
+            <a href="{{ "documentation/quickstart.html" | true_relative_url: page.url }}" class="page__btn page__btn_o documentation__btn">
                 Быстрый старт
             </a>
-            <a href="{{ "documentation/guides.html" | relative_url }}" class="page__btn page__btn_o documentation__btn">
+            <a href="{{ "documentation/guides.html" | true_relative_url: page.url }}" class="page__btn page__btn_o documentation__btn">
                 Руководства
             </a>
         </div>

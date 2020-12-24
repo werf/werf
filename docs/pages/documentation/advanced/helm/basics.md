@@ -14,8 +14,8 @@ werf includes all the existing Helm functionality (the latter is integrated into
 - also, werf has some unique features which we will discuss below.
 
 werf uses the following two commands to deal with an application in the Kubernetes cluster:
-- [converge]({{ "documentation/reference/cli/werf_converge.html" | relative_url }}) — to install or update an application;  
-- [dismiss]({{ "documentation/reference/cli/werf_dismiss.html" | relative_url }}) — to delete an application from the cluster.
+- [converge]({{ "documentation/reference/cli/werf_converge.html" | true_relative_url: page.url }}) — to install or update an application;
+- [dismiss]({{ "documentation/reference/cli/werf_dismiss.html" | true_relative_url: page.url }}) — to delete an application from the cluster.
 
 ## Chart
 
@@ -157,7 +157,7 @@ spec:
 
 Secret files are excellent for storing sensitive data such as certificates and private keys in the project repository.
 
-Secret files are placed in the `.helm/secret` directory. The user can create an arbitrary files structure in this directory. [This article about secrets]({{ "documentation/advanced/helm/working_with_secrets.html#secret-file-encryption" | relative_url }}) describes how to encrypt them.
+Secret files are placed in the `.helm/secret` directory. The user can create an arbitrary files structure in this directory. [This article about secrets]({{ "documentation/advanced/helm/working_with_secrets.html#secret-file-encryption" | true_relative_url: page.url }}) describes how to encrypt them.
 
 ##### werf_secret_file
 
@@ -218,9 +218,9 @@ global:
       password: mysql-dev
 ```
 
-Values placed under the `global` key will be available both in the current chart and in all [subcharts]({{ "documentation/advanced/helm/working_with_chart_dependencies.html" | relative_url }}).
+Values placed under the `global` key will be available both in the current chart and in all [subcharts]({{ "documentation/advanced/helm/working_with_chart_dependencies.html" | true_relative_url: page.url }}).
 
-Values placed under the arbitrary `SOMEKEY` key will be available in the current chart and in the `SOMEKEY` [subchart]({{ "documentation/advanced/helm/working_with_chart_dependencies.html" | relative_url }}).
+Values placed under the arbitrary `SOMEKEY` key will be available in the current chart and in the `SOMEKEY` [subchart]({{ "documentation/advanced/helm/working_with_chart_dependencies.html" | true_relative_url: page.url }}).
 
 The `.helm/values.yaml` file is the default place to store values. You can also pass additional user-defined regular values via:
 
@@ -242,7 +242,7 @@ global:
       password: 100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123
 ```
 
-Each value (like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123`) in the secret value map is encoded by werf. The structure of the secret value map is the same as that of a regular value map (for example, in `values.yaml`). See more info [about secret value generation and working with secrets]({{ "documentation/advanced/helm/working_with_secrets.html#secret-values-encryption" | relative_url }}).
+Each value (like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123`) in the secret value map is encoded by werf. The structure of the secret value map is the same as that of a regular value map (for example, in `values.yaml`). See more info [about secret value generation and working with secrets]({{ "documentation/advanced/helm/working_with_secrets.html#secret-values-encryption" | true_relative_url: page.url }}).
 
 The `.helm/secret-values.yaml` file is the default place for storing secret values. You can also pass additional user-defined secret values via separate secret value files by specifying `--secret-values=PATH_TO_FILE` (can be used repeatedly to pass multiple files).
 
@@ -310,7 +310,7 @@ Each release version is stored in the Kubernetes cluster itself. werf supports s
 
 By default, werf stores releases in the ConfigMaps in the `kube-system` namespace, and this is fully compatible with the default [Helm 2](https://helm.sh) configuration. You can set the release storage by werf converge cli options: `--helm-release-storage-namespace=NS` and `--helm-release-storage-type=configmap|secret`.
 
-The [werf helm list]({{ "documentation/reference/cli/werf_helm_list.html" | relative_url }}) command lists releases created by werf. Also, the user can fetch the history of a specific release with the [werf helm history]({{ "documentation/reference/cli/werf_helm_history.html" | relative_url }}) command.
+The [werf helm list]({{ "documentation/reference/cli/werf_helm_list.html" | true_relative_url: page.url }}) command lists releases created by werf. Also, the user can fetch the history of a specific release with the [werf helm history]({{ "documentation/reference/cli/werf_helm_history.html" | true_relative_url: page.url }}) command.
 
 #### Helm compatibility notice
 
@@ -329,11 +329,11 @@ Using this environment, werf determines:
  1. Release name.
  2. Kubernetes namespace.
 
-The environment is a required parameter for deploying and should be specified either with an `--env` option or determined automatically using the data for the CI/CD system used. See the [CI/CD configuration integration]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#cicd-configuration-integration" | relative_url }}) for more info.
+The environment is a required parameter for deploying and should be specified either with an `--env` option or determined automatically using the data for the CI/CD system used. See the [CI/CD configuration integration]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#cicd-configuration-integration" | true_relative_url: page.url }}) for more info.
 
 ### Release name
 
-The release name is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ "documentation/reference/werf_yaml.html#project-name" | relative_url }}) and `[[ env ]]` refers to the specified or detected environment.
+The release name is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ "documentation/reference/werf_yaml.html#project-name" | true_relative_url: page.url }}) and `[[ env ]]` refers to the specified or detected environment.
 
 For example, for the project named `symfony-demo`, the following Helm Release names can be constructed depending on the environment:
 * `symfony-demo-stage` for the `stage` environment;
@@ -342,17 +342,17 @@ For example, for the project named `symfony-demo`, the following Helm Release na
 
 You can redefine the release using the `--release NAME` deploy option. In that case werf would use the specified name as is.
 
-You can also define the custom release name in the werf.yaml configuration [by setting `deploy.helmRelease`]({{ "documentation/advanced/helm/basics.html#release-name" | relative_url }}).
+You can also define the custom release name in the werf.yaml configuration [by setting `deploy.helmRelease`]({{ "documentation/advanced/helm/basics.html#release-name" | true_relative_url: page.url }}).
 
 #### Slugging the release name
 
-The name of the Helm Release constructed using the template will be slugified according to the [*release slug procedure*]({{ "documentation/internals/names_slug_algorithm.html#basic-algorithm" | relative_url }}) to fit the requirements for the release name. This procedure generates a unique and valid Helm Release name.
+The name of the Helm Release constructed using the template will be slugified according to the [*release slug procedure*]({{ "documentation/internals/names_slug_algorithm.html#basic-algorithm" | true_relative_url: page.url }}) to fit the requirements for the release name. This procedure generates a unique and valid Helm Release name.
 
-This is the default behavior. You can disable it by [setting `deploy.helmReleaseSlug=false`]({{ "documentation/advanced/helm/basics.html#release-name" | relative_url }}) in the `werf.yaml` configuration.
+This is the default behavior. You can disable it by [setting `deploy.helmReleaseSlug=false`]({{ "documentation/advanced/helm/basics.html#release-name" | true_relative_url: page.url }}) in the `werf.yaml` configuration.
 
 ### Kubernetes namespace
 
-The Kubernetes namespace is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ "documentation/reference/werf_yaml.html#project-name" | relative_url }}) and `[[ env ]]` refers to the environment.
+The Kubernetes namespace is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ "documentation/reference/werf_yaml.html#project-name" | true_relative_url: page.url }}) and `[[ env ]]` refers to the environment.
 
 For example, for the project named `symfony-demo`, there can be the following Kubernetes namespaces depending on the environment specified:
 
@@ -362,13 +362,13 @@ For example, for the project named `symfony-demo`, there can be the following Ku
 
 You can redefine the Kubernetes Namespace using the `--namespace NAMESPACE` deploy option. In that case, werf would use the specified name as is.
 
-You can also define the custom Kubernetes Namespace in the werf.yaml configuration [by setting `deploy.namespace`]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | relative_url }}) parameter.
+You can also define the custom Kubernetes Namespace in the werf.yaml configuration [by setting `deploy.namespace`]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | true_relative_url: page.url }}) parameter.
 
 #### Slugging Kubernetes namespace
 
-The Kubernetes namespace that is constructed using the template will be slugified to fit the [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements according to the [*namespace slugging procedure*]({{ "documentation/internals/names_slug_algorithm.html#basic-algorithm" | relative_url }}) that generates a unique and valid Kubernetes Namespace.
+The Kubernetes namespace that is constructed using the template will be slugified to fit the [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements according to the [*namespace slugging procedure*]({{ "documentation/internals/names_slug_algorithm.html#basic-algorithm" | true_relative_url: page.url }}) that generates a unique and valid Kubernetes Namespace.
 
-This is default behavior. It can be disabled by [setting `deploy.namespaceSlug=false`]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | relative_url }}) in the werf.yaml configuration.
+This is default behavior. It can be disabled by [setting `deploy.namespaceSlug=false`]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | true_relative_url: page.url }}) in the werf.yaml configuration.
 
 ## Deploy process
 
@@ -413,7 +413,7 @@ Hooks are sorted in the ascending order specified by the `helm.sh/hook-weight` a
 
 ### Configure resource tracking
 
-Tracking can be configured for each resource using [resource annotations]({{ "documentation/reference/deploy_annotations.html" | relative_url }}), which should be set in the chart templates.
+Tracking can be configured for each resource using [resource annotations]({{ "documentation/reference/deploy_annotations.html" | true_relative_url: page.url }}), which should be set in the chart templates.
 
 ### Annotating and labeling of chart resources
 
@@ -425,12 +425,12 @@ werf automatically sets the following built-in annotations to all deployed chart
  * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`;
  * `"project.werf.io/env": ENV` — environment name specified via the `--env` param or `WERF_ENV` variable; optional, will not be set if env is not used.
 
-werf also sets auto annotations containing information from the CI/CD system used (for example, GitLab CI)  when running the `werf ci-env` command prior to the `werf converge` command. For example, [`project.werf.io/git`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_project_git" | relative_url }}), [`ci.werf.io/commit`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_ci_commit" | relative_url }}), [`gitlab.ci.werf.io/pipeline-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_pipeline_url" | relative_url }}) and [`gitlab.ci.werf.io/job-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_job_url" | relative_url }}).
+werf also sets auto annotations containing information from the CI/CD system used (for example, GitLab CI)  when running the `werf ci-env` command prior to the `werf converge` command. For example, [`project.werf.io/git`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_project_git" | true_relative_url: page.url }}), [`ci.werf.io/commit`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_ci_commit" | true_relative_url: page.url }}), [`gitlab.ci.werf.io/pipeline-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_pipeline_url" | true_relative_url: page.url }}) and [`gitlab.ci.werf.io/job-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_job_url" | true_relative_url: page.url }}).
 
 For more information about the CI/CD integration, please refer to the following pages:
 
- * [plugging into CI/CD overview]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | relative_url }});
- * [plugging into GitLab CI]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html" | relative_url }}).
+ * [plugging into CI/CD overview]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url: page.url }});
+ * [plugging into GitLab CI]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html" | true_relative_url: page.url }}).
 
 #### Custom annotations and labels
 

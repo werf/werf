@@ -33,7 +33,7 @@ werf ci-env command should provide authorization for all subsequent commands, al
 
 The address of the Docker registry will also be used as the basis for the `--repo` parameter. Thus, the [`WERF_REPO=DOCKER_REGISTRY_REPO`](#werf_repo) variable will be set.
 
-Almost all built-in Docker registry implementations in CI/CD systems have their own peculiarities and therefore werf must know which implementation it works with (more about the features of the supported Docker registry implementations [here]({{ "documentation/advanced/supported_registry_implementations.html" | relative_url }})). If the registry address unambiguously determines the type of implementation, then nothing is additionally required from the user. Otherwise, the type of implementation should be specified by the `--repo-implementation` option (`$WERF_REPO_IMPLEMENTATION`). The `werf ci-env` command sets a value for the built-in Docker registry, if necessary.
+Almost all built-in Docker registry implementations in CI/CD systems have their own peculiarities and therefore werf must know which implementation it works with (more about the features of the supported Docker registry implementations [here]({{ "documentation/advanced/supported_registry_implementations.html" | true_relative_url: page.url }})). If the registry address unambiguously determines the type of implementation, then nothing is additionally required from the user. Otherwise, the type of implementation should be specified by the `--repo-implementation` option (`$WERF_REPO_IMPLEMENTATION`). The `werf ci-env` command sets a value for the built-in Docker registry, if necessary.
 
 ### CI/CD pipelines integration
 
@@ -45,13 +45,13 @@ The annotation name depends on the selected CI/CD system and is composed as foll
 
 The [`WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git": URL`](#werf_add_annotation_project_git) environment variable will be set as a result of running the `werf ci-env` command.
 
-Also, werf can automatically pass/set various other *annotations* by analyzing the CI/CD system as well as *custom annotations and labels*; see the [article for more details]({{ "documentation/advanced/helm/basics.html#annotating-and-labeling-of-chart-resources" | relative_url }}).
+Also, werf can automatically pass/set various other *annotations* by analyzing the CI/CD system as well as *custom annotations and labels*; see the [article for more details]({{ "documentation/advanced/helm/basics.html#annotating-and-labeling-of-chart-resources" | true_relative_url: page.url }}).
 
 ### CI/CD configuration integration
 
 There is a concept of the *environment* in CI/CD systems. The environment defines used host nodes, access parameters, information about the Kubernetes cluster connection, job parameters (e.g., environment variables used), and other data. Typical environments are *development*, *staging*, *testing*, *production*, and *review environments* with support for dynamical names.
 
-werf also uses the concept of an *environment name* in the [deploying process]({{ "documentation/advanced/helm/basics.html#environment" | relative_url }}).
+werf also uses the concept of an *environment name* in the [deploying process]({{ "documentation/advanced/helm/basics.html#environment" | true_relative_url: page.url }}).
 
 The `werf ci-env` command identifies the current environment name of the CI/CD system and passes it to all subsequent werf commands automatically. werf prefers the slugged name of the environment if the CI/CD system exports such a name.
 
@@ -71,7 +71,7 @@ The `werf ci-env` command sets the logging output width to 100 symbols since it 
 
 The ci-env command passes all parameters to werf via environment variables, see the [pass cli params as environment variables](#pass-cli-parameters-as-environment-variables) section below.
 
-The [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) must be called at the beginning of any CI/CD job before running any other werf command.
+The [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) must be called at the beginning of any CI/CD job before running any other werf command.
 
 **NOTE:** The `werf ci-env` command returns a bash script that exports [werf params by using environment variables](#pass-cli-parameters-as-environment-variables). So to take advantage of the ci-env command, the user must use a `source` shell builtin for the command output. For example:
 
@@ -164,50 +164,50 @@ This config then will be utilized by all subsequent werf commands. Also, it can 
 
 As an output of the ci-env command, werf exports the following list of variables. To customize these variables, the user may predefine any variable with the prefix `WERF_` before running the `werf ci-env` command (werf will detect the already defined environment variable and will use it as-is). You can achieve this by using the environment variables of the project or by exporting variables in the shell.
 
-The [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) defines the following variables:
+The [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) defines the following variables:
 
 #### DOCKER_CONFIG
 
-A path to the new temporary docker config generated by the [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}).
+A path to the new temporary docker config generated by the [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}).
 
 #### WERF_REPO
 
-As part of the [Docker registry integration](#docker-registry-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) identifies the Docker registry and defines the `--repo` parameter using `WERF_REPO` environment variable.
+As part of the [Docker registry integration](#docker-registry-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) identifies the Docker registry and defines the `--repo` parameter using `WERF_REPO` environment variable.
 
 #### WERF_REPO_IMPLEMENTATION
 
-As part of the [Docker registry integration](#docker-registry-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) defines the `--repo-implementation` parameter using `WERF_REPO_IMPLEMENTATION` in addition to [`WERF_REPO`](#werf_repo).
+As part of the [Docker registry integration](#docker-registry-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) defines the `--repo-implementation` parameter using `WERF_REPO_IMPLEMENTATION` in addition to [`WERF_REPO`](#werf_repo).
 
 #### WERF_ENV
 
-As part of the [CI/CD configuration integration](#cicd-configuration-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) identifies an environment name and defines the `--env` parameter based on the `WERF_ENV` environment variable.
+As part of the [CI/CD configuration integration](#cicd-configuration-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) identifies an environment name and defines the `--env` parameter based on the `WERF_ENV` environment variable.
 
 #### WERF_ADD_ANNOTATION_PROJECT_GIT
 
-Within the [CI/CD pipelines integration](#cicd-pipelines-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) detects the URL of a project's web page and sets an `--add-annotation` parameter using `WERF_ADD_ANNOTATION_PROJECT_GIT` environment variable.
+Within the [CI/CD pipelines integration](#cicd-pipelines-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) detects the URL of a project's web page and sets an `--add-annotation` parameter using `WERF_ADD_ANNOTATION_PROJECT_GIT` environment variable.
 
 #### WERF_ADD_ANNOTATION_CI_COMMIT
 
-Under the [CI/CD pipelines integration](#cicd-pipelines-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) detects the current commit and sets an`--add-annotation` parameter using the `WERF_ADD_ANNOTATION_CI_COMMIT` environment variable.
+Under the [CI/CD pipelines integration](#cicd-pipelines-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) detects the current commit and sets an`--add-annotation` parameter using the `WERF_ADD_ANNOTATION_CI_COMMIT` environment variable.
 
 #### WERF_LOG_COLOR_MODE
 
-In the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) sets a `--log-color-mode` parameter using the `WERF_LOG_COLOR_MODE` environment variable.
+In the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) sets a `--log-color-mode` parameter using the `WERF_LOG_COLOR_MODE` environment variable.
 
 #### WERF_LOG_PROJECT_DIR
 
-In the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) sets a `--log-project-dir` parameter using the `WERF_LOG_PROJECT_DIR` environment variable.
+In the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) sets a `--log-project-dir` parameter using the `WERF_LOG_PROJECT_DIR` environment variable.
 
 #### WERF_ENABLE_PROCESS_EXTERMINATOR
 
-As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) sets an `--enable-process-exterminator` parameter based on the `WERF_ENABLE_PROCESS_EXTERMINATOR` environment variable.
+As part of the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) sets an `--enable-process-exterminator` parameter based on the `WERF_ENABLE_PROCESS_EXTERMINATOR` environment variable.
 
 #### WERF_LOG_TERMINAL_WIDTH
 
-Within the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | relative_url }}) sets a `--log-terminal-width` parameter using the `WERF_LOG_TERMINAL_WIDTH` environment variable.
+Within the [configure modes of operation in CI/CD systems](#configure-modes-of-operation-in-cicd-systems) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url: page.url }}) sets a `--log-terminal-width` parameter using the `WERF_LOG_TERMINAL_WIDTH` environment variable.
 
 ## Further reading
 
- * [How does an integration with GitLab CI work?]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html" | relative_url }}).
- * [How does an integration with GitHub Actions work?]({{ "documentation/internals/how_ci_cd_integration_works/github_actions.html" | relative_url }}).
- * [Generalized guide on using werf with any CI/CD system]({{ "documentation/advanced/ci_cd/generic_ci_cd_integration.html" | relative_url }}).
+ * [How does an integration with GitLab CI work?]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html" | true_relative_url: page.url }}).
+ * [How does an integration with GitHub Actions work?]({{ "documentation/internals/how_ci_cd_integration_works/github_actions.html" | true_relative_url: page.url }}).
+ * [Generalized guide on using werf with any CI/CD system]({{ "documentation/advanced/ci_cd/generic_ci_cd_integration.html" | true_relative_url: page.url }}).

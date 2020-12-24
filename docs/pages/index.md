@@ -17,13 +17,13 @@ layout: default
                     <li>Open Source CLI tool. <a href="https://github.com/werf/werf" target="_blank">Written in Go</a>.</li>
                 </ul>
                 <div class="presentation__btns page__btn-group">
-                    <a href="{{ "introduction.html" | relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
+                    <a href="{{ "introduction.html" | true_relative_url: page.url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Introduction
                     </a>
-                    <a href="{{ "documentation/quickstart.html" | relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
+                    <a href="{{ "documentation/quickstart.html" | true_relative_url: page.url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Quickstart
                     </a>
-                    <a href="{{ "documentation/index.html" | relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
+                    <a href="{{ "documentation/index.html" | true_relative_url: page.url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Documentation
                     </a>
                 </div>
@@ -116,7 +116,7 @@ layout: default
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Easy to use</div>
                 <div class="features__list-item-text">
-                    werf just works out of the box with a minimal configuration. You don't even need to be a DevOps/SRE engineer to use werf. <a href="{{ "documentation/guides.html" | relative_url }}"><b>Many guides</b></a> are provided to quickly deploy your app into Kubernetes.
+                    werf just works out of the box with a minimal configuration. You don't even need to be a DevOps/SRE engineer to use werf. <a href="{{ "documentation/guides.html" | true_relative_url: page.url }}"><b>Many guides</b></a> are provided to quickly deploy your app into Kubernetes.
                 </div>
             </li>
             <li class="features__list-item">
@@ -190,7 +190,7 @@ layout: default
                     werf is a mature,<br>
                     reliable tool you can trust
                 </div>
-                <a href="{{ "installation.html#all-changes-in-werf-go-through-all-stability-channels" | relative_url }}" class="page__btn page__btn_b page__btn_small page__btn_inline">
+                <a href="{{ "installation.html#all-changes-in-werf-go-through-all-stability-channels" | true_relative_url: page.url }}" class="page__btn page__btn_b page__btn_small page__btn_inline">
                     Read about stability channels and release process
                 </a>
             </div>
@@ -233,13 +233,13 @@ layout: default
             </div>
         </div>
         <div class="documentation__btns">
-            <a href="{{ "introduction.html" | relative_url }}" class="page__btn page__btn_b documentation__btn">
+            <a href="{{ "introduction.html" | true_relative_url: page.url }}" class="page__btn page__btn_b documentation__btn">
                 Introduction
             </a>
-            <a href="{{ "documentation/quickstart.html" | relative_url }}" class="page__btn page__btn_o documentation__btn">
+            <a href="{{ "documentation/quickstart.html" | true_relative_url: page.url }}" class="page__btn page__btn_o documentation__btn">
                 Quickstart
             </a>
-            <a href="{{ "documentation/index.html" | relative_url }}" class="page__btn page__btn_o documentation__btn">
+            <a href="{{ "documentation/index.html" | true_relative_url: page.url }}" class="page__btn page__btn_o documentation__btn">
                 Documentation
             </a>
         </div>

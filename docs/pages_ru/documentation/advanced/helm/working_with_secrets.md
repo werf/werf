@@ -16,9 +16,9 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 * из специального файла `.werf_secret_key`, находящегося в корневой папке проекта
 * из файла `~/.werf/global_secret_key` (глобальный ключ)
 
-> Ключ шифрования должен иметь **шестнадцатеричный дамп** длиной 16, 24, или 32 байта для выбора соответственно алгоритмов AES-128, AES-192, или AES-256. Команда [werf helm secret generate-secret-key]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | relative_url }}) возвращает ключ шифрования, подходящий для использования алгоритма AES-128.
+> Ключ шифрования должен иметь **шестнадцатеричный дамп** длиной 16, 24, или 32 байта для выбора соответственно алгоритмов AES-128, AES-192, или AES-256. Команда [werf helm secret generate-secret-key]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | true_relative_url: page.url }}) возвращает ключ шифрования, подходящий для использования алгоритма AES-128.
 
-Вы можете быстро сгенерировать ключ, используя команду [werf helm secret generate-secret-key]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | relative_url }}).
+Вы можете быстро сгенерировать ключ, используя команду [werf helm secret generate-secret-key]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | true_relative_url: page.url }}).
 
 ### Работа с переменной окружения WERF_SECRET_KEY
 
@@ -48,9 +48,9 @@ mysql:
 ```
 
 Для управления файлами с секретными переменными используйте следующие команды:
-- [werf helm secret values edit]({{ "documentation/reference/cli/werf_helm_secret_values_edit.html" | relative_url }})
-- [werf helm secret values encrypt]({{ "documentation/reference/cli/werf_helm_secret_values_encrypt.html" | relative_url }})
-- [werf helm secret values decrypt]({{ "documentation/reference/cli/werf_helm_secret_values_decrypt.html" | relative_url }})
+- [werf helm secret values edit]({{ "documentation/reference/cli/werf_helm_secret_values_edit.html" | true_relative_url: page.url }})
+- [werf helm secret values encrypt]({{ "documentation/reference/cli/werf_helm_secret_values_encrypt.html" | true_relative_url: page.url }})
+- [werf helm secret values decrypt]({{ "documentation/reference/cli/werf_helm_secret_values_decrypt.html" | true_relative_url: page.url }})
 
 ### Использование в шаблонах чарта
 
@@ -74,9 +74,9 @@ env:
 Чтобы использовать файлы содержащие секретную информацию в шаблонах Helm, вы должны сохранить их в соответствующем виде в каталоге `.helm/secret`.
 
 Для управления файлами, содержащими секретную информацию, используйте следующие команды:
-- [werf helm secret file edit]({{ "documentation/reference/cli/werf_helm_secret_file_edit.html" | relative_url }})
-- [werf helm secret file encrypt]({{ "documentation/reference/cli/werf_helm_secret_file_encrypt.html" | relative_url }})
-- [werf helm secret file decrypt]({{ "documentation/reference/cli/werf_helm_secret_file_decrypt.html" | relative_url }})
+- [werf helm secret file edit]({{ "documentation/reference/cli/werf_helm_secret_file_edit.html" | true_relative_url: page.url }})
+- [werf helm secret file encrypt]({{ "documentation/reference/cli/werf_helm_secret_file_encrypt.html" | true_relative_url: page.url }})
+- [werf helm secret file decrypt]({{ "documentation/reference/cli/werf_helm_secret_file_decrypt.html" | true_relative_url: page.url }})
 
 ### Использование в шаблонах чарта
 
@@ -94,4 +94,4 @@ data:
 
 ## Смена ключа шифрования
 
-Для перегенерации всех секретных переменных и файлов содержащих секреты с новым ключом шифрования используется команда [werf helm secret rotate-secret-key]({{ "documentation/reference/cli/werf_helm_secret_rotate_secret_key.html" | relative_url }}).
+Для перегенерации всех секретных переменных и файлов содержащих секреты с новым ключом шифрования используется команда [werf helm secret rotate-secret-key]({{ "documentation/reference/cli/werf_helm_secret_rotate_secret_key.html" | true_relative_url: page.url }}).

@@ -1,19 +1,16 @@
-{{- $_ := set . "Version" ( splitList "/" ( env "GITHUB_REF") | last ) }}
-{{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
-
 project: werfio-ng
 configVersion: 1
 deploy:
   helmChartDir: docs/.helm
-  helmRelease: "[[ project ]]-{{ .VersionURLNormalized }}-[[ env ]]"
 
 ---
-artifact: asset-{{ .VersionURLNormalized }}
+artifact: asset
 from: jekyll/builder:3
 ansible:
   install:
   - shell: |
       export PATH=/usr/jekyll/bin/:$PATH
+      gem update bundler
   - name: "Install Dependencies"
     shell: bundle install
     args:
@@ -27,10 +24,14 @@ ansible:
     with_items:
     - /app/_site/main/
     - /app/_site/ru/
+  - name: "Install common head.html (which use ssi)"
+    shell: cp -f head-common.html head.html
+    args:
+      executable: /bin/bash
+      chdir: /app/docs/_includes
   - shell: |
-      echo -e "timezone: Europe/Moscow\nwerfVersion: {{ .Version }}\nwerfVersionURLNormalized: {{ .VersionURLNormalized }}" > /tmp/_config_additional.yml
-      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/{{ if ne .Version "master"}}{{.VersionURLNormalized }} --baseurl /{{ .VersionURLNormalized }}{{ end }} --config /app/docs/_config.yml,/tmp/_config_additional.yml
-      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/{{ if ne .Version "master"}}{{.VersionURLNormalized }} --baseurl /{{ .VersionURLNormalized }}{{ end }} --config /app/docs/_config.yml,/app/docs/_config_ru.yml,/tmp/_config_additional.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/ --config /app/docs/_config.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml
     args:
       executable: /bin/bash
       chdir: /app/docs
@@ -39,12 +40,14 @@ git:
   to: /app/docs
   owner: jekyll
   group: jekyll
-  excludePaths: '**/*.sh'
+  excludePaths:
+  - '**/*.sh'
+  - .helm
   stageDependencies:
     install: ['Gemfile','Gemfile.lock']
     beforeSetup: '**/*'
 ---
-image: site-{{ .VersionURLNormalized }}
+image: ~
 from: nginx:stable-alpine
 ansible:
   setup:
@@ -53,7 +56,6 @@ ansible:
       content: |
 {{ .Files.Get "docs/.werf/nginx.conf" | indent 8 }}
       dest: /etc/nginx/nginx.conf
-{{- if eq .Version "master" }}
   - copy:
       content: |
 {{ .Files.Get "docs/.werf/robots.txt" | indent 8 }}
@@ -62,9 +64,8 @@ ansible:
       content: |
 {{ .Files.Get "docs/.werf/robots_ru.txt" | indent 8 }}
       dest: /app/ru/robots.txt
-{{- end }}
 import:
-- artifact: asset-{{ .VersionURLNormalized }}
+- artifact: asset
   add: /app/_site
   to: /app/
   before: setup

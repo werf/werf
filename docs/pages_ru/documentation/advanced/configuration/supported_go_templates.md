@@ -100,7 +100,7 @@ permalink: documentation/advanced/configuration/supported_go_templates.html
   ```
   {% endraw %}
 
-* Функция `tpl` позволяет обрабатывать строки, как Go шаблоны в `werf.yaml`, передавая их в переменных окружения либо в файлах проекта: [раннее описанный пример с файлами проекта]({{ "documentation/advanced/configuration/organizing_configuration.html#использование-функции-tpl" | relative_url }}).<a id="tpl" href="#tpl" class="anchorjs-link " aria-label="Anchor link for: tpl" data-anchorjs-icon=""></a>
+* Функция `tpl` позволяет обрабатывать строки, как Go шаблоны в `werf.yaml`, передавая их в переменных окружения либо в файлах проекта: [раннее описанный пример с файлами проекта]({{ "documentation/advanced/configuration/organizing_configuration.html#использование-функции-tpl" | true_relative_url: page.url }}).<a id="tpl" href="#tpl" class="anchorjs-link " aria-label="Anchor link for: tpl" data-anchorjs-icon=""></a>
 
 * Функции `.Files.Get` и `.Files.Glob` для работы с файлами проекта:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get" data-anchorjs-icon=""></a>
 
