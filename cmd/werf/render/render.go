@@ -302,13 +302,13 @@ func runRender() error {
 	}
 
 	var secretsManager secret.Manager
-	if m, err := deploy.GetSafeSecretManager(ctx, projectDir, chartDir, *commonCmdData.SecretValues, localGitRepo, *commonCmdData.IgnoreSecretKey); err != nil {
+	if m, err := deploy.GetSafeSecretManager(ctx, projectDir, chartDir, *commonCmdData.SecretValues, &localGitRepo, *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {
 		secretsManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, localGitRepo, projectDir, werf_chart.WerfChartOptions{
+	wc := werf_chart.NewWerfChart(ctx, &localGitRepo, projectDir, werf_chart.WerfChartOptions{
 		ReleaseName: releaseName,
 		ChartDir:    chartDir,
 

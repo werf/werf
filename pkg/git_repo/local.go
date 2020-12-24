@@ -16,6 +16,8 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
+var ErrLocalRepositoryNotExists = git.ErrRepositoryNotExists
+
 type Local struct {
 	Base
 	Path   string
@@ -24,57 +26,57 @@ type Local struct {
 	headCommit string
 }
 
-func OpenLocalRepo(name, path string, dev bool) (*Local, error) {
-	_, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+func OpenLocalRepo(name, path string, dev bool) (l Local, err error) {
+	_, err = git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		if err == git.ErrRepositoryNotExists {
-			return nil, nil
+			return l, ErrLocalRepositoryNotExists
 		}
 
-		return nil, err
+		return l, err
 	}
 
 	gitDir, err := true_git.GetRealRepoDir(filepath.Join(path, ".git"))
 	if err != nil {
-		return nil, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
+		return l, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
 	}
 
-	localRepo, err := newLocal(name, path, gitDir)
+	l, err = newLocal(name, path, gitDir)
 	if err != nil {
-		return nil, err
+		return l, err
 	}
 
 	if dev {
 		devHeadCommit, err := true_git.SyncDevBranchWithStagedFiles(
 			context.Background(),
-			localRepo.GitDir,
-			localRepo.getRepoWorkTreeCacheDir(localRepo.getRepoID()),
-			localRepo.headCommit,
+			l.GitDir,
+			l.getRepoWorkTreeCacheDir(l.getRepoID()),
+			l.headCommit,
 		)
 		if err != nil {
-			return nil, err
+			return l, err
 		}
 
-		localRepo.headCommit = devHeadCommit
+		l.headCommit = devHeadCommit
 	}
 
-	return localRepo, nil
+	return l, nil
 }
 
-func newLocal(name, path, gitDir string) (*Local, error) {
+func newLocal(name, path, gitDir string) (l Local, err error) {
 	headCommit, err := getHeadCommit(path)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get git repo head commit: %s", err)
+		return l, fmt.Errorf("unable to get git repo head commit: %s", err)
 	}
 
-	local := &Local{
+	l = Local{
 		Base:       Base{Name: name},
 		Path:       path,
 		GitDir:     gitDir,
 		headCommit: headCommit,
 	}
 
-	return local, nil
+	return l, nil
 }
 
 func (repo *Local) PlainOpen() (*git.Repository, error) {

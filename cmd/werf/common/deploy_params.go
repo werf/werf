@@ -198,8 +198,8 @@ func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGett
 	return list
 }
 
-func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string) func(dir string) ([]*loader.BufferedFile, error) {
-	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
+func MakeChartDirLoadFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string) func(dir string) ([]*loader.BufferedFile, error) {
+	if giterminism_inspector.LooseGiterminism {
 		return nil
 	}
 	return func(dir string) ([]*loader.BufferedFile, error) {
@@ -207,8 +207,8 @@ func MakeChartDirLoadFunc(ctx context.Context, localGitRepo *git_repo.Local, pro
 	}
 }
 
-func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string) func(name string, settings *cli.EnvSettings) (string, error) {
-	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
+func MakeLocateChartFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string) func(name string, settings *cli.EnvSettings) (string, error) {
+	if giterminism_inspector.LooseGiterminism {
 		return nil
 	}
 
@@ -228,8 +228,8 @@ func MakeLocateChartFunc(ctx context.Context, localGitRepo *git_repo.Local, proj
 	}
 }
 
-func MakeHelmReadFileFunc(ctx context.Context, localGitRepo *git_repo.Local, projectDir string) func(filePath string) ([]byte, error) {
-	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
+func MakeHelmReadFileFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string) func(filePath string) ([]byte, error) {
+	if giterminism_inspector.LooseGiterminism {
 		return nil
 	}
 

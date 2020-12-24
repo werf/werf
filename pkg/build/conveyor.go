@@ -57,7 +57,7 @@ type Conveyor struct {
 	imageSets [][]*Image
 
 	stageImages    map[string]*container_runtime.StageImage
-	localGitRepo   *git_repo.Local
+	localGitRepo   git_repo.Local
 	remoteGitRepos map[string]*git_repo.Remote
 
 	tmpDir string
@@ -83,7 +83,7 @@ type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, localGitRepo *git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, localGitRepo git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
 	return &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -299,17 +299,7 @@ func (c *Conveyor) GetOrCreateGitRepoCache(gitRepoName string) *stage.GitRepoCac
 	return c.gitReposCaches[gitRepoName]
 }
 
-func (c *Conveyor) SetLocalGitRepo(repo *git_repo.Local) {
-	c.getServiceRWMutex("LocalGitRepo").Lock()
-	defer c.getServiceRWMutex("LocalGitRepo").Unlock()
-
-	c.localGitRepo = repo
-}
-
-func (c *Conveyor) GetLocalGitRepo() *git_repo.Local {
-	c.getServiceRWMutex("LocalGitRepo").RLock()
-	defer c.getServiceRWMutex("LocalGitRepo").RUnlock()
-
+func (c *Conveyor) GetLocalGitRepo() git_repo.Local {
 	return c.localGitRepo
 }
 
@@ -692,11 +682,7 @@ func (c *Conveyor) GetImageTmpDir(imageName string) string {
 
 func (c *Conveyor) GetProjectRepoCommit(ctx context.Context) (string, error) {
 	localGitRepo := c.GetLocalGitRepo()
-	if localGitRepo != nil {
-		return localGitRepo.HeadCommit(ctx)
-	} else {
-		return "", nil
-	}
+	return localGitRepo.HeadCommit(ctx)
 }
 
 func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
@@ -868,9 +854,6 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 
 	if len(imageBaseConfig.Git.Local) != 0 {
 		localGitRepo := c.GetLocalGitRepo()
-		if localGitRepo == nil {
-			return nil, errors.New("local git mapping is used but project git repository is not found")
-		}
 
 		if !c.werfConfig.Meta.GitWorktree.GetForceShallowClone() {
 			isShallowClone, err := localGitRepo.IsShallowClone()
@@ -1043,12 +1026,12 @@ func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRe
 	return gitMapping
 }
 
-func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo *git_repo.Local, imageName string, c *Conveyor) *stage.GitMapping {
+func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo git_repo.Local, imageName string, c *Conveyor) *stage.GitMapping {
 	gitMapping := baseGitMappingInit(localGitMappingConfig.GitLocalExport, imageName, c)
 
 	gitMapping.Name = "own"
 
-	gitMapping.GitRepoInterface = localGitRepo
+	gitMapping.GitRepoInterface = &localGitRepo
 
 	gitMapping.GitRepoCache = c.GetOrCreateGitRepoCache(localGitRepo.GetName())
 
@@ -1120,10 +1103,6 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	img.isDockerfileImage = true
 
 	localGitRepo := c.GetLocalGitRepo()
-	if localGitRepo == nil {
-		return nil, fmt.Errorf("local git repository was not found")
-	}
-
 	headCommit, err := localGitRepo.HeadCommit(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get head commit: %s", err)
@@ -1229,7 +1208,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	return img, nil
 }
 
-func getDockerfileData(ctx context.Context, imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor, localGitRepo *git_repo.Local, headCommit string) ([]byte, error) {
+func getDockerfileData(ctx context.Context, imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor, localGitRepo git_repo.Local, headCommit string) ([]byte, error) {
 	var dockerfileData []byte
 	relDockerfilePath := filepath.Join(imageFromDockerfileConfig.Context, imageFromDockerfileConfig.Dockerfile)
 	if isAccepted, err := giterminism_inspector.IsUncommittedDockerfileAccepted(relDockerfilePath); err != nil {
@@ -1267,7 +1246,7 @@ func getDockerfileData(ctx context.Context, imageFromDockerfileConfig *config.Im
 	return dockerfileData, nil
 }
 
-func getDockerignorePatterns(ctx context.Context, imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor, localGitRepo *git_repo.Local, headCommit string) ([]string, error) {
+func getDockerignorePatterns(ctx context.Context, imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor, localGitRepo git_repo.Local, headCommit string) ([]string, error) {
 	var dockerignorePatterns []string
 	relDockerignorePath := filepath.Join(imageFromDockerfileConfig.Context, ".dockerignore")
 	if isAccepted, err := giterminism_inspector.IsUncommittedDockerignoreAccepted(relDockerignorePath); err != nil {
@@ -1313,7 +1292,7 @@ func getDockerignorePatterns(ctx context.Context, imageFromDockerfileConfig *con
 	return dockerignorePatterns, nil
 }
 
-func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, commit, relPath string) ([]byte, error) {
+func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo git_repo.Local, commit, relPath string) ([]byte, error) {
 	return git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
 }
 

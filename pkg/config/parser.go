@@ -34,7 +34,7 @@ type WerfConfigOptions struct {
 	Env                 string
 }
 
-func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string, localGitRepo *git_repo.Local, opts WerfConfigOptions) error {
+func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, imagesToProcess []string, localGitRepo git_repo.Local, opts WerfConfigOptions) error {
 	werfConfig, err := GetWerfConfig(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func RenderWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfi
 	return nil
 }
 
-func GetWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, opts WerfConfigOptions) (*WerfConfig, error) {
+func GetWerfConfig(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo git_repo.Local, opts WerfConfigOptions) (*WerfConfig, error) {
 	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts.Env)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
@@ -211,18 +211,16 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo *git_repo.Local, env string) (string, error) {
+func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfConfigTemplatesDir string, localGitRepo git_repo.Local, env string) (string, error) {
 	var commit string
-	if localGitRepo != nil {
-		if c, err := localGitRepo.HeadCommit(ctx); err != nil {
-			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
-		} else {
-			commit = c
-		}
+	if c, err := localGitRepo.HeadCommit(ctx); err != nil {
+		return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+	} else {
+		commit = c
 	}
 
 	var data []byte
-	if giterminism_inspector.LooseGiterminism || localGitRepo == nil || giterminism_inspector.IsUncommittedConfigAccepted() {
+	if giterminism_inspector.LooseGiterminism || giterminism_inspector.IsUncommittedConfigAccepted() {
 		if d, err := ioutil.ReadFile(werfConfigPath); err != nil {
 			return "", fmt.Errorf("error reading %q: %s", werfConfigPath, err)
 		} else {
@@ -240,7 +238,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	tmpl.Funcs(funcMap(tmpl))
 
 	var werfConfigsTemplates []string
-	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
+	if giterminism_inspector.LooseGiterminism {
 		if templates, err := getWerfConfigTemplatesFromFilesystem(werfConfigTemplatesDir); err != nil {
 			return "", err
 		} else {
@@ -260,7 +258,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 
 	for _, relTemplatePath := range werfConfigsTemplates {
 		var templateData []byte
-		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
+		if giterminism_inspector.LooseGiterminism {
 			if d, err := ioutil.ReadFile(relTemplatePath); err != nil {
 				return "", err
 			} else {
@@ -385,12 +383,12 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 type files struct {
 	ctx          context.Context
 	ProjectDir   string
-	LocalGitRepo *git_repo.Local
+	LocalGitRepo git_repo.Local
 	Commit       string
 }
 
 func (f files) doGet(path string) (string, error) {
-	if giterminism_inspector.LooseGiterminism || f.LocalGitRepo == nil {
+	if giterminism_inspector.LooseGiterminism {
 		filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
 
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {

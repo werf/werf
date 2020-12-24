@@ -883,7 +883,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 	return res, nil
 }
 
-func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
 	werfConfigPath, err := GetWerfConfigPath(projectDir, *cmdData.ConfigPath, false, localGitRepo)
 	if err != nil {
 		return nil, err
@@ -897,7 +897,7 @@ func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 	return nil, nil
 }
 
-func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo *git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
 	werfConfigPath, err := GetWerfConfigPath(projectDir, *cmdData.ConfigPath, true, localGitRepo)
 	if err != nil {
 		return nil, err
@@ -908,7 +908,7 @@ func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 	return config.GetWerfConfig(ctx, projectDir, werfConfigPath, werfConfigTemplatesDir, localGitRepo, opts)
 }
 
-func GetWerfConfigPath(projectDir string, customConfigPath string, required bool, localGitRepo *git_repo.Local) (string, error) {
+func GetWerfConfigPath(projectDir string, customConfigPath string, required bool, localGitRepo git_repo.Local) (string, error) {
 	var configPathToCheck []string
 
 	if customConfigPath != "" {
@@ -921,7 +921,7 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 
 	var commit string
 	for _, werfConfigPath := range configPathToCheck {
-		if giterminism_inspector.LooseGiterminism || localGitRepo == nil || giterminism_inspector.IsUncommittedConfigAccepted() {
+		if giterminism_inspector.LooseGiterminism || giterminism_inspector.IsUncommittedConfigAccepted() {
 			if exists, err := util.FileExists(werfConfigPath); err != nil {
 				return "", err
 			} else if exists {
@@ -945,7 +945,7 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 	}
 
 	if required {
-		if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
+		if giterminism_inspector.LooseGiterminism {
 			return "", fmt.Errorf("werf configuration file not found (%s)", strings.Join(configPathToCheck, ", "))
 		} else {
 			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo commit %s", strings.Join(configPathToCheck, ", "), commit)
@@ -1263,7 +1263,7 @@ func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
 }
 
-func OpenLocalGitRepo(projectDir string) (*git_repo.Local, error) {
+func OpenLocalGitRepo(projectDir string) (git_repo.Local, error) {
 	return git_repo.OpenLocalRepo("own", projectDir, giterminism_inspector.DevMode)
 }
 

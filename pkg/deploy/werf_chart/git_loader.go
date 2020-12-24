@@ -19,7 +19,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 )
 
-func GiterministicFilesLoader(ctx context.Context, localGitRepo *git_repo.Local, projectDir, loadDir string) ([]*loader.BufferedFile, error) {
+func GiterministicFilesLoader(ctx context.Context, localGitRepo git_repo.Local, projectDir, loadDir string) ([]*loader.BufferedFile, error) {
 	var res []*loader.BufferedFile
 	var lock *chart.Lock
 
@@ -94,7 +94,7 @@ CheckUncommittedChartYaml:
 	return res, nil
 }
 
-func LoadFilesFromGit(ctx context.Context, localGitRepo *git_repo.Local, projectDir, loadDir string) ([]*loader.BufferedFile, error) {
+func LoadFilesFromGit(ctx context.Context, localGitRepo git_repo.Local, projectDir, loadDir string) ([]*loader.BufferedFile, error) {
 	commit, err := localGitRepo.HeadCommit(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get local repo head commit: %s", err)

@@ -239,7 +239,7 @@ func shlexProcessWord(value string, argsArray []string) (string, error) {
 	return resolvedValue, nil
 }
 
-func NewContextChecksum(projectPath string, dockerignorePathMatcher *path_matcher.DockerfileIgnorePathMatcher, localGitRepo *git_repo.Local) *ContextChecksum {
+func NewContextChecksum(projectPath string, dockerignorePathMatcher *path_matcher.DockerfileIgnorePathMatcher, localGitRepo git_repo.Local) *ContextChecksum {
 	return &ContextChecksum{
 		projectPath:             projectPath,
 		dockerignorePathMatcher: dockerignorePathMatcher,
@@ -249,7 +249,7 @@ func NewContextChecksum(projectPath string, dockerignorePathMatcher *path_matche
 
 type ContextChecksum struct {
 	projectPath             string
-	localGitRepo            *git_repo.Local
+	localGitRepo            git_repo.Local
 	dockerignorePathMatcher *path_matcher.DockerfileIgnorePathMatcher
 
 	mainLsTreeResult *ls_tree.Result

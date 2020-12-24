@@ -12,7 +12,7 @@ import (
 
 type ConveyorWithRetryWrapper struct {
 	WerfConfig          *config.WerfConfig
-	LocalGitRepo        *git_repo.Local
+	LocalGitRepo        git_repo.Local
 	ImageNamesToProcess []string
 	ProjectDir          string
 	BaseTmpDir          string
@@ -24,7 +24,7 @@ type ConveyorWithRetryWrapper struct {
 	ConveyorOptions ConveyorOptions
 }
 
-func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, localGitRepo *git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
+func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, localGitRepo git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
 	return &ConveyorWithRetryWrapper{
 		WerfConfig:          werfConfig,
 		LocalGitRepo:        localGitRepo,

@@ -200,7 +200,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 			return fmt.Errorf("unable to get local repo head commit: %s", err)
 		}
 
-		if vals, err := DecodeSecretValuesFileFromGitCommit(wc.Ctx, path, commit, wc.LocalGitRepo, wc.SecretsManager, wc.ProjectDir); err != nil {
+		if vals, err := DecodeSecretValuesFileFromGitCommit(wc.Ctx, path, commit, *wc.LocalGitRepo, wc.SecretsManager, wc.ProjectDir); err != nil {
 			return fmt.Errorf("unable to decode secret values file %q: %s", path, err)
 		} else {
 			decodedValues = vals
