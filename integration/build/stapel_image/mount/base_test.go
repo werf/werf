@@ -17,13 +17,13 @@ type entry struct {
 }
 
 var itBody = func(e entry) {
-	utils.CopyIn(e.fixturePath, testDirPath)
+	utils.CopyIn(e.fixturePath, SuiteData.TestDirPath)
 
-	stubs.SetEnv("FROM_CACHE_VERSION", "1")
+	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 
 	output := utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"build",
 	)
 
@@ -31,11 +31,11 @@ var itBody = func(e entry) {
 		Ω(output).Should(match)
 	}
 
-	stubs.SetEnv("FROM_CACHE_VERSION", "2")
+	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
 
 	output = utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"build",
 	)
 
@@ -43,11 +43,11 @@ var itBody = func(e entry) {
 		Ω(output).Should(match)
 	}
 
-	docker.RunSucceedContainerCommandWithStapel(werfBinPath, testDirPath, []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})
+	docker.RunSucceedContainerCommandWithStapel(SuiteData.WerfBinPath, SuiteData.TestDirPath, []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})
 }
 
 var _ = BeforeEach(func() {
-	stubs.SetEnv("WERF_LOOSE_GITERMINISM", "1")
+	SuiteData.Stubs.SetEnv("WERF_LOOSE_GITERMINISM", "1")
 })
 
 var _ = DescribeTable("base (non-deterministic)", itBody,

@@ -24,18 +24,18 @@ func init() {
 var _ = XDescribe("persistent stage digests", func() {
 	BeforeEach(func() {
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
-			"clone", werfRepositoryDir, testDirPath,
+			"clone", werfRepositoryDir, SuiteData.TestDirPath,
 		)
 
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
 			"checkout", "-b", "integration-digest-test", "v1.0.10",
 		)
 
-		utils.CopyIn(utils.FixturePath("digest"), testDirPath)
+		utils.CopyIn(utils.FixturePath("digest"), SuiteData.TestDirPath)
 	})
 
 	type entry struct {
@@ -47,8 +47,8 @@ var _ = XDescribe("persistent stage digests", func() {
 
 	DescribeTable("should not be changed", func(e entry) {
 		output, err := utils.RunCommand(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"build", e.imageName,
 		)
 

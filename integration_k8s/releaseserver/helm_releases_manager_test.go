@@ -30,7 +30,7 @@ var _ = Describe("Helm releases manager", func() {
 
 	Context("when releases-history-max option has been specified from the beginning", func() {
 		AfterEach(func() {
-			utils.RunCommand("helm_releases_manager_app1-001", werfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand("helm_releases_manager_app1-001", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should keep no more than specified number of releases", func() {
@@ -46,7 +46,7 @@ var _ = Describe("Helm releases manager", func() {
 
 	Context("when releases-history-max was not specified initially and then specified", func() {
 		AfterEach(func() {
-			utils.RunCommand("helm_releases_manager_app1-001", werfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand("helm_releases_manager_app1-001", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should keep no more than specified number of releases", func() {

@@ -33,7 +33,7 @@ var _ = Describe("Resources adopter", func() {
 		})
 
 		AfterEach(func() {
-			utils.RunCommand("resources_adopter_app1-003", werfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand("resources_adopter_app1-003", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should fail to deploy release when resources already exist; should adopt already existing resources when adoption annotation is set", func() {

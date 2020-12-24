@@ -12,22 +12,22 @@ import (
 
 var _ = Describe("cleaning images and stages", func() {
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("default"), testDirPath)
+		utils.CopyIn(utils.FixturePath("default"), SuiteData.TestDirPath)
 
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
 			"init",
 		)
 
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
 			"add", "-A",
 		)
 
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
 			"commit", "-m", "Initial commit",
 		)
@@ -36,8 +36,8 @@ var _ = Describe("cleaning images and stages", func() {
 	Context("with deployed image", func() {
 		BeforeEach(func() {
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"build",
 			)
 
@@ -50,15 +50,15 @@ var _ = Describe("cleaning images and stages", func() {
 				"--set", fmt.Sprintf("imageCredentials.password=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD")),
 			}
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				werfDeployArgs...,
 			)
 		})
 
 		When("KeepStageSetsBuiltWithinLastNHours policy is disabled", func() {
 			BeforeEach(func() {
-				stubs.SetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS", "0")
+				SuiteData.Stubs.SetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS", "0")
 			})
 
 			It("should not remove stages that are related with deployed image", func() {
@@ -66,8 +66,8 @@ var _ = Describe("cleaning images and stages", func() {
 				Ω(count).Should(Equal(2))
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"cleanup",
 				)
 

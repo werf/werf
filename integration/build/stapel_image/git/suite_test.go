@@ -1,87 +1,58 @@
 package git_test
 
 import (
-	"fmt"
-	"os"
 	"testing"
 
-	"github.com/prashantv/gostub"
+	"github.com/onsi/ginkgo"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
+	"github.com/werf/werf/integration/suite_init"
 
 	"github.com/werf/werf/integration/utils"
 )
 
 const gitCacheSizeStep = 1024 * 1024
 
-func TestIntegration(t *testing.T) {
-	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
-		fmt.Println("Missing required tools")
-		os.Exit(1)
-	}
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Build/Stapel Image/Git suite", suite_init.TestSuiteEntrypointFuncOptions{
+	RequiredSuiteTools: []string{"docker", "git"},
+})
 
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Build/Stapel Image/Git Suite")
+func TestSuite(t *testing.T) {
+	testSuiteEntrypointFunc(t)
 }
 
-var requiredSuiteTools = []string{"git", "docker"}
-var requiredSuiteEnvs []string
+var SuiteData suite_init.SuiteData
 
-var testDirPath string
-var tmpDir string
-var werfBinPath string
-var stubs = gostub.New()
-
-var _ = SynchronizedBeforeSuite(func() []byte {
-	computedPathToWerf := utils.ProcessWerfBinPath()
-	return []byte(computedPathToWerf)
-}, func(computedPathToWerf []byte) {
-	werfBinPath = string(computedPathToWerf)
-})
-
-var _ = BeforeEach(func() {
-	tmpDir = utils.GetTempDir()
-	testDirPath = tmpDir
-
-	utils.BeforeEachOverrideWerfProjectName(stubs)
-})
-
-var _ = AfterEach(func() {
+var _ = ginkgo.AfterEach(func() {
 	utils.RunSucceedCommand(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"purge", "--force",
 	)
-
-	err := os.RemoveAll(tmpDir)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	stubs.Reset()
 })
 
-var _ = SynchronizedAfterSuite(func() {}, func() {
-	gexec.CleanupBuildArtifacts()
-})
+var _ = SuiteData.StubsData.Setup()
+var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
+var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)
+var _ = SuiteData.ProjectNameData.Setup(&SuiteData.StubsData)
+var _ = SuiteData.TmpDirData.Setup()
 
-func commonBeforeEach(testDirPath, fixturePath string) {
-	utils.CopyIn(fixturePath, testDirPath)
+func commonBeforeEach(fixturePath string) {
+	utils.CopyIn(fixturePath, SuiteData.TestDirPath)
 
 	utils.RunSucceedCommand(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		"init",
 	)
 
 	utils.RunSucceedCommand(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		"add", "werf*.yaml",
 	)
 
 	utils.RunSucceedCommand(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		"commit", "-m", "Initial commit",
 	)

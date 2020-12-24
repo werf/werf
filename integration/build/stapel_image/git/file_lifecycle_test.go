@@ -38,7 +38,7 @@ var _ = Describe("file lifecycle", func() {
 	}
 
 	createFileFunc := func(fileName string, fileData []byte, filePerm os.FileMode) {
-		filePath := filepath.Join(testDirPath, fileName)
+		filePath := filepath.Join(SuiteData.TestDirPath, fileName)
 		utils.CreateFile(filePath, fileData)
 
 		if runtime.GOOS == "windows" {
@@ -51,7 +51,7 @@ var _ = Describe("file lifecycle", func() {
 			gitArgs = append(gitArgs, fileName)
 
 			utils.RunSucceedCommand(
-				testDirPath,
+				SuiteData.TestDirPath,
 				"git",
 				gitArgs...,
 			)
@@ -62,7 +62,7 @@ var _ = Describe("file lifecycle", func() {
 
 	fileLifecycleEntryItBody := func(entry fileLifecycleEntry) {
 		var commitMsg string
-		filePath := filepath.Join(testDirPath, entry.relPath)
+		filePath := filepath.Join(SuiteData.TestDirPath, entry.relPath)
 		if entry.delete {
 			Ω(os.Remove(filePath)).Should(Succeed())
 			commitMsg = "Delete file " + entry.relPath
@@ -72,15 +72,15 @@ var _ = Describe("file lifecycle", func() {
 		}
 
 		if entry.devMode {
-			stubs.SetEnv("WERF_DEV", "1")
-			addFile(testDirPath, entry.relPath)
+			SuiteData.Stubs.SetEnv("WERF_DEV", "1")
+			addFile(SuiteData.TestDirPath, entry.relPath)
 		} else {
-			addAndCommitFile(testDirPath, entry.relPath, commitMsg)
+			addAndCommitFile(SuiteData.TestDirPath, entry.relPath, commitMsg)
 		}
 
 		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"build",
 		)
 
@@ -93,12 +93,12 @@ var _ = Describe("file lifecycle", func() {
 			cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%a %s) <(echo %s)", shellescape.Quote(path.Join(gitToPath, entry.relPath)), strconv.FormatUint(uint64(entry.perm), 8)))
 			cmd = append(cmd, fmt.Sprintf("diff %s %s", shellescape.Quote(path.Join(gitToPath, entry.relPath)), shellescape.Quote(path.Join("/host", entry.relPath))))
 
-			extraDockerOptions = append(extraDockerOptions, fmt.Sprintf("-v %s:%s", testDirPath, "/host"))
+			extraDockerOptions = append(extraDockerOptions, fmt.Sprintf("-v %s:%s", SuiteData.TestDirPath, "/host"))
 		}
 
 		docker.RunSucceedContainerCommandWithStapel(
-			werfBinPath,
-			testDirPath,
+			SuiteData.WerfBinPath,
+			SuiteData.TestDirPath,
 			extraDockerOptions,
 			cmd,
 		)
@@ -106,7 +106,7 @@ var _ = Describe("file lifecycle", func() {
 
 	BeforeEach(func() {
 		fixturesPathParts = []string{"file_lifecycle"}
-		commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
+		commonBeforeEach(utils.FixturePath(fixturesPathParts...))
 	})
 
 	type test struct {
@@ -177,11 +177,11 @@ var _ = Describe("file lifecycle", func() {
 			When("gitArchive stage with file is built"+extraDescription+pathLogFunc(relPathToAdd), func() {
 				BeforeEach(func() {
 					createFileFunc(relPathToAddAndModify, fileDataToAdd, gitExecutableFilePerm)
-					addAndCommitFile(testDirPath, relPathToAddAndModify, "Add file "+relPathToAddAndModify)
+					addAndCommitFile(SuiteData.TestDirPath, relPathToAddAndModify, "Add file "+relPathToAddAndModify)
 
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 				})
@@ -239,13 +239,13 @@ var _ = Describe("file lifecycle", func() {
 
 				symlinkFileLifecycleEntryItBody := func(entry symlinkFileLifecycleEntry) {
 					var commitMsg string
-					filePath := filepath.Join(testDirPath, entry.relPath)
+					filePath := filepath.Join(SuiteData.TestDirPath, entry.relPath)
 					if entry.delete {
 						Ω(os.Remove(filePath)).Should(Succeed())
 						commitMsg = "Delete file " + entry.relPath
 					} else {
 						hashBytes, _ := utils.RunCommandWithOptions(
-							testDirPath,
+							SuiteData.TestDirPath,
 							"git",
 							[]string{"hash-object", "-w", "--stdin"},
 							utils.RunCommandOptions{
@@ -255,13 +255,13 @@ var _ = Describe("file lifecycle", func() {
 						)
 
 						utils.RunSucceedCommand(
-							testDirPath,
+							SuiteData.TestDirPath,
 							"git",
 							"update-index", "--add", "--cacheinfo", "120000", string(bytes.TrimSpace(hashBytes)), entry.relPath,
 						)
 
 						utils.RunSucceedCommand(
-							testDirPath,
+							SuiteData.TestDirPath,
 							"git",
 							"checkout", entry.relPath,
 						)
@@ -270,15 +270,15 @@ var _ = Describe("file lifecycle", func() {
 					}
 
 					if entry.devMode {
-						stubs.SetEnv("WERF_DEV", "1")
-						addFile(testDirPath, entry.relPath)
+						SuiteData.Stubs.SetEnv("WERF_DEV", "1")
+						addFile(SuiteData.TestDirPath, entry.relPath)
 					} else {
-						addAndCommitFile(testDirPath, entry.relPath, commitMsg)
+						addAndCommitFile(SuiteData.TestDirPath, entry.relPath, commitMsg)
 					}
 
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
@@ -292,8 +292,8 @@ var _ = Describe("file lifecycle", func() {
 					}
 
 					docker.RunSucceedContainerCommandWithStapel(
-						werfBinPath,
-						testDirPath,
+						SuiteData.WerfBinPath,
+						SuiteData.TestDirPath,
 						[]string{},
 						cmd,
 					)

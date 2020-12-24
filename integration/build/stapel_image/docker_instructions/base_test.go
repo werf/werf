@@ -20,18 +20,18 @@ type entry struct {
 }
 
 var itBody = func(e entry) {
-	testDirPath = utils.FixturePath("base")
-	stubs.SetEnv("WERF_CONFIG", filepath.Join(testDirPath, e.werfYaml))
+	SuiteData.TestDirPath = utils.FixturePath("base")
+	SuiteData.Stubs.SetEnv("WERF_CONFIG", filepath.Join(SuiteData.TestDirPath, e.werfYaml))
 
 	utils.RunSucceedCommand(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"build",
 	)
 
 	resultImageName := utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"stage", "image",
 	)
 

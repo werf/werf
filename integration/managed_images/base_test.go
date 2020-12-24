@@ -11,13 +11,13 @@ import (
 
 var _ = Describe("managed images", func() {
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("default"), testDirPath)
+		utils.CopyIn(utils.FixturePath("default"), SuiteData.TestDirPath)
 	})
 
 	It("ls should not return anything", func() {
 		output := utils.SucceedCommandOutputString(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"managed-images", "ls",
 		)
 
@@ -49,8 +49,8 @@ var _ = Describe("managed images", func() {
 	When("werf images have been built", func() {
 		BeforeEach(func() {
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"build",
 			)
 		})
@@ -66,24 +66,24 @@ var _ = Describe("managed images", func() {
 
 func addManagedImage(imageName string) {
 	utils.RunSucceedCommand(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"managed-images", "add", imageName,
 	)
 }
 
 func rmManagedImage(imageName string) {
 	utils.RunSucceedCommand(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"managed-images", "rm", imageName,
 	)
 }
 
 func isManagedImage(imageName string) bool {
 	output := utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"managed-images", "ls",
 	)
 

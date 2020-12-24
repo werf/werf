@@ -40,19 +40,19 @@ var _ = Describe("git stages", func() {
 
 		BeforeEach(func() {
 			fixturesPathParts = append(fixturesPathParts, "image")
-			commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
+			commonBeforeEach(utils.FixturePath(fixturesPathParts...))
 		})
 
 		It("gitArchive stage should be built", func() {
 			specSteps = append(specSteps, toBuildGitArchiveStageStep)
-			runStagesSpecSteps(testDirPath, specSteps)
+			runStagesSpecSteps(specSteps)
 		})
 
 		When("gitArchive stage is built", func() {
 			toBuildGitCacheStageStep := stagesSpecStep{
 				byText: "Diff between gitArchive commit and current commit >=1MB: gitCache stage should be built",
 				beforeBuildHookFunc: func() {
-					createAndCommitFile(testDirPath, "file_1MB", gitCacheSizeStep)
+					createAndCommitFile(SuiteData.TestDirPath, "file_1MB", gitCacheSizeStep)
 				},
 				checkResultedFilesChecksum: true,
 				expectedOutputMatchers: []types.GomegaMatcher{
@@ -65,7 +65,7 @@ var _ = Describe("git stages", func() {
 			toBuildGitLatestPatchStageStep := stagesSpecStep{
 				byText: "Diff between gitArchive commit and current commit <1MB: gitLatestPatch stage should be built",
 				beforeBuildHookFunc: func() {
-					createAndCommitFile(testDirPath, "file_1023KiB", gitCacheSizeStep-1024)
+					createAndCommitFile(SuiteData.TestDirPath, "file_1023KiB", gitCacheSizeStep-1024)
 				},
 				checkResultedFilesChecksum: true,
 				expectedOutputMatchers: []types.GomegaMatcher{
@@ -81,19 +81,19 @@ var _ = Describe("git stages", func() {
 
 			It("gitCache stage should be built (diff between gitArchive commit and current commit >=1MB)", func() {
 				specSteps = append(specSteps, toBuildGitCacheStageStep)
-				runStagesSpecSteps(testDirPath, specSteps)
+				runStagesSpecSteps(specSteps)
 			})
 
 			It("gitLatestPatch stage should be built (diff between gitArchive commit and current commit <1MB)", func() {
 				specSteps = append(specSteps, toBuildGitLatestPatchStageStep)
-				runStagesSpecSteps(testDirPath, specSteps)
+				runStagesSpecSteps(specSteps)
 			})
 
 			When("gitCache stage is built", func() {
 				toRepeatedlyBuildGitCacheStageStep := stagesSpecStep{
 					byText: "Diff between gitArchive commit and current commit >=1MB: gitCache stage should be built",
 					beforeBuildHookFunc: func() {
-						createAndCommitFile(testDirPath, "file2_1MB", gitCacheSizeStep)
+						createAndCommitFile(SuiteData.TestDirPath, "file2_1MB", gitCacheSizeStep)
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
@@ -106,7 +106,7 @@ var _ = Describe("git stages", func() {
 				toBuildGitLatestPatchStageStep := stagesSpecStep{
 					byText: "Diff between gitArchive commit and current commit <1MB: gitLatestPatch stage should be built",
 					beforeBuildHookFunc: func() {
-						createAndCommitFile(testDirPath, "file_1023KiB", gitCacheSizeStep-1024)
+						createAndCommitFile(SuiteData.TestDirPath, "file_1023KiB", gitCacheSizeStep-1024)
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
@@ -122,12 +122,12 @@ var _ = Describe("git stages", func() {
 
 				It("gitCache stage should be built (diff between gitCache commit and current commit >=1MB)", func() {
 					specSteps = append(specSteps, toRepeatedlyBuildGitCacheStageStep)
-					runStagesSpecSteps(testDirPath, specSteps)
+					runStagesSpecSteps(specSteps)
 				})
 
 				It("gitLatestPatch stage should be built (diff between gitCache commit and current commit <1MB)", func() {
 					specSteps = append(specSteps, toBuildGitLatestPatchStageStep)
-					runStagesSpecSteps(testDirPath, specSteps)
+					runStagesSpecSteps(specSteps)
 				})
 			})
 
@@ -138,12 +138,12 @@ var _ = Describe("git stages", func() {
 
 				It("gitCache stage should be built (diff between gitArchive commit and current commit >=1MB)", func() {
 					specSteps = append(specSteps, toBuildGitCacheStageStep)
-					runStagesSpecSteps(testDirPath, specSteps)
+					runStagesSpecSteps(specSteps)
 				})
 
 				It("gitLatestPatch stage should be built (diff between gitCache commit and current commit <1MB)", func() {
 					specSteps = append(specSteps, toBuildGitLatestPatchStageStep)
-					runStagesSpecSteps(testDirPath, specSteps)
+					runStagesSpecSteps(specSteps)
 				})
 			})
 		})
@@ -162,7 +162,7 @@ var _ = Describe("git stages", func() {
 		toBuildNothingStep := stagesSpecStep{
 			byText: "Any changes: nothing should be built",
 			beforeBuildHookFunc: func() {
-				createAndCommitFile(testDirPath, "file", gitCacheSizeStep)
+				createAndCommitFile(SuiteData.TestDirPath, "file", gitCacheSizeStep)
 			},
 			checkResultedFilesChecksum: false,
 			expectedOutputMatchers: []types.GomegaMatcher{
@@ -173,12 +173,12 @@ var _ = Describe("git stages", func() {
 
 		BeforeEach(func() {
 			fixturesPathParts = append(fixturesPathParts, "artifact")
-			commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
+			commonBeforeEach(utils.FixturePath(fixturesPathParts...))
 		})
 
 		It("gitArchive stage should be built", func() {
 			specSteps = append(specSteps, toBuildGitArchiveStageStep)
-			runStagesSpecSteps(testDirPath, specSteps)
+			runStagesSpecSteps(specSteps)
 		})
 
 		When("gitArchive stage is built", func() {
@@ -188,7 +188,7 @@ var _ = Describe("git stages", func() {
 
 			It("nothing should be built", func() {
 				specSteps = append(specSteps, toBuildNothingStep)
-				runStagesSpecSteps(testDirPath, specSteps)
+				runStagesSpecSteps(specSteps)
 			})
 		})
 	})
@@ -222,7 +222,7 @@ var _ = Describe("user stages", func() {
 		toBuildGitCacheStageStep := stagesSpecStep{
 			byText: "Diff between gitArchive commit and current commit >=1MB: gitCache stage should be built",
 			beforeBuildHookFunc: func() {
-				createAndCommitFile(testDirPath, "file_1MB", gitCacheSizeStep)
+				createAndCommitFile(SuiteData.TestDirPath, "file_1MB", gitCacheSizeStep)
 			},
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
@@ -235,7 +235,7 @@ var _ = Describe("user stages", func() {
 		toBuildGitLatestPatchStageStep := stagesSpecStep{
 			byText: "Diff between gitArchive commit and current commit <1MB: gitLatestPatch stage should be built",
 			beforeBuildHookFunc: func() {
-				createAndCommitFile(testDirPath, "file_1023KiB", gitCacheSizeStep-1024)
+				createAndCommitFile(SuiteData.TestDirPath, "file_1023KiB", gitCacheSizeStep-1024)
 			},
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
@@ -252,7 +252,7 @@ var _ = Describe("user stages", func() {
 		When("stageDependencies are not defined", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "without_stage_dependencies")
-				commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
+				commonBeforeEach(utils.FixturePath(fixturesPathParts...))
 			})
 
 			When("gitArchive stage is built", func() {
@@ -261,7 +261,7 @@ var _ = Describe("user stages", func() {
 						specSteps = append(specSteps, stagesSpecStep{
 							byText: "beforeInstallCacheVersion changed: beforeInstall stage should be built",
 							beforeBuildHookFunc: func() {
-								stubs.SetEnv("WERF_CONFIG", "werf_beforeInstallCacheVersion.yaml")
+								SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_beforeInstallCacheVersion.yaml")
 							},
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
@@ -270,7 +270,7 @@ var _ = Describe("user stages", func() {
 								ContainSubstring("Building stage image/gitArchive"),
 							},
 						})
-						runStagesSpecSteps(testDirPath, specSteps)
+						runStagesSpecSteps(specSteps)
 					})
 
 					for _, userStage := range []string{"install", "beforeSetup", "setup"} {
@@ -282,7 +282,7 @@ var _ = Describe("user stages", func() {
 							specSteps = append(specSteps, stagesSpecStep{
 								byText: fmt.Sprintf("%[1]sCacheVersion changed: %[1]s stage should be built", boundedUserStage),
 								beforeBuildHookFunc: func() {
-									stubs.SetEnv("WERF_CONFIG", fmt.Sprintf("werf_%sCacheVersion.yaml", boundedUserStage))
+									SuiteData.Stubs.SetEnv("WERF_CONFIG", fmt.Sprintf("werf_%sCacheVersion.yaml", boundedUserStage))
 								},
 								checkResultedFilesChecksum: true,
 								expectedOutputMatchers: []types.GomegaMatcher{
@@ -291,7 +291,7 @@ var _ = Describe("user stages", func() {
 									ContainSubstring(fmt.Sprintf("Building stage image/%s", boundedUserStage)),
 								},
 							})
-							runStagesSpecSteps(testDirPath, specSteps)
+							runStagesSpecSteps(specSteps)
 						})
 					}
 				}
@@ -323,7 +323,7 @@ var _ = Describe("user stages", func() {
 		When("stageDependencies are defined", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "with_stage_dependencies")
-				commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
+				commonBeforeEach(utils.FixturePath(fixturesPathParts...))
 			})
 
 			When("gitArchive stage is built", func() {
@@ -337,14 +337,14 @@ var _ = Describe("user stages", func() {
 							specSteps = append(specSteps, stagesSpecStep{
 								byText: fmt.Sprintf("Dependent file changed: %s stage should be built", boundedUserStage),
 								beforeBuildHookFunc: func() {
-									createAndCommitFile(testDirPath, boundedUserStage, 10)
+									createAndCommitFile(SuiteData.TestDirPath, boundedUserStage, 10)
 								},
 								checkResultedFilesChecksum: true,
 								expectedOutputMatchers: []types.GomegaMatcher{
 									ContainSubstring(fmt.Sprintf("Building stage image/%s", boundedUserStage)),
 								},
 							})
-							runStagesSpecSteps(testDirPath, specSteps)
+							runStagesSpecSteps(specSteps)
 						})
 					}
 				}
@@ -387,7 +387,7 @@ var _ = Describe("user stages", func() {
 		toBuildNothingStep := stagesSpecStep{
 			byText: "Any changes: nothing should be built",
 			beforeBuildHookFunc: func() {
-				createAndCommitFile(testDirPath, "file", gitCacheSizeStep)
+				createAndCommitFile(SuiteData.TestDirPath, "file", gitCacheSizeStep)
 			},
 			checkResultedFilesChecksum: false,
 			expectedOutputMatchers: []types.GomegaMatcher{
@@ -403,14 +403,14 @@ var _ = Describe("user stages", func() {
 		When("stageDependencies are not defined", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "without_stage_dependencies")
-				commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
+				commonBeforeEach(utils.FixturePath(fixturesPathParts...))
 			})
 
 			When("gitArchive stage is built", func() {
 				toBuildBeforeInstallStageStep := stagesSpecStep{
 					byText: fmt.Sprintf("beforeInstallCacheVersion changed: beforeInstall stage should be built"),
 					beforeBuildHookFunc: func() {
-						stubs.SetEnv("WERF_CONFIG", "werf_beforeInstallCacheVersion.yaml")
+						SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_beforeInstallCacheVersion.yaml")
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
@@ -424,7 +424,7 @@ var _ = Describe("user stages", func() {
 
 				It("gitArchive stage should be built (beforeInstall)", func() {
 					specSteps = append(specSteps, toBuildBeforeInstallStageStep)
-					runStagesSpecSteps(testDirPath, specSteps)
+					runStagesSpecSteps(specSteps)
 				})
 
 				for _, userStage := range []string{"install", "beforeSetup", "setup"} {
@@ -436,20 +436,20 @@ var _ = Describe("user stages", func() {
 						specSteps = append(specSteps, stagesSpecStep{
 							byText: fmt.Sprintf("%[1]sCacheVersion changed: %[1]s stage should be built", boundedUserStage),
 							beforeBuildHookFunc: func() {
-								stubs.SetEnv("WERF_CONFIG", fmt.Sprintf("werf_%sCacheVersion.yaml", boundedUserStage))
+								SuiteData.Stubs.SetEnv("WERF_CONFIG", fmt.Sprintf("werf_%sCacheVersion.yaml", boundedUserStage))
 							},
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
 								ContainSubstring(fmt.Sprintf("Building stage artifact/%s", boundedUserStage)),
 							},
 						})
-						runStagesSpecSteps(testDirPath, specSteps)
+						runStagesSpecSteps(specSteps)
 					})
 				}
 
 				It("nothing should be built", func() {
 					specSteps = append(specSteps, toBuildNothingStep)
-					runStagesSpecSteps(testDirPath, specSteps)
+					runStagesSpecSteps(specSteps)
 				})
 			})
 		})
@@ -457,7 +457,7 @@ var _ = Describe("user stages", func() {
 		When("stageDependencies are defined", func() {
 			BeforeEach(func() {
 				fixturesPathParts = append(fixturesPathParts, "with_stage_dependencies")
-				commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
+				commonBeforeEach(utils.FixturePath(fixturesPathParts...))
 			})
 
 			When("gitArchive stage is built", func() {
@@ -474,20 +474,20 @@ var _ = Describe("user stages", func() {
 						specSteps = append(specSteps, stagesSpecStep{
 							byText: fmt.Sprintf("Dependent file changed: %s stage should be built", boundedUserStage),
 							beforeBuildHookFunc: func() {
-								createAndCommitFile(testDirPath, boundedUserStage, 10)
+								createAndCommitFile(SuiteData.TestDirPath, boundedUserStage, 10)
 							},
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
 								ContainSubstring(fmt.Sprintf("Building stage artifact/%s", boundedUserStage)),
 							},
 						})
-						runStagesSpecSteps(testDirPath, specSteps)
+						runStagesSpecSteps(specSteps)
 					})
 				}
 
 				It("nothing should be built", func() {
 					specSteps = append(specSteps, toBuildNothingStep)
-					runStagesSpecSteps(testDirPath, specSteps)
+					runStagesSpecSteps(specSteps)
 				})
 			})
 		})
@@ -501,7 +501,7 @@ type stagesSpecStep struct {
 	expectedOutputMatchers     []types.GomegaMatcher
 }
 
-func runStagesSpecSteps(testDirPath string, steps []stagesSpecStep) {
+func runStagesSpecSteps(steps []stagesSpecStep) {
 	for _, step := range steps {
 		By(step.byText)
 
@@ -510,13 +510,13 @@ func runStagesSpecSteps(testDirPath string, steps []stagesSpecStep) {
 		}
 
 		out := utils.SucceedCommandOutputString(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"build",
 		)
 
 		if step.checkResultedFilesChecksum {
-			checkResultedFilesChecksum(testDirPath)
+			checkResultedFilesChecksum()
 		}
 
 		for _, matcher := range step.expectedOutputMatchers {
@@ -524,15 +524,15 @@ func runStagesSpecSteps(testDirPath string, steps []stagesSpecStep) {
 		}
 
 		out = utils.SucceedCommandOutputString(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"build",
 		)
 		Ω(out).ShouldNot(ContainSubstring("Building stage"))
 	}
 }
 
-func checkResultedFilesChecksum(testDirPath string) {
+func checkResultedFilesChecksum() {
 	containerTestDirPath := "/source"
 
 	expectedFilesChecksum := filesChecksumCommand(containerTestDirPath)
@@ -540,9 +540,9 @@ func checkResultedFilesChecksum(testDirPath string) {
 	diffCommand := fmt.Sprintf("diff <(%s) <(%s)", resultFilesChecksum, expectedFilesChecksum)
 
 	docker.RunSucceedContainerCommandWithStapel(
-		werfBinPath,
-		testDirPath,
-		[]string{fmt.Sprintf("-v %s:%s", testDirPath, containerTestDirPath)},
+		SuiteData.WerfBinPath,
+		SuiteData.TestDirPath,
+		[]string{fmt.Sprintf("-v %s:%s", SuiteData.TestDirPath, containerTestDirPath)},
 		[]string{diffCommand},
 	)
 }

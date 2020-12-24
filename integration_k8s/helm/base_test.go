@@ -21,21 +21,21 @@ var _ = Describe("deploy and rollback chart", func() {
 
 	AfterEach(func() {
 		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"helm", "uninstall", releaseName, "--namespace", releaseNamespace,
 		)
 	})
 
 	When("deploy local chart", func() {
 		BeforeEach(func() {
-			utils.CopyIn(utils.FixturePath("chart_1"), testDirPath)
+			utils.CopyIn(utils.FixturePath("chart_1"), SuiteData.TestDirPath)
 		})
 
 		It("should deploy chart in working directory", func() {
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"helm", "install", releaseName, ".", "--namespace", releaseNamespace,
 			)
 		})
@@ -43,16 +43,16 @@ var _ = Describe("deploy and rollback chart", func() {
 		When("first release has been deployed", func() {
 			BeforeEach(func() {
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"helm", "install", releaseName, ".", "--namespace", releaseNamespace,
 				)
 			})
 
 			It("should get release templates and values", func() {
 				output := utils.SucceedCommandOutputString(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"helm", "get", "all", releaseName, "--namespace", releaseNamespace,
 				)
 
@@ -73,20 +73,20 @@ var _ = Describe("deploy and rollback chart", func() {
 
 			When("second release has been deployed", func() {
 				BeforeEach(func() {
-					Ω(os.RemoveAll(testDirPath)).ShouldNot(HaveOccurred())
-					utils.CopyIn(utils.FixturePath("chart_2"), testDirPath)
+					Ω(os.RemoveAll(SuiteData.TestDirPath)).ShouldNot(HaveOccurred())
+					utils.CopyIn(utils.FixturePath("chart_2"), SuiteData.TestDirPath)
 
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"helm", "upgrade", releaseName, ".", "--namespace", releaseNamespace,
 					)
 				})
 
 				It("should get release templates and values", func() {
 					output := utils.SucceedCommandOutputString(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"helm", "get", "all", releaseName, "--namespace", releaseNamespace,
 					)
 
@@ -114,8 +114,8 @@ var _ = Describe("deploy and rollback chart", func() {
 
 				It("should list release", func() {
 					output := utils.SucceedCommandOutputString(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"helm", "list", "--namespace", releaseNamespace,
 					)
 
@@ -124,8 +124,8 @@ var _ = Describe("deploy and rollback chart", func() {
 
 				It("should get release history", func() {
 					output := utils.SucceedCommandOutputString(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"helm", "history", releaseName, "--namespace", releaseNamespace,
 					)
 
@@ -135,14 +135,14 @@ var _ = Describe("deploy and rollback chart", func() {
 
 				It("should rollback release", func() {
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"helm", "rollback", releaseName, "1", "--namespace", releaseNamespace,
 					)
 
 					output := utils.SucceedCommandOutputString(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"helm", "get", "all", releaseName, "--namespace", releaseNamespace,
 					)
 
@@ -154,21 +154,21 @@ var _ = Describe("deploy and rollback chart", func() {
 
 	When("deploy by chart reference", func() {
 		BeforeEach(func() {
-			stubs.SetEnv("XDG_DATA_HOME", testDirPath)
-			stubs.SetEnv("XDG_CACHE_HOME", testDirPath)
-			stubs.SetEnv("XDG_CONFIG_HOME", testDirPath)
+			SuiteData.Stubs.SetEnv("XDG_DATA_HOME", SuiteData.TestDirPath)
+			SuiteData.Stubs.SetEnv("XDG_CACHE_HOME", SuiteData.TestDirPath)
+			SuiteData.Stubs.SetEnv("XDG_CONFIG_HOME", SuiteData.TestDirPath)
 
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"helm", "repo", "add", "stable", "https://charts.helm.sh/stable",
 			)
 		})
 
 		It("should deploy chart by chart reference", func() {
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"helm", "install", releaseName, "stable/nginx-ingress", "--namespace", releaseNamespace,
 			)
 		})

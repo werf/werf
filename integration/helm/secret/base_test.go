@@ -17,31 +17,31 @@ import (
 
 var _ = It("should generate secret key", func() {
 	utils.RunSucceedCommand(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"helm", "secret", "generate-secret-key",
 	)
 })
 
 var _ = It("should rotate secret key", func() {
-	utils.CopyIn(utils.FixturePath("rotate_secret_key"), testDirPath)
+	utils.CopyIn(utils.FixturePath("rotate_secret_key"), SuiteData.TestDirPath)
 
-	res, err := ioutil.ReadFile(filepath.Join(testDirPath, ".werf_secret_key"))
+	res, err := ioutil.ReadFile(filepath.Join(SuiteData.TestDirPath, ".werf_secret_key"))
 	Ω(err).ShouldNot(HaveOccurred())
 
 	oldSecretKey := strings.TrimSpace(string(res))
-	Ω(os.Remove(filepath.Join(testDirPath, ".werf_secret_key"))).Should(Succeed())
+	Ω(os.Remove(filepath.Join(SuiteData.TestDirPath, ".werf_secret_key"))).Should(Succeed())
 
 	output := utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"helm", "secret", "generate-secret-key",
 	)
 
 	newSecretKey := strings.TrimSpace(output)
 
-	cmd := exec.Command(werfBinPath, utils.WerfBinArgs("helm", "secret", "rotate-secret-key")...)
-	cmd.Dir = testDirPath
+	cmd := exec.Command(SuiteData.WerfBinPath, utils.WerfBinArgs("helm", "secret", "rotate-secret-key")...)
+	cmd.Dir = SuiteData.TestDirPath
 	cmd.Env = append([]string{
 		fmt.Sprintf("WERF_SECRET_KEY=%s", newSecretKey),
 		fmt.Sprintf("WERF_OLD_SECRET_KEY=%s", oldSecretKey),
@@ -62,13 +62,13 @@ var _ = Describe("helm secret encrypt/decrypt", func() {
 	var encryptedSecret = "1000ceeb30457f57eb67a2dfecd65c563417f4ae06167fb21be60549d247bf388165"
 
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("default"), testDirPath)
+		utils.CopyIn(utils.FixturePath("default"), SuiteData.TestDirPath)
 	})
 
 	It("should be encrypted", func() {
 		resultData, _ := utils.RunCommandWithOptions(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			[]string{"helm", "secret", "encrypt"},
 			utils.RunCommandOptions{
 				ToStdin:       secret,
@@ -79,8 +79,8 @@ var _ = Describe("helm secret encrypt/decrypt", func() {
 		result := string(bytes.TrimSpace(resultData))
 
 		resultData, _ = utils.RunCommandWithOptions(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			[]string{"helm", "secret", "decrypt"},
 			utils.RunCommandOptions{
 				ToStdin:       result,
@@ -95,8 +95,8 @@ var _ = Describe("helm secret encrypt/decrypt", func() {
 
 	It("should be decrypted", func() {
 		resultData, _ := utils.RunCommandWithOptions(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			[]string{"helm", "secret", "decrypt"},
 			utils.RunCommandOptions{
 				ToStdin:       encryptedSecret,

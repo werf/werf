@@ -11,13 +11,13 @@ import (
 
 var _ = Describe("helm render", func() {
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("base"), testDirPath)
+		utils.CopyIn(utils.FixturePath("base"), SuiteData.TestDirPath)
 	})
 
 	It("should be rendered", func() {
 		output := utils.SucceedCommandOutputString(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"render",
 		)
 

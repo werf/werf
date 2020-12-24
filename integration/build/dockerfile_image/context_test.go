@@ -24,13 +24,13 @@ func init() {
 var _ = Describe("context", func() {
 	BeforeEach(func() {
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
-			"clone", werfRepositoryDir, testDirPath,
+			"clone", werfRepositoryDir, SuiteData.TestDirPath,
 		)
 
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
 			"checkout", "-b", "integration-context-test", "v1.0.10",
 		)
@@ -38,8 +38,8 @@ var _ = Describe("context", func() {
 
 	AfterEach(func() {
 		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"purge", "--force",
 		)
 	})
@@ -55,8 +55,8 @@ var _ = Describe("context", func() {
 		entry.prepareFixturesFunc()
 
 		output, err := utils.RunCommand(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"build", "--debug",
 		)
 		Ω(err).ShouldNot(HaveOccurred())
@@ -73,16 +73,16 @@ var _ = Describe("context", func() {
 	var _ = DescribeTable("checksum", itBody,
 		Entry("base", entry{
 			prepareFixturesFunc: func() {
-				utils.CopyIn(utils.FixturePath("context", "base"), testDirPath)
+				utils.CopyIn(utils.FixturePath("context", "base"), SuiteData.TestDirPath)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"add", "werf.yaml", ".dockerignore", "Dockerfile",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"commit", "-m", "+",
 				)
@@ -91,16 +91,16 @@ var _ = Describe("context", func() {
 		}),
 		Entry("contextAdd", entry{
 			prepareFixturesFunc: func() {
-				utils.CopyIn(utils.FixturePath("context", "context_add_file"), testDirPath)
+				utils.CopyIn(utils.FixturePath("context", "context_add_file"), SuiteData.TestDirPath)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"add", "werf.yaml", ".dockerignore", "Dockerfile",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"commit", "-m", "+",
 				)

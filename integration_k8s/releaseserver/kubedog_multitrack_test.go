@@ -74,7 +74,7 @@ func unknownDeploymentStateForbidden(ds *DeploymentState) {
 var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
 	Context("when chart contains valid resource", func() {
 		AfterEach(func() {
-			utils.RunCommand("kubedog_multitrack_app1", werfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand("kubedog_multitrack_app1", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should report Deployment is ready before werf exit", func() {
@@ -100,7 +100,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 	Context("when chart contains resource with invalid docker image", func() {
 		AfterEach(func() {
-			utils.RunCommand("kubedog_multitrack_app2", werfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand("kubedog_multitrack_app2", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should report ImagePullBackoff occured in Deployment and werf should fail", func() {

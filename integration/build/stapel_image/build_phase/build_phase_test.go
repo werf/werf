@@ -1,4 +1,4 @@
-package ansible_test
+package build_phase_test
 
 import (
 	"fmt"
@@ -56,7 +56,7 @@ func ExtractStageInfoFromOutputLine(stageInfo *StageInfo, line string) *StageInf
 var _ = Describe("Build phase", func() {
 	Context("when building the same stage for two commits at the same time", func() {
 		BeforeEach(func() {
-			stubs.SetEnv("WERF_VERBOSE", "1")
+			SuiteData.Stubs.SetEnv("WERF_VERBOSE", "1")
 		})
 
 		AfterEach(func() {
@@ -73,7 +73,7 @@ var _ = Describe("Build phase", func() {
 			Expect(copy.Copy("build_phase_repo1", "build_phase_repo2")).To(Succeed())
 			Expect(setGitRepoState("build_phase-002", "build_phase_repo2", "two")).To(Succeed())
 
-			stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
+			SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
 			Expect(werfBuild("build_phase-001", liveexec.ExecCommandOptions{})).To(Succeed())
 
 			var wg sync.WaitGroup

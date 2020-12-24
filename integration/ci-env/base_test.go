@@ -17,7 +17,7 @@ import (
 var _ = Describe("base", func() {
 	BeforeEach(func() {
 		Ω(werf.Init("", "")).Should(Succeed())
-		testDirPath = utils.FixturePath("base")
+		SuiteData.TestDirPath = utils.FixturePath("base")
 	})
 
 	ciSystems := []string{
@@ -31,8 +31,8 @@ var _ = Describe("base", func() {
 		Context(ciSystem, func() {
 			It("should print only script path", func() {
 				output := utils.SucceedCommandOutputString(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					utils.WerfBinArgs("ci-env", ciSystem, "--as-file")...,
 				)
 
@@ -53,14 +53,14 @@ var _ = Describe("base", func() {
 
 			It("should print only shell script", func() {
 				output := utils.SucceedCommandOutputString(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					utils.WerfBinArgs("ci-env", ciSystem)...,
 				)
 
 				useAsFileOutput := utils.SucceedCommandOutputString(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					utils.WerfBinArgs("ci-env", ciSystem, "--as-file")...,
 				)
 

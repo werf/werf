@@ -12,22 +12,22 @@ import (
 
 var _ = forEachDockerRegistryImplementation("purge command", func() {
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("purge"), testDirPath)
+		utils.CopyIn(utils.FixturePath("purge"), SuiteData.TestDirPath)
 
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
 			"init",
 		)
 
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
 			"add", "werf.yaml",
 		)
 
 		utils.RunSucceedCommand(
-			testDirPath,
+			SuiteData.TestDirPath,
 			"git",
 			"commit", "-m", "Initial commit",
 		)
@@ -35,8 +35,8 @@ var _ = forEachDockerRegistryImplementation("purge command", func() {
 
 	It("should remove all project data", func() {
 		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"build",
 		)
 
@@ -46,12 +46,12 @@ var _ = forEachDockerRegistryImplementation("purge command", func() {
 		Ω(len(ImportMetadataIDs())).Should(BeNumerically(">", 0))
 
 		utils.RunSucceedCommand(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"purge",
 		)
 
-		if testImplementation != docker_registry.QuayImplementationName {
+		if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
 			Ω(StagesCount()).Should(Equal(0))
 			Ω(ManagedImagesCount()).Should(Equal(0))
 			Ω(len(ImageMetadata(imageName))).Should(Equal(0))
@@ -61,29 +61,29 @@ var _ = forEachDockerRegistryImplementation("purge command", func() {
 
 	Context("when there is running container based on werf image", func() {
 		BeforeEach(func() {
-			if stagesStorage.Address() != ":local" {
-				Skip(fmt.Sprintf("to test :local storage (%s)", stagesStorage.Address()))
+			if SuiteData.StagesStorage.Address() != ":local" {
+				Skip(fmt.Sprintf("to test :local storage (%s)", SuiteData.StagesStorage.Address()))
 			}
 		})
 
 		BeforeEach(func() {
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"build",
 			)
 
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"run", "--docker-options", "-d", "--", "/bin/sleep", "30",
 			)
 		})
 
 		It("should fail with specific error", func() {
 			out, err := utils.RunCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"purge",
 			)
 			Ω(err).ShouldNot(Succeed())
@@ -93,8 +93,8 @@ var _ = forEachDockerRegistryImplementation("purge command", func() {
 
 		It("should remove project images and related container", func() {
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"purge", "--force",
 			)
 

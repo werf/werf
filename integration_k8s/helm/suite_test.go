@@ -1,49 +1,21 @@
 package helm_test
 
 import (
-	"os"
 	"testing"
 
-	"github.com/prashantv/gostub"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
-
-	"github.com/werf/werf/integration/utils"
+	"github.com/werf/werf/integration/suite_init"
 )
 
-func TestIntegration(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Helm Suite")
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Helm suite", suite_init.TestSuiteEntrypointFuncOptions{})
+
+func TestSuite(t *testing.T) {
+	testSuiteEntrypointFunc(t)
 }
 
-var testDirPath string
-var tmpDir string
-var werfBinPath string
-var stubs = gostub.New()
+var SuiteData suite_init.SuiteData
 
-var _ = SynchronizedBeforeSuite(func() []byte {
-	computedPathToWerf := utils.ProcessWerfBinPath()
-	return []byte(computedPathToWerf)
-}, func(computedPathToWerf []byte) {
-	werfBinPath = string(computedPathToWerf)
-})
-
-var _ = SynchronizedAfterSuite(func() {}, func() {
-	gexec.CleanupBuildArtifacts()
-})
-
-var _ = BeforeEach(func() {
-	tmpDir = utils.GetTempDir()
-	testDirPath = tmpDir
-
-	utils.BeforeEachOverrideWerfProjectName(stubs)
-})
-
-var _ = AfterEach(func() {
-	err := os.RemoveAll(tmpDir)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	stubs.Reset()
-})
+var _ = SuiteData.StubsData.Setup()
+var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
+var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)
+var _ = SuiteData.ProjectNameData.Setup(&SuiteData.StubsData)
+var _ = SuiteData.TmpDirData.Setup()
