@@ -47,7 +47,12 @@ func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
 }
 
 type stapel struct {
+	Git   git   `json:"git"`
 	Mount mount `json:"mount"`
+}
+
+type git struct {
+	AllowBranch bool `json:"allowBranch"`
 }
 
 type mount struct {
