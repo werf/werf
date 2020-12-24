@@ -76,7 +76,6 @@ type CmdData struct {
 	KeepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
 
-	LooseGiterminism               *bool
 	NonStrictGiterminismInspection *bool
 	Dev                            *bool
 
@@ -144,14 +143,8 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupGiterminismInspectorOptions(cmdData *CmdData, cmd *cobra.Command) {
-	setupLooseGiterminism(cmdData, cmd)
 	setupNonStrictGiterminismInspection(cmdData, cmd)
 	setupDev(cmdData, cmd)
-}
-
-func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.LooseGiterminism = new(bool)
-	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html, default $WERF_LOOSE_GITERMINISM)")
 }
 
 func setupNonStrictGiterminismInspection(cmdData *CmdData, cmd *cobra.Command) {
@@ -921,7 +914,7 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 
 	var commit string
 	for _, werfConfigPath := range configPathToCheck {
-		if giterminism_inspector.LooseGiterminism || giterminism_inspector.IsUncommittedConfigAccepted() {
+		if giterminism_inspector.IsUncommittedConfigAccepted() {
 			if exists, err := util.FileExists(werfConfigPath); err != nil {
 				return "", err
 			} else if exists {
@@ -945,11 +938,7 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 	}
 
 	if required {
-		if giterminism_inspector.LooseGiterminism {
-			return "", fmt.Errorf("werf configuration file not found (%s)", strings.Join(configPathToCheck, ", "))
-		} else {
-			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo commit %s", strings.Join(configPathToCheck, ", "), commit)
-		}
+		return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo commit %s", strings.Join(configPathToCheck, ", "), commit)
 	}
 
 	return "", nil
@@ -969,9 +958,8 @@ func InitGiterminismInspector(cmdData *CmdData) error {
 	}
 
 	return giterminism_inspector.Init(projectPath, giterminism_inspector.InspectionOptions{
-		LooseGiterminism: *cmdData.LooseGiterminism,
-		NonStrict:        *cmdData.NonStrictGiterminismInspection,
-		DevMode:          *cmdData.Dev,
+		NonStrict: *cmdData.NonStrictGiterminismInspection,
+		DevMode:   *cmdData.Dev,
 	})
 }
 

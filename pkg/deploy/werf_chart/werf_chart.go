@@ -24,7 +24,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/secretvalues"
 )
@@ -252,7 +251,7 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 
 func (wc *WerfChart) AfterLoad() error {
 	if wc.SecretsManager != nil {
-		if giterminism_inspector.LooseGiterminism || wc.LocalGitRepo == nil {
+		if wc.LocalGitRepo == nil {
 			if err := wc.loadSecretsFromFilesystem(); err != nil {
 				return err
 			}

@@ -89,11 +89,6 @@ werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compo
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info                                                                               
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_LOOSE_GITERMINISM)
       --non-strict-giterminism-inspection=false
             Change some errors to warnings during giterminism inspection (more info                 
             https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       

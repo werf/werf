@@ -76,7 +76,7 @@ func (c *StapelImageBase) exports() []autoExcludeExport {
 }
 
 func (c *StapelImageBase) validate() error {
-	if c.FromLatest && !giterminism_inspector.LooseGiterminism {
+	if c.FromLatest {
 		if err := giterminism_inspector.ReportConfigStapelFromLatest(context.Background()); err != nil {
 			errMsg := "\n\n" + err.Error()
 			return newDetailedConfigError(errMsg, nil, c.raw.doc)

@@ -18,7 +18,7 @@ type GitRemoteExport struct {
 func (c *GitRemoteExport) validate() error {
 	isDefaultMasterBranch := c.Branch == "" && c.Commit == "" && c.Tag == ""
 	isBranch := isDefaultMasterBranch || c.Branch != ""
-	if isBranch && !giterminism_inspector.LooseGiterminism {
+	if isBranch {
 		if err := giterminism_inspector.ReportConfigStapelGitBranch(context.Background()); err != nil {
 			errMsg := "\n\n" + err.Error()
 			return newDetailedConfigError(errMsg, c.raw, c.raw.rawStapelImage.doc)

@@ -220,7 +220,7 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	}
 
 	var data []byte
-	if giterminism_inspector.LooseGiterminism || giterminism_inspector.IsUncommittedConfigAccepted() {
+	if giterminism_inspector.IsUncommittedConfigAccepted() {
 		if d, err := ioutil.ReadFile(werfConfigPath); err != nil {
 			return "", fmt.Errorf("error reading %q: %s", werfConfigPath, err)
 		} else {
@@ -238,43 +238,27 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, werfConfigPath, werfC
 	tmpl.Funcs(funcMap(tmpl))
 
 	var werfConfigsTemplates []string
-	if giterminism_inspector.LooseGiterminism {
-		if templates, err := getWerfConfigTemplatesFromFilesystem(werfConfigTemplatesDir); err != nil {
-			return "", err
-		} else {
-			werfConfigsTemplates = templates
-		}
+	if paths, err := localGitRepo.GetCommitFilePathList(ctx, commit); err != nil {
+		return "", fmt.Errorf("unable to get files list from local git repo: %s", err)
 	} else {
-		if paths, err := localGitRepo.GetCommitFilePathList(ctx, commit); err != nil {
-			return "", fmt.Errorf("unable to get files list from local git repo: %s", err)
-		} else {
-			for _, path := range paths {
-				if util.IsSubpathOfBasePath(werfConfigTemplatesDir, path) {
-					werfConfigsTemplates = append(werfConfigsTemplates, path)
-				}
+		for _, path := range paths {
+			if util.IsSubpathOfBasePath(werfConfigTemplatesDir, path) {
+				werfConfigsTemplates = append(werfConfigsTemplates, path)
 			}
 		}
 	}
 
 	for _, relTemplatePath := range werfConfigsTemplates {
 		var templateData []byte
-		if giterminism_inspector.LooseGiterminism {
-			if d, err := ioutil.ReadFile(relTemplatePath); err != nil {
-				return "", err
-			} else {
-				templateData = d
-			}
-		} else {
-			commit, err := localGitRepo.HeadCommit(ctx)
-			if err != nil {
-				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
-			}
+		commit, err := localGitRepo.HeadCommit(ctx)
+		if err != nil {
+			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+		}
 
-			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath); err != nil {
-				return "", err
-			} else {
-				templateData = d
-			}
+		if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath); err != nil {
+			return "", err
+		} else {
+			templateData = d
 		}
 
 		templateName, err := filepath.Rel(werfConfigTemplatesDir, relTemplatePath)
@@ -359,11 +343,8 @@ func funcMap(tmpl *template.Template) template.FuncMap {
 	envFunc := funcMap["env"].(func(string) string)
 	funcMap["env"] = func(value interface{}) (string, error) {
 		envName := fmt.Sprint(value)
-
-		if !giterminism_inspector.LooseGiterminism {
-			if err := giterminism_inspector.ReportConfigGoTemplateRenderingEnv(context.Background(), envName); err != nil {
-				return "", err
-			}
+		if err := giterminism_inspector.ReportConfigGoTemplateRenderingEnv(context.Background(), envName); err != nil {
+			return "", err
 		}
 
 		return envFunc(envName), nil
@@ -388,22 +369,6 @@ type files struct {
 }
 
 func (f files) doGet(path string) (string, error) {
-	if giterminism_inspector.LooseGiterminism {
-		filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
-
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-			return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
-		} else if err != nil {
-			return "", fmt.Errorf("error accessing %s: %s", filePath, err)
-		}
-
-		if b, err := ioutil.ReadFile(filePath); err != nil {
-			return "", fmt.Errorf("error reading %s: %s", filePath, err)
-		} else {
-			return string(b), nil
-		}
-	}
-
 	if exists, err := f.LocalGitRepo.IsCommitFileExists(f.ctx, f.Commit, path); err != nil {
 		return "", fmt.Errorf("unable to check existence of %s in the local git repo commit %s: %s", path, f.Commit, err)
 	} else if !exists {
@@ -504,12 +469,7 @@ func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface
 	var res map[string]interface{}
 	var err error
 
-	if giterminism_inspector.LooseGiterminism {
-		res, err = f.doGlobFromFilesystem(pattern)
-	} else {
-		res, err = f.doGlobFromGitRepo(ctx, pattern)
-	}
-
+	res, err = f.doGlobFromGitRepo(ctx, pattern)
 	if len(res) == 0 {
 		logboek.Context(f.ctx).Warn().LogF("WARNING: No matches found for {{ .Files.Glob '%s' }}\n", pattern)
 	}

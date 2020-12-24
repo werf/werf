@@ -14,7 +14,6 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/util"
@@ -199,19 +198,12 @@ func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGett
 }
 
 func MakeChartDirLoadFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string) func(dir string) ([]*loader.BufferedFile, error) {
-	if giterminism_inspector.LooseGiterminism {
-		return nil
-	}
 	return func(dir string) ([]*loader.BufferedFile, error) {
 		return werf_chart.GiterministicFilesLoader(ctx, localGitRepo, projectDir, dir)
 	}
 }
 
 func MakeLocateChartFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string) func(name string, settings *cli.EnvSettings) (string, error) {
-	if giterminism_inspector.LooseGiterminism {
-		return nil
-	}
-
 	return func(name string, settings *cli.EnvSettings) (string, error) {
 		commit, err := localGitRepo.HeadCommit(ctx)
 		if err != nil {
@@ -229,10 +221,6 @@ func MakeLocateChartFunc(ctx context.Context, localGitRepo git_repo.Local, proje
 }
 
 func MakeHelmReadFileFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string) func(filePath string) ([]byte, error) {
-	if giterminism_inspector.LooseGiterminism {
-		return nil
-	}
-
 	return func(filePath string) ([]byte, error) {
 		commit, err := localGitRepo.HeadCommit(ctx)
 		if err != nil {

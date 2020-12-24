@@ -12,7 +12,6 @@ import (
 const giterminismDocPageURL = "https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html"
 
 var (
-	LooseGiterminism         bool
 	NonStrict                bool
 	DevMode                  bool
 	ReportedUncommittedPaths []string
@@ -22,13 +21,11 @@ var (
 )
 
 type InspectionOptions struct {
-	LooseGiterminism bool
-	NonStrict        bool
-	DevMode          bool
+	NonStrict bool
+	DevMode   bool
 }
 
 func Init(projectPath string, opts InspectionOptions) error {
-	LooseGiterminism = opts.LooseGiterminism
 	NonStrict = opts.NonStrict
 	DevMode = opts.DevMode
 
