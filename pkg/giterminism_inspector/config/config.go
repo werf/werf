@@ -47,8 +47,9 @@ func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
 }
 
 type stapel struct {
-	Git   git   `json:"git"`
-	Mount mount `json:"mount"`
+	AllowFromLatest bool  `json:"allowFromLatest"`
+	Git   			git   `json:"git"`
+	Mount 			mount `json:"mount"`
 }
 
 type git struct {

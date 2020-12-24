@@ -51,6 +51,8 @@ definitions:
     type: object
     additionalProperties: {}
     properties:
+      allowFromLatest:
+        type: boolean
       git:
         $ref: '#/definitions/ConfigStapelGit'
       mount:
