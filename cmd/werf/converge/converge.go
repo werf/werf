@@ -404,7 +404,7 @@ func run(ctx context.Context, projectDir string) error {
 		Install:         common.NewBool(true),
 		Wait:            common.NewBool(true),
 		Atomic:          common.NewBool(cmdData.AutoRollback),
-		Timeout:         common.NewDuration(time.Duration(cmdData.Timeout)),
+		Timeout:         common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
 	})
 	return wc.WrapUpgrade(ctx, func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
