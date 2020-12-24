@@ -1,0 +1,5 @@
+resources:
+  requests:
+    memory:
+      _default: 200M
+      production: 500M

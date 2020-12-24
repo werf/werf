@@ -1,0 +1,70 @@
+{{- $_ := set . "Version" ( splitList "/" ( env "GITHUB_REF") | last ) }}
+{{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
+
+project: werfio-ng
+configVersion: 1
+deploy:
+  helmChartDir: docs/.helm
+  helmRelease: "[[ project ]]-{{ .VersionURLNormalized }}-[[ env ]]"
+
+---
+artifact: asset-{{ .VersionURLNormalized }}
+from: jekyll/builder:3
+ansible:
+  install:
+  - shell: |
+      export PATH=/usr/jekyll/bin/:$PATH
+  - name: "Install Dependencies"
+    shell: bundle install
+    args:
+      executable: /bin/bash
+      chdir: /app/docs
+  beforeSetup:
+  - file:
+      path: "{{`{{ item }}`}}"
+      state: directory
+      mode: 0777
+    with_items:
+    - /app/_site/main/
+    - /app/_site/ru/
+  - shell: |
+      echo -e "timezone: Europe/Moscow\nwerfVersion: {{ .Version }}\nwerfVersionURLNormalized: {{ .VersionURLNormalized }}" > /tmp/_config_additional.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/{{ if ne .Version "master"}}{{.VersionURLNormalized }} --baseurl /{{ .VersionURLNormalized }}{{ end }} --config /app/docs/_config.yml,/tmp/_config_additional.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/{{ if ne .Version "master"}}{{.VersionURLNormalized }} --baseurl /{{ .VersionURLNormalized }}{{ end }} --config /app/docs/_config.yml,/app/docs/_config_ru.yml,/tmp/_config_additional.yml
+    args:
+      executable: /bin/bash
+      chdir: /app/docs
+git:
+- add: /docs
+  to: /app/docs
+  owner: jekyll
+  group: jekyll
+  excludePaths: '**/*.sh'
+  stageDependencies:
+    install: ['Gemfile','Gemfile.lock']
+    beforeSetup: '**/*'
+---
+image: site-{{ .VersionURLNormalized }}
+from: nginx:stable-alpine
+ansible:
+  setup:
+  - name: "Setup /etc/nginx/nginx.conf"
+    copy:
+      content: |
+{{ .Files.Get "docs/.werf/nginx.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
+{{- if eq .Version "master" }}
+  - copy:
+      content: |
+{{ .Files.Get "docs/.werf/robots.txt" | indent 8 }}
+      dest: /app/main/robots.txt
+  - copy:
+      content: |
+{{ .Files.Get "docs/.werf/robots_ru.txt" | indent 8 }}
+      dest: /app/ru/robots.txt
+{{- end }}
+import:
+- artifact: asset-{{ .VersionURLNormalized }}
+  add: /app/_site
+  to: /app/
+  before: setup

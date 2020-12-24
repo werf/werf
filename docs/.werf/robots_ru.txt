@@ -1,0 +1,13 @@
+User-agent: *
+
+Disallow: /latest
+Disallow: /master
+
+Disallow: /assets/channels.json
+Disallow: *.js
+Disallow: /v
+Disallow: /documentation/cli
+
+Sitemap: https://ru.werf.io/sitemap.xml
+Host: ru.werf.io
+
