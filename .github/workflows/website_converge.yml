@@ -1,47 +1,50 @@
-# name: Website build doc from tag
-# on:
-#   push:
-#     tags:
-#       - 'v*'
-#     branches: [master]
-# jobs:
+name: Website build doc from tag
+on:
+  push:
+    tags:
+      - 'testv*'
+    branches: [master, wf-werfio3]
+jobs:
 
-#   build:
-#     name: Converge
-#     runs-on: tfprod-werf
-#     steps:
+  build:
+    name: Converge
+    runs-on: tfprod-werf
+    steps:
 
-#     - name: Checkout code
-#       uses: actions/checkout@v2
-#       with:
-#         fetch-depth: 0
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
-#     - name: Deploy website to test
-#       uses: werf/actions/converge@master
-#       with:
-#         env: test
-#         group: 1.2
-#         channel: alpha
-#       env:
-#         WERF_CONFIG: "docs/werf.yaml"
-#         WERF_CONFIG_TEMPLATES_DIR: "docs/.werf"
-#         WERF_LOOSE_GITERMINISM: 1
-#         WERF_LOG_VERBOSE: "on"
-#         WERF_KUBE_CONTEXT: dev
-#         WERF_SET_CI_URL: "global.ci_url=werfng.test.flant.com"
-#         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
+    - name: Set Helm release name
+      id: value_set
+      run: |
+          echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
 
-#     - name: Deploy website to production
-#       uses: werf/actions/converge@master
-#       with:
-#         env: production
-#         group: 1.2
-#         channel: alpha
-#       env:
-#         WERF_CONFIG: "docs/werf.yaml"
-#         WERF_CONFIG_TEMPLATES_DIR: "docs/.werf"
-#         WERF_LOOSE_GITERMINISM: 1
-#         WERF_LOG_VERBOSE: "on"
-#         WERF_KUBE_CONTEXT: prod
-#         WERF_SET_CI_URL: "global.ci_url=ng.werf.io"
-#         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
+    - name: Deploy website to test
+      uses: werf/actions/converge@master
+      with:
+        env: test
+        group: 1.2
+        channel: alpha
+      env:
+        WERF_RELEASE: "werfio-ng-${{ env.Version }}-test"
+        WERF_CONFIG: "docs/werf.yaml"
+        WERF_CONFIG_TEMPLATES_DIR: "docs/.werf"
+        WERF_LOG_VERBOSE: "on"
+        WERF_KUBE_CONTEXT: dev
+        WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
+
+    - name: Deploy website to production
+      uses: werf/actions/converge@master
+      with:
+        env: production
+        group: 1.2
+        channel: alpha
+      env:
+        WERF_RELEASE: "werfio-ng-${{ env.Version }}-production"
+        WERF_CONFIG: "docs/werf.yaml"
+        WERF_CONFIG_TEMPLATES_DIR: "docs/.werf"
+        WERF_LOG_VERBOSE: "on"
+        WERF_KUBE_CONTEXT: prod
+        WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"

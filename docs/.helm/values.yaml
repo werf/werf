@@ -1,5 +1,10 @@
+host:
+  production: werfng.io
+  _default: werfng.test.flant.com
+
 resources:
   requests:
     memory:
       _default: 200M
       production: 500M
+
