@@ -33,6 +33,10 @@ definitions:
     properties:
       allowUncommitted:
         type: boolean
+      allowUncommittedTemplates:
+        type: array
+        items:
+          type: string
       goTemplateRendering:
         $ref: '#/definitions/ConfigGoTemplateRendering'
       stapel:

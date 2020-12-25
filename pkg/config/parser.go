@@ -261,45 +261,91 @@ func parseWerfConfig(ctx context.Context, tmpl *template.Template, localGitRepo 
 }
 
 func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, localGitRepo git_repo.Local, commit string, projectDir string, relWerfConfigTemplatesDir string) error {
-	var werfConfigsTemplates []string
-	if giterminism_inspector.LooseGiterminism {
-		if templates, err := getWerfConfigTemplatesFromFilesystem(projectDir, relWerfConfigTemplatesDir); err != nil {
+	templateNameFunc := func(relTemplatePath string) string {
+		return filepath.ToSlash(util.GetRelativeToBaseFilepath(relWerfConfigTemplatesDir, relTemplatePath))
+	}
+
+	addTemplatesFromFSFunc := func(relTemplatePath string) error {
+		d, err := ioutil.ReadFile(filepath.Join(projectDir, relTemplatePath))
+		if err != nil {
 			return err
-		} else {
-			werfConfigsTemplates = templates
 		}
-	} else {
-		if templates, err := getWerfConfigTemplatesLocalGitRepo(ctx, localGitRepo, commit, relWerfConfigTemplatesDir); err != nil {
+
+		return addTemplate(tmpl, templateNameFunc(relTemplatePath), string(d))
+	}
+
+	addTemplatesFromLocalGitRepoFunc := func(relTemplatePath string) error {
+		d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath)
+		if err != nil {
 			return err
-		} else {
-			werfConfigsTemplates = templates
+		}
+
+		templateName, err := filepath.Rel(relWerfConfigTemplatesDir, relTemplatePath)
+		if err != nil {
+			return err
+		}
+
+		return addTemplate(tmpl, templateName, string(d))
+	}
+
+	fsTemplatePathList, err := getWerfConfigTemplatesFromFilesystem(projectDir, relWerfConfigTemplatesDir)
+	if err != nil {
+		return err
+	}
+
+	if giterminism_inspector.LooseGiterminism {
+		for _, relPath := range fsTemplatePathList {
+			if err := addTemplatesFromFSFunc(relPath); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	commitTemplatePathList, err := getWerfConfigTemplatesLocalGitRepo(ctx, localGitRepo, commit, relWerfConfigTemplatesDir)
+	if err != nil {
+		return err
+	}
+
+	for _, relPath := range commitTemplatePathList {
+		if accepted, err := giterminism_inspector.IsUncommittedConfigTemplateFileAccepted(relPath); err != nil {
+			return err
+		} else if accepted {
+			continue
+		}
+
+		if err := addTemplatesFromLocalGitRepoFunc(relPath); err != nil {
+			return err
 		}
 	}
 
-	for _, relTemplatePath := range werfConfigsTemplates {
-		var templateData []byte
-		if giterminism_inspector.LooseGiterminism {
-			if d, err := ioutil.ReadFile(relTemplatePath); err != nil {
-				return err
-			} else {
-				templateData = d
-			}
-		} else {
-			commit, err := localGitRepo.HeadCommit(ctx)
+	if giterminism_inspector.HaveUncommittedConfigTemplates() {
+		for _, relPath := range fsTemplatePathList {
+			accepted, err := giterminism_inspector.IsUncommittedConfigTemplateFileAccepted(relPath)
 			if err != nil {
-				return fmt.Errorf("unable to get local repo head commit: %s", err)
+				return err
 			}
 
-			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath); err != nil {
+			if !accepted {
+				continue
+			}
+
+			if err := addTemplatesFromFSFunc(relPath); err != nil {
 				return err
-			} else {
-				templateData = d
 			}
 		}
+	} else {
+		var commitTemplatePathListToFilepath []string
+		for _, path := range commitTemplatePathList {
+			commitTemplatePathListToFilepath = append(commitTemplatePathListToFilepath, filepath.FromSlash(path))
+		}
 
-		templateName := filepath.ToSlash(relTemplatePath)
-		if err := addTemplate(tmpl, templateName, string(templateData)); err != nil {
-			return err
+		untrackedFiles := util.ExcludeFromStringArray(fsTemplatePathList, commitTemplatePathListToFilepath...)
+		for _, path := range untrackedFiles {
+			if err := giterminism_inspector.ReportUntrackedConfigTemplateFile(ctx, path); err != nil {
+				return err
+			}
 		}
 	}
 
