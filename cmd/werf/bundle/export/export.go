@@ -9,7 +9,6 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -171,7 +170,7 @@ func runExport() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	localGitRepo, err := git_repo.OpenLocalRepo("own", projectDir, giterminism_inspector.DevMode)
+	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
 	if err != nil {
 		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
 	}
@@ -286,13 +285,13 @@ func runExport() error {
 	}
 
 	var secretsManager secret.Manager
-	if m, err := deploy.GetSafeSecretManager(ctx, projectDir, chartDir, *commonCmdData.SecretValues, localGitRepo, *commonCmdData.IgnoreSecretKey); err != nil {
+	if m, err := deploy.GetSafeSecretManager(ctx, projectDir, chartDir, *commonCmdData.SecretValues, &localGitRepo, *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {
 		secretsManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, localGitRepo, projectDir, werf_chart.WerfChartOptions{
+	wc := werf_chart.NewWerfChart(ctx, &localGitRepo, projectDir, werf_chart.WerfChartOptions{
 		ReleaseName: "RELEASE",
 		ChartDir:    chartDir,
 

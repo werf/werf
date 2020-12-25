@@ -216,7 +216,7 @@ func runCleanup() error {
 
 	cleanupOptions := cleaning.CleanupOptions{
 		ImageNameList:                           imagesNames,
-		LocalGit:                                localGitRepo,
+		LocalGit:                                &localGitRepo,
 		KubernetesContextClients:                kubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients),
 		WithoutKube:                             *commonCmdData.WithoutKube,
