@@ -912,6 +912,19 @@ func GetWerfConfigPath(projectDir string, customConfigPath string, required bool
 	var configPathToCheck []string
 
 	if customConfigPath != "" {
+		if !filepath.IsAbs(customConfigPath) {
+			workdirPath, err := os.Getwd()
+			if err != nil {
+				return "", fmt.Errorf("unable to get working directory: %s", err)
+			}
+
+			customConfigPath = filepath.Join(workdirPath, filepath.Clean(customConfigPath))
+		}
+
+		if !util.IsSubpathOfBasePath(projectDir, customConfigPath) {
+			return "", fmt.Errorf("werf configuration file must be in project directory (%s)", customConfigPath)
+		}
+
 		configPathToCheck = append(configPathToCheck, customConfigPath)
 	} else {
 		for _, werfDefaultConfigName := range []string{"werf.yml", "werf.yaml"} {
