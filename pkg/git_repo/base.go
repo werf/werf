@@ -587,7 +587,7 @@ func (repo *Base) readFileInRepository(ctx context.Context, repository *git.Repo
 }
 
 func (repo *Base) realpathInRepository(ctx context.Context, repository *git.Repository, commit, filePath string) (string, error) {
-	parts := util.SplitPath(filePath)
+	parts := util.SplitFilepath(filePath)
 
 	var resolvedBasePath string
 
