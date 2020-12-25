@@ -14,41 +14,41 @@ import (
 
 var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 	BeforeEach(func() {
-		stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
+		SuiteData.Stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
 	})
 
 	Describe("git history-based cleanup", func() {
 		BeforeEach(func() {
-			stubs.SetEnv("WERF_LOOSE_GITERMINISM", "1") // FIXME
-			utils.CopyIn(utils.FixturePath("git_history_based_cleanup"), testDirPath)
+			SuiteData.Stubs.SetEnv("WERF_LOOSE_GITERMINISM", "1") // FIXME
+			utils.CopyIn(utils.FixturePath("git_history_based_cleanup"), SuiteData.TestDirPath)
 			cleanupBeforeEachBase()
 		})
 
 		It("should work only with remote references", func() {
-			stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
+			SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
 
 			utils.RunSucceedCommand(
-				testDirPath,
+				SuiteData.TestDirPath,
 				"git",
 				"checkout", "-b", "test",
 			)
 
 			utils.RunSucceedCommand(
-				testDirPath,
+				SuiteData.TestDirPath,
 				"git",
 				"push", "--set-upstream", "origin", "test",
 			)
 
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"build",
 			)
 
 			gitHistoryBasedCleanupCheck(imageName, 1, 1)
 
 			utils.RunSucceedCommand(
-				testDirPath,
+				SuiteData.TestDirPath,
 				"git",
 				"push", "origin", "--delete", "test",
 			)
@@ -57,23 +57,23 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 		})
 
 		It("should remove image from untracked branch", func() {
-			stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
+			SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
 
 			utils.RunSucceedCommand(
-				testDirPath,
+				SuiteData.TestDirPath,
 				"git",
 				"checkout", "-b", "some_branch",
 			)
 
 			utils.RunSucceedCommand(
-				testDirPath,
+				SuiteData.TestDirPath,
 				"git",
 				"push", "--set-upstream", "origin", "some_branch",
 			)
 
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"build",
 			)
 
@@ -81,31 +81,31 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 		})
 
 		It("should keep several images that are related to one commit regardless of the keep policies (imagesPerReference.last=1)", func() {
-			stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "9")
+			SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "9")
 
 			utils.RunSucceedCommand(
-				testDirPath,
+				SuiteData.TestDirPath,
 				"git",
 				"checkout", "-b", "test",
 			)
 
 			utils.RunSucceedCommand(
-				testDirPath,
+				SuiteData.TestDirPath,
 				"git",
 				"push", "--set-upstream", "origin", "test",
 			)
 
-			stubs.SetEnv("FROM_CACHE_VERSION", "1")
+			SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"build",
 			)
 
-			stubs.SetEnv("FROM_CACHE_VERSION", "2")
+			SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"build",
 			)
 
@@ -114,23 +114,23 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 		Context("keep policies", func() {
 			It("should remove image by imagesPerReference.last", func() {
-				stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "2")
+				SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "2")
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"checkout", "-b", "test",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"push", "--set-upstream", "origin", "test",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
@@ -138,25 +138,25 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 			})
 
 			It("should remove image by imagesPerReference.in", func() {
-				stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "3")
+				SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "3")
 
 				setLastCommitCommitterWhen(time.Now().Add(-(25 * time.Hour)))
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"checkout", "-b", "test",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"push", "--set-upstream", "origin", "test",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
@@ -165,14 +165,14 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				setLastCommitCommitterWhen(time.Now().Add(-(23 * time.Hour)))
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"push", "--force",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
@@ -180,25 +180,25 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 			})
 
 			It("should remove image by references.limit.in", func() {
-				stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "4")
+				SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "4")
 
 				setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)))
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"checkout", "-b", "test",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"push", "--set-upstream", "origin", "test",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
@@ -207,14 +207,14 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)))
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"push", "--set-upstream", "--force",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
@@ -236,7 +236,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 				BeforeEach(func() {
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"checkout", "-b", ref1,
 					)
@@ -244,15 +244,15 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)))
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"push", "--set-upstream", "origin", ref1,
 					)
 
-					stubs.SetEnv("FROM_CACHE_VERSION", "1")
+					SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
@@ -260,7 +260,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					_ = stageID1
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"checkout", "-b", ref2,
 					)
@@ -268,46 +268,46 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)))
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"push", "--set-upstream", "origin", ref2,
 					)
 
-					stubs.SetEnv("FROM_CACHE_VERSION", "2")
+					SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
 					stageID2 = resultStageID(imageName)
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"checkout", "-b", ref3,
 					)
 
 					setLastCommitCommitterWhen(time.Now())
 
-					stubs.SetEnv("FROM_CACHE_VERSION", "3")
+					SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "3")
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
 					stageID3 = resultStageID(imageName)
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"push", "--set-upstream", "origin", ref3,
 					)
 				})
 
 				It("should remove image by references.limit.in OR references.limit.last", func() {
-					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "5")
+					SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "5")
 					gitHistoryBasedCleanupCheck(
 						imageName, 3, 2,
 						func(imageMetadata map[string][]string) {
@@ -318,7 +318,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				})
 
 				It("should remove image by references.limit.in AND references.limit.last", func() {
-					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "6")
+					SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "6")
 					gitHistoryBasedCleanupCheck(
 						imageName, 3, 1,
 						func(imageMetadata map[string][]string) {
@@ -337,17 +337,17 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 				BeforeEach(func() {
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"checkout", "-b", "test",
 					)
 
 					setLastCommitCommitterWhen(time.Now().Add(-(13 * time.Hour)))
 
-					stubs.SetEnv("FROM_CACHE_VERSION", "1")
+					SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
@@ -355,38 +355,38 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					_ = stageID1
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"commit", "--allow-empty", "-m", "+",
 					)
 
 					setLastCommitCommitterWhen(time.Now().Add(-(11 * time.Hour)))
 
-					stubs.SetEnv("FROM_CACHE_VERSION", "2")
+					SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
 					stageID2 = resultStageID(imageName)
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"commit", "--allow-empty", "-m", "+",
 					)
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"push", "--set-upstream", "origin", "test",
 					)
 
-					stubs.SetEnv("FROM_CACHE_VERSION", "3")
+					SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "3")
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
@@ -394,7 +394,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				})
 
 				It("should remove image by imagesPerReference.in OR imagesPerReference.last", func() {
-					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "7")
+					SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "7")
 					gitHistoryBasedCleanupCheck(
 						imageName, 3, 2,
 						func(imageMetadata map[string][]string) {
@@ -405,7 +405,7 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				})
 
 				It("should remove image by imagesPerReference.in AND imagesPerReference.last", func() {
-					stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "8")
+					SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "8")
 					gitHistoryBasedCleanupCheck(
 						imageName, 3, 1,
 						func(imageMetadata map[string][]string) {
@@ -441,20 +441,20 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				It("should keep image metadata only for the latest commit (one branch)", func() {
 					for i := 0; i < 3; i++ {
 						utils.RunSucceedCommand(
-							testDirPath,
+							SuiteData.TestDirPath,
 							"git",
 							"commit", "--allow-empty", "-m", "+",
 						)
 
 						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
+							SuiteData.TestDirPath,
+							SuiteData.WerfBinPath,
 							"build",
 						)
 					}
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"push", "--set-upstream", "origin", "master",
 					)
@@ -467,26 +467,26 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				It("should keep all image metadata (several branches)", func() {
 					for i := 0; i < 3; i++ {
 						utils.RunSucceedCommand(
-							testDirPath,
+							SuiteData.TestDirPath,
 							"git",
 							"commit", "--allow-empty", "-m", "+",
 						)
 
 						utils.RunSucceedCommand(
-							testDirPath,
-							werfBinPath,
+							SuiteData.TestDirPath,
+							SuiteData.WerfBinPath,
 							"build",
 						)
 
 						branch := fmt.Sprintf("test_%d", i)
 						utils.RunSucceedCommand(
-							testDirPath,
+							SuiteData.TestDirPath,
 							"git",
 							"checkout", "-b", branch,
 						)
 
 						utils.RunSucceedCommand(
-							testDirPath,
+							SuiteData.TestDirPath,
 							"git",
 							"push", "--set-upstream", "origin", branch,
 						)
@@ -500,33 +500,33 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 	Describe("cleanup unused stages", func() {
 		BeforeEach(func() {
-			utils.CopyIn(utils.FixturePath("cleanup_unused_stages"), testDirPath)
-			stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
+			utils.CopyIn(utils.FixturePath("cleanup_unused_stages"), SuiteData.TestDirPath)
+			SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
 			cleanupBeforeEachBase()
 		})
 
 		It("should work properly with non-existent/empty repo", func() {
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"cleanup",
 			)
 		})
 
 		When("KeepStageSetsBuiltWithinLastNHours policy is disabled", func() {
 			BeforeEach(func() {
-				stubs.SetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS", "0")
+				SuiteData.Stubs.SetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS", "0")
 			})
 
 			It("should remove unused stages", func() {
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"push", "--set-upstream", "origin", "master",
 				)
@@ -535,41 +535,41 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				Ω(countAfterFirstBuild).Should(Equal(4))
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"commit", "--allow-empty", "-m", "test",
 				)
 
-				stubs.SetEnv("WERF_CONFIG", "werf_2a.yaml") // full rebuild
+				SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_2a.yaml") // full rebuild
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
 				countAfterSecondBuild := StagesCount()
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"cleanup",
 				)
 
-				if testImplementation != docker_registry.QuayImplementationName {
+				if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
 					Ω(StagesCount()).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
 				}
 			})
 
 			It("should not remove used stages", func() {
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"push", "--set-upstream", "origin", "master",
 				)
@@ -578,8 +578,8 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				Ω(count).Should(Equal(4))
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"cleanup",
 				)
 
@@ -588,29 +588,29 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 			When("there is running container based on werf stage", func() {
 				BeforeEach(func() {
-					if stagesStorage.Address() != ":local" {
-						Skip(fmt.Sprintf("to test :local storage (%s)", stagesStorage.Address()))
+					if SuiteData.StagesStorage.Address() != ":local" {
+						Skip(fmt.Sprintf("to test :local storage (%s)", SuiteData.StagesStorage.Address()))
 					}
 
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"run", "--docker-options", "-d", "--", "/bin/sleep", "30",
 					)
 				})
 
 				It("should skip stage with related running container", func() {
-					stubs.SetEnv("WERF_LOG_PRETTY", "0")
+					SuiteData.Stubs.SetEnv("WERF_LOG_PRETTY", "0")
 
 					out, err := utils.RunCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"cleanup",
 					)
 					Ω(err).Should(Succeed())
@@ -622,13 +622,13 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 			Context("imports metadata", func() {
 				It("should keep used artifact", func() {
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"push", "--set-upstream", "origin", "master",
 					)
@@ -637,8 +637,8 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					Ω(countAfterFirstBuild).Should(Equal(4))
 
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"cleanup",
 					)
 
@@ -649,8 +649,8 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 				It("should keep both artifacts by identical import checksum", func() {
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
@@ -658,36 +658,36 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					Ω(countAfterFirstBuild).Should(Equal(4))
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"commit", "--allow-empty", "-m", "test",
 					)
 
-					stubs.SetEnv("WERF_CONFIG", "werf_2b.yaml") // full artifact rebuild
+					SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_2b.yaml") // full artifact rebuild
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"push", "--set-upstream", "origin", "master",
 					)
 
 					countAfterSecondBuild := StagesCount()
-					if testImplementation != docker_registry.QuayImplementationName {
+					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
 						Ω(countAfterSecondBuild).Should(Equal(6))
 					}
 
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"cleanup",
 					)
 
-					if testImplementation != docker_registry.QuayImplementationName {
+					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
 						countAfterCleanup := StagesCount()
 						Ω(countAfterCleanup).Should(Equal(countAfterSecondBuild))
 						Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(2))
@@ -696,13 +696,13 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 				It("should remove unused artifact which does not have related import metadata", func() {
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"build",
 					)
 
 					utils.RunSucceedCommand(
-						testDirPath,
+						SuiteData.TestDirPath,
 						"git",
 						"push", "--set-upstream", "origin", "master",
 					)
@@ -714,12 +714,12 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 					RmImportMetadata(ImportMetadataIDs()[0])
 
 					utils.RunSucceedCommand(
-						testDirPath,
-						werfBinPath,
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
 						"cleanup",
 					)
 
-					if testImplementation != docker_registry.QuayImplementationName {
+					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
 						countAfterCleanup := StagesCount()
 						Ω(countAfterCleanup).Should(Equal(3))
 						Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(0))
@@ -730,18 +730,18 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 		When("KeepStageSetsBuiltWithinLastNHours policy is 2 hours (default)", func() {
 			BeforeEach(func() {
-				stubs.UnsetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
+				SuiteData.Stubs.UnsetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
 			})
 
 			It("should not remove unused stages that was built within 2 hours", func() {
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"push", "--set-upstream", "origin", "master",
 				)
@@ -750,31 +750,31 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				Ω(countAfterFirstBuild).Should(Equal(4))
 
 				utils.RunSucceedCommand(
-					testDirPath,
+					SuiteData.TestDirPath,
 					"git",
 					"commit", "--allow-empty", "-m", "test",
 				)
 
-				stubs.SetEnv("WERF_CONFIG", "werf_2a.yaml") // full rebuild
+				SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_2a.yaml") // full rebuild
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"build",
 				)
 
 				countAfterSecondBuild := StagesCount()
-				if testImplementation != docker_registry.QuayImplementationName {
+				if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
 					Ω(countAfterSecondBuild).Should(Equal(8))
 				}
 
 				utils.RunSucceedCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"cleanup",
 				)
 
-				if testImplementation != docker_registry.QuayImplementationName {
+				if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
 					Ω(StagesCount()).Should(Equal(countAfterSecondBuild))
 				}
 			})
@@ -784,8 +784,8 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 
 func resultStageID(imageName string) string {
 	res := utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"stage", "image", imageName,
 	)
 
@@ -795,31 +795,31 @@ func resultStageID(imageName string) string {
 
 func cleanupBeforeEachBase() {
 	utils.RunSucceedCommand(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		"init", "--bare", "remote.git",
 	)
 
 	utils.RunSucceedCommand(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		"init",
 	)
 
 	utils.RunSucceedCommand(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		"remote", "add", "origin", "remote.git",
 	)
 
 	utils.RunSucceedCommand(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		"add", "werf*.yaml",
 	)
 
 	utils.RunSucceedCommand(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		"commit", "-m", "Initial commit",
 	)
@@ -827,7 +827,7 @@ func cleanupBeforeEachBase() {
 
 func getHeadCommit() string {
 	out := utils.SucceedCommandOutputString(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		"rev-parse", "HEAD",
 	)
@@ -839,12 +839,12 @@ func gitHistoryBasedCleanupCheck(imageName string, expectedNumberOfMetadataTagsB
 	Ω(ImageMetadata(imageName)).Should(HaveLen(expectedNumberOfMetadataTagsBefore))
 
 	utils.RunSucceedCommand(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"cleanup",
 	)
 
-	if testImplementation != docker_registry.QuayImplementationName {
+	if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
 		imageMetadata := ImageMetadata(imageName)
 		Ω(imageMetadata).Should(HaveLen(expectedNumberOfMetadataTagsAfter))
 
@@ -858,7 +858,7 @@ func gitHistoryBasedCleanupCheck(imageName string, expectedNumberOfMetadataTagsB
 
 func setLastCommitCommitterWhen(newDate time.Time) {
 	_, _ = utils.RunCommandWithOptions(
-		testDirPath,
+		SuiteData.TestDirPath,
 		"git",
 		[]string{"commit", "--amend", "--allow-empty", "--no-edit", "--date", newDate.Format(time.RFC3339)},
 		utils.RunCommandOptions{ShouldSucceed: true, ExtraEnv: []string{fmt.Sprintf("GIT_COMMITTER_DATE=%s", newDate.Format(time.RFC3339))}},

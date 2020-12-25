@@ -1,4 +1,4 @@
-package docs_test
+package build_phase_test
 
 import (
 	"testing"
@@ -6,19 +6,15 @@ import (
 	"github.com/werf/werf/integration/suite_init"
 )
 
-var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Docs suite", suite_init.TestSuiteEntrypointFuncOptions{})
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Build phase suite", suite_init.TestSuiteEntrypointFuncOptions{})
 
 func TestSuite(t *testing.T) {
 	testSuiteEntrypointFunc(t)
 }
 
-var SuiteData struct {
-	suite_init.SuiteData
-	TestDirPath string
-}
+var SuiteData suite_init.SuiteData
 
 var _ = SuiteData.StubsData.Setup()
 var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
 var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)
 var _ = SuiteData.ProjectNameData.Setup(&SuiteData.StubsData)
-var _ = SuiteData.TmpDirData.Setup()

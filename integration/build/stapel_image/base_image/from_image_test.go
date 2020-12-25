@@ -13,11 +13,11 @@ import (
 
 var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfterBuildChecks func(appConfigName, fromImageConfigName string)) {
 	By(fmt.Sprintf("fromCacheVersion: %s", "0"))
-	stubs.SetEnv("FROM_CACHE_VERSION", "0")
+	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "0")
 
 	output := utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"build",
 	)
 
@@ -26,11 +26,11 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 	extraAfterBuildChecks(appConfigName, fromImageConfigName)
 
 	By(fmt.Sprintf("fromCacheVersion: %s", "1"))
-	stubs.SetEnv("FROM_CACHE_VERSION", "1")
+	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 
 	output = utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		"build",
 	)
 
@@ -41,20 +41,20 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 
 var _ = XDescribe("fromImage", func() {
 	BeforeEach(func() {
-		testDirPath = utils.FixturePath("from_image")
+		SuiteData.TestDirPath = utils.FixturePath("from_image")
 	})
 
 	It("should be rebuilt", func() {
 		fromImageItFunc("app", "fromImage", func(appConfigName, fromImageConfigName string) {
 			appImageName := utils.SucceedCommandOutputString(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"stage", "image", appConfigName,
 			)
 
 			fromImageName := utils.SucceedCommandOutputString(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"stage", "image", fromImageConfigName,
 			)
 
@@ -65,7 +65,7 @@ var _ = XDescribe("fromImage", func() {
 
 var _ = XDescribe("fromArtifact", func() {
 	BeforeEach(func() {
-		testDirPath = utils.FixturePath("from_artifact")
+		SuiteData.TestDirPath = utils.FixturePath("from_artifact")
 	})
 
 	It("should be rebuilt", func() {

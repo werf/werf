@@ -14,14 +14,14 @@ type listEntry struct {
 }
 
 var listItBody = func(entry listEntry) {
-	testDirPath = utils.FixturePath("list")
+	SuiteData.TestDirPath = utils.FixturePath("list")
 
 	werfArgs := []string{"config", "list"}
 	werfArgs = append(werfArgs, entry.extraArgs...)
 
 	output := utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		werfArgs...,
 	)
 

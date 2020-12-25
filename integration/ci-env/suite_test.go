@@ -3,28 +3,20 @@ package ci_env_test
 import (
 	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
-
-	"github.com/werf/werf/integration/utils"
+	"github.com/werf/werf/integration/suite_init"
 )
 
-func TestIntegration(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "CI-env Suite")
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("CI-env suite", suite_init.TestSuiteEntrypointFuncOptions{})
+
+func TestSuite(t *testing.T) {
+	testSuiteEntrypointFunc(t)
 }
 
-var testDirPath string
-var werfBinPath string
+var SuiteData struct {
+	suite_init.SuiteData
+	TestDirPath string
+}
 
-var _ = SynchronizedBeforeSuite(func() []byte {
-	computedPathToWerf := utils.ProcessWerfBinPath()
-	return []byte(computedPathToWerf)
-}, func(computedPathToWerf []byte) {
-	werfBinPath = string(computedPathToWerf)
-})
-
-var _ = SynchronizedAfterSuite(func() {}, func() {
-	gexec.CleanupBuildArtifacts()
-})
+var _ = SuiteData.StubsData.Setup()
+var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
+var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)

@@ -25,21 +25,21 @@ var _ = XDescribe("from and fromLatest", func() {
 		if !utilsDocker.IsImageExist(imageName) {
 			Ω(utilsDocker.Pull(imageName)).Should(Succeed(), "docker pull")
 		}
-		Ω(utilsDocker.CliTag(imageName, registryProjectRepository)).Should(Succeed(), "docker tag")
-		Ω(utilsDocker.CliPush(registryProjectRepository)).Should(Succeed(), "docker push")
-		Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi")
+		Ω(utilsDocker.CliTag(imageName, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker tag")
+		Ω(utilsDocker.CliPush(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker push")
+		Ω(utilsDocker.CliRmi(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
 	}
 
 	BeforeEach(func() {
-		testDirPath = utils.FixturePath("from_and_from_latest")
+		SuiteData.TestDirPath = utils.FixturePath("from_and_from_latest")
 
 		fromBaseRepoImageState1ID = utilsDocker.ImageID(suiteImage1)
 		fromBaseRepoImageState2ID = utilsDocker.ImageID(suiteImage2)
 
-		fromImage = registryProjectRepository
+		fromImage = SuiteData.RegistryProjectRepository
 
-		stubs.SetEnv("FROM_IMAGE", fromImage)
-		stubs.SetEnv("FROM_LATEST", "false")
+		SuiteData.Stubs.SetEnv("FROM_IMAGE", fromImage)
+		SuiteData.Stubs.SetEnv("FROM_LATEST", "false")
 	})
 
 	type entry struct {
@@ -50,11 +50,11 @@ var _ = XDescribe("from and fromLatest", func() {
 	}
 
 	entryItBody := func(e entry) {
-		stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
+		SuiteData.Stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
 
 		res, err := utils.RunCommand(
-			testDirPath,
-			werfBinPath,
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
 			"build",
 		)
 
@@ -70,8 +70,8 @@ var _ = XDescribe("from and fromLatest", func() {
 
 		if err == nil {
 			resultImageName := utils.SucceedCommandOutputString(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"stage", "image",
 			)
 
@@ -154,12 +154,12 @@ var _ = XDescribe("from and fromLatest", func() {
 			})
 
 			AfterEach(func() {
-				utilsDocker.ImageRemoveIfExists(registryProjectRepository)
+				utilsDocker.ImageRemoveIfExists(SuiteData.RegistryProjectRepository)
 			})
 
 			Context("when local from image is actual", func() {
 				BeforeEach(func() {
-					Ω(utilsDocker.Pull(registryProjectRepository)).Should(Succeed(), "docker pull")
+					Ω(utilsDocker.Pull(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
 				})
 
 				DescribeTable("checking from stage logic",
@@ -212,7 +212,7 @@ var _ = XDescribe("from and fromLatest", func() {
 
 				Context("when from image exists locally", func() {
 					BeforeEach(func() {
-						Ω(utilsDocker.CliTag(suiteImage1, registryProjectRepository)).Should(Succeed(), "docker tag")
+						Ω(utilsDocker.CliTag(suiteImage1, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker tag")
 					})
 
 					DescribeTable("checking from stage logic",
@@ -247,7 +247,7 @@ var _ = XDescribe("from and fromLatest", func() {
 		})
 
 		AfterEach(func() {
-			utilsDocker.ImageRemoveIfExists(registryProjectRepository)
+			utilsDocker.ImageRemoveIfExists(SuiteData.RegistryProjectRepository)
 		})
 
 		type entryWithPreBuild struct {
@@ -256,11 +256,11 @@ var _ = XDescribe("from and fromLatest", func() {
 		}
 
 		entryWithPreBuildItBody := func(e entryWithPreBuild) {
-			stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
+			SuiteData.Stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
 
 			utils.RunSucceedCommand(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"build",
 			)
 
@@ -276,7 +276,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				entryWithPreBuildItBody,
 				Entry("should not be rebuilt (fromLatest: false)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.Pull(registryProjectRepository)).Should(Succeed(), "docker pull")
+						Ω(utilsDocker.Pull(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
 					},
 					entry: entry{
 						fromLatest: false,
@@ -290,7 +290,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				}),
 				Entry("should not be rebuilt (fromLatest: true)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.Pull(registryProjectRepository)).Should(Succeed(), "docker pull")
+						Ω(utilsDocker.Pull(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
 					},
 					entry: entry{
 						fromLatest: true,
@@ -310,7 +310,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				entryWithPreBuildItBody,
 				Entry("should not be rebuilt (fromLatest: false)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi")
+						Ω(utilsDocker.CliRmi(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
 						registryProjectRepositoryLatestAs(suiteImage1)
 					},
 					entry: entry{
@@ -325,7 +325,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				}),
 				Entry("should be rebuilt with actual image (fromLatest: true)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.CliRmi(registryProjectRepository)).Should(Succeed(), "docker rmi")
+						Ω(utilsDocker.CliRmi(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
 						registryProjectRepositoryLatestAs(suiteImage1)
 					},
 					entry: entry{
@@ -345,17 +345,17 @@ var _ = XDescribe("from and fromLatest", func() {
 
 var _ = XDescribe("fromCacheVersion", func() {
 	BeforeEach(func() {
-		testDirPath = utils.FixturePath("from_cache_version")
+		SuiteData.TestDirPath = utils.FixturePath("from_cache_version")
 	})
 
 	It("should be rebuilt", func() {
 		specStep := func(fromCacheVersion string) {
 			By(fmt.Sprintf("fromCacheVersion: %s", fromCacheVersion))
-			stubs.SetEnv("FROM_CACHE_VERSION", fromCacheVersion)
+			SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", fromCacheVersion)
 
 			output := utils.SucceedCommandOutputString(
-				testDirPath,
-				werfBinPath,
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
 				"build",
 			)
 

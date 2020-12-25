@@ -8,11 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prashantv/gostub"
+	"github.com/werf/werf/integration/suite_init"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/storage"
@@ -48,54 +47,34 @@ import (
 
 const imageName = "image"
 
-func TestIntegration(t *testing.T) {
-	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
-		fmt.Println("Missing required tools")
-		os.Exit(1)
-	}
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Cleanup suite", suite_init.TestSuiteEntrypointFuncOptions{
+	RequiredSuiteTools: []string{"git", "docker"},
+})
 
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Cleanup Suite")
+func TestSuite(t *testing.T) {
+	testSuiteEntrypointFunc(t)
 }
 
-var requiredSuiteTools = []string{"git", "docker"}
-var requiredSuiteEnvs []string
+var SuiteData struct {
+	suite_init.SuiteData
+	LocalRegistryRepoAddress   string
+	LocalRegistryContainerName string
+	TestImplementation         string
+	StagesStorage              storage.StagesStorage
+}
 
-var tmpDir string
-var testImplementation string
-var testDirPath string
-var werfBinPath string
-var stubs = gostub.New()
-var localRegistryRepoAddress, localRegistryContainerName string
+var _ = SuiteData.StubsData.Setup()
+var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
+var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)
+var _ = SuiteData.ProjectNameData.Setup(&SuiteData.StubsData)
+var _ = SuiteData.TmpDirData.Setup()
 
-var stagesStorage storage.StagesStorage
-
-var _ = SynchronizedBeforeSuite(func() []byte {
-	computedPathToWerf := utils.ProcessWerfBinPath()
-	return []byte(computedPathToWerf)
-}, func(computedPathToWerf []byte) {
-	werfBinPath = string(computedPathToWerf)
-	localRegistryRepoAddress, localRegistryContainerName = utilsDocker.LocalDockerRegistryRun()
+var _ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
+	SuiteData.LocalRegistryRepoAddress, SuiteData.LocalRegistryContainerName = utilsDocker.LocalDockerRegistryRun()
 })
 
-var _ = SynchronizedAfterSuite(func() {
-	utilsDocker.ContainerStopAndRemove(localRegistryContainerName)
-}, func() {
-	gexec.CleanupBuildArtifacts()
-})
-
-var _ = BeforeEach(func() {
-	tmpDir = utils.GetTempDir()
-	testDirPath = tmpDir
-
-	utils.BeforeEachOverrideWerfProjectName(stubs)
-})
-
-var _ = AfterEach(func() {
-	err := os.RemoveAll(tmpDir)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	stubs.Reset()
+var _ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func() {
+	utilsDocker.ContainerStopAndRemove(SuiteData.LocalRegistryContainerName)
 })
 
 func forEachDockerRegistryImplementation(description string, body func()) bool {
@@ -104,7 +83,7 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 
 		Describe(fmt.Sprintf("[%s] %s", implementationName, description), func() {
 			BeforeEach(func() {
-				testImplementation = implementationName
+				SuiteData.TestImplementation = implementationName
 
 				var stagesStorageAddress string
 				var stagesStorageImplementationName string
@@ -114,7 +93,7 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 					if implementationName == ":local" {
 						stagesStorageAddress = ":local"
 					} else {
-						stagesStorageAddress = strings.Join([]string{localRegistryRepoAddress, utils.ProjectName(), "stages"}, "/")
+						stagesStorageAddress = strings.Join([]string{SuiteData.LocalRegistryRepoAddress, utils.ProjectName(), "stages"}, "/")
 						stagesStorageDockerRegistryOptions = docker_registry.DockerRegistryOptions{}
 					}
 				} else {
@@ -132,12 +111,12 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 
 				if isNotSupported {
 					stagesStorageImplementationName = "default"
-					stubs.SetEnv("WERF_REPO_IMPLEMENTATION", stagesStorageImplementationName)
+					SuiteData.Stubs.SetEnv("WERF_REPO_IMPLEMENTATION", stagesStorageImplementationName)
 				}
 
 				initStagesStorage(stagesStorageAddress, stagesStorageImplementationName, stagesStorageDockerRegistryOptions)
 
-				stubs.SetEnv("WERF_REPO", stagesStorageAddress)
+				SuiteData.Stubs.SetEnv("WERF_REPO", stagesStorageAddress)
 			})
 
 			BeforeEach(func() {
@@ -147,8 +126,8 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 			AfterEach(func() {
 			afterEach:
 				combinedOutput, err := utils.RunCommand(
-					testDirPath,
-					werfBinPath,
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
 					"purge", "--force",
 				)
 
@@ -174,27 +153,27 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 }
 
 func initStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	stagesStorage = utils.NewStagesStorage(stagesStorageAddress, implementationName, dockerRegistryOptions)
+	SuiteData.StagesStorage = utils.NewStagesStorage(stagesStorageAddress, implementationName, dockerRegistryOptions)
 }
 
 func StagesCount() int {
-	return utils.StagesCount(context.Background(), stagesStorage)
+	return utils.StagesCount(context.Background(), SuiteData.StagesStorage)
 }
 
 func ManagedImagesCount() int {
-	return utils.ManagedImagesCount(context.Background(), stagesStorage)
+	return utils.ManagedImagesCount(context.Background(), SuiteData.StagesStorage)
 }
 
 func ImageMetadata(imageName string) map[string][]string {
-	return utils.ImageMetadata(context.Background(), stagesStorage, imageName)
+	return utils.ImageMetadata(context.Background(), SuiteData.StagesStorage, imageName)
 }
 
 func RmImportMetadata(importSourceID string) {
-	utils.RmImportMetadata(context.Background(), stagesStorage, importSourceID)
+	utils.RmImportMetadata(context.Background(), SuiteData.StagesStorage, importSourceID)
 }
 
 func ImportMetadataIDs() []string {
-	return utils.ImportMetadataIDs(context.Background(), stagesStorage)
+	return utils.ImportMetadataIDs(context.Background(), SuiteData.StagesStorage)
 }
 
 func implementationListToCheck() []string {
@@ -278,8 +257,8 @@ func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) do
 		username := getRequiredEnv(usernameEnvName)
 		password := getRequiredEnv(passwordEnvName)
 
-		stubs.SetEnv("WERF_REPO_DOCKER_HUB_USERNAME", username)
-		stubs.SetEnv("WERF_REPO_DOCKER_HUB_PASSWORD", password)
+		SuiteData.Stubs.SetEnv("WERF_REPO_DOCKER_HUB_USERNAME", username)
+		SuiteData.Stubs.SetEnv("WERF_REPO_DOCKER_HUB_PASSWORD", password)
 
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
@@ -290,7 +269,7 @@ func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) do
 	case docker_registry.GitHubPackagesImplementationName:
 		token := getRequiredEnv(tokenEnvName)
 
-		stubs.SetEnv("WERF_REPO_GITHUB_TOKEN", token)
+		SuiteData.Stubs.SetEnv("WERF_REPO_GITHUB_TOKEN", token)
 
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
@@ -329,10 +308,10 @@ func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) do
 func implementationBeforeEach(implementationName string) {
 	switch implementationName {
 	case docker_registry.AwsEcrImplementationName:
-		err := stagesStorage.CreateRepo(context.Background())
+		err := SuiteData.StagesStorage.CreateRepo(context.Background())
 		Ω(err).Should(Succeed())
 	case docker_registry.QuayImplementationName:
-		stubs.SetEnv("WERF_PARALLEL", "0")
+		SuiteData.Stubs.SetEnv("WERF_PARALLEL", "0")
 	default:
 	}
 }
@@ -340,7 +319,7 @@ func implementationBeforeEach(implementationName string) {
 func implementationAfterEach(implementationName string) {
 	switch implementationName {
 	case docker_registry.AzureCrImplementationName, docker_registry.AwsEcrImplementationName, docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName, docker_registry.QuayImplementationName:
-		err := stagesStorage.DeleteRepo(context.Background())
+		err := SuiteData.StagesStorage.DeleteRepo(context.Background())
 		switch err := err.(type) {
 		case nil, docker_registry.AzureCrNotFoundError, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError, docker_registry.QuayNotFoundError:
 		default:

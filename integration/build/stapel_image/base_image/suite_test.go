@@ -1,74 +1,68 @@
 package base_image_test
 
 import (
-	"fmt"
-	"os"
 	"strings"
 	"testing"
 
-	"github.com/prashantv/gostub"
+	"github.com/werf/werf/integration/utils"
+
+	"github.com/werf/werf/integration/suite_init"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 
-	"github.com/werf/werf/integration/utils"
 	utilsDocker "github.com/werf/werf/integration/utils/docker"
 )
-
-func TestIntegration(t *testing.T) {
-	if !utils.MeetsRequirements(requiredSuiteTools, requiredSuiteEnvs) {
-		fmt.Println("Missing required tools")
-		os.Exit(1)
-	}
-
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Build/Stapel Image/Base Image Suite")
-}
-
-var requiredSuiteTools = []string{"docker"}
-var requiredSuiteEnvs []string
-
-var testDirPath string
-var werfBinPath string
-var stubs = gostub.New()
-var registry, registryContainerName string
-var registryProjectRepository string
 
 var suiteImage1 = "flant/werf-test:base-image-suite-image1"
 var suiteImage2 = "flant/werf-test:base-image-suite-image2"
 
-var _ = SynchronizedBeforeSuite(func() []byte {
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Ansible suite", suite_init.TestSuiteEntrypointFuncOptions{
+	RequiredSuiteTools: []string{"docker"},
+})
+
+func TestSuite(t *testing.T) {
+	testSuiteEntrypointFunc(t)
+}
+
+var SuiteData = struct {
+	suite_init.SuiteData
+
+	Registry                  string
+	RegistryContainerName     string
+	RegistryProjectRepository string
+}{}
+
+var _ = AfterEach(func() {
+	utils.RunSucceedCommand(
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
+		"purge", "--force",
+	)
+})
+
+var _ = SuiteData.StubsData.Setup()
+var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
+var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)
+var _ = SuiteData.ProjectNameData.Setup(&SuiteData.StubsData)
+var _ = SuiteData.TmpDirData.Setup()
+
+var _ = SuiteData.AppendSynchronizedBeforeSuiteNode1Func(func() {
 	for _, suiteImage := range []string{suiteImage1, suiteImage2} {
 		if !utilsDocker.IsImageExist(suiteImage) {
 			Ω(utilsDocker.Pull(suiteImage)).Should(Succeed(), "docker pull")
 		}
 	}
-
-	computedPathToWerf := utils.ProcessWerfBinPath()
-	return []byte(computedPathToWerf)
-}, func(computedPathToWerf []byte) {
-	werfBinPath = string(computedPathToWerf)
-	registry, registryContainerName = utilsDocker.LocalDockerRegistryRun()
 })
 
-var _ = SynchronizedAfterSuite(func() {
-	utilsDocker.ContainerStopAndRemove(registryContainerName)
-}, func() {
-	gexec.CleanupBuildArtifacts()
+var _ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
+	SuiteData.Registry, SuiteData.RegistryContainerName = utilsDocker.LocalDockerRegistryRun()
+})
+
+var _ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func() {
+	utilsDocker.ContainerStopAndRemove(SuiteData.RegistryContainerName)
 })
 
 var _ = BeforeEach(func() {
-	utils.BeforeEachOverrideWerfProjectName(stubs)
-	registryProjectRepository = strings.Join([]string{registry, utils.ProjectName()}, "/")
-})
-
-var _ = AfterEach(func() {
-	utils.RunSucceedCommand(
-		testDirPath,
-		werfBinPath,
-		"purge", "--force",
-	)
-
-	stubs.Reset()
+	SuiteData.RegistryProjectRepository = strings.Join([]string{SuiteData.Registry, SuiteData.ProjectName}, "/")
 })

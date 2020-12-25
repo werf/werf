@@ -1,16 +1,12 @@
 package get_test
 
 import (
-	"os"
 	"testing"
 
-	"github.com/prashantv/gostub"
+	"github.com/werf/werf/integration/suite_init"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
-
-	"github.com/werf/werf/integration/utils"
 )
 
 func TestIntegration(t *testing.T) {
@@ -18,32 +14,19 @@ func TestIntegration(t *testing.T) {
 	RunSpecs(t, "Helm/Get Suite")
 }
 
-var testDirPath string
-var tmpDir string
-var werfBinPath string
-var stubs = gostub.New()
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Helm/Get suite", suite_init.TestSuiteEntrypointFuncOptions{})
 
-var _ = SynchronizedBeforeSuite(func() []byte {
-	computedPathToWerf := utils.ProcessWerfBinPath()
-	return []byte(computedPathToWerf)
-}, func(computedPathToWerf []byte) {
-	werfBinPath = string(computedPathToWerf)
-})
+func TestSuite(t *testing.T) {
+	testSuiteEntrypointFunc(t)
+}
 
-var _ = SynchronizedAfterSuite(func() {}, func() {
-	gexec.CleanupBuildArtifacts()
-})
+var SuiteData struct {
+	suite_init.SuiteData
+	TestDirPath string
+}
 
-var _ = BeforeEach(func() {
-	tmpDir = utils.GetTempDir()
-	testDirPath = tmpDir
-
-	utils.BeforeEachOverrideWerfProjectName(stubs)
-})
-
-var _ = AfterEach(func() {
-	err := os.RemoveAll(tmpDir)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	stubs.Reset()
-})
+var _ = SuiteData.StubsData.Setup()
+var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
+var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)
+var _ = SuiteData.ProjectNameData.Setup(&SuiteData.StubsData)
+var _ = SuiteData.TmpDirData.Setup()

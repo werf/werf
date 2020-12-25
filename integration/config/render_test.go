@@ -15,14 +15,14 @@ type renderEntry struct {
 }
 
 var renderItBody = func(entry renderEntry) {
-	testDirPath = utils.FixturePath("render")
+	SuiteData.TestDirPath = utils.FixturePath("render")
 
 	werfArgs := []string{"config", "render"}
 	werfArgs = append(werfArgs, entry.extraArgs...)
 
 	output := utils.SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
 		werfArgs...,
 	)
 
