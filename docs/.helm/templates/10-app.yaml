@@ -1,7 +1,4 @@
 {{- $_ := set . "Version" ( splitList "/" .Values.global.github_ref | last ) }}
-
-{{- if eq .Version "wf-werfio3" }}{{ $_ := set . "Version" "master" }}{{- end  }}
-
 {{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
 {{- $_ := set . "VersionDNSNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" ) }}
 
