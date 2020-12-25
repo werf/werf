@@ -16,7 +16,7 @@ const (
 	// TODO: use embedded file openapi_spec.yaml instead
 	schemaYaml = `type: object
 required:
-- giterminismConfigVersion
+  - giterminismConfigVersion
 additionalProperties: {}
 properties:
   giterminismConfigVersion:
@@ -51,6 +51,8 @@ definitions:
     type: object
     additionalProperties: {}
     properties:
+      allowFromLatest:
+        type: boolean
       mount:
         $ref: '#/definitions/ConfigStapelMount'
   ConfigStapelMount:

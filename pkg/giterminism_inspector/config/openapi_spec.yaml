@@ -35,6 +35,8 @@ definitions:
     type: object
     additionalProperties: {}
     properties:
+      allowFromLatest:
+        type: boolean
       mount:
         $ref: '#/definitions/ConfigStapelMount'
   ConfigStapelMount:
