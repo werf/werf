@@ -5,12 +5,12 @@ description: Deploy your first application with werf
 sidebar: documentation
 ---
 
-In this article we will show you how to set up the deployment of an [example application](https://github.com/werf/quickstart-application) (a cool voting app in our case) using werf. It is better to start with a [short introduction]({{ "introduction.html" | relative_url }}) first if you haven't read it yet.
+In this article we will show you how to set up the deployment of an [example application](https://github.com/werf/quickstart-application) (a cool voting app in our case) using werf. It is better to start with a [short introduction](../introduction.html) first if you haven't read it yet.
 
 ## Prepare your host
 
- 1. Install [dependencies]({{ "installation.html#install-dependencies" | relative_url }}) (Docker and Git).
- 2. Install [multiwerf and werf]({{ "installation.html#install-werf" | relative_url }}).
+ 1. Install [dependencies](../installation.html#install-dependencies) (Docker and Git).
+ 2. Install [multiwerf and werf](../installation.html#install-werf).
 
 Make sure you have `werf` command available in your shell before proceeding to the next step:
    
@@ -210,7 +210,7 @@ minikube service --namespace quickstart-application --url result
 
 ## How it works
 
-To deploy an application using werf, we should define the desired state in the Git (as set out in the [introduction]({{ "introduction.html" | relative_url }})).
+To deploy an application using werf, we should define the desired state in the Git (as set out in the [introduction](../introduction.html)).
 
  1. We have the following Dockerfiles in our repository:
 
@@ -245,7 +245,7 @@ To deploy an application using werf, we should define the desired state in the G
 
  3. Kubernetes templates for `vote`, `db`, `redis`, `result` and `worker` components of the application are described in the files of a `.helm/templates/` directory. Components interact with each other as shown in the diagram:
 
-  ![architecture]({{ "images/quickstart-architecture.svg" | relative_url }})
+  ![architecture](../images/quickstart-architecture.svg)
 
    - A front-end web app in Python or ASP.NET Core lets you vote for one of the two options;
    - A Redis or NATS queue collects new votes;
@@ -255,4 +255,4 @@ To deploy an application using werf, we should define the desired state in the G
 
 ## What's next?
 
-Check the ["Using werf with CI/CD systems" article]({{ "documentation/using_with_ci_cd_systems.html" | relative_url }}) or refer to the [guides]({{ "documentation/guides.html" | relative_url }}).
+Check the ["Using werf with CI/CD systems" article](using_with_ci_cd_systems.html) or refer to the [guides](guides.html).

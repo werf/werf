@@ -72,3 +72,7 @@ timezone: Europe/Moscow
 
 sidebars:
 - documentation
+
+assets:
+  digest: false
+#  destination: "./"
