@@ -54,14 +54,14 @@ func NewCmd() *cobra.Command {
 			configOpts := common.GetWerfConfigOptions(&commonCmdData, false)
 
 			// TODO disable logboek only for this action
-			werfConfigPath, err := common.GetWerfConfigPath(projectDir, *commonCmdData.ConfigPath, true, localGitRepo)
+			relWerfConfigPath, err := common.RelGetWerfConfigPath(projectDir, *commonCmdData.ConfigPath, true, localGitRepo)
 			if err != nil {
 				return err
 			}
 
-			werfConfigTemplatesDir := common.GetWerfConfigTemplatesDir(projectDir, &commonCmdData)
+			relWerfConfigTemplatesDir := common.GetRelWerfConfigTemplatesDir(projectDir, &commonCmdData)
 
-			return config.RenderWerfConfig(common.BackgroundContext(), projectDir, werfConfigPath, werfConfigTemplatesDir, args, localGitRepo, configOpts)
+			return config.RenderWerfConfig(common.BackgroundContext(), projectDir, relWerfConfigPath, relWerfConfigTemplatesDir, args, localGitRepo, configOpts)
 		},
 	}
 

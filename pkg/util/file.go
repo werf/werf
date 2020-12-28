@@ -79,8 +79,8 @@ func GetRelativeToBaseFilepath(base, path string) string {
 }
 
 func IsSubpathOfBasePath(basePath, path string) bool {
-	basePathParts := SplitPath(basePath)
-	pathParts := SplitPath(path)
+	basePathParts := SplitFilepath(basePath)
+	pathParts := SplitFilepath(path)
 
 	if len(basePathParts) > len(pathParts) {
 		return false
@@ -91,19 +91,4 @@ func IsSubpathOfBasePath(basePath, path string) bool {
 		}
 	}
 	return true
-}
-
-func SplitPath(path string) []string {
-	var parts []string
-	var dir = path
-	var file string
-	for {
-		dir, file = filepath.Split(dir)
-		parts = append([]string{file}, parts...)
-		if dir == "" {
-			break
-		}
-		dir = filepath.Dir(dir)
-	}
-	return parts
 }

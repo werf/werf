@@ -15,10 +15,15 @@ type GiterminismConfig struct {
 }
 
 type config struct {
-	AllowUncommitted    bool                `json:"allowUncommitted"`
-	GoTemplateRendering goTemplateRendering `json:"goTemplateRendering"`
-	Stapel              stapel              `json:"stapel"`
-	Dockerfile          dockerfile          `json:"dockerfile"`
+	AllowUncommitted          bool                `json:"allowUncommitted"`
+	AllowUncommittedTemplates []string            `json:"allowUncommittedTemplates"`
+	GoTemplateRendering       goTemplateRendering `json:"goTemplateRendering"`
+	Stapel                    stapel              `json:"stapel"`
+	Dockerfile                dockerfile          `json:"dockerfile"`
+}
+
+func (c config) IsUncommittedTemplateFileAccepted(path string) (bool, error) {
+	return isPathMatched(c.AllowUncommittedTemplates, path, true)
 }
 
 type goTemplateRendering struct {

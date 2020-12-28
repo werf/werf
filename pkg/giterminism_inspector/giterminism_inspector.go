@@ -45,6 +45,14 @@ func IsUncommittedConfigAccepted() bool {
 	return giterminismConfig.Config.AllowUncommitted
 }
 
+func IsUncommittedConfigTemplateFileAccepted(path string) (bool, error) {
+	return giterminismConfig.Config.IsUncommittedTemplateFileAccepted(path)
+}
+
+func HaveUncommittedConfigTemplates() bool {
+	return len(giterminismConfig.Config.AllowUncommittedTemplates) != 0
+}
+
 func IsUncommittedDockerfileAccepted(path string) (bool, error) {
 	return giterminismConfig.Config.Dockerfile.IsUncommittedAccepted(path)
 }
@@ -83,6 +91,10 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 	} else {
 		return fmt.Errorf("restricted usage of uncommitted file %s (more info %s)", path, giterminismDocPageURL)
 	}
+}
+
+func ReportUntrackedConfigTemplateFile(ctx context.Context, path string) error {
+	return ReportUntrackedFile(ctx, path)
 }
 
 func ReportConfigStapelFromLatest(_ context.Context) error {
