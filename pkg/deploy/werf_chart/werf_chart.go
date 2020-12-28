@@ -186,12 +186,12 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 		logboek.Context(wc.Ctx).Debug().LogF("Check %s exists in the local git repo commit %s: NOT FOUND\n", defaultSecretValuesFile, commit)
 	}
 
-	for _, path := range wc.SecretValueFiles {
-		secretValuesFiles = append(secretValuesFiles, path)
+	for _, relPath := range wc.SecretValueFiles {
+		secretValuesFiles = append(secretValuesFiles, relPath)
 	}
 
-	for _, path := range secretValuesFiles {
-		logboek.Context(wc.Ctx).Debug().LogF("Decoding secret values file %q\n", path)
+	for _, relPath := range secretValuesFiles {
+		logboek.Context(wc.Ctx).Debug().LogF("Decoding secret values file %q\n", relPath)
 
 		var decodedValues map[string]interface{}
 
@@ -200,8 +200,8 @@ func (wc *WerfChart) loadSecretsFromLocalGitRepo() error {
 			return fmt.Errorf("unable to get local repo head commit: %s", err)
 		}
 
-		if vals, err := DecodeSecretValuesFileFromGitCommit(wc.Ctx, path, commit, *wc.LocalGitRepo, wc.SecretsManager, wc.ProjectDir); err != nil {
-			return fmt.Errorf("unable to decode secret values file %q: %s", path, err)
+		if vals, err := DecodeSecretValuesFileFromGitCommit(wc.Ctx, wc.SecretsManager, *wc.LocalGitRepo, commit, wc.ProjectDir, relPath); err != nil {
+			return fmt.Errorf("unable to decode secret values file %q: %s", relPath, err)
 		} else {
 			decodedValues = vals
 		}

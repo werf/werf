@@ -97,6 +97,10 @@ type helm struct {
 	AllowUncommittedFiles []string `json:"allowUncommittedFiles"`
 }
 
+func (h helm) IsUncommittedFileAccepted(path string) (bool, error) {
+	return isPathMatched(h.AllowUncommittedFiles, path, true)
+}
+
 func isPathMatched(patterns []string, path string, withGlobs bool) (bool, error) {
 	path = filepath.ToSlash(path)
 	for _, pattern := range patterns {

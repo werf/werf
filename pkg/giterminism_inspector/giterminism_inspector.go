@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
+
 	"github.com/werf/werf/pkg/giterminism_inspector/config"
 )
 
@@ -61,7 +62,11 @@ func IsUncommittedDockerignoreAccepted(path string) (bool, error) {
 	return giterminismConfig.Config.Dockerfile.IsUncommittedDockerignoreAccepted(path)
 }
 
-func ReportUntrackedFile(ctx context.Context, path string) error {
+func IsHelmUncommittedFileAccepted(path string) (bool, error) {
+	return giterminismConfig.Helm.IsUncommittedFileAccepted(path)
+}
+
+func reportUntrackedFile(ctx context.Context, path string) error {
 	for _, p := range ReportedUntrackedPaths {
 		if p == path {
 			return nil
@@ -94,11 +99,11 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 }
 
 func ReportUntrackedConfigTemplateFile(ctx context.Context, path string) error {
-	return ReportUntrackedFile(ctx, path)
+	return reportUntrackedFile(ctx, path)
 }
 
 func ReportUntrackedConfigGoTemplateRenderingFile(ctx context.Context, path string) error {
-	return ReportUntrackedFile(ctx, path)
+	return reportUntrackedFile(ctx, path)
 }
 
 func ReportConfigStapelFromLatest(_ context.Context) error {
@@ -163,6 +168,10 @@ func ReportConfigGoTemplateRenderingEnv(_ context.Context, envName string) error
 	}
 
 	return fmt.Errorf("env name %s is forbidden due to enabled giterminism mode (more info %s)", envName, giterminismDocPageURL)
+}
+
+func ReportUntrackedHelmFile(ctx context.Context, path string) error {
+	return reportUntrackedFile(ctx, path)
 }
 
 func PrintInspectionDebrief(ctx context.Context) {

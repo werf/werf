@@ -23,12 +23,12 @@ func GiterministicFilesLoader(ctx context.Context, localGitRepo git_repo.Local, 
 	var res []*loader.BufferedFile
 	var lock *chart.Lock
 
-	gitFiles, err := LoadFilesFromGit(ctx, localGitRepo, projectDir, loadDir)
+	commitFiles, err := LoadFiles(ctx, localGitRepo, projectDir, loadDir)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, f := range gitFiles {
+	for _, f := range commitFiles {
 		switch {
 		case f.Name == "Chart.lock":
 			lock = new(chart.Lock)
@@ -45,34 +45,10 @@ func GiterministicFilesLoader(ctx context.Context, localGitRepo git_repo.Local, 
 		}
 	}
 
-	res = gitFiles
-
-	localFiles, err := loader.GetFilesFromLocalFilesystem(loadDir)
-	if err != nil {
-		return nil, err
-	}
-
-CheckUncommittedChartYaml:
-	for _, f := range localFiles {
-		if f.Name == "Chart.yaml" {
-			for _, gf := range gitFiles {
-				if gf.Name == "Chart.yaml" {
-					break CheckUncommittedChartYaml
-				}
-			}
-
-			if err := giterminism_inspector.ReportUntrackedFile(ctx, filepath.Join(loadDir, f.Name)); err != nil {
-				return nil, err
-			}
-
-			break CheckUncommittedChartYaml
-		}
-	}
-
 	if lock != nil {
 		localSubchartsFiles := make(map[string][]*loader.BufferedFile)
 
-		for _, f := range localFiles {
+		for _, f := range commitFiles {
 			switch {
 			case strings.HasPrefix(f.Name, "charts/"):
 				fname := strings.TrimPrefix(f.Name, "charts/")
@@ -94,7 +70,7 @@ CheckUncommittedChartYaml:
 	return res, nil
 }
 
-func LoadFilesFromGit(ctx context.Context, localGitRepo git_repo.Local, projectDir, loadDir string) ([]*loader.BufferedFile, error) {
+func LoadFiles(ctx context.Context, localGitRepo git_repo.Local, projectDir, loadDir string) ([]*loader.BufferedFile, error) {
 	commit, err := localGitRepo.HeadCommit(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get local repo head commit: %s", err)
@@ -119,16 +95,61 @@ func LoadFilesFromGit(ctx context.Context, localGitRepo git_repo.Local, projectD
 	}
 
 	var res []*loader.BufferedFile
+	for _, relPath := range repoPaths {
+		if util.IsSubpathOfBasePath(relativeLoadDir, relPath) {
+			// .helmignore
 
-	for _, repoPath := range repoPaths {
-		if util.IsSubpathOfBasePath(relativeLoadDir, repoPath) {
-			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, repoPath); err != nil {
+			accepted, err := giterminism_inspector.IsHelmUncommittedFileAccepted(relPath)
+			if err != nil {
 				return nil, err
-			} else {
-				logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, repoPath, d)
-				res = append(res, &loader.BufferedFile{Name: filepath.ToSlash(util.GetRelativeToBaseFilepath(relativeLoadDir, repoPath)), Data: d})
+			}
+
+			if accepted {
+				continue
+			}
+
+			d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
+			if err != nil {
+				return nil, err
+			}
+
+			logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, relPath, d)
+			res = append(res, &loader.BufferedFile{Name: filepath.ToSlash(util.GetRelativeToBaseFilepath(relativeLoadDir, relPath)), Data: d})
+		}
+	}
+
+	isBufferedFilePathAddedFunc := func(path string) bool {
+		for _, bufferedFile := range res {
+			if bufferedFile.Name == path {
+				return true
 			}
 		}
+
+		return false
+	}
+
+	localFiles, err := loader.GetFilesFromLocalFilesystem(loadDir)
+	if err != nil {
+		return nil, err
+	}
+	for _, localFile := range localFiles {
+		relPath := util.GetRelativeToBaseFilepath(projectDir, localFile.Name)
+		accepted, err := giterminism_inspector.IsHelmUncommittedFileAccepted(relPath)
+		if err != nil {
+			return nil, err
+		}
+
+		if !accepted {
+			if !isBufferedFilePathAddedFunc(localFile.Name) {
+				if err := giterminism_inspector.ReportUntrackedHelmFile(ctx, relPath); err != nil {
+					return nil, err
+				}
+			}
+
+			continue
+		}
+
+		res = append(res, localFile)
 	}
 
 	return res, nil
