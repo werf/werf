@@ -287,6 +287,10 @@ func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, l
 		return addTemplate(tmpl, templateName, string(d))
 	}
 
+	isTemplateExistFunc := func(relTemplatePath string) bool {
+		return tmpl.Lookup(templateNameFunc(relTemplatePath)) != nil
+	}
+
 	fsTemplatePathList, err := getWerfConfigTemplatesFromFilesystem(projectDir, relWerfConfigTemplatesDir)
 	if err != nil {
 		return err
@@ -319,32 +323,24 @@ func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, l
 		}
 	}
 
-	if giterminism_inspector.HaveUncommittedConfigTemplates() {
-		for _, relPath := range fsTemplatePathList {
-			accepted, err := giterminism_inspector.IsUncommittedConfigTemplateFileAccepted(relPath)
-			if err != nil {
-				return err
-			}
-
-			if !accepted {
-				continue
-			}
-
-			if err := addTemplatesFromFSFunc(relPath); err != nil {
-				return err
-			}
-		}
-	} else {
-		var commitTemplatePathListToFilepath []string
-		for _, path := range commitTemplatePathList {
-			commitTemplatePathListToFilepath = append(commitTemplatePathListToFilepath, filepath.FromSlash(path))
+	for _, relPath := range fsTemplatePathList {
+		accepted, err := giterminism_inspector.IsUncommittedConfigTemplateFileAccepted(relPath)
+		if err != nil {
+			return err
 		}
 
-		untrackedFiles := util.ExcludeFromStringArray(fsTemplatePathList, commitTemplatePathListToFilepath...)
-		for _, path := range untrackedFiles {
-			if err := giterminism_inspector.ReportUntrackedConfigTemplateFile(ctx, path); err != nil {
-				return err
+		if !accepted {
+			if !isTemplateExistFunc(relPath) {
+				if err := giterminism_inspector.ReportUntrackedConfigTemplateFile(ctx, relPath); err != nil {
+					return err
+				}
 			}
+
+			continue
+		}
+
+		if err := addTemplatesFromFSFunc(relPath); err != nil {
+			return err
 		}
 	}
 
