@@ -740,6 +740,17 @@ func findStageByImageID(stages []*image.StageDescription, imageID string) *image
 
 func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDescription, stage *image.StageDescription) ([]*image.StageDescription, []*image.StageDescription) {
 	var excludedStages []*image.StageDescription
+	currentStage := stage
+	for {
+		stages = excludeStages(stages, currentStage)
+		excludedStages = append(excludedStages, currentStage)
+
+		currentStage = findStageByImageID(stages, currentStage.Info.ParentID)
+		if currentStage == nil {
+			break
+		}
+	}
+
 	for label, checksum := range stage.Info.Labels {
 		if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
 			sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
@@ -750,17 +761,6 @@ func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDe
 					excludedStages = append(excludedStages, excludedImportStages...)
 				}
 			}
-		}
-	}
-
-	currentStage := stage
-	for {
-		stages = excludeStages(stages, currentStage)
-		excludedStages = append(excludedStages, currentStage)
-
-		currentStage = findStageByImageID(stages, currentStage.Info.ParentID)
-		if currentStage == nil {
-			break
 		}
 	}
 
