@@ -13,8 +13,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/werf/werf/pkg/giterminism_inspector"
-
 	"github.com/Masterminds/sprig/v3"
 	"github.com/bmatcuk/doublestar"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -23,6 +21,7 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/tmp_manager"
@@ -288,6 +287,10 @@ func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, l
 		return addTemplate(tmpl, templateName, string(d))
 	}
 
+	isTemplateExistFunc := func(relTemplatePath string) bool {
+		return tmpl.Lookup(templateNameFunc(relTemplatePath)) != nil
+	}
+
 	fsTemplatePathList, err := getWerfConfigTemplatesFromFilesystem(projectDir, relWerfConfigTemplatesDir)
 	if err != nil {
 		return err
@@ -320,32 +323,24 @@ func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, l
 		}
 	}
 
-	if giterminism_inspector.HaveUncommittedConfigTemplates() {
-		for _, relPath := range fsTemplatePathList {
-			accepted, err := giterminism_inspector.IsUncommittedConfigTemplateFileAccepted(relPath)
-			if err != nil {
-				return err
-			}
-
-			if !accepted {
-				continue
-			}
-
-			if err := addTemplatesFromFSFunc(relPath); err != nil {
-				return err
-			}
-		}
-	} else {
-		var commitTemplatePathListToFilepath []string
-		for _, path := range commitTemplatePathList {
-			commitTemplatePathListToFilepath = append(commitTemplatePathListToFilepath, filepath.FromSlash(path))
+	for _, relPath := range fsTemplatePathList {
+		accepted, err := giterminism_inspector.IsUncommittedConfigTemplateFileAccepted(relPath)
+		if err != nil {
+			return err
 		}
 
-		untrackedFiles := util.ExcludeFromStringArray(fsTemplatePathList, commitTemplatePathListToFilepath...)
-		for _, path := range untrackedFiles {
-			if err := giterminism_inspector.ReportUntrackedConfigTemplateFile(ctx, path); err != nil {
-				return err
+		if !accepted {
+			if !isTemplateExistFunc(relPath) {
+				if err := giterminism_inspector.ReportUntrackedConfigTemplateFile(ctx, relPath); err != nil {
+					return err
+				}
 			}
+
+			continue
+		}
+
+		if err := addTemplatesFromFSFunc(relPath); err != nil {
+			return err
 		}
 	}
 
@@ -462,7 +457,12 @@ type files struct {
 }
 
 func (f files) doGet(path string) (string, error) {
-	if giterminism_inspector.LooseGiterminism {
+	accepted, err := giterminism_inspector.IsUncommittedConfigGoTemplateRenderingFileAccepted(path)
+	if err != nil {
+		return "", err
+	}
+
+	if giterminism_inspector.LooseGiterminism || accepted {
 		filePath := filepath.Join(f.ProjectDir, filepath.FromSlash(path))
 
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -484,7 +484,7 @@ func (f files) doGet(path string) (string, error) {
 		return "", fmt.Errorf("config {{ .Files.Get '%s' }}: file not exist", path)
 	}
 
-	if b, err := f.LocalGitRepo.ReadCommitFile(f.ctx, f.Commit, path); err != nil {
+	if b, err := git_repo.ReadCommitFileAndCompareWithProjectFile(f.ctx, f.LocalGitRepo, f.Commit, f.ProjectDir, path); err != nil {
 		return "", fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
 	} else {
 		return string(b), nil
@@ -499,10 +499,9 @@ func (f files) Get(path string) string {
 	}
 }
 
-func (f files) doGlobFromFilesystem(pattern string) (map[string]interface{}, error) {
+func (f files) doGlobFromFS(pattern string) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
-
-	err := util.WalkByPattern(f.ProjectDir, filepath.FromSlash(pattern), func(path string, s os.FileInfo, err error) error {
+	err := util.WalkByPattern(f.ProjectDir, pattern, func(path string, s os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -550,45 +549,76 @@ func (f files) doGlobFromFilesystem(pattern string) (map[string]interface{}, err
 	return result, nil
 }
 
-func (f files) doGlobFromGitRepo(ctx context.Context, pattern string) (map[string]interface{}, error) {
-	if paths, err := f.LocalGitRepo.GetCommitFilePathList(ctx, f.Commit); err != nil {
-		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
+func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface{}, error) {
+	res := map[string]interface{}{}
+	var err error
+	if giterminism_inspector.LooseGiterminism {
+		res, err = f.doGlobFromFS(pattern)
 	} else {
-		result := make(map[string]interface{})
-
-		for _, path := range paths {
-			// FIXME: use ls-tree path matcher
-			if matched, err := doublestar.PathMatch(pattern, path); err != nil {
-				return nil, fmt.Errorf("path match failed: %s", err)
-			} else if matched {
-				if b, err := f.LocalGitRepo.ReadCommitFile(ctx, f.Commit, path); err != nil {
-					return nil, fmt.Errorf("error reading %s from local git repo commit %s: %s", path, f.Commit, err)
-				} else {
-					resultPath := filepath.ToSlash(path)
-					result[resultPath] = string(b)
-				}
-			}
+		commitPathList, err := f.LocalGitRepo.GetCommitFilePathList(ctx, f.Commit)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
 		}
 
-		return result, nil
+		for _, relFilepath := range commitPathList {
+			relPath := filepath.ToSlash(relFilepath)
+			if matched, err := doublestar.Match(pattern, relPath); err != nil {
+				return nil, err
+			} else if !matched {
+				continue
+			}
+
+			accepted, err := giterminism_inspector.IsUncommittedConfigGoTemplateRenderingFileAccepted(relPath)
+			if err != nil {
+				return nil, err
+			}
+
+			if accepted {
+				continue
+			}
+
+			data, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, f.LocalGitRepo, f.Commit, f.ProjectDir, relPath)
+			if err != nil {
+				return nil, err
+			}
+
+			res[relPath] = string(data)
+		}
+
+		fsPathList, err := f.doGlobFromFS(pattern)
+		if err != nil {
+			return nil, err
+		}
+		for relPath, data := range fsPathList {
+			accepted, err := giterminism_inspector.IsUncommittedConfigGoTemplateRenderingFileAccepted(relPath)
+			if err != nil {
+				return nil, err
+			}
+
+			if !accepted {
+				_, exist := res[relPath]
+				if !exist {
+					if err := giterminism_inspector.ReportUntrackedConfigGoTemplateRenderingFile(ctx, relPath); err != nil {
+						return nil, err
+					}
+				}
+
+				continue
+			}
+
+			res[relPath] = data
+		}
 	}
-}
 
-func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface{}, error) {
-	var res map[string]interface{}
-	var err error
-
-	if giterminism_inspector.LooseGiterminism {
-		res, err = f.doGlobFromFilesystem(pattern)
-	} else {
-		res, err = f.doGlobFromGitRepo(ctx, pattern)
+	if err != nil {
+		return nil, err
 	}
 
 	if len(res) == 0 {
 		logboek.Context(f.ctx).Warn().LogF("WARNING: No matches found for {{ .Files.Glob '%s' }}\n", pattern)
 	}
 
-	return res, err
+	return res, nil
 }
 
 // Glob returns the hash of regular files and their contents for the paths that are matched pattern

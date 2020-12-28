@@ -49,8 +49,8 @@ func IsUncommittedConfigTemplateFileAccepted(path string) (bool, error) {
 	return giterminismConfig.Config.IsUncommittedTemplateFileAccepted(path)
 }
 
-func HaveUncommittedConfigTemplates() bool {
-	return len(giterminismConfig.Config.AllowUncommittedTemplates) != 0
+func IsUncommittedConfigGoTemplateRenderingFileAccepted(path string) (bool, error) {
+	return giterminismConfig.Config.GoTemplateRendering.IsUncommittedFileAccepted(path)
 }
 
 func IsUncommittedDockerfileAccepted(path string) (bool, error) {
@@ -94,6 +94,10 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 }
 
 func ReportUntrackedConfigTemplateFile(ctx context.Context, path string) error {
+	return ReportUntrackedFile(ctx, path)
+}
+
+func ReportUntrackedConfigGoTemplateRenderingFile(ctx context.Context, path string) error {
 	return ReportUntrackedFile(ctx, path)
 }
 

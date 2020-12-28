@@ -51,6 +51,10 @@ definitions:
         type: array
         items:
           type: string
+      allowUncommittedFiles:
+        type: array
+        items:
+          type: string
   ConfigStapel:
     type: object
     additionalProperties: {}

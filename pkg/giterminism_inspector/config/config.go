@@ -27,7 +27,8 @@ func (c config) IsUncommittedTemplateFileAccepted(path string) (bool, error) {
 }
 
 type goTemplateRendering struct {
-	AllowEnvVariables []string `json:"allowEnvVariables"`
+	AllowEnvVariables     []string `json:"allowEnvVariables"`
+	AllowUncommittedFiles []string `json:"allowUncommittedFiles"`
 }
 
 func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
@@ -49,6 +50,10 @@ func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (r goTemplateRendering) IsUncommittedFileAccepted(path string) (bool, error) {
+	return isPathMatched(r.AllowUncommittedFiles, path, true)
 }
 
 type stapel struct {
