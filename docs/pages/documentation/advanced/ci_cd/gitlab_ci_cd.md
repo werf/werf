@@ -18,9 +18,9 @@ A typical pipeline includes the following stages:
 
 The set of tiers (as well as GitLab environments) in a Kubernetes cluster may vary depending on multiple factors. In this article, we will discuss various options of setting up environments for the following tiers:
 
-* [Production]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#production" | relative_url }}).
-* [Staging]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#staging" | relative_url }}).
-* [Review]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#review" | relative_url }}).
+* [Production]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#production" | true_relative_url: page.url }}).
+* [Staging]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#staging" | true_relative_url: page.url }}).
+* [Review]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#review" | true_relative_url: page.url }}).
 
 Below, we discuss various pipeline stages and options for setting them up. We will start with general terms and then proceed to the particularities. At the end of the article, you may find [ready-made .gitlab-ci.yml](#the-complete-gitlab-ciyml-for-ready-made-workflows) files tailored for specific workflows.
 
@@ -34,7 +34,7 @@ Regardless of the workflow in question, all configuration versions are subject t
 
 There are various configuration options for deploying to review, staging, and production environments. Each option for the staging and production environments is complemented by several ways to roll back the release in production.
 
-> You can learn more about implementing the CI/CD approach using werf and constructing the custom workflow in the [introductory article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | relative_url }}).
+> You can learn more about implementing the CI/CD approach using werf and constructing the custom workflow in the [introductory article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | true_relative_url: page.url }}).
 
 ## Requirements
 
@@ -82,7 +82,7 @@ Let us install and configure the GitLab runner on the node where werf will be ru
    ```
    
 1. Install [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) and configure `kubectl` (if they were not installed before).
-1. Install [werf dependencies]({{ "installation.html#install-dependencies" | relative_url }}).
+1. Install [werf dependencies]({{ "installation.html#install-dependencies" | true_relative_url: page.url }}).
 1. Install [multiwerf](https://github.com/werf/multiwerf) under the `gitlab-runner` user:
 
    ```shell
@@ -132,7 +132,7 @@ In the simplest case, if an integrated Docker registry is used, then the authori
 
 As a result of the `werf ci-env` command, a temporary docker config is created. It is used by all the commands in the shell session (including docker). It means that parallel tasks do not overlap when using docker, and the temporary token is preserved (not overwritten) in the configuration.
 
-If you need to authorize using the custom credentials, the `docker login` command must be executed after invoking `werf ci-env` (this [article]({{ "documentation/advanced/supported_registry_implementations.html#docker-authorization" | relative_url }}) sheds more light on authorization).
+If you need to authorize using the custom credentials, the `docker login` command must be executed after invoking `werf ci-env` (this [article]({{ "documentation/advanced/supported_registry_implementations.html#docker-authorization" | true_relative_url: page.url }}) sheds more light on authorization).
 
 ## Deploying an application
 
@@ -217,9 +217,9 @@ Stop Review:
 
 The `Review` job defines the deployment of a review release to a dynamic environment, the name of which is based on an unique MR identifier. The `auto_stop_in` parameter allows you to specify a period of inactivity in the MR. The GitLab environment will be automatically stopped after this period is over. Stopping the GitLab environment does not affect resources in the cluster or a review release in any way. Therefore, we need to define the job that is called when the environment is being stopped (`on_stop`). In our case, this is a `Stop Review` job.
 
-The `Stop Review` job deletes the review release and shuts down the GitLab environment (`action: stop`): werf deletes the helm release and the associated Kubernetes namespace with all its contents ([werf dismiss]({{ "documentation/reference/cli/werf_dismiss.html" | relative_url }})). You can run the `Stop Review` job manually after the deployment to the review tier is complete, or automatically via the GitLab server (for example, when the corresponding branch is deleted as a result of merging with master, provided that the appropriate option is set in the GitLab interface).
+The `Stop Review` job deletes the review release and shuts down the GitLab environment (`action: stop`): werf deletes the helm release and the associated Kubernetes namespace with all its contents ([werf dismiss]({{ "documentation/reference/cli/werf_dismiss.html" | true_relative_url: page.url }})). You can run the `Stop Review` job manually after the deployment to the review tier is complete, or automatically via the GitLab server (for example, when the corresponding branch is deleted as a result of merging with master, provided that the appropriate option is set in the GitLab interface).
 
-The `werf dismiss` command requires werf.yaml to work, because this file contains [templates for the release name and the namespace]({{ "documentation/advanced/helm/basics.html" | relative_url }}). It is not possible to use the source code from the git when deleting a branch, that is why we use werf.yaml (it was saved when the Review job was running), while pulling changes from git is disabled (`GIT_STRATEGY: none`).
+The `werf dismiss` command requires werf.yaml to work, because this file contains [templates for the release name and the namespace]({{ "documentation/advanced/helm/basics.html" | true_relative_url: page.url }}). It is not possible to use the source code from the git when deleting a branch, that is why we use werf.yaml (it was saved when the Review job was running), while pulling changes from git is disabled (`GIT_STRATEGY: none`).
 
 Thus, by default, we have the following options for deleting the review environment:
 
@@ -232,7 +232,7 @@ Now, let us explore main strategies to deploy the review environment.
 
 #### 1. Manually
 
-> This option implements the approach described in the section [Deploy to review using a pull request at the click of a button]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#deploy-to-review-using-a-pull-request-at-the-click-of-a-button" | relative_url }})
+> This option implements the approach described in the section [Deploy to review using a pull request at the click of a button]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#deploy-to-review-using-a-pull-request-at-the-click-of-a-button" | true_relative_url: page.url }})
 
 With this approach, the user deploys and deletes the environment by clicking the button in the pipeline.
 
@@ -274,7 +274,7 @@ Stop Review:
 
 #### 2. Automatically using a branch name
 
-> This option implements the approach described in the section [Automatically deploy to review from a branch using a pattern]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-review-from-a-branch-using-a-pattern" | relative_url }})
+> This option implements the approach described in the section [Automatically deploy to review from a branch using a pattern]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-review-from-a-branch-using-a-pattern" | true_relative_url: page.url }})
 
 In the configuration below, the code is automatically released with every commit in the MR if the name of the git branch has the `review-` prefix.
 
@@ -314,7 +314,7 @@ Stop Review:
 
 #### 3. Semi-automatic mode using a label (recommended)
 
-> This option implements the approach described in the section [Automatically deploy to review using a pull request; manual triggering]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-review-using-a-pull-request-manual-triggering" | relative_url }})
+> This option implements the approach described in the section [Automatically deploy to review using a pull request; manual triggering]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-review-using-a-pull-request-manual-triggering" | true_relative_url: page.url }})
 
 Semi-automatic mode with a label is a comprehensive solution that combines the previous two options.
 
@@ -398,7 +398,7 @@ In our case, these environments are the most inportant ones. Thus, the names of 
 
 #### 1. Fast and Furious (recommended)
 
-> This scenario implements the approaches described in [Automatically deploy to production from master]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-production-from-master" | relative_url }}) and [Deploy to production-like using a pull request at the click of a button]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button" | relative_url }}) sections.
+> This scenario implements the approaches described in [Automatically deploy to production from master]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-production-from-master" | true_relative_url: page.url }}) and [Deploy to production-like using a pull request at the click of a button]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button" | true_relative_url: page.url }}) sections.
 
 The code is automatically deployed to **production** in response to any changes in master. At the same time, you can deploy an application to **staging** by clicking the button in the MR.
 
@@ -429,7 +429,7 @@ Options for rolling back changes in production:
 
 #### 2. Push the button
 
-> This scenario implements the approaches described in the [Deploy to production from master at the click of a button]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#deploy-to-production-from-master-at-the-click-of-a-button" | relative_url }}) and [Automatically deploy to staging from master]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-staging-from-master" | relative_url }}) sections
+> This scenario implements the approaches described in the [Deploy to production from master at the click of a button]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#deploy-to-production-from-master-at-the-click-of-a-button" | true_relative_url: page.url }}) and [Automatically deploy to staging from master]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-staging-from-master" | true_relative_url: page.url }}) sections
 
 Deploying to **production** is triggered by clicking the button associated with the commit in master, and rolling out to **staging** is performed automatically in response to changes in master.
 
@@ -459,7 +459,7 @@ Options for rolling back changes in production:
 
 #### 3. Tag everything (recommended)
 
-> This scenario implements the approaches described in the [Automatically deploy to production using a tag]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-production-using-a-tag" | relative_url }}) and  [Deploy to staging from master at the click of a button]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#deploy-to-staging-from-master-at-the-click-of-a-button" | relative_url }})
+> This scenario implements the approaches described in the [Automatically deploy to production using a tag]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-production-using-a-tag" | true_relative_url: page.url }}) and  [Deploy to staging from master at the click of a button]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#deploy-to-staging-from-master-at-the-click-of-a-button" | true_relative_url: page.url }})
 
 The rollout to **production** is triggered when the tag is assigned; deploying to **staging** is performed by clicking the button associated with the specific commit in master.
 
@@ -490,7 +490,7 @@ Options for rolling back changes in production:
 
 #### 4. Branch, branch, branch!
 
-> This scenario implements the approaches described in the [Automatically deploy to production from a branch]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-production-from-a-branch" | relative_url }}) and [Automatically deploy to production-like from a branch]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-production-like-from-a-branch" | relative_url }}) sections
+> This scenario implements the approaches described in the [Automatically deploy to production from a branch]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-production-from-a-branch" | true_relative_url: page.url }}) and [Automatically deploy to production-like from a branch]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#automatically-deploy-to-production-like-from-a-branch" | true_relative_url: page.url }}) sections
 
 The code is deployed to **production** automatically; rolling out to **staging** is performed in response to changes in the master branch.
 
@@ -535,7 +535,7 @@ Cleanup:
 ```
 {% endraw %}
 
-werf has an efficient built-in cleanup mechanism to avoid overflowing the Docker registry and the building node with outdated and unused images. You can learn more about the werf's cleanup functionality [here]({{ "documentation/advanced/cleanup.html" | relative_url }}).
+werf has an efficient built-in cleanup mechanism to avoid overflowing the Docker registry and the building node with outdated and unused images. You can learn more about the werf's cleanup functionality [here]({{ "documentation/advanced/cleanup.html" | true_relative_url: page.url }}).
 
 To use cleanup, you have to create a `Personal Access Token` in GitLab with the necessary permissions. This token will be used for authorization in the Docker registry before cleanup.
 
@@ -559,7 +559,7 @@ The cleanup stage runs on a schedule only. You can define the schedule by openin
 ### Workflow Details
 {:.no_toc}
 
-> You can read more about workflow scenarios in the [article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#1-fast-and-furious" | relative_url }})
+> You can read more about workflow scenarios in the [article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#1-fast-and-furious" | true_relative_url: page.url }})
 
 * [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 3 Semi-automatic mode using a label (recommended)](#3-semi-automatic-mode-using-a-label-recommended).
@@ -694,7 +694,7 @@ Cleanup:
 ### Workflow Details
 {:.no_toc}
 
-> You can read more about workflow scenarios in the [article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#2-push-the-button" | relative_url }})
+> You can read more about workflow scenarios in the [article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#2-push-the-button" | true_relative_url: page.url }})
 
 * [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 1 Manually](#1-manually).
@@ -797,7 +797,7 @@ Cleanup:
 ### Workflow Details
 {:.no_toc}
 
-> You can read more about workflow scenarios in the [article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#3-tag-everything" | relative_url }})
+> You can read more about workflow scenarios in the [article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#3-tag-everything" | true_relative_url: page.url }})
 
 * [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 1 Manually](#1-manually).
@@ -898,7 +898,7 @@ Cleanup:
 ### Workflow Details
 {:.no_toc}
 
-> You can read more about workflow scenarios in the [article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#4-branch-branch-branch" | relative_url }})
+> You can read more about workflow scenarios in the [article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#4-branch-branch-branch" | true_relative_url: page.url }})
 
 * [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 2 Automatically using a branch name](#2-automatically-using-a-branch-name).

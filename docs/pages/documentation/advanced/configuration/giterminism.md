@@ -27,11 +27,11 @@ With `--loose-giterminism` flag (or `WERF_LOOSE_GITERMINISM=1` environment varia
 
 ### Env go-templates function
 
-[`{{ env }}` and `{{ expandenv }}`]({{ "documentation/advanced/configuration/supported_go_templates.html" | relative_url }}) functions are only available when `--loose-giterminism` flag (or `WERF_LOOSE_GITERMINISM=1` environment variable) has been specified.
+[`{{ env }}` and `{{ expandenv }}`]({{ "documentation/advanced/configuration/supported_go_templates.html" | true_relative_url: page.url }}) functions are only available when `--loose-giterminism` flag (or `WERF_LOOSE_GITERMINISM=1` environment variable) has been specified.
 
 ### Mount directive
 
-[`mount` directive]({{ "documentation/reference/werf_yaml.html" | relative_url}}) of the stapel builder is only available when `--loose-giterminism` flag (or `WERF_LOOSE_GITERMINISM=1` environment variable) has been specified.
+[`mount` directive]({{ "documentation/reference/werf_yaml.html" | true_relative_url: page.url}}) of the stapel builder is only available when `--loose-giterminism` flag (or `WERF_LOOSE_GITERMINISM=1` environment variable) has been specified.
 
 ## Dockerfile builder
 
@@ -39,7 +39,7 @@ Werf pass build context, `Dockerfile` and `.dockerignore` to the dockerfile buil
 
 **Important:** All uncommitted changes to the files in the project work tree will be ignored for the dockerfile builder context, `Dockerfile` and `.dockerignore` — `--loose-giterminism` flag (or `WERF_LOOSE_GITERMINISM=1` environment variable) does not affect this behaviour.
 
-However there is one implicit only way to add files from the project working tree to the dockerfile build context: using [`contextAddFile` directive]({{ "documentation/reference/werf_yaml.html" | relative_url}}):
+However there is one implicit only way to add files from the project working tree to the dockerfile build context: using [`contextAddFile` directive]({{ "documentation/reference/werf_yaml.html" | true_relative_url: page.url}}):
 
 ```
 context: app

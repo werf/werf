@@ -44,13 +44,13 @@ The actions are the same for all slugs since they are restrictive enough to sati
 
 ## Usage
 
-The slug may be applied to an arbitrary string via the [`werf slugify` command]({{ "documentation/reference/cli/werf_slugify.html" | relative_url }}).
+The slug may be applied to an arbitrary string via the [`werf slugify` command]({{ "documentation/reference/cli/werf_slugify.html" | true_relative_url: page.url }}).
 
-werf automatically applies slug in CI/CD systems such as GitLab CI. See [plugging into CI/CD]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | relative_url }}) for more details. The basic principles are:
+werf automatically applies slug in CI/CD systems such as GitLab CI. See [plugging into CI/CD]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url: page.url }}) for more details. The basic principles are:
  * the slug is auto-applied to parameters that are automatically obtained from the environment of CI/CD systems;
  * the slug isn't auto-applied to parameters that are specified manually via `--release` or `--namespace`; in this case, parameters are only validated to comply with the requirements.
 
-The user should run the [`werf slugify` command]({{ "documentation/reference/cli/werf_slugify.html" | relative_url }}) explicitly to apply slug to parameters specified manually with `--release`, or `--namespace` user should call, for example:
+The user should run the [`werf slugify` command]({{ "documentation/reference/cli/werf_slugify.html" | true_relative_url: page.url }}) explicitly to apply slug to parameters specified manually with `--release`, or `--namespace` user should call, for example:
 
 ```shell
 werf converge --release $(werf slugify --format helm-release "MyProject/1") --namespace $(werf slugify --format kubernetes-namespace "MyProject/1") ...

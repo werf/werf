@@ -14,8 +14,8 @@ directive_summary: docker
 * `ENV` to set the environment variable (read more [here](https://docs.docker.com/engine/reference/builder/#env)).
 * `LABEL` to add metadata to an image (read more [here](https://docs.docker.com/engine/reference/builder/#label)).
 * `EXPOSE` to inform Docker that the container listens on the specified network ports at runtime (read more [here](https://docs.docker.com/engine/reference/builder/#expose))
-* `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#entrypoint)). How stapel builder processes CMD and ENTRYPOINT is covered [here]({{ "documentation/internals/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint" | relative_url }}).
-* `CMD` to provide default arguments for the `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#cmd)). How stapel builder processes CMD and ENTRYPOINT is covered [here]({{ "documentation/internals/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint" | relative_url }}).
+* `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#entrypoint)). How stapel builder processes CMD and ENTRYPOINT is covered [here]({{ "documentation/internals/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint" | true_relative_url: page.url }}).
+* `CMD` to provide default arguments for the `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#cmd)). How stapel builder processes CMD and ENTRYPOINT is covered [here]({{ "documentation/internals/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint" | true_relative_url: page.url }}).
 * `HEALTHCHECK` to tell Docker how to test a container to check that it is still working (read more [here](https://docs.docker.com/engine/reference/builder/#healthcheck))
 
 These instructions can be specified in the `docker` config directive.
@@ -35,6 +35,6 @@ docker:
 Defined docker instructions are applied on the last stage called `docker_instructions`.
 Thus, instructions do not affect other stages, ones just will be applied to a built image.
 
-If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | relative_url }}) with these variables.
+If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | true_relative_url: page.url }}) with these variables.
 
-> Tip: you can also implement exporting environment variables right in [_user stage_]({{ "documentation/advanced/building_images_with_stapel/assembly_instructions.html#what-are-user-stages" | relative_url }}) instructions
+> Tip: you can also implement exporting environment variables right in [_user stage_]({{ "documentation/advanced/building_images_with_stapel/assembly_instructions.html#what-are-user-stages" | true_relative_url: page.url }}) instructions

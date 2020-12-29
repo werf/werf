@@ -47,7 +47,7 @@ fromLatest: true
 
 ## fromImage and fromArtifact
 
-Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | relative_url }}), that is described in the same `werf.yaml`.
+Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url: page.url }}), that is described in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>
@@ -59,8 +59,8 @@ it is reasonable to store its description with _images_ and _artifacts_ which ar
 
 Also, this method can be useful if the stages of _stage conveyor_ are not enough for building the image. You can design your _stage conveyor_.
 
-<a class="google-drawings" href="{{ "images/configuration/base_image2.png" | relative_url }}" data-featherlight="image">
-    <img src="{{ "images/configuration/base_image2_preview.png" | relative_url }}" alt="Conveyor with fromImage and fromArtifact stages">
+<a class="google-drawings" href="{{ "images/configuration/base_image2.png" | true_relative_url: page.url }}" data-featherlight="image">
+    <img src="{{ "images/configuration/base_image2_preview.png" | true_relative_url: page.url }}" alt="Conveyor with fromImage and fromArtifact stages">
 </a>
 
 ## fromCacheVersion

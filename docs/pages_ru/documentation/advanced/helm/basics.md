@@ -13,8 +13,8 @@ werf включает весь существующий функционал Hel
 - и другие особенности, о которых пойдёт речь далее.
 
 Для работы с приложением в Kubernetes достаточно двух команд: 
-- [converge]({{ "documentation/reference/cli/werf_converge.html" | relative_url }}) — для установки или обновления приложения в кластере, и 
-- [dismiss]({{ "documentation/reference/cli/werf_dismiss.html" | relative_url }}) — для удаления приложения из кластера.
+- [converge]({{ "documentation/reference/cli/werf_converge.html" | true_relative_url: page.url }}) — для установки или обновления приложения в кластере, и
+- [dismiss]({{ "documentation/reference/cli/werf_dismiss.html" | true_relative_url: page.url }}) — для удаления приложения из кластера.
 
 ## Чарт
 
@@ -155,7 +155,7 @@ spec:
 
 Файлы секретов удобны для хранения конфиденциальных данных в репозитории проекта, таких как сертификаты и закрытые ключи.
 
-Файлы секретов размещаются в папке `.helm/secret`, где пользователь может создать произвольную структуру файлов. Читайте подробнее о том, как шифровать файлы в соответствующей [статье]({{ "documentation/advanced/helm/working_with_secrets.html#шифрование-файлов-секретов" | relative_url }}).
+Файлы секретов размещаются в папке `.helm/secret`, где пользователь может создать произвольную структуру файлов. Читайте подробнее о том, как шифровать файлы в соответствующей [статье]({{ "documentation/advanced/helm/working_with_secrets.html#шифрование-файлов-секретов" | true_relative_url: page.url }}).
 
 ##### werf_secret_file
 
@@ -218,9 +218,9 @@ global:
       password: mysql-dev
 ```
 
-Данные, размещенные внутри ключа `global`, будут доступны как в текущем чарте, так и во всех [вложенных чартах]({{ "documentation/advanced/helm/working_with_chart_dependencies.html" | relative_url }}) (сабчарты, subcharts).
+Данные, размещенные внутри ключа `global`, будут доступны как в текущем чарте, так и во всех [вложенных чартах]({{ "documentation/advanced/helm/working_with_chart_dependencies.html" | true_relative_url: page.url }}) (сабчарты, subcharts).
 
-Данные, размещенные внутри произвольного ключа `SOMEKEY` будут доступны в текущем чарте и во [вложенном чарте]({{ "documentation/advanced/helm/working_with_chart_dependencies.html" | relative_url }}) с именем `SOMEKEY`.
+Данные, размещенные внутри произвольного ключа `SOMEKEY` будут доступны в текущем чарте и во [вложенном чарте]({{ "documentation/advanced/helm/working_with_chart_dependencies.html" | true_relative_url: page.url }}) с именем `SOMEKEY`.
 
 Файл `.helm/values.yaml` — файл по умолчанию для хранения данных. Данные также могут передаваться следующими способами:
 
@@ -242,7 +242,7 @@ global:
       password: 100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123
 ```
 
-Каждое значение в файле секретов (например, `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123`), представляет собой зашифрованные с помощью werf данные. Структура хранения секретов, такая же как и при хранении обычных данных, например, в `values.yaml`. Читайте подробнее о [генерации секретов и работе с ними]({{ "documentation/advanced/helm/working_with_secrets.html#шифрация-секретных-переменных" | relative_url }}) в соответствующей статье.
+Каждое значение в файле секретов (например, `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842161123`), представляет собой зашифрованные с помощью werf данные. Структура хранения секретов, такая же как и при хранении обычных данных, например, в `values.yaml`. Читайте подробнее о [генерации секретов и работе с ними]({{ "documentation/advanced/helm/working_with_secrets.html#шифрация-секретных-переменных" | true_relative_url: page.url }}) в соответствующей статье.
 
 Файл `.helm/secret-values.yaml` — файл для хранения данных секретов по умолчанию. Данные также могут передаваться с помощью параметра `--secret-values=PATH_TO_FILE`, с помощью которого может быть указан отдельный файл с данными секретов (может быть указано несколько параметров, по одному для каждого файла данных секретов).
 
@@ -310,7 +310,7 @@ global:
 
 По умолчанию, werf хранит информацию о релизах в объектах ConfigMap в namespace `kube-system`, что полностью совместимо с конфигурацией [Helm 2](https://helm.sh) по умолчанию. Место хранения информации о релизах может быть указано при деплое с помощью параметров werf: `--helm-release-storage-namespace=NS` и `--helm-release-storage-type=configmap|secret`.
 
-Для получения информации обо всех созданных релизах можно использовать команду [werf helm list]({{ "documentation/reference/cli/werf_helm_list.html" | relative_url }}), а для просмотра истории конкретного релиза [werf helm history]({{ "documentation/reference/cli/werf_helm_history.html" | relative_url }}). 
+Для получения информации обо всех созданных релизах можно использовать команду [werf helm list]({{ "documentation/reference/cli/werf_helm_list.html" | true_relative_url: page.url }}), а для просмотра истории конкретного релиза [werf helm history]({{ "documentation/reference/cli/werf_helm_history.html" | true_relative_url: page.url }}).
 
 #### Замечание о совместимости с Helm
 
@@ -329,11 +329,11 @@ werf полностью совместим с уже установленным 
  1. Имя релиза.
  2. Namespace в Kubernetes.
 
-Передача имени окружения является обязательной для операции деплоя и должна быть выполнена либо с помощью параметра `--env` либо на основании данных используемой CI/CD системы (читай подробнее про [интеграцию c CI/CD системами]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#интеграция-с-настройками-cicd" | relative_url }})) определиться автоматически.
+Передача имени окружения является обязательной для операции деплоя и должна быть выполнена либо с помощью параметра `--env` либо на основании данных используемой CI/CD системы (читай подробнее про [интеграцию c CI/CD системами]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#интеграция-с-настройками-cicd" | true_relative_url: page.url }})) определиться автоматически.
 
 ### Имя релиза
 
-По умолчанию название релиза формируется по шаблону `[[project]]-[[env]]`. Где `[[ project ]]` — имя [проекта]({{ "documentation/reference/werf_yaml.html#имя-проекта" | relative_url }}), а `[[ env ]]` — имя [окружения](#окружение).
+По умолчанию название релиза формируется по шаблону `[[project]]-[[env]]`. Где `[[ project ]]` — имя [проекта]({{ "documentation/reference/werf_yaml.html#имя-проекта" | true_relative_url: page.url }}), а `[[ env ]]` — имя [окружения](#окружение).
 
 Например, для проекта с именем `symfony-demo` будет сформировано следующее имя релиза в зависимости от имени окружения:
 * `symfony-demo-stage` для окружения `stage`;
@@ -342,17 +342,17 @@ werf полностью совместим с уже установленным 
 
 Имя релиза может быть переопределено с помощью параметра `--release NAME` при деплое. В этом случае werf будет использовать указанное имя как есть, без каких либо преобразований и использования шаблонов.
 
-Имя релиза также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.helmRelease`]({{ "documentation/advanced/helm/basics.html#имя-релиза" | relative_url }}).
+Имя релиза также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.helmRelease`]({{ "documentation/advanced/helm/basics.html#имя-релиза" | true_relative_url: page.url }}).
 
 #### Слагификация имени релиза
 
-Сформированное по шаблону имя Helm-релиза [слагифицируется]({{ "documentation/internals/names_slug_algorithm.html#базовый-алгоритм" | relative_url }}), в результате чего получается уникальное имя Helm-релиза.
+Сформированное по шаблону имя Helm-релиза [слагифицируется]({{ "documentation/internals/names_slug_algorithm.html#базовый-алгоритм" | true_relative_url: page.url }}), в результате чего получается уникальное имя Helm-релиза.
 
-Слагификация имени Helm-релиза включена по умолчанию, но может быть отключена указанием параметра [`deploy.helmReleaseSlug=false`]({{ "documentation/advanced/helm/basics.html#имя-релиза" | relative_url }}) в файле конфигурации `werf.yaml`.
+Слагификация имени Helm-релиза включена по умолчанию, но может быть отключена указанием параметра [`deploy.helmReleaseSlug=false`]({{ "documentation/advanced/helm/basics.html#имя-релиза" | true_relative_url: page.url }}) в файле конфигурации `werf.yaml`.
 
 ### Namespace в Kubernetes
 
-По умолчанию namespace, используемый в Kubernetes, формируется по шаблону `[[ project ]]-[[ env ]]`, где `[[ project ]]` — [имя проекта]({{ "documentation/reference/werf_yaml.html#имя-проекта" | relative_url }}), а `[[ env ]]` — имя [окружения](#окружение).
+По умолчанию namespace, используемый в Kubernetes, формируется по шаблону `[[ project ]]-[[ env ]]`, где `[[ project ]]` — [имя проекта]({{ "documentation/reference/werf_yaml.html#имя-проекта" | true_relative_url: page.url }}), а `[[ env ]]` — имя [окружения](#окружение).
 
 Например, для проекта с именем `symfony-demo` будет сформировано следующее имя namespace в Kubernetes, в зависимости от имени окружения:
 * `symfony-demo-stage` для окружения `stage`;
@@ -361,13 +361,13 @@ werf полностью совместим с уже установленным 
 
 Имя namespace в Kubernetes может быть переопределено с помощью параметра `--namespace NAMESPACE` при деплое. В этом случае werf будет использовать указанное имя как есть, без каких либо преобразований и использования шаблонов.
 
-Имя namespace также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.namespace`]({{ "documentation/advanced/helm/basics.html#namespace-в-kubernetes" | relative_url }}).
+Имя namespace также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.namespace`]({{ "documentation/advanced/helm/basics.html#namespace-в-kubernetes" | true_relative_url: page.url }}).
 
 #### Слагификация namespace Kubernetes
 
-Сформированное по шаблону имя namespace [слагифицируется]({{ "documentation/internals/names_slug_algorithm.html#базовый-алгоритм" | relative_url }}), чтобы удовлетворять требованиям к [DNS именам](https://www.ietf.org/rfc/rfc1035.txt), в результате чего получается уникальное имя namespace в Kubernetes.
+Сформированное по шаблону имя namespace [слагифицируется]({{ "documentation/internals/names_slug_algorithm.html#базовый-алгоритм" | true_relative_url: page.url }}), чтобы удовлетворять требованиям к [DNS именам](https://www.ietf.org/rfc/rfc1035.txt), в результате чего получается уникальное имя namespace в Kubernetes.
 
-Слагификация имени namespace включена по умолчанию, но может быть отключена указанием параметра [`deploy.namespaceSlug=false`]({{ "documentation/advanced/helm/basics.html#namespace-в-kubernetes" | relative_url }}) в файле конфигурации `werf.yaml`.
+Слагификация имени namespace включена по умолчанию, но может быть отключена указанием параметра [`deploy.namespaceSlug=false`]({{ "documentation/advanced/helm/basics.html#namespace-в-kubernetes" | true_relative_url: page.url }}) в файле конфигурации `werf.yaml`.
 
 ## Процесс деплоя
 
@@ -520,12 +520,12 @@ werf автоматически устанавливает следующие в
  * `"project.werf.io/env": ENV` — имя окружения, указанное с помощью параметра `--env` или переменной окружения `WERF_ENV` (не обязательно, аннотация не устанавливается, если окружение не было указано при запуске).
 
 При использовании команды `werf ci-env` перед выполнением команды `werf converge`, werf также автоматически устанавливает аннотации содержащие информацию из используемой системы CI/CD (например, GitLab CI).
-Например, [`project.werf.io/git`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_project_git" | relative_url }}), [`ci.werf.io/commit`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_ci_commit" | relative_url }}), [`gitlab.ci.werf.io/pipeline-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_pipeline_url" | relative_url }}) и [`gitlab.ci.werf.io/job-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_job_url" | relative_url }}).
+Например, [`project.werf.io/git`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_project_git" | true_relative_url: page.url }}), [`ci.werf.io/commit`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_ci_commit" | true_relative_url: page.url }}), [`gitlab.ci.werf.io/pipeline-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_pipeline_url" | true_relative_url: page.url }}) и [`gitlab.ci.werf.io/job-url`]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_job_url" | true_relative_url: page.url }}).
 
 Для более подробной информации об интеграции werf с системами CI/CD читайте статьи по темам:
 
- * [Общие сведения по работе с CI/CD системами]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | relative_url }});
- * [Работа GitLab CI]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html" | relative_url }}).
+ * [Общие сведения по работе с CI/CD системами]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url: page.url }});
+ * [Работа GitLab CI]({{ "documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html" | true_relative_url: page.url }}).
 
 #### Пользовательские аннотации и лейблы
 

@@ -27,11 +27,11 @@ change_canonical: true
 
 ### Функции go-шаблонов для доступа к переменным окружения
 
-Функции [`{{ env }}` и `{{ expandenv }}`]({{ "documentation/advanced/configuration/supported_go_templates.html" | relative_url }}) доступны для использования при чтении конфига `werf.yaml` только при указании флага `--loose-giterminism` (или переменной окружения `WERF_LOOSE_GITERMINISM=1`).
+Функции [`{{ env }}` и `{{ expandenv }}`]({{ "documentation/advanced/configuration/supported_go_templates.html" | true_relative_url: page.url }}) доступны для использования при чтении конфига `werf.yaml` только при указании флага `--loose-giterminism` (или переменной окружения `WERF_LOOSE_GITERMINISM=1`).
 
 ### Директива mount
 
-[Директива `mount`]({{ "documentation/reference/werf_yaml.html" | relative_url}}) для сборщика образов stapel доступна для использования только при указании флага `--loose-giterminism` (или переменной окружения `WERF_LOOSE_GITERMINISM=1`).
+[Директива `mount`]({{ "documentation/reference/werf_yaml.html" | true_relative_url: page.url}}) для сборщика образов stapel доступна для использования только при указании флага `--loose-giterminism` (или переменной окружения `WERF_LOOSE_GITERMINISM=1`).
 
 ## Сборщик Dockerfile
 
@@ -39,7 +39,7 @@ Werf использует контекст для Dockerfile и сам `Dockerfi
 
 **Важно:** Нет способа выключить чтение контекста, `Dockerfile` и `.dockerignore` из текущего коммита для данного сборщика — флаг `--loose-giterminism` (или переменная окружения `WERF_LOOSE_GITERMINISM=1`) не влияет на работу данного сборщика.
 
-Однако есть один способ явным образом добавить файлы вне гит-репозитория в контекст сборки Dockerfile: с помощью [директивы `contextAddFile`]({{ "documentation/reference/werf_yaml.html" | relative_url}}):
+Однако есть один способ явным образом добавить файлы вне гит-репозитория в контекст сборки Dockerfile: с помощью [директивы `contextAddFile`]({{ "documentation/reference/werf_yaml.html" | true_relative_url: page.url}}):
 
 ```
 context: app
