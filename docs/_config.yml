@@ -26,6 +26,9 @@ exclude:
 - .idea/
 - .gitignore
 - vendor
+- Gemfile
+- Gemfile.lock
+- "*.sh"
 - pages_ru/
 
 highlighter: rouge
@@ -75,4 +78,3 @@ sidebars:
 
 assets:
   digest: false
-#  destination: "./"

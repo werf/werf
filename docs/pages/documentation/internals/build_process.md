@@ -4,26 +4,26 @@ sidebar: documentation
 permalink: documentation/internals/build_process.html
 ---
 
-In this article we describe a build process to build images which described in the werf.yaml configuration file. Build process involves [sequential building of stages]({{ "documentation/internals/stages_and_storage.html" | relative_url }}#stages) for each image described in the configuration.
+In this article we describe a build process to build images which described in the werf.yaml configuration file. Build process involves [sequential building of stages]({{ "documentation/internals/stages_and_storage.html" | true_relative_url: page.url }}#stages) for each image described in the configuration.
 
-Dockerfile-image, Stapel-image and Stapel-artifact each built by a different type of conveyor. But werf handles each stage of such conveyor in a common way: there is the same [stage selection rules](#stage-selection), the same [stage building and saving rules](#stage-building-and-saving) and also the same [synchronization rules]({{ "documentation/advanced/synchronization.html" | relative_url }}) of multiple werf processes running from arbitrary hosts.
+Dockerfile-image, Stapel-image and Stapel-artifact each built by a different type of conveyor. But werf handles each stage of such conveyor in a common way: there is the same [stage selection rules](#stage-selection), the same [stage building and saving rules](#stage-building-and-saving) and also the same [synchronization rules]({{ "documentation/advanced/synchronization.html" | true_relative_url: page.url }}) of multiple werf processes running from arbitrary hosts.
 
 ## Dockerfile image
 
-werf uses Dockerfile as the principal way to describe how to build an image. Images built with Dockerfile will be referred to as **dockerfile images** ([learn more about a dockerfile image]({{ "documentation/reference/werf_yaml.html#dockerfile-builder" | relative_url }})).
+werf uses Dockerfile as the principal way to describe how to build an image. Images built with Dockerfile will be referred to as **dockerfile images** ([learn more about a dockerfile image]({{ "documentation/reference/werf_yaml.html#dockerfile-builder" | true_relative_url: page.url  }})).
 
 ### How a dockerfile image is being built
 
-werf creates a single [stage]({{ "documentation/internals/stages_and_storage.html#stages" | relative_url }}) called `dockerfile` to build a dockerfile image.
+werf creates a single [stage]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url: page.url  }}) called `dockerfile` to build a dockerfile image.
 
 How the `dockerfile` stage is being built:
 
  1. Stage digest is calculated based on specified `Dockerfile` and its contents. This digest represents the resulting image state.
- 2. werf does not perform a new docker build if an image with this digest already exists in the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}).
- 3. werf performs a regular docker build if there is no image with the specified digest in the [stage storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
- 4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}) (while tagging the resulting docker image with the calculated digest) if the [`:local` stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}) parameter is set.
+ 2. werf does not perform a new docker build if an image with this digest already exists in the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url: page.url  }}).
+ 3. werf performs a regular docker build if there is no image with the specified digest in the [stage storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url: page.url  }}). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
+ 4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url: page.url  }}) (while tagging the resulting docker image with the calculated digest) if the [`:local` stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url: page.url  }}) parameter is set.
 
-See the [configuration article]({{ "documentation/reference/werf_yaml.html#dockerfile-builder" | relative_url }}) for the werf.yaml configuration details.
+See the [configuration article]({{ "documentation/reference/werf_yaml.html#dockerfile-builder" | true_relative_url: page.url  }}) for the werf.yaml configuration details.
 
 ## Stapel image and artifact
 
@@ -36,7 +36,7 @@ Also, werf has an alternative tool for building images. The so-called stapel bui
 
 The image built with a stapel builder will be referred to as a **stapel image**.
 
-See [stapel image]({{ "documentation/reference/werf_yaml.html#image-section" | relative_url }}) and [stapel artifact]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | relative_url }}) articles for more details.
+See [stapel image]({{ "documentation/reference/werf_yaml.html#image-section" | true_relative_url: page.url  }}) and [stapel artifact]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url: page.url  }}) articles for more details.
 
 ### How stapel images and artifacts are built
 
@@ -46,15 +46,15 @@ werf generates a specific **list of instructions** needed to build a stage. Inst
 
 All generated instructions to build the current stage are supposed to be run in a container that is based on the previous stage. This container will be referred to as a **build container**.
 
-werf runs instructions from the list in the build container (as you know, it is based on the previous stage). The resulting container state is then committed as a new stage and saved into the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | relative_url }}).
+werf runs instructions from the list in the build container (as you know, it is based on the previous stage). The resulting container state is then committed as a new stage and saved into the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url: page.url  }}).
 
-werf has a special service image called `flant/werf-stapel`. It contains a chroot `/.werf/stapel` with all the necessary tools and libraries to build images with a stapel builder. You may find more info about the stapel image [in the article]({{ "documentation/internals/development/stapel_image.html" | relative_url }}).
+werf has a special service image called `flant/werf-stapel`. It contains a chroot `/.werf/stapel` with all the necessary tools and libraries to build images with a stapel builder. You may find more info about the stapel image [in the article]({{ "documentation/internals/development/stapel_image.html" | true_relative_url: page.url  }}).
 
 `flant/werf-stapel` is mounted into every build container so that all precompiled tools are available in every stage being built and may be used in the instructions list.
 
 ### How stapel builder processes CMD and ENTRYPOINT
 
-To build a stage image, werf launches a container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | relative_url }}) values. If the base image does not have corresponding values, werf resets service to the special empty values:
+To build a stage image, werf launches a container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | true_relative_url: page.url  }}) values. If the base image does not have corresponding values, werf resets service to the special empty values:
 * `[]` for `CMD`;
 * `[""]` for `ENTRYPOINT`.
 
@@ -81,4 +81,4 @@ Note that multiple processes (on a single or multiple hosts) may start building 
 
 In other words: the first process which finishes the build (the fastest one) will have a chance to save newly built stage into the stages storage. The slow build process will not block faster processes from saving build results and building next stages.
 
-To select stages and save new ones into the stages storage werf uses [synchronization service components]({{ "documentation/advanced/synchronization.html" | relative_url }}) to coordinate multiple werf processes and store stages cache needed for werf builder.
+To select stages and save new ones into the stages storage werf uses [synchronization service components]({{ "documentation/advanced/synchronization.html" | true_relative_url: page.url  }}) to coordinate multiple werf processes and store stages cache needed for werf builder.
