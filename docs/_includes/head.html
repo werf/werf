@@ -3,8 +3,8 @@
 <meta name="viewport" content="width=1260">
 
 {%- if page.multilang %}
-<link data-proofer-ignore rel="alternate" hreflang="ru" href="{{ site.site_urls.ru }}{{ page.url | relative_url }}" />
-<link data-proofer-ignore rel="alternate" hreflang="en" href="{{ site.site_urls.en }}{{ page.url | relative_url }}" />
+<link data-proofer-ignore rel="alternate" hreflang="ru" href="{{ site.site_urls.ru }}{{ page.url | true_relative_url: page.url }}" />
+<link data-proofer-ignore rel="alternate" hreflang="en" href="{{ site.site_urls.en }}{{ page.url | true_relative_url: page.url }}" />
 {%- endif %}
 
 {%- assign page_url_parts = page.url | split: '/' -%}
@@ -50,11 +50,11 @@
 <meta property="twitter:description" content="{{ description }}">
 <meta property="twitter:image" content="{{ site.url }}/images/share.png">
 
-<link rel="apple-touch-icon" sizes="180x180" href="{{ "apple-touch-icon.png" | relative_url }}">
-<link rel="icon" type="image/png" sizes="32x32" href="{{ "favicon-32x32.png" | relative_url }}">
-<link rel="icon" type="image/png" sizes="16x16" href="{{ "favicon-16x16.png" | relative_url }}">
-<link rel="manifest" href="{{ "site.webmanifest" | relative_url }}">
-<link rel="mask-icon" href="{{ "safari-pinned-tab.svg" | relative_url }}" color="#5bbad5">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ "apple-touch-icon.png" | true_relative_url: page.url }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ "favicon-32x32.png" | true_relative_url: page.url }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ "favicon-16x16.png" | true_relative_url: page.url }}">
+<link rel="manifest" href="{{ "site.webmanifest" | true_relative_url: page.url }}">
+<link rel="mask-icon" href="{{ "safari-pinned-tab.svg" | true_relative_url: page.url }}" color="#5bbad5">
 <meta name="msapplication-TileColor" content="#ffc40d">
 <meta name="theme-color" content="#ffffff">
 

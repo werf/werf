@@ -57,11 +57,11 @@
             {%- if directive.default %} ({{ defaultText }} <code class="language-plaintext highlighter-rouge">{{ directive.default | escape }}</code>){% endif -%}
             {% for link in directive.detailsCustomLinks %}
             {%- if link.anchor %}. <a href="{{ link.anchor }}">{{ link.text }}</a>
-            {%- elsif link.article %}. <a href="{{ link.article | relative_url }}">{{ link.text }}</a>
+            {%- elsif link.article %}. <a href="{{ link.article | true_relative_url: page.url }}">{{ link.text }}</a>
             {%- elsif link.link %}. <a href="{{ link.link }}">{{ link.text }}</a>{% endif -%}
             {% endfor %}
             {%- if directive.detailsAnchor %}. {{ moreDetailsText }} <a href="{{ directive.detailsAnchor }}">{{ moreDetailsHereText }}</a>
-            {%- elsif directive.detailsArticle %}. {{ moreDetailsText }} <a href="{{ directive.detailsArticle | relative_url }}">{{ moreDetailsHereText }}</a>
+            {%- elsif directive.detailsArticle %}. {{ moreDetailsText }} <a href="{{ directive.detailsArticle | true_relative_url: page.url }}">{{ moreDetailsHereText }}</a>
             {%- elsif directive.detailsLink %}. {{ moreDetailsText }} <a href="{{ directive.detailsLink }}">{{ moreDetailsHereText }}</a>{% endif -%}
         </span>
     </td>
