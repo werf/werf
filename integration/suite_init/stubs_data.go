@@ -9,9 +9,12 @@ type StubsData struct {
 	Stubs *gostub.Stubs
 }
 
-func (data *StubsData) Setup() bool {
-	data.Stubs = gostub.New()
-	return SetupStubs(data.Stubs)
+func NewStubsData() *StubsData {
+	data := &StubsData{
+		Stubs: gostub.New(),
+	}
+	SetupStubs(data.Stubs)
+	return data
 }
 
 func SetupStubs(stubs *gostub.Stubs) bool {

@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/werf/werf/integration/utils"
+
 	"github.com/werf/werf/integration/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
@@ -120,7 +122,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		It("should install packages successfully", func() {
-			Expect(setGitRepoState("yarn", "yarn_repo", "initial commit")).To(Succeed())
+			Expect(utils.SetGitRepoState("yarn", "yarn_repo", "initial commit")).To(Succeed())
 			Expect(werfBuild("yarn", liveexec.ExecCommandOptions{})).To(Succeed())
 		})
 	})
@@ -142,7 +144,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 				Skip("Skipping on windows")
 			}
 
-			Expect(setGitRepoState("python_encoding", "python_encoding_repo", "initial commit")).To(Succeed())
+			Expect(utils.SetGitRepoState("python_encoding", "python_encoding_repo", "initial commit")).To(Succeed())
 			Expect(werfBuild("python_encoding", liveexec.ExecCommandOptions{})).To(Succeed())
 		})
 	})

@@ -4,9 +4,6 @@ import (
 	"testing"
 
 	"github.com/werf/werf/integration/suite_init"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Config suite", suite_init.TestSuiteEntrypointFuncOptions{})
@@ -20,12 +17,7 @@ var SuiteData struct {
 	TestDirPath string
 }
 
-var _ = SuiteData.StubsData.Setup()
-var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
-var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)
-var _ = SuiteData.ProjectNameData.Setup(&SuiteData.StubsData)
-
-func TestIntegration(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Config Suite")
-}
+var _ = SuiteData.SetupStubs(suite_init.NewStubsData())
+var _ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
+var _ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
+var _ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))

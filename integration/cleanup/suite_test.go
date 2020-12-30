@@ -63,11 +63,11 @@ var SuiteData struct {
 	StagesStorage              storage.StagesStorage
 }
 
-var _ = SuiteData.StubsData.Setup()
-var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
-var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)
-var _ = SuiteData.ProjectNameData.Setup(&SuiteData.StubsData)
-var _ = SuiteData.TmpDirData.Setup()
+var _ = SuiteData.SetupStubs(suite_init.NewStubsData())
+var _ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
+var _ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
+var _ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
+var _ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 
 var _ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
 	SuiteData.LocalRegistryRepoAddress, SuiteData.LocalRegistryContainerName = utilsDocker.LocalDockerRegistryRun()
@@ -229,7 +229,7 @@ func implementationStagesStorageAddress(implementationName string) string {
 		implementationCode,
 	)
 
-	registry := getRequiredEnv(registryEnvName)
+	registry := utils.GetRequiredEnv(registryEnvName)
 
 	return fmt.Sprintf("%s/%s-stages", registry, projectName)
 }
@@ -254,8 +254,8 @@ func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) do
 
 	switch implementationName {
 	case docker_registry.DockerHubImplementationName:
-		username := getRequiredEnv(usernameEnvName)
-		password := getRequiredEnv(passwordEnvName)
+		username := utils.GetRequiredEnv(usernameEnvName)
+		password := utils.GetRequiredEnv(passwordEnvName)
 
 		SuiteData.Stubs.SetEnv("WERF_REPO_DOCKER_HUB_USERNAME", username)
 		SuiteData.Stubs.SetEnv("WERF_REPO_DOCKER_HUB_PASSWORD", password)
@@ -267,7 +267,7 @@ func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) do
 			DockerHubPassword:     password,
 		}
 	case docker_registry.GitHubPackagesImplementationName:
-		token := getRequiredEnv(tokenEnvName)
+		token := utils.GetRequiredEnv(tokenEnvName)
 
 		SuiteData.Stubs.SetEnv("WERF_REPO_GITHUB_TOKEN", token)
 
@@ -277,8 +277,8 @@ func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) do
 			GitHubToken:           token,
 		}
 	case docker_registry.HarborImplementationName:
-		username := getRequiredEnv(usernameEnvName)
-		password := getRequiredEnv(passwordEnvName)
+		username := utils.GetRequiredEnv(usernameEnvName)
+		password := utils.GetRequiredEnv(passwordEnvName)
 
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
@@ -295,7 +295,7 @@ func implementationDockerRegistryOptionsAndSetEnvs(implementationName string) do
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
 			SkipTlsVerifyRegistry: false,
-			QuayToken:             getRequiredEnv(tokenEnvName),
+			QuayToken:             utils.GetRequiredEnv(tokenEnvName),
 		}
 	default:
 		return docker_registry.DockerRegistryOptions{
@@ -327,13 +327,4 @@ func implementationAfterEach(implementationName string) {
 		}
 	default:
 	}
-}
-
-func getRequiredEnv(name string) string {
-	envValue := os.Getenv(name)
-	if envValue == "" {
-		panic(fmt.Sprintf("environment variable %s must be specified", name))
-	}
-
-	return envValue
 }

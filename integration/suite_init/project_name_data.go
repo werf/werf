@@ -17,8 +17,10 @@ type ProjectNameData struct {
 	ProjectName string
 }
 
-func (data *ProjectNameData) Setup(stubsData *StubsData) bool {
-	return SetupProjectName(&data.ProjectName, stubsData.Stubs)
+func NewProjectNameData(stubsData *StubsData) *ProjectNameData {
+	data := &ProjectNameData{}
+	SetupProjectName(&data.ProjectName, stubsData.Stubs)
+	return data
 }
 
 func SetupProjectName(projectName *string, stubs *gostub.Stubs) bool {

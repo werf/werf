@@ -1,11 +1,17 @@
 package bundles_test
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/werf/werf/integration/suite_init"
+
 	"github.com/werf/werf/integration/utils"
 
 	"github.com/werf/werf/integration/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 func liveExecWerf(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
