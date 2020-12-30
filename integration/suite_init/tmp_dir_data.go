@@ -13,8 +13,10 @@ type TmpDirData struct {
 	TestDirPath string
 }
 
-func (data *TmpDirData) Setup() bool {
-	return SetupTmpDir(&data.TmpDir, &data.TestDirPath)
+func NewTmpDirData() *TmpDirData {
+	data := &TmpDirData{}
+	SetupTmpDir(&data.TmpDir, &data.TestDirPath)
+	return data
 }
 
 func SetupTmpDir(tmpDir, testDirPath *string) bool {

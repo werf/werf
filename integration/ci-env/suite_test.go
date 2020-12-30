@@ -17,6 +17,6 @@ var SuiteData struct {
 	TestDirPath string
 }
 
-var _ = SuiteData.StubsData.Setup()
-var _ = SuiteData.SynchronizedSuiteCallbacksData.Setup()
-var _ = SuiteData.WerfBinaryData.Setup(&SuiteData.SynchronizedSuiteCallbacksData)
+var _ = SuiteData.SetupStubs(suite_init.NewStubsData())
+var _ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
+var _ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))

@@ -13,7 +13,9 @@ type SynchronizedSuiteCallbacksData struct {
 	synchronizedAfterSuiteNode1Funcs    []func()
 }
 
-func (data *SynchronizedSuiteCallbacksData) Setup() bool {
+func NewSynchronizedSuiteCallbacksData() *SynchronizedSuiteCallbacksData {
+	data := &SynchronizedSuiteCallbacksData{}
+
 	SynchronizedBeforeSuite(func() []byte {
 		for _, f := range data.synchronizedBeforeSuiteNode1Funcs {
 			f()
@@ -39,7 +41,7 @@ func (data *SynchronizedSuiteCallbacksData) Setup() bool {
 		}
 	})
 
-	return true
+	return data
 }
 
 func (data *SynchronizedSuiteCallbacksData) AppendSynchronizedBeforeSuiteNode1Func(f func()) bool {

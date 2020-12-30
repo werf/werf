@@ -13,8 +13,10 @@ type K8sDockerRegistryData struct {
 	K8sDockerRegistryRepo string
 }
 
-func (data *K8sDockerRegistryData) Setup(projectNameData *ProjectNameData, stubsData *StubsData) bool {
-	return SetupK8sDockerRegistryRepo(&data.K8sDockerRegistryRepo, &projectNameData.ProjectName, stubsData.Stubs)
+func NewK8sDockerRegistryData(projectNameData *ProjectNameData, stubsData *StubsData) *K8sDockerRegistryData {
+	data := &K8sDockerRegistryData{}
+	SetupK8sDockerRegistryRepo(&data.K8sDockerRegistryRepo, &projectNameData.ProjectName, stubsData.Stubs)
+	return data
 }
 
 func SetupK8sDockerRegistryRepo(repo *string, projectName *string, stubs *gostub.Stubs) bool {

@@ -11,13 +11,14 @@ type WerfBinaryData struct {
 	WerfBinPath string
 }
 
-func (data *WerfBinaryData) Setup(synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData) bool {
+func NewWerfBinaryData(synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData) *WerfBinaryData {
+	data := &WerfBinaryData{}
 	synchronizedSuiteCallbacksData.SetSynchronizedBeforeSuiteNode1FuncWithReturnValue(ComputeWerfBinPath)
 	synchronizedSuiteCallbacksData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(computedPath []byte) {
 		data.WerfBinPath = string(computedPath)
 	})
 	synchronizedSuiteCallbacksData.AppendSynchronizedAfterSuiteAllNodesFunc(gexec.CleanupBuildArtifacts)
-	return true
+	return data
 }
 
 func ComputeWerfBinPath() []byte {
