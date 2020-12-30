@@ -405,6 +405,143 @@ jobs:
         name: tests_coverage
         path: tests_coverage
 
+  integration_k8s_per_registry_implementation_tests:
+    name: Integration k8s per registry implementation tests
+    needs: precompiled_tests_binaries
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        k8s_version: [1.16, 1.17, 1.18, 1.19]
+        implementation:
+          - acr
+          - default
+          - dockerhub
+          - ecr
+          - gcr
+  #        - github
+          - harbor
+          - quay
+
+    runs-on: ${{ matrix.os }}
+    env:
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
+      WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
+      WERF_TEST_ACR_REGISTRY: ${{ secrets.WERF_TEST_ACR_REGISTRY }}
+      WERF_TEST_ACR_USERNAME: ${{ secrets.WERF_TEST_ACR_USERNAME }}
+
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DEFAULT: 1
+      WERF_TEST_DEFAULT_PASSWORD: ${{ secrets.WERF_TEST_DEFAULT_PASSWORD }}
+      WERF_TEST_DEFAULT_REGISTRY: ${{ secrets.WERF_TEST_DEFAULT_REGISTRY }}
+      WERF_TEST_DEFAULT_USERNAME: ${{ secrets.WERF_TEST_DEFAULT_USERNAME }}
+
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DOCKERHUB: 1
+      WERF_TEST_DOCKERHUB_PASSWORD: ${{ secrets.WERF_TEST_DOCKERHUB_PASSWORD }}
+      WERF_TEST_DOCKERHUB_REGISTRY: ${{ secrets.WERF_TEST_DOCKERHUB_REGISTRY }}
+      WERF_TEST_DOCKERHUB_USERNAME: ${{ secrets.WERF_TEST_DOCKERHUB_USERNAME }}
+
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: 1
+      WERF_TEST_ECR_REGISTRY: ${{ secrets.WERF_TEST_ECR_REGISTRY }}
+      WERF_TEST_ECR_PASSWORD: ${{ secrets.WERF_TEST_ECR_PASSWORD }}
+      WERF_TEST_ECR_USERNAME: ${{ secrets.WERF_TEST_ECR_USERNAME }}
+
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GCR: 1
+      WERF_TEST_GCR_BASE64_CONFIG: ${{ secrets.WERF_TEST_GCR_BASE64_CONFIG }}
+      WERF_TEST_GCR_REGISTRY: ${{ secrets.WERF_TEST_GCR_REGISTRY }}
+
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: 1
+      WERF_TEST_GITHUB_PASSWORD: ${{ secrets.WERF_TEST_GITHUB_PASSWORD }}
+      WERF_TEST_GITHUB_REGISTRY: ${{ secrets.WERF_TEST_GITHUB_REGISTRY }}
+      WERF_TEST_GITHUB_TOKEN: ${{ secrets.WERF_TEST_GITHUB_TOKEN }}
+      WERF_TEST_GITHUB_USERNAME: ${{ secrets.WERF_TEST_GITHUB_USERNAME }}
+
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR: 1
+      WERF_TEST_HARBOR_PASSWORD: ${{ secrets.WERF_TEST_HARBOR_PASSWORD }}
+      WERF_TEST_HARBOR_REGISTRY: ${{ secrets.WERF_TEST_HARBOR_REGISTRY }}
+      WERF_TEST_HARBOR_USERNAME: ${{ secrets.WERF_TEST_HARBOR_USERNAME }}
+
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_QUAY: 1
+      WERF_TEST_QUAY_PASSWORD: ${{ secrets.WERF_TEST_QUAY_PASSWORD }}
+      WERF_TEST_QUAY_REGISTRY: ${{ secrets.WERF_TEST_QUAY_REGISTRY }}
+      WERF_TEST_QUAY_TOKEN: ${{ secrets.WERF_TEST_QUAY_TOKEN }}
+      WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
+    steps:
+
+    - name: Set up Go 1.14
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.14
+      id: go
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Download integration k8s tests binaries
+      uses: actions/download-artifact@master
+      with:
+        name: "${{ matrix.os }}_integration_k8s_tests_binaries"
+        path: .
+
+    - name: Download werf with coverage binary
+      uses: actions/download-artifact@master
+      with:
+        name: "${{ matrix.os }}_werf_with_coverage"
+        path: .
+
+    - name: Login (acr)
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      if: matrix.implementation == 'acr'
+
+    - name: Login (ecr)
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      if: matrix.implementation == 'ecr'
+
+    - name: Prepare environment
+      run: |
+        export WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/tests_coverage/integration_k8s_tests/${{ matrix.os }}
+        mkdir -p $WERF_TEST_COVERAGE_DIR
+        echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
+
+        ./scripts/ci/git.sh
+        ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.implementation }}
+
+        go build github.com/onsi/ginkgo/ginkgo
+
+        chmod +x werf_with_coverage
+        find integration_k8s -type f -name '*.test' -exec chmod +x {} \;
+
+        echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
+      shell: bash
+      env:
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
+        WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
+
+    - name: Test
+      run: |
+        source ./scripts/ci/integration_k8s_tests_before_hook.sh
+        # NOTE: integration_k8s/bundles only for now!
+        test_binaries=$(find integration_k8s/bundles -type f -name '*.test')
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+      shell: bash
+      env:
+        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: tests_coverage
+        path: tests_coverage
+
   integration_tests_on_self_hosted_runners:
     name: Integration tests
     needs: precompiled_tests_binaries
