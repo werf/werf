@@ -34,18 +34,15 @@ type goTemplateRendering struct {
 func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
 	for _, pattern := range r.AllowEnvVariables {
 		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
-			r, err := regexp.Compile(pattern[1 : len(pattern)-1])
+			expr := fmt.Sprintf("^%s$", pattern[1:len(pattern)-1])
+			r, err := regexp.Compile(expr)
 			if err != nil {
 				return false, err
 			}
 
-			if r.MatchString(name) {
-				return true, nil
-			}
+			return r.MatchString(name), nil
 		} else {
-			if pattern == name {
-				return true, nil
-			}
+			return pattern == name, nil
 		}
 	}
 
@@ -102,17 +99,19 @@ func isPathMatched(patterns []string, path string, withGlobs bool) (bool, error)
 	for _, pattern := range patterns {
 		pattern = filepath.ToSlash(pattern)
 
+		var expr string
 		var matchFunc func(string, string) (bool, error)
 		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") && withGlobs {
-			pattern = pattern[1 : len(pattern)-1]
+			expr = fmt.Sprintf("^%s$", pattern[1:len(pattern)-1])
 			matchFunc = doublestar.Match
 		} else {
+			expr = pattern
 			matchFunc = func(pattern string, path string) (bool, error) {
 				return pattern == path, nil
 			}
 		}
 
-		if matched, err := matchFunc(pattern, path); err != nil {
+		if matched, err := matchFunc(expr, path); err != nil {
 			return false, fmt.Errorf("unable to match path (pattern: %s, path %s): %s", pattern, path, err)
 		} else if matched {
 			return true, nil

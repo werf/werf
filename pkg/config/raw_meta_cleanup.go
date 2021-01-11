@@ -166,10 +166,11 @@ func (c *rawMetaCleanupKeepPolicyReferences) processRegexpString(name, configVal
 		value = strings.TrimPrefix(configValue, "/")
 		value = strings.TrimSuffix(value, "/")
 	} else {
-		value = fmt.Sprintf("^%s$", regexp.QuoteMeta(configValue))
+		value = regexp.QuoteMeta(configValue)
 	}
 
-	regex, err := regexp.Compile(value)
+	expr := fmt.Sprintf("^%s$", value)
+	regex, err := regexp.Compile(expr)
 	if err != nil {
 		return nil, newDetailedConfigError(fmt.Sprintf("invalid value '%s' for `%s: string|REGEX`!", configValue, name), c, c.rawMetaCleanup.rawMeta.doc)
 	}
