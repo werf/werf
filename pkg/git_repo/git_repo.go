@@ -7,7 +7,7 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-const GitRepoCacheVersion = "3"
+const GitRepoCacheVersion = "4"
 
 type PatchOptions struct {
 	FilterOptions
