@@ -25,9 +25,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # run tests label
+        os: [ubuntu, macOS, windows]
+    runs-on: ${{ matrix.os }}-latest
+    if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run tests')
     steps:
 
     - name: Set up Go 1.14
@@ -46,15 +46,16 @@ jobs:
         ./scripts/tests/precompiled_tests_binaries.sh ./pkg ./precompiled_tests_binaries/unit
 
         # integration tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration ./precompiled_tests_binaries/integration
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/default ./precompiled_tests_binaries/integration_default
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/k8s_per_version ./precompiled_tests_binaries/integration_k8s_per_version
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/container_registry_per_implementation ./precompiled_tests_binaries/integration_container_registry_per_implementation
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/k8s_per_version_and_container_registry_per_implementation ./precompiled_tests_binaries/integration_k8s_per_version_and_container_registry_per_implementation
 
-        # integration_k8s tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration_k8s ./precompiled_tests_binaries/integration_k8s
       shell: bash
 
-    - name: Compile tests werf binary (ubuntu-latest)
+    - name: Compile tests werf binary (ubuntu)
       run: GOBIN=$PWD ./go-build.sh
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu'
 
     - name: Upload unit tests binaries
       uses: actions/upload-artifact@master
@@ -62,24 +63,36 @@ jobs:
         name: "${{ matrix.os }}_unit_tests_binaries"
         path: precompiled_tests_binaries/unit
 
-    - name: Upload integration tests binaries
+    - name: Upload integration default tests binaries
       uses: actions/upload-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_tests_binaries"
-        path: precompiled_tests_binaries/integration
+        name: "${{ matrix.os }}_integration_default_tests_binaries"
+        path: precompiled_tests_binaries/integration_default
 
-    - name: Upload integration k8s tests binaries
+    - name: Upload integration k8s_per_version tests binaries
       uses: actions/upload-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_k8s_tests_binaries"
-        path: precompiled_tests_binaries/integration_k8s
+        name: "${{ matrix.os }}_integration_k8s_per_version_tests_binaries"
+        path: precompiled_tests_binaries/integration_k8s_per_version
 
-    - name: Upload werf binary (ubuntu-latest)
+    - name: Upload integration container_registry_per_implementation tests binaries
+      uses: actions/upload-artifact@master
+      with:
+        name: "${{ matrix.os }}_integration_container_registry_per_implementation_tests_binaries"
+        path: precompiled_tests_binaries/integration_container_registry_per_implementation
+
+    - name: Upload integration k8s_per_version_and_container_registry_per_implementation tests binaries
+      uses: actions/upload-artifact@master
+      with:
+        name: "${{ matrix.os }}_integration_k8s_per_version_and_container_registry_per_implementation_tests_binaries"
+        path: precompiled_tests_binaries/integration_k8s_per_version_and_container_registry_per_implementation
+
+    - name: Upload werf binary (ubuntu)
       uses: actions/upload-artifact@master
       with:
         name: "${{ matrix.os }}_werf_binary"
         path: werf
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu'
 
   unit_tests:
     name: Unit tests
@@ -87,8 +100,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+        os: [ubuntu, macOS, windows]
+    runs-on: ${{ matrix.os }}-latest
     steps:
 
     - name: Set up Go 1.14
@@ -118,18 +131,18 @@ jobs:
         done
       shell: bash
 
-  integration_tests:
-    name: Integration tests
+  integration_default_tests:
+    name: Integration default tests
     needs: precompiled_tests_binaries
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu]
         extra-find-args:
         - "-name 'git.test'"
         - "-name 'ansible.test'"
         - "! -name 'git.test' ! -name 'ansible.test'"
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     steps:
 
     - name: Set up Go 1.14
@@ -148,10 +161,10 @@ jobs:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''ansible.test'''
 
-    - name: Download integration tests binaries
+    - name: Download integration default tests binaries
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_tests_binaries"
+        name: "${{ matrix.os }}_integration_default_tests_binaries"
         path: .
 
     - name: Download werf binary
@@ -176,16 +189,16 @@ jobs:
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ./ginkgo -p -keepGoing $test_binaries
       shell: bash
 
-  integration_k8s_tests:
-    name: Integration k8s tests
+  integration_k8s_per_version_tests:
+    name: Integration k8s_per_version tests
     needs: precompiled_tests_binaries
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     steps:
 
     - name: Set up Go 1.14
@@ -197,10 +210,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Download integration k8s tests binaries
+    - name: Download integration k8s_per_version tests binaries
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_k8s_tests_binaries"
+        name: "${{ matrix.os }}_integration_k8s_per_version_tests_binaries"
         path: .
 
     - name: Download werf binary
@@ -215,7 +228,7 @@ jobs:
 
         go build github.com/onsi/ginkgo/ginkgo
 
-        find integration_k8s -type f -name '*.test' -exec chmod +x {} \;
+        find integration -type f -name '*.test' -exec chmod +x {} \;
 
         chmod +x werf
 
@@ -230,7 +243,7 @@ jobs:
     - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        test_binaries=$(find integration_k8s -type f -name '*.test')
+        test_binaries=$(find integration -type f -name '*.test')
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       env:
@@ -238,13 +251,13 @@ jobs:
         WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
         WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
 
-  integration_k8s_per_registry_implementation_tests:
-    name: Integration k8s per registry implementation tests
+  integration_k8s_per_version_and_container_registry_per_implementation_tests:
+    name: Integration k8s_per_version_and_container_registry_per_implementation tests
     needs: precompiled_tests_binaries
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
         implementation:
           - acr
@@ -256,7 +269,7 @@ jobs:
           - harbor
           - quay
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     env:
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
       WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
@@ -309,10 +322,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Download integration k8s tests binaries
+    - name: Download integration k8s_per_version_and_container_registry_per_implementation tests binaries
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_k8s_tests_binaries"
+        name: "${{ matrix.os }}_integration_k8s_per_version_and_container_registry_per_implementation_tests_binaries"
         path: .
 
     - name: Download werf binary
@@ -342,7 +355,7 @@ jobs:
 
         go build github.com/onsi/ginkgo/ginkgo
 
-        find integration_k8s -type f -name '*.test' -exec chmod +x {} \;
+        find integration -type f -name '*.test' -exec chmod +x {} \;
 
         chmod +x werf
 
@@ -357,8 +370,7 @@ jobs:
     - name: Test
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        # NOTE: integration_k8s/bundles only for now!
-        test_binaries=$(find integration_k8s/bundles -type f -name '*.test')
+        test_binaries=$(find integration -type f -name '*.test')
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       env:

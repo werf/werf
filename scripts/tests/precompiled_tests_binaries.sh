@@ -11,9 +11,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     brew install findutils
   fi
 
-  package_paths=$(gfind "$find_dir" -type f -name '*_test.go' -printf '%h\n' | sort -u)
+  package_paths=$(gfind -L "$find_dir" -type f -name '*_test.go' -printf '%h\n' | sort -u)
 else
-  package_paths=$(find "$find_dir" -type f -name '*_test.go' -printf '%h\n' | sort -u)
+  package_paths=$(find  -L "$find_dir" -type f -name '*_test.go' -printf '%h\n' | sort -u)
 fi
 
 unameOut="$(uname -s)"
