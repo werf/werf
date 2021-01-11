@@ -6,7 +6,7 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-const GitWorkTreeCacheVersion = "6"
+const GitWorkTreeCacheVersion = "7"
 
 func GetWorkTreeCacheDir() string {
 	return filepath.Join(werf.GetLocalCacheDir(), "git_worktrees", GitWorkTreeCacheVersion)

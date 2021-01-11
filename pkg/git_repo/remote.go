@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/werf/werf/pkg/util"
+
 	"gopkg.in/ini.v1"
 
 	"github.com/werf/werf/pkg/true_git"
@@ -63,7 +65,7 @@ func (repo *Remote) getFilesystemRelativePathByEndpoint() string {
 }
 
 func (repo *Remote) GetClonePath() string {
-	return filepath.Join(GetGitRepoCacheDir(), repo.getFilesystemRelativePathByEndpoint())
+	return filepath.Join(GetGitRepoCacheDir(), repo.getRepoID())
 }
 
 func (repo *Remote) RemoteOriginUrl() (string, error) {
@@ -297,11 +299,11 @@ func (repo *Remote) IsCommitExists(ctx context.Context, commit string) (bool, er
 }
 
 func (repo *Remote) getRepoID() string {
-	return repo.getFilesystemRelativePathByEndpoint()
+	return util.Sha256Hash(repo.getFilesystemRelativePathByEndpoint())
 }
 
 func (repo *Remote) getWorkTreeCacheDir(repoID string) string {
-	return filepath.Join(GetWorkTreeCacheDir(), repoID)
+	return filepath.Join(GetWorkTreeCacheDir(), "remote", repoID)
 }
 
 func (repo *Remote) withRemoteRepoLock(ctx context.Context, f func() error) error {
