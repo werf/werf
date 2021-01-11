@@ -166,11 +166,27 @@ func ReportConfigGoTemplateRenderingEnv(_ context.Context, envName string) error
 }
 
 func PrintInspectionDebrief(ctx context.Context) {
+	headerPrinted := false
+	printHeader := func() {
+		if headerPrinted {
+			return
+		}
+		logboek.Context(ctx).Warn().LogLn()
+		logboek.Context(ctx).Warn().LogF("### Giterminism inspection debrief ###\n")
+		logboek.Context(ctx).Warn().LogLn()
+		headerPrinted = true
+	}
+
+	defer func() {
+		if headerPrinted {
+			logboek.Context(ctx).Warn().LogF("More info about giterminism in the werf is available at %s\n", giterminismDocPageURL)
+			logboek.Context(ctx).Warn().LogLn()
+		}
+	}()
+
 	if NonStrict {
 		if len(ReportedUncommittedPaths) > 0 || len(ReportedUntrackedPaths) > 0 {
-			logboek.Context(ctx).Warn().LogLn()
-			logboek.Context(ctx).Warn().LogF("### Giterminism inspection debrief ###\n")
-			logboek.Context(ctx).Warn().LogLn()
+			printHeader()
 
 			if len(ReportedUncommittedPaths) > 0 {
 				logboek.Context(ctx).Warn().LogF("Following uncommitted files were not taken into account:\n")
@@ -188,8 +204,16 @@ func PrintInspectionDebrief(ctx context.Context) {
 				logboek.Context(ctx).Warn().LogLn()
 			}
 
-			logboek.Context(ctx).Warn().LogF("More info about giterminism in the werf avaiable on the page: %s\n", giterminismDocPageURL)
-			logboek.Context(ctx).Warn().LogLn()
 		}
+	}
+
+	if LooseGiterminism {
+		printHeader()
+
+		logboek.Context(ctx).Warn().LogF("--loose-giterminism option (and WERF_LOOSE_GITERMINISM env variable) is forbidden and will be removed soon!\n")
+		logboek.Context(ctx).Warn().LogLn()
+		logboek.Context(ctx).Warn().LogF("Please use werf-giterminism.yaml config instead to loosen giterminism restrictions if needed.\n")
+		logboek.Context(ctx).Warn().LogF("Description of werf-giterminsim.yaml configuration is available at %s\n", giterminismDocPageURL)
+		logboek.Context(ctx).Warn().LogLn()
 	}
 }
