@@ -8,6 +8,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type ServiceValuesOptions struct {
@@ -18,6 +19,9 @@ type ServiceValuesOptions struct {
 
 func GetServiceValues(ctx context.Context, projectName string, repo string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	globalInfo := map[string]interface{}{
+		"werf": map[string]interface{}{
+			"version": werf.Version,
+		},
 		"env": opts.Env,
 	}
 
