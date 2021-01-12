@@ -5,64 +5,77 @@ import (
 	"os"
 	"strings"
 
-	"github.com/prashantv/gostub"
+	"github.com/onsi/gomega"
 
-	"github.com/onsi/ginkgo"
 	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/storage"
 )
 
 type ContainerRegistryPerImplementationData struct {
 	ContainerRegistryPerImplementation map[string]*containerRegistryImplementationData
 }
 
-type containerRegistryImplementationData struct {
-	Repo               string
-	ImplementationName string
-	RegistryOptions    docker_registry.DockerRegistryOptions
-	StagesStorage      storage.StagesStorage
+func (data *ContainerRegistryPerImplementationData) ActivateImplementationWerfEnvironmentParams(implementationName string, stubsData *StubsData) bool {
+	implData := data.ContainerRegistryPerImplementation[implementationName]
+
+	stubsData.Stubs.SetEnv("WERF_REPO_IMPLEMENTATION", implData.ImplementationName)
+
+	switch implementationName {
+	case docker_registry.DockerHubImplementationName:
+		stubsData.Stubs.SetEnv("WERF_REPO_DOCKER_HUB_USERNAME", implData.RegistryOptions.DockerHubUsername)
+		stubsData.Stubs.SetEnv("WERF_REPO_DOCKER_HUB_PASSWORD", implData.RegistryOptions.DockerHubPassword)
+	case docker_registry.GitHubPackagesImplementationName:
+		stubsData.Stubs.SetEnv("WERF_REPO_GITHUB_TOKEN", implData.RegistryOptions.GitHubToken)
+	}
+
+	return true
 }
 
-func NewContainerRegistryPerImplementationData(projectNameData *ProjectNameData, stubsData *StubsData, implementationName string) *ContainerRegistryPerImplementationData {
+type containerRegistryImplementationData struct {
+	RegistryAddress    string
+	ImplementationName string
+	RegistryOptions    docker_registry.DockerRegistryOptions
+}
+
+func NewContainerRegistryPerImplementationData(synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData) *ContainerRegistryPerImplementationData {
 	data := &ContainerRegistryPerImplementationData{}
 
-	ginkgo.BeforeEach(func() {
-		if data.ContainerRegistryPerImplementation == nil {
-			data.ContainerRegistryPerImplementation = make(map[string]*containerRegistryImplementationData)
-		}
+	synchronizedSuiteCallbacksData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
+		implementations := ContainerRegistryImplementationListToCheck()
+		gomega.Expect(len(implementations)).NotTo(gomega.Equal(0), "expected at least one of WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_<IMPLEMENTATION>=1 to be set, supported implementations: %v", docker_registry.ImplementationList())
 
-		isNotSupported := true
-		for _, name := range docker_registry.ImplementationList() {
-			if name == implementationName {
-				isNotSupported = false
+		data.ContainerRegistryPerImplementation = make(map[string]*containerRegistryImplementationData)
+
+		for _, implementationName := range implementations {
+			isNotSupported := true
+			for _, name := range docker_registry.ImplementationList() {
+				if name == implementationName {
+					isNotSupported = false
+				}
 			}
+			var implementationNameForWerf string
+			if isNotSupported {
+				implementationNameForWerf = "default"
+			} else {
+				implementationNameForWerf = implementationName
+			}
+
+			registryAddress := ContainerRegistryImplementationAddress(implementationNameForWerf)
+
+			implData := &containerRegistryImplementationData{
+				RegistryAddress:    registryAddress,
+				ImplementationName: implementationNameForWerf,
+				RegistryOptions:    ContainerRegistryImplementationDockerRegistryOptionsAndSetEnvs(implementationNameForWerf),
+			}
+
+			data.ContainerRegistryPerImplementation[implementationName] = implData
 		}
-		var implementationNameForWerf string
-		if isNotSupported {
-			implementationNameForWerf = "default"
-		} else {
-			implementationNameForWerf = implementationName
-		}
-
-		implData := &containerRegistryImplementationData{
-			Repo:               ContainerRegistryImplementationStagesStorageAddress(implementationNameForWerf, projectNameData.ProjectName),
-			ImplementationName: implementationNameForWerf,
-			RegistryOptions:    ContainerRegistryImplementationDockerRegistryOptionsAndSetEnvs(implementationNameForWerf, stubsData.Stubs),
-		}
-
-		implData.StagesStorage = utils.NewStagesStorage(implData.Repo, implementationNameForWerf, implData.RegistryOptions)
-
-		data.ContainerRegistryPerImplementation[implementationName] = implData
-
-		stubsData.Stubs.SetEnv("WERF_REPO", implData.Repo)
-		stubsData.Stubs.SetEnv("WERF_REPO_IMPLEMENTATION", implData.ImplementationName)
 	})
 
 	return data
 }
 
-func ContainerRegistryImplementationDockerRegistryOptionsAndSetEnvs(implementationName string, stubs *gostub.Stubs) docker_registry.DockerRegistryOptions {
+func ContainerRegistryImplementationDockerRegistryOptionsAndSetEnvs(implementationName string) docker_registry.DockerRegistryOptions {
 	implementationCode := strings.ToUpper(implementationName)
 
 	usernameEnvName := fmt.Sprintf(
@@ -85,9 +98,6 @@ func ContainerRegistryImplementationDockerRegistryOptionsAndSetEnvs(implementati
 		username := utils.GetRequiredEnv(usernameEnvName)
 		password := utils.GetRequiredEnv(passwordEnvName)
 
-		stubs.SetEnv("WERF_REPO_DOCKER_HUB_USERNAME", username)
-		stubs.SetEnv("WERF_REPO_DOCKER_HUB_PASSWORD", password)
-
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
 			SkipTlsVerifyRegistry: false,
@@ -96,8 +106,6 @@ func ContainerRegistryImplementationDockerRegistryOptionsAndSetEnvs(implementati
 		}
 	case docker_registry.GitHubPackagesImplementationName:
 		token := utils.GetRequiredEnv(tokenEnvName)
-
-		stubs.SetEnv("WERF_REPO_GITHUB_TOKEN", token)
 
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
@@ -133,7 +141,7 @@ func ContainerRegistryImplementationDockerRegistryOptionsAndSetEnvs(implementati
 	}
 }
 
-func ContainerRegistryImplementationStagesStorageAddress(implementationName, projectName string) string {
+func ContainerRegistryImplementationAddress(implementationName string) string {
 	implementationCode := strings.ToUpper(implementationName)
 
 	registryEnvName := fmt.Sprintf(
@@ -141,9 +149,7 @@ func ContainerRegistryImplementationStagesStorageAddress(implementationName, pro
 		implementationCode,
 	)
 
-	registry := utils.GetRequiredEnv(registryEnvName)
-
-	return fmt.Sprintf("%s/%s", registry, projectName)
+	return utils.GetRequiredEnv(registryEnvName)
 }
 
 func ContainerRegistryImplementationListToCheck() []string {
