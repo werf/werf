@@ -22,5 +22,6 @@
 /tests/integration/three-way-merge/**/main
 /bin
 /tests-coverage
+/precompiled_tests_binaries
 
 docs/\.jekyll-cache/

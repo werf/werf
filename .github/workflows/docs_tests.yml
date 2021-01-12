@@ -27,7 +27,7 @@ jobs:
       - name: Test
         run: |
           ./scripts/ci/git.sh
-          go test ./integration/docs
+          go test ./integration/suites/docs
 
   check_links:
     container: jekyll/builder:3
