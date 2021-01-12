@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/logboek"
+
 	"github.com/werf/werf/pkg/giterminism_inspector"
 )
 
@@ -101,8 +103,11 @@ func (c *StapelImageBase) validate() error {
 		return newDetailedConfigError("conflict between `from`, `fromImage` and `fromArtifact` directives!", nil, c.raw.doc)
 	}
 
+	if c.raw.FromArtifact != "" {
+		logboek.Context(context.Background()).Warn().LogLn("DEPRECATION WARNING: The directive `fromArtifact` will be removed in v1.3. Use `fromImage` or `import` directive instead!")
+	}
+
 	// TODO: валидацию формата `From`
-	// TODO: валидация формата `Name`
 
 	return nil
 }
