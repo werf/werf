@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -365,7 +366,14 @@ func getWerfConfigTemplatesLocalGitRepo(ctx context.Context, localGitRepo git_re
 			continue
 		}
 
-		templatesPathList = append(templatesPathList, relPath)
+		matched, err := filepath.Match("*.tmpl", path.Base(relPath))
+		if err != nil {
+			return nil, err
+		}
+
+		if matched {
+			templatesPathList = append(templatesPathList, relPath)
+		}
 	}
 
 	return templatesPathList, nil
