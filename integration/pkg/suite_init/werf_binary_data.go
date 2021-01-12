@@ -17,7 +17,7 @@ func NewWerfBinaryData(synchronizedSuiteCallbacksData *SynchronizedSuiteCallback
 	synchronizedSuiteCallbacksData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(computedPath []byte) {
 		data.WerfBinPath = string(computedPath)
 	})
-	synchronizedSuiteCallbacksData.AppendSynchronizedAfterSuiteAllNodesFunc(gexec.CleanupBuildArtifacts)
+	synchronizedSuiteCallbacksData.AppendSynchronizedAfterSuiteNode1Func(gexec.CleanupBuildArtifacts)
 	return data
 }
 
