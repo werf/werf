@@ -9,6 +9,7 @@ import (
 
 	"github.com/werf/werf/pkg/images_manager"
 	"github.com/werf/werf/pkg/tag_strategy"
+	"github.com/werf/werf/pkg/werf"
 )
 
 const (
@@ -32,9 +33,10 @@ func GetServiceValues(ctx context.Context, projectName string, imagesRepository,
 	}
 
 	werfInfo := map[string]interface{}{
-		"name": projectName,
-		"repo": imagesRepository,
-		"ci":   ciInfo,
+		"name":    projectName,
+		"repo":    imagesRepository,
+		"ci":      ciInfo,
+		"version": werf.Version,
 	}
 	if commonTag != "" {
 		werfInfo["docker_tag"] = commonTag
