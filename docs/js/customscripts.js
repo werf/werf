@@ -57,13 +57,13 @@ $(function() {
 
 // Load versions and append them to topnavbar
 $(document).ready(function () {
+  // TODO!!!! Should be refactored
+  $('.header__menu').addClass('header__menu_active');
   // releasesInfo variable generates by generate_artifacts script and loads in head on the build stage as channels.js;
   var releasesInfo = window.releasesInfo;
 
-  if (releasesInfo === undefined || releasesInfo.menuChannels === undefined) return;
-
   var menu = $('#doc-versions-menu');
-  var toggler;
+  var toggler, currentRelease, currentChannel;;
   var currentRelease = $('#werfVersion').text();
   var currentChannel = $('#werfChannel').text();
   if (!currentRelease) currentRelease = 'local';
@@ -151,7 +151,6 @@ $(document).ready(function () {
     toggler.append('<span class="header__menu-item-extra"> – ' + currentRelease + '</span>');
   }
   menu.prepend(toggler);
-  $('.header__menu').addClass('header__menu_active')
 
 });
 

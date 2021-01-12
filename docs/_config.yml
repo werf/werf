@@ -26,6 +26,9 @@ exclude:
 - .idea/
 - .gitignore
 - vendor
+- Gemfile
+- Gemfile.lock
+- "*.sh"
 - pages_ru/
 
 highlighter: rouge
@@ -67,18 +70,8 @@ defaults:
       type: "pages"
     values:
       lang: ru
-#  - scope:
-#      path: "pages/cli"
-#      type: "pages"
-#    values:
-#      multilang: false
-#  - scope:
-#      path: "pages_ru/cli"
-#      type: "pages"
-#    values:
-#      multilang: false
-#      sitemap_include: false
 
+timezone: Europe/Moscow
 
 sidebars:
 - documentation

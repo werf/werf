@@ -35,7 +35,7 @@ deploy:
 
 ### Release name
 
-werf allows to define a custom release name template, which [used during deploy process]({{ "documentation/advanced/helm/basics.html#release-name" | relative_url }}) to generate a release name:
+werf allows to define a custom release name template, which [used during deploy process]({{ "documentation/advanced/helm/basics.html#release-name" | true_relative_url: page.url }}) to generate a release name:
 
 ```yaml
 project: PROJECT_NAME
@@ -55,12 +55,12 @@ deploy:
 ```
 {% endraw %}
 
-`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ "documentation/advanced/helm/basics.html#slugging-the-release-name" | relative_url }}) to generated helm release name. Default: `true`.
+`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ "documentation/advanced/helm/basics.html#slugging-the-release-name" | true_relative_url: page.url }}) to generated helm release name. Default: `true`.
 
 
 ### Kubernetes namespace
 
-werf allows to define a custom Kubernetes namespace template, which [used during deploy process]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | relative_url }}) to generate a Kubernetes Namespace:
+werf allows to define a custom Kubernetes namespace template, which [used during deploy process]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | true_relative_url: page.url }}) to generate a Kubernetes Namespace:
 
 ```yaml
 project: PROJECT_NAME
@@ -80,13 +80,13 @@ deploy:
 ```
 {% endraw %}
 
-`deploy.namespaceSlug` defines whether to apply or not [slug]({{ "documentation/advanced/helm/basics.html#slugging-kubernetes-namespace" | relative_url }}) to generated kubernetes namespace. Default: `true`.
+`deploy.namespaceSlug` defines whether to apply or not [slug]({{ "documentation/advanced/helm/basics.html#slugging-kubernetes-namespace" | true_relative_url: page.url }}) to generated kubernetes namespace. Default: `true`.
 
 ## Cleanup
 
 ### Configuring cleanup policies
 
-The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ "documentation/advanced/cleanup.html#git-history-based-cleanup-algorithm" | relative_url }}), __images not meeting the criteria of any policy are deleted__.
+The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ "documentation/advanced/cleanup.html#git-history-based-cleanup-algorithm" | true_relative_url: page.url }}), __images not meeting the criteria of any policy are deleted__.
 
 Each policy consists of two parts:
 

@@ -1,5 +1,4 @@
 {{- $_ := set . "Version" ( splitList "/" .Values.global.github_ref | last ) }}
-
 {{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
 {{- $_ := set . "VersionDNSNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" ) }}
 
@@ -27,7 +26,7 @@ spec:
       containers:
         - name: web
           command: ["nginx", "-g", "daemon off;"]
-          image: {{ tuple ( printf "site-%s" .VersionURLNormalized  ) . | werf_image }}
+          image: {{ tuple . | werf_image }}
 {{- include "resources" . | indent 10 }}
           ports:
           - containerPort: 80

@@ -5,14 +5,14 @@ description: Разверните ваше первое приложение с 
 sidebar: documentation
 ---
 
-В этой статье мы покажем, как развернуть простое [приложение](https://github.com/werf/quickstart-application) (для голосования в нашем случае) с помощью werf. Прежде всего рекомендуем ознакомиться с [кратким введением]({{ "introduction.html" | relative_url }}), если вы этого еще не сделали.
+В этой статье мы покажем, как развернуть простое [приложение](https://github.com/werf/quickstart-application) (для голосования в нашем случае) с помощью werf. Прежде всего рекомендуем ознакомиться с [кратким введением]({{ "introduction.html" | true_relative_url: page.url }}), если вы этого еще не сделали.
 
-Чтобы повторить все шаги, изложенные в этом кратком руководстве, необходимо [установить werf]({{ "installation.html" | relative_url }}).
+Чтобы повторить все шаги, изложенные в этом кратком руководстве, необходимо [установить werf]({{ "installation.html" | true_relative_url: page.url }}).
 
 ## Подготовьте вашу систему
 
- 1. Установите [зависимости]({{ "installation.html#установка-зависимостей" | relative_url }}).
- 2. Установите [multiwerf и werf]({{ "installation.html#установка-werf" | relative_url }}).
+ 1. Установите [зависимости]({{ "installation.html#установка-зависимостей" | true_relative_url: page.url }}).
+ 2. Установите [multiwerf и werf]({{ "installation.html#установка-werf" | true_relative_url: page.url }}).
 
 Прежде чем переходить к следующим шагам, надо убедиться что команда `werf` доступна в вашем shell:
 
@@ -212,7 +212,7 @@ minikube service --namespace quickstart-application --url result
 
 ## Принципы работы
 
-Чтобы развернуть приложение с помощью `werf`, необходимо описать желаемое состояние в Git (как описано во [введении]({{ "introduction.html" | relative_url }})).
+Чтобы развернуть приложение с помощью `werf`, необходимо описать желаемое состояние в Git (как описано во [введении]({{ "introduction.html" | true_relative_url: page.url }})).
 
  1. В нашем репозитории имеются следующие Dockerfile'ы:
 
@@ -248,7 +248,7 @@ minikube service --namespace quickstart-application --url result
 
  3. Шаблоны для компонентов приложения `vote`, `db`, `redis`, `result` и `worker` описаны в каталоге `.helm/templates/`. Схема ниже показывает, как компоненты взаимодействуют между собой:
 
-  ![architecture]({{ "images/quickstart-architecture.svg" | relative_url }})
+  ![architecture]({{ "images/quickstart-architecture.svg" | true_relative_url: page.url }})
 
    - Фронтенд-приложение на Python или ASP.NET Core позволяет пользователю проголосовать за один из двух вариантов;
    - Очередь на базе Redis или NATS получает новые голоса;
@@ -258,4 +258,4 @@ minikube service --namespace quickstart-application --url result
 
 ## Что дальше?
 
-Рекомендуем ознакомиться со статьей ["Использование werf с системами CI/CD"]({{ "documentation/using_with_ci_cd_systems.html" | relative_url }}) или обратиться к соответствующим [руководствам]({{ "documentation/guides.html" | relative_url }}).
+Рекомендуем ознакомиться со статьей ["Использование werf с системами CI/CD"]({{ "documentation/using_with_ci_cd_systems.html" | true_relative_url: page.url }}) или обратиться к соответствующим [руководствам]({{ "documentation/guides.html" | true_relative_url: page.url }}).

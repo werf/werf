@@ -35,16 +35,16 @@ dependencies:
 Файл `requirements.lock` содержит точные версии прямых зависимостей, версии зависимостей прямых зависимостей и т.д.
 
 Для работы с файлом зависимостей существуют команды `werf helm dependency`, которые упрощают синхронизацию между желаемыми зависимостями и фактическими зависимостями, указанными в папке чарта:
-* [werf helm dependency list]({{ "documentation/reference/cli/werf_helm_dependency_list.html" | relative_url }}) — проверка зависимостей и их статуса.  
-* [werf helm dependency update]({{ "documentation/reference/cli/werf_helm_dependency_update.html" | relative_url }}) — обновление папки `/charts` согласно содержимому файла `requirements.yaml`.
-* [werf helm dependency build]({{ "documentation/reference/cli/werf_helm_dependency_build.html" | relative_url }}) — обновление `/charts` согласно содержимому файла `requirements.lock`.
+* [werf helm dependency list]({{ "documentation/reference/cli/werf_helm_dependency_list.html" | true_relative_url: page.url }}) — проверка зависимостей и их статуса.
+* [werf helm dependency update]({{ "documentation/reference/cli/werf_helm_dependency_update.html" | true_relative_url: page.url }}) — обновление папки `/charts` согласно содержимому файла `requirements.yaml`.
+* [werf helm dependency build]({{ "documentation/reference/cli/werf_helm_dependency_build.html" | true_relative_url: page.url }}) — обновление `/charts` согласно содержимому файла `requirements.lock`.
 
 Все репозитории чартов, используемые в `requirements.yaml`, должны быть настроены в системе. Для работы с репозиториями чартов можно использовать команды `werf helm repo`:
-* [werf helm repo add]({{ "documentation/reference/cli/werf_helm_repo_add.html" | relative_url }}) — добавление репозитория чартов.
-* [werf helm repo index]({{ "documentation/reference/cli/werf_helm_repo_index.html" | relative_url }}).
-* [werf helm repo list]({{ "documentation/reference/cli/werf_helm_repo_list.html" | relative_url }}) — вывод списка существующих репозиториев чартов.
-* [werf helm repo remove]({{ "documentation/reference/cli/werf_helm_repo_remove.html" | relative_url }}) — удаление репозитория чартов.
-* [werf helm repo update]({{ "documentation/reference/cli/werf_helm_repo_update.html" | relative_url }}) — обновление локального индекса репозиториев чартов.
+* [werf helm repo add]({{ "documentation/reference/cli/werf_helm_repo_add.html" | true_relative_url: page.url }}) — добавление репозитория чартов.
+* [werf helm repo index]({{ "documentation/reference/cli/werf_helm_repo_index.html" | true_relative_url: page.url }}).
+* [werf helm repo list]({{ "documentation/reference/cli/werf_helm_repo_list.html" | true_relative_url: page.url }}) — вывод списка существующих репозиториев чартов.
+* [werf helm repo remove]({{ "documentation/reference/cli/werf_helm_repo_remove.html" | true_relative_url: page.url }}) — удаление репозитория чартов.
+* [werf helm repo update]({{ "documentation/reference/cli/werf_helm_repo_update.html" | true_relative_url: page.url }}) — обновление локального индекса репозиториев чартов.
 
 werf совместим с настройками Helm, поэтому по умолчанию команды `werf helm dependency` и `werf helm repo` используют настройки из папки конфигурации Helm в домашней папке пользователя, — `~/.helm`. Вы можете указать другую папку с помощью параметра `--helm-home`. Если у вас нет папки `~/.helm` в домашней папке, либо вы хотите создать другую, то вы можете использовать команду `werf helm repo init` для инициализации необходимых настроек и конфигурации репозитория чартов по умолчанию.
 

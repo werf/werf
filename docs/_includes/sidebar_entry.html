@@ -14,7 +14,7 @@
 {%- elsif entry.external_url %}
 <li class="{{ item_entry_class }}"><a href="{{ entry.external_url }}" target="_blank">{{entry.title}}</a></li>
 {%- elsif page.url == entry.url %}
-<li class="{{ item_entry_class }} active"><a href="{{ entry.url | relative_url }}">{{entry.title}}</a></li>
+<li class="{{ item_entry_class }} active"><a href="{{ entry.url | true_relative_url: page.url }}">{{entry.title}}</a></li>
 {%- else %}
-<li class="{{ item_entry_class }}"><a href="{{ entry.url | relative_url }}">{{entry.title}}</a></li>
+<li class="{{ item_entry_class }}"><a href="{{ entry.url | true_relative_url: page.url }}">{{entry.title}}</a></li>
 {%- endif %}

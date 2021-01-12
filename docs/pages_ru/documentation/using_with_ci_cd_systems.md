@@ -9,12 +9,12 @@ sidebar: documentation
 
 В этой статье мы рассмотрим основы использования werf в рамках различных систем CI/CD.
 
-Также доступна статья, в которой обсуждаются более продвинутые вопросы [общей интеграции в процесс CI/CD]({{ "documentation/advanced/ci_cd/generic_ci_cd_integration.html" | relative_url }}).
+Также доступна статья, в которой обсуждаются более продвинутые вопросы [общей интеграции в процесс CI/CD]({{ "documentation/advanced/ci_cd/generic_ci_cd_integration.html" | true_relative_url: page.url }}).
 
 werf изначально поддерживает GitLab CI/CD и GitHub Actions, а также предлагает специальную команду `werf ci-env` (она необязательна и позволяет настраивать параметры werf, описываемые в этой статье, автоматически и единообразно). Дополнительные сведения можно найти в следующих документах:
 
- - [GitLab CI/CD]({{ "documentation/advanced/ci_cd/gitlab_ci_cd.html" | relative_url }});
- - [GitHub Actions]({{ "documentation/advanced/ci_cd/github_actions.html" | relative_url }}).
+ - [GitLab CI/CD]({{ "documentation/advanced/ci_cd/gitlab_ci_cd.html" | true_relative_url: page.url }});
+ - [GitHub Actions]({{ "documentation/advanced/ci_cd/github_actions.html" | true_relative_url: page.url }}).
 
 ## Команды werf, которые понадобятся
 
@@ -91,7 +91,7 @@ docker login registry.mydomain.org/application -uUSER -pPASSWORD
 
 ### Настройка целевого окружения для werf
 
-Обычно приложение развертывается в различные [окружения]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#окружение" | relative_url }}) (`production`, `staging`, `testing`, и т.д.).
+Обычно приложение развертывается в различные [окружения]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#окружение" | true_relative_url: page.url }}) (`production`, `staging`, `testing`, и т.д.).
 
 В werf имеется опциональный параметр `--env` (или переменная среды `WERF_ENV`), с помощью которого можно задать имя используемого окружения. Оно влияет на название соответствующего [пространства имен Kubernetes]() и [название Helm-релиза](). Мы рекомендуем проверять имя окружения в процессе выполнения CI/CD-задания (например, с помощью встроенных переменных окружения вашей CI/CD-системы) и соответствующим образом устанавливать параметр `--env`.
 
@@ -125,7 +125,7 @@ werf converge
 
 Обычно CI/CD-система производит checkout на текущий git-коммит полностью автоматически, и пользователю не приходится этим заниматься самостоятельно. Однако некоторые системы могут быть лишены подобного функционала. В этом случае вы должны самостоятельно произвести checkout на целевой git-коммит в репозитории проекта перед запуском основных команд werf (`werf converge`, `werf dismiss`, `werf cleanup`).
 
-Дополнительная информация о converge доступна во [введении]({{ "introduction.html#что-такое-converge" | relative_url }}). 
+Дополнительная информация о converge доступна во [введении]({{ "introduction.html#что-такое-converge" | true_relative_url: page.url }}).
 
 Примечание: поведение команды werf converge полностью детерминировано и прозрачно с точки зрения репозитория git. После завершения ее работы приложение будет запущено. Оно будет соответствовать состоянию, определенному в целевом git-коммите. -
 
@@ -175,8 +175,8 @@ export WERF_ENABLE_PROCESS_EXTERMINATOR=1
 
 ## Что дальше?
 
-В [этом разделе]({{ "documentation/reference/deploy_annotations.html" | relative_url }}) рассказывается, как управлять отслеживанием ресурсов в процессе развертывания.
+В [этом разделе]({{ "documentation/reference/deploy_annotations.html" | true_relative_url: page.url }}) рассказывается, как управлять отслеживанием ресурсов в процессе развертывания.
 
-Также рекомендуем ознакомиться со статьей ["Основы рабочего процесса CI/CD"]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | relative_url }}). В ней описываются различные способы настройки рабочих процессов CI/CD.
+Также рекомендуем ознакомиться со статьей ["Основы рабочего процесса CI/CD"]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | true_relative_url: page.url }}). В ней описываются различные способы настройки рабочих процессов CI/CD.
 
-В разделе ["Руководства"]({{ "documentation/guides.html" | relative_url }}) можно найти инструкцию, подходящую для вашего проекта. Эти руководства также содержат подробную информацию о настройке конкретных систем CI/CD.
+В разделе ["Руководства"]({{ "documentation/guides.html" | true_relative_url: page.url }}) можно найти инструкцию, подходящую для вашего проекта. Эти руководства также содержат подробную информацию о настройке конкретных систем CI/CD.
