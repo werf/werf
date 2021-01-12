@@ -41,14 +41,6 @@ func Init(projectPath string, opts InspectionOptions) error {
 	return nil
 }
 
-func IsUncommittedConfigAccepted() bool {
-	return giterminismConfig.Config.AllowUncommitted
-}
-
-func IsUncommittedConfigTemplateFileAccepted(path string) (bool, error) {
-	return giterminismConfig.Config.IsUncommittedTemplateFileAccepted(path)
-}
-
 func IsUncommittedConfigGoTemplateRenderingFileAccepted(path string) (bool, error) {
 	return giterminismConfig.Config.GoTemplateRendering.IsUncommittedFileAccepted(path)
 }
@@ -91,10 +83,6 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 	} else {
 		return fmt.Errorf("restricted usage of uncommitted file %s (more info %s)", path, giterminismDocPageURL)
 	}
-}
-
-func ReportUntrackedConfigTemplateFile(ctx context.Context, path string) error {
-	return ReportUntrackedFile(ctx, path)
 }
 
 func ReportUntrackedConfigGoTemplateRenderingFile(ctx context.Context, path string) error {

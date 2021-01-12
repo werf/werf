@@ -55,27 +55,24 @@ func IsNotADirectoryError(err error) bool {
 }
 
 func GetRelativeToBaseFilepath(base, path string) string {
-	if !filepath.IsAbs(path) {
-		if absPath, err := filepath.Abs(path); err != nil {
-			panic(err.Error())
-		} else {
-			path = absPath
-		}
-	}
+	path = GetAbsoluteFilepath(path)
+	base = GetAbsoluteFilepath(base)
 
-	if !filepath.IsAbs(base) {
-		if absPath, err := filepath.Abs(base); err != nil {
-			panic(err.Error())
-		} else {
-			base = absPath
-		}
-	}
-
-	if res, err := filepath.Rel(base, path); err != nil {
+	res, err := filepath.Rel(base, path)
+	if err != nil {
 		panic(err.Error())
-	} else {
-		return res
 	}
+
+	return res
+}
+
+func GetAbsoluteFilepath(absOrRelPath string) string {
+	absPath, err := filepath.Abs(absOrRelPath)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return absPath
 }
 
 func IsSubpathOfBasePath(basePath, path string) bool {

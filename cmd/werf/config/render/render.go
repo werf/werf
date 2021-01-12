@@ -46,22 +46,24 @@ func NewCmd() *cobra.Command {
 				return fmt.Errorf("getting project dir failed: %s", err)
 			}
 
-			localGitRepo, err := common.OpenLocalGitRepo(projectDir)
-			if err != nil {
-				return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
-			}
-
-			configOpts := common.GetWerfConfigOptions(&commonCmdData, false)
-
-			// TODO disable logboek only for this action
-			relWerfConfigPath, err := common.RelGetWerfConfigPath(projectDir, *commonCmdData.ConfigPath, true, localGitRepo)
+			giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 			if err != nil {
 				return err
 			}
 
-			relWerfConfigTemplatesDir := common.GetRelWerfConfigTemplatesDir(projectDir, &commonCmdData)
+			configOpts := common.GetWerfConfigOptions(&commonCmdData, false)
 
-			return config.RenderWerfConfig(common.BackgroundContext(), projectDir, relWerfConfigPath, relWerfConfigTemplatesDir, args, localGitRepo, configOpts)
+			customWerfConfigRelPath, err := common.GetCustomWerfConfigRelPath(projectDir, &commonCmdData)
+			if err != nil {
+				return err
+			}
+
+			customWerfConfigTemplatesDirRelPath, err := common.GetCustomWerfConfigTemplatesDirRelPath(projectDir, &commonCmdData)
+			if err != nil {
+				return err
+			}
+
+			return config.RenderWerfConfig(common.BackgroundContext(), customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, args, giterminismManager, configOpts)
 		},
 	}
 

@@ -114,12 +114,12 @@ func run(imageNames []string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
+	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+		return err
 	}
 
-	werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, false))
+	werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

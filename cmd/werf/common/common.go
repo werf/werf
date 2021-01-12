@@ -22,6 +22,8 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism"
+	"github.com/werf/werf/pkg/giterminism/manager"
 	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/storage"
@@ -883,89 +885,69 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 	return res, nil
 }
 
-func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
-	relWerfConfigPath, err := RelGetWerfConfigPath(projectDir, *cmdData.ConfigPath, false, localGitRepo)
+func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, giterminismManager giterminism.Manager, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(projectDir, cmdData)
 	if err != nil {
 		return nil, err
 	}
 
-	if relWerfConfigPath != "" {
-		relWerfConfigTemplatesDir := GetRelWerfConfigTemplatesDir(projectDir, cmdData)
-		return config.GetWerfConfig(ctx, projectDir, relWerfConfigPath, relWerfConfigTemplatesDir, localGitRepo, opts)
+	if customWerfConfigRelPath != "" {
+		customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(projectDir, cmdData)
+		if err != nil {
+			return nil, err
+		}
+
+		c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+		if err != nil && !giterminism.IsConfigNotFoundError(err) {
+			return nil, err
+		}
+
+		return c, nil
 	}
 
 	return nil, nil
 }
 
-func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, localGitRepo git_repo.Local, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
-	relWerfConfigPath, err := RelGetWerfConfigPath(projectDir, *cmdData.ConfigPath, true, localGitRepo)
+func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, giterminismManager giterminism.Manager, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(projectDir, cmdData)
 	if err != nil {
 		return nil, err
 	}
 
-	relWerfConfigTemplatesDir := GetRelWerfConfigTemplatesDir(projectDir, cmdData)
+	customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(projectDir, cmdData)
+	if err != nil {
+		return nil, err
+	}
 
-	return config.GetWerfConfig(ctx, projectDir, relWerfConfigPath, relWerfConfigTemplatesDir, localGitRepo, opts)
+	return config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
 }
 
-func RelGetWerfConfigPath(projectDir string, customConfigPath string, required bool, localGitRepo git_repo.Local) (string, error) {
-	var configPathToCheck []string
-
-	if customConfigPath != "" {
-		if !filepath.IsAbs(customConfigPath) {
-			workdirPath, err := os.Getwd()
-			if err != nil {
-				return "", fmt.Errorf("unable to get working directory: %s", err)
-			}
-
-			customConfigPath = filepath.Join(workdirPath, filepath.Clean(customConfigPath))
-		}
-
-		if !util.IsSubpathOfBasePath(projectDir, customConfigPath) {
-			return "", fmt.Errorf("werf configuration file must be in project directory (%s)", customConfigPath)
-		}
-
-		configPathToCheck = append(configPathToCheck, customConfigPath)
-	} else {
-		for _, werfDefaultConfigName := range []string{"werf.yml", "werf.yaml"} {
-			configPathToCheck = append(configPathToCheck, filepath.Join(projectDir, werfDefaultConfigName))
-		}
+func GetCustomWerfConfigRelPath(projectDir string, cmdData *CmdData) (string, error) {
+	customConfigPath := *cmdData.ConfigPath
+	if customConfigPath == "" {
+		return "", nil
 	}
 
-	var commit string
-	for _, werfConfigPath := range configPathToCheck {
-		if giterminism_inspector.LooseGiterminism || giterminism_inspector.IsUncommittedConfigAccepted() {
-			if exists, err := util.FileExists(werfConfigPath); err != nil {
-				return "", err
-			} else if exists {
-				return util.GetRelativeToBaseFilepath(projectDir, werfConfigPath), nil
-			}
-		} else {
-			ctx := BackgroundContext()
-			if c, err := localGitRepo.HeadCommit(ctx); err != nil {
-				return "", fmt.Errorf("unable to get local repo head commit: %s", err)
-			} else {
-				commit = c
-			}
-
-			relPath := util.GetRelativeToBaseFilepath(projectDir, werfConfigPath)
-			if exists, err := localGitRepo.IsCommitFileExists(ctx, commit, relPath); err != nil {
-				return "", fmt.Errorf("unable to check %q existence in the local git repo commit %s: %s", relPath, commit, err)
-			} else if exists {
-				return relPath, nil
-			}
-		}
+	customConfigPath = util.GetAbsoluteFilepath(customConfigPath)
+	if !util.IsSubpathOfBasePath(projectDir, customConfigPath) {
+		return "", fmt.Errorf("werf configuration file '%s' must be in the project directory", customConfigPath)
 	}
 
-	if required {
-		if giterminism_inspector.LooseGiterminism {
-			return "", fmt.Errorf("werf configuration file not found (%s)", strings.Join(configPathToCheck, ", "))
-		} else {
-			return "", fmt.Errorf("werf configuration file not found (%s) in the local git repo commit %s", strings.Join(configPathToCheck, ", "), commit)
-		}
+	return util.GetRelativeToBaseFilepath(projectDir, customConfigPath), nil
+}
+
+func GetCustomWerfConfigTemplatesDirRelPath(projectDir string, cmdData *CmdData) (string, error) {
+	customConfigTemplatesDirPath := *cmdData.ConfigTemplatesDir
+	if customConfigTemplatesDirPath == "" {
+		return "", nil
 	}
 
-	return "", nil
+	customConfigTemplatesDirPath = util.GetAbsoluteFilepath(customConfigTemplatesDirPath)
+	if !util.IsSubpathOfBasePath(projectDir, customConfigTemplatesDirPath) {
+		return "", fmt.Errorf("werf configuration templates directory '%s' must be in the project directory", customConfigTemplatesDirPath)
+	}
+
+	return util.GetRelativeToBaseFilepath(projectDir, customConfigTemplatesDirPath), nil
 }
 
 func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.WerfConfigOptions {
@@ -973,6 +955,27 @@ func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.Wer
 		LogRenderedFilePath: LogRenderedFilePath,
 		Env:                 *cmdData.Environment,
 	}
+}
+
+func GetGiterminismManager(cmdData *CmdData) (giterminism.Manager, error) {
+	projectDir, err := GetProjectDir(cmdData)
+	if err != nil {
+		return nil, err
+	}
+
+	localGitRepo, err := OpenLocalGitRepo(projectDir)
+	if err != nil {
+		return nil, err
+	}
+
+	headCommit, err := localGitRepo.HeadCommit(BackgroundContext())
+	if err != nil {
+		return nil, err
+	}
+
+	return manager.NewManager(projectDir, localGitRepo, headCommit, manager.NewManagerOptions{
+		LooseGiterminism: *cmdData.LooseGiterminism,
+	})
 }
 
 func InitGiterminismInspector(cmdData *CmdData) error {
@@ -986,15 +989,6 @@ func InitGiterminismInspector(cmdData *CmdData) error {
 		NonStrict:        *cmdData.NonStrictGiterminismInspection,
 		DevMode:          *cmdData.Dev,
 	})
-}
-
-func GetRelWerfConfigTemplatesDir(projectDir string, cmdData *CmdData) string {
-	customConfigTemplatesDir := *cmdData.ConfigTemplatesDir
-	if customConfigTemplatesDir != "" {
-		return util.GetRelativeToBaseFilepath(projectDir, customConfigTemplatesDir)
-	} else {
-		return util.GetRelativeToBaseFilepath(projectDir, filepath.Join(projectDir, ".werf"))
-	}
 }
 
 func GetProjectDir(cmdData *CmdData) (string, error) {
