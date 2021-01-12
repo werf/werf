@@ -333,9 +333,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 }
 
 func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.Interface) error {
-	_, err := stapel.GetOrCreateContainer(ctx)
-	if err != nil {
-		return fmt.Errorf("get or create stapel container failed: %s", err)
+	if !img.isDockerfileImage {
+		_, err := stapel.GetOrCreateContainer(ctx)
+		if err != nil {
+			return fmt.Errorf("get or create stapel container failed: %s", err)
+		}
 	}
 
 	infoSectionFunc := func(err error) {
