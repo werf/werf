@@ -70,12 +70,12 @@ func run() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
+	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &commonCmdData, localGitRepo, common.GetWerfConfigOptions(&commonCmdData, false))
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return err
 	}

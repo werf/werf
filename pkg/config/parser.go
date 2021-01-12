@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -22,6 +21,7 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/giterminism"
 	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/slug"
@@ -34,16 +34,16 @@ type WerfConfigOptions struct {
 	Env                 string
 }
 
-func RenderWerfConfig(ctx context.Context, projectDir, relWerfConfigPath, relWerfConfigTemplatesDir string, imagesToProcess []string, localGitRepo git_repo.Local, opts WerfConfigOptions) error {
-	werfConfig, err := GetWerfConfig(ctx, projectDir, relWerfConfigPath, relWerfConfigTemplatesDir, localGitRepo, opts)
+func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, imagesToProcess []string, giterminismManager giterminism.Manager, opts WerfConfigOptions) error {
+	werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
 	if err != nil {
 		return err
 	}
 
 	if len(imagesToProcess) == 0 {
-		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, relWerfConfigPath, relWerfConfigTemplatesDir, localGitRepo, opts.Env)
+		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
 		if err != nil {
-			return fmt.Errorf("cannot parse config: %s", err)
+			return err
 		}
 
 		fmt.Print(werfConfigRenderContent)
@@ -70,10 +70,10 @@ func RenderWerfConfig(ctx context.Context, projectDir, relWerfConfigPath, relWer
 	return nil
 }
 
-func GetWerfConfig(ctx context.Context, projectDir, relWerfConfigPath, relWerfConfigTemplatesDir string, localGitRepo git_repo.Local, opts WerfConfigOptions) (*WerfConfig, error) {
-	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, projectDir, relWerfConfigPath, relWerfConfigTemplatesDir, localGitRepo, opts.Env)
+func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism.Manager, opts WerfConfigOptions) (*WerfConfig, error) {
+	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse config: %s", err)
+		return nil, err
 	}
 
 	werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(ctx)
@@ -101,7 +101,7 @@ func GetWerfConfig(ctx context.Context, projectDir, relWerfConfigPath, relWerfCo
 	}
 
 	if meta == nil {
-		defaultProjectName, err := GetProjectName(ctx, projectDir)
+		defaultProjectName, err := GetProjectName(ctx, giterminismManager.ProjectDir())
 		if err != nil {
 			return nil, fmt.Errorf("failed to get default project name: %s", err)
 		}
@@ -211,27 +211,25 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func renderWerfConfigYaml(ctx context.Context, projectDir, relWerfConfigPath, relWerfConfigTemplatesDir string, localGitRepo git_repo.Local, env string) (string, error) {
-	var commit string
-	if c, err := localGitRepo.HeadCommit(ctx); err != nil {
-		return "", fmt.Errorf("unable to get local repo head commit: %s", err)
-	} else {
-		commit = c
-	}
-
+func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism.Manager, env string) (string, error) {
 	tmpl := template.New("werfConfig")
 	tmpl.Funcs(funcMap(tmpl))
 
-	if err := parseWerfConfigTemplatesDir(ctx, tmpl, localGitRepo, commit, projectDir, relWerfConfigTemplatesDir); err != nil {
+	if err := parseWerfConfigTemplatesDir(ctx, tmpl, giterminismManager, customWerfConfigTemplatesDirRelPath); err != nil {
 		return "", err
 	}
 
-	if err := parseWerfConfig(ctx, tmpl, localGitRepo, commit, projectDir, relWerfConfigPath); err != nil {
+	if err := parseWerfConfig(ctx, tmpl, giterminismManager, customWerfConfigRelPath); err != nil {
 		return "", err
 	}
 
 	templateData := make(map[string]interface{})
-	templateData["Files"] = files{ctx: ctx, ProjectDir: projectDir, Commit: commit, LocalGitRepo: localGitRepo}
+	templateData["Files"] = files{
+		ctx:          ctx,
+		ProjectDir:   giterminismManager.ProjectDir(),
+		LocalGitRepo: *giterminismManager.LocalGitRepo(),
+		Commit:       giterminismManager.HeadCommit(),
+	}
 	templateData["Env"] = env
 
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)
@@ -239,18 +237,10 @@ func renderWerfConfigYaml(ctx context.Context, projectDir, relWerfConfigPath, re
 	return config, err
 }
 
-func parseWerfConfig(ctx context.Context, tmpl *template.Template, localGitRepo git_repo.Local, commit string, projectDir string, relWerfConfigPath string) (err error) {
-	var configData []byte
-	if giterminism_inspector.LooseGiterminism || giterminism_inspector.IsUncommittedConfigAccepted() {
-		configData, err = ioutil.ReadFile(filepath.Join(projectDir, relWerfConfigPath))
-		if err != nil {
-			return err
-		}
-	} else {
-		configData, err = git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relWerfConfigPath)
-		if err != nil {
-			return err
-		}
+func parseWerfConfig(ctx context.Context, tmpl *template.Template, giterminismManager giterminism.Manager, relWerfConfigPath string) error {
+	configData, err := giterminismManager.FileReader().ReadConfig(ctx, relWerfConfigPath)
+	if err != nil {
+		return err
 	}
 
 	if _, err := tmpl.Parse(string(configData)); err != nil {
@@ -260,161 +250,25 @@ func parseWerfConfig(ctx context.Context, tmpl *template.Template, localGitRepo 
 	return nil
 }
 
-func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, localGitRepo git_repo.Local, commit string, projectDir string, relWerfConfigTemplatesDir string) error {
-	templateNameFunc := func(relTemplatePath string) string {
-		return filepath.ToSlash(util.GetRelativeToBaseFilepath(relWerfConfigTemplatesDir, relTemplatePath))
-	}
-
-	addTemplatesFromFSFunc := func(relTemplatePath string) error {
-		d, err := ioutil.ReadFile(filepath.Join(projectDir, relTemplatePath))
+func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, giterminismManager giterminism.Manager, customWerfConfigTemplatesDirRelPath string) error {
+	return giterminismManager.FileReader().ReadConfigTemplateFiles(ctx, customWerfConfigTemplatesDirRelPath, func(templatePathInsideDir string, data []byte, err error) error {
 		if err != nil {
 			return err
 		}
 
-		return addTemplate(tmpl, templateNameFunc(relTemplatePath), string(d))
-	}
-
-	addTemplatesFromLocalGitRepoFunc := func(relTemplatePath string) error {
-		d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relTemplatePath)
-		if err != nil {
+		templateName := filepath.ToSlash(templatePathInsideDir)
+		if err := addTemplate(tmpl, templateName, string(data)); err != nil {
 			return err
-		}
-
-		templateName, err := filepath.Rel(relWerfConfigTemplatesDir, relTemplatePath)
-		if err != nil {
-			return err
-		}
-
-		return addTemplate(tmpl, templateName, string(d))
-	}
-
-	isTemplateExistFunc := func(relTemplatePath string) bool {
-		return tmpl.Lookup(templateNameFunc(relTemplatePath)) != nil
-	}
-
-	fsTemplatePathList, err := getWerfConfigTemplatesFromFilesystem(projectDir, relWerfConfigTemplatesDir)
-	if err != nil {
-		return err
-	}
-
-	if giterminism_inspector.LooseGiterminism {
-		for _, relPath := range fsTemplatePathList {
-			if err := addTemplatesFromFSFunc(relPath); err != nil {
-				return err
-			}
 		}
 
 		return nil
-	}
-
-	commitTemplatePathList, err := getWerfConfigTemplatesLocalGitRepo(ctx, localGitRepo, commit, relWerfConfigTemplatesDir)
-	if err != nil {
-		return err
-	}
-
-	for _, relPath := range commitTemplatePathList {
-		if accepted, err := giterminism_inspector.IsUncommittedConfigTemplateFileAccepted(relPath); err != nil {
-			return err
-		} else if accepted {
-			continue
-		}
-
-		if err := addTemplatesFromLocalGitRepoFunc(relPath); err != nil {
-			return err
-		}
-	}
-
-	for _, relPath := range fsTemplatePathList {
-		accepted, err := giterminism_inspector.IsUncommittedConfigTemplateFileAccepted(relPath)
-		if err != nil {
-			return err
-		}
-
-		if !accepted {
-			if !isTemplateExistFunc(relPath) {
-				if err := giterminism_inspector.ReportUntrackedConfigTemplateFile(ctx, relPath); err != nil {
-					return err
-				}
-			}
-
-			continue
-		}
-
-		if err := addTemplatesFromFSFunc(relPath); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	})
 }
 
 func addTemplate(tmpl *template.Template, templateName string, templateContent string) error {
 	extraTemplate := tmpl.New(templateName)
 	_, err := extraTemplate.Parse(templateContent)
 	return err
-}
-
-func getWerfConfigTemplatesLocalGitRepo(ctx context.Context, localGitRepo git_repo.Local, commit string, relConfigTemplatesDir string) ([]string, error) {
-	paths, err := localGitRepo.GetCommitFilePathList(ctx, commit)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
-	}
-
-	var templatesPathList []string
-	for _, relPath := range paths {
-		if !util.IsSubpathOfBasePath(relConfigTemplatesDir, relPath) {
-			continue
-		}
-
-		matched, err := filepath.Match("*.tmpl", path.Base(relPath))
-		if err != nil {
-			return nil, err
-		}
-
-		if matched {
-			templatesPathList = append(templatesPathList, relPath)
-		}
-	}
-
-	return templatesPathList, nil
-}
-
-func getWerfConfigTemplatesFromFilesystem(projectDir, relWerfConfigTemplatesDir string) ([]string, error) {
-	werfConfigTemplatesDir := filepath.Join(projectDir, relWerfConfigTemplatesDir)
-
-	if exist, err := util.DirExists(werfConfigTemplatesDir); err != nil {
-		return nil, fmt.Errorf("unable to check existence of directory %s: %s", werfConfigTemplatesDir, err)
-	} else if !exist {
-		return nil, nil
-	}
-
-	var templates []string
-	if err := filepath.Walk(werfConfigTemplatesDir, func(fp string, fi os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if fi.IsDir() {
-			return nil
-		}
-
-		matched, err := filepath.Match("*.tmpl", fi.Name())
-		if err != nil {
-			return err
-		}
-
-		if matched {
-			relToWerfConfigTemplatesDir := util.GetRelativeToBaseFilepath(werfConfigTemplatesDir, fp)
-			relToProjectDir := filepath.Join(relWerfConfigTemplatesDir, relToWerfConfigTemplatesDir)
-			templates = append(templates, relToProjectDir)
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return templates, nil
 }
 
 func funcMap(tmpl *template.Template) template.FuncMap {

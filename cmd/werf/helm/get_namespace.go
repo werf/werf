@@ -66,12 +66,12 @@ func runGetNamespace() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
+	giterminismManager, err := common.GetGiterminismManager(&getNamespaceCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getNamespaceCmdData, localGitRepo, common.GetWerfConfigOptions(&getNamespaceCmdData, false))
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getNamespaceCmdData, giterminismManager, common.GetWerfConfigOptions(&getNamespaceCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

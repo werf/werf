@@ -66,12 +66,12 @@ func runGetRelease() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
+	giterminismManager, err := common.GetGiterminismManager(&getReleaseCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
+		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getReleaseCmdData, localGitRepo, common.GetWerfConfigOptions(&getReleaseCmdData, false))
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
