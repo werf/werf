@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://community.flant.com/c/werf/6"><img src="https://img.shields.io/discourse/status?server=https%3A%2F%2Fcommunity.flant.com&style=flat-square" alt="Discourse forum"/></a>
+  <a href="https://github.com/werf/werf/discussions"><img src="https://img.shields.io/badge/GitHub-discussions-brightgreen" alt="Discourse forum"/></a>
   <a href="https://twitter.com/werf_io"><img src="https://img.shields.io/twitter/follow/werf_io?label=%40werf_io&style=flat-square" alt="Twitter"></a>
   <a href="https://t.me/werf_ru"><img src="https://img.shields.io/badge/telegram-RU%20chat-179cde.svg?logo=telegram" alt="Telegram chat RU"></a><br>
   <a href='https://bintray.com/flant/werf/werf/_latestVersion'><img src='https://api.bintray.com/packages/flant/werf/werf/images/download.svg'></a>
@@ -102,27 +102,28 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - ~Distributed builds with the shared Docker registry~ [#1614](https://github.com/werf/werf/issues/1614).
 - ~Support for Helm 3~ [#1606](https://github.com/werf/werf/issues/1606).
 
-## Documentation and support
+## Production ready
+
+werf is a mature, reliable tool you can trust. [Read about stability channels and release process](https://werf.io/installation.html#all-changes-in-werf-go-through-all-stability-channels).
+
+
+## Documentation
 
 Detailed **[documentaion](https://werf.io/documentation/index.html)** is available in multiple languages.
 
 **[Many guides](https://werf.io/documentation/guides.html)** are provided to quickly deploy your app into Kubernetes.
 
-We are always in contact with the community through [Twitter](https://twitter.com/werf_io) and [Slack](https://cloud-native.slack.com/messages/CHY2THYUU). Join us!
 
-> Russian-speaking users can also reach us in [Telegram Chat](https://t.me/werf_ru).
+## Community & support
+
+Please feel free to reach developers/maintainers and users via [GitHub Discussions](https://github.com/werf/werf/discussions) for any questions regarding werf.
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues).
 
-## Production ready
+You're also welcome to follow [@werf_io](https://twitter.com/werf_io) to stay informed about all important news, new articles, etc.
 
-werf is a mature, reliable tool you can trust. [Read about stability channels and release process](https://werf.io/installation.html#all-changes-in-werf-go-through-all-stability-channels).
+> Finally, we have [this Telegram chat](https://t.me/werf_ru) for Russian-speaking users as well.
 
-## Community
-
-Please feel free to reach us via [Flant Open Source forums](https://community.flant.com/) (based on Discourse). They have a [special category](https://community.flant.com/c/werf/6) dedicated to werf.
-
-You're also welcome to follow [@werf_io](https://twitter.com/werf_io) to stay informed about all important news, articles, etc.
 
 ## License
 
