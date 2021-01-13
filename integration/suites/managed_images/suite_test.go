@@ -12,10 +12,7 @@ func TestSuite(t *testing.T) {
 	testSuiteEntrypointFunc(t)
 }
 
-var SuiteData struct {
-	suite_init.SuiteData
-	TestDirPath string
-}
+var SuiteData suite_init.SuiteData
 
 var _ = SuiteData.SetupStubs(suite_init.NewStubsData())
 var _ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
