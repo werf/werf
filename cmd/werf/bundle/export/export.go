@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+
 	"helm.sh/helm/v3/pkg/getter"
 
 	"github.com/werf/werf/pkg/config"
@@ -330,7 +332,7 @@ func runExport() error {
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
 			return werf_chart.NewWerfChart(ctx, nil, projectDir, werf_chart.WerfChartOptions{})
 		},
-		LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir),
+		LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, cmd_helm.Settings, command_helpers.BuildChartDependenciesOptions{}),
 		LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir),
 		ReadFileFunc:    common.MakeHelmReadFileFunc(ctx, localGitRepo, projectDir),
 	}

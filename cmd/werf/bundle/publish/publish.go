@@ -15,6 +15,7 @@ import (
 	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/secret"
@@ -340,7 +341,7 @@ func runPublish() error {
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
 			return werf_chart.NewWerfChart(ctx, nil, projectDir, werf_chart.WerfChartOptions{})
 		},
-		LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir),
+		LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, cmd_helm.Settings, command_helpers.BuildChartDependenciesOptions{}),
 		LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir),
 		ReadFileFunc:    common.MakeHelmReadFileFunc(ctx, localGitRepo, projectDir),
 	}
