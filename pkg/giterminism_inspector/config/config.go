@@ -102,7 +102,7 @@ func isPathMatched(patterns []string, path string, withGlobs bool) (bool, error)
 		var expr string
 		var matchFunc func(string, string) (bool, error)
 		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") && withGlobs {
-			expr = fmt.Sprintf("^%s$", pattern[1:len(pattern)-1])
+			expr = pattern[1 : len(pattern)-1]
 			matchFunc = doublestar.Match
 		} else {
 			expr = pattern
