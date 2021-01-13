@@ -118,6 +118,12 @@ func WalkByPattern(dir, pattern string, walkFunc func(path string, f os.FileInfo
 		dir = filepath.Join(append([]string{dir}, patternComponents[0:patIdx]...)...)
 	}
 
+	if exist, err := FileExists(dir); err != nil {
+		return err
+	} else if !exist {
+		return nil
+	}
+
 	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return walkFunc(path, f, err)
