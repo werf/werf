@@ -4,15 +4,7 @@ import (
 	"testing"
 
 	"github.com/werf/werf/integration/pkg/suite_init"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
-
-func TestIntegration(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Helm/Get Suite")
-}
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Helm/Get suite", suite_init.TestSuiteEntrypointFuncOptions{})
 
@@ -20,10 +12,7 @@ func TestSuite(t *testing.T) {
 	testSuiteEntrypointFunc(t)
 }
 
-var SuiteData struct {
-	suite_init.SuiteData
-	TestDirPath string
-}
+var SuiteData suite_init.SuiteData
 
 var _ = SuiteData.SetupStubs(suite_init.NewStubsData())
 var _ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
