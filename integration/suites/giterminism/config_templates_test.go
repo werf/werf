@@ -54,7 +54,7 @@ config:
 # template .werf/templates/1.tmpl
 `)
 				fileCreateOrAppend(configPath, `{{ include "templates/1.tmpl" . }}`)
-				gitAddAndCommit(configPath)
+				gitAddAndCommit("werf.yaml")
 			}
 
 			if e.commitTemplate1 {
@@ -66,7 +66,7 @@ config:
 # template .werf/templates/2.tmpl
 `)
 				fileCreateOrAppend(configPath, `{{ include "templates/2.tmpl" . }}`)
-				gitAddAndCommit(configPath)
+				gitAddAndCommit("werf.yaml")
 			}
 
 			if e.changeTemplate1AfterCommit {
