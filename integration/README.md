@@ -1,10 +1,8 @@
 # Integration tests
 
-FIXME: write about ginkgo and CI tests runners
-
 To create an integration test suite you need:
 
- 1. Write golang test suite itself.
+ 1. Write a golang test suite itself.
  2. Enable your suite for CI.
 
 ## How to write a test suite
