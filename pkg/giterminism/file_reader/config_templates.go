@@ -40,6 +40,12 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 		return r.readCommitConfigTemplateFile(ctx, relPath)
 	}
 
+	tmplFuncWrapperFunc := func(relPath string, data []byte, err error) error {
+		templatePathInsideDir := util.GetRelativeToBaseFilepath(templatesDirRelPath, relPath)
+		readFileBeforeHookFunc(relPath)
+		return tmplFunc(templatePathInsideDir, data, err)
+	}
+
 	templateRelPathListFromFS, err := r.configTemplateFileRelPathListFromFS(templatesDirRelPath)
 	if err != nil {
 		return err
@@ -48,7 +54,7 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 	if r.manager.LooseGiterminism() {
 		for _, templateRelPath := range templateRelPathListFromFS {
 			data, err := readFileFunc(templateRelPath)
-			if err := tmplFunc(templateRelPath, data, err); err != nil {
+			if err := tmplFuncWrapperFunc(templateRelPath, data, err); err != nil {
 				return err
 			}
 		}
@@ -69,7 +75,7 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 		}
 
 		data, err := readCommitFileFunc(templateRelPath)
-		if err := tmplFunc(templateRelPath, data, err); err != nil {
+		if err := tmplFuncWrapperFunc(templateRelPath, data, err); err != nil {
 			return err
 		}
 	}
@@ -89,7 +95,7 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 		}
 
 		data, err := readFileFunc(templateRelPath)
-		if err := tmplFunc(templateRelPath, data, err); err != nil {
+		if err := tmplFuncWrapperFunc(templateRelPath, data, err); err != nil {
 			return err
 		}
 	}
