@@ -7,6 +7,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 
@@ -198,12 +200,12 @@ func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGett
 	return list
 }
 
-func MakeChartDirLoadFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string) func(dir string) ([]*loader.BufferedFile, error) {
+func MakeChartDirLoadFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) func(dir string) ([]*loader.BufferedFile, error) {
 	if giterminism_inspector.LooseGiterminism {
 		return nil
 	}
 	return func(dir string) ([]*loader.BufferedFile, error) {
-		return werf_chart.GiterministicFilesLoader(ctx, localGitRepo, projectDir, dir)
+		return werf_chart.GiterministicFilesLoader(ctx, localGitRepo, projectDir, dir, helmEnvSettings, buildChartDependenciesOpts)
 	}
 }
 
