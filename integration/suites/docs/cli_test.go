@@ -49,7 +49,7 @@ var _ = Describe("docs", func() {
 			SuiteData.TestDirPath,
 			SuiteData.WerfBinPath,
 			[]string{"docs", "--dir", SuiteData.TestDirPath},
-			utils.RunCommandOptions{ShouldSucceed: true, ExtraEnv: []string{"HOME=~"}},
+			utils.RunCommandOptions{ShouldSucceed: true, ExtraEnv: []string{"HOME=~", "WERF_PROJECT_NAME="}},
 		)
 
 		utils.RunSucceedCommand(
@@ -61,7 +61,7 @@ var _ = Describe("docs", func() {
 		utils.RunSucceedCommand(
 			SuiteData.TestDirPath,
 			"git",
-			"diff-index", "--exit-code", "HEAD", "--",
+			"diff", "--exit-code", "HEAD", "--",
 		)
 	})
 })
