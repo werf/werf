@@ -8,7 +8,7 @@ import (
 
 	"github.com/werf/werf/pkg/werf"
 
-	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 
 	helm_secret_decrypt "github.com/werf/werf/cmd/werf/helm/secret/decrypt"
 	helm_secret_encrypt "github.com/werf/werf/cmd/werf/helm/secret/encrypt"
@@ -39,8 +39,6 @@ import (
 var _commonCmdData cmd_werf_common.CmdData
 
 func NewCmd() *cobra.Command {
-	ctx := common.BackgroundContext()
-
 	var namespace string
 	actionConfig := new(action.Configuration)
 
@@ -49,13 +47,11 @@ func NewCmd() *cobra.Command {
 		Short: "Manage application deployment with helm",
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, nil, "", werf_chart.WerfChartOptions{})
+	wc := chart_extender.NewWerfChartStub()
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender: wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-			return werf_chart.NewWerfChart(ctx, nil, "", werf_chart.WerfChartOptions{})
-		},
+		ChartExtender:               wc,
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfChartStub() },
 	}
 
 	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
@@ -132,10 +128,10 @@ func NewCmd() *cobra.Command {
 
 				ctx := common.BackgroundContext()
 
-				if vals, err := werf_chart.GetServiceValues(ctx, "PROJECT", "REPO", nil, werf_chart.ServiceValuesOptions{Namespace: namespace, IsStub: true}); err != nil {
+				if vals, err := chart_extender.GetServiceValues(ctx, "PROJECT", "REPO", nil, chart_extender.ServiceValuesOptions{Namespace: namespace, IsStub: true}); err != nil {
 					return fmt.Errorf("error creating service values: %s", err)
-				} else if err := wc.SetServiceValues(vals); err != nil {
-					return err
+				} else {
+					wc.SetStubServiceValues(vals)
 				}
 
 				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64)

@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 
-	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 
 	"helm.sh/helm/v3/pkg/cli/values"
 
@@ -198,7 +200,7 @@ func runApply() error {
 		lockManager = m
 	}
 
-	bundle := werf_chart.NewBundle(bundleTmpDir, lockManager)
+	bundle := chart_extender.NewBundle(bundleTmpDir)
 
 	postRenderer, err := bundle.GetPostRenderer()
 	if err != nil {
@@ -229,11 +231,7 @@ func runApply() error {
 		Timeout:         common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
 	})
 
-	/*
-	 * TODO: rework WerfChart and Bundle, use shared common code
-	 */
-
-	return bundle.WrapUpgrade(ctx, releaseName, func() error {
+	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, bundle.Dir})
 	})
 }

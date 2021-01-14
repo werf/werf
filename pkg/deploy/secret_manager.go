@@ -7,8 +7,8 @@ import (
 
 	"github.com/werf/logboek"
 
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/secret"
-	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/util"
@@ -17,8 +17,8 @@ import (
 func GetSafeSecretManager(ctx context.Context, projectDir, helmChartDir string, secretValues []string, localGitRepo *git_repo.Local, ignoreSecretKey bool) (secret.Manager, error) {
 	isSecretsExists := false
 
-	secretDirPath := filepath.Join(helmChartDir, werf_chart.SecretDirName)
-	defaultSecretValuesFilePath := filepath.Join(helmChartDir, werf_chart.DefaultSecretValuesFileName)
+	secretDirPath := filepath.Join(helmChartDir, chart_extender.SecretDirName)
+	defaultSecretValuesFilePath := filepath.Join(helmChartDir, chart_extender.DefaultSecretValuesFileName)
 	if giterminism_inspector.LooseGiterminism || localGitRepo == nil {
 		if exists, err := util.DirExists(secretDirPath); err != nil {
 			return nil, fmt.Errorf("unable to check directory %s existence: %s", secretDirPath, err)

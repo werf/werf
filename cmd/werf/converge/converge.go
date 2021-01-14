@@ -23,9 +23,9 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/secret"
-	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
@@ -345,28 +345,25 @@ func run(ctx context.Context, projectDir string) error {
 		lockManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, &localGitRepo, projectDir, werf_chart.WerfChartOptions{
-		ReleaseName: releaseName,
-		ChartDir:    chartDir,
-
+	wc := chart_extender.NewWerfChart(giterminismManager, secretsManager, projectDir, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{
 		SecretValueFiles: *commonCmdData.SecretValues,
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
-
-		LockManager:    lockManager,
-		SecretsManager: secretsManager,
 	})
+
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
 		return err
 	}
 	if err := wc.SetWerfConfig(werfConfig); err != nil {
 		return err
 	}
-	if vals, err := werf_chart.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, werf_chart.ServiceValuesOptions{Namespace: namespace, Env: *commonCmdData.Environment}); err != nil {
+	if vals, err := chart_extender.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, chart_extender.ServiceValuesOptions{Namespace: namespace, Env: *commonCmdData.Environment}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else if err := wc.SetServiceValues(vals); err != nil {
 		return err
 	}
+
+	wc.SetChartExtenderContext(ctx)
 
 	actionConfig := new(action.Configuration)
 	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
@@ -383,17 +380,17 @@ func run(ctx context.Context, projectDir string) error {
 	}
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender: wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-			return werf_chart.NewWerfChart(ctx, nil, projectDir, werf_chart.WerfChartOptions{})
-		},
-		LoadDirFunc:     common.MakeChartDirLoadFunc(ctx, localGitRepo, projectDir, cmd_helm.Settings, command_helpers.BuildChartDependenciesOptions{}),
-		LocateChartFunc: common.MakeLocateChartFunc(ctx, localGitRepo, projectDir),
-		ReadFileFunc:    common.MakeHelmReadFileFunc(ctx, localGitRepo, projectDir),
+		ChartExtender:               wc,
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
+	}
+
+	postRenderer, err := wc.GetPostRenderer()
+	if err != nil {
+		return err
 	}
 
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
-		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
+		PostRenderer: postRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   *commonCmdData.Values,
 			StringValues: *commonCmdData.SetString,
@@ -406,7 +403,8 @@ func run(ctx context.Context, projectDir string) error {
 		Atomic:          common.NewBool(cmdData.AutoRollback),
 		Timeout:         common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
 	})
-	return wc.WrapUpgrade(ctx, func() error {
+
+	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
 	})
 }

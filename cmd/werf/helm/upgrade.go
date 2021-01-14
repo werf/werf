@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
-	"github.com/werf/werf/pkg/deploy/werf_chart"
 
 	"github.com/spf13/cobra"
 	"github.com/werf/werf/cmd/werf/common"
@@ -16,9 +18,14 @@ import (
 
 var upgradeCmdData cmd_werf_common.CmdData
 
-func NewUpgradeCmd(actionConfig *action.Configuration, wc *werf_chart.WerfChart) *cobra.Command {
+func NewUpgradeCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
+	postRenderer, err := wc.GetPostRenderer()
+	if err != nil {
+		panic(err.Error())
+	}
+
 	cmd, helmAction := cmd_helm.NewUpgradeCmd(actionConfig, os.Stdout, cmd_helm.UpgradeCmdOptions{
-		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
+		PostRenderer: postRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &upgradeCmdData)
 
@@ -30,26 +37,23 @@ func NewUpgradeCmd(actionConfig *action.Configuration, wc *werf_chart.WerfChart)
 			return err
 		}
 
+		releaseName := args[0]
+
 		if chartDir, err := helmAction.ChartPathOptions.LocateChart(args[1], cmd_helm.Settings); err != nil {
 			return err
 		} else {
-			wc.ChartDir = chartDir
-		}
-		wc.ReleaseName = args[0]
+			if err := InitRenderRelatedWerfChartParams(ctx, &upgradeCmdData, wc, chartDir); err != nil {
+				return fmt.Errorf("unable to init werf chart: %s", err)
+			}
 
-		if err := InitRenderRelatedWerfChartParams(ctx, &upgradeCmdData, wc, wc.ChartDir); err != nil {
-			return fmt.Errorf("unable to init werf chart: %s", err)
+			if m, err := lock_manager.NewLockManager(cmd_helm.Settings.Namespace()); err != nil {
+				return fmt.Errorf("unable to create lock manager: %s", err)
+			} else {
+				return command_helpers.LockReleaseWrapper(ctx, releaseName, m, func() error {
+					return oldRunE(cmd, args)
+				})
+			}
 		}
-
-		if m, err := lock_manager.NewLockManager(cmd_helm.Settings.Namespace()); err != nil {
-			return fmt.Errorf("unable to create lock manager: %s", err)
-		} else {
-			wc.LockManager = m
-		}
-
-		return wc.WrapUpgrade(ctx, func() error {
-			return oldRunE(cmd, args)
-		})
 	}
 
 	return cmd

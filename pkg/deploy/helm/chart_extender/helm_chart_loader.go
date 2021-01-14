@@ -1,4 +1,4 @@
-package werf_chart
+package chart_extender
 
 import (
 	"context"
@@ -30,7 +30,7 @@ func GetChartDependenciesCacheDir(lockDigest string) string {
 	return filepath.Join(werf.GetLocalCacheDir(), "helm_chart_dependencies", lockDigest)
 }
 
-func LoadMetadata(files []*loader.BufferedFile) (*chart.Metadata, error) {
+func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, error) {
 	var metadata *chart.Metadata
 
 	for _, f := range files {
@@ -61,9 +61,9 @@ func LoadMetadata(files []*loader.BufferedFile) (*chart.Metadata, error) {
 	return metadata, nil
 }
 
-func LoadLock(files []*loader.BufferedFile) (*chart.Lock, *loader.BufferedFile, error) {
+func LoadLock(files []*chart.ChartExtenderBufferedFile) (*chart.Lock, *chart.ChartExtenderBufferedFile, error) {
 	var lock *chart.Lock
-	var lockFile *loader.BufferedFile
+	var lockFile *chart.ChartExtenderBufferedFile
 
 	for _, f := range files {
 		switch {
@@ -101,6 +101,11 @@ func GetPreparedChartDependenciesDir(ctx context.Context, lockDigest string, loc
 
 			tmpDepsDir := fmt.Sprintf("%s.tmp.%s", depsDir, uuid.NewV4().String())
 
+			buildChartDependenciesOpts.LoadOptions = &loader.LoadOptions{
+				ChartExtender:               NewWerfChartStub(),
+				SubchartExtenderFactoryFunc: nil,
+			}
+
 			if err := command_helpers.BuildChartDependenciesInDir(ctx, lockFileData, chartFileData, tmpDepsDir, helmEnvSettings, buildChartDependenciesOpts); err != nil {
 				return fmt.Errorf("error building chart dependencies: %s", err)
 			}
@@ -122,13 +127,13 @@ func GetPreparedChartDependenciesDir(ctx context.Context, lockDigest string, loc
 	return depsDir, nil
 }
 
-func GiterministicFilesLoader(ctx context.Context, localGitRepo git_repo.Local, projectDir, loadDir string, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*loader.BufferedFile, error) {
+func GiterministicFilesLoader(ctx context.Context, localGitRepo *git_repo.Local, projectDir, loadDir string, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
 	gitFiles, err := LoadFilesFromGit(ctx, localGitRepo, projectDir, loadDir)
 	if err != nil {
 		return nil, err
 	}
 
-	var chartFile *loader.BufferedFile
+	var chartFile *chart.ChartExtenderBufferedFile
 	for _, f := range gitFiles {
 		if f.Name == "Chart.yaml" {
 			chartFile = f
@@ -162,7 +167,9 @@ func GiterministicFilesLoader(ctx context.Context, localGitRepo git_repo.Local, 
 
 				for _, f := range localFiles {
 					if strings.HasPrefix(f.Name, "charts/") {
-						res = append(res, f)
+						f1 := new(chart.ChartExtenderBufferedFile)
+						*f1 = chart.ChartExtenderBufferedFile(*f)
+						res = append(res, f1)
 						logboek.Context(ctx).Debug().LogF("-- GiterministicFilesLoader: loading subchart %q from dependencies dir %s\n", f.Name, depsDir)
 					}
 				}
@@ -173,7 +180,7 @@ func GiterministicFilesLoader(ctx context.Context, localGitRepo git_repo.Local, 
 	return res, nil
 }
 
-func LoadFilesFromGit(ctx context.Context, localGitRepo git_repo.Local, projectDir, loadDir string) ([]*loader.BufferedFile, error) {
+func LoadFilesFromGit(ctx context.Context, localGitRepo *git_repo.Local, projectDir, loadDir string) ([]*chart.ChartExtenderBufferedFile, error) {
 	commit, err := localGitRepo.HeadCommit(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get local repo head commit: %s", err)
@@ -197,15 +204,15 @@ func LoadFilesFromGit(ctx context.Context, localGitRepo git_repo.Local, projectD
 		relativeLoadDir = string(linkDest)
 	}
 
-	var res []*loader.BufferedFile
+	var res []*chart.ChartExtenderBufferedFile
 
 	for _, repoPath := range repoPaths {
 		if util.IsSubpathOfBasePath(relativeLoadDir, repoPath) {
-			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, repoPath); err != nil {
+			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, *localGitRepo, commit, projectDir, repoPath); err != nil {
 				return nil, err
 			} else {
 				logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, repoPath, d)
-				res = append(res, &loader.BufferedFile{Name: filepath.ToSlash(util.GetRelativeToBaseFilepath(relativeLoadDir, repoPath)), Data: d})
+				res = append(res, &chart.ChartExtenderBufferedFile{Name: filepath.ToSlash(util.GetRelativeToBaseFilepath(relativeLoadDir, repoPath)), Data: d})
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-package werf_chart
+package chart_extender
 
 var TemplateHelpers = `{{- define "_werf_image" -}}
 {{-   $context := index . 0 -}}

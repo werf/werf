@@ -11,7 +11,7 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/deploy/werf_chart"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
@@ -215,7 +215,7 @@ func runGetServiceValues() error {
 		}
 	}
 
-	serviceValues, err := werf_chart.GetServiceValues(ctx, projectName, imagesRepository, imagesInfoGetters, werf_chart.ServiceValuesOptions{Namespace: namespace, Env: environment})
+	serviceValues, err := chart_extender.GetServiceValues(ctx, projectName, imagesRepository, imagesInfoGetters, chart_extender.ServiceValuesOptions{Namespace: namespace, Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
