@@ -1,8 +1,6 @@
 package giterminism_test
 
 import (
-	"path/filepath"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -10,7 +8,7 @@ import (
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
-var _ = Describe("werf.yaml", func() {
+var _ = Describe("config", func() {
 	BeforeEach(ConfigBeforeEach)
 
 	type entry struct {
@@ -22,9 +20,6 @@ var _ = Describe("werf.yaml", func() {
 
 	DescribeTable("allowUncommitted",
 		func(e entry) {
-			configPath := filepath.Join(SuiteData.TestDirPath, "werf.yaml")
-			giterminismConfigPath := filepath.Join(SuiteData.TestDirPath, "werf-giterminism.yaml")
-
 			var contentToAppend string
 			if e.allowUncommitted {
 				contentToAppend = `
@@ -35,7 +30,7 @@ config:
 config:
   allowUncommitted: false`
 			}
-			fileCreateOrAppend(giterminismConfigPath, contentToAppend)
+			fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 			gitAddAndCommit("werf-giterminism.yaml")
 
 			if e.commitConfig {
@@ -43,7 +38,7 @@ config:
 			}
 
 			if e.changeConfigAfterCommit {
-				fileCreateOrAppend(configPath, "\n")
+				fileCreateOrAppend("werf.yaml", "\n")
 			}
 
 			output, err := utils.RunCommand(
@@ -60,27 +55,27 @@ config:
 			}
 		},
 		Entry("werf.yaml not found in commit", entry{
-			allowUncommitted:     false,
-			commitConfig:         false,
-			expectedErrSubstring: "the werf config 'werf.yaml', 'werf.yml' not found in the project git repository",
+			expectedErrSubstring: `the following werf configs not found in the project git repository:
+
+ - werf.yaml
+ - werf.yml
+
+`,
 		}),
 		Entry("werf.yaml committed", entry{
-			allowUncommitted: false,
-			commitConfig:     true,
+			commitConfig: true,
+		}),
+		Entry("werf.yaml committed, werf.yaml has uncommitted changes", entry{
+			commitConfig:            true,
+			changeConfigAfterCommit: true,
+			expectedErrSubstring:    `the uncommitted configuration found in the project directory: the werf config 'werf.yaml' changes must be committed`,
 		}),
 		Entry("config.allowUncommitted is true, werf.yaml not committed", entry{
 			allowUncommitted: true,
-			commitConfig:     false,
 		}),
 		Entry("config.allowUncommitted is true, werf.yaml committed", entry{
 			allowUncommitted: true,
 			commitConfig:     true,
-		}),
-		Entry("werf.yaml committed, local werf.yaml has uncommitted changes", entry{
-			allowUncommitted:        false,
-			commitConfig:            true,
-			changeConfigAfterCommit: true,
-			expectedErrSubstring:    "the werf config 'werf.yaml' must be committed",
 		}),
 	)
 })
