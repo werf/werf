@@ -2,10 +2,8 @@ package file_reader
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/giterminism"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -27,14 +25,17 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 			templatePathInsideDir := util.GetRelativeToBaseFilepath(templatesDirRelPath, relPath)
 			return tmplFunc(templatePathInsideDir, data, err)
 		},
-		func(relPath string) error {
-			return giterminism.NewUncommittedConfigurationError(fmt.Sprintf("the werf config template '%s' must be committed", relPath))
+		func(relPaths ...string) error {
+			return NewUncommittedFilesError("werf config template", relPaths...)
+		},
+		func(relPaths ...string) error {
+			return NewUncommittedFilesChangesError("werf config template", relPaths...)
 		},
 	)
 }
 
 func (r FileReader) readCommitConfigTemplateFile(ctx context.Context, relPath string) ([]byte, error) {
 	return r.readCommitFile(ctx, relPath, func(ctx context.Context, relPath string) error {
-		return giterminism.NewUncommittedConfigurationError(fmt.Sprintf("the werf config template '%s' must be committed", relPath))
+		return NewUncommittedFilesChangesError("werf config template", relPath)
 	})
 }

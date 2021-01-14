@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-
-	"github.com/werf/werf/pkg/giterminism"
 )
 
 func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, pattern string) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 
-	err := r.configurationFilesGlob(
+	if err := r.configurationFilesGlob(
 		ctx,
 		pattern,
 		r.manager.Config().IsUncommittedConfigGoTemplateRenderingFileAccepted,
@@ -25,12 +23,17 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, pattern strin
 
 			return nil
 		},
-		func(relPath string) error {
-			return giterminism.NewUncommittedConfigurationError(fmt.Sprintf("{{ .Files.Glob '%s' }}: the file '%s' must be committed", pattern, filepath.FromSlash(relPath)))
+		func(relPaths ...string) error {
+			return NewUncommittedFilesError("file", relPaths...)
 		},
-	)
+		func(relPaths ...string) error {
+			return NewUncommittedFilesChangesError("file", relPaths...)
+		},
+	); err != nil {
+		return nil, fmt.Errorf("{{ .Files.Glob '%s' }}: %s", pattern, err)
+	}
 
-	return result, err
+	return result, nil
 }
 
 func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string) ([]byte, error) {
@@ -70,13 +73,13 @@ func (r FileReader) checkConfigGoTemplateFileExistence(ctx context.Context, relP
 		if shouldReadFromFS {
 			return nil
 		} else {
-			return giterminism.NewError(fmt.Sprintf("the file '%s' must be committed", filepath.FromSlash(relPath)))
+			return NewUncommittedFilesError("file", relPath)
 		}
 	} else {
 		if shouldReadFromFS {
-			return fmt.Errorf("the file '%s' not found in the project directory", filepath.FromSlash(relPath))
+			return NewFilesNotFoundInTheProjectDirectoryError("file", relPath)
 		} else {
-			return giterminism.NewError(fmt.Sprintf("the file '%s' not found in the project git repository", filepath.ToSlash(relPath)))
+			return NewFilesNotFoundInTheProjectGitRepositoryError("file", relPath)
 		}
 	}
 }
@@ -95,7 +98,7 @@ func (r FileReader) readConfigGoTemplateFile(ctx context.Context, relPath string
 }
 
 func (r FileReader) readCommitConfigGoTemplateFile(ctx context.Context, relPath string) ([]byte, error) {
-	return r.readCommitFile(ctx, relPath, func(ctx context.Context, s string) error {
-		return giterminism.NewUncommittedConfigurationError(fmt.Sprintf("the file '%s' must be committed", filepath.FromSlash(relPath)))
+	return r.readCommitFile(ctx, relPath, func(ctx context.Context, relPath string) error {
+		return NewUncommittedFilesChangesError("file", relPath)
 	})
 }

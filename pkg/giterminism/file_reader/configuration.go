@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, isFileAcceptedFunc func(relPath string) (bool, error), readCommitFileFunc func(ctx context.Context, relPath string) ([]byte, error), handleFileFunc func(relPath string, data []byte, err error) error, uncommittedFileErrorFunc func(relPath string) error) error {
+func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, isFileAcceptedFunc func(relPath string) (bool, error), readCommitFileFunc func(ctx context.Context, relPath string) ([]byte, error), handleFileFunc func(relPath string, data []byte, err error) error, uncommittedFilesErrorFunc func(relPaths ...string) error, uncommittedFilesChangesErrorFunc func(relPaths ...string) error) error {
 	processedFiles := map[string]bool{}
 
 	isFileProcessedFunc := func(relPath string) bool {
@@ -47,6 +47,7 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 		return err
 	}
 
+	var relPathListWithUncommittedFilesChanges []string
 	for _, relPath := range fileRelPathListFromCommit {
 		if accepted, err := isFileAcceptedFunc(relPath); err != nil {
 			return err
@@ -56,10 +57,20 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 
 		data, err := readCommitFileWrapperFunc(relPath)
 		if err := handleFileFunc(relPath, data, err); err != nil {
+			if isUncommittedFilesChangesError(err) {
+				relPathListWithUncommittedFilesChanges = append(relPathListWithUncommittedFilesChanges, relPath)
+				continue
+			}
+
 			return err
 		}
 	}
 
+	if len(relPathListWithUncommittedFilesChanges) != 0 {
+		return uncommittedFilesChangesErrorFunc(relPathListWithUncommittedFilesChanges...)
+	}
+
+	var relPathListWithUncommittedFiles []string
 	for _, relPath := range fileRelPathListFromFS {
 		accepted, err := isFileAcceptedFunc(relPath)
 		if err != nil {
@@ -68,7 +79,7 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 
 		if !accepted {
 			if !isFileProcessedFunc(relPath) {
-				return uncommittedFileErrorFunc(relPath)
+				relPathListWithUncommittedFiles = append(relPathListWithUncommittedFiles, relPath)
 			}
 
 			continue
@@ -78,6 +89,10 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 		if err := handleFileFunc(relPath, data, err); err != nil {
 			return err
 		}
+	}
+
+	if len(relPathListWithUncommittedFiles) != 0 {
+		return uncommittedFilesErrorFunc(relPathListWithUncommittedFiles...)
 	}
 
 	return nil

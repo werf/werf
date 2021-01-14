@@ -60,8 +60,6 @@ func (r FileReader) readCommitFile(ctx context.Context, relPath string, handleUn
 		return nil, fmt.Errorf("unable to compare commit file %q with the local project file: %s", fileRepoPath, err)
 	}
 
-	fmt.Println(relPath, isDataIdentical)
-
 	if !isDataIdentical {
 		if err := handleUncommittedChangesFunc(ctx, filepath.FromSlash(relPath)); err != nil {
 			return nil, err
