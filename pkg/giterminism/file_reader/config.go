@@ -49,14 +49,14 @@ func (r FileReader) readConfig(ctx context.Context, relPath string) ([]byte, err
 
 func (r FileReader) readCommitConfig(ctx context.Context, relPath string) ([]byte, error) {
 	return r.readCommitFile(ctx, relPath, func(ctx context.Context, relPath string) error {
-		return fmt.Errorf("werf configuration file '%s' must be committed (read more about giterminism here, %s)", relPath, giterminism.GiterminismDocPageURL) // TODO
+		return giterminism.NewUncommittedConfigurationError(fmt.Sprintf("the werf config '%s' must be committed", relPath))
 	})
 }
 
 func (r FileReader) prepareConfigNotFoundError(configPathsToCheck []string) error {
 	if r.manager.LooseGiterminism() {
-		return giterminism.ConfigNotFoundError(fmt.Errorf("werf configuration file '%s' not found", strings.Join(configPathsToCheck, "', '")))
+		return giterminism.NewConfigNotFoundError(fmt.Sprintf("the werf config '%s' not found in the project directory", strings.Join(configPathsToCheck, "', '")))
 	}
 
-	return giterminism.ConfigNotFoundError(fmt.Errorf("werf configuration file '%s' not found in the local git repo commit %s", strings.Join(configPathsToCheck, "', '"), r.manager.HeadCommit()))
+	return giterminism.NewConfigNotFoundError(fmt.Sprintf("the werf config '%s' not found in the project git repository", strings.Join(configPathsToCheck, "', '")))
 }

@@ -82,7 +82,7 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 
 		if !accepted {
 			if !isFileProcessedFunc(templateRelPath) {
-				return fmt.Errorf("werf configuration template file '%s' must be committed (read more about giterminism here, %s)", templateRelPath, giterminism.GiterminismDocPageURL) // TODO
+				return giterminism.NewUncommittedConfigurationError(fmt.Sprintf("the werf config template '%s' must be committed", templateRelPath))
 			}
 
 			continue
@@ -155,7 +155,7 @@ func (r FileReader) configTemplateFilePathListFromCommit(ctx context.Context, te
 
 func (r FileReader) readCommitConfigTemplateFile(ctx context.Context, relPath string) ([]byte, error) {
 	return r.readCommitFile(ctx, relPath, func(ctx context.Context, relPath string) error {
-		return fmt.Errorf("werf configuration template file '%s' must be committed (read more about giterminism here, %s)", relPath, giterminism.GiterminismDocPageURL) // TODO
+		return giterminism.NewUncommittedConfigurationError(fmt.Sprintf("the werf config template '%s' must be committed", relPath))
 	})
 }
 

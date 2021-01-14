@@ -6,8 +6,6 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 )
 
-const GiterminismDocPageURL = "https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html"
-
 type Manager interface {
 	FileReader() FileReader
 	Config() Config
