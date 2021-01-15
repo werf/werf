@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+
+	"github.com/werf/werf/pkg/giterminism"
 )
 
 type rawStapelImage struct {
@@ -95,9 +97,9 @@ func (c *rawStapelImage) stapelImageType() string {
 	return ""
 }
 
-func (c *rawStapelImage) toStapelImageDirectives() (images []*StapelImage, err error) {
+func (c *rawStapelImage) toStapelImageDirectives(giterminismManager giterminism.Manager) (images []*StapelImage, err error) {
 	for _, imageName := range c.Images {
-		if image, err := c.toStapelImageDirective(imageName); err != nil {
+		if image, err := c.toStapelImageDirective(giterminismManager, imageName); err != nil {
 			return nil, err
 		} else {
 			images = append(images, image)
@@ -107,11 +109,11 @@ func (c *rawStapelImage) toStapelImageDirectives() (images []*StapelImage, err e
 	return images, nil
 }
 
-func (c *rawStapelImage) toStapelImageArtifactDirectives() (*StapelImageArtifact, error) {
+func (c *rawStapelImage) toStapelImageArtifactDirectives(giterminismManager giterminism.Manager) (*StapelImageArtifact, error) {
 	imageArtifact := &StapelImageArtifact{}
 
 	var err error
-	if imageArtifact.StapelImageBase, err = c.toStapelImageBaseDirective(c.Artifact); err != nil {
+	if imageArtifact.StapelImageBase, err = c.toStapelImageBaseDirective(giterminismManager, c.Artifact); err != nil {
 		return nil, err
 	}
 
@@ -122,10 +124,10 @@ func (c *rawStapelImage) toStapelImageArtifactDirectives() (*StapelImageArtifact
 	return imageArtifact, nil
 }
 
-func (c *rawStapelImage) toStapelImageDirective(name string) (*StapelImage, error) {
+func (c *rawStapelImage) toStapelImageDirective(giterminismManager giterminism.Manager, name string) (*StapelImage, error) {
 	image := &StapelImage{}
 
-	if imageBase, err := c.toStapelImageBaseDirective(name); err != nil {
+	if imageBase, err := c.toStapelImageBaseDirective(giterminismManager, name); err != nil {
 		return nil, err
 	} else {
 		image.StapelImageBase = imageBase
@@ -200,7 +202,7 @@ func (c *rawStapelImage) validateStapelImageArtifactDirective(imageArtifact *Sta
 	return nil
 }
 
-func (c *rawStapelImage) toStapelImageBaseDirective(name string) (imageBase *StapelImageBase, err error) {
+func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager giterminism.Manager, name string) (imageBase *StapelImageBase, err error) {
 	if imageBase, err = c.toBaseStapelImageBaseDirective(name); err != nil {
 		return nil, err
 	}
@@ -219,7 +221,7 @@ func (c *rawStapelImage) toStapelImageBaseDirective(name string) (imageBase *Sta
 				imageBase.Git.Local = append(imageBase.Git.Local, gitLocal)
 			}
 		} else {
-			if gitRemote, err := git.toGitRemoteDirective(); err != nil {
+			if gitRemote, err := git.toGitRemoteDirective(giterminismManager); err != nil {
 				return nil, err
 			} else {
 				imageBase.Git.Remote = append(imageBase.Git.Remote, gitRemote)

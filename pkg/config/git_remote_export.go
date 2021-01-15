@@ -1,9 +1,7 @@
 package config
 
 import (
-	"context"
-
-	"github.com/werf/werf/pkg/giterminism_inspector"
+	"github.com/werf/werf/pkg/giterminism"
 )
 
 type GitRemoteExport struct {
@@ -15,13 +13,13 @@ type GitRemoteExport struct {
 	raw *rawGit
 }
 
-func (c *GitRemoteExport) validate() error {
+func (c *GitRemoteExport) validate(giterminismManager giterminism.Manager) error {
 	isDefaultMasterBranch := c.Branch == "" && c.Commit == "" && c.Tag == ""
 	isBranch := isDefaultMasterBranch || c.Branch != ""
-	if isBranch && !giterminism_inspector.LooseGiterminism {
-		if err := giterminism_inspector.ReportConfigStapelGitBranch(context.Background()); err != nil {
-			errMsg := "\n\n" + err.Error()
-			return newDetailedConfigError(errMsg, c.raw, c.raw.rawStapelImage.doc)
+
+	if isBranch {
+		if err := giterminismManager.Inspector().InspectConfigStapelGitBranch(); err != nil {
+			return newDetailedConfigError(err.Error(), c.raw, c.raw.rawStapelImage.doc)
 		}
 	}
 

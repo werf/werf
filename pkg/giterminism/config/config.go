@@ -33,3 +33,7 @@ func (c Config) IsUncommittedConfigGoTemplateRenderingFileAccepted(path string) 
 func (c Config) IsConfigGoTemplateRenderingEnvNameAccepted(envName string) (bool, error) {
 	return c.Config.GoTemplateRendering.IsEnvNameAccepted(envName)
 }
+
+func (c Config) IsConfigStapelGitBranchAccepted() bool {
+	return c.Config.Stapel.Git.AllowBranch
+}
