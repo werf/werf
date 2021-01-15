@@ -48,7 +48,7 @@ config:  # giterminism configuration for werf.yaml
     allowUncommittedDockerignoreFiles:
       - /**/*/
       - myapp/.dockerignore
-    allowContextAddFile:
+    allowContextAddFiles:
       - aaa
       - bbb
 helm: # giterminism configuration for helm
@@ -92,14 +92,14 @@ In this configuration werf will create dockerfile builder context which will con
  - directory `app` from the current commit of the local git repo (specified by `context` directive);
  - `myfile` and `dir/a.out` files from the `app` directory of the current project work tree (including uncommitted and untracked by git files).
 
-[`config.dockerfile.allowContextAddFile`](#werf-giterminismyaml) directive  of the `werf-giterminism.yaml` configuration file should be specified to allow usage of `contextAddFile` directive of `werf.yaml` configuration file:
+[`config.dockerfile.allowContextAddFiles`](#werf-giterminismyaml) directive  of the `werf-giterminism.yaml` configuration file should be specified to allow usage of `contextAddFile` directive of `werf.yaml` configuration file:
 
 ```yaml
 # werf-giterminism.yaml configuration file
 giterminismConfigVersion: 1
 config:
   dockerfile:
-    allowContextAddFile:
+    allowContextAddFiles:
       - myfile
       - dir/a.out
 ```

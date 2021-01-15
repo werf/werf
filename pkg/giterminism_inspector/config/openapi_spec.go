@@ -93,7 +93,7 @@ definitions:
         type: array
         items:
           type: string
-      allowContextAddFile:
+      allowContextAddFiles:
         type: array
         items:
           type: string
