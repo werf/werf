@@ -13,6 +13,52 @@ import (
 var _ = Describe("config stapel", func() {
 	BeforeEach(CommonBeforeEach)
 
+	Context("fromLatest", func() {
+		type entry struct {
+			allowStapelFromLatest bool
+			expectedErrSubstring  string
+		}
+
+		DescribeTable("config.stapel.allowFromLatest",
+			func(e entry) {
+				fileCreateOrAppend("werf.yaml", `
+fromLatest: true
+image: test
+from: alpine
+`)
+				gitAddAndCommit("werf.yaml")
+
+				if e.allowStapelFromLatest {
+					contentToAppend := `
+config:
+  stapel:
+    allowFromLatest: true`
+					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
+					gitAddAndCommit("werf-giterminism.yaml")
+				}
+
+				output, err := utils.RunCommand(
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
+					"config", "render",
+				)
+
+				if e.expectedErrSubstring != "" {
+					Ω(err).Should(HaveOccurred())
+					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+				} else {
+					Ω(err).ShouldNot(HaveOccurred())
+				}
+			},
+			Entry("the from latest directive not allowed", entry{
+				expectedErrSubstring: "the configuration with external dependency found in the werf config: fromLatest directive not allowed",
+			}),
+			Entry("the from latest directive allowed", entry{
+				allowStapelFromLatest: true,
+			}),
+		)
+	})
+
 	Context("git.branch", func() {
 		type entry struct {
 			allowStapelGitBranch bool
