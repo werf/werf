@@ -10,8 +10,8 @@ const (
 	configErrorConfigType           configType = "werf config"
 	configTemplateErrorConfigType   configType = "werf config template"
 	configGoTemplateErrorConfigType configType = "file"
-	dockerfileErrorConfigType   configType = "dockerfile"
-	dockerignoreErrorConfigType configType = "dockerignore file"
+	dockerfileErrorConfigType       configType = "dockerfile"
+	dockerignoreErrorConfigType     configType = "dockerignore file"
 )
 
 type FileReader struct {
