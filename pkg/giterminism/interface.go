@@ -28,6 +28,8 @@ type FileReader interface {
 type Inspector interface {
 	InspectConfigGoTemplateRenderingEnv(ctx context.Context, envName string) error
 	InspectConfigStapelGitBranch() error
+	InspectConfigStapelMountBuildDir() error
+	InspectConfigStapelMountFromPath(fromPath string) error
 }
 
 type Config interface {
@@ -36,4 +38,6 @@ type Config interface {
 	IsUncommittedConfigGoTemplateRenderingFileAccepted(relPath string) (bool, error)
 	IsConfigGoTemplateRenderingEnvNameAccepted(envName string) (bool, error)
 	IsConfigStapelGitBranchAccepted() bool
+	IsConfigStapelMountBuildDirAccepted() bool
+	IsConfigStapelMountFromPathAccepted(fromPath string) (bool, error)
 }

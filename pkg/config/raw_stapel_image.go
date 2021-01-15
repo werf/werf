@@ -203,7 +203,7 @@ func (c *rawStapelImage) validateStapelImageArtifactDirective(imageArtifact *Sta
 }
 
 func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager giterminism.Manager, name string) (imageBase *StapelImageBase, err error) {
-	if imageBase, err = c.toBaseStapelImageBaseDirective(name); err != nil {
+	if imageBase, err = c.toBaseStapelImageBaseDirective(giterminismManager, name); err != nil {
 		return nil, err
 	}
 
@@ -268,12 +268,12 @@ func (c *rawStapelImage) validateStapelImageBaseDirective(imageBase *StapelImage
 	return nil
 }
 
-func (c *rawStapelImage) toBaseStapelImageBaseDirective(name string) (imageBase *StapelImageBase, err error) {
+func (c *rawStapelImage) toBaseStapelImageBaseDirective(giterminismManager giterminism.Manager, name string) (imageBase *StapelImageBase, err error) {
 	imageBase = &StapelImageBase{}
 	imageBase.Name = name
 
 	for _, mount := range c.RawMount {
-		if imageMount, err := mount.toDirective(); err != nil {
+		if imageMount, err := mount.toDirective(giterminismManager); err != nil {
 			return nil, err
 		} else {
 			imageBase.Mount = append(imageBase.Mount, imageMount)

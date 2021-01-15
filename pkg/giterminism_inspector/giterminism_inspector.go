@@ -102,24 +102,6 @@ func ReportConfigStapelFromLatest(_ context.Context) error {
 If you still want to use this directive, then disable werf giterminism mode with option --loose-giterminism (or WERF_LOOSE_GITERMINISM=1 env var). However it is NOT RECOMMENDED to use the actual base image in a such way. Use a particular unchangeable tag or periodically change 'fromCacheVersion' value to provide controllable and predictable lifecycle of software.`)
 }
 
-func ReportConfigStapelMountBuildDir(_ context.Context) error {
-	if giterminismConfig.Config.Stapel.Mount.AllowBuildDir {
-		return nil
-	}
-
-	return fmt.Errorf("'mount { from: build_dir, ... }' is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", giterminismDocPageURL)
-}
-
-func ReportConfigStapelMountFromPath(_ context.Context, fromPath string) error {
-	if isAccepted, err := giterminismConfig.Config.Stapel.Mount.IsFromPathAccepted(fromPath); err != nil {
-		return err
-	} else if isAccepted {
-		return nil
-	}
-
-	return fmt.Errorf("'mount { fromPath: %s, ... }' is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", fromPath, giterminismDocPageURL)
-}
-
 func ReportConfigDockerfileContextAddFile(_ context.Context, contextAddFile string) error {
 	if isAccepted, err := giterminismConfig.Config.Dockerfile.IsContextAddFileAccepted(contextAddFile); err != nil {
 		return err
