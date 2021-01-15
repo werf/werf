@@ -23,7 +23,6 @@ import (
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism"
-	"github.com/werf/werf/pkg/giterminism/file_reader"
 	"github.com/werf/werf/pkg/giterminism/manager"
 	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/logging"
@@ -892,14 +891,19 @@ func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 		return nil, err
 	}
 
-	if customWerfConfigRelPath != "" {
+	exist, err := giterminismManager.FileReader().IsConfigExistAnywhere(ctx, customWerfConfigRelPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if exist {
 		customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(projectDir, cmdData)
 		if err != nil {
 			return nil, err
 		}
 
 		c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
-		if err != nil && !file_reader.IsConfigNotFoundError(err) {
+		if err != nil {
 			return nil, err
 		}
 

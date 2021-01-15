@@ -18,6 +18,7 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 	pattern := filepath.Join(templatesDirRelPath, "**", "*.tmpl")
 	return r.configurationFilesGlob(
 		ctx,
+		configTemplateErrorConfigType,
 		pattern,
 		r.manager.Config().IsUncommittedConfigTemplateFileAccepted,
 		r.readCommitConfigTemplateFile,
@@ -25,17 +26,11 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 			templatePathInsideDir := util.GetRelativeToBaseFilepath(templatesDirRelPath, relPath)
 			return tmplFunc(templatePathInsideDir, data, err)
 		},
-		func(relPaths ...string) error {
-			return NewUncommittedFilesError("werf config template", relPaths...)
-		},
-		func(relPaths ...string) error {
-			return NewUncommittedFilesChangesError("werf config template", relPaths...)
-		},
 	)
 }
 
 func (r FileReader) readCommitConfigTemplateFile(ctx context.Context, relPath string) ([]byte, error) {
 	return r.readCommitFile(ctx, relPath, func(ctx context.Context, relPath string) error {
-		return NewUncommittedFilesChangesError("werf config template", relPath)
+		return NewUncommittedFilesChangesError(configTemplateErrorConfigType, relPath)
 	})
 }

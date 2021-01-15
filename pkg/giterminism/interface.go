@@ -19,6 +19,7 @@ type Manager interface {
 }
 
 type FileReader interface {
+	IsConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadConfig(ctx context.Context, customRelPath string) ([]byte, error)
 	ReadConfigTemplateFiles(ctx context.Context, customRelDirPath string, tmplFunc func(templatePathInsideDir string, data []byte, err error) error) error
 	ConfigGoTemplateFilesGet(ctx context.Context, relPath string) ([]byte, error)

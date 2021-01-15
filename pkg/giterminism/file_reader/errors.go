@@ -7,18 +7,17 @@ import (
 	"strings"
 )
 
-type FilesNotFoundInTheProjectDirectoryError error
-type FilesNotFoundInTheProjectGitRepositoryError error
-type UncommittedFilesError error
-type UncommittedFilesChangesError error
-
-func isUncommittedFilesError(err error) bool {
-	switch err.(type) {
-	case UncommittedFilesError:
-		return true
-	default:
-		return false
-	}
+type FilesNotFoundInTheProjectDirectoryError struct {
+	error
+}
+type FilesNotFoundInTheProjectGitRepositoryError struct {
+	error
+}
+type UncommittedFilesError struct {
+	error
+}
+type UncommittedFilesChangesError struct {
+	error
 }
 
 func isUncommittedFilesChangesError(err error) bool {
@@ -30,7 +29,7 @@ func isUncommittedFilesChangesError(err error) bool {
 	}
 }
 
-func NewFilesNotFoundInTheProjectDirectoryError(configType string, relPaths ...string) error {
+func NewFilesNotFoundInTheProjectDirectoryError(configType configType, relPaths ...string) error {
 	var errorMsg string
 	if len(relPaths) == 1 {
 		errorMsg = fmt.Sprintf("the %s '%s' not found in the project directory", configType, filepath.ToSlash(relPaths[0]))
@@ -40,10 +39,10 @@ func NewFilesNotFoundInTheProjectDirectoryError(configType string, relPaths ...s
 		panic("unexpected condition")
 	}
 
-	return errors.NewError(errorMsg)
+	return FilesNotFoundInTheProjectDirectoryError{errors.NewError(errorMsg)}
 }
 
-func NewFilesNotFoundInTheProjectGitRepositoryError(configType string, relPaths ...string) error {
+func NewFilesNotFoundInTheProjectGitRepositoryError(configType configType, relPaths ...string) error {
 	var errorMsg string
 	if len(relPaths) == 1 {
 		errorMsg = fmt.Sprintf("the %s '%s' not found in the project git repository", configType, filepath.ToSlash(relPaths[0]))
@@ -53,10 +52,10 @@ func NewFilesNotFoundInTheProjectGitRepositoryError(configType string, relPaths 
 		panic("unexpected condition")
 	}
 
-	return errors.NewError(errorMsg)
+	return FilesNotFoundInTheProjectGitRepositoryError{errors.NewError(errorMsg)}
 }
 
-func NewUncommittedFilesError(configType string, relPaths ...string) error {
+func NewUncommittedFilesError(configType configType, relPaths ...string) error {
 	errorMsg := "the uncommitted configuration found in the project directory"
 	if len(relPaths) == 1 {
 		errorMsg = fmt.Sprintf("%s: the %s '%s' must be committed", errorMsg, configType, filepath.ToSlash(relPaths[0]))
@@ -66,10 +65,10 @@ func NewUncommittedFilesError(configType string, relPaths ...string) error {
 		panic("unexpected condition")
 	}
 
-	return errors.NewError(errorMsg)
+	return UncommittedFilesError{errors.NewError(errorMsg)}
 }
 
-func NewUncommittedFilesChangesError(configType string, relPaths ...string) error {
+func NewUncommittedFilesChangesError(configType configType, relPaths ...string) error {
 	errorMsg := "the uncommitted configuration found in the project directory"
 	if len(relPaths) == 1 {
 		errorMsg = fmt.Sprintf("%s: the %s '%s' changes must be committed", errorMsg, configType, filepath.ToSlash(relPaths[0]))
@@ -79,7 +78,7 @@ func NewUncommittedFilesChangesError(configType string, relPaths ...string) erro
 		panic("unexpected condition")
 	}
 
-	return errors.NewError(errorMsg)
+	return UncommittedFilesChangesError{errors.NewError(errorMsg)}
 }
 
 func prepareListOfFilesString(paths []string) string {
