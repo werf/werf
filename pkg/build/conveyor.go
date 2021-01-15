@@ -1110,10 +1110,6 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 
 	for _, contextAddFile := range imageFromDockerfileConfig.ContextAddFile {
 		relContextAddFile := filepath.Join(imageFromDockerfileConfig.Context, contextAddFile)
-		if err := giterminism_inspector.ReportConfigDockerfileContextAddFile(ctx, relContextAddFile); err != nil {
-			return nil, err
-		}
-
 		absContextAddFile := filepath.Join(c.projectDir, relContextAddFile)
 		exist, err := util.FileExists(absContextAddFile)
 		if err != nil {

@@ -460,7 +460,7 @@ func prepareWerfConfig(giterminismManager giterminism.Manager, rawImages []*rawS
 	var artifacts []*StapelImageArtifact
 
 	for _, rawImageFromDockerfile := range rawImagesFromDockerfile {
-		if sameImages, err := rawImageFromDockerfile.toImageFromDockerfileDirectives(); err != nil {
+		if sameImages, err := rawImageFromDockerfile.toImageFromDockerfileDirectives(giterminismManager); err != nil {
 			return nil, err
 		} else {
 			imagesFromDockerfile = append(imagesFromDockerfile, sameImages...)
