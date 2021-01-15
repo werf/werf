@@ -1,5 +1,5 @@
 ```shell
-curl -L https://dl.bintray.com/flant/werf/v1.1.21+fix22/werf-darwin-amd64-v1.1.21+fix22 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/{{ include.version }}/werf-darwin-amd64-{{ include.version }} -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
