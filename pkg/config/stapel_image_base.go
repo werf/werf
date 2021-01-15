@@ -6,7 +6,7 @@ import (
 
 	"github.com/werf/logboek"
 
-	"github.com/werf/werf/pkg/giterminism_inspector"
+	"github.com/werf/werf/pkg/giterminism"
 )
 
 type StapelImageBase struct {
@@ -77,11 +77,10 @@ func (c *StapelImageBase) exports() []autoExcludeExport {
 	return exports
 }
 
-func (c *StapelImageBase) validate() error {
-	if c.FromLatest && !giterminism_inspector.LooseGiterminism {
-		if err := giterminism_inspector.ReportConfigStapelFromLatest(context.Background()); err != nil {
-			errMsg := "\n\n" + err.Error()
-			return newDetailedConfigError(errMsg, nil, c.raw.doc)
+func (c *StapelImageBase) validate(giterminismManager giterminism.Manager) error {
+	if c.FromLatest {
+		if err := giterminismManager.Inspector().InspectConfigStapelFromLatest(); err != nil {
+			return newDetailedConfigError(err.Error(), nil, c.raw.doc)
 		}
 	}
 

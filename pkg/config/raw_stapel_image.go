@@ -253,15 +253,15 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 		}
 	}
 
-	if err := c.validateStapelImageBaseDirective(imageBase); err != nil {
+	if err := c.validateStapelImageBaseDirective(giterminismManager, imageBase); err != nil {
 		return nil, err
 	}
 
 	return imageBase, nil
 }
 
-func (c *rawStapelImage) validateStapelImageBaseDirective(imageBase *StapelImageBase) (err error) {
-	if err := imageBase.validate(); err != nil {
+func (c *rawStapelImage) validateStapelImageBaseDirective(giterminismManager giterminism.Manager, imageBase *StapelImageBase) (err error) {
+	if err := imageBase.validate(giterminismManager); err != nil {
 		return err
 	}
 

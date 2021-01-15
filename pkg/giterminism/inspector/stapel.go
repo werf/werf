@@ -4,6 +4,21 @@ import (
 	"fmt"
 )
 
+func (i Inspector) InspectConfigStapelFromLatest() error {
+	if i.manager.LooseGiterminism() || i.manager.Config().IsConfigStapelFromLatestAccepted() {
+		return nil
+	}
+
+	return NewExternalDependencyFoundError(`fromLatest directive not allowed
+
+Pay attention, werf uses actual base image digest in stage digest if 'fromLatest' is specified. Thus, the usage of this directive might break the reproducibility of previous builds. If the base image is changed in the registry, all previously built stages become not usable.
+
+ * Previous pipeline jobs (e.g. deploy) cannot be retried without the image rebuild after changing base image in the registry.
+ * If base image is modified unexpectedly it might lead to the inexplicably failed pipeline. For instance, the modification occurs after successful build and the following jobs will be failed due to changing of stages digests alongside base image digest.
+
+We recommend a particular unchangeable tag or periodically change 'fromCacheVersion' value to provide controllable and predictable lifecycle of software.`)
+}
+
 func (i Inspector) InspectConfigStapelGitBranch() error {
 	if i.manager.LooseGiterminism() || i.manager.Config().IsConfigStapelGitBranchAccepted() {
 		return nil

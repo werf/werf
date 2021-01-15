@@ -2,7 +2,6 @@ package giterminism_inspector
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/werf/logboek"
@@ -87,19 +86,6 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 
 func ReportUntrackedConfigGoTemplateRenderingFile(ctx context.Context, path string) error {
 	return ReportUntrackedFile(ctx, path)
-}
-
-func ReportConfigStapelFromLatest(_ context.Context) error {
-	if giterminismConfig.Config.Stapel.AllowFromLatest {
-		return nil
-	}
-
-	return errors.New(`Pay attention, werf uses actual base image digest in stage digest if 'fromLatest' is specified. Thus, the usage of this directive might break the reproducibility of previous builds. If the base image is changed in the registry, all previously built stages become not usable.
-
-* Previous pipeline jobs (e.g. deploy) cannot be retried without the image rebuild after changing base image in the registry.
-* If base image is modified unexpectedly it might lead to the inexplicably failed pipeline. For instance, the modification occurs after successful build and the following jobs will be failed due to changing of stages digests alongside base image digest.
-
-If you still want to use this directive, then disable werf giterminism mode with option --loose-giterminism (or WERF_LOOSE_GITERMINISM=1 env var). However it is NOT RECOMMENDED to use the actual base image in a such way. Use a particular unchangeable tag or periodically change 'fromCacheVersion' value to provide controllable and predictable lifecycle of software.`)
 }
 
 func ReportConfigDockerfileContextAddFile(_ context.Context, contextAddFile string) error {

@@ -34,6 +34,10 @@ func (c Config) IsConfigGoTemplateRenderingEnvNameAccepted(envName string) (bool
 	return c.Config.GoTemplateRendering.IsEnvNameAccepted(envName)
 }
 
+func (c Config) IsConfigStapelFromLatestAccepted() bool {
+	return c.Config.Stapel.AllowFromLatest
+}
+
 func (c Config) IsConfigStapelGitBranchAccepted() bool {
 	return c.Config.Stapel.Git.AllowBranch
 }
