@@ -144,19 +144,52 @@ channels:
 Последний релиз может быть найден [на данной странице](https://bintray.com/flant/werf/werf/_latestVersion)
 </div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
+  {% for version in page.versions %}
+    <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+      {% for channel in page.channels %}
+        <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+  {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
+  {% assign download_version = site.data.channels_versions.versions[version_key] %}
 <div markdown="1">
-{% include installation/binary_linux.md %}
+{% include installation/binary_linux.md version=download_version %}
 </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
         </div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="macos">
+  {% for version in page.versions %}
+    <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+      {% for channel in page.channels %}
+        <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+  {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
+  {% assign download_version = site.data.channels_versions.versions[version_key] %}
 <div markdown="1">
-{% include installation/binary_macos.md %}
+{% include installation/binary_macos.md version=download_version %}
 </div>
         </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
+        </div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="windows">
+  {% for version in page.versions %}
+    <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+      {% for channel in page.channels %}
+        <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+  {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
+  {% assign download_version = site.data.channels_versions.versions[version_key] %}
 <div markdown="1">
-{% include installation/binary_windows.md %}
+{% include installation/binary_windows.md version=download_version %}
 </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
         </div>
       </div><!-- /method -->
       <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="source">
