@@ -75,7 +75,7 @@ Published into container registry bundle can be rolled out by the "werf bundle "
 
 			common.LogVersion()
 
-			return common.LogRunningTime(runPublish())
+			return common.LogRunningTime(runPublish)
 		},
 	}
 
