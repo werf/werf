@@ -43,9 +43,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(func() error {
-				return runCleanup()
-			})
+			return common.LogRunningTime(runCleanup)
 		},
 	}
 
