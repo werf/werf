@@ -257,10 +257,7 @@ func (m *StagesStorageManager) CopySuitableByDigestStage(ctx context.Context, st
 }
 
 func (m *StagesStorageManager) getWithManifestCacheOption() bool {
-	if m.StagesStorage.Address() == storage.LocalStorageAddress {
-		return false
-	}
-	return true
+	return if m.StagesStorage.Address() != storage.LocalStorageAddress 
 }
 
 func (m *StagesStorageManager) getStagesByDigestFromCache(ctx context.Context, stageName, stageDigest string) (bool, []*image.StageDescription, error) {

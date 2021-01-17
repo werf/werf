@@ -83,7 +83,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 			gotNoPubkey := false
 			Expect(werfBuild("apt_key1-001", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Index(line, `public key is not available: NO_PUBKEY`) != -1 {
+					if strings.Contains(line, `public key is not available: NO_PUBKEY`) {
 						gotNoPubkey = true
 					}
 				},
@@ -93,7 +93,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 			gotPackageInstallDone := false
 			Expect(werfBuild("apt_key1-002", liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Index(line, `apt 'Install package from new repository' [clickhouse-client]`) != -1 {
+					if strings.Contains(line, `apt 'Install package from new repository' [clickhouse-client]`) {
 						gotPackageInstallDone = true
 					}
 					Expect(line).NotTo(MatchRegexp(`apt 'Install package from new repository' \[clickhouse-client\] \(".*" seconds\) FAILED`))

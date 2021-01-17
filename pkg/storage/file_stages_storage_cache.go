@@ -31,7 +31,7 @@ func NewFileStagesStorageCache(cacheDir string) *FileStagesStorageCache {
 }
 
 func (cache *FileStagesStorageCache) String() string {
-	return fmt.Sprintf("%s", cache.CacheDir)
+	return cache.CacheDir
 }
 
 func (cache *FileStagesStorageCache) GetAllStages(ctx context.Context, projectName string) (bool, []image.StageID, error) {
@@ -111,7 +111,7 @@ func (cache *FileStagesStorageCache) StoreStagesByDigest(ctx context.Context, pr
 		return err
 	}
 
-	if err := ioutil.WriteFile(sigFile, append(dataBytes, []byte("\n")...), 0644); err != nil {
+	if err := ioutil.WriteFile(sigFile, append(dataBytes, []byte("\n")...), 0o644); err != nil {
 		return fmt.Errorf("error writing file %s: %s", sigFile, err)
 	}
 

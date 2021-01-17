@@ -78,8 +78,8 @@ var _ = Describe("Build phase", func() {
 			Expect(werfBuild("build_phase-001", liveexec.ExecCommandOptions{})).To(Succeed())
 
 			var wg sync.WaitGroup
-			startFirst := make(chan struct{}, 0)
-			startSecond := make(chan struct{}, 0)
+			startFirst := make(chan struct{})
+			startSecond := make(chan struct{})
 			wg.Add(2)
 
 			var firstCommitInstallStage, secondCommitInstallStage, secondCommitInstallStageOnRetry *StageInfo

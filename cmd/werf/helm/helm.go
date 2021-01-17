@@ -106,9 +106,7 @@ func NewCmd() *cobra.Command {
 		cmd := commandsQueue[0]
 		commandsQueue = commandsQueue[1:]
 
-		for _, cmd := range cmd.Commands() {
-			commandsQueue = append(commandsQueue, cmd)
-		}
+		commandsQueue = append(commandsQueue, cmd.Commands()...)
 
 		if cmd.Runnable() {
 			oldRunE := cmd.RunE

@@ -1283,7 +1283,7 @@ func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()
 
-	logboek.Default().LogFHighlight("Running time %0.2f seconds\n", time.Now().Sub(t).Seconds())
+	logboek.Default().LogFHighlight("Running time %0.2f seconds\n", time.Since(t).Seconds())
 
 	return err
 }

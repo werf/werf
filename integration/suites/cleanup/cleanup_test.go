@@ -848,10 +848,8 @@ func gitHistoryBasedCleanupCheck(imageName string, expectedNumberOfMetadataTagsB
 		imageMetadata := ImageMetadata(imageName)
 		Ω(imageMetadata).Should(HaveLen(expectedNumberOfMetadataTagsAfter))
 
-		if afterCleanupChecks != nil {
-			for _, check := range afterCleanupChecks {
-				check(imageMetadata)
-			}
+		for _, check := range afterCleanupChecks {
+			check(imageMetadata)
 		}
 	}
 }

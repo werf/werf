@@ -91,8 +91,8 @@ tryPull:
 			}
 
 			for _, specificError := range specificErrors {
-				if strings.Index(err.Error(), specificError) != -1 {
-					attempt += 1
+				if strings.Contains(err.Error(), specificError) {
+					attempt++
 					seconds := rand.Intn(30-15) + 15 // from 15 to 30 seconds
 
 					logboek.Context(ctx).Warn().LogF("Retrying docker pull in %d seconds (%d/%d) ...\n", seconds, attempt, cliPullMaxAttempts)
@@ -137,8 +137,8 @@ tryPush:
 			}
 
 			for _, specificError := range specificErrors {
-				if strings.Index(err.Error(), specificError) != -1 {
-					attempt += 1
+				if strings.Contains(err.Error(), specificError) {
+					attempt++
 					seconds := rand.Intn(30-15) + 15 // from 15 to 30 seconds
 
 					msg := fmt.Sprintf("Retrying docker push in %d seconds (%d/%d) ...\n", seconds, attempt, cliPushMaxAttempts)

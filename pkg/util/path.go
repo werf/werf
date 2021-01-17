@@ -111,7 +111,7 @@ func WalkByPattern(dir, pattern string, walkFunc func(path string, f os.FileInfo
 	patLen := len(patternComponents)
 	patIdx := 0
 	for ; patIdx < patLen; patIdx++ {
-		if strings.IndexAny(patternComponents[patIdx], "*?[{\\") >= 0 {
+		if strings.ContainsAny(patternComponents[patIdx], "*?[{\\") {
 			break
 		}
 	}
@@ -141,7 +141,6 @@ func WalkByPattern(dir, pattern string, walkFunc func(path string, f os.FileInfo
 
 		return nil
 	})
-
 	if err != nil {
 		return fmt.Errorf("filepath walk failed: %s", err)
 	}

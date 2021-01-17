@@ -49,10 +49,7 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 		SecretsManager:     secretManager,
 
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
-		decodedSecretFilesData:                make(map[string]string, 0),
-
-		ExtraValuesData:          NewExtraValuesData(),
-		ChartExtenderContextData: NewChartExtenderContextData(ctx),
+		decodedSecretFilesData:                make(map[string]string),
 	}
 
 	wc.extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
