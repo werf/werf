@@ -36,7 +36,7 @@ func NewLockManager(namespace string) (*LockManager, error) {
 			Resource: "configmaps",
 		}, configMapName, namespace,
 	)
-	lockerWithRetry := locker_with_retry.NewLockerWithRetry(nil, locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+	lockerWithRetry := locker_with_retry.NewLockerWithRetry(context.Background(), locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
 
 	return &LockManager{
 		Namespace:       namespace,
