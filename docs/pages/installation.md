@@ -3,10 +3,6 @@ title: Installation
 permalink: installation.html
 layout: default
 description: How to install werf?
-download_versions:
-  v1.2: v1.2.4+fix6
-  v1.1: v1.1.21+fix22
-  v1.0: v1.0.13+fix4
 versions:
   - 1.2
   - 1.1
@@ -150,36 +146,48 @@ The latest release can be found [at this page](https://bintray.com/flant/werf/we
 </div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
   {% for version in page.versions %}
-  {% capture version_key %}v{{ version }}{% endcapture %}
-  {% assign download_version = page.download_versions[version_key] %}
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+      {% for channel in page.channels %}
+        <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+  {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
+  {% assign download_version = site.data.channels_versions.versions[version_key] %}
 <div markdown="1">
 {% include installation/binary_linux.md version=download_version %}
 </div>
+        </div>
+      {% endfor %}
     </div>
   {% endfor %}
 
         </div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="macos">
   {% for version in page.versions %}
-  {% capture version_key %}v{{ version }}{% endcapture %}
-  {% assign download_version = page.download_versions[version_key] %}
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+      {% for channel in page.channels %}
+        <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+  {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
+  {% assign download_version = site.data.channels_versions.versions[version_key] %}
 <div markdown="1">
 {% include installation/binary_macos.md version=download_version %}
 </div>
+        </div>
+      {% endfor %}
     </div>
   {% endfor %}
 
         </div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="windows">
   {% for version in page.versions %}
-  {% capture version_key %}v{{ version }}{% endcapture %}
-  {% assign download_version = page.download_versions[version_key] %}
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
+      {% for channel in page.channels %}
+        <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+  {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
+  {% assign download_version = site.data.channels_versions.versions[version_key] %}
 <div markdown="1">
 {% include installation/binary_windows.md version=download_version %}
 </div>
+        </div>
+      {% endfor %}
     </div>
   {% endfor %}
 
