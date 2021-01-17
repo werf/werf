@@ -25,6 +25,14 @@ $(document).ready(function() {
   }
 
   function installSelect(group, param) {
+    // Update URL params
+    let url = new URL(window.location.href);
+    let params = new URLSearchParams(url.search);
+    params.set(group, param);
+    url.search = params.toString();
+    window.history.replaceState(null, null, url.toString());
+
+    // Update buttons status
     if (group == "version" && param == "1.2") {
         $(`[data-install-tab="rock-solid"]`).hide();
         $(`[data-install-tab="stable"]`).hide();
@@ -43,11 +51,20 @@ $(document).ready(function() {
     doInstallSelect(group, param)
   }
 
+  let url = new URL(window.location.href);
+  let params = new URLSearchParams(url.search);
+  Object.keys(defaults).forEach(function(key) {
+     if ( ! params.get(key) ) {
+        params.set(key, defaults[key]);
+     }
+  });
+
+    for(let [key, value] of params) {
+      installSelect(key, value)
+    }
+
   $('[data-install-tab]').on('click', function() {
     installSelect($(this).data('install-tab-group'), $(this).data('install-tab'));
   })
 
-  Object.keys(defaults).forEach(function(key) {
-    installSelect(key, defaults[key]);
-  });
 })

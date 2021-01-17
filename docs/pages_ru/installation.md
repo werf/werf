@@ -15,6 +15,7 @@ channels:
   - rock-solid
 ---
 {%- asset installation.css %}
+{%- asset installation.js %}
 
 <div class="page__container page_installation">
 
