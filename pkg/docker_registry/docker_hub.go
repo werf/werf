@@ -67,18 +67,17 @@ func (r *dockerHub) DeleteRepoImage(ctx context.Context, repoImage *image.Info) 
 	}
 
 	resp, err := r.dockerHubApi.deleteTag(ctx, account, project, repoImage.Tag, token)
-	if resp != nil {
-		if resp.StatusCode == http.StatusUnauthorized {
-			return DockerHubUnauthorizedError{error: err}
-		} else if resp.StatusCode == http.StatusNotFound {
-			return DockerHubNotFoundError{error: err}
-		}
-	}
-
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusUnauthorized {
+		return DockerHubUnauthorizedError{error: err}
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return DockerHubNotFoundError{error: err}
+	}
 	return nil
 }
 
@@ -94,38 +93,39 @@ func (r *dockerHub) deleteRepo(ctx context.Context, reference string) error {
 	}
 
 	resp, err := r.dockerHubApi.deleteRepository(ctx, account, project, token)
-	if resp != nil {
-		if resp.StatusCode == http.StatusUnauthorized {
-			return DockerHubUnauthorizedError{error: err}
-		} else if resp.StatusCode == http.StatusNotFound {
-			return DockerHubNotFoundError{error: err}
-		}
-	}
-
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusUnauthorized {
+		return DockerHubUnauthorizedError{error: err}
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return DockerHubNotFoundError{error: err}
+	}
 	return nil
 }
 
 func (r *dockerHub) getToken(ctx context.Context) (string, error) {
-	if r.dockerHubCredentials.token == "" {
-		token, resp, err := r.dockerHubApi.getToken(ctx, r.dockerHubCredentials.username, r.dockerHubCredentials.password)
-		if resp != nil {
-			if resp.StatusCode == http.StatusUnauthorized {
-				return "", DockerHubUnauthorizedError{error: err}
-			} else if resp.StatusCode == http.StatusNotFound {
-				return "", DockerHubNotFoundError{error: err}
-			}
-		}
-
-		if err != nil {
-			return "", err
-		}
-
-		r.dockerHubCredentials.token = token
+	if r.dockerHubCredentials.token != "" {
+		return r.dockerHubCredentials.token, nil
 	}
+
+	token, resp, err := r.dockerHubApi.getToken(ctx, r.dockerHubCredentials.username, r.dockerHubCredentials.password)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return "", DockerHubUnauthorizedError{error: err}
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return "", DockerHubNotFoundError{error: err}
+	}
+
+	r.dockerHubCredentials.token = token
 
 	return r.dockerHubCredentials.token, nil
 }
@@ -142,13 +142,11 @@ func (r *dockerHub) parseReference(reference string) (string, string, error) {
 
 	repositoryParts := strings.Split(parsedReference.RepositoryStr(), "/")
 
-	var account, project string
-	if len(repositoryParts) == 2 {
-		account = repositoryParts[0]
-		project = repositoryParts[1]
-	} else {
+	if len(repositoryParts) != 2 {
 		return "", "", fmt.Errorf("unexpected reference %s", reference)
 	}
 
+	account := repositoryParts[0]
+	project := repositoryParts[1]
 	return account, project, nil
 }
