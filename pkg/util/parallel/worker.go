@@ -16,7 +16,7 @@ func (w *bufWorker) TaskResult(err error) interface{} {
 	taskResult := &bufWorkerTaskResult{
 		buf:  w.buf,
 		err:  err,
-		data: w.buf.Bytes(),
+		data: []byte(w.buf.String()),
 	}
 
 	w.buf.Reset()

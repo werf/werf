@@ -189,7 +189,7 @@ func (storage *LocalDockerServerStagesStorage) GetManagedImages(ctx context.Cont
 
 func (storage *LocalDockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error) {
 	filterSet := filters.NewArgs()
-	filterSet.Add("reference", projectName)
+	filterSet.Add("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
 	// NOTE digest already depends on build-cache-version
 	filterSet.Add("label", fmt.Sprintf("%s=%s", image.WerfStageDigestLabel, digest))
 

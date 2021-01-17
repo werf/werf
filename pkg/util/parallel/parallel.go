@@ -147,7 +147,7 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 
 				for _, buf := range workersBuffs {
 					if buf != taskResult.buf {
-						processTaskResultData(ctx, buf.Bytes())
+						processTaskResultData(ctx, []byte(buf.String()))
 					}
 				}
 
