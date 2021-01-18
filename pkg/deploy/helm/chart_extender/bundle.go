@@ -1,12 +1,17 @@
 package chart_extender
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+
+	"helm.sh/helm/v3/pkg/chart/loader"
 
 	"helm.sh/helm/v3/pkg/cli"
 
@@ -15,9 +20,16 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 )
 
-func NewBundle(dir string) *Bundle {
+type BundleOptions struct {
+	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
+}
+
+func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, opts BundleOptions) *Bundle {
 	return &Bundle{
-		Dir: dir,
+		Dir:                        dir,
+		HelmEnvSettings:            helmEnvSettings,
+		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
+		chartExtenderContext:       ctx,
 	}
 }
 
@@ -26,8 +38,12 @@ func NewBundle(dir string) *Bundle {
  * which could be used during helm install/upgrade process
  */
 type Bundle struct {
-	Dir       string
-	HelmChart *chart.Chart
+	Dir                        string
+	HelmChart                  *chart.Chart
+	HelmEnvSettings            *cli.EnvSettings
+	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
+
+	chartExtenderContext context.Context
 }
 
 func (bundle *Bundle) GetPostRenderer() (*helm.ExtraAnnotationsAndLabelsPostRenderer, error) {
@@ -83,9 +99,25 @@ func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.
 	}
 }
 
+func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*chart.ChartExtenderBufferedFile {
+	var res []*chart.ChartExtenderBufferedFile
+	for _, f := range files {
+		f1 := new(chart.ChartExtenderBufferedFile)
+		*f1 = chart.ChartExtenderBufferedFile(*f)
+		res = append(res, f1)
+	}
+	return res
+}
+
 // LoadDir method for the chart.Extender interface
 func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
-	return false, nil, nil
+	files, err := loader.GetFilesFromLocalFilesystem(dir)
+	if err != nil {
+		return true, nil, err
+	}
+
+	res, err := LoadChartDependencies(bundle.chartExtenderContext, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.BuildChartDependenciesOpts)
+	return true, res, err
 }
 
 // LocateChart method for the chart.Extender interface

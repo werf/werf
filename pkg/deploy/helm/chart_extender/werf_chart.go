@@ -41,7 +41,7 @@ type WerfChartOptions struct {
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 }
 
-func NewWerfChart(giterminismManager giterminism.Manager, secretManager secret.Manager, projectDir, chartDir string, helmEnvSettings *cli.EnvSettings, opts WerfChartOptions) *WerfChart {
+func NewWerfChart(ctx context.Context, giterminismManager giterminism.Manager, secretManager secret.Manager, projectDir, chartDir string, helmEnvSettings *cli.EnvSettings, opts WerfChartOptions) *WerfChart {
 	wc := &WerfChart{
 		ProjectDir:       projectDir,
 		ChartDir:         chartDir,
@@ -53,6 +53,7 @@ func NewWerfChart(giterminismManager giterminism.Manager, secretManager secret.M
 
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
 		decodedSecretFilesData:                make(map[string]string, 0),
+		chartExtenderContext:                  ctx,
 	}
 
 	wc.extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
@@ -200,10 +201,6 @@ func (wc *WerfChart) GetPostRenderer() (postrender.PostRenderer, error) {
 	return wc.extraAnnotationsAndLabelsPostRenderer, nil
 }
 
-func (wc *WerfChart) SetChartExtenderContext(ctx context.Context) {
-	wc.chartExtenderContext = ctx
-}
-
 func (wc *WerfChart) SetWerfConfig(werfConfig *config.WerfConfig) error {
 	wc.extraAnnotationsAndLabelsPostRenderer.Add(map[string]string{
 		"project.werf.io/name": werfConfig.Meta.Project,
@@ -305,5 +302,5 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputV
 		}
 	}
 
-	return NewBundle(destDir), nil
+	return NewBundle(ctx, destDir, wc.HelmEnvSettings, BundleOptions{BuildChartDependenciesOpts: wc.BuildChartDependenciesOpts}), nil
 }
