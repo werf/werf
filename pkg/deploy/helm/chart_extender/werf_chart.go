@@ -16,7 +16,6 @@ import (
 	"github.com/werf/werf/pkg/util/secretvalues"
 
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/util"
 	"helm.sh/helm/v3/pkg/cli"
 
@@ -93,6 +92,7 @@ func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
 
 // ChartLoaded method for the chart.Extender interface
 func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
+	// TODO: Remove loose giterminism, load secrets from provided buffered-files param, do not read any files by itself
 	if wc.SecretsManager != nil {
 		if giterminism_inspector.LooseGiterminism {
 			if err := wc.loadSecretsFromFilesystem(); err != nil {
@@ -160,48 +160,34 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 
 // LoadDir method for the chart.Extender interface
 func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
+	// TODO: Remove loose giterminism, return always true
 	if giterminism_inspector.LooseGiterminism {
 		return false, nil, nil
 	}
 
-	res, err := GiterministicFilesLoader(wc.chartExtenderContext, wc.GiterminismManager.LocalGitRepo(), wc.ProjectDir, dir, wc.HelmEnvSettings, wc.BuildChartDependenciesOpts)
+	res, err := GiterministicFilesLoader(wc.chartExtenderContext, wc.GiterminismManager, dir, wc.HelmEnvSettings, wc.BuildChartDependenciesOpts)
 	return true, res, err
 }
 
 // LocateChart method for the chart.Extender interface
 func (wc *WerfChart) LocateChart(name string, settings *cli.EnvSettings) (bool, string, error) {
+	// TODO: Remove loose giterminism, return always true
 	if giterminism_inspector.LooseGiterminism {
 		return false, "", nil
 	}
 
-	commit, err := wc.GiterminismManager.LocalGitRepo().HeadCommit(wc.chartExtenderContext)
-	if err != nil {
-		return true, "", fmt.Errorf("unable to get local repo head commit: %s", err)
-	}
-
-	if exists, err := wc.GiterminismManager.LocalGitRepo().IsCommitDirectoryExists(wc.chartExtenderContext, name, commit); err != nil {
-		return true, "", fmt.Errorf("error checking existence of %q in the local git repo commit %s: %s", name, commit, err)
-	} else if exists {
-		return true, name, nil
-	} else {
-		return true, "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
-	}
+	res, err := wc.GiterminismManager.FileReader().LocateChart(wc.chartExtenderContext, name, settings)
+	return true, res, err
 }
 
 // ReadFile method for the chart.Extender interface
 func (wc *WerfChart) ReadFile(filePath string) (bool, []byte, error) {
+	// TODO: Remove loose giterminism, return always true
 	if giterminism_inspector.LooseGiterminism {
 		return false, nil, nil
 	}
 
-	commit, err := wc.GiterminismManager.LocalGitRepo().HeadCommit(wc.chartExtenderContext)
-	if err != nil {
-		return true, nil, fmt.Errorf("unable to get local repo head commit: %s", err)
-	}
-
-	relativeFilePath := util.GetRelativeToBaseFilepath(wc.ProjectDir, filePath)
-
-	res, err := git_repo.ReadCommitFileAndCompareWithProjectFile(wc.chartExtenderContext, *wc.GiterminismManager.LocalGitRepo(), commit, wc.ProjectDir, relativeFilePath)
+	res, err := wc.GiterminismManager.FileReader().ReadChartFile(wc.chartExtenderContext, filePath)
 	return true, res, err
 }
 

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/werf/werf/pkg/giterminism"
+
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 
 	uuid "github.com/satori/go.uuid"
@@ -20,9 +22,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/util"
 
-	"github.com/werf/werf/pkg/git_repo"
 	"helm.sh/helm/v3/pkg/chart/loader"
 )
 
@@ -127,8 +127,8 @@ func GetPreparedChartDependenciesDir(ctx context.Context, lockDigest string, loc
 	return depsDir, nil
 }
 
-func GiterministicFilesLoader(ctx context.Context, localGitRepo *git_repo.Local, projectDir, loadDir string, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
-	gitFiles, err := LoadFilesFromGit(ctx, localGitRepo, projectDir, loadDir)
+func GiterministicFilesLoader(ctx context.Context, giterminismManager giterminism.Manager, loadDir string, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
+	gitFiles, err := giterminismManager.FileReader().LoadChartDir(ctx, loadDir)
 	if err != nil {
 		return nil, err
 	}
@@ -173,46 +173,6 @@ func GiterministicFilesLoader(ctx context.Context, localGitRepo *git_repo.Local,
 						logboek.Context(ctx).Debug().LogF("-- GiterministicFilesLoader: loading subchart %q from dependencies dir %s\n", f.Name, depsDir)
 					}
 				}
-			}
-		}
-	}
-
-	return res, nil
-}
-
-func LoadFilesFromGit(ctx context.Context, localGitRepo *git_repo.Local, projectDir, loadDir string) ([]*chart.ChartExtenderBufferedFile, error) {
-	commit, err := localGitRepo.HeadCommit(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get local repo head commit: %s", err)
-	}
-
-	logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit projectDir=%s loadDir=%s commit=%s\n", loadDir, projectDir, commit)
-
-	repoPaths, err := localGitRepo.GetCommitFilePathList(ctx, commit)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get local repo paths for commit %s: %s", commit, err)
-	}
-
-	// TODO: Add .helmignore someday
-
-	relativeLoadDir := util.GetRelativeToBaseFilepath(projectDir, loadDir)
-
-	if isSymlink, linkDest, err := localGitRepo.CheckAndReadCommitSymlink(ctx, relativeLoadDir, commit); err != nil {
-		return nil, fmt.Errorf("error checking %s is symlink in the local git repo commit %s: %s", relativeLoadDir, commit, err)
-	} else if isSymlink {
-		logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit: load dir %q is symlink to %q\n", relativeLoadDir, linkDest)
-		relativeLoadDir = string(linkDest)
-	}
-
-	var res []*chart.ChartExtenderBufferedFile
-
-	for _, repoPath := range repoPaths {
-		if util.IsSubpathOfBasePath(relativeLoadDir, repoPath) {
-			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, *localGitRepo, commit, projectDir, repoPath); err != nil {
-				return nil, err
-			} else {
-				logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, repoPath, d)
-				res = append(res, &chart.ChartExtenderBufferedFile{Name: filepath.ToSlash(util.GetRelativeToBaseFilepath(relativeLoadDir, repoPath)), Data: d})
 			}
 		}
 	}
