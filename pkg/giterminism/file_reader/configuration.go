@@ -113,6 +113,41 @@ func (r FileReader) readConfigurationFile(ctx context.Context, configType config
 	})
 }
 
+func (r FileReader) checkConfigurationDirectoryExistence(ctx context.Context, configType configType, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) error {
+	accepted, err := isFileAcceptedFunc(relPath)
+	if err != nil {
+		return err
+	}
+
+	shouldReadFromFS := r.manager.LooseGiterminism() || accepted
+	if !shouldReadFromFS {
+		if exist, err := r.isCommitDirectoryExist(ctx, relPath); err != nil {
+			return err
+		} else if exist {
+			return nil
+		}
+	}
+
+	exist, err := r.isDirectoryExist(relPath)
+	if err != nil {
+		return err
+	}
+
+	if exist {
+		if shouldReadFromFS {
+			return nil
+		} else {
+			return NewUncommittedFilesError(configType, relPath)
+		}
+	} else {
+		if shouldReadFromFS {
+			return NewFilesNotFoundInTheProjectDirectoryError(configType, relPath)
+		} else {
+			return NewFilesNotFoundInTheProjectGitRepositoryError(configType, relPath)
+		}
+	}
+}
+
 func (r FileReader) checkConfigurationFileExistence(ctx context.Context, configType configType, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) error {
 	accepted, err := isFileAcceptedFunc(relPath)
 	if err != nil {
@@ -156,6 +191,19 @@ func (r FileReader) isConfigurationFileExistAnywhere(ctx context.Context, relPat
 	} else {
 		return true, nil
 	}
+}
+
+func (r FileReader) isConfigurationDirectoryExist(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) (bool, error) {
+	accepted, err := isFileAcceptedFunc(relPath)
+	if err != nil {
+		return false, err
+	}
+
+	if r.manager.LooseGiterminism() || accepted {
+		return r.isDirectoryExist(relPath)
+	}
+
+	return r.isCommitDirectoryExist(ctx, relPath)
 }
 
 func (r FileReader) isConfigurationFileExist(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) (bool, error) {

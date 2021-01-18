@@ -54,10 +54,14 @@ func (c Config) IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, 
 	return c.Config.Dockerfile.IsContextAddFileAccepted(relPath)
 }
 
-func (c Config) IsUncommittedDockerfileAccepted(path string) (bool, error) {
-	return c.Config.Dockerfile.IsUncommittedAccepted(path)
+func (c Config) IsUncommittedDockerfileAccepted(relPath string) (bool, error) {
+	return c.Config.Dockerfile.IsUncommittedAccepted(relPath)
 }
 
-func (c Config) IsUncommittedDockerignoreAccepted(path string) (bool, error) {
-	return c.Config.Dockerfile.IsUncommittedDockerignoreAccepted(path)
+func (c Config) IsUncommittedDockerignoreAccepted(relPath string) (bool, error) {
+	return c.Config.Dockerfile.IsUncommittedDockerignoreAccepted(relPath)
+}
+
+func (c Config) IsUncommittedHelmFileAccepted(relPath string) (bool, error) {
+	return c.Helm.IsUncommittedHelmFileAccepted(relPath)
 }

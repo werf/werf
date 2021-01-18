@@ -82,10 +82,12 @@ func IsSubpathOfBasePath(basePath, path string) bool {
 	if len(basePathParts) > len(pathParts) {
 		return false
 	}
+
 	for i := range basePathParts {
 		if basePathParts[i] != pathParts[i] {
 			return false
 		}
 	}
+
 	return true
 }

@@ -39,6 +39,7 @@ func ExpandPath(path string) string {
 }
 
 func SplitFilepath(path string) (result []string) {
+	path = filepath.FromSlash(path)
 	separator := os.PathSeparator
 
 	idx := 0

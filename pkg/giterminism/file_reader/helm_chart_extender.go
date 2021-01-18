@@ -3,78 +3,107 @@ package file_reader
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
-
-	"github.com/werf/logboek"
-
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/util"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/cli"
+
+	"github.com/werf/werf/pkg/util"
 )
 
-func (r FileReader) LocateChart(ctx context.Context, name string, settings *cli.EnvSettings) (string, error) {
-	commit, err := r.manager.LocalGitRepo().HeadCommit(ctx)
+func (r FileReader) LocateChart(ctx context.Context, relDir string, _ *cli.EnvSettings) (string, error) {
+	files, err := r.loadChartDir(ctx, relDir)
 	if err != nil {
-		return "", fmt.Errorf("unable to get local repo head commit: %s", err)
+		return "", err
 	}
 
-	if exists, err := r.manager.LocalGitRepo().IsCommitDirectoryExists(ctx, name, commit); err != nil {
-		return "", fmt.Errorf("error checking existence of %q in the local git repo commit %s: %s", name, commit, err)
-	} else if exists {
-		return name, nil
+	if len(files) == 0 {
+		return "", NewFilesNotFoundInTheProjectGitRepositoryError(chartDirectoryErrorConfigType, relDir)
 	}
-	return "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
+
+	return relDir, nil
 }
 
-func (r FileReader) ReadChartFile(ctx context.Context, filePath string) ([]byte, error) {
-	commit, err := r.manager.LocalGitRepo().HeadCommit(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get local repo head commit: %s", err)
+func (r FileReader) ReadChartFile(ctx context.Context, relPath string) ([]byte, error) {
+	if err := r.checkChartFileExistence(ctx, relPath); err != nil {
+		return nil, err
 	}
 
-	relativeFilePath := util.GetRelativeToBaseFilepath(r.manager.ProjectDir(), filePath)
-
-	return git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, *r.manager.LocalGitRepo(), commit, r.manager.ProjectDir(), relativeFilePath)
+	return r.readChartFile(ctx, relPath)
 }
 
-func (r FileReader) LoadChartDir(ctx context.Context, dir string) ([]*chart.ChartExtenderBufferedFile, error) {
-	commit, err := r.manager.LocalGitRepo().HeadCommit(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get local repo head commit: %s", err)
-	}
+func (r FileReader) LoadChartDir(ctx context.Context, relDir string) ([]*chart.ChartExtenderBufferedFile, error) {
+	return r.loadChartDir(ctx, relDir)
+}
 
-	logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit dir=%s projectDir=%s commit=%s\n", dir, r.manager.ProjectDir(), commit)
-
-	repoPaths, err := r.manager.LocalGitRepo().GetCommitFilePathList(ctx, commit)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get local repo paths for commit %s: %s", commit, err)
-	}
-
-	// TODO: Add .helmignore
-
-	relativeLoadDir := util.GetRelativeToBaseFilepath(r.manager.ProjectDir(), dir)
-
-	if isSymlink, linkDest, err := r.manager.LocalGitRepo().CheckAndReadCommitSymlink(ctx, relativeLoadDir, commit); err != nil {
-		return nil, fmt.Errorf("error checking %s is symlink in the local git repo commit %s: %s", relativeLoadDir, commit, err)
-	} else if isSymlink {
-		logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit: load dir %q is symlink to %q\n", relativeLoadDir, linkDest)
-		relativeLoadDir = string(linkDest)
-	}
-
+// TODO helmignore support
+func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.ChartExtenderBufferedFile, error) {
 	var res []*chart.ChartExtenderBufferedFile
 
-	for _, repoPath := range repoPaths {
-		if util.IsSubpathOfBasePath(relativeLoadDir, repoPath) {
-			if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, *r.manager.LocalGitRepo(), commit, r.manager.ProjectDir(), repoPath); err != nil {
-				return nil, err
-			} else {
-				logboek.Context(ctx).Debug().LogF("-- LoadFilesFromGit commit=%s loaded file %s:\n%s\n", commit, repoPath, d)
-				res = append(res, &chart.ChartExtenderBufferedFile{Name: filepath.ToSlash(util.GetRelativeToBaseFilepath(relativeLoadDir, repoPath)), Data: d})
+	if exist, err := r.isConfigurationFileExistAnywhere(ctx, relDir); err != nil {
+		return nil, err
+	} else if !exist {
+		return nil, NewFilesNotFoundInTheProjectGitRepositoryError(chartDirectoryErrorConfigType, relDir)
+	}
+
+	// TODO configurationFilesGlob method must resolve symlinks properly
+	relDir, err := r.resolveChartDirectory(relDir)
+	if err != nil {
+		return nil, err
+	}
+
+	pattern := filepath.Join(relDir, "**/*")
+	if err := r.configurationFilesGlob(
+		ctx,
+		chartFileErrorConfigType,
+		pattern,
+		r.manager.Config().IsUncommittedHelmFileAccepted,
+		r.readChartFile,
+		func(relPath string, data []byte, err error) error {
+			if err != nil {
+				return err
 			}
-		}
+
+			relPath = filepath.ToSlash(util.GetRelativeToBaseFilepath(relDir, relPath))
+			res = append(res, &chart.ChartExtenderBufferedFile{Name: relPath, Data: data})
+
+			return nil
+		},
+	); err != nil {
+		return nil, err
 	}
 
 	return res, nil
+}
+
+func (r FileReader) resolveChartDirectory(relDir string) (string, error) {
+	absDir := filepath.Join(r.manager.ProjectDir(), relDir)
+	link, err := filepath.EvalSymlinks(absDir)
+	if err != nil {
+		return "", fmt.Errorf("eval symlink %s failed: %s", absDir, err)
+	}
+
+	linkStat, err := os.Lstat(link)
+	if err != nil {
+		return "", fmt.Errorf("lstat %s failed: %s", linkStat, err)
+	}
+
+	if !linkStat.IsDir() {
+		return "", fmt.Errorf("unable to handle the chart directory '%s': linked to file not a directory", link)
+	}
+
+	if !util.IsSubpathOfBasePath(r.manager.ProjectDir(), link) {
+		return "", fmt.Errorf("unable to handle the chart directory '%s' which is located outside the project directory", link)
+	}
+
+	return util.GetRelativeToBaseFilepath(r.manager.ProjectDir(), link), nil
+}
+
+func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, error) {
+	return r.readConfigurationFile(ctx, chartFileErrorConfigType, relPath, r.manager.Config().IsUncommittedHelmFileAccepted)
+}
+
+func (r FileReader) checkChartFileExistence(ctx context.Context, relPath string) error {
+	return r.checkConfigurationFileExistence(ctx, chartFileErrorConfigType, relPath, r.manager.Config().IsUncommittedHelmFileAccepted)
 }

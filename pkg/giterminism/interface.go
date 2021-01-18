@@ -62,4 +62,5 @@ type Config interface {
 	IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, error)
 	IsUncommittedDockerfileAccepted(relPath string) (bool, error)
 	IsUncommittedDockerignoreAccepted(relPath string) (bool, error)
+	IsUncommittedHelmFileAccepted(relPath string) (bool, error)
 }

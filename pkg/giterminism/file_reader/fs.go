@@ -66,6 +66,16 @@ func (r FileReader) readFile(relPath string) ([]byte, error) {
 	return data, nil
 }
 
+func (r FileReader) isDirectoryExist(relPath string) (bool, error) {
+	absPath := filepath.Join(r.manager.ProjectDir(), relPath)
+	exist, err := util.DirExists(absPath)
+	if err != nil {
+		return false, fmt.Errorf("unable to check existence of directory %s: %s", absPath, err)
+	}
+
+	return exist, nil
+}
+
 func (r FileReader) isFileExist(relPath string) (bool, error) {
 	absPath := filepath.Join(r.manager.ProjectDir(), relPath)
 	exist, err := util.FileExists(absPath)

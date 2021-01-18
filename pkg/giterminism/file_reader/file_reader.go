@@ -12,6 +12,8 @@ const (
 	configGoTemplateErrorConfigType configType = "file"
 	dockerfileErrorConfigType       configType = "dockerfile"
 	dockerignoreErrorConfigType     configType = "dockerignore file"
+	chartFileErrorConfigType        configType = "chart file"
+	chartDirectoryErrorConfigType   configType = "chart directory"
 )
 
 type FileReader struct {
