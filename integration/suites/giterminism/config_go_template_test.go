@@ -178,4 +178,61 @@ config:
 			)
 		})
 	}
+
+	Context("env", func() {
+		type entry struct {
+			allowEnvVariablesRegexp string
+			addEnvName              string
+			expectedErrSubstring    string
+		}
+
+		DescribeTable("config.goTemplateRendering.allowEnvVariables",
+			func(e entry) {
+				fileCreateOrAppend("werf.yaml", fmt.Sprintf(`{{ env "%s" }}`, e.addEnvName))
+				gitAddAndCommit("werf.yaml")
+
+				if e.allowEnvVariablesRegexp != "" {
+					contentToAppend := fmt.Sprintf(`
+config:
+  goTemplateRendering:
+    allowEnvVariables: [%s]`, e.allowEnvVariablesRegexp)
+					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
+					gitAddAndCommit("werf-giterminism.yaml")
+				}
+
+				SuiteData.Stubs.SetEnv(e.addEnvName, fmt.Sprintf("# %s", e.addEnvName))
+				output, err := utils.RunCommand(
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
+					"config", "render",
+				)
+
+				if e.expectedErrSubstring != "" {
+					Ω(err).Should(HaveOccurred())
+					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+				} else {
+					Ω(err).ShouldNot(HaveOccurred())
+					Ω(string(output)).Should(ContainSubstring(fmt.Sprintf("# %s", e.addEnvName)))
+				}
+			},
+			Entry("the env name not allowed", entry{
+				addEnvName:           "NAME",
+				expectedErrSubstring: "error calling env: the configuration with external dependency found in the werf config: env name 'NAME' not allowed",
+			}),
+			Entry("config.goTemplateRendering.allowEnvVariables (NAME) covers the env name", entry{
+				allowEnvVariablesRegexp: "NAME",
+				addEnvName:              "NAME",
+			}),
+			Entry("config.goTemplateRendering.allowEnvVariables (NA*) does not cover the env name", entry{
+				allowEnvVariablesRegexp: "NA*",
+				addEnvName:              "NAME",
+				expectedErrSubstring:    "error calling env: the configuration with external dependency found in the werf config: env name 'NAME' not allowed",
+			}),
+			Entry("config.goTemplateRendering.allowEnvVariables (/NA*/) does not cover the env name", entry{
+				allowEnvVariablesRegexp: "/NA*/",
+				addEnvName:              "NAME",
+				expectedErrSubstring:    "error calling env: the configuration with external dependency found in the werf config: env name 'NAME' not allowed",
+			}),
+		)
+	})
 })

@@ -8,6 +8,7 @@ import (
 
 type Manager interface {
 	FileReader() FileReader
+	Inspector() Inspector
 	Config() Config
 
 	LocalGitRepo() *git_repo.Local
@@ -24,8 +25,13 @@ type FileReader interface {
 	ConfigGoTemplateFilesGlob(ctx context.Context, pattern string) (map[string]interface{}, error)
 }
 
+type Inspector interface {
+	InspectConfigGoTemplateRenderingEnv(ctx context.Context, envName string) error
+}
+
 type Config interface {
 	IsUncommittedConfigAccepted() bool
 	IsUncommittedConfigTemplateFileAccepted(relPath string) (bool, error)
 	IsUncommittedConfigGoTemplateRenderingFileAccepted(relPath string) (bool, error)
+	IsConfigGoTemplateRenderingEnvNameAccepted(envName string) (bool, error)
 }

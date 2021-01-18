@@ -20,7 +20,6 @@ import (
 
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/tmp_manager"
@@ -211,7 +210,7 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 
 func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism.Manager, env string) (string, error) {
 	tmpl := template.New("werfConfig")
-	tmpl.Funcs(funcMap(tmpl))
+	tmpl.Funcs(funcMap(tmpl, giterminismManager))
 
 	if err := parseWerfConfigTemplatesDir(ctx, tmpl, giterminismManager, customWerfConfigTemplatesDirRelPath); err != nil {
 		return "", err
@@ -267,7 +266,7 @@ func addTemplate(tmpl *template.Template, templateName string, templateContent s
 	return err
 }
 
-func funcMap(tmpl *template.Template) template.FuncMap {
+func funcMap(tmpl *template.Template, giterminismManager giterminism.Manager) template.FuncMap {
 	funcMap := sprig.TxtFuncMap()
 	delete(funcMap, "expandenv")
 
@@ -286,11 +285,8 @@ func funcMap(tmpl *template.Template) template.FuncMap {
 	envFunc := funcMap["env"].(func(string) string)
 	funcMap["env"] = func(value interface{}) (string, error) {
 		envName := fmt.Sprint(value)
-
-		if !giterminism_inspector.LooseGiterminism {
-			if err := giterminism_inspector.ReportConfigGoTemplateRenderingEnv(context.Background(), envName); err != nil {
-				return "", err
-			}
+		if err := giterminismManager.Inspector().InspectConfigGoTemplateRenderingEnv(context.Background(), envName); err != nil {
+			return "", err
 		}
 
 		return envFunc(envName), nil

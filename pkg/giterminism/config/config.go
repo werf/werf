@@ -29,3 +29,7 @@ func (c Config) IsUncommittedConfigTemplateFileAccepted(path string) (bool, erro
 func (c Config) IsUncommittedConfigGoTemplateRenderingFileAccepted(path string) (bool, error) {
 	return c.Config.GoTemplateRendering.IsUncommittedFileAccepted(path)
 }
+
+func (c Config) IsConfigGoTemplateRenderingEnvNameAccepted(envName string) (bool, error) {
+	return c.Config.GoTemplateRendering.IsEnvNameAccepted(envName)
+}

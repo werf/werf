@@ -5,6 +5,7 @@ import (
 	"github.com/werf/werf/pkg/giterminism"
 	"github.com/werf/werf/pkg/giterminism/config"
 	"github.com/werf/werf/pkg/giterminism/file_reader"
+	"github.com/werf/werf/pkg/giterminism/inspector"
 )
 
 type Manager struct {
@@ -14,6 +15,7 @@ type Manager struct {
 
 	fileReader giterminism.FileReader
 	config     giterminism.Config
+	inspector  giterminism.Inspector
 
 	devMode                        bool
 	looseGiterminism               bool
@@ -39,6 +41,7 @@ func NewManager(projectDir string, localGitRepo git_repo.Local, headCommit strin
 
 	m.config = c
 	m.fileReader = file_reader.NewFileReader(m)
+	m.inspector = inspector.NewInspector(m)
 
 	return m, nil
 }
@@ -57,6 +60,10 @@ func (m Manager) LocalGitRepo() *git_repo.Local {
 
 func (m Manager) FileReader() giterminism.FileReader {
 	return m.fileReader
+}
+
+func (m Manager) Inspector() giterminism.Inspector {
+	return m.inspector
 }
 
 func (m Manager) Config() giterminism.Config {
