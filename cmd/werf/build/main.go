@@ -242,7 +242,7 @@ func run(ctx context.Context, projectDir string, imagesToProcess []string) error
 
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, localGitRepo, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, localGitRepo, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

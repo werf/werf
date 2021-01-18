@@ -10,8 +10,14 @@ import (
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
-func BaseBeforeEach() {
-	utils.CopyIn(utils.FixturePath(), SuiteData.TestDirPath)
+func CommonBeforeEach() {
+	gitInit()
+	utils.CopyIn(utils.FixturePath("default"), SuiteData.TestDirPath)
+	gitAddAndCommit("werf-giterminism.yaml")
+	gitAddAndCommit("werf.yaml")
+}
+
+func gitInit() {
 	utils.RunSucceedCommand(
 		SuiteData.TestDirPath,
 		"git",
@@ -23,16 +29,6 @@ func BaseBeforeEach() {
 		"git",
 		"commit", "--allow-empty", "-m", "Initial commit",
 	)
-}
-
-func ConfigBeforeEach() {
-	BaseBeforeEach()
-	gitAddAndCommit("werf-giterminism.yaml")
-}
-
-func CommonBeforeEach() {
-	ConfigBeforeEach()
-	gitAddAndCommit("werf.yaml")
 }
 
 func gitAddAndCommit(relPath string) {

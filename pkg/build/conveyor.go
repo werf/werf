@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -28,7 +27,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
+	"github.com/werf/werf/pkg/giterminism"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -56,9 +55,10 @@ type Conveyor struct {
 	images    []*Image
 	imageSets [][]*Image
 
-	stageImages    map[string]*container_runtime.StageImage
-	localGitRepo   git_repo.Local
-	remoteGitRepos map[string]*git_repo.Remote
+	stageImages        map[string]*container_runtime.StageImage
+	localGitRepo       git_repo.Local
+	giterminismManager giterminism.Manager
+	remoteGitRepos     map[string]*git_repo.Remote
 
 	tmpDir string
 
@@ -83,7 +83,7 @@ type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, localGitRepo git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism.Manager, localGitRepo git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
 	return &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -94,7 +94,8 @@ func NewConveyor(werfConfig *config.WerfConfig, localGitRepo git_repo.Local, ima
 
 		sshAuthSock: sshAuthSock,
 
-		localGitRepo: localGitRepo,
+		localGitRepo:       localGitRepo,
+		giterminismManager: giterminismManager,
 
 		stageImages:            make(map[string]*container_runtime.StageImage),
 		gitReposCaches:         make(map[string]*stage.GitRepoCache),
@@ -1102,12 +1103,6 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	img.name = imageFromDockerfileConfig.Name
 	img.isDockerfileImage = true
 
-	localGitRepo := c.GetLocalGitRepo()
-	headCommit, err := localGitRepo.HeadCommit(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get head commit: %s", err)
-	}
-
 	for _, contextAddFile := range imageFromDockerfileConfig.ContextAddFile {
 		relContextAddFile := filepath.Join(imageFromDockerfileConfig.Context, contextAddFile)
 		absContextAddFile := filepath.Join(c.projectDir, relContextAddFile)
@@ -1121,14 +1116,27 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		}
 	}
 
-	dockerfileData, err := getDockerfileData(ctx, imageFromDockerfileConfig, c, localGitRepo, headCommit)
+	relDockerfilePath := filepath.Join(imageFromDockerfileConfig.Context, imageFromDockerfileConfig.Dockerfile)
+	dockerfileData, err := c.giterminismManager.FileReader().ReadDockerfile(ctx, relDockerfilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	dockerignorePatterns, err := getDockerignorePatterns(ctx, imageFromDockerfileConfig, c, localGitRepo, headCommit)
-	if err != nil {
+	var dockerignorePatterns []string
+	relDockerignorePath := filepath.Join(imageFromDockerfileConfig.Context, ".dockerignore")
+	if exist, err := c.giterminismManager.FileReader().IsDockerignoreExistAnywhere(ctx, relDockerignorePath); err != nil {
 		return nil, err
+	} else if exist {
+		dockerignoreData, err := c.giterminismManager.FileReader().ReadDockerignore(ctx, relDockerignorePath)
+		if err != nil {
+			return nil, err
+		}
+
+		r := bytes.NewReader(dockerignoreData)
+		dockerignorePatterns, err = dockerignore.ReadAll(r)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read .dockerignore file: %s", err)
+		}
 	}
 
 	dockerignorePatternMatcher, err := fileutils.NewPatternMatcher(dockerignorePatterns)
@@ -1193,7 +1201,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 			imageFromDockerfileConfig.SSH,
 		),
 		ds,
-		stage.NewContextChecksum(c.projectDir, dockerignorePathMatcher, localGitRepo),
+		stage.NewContextChecksum(c.projectDir, dockerignorePathMatcher, c.GetLocalGitRepo()),
 		baseStageOptions,
 	)
 
@@ -1202,94 +1210,6 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())
 
 	return img, nil
-}
-
-func getDockerfileData(ctx context.Context, imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor, localGitRepo git_repo.Local, headCommit string) ([]byte, error) {
-	var dockerfileData []byte
-	relDockerfilePath := filepath.Join(imageFromDockerfileConfig.Context, imageFromDockerfileConfig.Dockerfile)
-	if isAccepted, err := giterminism_inspector.IsUncommittedDockerfileAccepted(relDockerfilePath); err != nil {
-		return nil, err
-	} else if isAccepted {
-		absDockerfilePath := filepath.Join(c.projectDir, relDockerfilePath)
-
-		exist, err := util.FileExists(absDockerfilePath)
-		if err != nil {
-			return nil, fmt.Errorf("unable to check existence of file %s: %s", absDockerfilePath, err)
-		}
-
-		if !exist {
-			return nil, fmt.Errorf("dockerfile '%s' was not found", absDockerfilePath)
-		}
-
-		dockerfileData, err = ioutil.ReadFile(absDockerfilePath)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read file %s: %s", absDockerfilePath, err)
-		}
-	} else {
-		exists, err := localGitRepo.IsCommitFileExists(ctx, headCommit, relDockerfilePath)
-		if err != nil {
-			return nil, fmt.Errorf("unable to check file %s existence in the local git repo commit %s %s: %s", relDockerfilePath, headCommit, err)
-		} else if !exists {
-			return nil, fmt.Errorf("dockerfile '%s' was not found in the local git repo commit %s", relDockerfilePath, headCommit)
-		}
-
-		dockerfileData, err = getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, relDockerfilePath)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return dockerfileData, nil
-}
-
-func getDockerignorePatterns(ctx context.Context, imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor, localGitRepo git_repo.Local, headCommit string) ([]string, error) {
-	var dockerignorePatterns []string
-	relDockerignorePath := filepath.Join(imageFromDockerfileConfig.Context, ".dockerignore")
-	if isAccepted, err := giterminism_inspector.IsUncommittedDockerignoreAccepted(relDockerignorePath); err != nil {
-		return nil, err
-	} else if isAccepted {
-		absDockerfileignorePath := filepath.Join(c.projectDir, relDockerignorePath)
-
-		exist, err := util.FileExists(absDockerfileignorePath)
-		if err != nil {
-			return nil, fmt.Errorf("unable to check existence of file %s: %s", absDockerfileignorePath, err)
-		}
-
-		if exist {
-			data, err := ioutil.ReadFile(absDockerfileignorePath)
-			if err != nil {
-				return nil, fmt.Errorf("unable to read file %s: %s", absDockerfileignorePath, err)
-			}
-
-			r := bytes.NewReader(data)
-			dockerignorePatterns, err = dockerignore.ReadAll(r)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		exist, err := localGitRepo.IsCommitFileExists(ctx, headCommit, relDockerignorePath)
-		if err != nil {
-			return nil, fmt.Errorf("unable to check file .dockerignore existence in the local git repo commit %s: %s", headCommit, err)
-		} else if exist {
-			data, err := getFileDataFromGitAndCompareWithLocal(ctx, c.projectDir, localGitRepo, headCommit, relDockerignorePath)
-			if err != nil {
-				return nil, err
-			}
-
-			r := bytes.NewReader(data)
-			dockerignorePatterns, err = dockerignore.ReadAll(r)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return dockerignorePatterns, nil
-}
-
-func getFileDataFromGitAndCompareWithLocal(ctx context.Context, projectDir string, localGitRepo git_repo.Local, commit, relPath string) ([]byte, error) {
-	return git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relPath)
 }
 
 func resolveDockerStagesFromValue(stages []instructions.Stage) {

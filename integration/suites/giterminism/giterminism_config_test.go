@@ -8,7 +8,7 @@ import (
 )
 
 var _ = XDescribe("werf-giterminism.yaml", func() {
-	BeforeEach(BaseBeforeEach)
+	BeforeEach(gitInit)
 
 	It("werf-giterminism.yaml must be committed", func() {
 		output, err := utils.RunCommand(

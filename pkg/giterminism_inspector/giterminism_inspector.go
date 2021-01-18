@@ -44,14 +44,6 @@ func IsUncommittedConfigGoTemplateRenderingFileAccepted(path string) (bool, erro
 	return giterminismConfig.Config.GoTemplateRendering.IsUncommittedFileAccepted(path)
 }
 
-func IsUncommittedDockerfileAccepted(path string) (bool, error) {
-	return giterminismConfig.Config.Dockerfile.IsUncommittedAccepted(path)
-}
-
-func IsUncommittedDockerignoreAccepted(path string) (bool, error) {
-	return giterminismConfig.Config.Dockerfile.IsUncommittedDockerignoreAccepted(path)
-}
-
 func ReportUntrackedFile(ctx context.Context, path string) error {
 	for _, p := range ReportedUntrackedPaths {
 		if p == path {
@@ -86,16 +78,6 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 
 func ReportUntrackedConfigGoTemplateRenderingFile(ctx context.Context, path string) error {
 	return ReportUntrackedFile(ctx, path)
-}
-
-func ReportConfigDockerfileContextAddFile(_ context.Context, contextAddFile string) error {
-	if isAccepted, err := giterminismConfig.Config.Dockerfile.IsContextAddFileAccepted(contextAddFile); err != nil {
-		return err
-	} else if isAccepted {
-		return nil
-	}
-
-	return fmt.Errorf("'contextAddFile %s' is forbidden due to enabled giterminism mode (more info %s), it is recommended to avoid this directive", contextAddFile, giterminismDocPageURL)
 }
 
 func ReportConfigGoTemplateRenderingEnv(_ context.Context, envName string) error {

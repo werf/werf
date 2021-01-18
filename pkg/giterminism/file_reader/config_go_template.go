@@ -11,6 +11,7 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, pattern strin
 
 	if err := r.configurationFilesGlob(
 		ctx,
+		configGoTemplateErrorConfigType,
 		pattern,
 		r.manager.Config().IsUncommittedConfigGoTemplateRenderingFileAccepted,
 		r.readCommitConfigGoTemplateFile,
@@ -22,12 +23,6 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, pattern strin
 			result[filepath.ToSlash(relPath)] = string(data)
 
 			return nil
-		},
-		func(relPaths ...string) error {
-			return NewUncommittedFilesError("file", relPaths...)
-		},
-		func(relPaths ...string) error {
-			return NewUncommittedFilesChangesError("file", relPaths...)
 		},
 	); err != nil {
 		return nil, fmt.Errorf("{{ .Files.Glob '%s' }}: %s", pattern, err)
@@ -50,55 +45,15 @@ func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string
 }
 
 func (r FileReader) checkConfigGoTemplateFileExistence(ctx context.Context, relPath string) error {
-	accepted, err := r.manager.Config().IsUncommittedConfigGoTemplateRenderingFileAccepted(relPath)
-	if err != nil {
-		return err
-	}
-
-	shouldReadFromFS := r.manager.LooseGiterminism() || accepted
-	if !shouldReadFromFS {
-		if exist, err := r.isCommitFileExist(ctx, relPath); err != nil {
-			return err
-		} else if exist {
-			return nil
-		}
-	}
-
-	exist, err := r.isFileExist(relPath)
-	if err != nil {
-		return err
-	}
-
-	if exist {
-		if shouldReadFromFS {
-			return nil
-		} else {
-			return NewUncommittedFilesError("file", relPath)
-		}
-	} else {
-		if shouldReadFromFS {
-			return NewFilesNotFoundInTheProjectDirectoryError("file", relPath)
-		} else {
-			return NewFilesNotFoundInTheProjectGitRepositoryError("file", relPath)
-		}
-	}
+	return r.checkConfigurationFileExistence(ctx, configGoTemplateErrorConfigType, relPath, r.manager.Config().IsUncommittedConfigGoTemplateRenderingFileAccepted)
 }
 
 func (r FileReader) readConfigGoTemplateFile(ctx context.Context, relPath string) ([]byte, error) {
-	accepted, err := r.manager.Config().IsUncommittedConfigGoTemplateRenderingFileAccepted(relPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if r.manager.LooseGiterminism() || accepted {
-		return r.readFile(relPath)
-	}
-
-	return r.readCommitConfigGoTemplateFile(ctx, relPath)
+	return r.readConfigurationFile(ctx, configGoTemplateErrorConfigType, relPath, r.manager.Config().IsUncommittedConfigGoTemplateRenderingFileAccepted)
 }
 
 func (r FileReader) readCommitConfigGoTemplateFile(ctx context.Context, relPath string) ([]byte, error) {
 	return r.readCommitFile(ctx, relPath, func(ctx context.Context, relPath string) error {
-		return NewUncommittedFilesChangesError("file", relPath)
+		return NewUncommittedFilesChangesError(configGoTemplateErrorConfigType, relPath)
 	})
 }

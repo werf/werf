@@ -53,3 +53,11 @@ func (c Config) IsConfigStapelMountFromPathAccepted(fromPath string) (bool, erro
 func (c Config) IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, error) {
 	return c.Config.Dockerfile.IsContextAddFileAccepted(relPath)
 }
+
+func (c Config) IsUncommittedDockerfileAccepted(path string) (bool, error) {
+	return c.Config.Dockerfile.IsUncommittedAccepted(path)
+}
+
+func (c Config) IsUncommittedDockerignoreAccepted(path string) (bool, error) {
+	return c.Config.Dockerfile.IsUncommittedDockerignoreAccepted(path)
+}
