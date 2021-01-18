@@ -1,6 +1,6 @@
 package chart_extender
 
-var TemplateHelpers = `{{- define "_werf_image" -}}
+var ChartTemplateHelpers = `{{- define "_werf_image" -}}
 {{-   $context := index . 0 -}}
 {{-   if $context.Values.werf.is_stub -}}
 {{      $context.Values.werf.stub_image }}

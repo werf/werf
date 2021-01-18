@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/werf/werf/pkg/giterminism"
-
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 
 	uuid "github.com/satori/go.uuid"
@@ -127,27 +125,22 @@ func GetPreparedChartDependenciesDir(ctx context.Context, lockDigest string, loc
 	return depsDir, nil
 }
 
-func GiterministicFilesLoader(ctx context.Context, giterminismManager giterminism.Manager, loadDir string, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
-	gitFiles, err := giterminismManager.FileReader().LoadChartDir(ctx, loadDir)
-	if err != nil {
-		return nil, err
-	}
-
+func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
 	var chartFile *chart.ChartExtenderBufferedFile
-	for _, f := range gitFiles {
+	for _, f := range loadedFiles {
 		if f.Name == "Chart.yaml" {
 			chartFile = f
 			break
 		}
 	}
 
-	res := gitFiles
+	res := loadedFiles
 
 	if chartFile != nil {
-		if lock, lockFile, err := LoadLock(gitFiles); err != nil {
+		if lock, lockFile, err := LoadLock(loadedFiles); err != nil {
 			return nil, fmt.Errorf("error loading chart lock file: %s", err)
 		} else if lock == nil {
-			if metadata, err := LoadMetadata(gitFiles); err != nil {
+			if metadata, err := LoadMetadata(loadedFiles); err != nil {
 				return nil, fmt.Errorf("error loading chart metadata file: %s", err)
 			} else if len(metadata.Dependencies) > 0 {
 				logboek.Context(ctx).Error().LogLn("Cannot build chart dependencies and preload charts without lock file (.helm/Chart.lock or .helm/requirements.lock)")

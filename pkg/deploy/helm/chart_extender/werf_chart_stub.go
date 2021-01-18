@@ -57,11 +57,11 @@ func (wc *WerfChartStub) ChartLoaded(files []*chart.ChartExtenderBufferedFile) e
 	var opts GetHelmChartMetadataOptions
 	opts.DefaultName = "stub_name"
 	opts.DefaultVersion = "1.0.0"
-	wc.HelmChart.Metadata = GetHelmChartMetadataWithOverrides(wc.HelmChart.Metadata, opts)
+	wc.HelmChart.Metadata = AutosetChartMetadata(wc.HelmChart.Metadata, opts)
 
 	wc.HelmChart.Templates = append(wc.HelmChart.Templates, &chart.File{
 		Name: "templates/_werf_helpers.tpl",
-		Data: []byte(TemplateHelpers),
+		Data: []byte(ChartTemplateHelpers),
 	})
 
 	return nil
