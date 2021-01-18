@@ -345,7 +345,7 @@ func run(ctx context.Context, projectDir string) error {
 		lockManager = m
 	}
 
-	wc := chart_extender.NewWerfChart(giterminismManager, secretsManager, projectDir, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, projectDir, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{
 		SecretValueFiles: *commonCmdData.SecretValues,
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
@@ -362,8 +362,6 @@ func run(ctx context.Context, projectDir string) error {
 	} else if err := wc.SetServiceValues(vals); err != nil {
 		return err
 	}
-
-	wc.SetChartExtenderContext(ctx)
 
 	actionConfig := new(action.Configuration)
 	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{

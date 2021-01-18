@@ -184,7 +184,7 @@ func runDismiss() error {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
 
-	wc := chart_extender.NewWerfChart(giterminismManager, nil, projectDir, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{})
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, projectDir, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
 		return err
@@ -192,8 +192,6 @@ func runDismiss() error {
 	if err := wc.SetWerfConfig(werfConfig); err != nil {
 		return err
 	}
-
-	wc.SetChartExtenderContext(ctx)
 
 	actionConfig := new(action.Configuration)
 	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{

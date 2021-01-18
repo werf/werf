@@ -200,7 +200,7 @@ func runApply() error {
 		lockManager = m
 	}
 
-	bundle := chart_extender.NewBundle(bundleTmpDir)
+	bundle := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, chart_extender.BundleOptions{})
 
 	postRenderer, err := bundle.GetPostRenderer()
 	if err != nil {
