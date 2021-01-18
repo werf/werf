@@ -3,6 +3,10 @@ package giterminism
 import (
 	"context"
 
+	"helm.sh/helm/v3/pkg/chart"
+
+	"helm.sh/helm/v3/pkg/cli"
+
 	"github.com/werf/werf/pkg/git_repo"
 )
 
@@ -27,6 +31,14 @@ type FileReader interface {
 	ReadDockerfile(ctx context.Context, relPath string) ([]byte, error)
 	IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadDockerignore(ctx context.Context, relPath string) ([]byte, error)
+
+	HelmChartExtender
+}
+
+type HelmChartExtender interface {
+	LocateChart(ctx context.Context, name string, settings *cli.EnvSettings) (string, error)
+	ReadChartFile(ctx context.Context, filePath string) ([]byte, error)
+	LoadChartDir(ctx context.Context, dir string) ([]*chart.ChartExtenderBufferedFile, error)
 }
 
 type Inspector interface {
