@@ -27,7 +27,7 @@ var _ = Describe("config go template", func() {
 				contentToAppend := fmt.Sprintf(`
 config:
   goTemplateRendering:
-    allowUncommittedFiles: [%s]`, e.allowUncommittedFilesGlob)
+    allowUncommittedFiles: ["%s"]`, e.allowUncommittedFilesGlob)
 				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 				gitAddAndCommit("werf-giterminism.yaml")
 			}
@@ -168,10 +168,10 @@ config:
 						changeFilesAfterCommit:    []string{".werf/file1"},
 					},
 				}),
-				Entry("config.goTemplateRendering.allowUncommittedFiles (/**/*/) covers the not committed files", entry{
+				Entry("config.goTemplateRendering.allowUncommittedFiles (**/*) covers the not committed files", entry{
 					filesGlob: ".werf/*",
 					entryBase: entryBase{
-						allowUncommittedFilesGlob: `/**/*/`,
+						allowUncommittedFilesGlob: `**/*`,
 						addFiles:                  []string{".werf/file1", ".werf/file2", ".werf/file3"},
 					},
 				}),
@@ -195,7 +195,7 @@ config:
 					contentToAppend := fmt.Sprintf(`
 config:
   goTemplateRendering:
-    allowEnvVariables: [%s]`, e.allowEnvVariablesRegexp)
+    allowEnvVariables: ["%s"]`, e.allowEnvVariablesRegexp)
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 					gitAddAndCommit("werf-giterminism.yaml")
 				}
@@ -228,8 +228,8 @@ config:
 				addEnvName:              "NAME",
 				expectedErrSubstring:    "error calling env: the configuration with external dependency found in the werf config: env name 'NAME' not allowed",
 			}),
-			Entry("config.goTemplateRendering.allowEnvVariables (/NA*/) does not cover the env name", entry{
-				allowEnvVariablesRegexp: "/NA*/",
+			Entry("config.goTemplateRendering.allowEnvVariables (NA*) does not cover the env name", entry{
+				allowEnvVariablesRegexp: "NA*",
 				addEnvName:              "NAME",
 				expectedErrSubstring:    "error calling env: the configuration with external dependency found in the werf config: env name 'NAME' not allowed",
 			}),

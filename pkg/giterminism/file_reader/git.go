@@ -9,6 +9,19 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
+func (r FileReader) isCommitDirectoryExist(ctx context.Context, relPath string) (bool, error) {
+	exist, err := r.manager.LocalGitRepo().IsCommitDirectoryExists(ctx, r.manager.HeadCommit(), relPath)
+	if err != nil {
+		err := fmt.Errorf(
+			"unable to check existence of directory %s in the project git repo commit %s: %s",
+			relPath, r.manager.HeadCommit(), err,
+		)
+		return false, err
+	}
+
+	return exist, nil
+}
+
 func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool, error) {
 	exist, err := r.manager.LocalGitRepo().IsCommitFileExists(ctx, r.manager.HeadCommit(), relPath)
 	if err != nil {

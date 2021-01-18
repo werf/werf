@@ -63,6 +63,7 @@ func LoadLock(files []*chart.ChartExtenderBufferedFile) (*chart.Lock, *chart.Cha
 	var lock *chart.Lock
 	var lockFile *chart.ChartExtenderBufferedFile
 
+loop:
 	for _, f := range files {
 		switch {
 		case f.Name == "Chart.lock":
@@ -71,14 +72,14 @@ func LoadLock(files []*chart.ChartExtenderBufferedFile) (*chart.Lock, *chart.Cha
 				return nil, nil, errors.Wrap(err, "cannot load Chart.lock")
 			}
 			lockFile = f
-			break
+			break loop
 		case f.Name == "requirements.lock":
 			lock = new(chart.Lock)
 			if err := yaml.Unmarshal(f.Data, &lock); err != nil {
 				return nil, nil, errors.Wrap(err, "cannot load requirements.lock")
 			}
 			lockFile = f
-			break
+			break loop
 		}
 	}
 

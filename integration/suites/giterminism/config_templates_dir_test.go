@@ -36,7 +36,7 @@ config:
 			} else if e.allowUncommittedAllTemplates {
 				contentToAppend = `
 config:
-  allowUncommittedTemplates: [/.werf/**/*.tmpl/]`
+  allowUncommittedTemplates: [".werf/**/*.tmpl"]`
 			}
 
 			if contentToAppend != "" {
@@ -119,7 +119,7 @@ config:
 			commitTemplate1:           true,
 			expectedErrSubstring:      "the uncommitted configuration found in the project directory: the werf config template '.werf/templates/2.tmpl' must be committed",
 		}),
-		Entry("config.allowUncommittedTemplates has /.werf/**/*.tmpl/", entry{
+		Entry("config.allowUncommittedTemplates has .werf/**/*.tmpl", entry{
 			allowUncommittedAllTemplates: true,
 			addTemplate1:                 true,
 			addTemplate2:                 true,

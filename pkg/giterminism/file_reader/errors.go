@@ -73,7 +73,7 @@ func NewUncommittedFilesChangesError(configType configType, relPaths ...string) 
 	if len(relPaths) == 1 {
 		errorMsg = fmt.Sprintf("%s: the %s '%s' changes must be committed", errorMsg, configType, filepath.ToSlash(relPaths[0]))
 	} else if len(relPaths) > 1 {
-		errorMsg = fmt.Sprintf("%s: the following %ss changes must be committed:\n%s", errorMsg, configType, prepareListOfFilesString(relPaths))
+		errorMsg = fmt.Sprintf("%s: the following %ss changes must be committed:\n\n%s", errorMsg, configType, prepareListOfFilesString(relPaths))
 	} else {
 		panic("unexpected condition")
 	}

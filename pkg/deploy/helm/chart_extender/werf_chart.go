@@ -11,22 +11,17 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/werf/werf/pkg/util/secretvalues"
-
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"helm.sh/helm/v3/pkg/cli"
-
-	"github.com/werf/werf/pkg/giterminism"
-
-	"helm.sh/helm/v3/pkg/postrender"
-
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/deploy/secret"
-	"github.com/werf/werf/pkg/giterminism_inspector"
+	"github.com/werf/werf/pkg/giterminism"
+	"github.com/werf/werf/pkg/util/secretvalues"
 )
 
 const (
@@ -161,38 +156,23 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 
 // LoadDir method for the chart.Extender interface
 func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
-	// TODO: Remove loose giterminism, return always true
-	if giterminism_inspector.LooseGiterminism {
-		return false, nil, nil
-	}
-
-	gitFiles, err := wc.GiterminismManager.FileReader().LoadChartDir(wc.chartExtenderContext, dir)
+	files, err := wc.GiterminismManager.FileReader().LoadChartDir(wc.chartExtenderContext, dir)
 	if err != nil {
 		return true, nil, err
 	}
 
-	res, err := LoadChartDependencies(wc.chartExtenderContext, gitFiles, wc.HelmEnvSettings, wc.BuildChartDependenciesOpts)
+	res, err := LoadChartDependencies(wc.chartExtenderContext, files, wc.HelmEnvSettings, wc.BuildChartDependenciesOpts)
 	return true, res, err
 }
 
 // LocateChart method for the chart.Extender interface
 func (wc *WerfChart) LocateChart(name string, settings *cli.EnvSettings) (bool, string, error) {
-	// TODO: Remove loose giterminism, return always true
-	if giterminism_inspector.LooseGiterminism {
-		return false, "", nil
-	}
-
 	res, err := wc.GiterminismManager.FileReader().LocateChart(wc.chartExtenderContext, name, settings)
 	return true, res, err
 }
 
 // ReadFile method for the chart.Extender interface
 func (wc *WerfChart) ReadFile(filePath string) (bool, []byte, error) {
-	// TODO: Remove loose giterminism, return always true
-	if giterminism_inspector.LooseGiterminism {
-		return false, nil, nil
-	}
-
 	res, err := wc.GiterminismManager.FileReader().ReadChartFile(wc.chartExtenderContext, filePath)
 	return true, res, err
 }

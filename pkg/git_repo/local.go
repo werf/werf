@@ -254,7 +254,7 @@ func (repo *Local) IsCommitFileExists(ctx context.Context, commit, path string) 
 	return repo.isCommitFileExists(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.Path, repo.GitDir, commit, path)
 }
 
-func (repo *Local) IsCommitDirectoryExists(ctx context.Context, dir string, commit string) (bool, error) {
+func (repo *Local) IsCommitDirectoryExists(ctx context.Context, commit string, dir string) (bool, error) {
 	if paths, err := repo.GetCommitFilePathList(ctx, commit); err != nil {
 		return false, fmt.Errorf("unable to get file path list from the local git repo commit %s: %s", commit, err)
 	} else {
