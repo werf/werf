@@ -2,11 +2,11 @@ package config
 
 import (
 	"fmt"
+	"github.com/bmatcuk/doublestar"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/bmatcuk/doublestar"
 )
 
 type GiterminismConfig struct {
@@ -23,7 +23,7 @@ type config struct {
 }
 
 func (c config) IsUncommittedTemplateFileAccepted(path string) (bool, error) {
-	return isPathMatched(c.AllowUncommittedTemplates, path, true)
+	return isPathMatched(c.AllowUncommittedTemplates, path)
 }
 
 type goTemplateRendering struct {
@@ -50,7 +50,7 @@ func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
 }
 
 func (r goTemplateRendering) IsUncommittedFileAccepted(path string) (bool, error) {
-	return isPathMatched(r.AllowUncommittedFiles, path, true)
+	return isPathMatched(r.AllowUncommittedFiles, path)
 }
 
 type stapel struct {
@@ -69,7 +69,7 @@ type mount struct {
 }
 
 func (m mount) IsFromPathAccepted(path string) (bool, error) {
-	return isPathMatched(m.AllowFromPaths, path, true)
+	return isPathMatched(m.AllowFromPaths, path)
 }
 
 type dockerfile struct {
@@ -79,15 +79,15 @@ type dockerfile struct {
 }
 
 func (d dockerfile) IsContextAddFileAccepted(path string) (bool, error) {
-	return isPathMatched(d.AllowContextAddFiles, path, true)
+	return isPathMatched(d.AllowContextAddFiles, path)
 }
 
 func (d dockerfile) IsUncommittedAccepted(path string) (bool, error) {
-	return isPathMatched(d.AllowUncommitted, path, true)
+	return isPathMatched(d.AllowUncommitted, path)
 }
 
 func (d dockerfile) IsUncommittedDockerignoreAccepted(path string) (bool, error) {
-	return isPathMatched(d.AllowUncommittedDockerignoreFiles, path, true)
+	return isPathMatched(d.AllowUncommittedDockerignoreFiles, path)
 }
 
 type helm struct {
@@ -95,28 +95,29 @@ type helm struct {
 }
 
 func (h helm) IsUncommittedHelmFileAccepted(path string) (bool, error) {
-	return isPathMatched(h.AllowUncommittedFiles, path, true)
+	return isPathMatched(h.AllowUncommittedFiles, path)
 }
 
-func isPathMatched(patterns []string, path string, withGlobs bool) (bool, error) {
-	path = filepath.ToSlash(path)
+func isPathMatched(patterns []string, p string) (bool, error) {
+	p = filepath.ToSlash(p)
 	for _, pattern := range patterns {
 		pattern = filepath.ToSlash(pattern)
 
-		var expr string
-		var matchFunc func(string, string) (bool, error)
-		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") && withGlobs {
-			expr = pattern[1 : len(pattern)-1]
-			matchFunc = doublestar.Match
-		} else {
-			expr = pattern
-			matchFunc = func(pattern string, path string) (bool, error) {
-				return pattern == path, nil
+		matchFunc := func() (bool, error) {
+			exist, err := doublestar.PathMatch(pattern, p)
+			if err != nil {
+				return false, err
 			}
+
+			if exist {
+				return true, nil
+			}
+
+			return doublestar.PathMatch(path.Join(pattern, "**", "*"), p)
 		}
 
-		if matched, err := matchFunc(expr, path); err != nil {
-			return false, fmt.Errorf("unable to match path (pattern: %s, path %s): %s", pattern, path, err)
+		if matched, err := matchFunc(); err != nil {
+			return false, fmt.Errorf("unable to match path (pattern: %s, path %s): %s", pattern, p, err)
 		} else if matched {
 			return true, nil
 		}

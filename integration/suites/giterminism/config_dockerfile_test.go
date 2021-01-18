@@ -36,7 +36,7 @@ contextAddFile: [%s]
 					contentToAppend := fmt.Sprintf(`
 config:
   dockerfile:
-    allowContextAddFiles: [%s]`, e.configDockerfileContextAddFilesGlob)
+    allowContextAddFiles: ["%s"]`, e.configDockerfileContextAddFilesGlob)
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 					gitAddAndCommit("werf-giterminism.yaml")
 				}
@@ -62,8 +62,8 @@ config:
 				configDockerfileContextAddFilesGlob: "a/b/c",
 				contextAddFile:                      "a/b/c",
 			}),
-			Entry("config.dockerfile.allowContextAddFiles (/**/*/) covers the contextAddFile a/b/c", entry{
-				configDockerfileContextAddFilesGlob: "/**/*/",
+			Entry("config.dockerfile.allowContextAddFiles (**/*) covers the contextAddFile a/b/c", entry{
+				configDockerfileContextAddFilesGlob: "**/*",
 				contextAddFile:                      "a/b/c",
 			}),
 			Entry("config.dockerfile.allowContextAddFiles (a/b/c/) does not cover the contextAddFile a/b/c inside context d", entry{
@@ -103,7 +103,7 @@ context: %s
 					contentToAppend := fmt.Sprintf(`
 config:
   dockerfile:
-    allowUncommitted: [%s]`, e.configDockerfileAllowUncommittedGlob)
+    allowUncommitted: ["%s"]`, e.configDockerfileAllowUncommittedGlob)
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 					gitAddAndCommit("werf-giterminism.yaml")
 				}
@@ -162,12 +162,12 @@ FROM alpine
 				addDockerfile:                        true,
 				commitDockerfile:                     true,
 			}),
-			Entry("config.dockerfile.allowUncommitted (/*/) covers the dockerfile 'Dockerfile'", entry{
-				configDockerfileAllowUncommittedGlob: "/*/",
+			Entry("config.dockerfile.allowUncommitted (*) covers the dockerfile 'Dockerfile'", entry{
+				configDockerfileAllowUncommittedGlob: "*",
 				addDockerfile:                        true,
 			}),
-			Entry("config.dockerfile.allowUncommitted (/docker*/) does not cover the dockerfile 'Dockerfile'", entry{
-				configDockerfileAllowUncommittedGlob: "/docker*/",
+			Entry("config.dockerfile.allowUncommitted (docker*) does not cover the dockerfile 'Dockerfile'", entry{
+				configDockerfileAllowUncommittedGlob: "docker*",
 				addDockerfile:                        true,
 				expectedErrSubstring:                 "the uncommitted configuration found in the project directory: the dockerfile 'Dockerfile' must be committed",
 			}),
@@ -214,7 +214,7 @@ FROM alpine
 					contentToAppend := fmt.Sprintf(`
 config:
   dockerfile:
-    allowUncommittedDockerignoreFiles: [%s]`, e.configDockerfileAllowUncommittedDockerignoreFilesGlob)
+    allowUncommittedDockerignoreFiles: ["%s"]`, e.configDockerfileAllowUncommittedDockerignoreFilesGlob)
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 					gitAddAndCommit("werf-giterminism.yaml")
 				}
@@ -271,12 +271,12 @@ config:
 				addDockerignore:    true,
 				commitDockerignore: true,
 			}),
-			Entry("config.dockerfile.allowUncommittedDockerignoreFiles (/*/) covers the dockerignore '.dockerignore'", entry{
-				configDockerfileAllowUncommittedDockerignoreFilesGlob: "/*/",
+			Entry("config.dockerfile.allowUncommittedDockerignoreFiles (*) covers the dockerignore '.dockerignore'", entry{
+				configDockerfileAllowUncommittedDockerignoreFilesGlob: "*",
 				addDockerignore: true,
 			}),
-			Entry("config.dockerfile.allowUncommittedDockerignoreFiles (/docker*/) does not cover the dockerignore '.dockerignore'", entry{
-				configDockerfileAllowUncommittedDockerignoreFilesGlob: "/docker*/",
+			Entry("config.dockerfile.allowUncommittedDockerignoreFiles (docker*) does not cover the dockerignore '.dockerignore'", entry{
+				configDockerfileAllowUncommittedDockerignoreFilesGlob: "docker*",
 				addDockerignore:      true,
 				expectedErrSubstring: "the uncommitted configuration found in the project directory: the dockerignore file '.dockerignore' must be committed",
 			}),

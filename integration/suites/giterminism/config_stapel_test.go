@@ -181,7 +181,7 @@ mount:
 config:
   stapel:
     mount:
-      allowFromPaths: [%s]`, e.allowStapelMountFromPathsGlob)
+      allowFromPaths: ["%s"]`, e.allowStapelMountFromPathsGlob)
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 					gitAddAndCommit("werf-giterminism.yaml")
 				}
@@ -207,8 +207,8 @@ config:
 				allowStapelMountFromPathsGlob: "/a/b/c",
 				fromPath:                      "/a/b/c",
 			}),
-			Entry("config.stapel.mount.allowFromPaths (/**/*/) covers the from path /a/b/c", entry{
-				allowStapelMountFromPathsGlob: "/**/*/",
+			Entry("config.stapel.mount.allowFromPaths (**/*) covers the from path /a/b/c", entry{
+				allowStapelMountFromPathsGlob: "**/*",
 				fromPath:                      "/a/b/c",
 			}),
 		)

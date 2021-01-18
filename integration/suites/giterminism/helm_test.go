@@ -31,7 +31,7 @@ var _ = Describe("config", func() {
 			if e.allowUncommittedFilesGlob != "" {
 				contentToAppend = fmt.Sprintf(`
 helm:
-  allowUncommittedFiles: [%s]`, e.allowUncommittedFilesGlob)
+  allowUncommittedFiles: ["%s"]`, e.allowUncommittedFilesGlob)
 				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 				gitAddAndCommit("werf-giterminism.yaml")
 			}
@@ -105,7 +105,7 @@ helm:
 `,
 		}),
 		Entry("helm.allowUncommittedFiles (.helm/**/*) covers the not committed template", entry{
-			allowUncommittedFilesGlob: "/.helm/**/*/",
+			allowUncommittedFilesGlob: ".helm/**/*",
 			addFiles:                  []string{".helm/templates/template1.yaml"},
 		}),
 	)
