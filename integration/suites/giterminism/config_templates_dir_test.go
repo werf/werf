@@ -2,7 +2,6 @@ package giterminism_test
 
 import (
 	"fmt"
-	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -11,7 +10,7 @@ import (
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
-var _ = Describe(".werf/**/*.tmpl", func() {
+var _ = Describe("config templates dir", func() {
 	BeforeEach(CommonBeforeEach)
 
 	type entry struct {
@@ -28,10 +27,6 @@ var _ = Describe(".werf/**/*.tmpl", func() {
 		func(e entry) {
 			tmpl1RelPath := ".werf/templates/1.tmpl"
 			tmpl2RelPath := ".werf/templates/2.tmpl"
-			tmpl1Path := filepath.Join(SuiteData.TestDirPath, tmpl1RelPath)
-			tmpl2Path := filepath.Join(SuiteData.TestDirPath, tmpl2RelPath)
-			configPath := filepath.Join(SuiteData.TestDirPath, "werf.yaml")
-			giterminismConfigPath := filepath.Join(SuiteData.TestDirPath, "werf-giterminism.yaml")
 
 			var contentToAppend string
 			if e.allowUncommittedTemplate1 {
@@ -45,16 +40,16 @@ config:
 			}
 
 			if contentToAppend != "" {
-				fileCreateOrAppend(giterminismConfigPath, contentToAppend)
+				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 				gitAddAndCommit("werf-giterminism.yaml")
 			}
 
 			if e.addTemplate1 {
-				fileCreateOrAppend(tmpl1Path, `
+				fileCreateOrAppend(tmpl1RelPath, `
 # template .werf/templates/1.tmpl
 `)
-				fileCreateOrAppend(configPath, `{{ include "templates/1.tmpl" . }}`)
-				gitAddAndCommit(configPath)
+				fileCreateOrAppend("werf.yaml", `{{ include "templates/1.tmpl" . }}`)
+				gitAddAndCommit("werf.yaml")
 			}
 
 			if e.commitTemplate1 {
@@ -62,15 +57,15 @@ config:
 			}
 
 			if e.addTemplate2 {
-				fileCreateOrAppend(tmpl2Path, `
+				fileCreateOrAppend(tmpl2RelPath, `
 # template .werf/templates/2.tmpl
 `)
-				fileCreateOrAppend(configPath, `{{ include "templates/2.tmpl" . }}`)
-				gitAddAndCommit(configPath)
+				fileCreateOrAppend("werf.yaml", `{{ include "templates/2.tmpl" . }}`)
+				gitAddAndCommit("werf.yaml")
 			}
 
 			if e.changeTemplate1AfterCommit {
-				fileCreateOrAppend(tmpl1Path, "\n")
+				fileCreateOrAppend(tmpl1RelPath, "\n")
 			}
 
 			output, err := utils.RunCommand(
@@ -96,7 +91,7 @@ config:
 		},
 		Entry(".werf/templates/1.tmpl not found in commit", entry{
 			addTemplate1:         true,
-			expectedErrSubstring: fmt.Sprintf("the werf config template '%s' must be committed", filepath.FromSlash(".werf/templates/1.tmpl")),
+			expectedErrSubstring: fmt.Sprintf("the uncommitted configuration found in the project directory: the werf config template '%s' must be committed", ".werf/templates/1.tmpl"),
 		}),
 		Entry(".werf/templates/1.tmpl committed", entry{
 			addTemplate1:    true,
@@ -106,7 +101,7 @@ config:
 			addTemplate1:               true,
 			commitTemplate1:            true,
 			changeTemplate1AfterCommit: true,
-			expectedErrSubstring:       fmt.Sprintf("the werf config template '%s' must be committed", filepath.FromSlash(".werf/templates/1.tmpl")),
+			expectedErrSubstring:       "the uncommitted configuration found in the project directory: the werf config template '.werf/templates/1.tmpl' changes must be committed",
 		}),
 		Entry("config.allowUncommittedTemplates has .werf/templates/1.tmpl, the template file not committed", entry{
 			allowUncommittedTemplate1: true,
@@ -122,7 +117,7 @@ config:
 			addTemplate1:              true,
 			addTemplate2:              true,
 			commitTemplate1:           true,
-			expectedErrSubstring:      fmt.Sprintf("the werf config template '%s' must be committed", filepath.FromSlash(".werf/templates/2.tmpl")),
+			expectedErrSubstring:      "the uncommitted configuration found in the project directory: the werf config template '.werf/templates/2.tmpl' must be committed",
 		}),
 		Entry("config.allowUncommittedTemplates has /.werf/**/*.tmpl/", entry{
 			allowUncommittedAllTemplates: true,

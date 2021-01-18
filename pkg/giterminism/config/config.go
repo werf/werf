@@ -25,3 +25,7 @@ func (c Config) IsUncommittedConfigAccepted() bool {
 func (c Config) IsUncommittedConfigTemplateFileAccepted(path string) (bool, error) {
 	return c.Config.IsUncommittedTemplateFileAccepted(path)
 }
+
+func (c Config) IsUncommittedConfigGoTemplateRenderingFileAccepted(path string) (bool, error) {
+	return c.Config.GoTemplateRendering.IsUncommittedFileAccepted(path)
+}

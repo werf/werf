@@ -49,7 +49,9 @@ func gitAddAndCommit(relPath string) {
 	)
 }
 
-func fileCreateOrAppend(path, content string) {
+func fileCreateOrAppend(relPath, content string) {
+	path := filepath.Join(SuiteData.TestDirPath, relPath)
+
 	Ω(os.MkdirAll(filepath.Dir(path), 0777)).ShouldNot(HaveOccurred())
 
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

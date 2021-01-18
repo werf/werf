@@ -2,10 +2,6 @@ package file_reader
 
 import (
 	"context"
-	"fmt"
-	"strings"
-
-	"github.com/werf/werf/pkg/giterminism"
 )
 
 var DefaultWerfConfigNames = []string{"werf.yaml", "werf.yml"}
@@ -49,14 +45,28 @@ func (r FileReader) readConfig(ctx context.Context, relPath string) ([]byte, err
 
 func (r FileReader) readCommitConfig(ctx context.Context, relPath string) ([]byte, error) {
 	return r.readCommitFile(ctx, relPath, func(ctx context.Context, relPath string) error {
-		return giterminism.NewUncommittedConfigurationError(fmt.Sprintf("the werf config '%s' must be committed", relPath))
+		return NewUncommittedFilesChangesError("werf config", relPath)
 	})
 }
 
 func (r FileReader) prepareConfigNotFoundError(configPathsToCheck []string) error {
+	var err error
 	if r.manager.LooseGiterminism() {
-		return giterminism.NewConfigNotFoundError(fmt.Sprintf("the werf config '%s' not found in the project directory", strings.Join(configPathsToCheck, "', '")))
+		err = NewFilesNotFoundInTheProjectDirectoryError("werf config", configPathsToCheck...)
+	} else {
+		err = NewFilesNotFoundInTheProjectGitRepositoryError("werf config", configPathsToCheck...)
 	}
 
-	return giterminism.NewConfigNotFoundError(fmt.Sprintf("the werf config '%s' not found in the project git repository", strings.Join(configPathsToCheck, "', '")))
+	return ConfigNotFoundError(err)
+}
+
+type ConfigNotFoundError error
+
+func IsConfigNotFoundError(err error) bool {
+	switch err.(type) {
+	case ConfigNotFoundError:
+		return true
+	default:
+		return false
+	}
 }

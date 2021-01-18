@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+
+	"github.com/bmatcuk/doublestar"
 )
 
 func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool, error) {
@@ -18,6 +20,27 @@ func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool
 	}
 
 	return exist, nil
+}
+
+func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]string, error) {
+	var result []string
+
+	commitPathList, err := r.manager.LocalGitRepo().GetCommitFilePathList(ctx, r.manager.HeadCommit())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
+	}
+
+	pattern = filepath.ToSlash(pattern)
+	for _, relFilepath := range commitPathList {
+		relPath := filepath.ToSlash(relFilepath)
+		if matched, err := doublestar.Match(pattern, relPath); err != nil {
+			return nil, err
+		} else if matched {
+			result = append(result, relPath)
+		}
+	}
+
+	return result, nil
 }
 
 func (r FileReader) readCommitFile(ctx context.Context, relPath string, handleUncommittedChangesFunc func(context.Context, string) error) ([]byte, error) {
@@ -38,7 +61,7 @@ func (r FileReader) readCommitFile(ctx context.Context, relPath string, handleUn
 	}
 
 	if !isDataIdentical {
-		if err := handleUncommittedChangesFunc(ctx, relPath); err != nil {
+		if err := handleUncommittedChangesFunc(ctx, filepath.FromSlash(relPath)); err != nil {
 			return nil, err
 		}
 	}

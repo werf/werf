@@ -20,9 +20,12 @@ type Manager interface {
 type FileReader interface {
 	ReadConfig(ctx context.Context, customRelPath string) ([]byte, error)
 	ReadConfigTemplateFiles(ctx context.Context, customRelDirPath string, tmplFunc func(templatePathInsideDir string, data []byte, err error) error) error
+	ConfigGoTemplateFilesGet(ctx context.Context, relPath string) ([]byte, error)
+	ConfigGoTemplateFilesGlob(ctx context.Context, pattern string) (map[string]interface{}, error)
 }
 
 type Config interface {
 	IsUncommittedConfigAccepted() bool
 	IsUncommittedConfigTemplateFileAccepted(relPath string) (bool, error)
+	IsUncommittedConfigGoTemplateRenderingFileAccepted(relPath string) (bool, error)
 }
