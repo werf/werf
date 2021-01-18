@@ -57,12 +57,13 @@ func (r *quay) deleteRepo(ctx context.Context, reference string) error {
 	}
 
 	resp, err := r.quayApi.DeleteRepository(ctx, hostname, namespace, repository, r.quayCredentials.token)
-	if resp != nil && resp.StatusCode == http.StatusNotFound {
-		return QuayNotFoundError{error: err}
-	}
-
 	if err != nil {
 		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return QuayNotFoundError{error: err}
 	}
 
 	return nil
