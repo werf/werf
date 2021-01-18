@@ -49,3 +49,7 @@ func (c Config) IsConfigStapelMountBuildDirAccepted() bool {
 func (c Config) IsConfigStapelMountFromPathAccepted(fromPath string) (bool, error) {
 	return c.Config.Stapel.Mount.IsFromPathAccepted(fromPath)
 }
+
+func (c Config) IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, error) {
+	return c.Config.Dockerfile.IsContextAddFileAccepted(relPath)
+}

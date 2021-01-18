@@ -48,7 +48,7 @@ config:  # giterminism configuration for werf.yaml
     allowUncommittedDockerignoreFiles:
       - /**/*/
       - myapp/.dockerignore
-    allowContextAddFile:
+    allowContextAddFiles:
       - aaa
       - bbb
 helm: # giterminism configuration for helm
@@ -91,14 +91,14 @@ contextAddFile:
  - директории `app` из текущего коммита локального гит-репозитория (эта директория указана директивой `context`);
  - файлов `myfile` и `dir/a.out` из директории `app` в текущей рабочей директории проекта (данные файлы могут быть не коммитнуты в гит и могут быть untracked).
 
-Для использования директивы `contextAddFile` конфигурационного файла `werf.yaml` должна быть также явно включена директива [`config.dockerfile.allowContextAddFile`](#werf-giterminismyaml) конфигурационного файла `werf-giterminism.yaml`:
+Для использования директивы `contextAddFile` конфигурационного файла `werf.yaml` должна быть также явно включена директива [`config.dockerfile.allowContextAddFiles`](#werf-giterminismyaml) конфигурационного файла `werf-giterminism.yaml`:
 
 ```yaml
 # werf-giterminism.yaml configuration file
 giterminismConfigVersion: 1
 config:
   dockerfile:
-    allowContextAddFile:
+    allowContextAddFiles:
       - myfile
       - dir/a.out
 ```

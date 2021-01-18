@@ -75,11 +75,11 @@ func (m mount) IsFromPathAccepted(path string) (bool, error) {
 type dockerfile struct {
 	AllowUncommitted                  []string `json:"allowUncommitted"`
 	AllowUncommittedDockerignoreFiles []string `json:"allowUncommittedDockerignoreFiles"`
-	AllowContextAddFile               []string `json:"allowContextAddFile"`
+	AllowContextAddFiles              []string `json:"allowContextAddFiles"`
 }
 
 func (d dockerfile) IsContextAddFileAccepted(path string) (bool, error) {
-	return isPathMatched(d.AllowContextAddFile, path, true)
+	return isPathMatched(d.AllowContextAddFiles, path, true)
 }
 
 func (d dockerfile) IsUncommittedAccepted(path string) (bool, error) {

@@ -31,6 +31,7 @@ type Inspector interface {
 	InspectConfigStapelGitBranch() error
 	InspectConfigStapelMountBuildDir() error
 	InspectConfigStapelMountFromPath(fromPath string) error
+	InspectConfigDockerfileContextAddFile(relPath string) error
 }
 
 type Config interface {
@@ -42,4 +43,5 @@ type Config interface {
 	IsConfigStapelGitBranchAccepted() bool
 	IsConfigStapelMountBuildDirAccepted() bool
 	IsConfigStapelMountFromPathAccepted(fromPath string) (bool, error)
+	IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, error)
 }

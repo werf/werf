@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+
+	"github.com/werf/werf/pkg/giterminism"
 )
 
 type rawImageFromDockerfile struct {
@@ -64,9 +66,9 @@ func (c *rawImageFromDockerfile) UnmarshalYAML(unmarshal func(interface{}) error
 	return nil
 }
 
-func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives() (images []*ImageFromDockerfile, err error) {
+func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives(giterminismManager giterminism.Manager) (images []*ImageFromDockerfile, err error) {
 	for _, imageName := range c.Images {
-		if image, err := c.toImageFromDockerfileDirective(imageName); err != nil {
+		if image, err := c.toImageFromDockerfileDirective(giterminismManager, imageName); err != nil {
 			return nil, err
 		} else {
 			images = append(images, image)
@@ -76,7 +78,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives() (images []*Im
 	return images, nil
 }
 
-func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(imageName string) (image *ImageFromDockerfile, err error) {
+func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManager giterminism.Manager, imageName string) (image *ImageFromDockerfile, err error) {
 	image = &ImageFromDockerfile{}
 	image.Name = imageName
 	image.Dockerfile = c.Dockerfile
@@ -101,7 +103,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(imageName string
 
 	image.raw = c
 
-	if err := image.validate(); err != nil {
+	if err := image.validate(giterminismManager); err != nil {
 		return nil, err
 	}
 
