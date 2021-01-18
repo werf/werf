@@ -66,11 +66,6 @@ config:
 				configDockerfileContextAddFilesGlob: "/**/*/",
 				contextAddFile:                      "a/b/c",
 			}),
-			Entry("config.dockerfile.allowContextAddFiles (/*/) does not cover the contextAddFile /a/b/c", entry{
-				configDockerfileContextAddFilesGlob: "/*/",
-				contextAddFile:                      "a/b/c",
-				expectedErrSubstring:                "the configuration with external dependency found in the werf config: contextAddFile 'a/b/c' not allowed",
-			}),
 			Entry("config.dockerfile.allowContextAddFiles (a/b/c/) does not cover the contextAddFile a/b/c inside context d", entry{
 				configDockerfileContextAddFilesGlob: "a/b/c",
 				context:                             "d",

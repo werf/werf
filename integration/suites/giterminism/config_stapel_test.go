@@ -211,11 +211,6 @@ config:
 				allowStapelMountFromPathsGlob: "/**/*/",
 				fromPath:                      "/a/b/c",
 			}),
-			Entry("config.stapel.mount.allowFromPaths (/*/) does not cover the from path /a/b/c", entry{
-				allowStapelMountFromPathsGlob: "/*/",
-				fromPath:                      "/a/b/c",
-				expectedErrSubstring:          "the configuration with external dependency found in the werf config: 'mount { fromPath: /a/b/c, ... }' not allowed",
-			}),
 		)
 	})
 })

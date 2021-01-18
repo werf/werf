@@ -23,7 +23,7 @@ var _ = Describe("config", func() {
 		expectedErrSubstring    string
 	}
 
-	DescribeTable("allowUncommitted",
+	DescribeTable("config.allowUncommitted",
 		func(e entry) {
 			var contentToAppend string
 			if e.allowUncommitted {
