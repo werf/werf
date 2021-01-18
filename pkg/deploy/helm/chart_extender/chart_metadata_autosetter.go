@@ -8,7 +8,7 @@ type GetHelmChartMetadataOptions struct {
 	DefaultVersion string
 }
 
-func GetHelmChartMetadataWithOverrides(metadataIn *chart.Metadata, opts GetHelmChartMetadataOptions) *chart.Metadata {
+func AutosetChartMetadata(metadataIn *chart.Metadata, opts GetHelmChartMetadataOptions) *chart.Metadata {
 	var metadata *chart.Metadata
 	if metadataIn == nil {
 		metadata = &chart.Metadata{
