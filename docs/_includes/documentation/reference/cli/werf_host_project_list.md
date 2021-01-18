@@ -47,10 +47,6 @@ werf host project list [options]
             default $WERF_LOOSE_GITERMINISM)
   -q, --names-only=false
             Only show project names
-      --non-strict-giterminism-inspection=false
-            Change some errors to warnings during giterminism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

@@ -53,10 +53,6 @@ werf helm secret values decrypt [FILE_PATH] [options]
             more info                                                                               
             https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
             default $WERF_LOOSE_GITERMINISM)
-      --non-strict-giterminism-inspection=false
-            Change some errors to warnings during giterminism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
   -o, --output-file-path=''
             Write to file instead of stdout
       --tmp-dir=''
