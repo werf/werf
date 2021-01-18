@@ -1,4 +1,4 @@
-package werf_chart
+package chart_extender
 
 import (
 	"context"

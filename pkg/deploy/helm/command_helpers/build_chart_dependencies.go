@@ -16,9 +16,10 @@ import (
 )
 
 type BuildChartDependenciesOptions struct {
-	Keyring    string
-	SkipUpdate bool
-	Verify     downloader.VerificationStrategy
+	Keyring     string
+	SkipUpdate  bool
+	Verify      downloader.VerificationStrategy
+	LoadOptions *loader.LoadOptions
 }
 
 func BuildChartDependenciesInDir(ctx context.Context, lockFileData []byte, chartFileData []byte, targetDir string, helmEnvSettings *cli.EnvSettings, opts BuildChartDependenciesOptions) error {
@@ -52,10 +53,7 @@ func BuildChartDependenciesInDir(ctx context.Context, lockFileData []byte, chart
 	}
 
 	currentLoaderOptions := loader.GlobalLoadOptions
-	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender:               currentLoaderOptions.ChartExtender,
-		SubchartExtenderFactoryFunc: currentLoaderOptions.SubchartExtenderFactoryFunc,
-	}
+	loader.GlobalLoadOptions = opts.LoadOptions
 	defer func() {
 		loader.GlobalLoadOptions = currentLoaderOptions
 	}()

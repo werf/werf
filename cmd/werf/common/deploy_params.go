@@ -2,24 +2,14 @@ package common
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"strings"
 	"text/template"
 
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
-
 	"github.com/Masterminds/sprig/v3"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/deploy/werf_chart"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
-	"github.com/werf/werf/pkg/util"
 )
 
 func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *config.WerfConfig) (string, error) {
@@ -198,50 +188,4 @@ func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGett
 	}
 
 	return list
-}
-
-func MakeChartDirLoadFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) func(dir string) ([]*loader.BufferedFile, error) {
-	if giterminism_inspector.LooseGiterminism {
-		return nil
-	}
-	return func(dir string) ([]*loader.BufferedFile, error) {
-		return werf_chart.GiterministicFilesLoader(ctx, localGitRepo, projectDir, dir, helmEnvSettings, buildChartDependenciesOpts)
-	}
-}
-
-func MakeLocateChartFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string) func(name string, settings *cli.EnvSettings) (string, error) {
-	if giterminism_inspector.LooseGiterminism {
-		return nil
-	}
-
-	return func(name string, settings *cli.EnvSettings) (string, error) {
-		commit, err := localGitRepo.HeadCommit(ctx)
-		if err != nil {
-			return "", fmt.Errorf("unable to get local repo head commit: %s", err)
-		}
-
-		if exists, err := localGitRepo.IsCommitDirectoryExists(ctx, name, commit); err != nil {
-			return "", fmt.Errorf("error checking existence of %q in the local git repo commit %s: %s", name, commit, err)
-		} else if exists {
-			return name, nil
-		} else {
-			return "", fmt.Errorf("chart path %q not found in the local git repo commit %s", name, commit)
-		}
-	}
-}
-
-func MakeHelmReadFileFunc(ctx context.Context, localGitRepo git_repo.Local, projectDir string) func(filePath string) ([]byte, error) {
-	if giterminism_inspector.LooseGiterminism {
-		return nil
-	}
-
-	return func(filePath string) ([]byte, error) {
-		commit, err := localGitRepo.HeadCommit(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get local repo head commit: %s", err)
-		}
-
-		relativeFilePath := util.GetRelativeToBaseFilepath(projectDir, filePath)
-		return git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, relativeFilePath)
-	}
 }

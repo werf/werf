@@ -1,4 +1,4 @@
-package werf_chart
+package chart_extender
 
 import (
 	"context"
@@ -11,10 +11,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func DecodeSecretValuesFileFromGitCommit(ctx context.Context, path string, commit string, localGitRepo git_repo.Local, m secret.Manager, projectDir string) (map[string]interface{}, error) {
+func DecodeSecretValuesFileFromGitCommit(ctx context.Context, path string, commit string, localGitRepo *git_repo.Local, m secret.Manager, projectDir string) (map[string]interface{}, error) {
 	var data []byte
 
-	if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, localGitRepo, commit, projectDir, path); err != nil {
+	if d, err := git_repo.ReadCommitFileAndCompareWithProjectFile(ctx, *localGitRepo, commit, projectDir, path); err != nil {
 		return nil, err
 	} else {
 		data = d

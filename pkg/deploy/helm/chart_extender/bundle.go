@@ -1,7 +1,6 @@
-package werf_chart
+package chart_extender
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,28 +8,26 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/werf/werf/pkg/deploy/lock_manager"
+	"helm.sh/helm/v3/pkg/cli"
 
 	"github.com/werf/werf/pkg/deploy/helm"
 
 	"helm.sh/helm/v3/pkg/chart"
 )
 
+func NewBundle(dir string) *Bundle {
+	return &Bundle{
+		Dir: dir,
+	}
+}
+
 /*
  * Bundle object is chart.ChartExtender compatible object
  * which could be used during helm install/upgrade process
  */
 type Bundle struct {
-	Dir         string
-	HelmChart   *chart.Chart
-	LockManager *lock_manager.LockManager
-}
-
-func NewBundle(dir string, lockManager *lock_manager.LockManager) *Bundle {
-	return &Bundle{
-		Dir:         dir,
-		LockManager: lockManager,
-	}
+	Dir       string
+	HelmChart *chart.Chart
 }
 
 func (bundle *Bundle) GetPostRenderer() (*helm.ExtraAnnotationsAndLabelsPostRenderer, error) {
@@ -51,19 +48,28 @@ func (bundle *Bundle) GetPostRenderer() (*helm.ExtraAnnotationsAndLabelsPostRend
 	return postRenderer, nil
 }
 
-func (bundle *Bundle) SetupChart(c *chart.Chart) error {
+// ChartCreated method for the chart.Extender interface
+func (bundle *Bundle) ChartCreated(c *chart.Chart) error {
 	bundle.HelmChart = c
 	return nil
 }
 
-func (bundle *Bundle) AfterLoad() error {
+// ChartLoaded method for the chart.Extender interface
+func (bundle *Bundle) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
 	return nil
 }
 
+// ChartDependenciesLoaded method for the chart.Extender interface
+func (bundle *Bundle) ChartDependenciesLoaded() error {
+	return nil
+}
+
+// MakeValues method for the chart.Extender interface
 func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
 	return inputVals, nil
 }
 
+// SetupTemplateFuncs method for the chart.Extender interface
 func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
 	helmIncludeFunc := funcMap["include"].(func(name string, data interface{}) (string, error))
 	setupIncludeWrapperFunc := func(name string) {
@@ -77,19 +83,19 @@ func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.
 	}
 }
 
-func (bundle *Bundle) WrapUpgrade(ctx context.Context, releaseName string, upgradeFunc func() error) error {
-	return bundle.lockReleaseWrapper(ctx, releaseName, upgradeFunc)
+// LoadDir method for the chart.Extender interface
+func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
+	return false, nil, nil
 }
 
-func (bundle *Bundle) lockReleaseWrapper(ctx context.Context, releaseName string, commandFunc func() error) error {
-	if bundle.LockManager != nil {
-		if lock, err := bundle.LockManager.LockRelease(ctx, releaseName); err != nil {
-			return err
-		} else {
-			defer bundle.LockManager.Unlock(lock)
-		}
-	}
-	return commandFunc()
+// LocateChart method for the chart.Extender interface
+func (bundle *Bundle) LocateChart(name string, settings *cli.EnvSettings) (bool, string, error) {
+	return false, "", nil
+}
+
+// ReadFile method for the chart.Extender interface
+func (bundle *Bundle) ReadFile(filePath string) (bool, []byte, error) {
+	return false, nil, nil
 }
 
 func writeBundleJsonMap(dataMap map[string]string, path string) error {

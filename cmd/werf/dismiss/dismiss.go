@@ -1,9 +1,10 @@
 package dismiss
 
 import (
-	"context"
 	"fmt"
 	"time"
+
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 
 	"github.com/spf13/cobra"
 
@@ -15,8 +16,8 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
-	"github.com/werf/werf/pkg/deploy/werf_chart"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
@@ -145,11 +146,6 @@ func runDismiss() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
 
-	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
-	if err != nil {
-		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
-	}
-
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
 		return err
@@ -183,16 +179,21 @@ func runDismiss() error {
 		lockManager = m
 	}
 
-	wc := werf_chart.NewWerfChart(ctx, &localGitRepo, projectDir, werf_chart.WerfChartOptions{
-		ReleaseName: releaseName,
-		LockManager: lockManager,
-	})
+	chartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData, werfConfig)
+	if err != nil {
+		return fmt.Errorf("getting helm chart dir failed: %s", err)
+	}
+
+	wc := chart_extender.NewWerfChart(giterminismManager, nil, projectDir, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{})
+
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
 		return err
 	}
 	if err := wc.SetWerfConfig(werfConfig); err != nil {
 		return err
 	}
+
+	wc.SetChartExtenderContext(ctx)
 
 	actionConfig := new(action.Configuration)
 	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
@@ -212,7 +213,8 @@ func runDismiss() error {
 		DeleteNamespace: &cmdData.WithNamespace,
 		DeleteHooks:     &cmdData.WithHooks,
 	})
-	return wc.WrapUninstall(context.Background(), func() error {
+
+	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 		return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
-	}, cmdData.WithNamespace)
+	})
 }
