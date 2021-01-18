@@ -63,9 +63,7 @@ func NewCmd() *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(func() error {
-				return runApply()
-			})
+			return common.LogRunningTime(runApply)
 		},
 	}
 

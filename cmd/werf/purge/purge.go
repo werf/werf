@@ -44,9 +44,7 @@ WARNING: Do not run this command during any other werf command is working on the
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(func() error {
-				return runPurge()
-			})
+			return common.LogRunningTime(runPurge)
 		},
 	}
 

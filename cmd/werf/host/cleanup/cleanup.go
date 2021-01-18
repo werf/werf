@@ -43,9 +43,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(func() error {
-				return runGC()
-			})
+			return common.LogRunningTime(runGC)
 		},
 	}
 

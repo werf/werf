@@ -62,9 +62,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(func() error {
-				return runDismiss()
-			})
+			return common.LogRunningTime(runDismiss)
 		},
 	}
 
