@@ -2,6 +2,8 @@ package config
 
 import (
 	"regexp"
+
+	"github.com/werf/werf/pkg/giterminism"
 )
 
 type rawGit struct {
@@ -120,10 +122,10 @@ func (c *rawGit) validateGitLocalExportDirective(gitLocalExport *GitLocalExport)
 	return nil
 }
 
-func (c *rawGit) toGitRemoteDirective() (gitRemote *GitRemote, err error) {
+func (c *rawGit) toGitRemoteDirective(giterminismManager giterminism.Manager) (gitRemote *GitRemote, err error) {
 	gitRemote = &GitRemote{}
 
-	if gitRemoteExport, err := c.toGitRemoteExportDirective(); err != nil {
+	if gitRemoteExport, err := c.toGitRemoteExportDirective(giterminismManager); err != nil {
 		return nil, err
 	} else {
 		gitRemote.GitRemoteExport = gitRemoteExport
@@ -148,7 +150,7 @@ func (c *rawGit) validateGitRemoteDirective(gitRemote *GitRemote) (err error) {
 	return nil
 }
 
-func (c *rawGit) toGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport, err error) {
+func (c *rawGit) toGitRemoteExportDirective(giterminismManager giterminism.Manager) (gitRemoteExport *GitRemoteExport, err error) {
 	gitRemoteExport = &GitRemoteExport{}
 
 	if gitLocalExport, err := c.toGitLocalExportDirective(); err != nil {
@@ -163,15 +165,15 @@ func (c *rawGit) toGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport,
 
 	gitRemoteExport.raw = c
 
-	if err := c.validateGitRemoteExportDirective(gitRemoteExport); err != nil {
+	if err := c.validateGitRemoteExportDirective(gitRemoteExport, giterminismManager); err != nil {
 		return nil, err
 	}
 
 	return gitRemoteExport, nil
 }
 
-func (c *rawGit) validateGitRemoteExportDirective(gitRemoteExport *GitRemoteExport) (err error) {
-	if err := gitRemoteExport.validate(); err != nil {
+func (c *rawGit) validateGitRemoteExportDirective(gitRemoteExport *GitRemoteExport, giterminismManager giterminism.Manager) (err error) {
+	if err := gitRemoteExport.validate(giterminismManager); err != nil {
 		return err
 	}
 

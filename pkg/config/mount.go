@@ -1,10 +1,9 @@
 package config
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/giterminism_inspector"
+	"github.com/werf/werf/pkg/giterminism"
 )
 
 type Mount struct {
@@ -15,17 +14,16 @@ type Mount struct {
 	raw *rawMount
 }
 
-func (c *Mount) validate() error {
-	if !giterminism_inspector.LooseGiterminism {
-		if c.raw.FromPath != "" {
-			if err := giterminism_inspector.ReportConfigStapelMountFromPath(context.Background(), c.raw.FromPath); err != nil {
-				return err
-			}
-		} else if c.Type == "build_dir" {
-			if err := giterminism_inspector.ReportConfigStapelMountBuildDir(context.Background()); err != nil {
-				return err
-			}
-		}
+func (c *Mount) validate(giterminismManager giterminism.Manager) error {
+	var err error
+	if c.raw.FromPath != "" {
+		err = giterminismManager.Inspector().InspectConfigStapelMountFromPath(c.raw.FromPath)
+	} else if c.Type == "build_dir" {
+		err = giterminismManager.Inspector().InspectConfigStapelMountBuildDir()
+	}
+
+	if err != nil {
+		return newDetailedConfigError(err.Error(), c.raw, c.raw.rawStapelImage.doc)
 	}
 
 	if c.raw.From != "" && c.raw.FromPath != "" {

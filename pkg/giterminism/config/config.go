@@ -33,3 +33,19 @@ func (c Config) IsUncommittedConfigGoTemplateRenderingFileAccepted(path string) 
 func (c Config) IsConfigGoTemplateRenderingEnvNameAccepted(envName string) (bool, error) {
 	return c.Config.GoTemplateRendering.IsEnvNameAccepted(envName)
 }
+
+func (c Config) IsConfigStapelFromLatestAccepted() bool {
+	return c.Config.Stapel.AllowFromLatest
+}
+
+func (c Config) IsConfigStapelGitBranchAccepted() bool {
+	return c.Config.Stapel.Git.AllowBranch
+}
+
+func (c Config) IsConfigStapelMountBuildDirAccepted() bool {
+	return c.Config.Stapel.Mount.AllowBuildDir
+}
+
+func (c Config) IsConfigStapelMountFromPathAccepted(fromPath string) (bool, error) {
+	return c.Config.Stapel.Mount.IsFromPathAccepted(fromPath)
+}

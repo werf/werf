@@ -119,7 +119,7 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}
 
-	werfConfig, err := prepareWerfConfig(rawStapelImages, rawImagesFromDockerfile, meta)
+	werfConfig, err := prepareWerfConfig(giterminismManager, rawStapelImages, rawImagesFromDockerfile, meta)
 	if err != nil {
 		return nil, err
 	}
@@ -454,7 +454,7 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func prepareWerfConfig(rawImages []*rawStapelImage, rawImagesFromDockerfile []*rawImageFromDockerfile, meta *Meta) (*WerfConfig, error) {
+func prepareWerfConfig(giterminismManager giterminism.Manager, rawImages []*rawStapelImage, rawImagesFromDockerfile []*rawImageFromDockerfile, meta *Meta) (*WerfConfig, error) {
 	var stapelImages []*StapelImage
 	var imagesFromDockerfile []*ImageFromDockerfile
 	var artifacts []*StapelImageArtifact
@@ -469,13 +469,13 @@ func prepareWerfConfig(rawImages []*rawStapelImage, rawImagesFromDockerfile []*r
 
 	for _, rawImage := range rawImages {
 		if rawImage.stapelImageType() == "images" {
-			if sameImages, err := rawImage.toStapelImageDirectives(); err != nil {
+			if sameImages, err := rawImage.toStapelImageDirectives(giterminismManager); err != nil {
 				return nil, err
 			} else {
 				stapelImages = append(stapelImages, sameImages...)
 			}
 		} else {
-			if imageArtifact, err := rawImage.toStapelImageArtifactDirectives(); err != nil {
+			if imageArtifact, err := rawImage.toStapelImageArtifactDirectives(giterminismManager); err != nil {
 				return nil, err
 			} else {
 				artifacts = append(artifacts, imageArtifact)

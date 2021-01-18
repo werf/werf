@@ -3,8 +3,6 @@ package inspector
 import (
 	"context"
 	"fmt"
-
-	"github.com/werf/werf/pkg/giterminism/errors"
 )
 
 func (i Inspector) InspectConfigGoTemplateRenderingEnv(ctx context.Context, envName string) error {
@@ -18,5 +16,5 @@ func (i Inspector) InspectConfigGoTemplateRenderingEnv(ctx context.Context, envN
 		return nil
 	}
 
-	return errors.NewError(fmt.Sprintf(`the configuration with external dependency found in the werf config: env name '%s' not allowed`, envName))
+	return NewExternalDependencyFoundError(fmt.Sprintf(`env name '%s' not allowed`, envName))
 }
