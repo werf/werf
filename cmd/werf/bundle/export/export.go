@@ -163,7 +163,7 @@ func runExport() error {
 
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("getting project dir failed: %s", err)
+		return fmt.Errorf("unable to get project directory: %s", err)
 	}
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)

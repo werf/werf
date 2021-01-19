@@ -63,7 +63,7 @@ func runGetNamespace() error {
 
 	projectDir, err := common.GetProjectDir(&getNamespaceCmdData)
 	if err != nil {
-		return fmt.Errorf("getting project dir failed: %s", err)
+		return fmt.Errorf("unable to get project directory: %s", err)
 	}
 
 	giterminismManager, err := common.GetGiterminismManager(&getNamespaceCmdData)

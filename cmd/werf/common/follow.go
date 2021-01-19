@@ -13,7 +13,7 @@ import (
 func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx context.Context) error) error {
 	projectDir, err := GetProjectDir(cmdData)
 	if err != nil {
-		return fmt.Errorf("unable to get project dir: %s", err)
+		return fmt.Errorf("unable to get project directory: %s", err)
 	}
 
 	var savedHeadCommit string
