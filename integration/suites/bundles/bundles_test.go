@@ -35,7 +35,7 @@ var _ = Describe("Bundles", func() {
 
 				Expect(liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, append([]string{"clone", "https://github.com/werf/quickstart-application", SuiteData.ProjectName})...)).To(Succeed())
 				Expect(liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "bundle", "publish", "--repo", repo)).Should(Succeed())
-				Expect(liveExecWerf(".", liveexec.ExecCommandOptions{}, "bundle", "apply", "--repo", repo, "--release", SuiteData.ProjectName, "--namespace", SuiteData.ProjectName)).Should(Succeed())
+				Expect(liveExecWerf(".", liveexec.ExecCommandOptions{}, "bundle", "apply", "--repo", repo, "--release", SuiteData.ProjectName, "--namespace", SuiteData.ProjectName, "--set-docker-config-json-value")).Should(Succeed())
 			})
 		})
 	}

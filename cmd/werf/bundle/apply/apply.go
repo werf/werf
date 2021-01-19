@@ -78,12 +78,17 @@ func NewCmd() *cobra.Command {
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd) // FIXME
 
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
 
+	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupSet(&commonCmdData, cmd)
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
@@ -201,6 +206,12 @@ func runApply() error {
 	}
 
 	bundle := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, chart_extender.BundleOptions{})
+
+	if *commonCmdData.SetDockerConfigJsonValue {
+		if err := chart_extender.WriteDockerConfigJsonValue(ctx, bundle.GetExtraValues(), *commonCmdData.DockerConfig); err != nil {
+			return fmt.Errorf("error writing docker config value into bundle extra values: %s", err)
+		}
+	}
 
 	postRenderer, err := bundle.GetPostRenderer()
 	if err != nil {

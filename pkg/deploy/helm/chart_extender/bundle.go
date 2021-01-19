@@ -9,6 +9,11 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/werf/logboek"
+	"sigs.k8s.io/yaml"
+
+	"helm.sh/helm/v3/pkg/chartutil"
+
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -30,6 +35,8 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
 		HelmEnvSettings:            helmEnvSettings,
 		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
 		chartExtenderContext:       ctx,
+
+		ExtraValuesData: NewExtraValuesData(),
 	}
 }
 
@@ -44,6 +51,8 @@ type Bundle struct {
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 
 	chartExtenderContext context.Context
+
+	*ExtraValuesData
 }
 
 func (bundle *Bundle) GetPostRenderer() (*helm.ExtraAnnotationsAndLabelsPostRenderer, error) {
@@ -82,7 +91,14 @@ func (bundle *Bundle) ChartDependenciesLoaded() error {
 
 // MakeValues method for the chart.Extender interface
 func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
-	return inputVals, nil
+	vals := make(map[string]interface{})
+	chartutil.CoalesceTables(vals, bundle.extraValues)
+	chartutil.CoalesceTables(vals, inputVals)
+
+	data, err := yaml.Marshal(vals)
+	logboek.Context(bundle.chartExtenderContext).Debug().LogF("-- Bundle.MakeValues result (err=%v):\n%s\n---\n", err, data)
+
+	return vals, nil
 }
 
 // SetupTemplateFuncs method for the chart.Extender interface
