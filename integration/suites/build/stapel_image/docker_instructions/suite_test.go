@@ -3,10 +3,6 @@ package docker_instruction_test
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo"
-
-	"github.com/werf/werf/integration/pkg/utils"
-
 	"github.com/werf/werf/integration/pkg/suite_init"
 )
 
@@ -19,14 +15,6 @@ func TestSuite(t *testing.T) {
 }
 
 var SuiteData suite_init.SuiteData
-
-var _ = ginkgo.AfterEach(func() {
-	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
-		SuiteData.WerfBinPath,
-		"purge", "--force",
-	)
-})
 
 var _ = SuiteData.SetupStubs(suite_init.NewStubsData())
 var _ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())

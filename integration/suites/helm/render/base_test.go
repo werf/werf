@@ -11,12 +11,12 @@ import (
 
 var _ = Describe("helm render", func() {
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("base"), SuiteData.TestDirPath)
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
 	})
 
 	It("should be rendered", func() {
 		output := utils.SucceedCommandOutputString(
-			SuiteData.TestDirPath,
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			SuiteData.WerfBinPath,
 			"render",
 		)

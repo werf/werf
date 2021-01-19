@@ -12,31 +12,27 @@ import (
 
 var _ = Describe("cleaning images and stages", func() {
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("default"), SuiteData.TestDirPath)
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("default"), "initial commit")
+	})
 
+	var _ = AfterEach(func() {
 		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"init",
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+			SuiteData.WerfBinPath,
+			"dismiss", "--with-namespace",
 		)
 
 		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"add", "-A",
-		)
-
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"commit", "-m", "Initial commit",
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+			SuiteData.WerfBinPath,
+			"purge", "--force",
 		)
 	})
 
 	Context("with deployed image", func() {
 		BeforeEach(func() {
 			utils.RunSucceedCommand(
-				SuiteData.TestDirPath,
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"build",
 			)
@@ -50,7 +46,7 @@ var _ = Describe("cleaning images and stages", func() {
 				"--set", fmt.Sprintf("imageCredentials.password=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD")),
 			}
 			utils.RunSucceedCommand(
-				SuiteData.TestDirPath,
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				werfDeployArgs...,
 			)
@@ -66,7 +62,7 @@ var _ = Describe("cleaning images and stages", func() {
 				Ω(count).Should(Equal(2))
 
 				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
+					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					SuiteData.WerfBinPath,
 					"cleanup",
 				)

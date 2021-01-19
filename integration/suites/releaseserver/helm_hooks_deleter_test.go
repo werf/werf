@@ -14,13 +14,14 @@ import (
 var _ = Describe("Helm hooks deleter", func() {
 	Context("when installing chart with post-install Job hook and hook-succeeded delete policy", func() {
 		AfterEach(func() {
-			utils.RunCommand("helm_hooks_deleter_app1", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should delete hook when hook succeeded and wait till it is deleted without timeout https://github.com/werf/werf/issues/1885", func() {
-			gotDeletingHookLine := false
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "helm_hooks_deleter_app1", "initial commit")
 
-			Expect(werfDeploy("helm_hooks_deleter_app1", liveexec.ExecCommandOptions{
+			gotDeletingHookLine := false
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					Expect(strings.HasPrefix(line, "│ NOTICE Will not delete Job/migrate: resource does not belong to the helm release")).ShouldNot(BeTrue(), fmt.Sprintf("Got unexpected output line: %v", line))
 

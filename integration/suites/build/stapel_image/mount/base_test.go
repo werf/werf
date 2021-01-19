@@ -10,6 +10,14 @@ import (
 	"github.com/werf/werf/integration/pkg/utils/docker"
 )
 
+var _ = AfterEach(func() {
+	utils.RunSucceedCommand(
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+		SuiteData.WerfBinPath,
+		"purge", "--force",
+	)
+})
+
 type entry struct {
 	fixturePath                       string
 	expectedFirstBuildOutputMatchers  []types.GomegaMatcher
@@ -17,12 +25,12 @@ type entry struct {
 }
 
 var itBody = func(e entry) {
-	utils.CopyIn(e.fixturePath, SuiteData.TestDirPath)
+	SuiteData.CommitProjectWorktree(SuiteData.ProjectName, e.fixturePath, "initial commit")
 
 	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 
 	output := utils.SucceedCommandOutputString(
-		SuiteData.TestDirPath,
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		"build",
 	)
@@ -34,7 +42,7 @@ var itBody = func(e entry) {
 	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
 
 	output = utils.SucceedCommandOutputString(
-		SuiteData.TestDirPath,
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		"build",
 	)
@@ -43,7 +51,7 @@ var itBody = func(e entry) {
 		Ω(output).Should(match)
 	}
 
-	docker.RunSucceedContainerCommandWithStapel(SuiteData.WerfBinPath, SuiteData.TestDirPath, []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})
+	docker.RunSucceedContainerCommandWithStapel(SuiteData.WerfBinPath, SuiteData.GetProjectWorktree(SuiteData.ProjectName), []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})
 }
 
 var _ = BeforeEach(func() {

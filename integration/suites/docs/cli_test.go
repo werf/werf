@@ -1,12 +1,9 @@
 package docs_test
 
 import (
-	"path/filepath"
 	"runtime"
 
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
@@ -16,28 +13,7 @@ var _ = Describe("docs", func() {
 			Skip("skip on windows")
 		}
 
-		resolvedExpectationPath, err := filepath.EvalSymlinks(utils.FixturePath("cli", "docs"))
-		Ω(err).ShouldNot(HaveOccurred())
-
-		utils.CopyIn(resolvedExpectationPath, filepath.Join(SuiteData.TestDirPath, "docs"))
-
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"init",
-		)
-
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"add", "-A",
-		)
-
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"commit", "-m", "+",
-		)
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "../../../", "initial commit")
 
 		SuiteData.Stubs.UnsetEnv("DOCKER_CONFIG")
 		SuiteData.Stubs.UnsetEnv("WERF_DOCKER_CONFIG")
@@ -46,20 +22,20 @@ var _ = Describe("docs", func() {
 
 	It("should be without changes", func() {
 		_, _ = utils.RunCommandWithOptions(
-			SuiteData.TestDirPath,
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			SuiteData.WerfBinPath,
-			[]string{"docs", "--dir", SuiteData.TestDirPath},
+			[]string{"docs", "--dir", SuiteData.GetProjectWorktree(SuiteData.ProjectName)},
 			utils.RunCommandOptions{ShouldSucceed: true, ExtraEnv: []string{"HOME=~", "WERF_PROJECT_NAME="}},
 		)
 
 		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			"git",
 			"add", "-A",
 		)
 
 		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			"git",
 			"diff", "--exit-code", "HEAD", "--",
 		)

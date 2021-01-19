@@ -74,13 +74,15 @@ func unknownDeploymentStateForbidden(ds *DeploymentState) {
 var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
 	Context("when chart contains valid resource", func() {
 		AfterEach(func() {
-			utils.RunCommand("kubedog_multitrack_app1", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should report Deployment is ready before werf exit", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app1", "initial commit")
+
 			gotDeploymentReadyLine := false
 
-			Expect(werfDeploy("kubedog_multitrack_app1", liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
 						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
@@ -100,15 +102,17 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 	Context("when chart contains resource with invalid docker image", func() {
 		AfterEach(func() {
-			utils.RunCommand("kubedog_multitrack_app2", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should report ImagePullBackoff occured in Deployment and werf should fail", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app2", "initial commit")
+
 			gotImagePullBackoffLine := false
 			gotAllowedErrorsWarning := false
 			gotAllowedErrorsExceeded := false
 
-			Expect(werfDeploy("kubedog_multitrack_app2", liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, `1/1 allowed errors occurred for deploy/mydeploy1: continue tracking`) != -1 {
 						gotAllowedErrorsWarning = true

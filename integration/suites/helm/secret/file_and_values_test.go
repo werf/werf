@@ -20,7 +20,7 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 			runSucceedCommandWithFileDataOnStdin([]string{"helm", "secret", secretType, "decrypt", "-o", "result"}, fileToProcess)
 		} else {
 			utils.RunSucceedCommand(
-				SuiteData.TestDirPath,
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"helm", "secret", secretType, "decrypt", fileToProcess, "-o", "result",
 			)
@@ -30,18 +30,18 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 	}
 
 	var decryptItBody = func(secretType string, withPipe bool) {
-		utils.CopyIn(utils.FixturePath(secretType), SuiteData.TestDirPath)
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath(secretType), "initial commit")
 		decryptAndCheckFileOrValues(secretType, "encrypted_secret", withPipe)
 	}
 
 	var encryptItBody = func(secretType string, withPipe bool) {
-		utils.CopyIn(utils.FixturePath(secretType), SuiteData.TestDirPath)
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath(secretType), "initial commit")
 
 		if withPipe {
 			runSucceedCommandWithFileDataOnStdin([]string{"helm", "secret", secretType, "encrypt", "-o", "result"}, "secret")
 		} else {
 			utils.RunSucceedCommand(
-				SuiteData.TestDirPath,
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"helm", "secret", secretType, "encrypt", "secret", "-o", "result",
 			)
@@ -55,10 +55,10 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 			Skip("skip on windows")
 		}
 
-		utils.CopyIn(utils.FixturePath(secretType), SuiteData.TestDirPath)
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath(secretType), "initial commit")
 
 		_, _ = utils.RunCommandWithOptions(
-			SuiteData.TestDirPath,
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			SuiteData.WerfBinPath,
 			[]string{"helm", "secret", secretType, "edit", "result"},
 			utils.RunCommandOptions{
@@ -88,33 +88,33 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 })
 
 func fileContentsShouldBeEqual(path1, path2 string) {
-	data1, err := ioutil.ReadFile(filepath.Join(SuiteData.TestDirPath, path1))
+	data1, err := ioutil.ReadFile(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), path1))
 	Ω(err).ShouldNot(HaveOccurred())
 
-	data2, err := ioutil.ReadFile(filepath.Join(SuiteData.TestDirPath, path2))
+	data2, err := ioutil.ReadFile(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), path2))
 	Ω(err).ShouldNot(HaveOccurred())
 
 	data1 = bytes.ReplaceAll(data1, []byte(utils.LineBreak), []byte("\n"))
 	data2 = bytes.ReplaceAll(data2, []byte(utils.LineBreak), []byte("\n"))
 
-	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(SuiteData.TestDirPath, path1))
+	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), path1))
 	_, _ = fmt.Fprintf(GinkgoWriter, string(data1))
-	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(SuiteData.TestDirPath, path1))
+	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), path1))
 
-	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(SuiteData.TestDirPath, path2))
+	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), path2))
 	_, _ = fmt.Fprintf(GinkgoWriter, string(data2))
-	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(SuiteData.TestDirPath, path2))
+	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), path2))
 
 	Ω(bytes.Equal(data1, data2)).Should(BeTrue())
 }
 
 func runSucceedCommandWithFileDataOnStdin(werfArgs []string, secretFileName string) {
-	data, err := ioutil.ReadFile(filepath.Join(SuiteData.TestDirPath, secretFileName))
+	data, err := ioutil.ReadFile(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), secretFileName))
 
 	Ω(err).ShouldNot(HaveOccurred())
 
 	_, _ = utils.RunCommandWithOptions(
-		SuiteData.TestDirPath,
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		werfArgs,
 		utils.RunCommandOptions{

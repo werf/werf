@@ -11,12 +11,12 @@ import (
 
 var _ = Describe("helm render with extra annotations and labels", func() {
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("base"), SuiteData.TestDirPath)
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
 	})
 
 	It("should be rendered with extra annotations (except hooks)", func() {
 		output := utils.SucceedCommandOutputString(
-			SuiteData.TestDirPath,
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			SuiteData.WerfBinPath,
 			"render", "--add-annotation=anno1=value1", "--add-annotation=anno2=value2",
 		)
@@ -28,7 +28,7 @@ var _ = Describe("helm render with extra annotations and labels", func() {
 
 	It("should be rendered with extra labels (except hooks)", func() {
 		output := utils.SucceedCommandOutputString(
-			SuiteData.TestDirPath,
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			SuiteData.WerfBinPath,
 			"render", "--add-label=label1=value1", "--add-label=label2=value2",
 		)

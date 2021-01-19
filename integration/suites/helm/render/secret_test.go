@@ -9,30 +9,12 @@ import (
 
 var _ = Describe("helm render with secrets", func() {
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("secret"), SuiteData.TestDirPath)
-
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"init",
-		)
-
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"add", "-A",
-		)
-
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"commit", "-m", "Initial commit",
-		)
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("secret"), "initial commit")
 	})
 
 	It("should be rendered", func() {
 		output := utils.SucceedCommandOutputString(
-			SuiteData.TestDirPath,
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			SuiteData.WerfBinPath,
 			"render",
 		)

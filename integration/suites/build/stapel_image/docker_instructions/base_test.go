@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/onsi/ginkgo"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 
@@ -14,23 +16,32 @@ import (
 	utilsDocker "github.com/werf/werf/integration/pkg/utils/docker"
 )
 
+var _ = ginkgo.AfterEach(func() {
+	utils.RunSucceedCommand(
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+		SuiteData.WerfBinPath,
+		"purge", "--force",
+	)
+})
+
 type entry struct {
 	werfYaml     string
 	inspectCheck func(inspect *types.ImageInspect)
 }
 
 var itBody = func(e entry) {
-	SuiteData.TestDirPath = utils.FixturePath("base")
-	SuiteData.Stubs.SetEnv("WERF_CONFIG", filepath.Join(SuiteData.TestDirPath, e.werfYaml))
+	SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
+
+	SuiteData.Stubs.SetEnv("WERF_CONFIG", filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), e.werfYaml))
 
 	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		"build",
 	)
 
 	resultImageName := utils.SucceedCommandOutputString(
-		SuiteData.TestDirPath,
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		"stage", "image",
 	)

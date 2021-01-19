@@ -6,7 +6,6 @@ import (
 
 	"github.com/werf/werf/integration/pkg/suite_init"
 
-	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
 	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/pkg/docker_registry"
@@ -51,11 +50,3 @@ func StagesCount() int {
 func ImageMetadata(imageName string) map[string][]string {
 	return utils.ImageMetadata(context.Background(), SuiteData.StagesStorage, imageName)
 }
-
-var _ = ginkgo.AfterEach(func() {
-	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
-		SuiteData.WerfBinPath,
-		"purge", "--force",
-	)
-})
