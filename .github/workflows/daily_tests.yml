@@ -55,10 +55,10 @@ jobs:
         ./scripts/tests/precompiled_tests_binaries.sh ./pkg ./precompiled_tests_binaries/unit
 
         # integration tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/default ./precompiled_tests_binaries/default
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/k8s_per_version ./precompiled_tests_binaries/k8s_per_version
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/container_registry_per_implementation ./precompiled_tests_binaries/container_registry_per_implementation
-        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/k8s_per_version_and_container_registry_per_implementation ./precompiled_tests_binaries/k8s_per_version_and_container_registry_per_implementation
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/default ./precompiled_tests_binaries/integration_default
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/k8s_per_version ./precompiled_tests_binaries/integration_k8s_per_version
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/container_registry_per_implementation ./precompiled_tests_binaries/integration_container_registry_per_implementation
+        ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/k8s_per_version_and_container_registry_per_implementation ./precompiled_tests_binaries/integration_k8s_per_version_and_container_registry_per_implementation
 
         # werf with coverage binary
         ./scripts/tests/werf_with_coverage.sh
