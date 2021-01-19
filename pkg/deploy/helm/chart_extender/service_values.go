@@ -26,9 +26,10 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 	}
 
 	werfInfo := map[string]interface{}{
-		"name": projectName,
-		"repo": repo,
-		"env":  opts.Env,
+		"name":  projectName,
+		"repo":  repo,
+		"env":   opts.Env,
+		"image": map[string]interface{}{},
 	}
 
 	if opts.Namespace != "" {
@@ -45,9 +46,6 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 			werfInfo["is_nameless_image"] = true
 			werfInfo["image"] = imageInfoGetter.GetName()
 		} else {
-			if werfInfo["image"] == nil {
-				werfInfo["image"] = map[string]interface{}{}
-			}
 			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetName()
 		}
 	}

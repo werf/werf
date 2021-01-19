@@ -101,7 +101,7 @@ func GetPreparedChartDependenciesDir(ctx context.Context, lockDigest string, loc
 			tmpDepsDir := fmt.Sprintf("%s.tmp.%s", depsDir, uuid.NewV4().String())
 
 			buildChartDependenciesOpts.LoadOptions = &loader.LoadOptions{
-				ChartExtender:               NewWerfChartStub(),
+				ChartExtender:               NewWerfChartStub(ctx),
 				SubchartExtenderFactoryFunc: nil,
 			}
 

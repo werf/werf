@@ -1,6 +1,7 @@
 package chart_extender
 
 import (
+	"context"
 	"text/template"
 
 	"github.com/werf/werf/pkg/deploy/secret"
@@ -15,9 +16,10 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 )
 
-func NewWerfChartStub() *WerfChartStub {
+func NewWerfChartStub(ctx context.Context) *WerfChartStub {
 	return &WerfChartStub{
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
+		ChartExtenderContextData:              NewChartExtenderContextData(ctx),
 	}
 }
 
@@ -28,6 +30,8 @@ type WerfChartStub struct {
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	stubServiceValues                     map[string]interface{}
+
+	*ChartExtenderContextData
 }
 
 func (wc *WerfChartStub) SetupSecretManager(manager secret.Manager) {
@@ -87,6 +91,7 @@ func (wc *WerfChartStub) SetupTemplateFuncs(t *template.Template, funcMap templa
 		return "stub_data", nil
 	}
 	SetupIncludeWrapperFuncs(funcMap)
+	SetupWerfImageDeprecationFunc(wc.chartExtenderContext, funcMap)
 }
 
 // LoadDir method for the chart.Extender interface
