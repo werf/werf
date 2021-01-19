@@ -51,9 +51,9 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism.Manager, s
 
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
 		decodedSecretFilesData:                make(map[string]string, 0),
-		chartExtenderContext:                  ctx,
 
-		ExtraValuesData: NewExtraValuesData(),
+		ExtraValuesData:          NewExtraValuesData(),
+		ChartExtenderContextData: NewChartExtenderContextData(ctx),
 	}
 
 	wc.extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
@@ -79,9 +79,9 @@ type WerfChart struct {
 	decodedSecretFilesData                map[string]string
 	secretValuesToMask                    []string
 	serviceValues                         map[string]interface{}
-	chartExtenderContext                  context.Context
 
 	*ExtraValuesData
+	*ChartExtenderContextData
 }
 
 // ChartCreated method for the chart.Extender interface
@@ -164,6 +164,7 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 	}
 
 	SetupIncludeWrapperFuncs(funcMap)
+	SetupWerfImageDeprecationFunc(wc.chartExtenderContext, funcMap)
 }
 
 // LoadDir method for the chart.Extender interface

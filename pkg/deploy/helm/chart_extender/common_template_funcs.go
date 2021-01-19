@@ -1,6 +1,11 @@
 package chart_extender
 
-import "text/template"
+import (
+	"context"
+	"text/template"
+
+	"github.com/werf/logboek"
+)
 
 func SetupIncludeWrapperFuncs(funcMap template.FuncMap) {
 	helmIncludeFunc := funcMap["include"].(func(name string, data interface{}) (string, error))
@@ -12,5 +17,12 @@ func SetupIncludeWrapperFuncs(funcMap template.FuncMap) {
 
 	for _, name := range []string{"werf_image"} {
 		setupIncludeWrapperFunc(name)
+	}
+}
+
+func SetupWerfImageDeprecationFunc(ctx context.Context, funcMap template.FuncMap) {
+	funcMap["_print_werf_image_deprecation"] = func() (string, error) {
+		logboek.Context(ctx).Warn().LogF("DEPRECATION WARNING: Usage of werf_image is deprecated, use .Values.werf.image.IMAGE_NAME directly instead\n")
+		return "", nil
 	}
 }

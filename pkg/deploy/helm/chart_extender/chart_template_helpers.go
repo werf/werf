@@ -26,6 +26,7 @@ var ChartTemplateHelpers = `{{- define "_werf_image" -}}
 {{- end -}}
 
 {{- define "werf_image" -}}
+{{-   _print_werf_image_deprecation -}}
 {{-   if eq (typeOf .) "chartutil.Values" -}}
 {{-     $context := . -}}
 {{      tuple $context | include "_werf_image" }}

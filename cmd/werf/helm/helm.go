@@ -47,11 +47,13 @@ func NewCmd() *cobra.Command {
 		Short: "Manage application deployment with helm",
 	}
 
-	wc := chart_extender.NewWerfChartStub()
+	ctx := common.BackgroundContext()
+
+	wc := chart_extender.NewWerfChartStub(ctx)
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender:               wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfChartStub() },
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfChartStub(ctx) },
 	}
 
 	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")

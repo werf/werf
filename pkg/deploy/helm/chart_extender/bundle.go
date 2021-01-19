@@ -34,9 +34,8 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
 		Dir:                        dir,
 		HelmEnvSettings:            helmEnvSettings,
 		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
-		chartExtenderContext:       ctx,
-
-		ExtraValuesData: NewExtraValuesData(),
+		ExtraValuesData:            NewExtraValuesData(),
+		ChartExtenderContextData:   NewChartExtenderContextData(ctx),
 	}
 }
 
@@ -50,9 +49,8 @@ type Bundle struct {
 	HelmEnvSettings            *cli.EnvSettings
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 
-	chartExtenderContext context.Context
-
 	*ExtraValuesData
+	*ChartExtenderContextData
 }
 
 func (bundle *Bundle) GetPostRenderer() (*helm.ExtraAnnotationsAndLabelsPostRenderer, error) {
