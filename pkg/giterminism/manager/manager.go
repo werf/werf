@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"context"
+
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism"
 	"github.com/werf/werf/pkg/giterminism/config"
@@ -25,22 +27,23 @@ type NewManagerOptions struct {
 	LooseGiterminism bool
 }
 
-func NewManager(projectDir string, localGitRepo git_repo.Local, headCommit string, options NewManagerOptions) (giterminism.Manager, error) {
-	m := Manager{
+func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Local, headCommit string, options NewManagerOptions) (giterminism.Manager, error) {
+	m := &Manager{
 		projectDir:       projectDir,
 		localGitRepo:     localGitRepo,
 		headCommit:       headCommit,
 		looseGiterminism: options.LooseGiterminism,
 	}
 
-	c, err := config.NewConfig(projectDir)
+	m.fileReader = file_reader.NewFileReader(m)
+	m.inspector = inspector.NewInspector(m)
+
+	c, err := config.NewConfig(ctx, m)
 	if err != nil {
 		return nil, err
 	}
 
 	m.config = c
-	m.fileReader = file_reader.NewFileReader(m)
-	m.inspector = inspector.NewInspector(m)
 
 	return m, nil
 }

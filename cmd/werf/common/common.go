@@ -971,7 +971,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism.Manager, error) {
 		return nil, err
 	}
 
-	return manager.NewManager(projectDir, localGitRepo, headCommit, manager.NewManagerOptions{
+	return manager.NewManager(BackgroundContext(), projectDir, localGitRepo, headCommit, manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 	})
 }

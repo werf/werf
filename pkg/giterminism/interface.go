@@ -23,6 +23,8 @@ type Manager interface {
 }
 
 type FileReader interface {
+	IsGiterminismConfigExistAnywhere(ctx context.Context) (bool, error)
+	ReadGiterminismConfig(ctx context.Context) ([]byte, error)
 	IsConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadConfig(ctx context.Context, customRelPath string) ([]byte, error)
 	ReadConfigTemplateFiles(ctx context.Context, customRelDirPath string, tmplFunc func(templatePathInsideDir string, data []byte, err error) error) error
