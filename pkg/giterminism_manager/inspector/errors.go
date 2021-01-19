@@ -3,7 +3,7 @@ package inspector
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/giterminism/errors"
+	"github.com/werf/werf/pkg/giterminism_manager/errors"
 )
 
 type ExternalDependencyFoundError error

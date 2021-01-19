@@ -1,30 +1,23 @@
-package giterminism
+package giterminism_manager
 
 import (
 	"context"
 
 	"helm.sh/helm/v3/pkg/chart"
-
 	"helm.sh/helm/v3/pkg/cli"
 
 	"github.com/werf/werf/pkg/git_repo"
 )
 
-type Manager interface {
+type Interface interface {
 	FileReader() FileReader
 	Inspector() Inspector
-	Config() Config
 
 	LocalGitRepo() *git_repo.Local
-	HeadCommit() string
 	ProjectDir() string
-
-	LooseGiterminism() bool
 }
 
 type FileReader interface {
-	IsGiterminismConfigExistAnywhere(ctx context.Context) (bool, error)
-	ReadGiterminismConfig(ctx context.Context) ([]byte, error)
 	IsConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadConfig(ctx context.Context, customRelPath string) ([]byte, error)
 	ReadConfigTemplateFiles(ctx context.Context, customRelDirPath string, tmplFunc func(templatePathInsideDir string, data []byte, err error) error) error
@@ -50,19 +43,4 @@ type Inspector interface {
 	InspectConfigStapelMountBuildDir() error
 	InspectConfigStapelMountFromPath(fromPath string) error
 	InspectConfigDockerfileContextAddFile(relPath string) error
-}
-
-type Config interface {
-	IsUncommittedConfigAccepted() bool
-	IsUncommittedConfigTemplateFileAccepted(relPath string) (bool, error)
-	IsUncommittedConfigGoTemplateRenderingFileAccepted(relPath string) (bool, error)
-	IsConfigGoTemplateRenderingEnvNameAccepted(envName string) (bool, error)
-	IsConfigStapelFromLatestAccepted() bool
-	IsConfigStapelGitBranchAccepted() bool
-	IsConfigStapelMountBuildDirAccepted() bool
-	IsConfigStapelMountFromPathAccepted(fromPath string) (bool, error)
-	IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, error)
-	IsUncommittedDockerfileAccepted(relPath string) (bool, error)
-	IsUncommittedDockerignoreAccepted(relPath string) (bool, error)
-	IsUncommittedHelmFileAccepted(relPath string) (bool, error)
 }

@@ -6,11 +6,11 @@ import (
 )
 
 func (i Inspector) InspectConfigDockerfileContextAddFile(relPath string) error {
-	if i.manager.LooseGiterminism() {
+	if i.sharedOptions.LooseGiterminism() {
 		return nil
 	}
 
-	if isAccepted, err := i.manager.Config().IsConfigDockerfileContextAddFileAccepted(relPath); err != nil {
+	if isAccepted, err := i.giterminismConfig.IsConfigDockerfileContextAddFileAccepted(relPath); err != nil {
 		return err
 	} else if isAccepted {
 		return nil

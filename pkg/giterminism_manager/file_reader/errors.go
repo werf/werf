@@ -2,9 +2,10 @@ package file_reader
 
 import (
 	"fmt"
-	"github.com/werf/werf/pkg/giterminism/errors"
 	"path/filepath"
 	"strings"
+
+	"github.com/werf/werf/pkg/giterminism_manager/errors"
 )
 
 type FilesNotFoundInTheProjectDirectoryError struct {

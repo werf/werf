@@ -22,9 +22,8 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism"
-	"github.com/werf/werf/pkg/giterminism/manager"
 	"github.com/werf/werf/pkg/giterminism_inspector"
+	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
@@ -878,7 +877,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 	return res, nil
 }
 
-func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, giterminismManager giterminism.Manager, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
 	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(projectDir, cmdData)
 	if err != nil {
 		return nil, err
@@ -906,7 +905,7 @@ func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 	return nil, nil
 }
 
-func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, giterminismManager giterminism.Manager, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
 	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(projectDir, cmdData)
 	if err != nil {
 		return nil, err
@@ -955,7 +954,7 @@ func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.Wer
 	}
 }
 
-func GetGiterminismManager(cmdData *CmdData) (giterminism.Manager, error) {
+func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, error) {
 	projectDir, err := GetProjectDir(cmdData)
 	if err != nil {
 		return nil, err
@@ -971,7 +970,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism.Manager, error) {
 		return nil, err
 	}
 
-	return manager.NewManager(BackgroundContext(), projectDir, localGitRepo, headCommit, manager.NewManagerOptions{
+	return giterminism_manager.NewManager(BackgroundContext(), projectDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 	})
 }

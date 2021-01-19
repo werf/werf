@@ -5,7 +5,7 @@ import (
 )
 
 func (i Inspector) InspectConfigStapelFromLatest() error {
-	if i.manager.LooseGiterminism() || i.manager.Config().IsConfigStapelFromLatestAccepted() {
+	if i.sharedOptions.LooseGiterminism() || i.giterminismConfig.IsConfigStapelFromLatestAccepted() {
 		return nil
 	}
 
@@ -20,7 +20,7 @@ We recommend a particular unchangeable tag or periodically change 'fromCacheVers
 }
 
 func (i Inspector) InspectConfigStapelGitBranch() error {
-	if i.manager.LooseGiterminism() || i.manager.Config().IsConfigStapelGitBranchAccepted() {
+	if i.sharedOptions.LooseGiterminism() || i.giterminismConfig.IsConfigStapelGitBranchAccepted() {
 		return nil
 	}
 
@@ -28,7 +28,7 @@ func (i Inspector) InspectConfigStapelGitBranch() error {
 }
 
 func (i Inspector) InspectConfigStapelMountBuildDir() error {
-	if i.manager.LooseGiterminism() || i.manager.Config().IsConfigStapelMountBuildDirAccepted() {
+	if i.sharedOptions.LooseGiterminism() || i.giterminismConfig.IsConfigStapelMountBuildDirAccepted() {
 		return nil
 	}
 
@@ -36,11 +36,11 @@ func (i Inspector) InspectConfigStapelMountBuildDir() error {
 }
 
 func (i Inspector) InspectConfigStapelMountFromPath(fromPath string) error {
-	if i.manager.LooseGiterminism() {
+	if i.sharedOptions.LooseGiterminism() {
 		return nil
 	}
 
-	if isAccepted, err := i.manager.Config().IsConfigStapelMountFromPathAccepted(fromPath); err != nil {
+	if isAccepted, err := i.giterminismConfig.IsConfigStapelMountFromPathAccepted(fromPath); err != nil {
 		return err
 	} else if isAccepted {
 		return nil

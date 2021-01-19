@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/giterminism"
+	"github.com/werf/werf/pkg/giterminism_manager"
 )
 
 type rawImageFromDockerfile struct {
@@ -66,7 +66,7 @@ func (c *rawImageFromDockerfile) UnmarshalYAML(unmarshal func(interface{}) error
 	return nil
 }
 
-func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives(giterminismManager giterminism.Manager) (images []*ImageFromDockerfile, err error) {
+func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives(giterminismManager giterminism_manager.Interface) (images []*ImageFromDockerfile, err error) {
 	for _, imageName := range c.Images {
 		if image, err := c.toImageFromDockerfileDirective(giterminismManager, imageName); err != nil {
 			return nil, err
@@ -78,7 +78,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives(giterminismMana
 	return images, nil
 }
 
-func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManager giterminism.Manager, imageName string) (image *ImageFromDockerfile, err error) {
+func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManager giterminism_manager.Interface, imageName string) (image *ImageFromDockerfile, err error) {
 	image = &ImageFromDockerfile{}
 	image.Name = imageName
 	image.Dockerfile = c.Dockerfile

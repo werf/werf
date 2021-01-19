@@ -10,17 +10,10 @@ import (
 	"strings"
 
 	"github.com/bmatcuk/doublestar"
-
-	"github.com/werf/werf/pkg/giterminism"
 )
 
-type Config struct {
-	Config config `json:"config"`
-	Helm   helm   `json:"helm"`
-}
-
-func NewConfig(ctx context.Context, m giterminism.Manager) (c Config, err error) {
-	exist, err := m.FileReader().IsGiterminismConfigExistAnywhere(ctx)
+func NewConfig(ctx context.Context, fileReader fileReader) (c Config, err error) {
+	exist, err := fileReader.IsGiterminismConfigExistAnywhere(ctx)
 	if err != nil {
 		return c, err
 	}
@@ -29,7 +22,7 @@ func NewConfig(ctx context.Context, m giterminism.Manager) (c Config, err error)
 		return Config{}, nil
 	}
 
-	data, err := m.FileReader().ReadGiterminismConfig(ctx)
+	data, err := fileReader.ReadGiterminismConfig(ctx)
 	if err != nil {
 		return c, err
 	}
@@ -44,6 +37,16 @@ func NewConfig(ctx context.Context, m giterminism.Manager) (c Config, err error)
 	}
 
 	return c, err
+}
+
+type fileReader interface {
+	IsGiterminismConfigExistAnywhere(ctx context.Context) (bool, error)
+	ReadGiterminismConfig(ctx context.Context) ([]byte, error)
+}
+
+type Config struct {
+	Config config `json:"config"`
+	Helm   helm   `json:"helm"`
 }
 
 func (c Config) IsUncommittedConfigAccepted() bool {
