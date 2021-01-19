@@ -928,7 +928,7 @@ func GetCustomWerfConfigRelPath(projectDir string, cmdData *CmdData) (string, er
 
 	customConfigPath = util.GetAbsoluteFilepath(customConfigPath)
 	if !util.IsSubpathOfBasePath(projectDir, customConfigPath) {
-		return "", fmt.Errorf("werf configuration file '%s' must be in the project directory", customConfigPath)
+		return "", fmt.Errorf("the werf config '%s' must be in the project directory", customConfigPath)
 	}
 
 	return util.GetRelativeToBaseFilepath(projectDir, customConfigPath), nil
