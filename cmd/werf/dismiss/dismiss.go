@@ -212,7 +212,12 @@ func runDismiss() error {
 		DeleteHooks:     &cmdData.WithHooks,
 	})
 
-	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
+	if cmdData.WithNamespace {
+		// TODO: solve lock release + delete-namespace case
 		return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
-	})
+	} else {
+		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
+			return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
+		})
+	}
 }
