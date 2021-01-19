@@ -259,15 +259,6 @@ jobs:
       matrix:
         os: [ubuntu]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
-        implementation:
-          - acr
-          - default
-          - dockerhub
-          - ecr
-          - gcr
-  #        - github
-          - harbor
-          - quay
 
     runs-on: ${{ matrix.os }}-latest
     env:
@@ -338,7 +329,6 @@ jobs:
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-      if: matrix.implementation == 'acr'
 
     - name: Login (ecr)
       uses: aws-actions/configure-aws-credentials@v1
@@ -346,12 +336,17 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-      if: matrix.implementation == 'ecr'
 
     - name: Prepare environment
       run: |
         ./scripts/ci/git.sh
-        ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.implementation }}
+        ./scripts/ci/integration_tests_registries_login.sh default
+        ./scripts/ci/integration_tests_registries_login.sh acr
+        ./scripts/ci/integration_tests_registries_login.sh dockerhub
+        ./scripts/ci/integration_tests_registries_login.sh ecr
+        ./scripts/ci/integration_tests_registries_login.sh gcr
+        ./scripts/ci/integration_tests_registries_login.sh harbor
+        ./scripts/ci/integration_tests_registries_login.sh quay
 
         go build github.com/onsi/ginkgo/ginkgo
 
