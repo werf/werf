@@ -11,6 +11,9 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/werf/logboek"
+	"sigs.k8s.io/yaml"
+
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
@@ -49,6 +52,8 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism.Manager, s
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
 		decodedSecretFilesData:                make(map[string]string, 0),
 		chartExtenderContext:                  ctx,
+
+		ExtraValuesData: NewExtraValuesData(),
 	}
 
 	wc.extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
@@ -75,6 +80,8 @@ type WerfChart struct {
 	secretValuesToMask                    []string
 	serviceValues                         map[string]interface{}
 	chartExtenderContext                  context.Context
+
+	*ExtraValuesData
 }
 
 // ChartCreated method for the chart.Extender interface
@@ -124,9 +131,14 @@ func (wc *WerfChart) ChartDependenciesLoaded() error {
 // MakeValues method for the chart.Extender interface
 func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
 	vals := make(map[string]interface{})
+	chartutil.CoalesceTables(vals, wc.extraValues)   // NOTE: extra values will not be saved into the marshalled release
 	chartutil.CoalesceTables(vals, wc.serviceValues) // NOTE: service values will not be saved into the marshalled release
 	chartutil.CoalesceTables(vals, wc.decodedSecretValues)
 	chartutil.CoalesceTables(vals, inputVals)
+
+	data, err := yaml.Marshal(vals)
+	logboek.Context(wc.chartExtenderContext).Debug().LogF("-- WerfChart.MakeValues result (err=%v):\n%s\n---\n", err, data)
+
 	return vals, nil
 }
 

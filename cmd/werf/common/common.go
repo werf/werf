@@ -53,12 +53,13 @@ type CmdData struct {
 	HooksStatusProgressPeriodSeconds *int64
 	ReleasesHistoryMax               *int
 
-	Set             *[]string
-	SetString       *[]string
-	Values          *[]string
-	SetFile         *[]string
-	SecretValues    *[]string
-	IgnoreSecretKey *bool
+	SetDockerConfigJsonValue *bool
+	Set                      *[]string
+	SetString                *[]string
+	Values                   *[]string
+	SetFile                  *[]string
+	SecretValues             *[]string
+	IgnoreSecretKey          *bool
 
 	CommonRepoData         *RepoData
 	StagesStorage          *string
@@ -117,6 +118,11 @@ const (
 
 func GetLongCommandDescription(text string) string {
 	return logboek.FitText(text, types.FitTextOptions{MaxWidth: 100})
+}
+
+func SetupSetDockerConfigJsonValue(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SetDockerConfigJsonValue = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SetDockerConfigJsonValue, "set-docker-config-json-value", "", GetBoolEnvironmentDefaultFalse(os.Getenv("WERF_SET_DOCKER_CONFIG_VALUE")), "Shortcut to set current docker config into the .Values.dockerconfigjson")
 }
 
 func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {

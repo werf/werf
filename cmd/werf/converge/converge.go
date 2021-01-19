@@ -118,6 +118,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
 
+	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupSet(&commonCmdData, cmd)
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
@@ -361,6 +362,12 @@ func run(ctx context.Context, projectDir string) error {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else if err := wc.SetServiceValues(vals); err != nil {
 		return err
+	}
+
+	if *commonCmdData.SetDockerConfigJsonValue {
+		if err := chart_extender.WriteDockerConfigJsonValue(ctx, wc.GetExtraValues(), *commonCmdData.DockerConfig); err != nil {
+			return fmt.Errorf("error writing docker config value into werf chart extra values: %s", err)
+		}
 	}
 
 	actionConfig := new(action.Configuration)
