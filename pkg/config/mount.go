@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/giterminism"
+	"github.com/werf/werf/pkg/giterminism_manager"
 )
 
 type Mount struct {
@@ -14,7 +14,7 @@ type Mount struct {
 	raw *rawMount
 }
 
-func (c *Mount) validate(giterminismManager giterminism.Manager) error {
+func (c *Mount) validate(giterminismManager giterminism_manager.Interface) error {
 	var err error
 	if c.raw.FromPath != "" {
 		err = giterminismManager.Inspector().InspectConfigStapelMountFromPath(c.raw.FromPath)

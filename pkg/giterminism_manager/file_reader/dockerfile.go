@@ -13,11 +13,11 @@ func (r FileReader) ReadDockerfile(ctx context.Context, relPath string) ([]byte,
 }
 
 func (r FileReader) readDockerfile(ctx context.Context, relPath string) ([]byte, error) {
-	return r.readConfigurationFile(ctx, dockerfileErrorConfigType, relPath, r.manager.Config().IsUncommittedDockerfileAccepted)
+	return r.readConfigurationFile(ctx, dockerfileErrorConfigType, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted)
 }
 
 func (r FileReader) checkDockerfileExistence(ctx context.Context, relPath string) error {
-	return r.checkConfigurationFileExistence(ctx, dockerfileErrorConfigType, relPath, r.manager.Config().IsUncommittedDockerfileAccepted)
+	return r.checkConfigurationFileExistence(ctx, dockerfileErrorConfigType, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted)
 }
 
 func (r FileReader) IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error) {
@@ -33,13 +33,13 @@ func (r FileReader) ReadDockerignore(ctx context.Context, relPath string) ([]byt
 }
 
 func (r FileReader) checkDockerignoreExistence(ctx context.Context, relPath string) error {
-	return r.checkConfigurationFileExistence(ctx, dockerignoreErrorConfigType, relPath, r.manager.Config().IsUncommittedDockerignoreAccepted)
+	return r.checkConfigurationFileExistence(ctx, dockerignoreErrorConfigType, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted)
 }
 
 func (r FileReader) isDockerignoreExist(ctx context.Context, relPath string) (bool, error) {
-	return r.isConfigurationFileExist(ctx, relPath, r.manager.Config().IsUncommittedDockerignoreAccepted)
+	return r.isConfigurationFileExist(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted)
 }
 
 func (r FileReader) readDockerignore(ctx context.Context, relPath string) ([]byte, error) {
-	return r.readConfigurationFile(ctx, dockerignoreErrorConfigType, relPath, r.manager.Config().IsUncommittedDockerignoreAccepted)
+	return r.readConfigurationFile(ctx, dockerignoreErrorConfigType, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted)
 }

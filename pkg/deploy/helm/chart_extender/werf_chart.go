@@ -23,7 +23,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/deploy/secret"
-	"github.com/werf/werf/pkg/giterminism"
+	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/util/secretvalues"
 )
 
@@ -39,7 +39,7 @@ type WerfChartOptions struct {
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 }
 
-func NewWerfChart(ctx context.Context, giterminismManager giterminism.Manager, secretManager secret.Manager, projectDir, chartDir string, helmEnvSettings *cli.EnvSettings, opts WerfChartOptions) *WerfChart {
+func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretManager secret.Manager, projectDir, chartDir string, helmEnvSettings *cli.EnvSettings, opts WerfChartOptions) *WerfChart {
 	wc := &WerfChart{
 		ProjectDir:       projectDir,
 		ChartDir:         chartDir,
@@ -71,7 +71,7 @@ type WerfChart struct {
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 
 	SecretsManager     secret.Manager
-	GiterminismManager giterminism.Manager
+	GiterminismManager giterminism_manager.Interface
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	werfConfig                            *config.WerfConfig

@@ -3,7 +3,7 @@ package config
 import (
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/giterminism"
+	"github.com/werf/werf/pkg/giterminism_manager"
 )
 
 type ImageFromDockerfile struct {
@@ -20,7 +20,7 @@ type ImageFromDockerfile struct {
 	raw *rawImageFromDockerfile
 }
 
-func (c *ImageFromDockerfile) validate(giterminismManager giterminism.Manager) error {
+func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.Interface) error {
 	if !isRelativePath(c.Context) {
 		return newDetailedConfigError("`context: PATH` should be relative to project directory!", nil, c.raw.doc)
 	} else if c.Dockerfile != "" && !isRelativePath(c.Dockerfile) {

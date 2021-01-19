@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/werf/werf/pkg/giterminism"
+	"github.com/werf/werf/pkg/giterminism_manager"
 )
 
 type GitRemoteExport struct {
@@ -13,7 +13,7 @@ type GitRemoteExport struct {
 	raw *rawGit
 }
 
-func (c *GitRemoteExport) validate(giterminismManager giterminism.Manager) error {
+func (c *GitRemoteExport) validate(giterminismManager giterminism_manager.Interface) error {
 	isDefaultMasterBranch := c.Branch == "" && c.Commit == "" && c.Tag == ""
 	isBranch := isDefaultMasterBranch || c.Branch != ""
 

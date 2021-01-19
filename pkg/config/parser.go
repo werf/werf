@@ -19,7 +19,7 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism"
+	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/tmp_manager"
@@ -31,7 +31,7 @@ type WerfConfigOptions struct {
 	Env                 string
 }
 
-func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, imagesToProcess []string, giterminismManager giterminism.Manager, opts WerfConfigOptions) error {
+func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, imagesToProcess []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
 	werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfCo
 	return nil
 }
 
-func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism.Manager, opts WerfConfigOptions) (*WerfConfig, error) {
+func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (*WerfConfig, error) {
 	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
 	if err != nil {
 		return nil, err
@@ -208,7 +208,7 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism.Manager, env string) (string, error) {
+func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, env string) (string, error) {
 	tmpl := template.New("werfConfig")
 	tmpl.Funcs(funcMap(tmpl, giterminismManager))
 
@@ -232,7 +232,7 @@ func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWe
 	return config, err
 }
 
-func parseWerfConfig(ctx context.Context, tmpl *template.Template, giterminismManager giterminism.Manager, relWerfConfigPath string) error {
+func parseWerfConfig(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, relWerfConfigPath string) error {
 	configData, err := giterminismManager.FileReader().ReadConfig(ctx, relWerfConfigPath)
 	if err != nil {
 		return err
@@ -245,7 +245,7 @@ func parseWerfConfig(ctx context.Context, tmpl *template.Template, giterminismMa
 	return nil
 }
 
-func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, giterminismManager giterminism.Manager, customWerfConfigTemplatesDirRelPath string) error {
+func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, customWerfConfigTemplatesDirRelPath string) error {
 	return giterminismManager.FileReader().ReadConfigTemplateFiles(ctx, customWerfConfigTemplatesDirRelPath, func(templatePathInsideDir string, data []byte, err error) error {
 		if err != nil {
 			return err
@@ -266,7 +266,7 @@ func addTemplate(tmpl *template.Template, templateName string, templateContent s
 	return err
 }
 
-func funcMap(tmpl *template.Template, giterminismManager giterminism.Manager) template.FuncMap {
+func funcMap(tmpl *template.Template, giterminismManager giterminism_manager.Interface) template.FuncMap {
 	funcMap := sprig.TxtFuncMap()
 	delete(funcMap, "expandenv")
 
@@ -305,7 +305,7 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 
 type files struct {
 	ctx                context.Context
-	giterminismManager giterminism.Manager
+	giterminismManager giterminism_manager.Interface
 }
 
 func (f files) Get(relPath string) string {
@@ -454,7 +454,7 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func prepareWerfConfig(giterminismManager giterminism.Manager, rawImages []*rawStapelImage, rawImagesFromDockerfile []*rawImageFromDockerfile, meta *Meta) (*WerfConfig, error) {
+func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImages []*rawStapelImage, rawImagesFromDockerfile []*rawImageFromDockerfile, meta *Meta) (*WerfConfig, error) {
 	var stapelImages []*StapelImage
 	var imagesFromDockerfile []*ImageFromDockerfile
 	var artifacts []*StapelImageArtifact

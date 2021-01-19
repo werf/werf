@@ -1,6 +1,6 @@
 package config
 
-import "github.com/werf/werf/pkg/giterminism"
+import "github.com/werf/werf/pkg/giterminism_manager"
 
 type rawMount struct {
 	To       string `yaml:"to,omitempty"`
@@ -29,7 +29,7 @@ func (c *rawMount) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (c *rawMount) toDirective(giterminismManager giterminism.Manager) (mount *Mount, err error) {
+func (c *rawMount) toDirective(giterminismManager giterminism_manager.Interface) (mount *Mount, err error) {
 	mount = &Mount{}
 	mount.To = c.To
 	mount.From = c.FromPath
@@ -49,7 +49,7 @@ func (c *rawMount) toDirective(giterminismManager giterminism.Manager) (mount *M
 	return mount, nil
 }
 
-func (c *rawMount) validateDirective(giterminismManager giterminism.Manager, mount *Mount) (err error) {
+func (c *rawMount) validateDirective(giterminismManager giterminism_manager.Interface, mount *Mount) (err error) {
 	if err := mount.validate(giterminismManager); err != nil {
 		return err
 	}

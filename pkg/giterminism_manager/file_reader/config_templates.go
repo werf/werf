@@ -20,7 +20,7 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 		ctx,
 		configTemplateErrorConfigType,
 		pattern,
-		r.manager.Config().IsUncommittedConfigTemplateFileAccepted,
+		r.giterminismConfig.IsUncommittedConfigTemplateFileAccepted,
 		r.readCommitConfigTemplateFile,
 		func(relPath string, data []byte, err error) error {
 			templatePathInsideDir := util.GetRelativeToBaseFilepath(templatesDirRelPath, relPath)

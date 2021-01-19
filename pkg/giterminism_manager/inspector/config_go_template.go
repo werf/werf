@@ -6,11 +6,11 @@ import (
 )
 
 func (i Inspector) InspectConfigGoTemplateRenderingEnv(ctx context.Context, envName string) error {
-	if i.manager.LooseGiterminism() {
+	if i.sharedOptions.LooseGiterminism() {
 		return nil
 	}
 
-	if isAccepted, err := i.manager.Config().IsConfigGoTemplateRenderingEnvNameAccepted(envName); err != nil {
+	if isAccepted, err := i.giterminismConfig.IsConfigGoTemplateRenderingEnvNameAccepted(envName); err != nil {
 		return err
 	} else if isAccepted {
 		return nil

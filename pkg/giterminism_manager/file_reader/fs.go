@@ -13,7 +13,7 @@ import (
 // This function follows only symlinks pointed to a regular file (not to a directory)
 func (r FileReader) filesGlob(pattern string) ([]string, error) {
 	var result []string
-	err := util.WalkByPattern(r.manager.ProjectDir(), pattern, func(path string, s os.FileInfo, err error) error {
+	err := util.WalkByPattern(r.sharedOptions.ProjectDir(), pattern, func(path string, s os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -43,8 +43,8 @@ func (r FileReader) filesGlob(pattern string) ([]string, error) {
 			filePath = path
 		}
 
-		if util.IsSubpathOfBasePath(r.manager.ProjectDir(), filePath) {
-			relPath := util.GetRelativeToBaseFilepath(r.manager.ProjectDir(), filePath)
+		if util.IsSubpathOfBasePath(r.sharedOptions.ProjectDir(), filePath) {
+			relPath := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), filePath)
 			result = append(result, relPath)
 		} else {
 			return fmt.Errorf("unable to handle the file %s which is located outside the project directory", filePath)
@@ -57,7 +57,7 @@ func (r FileReader) filesGlob(pattern string) ([]string, error) {
 }
 
 func (r FileReader) readFile(relPath string) ([]byte, error) {
-	absPath := filepath.Join(r.manager.ProjectDir(), relPath)
+	absPath := filepath.Join(r.sharedOptions.ProjectDir(), relPath)
 	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file %s: %s", absPath, err)
@@ -67,7 +67,7 @@ func (r FileReader) readFile(relPath string) ([]byte, error) {
 }
 
 func (r FileReader) isDirectoryExist(relPath string) (bool, error) {
-	absPath := filepath.Join(r.manager.ProjectDir(), relPath)
+	absPath := filepath.Join(r.sharedOptions.ProjectDir(), relPath)
 	exist, err := util.DirExists(absPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check existence of directory %s: %s", absPath, err)
@@ -77,7 +77,7 @@ func (r FileReader) isDirectoryExist(relPath string) (bool, error) {
 }
 
 func (r FileReader) isFileExist(relPath string) (bool, error) {
-	absPath := filepath.Join(r.manager.ProjectDir(), relPath)
+	absPath := filepath.Join(r.sharedOptions.ProjectDir(), relPath)
 	exist, err := util.FileExists(absPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check existence of file %s: %s", absPath, err)

@@ -27,7 +27,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism"
+	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -57,7 +57,7 @@ type Conveyor struct {
 
 	stageImages        map[string]*container_runtime.StageImage
 	localGitRepo       git_repo.Local
-	giterminismManager giterminism.Manager
+	giterminismManager giterminism_manager.Interface
 	remoteGitRepos     map[string]*git_repo.Remote
 
 	tmpDir string
@@ -83,7 +83,7 @@ type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism.Manager, localGitRepo git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, localGitRepo git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
 	return &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
