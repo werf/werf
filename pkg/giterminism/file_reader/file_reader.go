@@ -7,13 +7,14 @@ import (
 type configType string
 
 const (
-	configErrorConfigType           configType = "werf config"
-	configTemplateErrorConfigType   configType = "werf config template"
-	configGoTemplateErrorConfigType configType = "file"
-	dockerfileErrorConfigType       configType = "dockerfile"
-	dockerignoreErrorConfigType     configType = "dockerignore file"
-	chartFileErrorConfigType        configType = "chart file"
-	chartDirectoryErrorConfigType   configType = "chart directory"
+	giterminismConfigErrorConfigType configType = "giterminism config"
+	configErrorConfigType            configType = "werf config"
+	configTemplateErrorConfigType    configType = "werf config template"
+	configGoTemplateErrorConfigType  configType = "file"
+	dockerfileErrorConfigType        configType = "dockerfile"
+	dockerignoreErrorConfigType      configType = "dockerignore file"
+	chartFileErrorConfigType         configType = "chart file"
+	chartDirectoryErrorConfigType    configType = "chart directory"
 )
 
 type FileReader struct {

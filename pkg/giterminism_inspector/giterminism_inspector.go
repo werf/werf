@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/giterminism_inspector/config"
 )
 
 const giterminismDocPageURL = "https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html"
@@ -16,8 +15,6 @@ var (
 	DevMode                  bool
 	ReportedUncommittedPaths []string
 	ReportedUntrackedPaths   []string
-
-	giterminismConfig config.GiterminismConfig
 )
 
 type InspectionOptions struct {
@@ -31,17 +28,7 @@ func Init(projectPath string, opts InspectionOptions) error {
 	NonStrict = opts.NonStrict
 	DevMode = opts.DevMode
 
-	if c, err := config.PrepareConfig(projectPath); err != nil {
-		return err
-	} else {
-		giterminismConfig = c
-	}
-
 	return nil
-}
-
-func IsUncommittedConfigGoTemplateRenderingFileAccepted(path string) (bool, error) {
-	return giterminismConfig.Config.GoTemplateRendering.IsUncommittedFileAccepted(path)
 }
 
 func ReportUntrackedFile(ctx context.Context, path string) error {
@@ -74,20 +61,6 @@ func ReportUncommittedFile(ctx context.Context, path string) error {
 	} else {
 		return fmt.Errorf("restricted usage of uncommitted file %s (more info %s)", path, giterminismDocPageURL)
 	}
-}
-
-func ReportUntrackedConfigGoTemplateRenderingFile(ctx context.Context, path string) error {
-	return ReportUntrackedFile(ctx, path)
-}
-
-func ReportConfigGoTemplateRenderingEnv(_ context.Context, envName string) error {
-	if isAccepted, err := giterminismConfig.Config.GoTemplateRendering.IsEnvNameAccepted(envName); err != nil {
-		return err
-	} else if isAccepted {
-		return nil
-	}
-
-	return fmt.Errorf("env name %s is forbidden due to enabled giterminism mode (more info %s)", envName, giterminismDocPageURL)
 }
 
 func PrintInspectionDebrief(ctx context.Context) {
