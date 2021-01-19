@@ -1005,16 +1005,20 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	return currentDir, nil
 }
 
-func GetHelmChartDir(projectDir string, cmdData *CmdData, werfConfig *config.WerfConfig) (string, error) {
+func GetHelmChartDir(werfConfig *config.WerfConfig, projectDir string) (string, error) {
 	var helmChartDir string
-
 	if werfConfig.Meta.Deploy.HelmChartDir != nil && *werfConfig.Meta.Deploy.HelmChartDir != "" {
 		helmChartDir = *werfConfig.Meta.Deploy.HelmChartDir
 	} else {
 		helmChartDir = ".helm"
 	}
 
-	return helmChartDir, nil
+	absHelmChartDir := util.GetAbsoluteFilepath(helmChartDir)
+	if !util.IsSubpathOfBasePath(projectDir, absHelmChartDir) {
+		return "", fmt.Errorf("the chart directory '%s' must be in the project directory", helmChartDir)
+	}
+
+	return util.GetRelativeToBaseFilepath(projectDir, absHelmChartDir), nil
 }
 
 func GetNamespace(cmdData *CmdData) string {

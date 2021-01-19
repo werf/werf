@@ -96,7 +96,7 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	helmChartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData, werfConfig)
+	helmChartDir, err := common.GetHelmChartDir(werfConfig, projectDir)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
