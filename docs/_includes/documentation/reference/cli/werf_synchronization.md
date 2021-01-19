@@ -68,10 +68,6 @@ werf synchronization [options]
             more info                                                                               
             https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
             default $WERF_LOOSE_GITERMINISM)
-      --non-strict-giterminism-inspection=false
-            Change some errors to warnings during giterminism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --port=''
             Bind synchronization server to the specified port (default 55581 or $WERF_PORT)
       --tmp-dir=''

@@ -115,10 +115,6 @@ werf render [options]
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
-      --non-strict-giterminism-inspection=false
-            Change some errors to warnings during giterminism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --output=''
             Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
             default)

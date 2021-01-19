@@ -92,10 +92,6 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             more info                                                                               
             https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
             default $WERF_LOOSE_GITERMINISM)
-      --non-strict-giterminism-inspection=false
-            Change some errors to warnings during giterminism inspection (more info                 
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_NON_STRICT_GITERMINISM_INSPECTION)
       --repo=''
             Docker Repo to store stages (default $WERF_REPO)
       --repo-docker-hub-password=''

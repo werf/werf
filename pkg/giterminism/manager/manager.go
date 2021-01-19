@@ -17,9 +17,8 @@ type Manager struct {
 	config     giterminism.Config
 	inspector  giterminism.Inspector
 
-	devMode                        bool
-	looseGiterminism               bool
-	nonStrictGiterminismInspection bool
+	devMode          bool
+	looseGiterminism bool
 }
 
 type NewManagerOptions struct {
