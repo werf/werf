@@ -1,9 +1,13 @@
 package bundles_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/integration/pkg/suite_init"
 
 	"github.com/werf/werf/integration/pkg/utils"
@@ -19,11 +23,19 @@ func liveExecWerf(dir string, opts liveexec.ExecCommandOptions, extraArgs ...str
 }
 
 var _ = Describe("Bundles", func() {
+	BeforeEach(func() {
+		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
+	})
+
 	for i := range suite_init.ContainerRegistryImplementationListToCheck() {
 		implementationName := suite_init.ContainerRegistryImplementationListToCheck()[i]
 
 		Context(fmt.Sprintf("[%s] publish and apply quickstart-application bundle", implementationName), func() {
 			AfterEach(func() {
+				liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "helm", "uninstall", "--namespace", SuiteData.ProjectName, SuiteData.ProjectName)
+
+				kube.Client.CoreV1().Namespaces().Delete(context.Background(), SuiteData.ProjectName, metav1.DeleteOptions{})
+
 				liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "purge", "--force")
 				os.RemoveAll(SuiteData.ProjectName)
 			})

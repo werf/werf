@@ -101,16 +101,8 @@ func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]i
 
 // SetupTemplateFuncs method for the chart.Extender interface
 func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
-	helmIncludeFunc := funcMap["include"].(func(name string, data interface{}) (string, error))
-	setupIncludeWrapperFunc := func(name string) {
-		funcMap[name] = func(data interface{}) (string, error) {
-			return helmIncludeFunc(name, data)
-		}
-	}
-
-	for _, name := range []string{"werf_image"} {
-		setupIncludeWrapperFunc(name)
-	}
+	SetupIncludeWrapperFuncs(funcMap)
+	SetupWerfImageDeprecationFunc(bundle.chartExtenderContext, funcMap)
 }
 
 func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*chart.ChartExtenderBufferedFile {
