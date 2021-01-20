@@ -17,7 +17,7 @@ import (
 var _ = Describe("base", func() {
 	BeforeEach(func() {
 		Ω(werf.Init("", "")).Should(Succeed())
-		SuiteData.TestDirPath = utils.FixturePath("base")
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
 	})
 
 	ciSystems := []string{
@@ -31,7 +31,7 @@ var _ = Describe("base", func() {
 		Context(ciSystem, func() {
 			It("should print only script path", func() {
 				output := utils.SucceedCommandOutputString(
-					SuiteData.TestDirPath,
+					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					SuiteData.WerfBinPath,
 					utils.WerfBinArgs("ci-env", ciSystem, "--as-file")...,
 				)
@@ -53,13 +53,13 @@ var _ = Describe("base", func() {
 
 			It("should print only shell script", func() {
 				output := utils.SucceedCommandOutputString(
-					SuiteData.TestDirPath,
+					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					SuiteData.WerfBinPath,
 					utils.WerfBinArgs("ci-env", ciSystem)...,
 				)
 
 				useAsFileOutput := utils.SucceedCommandOutputString(
-					SuiteData.TestDirPath,
+					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					SuiteData.WerfBinPath,
 					utils.WerfBinArgs("ci-env", ciSystem, "--as-file")...,
 				)

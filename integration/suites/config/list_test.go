@@ -14,13 +14,13 @@ type listEntry struct {
 }
 
 var listItBody = func(entry listEntry) {
-	SuiteData.TestDirPath = utils.FixturePath("list")
+	SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("list"), "initial commit")
 
 	werfArgs := []string{"config", "list"}
 	werfArgs = append(werfArgs, entry.extraArgs...)
 
 	output := utils.SucceedCommandOutputString(
-		SuiteData.TestDirPath,
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		werfArgs...,
 	)

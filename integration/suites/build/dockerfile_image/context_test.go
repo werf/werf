@@ -15,7 +15,7 @@ var werfRepositoryDir string
 
 func init() {
 	var err error
-	werfRepositoryDir, err = filepath.Abs("../../../")
+	werfRepositoryDir, err = filepath.Abs("../../../../")
 	if err != nil {
 		panic(err)
 	}
@@ -23,14 +23,16 @@ func init() {
 
 var _ = Describe("context", func() {
 	BeforeEach(func() {
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"clone", werfRepositoryDir, SuiteData.TestDirPath,
-		)
+		SuiteData.WerfRepoWorktreeDir = filepath.Join(SuiteData.TestDirPath, "werf_repo_worktree")
 
 		utils.RunSucceedCommand(
 			SuiteData.TestDirPath,
+			"git",
+			"clone", werfRepositoryDir, SuiteData.WerfRepoWorktreeDir,
+		)
+
+		utils.RunSucceedCommand(
+			SuiteData.WerfRepoWorktreeDir,
 			"git",
 			"checkout", "-b", "integration-context-test", "v1.0.10",
 		)
@@ -38,7 +40,7 @@ var _ = Describe("context", func() {
 
 	AfterEach(func() {
 		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
+			SuiteData.WerfRepoWorktreeDir,
 			SuiteData.WerfBinPath,
 			"purge", "--force",
 		)
@@ -55,7 +57,7 @@ var _ = Describe("context", func() {
 		entry.prepareFixturesFunc()
 
 		output, err := utils.RunCommand(
-			SuiteData.TestDirPath,
+			SuiteData.WerfRepoWorktreeDir,
 			SuiteData.WerfBinPath,
 			"build", "--debug",
 		)
@@ -73,16 +75,15 @@ var _ = Describe("context", func() {
 	var _ = DescribeTable("checksum", itBody,
 		Entry("base", entry{
 			prepareFixturesFunc: func() {
-				utils.CopyIn(utils.FixturePath("context", "base"), SuiteData.TestDirPath)
+				utils.CopyIn(utils.FixturePath("context", "base"), SuiteData.WerfRepoWorktreeDir)
 
 				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
+					SuiteData.WerfRepoWorktreeDir,
 					"git",
 					"add", "werf.yaml", ".dockerignore", "Dockerfile",
 				)
-
 				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
+					SuiteData.WerfRepoWorktreeDir,
 					"git",
 					"commit", "-m", "+",
 				)
@@ -91,22 +92,21 @@ var _ = Describe("context", func() {
 		}),
 		Entry("contextAdd", entry{
 			prepareFixturesFunc: func() {
-				utils.CopyIn(utils.FixturePath("context", "context_add_file"), SuiteData.TestDirPath)
+				utils.CopyIn(utils.FixturePath("context", "context_add_file"), SuiteData.WerfRepoWorktreeDir)
 
 				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
+					SuiteData.WerfRepoWorktreeDir,
 					"git",
-					"add", "werf.yaml", ".dockerignore", "Dockerfile",
+					"add", "werf.yaml", "werf-giterminism.yaml", ".dockerignore", "Dockerfile",
 				)
-
 				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
+					SuiteData.WerfRepoWorktreeDir,
 					"git",
 					"commit", "-m", "+",
 				)
 			},
-			expectedWindowsDigest: "f4f979dc59d00427ae092d7b98a082143504e3fafbe5e01ef913e5a5",
-			expectedUnixDigest:    "4d168006f579e786eb009927a517582ddb40ad2199aa4ad806e38d0b",
+			expectedWindowsDigest: "b1c6be25d30d2de58df66e46dc8a328176cc2744dc3bfc2ae8d2917b",
+			expectedUnixDigest:    "48a81bd49a6d299f78b463628ef6dd2436c2fce6736f2ad624b92e7f",
 		}),
 	)
 })

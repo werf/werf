@@ -12,7 +12,11 @@ func TestSuite(t *testing.T) {
 	testSuiteEntrypointFunc(t)
 }
 
-var SuiteData suite_init.SuiteData
+var SuiteData struct {
+	suite_init.SuiteData
+
+	WerfRepoWorktreeDir string
+}
 
 var _ = SuiteData.SetupStubs(suite_init.NewStubsData())
 var _ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())

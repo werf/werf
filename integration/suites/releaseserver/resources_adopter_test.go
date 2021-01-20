@@ -33,13 +33,15 @@ var _ = Describe("Resources adopter", func() {
 		})
 
 		AfterEach(func() {
-			utils.RunCommand("resources_adopter_app1-003", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should fail to deploy release when resources already exist; should adopt already existing resources when adoption annotation is set", func() {
 			By("Installing release first time without mydeploy2 and mydeploy4")
 
-			Expect(werfDeploy("resources_adopter_app1-001", liveexec.ExecCommandOptions{})).To(Succeed())
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "resources_adopter_app1-001", "initial commit")
+
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
 
 			By("creating mydeploy2 and mydeploy4 using API in the cluster")
 
@@ -105,9 +107,11 @@ spec:
 
 			By("redeploying release with added mydeploy2 and mydeploy4")
 
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "resources_adopter_app1-002", "add mydeploy2 and mydeploy4")
+
 			gotMydeploy2AlreadyExists := false
 			gotMydeploy4AlreadyExists := false
-			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, fmt.Sprintf(`Deployment "mydeploy2" in namespace "%s" exists and cannot be imported into the current release`, namespace)) != -1 {
 						gotMydeploy2AlreadyExists = true
@@ -130,7 +134,7 @@ spec:
 
 			By("redeploying release after first failure")
 
-			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{})).NotTo(Succeed())
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).NotTo(Succeed())
 
 			By("redeploying release with adoption annotations set to wrong release name")
 
@@ -158,7 +162,7 @@ spec:
 
 			gotMydeploy2AlreadyExists = false
 			gotMydeploy4AlreadyExists = false
-			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, fmt.Sprintf(`Deployment "mydeploy2" in namespace "%s" exists and cannot be imported into the current release`, namespace)) != -1 {
 						gotMydeploy2AlreadyExists = true
@@ -201,7 +205,7 @@ spec:
 
 			gotMydeploy2AlreadyExists = false
 			gotMydeploy4AlreadyExists = false
-			Expect(werfDeploy("resources_adopter_app1-002", liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					Expect(strings.Index(line, fmt.Sprintf(`Deployment "mydeploy2" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
 					Expect(strings.Index(line, fmt.Sprintf(`Deployment "mydeploy4" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
@@ -273,8 +277,10 @@ spec:
 
 			By("updating release with a new resource added to the chart that already exists in the cluster")
 
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "resources_adopter_app1-003", "add mydeploy5")
+
 			gotMydeploy5AlreadyExists := false
-			Expect(werfDeploy("resources_adopter_app1-003", liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, fmt.Sprintf(`Deployment "mydeploy5" in namespace "%s" exists and cannot be imported into the current release`, namespace)) != -1 {
 						gotMydeploy5AlreadyExists = true
@@ -298,7 +304,7 @@ spec:
 			}
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(werfDeploy("resources_adopter_app1-003", liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					Expect(strings.Index(line, fmt.Sprintf(`Deployment "mydeploy5" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
 				},
@@ -306,7 +312,7 @@ spec:
 
 			By("deleting release from cluster with all adopted resources")
 
-			Expect(werfDismiss("resources_adopter_app1-003", liveexec.ExecCommandOptions{})).To(Succeed())
+			Expect(liveexec.ExecCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, liveexec.ExecCommandOptions{}, utils.WerfBinArgs("dismiss")...)).To(Succeed())
 
 			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy1", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy1 should return not found error, got %v", err))
@@ -323,8 +329,7 @@ spec:
 			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy5", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy5 should return not found error, got %v", err))
 
-			_, err = kube.Client.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
-			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get ns/%s should return not found error, got %v", namespace, err))
+			kube.Client.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{})
 		})
 	})
 })

@@ -30,12 +30,14 @@ var _ = Describe("Helm releases manager", func() {
 
 	Context("when releases-history-max option has been specified from the beginning", func() {
 		AfterEach(func() {
-			utils.RunCommand("helm_releases_manager_app1-001", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should keep no more than specified number of releases", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "helm_releases_manager_app1-001", "initial commit")
+
 			for i := 0; i < 9; i++ {
-				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{
+				Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 					Env: map[string]string{"WERF_RELEASES_HISTORY_MAX": "5"},
 				})).Should(Succeed())
 				Expect(len(getReleasesHistory(releaseName, releaseName)) <= 5).To(BeTrue())
@@ -46,17 +48,19 @@ var _ = Describe("Helm releases manager", func() {
 
 	Context("when releases-history-max was not specified initially and then specified", func() {
 		AfterEach(func() {
-			utils.RunCommand("helm_releases_manager_app1-001", SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
 		It("should keep no more than specified number of releases", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "helm_releases_manager_app1-001", "initial commit")
+
 			for i := 0; i < 9; i++ {
-				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{})).Should(Succeed())
+				Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).Should(Succeed())
 			}
 			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(9))
 
 			for i := 0; i < 5; i++ {
-				Expect(werfDeploy("helm_releases_manager_app1-001", liveexec.ExecCommandOptions{}, "--releases-history-max=5")).Should(Succeed())
+				Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--releases-history-max=5")).Should(Succeed())
 				Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(5))
 			}
 		})

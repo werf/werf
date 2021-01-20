@@ -35,12 +35,14 @@ var _ = Describe("Stapel imports", func() {
 
 	Context("importing files and directories from artifact", func() {
 		AfterEach(func() {
-			werfPurge("imports_app1-003", liveexec.ExecCommandOptions{}, "--force")
+			werfPurge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("should allow importing files and directories, optionally rename files and directories and merge directories", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "imports_app1-001", "initial commit")
+
 			gotNoSuchFileError := false
-			Expect(werfBuild("imports_app1-001", liveexec.ExecCommandOptions{
+			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, "/myartifact/no-such-dir") != -1 && strings.Index(line, "No such file or directory") != -1 {
 						gotNoSuchFileError = true
@@ -49,8 +51,10 @@ var _ = Describe("Stapel imports", func() {
 			})).NotTo(Succeed())
 			Expect(gotNoSuchFileError).To(BeTrue())
 
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "imports_app1-002", "add missing no-such-dir")
+
 			gotNoSuchFileError = false
-			Expect(werfBuild("imports_app1-002", liveexec.ExecCommandOptions{
+			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Index(line, "/myartifact/file-no-such-file") != -1 && strings.Index(line, "No such file or directory") != -1 {
 						gotNoSuchFileError = true
@@ -59,73 +63,70 @@ var _ = Describe("Stapel imports", func() {
 			})).NotTo(Succeed())
 			Expect(gotNoSuchFileError).To(BeTrue())
 
-			Expect(werfBuild("imports_app1-003", liveexec.ExecCommandOptions{})).To(Succeed())
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "imports_app1-003", "add missing file-no-such-file")
 
-			Expect(werfRunOutput("imports_app1-003", "cat", "/usr/local/FILE")).To(ContainSubstring("FILE\n"))
-			Expect(werfRunOutput("imports_app1-003", "cat", "/usr/locallll")).To(ContainSubstring("FILE\n"))
-			Expect(werfRunOutput("imports_app1-003", "cat", "/usr/newlocal/file")).To(ContainSubstring("GOGOGO\n"))
-			Expect(werfRunOutput("imports_app1-003", "cat", "/usr/newlocal/a/b/FILE")).To(ContainSubstring("FILE\n"))
-			Expect(werfRunOutput("imports_app1-003", "cat", "/usr/share/file")).To(ContainSubstring("GOGOGO\n"))
-			Expect(werfRunOutput("imports_app1-003", "cat", "/usr/share/a/b/FILE")).To(ContainSubstring("FILE\n"))
-			Expect(werfRunOutput("imports_app1-003", "ls", "/usr/share/apk")).To(ContainSubstring("keys\n"))
-			Expect(werfRunOutput("imports_app1-003", "cat", "/file2")).To(ContainSubstring("GOGOGO\n"))
-			Expect(werfRunOutput("imports_app1-003", "cat", "/file")).To(ContainSubstring("GOGOGO\n"))
+			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/usr/local/FILE")).To(ContainSubstring("FILE\n"))
+			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/usr/locallll")).To(ContainSubstring("FILE\n"))
+			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/usr/newlocal/file")).To(ContainSubstring("GOGOGO\n"))
+			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/usr/newlocal/a/b/FILE")).To(ContainSubstring("FILE\n"))
+			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/usr/share/file")).To(ContainSubstring("GOGOGO\n"))
+			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/usr/share/a/b/FILE")).To(ContainSubstring("FILE\n"))
+			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "ls", "/usr/share/apk")).To(ContainSubstring("keys\n"))
+			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/file2")).To(ContainSubstring("GOGOGO\n"))
+			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/file")).To(ContainSubstring("GOGOGO\n"))
 		})
 	})
 
 	Context("caching by import source checksum", func() {
 		AfterEach(func() {
-			utils.RunSucceedCommand(
-				"import_metadata",
-				SuiteData.WerfBinPath,
-				"purge",
-			)
+			werfPurge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("should cache image when import source checksum was not changed", func() {
-			SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-001", "initial commit")
 
 			utils.RunSucceedCommand(
-				"import_metadata",
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"build",
 			)
 
-			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName("import_metadata", SuiteData.WerfBinPath, "image")
+			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
 
-			SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_2.yaml")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-002", "change artifact fromCacheVersion")
 
 			utils.RunSucceedCommand(
-				"import_metadata",
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"build",
 			)
 
-			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName("import_metadata", SuiteData.WerfBinPath, "image")
+			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
 
 			Ω(lastStageImageNameAfterFirstBuild).Should(Equal(lastStageImageNameAfterSecondBuild))
 		})
 
 		It("should rebuild image when import source checksum was changed", func() {
-			SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-001", "initial commit")
 
 			utils.RunSucceedCommand(
-				"import_metadata",
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"build",
 			)
 
-			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName("import_metadata", SuiteData.WerfBinPath, "image")
+			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
 
-			SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_3.yaml")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-003", "change artifact install stage")
 
 			utils.RunSucceedCommand(
-				"import_metadata",
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"build",
 			)
 
-			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName("import_metadata", SuiteData.WerfBinPath, "image")
+			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
 
 			Ω(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
 		})

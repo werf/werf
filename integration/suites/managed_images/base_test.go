@@ -11,12 +11,12 @@ import (
 
 var _ = Describe("managed images", func() {
 	BeforeEach(func() {
-		utils.CopyIn(utils.FixturePath("default"), SuiteData.TestDirPath)
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("default"), "initial commit")
 	})
 
 	It("ls should not return anything", func() {
 		output := utils.SucceedCommandOutputString(
-			SuiteData.TestDirPath,
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			SuiteData.WerfBinPath,
 			"managed-images", "ls",
 		)
@@ -49,7 +49,7 @@ var _ = Describe("managed images", func() {
 	When("werf images have been built", func() {
 		BeforeEach(func() {
 			utils.RunSucceedCommand(
-				SuiteData.TestDirPath,
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"build",
 			)
@@ -66,7 +66,7 @@ var _ = Describe("managed images", func() {
 
 func addManagedImage(imageName string) {
 	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		"managed-images", "add", imageName,
 	)
@@ -74,7 +74,7 @@ func addManagedImage(imageName string) {
 
 func rmManagedImage(imageName string) {
 	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		"managed-images", "rm", imageName,
 	)
@@ -82,7 +82,7 @@ func rmManagedImage(imageName string) {
 
 func isManagedImage(imageName string) bool {
 	output := utils.SucceedCommandOutputString(
-		SuiteData.TestDirPath,
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		"managed-images", "ls",
 	)
