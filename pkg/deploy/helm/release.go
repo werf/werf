@@ -159,6 +159,13 @@ type ChartOptions struct {
 }
 
 func DeployHelmChart(ctx context.Context, chartPath, releaseName, namespace string, opts ChartOptions) (err error) {
+	logboek.Context(ctx).Debug().LogBlock("Helm values params").Do(func() {
+		logboek.Context(ctx).Debug().LogF("values: %#v\n", opts.ChartValuesOptions.Values)
+		logboek.Context(ctx).Debug().LogF("set: %#v\n", opts.ChartValuesOptions.Set)
+		logboek.Context(ctx).Debug().LogF("set-string: %#v\n", opts.ChartValuesOptions.SetString)
+		logboek.Context(ctx).Debug().LogF("secret-values: %#v\n", opts.ChartValuesOptions.SecretValues)
+	})
+
 	var isReleaseExists bool
 
 	preDeployFunc := func() error {
