@@ -947,7 +947,7 @@ func GetCustomWerfConfigTemplatesDirRelPath(projectDir string, cmdData *CmdData)
 
 	customConfigTemplatesDirPath = util.GetAbsoluteFilepath(customConfigTemplatesDirPath)
 	if !util.IsSubpathOfBasePath(projectDir, customConfigTemplatesDirPath) {
-		return "", fmt.Errorf("werf configuration templates directory %q must be in the project directory", customConfigTemplatesDirPath)
+		return "", fmt.Errorf("the werf configuration templates directory %q must be in the project directory", customConfigTemplatesDirPath)
 	}
 
 	return util.GetRelativeToBaseFilepath(projectDir, customConfigTemplatesDirPath), nil
@@ -1018,7 +1018,7 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 			continue
 		}
 
-		return "", fmt.Errorf("the git repository not detected in the directory %q and the parent directories", projectDir)
+		return "", fmt.Errorf("werf requires a git repository for the project to exist: unable to find .git in the current directory %q or parent directories", projectDir)
 	}
 }
 
