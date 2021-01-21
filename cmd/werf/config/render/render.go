@@ -41,11 +41,6 @@ func NewCmd() *cobra.Command {
 				return err
 			}
 
-			projectDir, err := common.GetProjectDir(&commonCmdData)
-			if err != nil {
-				return fmt.Errorf("unable to get project directory: %s", err)
-			}
-
 			giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 			if err != nil {
 				return err
@@ -53,12 +48,12 @@ func NewCmd() *cobra.Command {
 
 			configOpts := common.GetWerfConfigOptions(&commonCmdData, false)
 
-			customWerfConfigRelPath, err := common.GetCustomWerfConfigRelPath(projectDir, &commonCmdData)
+			customWerfConfigRelPath, err := common.GetCustomWerfConfigRelPath(giterminismManager, &commonCmdData)
 			if err != nil {
 				return err
 			}
 
-			customWerfConfigTemplatesDirRelPath, err := common.GetCustomWerfConfigTemplatesDirRelPath(projectDir, &commonCmdData)
+			customWerfConfigTemplatesDirRelPath, err := common.GetCustomWerfConfigTemplatesDirRelPath(giterminismManager, &commonCmdData)
 			if err != nil {
 				return err
 			}
@@ -68,6 +63,7 @@ func NewCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)

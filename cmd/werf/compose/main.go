@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/werf/werf/pkg/giterminism_manager"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -152,6 +154,7 @@ Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NA
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -277,12 +280,12 @@ func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData com
 	}
 	ctx = ctxWithDockerCli
 
-	projectDir, err := common.GetProjectDir(&commonCmdData)
+	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
+		return err
 	}
 
-	common.ProcessLogProjectDir(&commonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
@@ -300,25 +303,15 @@ func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData com
 		}
 
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context) error {
-			return run(dockerComposeCmdName, cmdData, commonCmdData, ctx, projectDir)
+			return run(dockerComposeCmdName, cmdData, commonCmdData, ctx, giterminismManager)
 		})
 	} else {
-		return run(dockerComposeCmdName, cmdData, commonCmdData, ctx, projectDir)
+		return run(dockerComposeCmdName, cmdData, commonCmdData, ctx, giterminismManager)
 	}
 }
 
-func run(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.CmdData, ctx context.Context, projectDir string) error {
-	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
-	if err != nil {
-		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
-	}
-
-	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+func run(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.CmdData, ctx context.Context, giterminismManager giterminism_manager.Interface) error {
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -358,7 +351,7 @@ func run(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, localGitRepo, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, *giterminismManager.LocalGitRepo(), []string{}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	var envArray []string

@@ -53,6 +53,7 @@ Command will extract data with the old key, generate new secret data and rewrite
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -81,27 +82,22 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
-	}
-
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(context.Background(), projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	werfConfig, err := common.GetRequiredWerfConfig(context.Background(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	helmChartDir, err := common.GetHelmChartDir(werfConfig, projectDir)
+	helmChartDir, err := common.GetHelmChartDir(werfConfig, giterminismManager)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
 
-	newSecret, err := secret.GetManager(projectDir)
+	newSecret, err := secret.GetManager(giterminismManager.ProjectDir())
 	if err != nil {
 		return err
 	}

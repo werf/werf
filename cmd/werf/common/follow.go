@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/werf/logboek"
@@ -11,14 +10,14 @@ import (
 )
 
 func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx context.Context) error) error {
-	projectDir, err := GetProjectDir(cmdData)
+	workTree, err := GetGitWorkTree(cmdData)
 	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
+		return err
 	}
 
 	var savedHeadCommit string
 	iterFunc := func() error {
-		l, err := OpenLocalGitRepo(projectDir)
+		l, err := OpenLocalGitRepo(workTree)
 		if err != nil {
 			return err
 		}

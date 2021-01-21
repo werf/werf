@@ -261,7 +261,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 	return nil
 }
 
-func GetRealRepoDir(repoDir string) (string, error) {
+func ResolveRepoDir(repoDir string) (string, error) {
 	gitArgs := []string{"--git-dir", repoDir, "rev-parse", "--git-dir"}
 
 	cmd := exec.Command("git", gitArgs...)

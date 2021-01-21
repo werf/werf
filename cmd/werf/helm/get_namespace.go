@@ -29,6 +29,7 @@ func NewGetNamespaceCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&getNamespaceCmdData, cmd)
+	common.SetupGitWorkTree(&getNamespaceCmdData, cmd)
 	common.SetupConfigTemplatesDir(&getNamespaceCmdData, cmd)
 	common.SetupConfigPath(&getNamespaceCmdData, cmd)
 	common.SetupEnvironment(&getNamespaceCmdData, cmd)
@@ -61,17 +62,12 @@ func runGetNamespace() error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&getNamespaceCmdData)
-	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
-	}
-
 	giterminismManager, err := common.GetGiterminismManager(&getNamespaceCmdData)
 	if err != nil {
 		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getNamespaceCmdData, giterminismManager, common.GetWerfConfigOptions(&getNamespaceCmdData, false))
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &getNamespaceCmdData, giterminismManager, common.GetWerfConfigOptions(&getNamespaceCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

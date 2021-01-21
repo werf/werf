@@ -48,6 +48,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -124,12 +125,12 @@ func runCleanup() error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&commonCmdData)
+	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
+		return err
 	}
 
-	common.ProcessLogProjectDir(&commonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
@@ -137,23 +138,13 @@ func runCleanup() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
-	if err != nil {
-		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
-	}
-
-	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
 	if !werfConfig.Meta.GitWorktree.GetForceShallowClone() && !werfConfig.Meta.GitWorktree.GetAllowFetchingOriginBranchesAndTags() {
-		isShallow, err := localGitRepo.IsShallowClone()
+		isShallow, err := giterminismManager.LocalGitRepo().IsShallowClone()
 		if err != nil {
 			return fmt.Errorf("check shallow clone failed: %s", err)
 		}
@@ -168,7 +159,7 @@ func runCleanup() error {
 	}
 
 	if werfConfig.Meta.GitWorktree.GetAllowFetchingOriginBranchesAndTags() {
-		if err := localGitRepo.SyncWithOrigin(ctx); err != nil {
+		if err := giterminismManager.LocalGitRepo().SyncWithOrigin(ctx); err != nil {
 			return fmt.Errorf("synchronization failed: %s", err)
 		}
 	}
@@ -219,7 +210,7 @@ func runCleanup() error {
 
 	cleanupOptions := cleaning.CleanupOptions{
 		ImageNameList:                           imagesNames,
-		LocalGit:                                &localGitRepo,
+		LocalGit:                                giterminismManager.LocalGitRepo(),
 		KubernetesContextClients:                kubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients),
 		WithoutKube:                             *commonCmdData.WithoutKube,

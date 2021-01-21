@@ -29,6 +29,7 @@ func NewGetReleaseCmd() *cobra.Command {
 	}
 
 	common.SetupDir(&getReleaseCmdData, cmd)
+	common.SetupGitWorkTree(&getReleaseCmdData, cmd)
 	common.SetupConfigTemplatesDir(&getReleaseCmdData, cmd)
 	common.SetupConfigPath(&getReleaseCmdData, cmd)
 	common.SetupEnvironment(&getReleaseCmdData, cmd)
@@ -61,17 +62,12 @@ func runGetRelease() error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&getReleaseCmdData)
-	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
-	}
-
 	giterminismManager, err := common.GetGiterminismManager(&getReleaseCmdData)
 	if err != nil {
 		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

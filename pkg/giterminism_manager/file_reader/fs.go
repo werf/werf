@@ -43,11 +43,11 @@ func (r FileReader) filesGlob(pattern string) ([]string, error) {
 			filePath = path
 		}
 
-		if util.IsSubpathOfBasePath(r.sharedOptions.ProjectDir(), filePath) {
+		if util.IsSubpathOfBasePath(r.sharedOptions.LocalGitRepo().WorkTreeDir, filePath) {
 			relPath := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), filePath)
 			result = append(result, relPath)
 		} else {
-			return fmt.Errorf("unable to handle the file %s which is located outside the project directory", filePath)
+			return fmt.Errorf("unable to handle the file %s which is located outside of the git work tree %s", filePath, r.sharedOptions.LocalGitRepo().WorkTreeDir)
 		}
 
 		return nil
