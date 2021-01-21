@@ -933,7 +933,7 @@ func GetCustomWerfConfigRelPath(projectDir string, cmdData *CmdData) (string, er
 
 	customConfigPath = util.GetAbsoluteFilepath(customConfigPath)
 	if !util.IsSubpathOfBasePath(projectDir, customConfigPath) {
-		return "", fmt.Errorf("werf configuration file '%s' must be in the project directory", customConfigPath)
+		return "", fmt.Errorf("the werf config '%s' must be in the project directory", customConfigPath)
 	}
 
 	return util.GetRelativeToBaseFilepath(projectDir, customConfigPath), nil
@@ -984,7 +984,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 func InitGiterminismInspector(cmdData *CmdData) error {
 	projectPath, err := GetProjectDir(cmdData)
 	if err != nil {
-		return fmt.Errorf("unable to get project dir: %s", err)
+		return fmt.Errorf("unable to get project directory: %s", err)
 	}
 
 	return giterminism_inspector.Init(projectPath, giterminism_inspector.InspectionOptions{
@@ -994,32 +994,48 @@ func InitGiterminismInspector(cmdData *CmdData) error {
 }
 
 func GetProjectDir(cmdData *CmdData) (string, error) {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
+	var projectDir string
 	if *cmdData.Dir != "" {
-		if filepath.IsAbs(*cmdData.Dir) {
-			return *cmdData.Dir, nil
-		} else {
-			return filepath.Clean(filepath.Join(currentDir, *cmdData.Dir)), nil
-		}
+		projectDir = *cmdData.Dir
+	} else {
+		projectDir = "."
 	}
 
-	return currentDir, nil
+	projectDir = util.GetAbsoluteFilepath(projectDir)
+	d := projectDir
+	for {
+		exist, err := util.DirExists(filepath.Join(d, ".git"))
+		if err != nil {
+			return "", err
+		}
+
+		if exist {
+			return d, nil
+		}
+
+		if d != filepath.Dir(d) {
+			d = filepath.Dir(d)
+			continue
+		}
+
+		return "", fmt.Errorf("the git repository not detected in the directory '%s' and the parent directories", projectDir)
+	}
 }
 
-func GetHelmChartDir(projectDir string, cmdData *CmdData, werfConfig *config.WerfConfig) (string, error) {
+func GetHelmChartDir(werfConfig *config.WerfConfig, projectDir string) (string, error) {
 	var helmChartDir string
-
 	if werfConfig.Meta.Deploy.HelmChartDir != nil && *werfConfig.Meta.Deploy.HelmChartDir != "" {
 		helmChartDir = *werfConfig.Meta.Deploy.HelmChartDir
 	} else {
 		helmChartDir = ".helm"
 	}
 
-	return helmChartDir, nil
+	absHelmChartDir := util.GetAbsoluteFilepath(helmChartDir)
+	if !util.IsSubpathOfBasePath(projectDir, absHelmChartDir) {
+		return "", fmt.Errorf("the chart directory '%s' must be in the project directory", helmChartDir)
+	}
+
+	return util.GetRelativeToBaseFilepath(projectDir, absHelmChartDir), nil
 }
 
 func GetNamespace(cmdData *CmdData) string {

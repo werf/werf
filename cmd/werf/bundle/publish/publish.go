@@ -173,7 +173,7 @@ func runPublish() error {
 
 	projectDir, err := common.GetProjectDir(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("getting project dir failed: %s", err)
+		return fmt.Errorf("unable to get project directory: %s", err)
 	}
 
 	common.ProcessLogProjectDir(&commonCmdData, projectDir)
@@ -195,7 +195,7 @@ func runPublish() error {
 
 	projectName := werfConfig.Meta.Project
 
-	chartDir, err := common.GetHelmChartDir(projectDir, &commonCmdData, werfConfig)
+	chartDir, err := common.GetHelmChartDir(werfConfig, projectDir)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
