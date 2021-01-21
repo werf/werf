@@ -185,7 +185,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 			}
 
 			if debugArchive() {
-				logboek.Context(ctx).Debug().LogF("Added archive file '%s'\n", relToBasePathFilepath)
+				logboek.Context(ctx).Debug().LogF("Added archive file %q\n", relToBasePathFilepath)
 			}
 		case filemode.Symlink:
 			isSymlink := info.Mode()&os.ModeSymlink != 0

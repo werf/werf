@@ -165,7 +165,7 @@ func run(imageName string) error {
 	}
 
 	if !werfConfig.HasImage(imageName) {
-		return fmt.Errorf("image '%s' is not defined in werf.yaml", logging.ImageLogName(imageName, false))
+		return fmt.Errorf("image %q is not defined in werf.yaml", logging.ImageLogName(imageName, false))
 	}
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO

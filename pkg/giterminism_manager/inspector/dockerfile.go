@@ -16,5 +16,5 @@ func (i Inspector) InspectConfigDockerfileContextAddFile(relPath string) error {
 		return nil
 	}
 
-	return NewExternalDependencyFoundError(fmt.Sprintf("contextAddFile '%s' not allowed", filepath.ToSlash(relPath)))
+	return NewExternalDependencyFoundError(fmt.Sprintf("contextAddFile %q not allowed", filepath.ToSlash(relPath)))
 }

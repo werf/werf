@@ -25,7 +25,7 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, pattern strin
 			return nil
 		},
 	); err != nil {
-		return nil, fmt.Errorf("{{ .Files.Glob '%s' }}: %s", pattern, err)
+		return nil, fmt.Errorf("{{ .Files.Glob %q }}: %s", pattern, err)
 	}
 
 	return result, nil
@@ -33,12 +33,12 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, pattern strin
 
 func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string) ([]byte, error) {
 	if err := r.checkConfigGoTemplateFileExistence(ctx, relPath); err != nil {
-		return nil, fmt.Errorf("{{ .Files.Get '%s' }}: %s", relPath, err)
+		return nil, fmt.Errorf("{{ .Files.Get %q }}: %s", relPath, err)
 	}
 
 	data, err := r.readConfigGoTemplateFile(ctx, relPath)
 	if err != nil {
-		return nil, fmt.Errorf("{{ .Files.Get '%s' }}: %s", relPath, err)
+		return nil, fmt.Errorf("{{ .Files.Get %q }}: %s", relPath, err)
 	}
 
 	return data, nil

@@ -103,12 +103,12 @@ func (f *_escFile) Close() error {
 
 func (f *_escFile) Readdir(count int) ([]os.FileInfo, error) {
 	if !f.isDir {
-		return nil, fmt.Errorf(" escFile.Readdir: '%s' is not directory", f.name)
+		return nil, fmt.Errorf(" escFile.Readdir: %q is not directory", f.name)
 	}
 
 	fis, ok := _escDirs[f.local]
 	if !ok {
-		return nil, fmt.Errorf(" escFile.Readdir: '%s' is directory, but we have no info about content of this dir, local=%s", f.name, f.local)
+		return nil, fmt.Errorf(" escFile.Readdir: %q is directory, but we have no info about content of this dir, local=%s", f.name, f.local)
 	}
 	limit := count
 	if count <= 0 || limit > len(fis) {

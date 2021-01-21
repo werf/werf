@@ -16,5 +16,5 @@ func (i Inspector) InspectConfigGoTemplateRenderingEnv(ctx context.Context, envN
 		return nil
 	}
 
-	return NewExternalDependencyFoundError(fmt.Sprintf(`env name '%s' not allowed`, envName))
+	return NewExternalDependencyFoundError(fmt.Sprintf(`env name %q not allowed`, envName))
 }

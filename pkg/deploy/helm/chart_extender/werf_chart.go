@@ -157,7 +157,7 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 				secretFiles = append(secretFiles, key)
 			}
 
-			return "", fmt.Errorf("secret file '%s' not found, you may use one of the following: '%s'", secretRelativePath, strings.Join(secretFiles, "', '"))
+			return "", fmt.Errorf("secret file %q not found, you may use one of the following: %q", secretRelativePath, strings.Join(secretFiles, "', '"))
 		}
 
 		return decodedData, nil

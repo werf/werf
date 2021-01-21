@@ -40,7 +40,7 @@ func NewCmd(rootCmd *cobra.Command) *cobra.Command {
 				return nil
 			default:
 				common.PrintHelp(cmd)
-				return fmt.Errorf("provided shell '%s' not supported", cmdData.Shell)
+				return fmt.Errorf("provided shell %q not supported", cmdData.Shell)
 			}
 		},
 	}

@@ -90,11 +90,11 @@ func (r FileReader) resolveChartDirectory(relDir string) (string, error) {
 	}
 
 	if !linkStat.IsDir() {
-		return "", fmt.Errorf("unable to handle the chart directory '%s': linked to file not a directory", link)
+		return "", fmt.Errorf("unable to handle the chart directory %q: linked to file not a directory", link)
 	}
 
 	if !util.IsSubpathOfBasePath(r.sharedOptions.ProjectDir(), link) {
-		return "", fmt.Errorf("unable to handle the chart directory '%s' which is located outside the project directory", link)
+		return "", fmt.Errorf("unable to handle the chart directory %q which is located outside the project directory", link)
 	}
 
 	return util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), link), nil

@@ -53,7 +53,7 @@ var _ = It("should rotate secret key", func() {
 
 	filesShouldBeRegenerated := []string{".helm/secret/test", ".helm/secret/subdir/test", ".helm/secret-values.yaml"}
 	for _, path := range filesShouldBeRegenerated {
-		Ω(string(res)).Should(ContainSubstring(fmt.Sprintf("Regenerating file '%s'", filepath.FromSlash(path))))
+		Ω(string(res)).Should(ContainSubstring(fmt.Sprintf("Regenerating file %q", filepath.FromSlash(path))))
 	}
 })
 

@@ -150,7 +150,7 @@ func (c *rawMetaCleanupKeepPolicyReferencesLimit) UnmarshalYAML(unmarshal func(i
 
 	if c.Operator != nil {
 		if *c.Operator != "Or" && *c.Operator != "And" {
-			return newDetailedConfigError(fmt.Sprintf("unsupported value '%s' for `operator: Or|And`!", *c.Operator), c, c.rawMetaCleanup.rawMeta.doc)
+			return newDetailedConfigError(fmt.Sprintf("unsupported value %q for `operator: Or|And`!", *c.Operator), c, c.rawMetaCleanup.rawMeta.doc)
 		}
 	} else if c.In != nil && c.Last != nil {
 		defaultOperator := "And"
@@ -172,7 +172,7 @@ func (c *rawMetaCleanupKeepPolicyReferences) processRegexpString(name, configVal
 	expr := fmt.Sprintf("^%s$", value)
 	regex, err := regexp.Compile(expr)
 	if err != nil {
-		return nil, newDetailedConfigError(fmt.Sprintf("invalid value '%s' for `%s: string|REGEX`!", configValue, name), c, c.rawMetaCleanup.rawMeta.doc)
+		return nil, newDetailedConfigError(fmt.Sprintf("invalid value %q for `%s: string|REGEX`!", configValue, name), c, c.rawMetaCleanup.rawMeta.doc)
 	}
 
 	return regex, nil

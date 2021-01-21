@@ -56,7 +56,7 @@ func validateProject(name string) error {
 	if shouldNotBeSlugged(name, projectNameRegex, projectNameMaxSize) {
 		return nil
 	}
-	return fmt.Errorf("project name should comply with regex '%s' and be maximum %d chars", projectNameRegex, projectNameMaxSize)
+	return fmt.Errorf("project name should comply with regex %q and be maximum %d chars", projectNameRegex, projectNameMaxSize)
 }
 
 func DockerTag(name string) string {
@@ -70,7 +70,7 @@ func validateDockerTag(name string) error {
 	if shouldNotBeSlugged(name, dockerTagRegexp, dockerTagMaxSize) {
 		return nil
 	}
-	return fmt.Errorf("docker tag should comply with regex '%s' and be maximum %d chars", dockerTagRegexp, dockerTagMaxSize)
+	return fmt.Errorf("docker tag should comply with regex %q and be maximum %d chars", dockerTagRegexp, dockerTagMaxSize)
 }
 
 func KubernetesNamespace(name string) string {

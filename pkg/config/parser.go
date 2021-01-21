@@ -141,7 +141,7 @@ func GetProjectName(ctx context.Context, projectDir string) (string, error) {
 		if remoteOriginUrl != "" {
 			ep, err := transport.NewEndpoint(remoteOriginUrl)
 			if err != nil {
-				return "", fmt.Errorf("bad url '%s': %s", remoteOriginUrl, err)
+				return "", fmt.Errorf("bad url %q: %s", remoteOriginUrl, err)
 			}
 
 			gitName := strings.TrimSuffix(ep.Path, ".git")
@@ -323,7 +323,7 @@ func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface
 	}
 
 	if len(res) == 0 {
-		logboek.Context(f.ctx).Warn().LogF("WARNING: No matches found for {{ .Files.Glob '%s' }}\n", pattern)
+		logboek.Context(f.ctx).Warn().LogF("WARNING: No matches found for {{ .Files.Glob %q }}\n", pattern)
 	}
 
 	return res, nil
