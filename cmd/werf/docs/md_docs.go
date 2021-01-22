@@ -3,6 +3,7 @@ package docs
 import (
 	"bytes"
 	"fmt"
+	"html"
 	"io"
 	"io/ioutil"
 	"os"
@@ -54,8 +55,8 @@ func printEnvironments(buf *bytes.Buffer, cmd *cobra.Command) error {
 func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 	buf := new(bytes.Buffer)
 
-	short := cmd.Short
-	long := cmd.Long
+	short := html.EscapeString(cmd.Short)
+	long := html.EscapeString(cmd.Long)
 	if len(long) == 0 {
 		long = short
 	}
