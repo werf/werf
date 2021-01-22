@@ -41,7 +41,7 @@ func (c *rawMeta) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	if err := slug.ValidateProject(*c.Project); err != nil {
-		return newDetailedConfigError(fmt.Sprintf("bad project name '%s' specified in config: %s", *c.Project, err), nil, c.doc)
+		return newDetailedConfigError(fmt.Sprintf("bad project name %q specified in config: %s", *c.Project, err), nil, c.doc)
 	}
 
 	return nil

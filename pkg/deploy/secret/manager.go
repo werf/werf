@@ -87,7 +87,7 @@ func GetSecretKey(projectDir string) ([]byte, error) {
 	}
 
 	if len(secretKey) == 0 {
-		return nil, fmt.Errorf("encryption key not found in: '%s'", strings.Join(notFoundIn, "', '"))
+		return nil, fmt.Errorf("encryption key not found in: %q", strings.Join(notFoundIn, "', '"))
 	}
 
 	return secretKey, nil

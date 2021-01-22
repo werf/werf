@@ -760,7 +760,7 @@ func getInt64EnvVar(varName string) (*int64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vInt, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("bad %s variable value '%s': %s", varName, v, err)
+			return nil, fmt.Errorf("bad %s variable value %q: %s", varName, v, err)
 		}
 
 		res := new(int64)
@@ -776,7 +776,7 @@ func getIntEnvVar(varName string) (*int64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vInt, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("bad %s variable value '%s': %s", varName, v, err)
+			return nil, fmt.Errorf("bad %s variable value %q: %s", varName, v, err)
 		}
 
 		res := new(int64)
@@ -792,7 +792,7 @@ func getUint64EnvVar(varName string) (*uint64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vUint, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("bad %s variable value '%s': %s", varName, v, err)
+			return nil, fmt.Errorf("bad %s variable value %q: %s", varName, v, err)
 		}
 
 		res := new(uint64)
@@ -933,7 +933,7 @@ func GetCustomWerfConfigRelPath(projectDir string, cmdData *CmdData) (string, er
 
 	customConfigPath = util.GetAbsoluteFilepath(customConfigPath)
 	if !util.IsSubpathOfBasePath(projectDir, customConfigPath) {
-		return "", fmt.Errorf("the werf config '%s' must be in the project directory", customConfigPath)
+		return "", fmt.Errorf("the werf config %q must be in the project directory", customConfigPath)
 	}
 
 	return util.GetRelativeToBaseFilepath(projectDir, customConfigPath), nil
@@ -947,7 +947,7 @@ func GetCustomWerfConfigTemplatesDirRelPath(projectDir string, cmdData *CmdData)
 
 	customConfigTemplatesDirPath = util.GetAbsoluteFilepath(customConfigTemplatesDirPath)
 	if !util.IsSubpathOfBasePath(projectDir, customConfigTemplatesDirPath) {
-		return "", fmt.Errorf("werf configuration templates directory '%s' must be in the project directory", customConfigTemplatesDirPath)
+		return "", fmt.Errorf("the werf configuration templates directory %q must be in the project directory", customConfigTemplatesDirPath)
 	}
 
 	return util.GetRelativeToBaseFilepath(projectDir, customConfigTemplatesDirPath), nil
@@ -1018,7 +1018,7 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 			continue
 		}
 
-		return "", fmt.Errorf("the git repository not detected in the directory '%s' and the parent directories", projectDir)
+		return "", fmt.Errorf("werf requires a git repository for the project to exist: unable to find .git in the current directory %q or parent directories", projectDir)
 	}
 }
 
@@ -1032,7 +1032,7 @@ func GetHelmChartDir(werfConfig *config.WerfConfig, projectDir string) (string, 
 
 	absHelmChartDir := util.GetAbsoluteFilepath(helmChartDir)
 	if !util.IsSubpathOfBasePath(projectDir, absHelmChartDir) {
-		return "", fmt.Errorf("the chart directory '%s' must be in the project directory", helmChartDir)
+		return "", fmt.Errorf("the chart directory %q must be in the project directory", helmChartDir)
 	}
 
 	return util.GetRelativeToBaseFilepath(projectDir, absHelmChartDir), nil
@@ -1176,7 +1176,7 @@ func ProcessLogColorMode(cmdData *CmdData) error {
 	case "off":
 		logboek.Streams().DisableStyle()
 	default:
-		return fmt.Errorf("bad log color mode '%s': on, off and auto modes are supported", logColorMode)
+		return fmt.Errorf("bad log color mode %q: on, off and auto modes are supported", logColorMode)
 	}
 
 	return nil
@@ -1225,7 +1225,7 @@ func ValidateRepoImplementation(implementation string) error {
 		}
 	}
 
-	return fmt.Errorf("specified docker registry implementation '%s' is not supported", implementation)
+	return fmt.Errorf("specified docker registry implementation %q is not supported", implementation)
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {

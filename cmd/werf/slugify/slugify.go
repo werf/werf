@@ -82,7 +82,7 @@ func runSlugify(args []string) error {
 	case "":
 		return fmt.Errorf("--format FORMAT argument required")
 	default:
-		return fmt.Errorf("unknown format '%s'", cmdData.Format)
+		return fmt.Errorf("unknown format %q", cmdData.Format)
 	}
 
 	return nil

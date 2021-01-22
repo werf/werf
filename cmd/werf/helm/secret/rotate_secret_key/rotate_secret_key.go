@@ -196,7 +196,7 @@ func secretsRegenerate(newManager, oldManager secret.Manager, helmChartDir strin
 	}
 
 	for filePath, fileData := range regeneratedFilesData {
-		err := logboek.LogProcess(fmt.Sprintf("Saving file '%s'", filePath)).DoError(func() error {
+		err := logboek.LogProcess(fmt.Sprintf("Saving file %q", filePath)).DoError(func() error {
 			fileData = append(bytes.TrimSpace(fileData), []byte("\n")...)
 			return ioutil.WriteFile(filePath, fileData, 0644)
 		})
@@ -211,7 +211,7 @@ func secretsRegenerate(newManager, oldManager secret.Manager, helmChartDir strin
 
 func regenerateSecrets(filesData, regeneratedFilesData map[string][]byte, decodeFunc, encodeFunc func([]byte) ([]byte, error)) error {
 	for filePath, fileData := range filesData {
-		err := logboek.LogProcess(fmt.Sprintf("Regenerating file '%s'", filePath)).
+		err := logboek.LogProcess(fmt.Sprintf("Regenerating file %q", filePath)).
 			DoError(func() error {
 				data, err := decodeFunc(fileData)
 				if err != nil {

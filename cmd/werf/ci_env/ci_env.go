@@ -121,7 +121,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	case "", "default", "cmdexe", "powershell":
 	default:
 		common.PrintHelp(cmd)
-		return fmt.Errorf("provided shell '%s' not supported", cmdData.Shell)
+		return fmt.Errorf("provided shell %q not supported", cmdData.Shell)
 	}
 
 	var w io.Writer
@@ -151,7 +151,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		}
 	default:
 		common.PrintHelp(cmd)
-		return fmt.Errorf("provided ci system '%s' not supported", ciSystem)
+		return fmt.Errorf("provided ci system %q not supported", ciSystem)
 	}
 
 	if cmdData.AsFile || cmdData.AsEnvFile {

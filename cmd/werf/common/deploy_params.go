@@ -16,7 +16,7 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 	if releaseOption != "" {
 		err := slug.ValidateHelmRelease(releaseOption)
 		if err != nil {
-			return "", fmt.Errorf("bad Helm release specified '%s': %s", releaseOption, err)
+			return "", fmt.Errorf("bad Helm release specified %q: %s", releaseOption, err)
 		}
 		return releaseOption, nil
 	}
@@ -32,11 +32,11 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 
 	renderedRelease, err := renderDeployParamTemplate("release", releaseTemplate, environmentOption, werfConfig)
 	if err != nil {
-		return "", fmt.Errorf("cannot render Helm release name by template '%s': %s", releaseTemplate, err)
+		return "", fmt.Errorf("cannot render Helm release name by template %q: %s", releaseTemplate, err)
 	}
 
 	if renderedRelease == "" {
-		return "", fmt.Errorf("Helm release rendered by template '%s' is empty: release name cannot be empty", releaseTemplate)
+		return "", fmt.Errorf("Helm release rendered by template %q is empty: release name cannot be empty", releaseTemplate)
 	}
 
 	var helmReleaseSlug bool
@@ -52,7 +52,7 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 
 	err = slug.ValidateHelmRelease(renderedRelease)
 	if err != nil {
-		return "", fmt.Errorf("bad Helm release '%s' rendered by template '%s': %s", renderedRelease, releaseTemplate, err)
+		return "", fmt.Errorf("bad Helm release %q rendered by template %q: %s", renderedRelease, releaseTemplate, err)
 	}
 
 	return renderedRelease, nil
@@ -62,7 +62,7 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	if namespaceOption != "" {
 		err := slug.ValidateKubernetesNamespace(namespaceOption)
 		if err != nil {
-			return "", fmt.Errorf("bad Kubernetes namespace specified '%s': %s", namespaceOption, err)
+			return "", fmt.Errorf("bad Kubernetes namespace specified %q: %s", namespaceOption, err)
 		}
 		return namespaceOption, nil
 	}
@@ -78,11 +78,11 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 
 	renderedNamespace, err := renderDeployParamTemplate("namespace", namespaceTemplate, environmentOption, werfConfig)
 	if err != nil {
-		return "", fmt.Errorf("cannot render Kubernetes namespace by template '%s': %s", namespaceTemplate, err)
+		return "", fmt.Errorf("cannot render Kubernetes namespace by template %q: %s", namespaceTemplate, err)
 	}
 
 	if renderedNamespace == "" {
-		return "", fmt.Errorf("Kubernetes namespace rendered by template '%s' is empty: namespace cannot be empty", namespaceTemplate)
+		return "", fmt.Errorf("Kubernetes namespace rendered by template %q is empty: namespace cannot be empty", namespaceTemplate)
 	}
 
 	var namespaceSlug bool
@@ -98,7 +98,7 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 
 	err = slug.ValidateKubernetesNamespace(renderedNamespace)
 	if err != nil {
-		return "", fmt.Errorf("bad Kubernetes namespace '%s' rendered by template '%s': %s", renderedNamespace, namespaceTemplate, err)
+		return "", fmt.Errorf("bad Kubernetes namespace %q rendered by template %q: %s", renderedNamespace, namespaceTemplate, err)
 	}
 
 	return renderedNamespace, nil

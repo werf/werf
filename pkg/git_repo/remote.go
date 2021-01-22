@@ -41,7 +41,7 @@ func OpenRemoteRepo(name, url string) (*Remote, error) {
 
 func (repo *Remote) ValidateEndpoint() error {
 	if ep, err := transport.NewEndpoint(repo.Url); err != nil {
-		return fmt.Errorf("bad url '%s': %s", repo.Url, err)
+		return fmt.Errorf("bad url %q: %s", repo.Url, err)
 	} else {
 		repo.Endpoint = ep
 	}
@@ -242,7 +242,7 @@ func (repo *Remote) LatestBranchCommit(ctx context.Context, branch string) (stri
 		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
 	}
 
-	logboek.Context(ctx).Info().LogF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
+	logboek.Context(ctx).Info().LogF("Using commit %q of repo %q branch %q\n", res, repo.String(), branch)
 
 	return res, nil
 }
@@ -257,7 +257,7 @@ func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 
 	ref, err := rawRepo.Tag(tag)
 	if err != nil {
-		return "", fmt.Errorf("bad tag '%s' of repo %s: %s", tag, repo.String(), err)
+		return "", fmt.Errorf("bad tag %q of repo %s: %s", tag, repo.String(), err)
 	}
 
 	var res string
@@ -270,10 +270,10 @@ func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 	case plumbing.ErrObjectNotFound:
 		res = ref.Hash().String()
 	default:
-		return "", fmt.Errorf("bad tag '%s' of repo %s: %s", tag, repo.String(), err)
+		return "", fmt.Errorf("bad tag %q of repo %s: %s", tag, repo.String(), err)
 	}
 
-	logboek.Context(ctx).Info().LogF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
+	logboek.Context(ctx).Info().LogF("Using commit %q of repo %q tag %q\n", res, repo.String(), tag)
 
 	return res, nil
 }

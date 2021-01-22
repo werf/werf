@@ -637,7 +637,7 @@ func (c *Conveyor) GetImage(name string) *Image {
 		}
 	}
 
-	panic(fmt.Sprintf("Image '%s' not found!", name))
+	panic(fmt.Sprintf("Image %q not found!", name))
 }
 
 func (c *Conveyor) GetImageStageContentDigest(imageName, stageName string) string {
@@ -991,7 +991,7 @@ func filterAndLogGitMappings(ctx context.Context, c *Conveyor, gitMappings []*st
 
 			commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 			if err != nil {
-				return fmt.Errorf("unable to get commit of repo '%s': %s", gitMapping.GitRepo().GetName(), err)
+				return fmt.Errorf("unable to get commit of repo %q: %s", gitMapping.GitRepo().GetName(), err)
 			}
 
 			if commitInfo.VirtualMerge {
@@ -1112,7 +1112,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		}
 
 		if !exist {
-			return nil, fmt.Errorf("contextAddFile '%s' was not found (the path must be relative to the context '%s')", contextAddFile, imageFromDockerfileConfig.Context)
+			return nil, fmt.Errorf("contextAddFile %q was not found (the path must be relative to the context %q)", contextAddFile, imageFromDockerfileConfig.Context)
 		}
 	}
 

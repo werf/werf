@@ -18,7 +18,7 @@ func TestGenerateAexSecretKey(t *testing.T) {
 	}
 
 	if len(key) != 32 {
-		t.Errorf("Got unexpected key '%s'", key)
+		t.Errorf("Got unexpected key %q", key)
 	}
 }
 

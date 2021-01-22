@@ -29,7 +29,7 @@ func ReadFileData(filePath string) ([]byte, error) {
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("secret file '%s' not found", absFilePath)
+		return nil, fmt.Errorf("secret file %q not found", absFilePath)
 	}
 
 	fileData, err := ioutil.ReadFile(filePath)

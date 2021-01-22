@@ -91,7 +91,7 @@ config:
 		},
 		Entry(".werf/templates/1.tmpl not found in commit", entry{
 			addTemplate1:         true,
-			expectedErrSubstring: fmt.Sprintf("the uncommitted configuration found in the project directory: the werf config template '%s' must be committed", ".werf/templates/1.tmpl"),
+			expectedErrSubstring: fmt.Sprintf("the uncommitted configuration found in the project directory: the werf config template %q must be committed", ".werf/templates/1.tmpl"),
 		}),
 		Entry(".werf/templates/1.tmpl committed", entry{
 			addTemplate1:    true,

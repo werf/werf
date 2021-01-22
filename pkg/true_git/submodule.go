@@ -10,7 +10,7 @@ import (
 )
 
 func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
-	logProcessMsg := fmt.Sprintf("Sync submodules in work tree '%s'", workTreeDir)
+	logProcessMsg := fmt.Sprintf("Sync submodules in work tree %q", workTreeDir)
 	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
 		cmd := exec.Command(
 			"git", "-c", "core.autocrlf=false",
@@ -35,7 +35,7 @@ func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 }
 
 func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
-	logProcessMsg := fmt.Sprintf("Update submodules in work tree '%s'", workTreeDir)
+	logProcessMsg := fmt.Sprintf("Update submodules in work tree %q", workTreeDir)
 	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
 		cmd := exec.Command(
 			"git", "-c", "core.autocrlf=false",

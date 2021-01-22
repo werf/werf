@@ -335,7 +335,7 @@ func run(ctx context.Context, projectDir string) error {
 	}
 
 	if !werfConfig.HasImage(imageName) {
-		return fmt.Errorf("image '%s' is not defined in werf.yaml", logging.ImageLogName(imageName, false))
+		return fmt.Errorf("image %q is not defined in werf.yaml", logging.ImageLogName(imageName, false))
 	}
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
