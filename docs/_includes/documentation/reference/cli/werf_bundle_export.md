@@ -33,13 +33,13 @@ werf bundle export [options]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
             Also, can be specified with $WERF_ADD_ANNOTATION* (e.g.                                 
-            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1",                                           
-            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")
+            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
+            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
-            $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
+            $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
@@ -157,7 +157,7 @@ werf bundle export [options]
             <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the 
             following rules:
             - all characters are uppercase (app -> APP);
-            - charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND)
+            - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)
       --report-path=''
             Report save path ($WERF_REPORT_PATH by default)
       --secondary-repo=[]
@@ -190,8 +190,8 @@ werf bundle export [options]
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
-            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
+            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,          
+            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
             https://werf.io/documentation/reference/toolbox/ssh.html
   -S, --synchronization=''

@@ -5,12 +5,12 @@
 {% endif %}
 Run docker-compose config command with forwarded image names
 
-Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME                  
+Image environment name format: $WERF_&lt;FORMATTED_WERF_IMAGE_NAME&gt;_DOCKER_IMAGE_NAME                  
 ($WERF_DOCKER_IMAGE_NAME for nameless image).
-<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following   
+&lt;FORMATTED_WERF_IMAGE_NAME&gt; is werf image name from werf.yaml modified according to the following   
 rules:
-- all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND).
+- all characters are uppercase (app -&gt; APP);
+- charset /- is replaced with _ (DEV/APP-FRONTEND -&gt; DEV_APP_FRONTEND).
 
 {{ header }} Syntax
 
@@ -133,8 +133,8 @@ werf compose config [options] [--docker-compose-options="OPTIONS"] [--docker-com
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
-            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
+            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,          
+            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
             https://werf.io/documentation/reference/toolbox/ssh.html
   -S, --synchronization=''

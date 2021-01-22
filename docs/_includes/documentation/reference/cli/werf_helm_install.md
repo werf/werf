@@ -9,10 +9,10 @@ This command installs a chart archive.
 The install argument must be a chart reference, a path to a packaged chart,
 a path to an unpacked chart directory or a URL.
 
-To override values in a chart, use either the '--values' flag and pass in a file
-or use the '--set' flag and pass configuration from the command line, to force
-a string value use '--set-string'. In case a value is large and therefore
-you want not to use neither '--values' nor '--set', use '--set-file' to read the
+To override values in a chart, use either the &#39;--values&#39; flag and pass in a file
+or use the &#39;--set&#39; flag and pass configuration from the command line, to force
+a string value use &#39;--set-string&#39;. In case a value is large and therefore
+you want not to use neither &#39;--values&#39; nor &#39;--set&#39;, use &#39;--set-file&#39; to read the
 single large value from file.
 
     $ helm install -f myvalues.yaml myredis ./redis
@@ -29,21 +29,21 @@ or
 
     $ helm install --set-file my_script=[dothings.sh](dothings.sh) myredis ./redis
 
-You can specify the '--values'/'-f' flag multiple times. The priority will be given to the
+You can specify the &#39;--values&#39;/&#39;-f&#39; flag multiple times. The priority will be given to the
 last (right-most) file specified. For example, if both myvalues.yaml and override.yaml
-contained a key called 'Test', the value set in override.yaml would take precedence:
+contained a key called &#39;Test&#39;, the value set in override.yaml would take precedence:
 
     $ helm install -f myvalues.yaml -f override.yaml  myredis ./redis
 
-You can specify the '--set' flag multiple times. The priority will be given to the
-last (right-most) set specified. For example, if both 'bar' and 'newbar' values are
-set for a key called 'foo', the 'newbar' value would take precedence:
+You can specify the &#39;--set&#39; flag multiple times. The priority will be given to the
+last (right-most) set specified. For example, if both &#39;bar&#39; and &#39;newbar&#39; values are
+set for a key called &#39;foo&#39;, the &#39;newbar&#39; value would take precedence:
 
     $ helm install --set foo=bar --set foo=newbar  myredis ./redis
 
 
 To check the generated manifests of a release without installing the chart,
-the '--debug' and '--dry-run' flags can be combined.
+the &#39;--debug&#39; and &#39;--dry-run&#39; flags can be combined.
 
 If --verify is set, the chart MUST have a provenance file, and the provenance
 file MUST pass all verification steps.
@@ -60,14 +60,14 @@ CHART REFERENCES
 
 A chart reference is a convenient way of referencing a chart in a chart repository.
 
-When you use a chart reference with a repo prefix ('example/mariadb'), Helm will look in the local
-configuration for a chart repository named 'example', and will then look for a
-chart in that repository whose name is 'mariadb'. It will install the latest stable version of that chart
-until you specify '--devel' flag to also include development version (alpha, beta, and release candidate releases), or
-supply a version number with the '--version' flag.
+When you use a chart reference with a repo prefix (&#39;example/mariadb&#39;), Helm will look in the local
+configuration for a chart repository named &#39;example&#39;, and will then look for a
+chart in that repository whose name is &#39;mariadb&#39;. It will install the latest stable version of that chart
+until you specify &#39;--devel&#39; flag to also include development version (alpha, beta, and release candidate releases), or
+supply a version number with the &#39;--version&#39; flag.
 
-To see the list of chart repositories, use 'helm repo list'. To search for
-charts in a repository, use 'helm search'.
+To see the list of chart repositories, use &#39;helm repo list&#39;. To search for
+charts in a repository, use &#39;helm search&#39;.
 
 
 {{ header }} Syntax
@@ -83,13 +83,13 @@ werf helm install [NAME] [CHART] [flags] [options]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
             Also, can be specified with $WERF_ADD_ANNOTATION* (e.g.                                 
-            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1",                                           
-            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")
+            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
+            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
-            $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
+            $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --atomic=false
             if set, the installation process deletes the installation on failure. The --wait flag   
             will be set automatically if --atomic is used

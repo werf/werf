@@ -6,48 +6,48 @@
 
 Manage the dependencies of a chart.
 
-Helm charts store their dependencies in 'charts/'. For chart developers, it is
-often easier to manage dependencies in 'Chart.yaml' which declares all
+Helm charts store their dependencies in &#39;charts/&#39;. For chart developers, it is
+often easier to manage dependencies in &#39;Chart.yaml&#39; which declares all
 dependencies.
 
 The dependency commands operate on that file, making it easy to synchronize
 between the desired dependencies and the actual dependencies stored in the
-'charts/' directory.
+&#39;charts/&#39; directory.
 
 For example, this Chart.yaml declares two dependencies:
 
     # Chart.yaml
     dependencies:
     - name: nginx
-      version: "1.2.3"
-      repository: "[https://example.com/charts](https://example.com/charts)"
+      version: &#34;1.2.3&#34;
+      repository: &#34;[https://example.com/charts&#34](https://example.com/charts&#34);
     - name: memcached
-      version: "3.2.1"
-      repository: "[https://another.example.com/charts](https://another.example.com/charts)"
+      version: &#34;3.2.1&#34;
+      repository: &#34;[https://another.example.com/charts&#34](https://another.example.com/charts&#34);
 
 
-The 'name' should be the name of a chart, where that name must match the name
-in that chart's 'Chart.yaml' file.
+The &#39;name&#39; should be the name of a chart, where that name must match the name
+in that chart&#39;s &#39;Chart.yaml&#39; file.
 
-The 'version' field should contain a semantic version or version range.
+The &#39;version&#39; field should contain a semantic version or version range.
 
-The 'repository' URL should point to a Chart Repository. Helm expects that by
-appending '/index.yaml' to the URL, it should be able to retrieve the chart
-repository's index. Note: 'repository' can be an alias. The alias must start
-with 'alias:' or '@'.
+The &#39;repository&#39; URL should point to a Chart Repository. Helm expects that by
+appending &#39;/index.yaml&#39; to the URL, it should be able to retrieve the chart
+repository&#39;s index. Note: &#39;repository&#39; can be an alias. The alias must start
+with &#39;alias:&#39; or &#39;@&#39;.
 
 Starting from 2.2.0, repository can be defined as the path to the directory of
 the dependency charts stored locally. The path should start with a prefix of
-"[file://](file://)". For example,
+&#34;[file://&#34](file://&#34);. For example,
 
     # Chart.yaml
     dependencies:
     - name: nginx
-      version: "1.2.3"
-      repository: "[file://](file://)../dependency_chart/nginx"
+      version: &#34;1.2.3&#34;
+      repository: &#34;[file://../dependency_chart/nginx&#34](file://../dependency_chart/nginx&#34);
 
 If the dependency chart is retrieved locally, it is not required to have the
-repository added to helm by "helm add repo". Version matching is also supported
+repository added to helm by &#34;helm add repo&#34;. Version matching is also supported
 for this case.
 
 

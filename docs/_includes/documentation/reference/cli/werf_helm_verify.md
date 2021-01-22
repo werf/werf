@@ -10,8 +10,8 @@ Provenance files provide cryptographic verification that a chart has not been
 tampered with, and was packaged by a trusted provider.
 
 This command can be used to verify a local chart. Several other commands provide
-'--verify' flags that run the same validation. To generate a signed package, use
-the 'helm package --sign' command.
+&#39;--verify&#39; flags that run the same validation. To generate a signed package, use
+the &#39;helm package --sign&#39; command.
 
 
 {{ header }} Syntax

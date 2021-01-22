@@ -6,12 +6,12 @@
 
 Build out the charts/ directory from the Chart.lock file.
 
-Build is used to reconstruct a chart's dependencies to the state specified in
-the lock file. This will not re-negotiate dependencies, as 'helm dependency update'
+Build is used to reconstruct a chart&#39;s dependencies to the state specified in
+the lock file. This will not re-negotiate dependencies, as &#39;helm dependency update&#39;
 does.
 
-If no lock file is found, 'helm dependency build' will mirror the behavior
-of 'helm dependency update'.
+If no lock file is found, &#39;helm dependency build&#39; will mirror the behavior
+of &#39;helm dependency update&#39;.
 
 
 {{ header }} Syntax

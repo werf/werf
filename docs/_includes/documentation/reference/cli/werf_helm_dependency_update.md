@@ -6,14 +6,14 @@
 
 Update the on-disk dependencies to mirror Chart.yaml.
 
-This command verifies that the required charts, as expressed in 'Chart.yaml',
-are present in 'charts/' and are at an acceptable version. It will pull down
+This command verifies that the required charts, as expressed in &#39;Chart.yaml&#39;,
+are present in &#39;charts/&#39; and are at an acceptable version. It will pull down
 the latest charts that satisfy the dependencies, and clean up old dependencies.
 
 On successful update, this will generate a lock file that can be used to
 rebuild the dependencies to an exact version.
 
-Dependencies are not required to be represented in 'Chart.yaml'. For that
+Dependencies are not required to be represented in &#39;Chart.yaml&#39;. For that
 reason, an update command will not remove charts unless they are (a) present
 in the Chart.yaml file, but (b) at the wrong version.
 

@@ -7,7 +7,7 @@
 This command creates a chart directory along with the common files and
 directories used in a chart.
 
-For example, 'helm create foo' will create a directory structure that looks
+For example, &#39;helm create foo&#39; will create a directory structure that looks
 something like this:
 
     foo/
@@ -18,7 +18,7 @@ something like this:
     └── templates/    # The template files
         └── tests/    # The test files
 
-'helm create' takes a path for an argument. If directories in the given path
+&#39;helm create&#39; takes a path for an argument. If directories in the given path
 do not exist, Helm will attempt to create them as it goes. If the given
 destination exists and there are files in that directory, conflicting files
 will be overwritten, but other files will be left alone.

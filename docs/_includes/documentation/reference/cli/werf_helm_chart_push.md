@@ -8,7 +8,7 @@ Upload a chart to a remote registry.
 
 Note: the ref must already exist in the local registry cache.
 
-Must first run "helm chart save" or "helm chart pull".
+Must first run &#34;helm chart save&#34; or &#34;helm chart pull&#34;.
 
 
 {{ header }} Syntax

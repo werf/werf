@@ -10,7 +10,7 @@ The first argument of the rollback command is the name of a release, and the
 second is a revision (version) number. If this argument is omitted, it will
 roll back to the previous release.
 
-To see revision numbers, run 'helm history RELEASE'.
+To see revision numbers, run &#39;helm history RELEASE&#39;.
 
 
 {{ header }} Syntax

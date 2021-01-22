@@ -7,9 +7,9 @@
 Remove a chart from the local registry cache.
 
 Note: the chart content will still exist in the cache,
-but it will no longer appear in "helm chart list".
+but it will no longer appear in &#34;helm chart list&#34;.
 
-To remove all unlinked content, please run "helm chart prune". (TODO)
+To remove all unlinked content, please run &#34;helm chart prune&#34;. (TODO)
 
 
 {{ header }} Syntax

@@ -7,27 +7,27 @@
 This command lists all of the releases for a specified namespace (uses current namespace context if namespace not specified).
 
 By default, it lists only releases that are deployed or failed. Flags like
-'--uninstalled' and '--all' will alter this behavior. Such flags can be combined:
-'--uninstalled --failed'.
+&#39;--uninstalled&#39; and &#39;--all&#39; will alter this behavior. Such flags can be combined:
+&#39;--uninstalled --failed&#39;.
 
-By default, items are sorted alphabetically. Use the '-d' flag to sort by
+By default, items are sorted alphabetically. Use the &#39;-d&#39; flag to sort by
 release date.
 
 If the --filter flag is provided, it will be treated as a filter. Filters are
 regular expressions (Perl compatible) that are applied to the list of releases.
 Only items that match the filter will be returned.
 
-    $ helm list --filter 'ara[a-z]+'
+    $ helm list --filter &#39;ara[a-z]+&#39;
     NAME                UPDATED                                  CHART
     maudlin-arachnid    2020-06-18 14:17:46.125134977 +0000 UTC  alpine-0.1.0
 
-If no results are found, 'helm list' will exit 0, but with no output (or in
-the case of no '-q' flag, only headers).
+If no results are found, &#39;helm list&#39; will exit 0, but with no output (or in
+the case of no &#39;-q&#39; flag, only headers).
 
-By default, up to 256 items may be returned. To limit this, use the '--max' flag.
-Setting '--max' to 0 will not return all results. Rather, it will return the
-server's default, which may be much higher than 256. Pairing the '--max'
-flag with the '--offset' flag allows you to page through results.
+By default, up to 256 items may be returned. To limit this, use the &#39;--max&#39; flag.
+Setting &#39;--max&#39; to 0 will not return all results. Rather, it will return the
+server&#39;s default, which may be much higher than 256. Pairing the &#39;--max&#39;
+flag with the &#39;--offset&#39; flag allows you to page through results.
 
 
 {{ header }} Syntax
