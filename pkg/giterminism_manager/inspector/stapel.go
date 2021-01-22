@@ -32,7 +32,7 @@ func (i Inspector) InspectConfigStapelMountBuildDir() error {
 		return nil
 	}
 
-	return NewExternalDependencyFoundError("'mount { from: build_dir, ... }' not allowed")
+	return NewExternalDependencyFoundError(`"mount { from: build_dir, ... }" not allowed`)
 }
 
 func (i Inspector) InspectConfigStapelMountFromPath(fromPath string) error {
@@ -46,5 +46,5 @@ func (i Inspector) InspectConfigStapelMountFromPath(fromPath string) error {
 		return nil
 	}
 
-	return NewExternalDependencyFoundError(fmt.Sprintf("'mount { fromPath: %s, ... }' not allowed", fromPath))
+	return NewExternalDependencyFoundError(fmt.Sprintf(`"mount { fromPath: %s, ... }" not allowed`, fromPath))
 }

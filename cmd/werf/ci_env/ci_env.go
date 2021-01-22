@@ -57,6 +57,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -281,17 +282,12 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 	var repo string
 	if ciGithubDockerPackage != "" {
-		projectDir, err := common.GetProjectDir(&commonCmdData)
-		if err != nil {
-			return fmt.Errorf("unable to get project directory: %s", err)
-		}
-
 		giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 		if err != nil {
 			return err
 		}
 
-		werfConfig, err := common.GetOptionalWerfConfig(ctx, projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+		werfConfig, err := common.GetOptionalWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 		if err != nil {
 			return fmt.Errorf("unable to load werf config: %s", err)
 		}

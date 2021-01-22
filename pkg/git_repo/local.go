@@ -20,14 +20,19 @@ var ErrLocalRepositoryNotExists = git.ErrRepositoryNotExists
 
 type Local struct {
 	Base
-	Path   string
-	GitDir string
+
+	WorkTreeDir string
+	GitDir      string
 
 	headCommit string
 }
 
-func OpenLocalRepo(name, path string, dev bool) (l Local, err error) {
-	_, err = git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+type OpenLocalRepoOptions struct {
+	Dev bool
+}
+
+func OpenLocalRepo(name, workTreeDir string, opts OpenLocalRepoOptions) (l Local, err error) {
+	_, err = git.PlainOpenWithOptions(workTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		if err == git.ErrRepositoryNotExists {
 			return l, ErrLocalRepositoryNotExists
@@ -36,17 +41,17 @@ func OpenLocalRepo(name, path string, dev bool) (l Local, err error) {
 		return l, err
 	}
 
-	gitDir, err := true_git.GetRealRepoDir(filepath.Join(path, ".git"))
+	gitDir, err := true_git.ResolveRepoDir(filepath.Join(workTreeDir, git.GitDirName))
 	if err != nil {
-		return l, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
+		return l, fmt.Errorf("unable to resolve git repo dir for %s: %s", workTreeDir, err)
 	}
 
-	l, err = newLocal(name, path, gitDir)
+	l, err = newLocal(name, workTreeDir, gitDir)
 	if err != nil {
 		return l, err
 	}
 
-	if dev {
+	if opts.Dev {
 		devHeadCommit, err := true_git.SyncDevBranchWithStagedFiles(
 			context.Background(),
 			l.GitDir,
@@ -63,24 +68,24 @@ func OpenLocalRepo(name, path string, dev bool) (l Local, err error) {
 	return l, nil
 }
 
-func newLocal(name, path, gitDir string) (l Local, err error) {
-	headCommit, err := getHeadCommit(path)
+func newLocal(name, workTreeDir, gitDir string) (l Local, err error) {
+	headCommit, err := getHeadCommit(workTreeDir)
 	if err != nil {
 		return l, fmt.Errorf("unable to get git repo head commit: %s", err)
 	}
 
 	l = Local{
-		Base:       Base{Name: name},
-		Path:       path,
-		GitDir:     gitDir,
-		headCommit: headCommit,
+		Base:        Base{Name: name},
+		WorkTreeDir: workTreeDir,
+		GitDir:      gitDir,
+		headCommit:  headCommit,
 	}
 
 	return l, nil
 }
 
 func (repo *Local) PlainOpen() (*git.Repository, error) {
-	return git.PlainOpen(repo.Path)
+	return git.PlainOpen(repo.WorkTreeDir)
 }
 
 func (repo *Local) SyncWithOrigin(ctx context.Context) error {
@@ -106,7 +111,7 @@ func (repo *Local) SyncWithOrigin(ctx context.Context) error {
 			RefSpecs:  map[string]string{"origin": "+refs/heads/*:refs/remotes/origin/*"},
 		}
 
-		if err := true_git.Fetch(ctx, repo.Path, fetchOptions); err != nil {
+		if err := true_git.Fetch(ctx, repo.WorkTreeDir, fetchOptions); err != nil {
 			return fmt.Errorf("fetch failed: %s", err)
 		}
 
@@ -135,7 +140,7 @@ func (repo *Local) FetchOrigin(ctx context.Context) error {
 			RefSpecs:  map[string]string{"origin": "+refs/heads/*:refs/remotes/origin/*"},
 		}
 
-		if err := true_git.Fetch(ctx, repo.Path, fetchOptions); err != nil {
+		if err := true_git.Fetch(ctx, repo.WorkTreeDir, fetchOptions); err != nil {
 			return fmt.Errorf("fetch failed: %s", err)
 		}
 
@@ -144,11 +149,11 @@ func (repo *Local) FetchOrigin(ctx context.Context) error {
 }
 
 func (repo *Local) IsShallowClone() (bool, error) {
-	return true_git.IsShallowClone(repo.Path)
+	return true_git.IsShallowClone(repo.WorkTreeDir)
 }
 
 func (repo *Local) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
-	return repo.createDetachedMergeCommit(ctx, repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), fromCommit, toCommit)
+	return repo.createDetachedMergeCommit(ctx, repo.GitDir, repo.WorkTreeDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), fromCommit, toCommit)
 }
 
 func (repo *Local) GetMergeCommitParents(_ context.Context, commit string) ([]string, error) {
@@ -162,9 +167,9 @@ type LsTreeOptions struct {
 }
 
 func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts LsTreeOptions) (*ls_tree.Result, error) {
-	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
+		return nil, fmt.Errorf("cannot open repo %s: %s", repo.WorkTreeDir, err)
 	}
 
 	var commit string
@@ -180,16 +185,16 @@ func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatc
 }
 
 func (repo *Local) Status(ctx context.Context, pathMatcher path_matcher.PathMatcher) (*status.Result, error) {
-	repository, err := git.PlainOpenWithOptions(repo.Path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo %s: %s", repo.Path, err)
+		return nil, fmt.Errorf("cannot open repo %s: %s", repo.WorkTreeDir, err)
 	}
 
-	return status.Status(ctx, repository, repo.Path, pathMatcher)
+	return status.Status(ctx, repository, repo.WorkTreeDir, pathMatcher)
 }
 
 func (repo *Local) IsEmpty(ctx context.Context) (bool, error) {
-	return repo.isEmpty(ctx, repo.Path)
+	return repo.isEmpty(ctx, repo.WorkTreeDir)
 }
 
 func (repo *Local) IsAncestor(_ context.Context, ancestorCommit, descendantCommit string) (bool, error) {
@@ -197,7 +202,7 @@ func (repo *Local) IsAncestor(_ context.Context, ancestorCommit, descendantCommi
 }
 
 func (repo *Local) RemoteOriginUrl(ctx context.Context) (string, error) {
-	return repo.remoteOriginUrl(repo.Path)
+	return repo.remoteOriginUrl(repo.WorkTreeDir)
 }
 
 func (repo *Local) HeadCommit(_ context.Context) (string, error) {
@@ -205,39 +210,39 @@ func (repo *Local) HeadCommit(_ context.Context) (string, error) {
 }
 
 func (repo *Local) CreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
-	return repo.createPatch(ctx, repo.Path, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
+	return repo.createPatch(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
 func (repo *Local) CreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(ctx, repo.Path, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
+	return repo.createArchive(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
 func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, err error) {
 	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
-		checksum, err = repo.checksumWithLsTree(ctx, repo.Path, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
+		checksum, err = repo.checksumWithLsTree(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 	})
 
 	return checksum, err
 }
 
 func (repo *Local) CheckAndReadCommitSymlink(ctx context.Context, path string, commit string) (bool, []byte, error) {
-	return repo.checkAndReadSymlink(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.Path, repo.GitDir, commit, path)
+	return repo.checkAndReadSymlink(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.WorkTreeDir, repo.GitDir, commit, path)
 }
 
 func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, error) {
-	return repo.isCommitExists(ctx, repo.Path, repo.GitDir, commit)
+	return repo.isCommitExists(ctx, repo.WorkTreeDir, repo.GitDir, commit)
 }
 
 func (repo *Local) TagsList(ctx context.Context) ([]string, error) {
-	return repo.tagsList(repo.Path)
+	return repo.tagsList(repo.WorkTreeDir)
 }
 
 func (repo *Local) RemoteBranchesList(ctx context.Context) ([]string, error) {
-	return repo.remoteBranchesList(repo.Path)
+	return repo.remoteBranchesList(repo.WorkTreeDir)
 }
 
 func (repo *Local) getRepoID() string {
-	absPath, err := filepath.Abs(repo.Path)
+	absPath, err := filepath.Abs(repo.WorkTreeDir)
 	if err != nil {
 		panic(err) // stupid interface of filepath.Abs
 	}
@@ -251,7 +256,7 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 }
 
 func (repo *Local) IsCommitFileExists(ctx context.Context, commit, path string) (bool, error) {
-	return repo.isCommitFileExists(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.Path, repo.GitDir, commit, path)
+	return repo.isCommitFileExists(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.WorkTreeDir, repo.GitDir, commit, path)
 }
 
 func (repo *Local) IsCommitDirectoryExists(ctx context.Context, commit string, dir string) (bool, error) {
@@ -291,5 +296,5 @@ func (repo *Local) GetCommitFilePathList(ctx context.Context, commit string) ([]
 }
 
 func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) ([]byte, error) {
-	return repo.readFile(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.Path, repo.GitDir, commit, path)
+	return repo.readFile(ctx, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), repo.WorkTreeDir, repo.GitDir, commit, path)
 }

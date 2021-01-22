@@ -76,6 +76,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
@@ -139,19 +140,14 @@ func runDismiss() error {
 	}
 	ctx = ctxWithDockerCli
 
-	projectDir, err := common.GetProjectDir(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
-	}
-
-	common.ProcessLogProjectDir(&commonCmdData, projectDir)
-
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
+
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -179,12 +175,12 @@ func runDismiss() error {
 		lockManager = m
 	}
 
-	chartDir, err := common.GetHelmChartDir(werfConfig, projectDir)
+	chartDir, err := common.GetHelmChartDir(werfConfig, giterminismManager)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, projectDir, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{})
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
 		return err

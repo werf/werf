@@ -93,8 +93,8 @@ func (r FileReader) resolveChartDirectory(relDir string) (string, error) {
 		return "", fmt.Errorf("unable to handle the chart directory %q: linked to file not a directory", link)
 	}
 
-	if !util.IsSubpathOfBasePath(r.sharedOptions.ProjectDir(), link) {
-		return "", fmt.Errorf("unable to handle the chart directory %q which is located outside the project directory", link)
+	if !util.IsSubpathOfBasePath(r.sharedOptions.LocalGitRepo().WorkTreeDir, link) {
+		return "", fmt.Errorf("unable to handle the chart directory %q which is located outside of the git work tree %s", link, r.sharedOptions.LocalGitRepo().WorkTreeDir)
 	}
 
 	return util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), link), nil

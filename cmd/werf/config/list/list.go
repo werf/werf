@@ -34,6 +34,7 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.imagesOnly, "images-only", "", false, "Show image names without artifacts")
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -65,17 +66,12 @@ func run() error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
-	}
-
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
+	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return err
 	}

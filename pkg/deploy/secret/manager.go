@@ -23,12 +23,12 @@ func GenerateSecretKey() ([]byte, error) {
 	return secret.GenerateAexSecretKey()
 }
 
-func GetManager(projectDir string) (Manager, error) {
+func GetManager(workingDir string) (Manager, error) {
 	var m Manager
 	var key []byte
 	var err error
 
-	key, err = GetSecretKey(projectDir)
+	key, err = GetSecretKey(workingDir)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func GetManager(projectDir string) (Manager, error) {
 	return m, nil
 }
 
-func GetSecretKey(projectDir string) ([]byte, error) {
+func GetSecretKey(workingDir string) ([]byte, error) {
 	var secretKey []byte
 	var werfSecretKeyPaths []string
 	var notFoundIn []string
@@ -52,11 +52,11 @@ func GetSecretKey(projectDir string) ([]byte, error) {
 
 		var werfSecretKeyPath string
 
-		if projectDir != "" {
-			if projectWerfSecretKeyPath, err := filepath.Abs(filepath.Join(projectDir, ".werf_secret_key")); err != nil {
+		if workingDir != "" {
+			if defaultWerfSecretKeyPath, err := filepath.Abs(filepath.Join(workingDir, ".werf_secret_key")); err != nil {
 				return nil, err
 			} else {
-				werfSecretKeyPaths = append(werfSecretKeyPaths, projectWerfSecretKeyPath)
+				werfSecretKeyPaths = append(werfSecretKeyPaths, defaultWerfSecretKeyPath)
 			}
 		}
 

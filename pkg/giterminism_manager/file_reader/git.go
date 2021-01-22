@@ -6,11 +6,24 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/werf/werf/pkg/util"
+
+	"github.com/werf/logboek"
+
 	"github.com/bmatcuk/doublestar"
 )
 
+func (r FileReader) relativeToGitWorkingDir() string {
+	workingDir := r.sharedOptions.ProjectDir() // FIXME: rename project-dir to working dir and work-tree-dir to project-git-work-tree or project-git or project-work-tree or ...
+	return util.GetRelativeToBaseFilepath(r.sharedOptions.LocalGitRepo().WorkTreeDir, workingDir)
+}
+
+func (r FileReader) relativeToGitPath(relPath string) string {
+	return filepath.Join(r.relativeToGitWorkingDir(), relPath)
+}
+
 func (r FileReader) isCommitDirectoryExist(ctx context.Context, relPath string) (bool, error) {
-	exist, err := r.sharedOptions.LocalGitRepo().IsCommitDirectoryExists(ctx, r.sharedOptions.HeadCommit(), relPath)
+	exist, err := r.sharedOptions.LocalGitRepo().IsCommitDirectoryExists(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
 	if err != nil {
 		err := fmt.Errorf(
 			"unable to check existence of directory %s in the project git repo commit %s: %s",
@@ -23,7 +36,9 @@ func (r FileReader) isCommitDirectoryExist(ctx context.Context, relPath string) 
 }
 
 func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool, error) {
-	exist, err := r.sharedOptions.LocalGitRepo().IsCommitFileExists(ctx, r.sharedOptions.HeadCommit(), relPath)
+	logboek.Context(ctx).Debug().LogF("-- giterminism_manager.FileReader.isCommitFileExist relPath=%q\n", relPath)
+
+	exist, err := r.sharedOptions.LocalGitRepo().IsCommitFileExists(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
 	if err != nil {
 		err := fmt.Errorf(
 			"unable to check existence of file %s in the project git repo commit %s: %s",
@@ -44,8 +59,10 @@ func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]stri
 	}
 
 	pattern = filepath.ToSlash(pattern)
-	for _, relFilepath := range commitPathList {
-		relPath := filepath.ToSlash(relFilepath)
+	for _, relToGitFilepath := range commitPathList {
+		relToGitPath := filepath.ToSlash(relToGitFilepath)
+		relPath := util.GetRelativeToBaseFilepath(r.relativeToGitWorkingDir(), relToGitPath)
+
 		if matched, err := doublestar.Match(pattern, relPath); err != nil {
 			return nil, err
 		} else if matched {
@@ -57,11 +74,13 @@ func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]stri
 }
 
 func (r FileReader) readCommitFile(ctx context.Context, relPath string, handleUncommittedChangesFunc func(context.Context, string) error) ([]byte, error) {
-	fileRepoPath := filepath.ToSlash(relPath)
+	logboek.Context(ctx).Debug().LogF("-- giterminism_manager.FileReader.readCommitFile relPath=%q\n", relPath)
+
+	fileRepoPath := r.relativeToGitPath(filepath.ToSlash(relPath))
 
 	repoData, err := r.sharedOptions.LocalGitRepo().ReadCommitFile(ctx, r.sharedOptions.HeadCommit(), fileRepoPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", fileRepoPath, r.sharedOptions.HeadCommit(), err)
+		return nil, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", relPath, r.sharedOptions.HeadCommit(), err)
 	}
 
 	if handleUncommittedChangesFunc == nil {
@@ -70,7 +89,7 @@ func (r FileReader) readCommitFile(ctx context.Context, relPath string, handleUn
 
 	isDataIdentical, err := r.compareFileData(relPath, repoData)
 	if err != nil {
-		return nil, fmt.Errorf("unable to compare commit file %q with the local project file: %s", fileRepoPath, err)
+		return nil, fmt.Errorf("unable to compare commit file %q with the local project file: %s", relPath, err)
 	}
 
 	if !isDataIdentical {

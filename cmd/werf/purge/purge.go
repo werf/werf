@@ -49,6 +49,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -104,12 +105,12 @@ func runPurge() error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&commonCmdData)
+	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
+		return err
 	}
 
-	common.ProcessLogProjectDir(&commonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	if err := common.DockerRegistryInit(&commonCmdData); err != nil {
 		return err
@@ -125,12 +126,7 @@ func runPurge() error {
 	}
 	ctx = ctxWithDockerCli
 
-	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

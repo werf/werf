@@ -18,7 +18,6 @@ import (
 
 	"github.com/werf/logboek"
 
-	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/slug"
@@ -98,7 +97,7 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 	}
 
 	if meta == nil {
-		defaultProjectName, err := GetProjectName(ctx, giterminismManager.ProjectDir())
+		defaultProjectName, err := GetDefaultProjectName(ctx, giterminismManager)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get default project name: %s", err)
 		}
@@ -127,44 +126,22 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 	return werfConfig, nil
 }
 
-func GetProjectName(ctx context.Context, projectDir string) (string, error) {
-	name := filepath.Base(projectDir)
-
-	if exist, err := util.DirExists(filepath.Join(projectDir, ".git")); err != nil {
-		return "", err
-	} else if exist {
-		remoteOriginUrl, err := gitOwnRepoOriginUrl(ctx, projectDir)
-		if err != nil {
-			return "", err
-		}
-
-		if remoteOriginUrl != "" {
-			ep, err := transport.NewEndpoint(remoteOriginUrl)
-			if err != nil {
-				return "", fmt.Errorf("bad url %q: %s", remoteOriginUrl, err)
-			}
-
-			gitName := strings.TrimSuffix(ep.Path, ".git")
-
-			return slug.Project(gitName), nil
-		}
-	}
-
-	return slug.Project(name), nil
-}
-
-func gitOwnRepoOriginUrl(ctx context.Context, projectDir string) (string, error) {
-	localGitRepo := &git_repo.Local{
-		Path:   projectDir,
-		GitDir: filepath.Join(projectDir, ".git"),
-	}
-
-	remoteOriginUrl, err := localGitRepo.RemoteOriginUrl(ctx)
-	if err != nil {
+func GetDefaultProjectName(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
+	if remoteOriginUrl, err := giterminismManager.LocalGitRepo().RemoteOriginUrl(ctx); err != nil {
 		return "", nil
+	} else if remoteOriginUrl != "" {
+		ep, err := transport.NewEndpoint(remoteOriginUrl)
+		if err != nil {
+			return "", fmt.Errorf("bad url %q: %s", remoteOriginUrl, err)
+		}
+
+		gitName := strings.TrimSuffix(ep.Path, ".git")
+
+		return slug.Project(gitName), nil
 	}
 
-	return remoteOriginUrl, nil
+	name := filepath.Base(giterminismManager.ProjectDir())
+	return slug.Project(name), nil
 }
 
 func writeWerfConfigRender(werfConfigRenderContent string, werfConfigRenderPath string) error {

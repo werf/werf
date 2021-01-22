@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/werf/werf/pkg/true_git"
 
 	"github.com/spf13/cobra"
 
@@ -31,6 +32,7 @@ import (
 )
 
 type CmdData struct {
+	GitWorkTree        *string
 	ProjectName        *string
 	Dir                *string
 	ConfigPath         *string
@@ -124,6 +126,11 @@ func SetupSetDockerConfigJsonValue(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.SetDockerConfigJsonValue, "set-docker-config-json-value", "", GetBoolEnvironmentDefaultFalse(os.Getenv("WERF_SET_DOCKER_CONFIG_VALUE")), "Shortcut to set current docker config into the .Values.dockerconfigjson")
 }
 
+func SetupGitWorkTree(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.GitWorkTree = new(string)
+	cmd.Flags().StringVarP(cmdData.GitWorkTree, "git-work-tree", "", os.Getenv("WERF_GIT_WORK_TREE"), "Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that contains .git in the current or parent directories)")
+}
+
 func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ProjectName = new(string)
 	cmd.Flags().StringVarP(cmdData.ProjectName, "project-name", "N", os.Getenv("WERF_PROJECT_NAME"), "Use custom project name (default $WERF_PROJECT_NAME)")
@@ -131,7 +138,7 @@ func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dir = new(string)
-	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", os.Getenv("WERF_DIR"), "Use custom working directory (default $WERF_DIR or current directory)")
+	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", os.Getenv("WERF_DIR"), "Use specified project directory where project's werf.yaml and other configuration files should reside (default $WERF_DIR or current working directory)")
 }
 
 func SetupConfigPath(cmdData *CmdData, cmd *cobra.Command) {
@@ -883,8 +890,8 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 	return res, nil
 }
 
-func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
-	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(projectDir, cmdData)
+func GetOptionalWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(giterminismManager, cmdData)
 	if err != nil {
 		return nil, err
 	}
@@ -895,7 +902,7 @@ func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 	}
 
 	if exist {
-		customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(projectDir, cmdData)
+		customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(giterminismManager, cmdData)
 		if err != nil {
 			return nil, err
 		}
@@ -911,13 +918,13 @@ func GetOptionalWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 	return nil, nil
 }
 
-func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
-	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(projectDir, cmdData)
+func GetRequiredWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(giterminismManager, cmdData)
 	if err != nil {
 		return nil, err
 	}
 
-	customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(projectDir, cmdData)
+	customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(giterminismManager, cmdData)
 	if err != nil {
 		return nil, err
 	}
@@ -925,32 +932,32 @@ func GetRequiredWerfConfig(ctx context.Context, projectDir string, cmdData *CmdD
 	return config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
 }
 
-func GetCustomWerfConfigRelPath(projectDir string, cmdData *CmdData) (string, error) {
+func GetCustomWerfConfigRelPath(giterminismManager giterminism_manager.Interface, cmdData *CmdData) (string, error) {
 	customConfigPath := *cmdData.ConfigPath
 	if customConfigPath == "" {
 		return "", nil
 	}
 
 	customConfigPath = util.GetAbsoluteFilepath(customConfigPath)
-	if !util.IsSubpathOfBasePath(projectDir, customConfigPath) {
-		return "", fmt.Errorf("the werf config %q must be in the project directory", customConfigPath)
+	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().WorkTreeDir, customConfigPath) {
+		return "", fmt.Errorf("the werf config %q must be in the project git work tree %q", customConfigPath, giterminismManager.LocalGitRepo().WorkTreeDir)
 	}
 
-	return util.GetRelativeToBaseFilepath(projectDir, customConfigPath), nil
+	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigPath), nil
 }
 
-func GetCustomWerfConfigTemplatesDirRelPath(projectDir string, cmdData *CmdData) (string, error) {
+func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manager.Interface, cmdData *CmdData) (string, error) {
 	customConfigTemplatesDirPath := *cmdData.ConfigTemplatesDir
 	if customConfigTemplatesDirPath == "" {
 		return "", nil
 	}
 
 	customConfigTemplatesDirPath = util.GetAbsoluteFilepath(customConfigTemplatesDirPath)
-	if !util.IsSubpathOfBasePath(projectDir, customConfigTemplatesDirPath) {
-		return "", fmt.Errorf("the werf configuration templates directory %q must be in the project directory", customConfigTemplatesDirPath)
+	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().WorkTreeDir, customConfigTemplatesDirPath) {
+		return "", fmt.Errorf("the werf configuration templates directory %q must be in the project git work tree %q", customConfigTemplatesDirPath, giterminismManager.LocalGitRepo().WorkTreeDir)
 	}
 
-	return util.GetRelativeToBaseFilepath(projectDir, customConfigTemplatesDirPath), nil
+	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigTemplatesDirPath), nil
 }
 
 func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.WerfConfigOptions {
@@ -961,17 +968,22 @@ func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.Wer
 }
 
 func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, error) {
-	projectDir, err := GetProjectDir(cmdData)
+	gitWorkTree, err := GetGitWorkTree(cmdData)
 	if err != nil {
 		return nil, err
 	}
 
-	localGitRepo, err := OpenLocalGitRepo(projectDir)
+	localGitRepo, err := OpenLocalGitRepo(gitWorkTree)
 	if err != nil {
 		return nil, err
 	}
 
 	headCommit, err := localGitRepo.HeadCommit(BackgroundContext())
+	if err != nil {
+		return nil, err
+	}
+
+	projectDir, err := GetProjectDir(cmdData, gitWorkTree)
 	if err != nil {
 		return nil, err
 	}
@@ -982,47 +994,63 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 }
 
 func InitGiterminismInspector(cmdData *CmdData) error {
-	projectPath, err := GetProjectDir(cmdData)
-	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
-	}
-
-	return giterminism_inspector.Init(projectPath, giterminism_inspector.InspectionOptions{
+	return giterminism_inspector.Init(GetWorkingDir(cmdData), giterminism_inspector.InspectionOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		DevMode:          *cmdData.Dev,
 	})
 }
 
-func GetProjectDir(cmdData *CmdData) (string, error) {
+func GetGitWorkTree(cmdData *CmdData) (string, error) {
+	if *cmdData.GitWorkTree != "" {
+		workTree := *cmdData.GitWorkTree
+
+		if isValid, err := true_git.IsValidWorkTree(workTree); err != nil {
+			return "", err
+		} else if isValid {
+			return util.GetAbsoluteFilepath(workTree), nil
+		}
+
+		return "", fmt.Errorf("werf requires a git work tree for the project to exist: not a valid git work tree %q specified", workTree)
+	}
+
+	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree("."); err != nil {
+		return "", err
+	} else if found {
+		return util.GetAbsoluteFilepath(workTree), nil
+	}
+
+	return "", fmt.Errorf("werf requires a git work tree for the project to exist: unable to find a valid .git in the current directory %q or parent directories, you may also specify git work tree explicitly with --git-work-tree option (or WERF_GIT_WORK_TREE env var)", util.GetAbsoluteFilepath("."))
+}
+
+func GetWorkingDir(cmdData *CmdData) string {
+	var workingDir string
+	if *cmdData.Dir != "" {
+		workingDir = *cmdData.Dir
+	} else {
+		workingDir = "."
+	}
+	return util.GetAbsoluteFilepath(workingDir)
+}
+
+// FIXME: this is simple working dir
+// FIXME: while git-work-tree can be renamed to project-work-tree or project-git-work-tree or project-git
+func GetProjectDir(cmdData *CmdData, gitWorkTree string) (string, error) {
 	var projectDir string
 	if *cmdData.Dir != "" {
 		projectDir = *cmdData.Dir
 	} else {
 		projectDir = "."
 	}
-
 	projectDir = util.GetAbsoluteFilepath(projectDir)
-	d := projectDir
-	for {
-		exist, err := util.DirExists(filepath.Join(d, ".git"))
-		if err != nil {
-			return "", err
-		}
 
-		if exist {
-			return d, nil
-		}
-
-		if d != filepath.Dir(d) {
-			d = filepath.Dir(d)
-			continue
-		}
-
-		return "", fmt.Errorf("werf requires a git repository for the project to exist: unable to find .git in the current directory %q or parent directories", projectDir)
+	if util.IsSubpathOfBasePath(util.GetAbsoluteFilepath(gitWorkTree), projectDir) {
+		return projectDir, nil
 	}
+
+	return "", fmt.Errorf("werf requires project dir — the current working directory or directory specified with --dir option (or WERF_DIR env var) — to be located inside the git work tree: %q is located outside of the git work tree %q", gitWorkTree, projectDir)
 }
 
-func GetHelmChartDir(werfConfig *config.WerfConfig, projectDir string) (string, error) {
+func GetHelmChartDir(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface) (string, error) {
 	var helmChartDir string
 	if werfConfig.Meta.Deploy.HelmChartDir != nil && *werfConfig.Meta.Deploy.HelmChartDir != "" {
 		helmChartDir = *werfConfig.Meta.Deploy.HelmChartDir
@@ -1031,11 +1059,11 @@ func GetHelmChartDir(werfConfig *config.WerfConfig, projectDir string) (string, 
 	}
 
 	absHelmChartDir := util.GetAbsoluteFilepath(helmChartDir)
-	if !util.IsSubpathOfBasePath(projectDir, absHelmChartDir) {
-		return "", fmt.Errorf("the chart directory %q must be in the project directory", helmChartDir)
+	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().WorkTreeDir, absHelmChartDir) {
+		return "", fmt.Errorf("the chart directory %q must be in the project git work tree %q", helmChartDir, giterminismManager.LocalGitRepo().WorkTreeDir)
 	}
 
-	return util.GetRelativeToBaseFilepath(projectDir, absHelmChartDir), nil
+	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), absHelmChartDir), nil
 }
 
 func GetNamespace(cmdData *CmdData) string {
@@ -1288,8 +1316,8 @@ func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
 }
 
-func OpenLocalGitRepo(projectDir string) (git_repo.Local, error) {
-	return git_repo.OpenLocalRepo("own", projectDir, giterminism_inspector.DevMode)
+func OpenLocalGitRepo(workTreeDir string) (git_repo.Local, error) {
+	return git_repo.OpenLocalRepo("own", workTreeDir, git_repo.OpenLocalRepoOptions{Dev: giterminism_inspector.DevMode})
 }
 
 func BackgroundContext() context.Context {

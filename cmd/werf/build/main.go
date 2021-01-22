@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/werf/pkg/giterminism_manager"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -67,6 +69,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -146,12 +149,11 @@ func runMain(ctx context.Context, args []string) error {
 	}
 	ctx = ctxWithDockerCli
 
-	projectDir, err := common.GetProjectDir(&commonCmdData)
+	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
+		return err
 	}
-
-	common.ProcessLogProjectDir(&commonCmdData, projectDir)
+	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
@@ -166,25 +168,15 @@ func runMain(ctx context.Context, args []string) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context) error {
-			return run(ctx, projectDir, args)
+			return run(ctx, giterminismManager, args)
 		})
 	} else {
-		return run(ctx, projectDir, args)
+		return run(ctx, giterminismManager, args)
 	}
 }
 
-func run(ctx context.Context, projectDir string, imagesToProcess []string) error {
-	localGitRepo, err := common.OpenLocalGitRepo(projectDir)
-	if err != nil {
-		return fmt.Errorf("unable to open local repo %s: %s", projectDir, err)
-	}
-
-	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, projectDir, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+func run(ctx context.Context, giterminismManager giterminism_manager.Interface, imagesToProcess []string) error {
+	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -242,7 +234,7 @@ func run(ctx context.Context, projectDir string, imagesToProcess []string) error
 
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, localGitRepo, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, *giterminismManager.LocalGitRepo(), imagesToProcess, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

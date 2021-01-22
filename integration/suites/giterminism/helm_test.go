@@ -2,6 +2,7 @@ package giterminism_test
 
 import (
 	"fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -66,37 +67,37 @@ helm:
 			}
 		},
 		Entry("the chart directory not found", entry{
-			expectedErrSubstring: `the chart directory '.helm' not found in the project git repository`,
+			expectedErrSubstring: `the chart directory ".helm" not found in the project git repository`,
 		}),
-		Entry("the template file '.helm/templates/template1.yaml' not committed", entry{
+		Entry(`the template file ".helm/templates/template1.yaml" not committed`, entry{
 			addFiles:             []string{".helm/templates/template1.yaml"},
-			expectedErrSubstring: `the uncommitted configuration found in the project directory: the chart file '.helm/templates/template1.yaml' must be committed`,
+			expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the chart file ".helm/templates/template1.yaml" must be committed`,
 		}),
 		Entry("the template files not committed", entry{
 			addFiles:    []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
 			commitFiles: []string{".helm/templates/template1.yaml"},
-			expectedErrSubstring: `the uncommitted configuration found in the project directory: the following chart files must be committed:
+			expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the following chart files must be committed:
 
  - .helm/templates/template2.yaml
  - .helm/templates/template3.yaml
 
 `,
 		}),
-		Entry("the template file '.helm/templates/template1.yaml' committed", entry{
+		Entry(`the template file ".helm/templates/template1.yaml" committed`, entry{
 			addFiles:    []string{".helm/templates/template1.yaml"},
 			commitFiles: []string{".helm/templates/template1.yaml"},
 		}),
-		Entry("the template file '.helm/templates/template1.yaml' changed after commit", entry{
+		Entry(`the template file ".helm/templates/template1.yaml" changed after commit`, entry{
 			addFiles:               []string{".helm/templates/template1.yaml"},
 			commitFiles:            []string{".helm/templates/template1.yaml"},
 			changeFilesAfterCommit: []string{".helm/templates/template1.yaml"},
-			expectedErrSubstring:   `the uncommitted configuration found in the project directory: the chart file '.helm/templates/template1.yaml' changes must be committed`,
+			expectedErrSubstring:   `the uncommitted configuration found in the project git work tree: the chart file ".helm/templates/template1.yaml" changes must be committed`,
 		}),
 		Entry("the template files changed after commit", entry{
 			addFiles:               []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
 			commitFiles:            []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
 			changeFilesAfterCommit: []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
-			expectedErrSubstring: `the uncommitted configuration found in the project directory: the following chart files changes must be committed:
+			expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the following chart files changes must be committed:
 
  - .helm/templates/template1.yaml
  - .helm/templates/template2.yaml

@@ -39,9 +39,8 @@ type WerfChartOptions struct {
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 }
 
-func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretManager secret.Manager, projectDir, chartDir string, helmEnvSettings *cli.EnvSettings, opts WerfChartOptions) *WerfChart {
+func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretManager secret.Manager, chartDir string, helmEnvSettings *cli.EnvSettings, opts WerfChartOptions) *WerfChart {
 	wc := &WerfChart{
-		ProjectDir:       projectDir,
 		ChartDir:         chartDir,
 		SecretValueFiles: opts.SecretValueFiles,
 		HelmEnvSettings:  helmEnvSettings,
@@ -64,7 +63,6 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 type WerfChart struct {
 	HelmChart *chart.Chart
 
-	ProjectDir                 string
 	ChartDir                   string
 	SecretValueFiles           []string
 	HelmEnvSettings            *cli.EnvSettings

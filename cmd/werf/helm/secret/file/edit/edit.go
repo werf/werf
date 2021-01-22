@@ -64,12 +64,9 @@ func runSecretEdit(filepPath string) error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
-	}
+	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	m, err := secret.GetManager(projectDir)
+	m, err := secret.GetManager(workingDir)
 	if err != nil {
 		return err
 	}
