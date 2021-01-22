@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang/example/stringutil"
-
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/container_runtime"
@@ -561,12 +559,12 @@ func (storage *RepoStagesStorage) GetClientIDRecords(ctx context.Context, projec
 			}
 
 			tagWithoutPrefix := strings.TrimPrefix(tag, RepoClientIDRecrod_ImageTagPrefix)
-			dataParts := strings.SplitN(stringutil.Reverse(tagWithoutPrefix), "-", 2)
+			dataParts := strings.SplitN(util.Reverse(tagWithoutPrefix), "-", 2)
 			if len(dataParts) != 2 {
 				continue
 			}
 
-			clientID, timestampMillisecStr := stringutil.Reverse(dataParts[1]), stringutil.Reverse(dataParts[0])
+			clientID, timestampMillisecStr := util.Reverse(dataParts[1]), util.Reverse(dataParts[0])
 
 			timestampMillisec, err := strconv.ParseInt(timestampMillisecStr, 10, 64)
 			if err != nil {
