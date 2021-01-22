@@ -108,7 +108,7 @@ func newCmd(composeCmdName string, options *newCmdOptions) *cobra.Command {
 Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME ($WERF_DOCKER_IMAGE_NAME for nameless image).
 <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
 - all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND).`
+- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND).`
 	long = common.GetLongCommandDescription(long)
 	cmd := &cobra.Command{
 		Use:                   options.Use,
