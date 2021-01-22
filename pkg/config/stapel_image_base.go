@@ -1,7 +1,10 @@
 package config
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/werf/logboek"
 )
 
 type StapelImageBase struct {
@@ -107,8 +110,11 @@ We do not recommend using the actual base image such way. Use a particular uncha
 		return newDetailedConfigError("conflict between `from`, `fromImage` and `fromImageArtifact` directives!", nil, c.raw.doc)
 	}
 
+	if c.raw.FromImageArtifact != "" {
+		logboek.Context(context.Background()).Warn().LogLn("WARNING: Do not use artifacts as a base for other images and artifacts. The feature is deprecated, and the directive 'fromImageArtifact' will be completely removed in version v1.3.\n\nCareless use of artifacts may lead to difficult to trace issues that may arise long after the configuration has been written. The artifact image is cached after the first build and ignores any changes in the project git repository unless the user has explicitly specified stage dependencies. As found, this behavior is completely unexpected for users despite the fact that it is absolutely correct in the werf logic.")
+	}
+
 	// TODO: валидацию формата `From`
-	// TODO: валидация формата `Name`
 
 	return nil
 }
