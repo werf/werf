@@ -3,6 +3,7 @@ package giterminism_manager
 import (
 	"context"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager/config"
 	"github.com/werf/werf/pkg/giterminism_manager/file_reader"
@@ -37,6 +38,8 @@ func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Lo
 		fileReader:    fr,
 		inspector:     i,
 	}
+
+	logboek.Context(ctx).Debug().LogF("-- giterminism_manager.NewManager: projectDir=%q localGitRepo.WorkTreeDir=%q\n", projectDir, localGitRepo.WorkTreeDir)
 
 	return m, nil
 }
