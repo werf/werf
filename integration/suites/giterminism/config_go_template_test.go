@@ -65,17 +65,17 @@ config:
 		Context(".Files.Get", func() {
 			DescribeTable("config.goTemplateRendering.allowUncommittedFiles",
 				func(e entryBase) {
-					fileCreateOrAppend("werf.yaml", fmt.Sprintf(`{{ .Files.Get "%s" }}`, ".werf/file"))
+					fileCreateOrAppend("werf.yaml", fmt.Sprintf(`{{ .Files.Get %q }}`, ".werf/file"))
 					gitAddAndCommit("werf.yaml")
 
 					bodyFuncBase(e)
 				},
 				Entry("the file not found", entryBase{
-					expectedErrSubstring: "error calling Get: {{ .Files.Get '.werf/file' }}: the file '.werf/file' not found in the project git repository",
+					expectedErrSubstring: `error calling Get: {{ .Files.Get ".werf/file" }}: the file ".werf/file" not found in the project git repository`,
 				}),
 				Entry("the file not committed", entryBase{
 					addFiles:             []string{".werf/file"},
-					expectedErrSubstring: "error calling Get: {{ .Files.Get '.werf/file' }}: the uncommitted configuration found in the project directory: the file '.werf/file' must be committed",
+					expectedErrSubstring: `error calling Get: {{ .Files.Get ".werf/file" }}: the uncommitted configuration found in the project git work tree: the file ".werf/file" must be committed`,
 				}),
 				Entry("the file committed", entryBase{
 					addFiles:    []string{".werf/file"},
@@ -94,7 +94,7 @@ config:
 					addFiles:               []string{".werf/file"},
 					commitFiles:            []string{".werf/file"},
 					changeFilesAfterCommit: []string{".werf/file"},
-					expectedErrSubstring:   "error calling Get: {{ .Files.Get '.werf/file' }}: the uncommitted configuration found in the project directory: the file '.werf/file' changes must be committed",
+					expectedErrSubstring:   `error calling Get: {{ .Files.Get ".werf/file" }}: the uncommitted configuration found in the project git work tree: the file ".werf/file" changes must be committed`,
 				}),
 			)
 		})
@@ -108,7 +108,7 @@ config:
 			DescribeTable("config.goTemplateRendering.allowUncommittedFiles",
 				func(e entry) {
 					fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
-{{ range $path, $content := .Files.Glob "%s" }}
+{{ range $path, $content := .Files.Glob %q }}
 {{ $content }}
 {{ end }}
 `, e.filesGlob))
@@ -121,14 +121,14 @@ config:
 					filesGlob: ".werf/file1",
 					entryBase: entryBase{
 						addFiles:             []string{".werf/file1"},
-						expectedErrSubstring: "error calling Glob: {{ .Files.Glob '.werf/file1' }}: the uncommitted configuration found in the project directory: the file '.werf/file1' must be committed",
+						expectedErrSubstring: `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the uncommitted configuration found in the project git work tree: the file ".werf/file1" must be committed`,
 					},
 				}),
 				Entry("the files not committed", entry{
 					filesGlob: ".werf/*",
 					entryBase: entryBase{
 						addFiles: []string{".werf/file1", ".werf/file2", ".werf/file3"},
-						expectedErrSubstring: `error calling Glob: {{ .Files.Glob '.werf/*' }}: the uncommitted configuration found in the project directory: the following files must be committed:
+						expectedErrSubstring: `error calling Glob: {{ .Files.Glob ".werf/*" }}: the uncommitted configuration found in the project git work tree: the following files must be committed:
 
  - .werf/file1
  - .werf/file2
@@ -150,7 +150,7 @@ config:
 						addFiles:               []string{".werf/file1"},
 						commitFiles:            []string{".werf/file1"},
 						changeFilesAfterCommit: []string{".werf/file1"},
-						expectedErrSubstring:   "error calling Glob: {{ .Files.Glob '.werf/file1' }}: the uncommitted configuration found in the project directory: the file '.werf/file1' changes must be committed",
+						expectedErrSubstring:   `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the uncommitted configuration found in the project git work tree: the file ".werf/file1" changes must be committed`,
 					},
 				}),
 				Entry("config.goTemplateRendering.allowUncommittedFiles (.werf/file1) covers the not committed file", entry{
@@ -217,7 +217,7 @@ config:
 			},
 			Entry("the env name not allowed", entry{
 				addEnvName:           "NAME",
-				expectedErrSubstring: "error calling env: the configuration with external dependency found in the werf config: env name 'NAME' not allowed",
+				expectedErrSubstring: `error calling env: the configuration with external dependency found in the werf config: env name "NAME" not allowed`,
 			}),
 			Entry("config.goTemplateRendering.allowEnvVariables (NAME) covers the env name", entry{
 				allowEnvVariablesRegexp: "NAME",
@@ -226,12 +226,12 @@ config:
 			Entry("config.goTemplateRendering.allowEnvVariables (NA*) does not cover the env name", entry{
 				allowEnvVariablesRegexp: "NA*",
 				addEnvName:              "NAME",
-				expectedErrSubstring:    "error calling env: the configuration with external dependency found in the werf config: env name 'NAME' not allowed",
+				expectedErrSubstring:    `error calling env: the configuration with external dependency found in the werf config: env name "NAME" not allowed`,
 			}),
 			Entry("config.goTemplateRendering.allowEnvVariables (NA*) does not cover the env name", entry{
 				allowEnvVariablesRegexp: "NA*",
 				addEnvName:              "NAME",
-				expectedErrSubstring:    "error calling env: the configuration with external dependency found in the werf config: env name 'NAME' not allowed",
+				expectedErrSubstring:    `error calling env: the configuration with external dependency found in the werf config: env name "NAME" not allowed`,
 			}),
 		)
 	})

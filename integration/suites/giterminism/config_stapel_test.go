@@ -150,7 +150,7 @@ config:
 				}
 			},
 			Entry("the build_dir mount not allowed", entry{
-				expectedErrSubstring: "the configuration with external dependency found in the werf config: 'mount { from: build_dir, ... }' not allowed",
+				expectedErrSubstring: `the configuration with external dependency found in the werf config: "mount { from: build_dir, ... }" not allowed`,
 			}),
 			Entry("the build_dir mount allowed", entry{
 				allowStapelMountBuildDir: true,
@@ -201,7 +201,7 @@ config:
 			},
 			Entry("the from path /a/b/c not allowed", entry{
 				fromPath:             "/a/b/c",
-				expectedErrSubstring: "the configuration with external dependency found in the werf config: 'mount { fromPath: /a/b/c, ... }' not allowed",
+				expectedErrSubstring: `the configuration with external dependency found in the werf config: "mount { fromPath: /a/b/c, ... }" not allowed`,
 			}),
 			Entry("config.stapel.mount.allowFromPaths (/a/b/c) covers the from path /a/b/c", entry{
 				allowStapelMountFromPathsGlob: "/a/b/c",

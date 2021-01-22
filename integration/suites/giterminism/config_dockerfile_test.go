@@ -56,7 +56,7 @@ config:
 			},
 			Entry("the contextAddFile a/b/c not allowed", entry{
 				contextAddFile:       "a/b/c",
-				expectedErrSubstring: "the configuration with external dependency found in the werf config: contextAddFile 'a/b/c' not allowed",
+				expectedErrSubstring: `the configuration with external dependency found in the werf config: contextAddFile "a/b/c" not allowed`,
 			}),
 			Entry("config.dockerfile.allowContextAddFiles (a/b/c) covers the contextAddFile a/b/c", entry{
 				configDockerfileContextAddFilesGlob: "a/b/c",
@@ -70,7 +70,7 @@ config:
 				configDockerfileContextAddFilesGlob: "a/b/c",
 				context:                             "d",
 				contextAddFile:                      "a/b/c",
-				expectedErrSubstring:                "the configuration with external dependency found in the werf config: contextAddFile 'd/a/b/c' not allowed",
+				expectedErrSubstring:                `the configuration with external dependency found in the werf config: contextAddFile "d/a/b/c" not allowed`,
 			}),
 			Entry("config.dockerfile.allowContextAddFiles (d/a/b/c/) covers the contextAddFile a/b/c inside context d", entry{
 				configDockerfileContextAddFilesGlob: "d/a/b/c",
@@ -137,11 +137,11 @@ FROM alpine
 				}
 			},
 			Entry("the dockerfile not found", entry{
-				expectedErrSubstring: "the dockerfile 'Dockerfile' not found in the project git repository",
+				expectedErrSubstring: `the dockerfile "Dockerfile" not found in the project git repository`,
 			}),
 			Entry("the dockerfile not committed", entry{
 				addDockerfile:        true,
-				expectedErrSubstring: "the uncommitted configuration found in the project directory: the dockerfile 'Dockerfile' must be committed",
+				expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the dockerfile "Dockerfile" must be committed`,
 			}),
 			Entry("the dockerfile committed", entry{
 				addDockerfile:    true,
@@ -151,33 +151,33 @@ FROM alpine
 				addDockerfile:               true,
 				commitDockerfile:            true,
 				changeDockerfileAfterCommit: true,
-				expectedErrSubstring:        "the uncommitted configuration found in the project directory: the dockerfile 'Dockerfile' changes must be committed",
+				expectedErrSubstring:        `the uncommitted configuration found in the project git work tree: the dockerfile "Dockerfile" changes must be committed`,
 			}),
-			Entry("config.dockerfile.allowUncommitted (Dockerfile) covers the uncommitted dockerfile 'Dockerfile'", entry{
+			Entry(`config.dockerfile.allowUncommitted (Dockerfile) covers the uncommitted dockerfile "Dockerfile"`, entry{
 				configDockerfileAllowUncommittedGlob: "Dockerfile",
 				addDockerfile:                        true,
 			}),
-			Entry("config.dockerfile.allowUncommitted (Dockerfile) covers the committed dockerfile 'Dockerfile'", entry{
+			Entry(`config.dockerfile.allowUncommitted (Dockerfile) covers the committed dockerfile "Dockerfile"`, entry{
 				configDockerfileAllowUncommittedGlob: "Dockerfile",
 				addDockerfile:                        true,
 				commitDockerfile:                     true,
 			}),
-			Entry("config.dockerfile.allowUncommitted (*) covers the dockerfile 'Dockerfile'", entry{
+			Entry(`config.dockerfile.allowUncommitted (*) covers the dockerfile "Dockerfile"`, entry{
 				configDockerfileAllowUncommittedGlob: "*",
 				addDockerfile:                        true,
 			}),
-			Entry("config.dockerfile.allowUncommitted (docker*) does not cover the dockerfile 'Dockerfile'", entry{
+			Entry(`config.dockerfile.allowUncommitted (docker*) does not cover the dockerfile "Dockerfile"`, entry{
 				configDockerfileAllowUncommittedGlob: "docker*",
 				addDockerfile:                        true,
-				expectedErrSubstring:                 "the uncommitted configuration found in the project directory: the dockerfile 'Dockerfile' must be committed",
+				expectedErrSubstring:                 `the uncommitted configuration found in the project git work tree: the dockerfile "Dockerfile" must be committed`,
 			}),
-			Entry("config.dockerfile.allowContextAddFiles (Dockerfile) does not cover the dockerfile 'Dockerfile' inside context 'context'", entry{
+			Entry(`config.dockerfile.allowContextAddFiles (Dockerfile) does not cover the dockerfile "Dockerfile" inside context "context"`, entry{
 				configDockerfileAllowUncommittedGlob: "Dockerfile",
 				context:                              "context",
 				addDockerfile:                        true,
-				expectedErrSubstring:                 "the uncommitted configuration found in the project directory: the dockerfile 'context/Dockerfile' must be committed",
+				expectedErrSubstring:                 `the uncommitted configuration found in the project git work tree: the dockerfile "context/Dockerfile" must be committed`,
 			}),
-			Entry("config.dockerfile.allowContextAddFiles (context/Dockerfile) covers the dockerfile 'Dockerfile' inside context 'context'", entry{
+			Entry(`config.dockerfile.allowContextAddFiles (context/Dockerfile) covers the dockerfile "Dockerfile" inside context "context"`, entry{
 				configDockerfileAllowUncommittedGlob: "context/Dockerfile",
 				context:                              "context",
 				addDockerfile:                        true,
@@ -250,7 +250,7 @@ config:
 			Entry("the dockerignore not found", entry{}),
 			Entry("the dockerignore not committed", entry{
 				addDockerignore:      true,
-				expectedErrSubstring: "the uncommitted configuration found in the project directory: the dockerignore file '.dockerignore' must be committed",
+				expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the dockerignore file ".dockerignore" must be committed`,
 			}),
 			Entry("the dockerignore committed", entry{
 				addDockerignore:    true,
@@ -260,33 +260,33 @@ config:
 				addDockerignore:               true,
 				commitDockerignore:            true,
 				changeDockerignoreAfterCommit: true,
-				expectedErrSubstring:          "the uncommitted configuration found in the project directory: the dockerignore file '.dockerignore' changes must be committed",
+				expectedErrSubstring:          `the uncommitted configuration found in the project git work tree: the dockerignore file ".dockerignore" changes must be committed`,
 			}),
-			Entry("config.dockerfile.allowUncommittedDockerignoreFiles (.dockerignore) covers the uncommitted dockerignore '.dockerignore'", entry{
+			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (.dockerignore) covers the uncommitted dockerignore ".dockerignore"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: ".dockerignore",
 				addDockerignore: true,
 			}),
-			Entry("config.dockerfile.allowUncommittedDockerignoreFiles (.dockerignore) covers the committed dockerignore '.dockerignore'", entry{
+			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (.dockerignore) covers the committed dockerignore ".dockerignore"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: ".dockerignore",
 				addDockerignore:    true,
 				commitDockerignore: true,
 			}),
-			Entry("config.dockerfile.allowUncommittedDockerignoreFiles (*) covers the dockerignore '.dockerignore'", entry{
+			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (*) covers the dockerignore ".dockerignore"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: "*",
 				addDockerignore: true,
 			}),
-			Entry("config.dockerfile.allowUncommittedDockerignoreFiles (docker*) does not cover the dockerignore '.dockerignore'", entry{
+			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (docker*) does not cover the dockerignore ".dockerignore"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: "docker*",
 				addDockerignore:      true,
-				expectedErrSubstring: "the uncommitted configuration found in the project directory: the dockerignore file '.dockerignore' must be committed",
+				expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the dockerignore file ".dockerignore" must be committed`,
 			}),
-			Entry("config.dockerignore.allowContextAddFiles (.dockerignore) does not cover the dockerignore '.dockerignore' inside context 'context'", entry{
+			Entry(`config.dockerignore.allowContextAddFiles (.dockerignore) does not cover the dockerignore ".dockerignore" inside context "context"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: ".dockerignore",
 				context:              "context",
 				addDockerignore:      true,
-				expectedErrSubstring: "the uncommitted configuration found in the project directory: the dockerignore file 'context/.dockerignore' must be committed",
+				expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the dockerignore file "context/.dockerignore" must be committed`,
 			}),
-			Entry("config.dockerignore.allowContextAddFiles (context/.dockerignore) covers the dockerignore '.dockerignore' inside context 'context'", entry{
+			Entry(`config.dockerignore.allowContextAddFiles (context/.dockerignore) covers the dockerignore ".dockerignore" inside context "context"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: "context/.dockerignore",
 				context:         "context",
 				addDockerignore: true,
