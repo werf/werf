@@ -15,7 +15,8 @@ werf docs [options]
 
 ```shell
       --dir=''
-            Use custom working directory (default $WERF_DIR or current directory)
+            Use specified project directory where project's werf.yaml and other configuration files 
+            should reside (default $WERF_DIR or current working directory)
   -h, --help=false
             help for docs
       --log-color-mode='auto'

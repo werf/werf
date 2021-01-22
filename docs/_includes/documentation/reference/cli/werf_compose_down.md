@@ -41,7 +41,8 @@ werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compo
       --dev=false
             Enable developer mode (default $WERF_DEV)
       --dir=''
-            Use custom working directory (default $WERF_DIR or current directory)
+            Use specified project directory where project's werf.yaml and other configuration files 
+            should reside (default $WERF_DIR or current working directory)
       --docker-compose-bin-path=''
             Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)
       --docker-compose-command-options=''
@@ -56,6 +57,9 @@ werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compo
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=''
             Use specified environment (default $WERF_ENV)
+      --git-work-tree=''
+            Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
+            contains .git in the current or parent directories)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false
