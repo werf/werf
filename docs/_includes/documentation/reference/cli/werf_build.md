@@ -164,7 +164,7 @@ werf build [IMAGE_NAME...] [options]
             <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the 
             following rules:
             - all characters are uppercase (app -> APP);
-            - charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND)
+            - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)
       --report-path=''
             Report save path ($WERF_REPORT_PATH by default)
       --secondary-repo=[]
@@ -175,8 +175,8 @@ werf build [IMAGE_NAME...] [options]
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
-            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
+            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,          
+            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
             https://werf.io/documentation/reference/toolbox/ssh.html
   -S, --synchronization=''

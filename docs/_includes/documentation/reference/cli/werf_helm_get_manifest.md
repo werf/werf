@@ -7,7 +7,7 @@
 This command fetches the generated manifest for a given release.
 
 A manifest is a YAML-encoded representation of the Kubernetes resources that
-were generated from this release's chart(s). If a chart is dependent on other
+were generated from this release&#39;s chart(s). If a chart is dependent on other
 charts, those resources will also be included in the manifest.
 
 

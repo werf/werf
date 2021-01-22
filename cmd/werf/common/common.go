@@ -181,7 +181,7 @@ func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 
 	cmdData.SSHKeys = &sshKeys
 	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", sshKeys, `Use only specific ssh key(s).
-Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa", $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
+Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
 Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
 }
 
@@ -211,7 +211,7 @@ func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 	...
 <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
 - all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (dev/app-frontend -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
+- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
 }
 
 func GetReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
@@ -287,7 +287,7 @@ func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.AddAnnotations = &addAnnotations
 	cmd.Flags().StringArrayVarP(cmdData.AddAnnotations, "add-annotation", "", addAnnotations, `Add annotation to deploying resources (can specify multiple).
 Format: annoName=annoValue.
-Also, can be specified with $WERF_ADD_ANNOTATION* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1", $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")`)
+Also, can be specified with $WERF_ADD_ANNOTATION* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1, $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)`)
 }
 
 func SetupAddLabels(cmdData *CmdData, cmd *cobra.Command) {
@@ -296,7 +296,7 @@ func SetupAddLabels(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.AddLabels = &addLabels
 	cmd.Flags().StringArrayVarP(cmdData.AddLabels, "add-label", "", addLabels, `Add label to deploying resources (can specify multiple).
 Format: labelName=labelValue.
-Also, can be specified with $WERF_ADD_LABEL* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")`)
+Also, can be specified with $WERF_ADD_LABEL* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)`)
 }
 
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {

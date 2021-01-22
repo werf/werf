@@ -10,12 +10,12 @@ Chart.yaml file) and then package that directory.
 
 Versioned chart archives are used by Helm package repositories.
 
-To sign a chart, use the '--sign' flag. In most cases, you should also
-provide '--keyring path/to/secret/keys' and '--key keyname'.
+To sign a chart, use the &#39;--sign&#39; flag. In most cases, you should also
+provide &#39;--keyring path/to/secret/keys&#39; and &#39;--key keyname&#39;.
 
   $ helm package --sign ./mychart --key mykey --keyring ~/.gnupg/secring.gpg
 
-If '--keyring' is not specified, Helm usually defaults to the public keyring
+If &#39;--keyring&#39; is not specified, Helm usually defaults to the public keyring
 unless your environment is otherwise configured.
 
 

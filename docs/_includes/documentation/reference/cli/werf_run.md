@@ -126,8 +126,8 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
-            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
+            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,          
+            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
             https://werf.io/documentation/reference/toolbox/ssh.html
   -S, --synchronization=''

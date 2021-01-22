@@ -31,13 +31,18 @@ werf bundle apply [options]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
             Also, can be specified with $WERF_ADD_ANNOTATION* (e.g.                                 
-            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1",                                           
-            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")
+            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
+            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
-            $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
+            $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --docker-config=''
+            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
+            ~/.docker (in the order of priority)
+            Command needs granted permissions to read, pull and push images into the specified      
+            repo, to pull base images
       --env=''
             Use specified environment (default $WERF_ENV)
       --home-dir=''
@@ -117,6 +122,8 @@ werf bundle apply [options]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
+      --set-docker-config-json-value=false
+            Shortcut to set current docker config into the .Values.dockerconfigjson
       --set-file=[]
             Set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2).

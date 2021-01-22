@@ -7,25 +7,25 @@
 This command upgrades a release to a new version of a chart.
 
 The upgrade arguments must be a release and chart. The chart
-argument can be either: a chart reference('example/mariadb'), a path to a chart directory,
+argument can be either: a chart reference(&#39;example/mariadb&#39;), a path to a chart directory,
 a packaged chart, or a fully qualified URL. For chart references, the latest
-version will be specified unless the '--version' flag is set.
+version will be specified unless the &#39;--version&#39; flag is set.
 
-To override values in a chart, use either the '--values' flag and pass in a file
-or use the '--set' flag and pass configuration from the command line, to force string
-values, use '--set-string'. In case a value is large and therefore
-you want not to use neither '--values' nor '--set', use '--set-file' to read the
+To override values in a chart, use either the &#39;--values&#39; flag and pass in a file
+or use the &#39;--set&#39; flag and pass configuration from the command line, to force string
+values, use &#39;--set-string&#39;. In case a value is large and therefore
+you want not to use neither &#39;--values&#39; nor &#39;--set&#39;, use &#39;--set-file&#39; to read the
 single large value from file.
 
-You can specify the '--values'/'-f' flag multiple times. The priority will be given to the
+You can specify the &#39;--values&#39;/&#39;-f&#39; flag multiple times. The priority will be given to the
 last (right-most) file specified. For example, if both myvalues.yaml and override.yaml
-contained a key called 'Test', the value set in override.yaml would take precedence:
+contained a key called &#39;Test&#39;, the value set in override.yaml would take precedence:
 
     $ helm upgrade -f myvalues.yaml -f override.yaml redis ./redis
 
-You can specify the '--set' flag multiple times. The priority will be given to the
-last (right-most) set specified. For example, if both 'bar' and 'newbar' values are
-set for a key called 'foo', the 'newbar' value would take precedence:
+You can specify the &#39;--set&#39; flag multiple times. The priority will be given to the
+last (right-most) set specified. For example, if both &#39;bar&#39; and &#39;newbar&#39; values are
+set for a key called &#39;foo&#39;, the &#39;newbar&#39; value would take precedence:
 
     $ helm upgrade --set foo=bar --set foo=newbar redis ./redis
 
@@ -43,13 +43,13 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
             Also, can be specified with $WERF_ADD_ANNOTATION* (e.g.                                 
-            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1",                                           
-            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")
+            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
+            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
-            $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
+            $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --atomic=false
             if set, upgrade process rolls back changes made in case of failed upgrade. The --wait   
             flag will be set automatically if --atomic is used

@@ -9,7 +9,7 @@ This command takes a release name and uninstalls the release.
 It removes all of the resources associated with the last release of the chart
 as well as the release history, freeing it up for future use.
 
-Use the '--dry-run' flag to see which releases will be uninstalled without actually
+Use the &#39;--dry-run&#39; flag to see which releases will be uninstalled without actually
 uninstalling them.
 
 

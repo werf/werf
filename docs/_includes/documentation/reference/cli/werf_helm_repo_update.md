@@ -5,7 +5,7 @@
 {% endif %}
 
 Update gets the latest information about charts from the respective chart repositories.
-Information is cached locally, where it is used by commands like 'helm search'.
+Information is cached locally, where it is used by commands like &#39;helm search&#39;.
 
 
 {{ header }} Syntax

@@ -6,7 +6,7 @@
 
 This command downloads hooks for a given release.
 
-Hooks are formatted in YAML and separated by the YAML '---\n' separator.
+Hooks are formatted in YAML and separated by the YAML &#39;---\n&#39; separator.
 
 
 {{ header }} Syntax

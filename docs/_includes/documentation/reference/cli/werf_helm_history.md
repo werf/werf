@@ -6,7 +6,7 @@
 
 History prints historical revisions for a given release.
 
-A default maximum of 256 revisions will be returned. Setting '--max'
+A default maximum of 256 revisions will be returned. Setting &#39;--max&#39;
 configures the maximum length of the revision list returned.
 
 The historical release set is printed as a formatted table, e.g:
