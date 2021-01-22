@@ -22,9 +22,13 @@ werf config render [IMAGE_NAME...] [options]
       --dev=false
             Enable developer mode (default $WERF_DEV)
       --dir=''
-            Use custom working directory (default $WERF_DIR or current directory)
+            Use specified project directory where project's werf.yaml and other configuration files 
+            should reside (default $WERF_DIR or current working directory)
       --env=''
             Use specified environment (default $WERF_ENV)
+      --git-work-tree=''
+            Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
+            contains .git in the current or parent directories)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto'
