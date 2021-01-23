@@ -72,12 +72,14 @@ loop:
 				return nil, nil, errors.Wrap(err, "cannot load Chart.lock")
 			}
 			lockFile = f
+			break loop
 		case f.Name == "requirements.lock":
 			lock = new(chart.Lock)
 			if err := yaml.Unmarshal(f.Data, &lock); err != nil {
 				return nil, nil, errors.Wrap(err, "cannot load requirements.lock")
 			}
 			lockFile = f
+			break loop
 		}
 	}
 
