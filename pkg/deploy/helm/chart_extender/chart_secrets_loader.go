@@ -6,57 +6,80 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/werf/werf/pkg/secret"
+
 	"github.com/werf/werf/pkg/util"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 
-	"github.com/werf/werf/pkg/deploy/secret"
 	"sigs.k8s.io/yaml"
 )
 
-type LoadChartSecretValueFilesOptions struct {
+type SecretValuesFilesOptions struct {
 	CustomFiles []string
 }
 
-func LoadChartSecretValueFiles(chartDir string, loadedChartFiles []*chart.ChartExtenderBufferedFile, secretsManager secret.Manager, opts LoadChartSecretValueFilesOptions) (map[string]interface{}, error) {
-	var res map[string]interface{}
-
+func GetSecretValuesFiles(chartDir string, loadedChartFiles []*chart.ChartExtenderBufferedFile, opts SecretValuesFilesOptions) []*chart.ChartExtenderBufferedFile {
 	valuesFilePaths := []string{DefaultSecretValuesFileName}
 	for _, path := range opts.CustomFiles {
 		relPath := util.GetRelativeToBaseFilepath(chartDir, path)
 		valuesFilePaths = append(valuesFilePaths, relPath)
 	}
 
+	var res []*chart.ChartExtenderBufferedFile
 	for _, file := range loadedChartFiles {
 		for _, valuesFilePath := range valuesFilePaths {
 			if file.Name == valuesFilePath {
-				decodedData, err := secretsManager.DecryptYamlData(file.Data)
-				if err != nil {
-					return nil, fmt.Errorf("cannot decode file %q secret data: %s", file.Name, err)
-				}
-
-				rawValues := map[string]interface{}{}
-				if err := yaml.Unmarshal(decodedData, &rawValues); err != nil {
-					return nil, fmt.Errorf("cannot unmarshal secret values file %s: %s", file.Name, err)
-				}
-
-				res = chartutil.CoalesceTables(rawValues, res)
+				res = append(res, file)
 			}
 		}
 	}
 
-	return res, nil
+	return res
 }
 
-func LoadChartSecretFilesData(chartDir string, loadedChartFiles []*chart.ChartExtenderBufferedFile, secretsManager secret.Manager) (map[string]string, error) {
-	res := make(map[string]string)
+func GetSecretDirFiles(loadedChartFiles []*chart.ChartExtenderBufferedFile) []*chart.ChartExtenderBufferedFile {
+	var res []*chart.ChartExtenderBufferedFile
 
 	for _, file := range loadedChartFiles {
 		if !util.IsSubpathOfBasePath(SecretDirName, file.Name) {
 			continue
 		}
+		res = append(res, file)
+	}
 
-		decodedData, err := secretsManager.Decrypt([]byte(strings.TrimRightFunc(string(file.Data), unicode.IsSpace)))
+	return res
+}
+
+func LoadChartSecretValueFiles(chartDir string, secretDirFiles []*chart.ChartExtenderBufferedFile, encoder *secret.YamlEncoder) (map[string]interface{}, error) {
+	var res map[string]interface{}
+
+	for _, file := range secretDirFiles {
+		decodedData, err := encoder.DecryptYamlData(file.Data)
+		if err != nil {
+			return nil, fmt.Errorf("cannot decode file %q secret data: %s", filepath.Join(chartDir, file.Name), err)
+		}
+
+		rawValues := map[string]interface{}{}
+		if err := yaml.Unmarshal(decodedData, &rawValues); err != nil {
+			return nil, fmt.Errorf("cannot unmarshal secret values file %s: %s", filepath.Join(chartDir, file.Name), err)
+		}
+
+		res = chartutil.CoalesceTables(rawValues, res)
+	}
+
+	return res, nil
+}
+
+func LoadChartSecretDirFilesData(chartDir string, secretFiles []*chart.ChartExtenderBufferedFile, encoder *secret.YamlEncoder) (map[string]string, error) {
+	res := make(map[string]string)
+
+	for _, file := range secretFiles {
+		if !util.IsSubpathOfBasePath(SecretDirName, file.Name) {
+			continue
+		}
+
+		decodedData, err := encoder.Decrypt([]byte(strings.TrimRightFunc(string(file.Data), unicode.IsSpace)))
 		if err != nil {
 			return nil, fmt.Errorf("error decoding %s: %s", filepath.Join(chartDir, file.Name), err)
 		}

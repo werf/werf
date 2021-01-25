@@ -2,6 +2,7 @@ package secret
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -19,13 +20,21 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 
-	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/pkg/secret"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
-func SecretEdit(m secret.Manager, filePath string, values bool) error {
-	data, encodedData, err := readEditedFile(m, filePath, values)
+func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, filePath string, values bool) error {
+	var encoder *secret.YamlEncoder
+	if enc, err := m.GetYamlEncoder(ctx); err != nil {
+		return err
+	} else {
+		encoder = enc
+	}
+
+	data, encodedData, err := readEditedFile(filePath, values, encoder)
 	if err != nil {
 		return err
 	}
@@ -60,12 +69,12 @@ func SecretEdit(m secret.Manager, filePath string, values bool) error {
 
 		var newEncodedData []byte
 		if values {
-			newEncodedData, err = m.EncryptYamlData(newData)
+			newEncodedData, err = encoder.EncryptYamlData(newData)
 			if err != nil {
 				return err
 			}
 		} else {
-			newEncodedData, err = m.Encrypt(newData)
+			newEncodedData, err = encoder.Encrypt(newData)
 			if err != nil {
 				return err
 			}
@@ -113,7 +122,7 @@ func SecretEdit(m secret.Manager, filePath string, values bool) error {
 	return nil
 }
 
-func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []byte, error) {
+func readEditedFile(filePath string, values bool, encoder *secret.YamlEncoder) ([]byte, []byte, error) {
 	var data, encodedData []byte
 
 	exist, err := util.FileExists(filePath)
@@ -130,12 +139,12 @@ func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []b
 		encodedData = bytes.TrimSpace(encodedData)
 
 		if values {
-			data, err = m.DecryptYamlData(encodedData)
+			data, err = encoder.DecryptYamlData(encodedData)
 			if err != nil {
 				return nil, nil, err
 			}
 		} else {
-			data, err = m.Decrypt(encodedData)
+			data, err = encoder.Decrypt(encodedData)
 			if err != nil {
 				return nil, nil, err
 			}

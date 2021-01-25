@@ -5,17 +5,17 @@ import (
 	"testing"
 )
 
-type SecretMock struct{}
+type EncoderMock struct{}
 
-func (s *SecretMock) Encrypt(data []byte) ([]byte, error) {
+func (s *EncoderMock) Encrypt(data []byte) ([]byte, error) {
 	return []byte("encoded data"), nil
 }
 
-func (s *SecretMock) Decrypt(data []byte) ([]byte, error) {
+func (s *EncoderMock) Decrypt(data []byte) ([]byte, error) {
 	return []byte("data"), nil
 }
 
-func TestBaseSecret_doYamlData(t *testing.T) {
+func TestYamlEncoder_doYamlData(t *testing.T) {
 	valuesData := []byte(`image:
   repository: data
   tag: data
@@ -52,17 +52,17 @@ func TestBaseSecret_doYamlData(t *testing.T) {
   affinity: {}
 `)
 
-	s, err := newBaseManager(&SecretMock{})
+	enc, err := NewYamlEncoder(&EncoderMock{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	encodedData, err := s.EncryptYamlData(valuesData)
+	encodedData, err := enc.EncryptYamlData(valuesData)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	resultData, err := s.DecryptYamlData(encodedData)
+	resultData, err := enc.DecryptYamlData(encodedData)
 	if err != nil {
 		t.Fatal(err)
 	}

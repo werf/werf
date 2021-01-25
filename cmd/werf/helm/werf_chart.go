@@ -3,7 +3,8 @@ package helm
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/deploy"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
+
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 
 	"github.com/spf13/cobra"
@@ -35,12 +36,9 @@ func InitRenderRelatedWerfChartParams(ctx context.Context, commonCmdData *cmd_we
 	// NOTE: project-dir is the same as chart-dir for werf helm install/upgrade commands
 	// NOTE: project-dir is werf-project dir only for werf converge/dismiss commands
 
-	// FIXME: localGitRepo should not be needed by deploy secret manager
-	if m, err := deploy.GetSafeSecretManager(ctx, chartDir, chartDir, *commonCmdData.SecretValues, nil, *commonCmdData.IgnoreSecretKey); err != nil {
-		return err
-	} else {
-		wc.SetupSecretManager(m)
-	}
+	wc.SetupSecretsManager(secrets_manager.NewSecretsManager(chartDir, secrets_manager.SecretsManagerOptions{
+		DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey,
+	}))
 
 	return nil
 }

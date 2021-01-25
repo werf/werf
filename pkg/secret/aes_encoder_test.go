@@ -32,7 +32,7 @@ func TestNewAesSecret_positive(t *testing.T) {
 		key := []byte(hex.EncodeToString(randomBinary))
 
 		t.Run(fmt.Sprintf("%v|%v", size, string(key)), func(t *testing.T) {
-			_, err := NewAesSecret(key)
+			_, err := NewAesEncoder(key)
 			if err != nil {
 				t.Error(err)
 			}
@@ -65,7 +65,7 @@ func TestNewAesSecret_negative(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := NewAesSecret(test.key)
+			_, err := NewAesEncoder(test.key)
 			if err == nil {
 				t.Errorf("Expected error: %s", test.errorMessage)
 			} else if err.Error() != test.errorMessage {
@@ -76,7 +76,7 @@ func TestNewAesSecret_negative(t *testing.T) {
 }
 
 func TestAesSecret_Generate(t *testing.T) {
-	s, err := NewAesSecret(AesSecretKey)
+	s, err := NewAesEncoder(AesSecretKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +88,7 @@ func TestAesSecret_Generate(t *testing.T) {
 }
 
 func TestAesSecret_Extract_positive(t *testing.T) {
-	s, err := NewAesSecret(AesSecretKey)
+	s, err := NewAesEncoder(AesSecretKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,7 +127,7 @@ func TestAesSecret_Extract_negative(t *testing.T) {
 		},
 	}
 
-	s, err := NewAesSecret(AesSecretKey)
+	s, err := NewAesEncoder(AesSecretKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestAesSecret(t *testing.T) {
 
 		key := []byte(hex.EncodeToString(randomBinary))
 
-		s, err := NewAesSecret(key)
+		s, err := NewAesEncoder(key)
 		if err != nil {
 			t.Fatal(err)
 		}

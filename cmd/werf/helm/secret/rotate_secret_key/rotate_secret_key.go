@@ -8,12 +8,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/werf/werf/pkg/secret"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/util"
@@ -45,7 +47,7 @@ Command will extract data with the old key, generate new secret data and rewrite
 				return err
 			}
 
-			return runRotateSecretKey(cmd, args...)
+			return runRotateSecretKey(common.BackgroundContext(), cmd, args...)
 		},
 	}
 
@@ -65,7 +67,7 @@ Command will extract data with the old key, generate new secret data and rewrite
 	return cmd
 }
 
-func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
+func runRotateSecretKey(ctx context.Context, cmd *cobra.Command, secretValuesPaths ...string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -97,26 +99,24 @@ func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
 
-	newSecret, err := secret.GetManager(giterminismManager.ProjectDir())
-	if err != nil {
-		return err
-	}
+	secretsManager := secrets_manager.NewSecretsManager(giterminismManager.ProjectDir(), secrets_manager.SecretsManagerOptions{})
 
-	oldSecretKey := os.Getenv("WERF_OLD_SECRET_KEY")
-	if oldSecretKey == "" {
+	newEncoder, err := secretsManager.GetYamlEncoder(ctx)
+	if err != nil {
 		common.PrintHelp(cmd)
-		return fmt.Errorf("WERF_OLD_SECRET_KEY environment required")
-	}
-
-	oldSecret, err := secret.NewManager([]byte(oldSecretKey))
-	if err != nil {
 		return err
 	}
 
-	return secretsRegenerate(newSecret, oldSecret, helmChartDir, secretValuesPaths...)
+	oldEncoder, err := secretsManager.GetYamlEncoderForOldKey(ctx)
+	if err != nil {
+		common.PrintHelp(cmd)
+		return err
+	}
+
+	return secretsRegenerate(newEncoder, oldEncoder, helmChartDir, secretValuesPaths...)
 }
 
-func secretsRegenerate(newManager, oldManager secret.Manager, helmChartDir string, secretValuesPaths ...string) error {
+func secretsRegenerate(newEncoder, oldEncoder *secret.YamlEncoder, helmChartDir string, secretValuesPaths ...string) error {
 	var secretFilesPaths []string
 	regeneratedFilesData := map[string][]byte{}
 	secretFilesData := map[string][]byte{}
@@ -183,11 +183,11 @@ func secretsRegenerate(newManager, oldManager secret.Manager, helmChartDir strin
 		return err
 	}
 
-	if err := regenerateSecrets(secretFilesData, regeneratedFilesData, oldManager.Decrypt, newManager.Encrypt); err != nil {
+	if err := regenerateSecrets(secretFilesData, regeneratedFilesData, oldEncoder.Decrypt, newEncoder.Encrypt); err != nil {
 		return err
 	}
 
-	if err := regenerateSecrets(secretValuesFilesData, regeneratedFilesData, oldManager.DecryptYamlData, newManager.EncryptYamlData); err != nil {
+	if err := regenerateSecrets(secretValuesFilesData, regeneratedFilesData, oldEncoder.DecryptYamlData, newEncoder.EncryptYamlData); err != nil {
 		return err
 	}
 
