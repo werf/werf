@@ -249,11 +249,7 @@ func (phase *BuildPhase) addManagedImage(ctx context.Context, img *Image) error 
 func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) error {
 	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Processing image %s git metadata", img.GetName())).
 		DoError(func() error {
-			localGitRepo := phase.Conveyor.GetLocalGitRepo()
-			headCommit, err := localGitRepo.HeadCommit(ctx)
-			if err != nil {
-				return err
-			}
+			headCommit := phase.Conveyor.giterminismManager.HeadCommit()
 
 			exists, err := phase.Conveyor.StorageManager.StagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, img.GetStageID())
 			if err != nil {

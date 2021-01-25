@@ -5,7 +5,6 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -13,7 +12,6 @@ import (
 
 type ConveyorWithRetryWrapper struct {
 	WerfConfig          *config.WerfConfig
-	LocalGitRepo        git_repo.Local
 	GiterminismManager  giterminism_manager.Interface
 	ImageNamesToProcess []string
 	ProjectDir          string
@@ -26,10 +24,9 @@ type ConveyorWithRetryWrapper struct {
 	ConveyorOptions ConveyorOptions
 }
 
-func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, localGitRepo git_repo.Local, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
+func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
 	return &ConveyorWithRetryWrapper{
 		WerfConfig:          werfConfig,
-		LocalGitRepo:        localGitRepo,
 		GiterminismManager:  giterminismManager,
 		ImageNamesToProcess: imageNamesToProcess,
 		ProjectDir:          projectDir,
@@ -51,7 +48,6 @@ Retry:
 	newConveyor := NewConveyor(
 		wrapper.WerfConfig,
 		wrapper.GiterminismManager,
-		wrapper.LocalGitRepo,
 		wrapper.ImageNamesToProcess,
 		wrapper.ProjectDir,
 		wrapper.BaseTmpDir,

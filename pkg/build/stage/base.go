@@ -231,9 +231,7 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	if err := s.addProjectRepoCommitToLabels(ctx, c, image); err != nil {
-		return err
-	}
+	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, image)
@@ -247,15 +245,6 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage
 		return fmt.Errorf("error adding mounts volumes: %s", err)
 	}
 
-	return nil
-}
-
-func (s *BaseStage) addProjectRepoCommitToLabels(ctx context.Context, c Conveyor, image container_runtime.ImageInterface) error {
-	if commit, err := c.GetProjectRepoCommit(ctx); err != nil {
-		return fmt.Errorf("unable to get project repo commit: %s", err)
-	} else if commit != "" {
-		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: commit})
-	}
 	return nil
 }
 

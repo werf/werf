@@ -25,7 +25,6 @@ type Conveyor interface {
 	GetImportServer(ctx context.Context, imageName, stageName string) (import_server.ImportServer, error)
 	GetLocalGitRepoVirtualMergeOptions() VirtualMergeOptions
 
-	GetProjectRepoCommit(ctx context.Context) (string, error)
 	GiterminismManager() giterminism_manager.Interface
 }
 
