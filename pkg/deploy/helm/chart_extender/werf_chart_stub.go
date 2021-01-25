@@ -4,7 +4,7 @@ import (
 	"context"
 	"text/template"
 
-	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 
 	"helm.sh/helm/v3/pkg/postrender"
 
@@ -25,7 +25,7 @@ func NewWerfChartStub(ctx context.Context) *WerfChartStub {
 
 type WerfChartStub struct {
 	HelmChart        *chart.Chart
-	SecretManager    secret.Manager
+	SecretsManager   *secrets_manager.SecretsManager
 	SecretValueFiles []string
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
@@ -34,8 +34,8 @@ type WerfChartStub struct {
 	*ChartExtenderContextData
 }
 
-func (wc *WerfChartStub) SetupSecretManager(manager secret.Manager) {
-	wc.SecretManager = manager
+func (wc *WerfChartStub) SetupSecretsManager(manager *secrets_manager.SecretsManager) {
+	wc.SecretsManager = manager
 }
 
 func (wc *WerfChartStub) AddExtraAnnotationsAndLabels(extraAnnotations, extraLabels map[string]string) {

@@ -1,13 +1,15 @@
 package secret
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
-	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -36,7 +38,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 				return err
 			}
 
-			return runSecretEdit(args[0])
+			return runSecretEdit(common.BackgroundContext(), args[0])
 		},
 	}
 
@@ -51,7 +53,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 	return cmd
 }
 
-func runSecretEdit(filepPath string) error {
+func runSecretEdit(ctx context.Context, filePath string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -66,10 +68,5 @@ func runSecretEdit(filepPath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	m, err := secret.GetManager(workingDir)
-	if err != nil {
-		return err
-	}
-
-	return secret_common.SecretEdit(m, filepPath, false)
+	return secret_common.SecretEdit(ctx, secrets_manager.NewSecretsManager(workingDir, secrets_manager.SecretsManagerOptions{}), filePath, false)
 }

@@ -12,11 +12,11 @@ import (
 	"strings"
 )
 
-type AesSecret struct {
+type AesEncoder struct {
 	CipherBlock cipher.Block
 }
 
-func GenerateAexSecretKey() ([]byte, error) {
+func GenerateAesSecretKey() ([]byte, error) {
 	randomBytes := make([]byte, 16)
 	if _, err := rand.Read(randomBytes); err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func GenerateAexSecretKey() ([]byte, error) {
 	return result, nil
 }
 
-func NewAesSecret(key []byte) (*AesSecret, error) {
+func NewAesEncoder(key []byte) (*AesEncoder, error) {
 	key, err := hexToBinary(key)
 	if err != nil {
 		return nil, err
@@ -38,11 +38,11 @@ func NewAesSecret(key []byte) (*AesSecret, error) {
 		return nil, err
 	}
 
-	secret := &AesSecret{c}
+	secret := &AesEncoder{c}
 	return secret, nil
 }
 
-func (s *AesSecret) Encrypt(data []byte) ([]byte, error) {
+func (s *AesEncoder) Encrypt(data []byte) ([]byte, error) {
 	dataToEncrypt := pad(data)
 
 	cipherData := make([]byte, aes.BlockSize+len(dataToEncrypt))
@@ -67,7 +67,7 @@ func (s *AesSecret) Encrypt(data []byte) ([]byte, error) {
 	return result, nil
 }
 
-func (s *AesSecret) Decrypt(data []byte) ([]byte, error) {
+func (s *AesEncoder) Decrypt(data []byte) ([]byte, error) {
 	if len(data) == 0 {
 		return data, nil
 	}

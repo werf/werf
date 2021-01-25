@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -8,7 +9,7 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
-	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -43,7 +44,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 				filePath = args[0]
 			}
 
-			if err := runSecretEncrypt(filePath); err != nil {
+			if err := runSecretEncrypt(common.BackgroundContext(), filePath); err != nil {
 				if strings.HasSuffix(err.Error(), secret_common.ExpectedFilePathOrPipeError().Error()) {
 					common.PrintHelp(cmd)
 				}
@@ -68,7 +69,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 	return cmd
 }
 
-func runSecretEncrypt(filePath string) error {
+func runSecretEncrypt(ctx context.Context, filePath string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -83,10 +84,5 @@ func runSecretEncrypt(filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	m, err := secret.GetManager(workingDir)
-	if err != nil {
-		return err
-	}
-
-	return secret_common.SecretFileEncrypt(m, filePath, cmdData.OutputFilePath)
+	return secret_common.SecretFileEncrypt(ctx, secrets_manager.NewSecretsManager(workingDir, secrets_manager.SecretsManagerOptions{}), filePath, cmdData.OutputFilePath)
 }

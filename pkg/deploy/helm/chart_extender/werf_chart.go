@@ -11,6 +11,10 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
+
+	"github.com/werf/werf/pkg/secret"
+
 	"github.com/werf/logboek"
 	"sigs.k8s.io/yaml"
 
@@ -22,7 +26,6 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/deploy/secret"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/util/secretvalues"
 )
@@ -37,16 +40,18 @@ type WerfChartOptions struct {
 	ExtraAnnotations           map[string]string
 	ExtraLabels                map[string]string
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
+	DisableSecrets             bool
 }
 
-func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretManager secret.Manager, chartDir string, helmEnvSettings *cli.EnvSettings, opts WerfChartOptions) *WerfChart {
+func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretsManager *secrets_manager.SecretsManager, chartDir string, helmEnvSettings *cli.EnvSettings, opts WerfChartOptions) *WerfChart {
 	wc := &WerfChart{
 		ChartDir:         chartDir,
 		SecretValueFiles: opts.SecretValueFiles,
 		HelmEnvSettings:  helmEnvSettings,
+		DisableSecrets:   opts.DisableSecrets,
 
 		GiterminismManager: giterminismManager,
-		SecretsManager:     secretManager,
+		SecretsManager:     secretsManager,
 
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
 		decodedSecretFilesData:                make(map[string]string),
@@ -67,9 +72,10 @@ type WerfChart struct {
 	SecretValueFiles           []string
 	HelmEnvSettings            *cli.EnvSettings
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
+	DisableSecrets             bool
 
-	SecretsManager     secret.Manager
 	GiterminismManager giterminism_manager.Interface
+	SecretsManager     *secrets_manager.SecretsManager
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	werfConfig                            *config.WerfConfig
@@ -90,20 +96,36 @@ func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
 
 // ChartLoaded method for the chart.Extender interface
 func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
-	if data, err := LoadChartSecretFilesData(wc.ChartDir, files, wc.SecretsManager); err != nil {
-		return fmt.Errorf("error loading secret files data: %s", err)
-	} else {
-		wc.decodedSecretFilesData = data
-		for _, fileData := range wc.decodedSecretFilesData {
-			wc.secretValuesToMask = append(wc.secretValuesToMask, fileData)
+	secretDirFiles := GetSecretDirFiles(files)
+	secretValuesFiles := GetSecretValuesFiles(wc.ChartDir, files, SecretValuesFilesOptions{CustomFiles: wc.SecretValueFiles})
+
+	var encoder *secret.YamlEncoder
+	if len(secretDirFiles)+len(secretValuesFiles) > 0 {
+		if enc, err := wc.SecretsManager.GetYamlEncoder(wc.chartExtenderContext); err != nil {
+			return err
+		} else {
+			encoder = enc
 		}
 	}
 
-	if values, err := LoadChartSecretValueFiles(wc.ChartDir, files, wc.SecretsManager, LoadChartSecretValueFilesOptions{CustomFiles: wc.SecretValueFiles}); err != nil {
-		return fmt.Errorf("error loading secret value files: %s", err)
-	} else {
-		wc.decodedSecretValues = values
-		wc.secretValuesToMask = append(wc.secretValuesToMask, secretvalues.ExtractSecretValuesFromMap(values)...)
+	if len(secretDirFiles) > 0 {
+		if data, err := LoadChartSecretDirFilesData(wc.ChartDir, secretDirFiles, encoder); err != nil {
+			return fmt.Errorf("error loading secret files data: %s", err)
+		} else {
+			wc.decodedSecretFilesData = data
+			for _, fileData := range wc.decodedSecretFilesData {
+				wc.secretValuesToMask = append(wc.secretValuesToMask, fileData)
+			}
+		}
+	}
+
+	if len(secretValuesFiles) > 0 {
+		if values, err := LoadChartSecretValueFiles(wc.ChartDir, secretValuesFiles, encoder); err != nil {
+			return fmt.Errorf("error loading secret value files: %s", err)
+		} else {
+			wc.decodedSecretValues = values
+			wc.secretValuesToMask = append(wc.secretValuesToMask, secretvalues.ExtractSecretValuesFromMap(values)...)
+		}
 	}
 
 	var opts GetHelmChartMetadataOptions

@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 )
 
 var commonCmdData common.CmdData
@@ -39,7 +39,7 @@ For further usage, the encryption key should be saved in $WERF_SECRET_KEY or .we
 }
 
 func runGenerateSecretKey() error {
-	key, err := secret.GenerateSecretKey()
+	key, err := secrets_manager.GenerateSecretKey()
 	if err != nil {
 		return err
 	}

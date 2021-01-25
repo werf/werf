@@ -2,38 +2,48 @@ package secret
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/werf/werf/pkg/secret"
+
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 )
 
-func SecretFileEncrypt(m secret.Manager, filePath, outputFilePath string) error {
+func SecretFileEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, filePath, outputFilePath string) error {
 	options := &GenerateOptions{
 		FilePath:       filePath,
 		OutputFilePath: outputFilePath,
 		Values:         false,
 	}
 
-	return secretEncrypt(m, options)
+	return secretEncrypt(ctx, m, options)
 }
 
-func SecretValuesEncrypt(m secret.Manager, filePath, outputFilePath string) error {
+func SecretValuesEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, filePath, outputFilePath string) error {
 	options := &GenerateOptions{
 		FilePath:       filePath,
 		OutputFilePath: outputFilePath,
 		Values:         true,
 	}
 
-	return secretEncrypt(m, options)
+	return secretEncrypt(ctx, m, options)
 }
 
-func secretEncrypt(m secret.Manager, options *GenerateOptions) error {
+func secretEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, options *GenerateOptions) error {
 	var data []byte
 	var encodedData []byte
 	var err error
+
+	var encoder *secret.YamlEncoder
+	if enc, err := m.GetYamlEncoder(ctx); err != nil {
+		return err
+	} else {
+		encoder = enc
+	}
 
 	if options.FilePath != "" {
 		data, err = ReadFileData(options.FilePath)
@@ -54,12 +64,12 @@ func secretEncrypt(m secret.Manager, options *GenerateOptions) error {
 	}
 
 	if options.Values {
-		encodedData, err = m.EncryptYamlData(data)
+		encodedData, err = encoder.EncryptYamlData(data)
 		if err != nil {
 			return err
 		}
 	} else {
-		encodedData, err = m.Encrypt(data)
+		encodedData, err = encoder.Encrypt(data)
 		if err != nil {
 			return err
 		}

@@ -2,15 +2,18 @@ package secret
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
+
+	"github.com/werf/werf/pkg/secret"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/werf/werf/cmd/werf/common"
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
-	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -44,7 +47,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 				return err
 			}
 
-			return runSecretEncrypt()
+			return runSecretEncrypt(common.BackgroundContext())
 		},
 	}
 
@@ -61,7 +64,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 	return cmd
 }
 
-func runSecretEncrypt() error {
+func runSecretEncrypt(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -76,18 +79,20 @@ func runSecretEncrypt() error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	m, err := secret.GetManager(workingDir)
-	if err != nil {
-		return err
-	}
-
-	return secretEncrypt(m)
+	return secretEncrypt(ctx, secrets_manager.NewSecretsManager(workingDir, secrets_manager.SecretsManagerOptions{}))
 }
 
-func secretEncrypt(m secret.Manager) error {
+func secretEncrypt(ctx context.Context, m *secrets_manager.SecretsManager) error {
 	var data []byte
 	var encodedData []byte
 	var err error
+
+	var encoder *secret.YamlEncoder
+	if enc, err := m.GetYamlEncoder(ctx); err != nil {
+		return err
+	} else {
+		encoder = enc
+	}
 
 	if terminal.IsTerminal(int(os.Stdin.Fd())) {
 		data, err = secret_common.InputFromInteractiveStdin()
@@ -105,7 +110,7 @@ func secretEncrypt(m secret.Manager) error {
 		return nil
 	}
 
-	encodedData, err = m.Encrypt(data)
+	encodedData, err = encoder.Encrypt(data)
 	if err != nil {
 		return err
 	}

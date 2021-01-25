@@ -4,32 +4,31 @@ import (
 	"fmt"
 
 	"gopkg.in/yaml.v2"
-
-	"github.com/werf/werf/pkg/secret"
 )
 
-type BaseManager struct {
+// YamlEncoder is an Encoder compatible object with additional helpers to work with yaml data: EncryptYamlData and DecryptYamlData
+type YamlEncoder struct {
+	Encoder Encoder
+
 	generateFunc func([]byte) ([]byte, error)
 	extractFunc  func([]byte) ([]byte, error)
 }
 
-func newBaseManager(ss secret.Secret) (Manager, error) {
-	s := &BaseManager{}
+func NewYamlEncoder(encoder Encoder) *YamlEncoder {
+	yamlEncoder := &YamlEncoder{Encoder: encoder}
 
-	if ss != nil {
-		s.generateFunc = ss.Encrypt
-		s.extractFunc = ss.Decrypt
+	if encoder != nil {
+		yamlEncoder.generateFunc = encoder.Encrypt
+		yamlEncoder.extractFunc = encoder.Decrypt
 	} else {
-		s.generateFunc = doNothing
-		s.extractFunc = doNothing
+		yamlEncoder.generateFunc = doNothing
+		yamlEncoder.extractFunc = doNothing
 	}
 
-	return s, nil
+	return yamlEncoder
 }
 
-func doNothing(data []byte) ([]byte, error) { return data, nil }
-
-func (s *BaseManager) Encrypt(data []byte) ([]byte, error) {
+func (s *YamlEncoder) Encrypt(data []byte) ([]byte, error) {
 	resultData, err := s.generateFunc(data)
 	if err != nil {
 		return nil, fmt.Errorf("encryption failed: check encryption key and data: %s", err)
@@ -38,7 +37,7 @@ func (s *BaseManager) Encrypt(data []byte) ([]byte, error) {
 	return resultData, nil
 }
 
-func (s *BaseManager) EncryptYamlData(data []byte) ([]byte, error) {
+func (s *YamlEncoder) EncryptYamlData(data []byte) ([]byte, error) {
 	resultData, err := doYamlData(s.generateFunc, data)
 	if err != nil {
 		return nil, fmt.Errorf("encryption failed: check encryption key and data: %s", err)
@@ -47,10 +46,10 @@ func (s *BaseManager) EncryptYamlData(data []byte) ([]byte, error) {
 	return resultData, nil
 }
 
-func (s *BaseManager) Decrypt(data []byte) ([]byte, error) {
+func (s *YamlEncoder) Decrypt(data []byte) ([]byte, error) {
 	resultData, err := s.extractFunc(data)
 	if err != nil {
-		if secret.IsExtractDataError(err) {
+		if IsExtractDataError(err) {
 			return nil, fmt.Errorf("decryption failed: check data `%s`: %s", string(data), err)
 		}
 
@@ -60,10 +59,10 @@ func (s *BaseManager) Decrypt(data []byte) ([]byte, error) {
 	return resultData, nil
 }
 
-func (s *BaseManager) DecryptYamlData(data []byte) ([]byte, error) {
+func (s *YamlEncoder) DecryptYamlData(data []byte) ([]byte, error) {
 	resultData, err := doYamlData(s.extractFunc, data)
 	if err != nil {
-		if secret.IsExtractDataError(err) {
+		if IsExtractDataError(err) {
 			return nil, fmt.Errorf("decryption failed: check data `%s`: %s", string(data), err)
 		}
 
@@ -142,3 +141,5 @@ func doYamlValueSecret(doFunc func([]byte) ([]byte, error), data interface{}) (i
 		return string(result), nil
 	}
 }
+
+func doNothing(data []byte) ([]byte, error) { return data, nil }

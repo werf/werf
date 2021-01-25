@@ -16,8 +16,7 @@ import (
 
 	"github.com/werf/werf/pkg/deploy/helm"
 
-	"github.com/werf/werf/pkg/deploy"
-	"github.com/werf/werf/pkg/deploy/secret"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
@@ -288,13 +287,7 @@ func runPublish() error {
 		logboek.LogOptionalLn()
 	}
 
-	// FIXME
-	var secretsManager secret.Manager
-	if m, err := deploy.GetSafeSecretManager(ctx, giterminismManager.ProjectDir(), chartDir, *commonCmdData.SecretValues, giterminismManager.LocalGitRepo(), *commonCmdData.IgnoreSecretKey); err != nil {
-		return err
-	} else {
-		secretsManager = m
-	}
+	secretsManager := secrets_manager.NewSecretsManager(giterminismManager.ProjectDir(), secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{
 		SecretValueFiles: *commonCmdData.SecretValues,

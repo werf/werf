@@ -1,4 +1,4 @@
-package secret
+package secrets_manager
 
 import (
 	"fmt"
@@ -8,40 +8,24 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/secret"
+
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
-type Manager interface {
-	secret.Secret
-
-	EncryptYamlData(data []byte) ([]byte, error)
-	DecryptYamlData(encodedData []byte) ([]byte, error)
-}
-
 func GenerateSecretKey() ([]byte, error) {
-	return secret.GenerateAexSecretKey()
+	return secret.GenerateAesSecretKey()
 }
 
-func GetManager(workingDir string) (Manager, error) {
-	var m Manager
-	var key []byte
-	var err error
-
-	key, err = GetSecretKey(workingDir)
-	if err != nil {
-		return nil, err
+func GetRequiredOldSecretKey() ([]byte, error) {
+	secretKey := []byte(os.Getenv("WERF_OLD_SECRET_KEY"))
+	if len(secretKey) == 0 {
+		return nil, fmt.Errorf("WERF_OLD_SECRET_KEY environment required")
 	}
-
-	m, err = NewManager(key)
-	if err != nil {
-		return nil, err
-	}
-
-	return m, nil
+	return secretKey, nil
 }
 
-func GetSecretKey(workingDir string) ([]byte, error) {
+func GetRequiredSecretKey(workingDir string) ([]byte, error) {
 	var secretKey []byte
 	var werfSecretKeyPaths []string
 	var notFoundIn []string
@@ -87,21 +71,16 @@ func GetSecretKey(workingDir string) ([]byte, error) {
 	}
 
 	if len(secretKey) == 0 {
-		return nil, fmt.Errorf("encryption key not found in: %q", strings.Join(notFoundIn, "', '"))
+		return nil, NewEncryptionKeyRequiredError(notFoundIn)
 	}
 
 	return secretKey, nil
 }
 
-func NewManager(key []byte) (Manager, error) {
-	ss, err := secret.NewSecret(key)
-	if err != nil {
-		return nil, fmt.Errorf("check encryption key: %s", err)
+func NewEncryptionKeyRequiredError(notFoundIn []string) error {
+	notFoundInFormatted := []string{}
+	for _, el := range notFoundIn {
+		notFoundInFormatted = append(notFoundInFormatted, fmt.Sprintf("%q", el))
 	}
-
-	return newBaseManager(ss)
-}
-
-func NewSafeManager() (Manager, error) {
-	return newBaseManager(nil)
+	return fmt.Errorf("required encryption key not found in: %s", strings.Join(notFoundInFormatted, ", "))
 }
