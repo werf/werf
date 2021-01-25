@@ -7,6 +7,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 type Interface interface {
@@ -14,7 +15,9 @@ type Interface interface {
 	Inspector() Inspector
 
 	LocalGitRepo() *git_repo.Local
+	HeadCommit() string
 	ProjectDir() string
+	Dev() bool
 }
 
 type FileReader interface {
@@ -43,4 +46,5 @@ type Inspector interface {
 	InspectConfigStapelMountBuildDir() error
 	InspectConfigStapelMountFromPath(fromPath string) error
 	InspectConfigDockerfileContextAddFile(relPath string) error
+	InspectBuildContextFiles(ctx context.Context, matcher path_matcher.PathMatcher) error
 }

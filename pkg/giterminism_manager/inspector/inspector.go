@@ -1,5 +1,7 @@
 package inspector
 
+import "github.com/werf/werf/pkg/git_repo"
+
 type Inspector struct {
 	giterminismConfig giterminismConfig
 	sharedOptions     sharedOptions
@@ -19,5 +21,8 @@ type giterminismConfig interface {
 }
 
 type sharedOptions interface {
+	LocalGitRepo() *git_repo.Local
+	HeadCommit() string
 	LooseGiterminism() bool
+	Dev() bool
 }

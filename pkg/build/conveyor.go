@@ -300,6 +300,10 @@ func (c *Conveyor) GetOrCreateGitRepoCache(gitRepoName string) *stage.GitRepoCac
 	return c.gitReposCaches[gitRepoName]
 }
 
+func (c *Conveyor) GiterminismManager() giterminism_manager.Interface {
+	return c.giterminismManager
+}
+
 func (c *Conveyor) GetLocalGitRepo() git_repo.Local {
 	return c.localGitRepo
 }
@@ -1017,8 +1021,7 @@ func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRe
 	gitMapping.Branch = remoteGitMappingConfig.Branch
 
 	gitMapping.Name = remoteGitMappingConfig.Name
-
-	gitMapping.GitRepoInterface = remoteGitRepo
+	gitMapping.RemoteGitRepo = remoteGitRepo
 
 	gitMapping.GitRepoCache = c.GetOrCreateGitRepoCache(remoteGitRepo.GetName())
 
@@ -1029,8 +1032,7 @@ func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo git_r
 	gitMapping := baseGitMappingInit(localGitMappingConfig.GitLocalExport, imageName, c)
 
 	gitMapping.Name = "own"
-
-	gitMapping.GitRepoInterface = &localGitRepo
+	gitMapping.LocalGitRepo = &localGitRepo
 
 	gitMapping.GitRepoCache = c.GetOrCreateGitRepoCache(localGitRepo.GetName())
 
@@ -1199,7 +1201,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 			imageFromDockerfileConfig.SSH,
 		),
 		ds,
-		stage.NewContextChecksum(c.projectDir, dockerignorePathMatcher, c.GetLocalGitRepo()),
+		stage.NewContextChecksum(dockerignorePathMatcher),
 		baseStageOptions,
 	)
 

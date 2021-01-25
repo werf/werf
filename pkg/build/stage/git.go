@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	imagePkg "github.com/werf/werf/pkg/image"
 )
 
@@ -31,7 +30,7 @@ func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage,
 		return err
 	}
 
-	if giterminism_inspector.DevMode {
+	if c.GiterminismManager().Dev() {
 		image.BuilderContainer().AddLabel(map[string]string{imagePkg.WerfDevLabel: "true"})
 	}
 

@@ -12,6 +12,7 @@ import (
 
 type NewManagerOptions struct {
 	LooseGiterminism bool
+	Dev              bool
 }
 
 func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
@@ -20,6 +21,7 @@ func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Lo
 		localGitRepo:     localGitRepo,
 		headCommit:       headCommit,
 		looseGiterminism: options.LooseGiterminism,
+		dev:              options.Dev,
 	}
 
 	fr := file_reader.NewFileReader(sharedOptions)
@@ -64,6 +66,7 @@ type sharedOptions struct {
 	headCommit       string
 	localGitRepo     git_repo.Local
 	looseGiterminism bool
+	dev              bool
 }
 
 func (s *sharedOptions) ProjectDir() string {
@@ -80,4 +83,8 @@ func (s *sharedOptions) LocalGitRepo() *git_repo.Local {
 
 func (s *sharedOptions) LooseGiterminism() bool {
 	return s.looseGiterminism
+}
+
+func (s *sharedOptions) Dev() bool {
+	return s.dev
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sync"
 
 	"github.com/go-git/go-git/v5"
 
@@ -25,6 +26,9 @@ type Local struct {
 	GitDir      string
 
 	headCommit string
+
+	statusResult *status.Result
+	mutex        sync.Mutex
 }
 
 type OpenLocalRepoOptions struct {
@@ -185,12 +189,33 @@ func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatc
 }
 
 func (repo *Local) Status(ctx context.Context, pathMatcher path_matcher.PathMatcher) (*status.Result, error) {
-	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	result, err := repo.getMainStatusResult(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo %s: %s", repo.WorkTreeDir, err)
+		return nil, err
 	}
 
-	return status.Status(ctx, repository, repo.WorkTreeDir, pathMatcher)
+	return result.Status(ctx, pathMatcher)
+}
+
+func (repo *Local) getMainStatusResult(ctx context.Context) (*status.Result, error) {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	if repo.statusResult == nil {
+		repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+		if err != nil {
+			return nil, fmt.Errorf("cannot open repo %s: %s", repo.WorkTreeDir, err)
+		}
+
+		result, err := status.Status(ctx, repository, repo.WorkTreeDir, path_matcher.NewSimplePathMatcher("", []string{}, true))
+		if err != nil {
+			return nil, err
+		}
+
+		repo.statusResult = result
+	}
+
+	return repo.statusResult, nil
 }
 
 func (repo *Local) IsEmpty(ctx context.Context) (bool, error) {

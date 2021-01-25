@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/werf/werf/pkg/git_repo"
-
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -47,9 +47,15 @@ func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, s
 	return s.selectStageByOldestCreationTimestamp(ancestorsStages)
 }
 
-func (s *GitArchiveStage) GetDependencies(_ context.Context, _ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
+		if gitMapping.LocalGitRepo != nil {
+			if err := c.GiterminismManager().Inspector().InspectBuildContextFiles(ctx, path_matcher.NewGitMappingPathMatcher(gitMapping.Add, gitMapping.IncludePaths, gitMapping.ExcludePaths, true)); err != nil {
+				return "", err
+			}
+		}
+
 		args = append(args, gitMapping.GetParamshash())
 	}
 

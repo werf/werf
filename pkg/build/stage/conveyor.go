@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/werf/pkg/build/import_server"
+	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/storage"
 )
 
@@ -25,6 +26,7 @@ type Conveyor interface {
 	GetLocalGitRepoVirtualMergeOptions() VirtualMergeOptions
 
 	GetProjectRepoCommit(ctx context.Context) (string, error)
+	GiterminismManager() giterminism_manager.Interface
 }
 
 type VirtualMergeOptions struct {
