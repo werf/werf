@@ -131,7 +131,7 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 
 		logboek.Context(ctx).Default().LogFDetails("Clone %s\n", repo.Url)
 
-		if err := os.MkdirAll(filepath.Dir(repo.GetClonePath()), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(repo.GetClonePath()), 0o755); err != nil {
 			return fmt.Errorf("unable to create dir %s: %s", filepath.Dir(repo.GetClonePath()), err)
 		}
 
@@ -213,7 +213,7 @@ func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (st
 
 	err = refs.ForEach(func(ref *plumbing.Reference) error {
 		if ref.Name().String() == reference {
-			res = fmt.Sprintf("%s", ref.Hash())
+			res = ref.Hash().String()
 			return storer.ErrStop
 		}
 

@@ -605,7 +605,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	if m.KeepStagesBuiltWithinLastNHours != 0 {
 		var excludedStages []*image.StageDescription
 		for _, stage := range stagesToDelete {
-			if (time.Now().Sub(stage.Info.GetCreatedAt()).Hours()) <= float64(m.KeepStagesBuiltWithinLastNHours) {
+			if (time.Since(stage.Info.GetCreatedAt()).Hours()) <= float64(m.KeepStagesBuiltWithinLastNHours) {
 				var excludedStagesByStage []*image.StageDescription
 				stagesToDelete, excludedStagesByStage = m.excludeStageAndRelativesByImageID(stagesToDelete, stage.Info.ID)
 				excludedStages = append(excludedStages, excludedStagesByStage...)

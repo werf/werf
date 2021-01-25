@@ -25,7 +25,7 @@ var _ = Describe("Helm hooks deleter", func() {
 				OutputLineHandler: func(line string) {
 					Expect(strings.HasPrefix(line, "│ NOTICE Will not delete Job/migrate: resource does not belong to the helm release")).ShouldNot(BeTrue(), fmt.Sprintf("Got unexpected output line: %v", line))
 
-					if strings.Index(line, "Waiting for resources elimination: jobs/migrate") != -1 {
+					if strings.Contains(line, "Waiting for resources elimination: jobs/migrate") {
 						gotDeletingHookLine = true
 					}
 				},

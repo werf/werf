@@ -114,13 +114,13 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Index(line, `1/1 allowed errors occurred for deploy/mydeploy1: continue tracking`) != -1 {
+					if strings.Contains(line, `1/1 allowed errors occurred for deploy/mydeploy1: continue tracking`) {
 						gotAllowedErrorsWarning = true
 					}
-					if strings.Index(line, `Allowed failures count for deploy/mydeploy1 exceeded 1 errors: stop tracking immediately!`) != -1 {
+					if strings.Contains(line, `Allowed failures count for deploy/mydeploy1 exceeded 1 errors: stop tracking immediately!`) {
 						gotAllowedErrorsExceeded = true
 					}
-					if strings.Index(line, "deploy/mydeploy1 ERROR:") != -1 && strings.HasSuffix(line, `ImagePullBackOff: Back-off pulling image "ubuntu:18.03"`) {
+					if strings.Contains(line, "deploy/mydeploy1 ERROR:") && strings.HasSuffix(line, `ImagePullBackOff: Back-off pulling image "ubuntu:18.03"`) {
 						gotImagePullBackoffLine = true
 					}
 

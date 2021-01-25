@@ -47,12 +47,15 @@ func (b *Ansible) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage
 func (b *Ansible) BeforeInstall(ctx context.Context, container Container) error {
 	return b.stage(ctx, "BeforeInstall", container)
 }
+
 func (b *Ansible) Install(ctx context.Context, container Container) error {
 	return b.stage(ctx, "Install", container)
 }
+
 func (b *Ansible) BeforeSetup(ctx context.Context, container Container) error {
 	return b.stage(ctx, "BeforeSetup", container)
 }
+
 func (b *Ansible) Setup(ctx context.Context, container Container) error {
 	return b.stage(ctx, "Setup", container)
 }
@@ -199,7 +202,7 @@ func (b *Ansible) stageTasks(userStageName string) []*config.AnsibleTask {
 	value := b.configFieldValue(userStageName)
 	ansibleTasks, ok := value.([]*config.AnsibleTask)
 	if !ok {
-		panic(fmt.Sprintf("runtime error"))
+		panic("runtime error")
 	}
 
 	return ansibleTasks

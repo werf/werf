@@ -436,7 +436,6 @@ func (c *Conveyor) doDetermineStages(ctx context.Context) error {
 
 					return nil
 				})
-
 			if err != nil {
 				return err
 			}
@@ -907,7 +906,7 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 	var res []*stage.GitMapping
 
 	if len(gitMappings) != 0 {
-		err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Initializing git mappings")).DoError(func() error {
+		err := logboek.Context(ctx).Info().LogProcess("Initializing git mappings").DoError(func() error {
 			resGitMappings, err := filterAndLogGitMappings(ctx, c, gitMappings)
 			if err != nil {
 				return err
@@ -917,7 +916,6 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 
 			return nil
 		})
-
 		if err != nil {
 			return nil, err
 		}

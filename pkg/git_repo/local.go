@@ -176,7 +176,7 @@ func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatc
 	if opts.UseHeadCommit {
 		commit = repo.headCommit
 	} else if opts.Commit == "" {
-		panic(fmt.Sprintf("no commit specified for LsTree procedure: specify Commit or HeadCommit"))
+		panic("no commit specified for LsTree procedure: specify Commit or HeadCommit")
 	} else {
 		commit = opts.Commit
 	}

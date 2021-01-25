@@ -23,8 +23,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var cli *command.DockerCli
-var apiClient *client.Client
+var (
+	cli       *command.DockerCli
+	apiClient *client.Client
+)
 
 func init() {
 	if err := initCli(); err != nil {
@@ -185,7 +187,7 @@ tryPull:
 		}
 
 		for _, specificError := range specificErrors {
-			if strings.Index(err.Error(), specificError) != -1 {
+			if strings.Contains(err.Error(), specificError) {
 				fmt.Fprintf(GinkgoWriter, "Retrying pull in 5 seconds ...")
 				time.Sleep(5 * time.Second)
 				goto tryPull

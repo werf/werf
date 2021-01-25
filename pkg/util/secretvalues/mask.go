@@ -49,9 +49,7 @@ func ExtractSecretValuesFromMap(data map[string]interface{}) []string {
 
 			dataArr := []interface{}{}
 			if err := json.Unmarshal([]byte(elemStr), &dataArr); err == nil {
-				for _, v := range dataArr {
-					queue = append(queue, v)
-				}
+				queue = append(queue, dataArr...)
 			}
 		}
 	}
