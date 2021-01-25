@@ -186,7 +186,7 @@ func run(imageName string) error {
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, *giterminismManager.LocalGitRepo(), []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

@@ -973,7 +973,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 		return nil, err
 	}
 
-	localGitRepo, err := OpenLocalGitRepo(gitWorkTree)
+	localGitRepo, err := git_repo.OpenLocalRepo("own", gitWorkTree, git_repo.OpenLocalRepoOptions{Dev: *cmdData.Dev})
 	if err != nil {
 		return nil, err
 	}
@@ -990,13 +990,13 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 
 	return giterminism_manager.NewManager(BackgroundContext(), projectDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
+		Dev:              *cmdData.Dev,
 	})
 }
 
 func InitGiterminismInspector(cmdData *CmdData) error {
 	return giterminism_inspector.Init(GetWorkingDir(cmdData), giterminism_inspector.InspectionOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
-		DevMode:          *cmdData.Dev,
 	})
 }
 
@@ -1314,10 +1314,6 @@ func SetupVirtualMergeFromCommit(cmdData *CmdData, cmd *cobra.Command) {
 func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.VirtualMergeIntoCommit = new(string)
 	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
-}
-
-func OpenLocalGitRepo(workTreeDir string) (git_repo.Local, error) {
-	return git_repo.OpenLocalRepo("own", workTreeDir, git_repo.OpenLocalRepoOptions{Dev: giterminism_inspector.DevMode})
 }
 
 func BackgroundContext() context.Context {

@@ -10,23 +10,14 @@ import (
 )
 
 func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx context.Context) error) error {
-	workTree, err := GetGitWorkTree(cmdData)
-	if err != nil {
-		return err
-	}
-
 	var savedHeadCommit string
 	iterFunc := func() error {
-		l, err := OpenLocalGitRepo(workTree)
+		giterminismManager, err := GetGiterminismManager(cmdData)
 		if err != nil {
 			return err
 		}
 
-		currentHeadCommit, err := l.HeadCommit(ctx)
-		if err != nil {
-			return err
-		}
-
+		currentHeadCommit := giterminismManager.HeadCommit()
 		if savedHeadCommit != currentHeadCommit {
 			savedHeadCommit = currentHeadCommit
 

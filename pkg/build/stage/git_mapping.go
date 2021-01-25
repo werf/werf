@@ -33,10 +33,9 @@ type GitRepoCache struct {
 }
 
 type GitMapping struct {
-	GitRepoInterface git_repo.GitRepo
-	LocalGitRepo     *git_repo.Local
-	RemoteGitRepo    *git_repo.Remote
-	GitRepoCache     *GitRepoCache
+	LocalGitRepo  *git_repo.Local
+	RemoteGitRepo *git_repo.Remote
+	GitRepoCache  *GitRepoCache
 
 	Name               string
 	As                 string
@@ -103,9 +102,7 @@ func (gm *GitMapping) getMutex(key string) *sync.Mutex {
 }
 
 func (gm *GitMapping) GitRepo() git_repo.GitRepo {
-	if gm.GitRepoInterface != nil {
-		return gm.GitRepoInterface
-	} else if gm.LocalGitRepo != nil {
+	if gm.LocalGitRepo != nil {
 		return gm.LocalGitRepo
 	} else if gm.RemoteGitRepo != nil {
 		return gm.RemoteGitRepo

@@ -358,7 +358,7 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, *giterminismManager.LocalGitRepo(), []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	var dockerImageName string

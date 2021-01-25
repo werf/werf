@@ -6,12 +6,14 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager/config"
+	"github.com/werf/werf/pkg/giterminism_manager/errors"
 	"github.com/werf/werf/pkg/giterminism_manager/file_reader"
 	"github.com/werf/werf/pkg/giterminism_manager/inspector"
 )
 
 type NewManagerOptions struct {
 	LooseGiterminism bool
+	Dev              bool
 }
 
 func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
@@ -20,6 +22,13 @@ func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Lo
 		localGitRepo:     localGitRepo,
 		headCommit:       headCommit,
 		looseGiterminism: options.LooseGiterminism,
+		dev:              options.Dev,
+	}
+
+	if options.LooseGiterminism {
+		err := errors.NewError(`WARNING: The --loose-giterminism option (and WERF_LOOSE_GITERMINISM env variable) is forbidden and will be removed soon!
+Please use werf-giterminism.yaml config instead to loosen giterminism restrictions if needed.`)
+		logboek.Context(ctx).Warn().LogLn(err)
 	}
 
 	fr := file_reader.NewFileReader(sharedOptions)
@@ -64,6 +73,7 @@ type sharedOptions struct {
 	headCommit       string
 	localGitRepo     git_repo.Local
 	looseGiterminism bool
+	dev              bool
 }
 
 func (s *sharedOptions) ProjectDir() string {
@@ -80,4 +90,8 @@ func (s *sharedOptions) LocalGitRepo() *git_repo.Local {
 
 func (s *sharedOptions) LooseGiterminism() bool {
 	return s.looseGiterminism
+}
+
+func (s *sharedOptions) Dev() bool {
+	return s.dev
 }
