@@ -7,7 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 
-	"github.com/golang/example/stringutil"
+	"github.com/werf/werf/pkg/util"
 )
 
 type Info struct {
@@ -66,12 +66,11 @@ func MustParseTimestampString(timestampString string) time.Time {
 }
 
 func ParseRepositoryAndTag(ref string) (string, string) {
-	parts := strings.SplitN(stringutil.Reverse(ref), ":", 2)
-	if len(parts) == 2 {
-		tag := stringutil.Reverse(parts[0])
-		repository := stringutil.Reverse(parts[1])
-		return repository, tag
-	} else {
+	parts := strings.SplitN(util.Reverse(ref), ":", 2)
+	if len(parts) != 2 {
 		return ref, ""
 	}
+	tag := util.Reverse(parts[0])
+	repository := util.Reverse(parts[1])
+	return repository, tag
 }

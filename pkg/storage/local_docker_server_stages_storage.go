@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang/example/stringutil"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
@@ -16,6 +14,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/util"
 )
 
 const (
@@ -421,12 +420,12 @@ func (storage *LocalDockerServerStagesStorage) GetClientIDRecords(ctx context.Co
 		for _, repoTag := range img.RepoTags {
 			_, tag := image.ParseRepositoryAndTag(repoTag)
 
-			tagParts := strings.SplitN(stringutil.Reverse(tag), "-", 2)
+			tagParts := strings.SplitN(util.Reverse(tag), "-", 2)
 			if len(tagParts) != 2 {
 				continue
 			}
 
-			clientID, timestampMillisecStr := stringutil.Reverse(tagParts[1]), stringutil.Reverse(tagParts[0])
+			clientID, timestampMillisecStr := util.Reverse(tagParts[1]), util.Reverse(tagParts[0])
 
 			timestampMillisec, err := strconv.ParseInt(timestampMillisecStr, 10, 64)
 			if err != nil {
