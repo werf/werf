@@ -6,6 +6,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager/config"
+	"github.com/werf/werf/pkg/giterminism_manager/errors"
 	"github.com/werf/werf/pkg/giterminism_manager/file_reader"
 	"github.com/werf/werf/pkg/giterminism_manager/inspector"
 )
@@ -22,6 +23,12 @@ func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Lo
 		headCommit:       headCommit,
 		looseGiterminism: options.LooseGiterminism,
 		dev:              options.Dev,
+	}
+
+	if options.LooseGiterminism {
+		err := errors.NewError(`WARNING: The --loose-giterminism option (and WERF_LOOSE_GITERMINISM env variable) is forbidden and will be removed soon!
+Please use werf-giterminism.yaml config instead to loosen giterminism restrictions if needed.`)
+		logboek.Context(ctx).Warn().LogLn(err)
 	}
 
 	fr := file_reader.NewFileReader(sharedOptions)
