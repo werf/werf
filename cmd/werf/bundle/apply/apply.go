@@ -230,10 +230,10 @@ func runApply() error {
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
 		PostRenderer: postRenderer,
 		ValueOpts: &values.Options{
-			ValueFiles:   *commonCmdData.Values,
-			StringValues: *commonCmdData.SetString,
-			Values:       *commonCmdData.Set,
-			FileValues:   *commonCmdData.SetFile,
+			ValueFiles:   common.GetValues(&commonCmdData),
+			StringValues: common.GetSetString(&commonCmdData),
+			Values:       common.GetSet(&commonCmdData),
+			FileValues:   common.GetSetFile(&commonCmdData),
 		},
 		CreateNamespace: common.NewBool(true),
 		Install:         common.NewBool(true),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -177,12 +178,10 @@ func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
-	sshKeys := predefinedValuesByEnvNamePrefix("WERF_SSH_KEY")
-
-	cmdData.SSHKeys = &sshKeys
-	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", sshKeys, `Use only specific ssh key(s).
-Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
+	cmdData.SSHKeys = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, `Use only specific ssh key(s).
+Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
+Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
 }
 
 func SetupReportPath(cmdData *CmdData, cmd *cobra.Command) {
@@ -249,8 +248,11 @@ func SetupKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) 
 func predefinedValuesByEnvNamePrefix(envNamePrefix string, envNamePrefixesToExcept ...string) []string {
 	var result []string
 
+	env := os.Environ()
+	sort.Strings(env)
+
 environLoop:
-	for _, keyValue := range os.Environ() {
+	for _, keyValue := range env {
 		parts := strings.SplitN(keyValue, "=", 2)
 		if strings.HasPrefix(parts[0], envNamePrefix) {
 			for _, exceptEnvNamePrefix := range envNamePrefixesToExcept {
@@ -282,21 +284,17 @@ func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
-	addAnnotations := predefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION")
-
-	cmdData.AddAnnotations = &addAnnotations
-	cmd.Flags().StringArrayVarP(cmdData.AddAnnotations, "add-annotation", "", addAnnotations, `Add annotation to deploying resources (can specify multiple).
+	cmdData.AddAnnotations = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.AddAnnotations, "add-annotation", "", []string{}, `Add annotation to deploying resources (can specify multiple).
 Format: annoName=annoValue.
-Also, can be specified with $WERF_ADD_ANNOTATION* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1, $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)`)
+Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1, $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)`)
 }
 
 func SetupAddLabels(cmdData *CmdData, cmd *cobra.Command) {
-	addLabels := predefinedValuesByEnvNamePrefix("WERF_ADD_LABEL")
-
-	cmdData.AddLabels = &addLabels
-	cmd.Flags().StringArrayVarP(cmdData.AddLabels, "add-label", "", addLabels, `Add label to deploying resources (can specify multiple).
+	cmdData.AddLabels = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.AddLabels, "add-label", "", []string{}, `Add label to deploying resources (can specify multiple).
 Format: labelName=labelValue.
-Also, can be specified with $WERF_ADD_LABEL* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)`)
+Also, can be specified with $WERF_ADD_LABEL_* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)`)
 }
 
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
@@ -338,9 +336,9 @@ func SetupCommonRepoData(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
-	secondaryStagesStorage := predefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO")
-	cmdData.SecondaryStagesStorage = &secondaryStagesStorage
-	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", secondaryStagesStorage, "Specify one or multiple secondary read-only repo with images that will be used as a cache")
+	cmdData.SecondaryStagesStorage = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", []string{}, `Specify one or multiple secondary read-only repos with images that will be used as a cache.
+Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)`)
 }
 
 func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
@@ -635,43 +633,33 @@ Defaults to:
 }
 
 func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
-	set := predefinedValuesByEnvNamePrefix("WERF_SET", "WERF_SET_STRING")
-
-	cmdData.Set = &set
-	cmd.Flags().StringArrayVarP(cmdData.Set, "set", "", set, `Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
-Also, can be defined with $WERF_SET* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)`)
+	cmdData.Set = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.Set, "set", "", []string{}, `Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
+Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)`)
 }
 
 func SetupSetString(cmdData *CmdData, cmd *cobra.Command) {
-	setString := predefinedValuesByEnvNamePrefix("WERF_SET_STRING")
-
-	cmdData.SetString = &setString
-	cmd.Flags().StringArrayVarP(cmdData.SetString, "set-string", "", setString, `Set STRING helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
-Also, can be defined with $WERF_SET_STRING* (e.g. $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)`)
+	cmdData.SetString = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.SetString, "set-string", "", []string{}, `Set STRING helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
+Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)`)
 }
 
 func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
-	values := predefinedValuesByEnvNamePrefix("WERF_VALUES")
-
-	cmdData.Values = &values
-	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", values, `Specify helm values in a YAML file or a URL (can specify multiple).
-Also, can be defined with $WERF_VALUES* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, $WERF_VALUES_DB=.helm/values_db.yaml)`)
+	cmdData.Values = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple).
+Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, $WERF_VALUES_DB=.helm/values_db.yaml)`)
 }
 
 func SetupSetFile(cmdData *CmdData, cmd *cobra.Command) {
-	setFile := predefinedValuesByEnvNamePrefix("WERF_SET_FILE")
-
-	cmdData.SetFile = &setFile
-	cmd.Flags().StringArrayVarP(cmdData.SetFile, "set-file", "", setFile, `Set values from respective files specified via the command line (can specify multiple or separate values with commas: key1=path1,key2=path2).
-Also, can be defined with $WERF_SET_FILE* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
+	cmdData.SetFile = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.SetFile, "set-file", "", []string{}, `Set values from respective files specified via the command line (can specify multiple or separate values with commas: key1=path1,key2=path2).
+Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
 }
 
 func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
-	secretValues := predefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES")
-
-	cmdData.SecretValues = &secretValues
-	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", secretValues, `Specify helm secret values in a YAML file (can specify multiple).
-Also, can be defined with $WERF_SECRET_VALUES* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES=.helm/secret_values_db.yaml)`)
+	cmdData.SecretValues = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple).
+Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
 }
 
 func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
@@ -879,7 +867,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 		res = append(res, localStagesStorage)
 	}
 
-	for _, address := range *cmdData.SecondaryStagesStorage {
+	for _, address := range GetSecondaryStagesStorage(cmdData) {
 		repoStagesStorage, err := storage.NewStagesStorage(address, containerRuntime, storage.StagesStorageOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create secondary stages storage at %s: %s", address, err)
@@ -1071,6 +1059,42 @@ func GetNamespace(cmdData *CmdData) string {
 		return "default"
 	}
 	return *cmdData.Namespace
+}
+
+func GetSSHKey(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_SSH_KEY_"), *cmdData.SSHKeys...)
+}
+
+func GetAddLabels(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), *cmdData.AddLabels...)
+}
+
+func GetAddAnnotations(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
+}
+
+func GetSecondaryStagesStorage(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+}
+
+func GetSet(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_"), *cmdData.Set...)
+}
+
+func GetSetString(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), *cmdData.SetString...)
+}
+
+func GetSetFile(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), *cmdData.SetFile...)
+}
+
+func GetValues(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_VALUES_"), *cmdData.Values...)
+}
+
+func GetSecretValues(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), *cmdData.SecretValues...)
 }
 
 func GetRequiredRelease(cmdData *CmdData) (string, error) {
