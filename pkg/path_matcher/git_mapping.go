@@ -63,9 +63,8 @@ func (f *GitMappingPathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bo
 	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(formatPath(path))
 	if f.isGreedySearchOn {
 		return false, isMatched || shouldGoThrough
-	} else {
-		return isMatched, shouldGoThrough
 	}
+	return isMatched, shouldGoThrough
 }
 
 func (f *GitMappingPathMatcher) processDirOrSubmodulePath(path string) (bool, bool) {
@@ -75,11 +74,14 @@ func (f *GitMappingPathMatcher) processDirOrSubmodulePath(path string) (bool, bo
 	if isPathRelativeToBasePath || path == f.basePath {
 		if len(f.includePaths) == 0 && len(f.excludePaths) == 0 {
 			return true, false
-		} else if hasUniversalGlob(f.excludePaths) {
+		}
+		if hasUniversalGlob(f.excludePaths) {
 			return false, false
-		} else if hasUniversalGlob(f.includePaths) {
+		}
+		if hasUniversalGlob(f.includePaths) {
 			return true, false
-		} else if path == f.basePath {
+		}
+		if path == f.basePath {
 			return false, true
 		}
 	} else if isBasePathRelativeToPath {
@@ -90,8 +92,8 @@ func (f *GitMappingPathMatcher) processDirOrSubmodulePath(path string) (bool, bo
 
 	relPath := rel(path, f.basePath)
 	relPathParts := util.SplitFilepath(relPath)
-	inProgressIncludePaths := f.includePaths[:]
-	inProgressExcludePaths := f.excludePaths[:]
+	inProgressIncludePaths := f.includePaths
+	inProgressExcludePaths := f.excludePaths
 	var matchedIncludePaths, matchedExcludePaths []string
 
 	for _, pathPart := range relPathParts {
@@ -118,19 +120,20 @@ func (f *GitMappingPathMatcher) processDirOrSubmodulePath(path string) (bool, bo
 
 	if len(inProgressExcludePaths) != 0 {
 		return false, !hasUniversalGlob(inProgressExcludePaths)
-	} else if len(inProgressIncludePaths) != 0 {
+	}
+	if len(inProgressIncludePaths) != 0 {
 		if hasUniversalGlob(inProgressIncludePaths) {
 			return true, false
-		} else {
-			return false, true
 		}
-	} else if len(matchedExcludePaths) != 0 {
-		return false, false
-	} else if len(matchedIncludePaths) != 0 {
-		return true, false
-	} else {
+		return false, true
+	}
+	if len(matchedExcludePaths) != 0 {
 		return false, false
 	}
+	if len(matchedIncludePaths) != 0 {
+		return true, false
+	}
+	return false, false
 }
 
 func matchGlobs(pathPart string, globs []string) (inProgressGlobs []string, matchedGlobs []string) {
@@ -152,16 +155,16 @@ func matchGlob(pathPart string, glob string) (inProgressGlob, matchedGlob string
 	if err != nil {
 		panic(err)
 	}
-
 	if !isMatched {
 		return "", ""
-	} else if strings.Contains(globParts[0], "**") {
-		return glob, ""
-	} else if len(globParts) > 1 {
-		return filepath.Join(globParts[1:]...), ""
-	} else {
-		return "", glob
 	}
+	if strings.Contains(globParts[0], "**") {
+		return glob, ""
+	}
+	if len(globParts) > 1 {
+		return filepath.Join(globParts[1:]...), ""
+	}
+	return "", glob
 }
 
 func hasUniversalGlob(globs []string) bool {

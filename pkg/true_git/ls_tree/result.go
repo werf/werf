@@ -67,6 +67,9 @@ func (r *Result) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatche
 			}
 		} else {
 			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, r.repository, r.tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, pathMatcher)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		res.lsTreeEntries = append(res.lsTreeEntries, entryLsTreeEntries...)
