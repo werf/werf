@@ -71,7 +71,7 @@ func NewCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		cmd_helm.NewUninstallCmd(actionConfig, os.Stdout, cmd_helm.UninstallCmdOptions{}),
-		cmd_helm.NewDependencyCmd(os.Stdout),
+		cmd_helm.NewDependencyCmd(actionConfig, os.Stdout),
 		cmd_helm.NewGetCmd(actionConfig, os.Stdout),
 		cmd_helm.NewHistoryCmd(actionConfig, os.Stdout),
 		cmd_helm.NewLintCmd(os.Stdout),
@@ -85,7 +85,7 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewEnvCmd(os.Stdout),
 		cmd_helm.NewPackageCmd(os.Stdout),
 		cmd_helm.NewPluginCmd(os.Stdout),
-		cmd_helm.NewPullCmd(os.Stdout),
+		cmd_helm.NewPullCmd(actionConfig, os.Stdout),
 		cmd_helm.NewSearchCmd(os.Stdout),
 		cmd_helm.NewShowCmd(os.Stdout),
 		cmd_helm.NewStatusCmd(actionConfig, os.Stdout),
