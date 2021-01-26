@@ -1,4 +1,4 @@
-package releaseserver_test
+package render_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/werf/werf/integration/pkg/suite_init"
 )
 
-var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Release server suite", suite_init.TestSuiteEntrypointFuncOptions{})
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Render suite", suite_init.TestSuiteEntrypointFuncOptions{})
 
 func TestSuite(t *testing.T) {
 	testSuiteEntrypointFunc(t)

@@ -1,4 +1,4 @@
-package releaseserver_test
+package deploy_test
 
 import (
 	"github.com/werf/werf/integration/pkg/utils"
