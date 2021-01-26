@@ -22,7 +22,7 @@ func SetupIncludeWrapperFuncs(funcMap template.FuncMap) {
 
 func SetupWerfImageDeprecationFunc(ctx context.Context, funcMap template.FuncMap) {
 	funcMap["_print_werf_image_deprecation"] = func() (string, error) {
-		logboek.Context(ctx).Warn().LogF("DEPRECATION WARNING: Usage of werf_image is deprecated, use .Values.werf.image.IMAGE_NAME directly instead\n")
+		logboek.Context(ctx).Warn().LogF("DEPRECATION WARNING: Usage of werf_image is deprecated, use .Values.werf.image.IMAGE_NAME directly instead, werf_image template function will be removed in v1.3.\n")
 		return "", nil
 	}
 }

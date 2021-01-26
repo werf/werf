@@ -26,7 +26,7 @@ func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Lo
 	}
 
 	if options.LooseGiterminism {
-		err := errors.NewError(`WARNING: The --loose-giterminism option (and WERF_LOOSE_GITERMINISM env variable) is forbidden and will be removed soon!
+		err := errors.NewError(`DEPRECATION WARNING: The --loose-giterminism option (and WERF_LOOSE_GITERMINISM env variable) is forbidden and will be removed in v1.2!
 Please use werf-giterminism.yaml config instead to loosen giterminism restrictions if needed.`)
 		logboek.Context(ctx).Warn().LogLn(err)
 	}
