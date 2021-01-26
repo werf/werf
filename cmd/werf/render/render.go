@@ -191,7 +191,7 @@ func runRender() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
@@ -298,7 +298,7 @@ func runRender() error {
 	secretsManager := secrets_manager.NewSecretsManager(giterminismManager.ProjectDir(), secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{
-		SecretValueFiles: *commonCmdData.SecretValues,
+		SecretValueFiles: common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 	})
@@ -353,10 +353,10 @@ func runRender() error {
 	helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, output, cmd_helm.TemplateCmdOptions{
 		PostRenderer: postRenderer,
 		ValueOpts: &values.Options{
-			ValueFiles:   *commonCmdData.Values,
-			StringValues: *commonCmdData.SetString,
-			Values:       *commonCmdData.Set,
-			FileValues:   *commonCmdData.SetFile,
+			ValueFiles:   common.GetValues(&commonCmdData),
+			StringValues: common.GetSetString(&commonCmdData),
+			Values:       common.GetSet(&commonCmdData),
+			FileValues:   common.GetSetFile(&commonCmdData),
 		},
 	})
 	return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, chartDir})

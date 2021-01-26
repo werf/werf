@@ -192,7 +192,7 @@ func runMain(ctx context.Context) error {
 
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
-	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
@@ -334,7 +334,7 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	}
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{
-		SecretValueFiles: *commonCmdData.SecretValues,
+		SecretValueFiles: common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 	})
@@ -384,10 +384,10 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
 		PostRenderer: postRenderer,
 		ValueOpts: &values.Options{
-			ValueFiles:   *commonCmdData.Values,
-			StringValues: *commonCmdData.SetString,
-			Values:       *commonCmdData.Set,
-			FileValues:   *commonCmdData.SetFile,
+			ValueFiles:   common.GetValues(&commonCmdData),
+			StringValues: common.GetSetString(&commonCmdData),
+			Values:       common.GetSet(&commonCmdData),
+			FileValues:   common.GetSetFile(&commonCmdData),
 		},
 		CreateNamespace: common.NewBool(true),
 		Install:         common.NewBool(true),
