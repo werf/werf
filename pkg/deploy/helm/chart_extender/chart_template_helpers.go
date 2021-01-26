@@ -8,7 +8,7 @@ var ChartTemplateHelpers = `{{- define "_werf_image" -}}
 {{-     if not $context.Values.werf.is_nameless_image -}}
 {{-       required "No image specified for template" nil -}}
 {{-     end -}}
-{{      $context.Values.werf.image }}
+{{      $context.Values.werf.nameless_image }}
 {{-   end -}}
 {{- end -}}
 
