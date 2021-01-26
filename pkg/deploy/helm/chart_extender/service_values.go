@@ -44,7 +44,7 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 	for _, imageInfoGetter := range imageInfoGetters {
 		if imageInfoGetter.IsNameless() {
 			werfInfo["is_nameless_image"] = true
-			werfInfo["image"] = imageInfoGetter.GetName()
+			werfInfo["nameless_image"] = imageInfoGetter.GetName()
 		} else {
 			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetName()
 		}
