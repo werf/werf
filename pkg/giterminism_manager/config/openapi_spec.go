@@ -20,8 +20,11 @@ required:
 additionalProperties: {}
 properties:
   giterminismConfigVersion:
-    type: string
-    enum: ["1"]
+    oneOf:
+      - type: number
+        enum: [1]
+      - type: string
+        enum: ["1"]
   config:
     $ref: '#/definitions/Config'
   helm:
