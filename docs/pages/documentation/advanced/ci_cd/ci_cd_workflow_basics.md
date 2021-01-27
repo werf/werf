@@ -11,8 +11,8 @@ As you know, the primary purpose of using CI/CD for any project is to deliver ap
 We will start with defining some basic terms like environment and workflow, and then move on to workflow building blocks and describe some ready-to-use workflows that can be constructed using provided workflow building blocks.
 
 We also recommend you to read one the following guides about configuring the specific CI/CD system:
- - [GitLab CI/CD]({{ "documentation/advanced/ci_cd/gitlab_ci_cd.html" | true_relative_url: page.url }});
- - [GitHub Actions]({{ "documentation/advanced/ci_cd/github_actions.html" | true_relative_url: page.url }}).
+ - [GitLab CI/CD]({{ "documentation/advanced/ci_cd/gitlab_ci_cd.html" | true_relative_url }});
+ - [GitHub Actions]({{ "documentation/advanced/ci_cd/github_actions.html" | true_relative_url }}).
 
 ## Basics
 
@@ -95,8 +95,8 @@ To implement a proper CI/CD, it is critical to automatically get instant feedbac
 ## Further reading
 
 We recommend you to read the guide for your specific CI/CD system:
- - The [GitLab CI/CD]({{ "documentation/advanced/ci_cd/gitlab_ci_cd.html" | true_relative_url: page.url }}) guide.
- - The [GitHub Actions]({{ "documentation/advanced/ci_cd/github_actions.html" | true_relative_url: page.url }}) guide.
+ - The [GitLab CI/CD]({{ "documentation/advanced/ci_cd/gitlab_ci_cd.html" | true_relative_url }}) guide.
+ - The [GitHub Actions]({{ "documentation/advanced/ci_cd/github_actions.html" | true_relative_url }}) guide.
 
 If you want to learn more about how to create a workflow, or no instructions exist for your particular CI/CD system, then you can read the following sections where the [workflow components](#workflow-components-for-various-environments) and [ready-made workflow configurations](#ready-made-workflow-configurations) are defined. After reading them, you will be able to choose a ready-made configuration (or create your own) and implement it for your CI/CD system using werf.
 

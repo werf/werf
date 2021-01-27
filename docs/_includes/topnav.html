@@ -28,11 +28,15 @@
                             and folder.url == '/publications.html' %} header__menu-item_active{% endif %}
                             {%- if folder.url.size<2 and page.url.size<2 %} header__menu-item_active{% endif %}">
                             {%- if folder.title == 'Документация' or folder.title == 'Documentation' %}
-                            <a href="{{ folder.url | true_relative_url: page.url }}">{{ folder.title }}</a>
+                                {%- if page.name == '404.md' %}
+                                <a data-proofer-ignore href="{{ folder.url }}">{{ folder.title }}</a>
+                                {%- else %}
+                                <a href="{{ folder.url | true_relative_url }}">{{ folder.title }}</a>
+                                {%- endif %}
                             {%- else if jekyll.environment == "production" %}
                             <a data-proofer-ignore href="{{ folder.url }}">{{ folder.title }}</a>
                             {%- else %}
-                            <a href="{{ folder.url | true_relative_url: page.url }}">{{ folder.title }}</a>
+                            <a href="{{ folder.url | true_relative_url }}">{{ folder.title }}</a>
                             {%- endif %}
                             {%- if folder.folderitems %}
                             <div class="header__submenu-container">
@@ -41,7 +45,7 @@
                                         {%- if folderitem.external_url %}
                                             <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
                                         {%- else %}
-                                            <li class="header__submenu-item"><a href="{{ folderitem.url | true_relative_url: page.url }}">{{folderitem.title}}</a></li>
+                                            <li class="header__submenu-item"><a href="{{ folderitem.url | true_relative_url }}">{{folderitem.title}}</a></li>
                                         {%- endif %}
                                     {%- endfor %}
                                 </ul>
@@ -60,9 +64,9 @@
                         {%- if folderitem.external_url %}
                         <li><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
                         {%- elsif page.url contains folderitem.url %}
-                        <li class="dropdownActive"><a href="{{ folderitem.url | true_relative_url: page.url }}">{{folderitem.title}}</a></li>
+                        <li class="dropdownActive"><a href="{{ folderitem.url | true_relative_url }}">{{folderitem.title}}</a></li>
                         {%- else %}
-                        <li><a href="{{ folderitem.url | true_relative_url: page.url }}">{{folderitem.title}}</a></li>
+                        <li><a href="{{ folderitem.url | true_relative_url }}">{{folderitem.title}}</a></li>
                         {%- endif %}
                         {%- endfor %}
                     </ul>
@@ -108,7 +112,7 @@
                        {% assign pages=site.pages | where:"ref", page.ref | sort: 'lang' %}
                        {% if pages.size > 1 %}
                          {% for _page in pages %}
-                            <a href="{{ _page.url | true_relative_url: page.url }}" class="publications__btn {% if _page.url == page.url %}active{% endif %}">{{ _page.lang }}</a>
+                            <a href="{{ _page.url | true_relative_url }}" class="publications__btn {% if _page.url == page.url %}active{% endif %}">{{ _page.lang }}</a>
                          {% endfor %}
                        {% endif %}
                      {% endif %}

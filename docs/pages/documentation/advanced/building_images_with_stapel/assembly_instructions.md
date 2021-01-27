@@ -7,7 +7,7 @@ directive_summary: shell_and_ansible
 
 ## What are user stages?
 
-***User stage*** is a [_stage_]({{ "documentation/internals/stages_and_storage.html" | true_relative_url: page.url }}) containing _assembly instructions_ from config.
+***User stage*** is a [_stage_]({{ "documentation/internals/stages_and_storage.html" | true_relative_url }}) containing _assembly instructions_ from config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create the specific docker layer by executing assembly instructions contained within the respective stage.
 
 ## Motivation behind stages
@@ -115,7 +115,7 @@ shell:
 
 _Shell assembly instructions_ are made up of arrays. Each array consists of bash commands for the related _user stage_. Commands for each stage are executed as a single `RUN` instruction in Dockerfile. Thus, werf creates one layer for each _user stage_.
 
-werf provides distribution-agnostic bash binary, so you do not need a bash binary in the [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | true_relative_url: page.url }}).
+werf provides distribution-agnostic bash binary, so you do not need a bash binary in the [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | true_relative_url }}).
 
 ```yaml
 beforeInstall:
@@ -244,7 +244,7 @@ An attempt to do a _werf config_ with the module not in this list will lead to a
 
 ### Copying files
 
-[Git mappings]({{ "documentation/advanced/building_images_with_stapel/git_directive.html" | true_relative_url: page.url }}) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage digest_, and file changes lead to the rebuild of the _user stage_.
+[Git mappings]({{ "documentation/advanced/building_images_with_stapel/git_directive.html" | true_relative_url }}) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage digest_, and file changes lead to the rebuild of the _user stage_.
 
 Here is an example of copying `nginx.conf` into an image:
 
@@ -315,14 +315,14 @@ src: {{`{{item}}`}}
 
 ## Dependencies of user stages
 
-werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ "documentation/internals/stages_and_storage.html" | true_relative_url: page.url }}), _stages_ are built one by one, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
+werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ "documentation/internals/stages_and_storage.html" | true_relative_url }}), _stages_ are built one by one, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
 
 You can use these dependencies to shape the rebuilding process of _user stages_. _Digests_ of user stages  (and, therefore, the rebuilding process) depend on:
 
 - changes in assembly instructions
 - changes of _cacheVersion directives_
 - changes in the git repository
-- changes in files being imported from [artifacts]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url: page.url }})
+- changes in files being imported from [artifacts]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url }})
 
 The first three dependencies are described below in more detail.
 
@@ -390,8 +390,8 @@ In other words, the contents of assembly instructions will change with each subs
 
 ## Dependency on changes in the git repo
 
-<a class="google-drawings" href="{{ "images/configuration/assembly_instructions3.png" | true_relative_url: page.url }}" data-featherlight="image">
-    <img src="{{ "images/configuration/assembly_instructions3_preview.png" | true_relative_url: page.url }}" alt="Dependency on git repo changes">
+<a class="google-drawings" href="{{ "images/configuration/assembly_instructions3.png" | true_relative_url }}" data-featherlight="image">
+    <img src="{{ "images/configuration/assembly_instructions3_preview.png" | true_relative_url }}" alt="Dependency on git repo changes">
 </a>
 
 The _git mapping reference_ states that there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ runs after the _beforeInstall_ user stage, and _gitLatestPatch_ runs after the _setup_ user stage if there are changes in the local git repository. Thus, in order to execute assembly instructions using the latest version of the source code, you can initiate the rebuilding of the _beforeInstall_ stage (by changing _cacheVersion_ or its instructions).
@@ -403,7 +403,7 @@ _install_, _beforeSetup_, and _setup_ user stages also depend on changes in the 
 <br />
 <br />
 This stage is pictured on the _Calculation digest phase_
-![git files actualized on specific stage]({{ "images/build/git_mapping_updated_on_stage.png" | true_relative_url: page.url }})
+![git files actualized on specific stage]({{ "images/build/git_mapping_updated_on_stage.png" | true_relative_url }})
 
 You can specify the dependency of the _user stage_ on changes in the git repository via the `git.stageDependencies` parameter. It has the following syntax:
 
@@ -506,7 +506,7 @@ You can use this image as a base for multiple applications if images from hub.do
 
 ### Example of using external dependencies
 
-You can use _CacheVersion directives_ jointly with [go templates]({{ "documentation/reference/werf_yaml.html#image-section" | true_relative_url: page.url }}) to define dependency of the _user stage_ on files outside of the git tree.
+You can use _CacheVersion directives_ jointly with [go templates]({{ "documentation/reference/werf_yaml.html#image-section" | true_relative_url }}) to define dependency of the _user stage_ on files outside of the git tree.
 
 {% raw %}
 ```yaml

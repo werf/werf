@@ -1,8 +1,8 @@
 {% assign directive = site.data.directive_summary[site.site_lang][include.directive] %}
 
 <div class="summary">
-<a class="google-drawings" href="{{ directive.link | true_relative_url: page.url }}" data-featherlight="image">
-    <img src="{{ directive.preview_link | true_relative_url: page.url }}" alt="{{ directive.link_alt }}">
+<a class="google-drawings" href="{{ directive.link | true_relative_url }}" data-featherlight="image">
+    <img src="{{ directive.preview_link | true_relative_url }}" alt="{{ directive.link_alt }}">
 </a>
 
 {%- if directive.yaml %}
@@ -36,8 +36,8 @@
 {%- if directive.extra %}
 <strong>{{ directive.extra.text }}</strong>
 
-<a class="google-drawings" href="{{ directive.extra.link | true_relative_url: page.url }}" data-featherlight="image">
-    <img src="{{ directive.extra.preview_link | true_relative_url: page.url }}" alt="{{ directive.extra.text }}">
+<a class="google-drawings" href="{{ directive.extra.link | true_relative_url }}" data-featherlight="image">
+    <img src="{{ directive.extra.preview_link | true_relative_url }}" alt="{{ directive.extra.text }}">
 </a>
 {%- endif %}
 </div>

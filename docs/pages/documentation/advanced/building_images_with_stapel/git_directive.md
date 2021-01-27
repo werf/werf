@@ -50,7 +50,7 @@ The _git mapping_ configuration for a local repository has the following paramet
 - `group` — the name or gid of the owner’s group;
 - `excludePaths` — a set of masks to exclude files or directories during recursive copying. Paths in masks must be specified relative to add;
 - `includePaths` — a set of masks to include files or directories during recursive copying. Paths in masks must be specified relative to add;
-- `stageDependencies` — a set of masks to monitor for changes that lead to rebuilds of the user stages. This is reviewed in detail in the [Running assembly instructions]({{ "documentation/advanced/building_images_with_stapel/assembly_instructions.html" | true_relative_url: page.url }}) reference.
+- `stageDependencies` — a set of masks to monitor for changes that lead to rebuilds of the user stages. This is reviewed in detail in the [Running assembly instructions]({{ "documentation/advanced/building_images_with_stapel/assembly_instructions.html" | true_relative_url }}) reference.
 
 The configuration of a _git mapping_ for a remote repository has some additional parameters:
 - `url` — address of the remote repository;
@@ -84,10 +84,10 @@ This basic _git mapping_ configuration adds entire contents of the repository to
   <a href="javascript:void(0)" class="tabs__btn btn__example1" onclick="openTab(event, 'btn__example1', 'tab__example1', 'git-mapping-01-dest')">Structure of a resulting image</a>
 </div>
 <div id="git-mapping-01-source" class="tabs__content tab__example1 active">
-  <img src="{{ "images/build/git_mapping_01.png" | true_relative_url: page.url }}" alt="git repository files tree" />
+  <img src="{{ "images/build/git_mapping_01.png" | true_relative_url }}" alt="git repository files tree" />
 </div>
 <div id="git-mapping-01-dest" class="tabs__content tab__example1">
-  <img src="{{ "images/build/git_mapping_02.png" | true_relative_url: page.url }}" alt="image files tree" />
+  <img src="{{ "images/build/git_mapping_02.png" | true_relative_url }}" alt="image files tree" />
 </div>
 
 You can specify multiple _git mappings_:
@@ -105,10 +105,10 @@ git:
   <a href="javascript:void(0)" class="tabs__btn btn__example2" onclick="openTab(event, 'btn__example2', 'tab__example2', 'git-mapping-02-dest')">Structure of a resulting image</a>
 </div>
 <div id="git-mapping-02-source" class="tabs__content tab__example2 active">
-  <img src="{{ "images/build/git_mapping_03.png" | true_relative_url: page.url }}" alt="git repository files tree" />
+  <img src="{{ "images/build/git_mapping_03.png" | true_relative_url }}" alt="git repository files tree" />
 </div>
 <div id="git-mapping-02-dest" class="tabs__content tab__example2">
-  <img src="{{ "images/build/git_mapping_04.png" | true_relative_url: page.url }}" alt="image files tree" />
+  <img src="{{ "images/build/git_mapping_04.png" | true_relative_url }}" alt="image files tree" />
 </div>
 
 It should be noted, however, that the _git mapping_ doesn't specify a directory to be transferred (similarly to `cp -r /src /app`). Instead, the `add` parameter specifies the contents of a directory that will be transferred from the repository recursively. That is, if you need to copy the contents of the `/assets` directory to the `/app/assets` directory, then you have to specify the **assets** keyword twice in the configuration or use the `includePaths` [filter](#using-filters). For example:
@@ -141,7 +141,7 @@ git:
   owner: www-data
 ```
 
-![index.php owned by www-data user and group]({{ "images/build/git_mapping_05.png" | true_relative_url: page.url }})
+![index.php owned by www-data user and group]({{ "images/build/git_mapping_05.png" | true_relative_url }})
 
 If the `group` parameter is omitted, then the group is set to the primary group of the user.
 

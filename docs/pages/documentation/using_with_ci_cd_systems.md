@@ -9,12 +9,12 @@ sidebar: documentation
 
 In this article we are covering the basics of using werf with any CI/CD system.
 
-Also, there is an article discussing the more advanced topic of [generic CI/CD integration]({{ "documentation/advanced/ci_cd/generic_ci_cd_integration.html" | true_relative_url: page.url }}).
+Also, there is an article discussing the more advanced topic of [generic CI/CD integration]({{ "documentation/advanced/ci_cd/generic_ci_cd_integration.html" | true_relative_url }}).
 
 werf supports any CI/CD system out-of-the-box. Furthermore, there is enhanced support for GitLab CI/CD and GitHub Actions in the form of the `werf ci-env` shortcut command that simplifies the configuration of these two systems even more (this command allows you to configure all werf parameters discussed in this article universally and automatically). You may find additional details in the following documents:
 
- - [GitLab CI/CD]({{ "documentation/advanced/ci_cd/gitlab_ci_cd.html" | true_relative_url: page.url }});
- - [GitHub Actions]({{ "documentation/advanced/ci_cd/github_actions.html" | true_relative_url: page.url }}).
+ - [GitLab CI/CD]({{ "documentation/advanced/ci_cd/gitlab_ci_cd.html" | true_relative_url }});
+ - [GitHub Actions]({{ "documentation/advanced/ci_cd/github_actions.html" | true_relative_url }}).
 
 ## Werf commands you will need
 
@@ -91,9 +91,9 @@ docker login registry.mydomain.org/application -uUSER -pPASSWORD
 
 ### Configure the destination environment for werf
 
-Typically, an application is deployed into different [environments]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#environment" | true_relative_url: page.url }}) (`production`, `staging`, `testing`, etc.).
+Typically, an application is deployed into different [environments]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#environment" | true_relative_url }}) (`production`, `staging`, `testing`, etc.).
 
-werf supports the optional `--env` param (or the `WERF_ENV` environment variable) that specifies the name of the environment in use. This environment name affects the [Kubernetes namespace]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | true_relative_url: page.url }}) and the [Helm release name]({{ "documentation/advanced/helm/basics.html#release-name" | true_relative_url: page.url }}). It is recommended to find out the name of the environment as part of the CI/CD job (for example, using built-in environment variables of your CI/CD system) and set the werf `--env` parameter accordingly.
+werf supports the optional `--env` param (or the `WERF_ENV` environment variable) that specifies the name of the environment in use. This environment name affects the [Kubernetes namespace]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | true_relative_url }}) and the [Helm release name]({{ "documentation/advanced/helm/basics.html#release-name" | true_relative_url }}). It is recommended to find out the name of the environment as part of the CI/CD job (for example, using built-in environment variables of your CI/CD system) and set the werf `--env` parameter accordingly.
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">Example</a>
@@ -124,7 +124,7 @@ werf converge
 
 Usually, a CI/CD system checks out to the current git commit in a fully automatic manner, and you don’t have to do anything. But some systems may not perform this step automatically. If this is the case, then you have to check out the target git commit in the project repository before running main werf commands (`werf converge`, `werf dismiss`, or `werf cleanup`).
 
-Read more about the converge process in the [introduction]({{ "introduction.html#what-is-converge" | true_relative_url: page.url }}).
+Read more about the converge process in the [introduction]({{ "introduction.html#what-is-converge" | true_relative_url }}).
 
 ### Other werf CI/CD settings
 
@@ -172,8 +172,8 @@ export WERF_ENABLE_PROCESS_EXTERMINATOR=1
 
 ## What's next?
 
-[This section]({{ "documentation/reference/deploy_annotations.html" | true_relative_url: page.url }}) shows you how to control output during the deploy process.
+[This section]({{ "documentation/reference/deploy_annotations.html" | true_relative_url }}) shows you how to control output during the deploy process.
 
-You can also check out the [CI/CD workflow basics article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | true_relative_url: page.url }}) that describes setting up your CI/CD workflows in a variety of ways.
+You can also check out the [CI/CD workflow basics article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | true_relative_url }}) that describes setting up your CI/CD workflows in a variety of ways.
 
-You may find a guide suitable for you project in the [guides section]({{ "documentation/guides.html" | true_relative_url: page.url }}). These guides also contain detailed information about setting up specific CI/CD systems.
+You may find a guide suitable for you project in the [guides section]({{ "documentation/guides.html" | true_relative_url }}). These guides also contain detailed information about setting up specific CI/CD systems.

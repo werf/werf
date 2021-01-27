@@ -242,12 +242,12 @@ Run the following command in the root of your project to converge:
 werf converge --docker-repo myregistry.domain.org/example-app [--kube-config ~/.kube/config]
 ```
 
-Generally, the converge command has only one mandatory argument: the address of the docker repository. werf will use this docker repository to store built images and use them in Kubernetes (thus, this docker repository must be accessible from within the Kubernetes cluster). Kube-config is another optional argument that defines the Kubernetes cluster to connect to. Also, there is an optional `--env` parameter (and the `WERF_ENV` environment variable) allowing you to deploy an application into various [environments]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#environment" | true_relative_url: page.url }}).
+Generally, the converge command has only one mandatory argument: the address of the docker repository. werf will use this docker repository to store built images and use them in Kubernetes (thus, this docker repository must be accessible from within the Kubernetes cluster). Kube-config is another optional argument that defines the Kubernetes cluster to connect to. Also, there is an optional `--env` parameter (and the `WERF_ENV` environment variable) allowing you to deploy an application into various [environments]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#environment" | true_relative_url }}).
 
 _NOTE: If your application does not use custom docker images (e.g., it uses only publicly available ones), you do not have to pass `--docker-repo` parameter to the command and may just omit it._
 
 ## What's next?
 
-Deploy your first demo application with this [quickstart]({{ "documentation/quickstart.html" | true_relative_url: page.url }}) or check the [guides]({{ "documentation/guides.html" | true_relative_url: page.url }}) – they cover the configuration of a wide variety of applications based on different programming languages and frameworks. We recommend finding a manual suitable for your application and follow instructions.
+Deploy your first demo application with this [quickstart]({{ "documentation/quickstart.html" | true_relative_url }}) or check the [guides]({{ "documentation/guides.html" | true_relative_url }}) – they cover the configuration of a wide variety of applications based on different programming languages and frameworks. We recommend finding a manual suitable for your application and follow instructions.
 
-Refer to [this article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | true_relative_url: page.url }}) if you feel like you are ready to dig deeper into the general overview of CI/CD workflows that can be implemented with werf.
+Refer to [this article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | true_relative_url }}) if you feel like you are ready to dig deeper into the general overview of CI/CD workflows that can be implemented with werf.

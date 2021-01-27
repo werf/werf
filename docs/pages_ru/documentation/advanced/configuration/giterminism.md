@@ -67,17 +67,17 @@ helm: # giterminism configuration for helm
 
 ### Функции go-шаблонов для доступа к переменным окружения
 
-Функции [`{{ env }}` и `{{ expandenv }}`]({{ "documentation/advanced/configuration/supported_go_templates.html" | true_relative_url: page.url }}) доступны для использования только при включении директивы [`config.goTemplateRendering.allowEnvVariables`](#werf-giterminismyaml) конфигурационного файла `werf-giterminism.yaml` (поддерживаются glob-ы).
+Функции [`{{ env }}` и `{{ expandenv }}`]({{ "documentation/advanced/configuration/supported_go_templates.html" | true_relative_url }}) доступны для использования только при включении директивы [`config.goTemplateRendering.allowEnvVariables`](#werf-giterminismyaml) конфигурационного файла `werf-giterminism.yaml` (поддерживаются glob-ы).
 
 ### Директива mount
 
-[Директива `mount`]({{ "documentation/reference/werf_yaml.html" | true_relative_url: page.url }}) для сборщика образов stapel доступна для использования только при включении директив [`config.stapel.mount`](#werf-giterminismyaml) конфигурационного файла `werf-giterminism.yaml` (конкретная директива выбирается исходя из типа требуемого mount-а).
+[Директива `mount`]({{ "documentation/reference/werf_yaml.html" | true_relative_url }}) для сборщика образов stapel доступна для использования только при включении директив [`config.stapel.mount`](#werf-giterminismyaml) конфигурационного файла `werf-giterminism.yaml` (конкретная директива выбирается исходя из типа требуемого mount-а).
 
 ## Сборщик Dockerfile
 
 Werf использует контекст для Dockerfile и сам `Dockerfile` и `.dockerignore` только из текущего коммита локального гит-репозитория.
 
-Есть единственный способ явным образом добавить файлы вне гит-репозитория в контекст сборки Dockerfile: с помощью [директивы `contextAddFile`]({{ "documentation/reference/werf_yaml.html" | true_relative_url: page.url}}):
+Есть единственный способ явным образом добавить файлы вне гит-репозитория в контекст сборки Dockerfile: с помощью [директивы `contextAddFile`]({{ "documentation/reference/werf_yaml.html" | true_relative_url}}):
 
 ```
 context: app

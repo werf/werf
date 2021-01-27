@@ -35,16 +35,16 @@ dependencies:
 The `requirements.lock` file lists the exact versions of immediate dependencies and their dependencies and so forth.
 
 The `werf helm dependency` commands operate on that file, making it easy to synchronize between the desired dependencies and the actual dependencies stored in the `charts` directory:
-* Use [werf helm dependency list]({{ "documentation/reference/cli/werf_helm_dependency_list.html" | true_relative_url: page.url }}) to check dependencies and their statuses.
-* Use [werf helm dependency update]({{ "documentation/reference/cli/werf_helm_dependency_update.html" | true_relative_url: page.url }}) to update `/charts` based on the contents of `requirements.yaml`.
-* Use [werf helm dependency build]({{ "documentation/reference/cli/werf_helm_dependency_build.html" | true_relative_url: page.url }}) to update `/charts` based on the `requirements.lock` file.
+* Use [werf helm dependency list]({{ "documentation/reference/cli/werf_helm_dependency_list.html" | true_relative_url }}) to check dependencies and their statuses.
+* Use [werf helm dependency update]({{ "documentation/reference/cli/werf_helm_dependency_update.html" | true_relative_url }}) to update `/charts` based on the contents of `requirements.yaml`.
+* Use [werf helm dependency build]({{ "documentation/reference/cli/werf_helm_dependency_build.html" | true_relative_url }}) to update `/charts` based on the `requirements.lock` file.
 
 All Chart Repositories that are used in `requirements.yaml` should be configured on the system. The `werf helm repo` commands can be used to interact with Chart Repositories:
-* Use [werf helm repo add]({{ "documentation/reference/cli/werf_helm_repo_add.html" | true_relative_url: page.url }}) to add Chart Repository.
-* Use [werf helm repo index]({{ "documentation/reference/cli/werf_helm_repo_index.html" | true_relative_url: page.url }}).
-* Use [werf helm repo list]({{ "documentation/reference/cli/werf_helm_repo_list.html" | true_relative_url: page.url }}) to list existing Chart Repositories.
-* Use [werf helm repo remove]({{ "documentation/reference/cli/werf_helm_repo_remove.html" | true_relative_url: page.url }}) to remove Chart Repository.
-* Use [werf helm repo update]({{ "documentation/reference/cli/werf_helm_repo_update.html" | true_relative_url: page.url }}) to update local Chart Repositories indexes.
+* Use [werf helm repo add]({{ "documentation/reference/cli/werf_helm_repo_add.html" | true_relative_url }}) to add Chart Repository.
+* Use [werf helm repo index]({{ "documentation/reference/cli/werf_helm_repo_index.html" | true_relative_url }}).
+* Use [werf helm repo list]({{ "documentation/reference/cli/werf_helm_repo_list.html" | true_relative_url }}) to list existing Chart Repositories.
+* Use [werf helm repo remove]({{ "documentation/reference/cli/werf_helm_repo_remove.html" | true_relative_url }}) to remove Chart Repository.
+* Use [werf helm repo update]({{ "documentation/reference/cli/werf_helm_repo_update.html" | true_relative_url }}) to update local Chart Repositories indexes.
 
 werf is compatible with Helm settings, so by default `werf helm dependency` and `werf helm repo` commands use settings from **helm home folder**, `~/.helm`. But you can change it with `--helm-home` option. If you do not have **helm home folder** or want to create another one use `werf helm repo init` command to initialize necessary settings and configure default Chart Repositories.
 
