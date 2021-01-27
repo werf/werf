@@ -183,7 +183,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		return err
 	}
 
-	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(ctx, common.GetSSHKey(commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {

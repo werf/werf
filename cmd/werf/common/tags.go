@@ -14,9 +14,7 @@ type TagOptionsGetterOptions struct {
 
 func GetDeployTag(cmdData *CmdData, opts TagOptionsGetterOptions) (string, tag_strategy.TagStrategy, error) {
 	optionsCount := 0
-	if len(*cmdData.TagCustom) > 0 {
-		optionsCount += len(*cmdData.TagCustom)
-	}
+	optionsCount += len(GetTagCustom(cmdData))
 
 	if *cmdData.TagGitBranch != "" {
 		optionsCount++
@@ -64,7 +62,7 @@ func GetTagOptions(cmdData *CmdData, opts TagOptionsGetterOptions) (build.TagOpt
 
 	res := build.TagOptions{}
 
-	for _, tag := range *cmdData.TagCustom {
+	for _, tag := range GetTagCustom(cmdData) {
 		err := slug.ValidateDockerTag(tag)
 		if err != nil {
 			return build.TagOptions{}, fmt.Errorf("bad --tag-custom parameter '%s' specified: %s", tag, err)

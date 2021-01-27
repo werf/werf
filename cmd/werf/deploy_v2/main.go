@@ -250,7 +250,7 @@ func runDeploy() error {
 			return err
 		}
 
-		if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
+		if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 			return fmt.Errorf("cannot initialize ssh agent: %s", err)
 		}
 		defer func() {
@@ -300,7 +300,7 @@ func runDeploy() error {
 	logboek.LogOptionalLn()
 
 	var secretsManager secret.Manager
-	if m, err := deploy.GetSafeSecretManager(context.Background(), projectDir, chartDir, *commonCmdData.SecretValues, *commonCmdData.IgnoreSecretKey); err != nil {
+	if m, err := deploy.GetSafeSecretManager(context.Background(), projectDir, chartDir, common.GetSecretValues(&commonCmdData), *commonCmdData.IgnoreSecretKey); err != nil {
 		return err
 	} else {
 		secretsManager = m
@@ -317,7 +317,7 @@ func runDeploy() error {
 		ReleaseName: releaseName,
 		ChartDir:    chartDir,
 
-		SecretValueFiles: *commonCmdData.SecretValues,
+		SecretValueFiles: common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 
@@ -335,10 +335,10 @@ func runDeploy() error {
 		},
 		PostRenderer: wc.ExtraAnnotationsAndLabelsPostRenderer,
 		ValueOpts: &values.Options{
-			ValueFiles:   *commonCmdData.Values,
-			StringValues: *commonCmdData.SetString,
-			Values:       *commonCmdData.Set,
-			FileValues:   *commonCmdData.SetFile,
+			ValueFiles:   common.GetValues(&commonCmdData),
+			StringValues: common.GetSetString(&commonCmdData),
+			Values:       common.GetSet(&commonCmdData),
+			FileValues:   common.GetSetFile(&commonCmdData),
 		},
 		CreateNamespace: NewBool(true),
 		Install:         NewBool(true),
