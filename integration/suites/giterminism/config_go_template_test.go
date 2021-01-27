@@ -75,7 +75,7 @@ config:
 				}),
 				Entry("the file not committed", entryBase{
 					addFiles:             []string{".werf/file"},
-					expectedErrSubstring: `error calling Get: {{ .Files.Get ".werf/file" }}: the uncommitted configuration found in the project git work tree: the file ".werf/file" must be committed`,
+					expectedErrSubstring: `error calling Get: {{ .Files.Get ".werf/file" }}: the file ".werf/file" must be committed`,
 				}),
 				Entry("the file committed", entryBase{
 					addFiles:    []string{".werf/file"},
@@ -94,7 +94,7 @@ config:
 					addFiles:               []string{".werf/file"},
 					commitFiles:            []string{".werf/file"},
 					changeFilesAfterCommit: []string{".werf/file"},
-					expectedErrSubstring:   `error calling Get: {{ .Files.Get ".werf/file" }}: the uncommitted configuration found in the project git work tree: the file ".werf/file" changes must be committed`,
+					expectedErrSubstring:   `error calling Get: {{ .Files.Get ".werf/file" }}: the file ".werf/file" changes must be committed`,
 				}),
 			)
 		})
@@ -121,14 +121,14 @@ config:
 					filesGlob: ".werf/file1",
 					entryBase: entryBase{
 						addFiles:             []string{".werf/file1"},
-						expectedErrSubstring: `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the uncommitted configuration found in the project git work tree: the file ".werf/file1" must be committed`,
+						expectedErrSubstring: `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the file ".werf/file1" must be committed`,
 					},
 				}),
 				Entry("the files not committed", entry{
 					filesGlob: ".werf/*",
 					entryBase: entryBase{
 						addFiles: []string{".werf/file1", ".werf/file2", ".werf/file3"},
-						expectedErrSubstring: `error calling Glob: {{ .Files.Glob ".werf/*" }}: the uncommitted configuration found in the project git work tree: the following files must be committed:
+						expectedErrSubstring: `error calling Glob: {{ .Files.Glob ".werf/*" }}: the following files must be committed:
 
  - .werf/file1
  - .werf/file2
@@ -150,7 +150,7 @@ config:
 						addFiles:               []string{".werf/file1"},
 						commitFiles:            []string{".werf/file1"},
 						changeFilesAfterCommit: []string{".werf/file1"},
-						expectedErrSubstring:   `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the uncommitted configuration found in the project git work tree: the file ".werf/file1" changes must be committed`,
+						expectedErrSubstring:   `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the file ".werf/file1" changes must be committed`,
 					},
 				}),
 				Entry("config.goTemplateRendering.allowUncommittedFiles (.werf/file1) covers the not committed file", entry{
