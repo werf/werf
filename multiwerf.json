@@ -60,6 +60,10 @@
         {
           "name": "beta",
           "version": "v1.2.4+fix11"
+        },
+        {
+          "name": "ea",
+          "version": "v1.2.4+fix11"
         }
       ]
     }
