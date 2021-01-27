@@ -180,7 +180,7 @@ werf build-and-publish [IMAGE_NAME...] [options]
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
+            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",        
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
             Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -s, --stages-storage=''
@@ -217,7 +217,7 @@ werf build-and-publish [IMAGE_NAME...] [options]
       --tag-custom=[]
             Use custom tagging strategy and tag by the specified arbitrary tags.
             Option can be used multiple times to produce multiple images with the specified tags.
-            Also can be specified in $WERF_TAG_CUSTOM_* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1,            
+            Also can be specified in $WERF_TAG_CUSTOM_* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1,           
             $WERF_TAG_CUSTOM_TAG2=tag2)
       --tag-git-branch=''
             Use git-branch tagging strategy and tag by the specified git branch (option can be      

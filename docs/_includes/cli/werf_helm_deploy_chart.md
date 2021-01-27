@@ -95,11 +95,12 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
+            Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,                      
+            $WERF_SET_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,         
+            Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
@@ -115,7 +116,7 @@ werf helm deploy-chart CHART_DIR|CHART_REFERENCE RELEASE_NAME [options]
             chart repository username (if using CHART as a chart reference)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml,  
+            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, 
             $WERF_VALUES_DB=.helm/values_db.yaml)
       --verify=false
             verify the package against its signature (if using CHART as a chart reference)
