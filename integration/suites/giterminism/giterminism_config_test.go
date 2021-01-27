@@ -53,7 +53,7 @@ var _ = Describe("giterminism config", func() {
 		Entry("the giterminism config not exist", entry{}),
 		Entry("the giterminism config not committed", entry{
 			addConfig:            true,
-			expectedErrSubstring: "the uncommitted configuration found in the project git work tree: the giterminism config \"werf-giterminism.yaml\" must be committed",
+			expectedErrSubstring: `unable to read werf giterminism config: the file "werf-giterminism.yaml" must be committed`,
 		}),
 		Entry("the giterminism config committed", entry{
 			addConfig:    true,
@@ -63,7 +63,7 @@ var _ = Describe("giterminism config", func() {
 			addConfig:               true,
 			commitConfig:            true,
 			changeConfigAfterCommit: true,
-			expectedErrSubstring:    "the uncommitted configuration found in the project git work tree: the giterminism config \"werf-giterminism.yaml\" changes must be committed",
+			expectedErrSubstring:    `unable to read werf giterminism config: the file "werf-giterminism.yaml" changes must be committed`,
 		}),
 	)
 })

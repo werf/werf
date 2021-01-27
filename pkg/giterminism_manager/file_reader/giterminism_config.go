@@ -1,6 +1,9 @@
 package file_reader
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 const GiterminismConfigName = "werf-giterminism.yaml"
 
@@ -9,17 +12,22 @@ func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context) (bool,
 }
 
 func (r FileReader) ReadGiterminismConfig(ctx context.Context) ([]byte, error) {
-	if err := r.checkConfigurationFileExistence(ctx, giterminismConfigErrorConfigType, GiterminismConfigName, func(relPath string) (bool, error) {
+	data, err := r.readGiterminismConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read werf giterminism config: %s", err)
+	}
+
+	return data, nil
+}
+
+func (r FileReader) readGiterminismConfig(ctx context.Context) ([]byte, error) {
+	if err := r.checkConfigurationFileExistence(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
 		return false, nil
 	}); err != nil {
 		return nil, err
 	}
 
-	return r.readGiterminismConfig(ctx)
-}
-
-func (r FileReader) readGiterminismConfig(ctx context.Context) ([]byte, error) {
-	return r.readConfigurationFile(ctx, giterminismConfigErrorConfigType, GiterminismConfigName, func(relPath string) (bool, error) {
+	return r.readConfigurationFile(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
 		return false, nil
 	})
 }
