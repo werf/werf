@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -1020,8 +1021,6 @@ func GetWorkingDir(cmdData *CmdData) string {
 	return util.GetAbsoluteFilepath(workingDir)
 }
 
-// FIXME: this is simple working dir
-// FIXME: while git-work-tree can be renamed to project-work-tree or project-git-work-tree or project-git
 func GetProjectDir(cmdData *CmdData, gitWorkTree string) (string, error) {
 	var projectDir string
 	if *cmdData.Dir != "" {
@@ -1046,12 +1045,12 @@ func GetHelmChartDir(werfConfig *config.WerfConfig, giterminismManager gitermini
 		helmChartDir = ".helm"
 	}
 
-	absHelmChartDir := util.GetAbsoluteFilepath(helmChartDir)
+	absHelmChartDir := filepath.Join(giterminismManager.ProjectDir(), helmChartDir)
 	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().WorkTreeDir, absHelmChartDir) {
-		return "", fmt.Errorf("the chart directory %q must be in the project git work tree %q", helmChartDir, giterminismManager.LocalGitRepo().WorkTreeDir)
+		return "", fmt.Errorf("the chart directory %s must be in the project git work tree %s", absHelmChartDir, giterminismManager.LocalGitRepo().WorkTreeDir)
 	}
 
-	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), absHelmChartDir), nil
+	return absHelmChartDir, nil
 }
 
 func GetNamespace(cmdData *CmdData) string {

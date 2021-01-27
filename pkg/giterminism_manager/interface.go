@@ -17,6 +17,7 @@ type Interface interface {
 	LocalGitRepo() *git_repo.Local
 	HeadCommit() string
 	ProjectDir() string
+	RelativeToGitProjectDir() string
 	Dev() bool
 }
 
