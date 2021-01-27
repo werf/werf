@@ -35,7 +35,7 @@ type OpenLocalRepoOptions struct {
 	Dev bool
 }
 
-func OpenLocalRepo(name, workTreeDir string, opts OpenLocalRepoOptions) (l Local, err error) {
+func OpenLocalRepo(name, workTreeDir string, opts OpenLocalRepoOptions) (l *Local, err error) {
 	_, err = git.PlainOpenWithOptions(workTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		if err == git.ErrRepositoryNotExists {
@@ -72,13 +72,13 @@ func OpenLocalRepo(name, workTreeDir string, opts OpenLocalRepoOptions) (l Local
 	return l, nil
 }
 
-func newLocal(name, workTreeDir, gitDir string) (l Local, err error) {
+func newLocal(name, workTreeDir, gitDir string) (l *Local, err error) {
 	headCommit, err := getHeadCommit(workTreeDir)
 	if err != nil {
 		return l, fmt.Errorf("unable to get git repo head commit: %s", err)
 	}
 
-	l = Local{
+	l = &Local{
 		Base:        Base{Name: name},
 		WorkTreeDir: workTreeDir,
 		GitDir:      gitDir,
