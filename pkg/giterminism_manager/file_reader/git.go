@@ -61,7 +61,7 @@ func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]stri
 	pattern = filepath.ToSlash(pattern)
 	for _, relToGitFilepath := range commitPathList {
 		relToGitPath := filepath.ToSlash(relToGitFilepath)
-		relPath := util.GetRelativeToBaseFilepath(r.relativeToGitWorkingDir(), relToGitPath)
+		relPath := filepath.ToSlash(util.GetRelativeToBaseFilepath(r.relativeToGitWorkingDir(), relToGitPath))
 
 		if matched, err := doublestar.Match(pattern, relPath); err != nil {
 			return nil, err
