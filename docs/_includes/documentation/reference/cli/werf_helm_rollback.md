@@ -40,6 +40,9 @@ werf helm rollback <RELEASE> [REVISION] [flags] [options]
             if set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
             Deployment, StatefulSet, or ReplicaSet are in a ready state before marking the release  
             as successful. It will wait for as long as --timeout
+      --wait-for-jobs=false
+            if set and --wait enabled, will wait until all Jobs have been completed before marking  
+            the release as successful. It will wait for as long as --timeout
 ```
 
 {{ header }} Options inherited from parent commands

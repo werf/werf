@@ -125,8 +125,10 @@ werf dismiss [options]
       --repo-quay-token=''
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --secondary-repo=[]
-            Specify one or multiple secondary read-only repo with images that will be used as a     
-            cache
+            Specify one or multiple secondary read-only repos with images that will be used as a    
+            cache.
+            Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
+            $WERF_SECONDARY_REPO_2=...)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

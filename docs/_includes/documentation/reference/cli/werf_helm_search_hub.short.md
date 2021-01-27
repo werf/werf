@@ -1,1 +1,1 @@
-search for charts in the Helm Hub or an instance of Monocular
+search for charts in the Artifact Hub or your own hub instance
