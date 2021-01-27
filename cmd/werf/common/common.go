@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/werf/werf/pkg/true_git"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -25,10 +23,10 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_inspector"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -981,12 +979,6 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 	return giterminism_manager.NewManager(BackgroundContext(), workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		Dev:              *cmdData.Dev,
-	})
-}
-
-func InitGiterminismInspector(cmdData *CmdData) error {
-	return giterminism_inspector.Init(GetWorkingDir(cmdData), giterminism_inspector.InspectionOptions{
-		LooseGiterminism: *cmdData.LooseGiterminism,
 	})
 }
 

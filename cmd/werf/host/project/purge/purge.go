@@ -81,10 +81,6 @@ func run(projectNames ...string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := common.InitGiterminismInspector(&commonCmdData); err != nil {
-		return err
-	}
-
 	if err := git_repo.Init(); err != nil {
 		return err
 	}
