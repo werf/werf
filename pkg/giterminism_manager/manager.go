@@ -16,7 +16,7 @@ type NewManagerOptions struct {
 	Dev              bool
 }
 
-func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
+func NewManager(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
 	sharedOptions := &sharedOptions{
 		projectDir:       projectDir,
 		localGitRepo:     localGitRepo,
@@ -71,7 +71,7 @@ func (m Manager) Inspector() Inspector {
 type sharedOptions struct {
 	projectDir       string
 	headCommit       string
-	localGitRepo     git_repo.Local
+	localGitRepo     *git_repo.Local
 	looseGiterminism bool
 	dev              bool
 }
@@ -85,7 +85,7 @@ func (s *sharedOptions) HeadCommit() string {
 }
 
 func (s *sharedOptions) LocalGitRepo() *git_repo.Local {
-	return &s.localGitRepo
+	return s.localGitRepo
 }
 
 func (s *sharedOptions) LooseGiterminism() bool {
