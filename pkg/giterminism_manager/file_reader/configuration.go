@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-func (r FileReader) configurationFilesGlob(ctx context.Context, configType configType, pattern string, isFileAcceptedFunc func(relPath string) (bool, error), readCommitFileFunc func(ctx context.Context, relPath string) ([]byte, error), handleFileFunc func(relPath string, data []byte, err error) error) error {
+func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, isFileAcceptedFunc func(relPath string) (bool, error), handleFileFunc func(relPath string, data []byte, err error) error) error {
 	processedFiles := map[string]bool{}
 
 	isFileProcessedFunc := func(relPath string) bool {
@@ -23,7 +23,7 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, configType confi
 
 	readCommitFileWrapperFunc := func(relPath string) ([]byte, error) {
 		readFileBeforeHookFunc(relPath)
-		return readCommitFileFunc(ctx, relPath)
+		return r.readCommitFile(ctx, relPath)
 	}
 
 	fileRelPathListFromFS, err := r.filesGlob(pattern)
@@ -67,7 +67,7 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, configType confi
 	}
 
 	if len(relPathListWithUncommittedFilesChanges) != 0 {
-		return NewUncommittedFilesChangesError(configType, relPathListWithUncommittedFilesChanges...)
+		return NewUncommittedFilesChangesError(relPathListWithUncommittedFilesChanges...)
 	}
 
 	var relPathListWithUncommittedFiles []string
@@ -92,13 +92,13 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, configType confi
 	}
 
 	if len(relPathListWithUncommittedFiles) != 0 {
-		return NewUncommittedFilesError(configType, relPathListWithUncommittedFiles...)
+		return NewUncommittedFilesError(relPathListWithUncommittedFiles...)
 	}
 
 	return nil
 }
 
-func (r FileReader) readConfigurationFile(ctx context.Context, configType configType, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) ([]byte, error) {
+func (r FileReader) readConfigurationFile(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) ([]byte, error) {
 	accepted, err := isFileAcceptedFunc(relPath)
 	if err != nil {
 		return nil, err
@@ -108,12 +108,10 @@ func (r FileReader) readConfigurationFile(ctx context.Context, configType config
 		return r.readFile(relPath)
 	}
 
-	return r.readCommitFile(ctx, relPath, func(ctx context.Context, relPath string) error {
-		return NewUncommittedFilesChangesError(configType, relPath)
-	})
+	return r.readCommitFile(ctx, relPath)
 }
 
-func (r FileReader) checkConfigurationDirectoryExistence(ctx context.Context, configType configType, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) error {
+func (r FileReader) checkConfigurationDirectoryExistence(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) error {
 	accepted, err := isFileAcceptedFunc(relPath)
 	if err != nil {
 		return err
@@ -137,18 +135,18 @@ func (r FileReader) checkConfigurationDirectoryExistence(ctx context.Context, co
 		if shouldReadFromFS {
 			return nil
 		} else {
-			return NewUncommittedFilesError(configType, relPath)
+			return NewUncommittedFilesError(relPath)
 		}
 	} else {
 		if shouldReadFromFS {
-			return NewFilesNotFoundInTheProjectDirectoryError(configType, relPath)
+			return NewFilesNotFoundInProjectDirectoryError(relPath)
 		} else {
-			return NewFilesNotFoundInTheProjectGitRepositoryError(configType, relPath)
+			return NewFilesNotFoundInProjectGitRepositoryError(relPath)
 		}
 	}
 }
 
-func (r FileReader) checkConfigurationFileExistence(ctx context.Context, configType configType, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) error {
+func (r FileReader) checkConfigurationFileExistence(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) error {
 	accepted, err := isFileAcceptedFunc(relPath)
 	if err != nil {
 		return err
@@ -172,13 +170,13 @@ func (r FileReader) checkConfigurationFileExistence(ctx context.Context, configT
 		if shouldReadFromFS {
 			return nil
 		} else {
-			return NewUncommittedFilesError(configType, relPath)
+			return NewUncommittedFilesError(relPath)
 		}
 	} else {
 		if shouldReadFromFS {
-			return NewFilesNotFoundInTheProjectDirectoryError(configType, relPath)
+			return NewFilesNotFoundInProjectDirectoryError(relPath)
 		} else {
-			return NewFilesNotFoundInTheProjectGitRepositoryError(configType, relPath)
+			return NewFilesNotFoundInProjectGitRepositoryError(relPath)
 		}
 	}
 }
