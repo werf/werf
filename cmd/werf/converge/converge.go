@@ -170,7 +170,7 @@ func runConverge() error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	if err := ssh_agent.Init(ctx, *commonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
@@ -307,10 +307,10 @@ func runConverge() error {
 	}
 
 	return deploy.Deploy(ctx, projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{
-		Set:                  *commonCmdData.Set,
-		SetString:            *commonCmdData.SetString,
-		Values:               *commonCmdData.Values,
-		SecretValues:         *commonCmdData.SecretValues,
+		Set:                  common.GetSet(&commonCmdData),
+		SetString:            common.GetSetString(&commonCmdData),
+		Values:               common.GetValues(&commonCmdData),
+		SecretValues:         common.GetSecretValues(&commonCmdData),
 		Timeout:              time.Duration(cmdData.Timeout) * time.Second,
 		Env:                  *commonCmdData.Environment,
 		UserExtraAnnotations: userExtraAnnotations,

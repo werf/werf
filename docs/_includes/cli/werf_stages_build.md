@@ -143,9 +143,9 @@ werf stages build [IMAGE_NAME...] [options]
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
+            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
-            Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -s, --stages-storage=''
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment)

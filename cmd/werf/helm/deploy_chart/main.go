@@ -200,9 +200,9 @@ func runDeployChart(chartDirOrChartReference string, releaseName string) error {
 	if err := werfChart.Deploy(ctx, releaseName, namespace, helm.ChartOptions{
 		Timeout: time.Duration(cmdData.Timeout) * time.Second,
 		ChartValuesOptions: helm.ChartValuesOptions{
-			Set:       *commonCmdData.Set,
-			SetString: *commonCmdData.SetString,
-			Values:    *commonCmdData.Values,
+			Set:       common.GetSet(&commonCmdData),
+			SetString: common.GetSetString(&commonCmdData),
+			Values:    common.GetValues(&commonCmdData),
 		},
 		ThreeWayMergeMode: threeWayMergeMode,
 	}); err != nil {

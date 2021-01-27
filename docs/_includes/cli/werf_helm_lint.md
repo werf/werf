@@ -66,23 +66,23 @@ werf helm lint [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES* (e.g.                                    
+            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                    
             $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
-            $WERF_SECRET_VALUES=.helm/secret_values_db.yaml)
+            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
+            Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_STRING* (e.g. $WERF_SET_STRING_1=key1=val1,         
+            Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,         
             $WERF_SET_STRING_2=key2=val2)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml,  
+            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml,  
             $WERF_VALUES_DB=.helm/values_db.yaml)
 ```
 

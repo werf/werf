@@ -133,10 +133,10 @@ func runLint() error {
 	}
 
 	return deploy.RunLint(ctx, projectDir, helmChartDir, werfConfig, stubImagesRepo.String(), imagesInfoGetters, tag, tagStrategy, deploy.LintOptions{
-		Values:          *commonCmdData.Values,
-		SecretValues:    *commonCmdData.SecretValues,
-		Set:             *commonCmdData.Set,
-		SetString:       *commonCmdData.SetString,
+		Values:          common.GetValues(&commonCmdData),
+		SecretValues:    common.GetSecretValues(&commonCmdData),
+		Set:             common.GetSet(&commonCmdData),
+		SetString:       common.GetSetString(&commonCmdData),
 		Env:             *commonCmdData.Environment,
 		IgnoreSecretKey: *commonCmdData.IgnoreSecretKey,
 	})

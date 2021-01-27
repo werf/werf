@@ -121,12 +121,8 @@ func GetHooksStatusProgressPeriod(cmdData *CmdData) time.Duration {
 
 func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
 	extraAnnotationMap := map[string]string{}
-	var addAnnotations []string
 
-	if *cmdData.AddAnnotations != nil {
-		addAnnotations = append(addAnnotations, *cmdData.AddAnnotations...)
-	}
-
+	addAnnotations := GetAddAnnotations(cmdData)
 	for _, addAnnotation := range addAnnotations {
 		parts := strings.Split(addAnnotation, "=")
 		if len(parts) != 2 {
@@ -141,12 +137,8 @@ func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
 
 func GetUserExtraLabels(cmdData *CmdData) (map[string]string, error) {
 	extraLabelMap := map[string]string{}
-	var addLabels []string
 
-	if *cmdData.AddLabels != nil {
-		addLabels = append(addLabels, *cmdData.AddLabels...)
-	}
-
+	addLabels := GetAddLabels(cmdData)
 	for _, addLabel := range addLabels {
 		parts := strings.Split(addLabel, "=")
 		if len(parts) != 2 {

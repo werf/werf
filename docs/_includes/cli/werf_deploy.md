@@ -49,13 +49,13 @@ werf deploy [options]
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
-            Also, can be specified with $WERF_ADD_ANNOTATION* (e.g.                                 
+            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                 
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1",                                           
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_ADD_LABEL* (e.g.                                      
+            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                      
             $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")
       --allow-git-shallow-clone=false
             Sign the intention of using shallow clone despite restrictions (default                 
@@ -176,26 +176,26 @@ werf deploy [options]
             Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES* (e.g.                                    
+            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                    
             $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
-            $WERF_SECRET_VALUES=.helm/secret_values_db.yaml)
+            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
+            Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_STRING* (e.g. $WERF_SET_STRING_1=key1=val1,         
+            Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,         
             $WERF_SET_STRING_2=key2=val2)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
+            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa",         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa").
-            Defaults to $WERF_SSH_KEY*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -s, --stages-storage=''
             Docker Repo to store stages or :local for non-distributed build (only :local is         
             supported for now; default $WERF_STAGES_STORAGE environment)
@@ -233,7 +233,7 @@ werf deploy [options]
       --tag-custom=[]
             Use custom tagging strategy and tag by the specified arbitrary tags.
             Option can be used multiple times to produce multiple images with the specified tags.
-            Also can be specified in $WERF_TAG_CUSTOM* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1,            
+            Also can be specified in $WERF_TAG_CUSTOM_* (e.g. $WERF_TAG_CUSTOM_TAG1=tag1,            
             $WERF_TAG_CUSTOM_TAG2=tag2)
       --tag-git-branch=''
             Use git-branch tagging strategy and tag by the specified git branch (option can be      
@@ -253,7 +253,7 @@ werf deploy [options]
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml,  
+            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml,  
             $WERF_VALUES_DB=.helm/values_db.yaml)
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
