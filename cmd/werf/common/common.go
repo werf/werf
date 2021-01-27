@@ -1020,8 +1020,6 @@ func GetWorkingDir(cmdData *CmdData) string {
 	return util.GetAbsoluteFilepath(workingDir)
 }
 
-// FIXME: this is simple working dir
-// FIXME: while git-work-tree can be renamed to project-work-tree or project-git-work-tree or project-git
 func GetProjectDir(cmdData *CmdData, gitWorkTree string) (string, error) {
 	var projectDir string
 	if *cmdData.Dir != "" {

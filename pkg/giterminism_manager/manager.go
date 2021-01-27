@@ -3,6 +3,8 @@ package giterminism_manager
 import (
 	"context"
 
+	"github.com/werf/werf/pkg/util"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager/config"
@@ -78,6 +80,10 @@ type sharedOptions struct {
 
 func (s *sharedOptions) ProjectDir() string {
 	return s.projectDir
+}
+
+func (s *sharedOptions) RelativeToGitProjectDir() string {
+	return util.GetRelativeToBaseFilepath(s.LocalGitRepo().WorkTreeDir, s.projectDir)
 }
 
 func (s *sharedOptions) HeadCommit() string {

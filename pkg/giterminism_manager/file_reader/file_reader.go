@@ -26,6 +26,7 @@ type giterminismConfig interface {
 
 type sharedOptions interface {
 	ProjectDir() string
+	RelativeToGitProjectDir() string
 	LocalGitRepo() *git_repo.Local
 	HeadCommit() string
 	LooseGiterminism() bool
