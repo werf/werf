@@ -137,11 +137,11 @@ FROM alpine
 				}
 			},
 			Entry("the dockerfile not found", entry{
-				expectedErrSubstring: `the dockerfile "Dockerfile" not found in the project git repository`,
+				expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" not found in the project git repository`,
 			}),
 			Entry("the dockerfile not committed", entry{
 				addDockerfile:        true,
-				expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the dockerfile "Dockerfile" must be committed`,
+				expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
 			}),
 			Entry("the dockerfile committed", entry{
 				addDockerfile:    true,
@@ -151,7 +151,7 @@ FROM alpine
 				addDockerfile:               true,
 				commitDockerfile:            true,
 				changeDockerfileAfterCommit: true,
-				expectedErrSubstring:        `the uncommitted configuration found in the project git work tree: the dockerfile "Dockerfile" changes must be committed`,
+				expectedErrSubstring:        `unable to read dockerfile "Dockerfile": the file "Dockerfile" changes must be committed`,
 			}),
 			Entry(`config.dockerfile.allowUncommitted (Dockerfile) covers the uncommitted dockerfile "Dockerfile"`, entry{
 				configDockerfileAllowUncommittedGlob: "Dockerfile",
@@ -169,13 +169,13 @@ FROM alpine
 			Entry(`config.dockerfile.allowUncommitted (docker*) does not cover the dockerfile "Dockerfile"`, entry{
 				configDockerfileAllowUncommittedGlob: "docker*",
 				addDockerfile:                        true,
-				expectedErrSubstring:                 `the uncommitted configuration found in the project git work tree: the dockerfile "Dockerfile" must be committed`,
+				expectedErrSubstring:                 `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
 			}),
 			Entry(`config.dockerfile.allowContextAddFiles (Dockerfile) does not cover the dockerfile "Dockerfile" inside context "context"`, entry{
 				configDockerfileAllowUncommittedGlob: "Dockerfile",
 				context:                              "context",
 				addDockerfile:                        true,
-				expectedErrSubstring:                 `the uncommitted configuration found in the project git work tree: the dockerfile "context/Dockerfile" must be committed`,
+				expectedErrSubstring:                 `unable to read dockerfile "context/Dockerfile": the file "context/Dockerfile" must be committed`,
 			}),
 			Entry(`config.dockerfile.allowContextAddFiles (context/Dockerfile) covers the dockerfile "Dockerfile" inside context "context"`, entry{
 				configDockerfileAllowUncommittedGlob: "context/Dockerfile",
@@ -250,7 +250,7 @@ config:
 			Entry("the dockerignore not found", entry{}),
 			Entry("the dockerignore not committed", entry{
 				addDockerignore:      true,
-				expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the dockerignore file ".dockerignore" must be committed`,
+				expectedErrSubstring: `unable to read dockerignore file ".dockerignore": the file ".dockerignore" must be committed`,
 			}),
 			Entry("the dockerignore committed", entry{
 				addDockerignore:    true,
@@ -260,7 +260,7 @@ config:
 				addDockerignore:               true,
 				commitDockerignore:            true,
 				changeDockerignoreAfterCommit: true,
-				expectedErrSubstring:          `the uncommitted configuration found in the project git work tree: the dockerignore file ".dockerignore" changes must be committed`,
+				expectedErrSubstring:          `unable to read dockerignore file ".dockerignore": the file ".dockerignore" changes must be committed`,
 			}),
 			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (.dockerignore) covers the uncommitted dockerignore ".dockerignore"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: ".dockerignore",
@@ -278,13 +278,13 @@ config:
 			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (docker*) does not cover the dockerignore ".dockerignore"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: "docker*",
 				addDockerignore:      true,
-				expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the dockerignore file ".dockerignore" must be committed`,
+				expectedErrSubstring: `unable to read dockerignore file ".dockerignore": the file ".dockerignore" must be committed`,
 			}),
 			Entry(`config.dockerignore.allowContextAddFiles (.dockerignore) does not cover the dockerignore ".dockerignore" inside context "context"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: ".dockerignore",
 				context:              "context",
 				addDockerignore:      true,
-				expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the dockerignore file "context/.dockerignore" must be committed`,
+				expectedErrSubstring: `unable to read dockerignore file "context/.dockerignore": the file "context/.dockerignore" must be committed`,
 			}),
 			Entry(`config.dockerignore.allowContextAddFiles (context/.dockerignore) covers the dockerignore ".dockerignore" inside context "context"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: "context/.dockerignore",

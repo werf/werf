@@ -3,6 +3,8 @@ package giterminism_manager
 import (
 	"context"
 
+	"github.com/werf/werf/pkg/util"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager/config"
@@ -16,7 +18,7 @@ type NewManagerOptions struct {
 	Dev              bool
 }
 
-func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
+func NewManager(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
 	sharedOptions := &sharedOptions{
 		projectDir:       projectDir,
 		localGitRepo:     localGitRepo,
@@ -71,7 +73,7 @@ func (m Manager) Inspector() Inspector {
 type sharedOptions struct {
 	projectDir       string
 	headCommit       string
-	localGitRepo     git_repo.Local
+	localGitRepo     *git_repo.Local
 	looseGiterminism bool
 	dev              bool
 }
@@ -80,12 +82,16 @@ func (s *sharedOptions) ProjectDir() string {
 	return s.projectDir
 }
 
+func (s *sharedOptions) RelativeToGitProjectDir() string {
+	return util.GetRelativeToBaseFilepath(s.LocalGitRepo().WorkTreeDir, s.projectDir)
+}
+
 func (s *sharedOptions) HeadCommit() string {
 	return s.headCommit
 }
 
 func (s *sharedOptions) LocalGitRepo() *git_repo.Local {
-	return &s.localGitRepo
+	return s.localGitRepo
 }
 
 func (s *sharedOptions) LooseGiterminism() bool {

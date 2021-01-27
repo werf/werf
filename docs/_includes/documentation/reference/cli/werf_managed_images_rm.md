@@ -95,16 +95,18 @@ werf managed-images rm [options]
       --repo-quay-token=''
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --secondary-repo=[]
-            Specify one or multiple secondary read-only repo with images that will be used as a     
-            cache
+            Specify one or multiple secondary read-only repos with images that will be used as a    
+            cache.
+            Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
+            $WERF_SECONDARY_REPO_2=...)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,          
+            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
             https://werf.io/documentation/reference/toolbox/ssh.html
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.

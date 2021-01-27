@@ -52,7 +52,7 @@ fromLatest: true
 
 ## fromImage и fromArtifact
 
-В качестве _базового образа_ можно указывать не только образ из локального хранилища или Docker registry, но и имя другого _образа_ или [_артефакта_]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url: page.url }}), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromArtifact` соответственно.
+В качестве _базового образа_ можно указывать не только образ из локального хранилища или Docker registry, но и имя другого _образа_ или [_артефакта_]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url }}), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromArtifact` соответственно.
 
 ```yaml
 fromImage: <image name>
@@ -64,8 +64,8 @@ fromArtifact: <artifact name>
 Также эта рекомендация будет полезной, если вам, по каким-либо причинам, не хватает существующего _конвейера стадий_.
 Используя в качестве _базового образа_ образ, описанный в том же `werf.yaml`, вы по сути можете построить свой _конвейер стадий_.
 
-<a class="google-drawings" href="{{ "images/configuration/base_image2.png" | true_relative_url: page.url }}" data-featherlight="image">
-<img src="{{ "images/configuration/base_image2_preview.png" | true_relative_url: page.url }}">
+<a class="google-drawings" href="{{ "images/configuration/base_image2.png" | true_relative_url }}" data-featherlight="image">
+<img src="{{ "images/configuration/base_image2_preview.png" | true_relative_url }}">
 </a>
 
 ## fromCacheVersion

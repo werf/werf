@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -355,5 +356,5 @@ func runRender() error {
 			FileValues:   common.GetSetFile(&commonCmdData),
 		},
 	})
-	return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, chartDir})
+	return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)})
 }

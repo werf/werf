@@ -13,13 +13,8 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
-func (r FileReader) relativeToGitWorkingDir() string {
-	workingDir := r.sharedOptions.ProjectDir() // FIXME: rename project-dir to working dir and work-tree-dir to project-git-work-tree or project-git or project-work-tree or ...
-	return util.GetRelativeToBaseFilepath(r.sharedOptions.LocalGitRepo().WorkTreeDir, workingDir)
-}
-
 func (r FileReader) relativeToGitPath(relPath string) string {
-	return filepath.Join(r.relativeToGitWorkingDir(), relPath)
+	return filepath.Join(r.sharedOptions.RelativeToGitProjectDir(), relPath)
 }
 
 func (r FileReader) isCommitDirectoryExist(ctx context.Context, relPath string) (bool, error) {
@@ -61,7 +56,7 @@ func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]stri
 	pattern = filepath.ToSlash(pattern)
 	for _, relToGitFilepath := range commitPathList {
 		relToGitPath := filepath.ToSlash(relToGitFilepath)
-		relPath := util.GetRelativeToBaseFilepath(r.relativeToGitWorkingDir(), relToGitPath)
+		relPath := filepath.ToSlash(util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), relToGitPath))
 
 		if matched, err := doublestar.Match(pattern, relPath); err != nil {
 			return nil, err
@@ -73,7 +68,7 @@ func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]stri
 	return result, nil
 }
 
-func (r FileReader) readCommitFile(ctx context.Context, relPath string, handleUncommittedChangesFunc func(context.Context, string) error) ([]byte, error) {
+func (r FileReader) readCommitFile(ctx context.Context, relPath string) ([]byte, error) {
 	logboek.Context(ctx).Debug().LogF("-- giterminism_manager.FileReader.readCommitFile relPath=%q\n", relPath)
 
 	fileRepoPath := r.relativeToGitPath(filepath.ToSlash(relPath))
@@ -83,17 +78,13 @@ func (r FileReader) readCommitFile(ctx context.Context, relPath string, handleUn
 		return nil, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", relPath, r.sharedOptions.HeadCommit(), err)
 	}
 
-	if handleUncommittedChangesFunc == nil {
-		return repoData, nil
-	}
-
 	isDataIdentical, err := r.compareFileData(relPath, repoData)
 	if err != nil {
 		return nil, fmt.Errorf("unable to compare commit file %q with the local project file: %s", relPath, err)
 	}
 
 	if !isDataIdentical {
-		if err := handleUncommittedChangesFunc(ctx, filepath.FromSlash(relPath)); err != nil {
+		if err := NewUncommittedFilesChangesError(relPath); err != nil {
 			return nil, err
 		}
 	}

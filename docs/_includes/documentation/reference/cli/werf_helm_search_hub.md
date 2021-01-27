@@ -4,28 +4,36 @@
 {% assign header = "###" %}
 {% endif %}
 
-Search the Helm Hub or an instance of Monocular for Helm charts.
+Search for Helm charts in the Artifact Hub or your own hub instance.
 
-The Helm Hub provides a centralized search for publicly available distributed
-charts. It is maintained by the Helm project. It can be visited at
-[https://hub.helm.sh](https://hub.helm.sh)
+Artifact Hub is a web-based application that enables finding, installing, and
+publishing packages and configurations for CNCF projects, including publicly
+available distributed charts Helm charts. It is a Cloud Native Computing
+Foundation sandbox project. You can browse the hub at [https://artifacthub.io/](https://artifacthub.io/)
 
-Monocular is a web-based application that enables the search and discovery of
-charts from multiple Helm Chart repositories. It is the codebase that powers the
-Helm Hub. You can find it at [https://github.com/helm/monocular](https://github.com/helm/monocular)
+The [KEYWORD] argument accepts either a keyword string, or quoted string of rich
+query options. For rich query options documentation, see
+[https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20compatible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search](https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20compatible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search)
+
+Previous versions of Helm used an instance of Monocular as the default
+&#39;endpoint&#39;, so for backwards compatibility Artifact Hub is compatible with the
+Monocular search API. Similarly, when setting the &#39;endpoint&#39; flag, the specified
+endpoint must also be implement a Monocular compatible search API endpoint.
+Note that when specifying a Monocular instance as the &#39;endpoint&#39;, rich queries
+are not supported. For API details, see [https://github.com/helm/monocular](https://github.com/helm/monocular)
 
 
 {{ header }} Syntax
 
 ```shell
-werf helm search hub [keyword] [flags] [options]
+werf helm search hub [KEYWORD] [flags] [options]
 ```
 
 {{ header }} Options
 
 ```shell
       --endpoint='https://hub.helm.sh'
-            monocular instance to query for charts
+            Hub instance to query for charts
       --max-col-width=50
             maximum column width for output table
   -o, --output=table

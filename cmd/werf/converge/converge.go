@@ -3,6 +3,7 @@ package converge
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -393,6 +394,6 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	})
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir})
+		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)})
 	})
 }

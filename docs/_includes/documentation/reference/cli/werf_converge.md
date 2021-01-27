@@ -45,13 +45,13 @@ werf converge --repo registry.mydomain.com/web --env production
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
-            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                 
+            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                      
+            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --atomic=false
             Enable auto rollback of the failed release to the previous deployed release version     
@@ -204,28 +204,31 @@ werf converge --repo registry.mydomain.com/web --env production
       --report-path=''
             Report save path ($WERF_REPORT_PATH by default)
       --secondary-repo=[]
-            Specify one or multiple secondary read-only repo with images that will be used as a     
-            cache
+            Specify one or multiple secondary read-only repos with images that will be used as a    
+            cache.
+            Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
+            $WERF_SECONDARY_REPO_2=...)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                    
+            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
             $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)
+            Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,                      
+            $WERF_SET_2=key2=val2)
       --set-docker-config-json-value=false
             Shortcut to set current docker config into the .Values.dockerconfigjson
       --set-file=[]
             Set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2).
-            Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,            
+            Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
             $WERF_SET_FILE_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,         
+            Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
   -Z, --skip-build=false
             Disable building of docker images, cached images in the repo should exist in the repo   
@@ -235,9 +238,9 @@ werf converge --repo registry.mydomain.com/web --env production
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,          
+            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see             
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
             https://werf.io/documentation/reference/toolbox/ssh.html
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
@@ -258,7 +261,7 @@ werf converge --repo registry.mydomain.com/web --env production
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml,  
+            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, 
             $WERF_VALUES_DB=.helm/values_db.yaml)
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      

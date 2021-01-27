@@ -331,7 +331,7 @@ func runPublish() error {
 		PostRenderer: postRenderer,
 		ValueOpts:    valueOpts,
 	})
-	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{"RELEASE", chartDir}); err != nil {
+	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{"RELEASE", filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
 		return err
 	}
 

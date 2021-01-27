@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -954,9 +955,15 @@ func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.Wer
 }
 
 func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, error) {
-	gitWorkTree, err := GetGitWorkTree(cmdData)
+	workingDir := GetWorkingDir(cmdData)
+
+	gitWorkTree, err := GetGitWorkTree(cmdData, workingDir)
 	if err != nil {
 		return nil, err
+	}
+
+	if !util.IsSubpathOfBasePath(util.GetAbsoluteFilepath(gitWorkTree), workingDir) {
+		return nil, fmt.Errorf("werf requires project dir — the current working directory or directory specified with --dir option (or WERF_DIR env var) — to be located inside the git work tree: %q is located outside of the git work tree %q", gitWorkTree, workingDir)
 	}
 
 	localGitRepo, err := git_repo.OpenLocalRepo("own", gitWorkTree, git_repo.OpenLocalRepoOptions{Dev: *cmdData.Dev})
@@ -969,18 +976,13 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 		return nil, err
 	}
 
-	projectDir, err := GetProjectDir(cmdData, gitWorkTree)
-	if err != nil {
-		return nil, err
-	}
-
-	return giterminism_manager.NewManager(BackgroundContext(), projectDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
+	return giterminism_manager.NewManager(BackgroundContext(), workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		Dev:              *cmdData.Dev,
 	})
 }
 
-func GetGitWorkTree(cmdData *CmdData) (string, error) {
+func GetGitWorkTree(cmdData *CmdData, workingDir string) (string, error) {
 	if *cmdData.GitWorkTree != "" {
 		workTree := *cmdData.GitWorkTree
 
@@ -993,7 +995,7 @@ func GetGitWorkTree(cmdData *CmdData) (string, error) {
 		return "", fmt.Errorf("werf requires a git work tree for the project to exist: not a valid git work tree %q specified", workTree)
 	}
 
-	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree("."); err != nil {
+	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree(workingDir); err != nil {
 		return "", err
 	} else if found {
 		return util.GetAbsoluteFilepath(workTree), nil
@@ -1012,24 +1014,6 @@ func GetWorkingDir(cmdData *CmdData) string {
 	return util.GetAbsoluteFilepath(workingDir)
 }
 
-// FIXME: this is simple working dir
-// FIXME: while git-work-tree can be renamed to project-work-tree or project-git-work-tree or project-git
-func GetProjectDir(cmdData *CmdData, gitWorkTree string) (string, error) {
-	var projectDir string
-	if *cmdData.Dir != "" {
-		projectDir = *cmdData.Dir
-	} else {
-		projectDir = "."
-	}
-	projectDir = util.GetAbsoluteFilepath(projectDir)
-
-	if util.IsSubpathOfBasePath(util.GetAbsoluteFilepath(gitWorkTree), projectDir) {
-		return projectDir, nil
-	}
-
-	return "", fmt.Errorf("werf requires project dir — the current working directory or directory specified with --dir option (or WERF_DIR env var) — to be located inside the git work tree: %q is located outside of the git work tree %q", gitWorkTree, projectDir)
-}
-
 func GetHelmChartDir(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface) (string, error) {
 	var helmChartDir string
 	if werfConfig.Meta.Deploy.HelmChartDir != nil && *werfConfig.Meta.Deploy.HelmChartDir != "" {
@@ -1038,12 +1022,12 @@ func GetHelmChartDir(werfConfig *config.WerfConfig, giterminismManager gitermini
 		helmChartDir = ".helm"
 	}
 
-	absHelmChartDir := util.GetAbsoluteFilepath(helmChartDir)
+	absHelmChartDir := filepath.Join(giterminismManager.ProjectDir(), helmChartDir)
 	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().WorkTreeDir, absHelmChartDir) {
-		return "", fmt.Errorf("the chart directory %q must be in the project git work tree %q", helmChartDir, giterminismManager.LocalGitRepo().WorkTreeDir)
+		return "", fmt.Errorf("the chart directory %s must be in the project git work tree %s", absHelmChartDir, giterminismManager.LocalGitRepo().WorkTreeDir)
 	}
 
-	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), absHelmChartDir), nil
+	return helmChartDir, nil
 }
 
 func GetNamespace(cmdData *CmdData) string {

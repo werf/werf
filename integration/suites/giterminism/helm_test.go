@@ -10,7 +10,7 @@ import (
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
-var _ = Describe("config", func() {
+var _ = Describe("helm chart files", func() {
 	BeforeEach(func() {
 		gitInit()
 		utils.CopyIn(utils.FixturePath("default"), SuiteData.TestDirPath)
@@ -67,16 +67,16 @@ helm:
 			}
 		},
 		Entry("the chart directory not found", entry{
-			expectedErrSubstring: `the chart directory ".helm" not found in the project git repository`,
+			expectedErrSubstring: `unable to locate chart directory: the directory ".helm" not found in the project git repository`,
 		}),
 		Entry(`the template file ".helm/templates/template1.yaml" not committed`, entry{
 			addFiles:             []string{".helm/templates/template1.yaml"},
-			expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the chart file ".helm/templates/template1.yaml" must be committed`,
+			expectedErrSubstring: `unable to locate chart directory: the file ".helm/templates/template1.yaml" must be committed`,
 		}),
 		Entry("the template files not committed", entry{
 			addFiles:    []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
 			commitFiles: []string{".helm/templates/template1.yaml"},
-			expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the following chart files must be committed:
+			expectedErrSubstring: `unable to locate chart directory: the following files must be committed:
 
  - .helm/templates/template2.yaml
  - .helm/templates/template3.yaml
@@ -91,13 +91,13 @@ helm:
 			addFiles:               []string{".helm/templates/template1.yaml"},
 			commitFiles:            []string{".helm/templates/template1.yaml"},
 			changeFilesAfterCommit: []string{".helm/templates/template1.yaml"},
-			expectedErrSubstring:   `the uncommitted configuration found in the project git work tree: the chart file ".helm/templates/template1.yaml" changes must be committed`,
+			expectedErrSubstring:   `unable to locate chart directory: the file ".helm/templates/template1.yaml" changes must be committed`,
 		}),
 		Entry("the template files changed after commit", entry{
 			addFiles:               []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
 			commitFiles:            []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
 			changeFilesAfterCommit: []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
-			expectedErrSubstring: `the uncommitted configuration found in the project git work tree: the following chart files changes must be committed:
+			expectedErrSubstring: `unable to locate chart directory: the following files changes must be committed:
 
  - .helm/templates/template1.yaml
  - .helm/templates/template2.yaml

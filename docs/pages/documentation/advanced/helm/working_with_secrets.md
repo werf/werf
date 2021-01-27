@@ -16,9 +16,9 @@ A key is required for encryption and decryption of data. There are two locations
 * from a special `.werf_secret_key` file in the project root
 * from `~/.werf/global_secret_key` (globally)
 
-> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. [werf helm secret generate-secret-key command]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | true_relative_url: page.url }}) returns AES-128 encryption key
+> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. [werf helm secret generate-secret-key command]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | true_relative_url }}) returns AES-128 encryption key
 
-You can promptly generate a key using the [werf helm secret generate-secret-key command]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | true_relative_url: page.url }}).
+You can promptly generate a key using the [werf helm secret generate-secret-key command]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | true_relative_url }}).
 
 ### Working with the WERF_SECRET_KEY environment variable
 
@@ -50,9 +50,9 @@ mysql:
 ```
 
 To manage secret values files use the following commands:
-- [werf helm secret values edit command]({{ "documentation/reference/cli/werf_helm_secret_values_edit.html" | true_relative_url: page.url }})
-- [werf helm secret values encrypt command]({{ "documentation/reference/cli/werf_helm_secret_values_encrypt.html" | true_relative_url: page.url }})
-- [werf helm secret values decrypt command]({{ "documentation/reference/cli/werf_helm_secret_values_decrypt.html" | true_relative_url: page.url }})
+- [werf helm secret values edit command]({{ "documentation/reference/cli/werf_helm_secret_values_edit.html" | true_relative_url }})
+- [werf helm secret values encrypt command]({{ "documentation/reference/cli/werf_helm_secret_values_encrypt.html" | true_relative_url }})
+- [werf helm secret values decrypt command]({{ "documentation/reference/cli/werf_helm_secret_values_decrypt.html" | true_relative_url }})
 
 ### Using in a chart template
 
@@ -76,9 +76,9 @@ Besides secret values, templates also use files that may not be stored unencrypt
 To use secret data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
 To manage secret files use the following commands:
-- [werf helm secret file edit command]({{ "documentation/reference/cli/werf_helm_secret_file_edit.html" | true_relative_url: page.url }})
-- [werf helm secret file encrypt command]({{ "documentation/reference/cli/werf_helm_secret_file_encrypt.html" | true_relative_url: page.url }})
-- [werf helm secret file decrypt command]({{ "documentation/reference/cli/werf_helm_secret_file_decrypt.html" | true_relative_url: page.url }})
+- [werf helm secret file edit command]({{ "documentation/reference/cli/werf_helm_secret_file_edit.html" | true_relative_url }})
+- [werf helm secret file encrypt command]({{ "documentation/reference/cli/werf_helm_secret_file_encrypt.html" | true_relative_url }})
+- [werf helm secret file decrypt command]({{ "documentation/reference/cli/werf_helm_secret_file_decrypt.html" | true_relative_url }})
 
 ### Using in a chart template
 
@@ -96,4 +96,4 @@ data:
 
 ## Secret key rotation
 
-To regenerate secret files and values with new secret key use [werf helm secret rotate-secret-key command]({{ "documentation/reference/cli/werf_helm_secret_rotate_secret_key.html" | true_relative_url: page.url }}).
+To regenerate secret files and values with new secret key use [werf helm secret rotate-secret-key command]({{ "documentation/reference/cli/werf_helm_secret_rotate_secret_key.html" | true_relative_url }}).
