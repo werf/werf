@@ -82,13 +82,13 @@ werf helm install [NAME] [CHART] [flags] [options]
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
-            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                 
+            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                      
+            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --atomic=false
             if set, the installation process deletes the installation on failure. The --wait flag   
@@ -141,7 +141,7 @@ werf helm install [NAME] [CHART] [flags] [options]
             chart repository url where to locate the requested chart
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                    
+            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
             $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
@@ -170,6 +170,9 @@ werf helm install [NAME] [CHART] [flags] [options]
             if set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
             Deployment, StatefulSet, or ReplicaSet are in a ready state before marking the release  
             as successful. It will wait for as long as --timeout
+      --wait-for-jobs=false
+            if set and --wait enabled, will wait until all Jobs have been completed before marking  
+            the release as successful. It will wait for as long as --timeout
 ```
 
 {{ header }} Options inherited from parent commands
