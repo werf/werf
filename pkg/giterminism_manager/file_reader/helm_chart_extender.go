@@ -12,7 +12,9 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func (r FileReader) LocateChart(ctx context.Context, relDir string, _ *cli.EnvSettings) (string, error) {
+func (r FileReader) LocateChart(ctx context.Context, chartDir string, _ *cli.EnvSettings) (string, error) {
+	relDir := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), chartDir)
+
 	files, err := r.loadChartDir(ctx, relDir)
 	if err != nil {
 		return "", fmt.Errorf("unable to locate chart directory: %s", err)
@@ -22,10 +24,12 @@ func (r FileReader) LocateChart(ctx context.Context, relDir string, _ *cli.EnvSe
 		return "", NewFilesNotFoundInProjectGitRepositoryError(relDir)
 	}
 
-	return relDir, nil
+	return chartDir, nil
 }
 
-func (r FileReader) ReadChartFile(ctx context.Context, relPath string) ([]byte, error) {
+func (r FileReader) ReadChartFile(ctx context.Context, path string) ([]byte, error) {
+	relPath := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), path)
+
 	data, err := r.readChartFile(ctx, relPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read chart file %q: %s", filepath.ToSlash(relPath), err)
@@ -42,7 +46,9 @@ func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, 
 	return r.readConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedHelmFileAccepted)
 }
 
-func (r FileReader) LoadChartDir(ctx context.Context, relDir string) ([]*chart.ChartExtenderBufferedFile, error) {
+func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*chart.ChartExtenderBufferedFile, error) {
+	relDir := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), chartDir)
+
 	files, err := r.loadChartDir(ctx, relDir)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load chart dir %q: %s", filepath.ToSlash(relDir), err)

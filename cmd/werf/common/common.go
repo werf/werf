@@ -1035,7 +1035,7 @@ func GetHelmChartDir(werfConfig *config.WerfConfig, giterminismManager gitermini
 		return "", fmt.Errorf("the chart directory %s must be in the project git work tree %s", absHelmChartDir, giterminismManager.LocalGitRepo().WorkTreeDir)
 	}
 
-	return absHelmChartDir, nil
+	return helmChartDir, nil
 }
 
 func GetNamespace(cmdData *CmdData) string {

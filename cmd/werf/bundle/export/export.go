@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"helm.sh/helm/v3/pkg/getter"
 
@@ -325,7 +326,7 @@ func runExport() error {
 		PostRenderer: postRenderer,
 		ValueOpts:    valueOpts,
 	})
-	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{"RELEASE", chartDir}); err != nil {
+	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{"RELEASE", filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
 		return err
 	}
 
