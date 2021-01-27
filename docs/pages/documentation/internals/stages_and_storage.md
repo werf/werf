@@ -23,20 +23,20 @@ The werf assembly process involves a sequential build of stages using the _stage
 </div>
 
 <div id="dockerfile-image-tab" class="tabs__content active">
-<a class="google-drawings" href="{{ "images/reference/stages_and_images1.png" | true_relative_url: page.url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images1_preview.png" | true_relative_url: page.url }}">
+<a class="google-drawings" href="{{ "images/reference/stages_and_images1.png" | true_relative_url }}" data-featherlight="image">
+<img src="{{ "images/reference/stages_and_images1_preview.png" | true_relative_url }}">
 </a>
 </div>
 
 <div id="stapel-image-tab" class="tabs__content">
-<a class="google-drawings" href="{{ "images/reference/stages_and_images2.png" | true_relative_url: page.url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images2_preview.png" | true_relative_url: page.url }}">
+<a class="google-drawings" href="{{ "images/reference/stages_and_images2.png" | true_relative_url }}" data-featherlight="image">
+<img src="{{ "images/reference/stages_and_images2_preview.png" | true_relative_url }}">
 </a>
 </div>
 
 <div id="stapel-artifact-tab" class="tabs__content">
-<a class="google-drawings" href="{{ "images/reference/stages_and_images3.png" | true_relative_url: page.url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images3_preview.png" | true_relative_url: page.url }}">
+<a class="google-drawings" href="{{ "images/reference/stages_and_images3.png" | true_relative_url }}" data-featherlight="image">
+<img src="{{ "images/reference/stages_and_images3_preview.png" | true_relative_url }}">
 </a>
 </div>
 
@@ -48,17 +48,17 @@ The _stage digest_ is used for [tagging](#stage-naming) a _stage_ (digest is the
 werf does not build stages that already exist in the _storage_ (similar to caching in Docker yet more complex).
 
 The ***stage digest*** is calculated as the checksum of:
- - checksum of [stage dependencies]({{ "documentation/internals/stages_and_storage.html#stage-dependencies" | true_relative_url: page.url }});
+ - checksum of [stage dependencies]({{ "documentation/internals/stages_and_storage.html#stage-dependencies" | true_relative_url }});
  - previous _stage digest_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
 Digest identifier of the stage represents content of the stage and depends on git history which lead to this content. There may be multiple built images for a single digest. Stage for different git branches can have the same digest, but werf will prevent cache of different git branches from
-being reused for totally different branches, [see stage selection algorithm]({{ "documentation/internals/build_process.html#stage-selection" | true_relative_url: page.url }}).
+being reused for totally different branches, [see stage selection algorithm]({{ "documentation/internals/build_process.html#stage-selection" | true_relative_url }}).
 
 It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
 
-<a class="google-drawings" href="{{ "images/reference/stages_and_images4.png" | true_relative_url: page.url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images4_preview.png" | true_relative_url: page.url }}">
+<a class="google-drawings" href="{{ "images/reference/stages_and_images4.png" | true_relative_url }}" data-featherlight="image">
+<img src="{{ "images/reference/stages_and_images4_preview.png" | true_relative_url }}">
 </a>
 
 ## Stage dependencies
@@ -72,7 +72,7 @@ _Stage dependency_ is a piece of data that affects the stage _digest_. Stage dep
 
 Most _stage dependencies_ are specified in the `werf.yaml`, others relate to a runtime.
 
-The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url: page.url }}) _stages dependencies_.
+The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url }}) _stages dependencies_.
 Each row describes dependencies for a certain stage.
 Left column contains a short description of dependencies, right column includes related `werf.yaml` directives and contains relevant references for more information.
 
@@ -113,7 +113,7 @@ Left column contains a short description of dependencies, right column includes 
     References:
     <ul>
     {% for reference in stage.references %}
-        <li><a href="{{ reference.link | true_relative_url: page.url }}">{{ reference.name }}</a></li>
+        <li><a href="{{ reference.link | true_relative_url }}">{{ reference.name }}</a></li>
     {% endfor %}
     </ul>
 </div>
@@ -173,7 +173,7 @@ Stages will be [named differently](#stage-naming) depending on local or remote s
 
 When docker registry is used as the storage for the project there is also a cache of local docker images on each host where werf is running. This cache is cleared by the werf itself or can be freely removed by other tools (such as `docker rmi`).
 
-It is recommended though to use docker registry as a storage, werf uses this mode with [CI/CD systems by default]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url: page.url }}).
+It is recommended though to use docker registry as a storage, werf uses this mode with [CI/CD systems by default]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url }}).
 
 Host requirements to use remote storage:
  - Connection to docker registry.
@@ -206,4 +206,4 @@ localhost:5000/myproject-stages                 796e905d0cc975e718b3f8b3ea0199ea
 
 _Digest_ identifier of the stage represents content of the stage and depends on git history which lead to this content.
 
-`TIMESTAMP_MILLISEC` is generated during [stage saving procedure]({{ "documentation/internals/build_process.html#stage-building-and-saving" | true_relative_url: page.url }}) after stage built. It is guaranteed that timestamp will be unique within specified storage.
+`TIMESTAMP_MILLISEC` is generated during [stage saving procedure]({{ "documentation/internals/build_process.html#stage-building-and-saving" | true_relative_url }}) after stage built. It is guaranteed that timestamp will be unique within specified storage.

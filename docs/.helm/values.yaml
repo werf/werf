@@ -1,5 +1,5 @@
 host:
-  production: werfng.io
+  production: ng.werf.io
   _default: werfng.test.flant.com
 
 resources:

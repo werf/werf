@@ -192,7 +192,7 @@ shell:
 
 Функция `tpl` позволяет обрабатывать строки, как Go шаблоны в `werf.yaml`, передавая их в переменных окружения либо в файлах проекта. Таким образом, шаблоны могут располагаться в произвольном месте в проекте и добавляться в `werf.yaml`.
 
-Стоит отметить, что шаблоны выполняются в общем контексте, поэтому в них доступны все шаблоны и значения из `werf.yaml` и [директории шаблонов]({{ "documentation/advanced/configuration/organizing_configuration.html#использование-директории-шаблонов" | true_relative_url: page.url }}).
+Стоит отметить, что шаблоны выполняются в общем контексте, поэтому в них доступны все шаблоны и значения из `werf.yaml` и [директории шаблонов]({{ "documentation/advanced/configuration/organizing_configuration.html#использование-директории-шаблонов" | true_relative_url }}).
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_werf_yaml')">werf.yaml</a>

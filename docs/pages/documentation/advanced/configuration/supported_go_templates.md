@@ -99,7 +99,7 @@ Go templates are available within YAML configuration. The following functions ar
   ```
   {% endraw %}
 
-* `tpl` function to evaluate strings (either content of environment variable or project file) as Go templates inside a template: [example with project files]({{ "documentation/advanced/configuration/organizing_configuration.html#with-tpl-function" | true_relative_url: page.url }}).<a id="tpl" href="#tpl" class="anchorjs-link " aria-label="Anchor link for: tpl" data-anchorjs-icon=""></a>
+* `tpl` function to evaluate strings (either content of environment variable or project file) as Go templates inside a template: [example with project files]({{ "documentation/advanced/configuration/organizing_configuration.html#with-tpl-function" | true_relative_url }}).<a id="tpl" href="#tpl" class="anchorjs-link " aria-label="Anchor link for: tpl" data-anchorjs-icon=""></a>
 
 * `.Files.Get` and `.Files.Glob` functions to work with project files:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get and .Files.Glob" data-anchorjs-icon=""></a>
 

@@ -3,7 +3,7 @@
    {%- if jekyll.environment == "production" %}
    <a data-proofer-ignore href="/">{{ site.breadcrumbs.hometext | default: "Home" }}</a>
    {%- else %}
-   <a href="{{ "/" | true_relative_url: page.url }}">{{ site.breadcrumbs.hometext | default: "Home" }}</a>
+   <a href="{{ "/" | true_relative_url }}">{{ site.breadcrumbs.hometext | default: "Home" }}</a>
    {%- endif %}
    </li>
 
@@ -23,7 +23,7 @@
    {{ breadcrumb_err | raise_error }}
    {% endunless -%}
    <li>
-      <a href="{{ breadcrumb.url | true_relative_url: page.url }}">{{ breadcrumb.title }}</a>
+      <a href="{{ breadcrumb.url | true_relative_url }}">{{ breadcrumb.title }}</a>
    </li>
    {% endif -%}
    {%- endfor %}

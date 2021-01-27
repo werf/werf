@@ -67,17 +67,17 @@ It is possible to specify list of files which will be read from the current proj
 
 ### Env go-templates function
 
-[`{{ env }}` and `{{ expandenv }}`]({{ "documentation/advanced/configuration/supported_go_templates.html" | true_relative_url: page.url }}) functions are only available when [`config.goTemplateRendering.allowEnvVariables`](#werf-giterminismyaml) `werf-giterminism.yaml` configuration file directive has been specified (globs are supported).
+[`{{ env }}` and `{{ expandenv }}`]({{ "documentation/advanced/configuration/supported_go_templates.html" | true_relative_url }}) functions are only available when [`config.goTemplateRendering.allowEnvVariables`](#werf-giterminismyaml) `werf-giterminism.yaml` configuration file directive has been specified (globs are supported).
 
 ### Mount directive
 
-[`mount` directive]({{ "documentation/reference/werf_yaml.html" | true_relative_url: page.url }}) of the stapel builder is only available when [`config.stapel.mount`](#werf-giterminismyaml) `werf-giterminism.yaml` configuration file directives has been specified (depending of the type of mount).
+[`mount` directive]({{ "documentation/reference/werf_yaml.html" | true_relative_url }}) of the stapel builder is only available when [`config.stapel.mount`](#werf-giterminismyaml) `werf-giterminism.yaml` configuration file directives has been specified (depending of the type of mount).
 
 ## Dockerfile builder
 
 Werf pass build context, `Dockerfile` and `.dockerignore` to the dockerfile builder only from the local git repo commit.
 
-There is only one implicit way to add files from the project working tree to the dockerfile build context: using [`contextAddFile` directive]({{ "documentation/reference/werf_yaml.html" | true_relative_url: page.url }}) directive of `werf.yaml` configuration file:
+There is only one implicit way to add files from the project working tree to the dockerfile build context: using [`contextAddFile` directive]({{ "documentation/reference/werf_yaml.html" | true_relative_url }}) directive of `werf.yaml` configuration file:
 
 ```yaml
 # werf.yaml configuration file

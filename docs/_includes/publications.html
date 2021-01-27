@@ -13,7 +13,7 @@
                 {%- for publication in year.items %}
                     <div class="publications__post">
                         <div class="publications__post-content">
-                            <div class="publications__post-head" style="background-image: url('{{ publication.img | true_relative_url: page.url }}')">
+                            <div class="publications__post-head" style="background-image: url('{{ publication.img | true_relative_url }}')">
                                 <div class="publications__post-head-content">
                                     <div class="publications__post-date">
                                         {{ publication.created | date: "%d %b" }}
