@@ -1,6 +1,7 @@
 package giterminism_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -57,4 +58,38 @@ func fileCreateOrAppend(relPath, content string) {
 	Ω(err).ShouldNot(HaveOccurred())
 
 	Ω(f.Close()).ShouldNot(HaveOccurred())
+}
+
+func symlinkFileCreateOrModify(relPath string, link string) {
+	symlinkFileCreateOrModifyAndAdd(relPath, link)
+
+	utils.RunSucceedCommand(
+		SuiteData.TestDirPath,
+		"git",
+		"rm", "--cached", relPath,
+	)
+}
+
+func symlinkFileCreateOrModifyAndAdd(relPath string, link string) {
+	hashBytes, _ := utils.RunCommandWithOptions(
+		SuiteData.TestDirPath,
+		"git",
+		[]string{"hash-object", "-w", "--stdin"},
+		utils.RunCommandOptions{
+			ToStdin:       link,
+			ShouldSucceed: true,
+		},
+	)
+
+	utils.RunSucceedCommand(
+		SuiteData.TestDirPath,
+		"git",
+		"update-index", "--add", "--cacheinfo", "120000", string(bytes.TrimSpace(hashBytes)), relPath,
+	)
+
+	utils.RunSucceedCommand(
+		SuiteData.TestDirPath,
+		"git",
+		"checkout", relPath,
+	)
 }
