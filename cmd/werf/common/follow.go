@@ -7,9 +7,11 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+
+	"github.com/werf/werf/pkg/giterminism_manager"
 )
 
-func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx context.Context) error) error {
+func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error) error {
 	var savedHeadCommit string
 	iterFunc := func() error {
 		giterminismManager, err := GetGiterminismManager(cmdData)
@@ -26,7 +28,7 @@ func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx cont
 					options.Style(style.Highlight())
 				}).
 				DoError(func() error {
-					return taskFunc(ctx)
+					return taskFunc(ctx, giterminismManager)
 				}); err != nil {
 				return err
 			}

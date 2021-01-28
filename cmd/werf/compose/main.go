@@ -298,15 +298,15 @@ func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData com
 			return err
 		}
 
-		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context) error {
-			return run(dockerComposeCmdName, cmdData, commonCmdData, ctx, giterminismManager)
+		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
+			return run(ctx, headCommitGiterminismManager, commonCmdData, cmdData, dockerComposeCmdName)
 		})
 	} else {
-		return run(dockerComposeCmdName, cmdData, commonCmdData, ctx, giterminismManager)
+		return run(ctx, giterminismManager, commonCmdData, cmdData, dockerComposeCmdName)
 	}
 }
 
-func run(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.CmdData, ctx context.Context, giterminismManager giterminism_manager.Interface) error {
+func run(ctx context.Context, giterminismManager giterminism_manager.Interface, commonCmdData common.CmdData, cmdData cmdDataType, dockerComposeCmdName string) error {
 	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)

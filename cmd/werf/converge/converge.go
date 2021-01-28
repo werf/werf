@@ -206,8 +206,8 @@ func runMain(ctx context.Context) error {
 
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
-		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context) error {
-			return run(ctx, giterminismManager)
+		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
+			return run(ctx, headCommitGiterminismManager)
 		})
 	} else {
 		return run(ctx, giterminismManager)
