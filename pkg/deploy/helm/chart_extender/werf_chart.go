@@ -260,17 +260,19 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputV
 		}
 	}
 
-	if wc.HelmChart.Metadata != nil {
-		bundleMetadata := *wc.HelmChart.Metadata
-		// Force api v2
-		bundleMetadata.APIVersion = chart.APIVersionV2
+	if wc.HelmChart.Metadata == nil {
+		panic("unexpected condition")
+	}
 
-		chartYamlFile := filepath.Join(destDir, "Chart.yaml")
-		if data, err := json.Marshal(bundleMetadata); err != nil {
-			return nil, fmt.Errorf("unable to prepare Chart.yaml data: %s", err)
-		} else if err := ioutil.WriteFile(chartYamlFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
-			return nil, fmt.Errorf("unable to write %q: %s", chartYamlFile, err)
-		}
+	bundleMetadata := *wc.HelmChart.Metadata
+	// Force api v2
+	bundleMetadata.APIVersion = chart.APIVersionV2
+
+	chartYamlFile := filepath.Join(destDir, "Chart.yaml")
+	if data, err := json.Marshal(bundleMetadata); err != nil {
+		return nil, fmt.Errorf("unable to prepare Chart.yaml data: %s", err)
+	} else if err := ioutil.WriteFile(chartYamlFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to write %q: %s", chartYamlFile, err)
 	}
 
 	if wc.HelmChart.Lock != nil {
