@@ -42,7 +42,7 @@ Please use werf-giterminism.yaml config instead to loosen giterminism restrictio
 
 	fr.SetGiterminismConfig(c)
 
-	i := inspector.NewInspector(c, sharedOptions)
+	i := inspector.NewInspector(c, fr, sharedOptions)
 
 	m := &Manager{
 		sharedOptions: sharedOptions,

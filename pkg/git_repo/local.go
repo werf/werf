@@ -316,6 +316,26 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoID)
 }
 
+type IsFileModifiedLocally struct {
+	StagedOnly   bool
+	WorktreeOnly bool
+}
+
+// IsFileModifiedLocally checks if the file has worktree or staged changes
+func (repo *Local) IsFileModifiedLocally(ctx context.Context, path string, options IsFileModifiedLocally) (bool, error) {
+	statusResult, err := repo.getMainStatusResult(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	isModified := statusResult.IsFileModified(path, status.FilterOptions{
+		StagingOnly:  options.StagedOnly,
+		WorktreeOnly: options.WorktreeOnly,
+	})
+
+	return isModified, nil
+}
+
 // ListCommitFilesWithGlob returns the list of files by the glob, follows symlinks.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
 func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, dir string, glob string) (files []string, err error) {

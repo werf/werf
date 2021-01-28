@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/werf/pkg/git_repo/status"
 	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/util"
 )
 
 func (i Inspector) InspectBuildContextFiles(ctx context.Context, matcher path_matcher.PathMatcher) error {
@@ -25,9 +26,18 @@ func (i Inspector) InspectBuildContextFiles(ctx context.Context, matcher path_ma
 	}
 
 	filePathList := result.FilePathList(status.FilterOptions{WorktreeOnly: i.sharedOptions.Dev()})
-	if len(filePathList) != 0 {
-		return NewUncommittedFilesChangesError(filePathList...)
+
+	if len(filePathList) == 0 {
+		return nil
 	}
 
-	return nil
+	var relativeToProjectDirPathList []string
+	for _, path := range filePathList {
+		relativeToProjectDirPathList = append(
+			relativeToProjectDirPathList,
+			util.GetRelativeToBaseFilepath(i.sharedOptions.RelativeToGitProjectDir(), path),
+		)
+	}
+
+	return i.fileReader.ExtraWindowsCheckFilesModifiedLocally(ctx, relativeToProjectDirPathList...)
 }

@@ -1,14 +1,20 @@
 package inspector
 
-import "github.com/werf/werf/pkg/git_repo"
+import (
+	"context"
+
+	"github.com/werf/werf/pkg/git_repo"
+)
 
 type Inspector struct {
 	giterminismConfig giterminismConfig
-	sharedOptions     sharedOptions
+	fileReader        fileReader
+
+	sharedOptions sharedOptions
 }
 
-func NewInspector(giterminismConfig giterminismConfig, sharedOptions sharedOptions) Inspector {
-	return Inspector{giterminismConfig: giterminismConfig, sharedOptions: sharedOptions}
+func NewInspector(giterminismConfig giterminismConfig, fileReader fileReader, sharedOptions sharedOptions) Inspector {
+	return Inspector{giterminismConfig: giterminismConfig, fileReader: fileReader, sharedOptions: sharedOptions}
 }
 
 type giterminismConfig interface {
@@ -20,7 +26,12 @@ type giterminismConfig interface {
 	IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, error)
 }
 
+type fileReader interface {
+	ExtraWindowsCheckFilesModifiedLocally(ctx context.Context, relPath ...string) error
+}
+
 type sharedOptions interface {
+	RelativeToGitProjectDir() string
 	LocalGitRepo() *git_repo.Local
 	HeadCommit() string
 	LooseGiterminism() bool

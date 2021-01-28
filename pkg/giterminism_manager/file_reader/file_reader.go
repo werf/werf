@@ -34,6 +34,7 @@ type sharedOptions interface {
 	LocalGitRepo() *git_repo.Local
 	HeadCommit() string
 	LooseGiterminism() bool
+	Dev() bool
 }
 
 func debug() bool {
