@@ -7,8 +7,8 @@ import (
 
 const GiterminismConfigName = "werf-giterminism.yaml"
 
-func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context) (bool, error) {
-	return r.isConfigurationFileExistAnywhere(ctx, GiterminismConfigName)
+func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context) (exist bool, err error) {
+	return r.IsConfigurationFileExistAnywhere(ctx, GiterminismConfigName)
 }
 
 func (r FileReader) ReadGiterminismConfig(ctx context.Context) ([]byte, error) {
@@ -21,13 +21,13 @@ func (r FileReader) ReadGiterminismConfig(ctx context.Context) ([]byte, error) {
 }
 
 func (r FileReader) readGiterminismConfig(ctx context.Context) ([]byte, error) {
-	if err := r.checkConfigurationFileExistence(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
+	if err := r.CheckConfigurationFileExistence(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
 		return false, nil
 	}); err != nil {
 		return nil, err
 	}
 
-	return r.readConfigurationFile(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
+	return r.ReadAndValidateConfigurationFile(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
 		return false, nil
 	})
 }

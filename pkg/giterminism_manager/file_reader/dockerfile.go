@@ -16,15 +16,15 @@ func (r FileReader) ReadDockerfile(ctx context.Context, relPath string) ([]byte,
 }
 
 func (r FileReader) readDockerfile(ctx context.Context, relPath string) ([]byte, error) {
-	if err := r.checkConfigurationFileExistence(ctx, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted); err != nil {
+	if err := r.CheckConfigurationFileExistence(ctx, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted); err != nil {
 		return nil, err
 	}
 
-	return r.readConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted)
+	return r.ReadAndValidateConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted)
 }
 
 func (r FileReader) IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error) {
-	return r.isConfigurationFileExistAnywhere(ctx, relPath)
+	return r.IsConfigurationFileExistAnywhere(ctx, relPath)
 }
 
 func (r FileReader) ReadDockerignore(ctx context.Context, relPath string) ([]byte, error) {
@@ -37,13 +37,9 @@ func (r FileReader) ReadDockerignore(ctx context.Context, relPath string) ([]byt
 }
 
 func (r FileReader) readDockerignore(ctx context.Context, relPath string) ([]byte, error) {
-	if err := r.checkConfigurationFileExistence(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted); err != nil {
+	if err := r.CheckConfigurationFileExistence(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted); err != nil {
 		return nil, err
 	}
 
-	return r.readConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted)
-}
-
-func (r FileReader) isDockerignoreExist(ctx context.Context, relPath string) (bool, error) {
-	return r.isConfigurationFileExist(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted)
+	return r.ReadAndValidateConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted)
 }

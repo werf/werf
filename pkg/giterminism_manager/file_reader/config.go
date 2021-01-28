@@ -10,7 +10,7 @@ var DefaultWerfConfigNames = []string{"werf.yaml", "werf.yml"}
 func (r FileReader) IsConfigExistAnywhere(ctx context.Context, customRelPath string) (bool, error) {
 	configRelPathList := r.configPathList(customRelPath)
 	for _, configRelPath := range configRelPathList {
-		if exist, err := r.isConfigurationFileExistAnywhere(ctx, configRelPath); err != nil {
+		if exist, err := r.IsConfigurationFileExistAnywhere(ctx, configRelPath); err != nil {
 			return false, err
 		} else if exist {
 			return true, nil
@@ -33,13 +33,15 @@ func (r FileReader) readConfig(ctx context.Context, customRelPath string) ([]byt
 	configRelPathList := r.configPathList(customRelPath)
 
 	for _, configPath := range configRelPathList {
-		if exist, err := r.isConfigExist(ctx, configPath); err != nil {
+		if exist, err := r.IsConfigurationFileExist(ctx, configPath, func(_ string) (bool, error) {
+			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
+		}); err != nil {
 			return nil, err
 		} else if !exist {
 			continue
 		}
 
-		return r.readConfigurationFile(ctx, configPath, func(relPath string) (bool, error) {
+		return r.ReadAndValidateConfigurationFile(ctx, configPath, func(_ string) (bool, error) {
 			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
 		})
 	}
@@ -47,15 +49,9 @@ func (r FileReader) readConfig(ctx context.Context, customRelPath string) ([]byt
 	return nil, r.prepareConfigNotFoundError(ctx, configRelPathList)
 }
 
-func (r FileReader) isConfigExist(ctx context.Context, relPath string) (bool, error) {
-	return r.isConfigurationFileExist(ctx, relPath, func(_ string) (bool, error) {
-		return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
-	})
-}
-
-func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) error {
+func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) (err error) {
 	for _, configPath := range configPathsToCheck {
-		err := r.checkConfigurationFileExistence(ctx, configPath, func(_ string) (bool, error) {
+		err := r.CheckConfigurationFileExistence(ctx, configPath, func(_ string) (bool, error) {
 			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
 		})
 

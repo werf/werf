@@ -3,9 +3,13 @@ package file_reader
 import (
 	"context"
 	"path/filepath"
+
+	"github.com/werf/werf/pkg/git_repo"
 )
 
-func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, isFileAcceptedFunc func(relPath string) (bool, error), handleFileFunc func(relPath string, data []byte, err error) error) error {
+// WalkConfigurationFilesWithGlob reads the configuration files taking into account the giterminism config.
+// The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
+func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, isFileAcceptedCheckFunc func(relPath string) (bool, error), handleFileFunc func(notResolvedPath string, data []byte, err error) error) (err error) {
 	processedFiles := map[string]bool{}
 
 	isFileProcessedFunc := func(relPath string) bool {
@@ -18,15 +22,15 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 
 	readFileFunc := func(relPath string) ([]byte, error) {
 		readFileBeforeHookFunc(relPath)
-		return r.readFile(relPath)
+		return r.ReadFile(ctx, relPath)
 	}
 
 	readCommitFileWrapperFunc := func(relPath string) ([]byte, error) {
 		readFileBeforeHookFunc(relPath)
-		return r.readCommitFile(ctx, relPath)
+		return r.ReadAndValidateCommitFile(ctx, relPath)
 	}
 
-	fileRelPathListFromFS, err := r.filesGlob(pattern)
+	fileRelPathListFromFS, err := r.ListFilesWithGlob(ctx, dir, glob)
 	if err != nil {
 		return err
 	}
@@ -42,14 +46,14 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 		return nil
 	}
 
-	fileRelPathListFromCommit, err := r.commitFilesGlob(ctx, pattern)
+	fileRelPathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob)
 	if err != nil {
 		return err
 	}
 
 	var relPathListWithUncommittedFilesChanges []string
 	for _, relPath := range fileRelPathListFromCommit {
-		if accepted, err := isFileAcceptedFunc(relPath); err != nil {
+		if accepted, err := r.IsFilePathAccepted(ctx, relPath, isFileAcceptedCheckFunc); err != nil {
 			return err
 		} else if accepted {
 			continue
@@ -72,7 +76,7 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 
 	var relPathListWithUncommittedFiles []string
 	for _, relPath := range fileRelPathListFromFS {
-		accepted, err := isFileAcceptedFunc(relPath)
+		accepted, err := r.IsFilePathAccepted(ctx, relPath, isFileAcceptedCheckFunc)
 		if err != nil {
 			return err
 		}
@@ -98,121 +102,99 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 	return nil
 }
 
-func (r FileReader) readConfigurationFile(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) ([]byte, error) {
-	accepted, err := isFileAcceptedFunc(relPath)
+func (r FileReader) ReadAndValidateConfigurationFile(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (data []byte, err error) {
+	existAndAccepted, err := r.IsRegularFileExistAndAccepted(ctx, relPath, isFileAcceptedCheckFunc)
 	if err != nil {
 		return nil, err
 	}
 
-	if r.sharedOptions.LooseGiterminism() || accepted {
-		return r.readFile(relPath)
+	if existAndAccepted {
+		return r.ReadFile(ctx, relPath)
 	}
 
-	return r.readCommitFile(ctx, relPath)
+	return r.ReadAndValidateCommitFile(ctx, relPath)
 }
 
-func (r FileReader) checkConfigurationDirectoryExistence(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) error {
-	accepted, err := isFileAcceptedFunc(relPath)
+// CheckConfigurationFileExistence returns an error if there are not the file in the project repository commit and an accepted file by the giteminism config in the project directory.
+func (r FileReader) CheckConfigurationFileExistence(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (err error) {
+	existInFS, err := r.IsRegularFileExist(ctx, relPath)
 	if err != nil {
 		return err
 	}
 
-	shouldReadFromFS := r.sharedOptions.LooseGiterminism() || accepted
-	if !shouldReadFromFS {
-		if exist, err := r.isCommitDirectoryExist(ctx, relPath); err != nil {
+	if existInFS {
+		if r.sharedOptions.LooseGiterminism() {
+			return nil
+		}
+
+		accepted, err := r.IsFilePathAccepted(ctx, relPath, isFileAcceptedCheckFunc)
+		if err != nil {
 			return err
-		} else if exist {
+		}
+
+		if accepted {
 			return nil
 		}
 	}
 
-	exist, err := r.isDirectoryExist(relPath)
+	if r.sharedOptions.LooseGiterminism() {
+		return NewFilesNotFoundInProjectDirectoryError(relPath)
+	}
+
+	exist, err := r.IsCommitFileExist(ctx, relPath)
 	if err != nil {
 		return err
 	}
 
 	if exist {
-		if shouldReadFromFS {
-			return nil
-		} else {
+		return nil
+	}
+
+	if existInFS {
+		err := r.ValidateCommitFilePath(ctx, relPath)
+		if git_repo.IsTreeEntryNotFoundInRepoErr(err) {
 			return NewUncommittedFilesError(relPath)
-		}
-	} else {
-		if shouldReadFromFS {
-			return NewFilesNotFoundInProjectDirectoryError(relPath)
 		} else {
-			return NewFilesNotFoundInProjectGitRepositoryError(relPath)
-		}
-	}
-}
-
-func (r FileReader) checkConfigurationFileExistence(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) error {
-	accepted, err := isFileAcceptedFunc(relPath)
-	if err != nil {
-		return err
-	}
-
-	shouldReadFromFS := r.sharedOptions.LooseGiterminism() || accepted
-	if !shouldReadFromFS {
-		if exist, err := r.isCommitFileExist(ctx, relPath); err != nil {
 			return err
-		} else if exist {
-			return nil
-		}
-	}
-
-	exist, err := r.isFileExist(relPath)
-	if err != nil {
-		return err
-	}
-
-	if exist {
-		if shouldReadFromFS {
-			return nil
-		} else {
-			return NewUncommittedFilesError(relPath)
 		}
 	} else {
-		if shouldReadFromFS {
-			return NewFilesNotFoundInProjectDirectoryError(relPath)
-		} else {
-			return NewFilesNotFoundInProjectGitRepositoryError(relPath)
-		}
+		return NewFilesNotFoundInProjectGitRepositoryError(relPath)
 	}
 }
 
-func (r FileReader) isConfigurationFileExistAnywhere(ctx context.Context, relPath string) (bool, error) {
-	if exist, err := r.isCommitFileExist(ctx, relPath); err != nil {
+// IsConfigurationFileExistAnywhere checks the configuration file existence in the project directory and the project repository.
+func (r FileReader) IsConfigurationFileExistAnywhere(ctx context.Context, relPath string) (bool, error) {
+	exist, err := r.IsRegularFileExist(ctx, relPath)
+	if err != nil {
 		return false, err
-	} else if !exist {
-		return r.isFileExist(relPath)
-	} else {
+	}
+
+	if exist {
 		return true, nil
 	}
+
+	if r.sharedOptions.LooseGiterminism() {
+		return false, nil
+	} else {
+		return r.IsCommitFileExist(ctx, relPath)
+	}
 }
 
-func (r FileReader) isConfigurationDirectoryExist(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) (bool, error) {
-	accepted, err := isFileAcceptedFunc(relPath)
+// IsConfigurationFileExist checks the configuration file existence taking into account the giterminism config.
+// The method applies isFileAcceptedCheckFunc for each resolved path.
+func (r FileReader) IsConfigurationFileExist(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (bool, error) {
+	exist, err := r.IsRegularFileExistAndAccepted(ctx, relPath, isFileAcceptedCheckFunc)
 	if err != nil {
 		return false, err
 	}
 
-	if r.sharedOptions.LooseGiterminism() || accepted {
-		return r.isDirectoryExist(relPath)
+	if exist {
+		return true, nil
 	}
 
-	return r.isCommitDirectoryExist(ctx, relPath)
-}
-
-func (r FileReader) isConfigurationFileExist(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) (bool, error) {
-	accepted, err := isFileAcceptedFunc(relPath)
-	if err != nil {
-		return false, err
+	if r.sharedOptions.LooseGiterminism() {
+		return false, nil
+	} else {
+		return r.IsCommitFileExist(ctx, relPath)
 	}
-
-	if r.sharedOptions.LooseGiterminism() || accepted {
-		return r.isFileExist(relPath)
-	}
-
-	return r.isCommitFileExist(ctx, relPath)
 }

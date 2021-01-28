@@ -4,10 +4,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"sort"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
@@ -98,7 +101,13 @@ func (r *Result) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatche
 }
 
 func (r *Result) Walk(f func(lsTreeEntry *LsTreeEntry) error) error {
-	if err := r.lsTreeEntriesWalk(f); err != nil {
+	return r.walkWithResult(func(_ *Result, lsTreeEntry *LsTreeEntry) error {
+		return f(lsTreeEntry)
+	})
+}
+
+func (r *Result) walkWithResult(f func(r *Result, lsTreeEntry *LsTreeEntry) error) error {
+	if err := r.lsTreeEntriesWalkWithResult(f); err != nil {
 		return err
 	}
 
@@ -107,7 +116,7 @@ func (r *Result) Walk(f func(lsTreeEntry *LsTreeEntry) error) error {
 	})
 
 	for _, submoduleResult := range r.submodulesResults {
-		if err := submoduleResult.Walk(f); err != nil {
+		if err := submoduleResult.walkWithResult(f); err != nil {
 			return err
 		}
 	}
@@ -171,15 +180,89 @@ func (r *Result) IsEmpty() bool {
 }
 
 func (r *Result) lsTreeEntriesWalk(f func(entry *LsTreeEntry) error) error {
+	return r.lsTreeEntriesWalkWithResult(func(_ *Result, entry *LsTreeEntry) error {
+		return f(entry)
+	})
+}
+
+func (r *Result) lsTreeEntriesWalkWithResult(f func(r *Result, entry *LsTreeEntry) error) error {
 	sort.Slice(r.lsTreeEntries, func(i, j int) bool {
 		return r.lsTreeEntries[i].FullFilepath < r.lsTreeEntries[j].FullFilepath
 	})
 
 	for _, lsTreeEntry := range r.lsTreeEntries {
-		if err := f(lsTreeEntry); err != nil {
+		if err := f(r, lsTreeEntry); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (r *Result) LsTreeEntry(relPath string) *LsTreeEntry {
+	if relPath == "." {
+		relPath = ""
+	}
+
+	var lsTreeEntry *LsTreeEntry
+	_ = r.Walk(func(entry *LsTreeEntry) error {
+		if filepath.ToSlash(entry.FullFilepath) == filepath.ToSlash(relPath) {
+			lsTreeEntry = entry
+		}
+
+		return nil
+	})
+
+	if lsTreeEntry == nil {
+		lsTreeEntry = &LsTreeEntry{
+			FullFilepath: relPath,
+			TreeEntry: object.TreeEntry{
+				Name: relPath,
+				Mode: filemode.Empty,
+				Hash: plumbing.Hash{},
+			},
+		}
+	}
+
+	return lsTreeEntry
+}
+
+func (r *Result) LsTreeEntryContent(relPath string) ([]byte, error) {
+	var entryResult *Result
+	var entry *LsTreeEntry
+
+	_ = r.walkWithResult(func(er *Result, e *LsTreeEntry) error {
+		if filepath.ToSlash(e.FullFilepath) == filepath.ToSlash(relPath) {
+			entryResult = er
+			entry = e
+		}
+
+		return nil
+	})
+
+	if entry == nil {
+		return nil, fmt.Errorf("unable to get tree entry %s", relPath)
+	}
+
+	if entryResult == nil {
+		panic("unexpected condition")
+	}
+
+	obj, err := entryResult.repository.BlobObject(entry.Hash)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get tree entry %q blob object: %s", entry.FullFilepath, err)
+	}
+
+	f, err := obj.Reader()
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read tree entry %q content: %s", relPath, err)
+	}
+
+	return data, err
 }

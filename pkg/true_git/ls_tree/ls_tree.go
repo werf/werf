@@ -171,7 +171,7 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 
 	lsTreeEntry, err := treeFindEntry(ctx, tree, treeFullFilepath, treeEntryFilepath)
 	if err != nil {
-		if err == object.ErrDirectoryNotFound || err == object.ErrFileNotFound {
+		if err == object.ErrDirectoryNotFound || err == object.ErrFileNotFound || err == object.ErrEntryNotFound || err == plumbing.ErrObjectNotFound {
 			return lsTreeEntries, submodulesResults, nil
 		}
 

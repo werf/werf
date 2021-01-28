@@ -758,32 +758,12 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 }
 
 func (repo *Base) checksumWithLsTree(ctx context.Context, repoPath, gitDir, workTreeCacheDir string, opts ChecksumOptions) (Checksum, error) {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
-	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
-	}
-
-	commitHash, err := newHash(opts.Commit)
-	if err != nil {
-		return nil, fmt.Errorf("bad commit hash `%s`: %s", opts.Commit, err)
-	}
-
-	commit, err := repository.CommitObject(commitHash)
-	if err != nil {
-		return nil, fmt.Errorf("bad commit `%s`: %s", opts.Commit, err)
-	}
-
-	hasSubmodules, err := HasSubmodulesInCommit(commit)
-	if err != nil {
-		return nil, err
-	}
-
 	checksum := &ChecksumDescriptor{
 		NoMatchPaths: make([]string, 0),
 		Hash:         sha256.New(),
 	}
 
-	err = true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(worktreeDir string) error {
+	err := repo.withWorkTree(ctx, repoPath, gitDir, workTreeCacheDir, opts.Commit, func(worktreeDir string) error {
 		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(gitDir, worktreeDir)
 		if err != nil {
 			return err
@@ -804,11 +784,11 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repoPath, gitDir, work
 			return err
 		}
 
-		for _, path := range opts.Paths {
+		for _, p := range opts.Paths {
 			var pathLsTreeResult *ls_tree.Result
 			pathMatcher := path_matcher.NewSimplePathMatcher(
 				opts.BasePath,
-				[]string{path},
+				[]string{p},
 				false,
 			)
 
@@ -833,7 +813,7 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repoPath, gitDir, work
 			if pathChecksum != "" {
 				checksum.Hash.Write([]byte(pathChecksum))
 			} else {
-				checksum.NoMatchPaths = append(checksum.NoMatchPaths, path)
+				checksum.NoMatchPaths = append(checksum.NoMatchPaths, p)
 			}
 		}
 
@@ -845,4 +825,28 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repoPath, gitDir, work
 	}
 
 	return checksum, nil
+}
+
+func (repo *Base) withWorkTree(ctx context.Context, repoPath, gitDir, workTreeCacheDir string, commit string, doFunc func(worktreeDir string) error) error {
+	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return fmt.Errorf("bad commit hash `%s`: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return fmt.Errorf("bad commit `%s`: %s", commit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
+	if err != nil {
+		return err
+	}
+
+	return true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, doFunc)
 }
