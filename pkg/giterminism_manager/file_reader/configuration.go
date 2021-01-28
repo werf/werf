@@ -4,12 +4,34 @@ import (
 	"context"
 	"path/filepath"
 
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
+
 	"github.com/werf/werf/pkg/git_repo"
 )
 
 // WalkConfigurationFilesWithGlob reads the configuration files taking into account the giterminism config.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
 func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, isFileAcceptedCheckFunc func(relPath string) (bool, error), handleFileFunc func(notResolvedPath string, data []byte, err error) error) (err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ConfigurationFilesGlob %q %q", dir, glob).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			err = r.walkConfigurationFilesWithGlob(ctx, dir, glob, isFileAcceptedCheckFunc, handleFileFunc)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, isFileAcceptedCheckFunc func(relPath string) (bool, error), handleFileFunc func(notResolvedPath string, data []byte, err error) error) (err error) {
 	processedFiles := map[string]bool{}
 
 	isFileProcessedFunc := func(relPath string) bool {
@@ -103,6 +125,25 @@ func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 }
 
 func (r FileReader) ReadAndValidateConfigurationFile(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (data []byte, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ReadAndValidateConfigurationFile %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			data, err = r.readAndValidateConfigurationFile(ctx, relPath, isFileAcceptedCheckFunc)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) readAndValidateConfigurationFile(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) ([]byte, error) {
 	existAndAccepted, err := r.IsRegularFileExistAndAccepted(ctx, relPath, isFileAcceptedCheckFunc)
 	if err != nil {
 		return nil, err
@@ -117,6 +158,25 @@ func (r FileReader) ReadAndValidateConfigurationFile(ctx context.Context, relPat
 
 // CheckConfigurationFileExistence returns an error if there are not the file in the project repository commit and an accepted file by the giteminism config in the project directory.
 func (r FileReader) CheckConfigurationFileExistence(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("CheckConfigurationFileExistence %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			err = r.checkConfigurationFileExistence(ctx, relPath, isFileAcceptedCheckFunc)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) checkConfigurationFileExistence(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) error {
 	existInFS, err := r.IsRegularFileExist(ctx, relPath)
 	if err != nil {
 		return err
@@ -163,7 +223,26 @@ func (r FileReader) CheckConfigurationFileExistence(ctx context.Context, relPath
 }
 
 // IsConfigurationFileExistAnywhere checks the configuration file existence in the project directory and the project repository.
-func (r FileReader) IsConfigurationFileExistAnywhere(ctx context.Context, relPath string) (bool, error) {
+func (r FileReader) IsConfigurationFileExistAnywhere(ctx context.Context, relPath string) (exist bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsConfigurationFileExistAnywhere %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			exist, err = r.isConfigurationFileExistAnywhere(ctx, relPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) isConfigurationFileExistAnywhere(ctx context.Context, relPath string) (bool, error) {
 	exist, err := r.IsRegularFileExist(ctx, relPath)
 	if err != nil {
 		return false, err
@@ -182,7 +261,26 @@ func (r FileReader) IsConfigurationFileExistAnywhere(ctx context.Context, relPat
 
 // IsConfigurationFileExist checks the configuration file existence taking into account the giterminism config.
 // The method applies isFileAcceptedCheckFunc for each resolved path.
-func (r FileReader) IsConfigurationFileExist(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (bool, error) {
+func (r FileReader) IsConfigurationFileExist(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (exist bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsConfigurationFileExist %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			exist, err = r.isConfigurationFileExist(ctx, relPath, isFileAcceptedCheckFunc)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) isConfigurationFileExist(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (bool, error) {
 	exist, err := r.IsRegularFileExistAndAccepted(ctx, relPath, isFileAcceptedCheckFunc)
 	if err != nil {
 		return false, err

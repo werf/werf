@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 )
 
 func (r FileReader) relativeToGitPath(relPath string) string {
@@ -17,7 +18,30 @@ func (r FileReader) IsCommitFileExist(ctx context.Context, relPath string) (bool
 	return r.sharedOptions.LocalGitRepo().IsCommitFileExist(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
 }
 
-func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir string, pattern string) ([]string, error) {
+func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir string, pattern string) (files []string, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ListCommitFilesWithGlob %q %q", dir, pattern).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			files, err = r.listCommitFilesWithGlob(ctx, dir, pattern)
+
+			if debug() {
+				var logFiles string
+				if len(files) != 0 {
+					logFiles = fmt.Sprintf("\n - %s", strings.Join(files, "\n - "))
+				}
+				logboek.Context(ctx).Debug().LogF("files: %v\nerr: %q\n", logFiles, err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir string, pattern string) ([]string, error) {
 	return r.sharedOptions.LocalGitRepo().ListCommitFilesWithGlob(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(dir), pattern)
 }
 
@@ -30,6 +54,25 @@ func (r FileReader) ResolveAndCheckCommitFilePath(ctx context.Context, relPath s
 }
 
 func (r FileReader) ReadAndValidateCommitFile(ctx context.Context, relPath string) (data []byte, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ReadAndValidateCommitFile %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			data, err = r.readAndValidateCommitConfigurationFile(ctx, relPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) readAndValidateCommitConfigurationFile(ctx context.Context, relPath string) ([]byte, error) {
 	if err := r.ValidateCommitFilePath(ctx, relPath); err != nil {
 		return nil, err
 	}

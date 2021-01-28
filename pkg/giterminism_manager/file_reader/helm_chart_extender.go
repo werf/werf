@@ -11,12 +11,21 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func (r FileReader) LocateChart(ctx context.Context, chartDir string, _ *cli.EnvSettings) (string, error) {
+func (r FileReader) LocateChart(ctx context.Context, chartDir string, settings *cli.EnvSettings) (string, error) {
+	chartDir, err := r.locateChart(ctx, chartDir, settings)
+	if err != nil {
+		return "", fmt.Errorf("unable to locate chart directory: %s", err)
+	}
+
+	return chartDir, nil
+}
+
+func (r FileReader) locateChart(ctx context.Context, chartDir string, _ *cli.EnvSettings) (string, error) {
 	relDir := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), chartDir)
 
 	files, err := r.loadChartDir(ctx, relDir)
 	if err != nil {
-		return "", fmt.Errorf("unable to locate chart directory: %s", err)
+		return "", err
 	}
 
 	if len(files) == 0 {

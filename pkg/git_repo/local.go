@@ -3,6 +3,7 @@ package git_repo
 import (
 	"context"
 	"fmt"
+	"os"
 	pathPkg "path"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/git_repo/status"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -316,7 +318,7 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 
 // ListCommitFilesWithGlob returns the list of files by the glob, follows symlinks.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
-func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, dir string, glob string) ([]string, error) {
+func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, dir string, glob string) (files []string, err error) {
 	glob = filepath.ToSlash(glob)
 	matchFunc := func(path string) (bool, error) {
 		for _, glob := range []string{
@@ -381,6 +383,10 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 	return result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
 		notResolvedPath := strings.Replace(filepath.ToSlash(lsTreeEntry.FullFilepath), resolvedDir, dir, -1)
 
+		if debugGiterminismManager() {
+			logboek.Context(ctx).Debug().LogF("-- %q %q\n", notResolvedPath, lsTreeEntry.Mode.String())
+		}
+
 		if lsTreeEntry.Mode.IsMalformed() {
 			panic(fmt.Sprintf("unexpected condition: %+v", lsTreeEntry))
 		}
@@ -413,6 +419,25 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 
 // ReadCommitFile resolves symlinks and returns commit tree entry content.
 func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) (data []byte, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ReadCommitFile %q %q", commit, path).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			data, err = repo.readCommitFile(ctx, commit, path)
+
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
+			}
+		})
+
+	return
+}
+
+func (repo *Local) readCommitFile(ctx context.Context, commit, path string) ([]byte, error) {
 	resolvedPath, err := repo.ResolveCommitFilePath(ctx, commit, path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to resolve commit file path %q: %s", path, err)
@@ -423,11 +448,50 @@ func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) (dat
 
 // IsCommitFileExist resolves symlinks and returns true if the resolved commit tree entry is Regular, Deprecated, or Executable.
 func (repo *Local) IsCommitFileExist(ctx context.Context, commit, path string) (exist bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsCommitFileExist %q %q", commit, path).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			exist, err = repo.isCommitFileExist(ctx, commit, path)
+
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
+			}
+		})
+
+	return
+
+}
+
+func (repo *Local) isCommitFileExist(ctx context.Context, commit, path string) (bool, error) {
 	return repo.checkCommitFileMode(ctx, commit, path, []filemode.FileMode{filemode.Regular, filemode.Deprecated, filemode.Executable})
 }
 
 // IsCommitDirectoryExist resolves symlinks and returns true if the resolved commit tree entry is Dir or Submodule.
 func (repo *Local) IsCommitDirectoryExist(ctx context.Context, commit, path string) (exist bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsCommitDirectoryExist %q %q", commit, path).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			exist, err = repo.isCommitDirectoryExist(ctx, commit, path)
+
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
+			}
+		})
+
+	return
+}
+
+func (repo *Local) isCommitDirectoryExist(ctx context.Context, commit, path string) (bool, error) {
 	return repo.checkCommitFileMode(ctx, commit, path, []filemode.FileMode{filemode.Dir, filemode.Submodule})
 }
 
@@ -457,6 +521,44 @@ func (repo *Local) checkCommitFileMode(ctx context.Context, commit string, path 
 
 // ResolveAndCheckCommitFilePath does ResolveCommitFilePath with an additional check for each resolved path.
 func (repo *Local) ResolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkFunc func(resolvedPath string) error) (resolvedPath string, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ResolveAndCheckCommitFilePath %q %q", commit, path).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			checkWithDebugFunc := func(resolvedPath string) error {
+				return logboek.Context(ctx).Debug().
+					LogBlock("-- check %s", resolvedPath).
+					Options(func(options types.LogBlockOptionsInterface) {
+						if !debugGiterminismManager() {
+							options.Mute()
+						}
+					}).
+					DoError(func() error {
+						err := checkFunc(resolvedPath)
+
+						if debugGiterminismManager() {
+							logboek.Context(ctx).Debug().LogF("err: %q\n", err)
+						}
+
+						return err
+					})
+			}
+
+			resolvedPath, err = repo.resolveAndCheckCommitFilePath(ctx, commit, path, checkWithDebugFunc)
+
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("resolvedPath: %v\nerr: %q\n", resolvedPath, err)
+			}
+		})
+
+	return
+}
+
+func (repo *Local) resolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkFunc func(relPath string) error) (resolvedPath string, err error) {
 	if err := checkFunc(path); err != nil {
 		return "", err
 	}
@@ -477,9 +579,22 @@ func (repo *Local) ResolveAndCheckCommitFilePath(ctx context.Context, commit, pa
 
 // ResolveCommitFilePath follows symbolic links and returns the resolved path if there is a corresponding tree entry in the repo.
 func (repo *Local) ResolveCommitFilePath(ctx context.Context, commit, path string) (resolvedPath string, err error) {
-	return repo.resolveCommitFilePath(ctx, commit, path, 0, nil)
+	logboek.Context(ctx).Debug().
+		LogBlock("ResolveCommitFilePath %q %q", commit, path).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			resolvedPath, err = repo.resolveCommitFilePath(ctx, commit, path, 0, nil)
 
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("resolvedPath: %v\nerr: %q\n", resolvedPath, err)
+			}
+		})
 
+	return
 }
 
 type treeEntryNotFoundInRepoErr struct {
@@ -508,6 +623,10 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 			return "", fmt.Errorf("unable to get commit tree entry %q: %s", path, err)
 		}
 
+		if debugGiterminismManager() {
+			logboek.Context(ctx).Debug().LogF("-- [*] %s %s %s\n", path, lsTreeEntry.Mode.String(), err)
+		}
+
 		if lsTreeEntry.Mode != filemode.Symlink && !lsTreeEntry.Mode.IsMalformed() {
 			return path, nil
 		}
@@ -523,6 +642,10 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 		lsTreeEntry, err := repo.getCommitTreeEntry(ctx, commit, pathToResolve)
 		if err != nil {
 			return "", fmt.Errorf("unable to get commit tree entry %q: %s", pathToResolve, err)
+		}
+
+		if debugGiterminismManager() {
+			logboek.Context(ctx).Debug().LogF("-- [%d] %s %s %s\n", ind, pathToResolve, lsTreeEntry.Mode.String(), err)
 		}
 
 		mode := lsTreeEntry.Mode
@@ -577,13 +700,26 @@ func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPa
 	return lsTreeResult.LsTreeEntryContent(relPath)
 }
 
-func (repo *Local) IsCommitTreeEntryExist(ctx context.Context, commit, relPath string) (bool, error) {
-	return repo.isCommitTreeEntryExist(ctx, commit, relPath)
+func (repo *Local) IsCommitTreeEntryExist(ctx context.Context, commit, relPath string) (exist bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsCommitTreeEntryExist %q %q", commit, relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			exist, err = repo.isTreeEntryExist(ctx, commit, relPath)
 
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
+			}
+		})
 
+	return
 }
 
-func (repo *Local) isCommitTreeEntryExist(ctx context.Context, commit, relPath string) (bool, error) {
+func (repo *Local) isTreeEntryExist(ctx context.Context, commit, relPath string) (bool, error) {
 	entry, err := repo.getCommitTreeEntry(ctx, commit, relPath)
 	if err != nil {
 		return false, err
@@ -604,4 +740,8 @@ func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) 
 	entry := lsTreeResult.LsTreeEntry(path)
 
 	return entry, nil
+}
+
+func debugGiterminismManager() bool {
+	return os.Getenv("WERF_DEBUG_GITERMINISM_MANAGER") == "1"
 }

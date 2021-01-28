@@ -3,11 +3,33 @@ package file_reader
 import (
 	"context"
 	"fmt"
+
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 )
 
 var DefaultWerfConfigNames = []string{"werf.yaml", "werf.yml"}
 
-func (r FileReader) IsConfigExistAnywhere(ctx context.Context, customRelPath string) (bool, error) {
+func (r FileReader) IsConfigExistAnywhere(ctx context.Context, customRelPath string) (exist bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsConfigExistAnywhere %q", customRelPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			exist, err = r.isConfigExistAnywhere(ctx, customRelPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) isConfigExistAnywhere(ctx context.Context, customRelPath string) (bool, error) {
 	configRelPathList := r.configPathList(customRelPath)
 	for _, configRelPath := range configRelPathList {
 		if exist, err := r.IsConfigurationFileExistAnywhere(ctx, configRelPath); err != nil {
@@ -20,8 +42,22 @@ func (r FileReader) IsConfigExistAnywhere(ctx context.Context, customRelPath str
 	return false, nil
 }
 
-func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) ([]byte, error) {
-	data, err := r.readConfig(ctx, customRelPath)
+func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) (data []byte, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ReadConfig %q", customRelPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			data, err = r.readConfig(ctx, customRelPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
+			}
+		})
+
 	if err != nil {
 		return nil, fmt.Errorf("unable to read werf config: %s", err)
 	}
@@ -46,10 +82,29 @@ func (r FileReader) readConfig(ctx context.Context, customRelPath string) ([]byt
 		})
 	}
 
-	return nil, r.prepareConfigNotFoundError(ctx, configRelPathList)
+	return nil, r.PrepareConfigNotFoundError(ctx, configRelPathList)
 }
 
-func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) (err error) {
+func (r FileReader) PrepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) (err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("PrepareConfigNotFoundError %v", configPathsToCheck).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			err = r.prepareConfigNotFoundError(ctx, configPathsToCheck)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) error {
 	for _, configPath := range configPathsToCheck {
 		err := r.CheckConfigurationFileExistence(ctx, configPath, func(_ string) (bool, error) {
 			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
