@@ -1,14 +1,11 @@
 package util
 
 import (
-	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strings"
 	"unicode/utf8"
-
-	"github.com/bmatcuk/doublestar"
 )
 
 func ExpandPath(path string) string {
@@ -98,52 +95,4 @@ func indexRuneWithEscaping(s string, r rune) int {
 		}
 	}
 	return end
-}
-
-// WalkByPattern supports ** in pattern and does not follow symlinks
-func WalkByPattern(dir, pattern string, walkFunc func(path string, f os.FileInfo, err error) error) error {
-	patternRelDir := filepath.Join(dir, pattern)
-	patternComponents := SplitFilepath(pattern)
-
-	// figure out how many components we don't need to glob because they're
-	// just names without patterns - we'll use os.Lstat below to check if that
-	// path actually exists
-	patLen := len(patternComponents)
-	patIdx := 0
-	for ; patIdx < patLen; patIdx++ {
-		if strings.ContainsAny(patternComponents[patIdx], "*?[{\\") {
-			break
-		}
-	}
-	if patIdx > 0 {
-		dir = filepath.Join(append([]string{dir}, patternComponents[0:patIdx]...)...)
-	}
-
-	if exist, err := FileExists(dir); err != nil {
-		return err
-	} else if !exist {
-		return nil
-	}
-
-	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
-		if err != nil {
-			return walkFunc(path, f, err)
-		}
-
-		matched, err := doublestar.PathMatch(patternRelDir, path)
-		if err != nil {
-			return walkFunc(path, f, fmt.Errorf("path match failed: %s", err))
-		}
-
-		if matched {
-			return walkFunc(path, f, nil)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("filepath walk failed: %s", err)
-	}
-
-	return nil
 }
