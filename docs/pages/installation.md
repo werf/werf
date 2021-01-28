@@ -389,5 +389,4 @@ The latest release can be found [at this page](https://bintray.com/flant/werf/we
       {%- endcomment %}
   </div>
   {%- endfor %}
-
 </div>

@@ -16,6 +16,12 @@ channels:
 ---
 {%- asset installation.css %}
 {%- asset installation.js %}
+{%- asset releases.css %}
+
+{%- assign releases = site.data.releases.releases %}
+{%- assign groups = site.data.releases_history.history | map: "group" | uniq | reverse %}
+{%- assign channels_sorted = site.data.channels_info.channels | sort: "stability" %}
+{%- assign channels_sorted_reverse = site.data.channels_info.channels | sort: "stability" | reverse  %}
 
 <div class="page__container page_installation">
 
