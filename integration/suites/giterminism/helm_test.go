@@ -18,96 +18,97 @@ var _ = Describe("helm chart files", func() {
 		gitAddAndCommit("werf-giterminism.yaml")
 	})
 
-	type entry struct {
-		allowUncommittedFilesGlob string
-		addFiles                  []string
-		commitFiles               []string
-		changeFilesAfterCommit    []string
-		expectedErrSubstring      string
-	}
+	Context("regular files", func() {
+		type entry struct {
+			allowUncommittedFilesGlob string
+			addFiles                  []string
+			commitFiles               []string
+			changeFilesAfterCommit    []string
+			expectedErrSubstring      string
+		}
 
-	DescribeTable("helm.allowUncommittedFiles",
-		func(e entry) {
-			var contentToAppend string
-			if e.allowUncommittedFilesGlob != "" {
-				contentToAppend = fmt.Sprintf(`
+		DescribeTable("helm.allowUncommittedFiles",
+			func(e entry) {
+				var contentToAppend string
+				if e.allowUncommittedFilesGlob != "" {
+					contentToAppend = fmt.Sprintf(`
 helm:
   allowUncommittedFiles: ["%s"]`, e.allowUncommittedFilesGlob)
-				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-				gitAddAndCommit("werf-giterminism.yaml")
-			}
-
-			for _, relPath := range e.addFiles {
-				fileCreateOrAppend(relPath, fmt.Sprintf(`test: %s`, relPath))
-			}
-
-			for _, relPath := range e.commitFiles {
-				gitAddAndCommit(relPath)
-			}
-
-			for _, relPath := range e.changeFilesAfterCommit {
-				fileCreateOrAppend(relPath, "\n")
-			}
-
-			output, err := utils.RunCommand(
-				SuiteData.TestDirPath,
-				SuiteData.WerfBinPath,
-				"render",
-			)
-
-			if e.expectedErrSubstring != "" {
-				Ω(err).Should(HaveOccurred())
-				Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
-			} else {
-				Ω(err).ShouldNot(HaveOccurred())
+					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
+					gitAddAndCommit("werf-giterminism.yaml")
+				}
 
 				for _, relPath := range e.addFiles {
-					Ω(string(output)).Should(ContainSubstring(fmt.Sprintf(`test: %s`, relPath)))
+					fileCreateOrAppend(relPath, fmt.Sprintf(`test: %s`, relPath))
 				}
-			}
-		},
-		Entry("the chart directory not found", entry{
-			expectedErrSubstring: `unable to locate chart directory: the directory ".helm" not found in the project git repository`,
-		}),
-		Entry(`the template file ".helm/templates/template1.yaml" not committed`, entry{
-			addFiles:             []string{".helm/templates/template1.yaml"},
-			expectedErrSubstring: `unable to locate chart directory: the file ".helm/templates/template1.yaml" must be committed`,
-		}),
-		Entry("the template files not committed", entry{
-			addFiles:    []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
-			commitFiles: []string{".helm/templates/template1.yaml"},
-			expectedErrSubstring: `unable to locate chart directory: the following files must be committed:
+
+				for _, relPath := range e.commitFiles {
+					gitAddAndCommit(relPath)
+				}
+
+				for _, relPath := range e.changeFilesAfterCommit {
+					fileCreateOrAppend(relPath, "\n")
+				}
+
+				output, err := utils.RunCommand(
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
+					"render",
+				)
+
+				if e.expectedErrSubstring != "" {
+					Ω(err).Should(HaveOccurred())
+					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+				} else {
+					Ω(err).ShouldNot(HaveOccurred())
+
+					for _, relPath := range e.addFiles {
+						Ω(string(output)).Should(ContainSubstring(fmt.Sprintf(`test: %s`, relPath)))
+					}
+				}
+			},
+			Entry("the chart directory not found", entry{
+				expectedErrSubstring: `unable to locate chart directory: the directory ".helm" not found in the project git repository`,
+			}),
+			Entry(`the template file ".helm/templates/template1.yaml" not committed`, entry{
+				addFiles:             []string{".helm/templates/template1.yaml"},
+				expectedErrSubstring: `unable to locate chart directory: the file ".helm/templates/template1.yaml" must be committed`,
+			}),
+			Entry("the template files not committed", entry{
+				addFiles:    []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
+				commitFiles: []string{".helm/templates/template1.yaml"},
+				expectedErrSubstring: `unable to locate chart directory: the following files must be committed:
 
  - .helm/templates/template2.yaml
  - .helm/templates/template3.yaml
 
 `,
-		}),
-		Entry(`the template file ".helm/templates/template1.yaml" committed`, entry{
-			addFiles:    []string{".helm/templates/template1.yaml"},
-			commitFiles: []string{".helm/templates/template1.yaml"},
-		}),
-		Entry(`the template file ".helm/templates/template1.yaml" changed after commit`, entry{
-			addFiles:               []string{".helm/templates/template1.yaml"},
-			commitFiles:            []string{".helm/templates/template1.yaml"},
-			changeFilesAfterCommit: []string{".helm/templates/template1.yaml"},
-			expectedErrSubstring:   `unable to locate chart directory: the file ".helm/templates/template1.yaml" changes must be committed`,
-		}),
-		Entry("the template files changed after commit", entry{
-			addFiles:               []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
-			commitFiles:            []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
-			changeFilesAfterCommit: []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
-			expectedErrSubstring: `unable to locate chart directory: the following files changes must be committed:
+			}),
+			Entry(`the template file ".helm/templates/template1.yaml" committed`, entry{
+				addFiles:    []string{".helm/templates/template1.yaml"},
+				commitFiles: []string{".helm/templates/template1.yaml"},
+			}),
+			Entry(`the template file ".helm/templates/template1.yaml" changed after commit`, entry{
+				addFiles:               []string{".helm/templates/template1.yaml"},
+				commitFiles:            []string{".helm/templates/template1.yaml"},
+				changeFilesAfterCommit: []string{".helm/templates/template1.yaml"},
+				expectedErrSubstring:   `unable to locate chart directory: the file ".helm/templates/template1.yaml" changes must be committed`,
+			}),
+			Entry("the template files changed after commit", entry{
+				addFiles:               []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
+				commitFiles:            []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
+				changeFilesAfterCommit: []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
+				expectedErrSubstring: `unable to locate chart directory: the following files changes must be committed:
 
  - .helm/templates/template1.yaml
  - .helm/templates/template2.yaml
  - .helm/templates/template3.yaml
 
 `,
-		}),
-		Entry("helm.allowUncommittedFiles (.helm/**/*) covers the not committed template", entry{
-			allowUncommittedFilesGlob: ".helm/**/*",
-			addFiles:                  []string{".helm/templates/template1.yaml"},
-		}),
-	)
+			}),
+			Entry("helm.allowUncommittedFiles (.helm/**/*) covers the not committed template", entry{
+				allowUncommittedFilesGlob: ".helm/**/*",
+				addFiles:                  []string{".helm/templates/template1.yaml"},
+			}))
+	})
 })

@@ -2,17 +2,20 @@ package giterminism_test
 
 import (
 	"fmt"
-	"path/filepath"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	"path/filepath"
 
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
 var _ = Describe("config dockerfile", func() {
 	BeforeEach(CommonBeforeEach)
+
+	const minimalDockerfile = `
+FROM alpine
+`
 
 	Context("contextAddFile", func() {
 		type entry struct {
@@ -81,108 +84,108 @@ config:
 	})
 
 	Context("Dockerfile", func() {
-		type entry struct {
-			configDockerfileAllowUncommittedGlob string
-			context                              string
-			addDockerfile                        bool
-			commitDockerfile                     bool
-			changeDockerfileAfterCommit          bool
-			expectedErrSubstring                 string
-		}
+		Context("regular files", func() {
+			type entry struct {
+				configDockerfileAllowUncommittedGlob string
+				context                              string
+				addDockerfile                        bool
+				commitDockerfile                     bool
+				changeDockerfileAfterCommit          bool
+				expectedErrSubstring                 string
+			}
 
-		DescribeTable("config.dockerfile.allowUncommitted",
-			func(e entry) {
-				fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
+			DescribeTable("config.dockerfile.allowUncommitted",
+				func(e entry) {
+					fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
 image: test
 dockerfile: Dockerfile
 context: %s
 `, e.context))
-				gitAddAndCommit("werf.yaml")
+					gitAddAndCommit("werf.yaml")
 
-				if e.configDockerfileAllowUncommittedGlob != "" {
-					contentToAppend := fmt.Sprintf(`
+					if e.configDockerfileAllowUncommittedGlob != "" {
+						contentToAppend := fmt.Sprintf(`
 config:
   dockerfile:
     allowUncommitted: ["%s"]`, e.configDockerfileAllowUncommittedGlob)
-					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-					gitAddAndCommit("werf-giterminism.yaml")
-				}
+						fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
+						gitAddAndCommit("werf-giterminism.yaml")
+					}
 
-				dockerfileRelPath := filepath.Join(e.context, "Dockerfile")
-				if e.addDockerfile {
-					fileCreateOrAppend(dockerfileRelPath, fmt.Sprintf(`
-FROM alpine
-`))
-				}
+					dockerfileRelPath := filepath.Join(e.context, "Dockerfile")
+					if e.addDockerfile {
+						fileCreateOrAppend(dockerfileRelPath, fmt.Sprintf(minimalDockerfile))
+					}
 
-				if e.commitDockerfile {
-					gitAddAndCommit(dockerfileRelPath)
-				}
+					if e.commitDockerfile {
+						gitAddAndCommit(dockerfileRelPath)
+					}
 
-				if e.changeDockerfileAfterCommit {
-					fileCreateOrAppend(dockerfileRelPath, fmt.Sprintf("\n"))
-				}
+					if e.changeDockerfileAfterCommit {
+						fileCreateOrAppend(dockerfileRelPath, fmt.Sprintf("\n"))
+					}
 
-				output, err := utils.RunCommand(
-					SuiteData.TestDirPath,
-					SuiteData.WerfBinPath,
-					"run", "--skip-build",
-				)
+					output, err := utils.RunCommand(
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
+						"run", "--skip-build",
+					)
 
-				Ω(err).Should(HaveOccurred())
-				if e.expectedErrSubstring != "" {
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
-				} else {
-					Ω(string(output)).Should(ContainSubstring("stages required"))
-				}
-			},
-			Entry("the dockerfile not found", entry{
-				expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" not found in the project git repository`,
-			}),
-			Entry("the dockerfile not committed", entry{
-				addDockerfile:        true,
-				expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
-			}),
-			Entry("the dockerfile committed", entry{
-				addDockerfile:    true,
-				commitDockerfile: true,
-			}),
-			Entry("the dockerfile committed, the dockerfile changed", entry{
-				addDockerfile:               true,
-				commitDockerfile:            true,
-				changeDockerfileAfterCommit: true,
-				expectedErrSubstring:        `unable to read dockerfile "Dockerfile": the file "Dockerfile" changes must be committed`,
-			}),
-			Entry(`config.dockerfile.allowUncommitted (Dockerfile) covers the uncommitted dockerfile "Dockerfile"`, entry{
-				configDockerfileAllowUncommittedGlob: "Dockerfile",
-				addDockerfile:                        true,
-			}),
-			Entry(`config.dockerfile.allowUncommitted (Dockerfile) covers the committed dockerfile "Dockerfile"`, entry{
-				configDockerfileAllowUncommittedGlob: "Dockerfile",
-				addDockerfile:                        true,
-				commitDockerfile:                     true,
-			}),
-			Entry(`config.dockerfile.allowUncommitted (*) covers the dockerfile "Dockerfile"`, entry{
-				configDockerfileAllowUncommittedGlob: "*",
-				addDockerfile:                        true,
-			}),
-			Entry(`config.dockerfile.allowUncommitted (docker*) does not cover the dockerfile "Dockerfile"`, entry{
-				configDockerfileAllowUncommittedGlob: "docker*",
-				addDockerfile:                        true,
-				expectedErrSubstring:                 `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
-			}),
-			Entry(`config.dockerfile.allowContextAddFiles (Dockerfile) does not cover the dockerfile "Dockerfile" inside context "context"`, entry{
-				configDockerfileAllowUncommittedGlob: "Dockerfile",
-				context:                              "context",
-				addDockerfile:                        true,
-				expectedErrSubstring:                 `unable to read dockerfile "context/Dockerfile": the file "context/Dockerfile" must be committed`,
-			}),
-			Entry(`config.dockerfile.allowContextAddFiles (context/Dockerfile) covers the dockerfile "Dockerfile" inside context "context"`, entry{
-				configDockerfileAllowUncommittedGlob: "context/Dockerfile",
-				context:                              "context",
-				addDockerfile:                        true,
-			}),
-		)
+					Ω(err).Should(HaveOccurred())
+					if e.expectedErrSubstring != "" {
+						Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+					} else {
+						Ω(string(output)).Should(ContainSubstring("stages required"))
+					}
+				},
+				Entry("the dockerfile not found", entry{
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" not found in the project git repository`,
+				}),
+				Entry("the dockerfile not committed", entry{
+					addDockerfile:        true,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
+				}),
+				Entry("the dockerfile committed", entry{
+					addDockerfile:    true,
+					commitDockerfile: true,
+				}),
+				Entry("the dockerfile committed, the dockerfile changed", entry{
+					addDockerfile:               true,
+					commitDockerfile:            true,
+					changeDockerfileAfterCommit: true,
+					expectedErrSubstring:        `unable to read dockerfile "Dockerfile": the file "Dockerfile" changes must be committed`,
+				}),
+				Entry(`config.dockerfile.allowUncommitted (Dockerfile) covers the uncommitted dockerfile "Dockerfile"`, entry{
+					configDockerfileAllowUncommittedGlob: "Dockerfile",
+					addDockerfile:                        true,
+				}),
+				Entry(`config.dockerfile.allowUncommitted (Dockerfile) covers the committed dockerfile "Dockerfile"`, entry{
+					configDockerfileAllowUncommittedGlob: "Dockerfile",
+					addDockerfile:                        true,
+					commitDockerfile:                     true,
+				}),
+				Entry(`config.dockerfile.allowUncommitted (*) covers the dockerfile "Dockerfile"`, entry{
+					configDockerfileAllowUncommittedGlob: "*",
+					addDockerfile:                        true,
+				}),
+				Entry(`config.dockerfile.allowUncommitted (docker*) does not cover the dockerfile "Dockerfile"`, entry{
+					configDockerfileAllowUncommittedGlob: "docker*",
+					addDockerfile:                        true,
+					expectedErrSubstring:                 `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
+				}),
+				Entry(`config.dockerfile.allowContextAddFiles (Dockerfile) does not cover the dockerfile "Dockerfile" inside context "context"`, entry{
+					configDockerfileAllowUncommittedGlob: "Dockerfile",
+					context:                              "context",
+					addDockerfile:                        true,
+					expectedErrSubstring:                 `unable to read dockerfile "context/Dockerfile": the file "context/Dockerfile" must be committed`,
+				}),
+				Entry(`config.dockerfile.allowContextAddFiles (context/Dockerfile) covers the dockerfile "Dockerfile" inside context "context"`, entry{
+					configDockerfileAllowUncommittedGlob: "context/Dockerfile",
+					context:                              "context",
+					addDockerfile:                        true,
+				}),
+			)
+		})
 	})
 
 	Context(".dockerignore", func() {
@@ -205,9 +208,7 @@ context: %s
 				gitAddAndCommit("werf.yaml")
 
 				dockerfileRelPath := filepath.Join(e.context, "Dockerfile")
-				fileCreateOrAppend(dockerfileRelPath, fmt.Sprintf(`
-FROM alpine
-`))
+				fileCreateOrAppend(dockerfileRelPath, fmt.Sprintf(minimalDockerfile))
 				gitAddAndCommit(dockerfileRelPath)
 
 				if e.configDockerfileAllowUncommittedDockerignoreFilesGlob != "" {
