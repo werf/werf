@@ -149,6 +149,7 @@ func runMain(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
@@ -163,8 +164,8 @@ func runMain(ctx context.Context, args []string) error {
 
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
-		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context) error {
-			return run(ctx, giterminismManager, args)
+		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
+			return run(ctx, headCommitGiterminismManager, args)
 		})
 	} else {
 		return run(ctx, giterminismManager, args)
