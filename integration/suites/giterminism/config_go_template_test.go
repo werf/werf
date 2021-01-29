@@ -107,12 +107,14 @@ config:
 
 			DescribeTable("config.goTemplateRendering.allowUncommittedFiles",
 				func(e entry) {
-					fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
+					if len(e.addFiles) != 0 {
+						fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
 {{ range $path, $content := .Files.Glob %q }}
 {{ $content }}
 {{ end }}
 `, e.filesGlob))
-					gitAddAndCommit("werf.yaml")
+						gitAddAndCommit("werf.yaml")
+					}
 
 					bodyFuncBase(e.entryBase)
 				},

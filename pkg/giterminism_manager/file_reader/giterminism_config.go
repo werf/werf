@@ -3,31 +3,63 @@ package file_reader
 import (
 	"context"
 	"fmt"
+
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 )
 
 const GiterminismConfigName = "werf-giterminism.yaml"
 
-func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context) (bool, error) {
-	return r.isConfigurationFileExistAnywhere(ctx, GiterminismConfigName)
+func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context) (exist bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsGiterminismConfigExistAnywhere").
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			exist, err = r.IsConfigurationFileExistAnywhere(ctx, GiterminismConfigName)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
+			}
+		})
+
+	return
 }
 
-func (r FileReader) ReadGiterminismConfig(ctx context.Context) ([]byte, error) {
-	data, err := r.readGiterminismConfig(ctx)
+func (r FileReader) ReadGiterminismConfig(ctx context.Context) (data []byte, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ReadGiterminismConfig").
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			data, err = r.readGiterminismConfig(ctx)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
+			}
+		})
+
 	if err != nil {
 		return nil, fmt.Errorf("unable to read werf giterminism config: %s", err)
 	}
 
-	return data, nil
+	return
 }
 
 func (r FileReader) readGiterminismConfig(ctx context.Context) ([]byte, error) {
-	if err := r.checkConfigurationFileExistence(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
+	if err := r.CheckConfigurationFileExistence(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
 		return false, nil
 	}); err != nil {
 		return nil, err
 	}
 
-	return r.readConfigurationFile(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
+	return r.ReadAndValidateConfigurationFile(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
 		return false, nil
 	})
 }

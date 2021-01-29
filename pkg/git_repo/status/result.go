@@ -151,6 +151,16 @@ func (sr *SubmoduleResult) isEmpty(options FilterOptions) bool {
 	return sr.Result.IsEmpty(options) && !sr.isNotClean && !sr.isNotInitialized
 }
 
+func (r *Result) IsFileModified(relPath string, options FilterOptions) bool {
+	for _, p := range r.FilePathList(options) {
+		if filepath.ToSlash(p) == filepath.ToSlash(relPath) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func isFileStatusAccepted(fileStatus *git.FileStatus, options FilterOptions) bool {
 	if (options.StagingOnly && !isFileStatusCodeExpected(fileStatus.Staging)) || (options.WorktreeOnly && !isFileStatusCodeExpected(fileStatus.Worktree)) {
 		return false

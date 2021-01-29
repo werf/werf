@@ -1,6 +1,10 @@
 package file_reader
 
-import "github.com/werf/werf/pkg/git_repo"
+import (
+	"os"
+
+	"github.com/werf/werf/pkg/git_repo"
+)
 
 type FileReader struct {
 	sharedOptions     sharedOptions
@@ -30,4 +34,9 @@ type sharedOptions interface {
 	LocalGitRepo() *git_repo.Local
 	HeadCommit() string
 	LooseGiterminism() bool
+	Dev() bool
+}
+
+func debug() bool {
+	return os.Getenv("WERF_DEBUG_GITERMINISM_MANAGER") == "1"
 }

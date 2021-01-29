@@ -5,109 +5,203 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-
-	"github.com/werf/werf/pkg/util"
+	"runtime"
+	"strings"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 
-	"github.com/bmatcuk/doublestar"
+	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/util"
 )
 
 func (r FileReader) relativeToGitPath(relPath string) string {
 	return filepath.Join(r.sharedOptions.RelativeToGitProjectDir(), relPath)
 }
 
-func (r FileReader) isCommitDirectoryExist(ctx context.Context, relPath string) (bool, error) {
-	exist, err := r.sharedOptions.LocalGitRepo().IsCommitDirectoryExists(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
-	if err != nil {
-		err := fmt.Errorf(
-			"unable to check existence of directory %s in the project git repo commit %s: %s",
-			relPath, r.sharedOptions.HeadCommit(), err,
-		)
-		return false, err
-	}
-
-	return exist, nil
+func (r FileReader) IsCommitFileModifiedLocally(ctx context.Context, relPath string) (bool, error) {
+	return r.sharedOptions.LocalGitRepo().IsFileModifiedLocally(ctx, r.relativeToGitPath(relPath), git_repo.IsFileModifiedLocally{
+		WorktreeOnly: r.sharedOptions.Dev(),
+	})
 }
 
-func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool, error) {
-	logboek.Context(ctx).Debug().LogF("-- giterminism_manager.FileReader.isCommitFileExist relPath=%q\n", relPath)
-
-	exist, err := r.sharedOptions.LocalGitRepo().IsCommitFileExists(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
-	if err != nil {
-		err := fmt.Errorf(
-			"unable to check existence of file %s in the project git repo commit %s: %s",
-			relPath, r.sharedOptions.HeadCommit(), err,
-		)
-		return false, err
-	}
-
-	return exist, nil
+func (r FileReader) IsCommitFileExist(ctx context.Context, relPath string) (bool, error) {
+	return r.sharedOptions.LocalGitRepo().IsCommitFileExist(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
 }
 
-func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]string, error) {
-	var result []string
-
-	commitPathList, err := r.sharedOptions.LocalGitRepo().GetCommitFilePathList(ctx, r.sharedOptions.HeadCommit())
-	if err != nil {
-		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
-	}
-
-	pattern = filepath.ToSlash(pattern)
-	for _, relToGitFilepath := range commitPathList {
-		relToGitPath := filepath.ToSlash(relToGitFilepath)
-		relPath := filepath.ToSlash(util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), relToGitPath))
-
-		if matched, err := doublestar.Match(pattern, relPath); err != nil {
-			return nil, err
-		} else if matched {
-			result = append(result, relPath)
-		}
-	}
-
-	return result, nil
+func (r FileReader) IsCommitTreeEntryExist(ctx context.Context, relPath string) (bool, error) {
+	return r.sharedOptions.LocalGitRepo().IsCommitTreeEntryExist(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
 }
 
-func (r FileReader) readCommitFile(ctx context.Context, relPath string) ([]byte, error) {
-	logboek.Context(ctx).Debug().LogF("-- giterminism_manager.FileReader.readCommitFile relPath=%q\n", relPath)
-
-	fileRepoPath := r.relativeToGitPath(filepath.ToSlash(relPath))
-
-	repoData, err := r.sharedOptions.LocalGitRepo().ReadCommitFile(ctx, r.sharedOptions.HeadCommit(), fileRepoPath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", relPath, r.sharedOptions.HeadCommit(), err)
-	}
-
-	isDataIdentical, err := r.compareFileData(relPath, repoData)
-	if err != nil {
-		return nil, fmt.Errorf("unable to compare commit file %q with the local project file: %s", relPath, err)
-	}
-
-	if !isDataIdentical {
-		if err := NewUncommittedFilesChangesError(relPath); err != nil {
-			return nil, err
-		}
-	}
-
-	return repoData, err
+func (r FileReader) ReadCommitTreeEntryContent(ctx context.Context, relPath string) ([]byte, error) {
+	return r.sharedOptions.LocalGitRepo().ReadCommitTreeEntryContent(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
 }
 
-func (r FileReader) compareFileData(relPath string, data []byte) (bool, error) {
-	var fileData []byte
-	if exist, err := r.isFileExist(relPath); err != nil {
-		return false, err
-	} else if exist {
-		fileData, err = r.readFile(relPath)
+func (r FileReader) ResolveAndCheckCommitFilePath(ctx context.Context, relPath string, checkFunc func(resolvedRelPath string) error) (string, error) {
+	return r.sharedOptions.LocalGitRepo().ResolveAndCheckCommitFilePath(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath), checkFunc)
+}
+
+func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir string, pattern string) (files []string, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ListCommitFilesWithGlob %q %q", dir, pattern).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			files, err = r.listCommitFilesWithGlob(ctx, dir, pattern)
+
+			if debug() {
+				var logFiles string
+				if len(files) != 0 {
+					logFiles = fmt.Sprintf("\n - %s", strings.Join(files, "\n - "))
+				}
+				logboek.Context(ctx).Debug().LogF("files: %v\nerr: %q\n", logFiles, err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir string, pattern string) ([]string, error) {
+	return r.sharedOptions.LocalGitRepo().ListCommitFilesWithGlob(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(dir), pattern)
+}
+
+func (r FileReader) ReadCommitFile(ctx context.Context, relPath string) ([]byte, error) {
+	return r.sharedOptions.LocalGitRepo().ReadCommitFile(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
+}
+
+func (r FileReader) ReadAndValidateCommitFile(ctx context.Context, relPath string) (data []byte, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ReadAndValidateCommitFile %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			data, err = r.readAndValidateCommitConfigurationFile(ctx, relPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) readAndValidateCommitConfigurationFile(ctx context.Context, relPath string) ([]byte, error) {
+	if err := r.ValidateCommitFilePath(ctx, relPath); err != nil {
+		return nil, err
+	}
+
+	return r.ReadCommitFile(ctx, relPath)
+}
+
+func (r FileReader) ValidateCommitFilePath(ctx context.Context, relPath string) error {
+	if _, err := r.ResolveAndCheckCommitFilePath(ctx, relPath, func(resolvedRelPath string) error {
+		resolvedRelPathRelativeToProjectDir := util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), resolvedRelPath)
+
+		isFileModified, err := r.IsCommitFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
 		if err != nil {
-			return false, err
+			return err
+		}
+
+		if !isFileModified {
+			return nil
+		}
+
+		if runtime.GOOS == "windows" {
+			return r.ExtraWindowsCheckFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
+		}
+
+		isTreeEntryExist, err := r.IsCommitTreeEntryExist(ctx, resolvedRelPathRelativeToProjectDir)
+		if err != nil {
+			return err
+		}
+
+		if isTreeEntryExist {
+			return NewUncommittedFilesChangesError(resolvedRelPathRelativeToProjectDir)
+		} else {
+			return NewUncommittedFilesError(resolvedRelPathRelativeToProjectDir)
+		}
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// https://github.com/go-git/go-git/issues/227
+func (r FileReader) ExtraWindowsCheckFilesModifiedLocally(ctx context.Context, relPathList ...string) error {
+	var uncommittedFilePathList []string
+
+	for _, relPath := range relPathList {
+		err := r.ExtraWindowsCheckFileModifiedLocally(ctx, relPath)
+		if err != nil {
+			switch err.(type) {
+			case UncommittedFilesError, UncommittedFilesChangesError:
+				uncommittedFilePathList = append(uncommittedFilePathList, relPath)
+				continue
+			}
+
+			return err
 		}
 	}
 
-	isDataIdentical := bytes.Equal(fileData, data)
-	fileDataWithForcedUnixLineBreak := bytes.ReplaceAll(fileData, []byte("\r\n"), []byte("\n"))
-	if !isDataIdentical {
-		isDataIdentical = bytes.Equal(fileDataWithForcedUnixLineBreak, data)
+	if len(uncommittedFilePathList) != 0 {
+		return NewUncommittedFilesChangesError(uncommittedFilePathList...)
 	}
 
-	return isDataIdentical, nil
+	return nil
+}
+
+// https://github.com/go-git/go-git/issues/227
+func (r FileReader) ExtraWindowsCheckFileModifiedLocally(ctx context.Context, relPath string) error {
+	isTreeEntryExist, err := r.IsCommitTreeEntryExist(ctx, relPath)
+	if err != nil {
+		return err
+	}
+
+	var commitFileData []byte
+	if isTreeEntryExist {
+		data, err := r.ReadCommitTreeEntryContent(ctx, relPath)
+		if err != nil {
+			return err
+		}
+
+		commitFileData = data
+	}
+
+	isFileExist, err := r.IsRegularFileExist(ctx, relPath)
+	if err != nil {
+		return err
+	}
+
+	var fsFileData []byte
+	if isFileExist {
+		data, err := r.ReadFile(ctx, relPath)
+		if err != nil {
+			return err
+		}
+
+		fsFileData = data
+	}
+
+	isDataIdentical := bytes.Equal(commitFileData, fsFileData)
+	localDataWithForcedUnixLineBreak := bytes.ReplaceAll(fsFileData, []byte("\r\n"), []byte("\n"))
+	if !isDataIdentical {
+		isDataIdentical = bytes.Equal(commitFileData, localDataWithForcedUnixLineBreak)
+	}
+
+	if isDataIdentical {
+		return nil
+	}
+
+	if isTreeEntryExist {
+		return NewUncommittedFilesChangesError(relPath)
+	} else {
+		return NewUncommittedFilesError(relPath)
+	}
 }
