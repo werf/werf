@@ -37,7 +37,7 @@ func (repo *Base) TagCommit(ctx context.Context, branch string) (string, error) 
 func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return "", fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	cfg, err := repository.Config()
@@ -55,7 +55,7 @@ func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 func (repo *Base) isEmpty(ctx context.Context, repoPath string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return false, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	commitIter, err := repository.CommitObjects()
@@ -105,27 +105,27 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	fromHash, err := newHash(opts.FromCommit)
 	if err != nil {
-		return nil, fmt.Errorf("bad `from` commit hash `%s`: %s", opts.FromCommit, err)
+		return nil, fmt.Errorf("bad `from` commit hash %q: %s", opts.FromCommit, err)
 	}
 
 	_, err = repository.CommitObject(fromHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad `from` commit `%s`: %s", opts.FromCommit, err)
+		return nil, fmt.Errorf("bad `from` commit %q: %s", opts.FromCommit, err)
 	}
 
 	toHash, err := newHash(opts.ToCommit)
 	if err != nil {
-		return nil, fmt.Errorf("bad `to` commit hash `%s`: %s", opts.ToCommit, err)
+		return nil, fmt.Errorf("bad `to` commit hash %q: %s", opts.ToCommit, err)
 	}
 
 	toCommit, err := repository.CommitObject(toHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad `to` commit `%s`: %s", opts.ToCommit, err)
+		return nil, fmt.Errorf("bad `to` commit %q: %s", opts.ToCommit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(toCommit)
@@ -164,7 +164,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating patch between `%s` and `%s` commits: %s", opts.FromCommit, opts.ToCommit, err)
+		return nil, fmt.Errorf("error creating patch between %q and %q commits: %s", opts.FromCommit, opts.ToCommit, err)
 	}
 
 	err = fileHandler.Close()
@@ -243,17 +243,17 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	commitHash, err := newHash(opts.Commit)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit hash `%s`: %s", opts.Commit, err)
+		return nil, fmt.Errorf("bad commit hash %q: %s", opts.Commit, err)
 	}
 
 	commit, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit `%s`: %s", opts.Commit, err)
+		return nil, fmt.Errorf("bad commit %q: %s", opts.Commit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(commit)
@@ -290,7 +290,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating archive for commit `%s`: %s", opts.Commit, err)
+		return nil, fmt.Errorf("error creating archive for commit %q: %s", opts.Commit, err)
 	}
 
 	if err := fileHandler.Close(); err != nil {
@@ -307,19 +307,19 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, commit string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return false, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	commitHash, err := newHash(commit)
 	if err != nil {
-		return false, fmt.Errorf("bad commit hash `%s`: %s", commit, err)
+		return false, fmt.Errorf("bad commit hash %q: %s", commit, err)
 	}
 
 	_, err = repository.CommitObject(commitHash)
 	if err == plumbing.ErrObjectNotFound {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("bad commit `%s`: %s", commit, err)
+		return false, fmt.Errorf("bad commit %q: %s", commit, err)
 	}
 
 	return true, nil
@@ -328,7 +328,7 @@ func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, c
 func (repo *Base) tagsList(repoPath string) ([]string, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	tags, err := repository.Tags()
@@ -361,7 +361,7 @@ func (repo *Base) tagsList(repoPath string) ([]string, error) {
 func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	branches, err := repository.References()
@@ -389,96 +389,61 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	return res, nil
 }
 
-func (repo *Base) checksumWithLsTree(ctx context.Context, repoPath, gitDir, workTreeCacheDir string, opts ChecksumOptions) (Checksum, error) {
+func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (Checksum, error) {
 	checksum := &ChecksumDescriptor{
 		NoMatchPaths: make([]string, 0),
 		Hash:         sha256.New(),
 	}
 
-	err := repo.withWorkTree(ctx, repoPath, gitDir, workTreeCacheDir, opts.Commit, func(worktreeDir string) error {
-		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(gitDir, worktreeDir)
-		if err != nil {
-			return err
-		}
+	pathMatcher := path_matcher.NewGitMappingPathMatcher(
+		opts.BasePath,
+		opts.IncludePaths,
+		opts.ExcludePaths,
+		false,
+	)
 
-		pathMatcher := path_matcher.NewGitMappingPathMatcher(
-			opts.BasePath,
-			opts.IncludePaths,
-			opts.ExcludePaths,
-			false,
-		)
-
-		var mainLsTreeResult *ls_tree.Result
-		if err := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String()).DoError(func() error {
-			mainLsTreeResult, err = ls_tree.LsTree(ctx, repositoryWithPreparedWorktree, opts.Commit, pathMatcher, true)
-			return err
-		}); err != nil {
-			return err
-		}
-
-		for _, p := range opts.Paths {
-			var pathLsTreeResult *ls_tree.Result
-			pathMatcher := path_matcher.NewSimplePathMatcher(
-				opts.BasePath,
-				[]string{p},
-				false,
-			)
-
-			logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
-			logProcess.Start()
-			pathLsTreeResult, err = mainLsTreeResult.LsTree(ctx, pathMatcher)
-			if err != nil {
-				logProcess.Fail()
-				return err
-			}
-			logProcess.End()
-
-			var pathChecksum string
-			if !pathLsTreeResult.IsEmpty() {
-				logboek.Context(ctx).Debug().LogBlock("ls-tree result checksum (%s)", pathMatcher.String()).Do(func() {
-					pathChecksum = pathLsTreeResult.Checksum(ctx)
-					logboek.Context(ctx).Debug().LogLn()
-					logboek.Context(ctx).Debug().LogLn(pathChecksum)
-				})
-			}
-
-			if pathChecksum != "" {
-				checksum.Hash.Write([]byte(pathChecksum))
-			} else {
-				checksum.NoMatchPaths = append(checksum.NoMatchPaths, p)
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
+	var mainLsTreeResult *ls_tree.Result
+	if err := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String()).DoError(func() error {
+		var err error
+		mainLsTreeResult, err = ls_tree.LsTree(ctx, repository, opts.Commit, pathMatcher, true)
+		return err
+	}); err != nil {
 		return nil, err
 	}
 
+	for _, p := range opts.Paths {
+		var pathLsTreeResult *ls_tree.Result
+		pathMatcher := path_matcher.NewSimplePathMatcher(
+			opts.BasePath,
+			[]string{p},
+			false,
+		)
+
+		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
+		logProcess.Start()
+		var err error
+		pathLsTreeResult, err = mainLsTreeResult.LsTree(ctx, pathMatcher)
+		if err != nil {
+			logProcess.Fail()
+			return nil, err
+		}
+		logProcess.End()
+
+		var pathChecksum string
+		if !pathLsTreeResult.IsEmpty() {
+			logboek.Context(ctx).Debug().LogBlock("ls-tree result checksum (%s)", pathMatcher.String()).Do(func() {
+				pathChecksum = pathLsTreeResult.Checksum(ctx)
+				logboek.Context(ctx).Debug().LogLn()
+				logboek.Context(ctx).Debug().LogLn(pathChecksum)
+			})
+		}
+
+		if pathChecksum != "" {
+			checksum.Hash.Write([]byte(pathChecksum))
+		} else {
+			checksum.NoMatchPaths = append(checksum.NoMatchPaths, p)
+		}
+	}
+
 	return checksum, nil
-}
-
-func (repo *Base) withWorkTree(ctx context.Context, repoPath, gitDir, workTreeCacheDir string, commit string, doFunc func(worktreeDir string) error) error {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
-	if err != nil {
-		return fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
-	}
-
-	commitHash, err := newHash(commit)
-	if err != nil {
-		return fmt.Errorf("bad commit hash `%s`: %s", commit, err)
-	}
-
-	commitObj, err := repository.CommitObject(commitHash)
-	if err != nil {
-		return fmt.Errorf("bad commit `%s`: %s", commit, err)
-	}
-
-	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
-	if err != nil {
-		return err
-	}
-
-	return true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, doFunc)
 }

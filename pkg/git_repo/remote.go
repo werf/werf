@@ -168,7 +168,7 @@ func (repo *Remote) Fetch(ctx context.Context) error {
 
 	cfg, err := ini.Load(cfgPath)
 	if err != nil {
-		return fmt.Errorf("cannot load repo `%s` config: %s", repo.String(), err)
+		return fmt.Errorf("cannot load repo %q config: %s", repo.String(), err)
 	}
 
 	remoteName := "origin"
@@ -178,7 +178,7 @@ func (repo *Remote) Fetch(ctx context.Context) error {
 		oldUrlKey.SetValue(repo.Url)
 		err := cfg.SaveTo(cfgPath)
 		if err != nil {
-			return fmt.Errorf("cannot update url of repo `%s`: %s", repo.String(), err)
+			return fmt.Errorf("cannot update url of repo %q: %s", repo.String(), err)
 		}
 	}
 
@@ -192,7 +192,7 @@ func (repo *Remote) Fetch(ctx context.Context) error {
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
-			return fmt.Errorf("cannot fetch remote `%s` of repo `%s`: %s", remoteName, repo.String(), err)
+			return fmt.Errorf("cannot fetch remote %q of repo %q: %s", remoteName, repo.String(), err)
 		}
 
 		return nil
@@ -239,7 +239,7 @@ func (repo *Remote) LatestBranchCommit(ctx context.Context, branch string) (stri
 		return "", err
 	}
 	if res == "" {
-		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
+		return "", fmt.Errorf("unknown branch %q of repo %q", branch, repo.String())
 	}
 
 	logboek.Context(ctx).Info().LogF("Using commit %q of repo %q branch %q\n", res, repo.String(), branch)
@@ -286,12 +286,21 @@ func (repo *Remote) CreateArchive(ctx context.Context, opts ArchiveOptions) (Arc
 	return repo.createArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Remote) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, err error) {
+func (repo *Remote) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, checksumErr error) {
 	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
-		checksum, err = repo.checksumWithLsTree(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+		if err := repo.yieldRepositoryBackedByWorkTree(ctx, opts.Commit, func(repository *git.Repository) error {
+			if cs, err := repo.checksumWithLsTree(ctx, repository, opts); err != nil {
+				return err
+			} else {
+				checksum = cs
+				return nil
+			}
+		}); err != nil {
+			checksumErr = err
+		}
 	})
 
-	return checksum, err
+	return
 }
 
 func (repo *Remote) IsCommitExists(ctx context.Context, commit string) (bool, error) {
@@ -317,4 +326,35 @@ func (repo *Remote) TagsList(_ context.Context) ([]string, error) {
 
 func (repo *Remote) RemoteBranchesList(_ context.Context) ([]string, error) {
 	return repo.remoteBranchesList(repo.GetClonePath())
+}
+
+func (repo *Remote) yieldRepositoryBackedByWorkTree(ctx context.Context, commit string, doFunc func(repository *git.Repository) error) error {
+	repository, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return fmt.Errorf("cannot open git repository %q: %s", repo.GetClonePath(), err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return fmt.Errorf("bad commit %q: %s", commit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
+	if err != nil {
+		return err
+	}
+
+	return true_git.WithWorkTree(ctx, repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
+		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GetClonePath(), preparedWorkTreeDir)
+		if err != nil {
+			return err
+		}
+
+		return doFunc(repositoryWithPreparedWorktree)
+	})
 }

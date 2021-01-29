@@ -206,13 +206,8 @@ func (repo *Local) getMainLsTreeResult(ctx context.Context, opts LsTreeOptions) 
 	}
 
 	var lsTreeResult *ls_tree.Result
-	if err := repo.withWorkTree(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), commit, func(worktreeDir string) error {
-		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GitDir, worktreeDir)
-		if err != nil {
-			return err
-		}
-
-		r, err := ls_tree.LsTree(ctx, repositoryWithPreparedWorktree, commit, path_matcher.NewSimplePathMatcher("", []string{}, false), opts.Strict)
+	if err := repo.yieldRepositoryBackedByWorkTree(ctx, commit, func(repository *git.Repository) error {
+		r, err := ls_tree.LsTree(ctx, repository, commit, path_matcher.NewSimplePathMatcher("", []string{}, false), opts.Strict)
 		if err != nil {
 			return err
 		}
@@ -282,12 +277,21 @@ func (repo *Local) CreateArchive(ctx context.Context, opts ArchiveOptions) (Arch
 	return repo.createArchive(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, err error) {
+func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, checksumErr error) {
 	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
-		checksum, err = repo.checksumWithLsTree(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
+		if err := repo.yieldRepositoryBackedByWorkTree(ctx, opts.Commit, func(repository *git.Repository) error {
+			if cs, err := repo.checksumWithLsTree(ctx, repository, opts); err != nil {
+				return err
+			} else {
+				checksum = cs
+				return nil
+			}
+		}); err != nil {
+			checksumErr = err
+		}
 	})
 
-	return checksum, err
+	return
 }
 
 func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, error) {
@@ -760,6 +764,41 @@ func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) 
 	entry := lsTreeResult.LsTreeEntry(path)
 
 	return entry, nil
+}
+
+func (repo *Local) yieldRepositoryBackedByWorkTree(ctx context.Context, commit string, doFunc func(repository *git.Repository) error) error {
+	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return fmt.Errorf("cannot open git work tree %q: %s", repo.WorkTreeDir, err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return fmt.Errorf("bad commit %q: %s", commit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
+	if err != nil {
+		return err
+	}
+
+	if hasSubmodules {
+		return true_git.WithWorkTree(ctx, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
+			repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GitDir, preparedWorkTreeDir)
+			if err != nil {
+				return err
+			}
+
+			return doFunc(repositoryWithPreparedWorktree)
+		})
+	} else {
+		return doFunc(repository)
+	}
 }
 
 func debugGiterminismManager() bool {
