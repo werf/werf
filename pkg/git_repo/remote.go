@@ -286,12 +286,21 @@ func (repo *Remote) CreateArchive(ctx context.Context, opts ArchiveOptions) (Arc
 	return repo.createArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Remote) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, err error) {
+func (repo *Remote) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, checksumErr error) {
 	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
-		checksum, err = repo.checksumWithLsTree(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+		if err := repo.yieldRepositoryBackedByWorkTree(ctx, opts.Commit, func(repository *git.Repository) error {
+			if cs, err := repo.checksumWithLsTree(ctx, repository, opts); err != nil {
+				return err
+			} else {
+				checksum = cs
+				return nil
+			}
+		}); err != nil {
+			checksumErr = err
+		}
 	})
 
-	return checksum, err
+	return
 }
 
 func (repo *Remote) IsCommitExists(ctx context.Context, commit string) (bool, error) {
@@ -317,4 +326,35 @@ func (repo *Remote) TagsList(_ context.Context) ([]string, error) {
 
 func (repo *Remote) RemoteBranchesList(_ context.Context) ([]string, error) {
 	return repo.remoteBranchesList(repo.GetClonePath())
+}
+
+func (repo *Remote) yieldRepositoryBackedByWorkTree(ctx context.Context, commit string, doFunc func(repository *git.Repository) error) error {
+	repository, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return fmt.Errorf("cannot open git repository %q: %s", repo.GetClonePath(), err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return fmt.Errorf("bad commit hash %q: %s", commit, err)
+	}
+
+	commitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return fmt.Errorf("bad commit %q: %s", commit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
+	if err != nil {
+		return err
+	}
+
+	return true_git.WithWorkTree(ctx, repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
+		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GetClonePath(), preparedWorkTreeDir)
+		if err != nil {
+			return err
+		}
+
+		return doFunc(repositoryWithPreparedWorktree)
+	})
 }
