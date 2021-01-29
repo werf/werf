@@ -355,6 +355,7 @@ entries:
 
       - title: Guides
         url: /documentation/guides.html
+        hot: true
 
       - title: Reference
         f:
@@ -501,6 +502,7 @@ entries:
 
       - title: Руководства
         url: /documentation/guides.html
+        hot: true
 
       - title: Справочник
         f:
