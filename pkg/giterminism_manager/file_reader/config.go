@@ -124,9 +124,9 @@ func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsT
 	}
 
 	if r.sharedOptions.LooseGiterminism() {
-		return NewFilesNotFoundInProjectDirectoryError(configPath)
+		return r.NewFilesNotFoundInProjectDirectoryError(configPath)
 	} else {
-		return NewFilesNotFoundInProjectGitRepositoryError(configPath)
+		return r.NewFilesNotFoundInProjectGitRepositoryError(configPath)
 	}
 }
 

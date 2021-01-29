@@ -93,7 +93,7 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 	}
 
 	if len(relPathListWithUncommittedFilesChanges) != 0 {
-		return NewUncommittedFilesChangesError(relPathListWithUncommittedFilesChanges...)
+		return r.NewUncommittedFilesChangesError(relPathListWithUncommittedFilesChanges...)
 	}
 
 	var relPathListWithUncommittedFiles []string
@@ -118,7 +118,7 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 	}
 
 	if len(relPathListWithUncommittedFiles) != 0 {
-		return NewUncommittedFilesError(relPathListWithUncommittedFiles...)
+		return r.NewUncommittedFilesError(relPathListWithUncommittedFiles...)
 	}
 
 	return nil
@@ -198,7 +198,7 @@ func (r FileReader) checkConfigurationFileExistence(ctx context.Context, relPath
 	}
 
 	if r.sharedOptions.LooseGiterminism() {
-		return NewFilesNotFoundInProjectDirectoryError(relPath)
+		return r.NewFilesNotFoundInProjectDirectoryError(relPath)
 	}
 
 	exist, err := r.IsCommitFileExist(ctx, relPath)
@@ -213,12 +213,12 @@ func (r FileReader) checkConfigurationFileExistence(ctx context.Context, relPath
 	if existInFS {
 		err := r.ValidateCommitFilePath(ctx, relPath)
 		if git_repo.IsTreeEntryNotFoundInRepoErr(err) {
-			return NewUncommittedFilesError(relPath)
+			return r.NewUncommittedFilesError(relPath)
 		} else {
 			return err
 		}
 	} else {
-		return NewFilesNotFoundInProjectGitRepositoryError(relPath)
+		return r.NewFilesNotFoundInProjectGitRepositoryError(relPath)
 	}
 }
 
