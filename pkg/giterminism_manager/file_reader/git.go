@@ -37,8 +37,8 @@ func (r FileReader) ReadCommitTreeEntryContent(ctx context.Context, relPath stri
 	return r.sharedOptions.LocalGitRepo().ReadCommitTreeEntryContent(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
 }
 
-func (r FileReader) ResolveAndCheckCommitFilePath(ctx context.Context, relPath string, checkFunc func(resolvedRelPath string) error) (string, error) {
-	return r.sharedOptions.LocalGitRepo().ResolveAndCheckCommitFilePath(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath), checkFunc)
+func (r FileReader) ResolveAndCheckCommitFilePath(ctx context.Context, relPath string, checkSymlinkTargetFunc func(resolvedRelPath string) error) (string, error) {
+	return r.sharedOptions.LocalGitRepo().ResolveAndCheckCommitFilePath(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath), checkSymlinkTargetFunc)
 }
 
 func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir string, pattern string) (files []string, err error) {
@@ -65,72 +65,97 @@ func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir string, pat
 }
 
 func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir string, pattern string) ([]string, error) {
-	return r.sharedOptions.LocalGitRepo().ListCommitFilesWithGlob(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(dir), pattern)
+	list, err := r.sharedOptions.LocalGitRepo().ListCommitFilesWithGlob(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(dir), pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []string
+	for _, path := range list {
+		result = append(result, util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), path))
+	}
+
+	return result, nil
 }
 
 func (r FileReader) ReadCommitFile(ctx context.Context, relPath string) ([]byte, error) {
 	return r.sharedOptions.LocalGitRepo().ReadCommitFile(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
 }
 
-func (r FileReader) ReadAndValidateCommitFile(ctx context.Context, relPath string) (data []byte, err error) {
+// CheckCommitFileExistenceAndLocalChanges returns nil if the file exists and does not have any uncommitted changes locally (each symlink target).
+func (r FileReader) CheckCommitFileExistenceAndLocalChanges(ctx context.Context, relPath string) (err error) {
 	logboek.Context(ctx).Debug().
-		LogBlock("ReadAndValidateCommitFile %q", relPath).
+		LogBlock("CheckCommitFileExistenceAndLocalChanges %q", relPath).
 		Options(func(options types.LogBlockOptionsInterface) {
 			if !debug() {
 				options.Mute()
 			}
 		}).
 		Do(func() {
-			data, err = r.readAndValidateCommitConfigurationFile(ctx, relPath)
+			err = r.checkCommitFileExistenceAndLocalChanges(ctx, relPath)
 
 			if debug() {
-				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
 			}
 		})
 
 	return
 }
 
-func (r FileReader) readAndValidateCommitConfigurationFile(ctx context.Context, relPath string) ([]byte, error) {
-	if err := r.ValidateCommitFilePath(ctx, relPath); err != nil {
-		return nil, err
-	}
-
-	return r.ReadCommitFile(ctx, relPath)
-}
-
-func (r FileReader) ValidateCommitFilePath(ctx context.Context, relPath string) error {
-	if _, err := r.ResolveAndCheckCommitFilePath(ctx, relPath, func(resolvedRelPath string) error {
-		resolvedRelPathRelativeToProjectDir := util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), resolvedRelPath)
-
-		isFileModified, err := r.IsCommitFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
-		if err != nil {
-			return err
-		}
-
-		if !isFileModified {
-			return nil
-		}
-
-		if runtime.GOOS == "windows" {
-			return r.ExtraWindowsCheckFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
-		}
-
-		isTreeEntryExist, err := r.IsCommitTreeEntryExist(ctx, resolvedRelPathRelativeToProjectDir)
-		if err != nil {
-			return err
-		}
-
-		if isTreeEntryExist {
-			return r.NewUncommittedFilesChangesError(resolvedRelPathRelativeToProjectDir)
-		} else {
-			return r.NewUncommittedFilesError(resolvedRelPathRelativeToProjectDir)
-		}
-	}); err != nil {
+func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context, relPath string) error {
+	if err := r.checkFileModifiedLocally(ctx, relPath); err != nil { // check not resolved path
 		return err
 	}
 
+	commitTreeEntryExist, err := r.IsCommitTreeEntryExist(ctx, relPath)
+	if err != nil {
+		return err
+	}
+
+	if !commitTreeEntryExist {
+		commitFileExist, err := r.IsCommitFileExist(ctx, relPath)
+		if err != nil {
+			return err
+		}
+
+		if !commitFileExist {
+			return r.NewFileNotFoundInProjectRepositoryError(relPath)
+		}
+	}
+
+	resolvedPath, err := r.ResolveAndCheckCommitFilePath(ctx, relPath, func(resolvedRelPath string) error { // check each symlink target
+		resolvedRelPathRelativeToProjectDir := util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), resolvedRelPath)
+
+		return r.checkFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
+	})
+	if err != nil {
+		return fmt.Errorf("symlink %q check failed: %s", relPath, err)
+	}
+
+	if resolvedPath != relPath { // check resolved path
+		if err := r.checkFileModifiedLocally(ctx, relPath); err != nil {
+			return fmt.Errorf("symlink %q check failed: %s", relPath, err)
+		}
+	}
+
 	return nil
+}
+
+func (r FileReader) checkFileModifiedLocally(ctx context.Context, relPath string) error {
+	isFileModified, err := r.IsCommitFileModifiedLocally(ctx, relPath)
+	if err != nil {
+		return err
+	}
+
+	if !isFileModified {
+		return nil
+	}
+
+	if runtime.GOOS == "windows" {
+		return r.ExtraWindowsCheckFileModifiedLocally(ctx, relPath)
+	}
+
+	return r.NewUncommittedFilesError(relPath)
 }
 
 // https://github.com/go-git/go-git/issues/227
@@ -141,7 +166,7 @@ func (r FileReader) ExtraWindowsCheckFilesModifiedLocally(ctx context.Context, r
 		err := r.ExtraWindowsCheckFileModifiedLocally(ctx, relPath)
 		if err != nil {
 			switch err.(type) {
-			case UncommittedFilesError, UncommittedFilesChangesError:
+			case UncommittedFilesError:
 				uncommittedFilePathList = append(uncommittedFilePathList, relPath)
 				continue
 			}
@@ -151,7 +176,7 @@ func (r FileReader) ExtraWindowsCheckFilesModifiedLocally(ctx context.Context, r
 	}
 
 	if len(uncommittedFilePathList) != 0 {
-		return r.NewUncommittedFilesChangesError(uncommittedFilePathList...)
+		return r.NewUncommittedFilesError(uncommittedFilePathList...)
 	}
 
 	return nil
@@ -199,9 +224,5 @@ func (r FileReader) ExtraWindowsCheckFileModifiedLocally(ctx context.Context, re
 		return nil
 	}
 
-	if isTreeEntryExist {
-		return r.NewUncommittedFilesChangesError(relPath)
-	} else {
-		return r.NewUncommittedFilesError(relPath)
-	}
+	return r.NewUncommittedFilesError(relPath)
 }

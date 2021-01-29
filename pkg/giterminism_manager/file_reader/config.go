@@ -69,17 +69,20 @@ func (r FileReader) readConfig(ctx context.Context, customRelPath string) ([]byt
 	configRelPathList := r.configPathList(customRelPath)
 
 	for _, configPath := range configRelPathList {
-		if exist, err := r.IsConfigurationFileExist(ctx, configPath, func(_ string) (bool, error) {
-			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
-		}); err != nil {
-			return nil, err
-		} else if !exist {
-			continue
-		}
-
-		return r.ReadAndValidateConfigurationFile(ctx, configPath, func(_ string) (bool, error) {
+		data, err := r.ReadAndCheckConfigurationFile(ctx, configPath, func(_ string) (bool, error) {
 			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
 		})
+
+		if err != nil {
+			switch err.(type) {
+			case FileNotFoundInProjectDirectoryError, FileNotFoundInProjectRepositoryError:
+				continue
+			}
+
+			return nil, err
+		}
+
+		return data, nil
 	}
 
 	return nil, r.PrepareConfigNotFoundError(ctx, configRelPathList)
@@ -94,7 +97,7 @@ func (r FileReader) PrepareConfigNotFoundError(ctx context.Context, configPathsT
 			}
 		}).
 		Do(func() {
-			err = r.prepareConfigNotFoundError(ctx, configPathsToCheck)
+			err = r.prepareConfigNotFoundError(configPathsToCheck)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -104,18 +107,7 @@ func (r FileReader) PrepareConfigNotFoundError(ctx context.Context, configPathsT
 	return
 }
 
-func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) error {
-	for _, configPath := range configPathsToCheck {
-		err := r.CheckConfigurationFileExistence(ctx, configPath, func(_ string) (bool, error) {
-			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
-		})
-
-		switch err.(type) {
-		case UncommittedFilesError, UncommittedFilesChangesError:
-			return err
-		}
-	}
-
+func (r FileReader) prepareConfigNotFoundError(configPathsToCheck []string) error {
 	var configPath string
 	if len(configPathsToCheck) == 1 {
 		configPath = configPathsToCheck[0]
@@ -124,9 +116,9 @@ func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsT
 	}
 
 	if r.sharedOptions.LooseGiterminism() {
-		return r.NewFilesNotFoundInProjectDirectoryError(configPath)
+		return r.NewFileNotFoundInProjectDirectoryError(configPath)
 	} else {
-		return r.NewFilesNotFoundInProjectGitRepositoryError(configPath)
+		return r.NewFileNotFoundInProjectRepositoryError(configPath)
 	}
 }
 

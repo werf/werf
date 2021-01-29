@@ -94,13 +94,13 @@ helm:
 				addFiles:               []string{".helm/templates/template1.yaml"},
 				commitFiles:            []string{".helm/templates/template1.yaml"},
 				changeFilesAfterCommit: []string{".helm/templates/template1.yaml"},
-				expectedErrSubstring:   `unable to locate chart directory: the file ".helm/templates/template1.yaml" changes must be committed`,
+				expectedErrSubstring:   `unable to locate chart directory: the file ".helm/templates/template1.yaml" must be committed`,
 			}),
 			Entry("the template files changed after commit", entry{
 				addFiles:               []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
 				commitFiles:            []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
 				changeFilesAfterCommit: []string{".helm/templates/template1.yaml", ".helm/templates/template2.yaml", ".helm/templates/template3.yaml"},
-				expectedErrSubstring: `unable to locate chart directory: the following files changes must be committed:
+				expectedErrSubstring: `unable to locate chart directory: the following files must be committed:
 
  - .helm/templates/template1.yaml
  - .helm/templates/template2.yaml
@@ -211,7 +211,7 @@ helm:
 				addSymlinks: map[string]string{
 					".helm/templates": "../dir/.helm/templates",
 				},
-				expectedErrSubstring: `unable to locate chart directory: the file ".helm/templates/template1.yaml" must be committed`,
+				expectedErrSubstring: `unable to locate chart directory: accepted symlink ".helm/templates/template1.yaml" check failed: the link target "dir/.helm/templates" should be also accepted by giterminism config`,
 			}),
 			Entry("helm.allowUncommittedFiles (.helm, dir) covers uncommitted files", entry{
 				skipOnWindows:              true,

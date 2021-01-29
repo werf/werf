@@ -99,7 +99,7 @@ config:
 			addTemplate1:               true,
 			commitTemplate1:            true,
 			changeTemplate1AfterCommit: true,
-			expectedErrSubstring:       `unable to read werf config templates: the file ".werf/templates/1.tmpl" changes must be committed`,
+			expectedErrSubstring:       `unable to read werf config templates: the file ".werf/templates/1.tmpl" must be committed`,
 		}),
 		Entry("config.allowUncommittedTemplates has .werf/templates/1.tmpl, the template file not committed", entry{
 			allowUncommittedTemplate1: true,

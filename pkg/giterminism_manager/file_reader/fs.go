@@ -2,7 +2,6 @@ package file_reader
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -117,8 +116,8 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 			logboek.Context(ctx).Debug().LogF("-- path: %q symlink: %v\n", path, f.Mode()&os.ModeSymlink == os.ModeSymlink)
 		}
 
-		notResolvedPath := strings.Replace(path, resolvedDir, relDir, 1)
-		notResolvedRelPath := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), notResolvedPath)
+		resolvedRelPath := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), path)
+		notResolvedRelPath := strings.Replace(resolvedRelPath, resolvedDir, relDir, 1)
 		if f.Mode()&os.ModeSymlink == os.ModeSymlink {
 			link, err := os.Readlink(path)
 			if err != nil {
@@ -131,7 +130,7 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 			}
 
 			if !util.IsSubpathOfBasePath(r.sharedOptions.ProjectDir(), resolvedLink) {
-				return configurationFileNotFoundInProjectDirectoryErr
+				return r.NewFileNotFoundInProjectDirectoryError(resolvedLink)
 			}
 
 			lstat, err := os.Lstat(resolvedLink)
@@ -140,7 +139,11 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 			}
 
 			if lstat.IsDir() {
-				return r.walkFiles(ctx, notResolvedRelPath, fileFunc)
+				if err := r.walkFiles(ctx, notResolvedRelPath, fileFunc); err != nil {
+					return fmt.Errorf("symlink %q resolve failed: %s", resolvedRelPath, err)
+				}
+
+				return nil
 			}
 
 			return fileFunc(notResolvedRelPath)
@@ -150,97 +153,110 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 	})
 }
 
-// IsRegularFileExistAndAccepted returns true if the file exists locally and every file path resolve is accepted by the giterminism config.
-func (r FileReader) IsRegularFileExistAndAccepted(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (exist bool, err error) {
+// CheckFileExistenceAndAcceptance returns nil if the resolved file exists and is fully accepted by the giterminism config (each symlink target must be accepted if the file path accepted)
+func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (err error) {
 	logboek.Context(ctx).Debug().
-		LogBlock("IsRegularFileExistAndAccepted %q", relPath).
+		LogBlock("CheckFileExistenceAndAcceptance %q", relPath).
 		Options(func(options types.LogBlockOptionsInterface) {
 			if !debug() {
 				options.Mute()
 			}
 		}).
 		Do(func() {
-			exist, err = r.isRegularFileExistAndAccepted(ctx, relPath, isFileAcceptedCheckFunc)
+			err = r.checkFileExistenceAndAcceptance(ctx, relPath, isFileAcceptedCheckFunc)
 
 			if debug() {
-				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
 			}
 		})
 
 	return
 }
 
-func (r FileReader) isRegularFileExistAndAccepted(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (bool, error) {
-	exist, err := r.IsRegularFileExist(ctx, relPath)
-	if err != nil {
-		return false, err
-	}
-
-	if exist {
-		accepted, err := r.IsFilePathAccepted(ctx, relPath, isFileAcceptedCheckFunc)
-		if err != nil {
-			return false, err
-		}
-
-		if accepted {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-// IsFilePathAccepted returns true if every file path resolve is accepted by the giterminism config.
-func (r FileReader) IsFilePathAccepted(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (accepted bool, err error) {
-	logboek.Context(ctx).Debug().
-		LogBlock("IsFilePathAccepted %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
-		Do(func() {
-			accepted, err = r.isFilePathAccepted(ctx, relPath, isFileAcceptedCheckFunc)
-
-			if debug() {
-				logboek.Context(ctx).Debug().LogF("accepted: %v\nerr: %q\n", accepted, err)
-			}
-		})
-
-	return
-}
-
-func (r FileReader) isFilePathAccepted(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (bool, error) {
-	var notAcceptedFilePathErr = errors.New("skip not accepted file path")
-
-	if _, err := r.ResolveAndCheckFilePath(ctx, relPath, func(resolvedPath string) error {
-		if r.sharedOptions.LooseGiterminism() {
-			return nil
-		}
-
-		accepted, err := isFileAcceptedCheckFunc(resolvedPath)
+func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) error {
+	if r.sharedOptions.LooseGiterminism() {
+		exist, err := r.IsRegularFileExist(ctx, relPath)
 		if err != nil {
 			return err
 		}
 
-		if debug() {
-			logboek.Context(ctx).Debug().LogF("-- accepted: %q %v\n", resolvedPath, accepted)
-		}
-
-		if !accepted {
-			return notAcceptedFilePathErr
+		if !exist {
+			return r.NewFileNotFoundInProjectDirectoryError(relPath)
 		}
 
 		return nil
-	}); err != nil {
-		if err == notAcceptedFilePathErr || err == configurationFileNotFoundInProjectDirectoryErr {
-			return false, nil
+	}
+
+	accepted, err := isFileAcceptedCheckFunc(relPath)
+	if err != nil {
+		return err
+	}
+
+	if !accepted {
+		return FileNotAcceptedError{fmt.Errorf("the file %q not accepted by giterminism config", relPath)}
+	}
+
+	resolvedPath, err := r.ResolveAndCheckFilePath(ctx, relPath, func(resolvedRelPath string) error {
+		accepted, err := isFileAcceptedCheckFunc(resolvedRelPath)
+		if err != nil {
+			return err
 		}
 
+		if !accepted {
+			return fmt.Errorf("the link target %q should be also accepted by giterminism config", resolvedRelPath)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return r.NewSymlinkResolveFailedError(relPath, err)
+	}
+
+	if resolvedPath != relPath {
+		accepted, err := isFileAcceptedCheckFunc(relPath)
+		if err != nil {
+			return err
+		}
+
+		if !accepted {
+			return r.NewSymlinkResolveFailedError(relPath, fmt.Errorf("the link target %q should be also accepted by giterminism config", resolvedPath))
+		}
+	}
+
+	return nil
+}
+
+// ShouldFileBeRead return true if not resolved path accepted by giterminism config.
+func (r FileReader) ShouldFileBeRead(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (should bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ShouldFileBeRead %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			should, err = r.shouldFileBeRead(relPath, isFileAcceptedCheckFunc)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("should: %v\nerr: %q\n", should, err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) shouldFileBeRead(relPath string, isFileAcceptedCheckFunc func(relPath string) (bool, error)) (bool, error) {
+	if r.sharedOptions.LooseGiterminism() {
+		return true, nil
+	}
+
+	accepted, err := isFileAcceptedCheckFunc(relPath)
+	if err != nil {
 		return false, err
 	}
 
-	return true, nil
+	return accepted, nil
 }
 
 // ReadFile returns the project file data.
@@ -273,7 +289,7 @@ func (r FileReader) readFile(relPath string) ([]byte, error) {
 	return data, nil
 }
 
-// isDirectoryExist resolves symlinks and returns true if the resolved file is a directory.
+// IsDirectoryExist resolves symlinks and returns true if the resolved file is a directory.
 func (r FileReader) IsDirectoryExist(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsDirectoryExist %q", relPath).
@@ -296,7 +312,7 @@ func (r FileReader) IsDirectoryExist(ctx context.Context, relPath string) (exist
 func (r FileReader) isDirectoryExist(ctx context.Context, relPath string) (bool, error) {
 	resolvedPath, err := r.ResolveFilePath(ctx, relPath)
 	if err != nil {
-		if err == configurationFileNotFoundInProjectDirectoryErr {
+		if IsFileNotFoundInProjectDirectoryError(err) {
 			return false, nil
 		}
 
@@ -335,7 +351,7 @@ func (r FileReader) IsRegularFileExist(ctx context.Context, relPath string) (exi
 func (r FileReader) isRegularFileExist(ctx context.Context, relPath string) (bool, error) {
 	resolvedPath, err := r.ResolveFilePath(ctx, relPath)
 	if err != nil {
-		if err == configurationFileNotFoundInProjectDirectoryErr {
+		if IsFileNotFoundInProjectDirectoryError(err) {
 			return false, nil
 		}
 
@@ -390,19 +406,8 @@ func (r FileReader) ResolveAndCheckFilePath(ctx context.Context, relPath string,
 	return
 }
 
-func (r FileReader) resolveAndCheckFilePath(ctx context.Context, relPath string, checkFunc func(resolvedPath string) error) (resolvedPath string, err error) {
-	resolvedPath, err = r.resolveFilePath(ctx, relPath, 0, checkFunc)
-	if err != nil {
-		return "", err
-	}
-
-	if resolvedPath != relPath {
-		if err := checkFunc(resolvedPath); err != nil {
-			return "", err
-		}
-	}
-
-	return resolvedPath, nil
+func (r FileReader) resolveAndCheckFilePath(ctx context.Context, relPath string, checkSymlinkTargetFunc func(resolvedPath string) error) (resolvedPath string, err error) {
+	return r.resolveFilePath(ctx, relPath, 0, checkSymlinkTargetFunc)
 }
 
 func (r FileReader) ResolveFilePath(ctx context.Context, relPath string) (resolvedPath string, err error) {
@@ -424,9 +429,7 @@ func (r FileReader) ResolveFilePath(ctx context.Context, relPath string) (resolv
 	return
 }
 
-var configurationFileNotFoundInProjectDirectoryErr = fmt.Errorf("the configutation file not found in the project directory")
-
-func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
+func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth int, checkSymlinkTargetFunc func(resolvedPath string) error) (string, error) {
 	if depth > 1000 {
 		return "", fmt.Errorf("too many levels of symbolic links")
 	}
@@ -452,7 +455,7 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 
 		if err != nil {
 			if os.IsNotExist(err) || util.IsNotADirectoryError(err) {
-				return "", configurationFileNotFoundInProjectDirectoryErr
+				return "", r.NewFileNotFoundInProjectDirectoryError(pathToResolve)
 			}
 
 			return "", fmt.Errorf("unable to access file %q: %s", absPathToResolve, err)
@@ -471,17 +474,17 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 			}
 
 			if !util.IsSubpathOfBasePath(r.sharedOptions.ProjectDir(), resolvedLink) {
-				return "", configurationFileNotFoundInProjectDirectoryErr
+				return "", r.NewFileNotFoundInProjectDirectoryError(resolvedLink)
 			}
 
 			resolvedRelLink := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), resolvedLink)
-			if checkFunc != nil {
-				if err := checkFunc(resolvedRelLink); err != nil {
+			if checkSymlinkTargetFunc != nil {
+				if err := checkSymlinkTargetFunc(resolvedRelLink); err != nil {
 					return "", err
 				}
 			}
 
-			resolvedTarget, err := r.resolveFilePath(ctx, resolvedRelLink, depth, checkFunc)
+			resolvedTarget, err := r.resolveFilePath(ctx, resolvedRelLink, depth, checkSymlinkTargetFunc)
 			if err != nil {
 				return "", err
 			}

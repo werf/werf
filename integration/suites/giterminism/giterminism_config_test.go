@@ -63,7 +63,7 @@ var _ = Describe("giterminism config", func() {
 			addConfig:               true,
 			commitConfig:            true,
 			changeConfigAfterCommit: true,
-			expectedErrSubstring:    `unable to read werf giterminism config: the file "werf-giterminism.yaml" changes must be committed`,
+			expectedErrSubstring:    `unable to read werf giterminism config: the file "werf-giterminism.yaml" must be committed`,
 		}),
 	)
 })
