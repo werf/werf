@@ -502,7 +502,7 @@ entries:
 
       - title: Руководства
         url: /documentation/guides.html
-        hot: true
+        hot: 'true'
 
       - title: Справочник
         f:
