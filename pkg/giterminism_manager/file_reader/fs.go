@@ -139,8 +139,6 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 				return fmt.Errorf("lstat %q failed: %s", resolvedLink, err)
 			}
 
-			fmt.Println(lstat.IsDir(), resolvedLink, notResolvedRelPath)
-
 			if lstat.IsDir() {
 				return r.walkFiles(ctx, notResolvedRelPath, fileFunc)
 			}
@@ -393,10 +391,6 @@ func (r FileReader) ResolveAndCheckFilePath(ctx context.Context, relPath string,
 }
 
 func (r FileReader) resolveAndCheckFilePath(ctx context.Context, relPath string, checkFunc func(resolvedPath string) error) (resolvedPath string, err error) {
-	if err := checkFunc(relPath); err != nil {
-		return "", err
-	}
-
 	resolvedPath, err = r.resolveFilePath(ctx, relPath, 0, checkFunc)
 	if err != nil {
 		return "", err

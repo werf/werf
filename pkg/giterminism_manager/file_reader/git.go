@@ -122,9 +122,9 @@ func (r FileReader) ValidateCommitFilePath(ctx context.Context, relPath string) 
 		}
 
 		if isTreeEntryExist {
-			return NewUncommittedFilesChangesError(resolvedRelPathRelativeToProjectDir)
+			return r.NewUncommittedFilesChangesError(resolvedRelPathRelativeToProjectDir)
 		} else {
-			return NewUncommittedFilesError(resolvedRelPathRelativeToProjectDir)
+			return r.NewUncommittedFilesError(resolvedRelPathRelativeToProjectDir)
 		}
 	}); err != nil {
 		return err
@@ -151,7 +151,7 @@ func (r FileReader) ExtraWindowsCheckFilesModifiedLocally(ctx context.Context, r
 	}
 
 	if len(uncommittedFilePathList) != 0 {
-		return NewUncommittedFilesChangesError(uncommittedFilePathList...)
+		return r.NewUncommittedFilesChangesError(uncommittedFilePathList...)
 	}
 
 	return nil
@@ -200,8 +200,8 @@ func (r FileReader) ExtraWindowsCheckFileModifiedLocally(ctx context.Context, re
 	}
 
 	if isTreeEntryExist {
-		return NewUncommittedFilesChangesError(relPath)
+		return r.NewUncommittedFilesChangesError(relPath)
 	} else {
-		return NewUncommittedFilesError(relPath)
+		return r.NewUncommittedFilesError(relPath)
 	}
 }

@@ -30,7 +30,7 @@ func isUncommittedFilesChangesError(err error) bool {
 	}
 }
 
-func NewFilesNotFoundInProjectDirectoryError(relPaths ...string) error {
+func (r FileReader) NewFilesNotFoundInProjectDirectoryError(relPaths ...string) error {
 	var errorMsg string
 	if len(relPaths) == 1 {
 		errorMsg = fmt.Sprintf("the file %q not found in the project directory", filepath.ToSlash(relPaths[0]))
@@ -43,7 +43,7 @@ func NewFilesNotFoundInProjectDirectoryError(relPaths ...string) error {
 	return FilesNotFoundInProjectDirectoryError{errors.NewError(errorMsg)}
 }
 
-func NewFilesNotFoundInProjectGitRepositoryError(relPaths ...string) error {
+func (r FileReader) NewFilesNotFoundInProjectGitRepositoryError(relPaths ...string) error {
 	var errorMsg string
 	if len(relPaths) == 1 {
 		errorMsg = fmt.Sprintf("the file %q not found in the project git repository", filepath.ToSlash(relPaths[0]))
@@ -56,37 +56,55 @@ func NewFilesNotFoundInProjectGitRepositoryError(relPaths ...string) error {
 	return FilesNotFoundInTheProjectGitRepositoryError{errors.NewError(errorMsg)}
 }
 
-func NewUncommittedFilesError(relPaths ...string) error {
+func (r FileReader) NewUncommittedFilesError(relPaths ...string) error {
+	return UncommittedFilesError{r.newUncommittedFilesErrorBase("", relPaths...)}
+}
+
+func (r FileReader) NewUncommittedFilesChangesError(relPaths ...string) error {
+	return UncommittedFilesChangesError{UncommittedFilesError{r.newUncommittedFilesErrorBase("changes", relPaths...)}}
+}
+
+func (r FileReader) newUncommittedFilesErrorBase(specificFileProperty string, relPaths ...string) error {
+	if specificFileProperty != "" {
+		specificFileProperty = " " + specificFileProperty
+	}
+
+	expectedAction := "must be committed"
+	if r.sharedOptions.Dev() {
+		expectedAction = "must be staged"
+	}
+
 	var errorMsg string
 	if len(relPaths) == 1 {
-		errorMsg = fmt.Sprintf("the file %q must be committed", filepath.ToSlash(relPaths[0]))
+		errorMsg = fmt.Sprintf("the file %q%s %s", filepath.ToSlash(relPaths[0]), specificFileProperty, expectedAction)
 	} else if len(relPaths) > 1 {
-		errorMsg = fmt.Sprintf("the following files must be committed:\n\n%s", prepareListOfFilesString(relPaths))
+		errorMsg = fmt.Sprintf("the following files%s %s:\n\n%s", specificFileProperty, expectedAction, prepareListOfFilesString(relPaths))
 	} else {
 		panic("unexpected condition")
 	}
 
-	return UncommittedFilesError{errors.NewError(errorMsg)}
-}
+	if r.sharedOptions.Dev() {
+		errorMsg = fmt.Sprintf(`%s
 
-func NewUncommittedFilesChangesError(relPaths ...string) error {
-	var errorMsg string
-	if len(relPaths) == 1 {
-		errorMsg = fmt.Sprintf("the file %q changes must be committed", filepath.ToSlash(relPaths[0]))
-	} else if len(relPaths) > 1 {
-		errorMsg = fmt.Sprintf("the following files changes must be committed:\n\n%s", prepareListOfFilesString(relPaths))
+To stage the changes use the following command: "git add %s".`, errorMsg, strings.Join(formatFilePathList(relPaths), " "))
 	} else {
-		panic("unexpected condition")
+		errorMsg = fmt.Sprintf(`%s
+
+You might also be interested in developer mode (activated with --dev option) that allows you to work with staged changes without doing redundant commits. Just use "git add <file>..." to include the changes that should be used.`, errorMsg)
 	}
 
 	return UncommittedFilesChangesError{errors.NewError(errorMsg)}
 }
 
 func prepareListOfFilesString(paths []string) string {
-	var result string
+	return " - " + strings.Join(formatFilePathList(paths), "\n - ")
+}
+
+func formatFilePathList(paths []string) []string {
+	var result []string
 	for _, path := range paths {
-		result += " - " + filepath.ToSlash(path) + "\n"
+		result = append(result, filepath.ToSlash(path))
 	}
 
-	return strings.TrimSuffix(result, "\n")
+	return result
 }
