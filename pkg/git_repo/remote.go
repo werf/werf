@@ -168,7 +168,7 @@ func (repo *Remote) Fetch(ctx context.Context) error {
 
 	cfg, err := ini.Load(cfgPath)
 	if err != nil {
-		return fmt.Errorf("cannot load repo `%s` config: %s", repo.String(), err)
+		return fmt.Errorf("cannot load repo %q config: %s", repo.String(), err)
 	}
 
 	remoteName := "origin"
@@ -178,7 +178,7 @@ func (repo *Remote) Fetch(ctx context.Context) error {
 		oldUrlKey.SetValue(repo.Url)
 		err := cfg.SaveTo(cfgPath)
 		if err != nil {
-			return fmt.Errorf("cannot update url of repo `%s`: %s", repo.String(), err)
+			return fmt.Errorf("cannot update url of repo %q: %s", repo.String(), err)
 		}
 	}
 
@@ -192,7 +192,7 @@ func (repo *Remote) Fetch(ctx context.Context) error {
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
-			return fmt.Errorf("cannot fetch remote `%s` of repo `%s`: %s", remoteName, repo.String(), err)
+			return fmt.Errorf("cannot fetch remote %q of repo %q: %s", remoteName, repo.String(), err)
 		}
 
 		return nil
@@ -239,7 +239,7 @@ func (repo *Remote) LatestBranchCommit(ctx context.Context, branch string) (stri
 		return "", err
 	}
 	if res == "" {
-		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
+		return "", fmt.Errorf("unknown branch %q of repo %q", branch, repo.String())
 	}
 
 	logboek.Context(ctx).Info().LogF("Using commit %q of repo %q branch %q\n", res, repo.String(), branch)

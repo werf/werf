@@ -37,7 +37,7 @@ func (repo *Base) TagCommit(ctx context.Context, branch string) (string, error) 
 func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return "", fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	cfg, err := repository.Config()
@@ -55,7 +55,7 @@ func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 func (repo *Base) isEmpty(ctx context.Context, repoPath string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return false, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	commitIter, err := repository.CommitObjects()
@@ -105,27 +105,27 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	fromHash, err := newHash(opts.FromCommit)
 	if err != nil {
-		return nil, fmt.Errorf("bad `from` commit hash `%s`: %s", opts.FromCommit, err)
+		return nil, fmt.Errorf("bad `from` commit hash %q: %s", opts.FromCommit, err)
 	}
 
 	_, err = repository.CommitObject(fromHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad `from` commit `%s`: %s", opts.FromCommit, err)
+		return nil, fmt.Errorf("bad `from` commit %q: %s", opts.FromCommit, err)
 	}
 
 	toHash, err := newHash(opts.ToCommit)
 	if err != nil {
-		return nil, fmt.Errorf("bad `to` commit hash `%s`: %s", opts.ToCommit, err)
+		return nil, fmt.Errorf("bad `to` commit hash %q: %s", opts.ToCommit, err)
 	}
 
 	toCommit, err := repository.CommitObject(toHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad `to` commit `%s`: %s", opts.ToCommit, err)
+		return nil, fmt.Errorf("bad `to` commit %q: %s", opts.ToCommit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(toCommit)
@@ -164,7 +164,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating patch between `%s` and `%s` commits: %s", opts.FromCommit, opts.ToCommit, err)
+		return nil, fmt.Errorf("error creating patch between %q and %q commits: %s", opts.FromCommit, opts.ToCommit, err)
 	}
 
 	err = fileHandler.Close()
@@ -243,17 +243,17 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	commitHash, err := newHash(opts.Commit)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit hash `%s`: %s", opts.Commit, err)
+		return nil, fmt.Errorf("bad commit hash %q: %s", opts.Commit, err)
 	}
 
 	commit, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit `%s`: %s", opts.Commit, err)
+		return nil, fmt.Errorf("bad commit %q: %s", opts.Commit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(commit)
@@ -290,7 +290,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating archive for commit `%s`: %s", opts.Commit, err)
+		return nil, fmt.Errorf("error creating archive for commit %q: %s", opts.Commit, err)
 	}
 
 	if err := fileHandler.Close(); err != nil {
@@ -307,19 +307,19 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, commit string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return false, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	commitHash, err := newHash(commit)
 	if err != nil {
-		return false, fmt.Errorf("bad commit hash `%s`: %s", commit, err)
+		return false, fmt.Errorf("bad commit hash %q: %s", commit, err)
 	}
 
 	_, err = repository.CommitObject(commitHash)
 	if err == plumbing.ErrObjectNotFound {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("bad commit `%s`: %s", commit, err)
+		return false, fmt.Errorf("bad commit %q: %s", commit, err)
 	}
 
 	return true, nil
@@ -328,7 +328,7 @@ func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, c
 func (repo *Base) tagsList(repoPath string) ([]string, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	tags, err := repository.Tags()
@@ -361,7 +361,7 @@ func (repo *Base) tagsList(repoPath string) ([]string, error) {
 func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
 	}
 
 	branches, err := repository.References()
