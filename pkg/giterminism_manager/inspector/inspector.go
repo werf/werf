@@ -27,6 +27,7 @@ type giterminismConfig interface {
 }
 
 type fileReader interface {
+	HandleValidateSubmodulesErr(err error) error
 	ExtraWindowsCheckFilesModifiedLocally(ctx context.Context, relPath ...string) error
 }
 

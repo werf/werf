@@ -320,34 +320,44 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoID)
 }
 
-type IsFileModifiedLocally struct {
-	StagedOnly   bool
-	WorktreeOnly bool
-}
-
-func (repo *Local) CheckIfFilePathInsideSubmodule(ctx context.Context, path string) (bool, bool, string, error) {
-	statusResult, err := repo.getMainStatusResult(ctx)
+func (repo *Local) ValidateSubmodules(ctx context.Context, matcher path_matcher.PathMatcher) error {
+	mainStatusResult, err := repo.getMainStatusResult(ctx)
 	if err != nil {
-		return false, false, "", err
+		return err
 	}
 
-	inside, unclean, submodulePath := statusResult.CheckIfFilePathInsideSubmodule(path)
-	return inside, unclean, submodulePath, nil
+	statusResult, err := mainStatusResult.Status(ctx, matcher)
+	if err != nil {
+		return err
+	}
+
+	return statusResult.ValidateSubmodules(repo.headCommit)
 }
 
 // IsFileModifiedLocally checks if the file has worktree or staged changes
-func (repo *Local) IsFileModifiedLocally(ctx context.Context, path string, options IsFileModifiedLocally) (bool, error) {
+func (repo *Local) IsFileModifiedLocally(ctx context.Context, path string, options status.FilterOptions) (bool, error) {
 	statusResult, err := repo.getMainStatusResult(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	isModified := statusResult.IsFileModified(path, status.FilterOptions{
-		StagingOnly:  options.StagedOnly,
-		WorktreeOnly: options.WorktreeOnly,
-	})
+	isModified := statusResult.IsFileModified(path, options)
 
 	return isModified, nil
+}
+
+func (repo *Local) GetModifiedLocallyFilePathList(ctx context.Context, matcher path_matcher.PathMatcher, options status.FilterOptions) ([]string, error) {
+	mainStatusResult, err := repo.getMainStatusResult(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	statusResult, err := mainStatusResult.Status(ctx, matcher)
+	if err != nil {
+		return nil, err
+	}
+
+	return statusResult.FilePathList(options), nil
 }
 
 // ListCommitFilesWithGlob returns the list of files by the glob, follows symlinks.
