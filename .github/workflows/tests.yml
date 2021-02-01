@@ -347,6 +347,7 @@ jobs:
         ./scripts/ci/integration_tests_registries_login.sh gcr
         ./scripts/ci/integration_tests_registries_login.sh harbor
         ./scripts/ci/integration_tests_registries_login.sh quay
+        ./scripts/ci/integration_tests_registries_login.sh github
 
         go build github.com/onsi/ginkgo/ginkgo
 
