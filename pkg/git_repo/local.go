@@ -325,6 +325,16 @@ type IsFileModifiedLocally struct {
 	WorktreeOnly bool
 }
 
+func (repo *Local) CheckIfFilePathInsideSubmodule(ctx context.Context, path string) (bool, bool, string, error) {
+	statusResult, err := repo.getMainStatusResult(ctx)
+	if err != nil {
+		return false, false, "", err
+	}
+
+	inside, unclean, submodulePath := statusResult.CheckIfFilePathInsideSubmodule(path)
+	return inside, unclean, submodulePath, nil
+}
+
 // IsFileModifiedLocally checks if the file has worktree or staged changes
 func (repo *Local) IsFileModifiedLocally(ctx context.Context, path string, options IsFileModifiedLocally) (bool, error) {
 	statusResult, err := repo.getMainStatusResult(ctx)
@@ -393,7 +403,7 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 
 	resolvedDir, err := repo.ResolveCommitFilePath(ctx, commit, dir)
 	if err != nil {
-		return fmt.Errorf("unable to resolve commit file path %q: %s", dir, err)
+		return fmt.Errorf("unable to resolve commit file %q: %s", dir, err)
 	}
 
 	result, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(resolvedDir, []string{}, true), LsTreeOptions{
@@ -405,7 +415,7 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 	}
 
 	return result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
-		notResolvedPath := strings.Replace(filepath.ToSlash(lsTreeEntry.FullFilepath), resolvedDir, dir, -1)
+		notResolvedPath := strings.Replace(filepath.ToSlash(lsTreeEntry.FullFilepath), resolvedDir, dir, 1)
 
 		if debugGiterminismManager() {
 			logboek.Context(ctx).Debug().LogF("-- %q %q\n", notResolvedPath, lsTreeEntry.Mode.String())
@@ -464,7 +474,7 @@ func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) (dat
 func (repo *Local) readCommitFile(ctx context.Context, commit, path string) ([]byte, error) {
 	resolvedPath, err := repo.ResolveCommitFilePath(ctx, commit, path)
 	if err != nil {
-		return nil, fmt.Errorf("unable to resolve commit file path %q: %s", path, err)
+		return nil, fmt.Errorf("unable to resolve commit file %q: %s", path, err)
 	}
 
 	return repo.ReadCommitTreeEntryContent(ctx, commit, resolvedPath)
@@ -526,7 +536,7 @@ func (repo *Local) checkCommitFileMode(ctx context.Context, commit string, path 
 			return false, nil
 		}
 
-		return false, fmt.Errorf("unable to resolve commit file path %q: %s", path, err)
+		return false, fmt.Errorf("unable to resolve commit file %q: %s", path, err)
 	}
 
 	lsTreeEntry, err := repo.getCommitTreeEntry(ctx, commit, resolvedPath)
@@ -543,8 +553,8 @@ func (repo *Local) checkCommitFileMode(ctx context.Context, commit string, path 
 	return false, nil
 }
 
-// ResolveAndCheckCommitFilePath does ResolveCommitFilePath with an additional check for each resolved path.
-func (repo *Local) ResolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkFunc func(resolvedPath string) error) (resolvedPath string, err error) {
+// ResolveAndCheckCommitFilePath does ResolveCommitFilePath with an additional check for each resolved link target.
+func (repo *Local) ResolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkSymlinkTargetFunc func(resolvedPath string) error) (resolvedPath string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ResolveAndCheckCommitFilePath %q %q", commit, path).
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -562,7 +572,7 @@ func (repo *Local) ResolveAndCheckCommitFilePath(ctx context.Context, commit, pa
 						}
 					}).
 					DoError(func() error {
-						err := checkFunc(resolvedPath)
+						err := checkSymlinkTargetFunc(resolvedPath)
 
 						if debugGiterminismManager() {
 							logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -582,23 +592,8 @@ func (repo *Local) ResolveAndCheckCommitFilePath(ctx context.Context, commit, pa
 	return
 }
 
-func (repo *Local) resolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkFunc func(relPath string) error) (resolvedPath string, err error) {
-	if err := checkFunc(path); err != nil {
-		return "", err
-	}
-
-	resolvedPath, err = repo.resolveCommitFilePath(ctx, commit, path, 0, checkFunc)
-	if err != nil {
-		return "", err
-	}
-
-	if resolvedPath != path {
-		if err := checkFunc(resolvedPath); err != nil {
-			return "", err
-		}
-	}
-
-	return resolvedPath, nil
+func (repo *Local) resolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkSymlinkTargetFunc func(relPath string) error) (resolvedPath string, err error) {
+	return repo.resolveCommitFilePath(ctx, commit, path, 0, checkSymlinkTargetFunc)
 }
 
 // ResolveCommitFilePath follows symbolic links and returns the resolved path if there is a corresponding tree entry in the repo.
@@ -634,7 +629,7 @@ func IsTreeEntryNotFoundInRepoErr(err error) bool {
 	}
 }
 
-func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
+func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path string, depth int, checkSymlinkTargetFunc func(resolvedPath string) error) (string, error) {
 	if depth > 1000 {
 		return "", fmt.Errorf("too many levels of symbolic links")
 	}
@@ -675,7 +670,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 		mode := lsTreeEntry.Mode
 		switch {
 		case mode.IsMalformed():
-			return "", treeEntryNotFoundInRepoErr{fmt.Errorf("commit tree entry %q not found in the repo", pathToResolve)}
+			return "", treeEntryNotFoundInRepoErr{fmt.Errorf("commit tree entry %q not found in the repository", pathToResolve)}
 		case mode == filemode.Symlink:
 			data, err := repo.ReadCommitTreeEntryContent(ctx, commit, pathToResolve)
 			if err != nil {
@@ -684,21 +679,21 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 
 			link := string(data)
 			if pathPkg.IsAbs(link) {
-				return "", treeEntryNotFoundInRepoErr{fmt.Errorf("commit tree entry %q not found in the repo", pathToResolve)}
+				return "", treeEntryNotFoundInRepoErr{fmt.Errorf("commit tree entry %q not found in the repository", link)}
 			}
 
 			resolvedLink := pathPkg.Join(pathPkg.Dir(pathToResolve), link)
 			if resolvedLink == ".." || strings.HasPrefix(resolvedLink, "../") {
-				return "", treeEntryNotFoundInRepoErr{fmt.Errorf("commit tree entry %q not found in the repo", pathToResolve)}
+				return "", treeEntryNotFoundInRepoErr{fmt.Errorf("commit tree entry %q not found in the repository", link)}
 			}
 
-			if checkFunc != nil {
-				if err := checkFunc(resolvedLink); err != nil {
+			if checkSymlinkTargetFunc != nil {
+				if err := checkSymlinkTargetFunc(resolvedLink); err != nil {
 					return "", err
 				}
 			}
 
-			resolvedTarget, err := repo.resolveCommitFilePath(ctx, commit, resolvedLink, depth, checkFunc)
+			resolvedTarget, err := repo.resolveCommitFilePath(ctx, commit, resolvedLink, depth, checkSymlinkTargetFunc)
 			if err != nil {
 				return "", err
 			}

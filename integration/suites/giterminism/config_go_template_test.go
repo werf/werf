@@ -94,7 +94,7 @@ config:
 					addFiles:               []string{".werf/file"},
 					commitFiles:            []string{".werf/file"},
 					changeFilesAfterCommit: []string{".werf/file"},
-					expectedErrSubstring:   `error calling Get: {{ .Files.Get ".werf/file" }}: the file ".werf/file" changes must be committed`,
+					expectedErrSubstring:   `error calling Get: {{ .Files.Get ".werf/file" }}: the file ".werf/file" must be committed`,
 				}),
 			)
 		})
@@ -152,7 +152,7 @@ config:
 						addFiles:               []string{".werf/file1"},
 						commitFiles:            []string{".werf/file1"},
 						changeFilesAfterCommit: []string{".werf/file1"},
-						expectedErrSubstring:   `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the file ".werf/file1" changes must be committed`,
+						expectedErrSubstring:   `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the file ".werf/file1" must be committed`,
 					},
 				}),
 				Entry("config.goTemplateRendering.allowUncommittedFiles (.werf/file1) covers the not committed file", entry{
@@ -225,15 +225,14 @@ config:
 				allowEnvVariablesRegexp: "NAME",
 				addEnvName:              "NAME",
 			}),
-			Entry("config.goTemplateRendering.allowEnvVariables (NA*) does not cover the env name", entry{
-				allowEnvVariablesRegexp: "NA*",
+			Entry("config.goTemplateRendering.allowEnvVariables (NA.*) does not cover the env name", entry{
+				allowEnvVariablesRegexp: "NA.*",
 				addEnvName:              "NAME",
 				expectedErrSubstring:    `error calling env: the configuration with external dependency found in the werf config: env name "NAME" not allowed`,
 			}),
-			Entry("config.goTemplateRendering.allowEnvVariables (NA*) does not cover the env name", entry{
-				allowEnvVariablesRegexp: "NA*",
+			Entry("config.goTemplateRendering.allowEnvVariables (/NA.*/) covers the env name", entry{
+				allowEnvVariablesRegexp: "/NA.*/",
 				addEnvName:              "NAME",
-				expectedErrSubstring:    `error calling env: the configuration with external dependency found in the werf config: env name "NAME" not allowed`,
 			}),
 		)
 	})

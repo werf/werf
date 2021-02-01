@@ -155,7 +155,7 @@ config:
 					addDockerfile:               true,
 					commitDockerfile:            true,
 					changeDockerfileAfterCommit: true,
-					expectedErrSubstring:        `unable to read dockerfile "Dockerfile": the file "Dockerfile" changes must be committed`,
+					expectedErrSubstring:        `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
 				}),
 				Entry(`config.dockerfile.allowUncommitted (Dockerfile) covers the uncommitted dockerfile "Dockerfile"`, entry{
 					configDockerfileAllowUncommittedGlob: "Dockerfile",
@@ -280,7 +280,7 @@ config:
 						"Dockerfile": "a",
 						"a":          dockerfilePath,
 					},
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "dir/Dockerfile" must be committed`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": symlink "Dockerfile" check failed: the file "dir/Dockerfile" must be committed`,
 				}),
 				Entry("the symlink to the config file changed after commit: werf.yaml (changed) -> a -> dir/werf.yaml", entry{
 					commitDockerfile: true,
@@ -292,7 +292,7 @@ config:
 					changeSymlinksAfterCommit: map[string]string{
 						"Dockerfile": dockerfilePath,
 					},
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" changes must be committed`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
 				}),
 				Entry("config.allowUncommitted (Dockerfile) does not cover uncommitted files", entry{
 					skipOnWindows:         true,
@@ -302,7 +302,7 @@ config:
 						"Dockerfile": "a",
 						"a":          dockerfilePath,
 					},
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": accepted symlink "Dockerfile" check failed: the link target "a" should be also accepted by giterminism config`,
 				}),
 				Entry("config.allowUncommitted (Dockerfile, a) does not cover uncommitted files", entry{
 					skipOnWindows:         true,
@@ -312,7 +312,7 @@ config:
 						"Dockerfile": "a",
 						"a":          dockerfilePath,
 					},
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": accepted symlink "Dockerfile" check failed: the link target "dir/Dockerfile" should be also accepted by giterminism config`,
 				}),
 				Entry("config.allowUncommitted (Dockerfile, a, dir/Dockerfile) covers uncommitted files", entry{
 					skipOnWindows:         true,
@@ -400,7 +400,7 @@ config:
 				addDockerignore:               true,
 				commitDockerignore:            true,
 				changeDockerignoreAfterCommit: true,
-				expectedErrSubstring:          `unable to read dockerignore file ".dockerignore": the file ".dockerignore" changes must be committed`,
+				expectedErrSubstring:          `unable to read dockerignore file ".dockerignore": the file ".dockerignore" must be committed`,
 			}),
 			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (.dockerignore) covers the uncommitted dockerignore ".dockerignore"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: ".dockerignore",

@@ -53,13 +53,7 @@ func (r FileReader) ReadGiterminismConfig(ctx context.Context) (data []byte, err
 }
 
 func (r FileReader) readGiterminismConfig(ctx context.Context) ([]byte, error) {
-	if err := r.CheckConfigurationFileExistence(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
-		return false, nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return r.ReadAndValidateConfigurationFile(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
+	return r.ReadAndCheckConfigurationFile(ctx, GiterminismConfigName, func(relPath string) (bool, error) {
 		return false, nil
 	})
 }

@@ -8,67 +8,57 @@ import (
 	"github.com/werf/werf/pkg/giterminism_manager/errors"
 )
 
-type FilesNotFoundInProjectDirectoryError struct {
-	error
-}
-type FilesNotFoundInTheProjectGitRepositoryError struct {
-	error
-}
 type UncommittedFilesError struct {
 	error
 }
-type UncommittedFilesChangesError struct {
+type FileNotAcceptedError struct {
+	error
+}
+type FileNotFoundInProjectDirectoryError struct {
+	error
+}
+type FileNotFoundInProjectRepositoryError struct {
 	error
 }
 
-func isUncommittedFilesChangesError(err error) bool {
+func IsFileNotFoundInProjectDirectoryError(err error) bool {
 	switch err.(type) {
-	case UncommittedFilesChangesError:
+	case FileNotFoundInProjectDirectoryError:
 		return true
 	default:
 		return false
 	}
 }
 
-func (r FileReader) NewFilesNotFoundInProjectDirectoryError(relPaths ...string) error {
-	var errorMsg string
-	if len(relPaths) == 1 {
-		errorMsg = fmt.Sprintf("the file %q not found in the project directory", filepath.ToSlash(relPaths[0]))
-	} else if len(relPaths) > 1 {
-		errorMsg = fmt.Sprintf("the following files not found in the project directory:\n\n%s", prepareListOfFilesString(relPaths))
-	} else {
-		panic("unexpected condition")
-	}
-
-	return FilesNotFoundInProjectDirectoryError{errors.NewError(errorMsg)}
+func (r FileReader) NewFileNotFoundInProjectDirectoryError(relPath string) error {
+	return FileNotFoundInProjectDirectoryError{errors.NewError(fmt.Sprintf("the file %q not found in the project directory", filepath.ToSlash(relPath)))}
 }
 
-func (r FileReader) NewFilesNotFoundInProjectGitRepositoryError(relPaths ...string) error {
-	var errorMsg string
-	if len(relPaths) == 1 {
-		errorMsg = fmt.Sprintf("the file %q not found in the project git repository", filepath.ToSlash(relPaths[0]))
-	} else if len(relPaths) > 1 {
-		errorMsg = fmt.Sprintf("the following files not found in the project git repository:\n\n%s", prepareListOfFilesString(relPaths))
-	} else {
-		panic("unexpected condition")
-	}
+func (r FileReader) NewFileNotFoundInProjectRepositoryError(relPath string) error {
+	return FileNotFoundInProjectRepositoryError{errors.NewError(fmt.Sprintf("the file %q not found in the project git repository", filepath.ToSlash(relPath)))}
+}
 
-	return FilesNotFoundInTheProjectGitRepositoryError{errors.NewError(errorMsg)}
+func (r FileReader) NewSymlinkResolveFailedError(link string, resolveErr error) error {
+	return errors.NewError(fmt.Sprintf("accepted symlink %q check failed: %s", filepath.ToSlash(link), resolveErr))
+}
+
+func (r FileReader) NewUncommittedSubmoduleChangesError(submodulePath string) error {
+	errorMsg := fmt.Sprintf("the submodule %q has modified files and these changes must be committed or discarded. Do not forget to push new changes to the submodule remote", filepath.ToSlash(submodulePath))
+
+	return errors.NewError(errorMsg)
+}
+
+func (r FileReader) NewUncleanSubmoduleError(submodulePath string) error {
+	expectedAction := "must be committed"
+	if r.sharedOptions.Dev() {
+		expectedAction = "must be staged"
+	}
+	errorMsg := fmt.Sprintf("the submodule %q is not clean and %s. Do not forget to push a new commit to the submodule remote If this commit exists only locally", filepath.ToSlash(submodulePath), expectedAction)
+
+	return r.newUncommittedFilesErrorBase(errorMsg, filepath.ToSlash(submodulePath))
 }
 
 func (r FileReader) NewUncommittedFilesError(relPaths ...string) error {
-	return UncommittedFilesError{r.newUncommittedFilesErrorBase("", relPaths...)}
-}
-
-func (r FileReader) NewUncommittedFilesChangesError(relPaths ...string) error {
-	return UncommittedFilesChangesError{UncommittedFilesError{r.newUncommittedFilesErrorBase("changes", relPaths...)}}
-}
-
-func (r FileReader) newUncommittedFilesErrorBase(specificFileProperty string, relPaths ...string) error {
-	if specificFileProperty != "" {
-		specificFileProperty = " " + specificFileProperty
-	}
-
 	expectedAction := "must be committed"
 	if r.sharedOptions.Dev() {
 		expectedAction = "must be staged"
@@ -76,24 +66,28 @@ func (r FileReader) newUncommittedFilesErrorBase(specificFileProperty string, re
 
 	var errorMsg string
 	if len(relPaths) == 1 {
-		errorMsg = fmt.Sprintf("the file %q%s %s", filepath.ToSlash(relPaths[0]), specificFileProperty, expectedAction)
+		errorMsg = fmt.Sprintf("the file %q %s", filepath.ToSlash(relPaths[0]), expectedAction)
 	} else if len(relPaths) > 1 {
-		errorMsg = fmt.Sprintf("the following files%s %s:\n\n%s", specificFileProperty, expectedAction, prepareListOfFilesString(relPaths))
+		errorMsg = fmt.Sprintf("the following files %s:\n\n%s", expectedAction, prepareListOfFilesString(relPaths))
 	} else {
 		panic("unexpected condition")
 	}
 
+	return UncommittedFilesError{r.newUncommittedFilesErrorBase(errorMsg, strings.Join(formatFilePathList(relPaths), " "))}
+}
+
+func (r FileReader) newUncommittedFilesErrorBase(errorMsg string, gitAddArg string) error {
 	if r.sharedOptions.Dev() {
 		errorMsg = fmt.Sprintf(`%s
 
-To stage the changes use the following command: "git add %s".`, errorMsg, strings.Join(formatFilePathList(relPaths), " "))
+To stage the changes use the following command: "git add %s".`, errorMsg, gitAddArg)
 	} else {
 		errorMsg = fmt.Sprintf(`%s
 
 You might also be interested in developer mode (activated with --dev option) that allows you to work with staged changes without doing redundant commits. Just use "git add <file>..." to include the changes that should be used.`, errorMsg)
 	}
 
-	return UncommittedFilesChangesError{errors.NewError(errorMsg)}
+	return UncommittedFilesError{errors.NewError(errorMsg)}
 }
 
 func prepareListOfFilesString(paths []string) string {

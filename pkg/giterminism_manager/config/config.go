@@ -116,16 +116,26 @@ type goTemplateRendering struct {
 
 func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
 	for _, pattern := range r.AllowEnvVariables {
-		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
-			expr := fmt.Sprintf("^%s$", pattern[1:len(pattern)-1])
-			r, err := regexp.Compile(expr)
-			if err != nil {
-				return false, err
-			}
+		match, err := func() (bool, error) {
+			if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
+				expr := fmt.Sprintf("^%s$", pattern[1:len(pattern)-1])
+				r, err := regexp.Compile(expr)
+				if err != nil {
+					return false, err
+				}
 
-			return r.MatchString(name), nil
-		} else {
-			return pattern == name, nil
+				return r.MatchString(name), nil
+			} else {
+				return pattern == name, nil
+			}
+		}()
+
+		if err != nil {
+			return false, err
+		}
+
+		if match {
+			return true, nil
 		}
 	}
 

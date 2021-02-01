@@ -87,7 +87,7 @@ config:
 				addConfig:               true,
 				commitConfig:            true,
 				changeConfigAfterCommit: true,
-				expectedErrSubstring:    `unable to read werf config: the file "werf.yaml" changes must be committed`,
+				expectedErrSubstring:    `unable to read werf config: the file "werf.yaml" must be committed`,
 			}),
 			Entry("config.allowUncommitted allows not committed config file", entry{
 				allowUncommitted: true,
@@ -183,7 +183,7 @@ config:
 					"werf.yaml": "a",
 					"a":         configFilePath,
 				},
-				expectedErrSubstring: `unable to read werf config: the file "dir/werf.yaml" must be committed`,
+				expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: the file "dir/werf.yaml" must be committed`,
 			}),
 			Entry("the symlink to the config file not committed: werf.yaml (not committed) -> a (not committed) -> dir/werf.yaml", entry{
 				addConfigFile:    true,
@@ -204,7 +204,7 @@ config:
 				addSymlinks: map[string]string{
 					"a": configFilePath,
 				},
-				expectedErrSubstring: ` unable to read werf config: the file "a" must be committed`,
+				expectedErrSubstring: ` unable to read werf config: symlink "werf.yaml" check failed: the file "a" must be committed`,
 			}),
 			Entry("the symlink to the config file changed after commit: werf.yaml (changed) -> a -> dir/werf.yaml", entry{
 				addConfigFile:    true,
@@ -216,7 +216,7 @@ config:
 				changeSymlinksAfterCommit: map[string]string{
 					"werf.yaml": configFilePath,
 				},
-				expectedErrSubstring: `unable to read werf config: the file "werf.yaml" changes must be committed`,
+				expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
 			}),
 			Entry("config.allowUncommitted allows not committed config file", entry{
 				skipOnWindows:        true,
@@ -233,18 +233,18 @@ config:
 			}),
 			Entry("the broken symlink in fs: werf.yaml -> werf.yaml", entry{
 				skipOnWindows:        true,
-				addAndCommitSymlinks: map[string]string{"werf.yaml": "werf.yaml"},
-				expectedErrSubstring: `unable to read werf config: unable to resolve file path "werf.yaml": too many levels of symbolic links`,
+				allowUncommitted:     true,
+				addSymlinks:          map[string]string{"werf.yaml": "werf.yaml"},
+				expectedErrSubstring: `unable to read werf config: accepted symlink "werf.yaml" check failed: too many levels of symbolic links`,
 			}),
 			Entry("the broken symlink in commit: werf.yaml -> werf.yaml", entry{
-				addAndCommitSymlinks:      map[string]string{"werf.yaml": "werf.yaml"},
-				changeSymlinksAfterCommit: map[string]string{"werf.yaml": configFilePath},
-				expectedErrSubstring:      `unable to read werf config: unable to resolve commit file path "werf.yaml": too many levels of symbolic links`,
+				addAndCommitSymlinks: map[string]string{"werf.yaml": "werf.yaml"},
+				expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: too many levels of symbolic links`,
 			}),
 			Entry("the linked file outside the project repository: werf.yaml -> a -> ../../../werf.yaml", entry{
 				skipOnWindows:        true,
 				addAndCommitSymlinks: map[string]string{"werf.yaml": "a", "a": "../../../werf.yaml"},
-				expectedErrSubstring: `unable to read werf config: the file "werf.yaml" not found in the project git repository`,
+				expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: commit tree entry "../../../werf.yaml" not found in the repository`,
 			}),
 		)
 	})
