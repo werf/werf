@@ -52,10 +52,7 @@ func TestYamlEncoder_doYamlData(t *testing.T) {
   affinity: {}
 `)
 
-	enc, err := NewYamlEncoder(&EncoderMock{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	enc := NewYamlEncoder(&EncoderMock{})
 
 	encodedData, err := enc.EncryptYamlData(valuesData)
 	if err != nil {
