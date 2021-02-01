@@ -144,6 +144,10 @@
   opacity: 1;
 }
 
+.overview__framework-action img.flip-horizontal {
+    transform: scaleX(-1);
+}
+
 .overview__framework-action {
   display: inline-block;
   height: 30px;
