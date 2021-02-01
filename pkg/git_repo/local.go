@@ -325,6 +325,16 @@ type IsFileModifiedLocally struct {
 	WorktreeOnly bool
 }
 
+func (repo *Local) CheckIfFilePathInsideSubmodule(ctx context.Context, path string) (bool, bool, string, error) {
+	statusResult, err := repo.getMainStatusResult(ctx)
+	if err != nil {
+		return false, false, "", err
+	}
+
+	inside, unclean, submodulePath := statusResult.CheckIfFilePathInsideSubmodule(path)
+	return inside, unclean, submodulePath, nil
+}
+
 // IsFileModifiedLocally checks if the file has worktree or staged changes
 func (repo *Local) IsFileModifiedLocally(ctx context.Context, path string, options IsFileModifiedLocally) (bool, error) {
 	statusResult, err := repo.getMainStatusResult(ctx)

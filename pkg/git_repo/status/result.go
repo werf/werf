@@ -2,13 +2,15 @@ package status
 
 import (
 	"context"
+	"path"
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
+
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/util"
 )
 
 type Result struct {
@@ -21,9 +23,7 @@ type Result struct {
 
 type SubmoduleResult struct {
 	*Result
-	isNotInitialized bool
-	isNotClean       bool
-	currentCommit    string
+	*git.SubmoduleStatus
 }
 
 type FilterOptions struct {
@@ -65,44 +65,17 @@ func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatche
 				logboek.Context(ctx).Debug().LogF("Submodule was checking: %s\n", submoduleResult.repositoryFullFilepath)
 			}
 
-			if submoduleResult.isNotInitialized {
-				res.submoduleResults = append(res.submoduleResults, submoduleResult)
-
-				if debugProcess() {
-					logboek.Context(ctx).Debug().LogFWithCustomStyle(
-						style.Get(style.FailName),
-						"Submodule is not initialized: path %s will be added to checksum\n",
-						submoduleResult.repositoryFullFilepath,
-					)
-				}
-				continue
-			}
-
-			if submoduleResult.isNotClean {
-				if debugProcess() {
-					logboek.Context(ctx).Debug().LogFWithCustomStyle(
-						style.Get(style.FailName),
-						"Submodule is not clean: current commit %s will be added to checksum\n",
-						submoduleResult.currentCommit,
-					)
-				}
-			}
-
 			newResult, err := submoduleResult.Status(ctx, pathMatcher)
 			if err != nil {
 				return nil, err
 			}
 
 			newSubmoduleResult := &SubmoduleResult{
-				Result:           newResult,
-				isNotInitialized: false,
-				isNotClean:       submoduleResult.isNotClean,
-				currentCommit:    submoduleResult.currentCommit,
+				Result:          newResult,
+				SubmoduleStatus: submoduleResult.SubmoduleStatus,
 			}
 
-			if !newSubmoduleResult.isEmpty(FilterOptions{}) {
-				res.submoduleResults = append(res.submoduleResults, newSubmoduleResult)
-			}
+			res.submoduleResults = append(res.submoduleResults, newSubmoduleResult)
 		}
 	}
 
@@ -135,26 +108,41 @@ func (r *Result) filteredFilePathList(options FilterOptions) []string {
 	return result
 }
 
-func (r *Result) IsEmpty(options FilterOptions) bool {
-	return len(r.filteredFilePathList(options)) == 0 && func() bool {
-		for _, sr := range r.submoduleResults {
-			if !sr.IsEmpty(options) {
-				return false
+func (r *Result) CheckIfFilePathInsideSubmodule(relPath string) (bool, bool, string) {
+	for _, sr := range r.submoduleResults {
+		if util.IsSubpathOfBasePath(filepath.ToSlash(sr.repositoryFullFilepath), filepath.ToSlash(relPath)) {
+			submodulePath := sr.repositoryFullFilepath
+
+			if sr.Current != sr.Expected {
+				return true, true, submodulePath
 			}
+
+			inside, unclean, nestedSubmodulePath := sr.CheckIfFilePathInsideSubmodule(relPath)
+			if inside {
+				return true, unclean, nestedSubmodulePath
+			}
+
+			return true, false, submodulePath
 		}
+	}
 
-		return true
-	}()
-}
-
-func (sr *SubmoduleResult) isEmpty(options FilterOptions) bool {
-	return sr.Result.IsEmpty(options) && !sr.isNotClean && !sr.isNotInitialized
+	return false, false, ""
 }
 
 func (r *Result) IsFileModified(relPath string, options FilterOptions) bool {
-	for _, p := range r.FilePathList(options) {
-		if filepath.ToSlash(p) == filepath.ToSlash(relPath) {
+	for _, filePath := range r.filteredFilePathList(options) {
+		if path.Join(r.repositoryFullFilepath, filePath) == filepath.ToSlash(relPath) {
 			return true
+		}
+	}
+
+	for _, sr := range r.submoduleResults {
+		if util.IsSubpathOfBasePath(filepath.ToSlash(sr.repositoryFullFilepath), filepath.ToSlash(relPath)) {
+			if sr.Current != sr.Expected {
+				return true
+			}
+
+			return sr.IsFileModified(relPath, options)
 		}
 	}
 

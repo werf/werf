@@ -42,6 +42,22 @@ func (r FileReader) NewSymlinkResolveFailedError(link string, resolveErr error) 
 	return errors.NewError(fmt.Sprintf("accepted symlink %q check failed: %s", filepath.ToSlash(link), resolveErr))
 }
 
+func (r FileReader) NewUncommittedSubmoduleChangesError(submodulePath string) error {
+	errorMsg := fmt.Sprintf("the submodule %q has modified files and these changes must be committed or discarded. Do not forget to push new changes to the submodule remote", filepath.ToSlash(submodulePath))
+
+	return errors.NewError(errorMsg)
+}
+
+func (r FileReader) NewUncleanSubmoduleError(submodulePath string) error {
+	expectedAction := "must be committed"
+	if r.sharedOptions.Dev() {
+		expectedAction = "must be staged"
+	}
+	errorMsg := fmt.Sprintf("the submodule %q is not clean and %s. Do not forget to push a new commit to the submodule remote If this commit exists only locally", filepath.ToSlash(submodulePath), expectedAction)
+
+	return r.newUncommittedFilesErrorBase(errorMsg, filepath.ToSlash(submodulePath))
+}
+
 func (r FileReader) NewUncommittedFilesError(relPaths ...string) error {
 	expectedAction := "must be committed"
 	if r.sharedOptions.Dev() {
@@ -57,10 +73,14 @@ func (r FileReader) NewUncommittedFilesError(relPaths ...string) error {
 		panic("unexpected condition")
 	}
 
+	return UncommittedFilesError{r.newUncommittedFilesErrorBase(errorMsg, strings.Join(formatFilePathList(relPaths), " "))}
+}
+
+func (r FileReader) newUncommittedFilesErrorBase(errorMsg string, gitAddArg string) error {
 	if r.sharedOptions.Dev() {
 		errorMsg = fmt.Sprintf(`%s
 
-To stage the changes use the following command: "git add %s".`, errorMsg, strings.Join(formatFilePathList(relPaths), " "))
+To stage the changes use the following command: "git add %s".`, errorMsg, gitAddArg)
 	} else {
 		errorMsg = fmt.Sprintf(`%s
 

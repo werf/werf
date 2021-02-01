@@ -19,7 +19,49 @@ func (r FileReader) relativeToGitPath(relPath string) string {
 	return filepath.Join(r.sharedOptions.RelativeToGitProjectDir(), relPath)
 }
 
-func (r FileReader) IsCommitFileModifiedLocally(ctx context.Context, relPath string) (bool, error) {
+func (r FileReader) CheckIfCommitFilePathInsideUncleanSubmodule(ctx context.Context, relPath string) (inside bool, unclean bool, submodulePath string, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("CheckIfCommitFilePathInsideUncleanSubmodule %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			inside, unclean, submodulePath, err = r.checkIfCommitFilePathInsideUncleanSubmodule(ctx, relPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("inside: %v\nunclean: %v\nsubmodulePath: %q\nerr: %q\n", inside, unclean, submodulePath, err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) checkIfCommitFilePathInsideUncleanSubmodule(ctx context.Context, relPath string) (bool, bool, string, error) {
+	return r.sharedOptions.LocalGitRepo().CheckIfFilePathInsideSubmodule(ctx, r.relativeToGitPath(relPath))
+}
+
+func (r FileReader) IsCommitFileModifiedLocally(ctx context.Context, relPath string) (modified bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsCommitFileModifiedLocally %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			modified, err = r.isCommitFileModifiedLocally(ctx, relPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("modified: %v\nerr: %q\n", modified, err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) isCommitFileModifiedLocally(ctx context.Context, relPath string) (bool, error) {
 	return r.sharedOptions.LocalGitRepo().IsFileModifiedLocally(ctx, r.relativeToGitPath(relPath), git_repo.IsFileModifiedLocally{
 		WorktreeOnly: r.sharedOptions.Dev(),
 	})
@@ -145,6 +187,28 @@ func (r FileReader) checkFileModifiedLocally(ctx context.Context, relPath string
 	isFileModified, err := r.IsCommitFileModifiedLocally(ctx, relPath)
 	if err != nil {
 		return err
+	}
+
+	inside, unclean, submodulePath, err := r.CheckIfCommitFilePathInsideUncleanSubmodule(ctx, relPath)
+	if err != nil {
+		return err
+	}
+
+	if inside {
+		exist, err := util.FileExists(filepath.Join(r.sharedOptions.LocalGitRepo().WorkTreeDir, submodulePath, ".git"))
+		if err != nil {
+			return err
+		}
+
+		if !exist {
+			return nil
+		}
+
+		if unclean {
+			return r.NewUncleanSubmoduleError(submodulePath)
+		} else if isFileModified {
+			return r.NewUncommittedSubmoduleChangesError(submodulePath)
+		}
 	}
 
 	if !isFileModified {

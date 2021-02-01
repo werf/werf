@@ -10,7 +10,6 @@ import (
 	"github.com/go-git/go-git/v5"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/path_matcher"
 )
@@ -103,25 +102,6 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 			submoduleResult := &SubmoduleResult{}
 			submoduleRepository, err := submodule.Repository()
 			if err != nil {
-				if err == git.ErrSubmoduleNotInitialized {
-					if debugProcess() {
-						logboek.Context(ctx).Debug().LogFWithCustomStyle(
-							style.Get(style.FailName),
-							"Submodule is not initialized: path %s will be added to checksum\n",
-							submoduleFullFilepath,
-						)
-					}
-
-					submoduleResult.isNotInitialized = true
-					submoduleResult.Result = &Result{
-						repositoryAbsFilepath:  submoduleRepositoryAbsFilepath,
-						repositoryFullFilepath: submoduleFullFilepath,
-					}
-
-					result.submoduleResults = append(result.submoduleResults, submoduleResult)
-					continue
-				}
-
 				return nil, fmt.Errorf("getting submodule repository failed (%s): %s", submoduleFullFilepath, err)
 			}
 
@@ -131,14 +111,11 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 			}
 
 			if !submoduleStatus.IsClean() {
-				submoduleResult.isNotClean = true
-				submoduleResult.currentCommit = submoduleStatus.Current.String()
-
 				if debugProcess() {
-					logboek.Context(ctx).Debug().LogFWithCustomStyle(
-						style.Get(style.FailName),
-						"Submodule is not clean: current commit %s will be added to checksum\n",
+					logboek.Context(ctx).Debug().LogF(
+						"Submodule is not clean: current commit %q expected %q\n",
 						submoduleStatus.Current,
+						submoduleStatus.Expected,
 					)
 				}
 			}
@@ -148,11 +125,10 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 				return nil, err
 			}
 
+			submoduleResult.SubmoduleStatus = submoduleStatus
 			submoduleResult.Result = sResult
 
-			if !submoduleResult.isEmpty(FilterOptions{}) {
-				result.submoduleResults = append(result.submoduleResults, submoduleResult)
-			}
+			result.submoduleResults = append(result.submoduleResults, submoduleResult)
 		}
 	}
 
