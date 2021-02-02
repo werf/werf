@@ -148,4 +148,4 @@ replace github.com/google/go-containerregistry => github.com/alexey-igrychev/go-
 
 replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200923113424-67dcadf45d7b
 
-replace k8s.io/helm => github.com/werf/helm v0.0.0-20201109094041-bd3efc6bde23
+replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202092607-295e772eabb1
