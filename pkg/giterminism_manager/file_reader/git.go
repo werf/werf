@@ -169,19 +169,25 @@ func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context,
 		}
 	}
 
-	resolvedPath, err := r.ResolveAndCheckCommitFilePath(ctx, relPath, func(resolvedRelPath string) error { // check each symlink target
-		resolvedRelPathRelativeToProjectDir := util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), resolvedRelPath)
+	if err := func() error {
+		resolvedPath, err := r.ResolveAndCheckCommitFilePath(ctx, relPath, func(resolvedRelPath string) error { // check each symlink target
+			resolvedRelPathRelativeToProjectDir := util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), resolvedRelPath)
 
-		return r.checkFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
-	})
-	if err != nil {
-		return fmt.Errorf("symlink %q check failed: %s", relPath, err)
-	}
-
-	if resolvedPath != relPath { // check resolved path
-		if err := r.checkFileModifiedLocally(ctx, relPath); err != nil {
-			return fmt.Errorf("symlink %q check failed: %s", relPath, err)
+			return r.checkFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
+		})
+		if err != nil {
+			return err
 		}
+
+		if resolvedPath != relPath { // check resolved path
+			if err := r.checkFileModifiedLocally(ctx, relPath); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}(); err != nil {
+		return fmt.Errorf("symlink %q check failed: %s", relPath, err)
 	}
 
 	return nil

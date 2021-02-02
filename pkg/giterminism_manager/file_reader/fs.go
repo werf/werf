@@ -13,6 +13,8 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
+
+	"github.com/werf/werf/pkg/giterminism_manager/errors"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -204,31 +206,41 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 		return FileNotAcceptedError{fmt.Errorf("the file %q not accepted by giterminism config", relPath)}
 	}
 
-	resolvedPath, err := r.ResolveAndCheckFilePath(ctx, relPath, func(resolvedRelPath string) error {
-		accepted, err := isFileAcceptedCheckFunc(resolvedRelPath)
+	if err := func() error {
+		notAcceptedError := func(resolvedPath string) error {
+			return errors.NewError(fmt.Sprintf("the link target %q should be also accepted by giterminism config", resolvedPath))
+		}
+
+		resolvedPath, err := r.ResolveAndCheckFilePath(ctx, relPath, func(resolvedRelPath string) error {
+			accepted, err := isFileAcceptedCheckFunc(resolvedRelPath)
+			if err != nil {
+				return err
+			}
+
+			if !accepted {
+				return notAcceptedError(resolvedRelPath)
+			}
+
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 
-		if !accepted {
-			return fmt.Errorf("the link target %q should be also accepted by giterminism config", resolvedRelPath)
+		if resolvedPath != relPath {
+			accepted, err := isFileAcceptedCheckFunc(relPath)
+			if err != nil {
+				return err
+			}
+
+			if !accepted {
+				return notAcceptedError(resolvedPath)
+			}
 		}
 
 		return nil
-	})
-	if err != nil {
-		return r.NewSymlinkResolveFailedError(relPath, err)
-	}
-
-	if resolvedPath != relPath {
-		accepted, err := isFileAcceptedCheckFunc(relPath)
-		if err != nil {
-			return err
-		}
-
-		if !accepted {
-			return r.NewSymlinkResolveFailedError(relPath, fmt.Errorf("the link target %q should be also accepted by giterminism config", resolvedPath))
-		}
+	}(); err != nil {
+		return fmt.Errorf("accepted symlink %q check failed: %s", relPath, err)
 	}
 
 	return nil
