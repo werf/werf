@@ -61,6 +61,9 @@ func fileCreateOrAppend(relPath, content string) {
 }
 
 func symlinkFileCreateOrModify(relPath string, link string) {
+	relPath = filepath.ToSlash(relPath)
+	link = filepath.ToSlash(link)
+
 	symlinkFileCreateOrModifyAndAdd(relPath, link)
 
 	utils.RunSucceedCommand(
@@ -71,6 +74,9 @@ func symlinkFileCreateOrModify(relPath string, link string) {
 }
 
 func symlinkFileCreateOrModifyAndAdd(relPath string, link string) {
+	relPath = filepath.ToSlash(relPath)
+	link = filepath.ToSlash(link)
+
 	hashBytes, _ := utils.RunCommandWithOptions(
 		SuiteData.TestDirPath,
 		"git",
@@ -92,4 +98,12 @@ func symlinkFileCreateOrModifyAndAdd(relPath string, link string) {
 		"git",
 		"checkout", relPath,
 	)
+}
+
+func getLinkTo(linkFile string, targetPath string) string {
+	target, err := filepath.Rel(filepath.Dir(linkFile), targetPath)
+	if err != nil {
+		panic(err)
+	}
+	return filepath.ToSlash(target)
 }
