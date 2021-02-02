@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu, macOS, windows]
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: [self-hosted, "${{ matrix.os }}", builder]
     steps:
 
     - name: Set up Go 1.14
@@ -27,26 +27,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-#    - name: Install upx (ubuntu)
-#      run: sudo apt-get install upx
-#      if: matrix.os == 'ubuntu'
-
     # To compress werf_with_coverage binary for macOS
     # This fixes related with monkey patching panic (panic: permission denied [recovered])
     - name: Install upx (macOS)
-      run: brew install upx
+      run: brew install upx || true
       if: matrix.os == 'macOS'
-
-#    - name: Install upx (windows)
-#      run: |
-#        mkdir bin
-#        echo $GITHUB_WORKSPACE/bin >> $GITHUB_PATH
-#
-#        curl -LO https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win64.zip
-#        unzip upx-3.95-win64.zip
-#        mv upx-3.95-win64/upx.exe bin
-#      shell: bash
-#      if: matrix.os == 'windows'
 
     - name: Compile tests binaries
       run: |
@@ -111,6 +96,7 @@ jobs:
   unit_tests:
     name: Unit tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -160,6 +146,7 @@ jobs:
   integration_default_tests:
     name: Integration default tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -228,6 +215,7 @@ jobs:
   integration_container_registry_per_implementation_tests:
     name: Integration container_registry_per_implementation tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -351,6 +339,7 @@ jobs:
   integration_k8s_per_version_tests:
     name: Integration k8s_per_version tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -422,6 +411,7 @@ jobs:
   integration_k8s_per_version_and_container_registry_per_implementation_tests:
     name: Integration k8s_per_version_and_container_registry_per_implementation tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -554,6 +544,7 @@ jobs:
   integration_default_tests_on_self_hosted_runners:
     name: Integration default tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -637,6 +628,7 @@ jobs:
   integration_k8s_per_version_tests_on_self_hosted_runners:
     name: Integration k8s_per_version tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
