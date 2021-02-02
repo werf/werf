@@ -1482,6 +1482,8 @@ github.com/werf/helm v0.0.0-20201105195415-9aa46615d9d2 h1:LQbHvBiXf61NSb8c3Z2jr
 github.com/werf/helm v0.0.0-20201105195415-9aa46615d9d2/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
 github.com/werf/helm v0.0.0-20201109094041-bd3efc6bde23 h1:dCmPOTeceQ7l3wxPQfD4LY0SsBmaHPr5yIZSDDBCrCo=
 github.com/werf/helm v0.0.0-20201109094041-bd3efc6bde23/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
+github.com/werf/helm v0.0.0-20210202092607-295e772eabb1 h1:XXhU/Uqx7oIZwwHGCW2/GKlva1gR35IVv3y447Mhu7s=
+github.com/werf/helm v0.0.0-20210202092607-295e772eabb1/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
 github.com/werf/helm/v3 v3.0.0-20200916183710-52cc604f86fa h1:hdW8piLwBtc14yWTevNHnigepekp8YR/+3zAPL/gD3U=
 github.com/werf/helm/v3 v3.0.0-20200916183710-52cc604f86fa/go.mod h1:ZaXz/vzktgwjyGGFbUWtIQkscfE7WYoRGP2szqAFHR0=
 github.com/werf/helm/v3 v3.0.0-20200917163411-aa36ce853669 h1:zhpvOBkrKtCzQYwuo/KcGgKB7bbhU8ZZmFDLbjRkXeA=
