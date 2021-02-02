@@ -25,8 +25,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macOS, windows]
-    runs-on: ${{ matrix.os }}-latest
+        os: [ ubuntu, macOS, windows ]
+    runs-on: [ self-hosted, "${{ matrix.os }}", builder ]
     if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run tests')
     steps:
 
@@ -97,6 +97,7 @@ jobs:
   unit_tests:
     name: Unit tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -134,6 +135,7 @@ jobs:
   integration_default_tests:
     name: Integration default tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -192,6 +194,7 @@ jobs:
   integration_k8s_per_version_tests:
     name: Integration k8s_per_version tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -254,6 +257,7 @@ jobs:
   integration_k8s_per_version_and_container_registry_per_implementation_tests:
     name: Integration k8s_per_version_and_container_registry_per_implementation tests
     needs: precompiled_tests_binaries
+    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -347,6 +351,7 @@ jobs:
         ./scripts/ci/integration_tests_registries_login.sh gcr
         ./scripts/ci/integration_tests_registries_login.sh harbor
         ./scripts/ci/integration_tests_registries_login.sh quay
+        ./scripts/ci/integration_tests_registries_login.sh github
 
         go build github.com/onsi/ginkgo/ginkgo
 

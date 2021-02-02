@@ -31,6 +31,11 @@ var _ = Describe("Bundles", func() {
 		implementationName := suite_init.ContainerRegistryImplementationListToCheck()[i]
 
 		Context(fmt.Sprintf("[%s] publish and apply quickstart-application bundle", implementationName), func() {
+			BeforeEach(func() {
+				SuiteData.Repo = fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
+				SuiteData.SetupRepo(context.Background(), SuiteData.Repo, implementationName, SuiteData.StubsData)
+			})
+
 			AfterEach(func() {
 				liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "helm", "uninstall", "--namespace", SuiteData.ProjectName, SuiteData.ProjectName)
 
@@ -38,16 +43,23 @@ var _ = Describe("Bundles", func() {
 
 				liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "purge", "--force")
 				os.RemoveAll(SuiteData.ProjectName)
+
+				SuiteData.TeardownRepo(context.Background(), SuiteData.Repo, implementationName, SuiteData.StubsData)
 			})
 
 			It("should publish latest quickstart-application bundle then apply into kubernetes", func() {
-				SuiteData.ContainerRegistryPerImplementationData.ActivateImplementationWerfEnvironmentParams(implementationName, SuiteData.StubsData)
-
-				repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
+				switch implementationName {
+				case "dockerhub":
+					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3184")
+				case "github":
+					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3188")
+				case "quay":
+					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3182")
+				}
 
 				Expect(liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, append([]string{"clone", "https://github.com/werf/quickstart-application", SuiteData.ProjectName})...)).To(Succeed())
-				Expect(liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "bundle", "publish", "--repo", repo)).Should(Succeed())
-				Expect(liveExecWerf(".", liveexec.ExecCommandOptions{}, "bundle", "apply", "--repo", repo, "--release", SuiteData.ProjectName, "--namespace", SuiteData.ProjectName, "--set-docker-config-json-value")).Should(Succeed())
+				Expect(liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "bundle", "publish")).Should(Succeed())
+				Expect(liveExecWerf(".", liveexec.ExecCommandOptions{}, "bundle", "apply", "--release", SuiteData.ProjectName, "--namespace", SuiteData.ProjectName, "--set-docker-config-json-value")).Should(Succeed())
 			})
 		})
 	}

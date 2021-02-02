@@ -207,8 +207,8 @@ spec:
 			gotMydeploy4AlreadyExists = false
 			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					Expect(strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy2" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
-					Expect(strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy4" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
+					Expect(strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy2" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(BeFalse(), fmt.Sprintf("Got unexpected output line: %v", line))
+					Expect(strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy4" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(BeFalse(), fmt.Sprintf("Got unexpected output line: %v", line))
 				},
 			})).To(Succeed())
 
@@ -306,7 +306,7 @@ spec:
 
 			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					Expect(strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy5" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(Equal(-1), fmt.Sprintf("Got unexpected output line: %v", line))
+					Expect(strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy5" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(BeFalse(), fmt.Sprintf("Got unexpected output line: %v", line))
 				},
 			})).To(Succeed())
 

@@ -11,8 +11,8 @@ import (
 var AesSecretKey = []byte("11ac8312520b5ff037bae386ea2e8a07")
 var supportedKeySizes = []int{16, 24, 32}
 
-func TestGenerateAexSecretKey(t *testing.T) {
-	key, err := GenerateAexSecretKey()
+func TestGenerateAesSecretKey(t *testing.T) {
+	key, err := GenerateAesSecretKey()
 	if err != nil {
 		t.Fatal(err)
 	}
