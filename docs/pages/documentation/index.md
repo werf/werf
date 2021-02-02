@@ -56,26 +56,7 @@ sidebar: documentation
             Find a guide suitable for your project (filter by a programming language, framework, CI/CD system, etc.) and deploy your first real application into the Kubernetes cluster with werf.
         </div>
     </div>
-    <div class="overview__frameworks">
-        <div class="overview__framework">
-            <img src="/images/guides/nodejs.png" width="129" height="79" class="overview__framework-logo" />
-            <a href="/guides/nodejs/100_basic.html" class="overview__framework-action">
-            <span>Node.js</span>
-            </a>
-        </div>
-        <div class="overview__framework">
-            <img src="/images/guides/springboot.png" width="149" height="78" class="overview__framework-logo" />
-            <a href="/guides/java_springboot/100_basic.html" class="overview__framework-action">
-                <span>Spring Boot</span>
-            </a>
-        </div>
-        <div class="overview__framework">
-            <img src="/images/guides/django.png" width="156" height="54" class="overview__framework-logo" />
-            <span class="overview__framework-action disabled">
-                <span>soon...</span>
-            </span>
-        </div>
-    </div>
+    {% include en/guides/tiles.html %}
     <div class="overview__title">Reference</div>
     <div class="overview__step">
         <div class="overview__step-title">Use Reference for structured information about werf configuration and commands</div>
