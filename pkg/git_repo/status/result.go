@@ -89,10 +89,6 @@ func (r *Result) FilePathList(options FilterOptions) []string {
 		result = append(result, filepath.Join(r.repositoryFullFilepath, filePath))
 	}
 
-	for _, submoduleResult := range r.submoduleResults {
-		result = append(result, submoduleResult.FilePathList(options)...)
-	}
-
 	return result
 }
 
