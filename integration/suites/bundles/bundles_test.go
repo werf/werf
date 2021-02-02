@@ -48,6 +48,15 @@ var _ = Describe("Bundles", func() {
 			})
 
 			It("should publish latest quickstart-application bundle then apply into kubernetes", func() {
+				switch implementationName {
+				case "dockerhub":
+					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3184")
+				case "github":
+					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3188")
+				case "quay":
+					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3182")
+				}
+
 				Expect(liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, append([]string{"clone", "https://github.com/werf/quickstart-application", SuiteData.ProjectName})...)).To(Succeed())
 				Expect(liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "bundle", "publish")).Should(Succeed())
 				Expect(liveExecWerf(".", liveexec.ExecCommandOptions{}, "bundle", "apply", "--release", SuiteData.ProjectName, "--namespace", SuiteData.ProjectName, "--set-docker-config-json-value")).Should(Succeed())
