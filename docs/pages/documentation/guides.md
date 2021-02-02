@@ -6,7 +6,7 @@ sidebar: documentation
 
 {%- asset overview.css %}
 
-<p>These guides provides reasonably detailed information that combines the theory and practice of development (Dev) and operation (Ops).</p>
+<p>These guides provide reasonably detailed information that combines the theory and practice of development (Dev) and operation (Ops).</p>
 
 <p>Its contents are aimed at developers seeking to acquire basic DevOps skills in organizing the continuous delivery of applications to Kubernetes. The DevOps engineers who want to solve their tasks more efficiently will also benefit from this tutorial.</p>
 
