@@ -16,45 +16,4 @@ sidebar: documentation
 
 <br>
 
-<div class="overview__frameworks">
-    <div class="overview__framework">
-        <img src="/images/guides/nodejs.png" width="129" height="79" class="overview__framework-logo" />
-        <a href="/guides/nodejs/100_basic.html" class="overview__framework-action">
-            <span>Node.js</span>
-            <img src="{% asset arrow.svg @path %}" class="flip-horizontal" height="12" />
-        </a>
-    </div>
-    <div class="overview__framework">
-        <img src="/images/guides/springboot.png" width="149" height="78" class="overview__framework-logo" />
-        <a href="/guides/java_springboot/100_basic.html" class="overview__framework-action">
-            <span>Spring Boot</span>
-            <img src="{% asset arrow.svg @path %}" class="flip-horizontal" height="12" />
-        </a>
-    </div>
-    <div class="overview__framework">
-        <img src="/images/guides/django.png" width="156" height="54" class="overview__framework-logo" />
-        <span class="overview__framework-action disabled">
-            <span>soon...</span>
-        </span>
-    </div>
-</div>
-<div class="overview__frameworks">
-    <div class="overview__framework">
-        <img src="/images/guides/go.svg" width="134" height="50" class="overview__framework-logo" />
-        <span class="overview__framework-action disabled">
-            <span>soon...</span>
-        </span>
-    </div>
-    <div class="overview__framework">
-        <img src="/images/guides/rails.svg" width="156" height="54" class="overview__framework-logo" />
-        <span class="overview__framework-action disabled">
-            <span>soon...</span>
-        </span>
-    </div>
-    <div class="overview__framework">
-        <img src="/images/guides/laravel.svg" width="175" height="51" class="overview__framework-logo" />
-        <span class="overview__framework-action disabled">
-            <span>soon...</span>
-        </span>
-    </div>
-</div>
+{% include en/guides/tiles.html %}
