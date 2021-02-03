@@ -127,6 +127,7 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 
 			submoduleResult.SubmoduleStatus = submoduleStatus
 			submoduleResult.Result = sResult
+			submoduleResult.SubmodulePath = submodulePath
 
 			result.submoduleResults = append(result.submoduleResults, submoduleResult)
 		}

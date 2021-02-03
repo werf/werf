@@ -11,7 +11,8 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
 
-	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/status"
+	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -23,27 +24,27 @@ func (r FileReader) isSubpathOfWorkTreeDir(absPath string) bool {
 	return util.IsSubpathOfBasePath(r.sharedOptions.LocalGitRepo().WorkTreeDir, absPath)
 }
 
-func (r FileReader) CheckIfCommitFilePathInsideUncleanSubmodule(ctx context.Context, relPath string) (inside bool, unclean bool, submodulePath string, err error) {
+func (r FileReader) ValidateRelatedSubmodules(ctx context.Context, relPath string) (err error) {
 	logboek.Context(ctx).Debug().
-		LogBlock("CheckIfCommitFilePathInsideUncleanSubmodule %q", relPath).
+		LogBlock("ValidateRelatedSubmodules %q", relPath).
 		Options(func(options types.LogBlockOptionsInterface) {
 			if !debug() {
 				options.Mute()
 			}
 		}).
 		Do(func() {
-			inside, unclean, submodulePath, err = r.checkIfCommitFilePathInsideUncleanSubmodule(ctx, relPath)
+			err = r.validateRelatedSubmodules(ctx, relPath)
 
 			if debug() {
-				logboek.Context(ctx).Debug().LogF("inside: %v\nunclean: %v\nsubmodulePath: %q\nerr: %q\n", inside, unclean, submodulePath, err)
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
 			}
 		})
 
 	return
 }
 
-func (r FileReader) checkIfCommitFilePathInsideUncleanSubmodule(ctx context.Context, relPath string) (bool, bool, string, error) {
-	return r.sharedOptions.LocalGitRepo().CheckIfFilePathInsideSubmodule(ctx, r.toWorkTreeRelativePath(relPath))
+func (r FileReader) validateRelatedSubmodules(ctx context.Context, relPath string) error {
+	return r.sharedOptions.LocalGitRepo().ValidateSubmodules(ctx, path_matcher.NewSimplePathMatcher(r.toWorkTreeRelativePath(relPath), nil, true))
 }
 
 func (r FileReader) IsCommitFileModifiedLocally(ctx context.Context, relPath string) (modified bool, err error) {
@@ -66,8 +67,9 @@ func (r FileReader) IsCommitFileModifiedLocally(ctx context.Context, relPath str
 }
 
 func (r FileReader) isCommitFileModifiedLocally(ctx context.Context, relPath string) (bool, error) {
-	return r.sharedOptions.LocalGitRepo().IsFileModifiedLocally(ctx, r.toWorkTreeRelativePath(relPath), git_repo.IsFileModifiedLocally{
-		WorktreeOnly: r.sharedOptions.Dev(),
+	return r.sharedOptions.LocalGitRepo().IsFileModifiedLocally(ctx, r.toWorkTreeRelativePath(relPath), status.FilterOptions{
+		WorktreeOnly:     r.sharedOptions.Dev(),
+		IgnoreSubmodules: true,
 	})
 }
 
@@ -194,31 +196,13 @@ func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context,
 }
 
 func (r FileReader) checkFileModifiedLocally(ctx context.Context, relPath string) error {
+	if err := r.ValidateRelatedSubmodules(ctx, relPath); err != nil {
+		return r.HandleValidateSubmodulesErr(err)
+	}
+
 	isFileModified, err := r.IsCommitFileModifiedLocally(ctx, relPath)
 	if err != nil {
 		return err
-	}
-
-	inside, unclean, submodulePath, err := r.CheckIfCommitFilePathInsideUncleanSubmodule(ctx, relPath)
-	if err != nil {
-		return err
-	}
-
-	if inside {
-		exist, err := util.FileExists(filepath.Join(r.sharedOptions.LocalGitRepo().WorkTreeDir, submodulePath, ".git"))
-		if err != nil {
-			return err
-		}
-
-		if !exist {
-			return nil
-		}
-
-		if unclean {
-			return r.NewUncleanSubmoduleError(submodulePath)
-		} else if isFileModified {
-			return r.NewUncommittedSubmoduleChangesError(submodulePath)
-		}
 	}
 
 	if !isFileModified {
@@ -230,6 +214,17 @@ func (r FileReader) checkFileModifiedLocally(ctx context.Context, relPath string
 	}
 
 	return r.NewUncommittedFilesError(relPath)
+}
+
+func (r FileReader) HandleValidateSubmodulesErr(err error) error {
+	switch statusErr := err.(type) {
+	case status.UncleanSubmoduleError:
+		return r.NewUncleanSubmoduleError(statusErr.SubmodulePath, statusErr.HeadCommitCurrentCommit, statusErr.CurrentCommit, statusErr.ExpectedCommit)
+	case status.SubmoduleHasUncommittedChangesError:
+		return r.NewUncommittedSubmoduleChangesError(statusErr.SubmodulePath, statusErr.FilePathList)
+	default:
+		return err
+	}
 }
 
 // https://github.com/go-git/go-git/issues/227

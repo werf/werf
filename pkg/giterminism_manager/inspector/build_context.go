@@ -3,8 +3,6 @@ package inspector
 import (
 	"context"
 
-	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/git_repo/status"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
@@ -15,17 +13,17 @@ func (i Inspector) InspectBuildContextFiles(ctx context.Context, matcher path_ma
 		return nil
 	}
 
-	logProcess := logboek.Context(ctx).Debug().LogProcess("status (%s)", matcher.String())
-	logProcess.Start()
-	result, err := i.sharedOptions.LocalGitRepo().Status(ctx, matcher)
-	if err != nil {
-		logProcess.Fail()
-		return err
-	} else {
-		logProcess.End()
+	if err := i.sharedOptions.LocalGitRepo().ValidateSubmodules(ctx, matcher); err != nil {
+		return i.fileReader.HandleValidateSubmodulesErr(err)
 	}
 
-	filePathList := result.FilePathList(status.FilterOptions{WorktreeOnly: i.sharedOptions.Dev()})
+	filePathList, err := i.sharedOptions.LocalGitRepo().GetModifiedLocallyFilePathList(ctx, matcher, status.FilterOptions{
+		WorktreeOnly:     i.sharedOptions.Dev(),
+		IgnoreSubmodules: true,
+	})
+	if err != nil {
+		return err
+	}
 
 	if len(filePathList) == 0 {
 		return nil

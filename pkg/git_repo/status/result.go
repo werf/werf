@@ -2,10 +2,13 @@ package status
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
 
@@ -23,12 +26,14 @@ type Result struct {
 
 type SubmoduleResult struct {
 	*Result
+	SubmodulePath string
 	*git.SubmoduleStatus
 }
 
 type FilterOptions struct {
-	StagingOnly  bool
-	WorktreeOnly bool
+	StagingOnly      bool
+	WorktreeOnly     bool
+	IgnoreSubmodules bool
 }
 
 func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatcher) (*Result, error) {
@@ -73,6 +78,7 @@ func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatche
 			newSubmoduleResult := &SubmoduleResult{
 				Result:          newResult,
 				SubmoduleStatus: submoduleResult.SubmoduleStatus,
+				SubmodulePath:   submoduleResult.SubmodulePath,
 			}
 
 			res.submoduleResults = append(res.submoduleResults, newSubmoduleResult)
@@ -87,6 +93,12 @@ func (r *Result) FilePathList(options FilterOptions) []string {
 	var result []string
 	for _, filePath := range r.filteredFilePathList(options) {
 		result = append(result, filepath.Join(r.repositoryFullFilepath, filePath))
+	}
+
+	if !options.IgnoreSubmodules {
+		for _, submoduleResult := range r.submoduleResults {
+			result = append(result, submoduleResult.FilePathList(options)...)
+		}
 	}
 
 	return result
@@ -104,25 +116,85 @@ func (r *Result) filteredFilePathList(options FilterOptions) []string {
 	return result
 }
 
-func (r *Result) CheckIfFilePathInsideSubmodule(relPath string) (bool, bool, string) {
+type UncleanSubmoduleError struct {
+	SubmodulePath           string
+	ExpectedCommit          string
+	CurrentCommit           string
+	HeadCommitCurrentCommit string
+	error
+}
+
+type SubmoduleHasUncommittedChangesError struct {
+	SubmodulePath string
+	FilePathList  []string
+	error
+}
+
+func (r *Result) ValidateSubmodules(headCommit string) error {
+	if len(r.submoduleResults) == 0 {
+		return nil
+	}
+
+	c, err := r.repository.CommitObject(plumbing.NewHash(headCommit))
+	if err != nil {
+		return err
+	}
+
+	cTree, err := c.Tree()
+	if err != nil {
+		return err
+	}
+
 	for _, sr := range r.submoduleResults {
-		if util.IsSubpathOfBasePath(filepath.ToSlash(sr.repositoryFullFilepath), filepath.ToSlash(relPath)) {
-			submodulePath := sr.repositoryFullFilepath
+		dotGitExist, err := util.FileExists(filepath.Join(sr.repositoryFullFilepath, ".git"))
+		if err != nil {
+			return err
+		}
 
-			if sr.Current != sr.Expected {
-				return true, true, submodulePath
+		if !dotGitExist {
+			continue
+		}
+
+		e, err := cTree.FindEntry(sr.SubmodulePath)
+		if err != nil {
+			if err == object.ErrEntryNotFound {
+				return UncleanSubmoduleError{
+					SubmodulePath:           sr.repositoryFullFilepath,
+					HeadCommitCurrentCommit: plumbing.ZeroHash.String(),
+					ExpectedCommit:          sr.Expected.String(),
+					CurrentCommit:           sr.Current.String(),
+					error:                   fmt.Errorf("submodule is not clean"),
+				}
 			}
 
-			inside, unclean, nestedSubmodulePath := sr.CheckIfFilePathInsideSubmodule(relPath)
-			if inside {
-				return true, unclean, nestedSubmodulePath
-			}
+			return err
+		}
 
-			return true, false, submodulePath
+		headCommitSubmoduleCommit := e.Hash
+		if headCommitSubmoduleCommit != sr.Expected || sr.Expected != sr.Current {
+			return UncleanSubmoduleError{
+				SubmodulePath:           sr.repositoryFullFilepath,
+				HeadCommitCurrentCommit: headCommitSubmoduleCommit.String(),
+				ExpectedCommit:          sr.Expected.String(),
+				CurrentCommit:           sr.Current.String(),
+				error:                   fmt.Errorf("submodule is not clean"),
+			}
+		}
+
+		if len(sr.fileStatusList) != 0 {
+			return SubmoduleHasUncommittedChangesError{
+				SubmodulePath: sr.repositoryFullFilepath,
+				FilePathList:  sr.filteredFilePathList(FilterOptions{IgnoreSubmodules: true}),
+				error:         fmt.Errorf("submodule has uncommitted changes"),
+			}
+		}
+
+		if err := sr.ValidateSubmodules(sr.Current.String()); err != nil {
+			return err
 		}
 	}
 
-	return false, false, ""
+	return nil
 }
 
 func (r *Result) IsFileModified(relPath string, options FilterOptions) bool {
@@ -132,13 +204,15 @@ func (r *Result) IsFileModified(relPath string, options FilterOptions) bool {
 		}
 	}
 
-	for _, sr := range r.submoduleResults {
-		if util.IsSubpathOfBasePath(filepath.ToSlash(sr.repositoryFullFilepath), filepath.ToSlash(relPath)) {
-			if sr.Current != sr.Expected {
-				return true
-			}
+	if !options.IgnoreSubmodules {
+		for _, sr := range r.submoduleResults {
+			if util.IsSubpathOfBasePath(filepath.ToSlash(sr.repositoryFullFilepath), filepath.ToSlash(relPath)) {
+				if sr.Current != sr.Expected {
+					return true
+				}
 
-			return sr.IsFileModified(relPath, options)
+				return sr.IsFileModified(relPath, options)
+			}
 		}
 	}
 
