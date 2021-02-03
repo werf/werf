@@ -16,8 +16,8 @@ func InitKubedog(ctx context.Context) error {
 	// set flag.Parsed() for glog
 	flag.CommandLine.Parse([]string{})
 
-	display.SetOut(logboek.Context(ctx).ProxyOutStream())
-	display.SetErr(logboek.Context(ctx).ProxyErrStream())
+	display.SetOut(logboek.Context(ctx).OutStream())
+	display.SetErr(logboek.Context(ctx).ErrStream())
 
 	if err := SilenceKlog(ctx); err != nil {
 		return err
@@ -47,7 +47,7 @@ func SilenceKlogV2(ctx context.Context) error {
 	klog_v2.SetOutputBySeverity("INFO", ioutil.Discard)
 	klog_v2.SetOutputBySeverity("WARNING", ioutil.Discard)
 	klog_v2.SetOutputBySeverity("ERROR", ioutil.Discard)
-	klog_v2.SetOutputBySeverity("FATAL", logboek.Context(ctx).ProxyErrStream())
+	klog_v2.SetOutputBySeverity("FATAL", logboek.Context(ctx).ErrStream())
 
 	return nil
 }
@@ -70,7 +70,7 @@ func SilenceKlog(ctx context.Context) error {
 	klog.SetOutputBySeverity("INFO", ioutil.Discard)
 	klog.SetOutputBySeverity("WARNING", ioutil.Discard)
 	klog.SetOutputBySeverity("ERROR", ioutil.Discard)
-	klog.SetOutputBySeverity("FATAL", logboek.Context(ctx).ProxyErrStream())
+	klog.SetOutputBySeverity("FATAL", logboek.Context(ctx).ErrStream())
 
 	return nil
 }

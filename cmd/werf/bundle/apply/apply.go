@@ -171,7 +171,7 @@ func runApply() error {
 	defer os.RemoveAll(bundleTmpDir)
 
 	if err := logboek.Context(ctx).LogProcess("Pulling bundle %q", bundleRef).DoError(func() error {
-		if cmd := cmd_helm.NewChartPullCmd(actionConfig, logboek.ProxyOutStream()); cmd != nil {
+		if cmd := cmd_helm.NewChartPullCmd(actionConfig, logboek.Context(ctx).OutStream()); cmd != nil {
 			if err := cmd.RunE(cmd, []string{bundleRef}); err != nil {
 				return fmt.Errorf("error saving bundle to the local chart helm cache: %s", err)
 			}
@@ -182,7 +182,7 @@ func runApply() error {
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Exporting bundle %q", bundleRef).DoError(func() error {
-		if cmd := cmd_helm.NewChartExportCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.ChartExportCmdOptions{Destination: bundleTmpDir}); cmd != nil {
+		if cmd := cmd_helm.NewChartExportCmd(actionConfig, logboek.Context(ctx).OutStream(), cmd_helm.ChartExportCmdOptions{Destination: bundleTmpDir}); cmd != nil {
 			if err := cmd.RunE(cmd, []string{bundleRef}); err != nil {
 				return fmt.Errorf("error pushing bundle %q: %s", bundleRef, err)
 			}
@@ -227,7 +227,7 @@ func runApply() error {
 		ChartExtender: bundle,
 	}
 
-	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
+	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.Context(ctx).OutStream(), cmd_helm.UpgradeCmdOptions{
 		PostRenderer: postRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),

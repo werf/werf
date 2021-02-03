@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
+	"github.com/gookit/color"
 	"github.com/rodaine/table"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -262,7 +262,7 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 	skippedDeployedImages := map[string]bool{}
 	for imageName, stageIDCommitList := range m.imageNameStageIDCommitListToCleanup {
 	Loop:
-		for stageID, _ := range stageIDCommitList {
+		for stageID := range stageIDCommitList {
 			dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.StagesStorage.String(), stageID)
 			for _, deployedDockerImageName := range deployedDockerImagesNames {
 				if deployedDockerImageName == dockerImageName {
@@ -340,7 +340,7 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 
 			var stageIDToUnlink []string
 		outerLoop:
-			for stageID, _ := range stageIDCommitList {
+			for stageID := range stageIDCommitList {
 				for _, reachedStageID := range reachedStageIDs {
 					if stageID == reachedStageID {
 						continue outerLoop
@@ -404,8 +404,10 @@ func (m *cleanupManager) printStageIDCommitListTable(ctx context.Context, imageN
 
 	if len(rows) != 0 {
 		tbl := table.New("Tag", "Commits")
-		tbl.WithWriter(logboek.Context(ctx).ProxyOutStream())
-		tbl.WithHeaderFormatter(color.New(color.Underline).SprintfFunc())
+		tbl.WithWriter(logboek.Context(ctx).OutStream())
+		tbl.WithHeaderFormatter(func(format string, a ...interface{}) string {
+			return logboek.ColorizeF(color.New(color.OpUnderscore), format, a...)
+		})
 		for _, row := range rows {
 			tbl.AddRow(row...)
 		}
@@ -588,7 +590,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 
 	stagesToDelete := m.stages
 	for _, stageIDCommitList := range m.imageNameStageIDCommitList {
-		for stageID, _ := range stageIDCommitList {
+		for stageID := range stageIDCommitList {
 			var excludedStagesByStageID []*image.StageDescription
 			stage := m.mustGetStage(stageID)
 			stagesToDelete, excludedStagesByStageID = m.excludeStageAndRelativesByImageID(stagesToDelete, stage.Info.ID)

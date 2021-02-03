@@ -40,7 +40,7 @@ func BuildChartDependenciesInDir(ctx context.Context, lockFileData []byte, chart
 	}
 
 	man := &downloader.Manager{
-		Out:        logboek.ProxyOutStream(),
+		Out:        logboek.Context(ctx).OutStream(),
 		ChartPath:  targetDir,
 		Keyring:    opts.Keyring,
 		SkipUpdate: opts.SkipUpdate,

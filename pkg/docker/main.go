@@ -114,8 +114,8 @@ func apiCli(ctx context.Context) client.APIClient {
 func defaultCliOptions(ctx context.Context) []command.DockerCliOption {
 	return []command.DockerCliOption{
 		command.WithInputStream(os.Stdin),
-		command.WithOutputStream(logboek.Context(ctx).ProxyOutStream()),
-		command.WithErrorStream(logboek.Context(ctx).ProxyErrStream()),
+		command.WithOutputStream(logboek.Context(ctx).OutStream()),
+		command.WithErrorStream(logboek.Context(ctx).ErrStream()),
 		command.WithContentTrust(false),
 	}
 }

@@ -14,11 +14,11 @@ var generic *api
 
 func Init(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool) error {
 	if logboek.Context(ctx).Debug().IsAccepted() {
-		logs.Progress.SetOutput(logboek.Context(ctx).ProxyOutStream())
-		logs.Warn.SetOutput(logboek.Context(ctx).ProxyErrStream())
+		logs.Progress.SetOutput(logboek.Context(ctx).OutStream())
+		logs.Warn.SetOutput(logboek.Context(ctx).ErrStream())
 
 		if debugDockerRegistryAPI() {
-			logs.Debug.SetOutput(logboek.Context(ctx).ProxyOutStream())
+			logs.Debug.SetOutput(logboek.Context(ctx).OutStream())
 		} else {
 			logs.Debug.SetOutput(ioutil.Discard)
 		}

@@ -13,8 +13,8 @@ func setCommandRecordingLiveOutput(ctx context.Context, cmd *exec.Cmd) *bytes.Bu
 	recorder := &bytes.Buffer{}
 
 	if liveGitOutput {
-		cmd.Stdout = io.MultiWriter(recorder, logboek.Context(ctx).ProxyOutStream())
-		cmd.Stderr = io.MultiWriter(recorder, logboek.Context(ctx).ProxyErrStream())
+		cmd.Stdout = io.MultiWriter(recorder, logboek.Context(ctx).OutStream())
+		cmd.Stderr = io.MultiWriter(recorder, logboek.Context(ctx).ErrStream())
 	} else {
 		cmd.Stdout = recorder
 		cmd.Stderr = recorder

@@ -54,8 +54,8 @@ import (
 
 func main() {
 	common.EnableTerminationSignalsTrap()
-	log.SetOutput(logboek.ProxyOutStream())
-	logrus.StandardLogger().SetOutput(logboek.ProxyOutStream())
+	log.SetOutput(logboek.OutStream())
+	logrus.StandardLogger().SetOutput(logboek.OutStream())
 
 	if err := process_exterminator.Init(); err != nil {
 		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)

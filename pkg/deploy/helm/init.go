@@ -56,7 +56,7 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 	kubeClient := actionConfig.KubeClient.(*helm_kube.Client)
 	kubeClient.ResourcesWaiter = NewResourcesWaiter(kubeInitializer, kubeClient, time.Now(), opts.StatusProgressPeriod, opts.HooksStatusProgressPeriod)
 
-	if registryClient, err := helm_v3.NewRegistryClient(logboek.Context(ctx).Debug().IsAccepted(), logboek.Context(ctx).ProxyOutStream()); err != nil {
+	if registryClient, err := helm_v3.NewRegistryClient(logboek.Context(ctx).Debug().IsAccepted(), logboek.Context(ctx).OutStream()); err != nil {
 		return fmt.Errorf("unable to create registry client: %s", err)
 	} else {
 		actionConfig.RegistryClient = registryClient

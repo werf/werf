@@ -209,7 +209,7 @@ func processTaskResultData(ctx context.Context, data []byte) {
 	}
 
 	logboek.Streams().DoWithoutIndent(func() {
-		_, _ = logboek.Context(ctx).ProxyOutStream().Write(data)
+		_, _ = logboek.Context(ctx).OutStream().Write(data)
 		logboek.Context(ctx).LogOptionalLn()
 	})
 }
