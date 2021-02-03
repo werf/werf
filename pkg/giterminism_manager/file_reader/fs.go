@@ -13,8 +13,18 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
+
+	"github.com/werf/werf/pkg/giterminism_manager/errors"
 	"github.com/werf/werf/pkg/util"
 )
+
+func (r FileReader) toProjectDirAbsolutePath(relPath string) string {
+	return filepath.Join(r.sharedOptions.ProjectDir(), relPath)
+}
+
+func (r FileReader) toProjectDirRelativePath(absPath string) string {
+	return util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), absPath)
+}
 
 // ListFilesWithGlob returns the list of files by the glob, follows symlinks.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
@@ -98,7 +108,7 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 		return fmt.Errorf("unable to resolve file path %q: %s", relDir, err)
 	}
 
-	absDirPath := filepath.Join(r.sharedOptions.ProjectDir(), resolvedDir)
+	absDirPath := r.toProjectDirAbsolutePath(resolvedDir)
 	return filepath.Walk(absDirPath, func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -116,7 +126,7 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 			logboek.Context(ctx).Debug().LogF("-- path: %q symlink: %v\n", path, f.Mode()&os.ModeSymlink == os.ModeSymlink)
 		}
 
-		resolvedRelPath := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), path)
+		resolvedRelPath := r.toProjectDirRelativePath(path)
 		notResolvedRelPath := strings.Replace(resolvedRelPath, resolvedDir, relDir, 1)
 		if f.Mode()&os.ModeSymlink == os.ModeSymlink {
 			link, err := os.Readlink(path)
@@ -129,13 +139,13 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 				resolvedLink = filepath.Join(filepath.Dir(path), link)
 			}
 
-			if !util.IsSubpathOfBasePath(r.sharedOptions.ProjectDir(), resolvedLink) {
+			if !r.isSubpathOfWorkTreeDir(resolvedLink) {
 				return r.NewFileNotFoundInProjectDirectoryError(resolvedLink)
 			}
 
 			lstat, err := os.Lstat(resolvedLink)
 			if err != nil {
-				return fmt.Errorf("lstat %q failed: %s", resolvedLink, err)
+				return err
 			}
 
 			if lstat.IsDir() {
@@ -196,31 +206,41 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 		return FileNotAcceptedError{fmt.Errorf("the file %q not accepted by giterminism config", relPath)}
 	}
 
-	resolvedPath, err := r.ResolveAndCheckFilePath(ctx, relPath, func(resolvedRelPath string) error {
-		accepted, err := isFileAcceptedCheckFunc(resolvedRelPath)
+	if err := func() error {
+		notAcceptedError := func(resolvedPath string) error {
+			return errors.NewError(fmt.Sprintf("the link target %q should be also accepted by giterminism config", resolvedPath))
+		}
+
+		resolvedPath, err := r.ResolveAndCheckFilePath(ctx, relPath, func(resolvedRelPath string) error {
+			accepted, err := isFileAcceptedCheckFunc(resolvedRelPath)
+			if err != nil {
+				return err
+			}
+
+			if !accepted {
+				return notAcceptedError(resolvedRelPath)
+			}
+
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 
-		if !accepted {
-			return fmt.Errorf("the link target %q should be also accepted by giterminism config", resolvedRelPath)
+		if resolvedPath != relPath {
+			accepted, err := isFileAcceptedCheckFunc(relPath)
+			if err != nil {
+				return err
+			}
+
+			if !accepted {
+				return notAcceptedError(resolvedPath)
+			}
 		}
 
 		return nil
-	})
-	if err != nil {
-		return r.NewSymlinkResolveFailedError(relPath, err)
-	}
-
-	if resolvedPath != relPath {
-		accepted, err := isFileAcceptedCheckFunc(relPath)
-		if err != nil {
-			return err
-		}
-
-		if !accepted {
-			return r.NewSymlinkResolveFailedError(relPath, fmt.Errorf("the link target %q should be also accepted by giterminism config", resolvedPath))
-		}
+	}(); err != nil {
+		return fmt.Errorf("accepted symlink %q check failed: %s", relPath, err)
 	}
 
 	return nil
@@ -280,7 +300,7 @@ func (r FileReader) ReadFile(ctx context.Context, relPath string) (data []byte, 
 }
 
 func (r FileReader) readFile(relPath string) ([]byte, error) {
-	absPath := filepath.Join(r.sharedOptions.ProjectDir(), relPath)
+	absPath := r.toProjectDirAbsolutePath(relPath)
 	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file %q: %s", absPath, err)
@@ -319,7 +339,7 @@ func (r FileReader) isDirectoryExist(ctx context.Context, relPath string) (bool,
 		return false, fmt.Errorf("unable to resolve file path %q: %s", relPath, err)
 	}
 
-	absPath := filepath.Join(r.sharedOptions.ProjectDir(), resolvedPath)
+	absPath := r.toProjectDirAbsolutePath(resolvedPath)
 	exist, err := util.DirExists(absPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check existence of directory %q: %s", absPath, err)
@@ -358,7 +378,7 @@ func (r FileReader) isRegularFileExist(ctx context.Context, relPath string) (boo
 		return false, fmt.Errorf("unable to resolve file path %q: %s", relPath, err)
 	}
 
-	absPath := filepath.Join(r.sharedOptions.ProjectDir(), resolvedPath)
+	absPath := r.toProjectDirAbsolutePath(resolvedPath)
 	exist, err := util.RegularFileExists(absPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check existence of file %q: %s", absPath, err)
@@ -441,7 +461,7 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 	var resolvedPath string
 	for ind := 0; ind < pathPartsLen; ind++ {
 		pathToResolve := filepath.Join(resolvedPath, pathParts[ind])
-		absPathToResolve := filepath.Join(r.sharedOptions.ProjectDir(), pathToResolve)
+		absPathToResolve := r.toProjectDirAbsolutePath(pathToResolve)
 
 		lstat, err := os.Lstat(absPathToResolve)
 
@@ -473,11 +493,11 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 				resolvedLink = filepath.Join(filepath.Dir(absPathToResolve), link)
 			}
 
-			if !util.IsSubpathOfBasePath(r.sharedOptions.ProjectDir(), resolvedLink) {
+			if !r.isSubpathOfWorkTreeDir(resolvedLink) {
 				return "", r.NewFileNotFoundInProjectDirectoryError(resolvedLink)
 			}
 
-			resolvedRelLink := util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), resolvedLink)
+			resolvedRelLink := r.toProjectDirRelativePath(resolvedLink)
 			if checkSymlinkTargetFunc != nil {
 				if err := checkSymlinkTargetFunc(resolvedRelLink); err != nil {
 					return "", err

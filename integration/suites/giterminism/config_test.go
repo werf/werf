@@ -1,6 +1,7 @@
 package giterminism_test
 
 import (
+	"path/filepath"
 	"runtime"
 
 	. "github.com/onsi/ginkgo"
@@ -11,100 +12,23 @@ import (
 )
 
 var _ = Describe("config", func() {
-	BeforeEach(func() {
-		gitInit()
-		utils.CopyIn(utils.FixturePath("config"), SuiteData.TestDirPath)
-		gitAddAndCommit("werf-giterminism.yaml")
-	})
-
 	const minimalConfigContent = `
 configVersion: 1
 project: none
 ---
 `
 
-	Context("regular files", func() {
-		type entry struct {
-			allowUncommitted        bool
-			addConfig               bool
-			commitConfig            bool
-			changeConfigAfterCommit bool
-			expectedErrSubstring    string
+	for _, value := range []string{"", "dir/custom_project_dir"} {
+		projectRelPath := value
+
+		relativeToWorkTreeDir := func(path string) string {
+			return filepath.Join(projectRelPath, path)
 		}
 
-		DescribeTable("config.allowUncommitted",
-			func(e entry) {
-				var contentToAppend string
-				if e.allowUncommitted {
-					contentToAppend = `
-config:
-  allowUncommitted: true`
-				} else {
-					contentToAppend = `
-config:
-  allowUncommitted: false`
-				}
-				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-				gitAddAndCommit("werf-giterminism.yaml")
+		werfGiterminismRelPath := relativeToWorkTreeDir("werf-giterminism.yaml")
+		werfConfigRelPath := relativeToWorkTreeDir("werf.yaml")
 
-				if e.addConfig {
-					fileCreateOrAppend("werf.yaml", minimalConfigContent)
-				}
-
-				if e.commitConfig {
-					gitAddAndCommit("werf.yaml")
-				}
-
-				if e.changeConfigAfterCommit {
-					fileCreateOrAppend("werf.yaml", "\n")
-				}
-
-				output, err := utils.RunCommand(
-					SuiteData.TestDirPath,
-					SuiteData.WerfBinPath,
-					"config", "render",
-				)
-
-				if e.expectedErrSubstring != "" {
-					Ω(err).Should(HaveOccurred())
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
-				} else {
-					Ω(err).ShouldNot(HaveOccurred())
-				}
-			},
-			Entry("the config file not found", entry{
-				expectedErrSubstring: `unable to read werf config: the file "werf.yaml" not found in the project git repository`,
-			}),
-			Entry("the config file not committed", entry{
-				addConfig:            true,
-				expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
-			}),
-			Entry("the config file committed", entry{
-				addConfig:    true,
-				commitConfig: true,
-			}),
-			Entry("the config file changed after commit", entry{
-				addConfig:               true,
-				commitConfig:            true,
-				changeConfigAfterCommit: true,
-				expectedErrSubstring:    `unable to read werf config: the file "werf.yaml" must be committed`,
-			}),
-			Entry("config.allowUncommitted allows not committed config file", entry{
-				allowUncommitted: true,
-				addConfig:        true,
-			}),
-			Entry("config.allowUncommitted allows committed file", entry{
-				allowUncommitted: true,
-				addConfig:        true,
-				commitConfig:     true,
-			}),
-		)
-	})
-
-	Context("symlinks", func() {
-		configFilePath := "dir/werf.yaml"
-
-		type entry struct {
+		type symlinkEntry struct {
 			allowUncommitted          bool
 			addConfigFile             bool
 			commitConfigFile          bool
@@ -115,8 +39,8 @@ config:
 			skipOnWindows             bool
 		}
 
-		DescribeTable("config.allowUncommitted",
-			func(e entry) {
+		symlinkBodyFunc := func(configFilePath string) func(e symlinkEntry) {
+			return func(e symlinkEntry) {
 				if e.skipOnWindows && runtime.GOOS == "windows" {
 					Skip("skip on windows")
 				}
@@ -131,8 +55,9 @@ config:
 config:
   allowUncommitted: false`
 				}
-				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-				gitAddAndCommit("werf-giterminism.yaml")
+
+				fileCreateOrAppend(werfGiterminismRelPath, contentToAppend)
+				gitAddAndCommit(werfGiterminismRelPath)
 
 				if e.addConfigFile {
 					fileCreateOrAppend(configFilePath, minimalConfigContent)
@@ -156,7 +81,7 @@ config:
 				}
 
 				output, err := utils.RunCommand(
-					SuiteData.TestDirPath,
+					filepath.Join(SuiteData.TestDirPath, projectRelPath),
 					SuiteData.WerfBinPath,
 					"config", "render",
 				)
@@ -167,85 +92,212 @@ config:
 				} else {
 					Ω(err).ShouldNot(HaveOccurred())
 				}
-			},
-			Entry("the config file committed: werf.yaml -> a -> dir/werf.yaml", entry{
-				commitConfigFile: true,
-				addConfigFile:    true,
-				addAndCommitSymlinks: map[string]string{
-					"werf.yaml": "a",
-					"a":         configFilePath,
-				},
-			}),
-			Entry("the config file not committed: werf.yaml -> a -> dir/werf.yaml (not committed)", entry{
-				skipOnWindows: true,
-				addConfigFile: true,
-				addAndCommitSymlinks: map[string]string{
-					"werf.yaml": "a",
-					"a":         configFilePath,
-				},
-				expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: the file "dir/werf.yaml" must be committed`,
-			}),
-			Entry("the symlink to the config file not committed: werf.yaml (not committed) -> a (not committed) -> dir/werf.yaml", entry{
-				addConfigFile:    true,
-				commitConfigFile: true,
-				addSymlinks: map[string]string{
-					"werf.yaml": "a",
-					"a":         configFilePath,
-				},
-				expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
-			}),
-			Entry("the symlink to the config file not committed: werf.yaml -> a (not committed) -> dir/werf.yaml", entry{
-				skipOnWindows:    true,
-				addConfigFile:    true,
-				commitConfigFile: true,
-				addAndCommitSymlinks: map[string]string{
-					"werf.yaml": "a",
-				},
-				addSymlinks: map[string]string{
-					"a": configFilePath,
-				},
-				expectedErrSubstring: ` unable to read werf config: symlink "werf.yaml" check failed: the file "a" must be committed`,
-			}),
-			Entry("the symlink to the config file changed after commit: werf.yaml (changed) -> a -> dir/werf.yaml", entry{
-				addConfigFile:    true,
-				commitConfigFile: true,
-				addAndCommitSymlinks: map[string]string{
-					"werf.yaml": "a",
-					"a":         configFilePath,
-				},
-				changeSymlinksAfterCommit: map[string]string{
-					"werf.yaml": configFilePath,
-				},
-				expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
-			}),
-			Entry("config.allowUncommitted allows not committed config file", entry{
-				skipOnWindows:        true,
-				allowUncommitted:     true,
-				addConfigFile:        true,
-				addAndCommitSymlinks: map[string]string{"werf.yaml": configFilePath},
-			}),
-			Entry("config.allowUncommitted allows committed config file", entry{
-				skipOnWindows:        true,
-				allowUncommitted:     true,
-				addConfigFile:        true,
-				commitConfigFile:     true,
-				addAndCommitSymlinks: map[string]string{"werf.yaml": configFilePath},
-			}),
-			Entry("the broken symlink in fs: werf.yaml -> werf.yaml", entry{
-				skipOnWindows:        true,
-				allowUncommitted:     true,
-				addSymlinks:          map[string]string{"werf.yaml": "werf.yaml"},
-				expectedErrSubstring: `unable to read werf config: accepted symlink "werf.yaml" check failed: too many levels of symbolic links`,
-			}),
-			Entry("the broken symlink in commit: werf.yaml -> werf.yaml", entry{
-				addAndCommitSymlinks: map[string]string{"werf.yaml": "werf.yaml"},
-				expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: too many levels of symbolic links`,
-			}),
-			Entry("the linked file outside the project repository: werf.yaml -> a -> ../../../werf.yaml", entry{
-				skipOnWindows:        true,
-				addAndCommitSymlinks: map[string]string{"werf.yaml": "a", "a": "../../../werf.yaml"},
-				expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: commit tree entry "../../../werf.yaml" not found in the repository`,
-			}),
-		)
-	})
+			}
+		}
+
+		runCommonTests := func() {
+			BeforeEach(func() {
+				gitInit()
+				utils.CopyIn(utils.FixturePath("config"), filepath.Join(SuiteData.TestDirPath, projectRelPath))
+				gitAddAndCommit(werfGiterminismRelPath)
+			})
+
+			Context("regular files", func() {
+				type entry struct {
+					allowUncommitted        bool
+					addConfig               bool
+					commitConfig            bool
+					changeConfigAfterCommit bool
+					expectedErrSubstring    string
+				}
+
+				DescribeTable("config.allowUncommitted",
+					func(e entry) {
+						var contentToAppend string
+						if e.allowUncommitted {
+							contentToAppend = `
+config:
+  allowUncommitted: true`
+						} else {
+							contentToAppend = `
+config:
+  allowUncommitted: false`
+						}
+
+						fileCreateOrAppend(werfGiterminismRelPath, contentToAppend)
+						gitAddAndCommit(werfGiterminismRelPath)
+
+						if e.addConfig {
+							fileCreateOrAppend(werfConfigRelPath, minimalConfigContent)
+						}
+
+						if e.commitConfig {
+							gitAddAndCommit(werfConfigRelPath)
+						}
+
+						if e.changeConfigAfterCommit {
+							fileCreateOrAppend(werfConfigRelPath, "\n")
+						}
+
+						output, err := utils.RunCommand(
+							filepath.Join(SuiteData.TestDirPath, projectRelPath),
+							SuiteData.WerfBinPath,
+							"config", "render",
+						)
+
+						if e.expectedErrSubstring != "" {
+							Ω(err).Should(HaveOccurred())
+							Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+						} else {
+							Ω(err).ShouldNot(HaveOccurred())
+						}
+					},
+					Entry("the config file not found", entry{
+						expectedErrSubstring: `unable to read werf config: the file "werf.yaml" not found in the project git repository`,
+					}),
+					Entry("the config file not committed", entry{
+						addConfig:            true,
+						expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
+					}),
+					Entry("the config file committed", entry{
+						addConfig:    true,
+						commitConfig: true,
+					}),
+					Entry("the config file changed after commit", entry{
+						addConfig:               true,
+						commitConfig:            true,
+						changeConfigAfterCommit: true,
+						expectedErrSubstring:    `unable to read werf config: the file "werf.yaml" must be committed`,
+					}),
+					Entry("config.allowUncommitted allows not committed config file", entry{
+						allowUncommitted: true,
+						addConfig:        true,
+					}),
+					Entry("config.allowUncommitted allows committed file", entry{
+						allowUncommitted: true,
+						addConfig:        true,
+						commitConfig:     true,
+					}),
+				)
+			})
+
+			Context("symlinks", func() {
+				configFilePath := relativeToWorkTreeDir("dir/werf.yaml")
+				aFilePath := relativeToWorkTreeDir("a")
+
+				DescribeTable("config.allowUncommitted",
+					symlinkBodyFunc(configFilePath),
+					Entry("the config file committed: werf.yaml -> a -> dir/werf.yaml", symlinkEntry{
+						commitConfigFile: true,
+						addConfigFile:    true,
+						addAndCommitSymlinks: map[string]string{
+							werfConfigRelPath: getLinkTo(werfConfigRelPath, aFilePath),
+							aFilePath:         getLinkTo(aFilePath, configFilePath),
+						},
+					}),
+					Entry("the config file not committed: werf.yaml -> a -> dir/werf.yaml (not committed)", symlinkEntry{
+						skipOnWindows: true,
+						addConfigFile: true,
+						addAndCommitSymlinks: map[string]string{
+							werfConfigRelPath: getLinkTo(werfConfigRelPath, aFilePath),
+							aFilePath:         getLinkTo(aFilePath, configFilePath),
+						},
+						expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: the file "dir/werf.yaml" must be committed`,
+					}),
+					Entry("the symlink to the config file not committed: werf.yaml (not committed) -> a (not committed) -> dir/werf.yaml", symlinkEntry{
+						addConfigFile:    true,
+						commitConfigFile: true,
+						addSymlinks: map[string]string{
+							werfConfigRelPath: getLinkTo(werfConfigRelPath, aFilePath),
+							aFilePath:         getLinkTo(aFilePath, configFilePath),
+						},
+						expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
+					}),
+					Entry("the symlink to the config file not committed: werf.yaml -> a (not committed) -> dir/werf.yaml", symlinkEntry{
+						skipOnWindows:    true,
+						addConfigFile:    true,
+						commitConfigFile: true,
+						addAndCommitSymlinks: map[string]string{
+							werfConfigRelPath: getLinkTo(werfConfigRelPath, aFilePath),
+						},
+						addSymlinks: map[string]string{
+							aFilePath: configFilePath,
+						},
+						expectedErrSubstring: ` unable to read werf config: symlink "werf.yaml" check failed: the file "a" must be committed`,
+					}),
+					Entry("the symlink to the config file changed after commit: werf.yaml (changed) -> a -> dir/werf.yaml", symlinkEntry{
+						addConfigFile:    true,
+						commitConfigFile: true,
+						addAndCommitSymlinks: map[string]string{
+							werfConfigRelPath: getLinkTo(werfConfigRelPath, aFilePath),
+							aFilePath:         getLinkTo(aFilePath, configFilePath),
+						},
+						changeSymlinksAfterCommit: map[string]string{
+							werfConfigRelPath: getLinkTo(werfConfigRelPath, configFilePath),
+						},
+						expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
+					}),
+					Entry("config.allowUncommitted allows not committed config file", symlinkEntry{
+						skipOnWindows:        true,
+						allowUncommitted:     true,
+						addConfigFile:        true,
+						addAndCommitSymlinks: map[string]string{werfConfigRelPath: getLinkTo(werfConfigRelPath, configFilePath)},
+					}),
+					Entry("config.allowUncommitted allows committed config file", symlinkEntry{
+						skipOnWindows:        true,
+						allowUncommitted:     true,
+						addConfigFile:        true,
+						commitConfigFile:     true,
+						addAndCommitSymlinks: map[string]string{werfConfigRelPath: getLinkTo(werfConfigRelPath, configFilePath)},
+					}),
+					Entry("the broken symlink in fs: werf.yaml -> werf.yaml", symlinkEntry{
+						skipOnWindows:        true,
+						allowUncommitted:     true,
+						addSymlinks:          map[string]string{werfConfigRelPath: getLinkTo(werfConfigRelPath, werfConfigRelPath)},
+						expectedErrSubstring: `unable to read werf config: accepted symlink "werf.yaml" check failed: too many levels of symbolic links`,
+					}),
+					Entry("the broken symlink in commit: werf.yaml -> werf.yaml", symlinkEntry{
+						addAndCommitSymlinks: map[string]string{werfConfigRelPath: getLinkTo(werfConfigRelPath, werfConfigRelPath)},
+						expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: too many levels of symbolic links`,
+					}),
+					Entry("the linked file outside the project repository: werf.yaml -> a -> ../../../werf.yaml", symlinkEntry{
+						skipOnWindows:        true,
+						addAndCommitSymlinks: map[string]string{werfConfigRelPath: getLinkTo(werfConfigRelPath, aFilePath), aFilePath: "../../../werf.yaml"},
+						expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: commit tree entry "../../../werf.yaml" not found in the repository`,
+					}),
+				)
+			})
+		}
+
+		if projectRelPath == "" {
+			{
+				runCommonTests()
+			}
+		} else {
+			Context("custom project directory", func() {
+				runCommonTests()
+
+				It("the symlink to the config file outside project directory: werf.yaml -> ../../werf.yaml", func() {
+					symlinkBodyFunc("werf.yaml")(symlinkEntry{
+						addConfigFile:    true,
+						commitConfigFile: true,
+						addAndCommitSymlinks: map[string]string{
+							relativeToWorkTreeDir("werf.yaml"): getLinkTo(relativeToWorkTreeDir("werf.yaml"), "werf.yaml"),
+						},
+					})
+				})
+
+				It("config.allowUncommitted allows the symlink to the config file outside project directory: werf.yaml -> ../../werf.yaml", func() {
+					symlinkBodyFunc("werf.yaml")(symlinkEntry{
+						skipOnWindows:    true,
+						allowUncommitted: true,
+						addConfigFile:    true,
+						addSymlinks: map[string]string{
+							relativeToWorkTreeDir("werf.yaml"): getLinkTo(relativeToWorkTreeDir("werf.yaml"), "werf.yaml"),
+						},
+					})
+				})
+			})
+		}
+	}
 })

@@ -38,10 +38,6 @@ func (r FileReader) NewFileNotFoundInProjectRepositoryError(relPath string) erro
 	return FileNotFoundInProjectRepositoryError{errors.NewError(fmt.Sprintf("the file %q not found in the project git repository", filepath.ToSlash(relPath)))}
 }
 
-func (r FileReader) NewSymlinkResolveFailedError(link string, resolveErr error) error {
-	return errors.NewError(fmt.Sprintf("accepted symlink %q check failed: %s", filepath.ToSlash(link), resolveErr))
-}
-
 func (r FileReader) NewUncommittedSubmoduleChangesError(submodulePath string) error {
 	errorMsg := fmt.Sprintf("the submodule %q has modified files and these changes must be committed or discarded. Do not forget to push new changes to the submodule remote", filepath.ToSlash(submodulePath))
 

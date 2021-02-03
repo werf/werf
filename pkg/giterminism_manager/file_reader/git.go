@@ -15,8 +15,12 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func (r FileReader) relativeToGitPath(relPath string) string {
+func (r FileReader) toWorkTreeRelativePath(relPath string) string {
 	return filepath.Join(r.sharedOptions.RelativeToGitProjectDir(), relPath)
+}
+
+func (r FileReader) isSubpathOfWorkTreeDir(absPath string) bool {
+	return util.IsSubpathOfBasePath(r.sharedOptions.LocalGitRepo().WorkTreeDir, absPath)
 }
 
 func (r FileReader) CheckIfCommitFilePathInsideUncleanSubmodule(ctx context.Context, relPath string) (inside bool, unclean bool, submodulePath string, err error) {
@@ -39,7 +43,7 @@ func (r FileReader) CheckIfCommitFilePathInsideUncleanSubmodule(ctx context.Cont
 }
 
 func (r FileReader) checkIfCommitFilePathInsideUncleanSubmodule(ctx context.Context, relPath string) (bool, bool, string, error) {
-	return r.sharedOptions.LocalGitRepo().CheckIfFilePathInsideSubmodule(ctx, r.relativeToGitPath(relPath))
+	return r.sharedOptions.LocalGitRepo().CheckIfFilePathInsideSubmodule(ctx, r.toWorkTreeRelativePath(relPath))
 }
 
 func (r FileReader) IsCommitFileModifiedLocally(ctx context.Context, relPath string) (modified bool, err error) {
@@ -62,25 +66,25 @@ func (r FileReader) IsCommitFileModifiedLocally(ctx context.Context, relPath str
 }
 
 func (r FileReader) isCommitFileModifiedLocally(ctx context.Context, relPath string) (bool, error) {
-	return r.sharedOptions.LocalGitRepo().IsFileModifiedLocally(ctx, r.relativeToGitPath(relPath), git_repo.IsFileModifiedLocally{
+	return r.sharedOptions.LocalGitRepo().IsFileModifiedLocally(ctx, r.toWorkTreeRelativePath(relPath), git_repo.IsFileModifiedLocally{
 		WorktreeOnly: r.sharedOptions.Dev(),
 	})
 }
 
 func (r FileReader) IsCommitFileExist(ctx context.Context, relPath string) (bool, error) {
-	return r.sharedOptions.LocalGitRepo().IsCommitFileExist(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
+	return r.sharedOptions.LocalGitRepo().IsCommitFileExist(ctx, r.sharedOptions.HeadCommit(), r.toWorkTreeRelativePath(relPath))
 }
 
 func (r FileReader) IsCommitTreeEntryExist(ctx context.Context, relPath string) (bool, error) {
-	return r.sharedOptions.LocalGitRepo().IsCommitTreeEntryExist(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
+	return r.sharedOptions.LocalGitRepo().IsCommitTreeEntryExist(ctx, r.sharedOptions.HeadCommit(), r.toWorkTreeRelativePath(relPath))
 }
 
 func (r FileReader) ReadCommitTreeEntryContent(ctx context.Context, relPath string) ([]byte, error) {
-	return r.sharedOptions.LocalGitRepo().ReadCommitTreeEntryContent(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
+	return r.sharedOptions.LocalGitRepo().ReadCommitTreeEntryContent(ctx, r.sharedOptions.HeadCommit(), r.toWorkTreeRelativePath(relPath))
 }
 
 func (r FileReader) ResolveAndCheckCommitFilePath(ctx context.Context, relPath string, checkSymlinkTargetFunc func(resolvedRelPath string) error) (string, error) {
-	return r.sharedOptions.LocalGitRepo().ResolveAndCheckCommitFilePath(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath), checkSymlinkTargetFunc)
+	return r.sharedOptions.LocalGitRepo().ResolveAndCheckCommitFilePath(ctx, r.sharedOptions.HeadCommit(), r.toWorkTreeRelativePath(relPath), checkSymlinkTargetFunc)
 }
 
 func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir string, pattern string) (files []string, err error) {
@@ -107,7 +111,7 @@ func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir string, pat
 }
 
 func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir string, pattern string) ([]string, error) {
-	list, err := r.sharedOptions.LocalGitRepo().ListCommitFilesWithGlob(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(dir), pattern)
+	list, err := r.sharedOptions.LocalGitRepo().ListCommitFilesWithGlob(ctx, r.sharedOptions.HeadCommit(), r.toWorkTreeRelativePath(dir), pattern)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +125,7 @@ func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir string, pat
 }
 
 func (r FileReader) ReadCommitFile(ctx context.Context, relPath string) ([]byte, error) {
-	return r.sharedOptions.LocalGitRepo().ReadCommitFile(ctx, r.sharedOptions.HeadCommit(), r.relativeToGitPath(relPath))
+	return r.sharedOptions.LocalGitRepo().ReadCommitFile(ctx, r.sharedOptions.HeadCommit(), r.toWorkTreeRelativePath(relPath))
 }
 
 // CheckCommitFileExistenceAndLocalChanges returns nil if the file exists and does not have any uncommitted changes locally (each symlink target).
@@ -165,19 +169,25 @@ func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context,
 		}
 	}
 
-	resolvedPath, err := r.ResolveAndCheckCommitFilePath(ctx, relPath, func(resolvedRelPath string) error { // check each symlink target
-		resolvedRelPathRelativeToProjectDir := util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), resolvedRelPath)
+	if err := func() error {
+		resolvedPath, err := r.ResolveAndCheckCommitFilePath(ctx, relPath, func(resolvedRelPath string) error { // check each symlink target
+			resolvedRelPathRelativeToProjectDir := util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), resolvedRelPath)
 
-		return r.checkFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
-	})
-	if err != nil {
-		return fmt.Errorf("symlink %q check failed: %s", relPath, err)
-	}
-
-	if resolvedPath != relPath { // check resolved path
-		if err := r.checkFileModifiedLocally(ctx, relPath); err != nil {
-			return fmt.Errorf("symlink %q check failed: %s", relPath, err)
+			return r.checkFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
+		})
+		if err != nil {
+			return err
 		}
+
+		if resolvedPath != relPath { // check resolved path
+			if err := r.checkFileModifiedLocally(ctx, relPath); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}(); err != nil {
+		return fmt.Errorf("symlink %q check failed: %s", relPath, err)
 	}
 
 	return nil
