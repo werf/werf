@@ -18,6 +18,7 @@ type Interface interface {
 	HeadCommit() string
 	ProjectDir() string
 	RelativeToGitProjectDir() string
+	LooseGiterminism() bool
 	Dev() bool
 }
 
