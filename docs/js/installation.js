@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
   var default_os;
   if (bowser.windows)
     default_os = 'windows'
@@ -34,18 +34,17 @@ $(document).ready(function() {
 
     // Update buttons status
     if (group == "version" && param == "1.2") {
-        $(`[data-install-tab="rock-solid"]`).hide();
-        $(`[data-install-tab="stable"]`).hide();
-        $(`[data-install-tab="ea"]`).hide();
+      $(`[data-install-tab="rock-solid"]`).hide();
+      $(`[data-install-tab="stable"]`).hide();
 
-        doInstallSelect(group, param)
-        doInstallSelect("channel", "beta")
-        return
+      doInstallSelect(group, param)
+      doInstallSelect("channel", "ea")
+      return
     } else if (group == "version") {
-        $(`[data-install-tab="rock-solid"]`).show();
-        $(`[data-install-tab="stable"]`).show();
-        $(`[data-install-tab="ea"]`).show();
-        $(`[data-install-tab="beta"]`).show();
+      $(`[data-install-tab="rock-solid"]`).show();
+      $(`[data-install-tab="stable"]`).show();
+      $(`[data-install-tab="ea"]`).show();
+      $(`[data-install-tab="beta"]`).show();
     }
 
     doInstallSelect(group, param)
@@ -53,17 +52,17 @@ $(document).ready(function() {
 
   let url = new URL(window.location.href);
   let params = new URLSearchParams(url.search);
-  Object.keys(defaults).forEach(function(key) {
-     if ( ! params.get(key) ) {
-        params.set(key, defaults[key]);
-     }
+  Object.keys(defaults).forEach(function (key) {
+    if (!params.get(key)) {
+      params.set(key, defaults[key]);
+    }
   });
 
-    for(let [key, value] of params) {
-      installSelect(key, value)
-    }
+  for (let [key, value] of params) {
+    installSelect(key, value)
+  }
 
-  $('[data-install-tab]').on('click', function() {
+  $('[data-install-tab]').on('click', function () {
     installSelect($(this).data('install-tab-group'), $(this).data('install-tab'));
   })
 
