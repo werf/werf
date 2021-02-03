@@ -57,7 +57,11 @@
 <body>
   <div class="page">
     <div class="page__content">
+      {%- if site.ssi %}
+      <!--#include virtual="/includes/topnav.html" -->
+      {%- else %}
       {%- include topnav.html %}
+      {%- endif %}
 
       <!-- Page Content -->
       {{ content }}

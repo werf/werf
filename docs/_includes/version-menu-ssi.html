@@ -1,0 +1,22 @@
+{%- raw %}
+{{ $CurrentPageURL := .CurrentPageURL }}
+<li id="doc-versions-menu" class="header__menu-item header__menu-item_parent">
+{{- $first := index .VersionItems 0 }}
+<a href="#">
+{{- if $first.Group }}
+{{- $first.Group }}-{{  $first.Channel }}<span class="header__menu-item-extra"> – {{ $first.Version }}</span>
+{{- else }}
+<span class="header__menu-item-extra">{{ $first.Version }}</span>
+{{- end }}
+</a>
+<div class="header__submenu-container">
+    <ul class="header__submenu">
+    {{- range (slice .VersionItems 1) }}
+            <li class="header__submenu-item"><a href="/{{ .VersionURL }}{{ $CurrentPageURL }}"><span
+                    class="header__submenu-item-channel"> {{ .Group }}-{{ .Channel }}</span><span
+                    class="header__submenu-item-release"> — {{ .Version }}</span></a></li>
+    {{- end }}
+    </ul>
+</div>
+</li>
+{% endraw -%}

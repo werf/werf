@@ -7,7 +7,7 @@ kind: Deployment
 metadata:
   name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
   annotations:
-    "werf.io/set-replicas-only-on-creation": "true"
+    "werf.io/replicas-on-creation": "1"
   labels:
     service: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
 spec:
@@ -26,7 +26,7 @@ spec:
       containers:
         - name: web
           command: ["nginx", "-g", "daemon off;"]
-          image: {{ tuple . | werf_image }}
+          image: {{ index .Values.werf.image "web" }}
 {{- include "resources" . | indent 10 }}
           ports:
           - containerPort: 80
