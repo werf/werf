@@ -2,6 +2,7 @@
 {{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
 {{- $_ := set . "VersionDNSNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" ) }}
 
+{{- if ne .Version "master") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -78,3 +79,4 @@ spec:
   selector:
     matchLabels:
       service: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+{{- end }}

@@ -2,6 +2,7 @@
 title: GitOps CLI-утилита
 permalink: /
 layout: default
+relation: site
 ---
 
 <div class="intro-scheme" id="intro-scheme">

@@ -3,6 +3,7 @@ title: Введение
 permalink: introduction.html
 description: Как werf работает?
 sidebar: documentation
+relation: site
 ---
 
 {% asset introduction.css %}

@@ -22,12 +22,6 @@ ansible:
     with_items:
     - /app/_site/main/
     - /app/_site/ru/
-  - name: "Turn SSI on"
-    shell: |
-      echo -e "\nssi: true\n" >> _config.yml
-    args:
-      executable: /bin/bash
-      chdir: /app/docs
   - shell: |
       JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/ --config /app/docs/_config.yml
       JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml
@@ -42,6 +36,8 @@ git:
   excludePaths:
   - '**/*.sh'
   - .helm
+  - werf.yaml
+  - .github
   stageDependencies:
     install: ['Gemfile','Gemfile.lock']
     beforeSetup: '**/*'
@@ -55,14 +51,6 @@ ansible:
       content: |
 {{ .Files.Get ".werf/nginx.conf" | indent 8 }}
       dest: /etc/nginx/nginx.conf
-  - copy:
-      content: |
-{{ .Files.Get ".werf/robots.txt" | indent 8 }}
-      dest: /app/main/robots.txt
-  - copy:
-      content: |
-{{ .Files.Get ".werf/robots_ru.txt" | indent 8 }}
-      dest: /app/ru/robots.txt
 import:
 - artifact: asset
   add: /app/_site
@@ -76,7 +64,7 @@ ansible:
     - name: Build apis
       shell: |
         go get -d -v ./
-        go build -v -o /go/src/app/server /go/src/app/main.go
+        go build -ldflags "-w -s" -v -o /go/src/app/server /go/src/app/
       args:
         executable: /bin/bash
         chdir: /go/src/app
@@ -107,5 +95,3 @@ import:
     before: setup
     excludePaths:
       - "**/documentation/"
-
-

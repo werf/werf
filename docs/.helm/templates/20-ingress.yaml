@@ -12,12 +12,14 @@ metadata:
     nginx.ingress.kubernetes.io/configuration-snippet: |
       ssi on;
       ssi_silent_errors on;
+{{- if eq .Version "master" }}
+{{- include "rewrites" . | indent 6 }}
+{{- end }}
 {{- if eq .Values.global.env "production" }}
+      proxy_set_header X-Original-URI         $request_uri;
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
-    # DELETE b4 prod
-    nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio-ng
 {{- else }}
-    nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio-ng
+    nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio
 {{- end }}
 spec:
   tls:

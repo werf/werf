@@ -3,6 +3,7 @@ title: Installation
 permalink: installation.html
 layout: default
 description: How to install werf?
+relation: site
 versions:
   - 1.2
   - 1.1
