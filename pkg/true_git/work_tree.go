@@ -85,7 +85,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 		return "", fmt.Errorf("unable to get worktree list for repo %s: %s", repoDir, err)
 	} else {
 		for _, workTreeDesc := range workTreeList {
-			if workTreeDesc.Path == workTreeDir {
+			if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(workTreeDir) {
 				isWorkTreeRegistered = true
 			}
 		}
