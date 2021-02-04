@@ -15,4 +15,6 @@ const (
 	ShowLogsUntilAnnoName         = "werf.io/show-logs-until"
 
 	ShowEventsAnnoName = "werf.io/show-service-messages"
+
+	ReplicasOnCreationAnnoName = "werf.io/replicas-on-creation"
 )

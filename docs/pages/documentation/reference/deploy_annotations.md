@@ -6,8 +6,9 @@ description: Description of annotations which control werf tracking of resources
 toc: false
 ---
 
-This article contains description of annotations which control werf tracking of resources during deploy process. Annotations should be configured in the chart templates.
+This article contains description of annotations which control werf resource operations and tracking of resources during deploy process. Annotations should be configured in the chart templates.
 
+ - [`werf.io/replicas-on-creation`](#replicas-on-creation) — defines number of replicas that should be set only when creating resource initially (useful for HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — defines a condition when werf should stop tracking of the resource.
  - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occured after failures threshold has been reached for the resource during deploy process.
  - [`werf.io/failures-allowed-per-replica`](#failures-allowed-per-replica) — defines a threshold of failures after which resource will be considered as failed and werf will handle this situation using [fail mode](#fail-mode).
@@ -19,6 +20,18 @@ This article contains description of annotations which control werf tracking of 
  - [`werf.io/show-service-messages`](#show-service-messages) — enable additional logging of Kubernetes related service messages for resource.
 
 More info about chart templates and other stuff is available in the [deploy basics article.]({{ "documentation/advanced/helm/basics.html" | true_relative_url }})
+
+## Replicas on creation
+
+When HPA is active usage of default `spec.replicas` leads to harmful and tricky behaviour, because each time werf chart is being converged through CI/CD process, resource replicas will be reset to the static `spec.replicas` value in the chart templates, even if this value will was already changed in runtime by the HPA.
+
+One recommended solution is to completely remove `spec.replicas` from the templates. But if you need to set replicas only when initially creating resource then you need `"werf.io/replicas-on-creation"` annotation.
+
+`"werf.io/replicas-on-creation": "NUM"`
+
+Defines a number of replicas which will be set for the resource on initial creation.
+
+**NOTE** `"NUM"` should be specified as string, because annotations does not support anything but strings, any type other than string will be ignored.
 
 ## Track termination mode
 
