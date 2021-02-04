@@ -579,6 +579,11 @@ func convertToStagesList(imageSummaryList []types.ImageSummary) ([]image.StageID
 
 		for _, repoTag := range repoTags {
 			_, tag := image.ParseRepositoryAndTag(repoTag)
+
+			if len(tag) != 70 || len(strings.Split(tag, "-")) != 2 { // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7-1611836746968
+				continue
+			}
+
 			if digest, uniqueID, err := getDigestAndUniqueIDFromLocalStageImageTag(tag); err != nil {
 				return nil, err
 			} else {
