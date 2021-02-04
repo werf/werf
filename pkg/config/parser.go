@@ -275,6 +275,17 @@ func funcMap(tmpl *template.Template, giterminismManager giterminism_manager.Int
 		return envFunc(envName), nil
 	}
 
+	funcMap["required"] = func(msg string, val interface{}) (interface{}, error) {
+		if val == nil {
+			return val, errors.New(msg)
+		} else if _, ok := val.(string); ok {
+			if val == "" {
+				return val, errors.New(msg)
+			}
+		}
+		return val, nil
+	}
+
 	return funcMap
 }
 
