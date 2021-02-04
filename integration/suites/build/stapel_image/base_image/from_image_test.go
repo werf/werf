@@ -62,13 +62,3 @@ var _ = XDescribe("fromImage", func() {
 		})
 	})
 })
-
-var _ = XDescribe("fromArtifact", func() {
-	BeforeEach(func() {
-		SuiteData.TestDirPath = utils.FixturePath("from_artifact")
-	})
-
-	It("should be rebuilt", func() {
-		fromImageItFunc("app", "fromArtifact", func(appConfigName, fromImageConfigName string) {})
-	})
-})

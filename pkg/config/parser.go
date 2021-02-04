@@ -266,6 +266,12 @@ func funcMap(tmpl *template.Template, giterminismManager giterminism_manager.Int
 			return "", err
 		}
 
+		if !giterminismManager.LooseGiterminism() {
+			if _, exist := os.LookupEnv(envName); !exist {
+				return "", fmt.Errorf("the environment variable %q must be set", envName)
+			}
+		}
+
 		return envFunc(envName), nil
 	}
 
