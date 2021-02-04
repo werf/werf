@@ -127,7 +127,7 @@ func (runtime *LocalDockerServerRuntime) PushBuiltImage(ctx context.Context, img
 	dockerImage := img.(*DockerImage)
 
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging built image by name %s", dockerImage.Image.Name())).DoError(func() error {
-		if err := dockerImage.Image.TagBuiltImage(ctx, dockerImage.Image.Name()); err != nil {
+		if err := dockerImage.Image.TagBuiltImage(ctx); err != nil {
 			return fmt.Errorf("unable to tag built image by name %s: %s", dockerImage.Image.Name(), err)
 		}
 		return nil
@@ -136,7 +136,7 @@ func (runtime *LocalDockerServerRuntime) PushBuiltImage(ctx context.Context, img
 	}
 
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", dockerImage.Image.Name())).DoError(func() error {
-		return docker.CliPushWithRetries(ctx, dockerImage.Image.Name())
+		return dockerImage.Image.Push(ctx)
 	}); err != nil {
 		return err
 	}
@@ -149,11 +149,13 @@ func (runtime *LocalDockerServerRuntime) TagImageByName(ctx context.Context, img
 	dockerImage := img.(*DockerImage)
 
 	if dockerImage.Image.GetBuiltId() != "" {
-		if err := dockerImage.Image.TagBuiltImage(ctx, dockerImage.Image.Name()); err != nil {
+		if err := dockerImage.Image.TagBuiltImage(ctx); err != nil {
 			return fmt.Errorf("unable to tag image %s: %s", dockerImage.Image.Name(), err)
 		}
 	} else {
-		runtime.RefreshImageObject(ctx, img)
+		if err := runtime.RefreshImageObject(ctx, img); err != nil {
+			return err
+		}
 	}
 
 	return nil

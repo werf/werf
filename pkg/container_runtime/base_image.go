@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/docker/docker/api/types"
-	"github.com/werf/werf/pkg/docker"
+
+	"github.com/werf/werf/pkg/image"
 )
 
 type baseImage struct {
@@ -19,10 +18,10 @@ type baseImage struct {
 }
 
 func newBaseImage(name string, localDockerServerRuntime *LocalDockerServerRuntime) *baseImage {
-	image := &baseImage{}
-	image.name = name
-	image.LocalDockerServerRuntime = localDockerServerRuntime
-	return image
+	img := &baseImage{}
+	img.name = name
+	img.LocalDockerServerRuntime = localDockerServerRuntime
+	return img
 }
 
 func (i *baseImage) Name() string {
@@ -56,16 +55,6 @@ func (i *baseImage) SetInspect(inspect *types.ImageInspect) {
 
 func (i *baseImage) UnsetInspect() {
 	i.inspect = nil
-}
-
-func (i *baseImage) Untag(ctx context.Context) error {
-	if err := docker.CliRmi(ctx, i.name, "--force"); err != nil {
-		return err
-	}
-
-	i.UnsetInspect()
-
-	return nil
 }
 
 func (i *baseImage) SetStageDescription(stageDesc *image.StageDescription) {

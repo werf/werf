@@ -18,7 +18,7 @@ type ImageInterface interface {
 	SetName(name string)
 
 	Pull(ctx context.Context) error
-	Untag(ctx context.Context) error
+	Push(ctx context.Context) error
 
 	// TODO: build specifics for stapel builder and dockerfile builder
 	// TODO: should be under a single separate interface
@@ -28,8 +28,7 @@ type ImageInterface interface {
 
 	Build(context.Context, BuildOptions) error
 	GetBuiltId() string
-	TagBuiltImage(ctx context.Context, name string) error
-	Export(ctx context.Context, name string) error
+	TagBuiltImage(ctx context.Context) error
 
 	Introspect(ctx context.Context) error
 
