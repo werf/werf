@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/fatih/color"
+	"github.com/gookit/color"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -50,31 +50,31 @@ func (i *Image) LogDetailedName() string {
 	return logging.ImageLogProcessName(i.name, i.isArtifact)
 }
 
-func (i *Image) LogProcessStyle() *style.Style {
+func (i *Image) LogProcessStyle() color.Style {
 	return ImageLogProcessStyle(i.isArtifact)
 }
 
-func (i *Image) LogTagStyle() *style.Style {
+func (i *Image) LogTagStyle() color.Style {
 	return ImageLogTagStyle(i.isArtifact)
 }
 
-func ImageLogProcessStyle(isArtifact bool) *style.Style {
+func ImageLogProcessStyle(isArtifact bool) color.Style {
 	return imageDefaultStyle(isArtifact)
 }
 
-func ImageLogTagStyle(isArtifact bool) *style.Style {
+func ImageLogTagStyle(isArtifact bool) color.Style {
 	return imageDefaultStyle(isArtifact)
 }
 
-func imageDefaultStyle(isArtifact bool) *style.Style {
-	var attributes []color.Attribute
+func imageDefaultStyle(isArtifact bool) color.Style {
+	var colors []color.Color
 	if isArtifact {
-		attributes = []color.Attribute{color.FgCyan, color.Bold}
+		colors = []color.Color{color.FgCyan, color.Bold}
 	} else {
-		attributes = []color.Attribute{color.FgYellow, color.Bold}
+		colors = []color.Color{color.FgYellow, color.Bold}
 	}
 
-	return &style.Style{Attributes: attributes}
+	return color.New(colors...)
 }
 
 func (i *Image) SetStages(stages []stage.Interface) {

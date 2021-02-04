@@ -349,7 +349,7 @@ func runPublish() error {
 		bundleRef := fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag)
 
 		if err := logboek.Context(ctx).LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
-			helmChartSaveCmd := cmd_helm.NewChartSaveCmd(actionConfig, logboek.ProxyOutStream())
+			helmChartSaveCmd := cmd_helm.NewChartSaveCmd(actionConfig, logboek.Context(ctx).OutStream())
 			if err := helmChartSaveCmd.RunE(helmChartSaveCmd, []string{bundle.Dir, bundleRef}); err != nil {
 				return fmt.Errorf("error saving bundle to the local chart helm cache: %s", err)
 			}
@@ -359,7 +359,7 @@ func runPublish() error {
 		}
 
 		if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", bundleRef).DoError(func() error {
-			helmChartPushCmd := cmd_helm.NewChartPushCmd(actionConfig, logboek.ProxyOutStream())
+			helmChartPushCmd := cmd_helm.NewChartPushCmd(actionConfig, logboek.Context(ctx).OutStream())
 			if err := helmChartPushCmd.RunE(helmChartPushCmd, []string{bundleRef}); err != nil {
 				return fmt.Errorf("error pushing bundle %q: %s", bundleRef, err)
 			}

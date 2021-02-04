@@ -8,13 +8,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gookit/color"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/path_matcher"
 )
@@ -136,7 +137,7 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 			if err == git.ErrSubmoduleNotInitialized {
 				if debugProcess() {
 					logboek.Context(ctx).Debug().LogFWithCustomStyle(
-						style.Get(style.FailName),
+						color.GetStyle("danger"),
 						"Submodule is not initialized: path %s will be added to checksum\n",
 						submoduleFullFilepath,
 					)
@@ -261,7 +262,7 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, 
 			if err == git.ErrSubmoduleNotInitialized {
 				if debugProcess() {
 					logboek.Context(ctx).Debug().LogFWithCustomStyle(
-						style.Get(style.FailName),
+						color.GetStyle("danger"),
 						"Submodule is not initialized: path %s will be added to checksum\n",
 						lsTreeEntry.FullFilepath,
 					)
@@ -362,7 +363,7 @@ func notInitializedSubmoduleFullFilepaths(ctx context.Context, repository *git.R
 
 					if debugProcess() {
 						logboek.Context(ctx).Debug().LogFWithCustomStyle(
-							style.Get(style.FailName),
+							color.GetStyle("danger"),
 							"Submodule is not initialized: path %s will be added to checksum\n",
 							submoduleFullFilepath,
 						)
@@ -422,7 +423,7 @@ func submoduleRepositoryAndTree(ctx context.Context, repository *git.Repository,
 	if debugProcess() {
 		if !submoduleStatus.IsClean() {
 			logboek.Context(ctx).Debug().LogFWithCustomStyle(
-				style.Get(style.FailName),
+				color.GetStyle("danger"),
 				"Submodule is not clean (current commit %s), expected commit %s will be checked\n",
 				submoduleStatus.Current,
 				submoduleStatus.Expected,

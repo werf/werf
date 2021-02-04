@@ -58,8 +58,8 @@ func Fetch(ctx context.Context, path string, options FetchOptions) error {
 	logboek.Context(ctx).Debug().LogLnDetails(command, strings.Join(commandArgs, " "))
 
 	cmd := exec.Command(command, commandArgs...)
-	cmd.Stdout = logboek.Context(ctx).ProxyOutStream()
-	cmd.Stderr = logboek.Context(ctx).ProxyErrStream()
+	cmd.Stdout = logboek.Context(ctx).OutStream()
+	cmd.Stderr = logboek.Context(ctx).ErrStream()
 
 	return cmd.Run()
 }

@@ -11,12 +11,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gookit/color"
+
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/style"
 
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/context_manager"
@@ -721,7 +722,7 @@ func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, git
 		if err != nil {
 			if err.Error() == "entry not found" {
 				logboek.Context(ctx).Debug().LogFWithCustomStyle(
-					style.Get(style.FailName),
+					color.GetStyle("danger"),
 					"Entry %s is not found\n",
 					s.dockerignorePathMatcher.BaseFilepath(),
 				)

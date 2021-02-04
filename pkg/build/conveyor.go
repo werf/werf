@@ -15,11 +15,12 @@ import (
 
 	"github.com/docker/docker/builder/dockerignore"
 	"github.com/docker/docker/pkg/fileutils"
+	"github.com/gookit/color"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/style"
+	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/build/import_server"
@@ -28,7 +29,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/image"
+	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/storage"
@@ -337,7 +338,7 @@ func (c *Conveyor) FetchLastImageStage(ctx context.Context, imageName string) er
 	return c.StorageManager.FetchStage(ctx, lastImageStage)
 }
 
-func (c *Conveyor) GetImageInfoGetters() (images []*image.InfoGetter) {
+func (c *Conveyor) GetImageInfoGetters() (images []*imagePkg.InfoGetter) {
 	for _, img := range c.images {
 		if img.isArtifact {
 			continue
@@ -383,7 +384,7 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 func (c *Conveyor) determineStages(ctx context.Context) error {
 	return logboek.Context(ctx).Info().LogProcess("Determining of stages").
 		Options(func(options types.LogProcessOptionsInterface) {
-			options.Style(style.Highlight())
+			options.Style(stylePkg.Highlight())
 		}).
 		DoError(func() error {
 			return c.doDetermineStages(ctx)
@@ -400,7 +401,7 @@ func (c *Conveyor) doDetermineStages(ctx context.Context) error {
 		for _, imageInterfaceConfig := range iteration {
 			var img *Image
 			var imageLogName string
-			var style *style.Style
+			var style color.Style
 
 			switch imageConfig := imageInterfaceConfig.(type) {
 			case config.StapelImageInterface:
@@ -498,7 +499,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 	logboek.Context(ctx).LogBlock(blockMsg).
 		Options(func(options types.LogBlockOptionsInterface) {
-			options.Style(style.Highlight())
+			options.Style(stylePkg.Highlight())
 		}).
 		Do(func() {
 			for setId := range c.imageSets {

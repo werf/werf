@@ -22,7 +22,6 @@ require (
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0
 	github.com/emicklei/go-restful v2.13.0+incompatible // indirect
-	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-git/go-billy/v5 v5.0.0
 	github.com/go-git/go-git/v5 v5.1.1-0.20200721083337-cded5b685b8a
@@ -33,6 +32,7 @@ require (
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/google/go-containerregistry v0.2.0
 	github.com/google/uuid v1.1.2
+	github.com/gookit/color v1.3.5
 	github.com/gosuri/uitable v0.0.4
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/go-multierror v1.0.0
@@ -62,9 +62,9 @@ require (
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20200724193237-c3ed55f3b481 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
-	github.com/werf/kubedog v0.4.1-0.20201210200031-65b86902f889
+	github.com/werf/kubedog v0.4.1-0.20210203160246-f86032227b73
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
-	github.com/werf/logboek v0.4.6
+	github.com/werf/logboek v0.5.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
