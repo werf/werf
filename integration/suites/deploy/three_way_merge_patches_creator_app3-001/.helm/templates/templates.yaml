@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mycm1
-data:
-  moloko: omlet
-  aloe: aloha
