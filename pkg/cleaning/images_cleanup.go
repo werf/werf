@@ -3,6 +3,7 @@ package cleaning
 import (
 	"context"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -160,6 +161,11 @@ func (m *imagesCleanupManager) initImageCommitHashImageMetadata(ctx context.Cont
 		commitImageMetadata := map[plumbing.Hash]*storage.ImageMetadata{}
 		if err := m.StorageManager.ForEachGetImageMetadataByCommit(ctx, m.ProjectName, imageName, func(commit string, imageMetadata *storage.ImageMetadata, err error) error {
 			if err != nil {
+				if os.Getenv("WERF_EXPERIMENTAL_IGNORE_IMAGE_METADATA_BY_COMMIT_BLOB_UNKNOWN") == "1" {
+					if strings.Contains(err.Error(), "BLOB_UNKNOWN") {
+						return nil
+					}
+				}
 				return err
 			}
 
