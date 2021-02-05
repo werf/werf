@@ -56,6 +56,10 @@ func IsManifestUnknownError(err error) bool {
 	return strings.Contains(err.Error(), "MANIFEST_UNKNOWN")
 }
 
+func IsBlobUnknownError(err error) bool {
+	return strings.Contains(err.Error(), "BLOB_UNKNOWN")
+}
+
 func IsNameUnknownError(err error) bool {
 	return strings.Contains(err.Error(), "NAME_UNKNOWN")
 }
