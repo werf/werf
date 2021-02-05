@@ -139,6 +139,23 @@ func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism
 	return tagFuncList, nil
 }
 
+func GetUseCustomTagFunc(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) (func(string) string, error) {
+	customTagFuncList, err := getCustomTagFuncList(commonCmdData, giterminismManager, werfConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(customTagFuncList) == 0 {
+		return nil, nil
+	}
+
+	if len(customTagFuncList) != 1 {
+		panic("unexpected condition")
+	}
+
+	return customTagFuncList[0], nil
+}
+
 func getCustomTagOptionValues(commonCmdData *CmdData) []string {
 	if commonCmdData.UseCustomTag != nil {
 		if *commonCmdData.UseCustomTag != "" {
