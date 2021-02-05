@@ -3,8 +3,11 @@ package converge
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/werf/werf/pkg/deploy/helm2"
 
 	"github.com/werf/werf/pkg/giterminism_manager"
 
@@ -319,6 +322,10 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 		return err
 	}
 
+	if err := helm2ReleaseExistanceCheckGuard(ctx, releaseName, namespace); err != nil {
+		return err
+	}
+
 	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
 	if err != nil {
 		return err
@@ -408,4 +415,64 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)})
 	})
+}
+
+func helm2ReleaseExistanceCheckGuard(ctx context.Context, releaseName, namespace string) error {
+	maintenanceOpts := helm2.MaintenanceHelperOptions{
+		KubeConfigOptions: kube.KubeConfigOptions{
+			Context:          *commonCmdData.KubeContext,
+			ConfigPath:       *commonCmdData.KubeConfig,
+			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+		},
+	}
+
+	for _, val := range []string{
+		os.Getenv("WERF_HELM2_RELEASE_STORAGE_NAMESPACE"),
+		os.Getenv("WERF_HELM_RELEASE_STORAGE_NAMESPACE"),
+		os.Getenv("TILLER_NAMESPACE"),
+	} {
+		if val != "" {
+			maintenanceOpts.ReleaseStorageNamespace = val
+			break
+		}
+	}
+
+	for _, val := range []string{
+		os.Getenv("WERF_HELM2_RELEASE_STORAGE_TYPE"),
+		os.Getenv("WERF_HELM_RELEASE_STORAGE_TYPE"),
+	} {
+		if val != "" {
+			maintenanceOpts.ReleaseStorageType = val
+			break
+		}
+	}
+
+	helm2MaintenanceHelper := helm2.NewMaintenanceHelper(maintenanceOpts)
+	if available, err := helm2MaintenanceHelper.CheckStorageAvailable(ctx); err != nil {
+		return err
+	} else if available {
+		existingReleases, err := helm2MaintenanceHelper.GetReleasesList(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting existing helm 2 releases to perform check: %s", err)
+		}
+		for _, existingReleaseName := range existingReleases {
+			if releaseName == existingReleaseName {
+				return fmt.Errorf(`found existing helm 2 release with the same name %q: cannot continue converge
+
+Please start a migration of your existing helm 2 release to helm 3 manually with the following command:
+
+    werf helm migrate2to3 --release %s --target-namespace %s --help
+
+### CAUTION! ###
+
+ 1. There is no way back after release has been migrated to helm 3.
+ 2. Check release and namespace params are set to correct values.
+ 3. Check other options of the migrate2to3 command to configure non-standard settings of the helm 2 release storage if needed.
+
+`, releaseName, releaseName, namespace)
+			}
+		}
+	}
+
+	return nil
 }
