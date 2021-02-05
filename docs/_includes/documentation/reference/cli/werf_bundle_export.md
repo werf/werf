@@ -213,6 +213,14 @@ werf bundle export [options]
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --use-custom-tag=''
+            Use a tag alias in helm templates instead of an image content-based tag (NOT            
+            RECOMMENDED).
+            For cleaning all aliases and a related content-based tag are treated as one.
+            It is necessary to use the image name shortcut %image% or %image_slug% in the tag       
+            format if there is more than one image in the werf config. 
+            Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g.                                    
+            $WERF_USE_CUSTOM_TAG="%image%-tag").
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple).
             Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, 
