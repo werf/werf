@@ -42,7 +42,7 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
       --dev=false
             Enable developer mode (default $WERF_DEV)
       --dir=''
-            Use specified project directory where project's werf.yaml and other configuration files 
+            Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
       --env=''
             Use specified environment (default $WERF_ENV)
