@@ -19,16 +19,88 @@ import (
 )
 
 type Result struct {
-	repository                           *git.Repository
-	repositoryFullFilepath               string
-	tree                                 *object.Tree
-	lsTreeEntries                        []*LsTreeEntry
-	submodulesResults                    []*SubmoduleResult
-	notInitializedSubmoduleFullFilepaths []string
+	commit                                  string
+	repositoryFullFilepath                  string
+	lsTreeEntries                           []*LsTreeEntry
+	submodulesResults                       []*SubmoduleResult
+	notInitializedSubmoduleFullFilepathList []string
+}
+
+func NewResult(commit string, repositoryFullFilepath string, lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, notInitializedSubmoduleFullFilepathList []string) *Result {
+	return &Result{
+		commit:                                  commit,
+		repositoryFullFilepath:                  repositoryFullFilepath,
+		lsTreeEntries:                           lsTreeEntries,
+		submodulesResults:                       submodulesResults,
+		notInitializedSubmoduleFullFilepathList: notInitializedSubmoduleFullFilepathList,
+	}
+}
+
+func (r *Result) setParentRecursively() {
+	for _, s := range r.submodulesResults {
+		s.parentResult = r
+		s.setParentRecursively()
+	}
+}
+
+func NewSubmoduleResult(submodulePath, submoduleName string, result *Result) *SubmoduleResult {
+	return &SubmoduleResult{
+		submoduleName: submoduleName,
+		submodulePath: submodulePath,
+		Result:        result,
+	}
 }
 
 type SubmoduleResult struct {
 	*Result
+	submoduleName string
+	submodulePath string
+
+	parentResult          *Result
+	parentSubmoduleResult *SubmoduleResult
+}
+
+func (r *SubmoduleResult) setParentRecursively() {
+	for _, s := range r.submodulesResults {
+		s.parentSubmoduleResult = r
+		s.setParentRecursively()
+	}
+}
+
+func (r *SubmoduleResult) submoduleRepositoryFromParent(mainRepository *git.Repository) (*git.Repository, error) {
+	var parentRepository *git.Repository
+	if r.parentResult != nil {
+		parentRepository = mainRepository
+	} else if r.parentSubmoduleResult != nil {
+		var err error
+		parentRepository, err = r.parentSubmoduleResult.submoduleRepositoryFromParent(mainRepository)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		panic("unexpected condition")
+	}
+
+	return r.submoduleRepository(parentRepository)
+}
+
+func (r *SubmoduleResult) submoduleRepository(parentRepository *git.Repository) (*git.Repository, error) {
+	w, err := parentRepository.Worktree()
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := w.Submodule(r.submoduleName)
+	if err != nil {
+		return nil, err
+	}
+
+	submoduleRepository, err := s.Repository()
+	if err != nil {
+		return nil, err
+	}
+
+	return submoduleRepository, nil
 }
 
 type LsTreeEntry struct {
@@ -36,14 +108,22 @@ type LsTreeEntry struct {
 	object.TreeEntry
 }
 
-func (r *Result) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatcher) (*Result, error) {
-	res := &Result{
-		repository:                           r.repository,
-		repositoryFullFilepath:               r.repositoryFullFilepath,
-		tree:                                 r.tree,
-		lsTreeEntries:                        []*LsTreeEntry{},
-		submodulesResults:                    []*SubmoduleResult{},
-		notInitializedSubmoduleFullFilepaths: []string{},
+func (r *Result) LsTree(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+	r, err := r.lsTree(ctx, repository, pathMatcher)
+	if err != nil {
+		return nil, err
+	}
+
+	r.setParentRecursively()
+	return r, nil
+}
+
+func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+	res := NewResult(r.commit, r.repositoryFullFilepath, []*LsTreeEntry{}, []*SubmoduleResult{}, []string{})
+
+	tree, err := getCommitTree(repository, r.commit)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, lsTreeEntry := range r.lsTreeEntries {
@@ -63,13 +143,13 @@ func (r *Result) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatche
 					logboek.Context(ctx).Debug().LogLn("Root tree was checking")
 				}
 
-				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(ctx, r.repository, r.tree, r.repositoryFullFilepath, r.repositoryFullFilepath, pathMatcher)
+				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, pathMatcher)
 				if err != nil {
 					return nil, err
 				}
 			}
 		} else {
-			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, r.repository, r.tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, pathMatcher)
+			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, pathMatcher)
 			if err != nil {
 				return nil, err
 			}
@@ -80,20 +160,26 @@ func (r *Result) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatche
 	}
 
 	for _, submoduleResult := range r.submodulesResults {
-		sr, err := submoduleResult.LsTree(ctx, pathMatcher)
+		submoduleRepository, err := submoduleResult.submoduleRepository(repository)
+		if err != nil {
+			return nil, err
+		}
+
+		sr, err := submoduleResult.lsTree(ctx, submoduleRepository, pathMatcher)
 		if err != nil {
 			return nil, err
 		}
 
 		if !sr.IsEmpty() {
-			res.submodulesResults = append(res.submodulesResults, &SubmoduleResult{sr})
+			sResult := NewSubmoduleResult(submoduleResult.submoduleName, submoduleResult.submodulePath, sr)
+			res.submodulesResults = append(res.submodulesResults, sResult)
 		}
 	}
 
-	for _, submoduleFullFilepath := range r.notInitializedSubmoduleFullFilepaths {
+	for _, submoduleFullFilepath := range r.notInitializedSubmoduleFullFilepathList {
 		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
 		if isMatched || shouldGoThrough {
-			res.notInitializedSubmoduleFullFilepaths = append(res.notInitializedSubmoduleFullFilepaths, submoduleFullFilepath)
+			res.notInitializedSubmoduleFullFilepathList = append(res.notInitializedSubmoduleFullFilepathList, submoduleFullFilepath)
 		}
 	}
 
@@ -101,12 +187,12 @@ func (r *Result) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatche
 }
 
 func (r *Result) Walk(f func(lsTreeEntry *LsTreeEntry) error) error {
-	return r.walkWithResult(func(_ *Result, lsTreeEntry *LsTreeEntry) error {
+	return r.walkWithResult(func(_ *Result, _ *SubmoduleResult, lsTreeEntry *LsTreeEntry) error {
 		return f(lsTreeEntry)
 	})
 }
 
-func (r *Result) walkWithResult(f func(r *Result, lsTreeEntry *LsTreeEntry) error) error {
+func (r *Result) walkWithResult(f func(r *Result, sr *SubmoduleResult, lsTreeEntry *LsTreeEntry) error) error {
 	if err := r.lsTreeEntriesWalkWithResult(f); err != nil {
 		return err
 	}
@@ -116,7 +202,9 @@ func (r *Result) walkWithResult(f func(r *Result, lsTreeEntry *LsTreeEntry) erro
 	})
 
 	for _, submoduleResult := range r.submodulesResults {
-		if err := submoduleResult.walkWithResult(f); err != nil {
+		if err := submoduleResult.walkWithResult(func(_ *Result, _ *SubmoduleResult, lsTreeEntry *LsTreeEntry) error {
+			return f(nil, submoduleResult, lsTreeEntry)
+		}); err != nil {
 			return err
 		}
 	}
@@ -144,8 +232,8 @@ func (r *Result) Checksum(ctx context.Context) string {
 		return nil
 	})
 
-	sort.Strings(r.notInitializedSubmoduleFullFilepaths)
-	for _, submoduleFullFilepath := range r.notInitializedSubmoduleFullFilepaths {
+	sort.Strings(r.notInitializedSubmoduleFullFilepathList)
+	for _, submoduleFullFilepath := range r.notInitializedSubmoduleFullFilepathList {
 		checksumArg := fmt.Sprintf("-%s", filepath.ToSlash(submoduleFullFilepath))
 		h.Write([]byte(checksumArg))
 		logboek.Context(ctx).Debug().LogF("Not initialized submodule was added: %s -> %s\n", submoduleFullFilepath, checksumArg)
@@ -176,22 +264,22 @@ func (r *Result) Checksum(ctx context.Context) string {
 }
 
 func (r *Result) IsEmpty() bool {
-	return len(r.lsTreeEntries) == 0 && len(r.submodulesResults) == 0 && len(r.notInitializedSubmoduleFullFilepaths) == 0
+	return len(r.lsTreeEntries) == 0 && len(r.submodulesResults) == 0 && len(r.notInitializedSubmoduleFullFilepathList) == 0
 }
 
 func (r *Result) lsTreeEntriesWalk(f func(entry *LsTreeEntry) error) error {
-	return r.lsTreeEntriesWalkWithResult(func(_ *Result, entry *LsTreeEntry) error {
+	return r.lsTreeEntriesWalkWithResult(func(_ *Result, _ *SubmoduleResult, entry *LsTreeEntry) error {
 		return f(entry)
 	})
 }
 
-func (r *Result) lsTreeEntriesWalkWithResult(f func(r *Result, entry *LsTreeEntry) error) error {
+func (r *Result) lsTreeEntriesWalkWithResult(f func(r *Result, sr *SubmoduleResult, lsTreeEntry *LsTreeEntry) error) error {
 	sort.Slice(r.lsTreeEntries, func(i, j int) bool {
 		return r.lsTreeEntries[i].FullFilepath < r.lsTreeEntries[j].FullFilepath
 	})
 
 	for _, lsTreeEntry := range r.lsTreeEntries {
-		if err := f(r, lsTreeEntry); err != nil {
+		if err := f(r, nil, lsTreeEntry); err != nil {
 			return err
 		}
 	}
@@ -227,13 +315,22 @@ func (r *Result) LsTreeEntry(relPath string) *LsTreeEntry {
 	return lsTreeEntry
 }
 
-func (r *Result) LsTreeEntryContent(relPath string) ([]byte, error) {
-	var entryResult *Result
+func (r *Result) LsTreeEntryContent(mainRepository *git.Repository, relPath string) ([]byte, error) {
+	var entryRepository *git.Repository
 	var entry *LsTreeEntry
 
-	_ = r.walkWithResult(func(er *Result, e *LsTreeEntry) error {
+	_ = r.walkWithResult(func(r *Result, sr *SubmoduleResult, e *LsTreeEntry) (err error) {
 		if filepath.ToSlash(e.FullFilepath) == filepath.ToSlash(relPath) {
-			entryResult = er
+			if r != nil {
+				entryRepository = mainRepository
+			} else if sr != nil {
+				entryRepository, err = sr.submoduleRepositoryFromParent(mainRepository)
+				if err != nil {
+					return err
+				}
+			} else {
+				panic(fmt.Sprintf("unexpected condition: %v", e))
+			}
 			entry = e
 		}
 
@@ -244,11 +341,11 @@ func (r *Result) LsTreeEntryContent(relPath string) ([]byte, error) {
 		return nil, fmt.Errorf("unable to get tree entry %s", relPath)
 	}
 
-	if entryResult == nil {
+	if entryRepository == nil {
 		panic("unexpected condition")
 	}
 
-	obj, err := entryResult.repository.BlobObject(entry.Hash)
+	obj, err := entryRepository.BlobObject(entry.Hash)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get tree entry %q blob object: %s", entry.FullFilepath, err)
 	}

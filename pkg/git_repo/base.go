@@ -395,7 +395,7 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 		Hash:         sha256.New(),
 	}
 
-	pathMatcher := path_matcher.NewGitMappingPathMatcher(
+	mainPathMatcher := path_matcher.NewGitMappingPathMatcher(
 		opts.BasePath,
 		opts.IncludePaths,
 		opts.ExcludePaths,
@@ -403,9 +403,9 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 	)
 
 	var mainLsTreeResult *ls_tree.Result
-	if err := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String()).DoError(func() error {
+	if err := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", mainPathMatcher.String()).DoError(func() error {
 		var err error
-		mainLsTreeResult, err = ls_tree.LsTree(ctx, repository, opts.Commit, pathMatcher, true)
+		mainLsTreeResult, err = ls_tree.LsTree(ctx, repository, opts.Commit, mainPathMatcher, true)
 		return err
 	}); err != nil {
 		return nil, err
@@ -422,7 +422,7 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
 		logProcess.Start()
 		var err error
-		pathLsTreeResult, err = mainLsTreeResult.LsTree(ctx, pathMatcher)
+		pathLsTreeResult, err = mainLsTreeResult.LsTree(ctx, repository, pathMatcher)
 		if err != nil {
 			logProcess.Fail()
 			return nil, err
