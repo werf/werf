@@ -31,9 +31,10 @@ func NewBase(name string) Base {
 	return Base{
 		Name: name,
 		Cache: Cache{
-			Archives:  make(map[string]Archive),
-			Patches:   make(map[string]Patch),
-			Checksums: make(map[string]Checksum),
+			Archives:       make(map[string]Archive),
+			Patches:        make(map[string]Patch),
+			Checksums:      make(map[string]Checksum),
+			checksumsMutex: make(map[string]sync.Mutex),
 		},
 	}
 }
@@ -44,7 +45,7 @@ type Cache struct {
 	Archives  map[string]Archive
 
 	patchesMutex   sync.Mutex
-	checksumsMutex sync.Mutex
+	checksumsMutex map[string]sync.Mutex
 	archivesMutex  sync.Mutex
 }
 
@@ -464,8 +465,13 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 }
 
 func (repo *Base) getOrCreateChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (Checksum, error) {
-	repo.Cache.checksumsMutex.Lock()
-	defer repo.Cache.checksumsMutex.Unlock()
+	checksumMutex, ok := repo.Cache.checksumsMutex[util.ObjectToHashKey(opts)]
+	if !ok {
+		checksumMutex = sync.Mutex{}
+	}
+
+	checksumMutex.Lock()
+	defer checksumMutex.Unlock()
 
 	if _, hasKey := repo.Cache.Checksums[util.ObjectToHashKey(opts)]; !hasKey {
 		checksum, err := repo.CreateChecksum(ctx, yieldRepositoryFunc, opts)
