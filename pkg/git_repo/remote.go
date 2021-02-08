@@ -33,7 +33,7 @@ type Remote struct {
 
 func OpenRemoteRepo(name, url string) (*Remote, error) {
 	repo := &Remote{
-		Base: Base{Name: name},
+		Base: NewBase(name),
 		Url:  url,
 	}
 	return repo, repo.ValidateEndpoint()
@@ -278,29 +278,16 @@ func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 	return res, nil
 }
 
-func (repo *Remote) CreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
-	return repo.createPatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+func (repo *Remote) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
+	return repo.getOrCreatePatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Remote) CreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
+	return repo.getOrCreateArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Remote) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, checksumErr error) {
-	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
-		if err := repo.yieldRepositoryBackedByWorkTree(ctx, opts.Commit, func(repository *git.Repository) error {
-			if cs, err := repo.checksumWithLsTree(ctx, repository, opts); err != nil {
-				return err
-			} else {
-				checksum = cs
-				return nil
-			}
-		}); err != nil {
-			checksumErr = err
-		}
-	})
-
-	return
+func (repo *Remote) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (Checksum, error) {
+	return repo.getOrCreateChecksum(ctx, repo.yieldRepositoryBackedByWorkTree, opts)
 }
 
 func (repo *Remote) IsCommitExists(ctx context.Context, commit string) (bool, error) {

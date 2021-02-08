@@ -7,19 +7,45 @@ import (
 	"io"
 	"os"
 	"strings"
-
-	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/true_git/ls_tree"
+	"sync"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+
+	"github.com/werf/logboek"
+
+	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/true_git/ls_tree"
+	"github.com/werf/werf/pkg/util"
 )
 
 type Base struct {
 	Name string
+
+	Cache Cache
+}
+
+func NewBase(name string) Base {
+	return Base{
+		Name: name,
+		Cache: Cache{
+			Archives:  make(map[string]Archive),
+			Patches:   make(map[string]Patch),
+			Checksums: make(map[string]Checksum),
+		},
+	}
+}
+
+type Cache struct {
+	Patches   map[string]Patch
+	Checksums map[string]Checksum
+	Archives  map[string]Archive
+
+	patchesMutex   sync.Mutex
+	checksumsMutex sync.Mutex
+	archivesMutex  sync.Mutex
 }
 
 func (repo *Base) HeadCommit(ctx context.Context) (string, error) {
@@ -94,6 +120,30 @@ func (repo *Base) String() string {
 
 func (repo *Base) GetName() string {
 	return repo.Name
+}
+
+func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
+	repo.Cache.patchesMutex.Lock()
+	defer repo.Cache.patchesMutex.Unlock()
+
+	if _, hasKey := repo.Cache.Patches[util.ObjectToHashKey(opts)]; !hasKey {
+		patch, err := repo.CreatePatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+		if err != nil {
+			return nil, err
+		}
+		repo.Cache.Patches[util.ObjectToHashKey(opts)] = patch
+	}
+	return repo.Cache.Patches[util.ObjectToHashKey(opts)], nil
+}
+
+func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (patch Patch, err error) {
+	logboek.Context(ctx).Debug().LogProcess("Creating patch").Do(func() {
+		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
+		logboek.Context(ctx).Debug().LogOptionalLn()
+		patch, err = repo.createPatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+	})
+
+	return
 }
 
 func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
@@ -232,6 +282,30 @@ func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error)
 	}
 
 	return res, nil
+}
+
+func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
+	repo.Cache.archivesMutex.Lock()
+	defer repo.Cache.archivesMutex.Unlock()
+
+	if _, hasKey := repo.Cache.Archives[util.ObjectToHashKey(opts)]; !hasKey {
+		archive, err := repo.CreateArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+		if err != nil {
+			return nil, err
+		}
+		repo.Cache.Archives[util.ObjectToHashKey(opts)] = archive
+	}
+	return repo.Cache.Archives[util.ObjectToHashKey(opts)], nil
+}
+
+func (repo *Base) CreateArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (archive Archive, err error) {
+	logboek.Context(ctx).Debug().LogProcess("Creating archive").Do(func() {
+		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
+		logboek.Context(ctx).Debug().LogOptionalLn()
+		archive, err = repo.createArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+	})
+
+	return
 }
 
 func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
@@ -387,6 +461,39 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	}
 
 	return res, nil
+}
+
+func (repo *Base) getOrCreateChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (Checksum, error) {
+	repo.Cache.checksumsMutex.Lock()
+	defer repo.Cache.checksumsMutex.Unlock()
+
+	if _, hasKey := repo.Cache.Checksums[util.ObjectToHashKey(opts)]; !hasKey {
+		checksum, err := repo.CreateChecksum(ctx, yieldRepositoryFunc, opts)
+		if err != nil {
+			return nil, err
+		}
+		repo.Cache.Checksums[util.ObjectToHashKey(opts)] = checksum
+	}
+	return repo.Cache.Checksums[util.ObjectToHashKey(opts)], nil
+}
+
+func (repo *Base) CreateChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (checksum Checksum, err error) {
+	logboek.Context(ctx).Debug().LogProcess("Creating checksum").Do(func() {
+		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
+		logboek.Context(ctx).Debug().LogOptionalLn()
+		checksum, err = repo.createChecksum(ctx, yieldRepositoryFunc, opts)
+	})
+
+	return
+}
+
+func (repo *Base) createChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (cs Checksum, err error) {
+	_ = yieldRepositoryFunc(ctx, opts.Commit, func(repository *git.Repository) error {
+		cs, err = repo.checksumWithLsTree(ctx, repository, opts)
+		return nil
+	})
+
+	return
 }
 
 func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (Checksum, error) {

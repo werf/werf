@@ -54,9 +54,9 @@ type GitRepo interface {
 	GetMergeCommitParents(ctx context.Context, commit string) ([]string, error)
 
 	CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error)
-	CreatePatch(context.Context, PatchOptions) (Patch, error)
-	CreateArchive(context.Context, ArchiveOptions) (Archive, error)
-	Checksum(context.Context, ChecksumOptions) (Checksum, error)
+	GetOrCreatePatch(context.Context, PatchOptions) (Patch, error)
+	GetOrCreateArchive(context.Context, ArchiveOptions) (Archive, error)
+	GetOrCreateChecksum(context.Context, ChecksumOptions) (Checksum, error)
 }
 
 type Patch interface {
