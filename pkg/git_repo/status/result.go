@@ -17,17 +17,33 @@ import (
 )
 
 type Result struct {
-	repository             *git.Repository
-	repositoryAbsFilepath  string // absolute path
 	repositoryFullFilepath string // path relative to main repository
 	fileStatusList         git.Status
 	submoduleResults       []*SubmoduleResult
 }
 
+func NewResult(repositoryFullFilepath string, fileStatusList git.Status, submoduleResults []*SubmoduleResult) *Result {
+	return &Result{
+		repositoryFullFilepath: repositoryFullFilepath,
+		fileStatusList:         fileStatusList,
+		submoduleResults:       submoduleResults,
+	}
+}
+
 type SubmoduleResult struct {
 	*Result
-	SubmodulePath string
-	*git.SubmoduleStatus
+	submoduleName   string
+	submodulePath   string
+	submoduleStatus *git.SubmoduleStatus
+}
+
+func NewSubmoduleResult(submoduleName, submodulePath string, submoduleStatus *git.SubmoduleStatus, result *Result) *SubmoduleResult {
+	return &SubmoduleResult{
+		submoduleName:   submoduleName,
+		submodulePath:   submodulePath,
+		submoduleStatus: submoduleStatus,
+		Result:          result,
+	}
 }
 
 type FilterOptions struct {
@@ -37,13 +53,7 @@ type FilterOptions struct {
 }
 
 func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatcher) (*Result, error) {
-	res := &Result{
-		repository:             r.repository,
-		repositoryAbsFilepath:  r.repositoryAbsFilepath,
-		repositoryFullFilepath: r.repositoryFullFilepath,
-		fileStatusList:         git.Status{},
-		submoduleResults:       []*SubmoduleResult{},
-	}
+	res := NewResult(r.repositoryFullFilepath, git.Status{}, []*SubmoduleResult{})
 
 	for fileStatusPath, fileStatus := range r.fileStatusList {
 		fileStatusFilepath := filepath.FromSlash(fileStatusPath)
@@ -75,11 +85,7 @@ func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatche
 				return nil, err
 			}
 
-			newSubmoduleResult := &SubmoduleResult{
-				Result:          newResult,
-				SubmoduleStatus: submoduleResult.SubmoduleStatus,
-				SubmodulePath:   submoduleResult.SubmodulePath,
-			}
+			newSubmoduleResult := NewSubmoduleResult(submoduleResult.submoduleName, submoduleResult.submodulePath, submoduleResult.submoduleStatus, newResult)
 
 			res.submoduleResults = append(res.submoduleResults, newSubmoduleResult)
 		}
@@ -130,12 +136,12 @@ type SubmoduleHasUncommittedChangesError struct {
 	error
 }
 
-func (r *Result) ValidateSubmodules(headCommit string) error {
+func (r *Result) ValidateSubmodules(repository *git.Repository, headCommit string) error {
 	if len(r.submoduleResults) == 0 {
 		return nil
 	}
 
-	c, err := r.repository.CommitObject(plumbing.NewHash(headCommit))
+	c, err := repository.CommitObject(plumbing.NewHash(headCommit))
 	if err != nil {
 		return err
 	}
@@ -155,14 +161,14 @@ func (r *Result) ValidateSubmodules(headCommit string) error {
 			continue
 		}
 
-		e, err := cTree.FindEntry(sr.SubmodulePath)
+		e, err := cTree.FindEntry(sr.submodulePath)
 		if err != nil {
 			if err == object.ErrEntryNotFound {
 				return UncleanSubmoduleError{
 					SubmodulePath:           sr.repositoryFullFilepath,
 					HeadCommitCurrentCommit: plumbing.ZeroHash.String(),
-					ExpectedCommit:          sr.Expected.String(),
-					CurrentCommit:           sr.Current.String(),
+					ExpectedCommit:          sr.submoduleStatus.Expected.String(),
+					CurrentCommit:           sr.submoduleStatus.Current.String(),
 					error:                   fmt.Errorf("submodule is not clean"),
 				}
 			}
@@ -171,12 +177,12 @@ func (r *Result) ValidateSubmodules(headCommit string) error {
 		}
 
 		headCommitSubmoduleCommit := e.Hash
-		if headCommitSubmoduleCommit != sr.Expected || sr.Expected != sr.Current {
+		if headCommitSubmoduleCommit != sr.submoduleStatus.Expected || sr.submoduleStatus.Expected != sr.submoduleStatus.Current {
 			return UncleanSubmoduleError{
 				SubmodulePath:           sr.repositoryFullFilepath,
 				HeadCommitCurrentCommit: headCommitSubmoduleCommit.String(),
-				ExpectedCommit:          sr.Expected.String(),
-				CurrentCommit:           sr.Current.String(),
+				ExpectedCommit:          sr.submoduleStatus.Expected.String(),
+				CurrentCommit:           sr.submoduleStatus.Current.String(),
 				error:                   fmt.Errorf("submodule is not clean"),
 			}
 		}
@@ -189,7 +195,22 @@ func (r *Result) ValidateSubmodules(headCommit string) error {
 			}
 		}
 
-		if err := sr.ValidateSubmodules(sr.Current.String()); err != nil {
+		w, err := repository.Worktree()
+		if err != nil {
+			return err
+		}
+
+		s, err := w.Submodule(sr.submoduleName)
+		if err != nil {
+			return err
+		}
+
+		srRepository, err := s.Repository()
+		if err != nil {
+			return err
+		}
+
+		if err := sr.ValidateSubmodules(srRepository, sr.submoduleStatus.Current.String()); err != nil {
 			return err
 		}
 	}
@@ -207,7 +228,7 @@ func (r *Result) IsFileModified(relPath string, options FilterOptions) bool {
 	if !options.IgnoreSubmodules {
 		for _, sr := range r.submoduleResults {
 			if util.IsSubpathOfBasePath(filepath.ToSlash(sr.repositoryFullFilepath), filepath.ToSlash(relPath)) {
-				if sr.Current != sr.Expected {
+				if sr.submoduleStatus.Current != sr.submoduleStatus.Expected {
 					return true
 				}
 

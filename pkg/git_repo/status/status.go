@@ -25,11 +25,11 @@ var fileStatusMapping = map[git.StatusCode]string{
 	git.UpdatedButUnmerged: "Updated",
 }
 
-func Status(ctx context.Context, repository *git.Repository, repositoryAbsFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
-	return status(ctx, repository, repositoryAbsFilepath, "", pathMatcher)
+func Status(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+	return status(ctx, repository, "", pathMatcher)
 }
 
-func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepath string, repositoryFullFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+func status(ctx context.Context, repository *git.Repository, repositoryFullFilepath string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
 	worktree, err := repository.Worktree()
 	if err != nil {
 		return nil, err
@@ -45,13 +45,7 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 		submoduleByPath[submodule.Config().Path] = submodule
 	}
 
-	result := &Result{
-		repository:             repository,
-		repositoryAbsFilepath:  repositoryAbsFilepath,
-		repositoryFullFilepath: repositoryFullFilepath,
-		fileStatusList:         git.Status{},
-		submoduleResults:       []*SubmoduleResult{},
-	}
+	result := NewResult(repositoryFullFilepath, git.Status{}, []*SubmoduleResult{})
 
 	worktreeStatus, err := worktree.Status()
 	if err != nil {
@@ -91,7 +85,6 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 	for submodulePath, submodule := range submoduleByPath {
 		submoduleFilepath := filepath.FromSlash(submodulePath)
 		submoduleFullFilepath := filepath.Join(repositoryFullFilepath, submoduleFilepath)
-		submoduleRepositoryAbsFilepath := filepath.Join(repositoryAbsFilepath, submoduleFilepath)
 
 		matched, shouldGoTrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
 		if matched || shouldGoTrough {
@@ -99,7 +92,6 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 				logboek.Context(ctx).Debug().LogF("Submodule was checking: %s\n", submoduleFullFilepath)
 			}
 
-			submoduleResult := &SubmoduleResult{}
 			submoduleRepository, err := submodule.Repository()
 			if err != nil {
 				return nil, fmt.Errorf("getting submodule repository failed (%s): %s", submoduleFullFilepath, err)
@@ -120,14 +112,12 @@ func status(ctx context.Context, repository *git.Repository, repositoryAbsFilepa
 				}
 			}
 
-			sResult, err := status(ctx, submoduleRepository, submoduleRepositoryAbsFilepath, submoduleFullFilepath, pathMatcher)
+			newResult, err := status(ctx, submoduleRepository, submoduleFullFilepath, pathMatcher)
 			if err != nil {
 				return nil, err
 			}
 
-			submoduleResult.SubmoduleStatus = submoduleStatus
-			submoduleResult.Result = sResult
-			submoduleResult.SubmodulePath = submodulePath
+			submoduleResult := NewSubmoduleResult(submodule.Config().Name, submodule.Config().Path, submoduleStatus, newResult)
 
 			result.submoduleResults = append(result.submoduleResults, submoduleResult)
 		}
