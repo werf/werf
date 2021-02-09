@@ -59,7 +59,13 @@ func (api *api) IsRepoImageExists(ctx context.Context, reference string) (bool, 
 
 func (api *api) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
 	if imgInfo, err := api.GetRepoImage(ctx, reference); err != nil {
-		if IsManifestUnknownError(err) || IsNameUnknownError(err) {
+		if IsBlobUnknownError(err) || IsManifestUnknownError(err) {
+			// TODO: Delete such images in werf-cleanup then enable warnings
+			// logboek.Context(ctx).Warn().LogF("WARNING: Got an error when inspecting repo image %q: %s\n", reference, err)
+			return nil, nil
+		}
+
+		if IsNameUnknownError(err) {
 			return nil, nil
 		}
 		return imgInfo, err
