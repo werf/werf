@@ -197,6 +197,9 @@ cli: &cli
       - title: werf helm list
         url: /documentation/reference/cli/werf_helm_list.html
 
+      - title: werf helm migrate2to3
+        url: /documentation/reference/cli/werf_helm_migrate2to3.html
+
       - title: werf helm package
         url: /documentation/reference/cli/werf_helm_package.html
 
