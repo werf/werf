@@ -4,9 +4,10 @@ go 1.14
 
 require (
 	bou.ke/monkey v1.0.1
-	github.com/Masterminds/goutils v1.1.0
+	github.com/Masterminds/goutils v1.1.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.20.0+incompatible
+	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/alessio/shellescape v0.0.0-20190409004728-b115ca0f9053
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect

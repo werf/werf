@@ -14,6 +14,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
+	sprigV3 "github.com/Masterminds/sprig/v3"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"gopkg.in/yaml.v2"
 
@@ -286,6 +287,13 @@ func getWerfConfigTemplates(path string) ([]string, error) {
 
 func funcMap(tmpl *template.Template) template.FuncMap {
 	funcMap := sprig.TxtFuncMap()
+	for name, f := range sprigV3.TxtFuncMap() {
+		_, exist := funcMap[name]
+		if !exist {
+			funcMap[name] = f
+		}
+	}
+
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
 		return executeTemplate(tmpl, name, data)
 	}
