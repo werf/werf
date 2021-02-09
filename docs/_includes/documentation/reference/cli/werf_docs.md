@@ -15,7 +15,7 @@ werf docs [options]
 
 ```shell
       --dir=''
-            Use specified project directory where project's werf.yaml and other configuration files 
+            Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
   -h, --help=false
             help for docs

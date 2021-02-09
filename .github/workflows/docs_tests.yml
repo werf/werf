@@ -67,6 +67,6 @@ jobs:
             --allow-hash-href \
             --empty-alt-ignore \
             --check_html \
-            --url_ignore "/localhost/,/bintray.com/,/t.me/,/slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.(ru)|(com)/,/twitter.com/,/example.com/,/dothings.sh/,/172.17.0.3/,/applications_guide_ru/,/werf_yaml.html#configuring-cleanup-policies/" \
+            --url_ignore "/localhost/,/bintray.com/,/t.me/,/slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.(ru)|(com)/,/twitter.com/,/example.com/,/dothings.sh/,/172.17.0.3/,/guides/,/werf_yaml.html#configuring-cleanup-policies/" \
             --http-status-ignore 0 \
             ./_site/

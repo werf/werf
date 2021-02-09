@@ -26,7 +26,7 @@ werf purge [options]
       --dev=false
             Enable developer mode (default $WERF_DEV)
       --dir=''
-            Use specified project directory where project's werf.yaml and other configuration files 
+            Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  

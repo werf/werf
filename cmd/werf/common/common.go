@@ -138,7 +138,7 @@ func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dir = new(string)
-	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", os.Getenv("WERF_DIR"), "Use specified project directory where project's werf.yaml and other configuration files should reside (default $WERF_DIR or current working directory)")
+	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", os.Getenv("WERF_DIR"), "Use specified project directory where project’s werf.yaml and other configuration files should reside (default $WERF_DIR or current working directory)")
 }
 
 func SetupConfigPath(cmdData *CmdData, cmd *cobra.Command) {
