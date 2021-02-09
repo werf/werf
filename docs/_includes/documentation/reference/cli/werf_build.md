@@ -41,6 +41,13 @@ werf build [IMAGE_NAME...] [options]
 {{ header }} Options
 
 ```shell
+      --add-custom-tag=[]
+            Set tag aliases for an image content-based tag.
+            For cleaning all aliases and a related content-based tag are treated as one.
+            It is necessary to use the image name shortcut %image% or %image_slug% in the tag       
+            format if there is more than one image in the werf config. 
+            Also, can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g.                                  
+            $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2").
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''

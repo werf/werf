@@ -3,21 +3,23 @@ package chart_extender
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/ghodss/yaml"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/image"
+	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/werf"
 )
 
 type ServiceValuesOptions struct {
-	Namespace string
-	Env       string
-	IsStub    bool
+	Namespace     string
+	Env           string
+	IsStub        bool
+	CustomTagFunc func(string) string
 }
 
-func GetServiceValues(ctx context.Context, projectName string, repo string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+func GetServiceValues(ctx context.Context, projectName string, repo string, imageInfoGetters []*imagePkg.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	globalInfo := map[string]interface{}{
 		"werf": map[string]interface{}{
 			"version": werf.Version,
@@ -32,6 +34,10 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 		"image": map[string]interface{}{},
 	}
 
+	if opts.CustomTagFunc != nil {
+		werfInfo["image_digest"] = map[string]interface{}{}
+	}
+
 	if opts.Namespace != "" {
 		werfInfo["namespace"] = opts.Namespace
 	}
@@ -42,11 +48,29 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 	}
 
 	for _, imageInfoGetter := range imageInfoGetters {
+		var image string
+		var imageDigest string
+
+		if opts.CustomTagFunc == nil {
+			image = imageInfoGetter.GetName()
+		} else {
+			image = strings.Join([]string{repo, opts.CustomTagFunc(imageInfoGetter.GetName())}, ":")
+			imageDigest = imageInfoGetter.GetTag()
+		}
+
 		if imageInfoGetter.IsNameless() {
 			werfInfo["is_nameless_image"] = true
-			werfInfo["nameless_image"] = imageInfoGetter.GetName()
+			werfInfo["nameless_image"] = image
+
+			if imageDigest != "" {
+				werfInfo["nameless_image_digest"] = imageInfoGetter.GetTag()
+			}
 		} else {
-			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetName()
+			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = image
+
+			if imageDigest != "" {
+				werfInfo["image_digest"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageDigest
+			}
 		}
 	}
 

@@ -119,6 +119,37 @@ func (storage *LocalDockerServerStagesStorage) GetStageDescription(ctx context.C
 	}
 }
 
+func (storage *LocalDockerServerStagesStorage) CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage CheckStageCustomTag %s %s\n", stageDescription.Info.Name, tag)
+
+	fullImageName := storage.makeStageCustomTagImageName(stageDescription, tag)
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage CheckStageCustomTag full image name: %s\n", fullImageName)
+
+	inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(ctx, fullImageName)
+	if err != nil {
+		return fmt.Errorf("unable to get image %q inspect: %s", fullImageName, err)
+	}
+
+	if inspect != nil {
+		return fmt.Errorf("the custom tag %q not found", tag)
+	}
+
+	if stageDescription.Info.ID != inspect.ID {
+		return fmt.Errorf("the custom tag %q image must be the same as related content-based tag %q image", tag, stageDescription.Info.Tag)
+	}
+
+	return nil
+}
+
+func (storage *LocalDockerServerStagesStorage) AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage AddStageCustomTag %s %s\n", stageDescription.StageID.String(), tag)
+	return docker.CliTag(ctx, stageDescription.Info.ID, storage.makeStageCustomTagImageName(stageDescription, tag))
+}
+
+func (storage *LocalDockerServerStagesStorage) makeStageCustomTagImageName(stageDescription *image.StageDescription, aliasTag string) string {
+	return strings.Join([]string{stageDescription.Info.Repository, aliasTag}, ":")
+}
+
 func (storage *LocalDockerServerStagesStorage) AddManagedImage(ctx context.Context, projectName, imageName string) error {
 	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 
@@ -579,6 +610,11 @@ func convertToStagesList(imageSummaryList []types.ImageSummary) ([]image.StageID
 
 		for _, repoTag := range repoTags {
 			_, tag := image.ParseRepositoryAndTag(repoTag)
+
+			if len(tag) != 70 || len(strings.Split(tag, "-")) != 2 { // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7-1611836746968
+				continue
+			}
+
 			if digest, uniqueID, err := getDigestAndUniqueIDFromLocalStageImageTag(tag); err != nil {
 				return nil, err
 			} else {

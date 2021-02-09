@@ -80,7 +80,7 @@ func (storage *RepoStagesStorage) ConstructStageImageName(_, digest string, uniq
 	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, digest, uniqueID)
 }
 
-func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error) {
+func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string) ([]image.StageID, error) {
 	var res []image.StageID
 
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
@@ -89,6 +89,10 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, projectName 
 		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesByDigest fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 
 		for _, tag := range tags {
+			if len(tag) != 70 || len(strings.Split(tag, "-")) != 2 { // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7-1611836746968
+				continue
+			}
+
 			if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) || strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) {
 				continue
 			}
@@ -126,7 +130,7 @@ func (storage *RepoStagesStorage) DeleteRepo(ctx context.Context) error {
 	return storage.DockerRegistry.DeleteRepo(ctx, storage.RepoAddress)
 }
 
-func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error) {
+func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, digest string) ([]image.StageID, error) {
 	var res []image.StageID
 
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
@@ -171,6 +175,16 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 		}, nil
 	}
 	return nil, nil
+}
+
+func (storage *RepoStagesStorage) CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage CheckStageCustomTag %s %s\n", stageDescription.Info.Name, tag)
+	return storage.DockerRegistry.CheckRepoImageCustomTag(ctx, stageDescription.Info, tag)
+}
+
+func (storage *RepoStagesStorage) AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage AddStageCustomTag %s %s\n", stageDescription.Info.Name, tag)
+	return storage.DockerRegistry.TagRepoImage(ctx, stageDescription.Info, tag)
 }
 
 func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectName, imageName string) error {

@@ -69,6 +69,9 @@ type CmdData struct {
 	SkipBuild *bool
 	StubTags  *bool
 
+	AddCustomTag *[]string
+	UseCustomTag *string
+
 	Synchronization    *string
 	Parallel           *bool
 	ParallelTasksLimit *int64
@@ -105,8 +108,6 @@ type CmdData struct {
 	VirtualMergeIntoCommit *string
 
 	ScanContextNamespaceOnly *bool
-
-	Tag *string
 }
 
 const (
@@ -338,6 +339,22 @@ func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SecondaryStagesStorage = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", []string{}, `Specify one or multiple secondary read-only repos with images that will be used as a cache.
 Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)`)
+}
+
+func SetupAddCustomTag(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.AddCustomTag = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.AddCustomTag, "add-custom-tag", "", []string{}, `Set tag aliases for an image content-based tag.
+For cleaning all aliases and a related content-based tag are treated as one.
+It is necessary to use the image name shortcut %image% or %image_slug% in the tag format if there is more than one image in the werf config. 
+Also, can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g. $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2").`)
+}
+
+func SetupUseCustomTag(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.UseCustomTag = new(string)
+	cmd.Flags().StringVarP(cmdData.UseCustomTag, "use-custom-tag", "", os.Getenv("WERF_USE_CUSTOM_TAG"), `Use a tag alias in helm templates instead of an image content-based tag (NOT RECOMMENDED).
+For cleaning all aliases and a related content-based tag are treated as one.
+It is necessary to use the image name shortcut %image% or %image_slug% in the tag format if there is more than one image in the werf config. 
+Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag").`)
 }
 
 func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
@@ -1051,6 +1068,10 @@ func GetAddAnnotations(cmdData *CmdData) []string {
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 	return append(predefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+}
+
+func getAddCustomTag(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
 }
 
 func GetSet(cmdData *CmdData) []string {
