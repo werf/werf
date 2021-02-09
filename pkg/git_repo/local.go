@@ -245,17 +245,17 @@ func (repo *Local) getMainStatusResult(ctx context.Context) (*status.Result, err
 	defer repo.mutex.Unlock()
 
 	if repo.statusResult == nil {
-		repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
-		if err != nil {
-			return nil, fmt.Errorf("cannot open repo %s: %s", repo.WorkTreeDir, err)
-		}
+		if err := repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) error {
+			result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}, true))
+			if err != nil {
+				return err
+			}
 
-		result, err := status.Status(ctx, repository, repo.WorkTreeDir, path_matcher.NewSimplePathMatcher("", []string{}, true))
-		if err != nil {
+			repo.statusResult = result
+			return nil
+		}); err != nil {
 			return nil, err
 		}
-
-		repo.statusResult = result
 	}
 
 	return repo.statusResult, nil
@@ -339,7 +339,9 @@ func (repo *Local) ValidateSubmodules(ctx context.Context, matcher path_matcher.
 		return err
 	}
 
-	return statusResult.ValidateSubmodules(repo.headCommit)
+	return repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) error {
+		return statusResult.ValidateSubmodules(repository, repo.headCommit)
+	})
 }
 
 // IsFileModifiedLocally checks if the file has worktree or staged changes
