@@ -151,12 +151,14 @@ func (r *Result) ValidateSubmodules(headCommit string) error {
 			return err
 		}
 
+		/* The submodule is not checked out, so it is not modified */
 		if !dotGitExist {
 			continue
 		}
 
 		e, err := cTree.FindEntry(sr.SubmodulePath)
 		if err != nil {
+			/* The submodule exists locally but it is not committed yet */
 			if err == object.ErrEntryNotFound {
 				return UncleanSubmoduleError{
 					SubmodulePath:           sr.repositoryFullFilepath,
@@ -171,7 +173,9 @@ func (r *Result) ValidateSubmodules(headCommit string) error {
 		}
 
 		headCommitSubmoduleCommit := e.Hash
-		if headCommitSubmoduleCommit != sr.Expected || sr.Expected != sr.Current {
+
+		/* The submodule is switched to another commit and not committed yet */
+		if headCommitSubmoduleCommit != sr.Expected {
 			return UncleanSubmoduleError{
 				SubmodulePath:           sr.repositoryFullFilepath,
 				HeadCommitCurrentCommit: headCommitSubmoduleCommit.String(),
@@ -181,6 +185,23 @@ func (r *Result) ValidateSubmodules(headCommit string) error {
 			}
 		}
 
+		/* The submodule expected commit (from stage) differs from the current commit */
+		if sr.Expected != sr.Current {
+			/* skip invalid submodule state */
+			if sr.Current == plumbing.ZeroHash {
+				continue
+			}
+
+			return UncleanSubmoduleError{
+				SubmodulePath:           sr.repositoryFullFilepath,
+				HeadCommitCurrentCommit: headCommitSubmoduleCommit.String(),
+				ExpectedCommit:          sr.Expected.String(),
+				CurrentCommit:           sr.Current.String(),
+				error:                   fmt.Errorf("submodule is not clean"),
+			}
+		}
+
+		/* The submodule has untracked/modified files */
 		if len(sr.fileStatusList) != 0 {
 			return SubmoduleHasUncommittedChangesError{
 				SubmodulePath: sr.repositoryFullFilepath,
