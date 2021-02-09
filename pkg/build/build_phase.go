@@ -205,7 +205,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 	return nil
 }
 
-func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, img *Image) bool {
+func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *Image) bool {
 	return false
 }
 
