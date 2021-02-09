@@ -51,6 +51,7 @@ deploy:
 В качестве значения для `deploy.helmRelease` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `project` и `env`. Значение шаблона имени релиза по умолчанию: `[[ project ]]-[[ env ]]`.
 
 Можно комбинировать переменные доступные в Go-шаблоне с переменными окружения следующим образом:
+
 {% raw %}
 ```yaml
 deploy:
@@ -58,6 +59,8 @@ deploy:
     [[ project ]]-{{ env "HELM_RELEASE_EXTRA" }}-[[ env ]]
 ```
 {% endraw %}
+
+**Замечание** Использование переменной окружения `HELM_RELEASE_EXTRA` в данном случае должно быть явно разрешено в конфиге [werf-giterminism.yaml]({{ "documentation/advanced/configuration/giterminism.html" | true_relative_url }.
 
 `deploy.helmReleaseSlug` включает или отключает [слагификацию]({{ "documentation/advanced/helm/basics.html#слагификация-имени-релиза" | true_relative_url }}) имени Helm-релиза (включен по умолчанию).
 

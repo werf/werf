@@ -194,7 +194,7 @@ func (i *StageImage) GetBuiltId() string {
 	}
 }
 
-func (i *StageImage) TagBuiltImage(ctx context.Context, name string) error {
+func (i *StageImage) TagBuiltImage(ctx context.Context) error {
 	return docker.CliTag(ctx, i.MustGetBuiltId(), i.name)
 }
 
@@ -214,51 +214,6 @@ func (i *StageImage) Pull(ctx context.Context) error {
 
 func (i *StageImage) Push(ctx context.Context) error {
 	return docker.CliPushWithRetries(ctx, i.name)
-}
-
-func (i *StageImage) Import(ctx context.Context, name string) error {
-	importedImage := newBaseImage(name, i.LocalDockerServerRuntime)
-
-	if err := docker.CliPullWithRetries(ctx, name); err != nil {
-		return err
-	}
-
-	importedImageId := importedImage.GetStageDescription().Info.ID
-
-	if err := docker.CliTag(ctx, importedImageId, i.name); err != nil {
-		return err
-	}
-
-	if err := docker.CliRmi(ctx, name); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (i *StageImage) Export(ctx context.Context, name string) error {
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging %s", name)).DoError(func() error {
-		return i.Tag(ctx, name)
-	}); err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Untagging %s", name)).DoError(func() error {
-			return docker.CliRmi(ctx, name)
-		}); err != nil {
-			// TODO: errored image state
-			logboek.Context(ctx).Error().LogF("Unable to remote temporary image %q: %s", name, err)
-		}
-	}()
-
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", name)).DoError(func() error {
-		return docker.CliPushWithRetries(ctx, name)
-	}); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (i *StageImage) DockerfileImageBuilder() *DockerfileImageBuilder {

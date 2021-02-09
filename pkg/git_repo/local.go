@@ -184,7 +184,15 @@ func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatc
 		return nil, err
 	}
 
-	return mainLsTreeResult.LsTree(ctx, pathMatcher)
+	var lsTreeResult *ls_tree.Result
+	if err := repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) (err error) {
+		lsTreeResult, err = mainLsTreeResult.LsTree(ctx, repository, pathMatcher)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	return lsTreeResult, nil
 }
 
 func (repo *Local) getMainLsTreeResult(ctx context.Context, opts LsTreeOptions) (*ls_tree.Result, error) {
@@ -728,7 +736,15 @@ func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPa
 		return nil, err
 	}
 
-	return lsTreeResult.LsTreeEntryContent(relPath)
+	var content []byte
+	if err := repo.yieldRepositoryBackedByWorkTree(ctx, commit, func(repository *git.Repository) error {
+		content, err = lsTreeResult.LsTreeEntryContent(repository, relPath)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	return content, nil
 }
 
 func (repo *Local) IsCommitTreeEntryExist(ctx context.Context, commit, relPath string) (exist bool, err error) {
