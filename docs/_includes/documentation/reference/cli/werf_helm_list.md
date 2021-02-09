@@ -63,7 +63,7 @@ werf helm list [flags] [options]
   -r, --reverse=false
             reverse the sort order
   -l, --selector=''
-            Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l              
+            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
             key1=value1,key2=value2). Works only for secret(default) and configmap storage backends.
   -q, --short=false
             output short (quiet) listing format
@@ -72,7 +72,7 @@ werf helm list [flags] [options]
       --time-format=''
             format time. Example: --time-format 2009-11-17 20:34:10 +0000 UTC
       --uninstalled=false
-            show uninstalled releases (if 'helm uninstall --keep-history' was used)
+            show uninstalled releases (if `helm uninstall --keep-history` was used)
       --uninstalling=false
             show releases that are currently being uninstalled
 ```
