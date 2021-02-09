@@ -185,16 +185,16 @@ func (r *Result) ValidateSubmodules(repository *git.Repository, headCommit strin
 			return UncleanSubmoduleError{
 				SubmodulePath:           sr.repositoryFullFilepath,
 				HeadCommitCurrentCommit: headCommitSubmoduleCommit.String(),
-				ExpectedCommit:          sr.Expected.String(),
-				CurrentCommit:           sr.Current.String(),
+				ExpectedCommit:          sr.submoduleStatus.Expected.String(),
+				CurrentCommit:           sr.submoduleStatus.Current.String(),
 				error:                   fmt.Errorf("submodule is not clean"),
 			}
 		}
 
 		/* The submodule expected commit (from stage) differs from the current commit */
-		if sr.Expected != sr.Current {
+		if sr.submoduleStatus.Expected != sr.submoduleStatus.Current {
 			/* skip invalid submodule state */
-			if sr.Current == plumbing.ZeroHash {
+			if sr.submoduleStatus.Current == plumbing.ZeroHash {
 				continue
 			}
 
