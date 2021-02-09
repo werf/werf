@@ -21,7 +21,7 @@ werf helm test [RELEASE] [flags] [options]
 ```shell
       --filter=[]
             specify tests by attribute (currently "name") using attribute=value syntax or           
-            '!attribute=value' to exclude a test (can specify multiple or separate values with      
+            `!attribute=value` to exclude a test (can specify multiple or separate values with      
             commas: name=test1,name=test2)
       --logs=false
             dump the logs from test pods (this runs after all tests are complete, but before any    

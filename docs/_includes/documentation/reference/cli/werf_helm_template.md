@@ -47,7 +47,7 @@ werf helm template [NAME] [CHART] [flags] [options]
       --description=''
             add a custom description
       --devel=false
-            use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
+            use development versions, too. Equivalent to version `>0.0.0-0`. If --version is set,   
             this is ignored
       --disable-openapi-validation=false
             if set, the installation process will not validate rendered templates against the       

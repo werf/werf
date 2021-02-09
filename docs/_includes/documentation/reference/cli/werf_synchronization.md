@@ -32,7 +32,7 @@ werf synchronization [options]
             Use kubernetes lock-manager stages-storage-cache (default $WERF_KUBERNETES)
       --kubernetes-namespace-prefix=''
             Use specified prefix for namespaces created for lock-manager and stages-storage-cache   
-            (defaults to 'werf-synchronization-' when --kubernetes option is used or                
+            (defaults to `werf-synchronization-` when --kubernetes option is used or                
             $WERF_KUBERNETES_NAMESPACE_PREFIX)
       --local=true
             Use file lock-manager and file stages-storage-cache (true by default or $WERF_LOCAL)

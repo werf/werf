@@ -64,7 +64,7 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
       --description=''
             add a custom description
       --devel=false
-            use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
+            use development versions, too. Equivalent to version `>0.0.0-0`. If --version is set,   
             this is ignored
       --disable-openapi-validation=false
             if set, the upgrade process will not validate rendered templates against the Kubernetes 
@@ -80,7 +80,7 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
       --insecure-skip-tls-verify=false
             skip tls certificate checks for the chart download
   -i, --install=false
-            if a release by this name doesn't already exist, run an install
+            if a release by this name doesn`t already exist, run an install
       --key-file=''
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg'
@@ -101,8 +101,8 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
       --reset-values=false
             when upgrading, reset the values to the ones built into the chart
       --reuse-values=false
-            when upgrading, reuse the last release's values and merge in any overrides from the     
-            command line via --set and -f. If '--reset-values' is specified, this is ignored
+            when upgrading, reuse the last release`s values and merge in any overrides from the     
+            command line via --set and -f. If `--reset-values` is specified, this is ignored
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple).
             Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   

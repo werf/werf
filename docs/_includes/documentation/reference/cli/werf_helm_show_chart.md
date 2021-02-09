@@ -22,7 +22,7 @@ werf helm show chart [CHART] [flags] [options]
       --cert-file=''
             identify HTTPS client using this SSL certificate file
       --devel=false
-            use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
+            use development versions, too. Equivalent to version `>0.0.0-0`. If --version is set,   
             this is ignored
       --insecure-skip-tls-verify=false
             skip tls certificate checks for the chart download

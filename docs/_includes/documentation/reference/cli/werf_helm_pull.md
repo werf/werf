@@ -35,7 +35,7 @@ werf helm pull [chart URL | repo/chartname] [...] [flags] [options]
             location to write the chart. If this and tardir are specified, tardir is appended to    
             this
       --devel=false
-            use development versions, too. Equivalent to version '>0.0.0-0'. If --version is set,   
+            use development versions, too. Equivalent to version `>0.0.0-0`. If --version is set,   
             this is ignored.
       --insecure-skip-tls-verify=false
             skip tls certificate checks for the chart download
@@ -46,7 +46,7 @@ werf helm pull [chart URL | repo/chartname] [...] [flags] [options]
       --password=''
             chart repository password where to locate the requested chart
       --prov=false
-            fetch the provenance file, but don't perform verification
+            fetch the provenance file, but don`t perform verification
       --repo=''
             chart repository url where to locate the requested chart
       --untar=false
