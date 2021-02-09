@@ -51,8 +51,6 @@ type Conveyor struct {
 
 	sshAuthSock string
 
-	gitReposCaches map[string]*stage.GitRepoCache
-
 	images    []*Image
 	imageSets [][]*Image
 
@@ -97,7 +95,6 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 		giterminismManager: giterminismManager,
 
 		stageImages:            make(map[string]*container_runtime.StageImage),
-		gitReposCaches:         make(map[string]*stage.GitRepoCache),
 		baseImagesRepoIdsCache: make(map[string]string),
 		baseImagesRepoErrCache: make(map[string]error),
 		images:                 []*Image{},
@@ -275,28 +272,6 @@ func (c *Conveyor) Terminate(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (c *Conveyor) GetGitRepoCaches() map[string]*stage.GitRepoCache {
-	c.getServiceRWMutex("GitRepoCaches").RLock()
-	defer c.getServiceRWMutex("GitRepoCaches").RUnlock()
-
-	return c.gitReposCaches
-}
-
-func (c *Conveyor) GetOrCreateGitRepoCache(gitRepoName string) *stage.GitRepoCache {
-	c.getServiceRWMutex("GitRepoCaches").Lock()
-	defer c.getServiceRWMutex("GitRepoCaches").Unlock()
-
-	if _, hasKey := c.gitReposCaches[gitRepoName]; !hasKey {
-		c.gitReposCaches[gitRepoName] = &stage.GitRepoCache{
-			Archives:  make(map[string]git_repo.Archive),
-			Patches:   make(map[string]git_repo.Patch),
-			Checksums: make(map[string]git_repo.Checksum),
-		}
-	}
-
-	return c.gitReposCaches[gitRepoName]
 }
 
 func (c *Conveyor) GiterminismManager() giterminism_manager.Interface {
@@ -1013,8 +988,6 @@ func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRe
 	gitMapping.Name = remoteGitMappingConfig.Name
 	gitMapping.RemoteGitRepo = remoteGitRepo
 
-	gitMapping.GitRepoCache = c.GetOrCreateGitRepoCache(remoteGitRepo.GetName())
-
 	return gitMapping
 }
 
@@ -1023,8 +996,6 @@ func gitLocalPathInit(localGitMappingConfig *config.GitLocal, imageName string, 
 
 	gitMapping.Name = "own"
 	gitMapping.LocalGitRepo = c.giterminismManager.LocalGitRepo()
-
-	gitMapping.GitRepoCache = c.GetOrCreateGitRepoCache(c.giterminismManager.LocalGitRepo().GetName())
 
 	return gitMapping
 }

@@ -13,8 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/werf/werf/pkg/util"
-
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/container_runtime"
@@ -22,20 +20,9 @@ import (
 	"github.com/werf/werf/pkg/stapel"
 )
 
-type GitRepoCache struct {
-	Patches   map[string]git_repo.Patch
-	Checksums map[string]git_repo.Checksum
-	Archives  map[string]git_repo.Archive
-
-	patchesMutex   sync.Mutex
-	checksumsMutex sync.Mutex
-	archivesMutex  sync.Mutex
-}
-
 type GitMapping struct {
 	LocalGitRepo  *git_repo.Local
 	RemoteGitRepo *git_repo.Remote
-	GitRepoCache  *GitRepoCache
 
 	Name               string
 	As                 string
@@ -109,91 +96,6 @@ func (gm *GitMapping) GitRepo() git_repo.GitRepo {
 	}
 
 	panic("GitRepo not initialized")
-}
-
-func (gm *GitMapping) getOrCreateChecksum(ctx context.Context, opts git_repo.ChecksumOptions) (git_repo.Checksum, error) {
-	gm.GitRepoCache.checksumsMutex.Lock()
-	defer gm.GitRepoCache.checksumsMutex.Unlock()
-
-	if _, hasKey := gm.GitRepoCache.Checksums[util.ObjectToHashKey(opts)]; !hasKey {
-		checksum, err := gm.GitRepo().Checksum(ctx, opts)
-		if err != nil {
-			return nil, err
-		}
-		gm.GitRepoCache.Checksums[util.ObjectToHashKey(opts)] = checksum
-	}
-	return gm.GitRepoCache.Checksums[util.ObjectToHashKey(opts)], nil
-}
-
-func (gm *GitMapping) getOrCreateArchive(ctx context.Context, opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
-	gm.GitRepoCache.archivesMutex.Lock()
-	defer gm.GitRepoCache.archivesMutex.Unlock()
-
-	if _, hasKey := gm.GitRepoCache.Archives[util.ObjectToHashKey(opts)]; !hasKey {
-		archive, err := gm.createArchive(ctx, opts)
-		if err != nil {
-			return nil, err
-		}
-		gm.GitRepoCache.Archives[util.ObjectToHashKey(opts)] = archive
-	}
-	return gm.GitRepoCache.Archives[util.ObjectToHashKey(opts)], nil
-}
-
-func (gm *GitMapping) createArchive(ctx context.Context, opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
-	var res git_repo.Archive
-
-	err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gm.GitRepo().GetName(), gm.Add)).DoError(func() error {
-		archive, err := gm.GitRepo().CreateArchive(ctx, opts)
-		if err != nil {
-			return err
-		}
-
-		res = archive
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (gm *GitMapping) getOrCreatePatch(ctx context.Context, opts git_repo.PatchOptions) (git_repo.Patch, error) {
-	gm.GitRepoCache.patchesMutex.Lock()
-	defer gm.GitRepoCache.patchesMutex.Unlock()
-
-	if _, hasKey := gm.GitRepoCache.Patches[util.ObjectToHashKey(opts)]; !hasKey {
-		patch, err := gm.createPatch(ctx, opts)
-		if err != nil {
-			return nil, err
-		}
-		gm.GitRepoCache.Patches[util.ObjectToHashKey(opts)] = patch
-	}
-	return gm.GitRepoCache.Patches[util.ObjectToHashKey(opts)], nil
-}
-
-func (gm *GitMapping) createPatch(ctx context.Context, opts git_repo.PatchOptions) (git_repo.Patch, error) {
-	var res git_repo.Patch
-
-	logProcessMsg := fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gm.GitRepo().GetName(), gm.Add)
-	err := logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
-		patch, err := gm.GitRepo().CreatePatch(ctx, opts)
-		if err != nil {
-			return err
-		}
-
-		res = patch
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (gm *GitMapping) getRepoFilterOptions() git_repo.FilterOptions {
@@ -446,7 +348,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 		ToCommit:      toCommit,
 	}
 
-	patch, err := gm.getOrCreatePatch(ctx, patchOpts)
+	patch, err := gm.GitRepo().GetOrCreatePatch(ctx, patchOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -456,7 +358,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 	}
 
 	if patch.HasBinary() {
-		pathsListFile, err := gm.preparePatchPathsListFile(patchOpts, patch)
+		pathsListFile, err := gm.preparePatchPathsListFile(patch)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create patch paths list file: %s", err)
 		}
@@ -522,7 +424,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 			Commit:        toCommit,
 		}
 
-		archive, err := gm.getOrCreateArchive(ctx, archiveOpts)
+		archive, err := gm.GitRepo().GetOrCreateArchive(ctx, archiveOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -532,7 +434,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 			return commands, nil
 		}
 
-		archiveFile, err := gm.prepareArchiveFile(archiveOpts, archive)
+		archiveFile, err := gm.prepareArchiveFile(archive)
 		if err != nil {
 			return nil, fmt.Errorf("cannot prepare archive file: %s", err)
 		}
@@ -643,7 +545,7 @@ func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string
 		Commit:        commit,
 	}
 
-	archive, err := gm.getOrCreateArchive(ctx, archiveOpts)
+	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, archiveOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -652,7 +554,7 @@ func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string
 		return nil, nil
 	}
 
-	archiveFile, err := gm.prepareArchiveFile(archiveOpts, archive)
+	archiveFile, err := gm.prepareArchiveFile(archive)
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare archive file: %s", err)
 	}
@@ -686,7 +588,7 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 		Commit:        commitInfo.Commit,
 	}
 
-	checksum, err := gm.getOrCreateChecksum(ctx, checksumOpts)
+	checksum, err := gm.GitRepo().GetOrCreateChecksum(ctx, checksumOpts)
 	if err != nil {
 		return "", err
 	}
@@ -719,7 +621,7 @@ func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit stri
 		WithBinary:            true,
 	}
 
-	patch, err := gm.getOrCreatePatch(ctx, patchOpts)
+	patch, err := gm.GitRepo().GetOrCreatePatch(ctx, patchOpts)
 	if err != nil {
 		return 0, err
 	}
@@ -804,7 +706,7 @@ func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuilt
 		FromCommit:    fromCommit,
 		ToCommit:      toCommitInfo.Commit,
 	}
-	patch, err := gm.getOrCreatePatch(ctx, patchOpts)
+	patch, err := gm.GitRepo().GetOrCreatePatch(ctx, patchOpts)
 	if err != nil {
 		return "", err
 	}
@@ -841,7 +743,7 @@ func (gm *GitMapping) baseIsPatchEmpty(ctx context.Context, fromCommit, toCommit
 		ToCommit:      toCommit,
 	}
 
-	patch, err := gm.getOrCreatePatch(ctx, patchOpts)
+	patch, err := gm.GitRepo().GetOrCreatePatch(ctx, patchOpts)
 	if err != nil {
 		return false, err
 	}
@@ -860,7 +762,7 @@ func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
 		Commit:        commitInfo.Commit,
 	}
 
-	archive, err := gm.getOrCreateArchive(ctx, archiveOpts)
+	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, archiveOpts)
 	if err != nil {
 		return false, err
 	}
@@ -868,14 +770,14 @@ func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
 	return archive.IsEmpty(), nil
 }
 
-func (gm *GitMapping) prepareArchiveFile(archiveOpts git_repo.ArchiveOptions, archive git_repo.Archive) (*ContainerFileDescriptor, error) {
+func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFileDescriptor, error) {
 	return &ContainerFileDescriptor{
 		FilePath:          archive.GetFilePath(),
 		ContainerFilePath: path.Join(gm.ContainerArchivesDir, filepath.Base(archive.GetFilePath())),
 	}, nil
 }
 
-func (gm *GitMapping) preparePatchPathsListFile(patchOpts git_repo.PatchOptions, patch git_repo.Patch) (*ContainerFileDescriptor, error) {
+func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
 	fileName := fmt.Sprintf("%s.paths_list", filepath.Base(patch.GetFilePath()))
 	filePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fileName)
 

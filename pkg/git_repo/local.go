@@ -86,7 +86,7 @@ func newLocal(name, workTreeDir, gitDir string) (l *Local, err error) {
 	}
 
 	l = &Local{
-		Base:               Base{Name: name},
+		Base:               NewBase(name),
 		WorkTreeDir:        workTreeDir,
 		GitDir:             gitDir,
 		headCommit:         headCommit,
@@ -277,29 +277,16 @@ func (repo *Local) HeadCommit(_ context.Context) (string, error) {
 	return repo.headCommit, nil
 }
 
-func (repo *Local) CreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
-	return repo.createPatch(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
+func (repo *Local) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
+	return repo.getOrCreatePatch(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Local) CreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
+func (repo *Local) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
+	return repo.getOrCreateArchive(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Local) Checksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, checksumErr error) {
-	logboek.Context(ctx).Debug().LogProcess("Calculating checksum").Do(func() {
-		if err := repo.yieldRepositoryBackedByWorkTree(ctx, opts.Commit, func(repository *git.Repository) error {
-			if cs, err := repo.checksumWithLsTree(ctx, repository, opts); err != nil {
-				return err
-			} else {
-				checksum = cs
-				return nil
-			}
-		}); err != nil {
-			checksumErr = err
-		}
-	})
-
-	return
+func (repo *Local) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, checksumErr error) {
+	return repo.getOrCreateChecksum(ctx, repo.yieldRepositoryBackedByWorkTree, opts)
 }
 
 func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, error) {
