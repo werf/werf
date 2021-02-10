@@ -317,7 +317,7 @@ func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface
 	}
 
 	if len(res) == 0 {
-		logboek.Context(f.ctx).Warn().LogF("WARNING: No matches found for {{ .Files.Glob %q }}\n", pattern)
+		return nil, fmt.Errorf("{{ .Files.Glob %q }}: no matches found", pattern)
 	}
 
 	return res, nil
