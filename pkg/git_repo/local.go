@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/bmatcuk/doublestar"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
@@ -360,33 +359,18 @@ func (repo *Local) GetModifiedLocallyFilePathList(ctx context.Context, matcher p
 // ListCommitFilesWithGlob returns the list of files by the glob, follows symlinks.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
 func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, dir string, glob string) (files []string, err error) {
-	glob = filepath.ToSlash(glob)
-	matchFunc := func(path string) (bool, error) {
-		for _, glob := range []string{
-			glob,
-			pathPkg.Join(glob, "**", "*"),
-		} {
-			matched, err := doublestar.Match(glob, path)
-			if err != nil {
-				return false, err
-			}
+	var prefixWithoutPatterns string
+	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
+	dir = filepath.Join(dir, prefixWithoutPatterns)
 
-			if matched {
-				return true, nil
-			}
-		}
-
-		return false, nil
+	pathMatcher := path_matcher.NewSimplePathMatcher(dir, []string{glob}, true)
+	if debugGiterminismManager() {
+		logboek.Context(ctx).Debug().LogLn("pathMatcher:", pathMatcher.String())
 	}
 
 	var result []string
-	if err := repo.WalkCommitFiles(ctx, commit, dir, func(notResolvedPath string) error {
-		matched, err := matchFunc(notResolvedPath)
-		if err != nil {
-			return err
-		}
-
-		if matched {
+	if err := repo.WalkCommitFiles(ctx, commit, dir, pathMatcher, func(notResolvedPath string) error {
+		if pathMatcher.MatchPath(notResolvedPath) {
 			result = append(result, notResolvedPath)
 		}
 
@@ -398,7 +382,13 @@ func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, d
 	return result, nil
 }
 
-func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir string, fileFunc func(notResolvedPath string) error) error {
+func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error {
+	isDirMatched, shouldGoThroughDir := pathMatcher.ProcessDirOrSubmodulePath(dir)
+	possiblyDirMatched := isDirMatched || shouldGoThroughDir
+	if !possiblyDirMatched {
+		return nil
+	}
+
 	exist, err := repo.IsCommitDirectoryExist(ctx, commit, dir)
 	if err != nil {
 		return err
@@ -432,6 +422,12 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 			panic(fmt.Sprintf("unexpected condition: %+v", lsTreeEntry))
 		}
 
+		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(notResolvedPath)
+		possiblyMatched := isMatched || shouldGoThrough
+		if !possiblyMatched {
+			return nil
+		}
+
 		if lsTreeEntry.Mode == filemode.Symlink {
 			isDir, err := repo.IsCommitDirectoryExist(ctx, commit, notResolvedPath)
 			if err != nil {
@@ -439,7 +435,7 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 			}
 
 			if isDir {
-				err := repo.WalkCommitFiles(ctx, commit, notResolvedPath, fileFunc)
+				err := repo.WalkCommitFiles(ctx, commit, notResolvedPath, pathMatcher, fileFunc)
 				if err != nil {
 					return err
 				}

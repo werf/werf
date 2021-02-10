@@ -96,3 +96,24 @@ func indexRuneWithEscaping(s string, r rune) int {
 	}
 	return end
 }
+
+// GlobPrefixWithoutPatterns figures out how many components we don't need to glob because they're
+// just names without patterns
+func GlobPrefixWithoutPatterns(glob string) (string, string) {
+	var prefix string
+
+	globComponents := SplitFilepath(glob)
+	length := len(globComponents)
+	ind := 0
+	for ; ind < length; ind++ {
+		if strings.ContainsAny(globComponents[ind], "*?[{\\") {
+			break
+		}
+	}
+	if ind > 0 {
+		prefix = filepath.Join(globComponents[0:ind]...)
+		glob = filepath.Join(globComponents[ind:]...)
+	}
+
+	return prefix, glob
+}
