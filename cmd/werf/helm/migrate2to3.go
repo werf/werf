@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/werf/werf/pkg/deploy/helm"
+	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/pkg/action"
+
 	"github.com/werf/kubedog/pkg/kube"
 
 	"github.com/spf13/cobra"
@@ -13,7 +17,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/deploy/helm2"
+	"github.com/werf/werf/pkg/deploy/helm/maintenance_helper"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -122,18 +126,43 @@ func runMigrate2To3(ctx context.Context) error {
 		return fmt.Errorf("--target-namespace (or WERF_TARGET_NAMESPACE env var) required! Please specify target namespace for a new helm 3 release explicitly (specify \"default\" for the default namespace).")
 	}
 
-	maintenanceOpts := helm2.MaintenanceHelperOptions{
-		ReleaseStorageNamespace: migrate2ToCmdData.Helm2ReleaseStorageNamespace,
-		ReleaseStorageType:      migrate2ToCmdData.Helm2ReleaseStorageType,
-		KubeConfigOptions: kube.KubeConfigOptions{
-			Context:          *migrate2To3CommonCmdData.KubeContext,
-			ConfigPath:       *migrate2To3CommonCmdData.KubeConfig,
-			ConfigDataBase64: *migrate2To3CommonCmdData.KubeConfigBase64,
-		},
+	kubeConfigOptions := kube.KubeConfigOptions{
+		Context:          *migrate2To3CommonCmdData.KubeContext,
+		ConfigPath:       *migrate2To3CommonCmdData.KubeConfig,
+		ConfigDataBase64: *migrate2To3CommonCmdData.KubeConfigBase64,
 	}
 
-	helm2MaintenanceHelper := helm2.NewMaintenanceHelper(maintenanceOpts)
-	if available, err := helm2MaintenanceHelper.CheckStorageAvailable(ctx); err != nil {
+	actionConfig := new(action.Configuration)
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), targetNamespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{KubeConfigOptions: kubeConfigOptions}); err != nil {
+		return err
+	}
+
+	maintenanceOpts := maintenance_helper.MaintenanceHelperOptions{
+		Helm2ReleaseStorageNamespace: migrate2ToCmdData.Helm2ReleaseStorageNamespace,
+		Helm2ReleaseStorageType:      migrate2ToCmdData.Helm2ReleaseStorageType,
+		KubeConfigOptions:            kubeConfigOptions,
+	}
+
+	maintenanceHelper := maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
+
+	existingHelm3Releases, err := maintenanceHelper.GetHelm3ReleasesList(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting existing helm 3 releases to perform check: %s", err)
+	}
+
+	foundHelm3Release := false
+	for _, releaseName := range existingHelm3Releases {
+		if releaseName == targetReleaseName {
+			foundHelm3Release = true
+			break
+		}
+	}
+
+	if foundHelm3Release {
+		return fmt.Errorf("found already existing helm 3 release %q", targetReleaseName)
+	}
+
+	if available, err := maintenanceHelper.CheckHelm2StorageAvailable(ctx); err != nil {
 		return err
 	} else if !available {
 		return fmt.Errorf("helm 2 release storage is not available")
@@ -141,7 +170,7 @@ func runMigrate2To3(ctx context.Context) error {
 
 	logboek.Context(ctx).Default().LogFDetails(" + Helm 2 release storage is available\n")
 
-	existingReleases, err := helm2MaintenanceHelper.GetReleasesList(ctx)
+	existingReleases, err := maintenanceHelper.GetHelm2ReleasesList(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting existing helm 2 releases to perform check: %s", err)
 	}
@@ -160,12 +189,22 @@ func runMigrate2To3(ctx context.Context) error {
 
 	logboek.Context(ctx).Default().LogFDetails(" + Found helm 2 release %q\n", existingReleaseName)
 
-	releaseData, err := helm2MaintenanceHelper.GetReleaseData(ctx, existingReleaseName)
+	releaseData, err := maintenanceHelper.GetHelm2ReleaseData(ctx, existingReleaseName)
 	if err != nil {
 		return fmt.Errorf("unable to get helm 2 release %q info: %s", existingReleaseName, err)
 	}
 
-	infos, err := helm2MaintenanceHelper.BuildResourcesInfos(releaseData)
+	logboek.Context(ctx).LogOptionalLn()
+	if err := logboek.Context(ctx).Default().LogProcess("Creating helm 3 release %q", targetReleaseName).DoError(func() error {
+		if err := maintenanceHelper.CreateHelm3ReleaseMetadataFromHelm2Release(ctx, targetReleaseName, targetNamespace, releaseData); err != nil {
+			return fmt.Errorf("unable to create helm 3 release %q: %s", targetReleaseName)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	infos, err := maintenanceHelper.BuildHelm2ResourcesInfos(releaseData)
 	if err != nil {
 		return fmt.Errorf("error building resources infos for release %q: %s", existingReleaseName, err)
 	}
@@ -188,7 +227,7 @@ func runMigrate2To3(ctx context.Context) error {
 
 	logboek.Context(ctx).LogOptionalLn()
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting helm 2 metadata for release %q", existingReleaseName).DoError(func() error {
-		if err := helm2MaintenanceHelper.ForgetReleaseStorageMetadata(ctx, existingReleaseName); err != nil {
+		if err := maintenanceHelper.DeleteHelm2ReleaseMetadata(ctx, existingReleaseName); err != nil {
 			return fmt.Errorf("unable to delete helm 2 release storage metadata for the release %q: %s", existingReleaseName, err)
 		}
 		return nil
@@ -196,9 +235,9 @@ func runMigrate2To3(ctx context.Context) error {
 		return err
 	}
 
-	logboek.Context(ctx).Default().LogFDetails(`Migration to helm 3 is almost done. Please run "werf converge" command to:
- - perform adoption of existing resources into a newly created helm 3 release;
- - bring resources to the state which is described in the repository .helm/templates directory.
+	logboek.Context(ctx).Default().LogFDetails(`Migration to helm 3 is almost done.
+
+Please run "werf converge" command to perform adoption of existing resources into a newly created helm 3 release and bring resources to the state which is described in the repository .helm/templates directory.
 
 Make sure "werf converge" command uses release name %q and namespace %q!
 `, targetReleaseName, targetNamespace)

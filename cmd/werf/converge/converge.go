@@ -7,11 +7,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/werf/pkg/deploy/helm2"
-
 	"github.com/werf/werf/pkg/giterminism_manager"
 
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/deploy/helm/maintenance_helper"
 
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
@@ -322,7 +321,23 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 		return err
 	}
 
-	if err := helm2ReleaseExistanceCheckGuard(ctx, releaseName, namespace); err != nil {
+	kubeConfigOptions := kube.KubeConfigOptions{
+		Context:          *commonCmdData.KubeContext,
+		ConfigPath:       *commonCmdData.KubeConfig,
+		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+	}
+
+	actionConfig := new(action.Configuration)
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+		KubeConfigOptions:         kubeConfigOptions,
+		ReleasesHistoryMax:        *commonCmdData.ReleasesHistoryMax,
+	}); err != nil {
+		return err
+	}
+
+	if err := helm2ReleaseExistanceCheckGuard(ctx, releaseName, namespace, actionConfig, kubeConfigOptions); err != nil {
 		return err
 	}
 
@@ -373,20 +388,6 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 		}
 	}
 
-	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
-		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
-		KubeConfigOptions: kube.KubeConfigOptions{
-			Context:          *commonCmdData.KubeContext,
-			ConfigPath:       *commonCmdData.KubeConfig,
-			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-		},
-		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
-	}); err != nil {
-		return err
-	}
-
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender:               wc,
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
@@ -417,13 +418,9 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	})
 }
 
-func helm2ReleaseExistanceCheckGuard(ctx context.Context, releaseName, namespace string) error {
-	maintenanceOpts := helm2.MaintenanceHelperOptions{
-		KubeConfigOptions: kube.KubeConfigOptions{
-			Context:          *commonCmdData.KubeContext,
-			ConfigPath:       *commonCmdData.KubeConfig,
-			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-		},
+func helm2ReleaseExistanceCheckGuard(ctx context.Context, releaseName, namespace string, actionConfig *action.Configuration, kubeConfigOptions kube.KubeConfigOptions) error {
+	maintenanceOpts := maintenance_helper.MaintenanceHelperOptions{
+		KubeConfigOptions: kubeConfigOptions,
 	}
 
 	for _, val := range []string{
@@ -432,7 +429,7 @@ func helm2ReleaseExistanceCheckGuard(ctx context.Context, releaseName, namespace
 		os.Getenv("TILLER_NAMESPACE"),
 	} {
 		if val != "" {
-			maintenanceOpts.ReleaseStorageNamespace = val
+			maintenanceOpts.Helm2ReleaseStorageNamespace = val
 			break
 		}
 	}
@@ -442,16 +439,16 @@ func helm2ReleaseExistanceCheckGuard(ctx context.Context, releaseName, namespace
 		os.Getenv("WERF_HELM_RELEASE_STORAGE_TYPE"),
 	} {
 		if val != "" {
-			maintenanceOpts.ReleaseStorageType = val
+			maintenanceOpts.Helm2ReleaseStorageType = val
 			break
 		}
 	}
 
-	helm2MaintenanceHelper := helm2.NewMaintenanceHelper(maintenanceOpts)
-	if available, err := helm2MaintenanceHelper.CheckStorageAvailable(ctx); err != nil {
+	helmMaintenanceHelper := maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
+	if available, err := helmMaintenanceHelper.CheckHelm2StorageAvailable(ctx); err != nil {
 		return err
 	} else if available {
-		existingReleases, err := helm2MaintenanceHelper.GetReleasesList(ctx)
+		existingReleases, err := helmMaintenanceHelper.GetHelm2ReleasesList(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting existing helm 2 releases to perform check: %s", err)
 		}
