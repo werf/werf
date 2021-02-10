@@ -120,7 +120,9 @@ func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir string, pat
 
 	var result []string
 	for _, path := range list {
-		result = append(result, util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), path))
+		relativeToGitProjectDirPath := util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), path)
+		relativeToDirPath := util.GetRelativeToBaseFilepath(dir, relativeToGitProjectDirPath)
+		result = append(result, relativeToDirPath)
 	}
 
 	return result, nil

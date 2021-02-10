@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	pathPkg "path"
 	"path/filepath"
 	"strings"
-
-	"github.com/bmatcuk/doublestar"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/giterminism_manager/errors"
+	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -52,48 +50,48 @@ func (r FileReader) ListFilesWithGlob(ctx context.Context, relDir, glob string) 
 }
 
 func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string) ([]string, error) {
-	var result []string
+	var prefixWithoutPatterns string
+	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
+	relDirWithGlobPart := filepath.Join(relDir, prefixWithoutPatterns)
 
-	glob = filepath.FromSlash(glob)
-	matchFunc := func(path string) (bool, error) {
-		for _, glob := range []string{
-			glob,
-			pathPkg.Join(glob, "**", "*"),
-		} {
-			matched, err := doublestar.PathMatch(glob, path)
-			if err != nil {
-				return false, err
-			}
-
-			if matched {
-				return true, nil
-			}
-		}
-
-		return false, nil
+	pathMatcher := path_matcher.NewSimplePathMatcher(relDirWithGlobPart, []string{glob}, true)
+	if debug() {
+		logboek.Context(ctx).Debug().LogLn("pathMatcher:", pathMatcher.String())
 	}
 
-	err := r.walkFiles(ctx, relDir, func(notResolvedPath string) error {
-		matched, err := matchFunc(notResolvedPath)
-		if err != nil {
-			return err
-		}
-
-		if debug() {
-			logboek.Context(ctx).Debug().LogF("-- %q %q\n", notResolvedPath, matched)
-		}
-
-		if matched {
-			result = append(result, notResolvedPath)
+	var result []string
+	fileFunc := func(notResolvedPath string) error {
+		if pathMatcher.MatchPath(notResolvedPath) {
+			result = append(result, util.GetRelativeToBaseFilepath(relDir, notResolvedPath))
 		}
 
 		return nil
-	})
+	}
 
+	isFileExist, err := r.isRegularFileExist(ctx, relDirWithGlobPart)
+	if err != nil {
+		return nil, err
+	}
+
+	if isFileExist {
+		if err := fileFunc(relDirWithGlobPart); err != nil {
+			return nil, err
+		}
+
+		return result, nil
+	}
+
+	err = r.walkFilesWithPathMatcher(ctx, pathMatcher.BaseFilepath(), pathMatcher, fileFunc)
 	return result, err
 }
 
-func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(notResolvedPath string) error) error {
+func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error {
+	isDirMatched, shouldGoThroughDir := pathMatcher.ProcessDirOrSubmodulePath(relDir)
+	possiblyDirMatched := isDirMatched || shouldGoThroughDir
+	if !possiblyDirMatched {
+		return nil
+	}
+
 	exist, err := r.IsDirectoryExist(ctx, relDir)
 	if err != nil {
 		return err
@@ -114,20 +112,32 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 			return err
 		}
 
-		if f.IsDir() {
-			if filepath.Base(path) == ".git" {
-				return filepath.SkipDir
-			}
-
-			return nil
-		}
-
 		if debug() {
 			logboek.Context(ctx).Debug().LogF("-- path: %q symlink: %v\n", path, f.Mode()&os.ModeSymlink == os.ModeSymlink)
 		}
 
 		resolvedRelPath := r.toProjectDirRelativePath(path)
 		notResolvedRelPath := strings.Replace(resolvedRelPath, resolvedDir, relDir, 1)
+
+		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(notResolvedRelPath)
+		possiblyMatched := isMatched || shouldGoThrough
+
+		if f.IsDir() {
+			if filepath.Base(path) == ".git" {
+				return filepath.SkipDir
+			}
+
+			if !possiblyMatched {
+				return filepath.SkipDir
+			}
+
+			return nil
+		}
+
+		if !possiblyMatched {
+			return nil
+		}
+
 		if f.Mode()&os.ModeSymlink == os.ModeSymlink {
 			link, err := os.Readlink(path)
 			if err != nil {
@@ -149,7 +159,7 @@ func (r FileReader) walkFiles(ctx context.Context, relDir string, fileFunc func(
 			}
 
 			if lstat.IsDir() {
-				if err := r.walkFiles(ctx, notResolvedRelPath, fileFunc); err != nil {
+				if err := r.walkFilesWithPathMatcher(ctx, notResolvedRelPath, pathMatcher, fileFunc); err != nil {
 					return fmt.Errorf("symlink %q resolve failed: %s", resolvedRelPath, err)
 				}
 

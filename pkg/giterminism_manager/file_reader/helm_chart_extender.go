@@ -7,8 +7,6 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/cli"
-
-	"github.com/werf/werf/pkg/util"
 )
 
 func (r FileReader) LocateChart(ctx context.Context, chartDir string, settings *cli.EnvSettings) (string, error) {
@@ -70,13 +68,13 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.C
 		relDir,
 		"**/*",
 		r.giterminismConfig.IsUncommittedHelmFileAccepted,
-		func(relPath string, data []byte, err error) error {
+		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
 			if err != nil {
 				return err
 			}
 
-			relPath = filepath.ToSlash(util.GetRelativeToBaseFilepath(relDir, relPath))
-			res = append(res, &chart.ChartExtenderBufferedFile{Name: relPath, Data: data})
+			relativeToDirNotResolvedPath = filepath.ToSlash(relativeToDirNotResolvedPath)
+			res = append(res, &chart.ChartExtenderBufferedFile{Name: relativeToDirNotResolvedPath, Data: data})
 
 			return nil
 		},
