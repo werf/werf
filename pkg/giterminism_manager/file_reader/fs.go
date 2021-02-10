@@ -52,9 +52,9 @@ func (r FileReader) ListFilesWithGlob(ctx context.Context, relDir, glob string) 
 func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string) ([]string, error) {
 	var prefixWithoutPatterns string
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
-	relDir = filepath.Join(relDir, prefixWithoutPatterns)
+	relDirWithGlobPart := filepath.Join(relDir, prefixWithoutPatterns)
 
-	pathMatcher := path_matcher.NewSimplePathMatcher(relDir, []string{glob}, true)
+	pathMatcher := path_matcher.NewSimplePathMatcher(relDirWithGlobPart, []string{glob}, true)
 	if debug() {
 		logboek.Context(ctx).Debug().LogLn("pathMatcher:", pathMatcher.String())
 	}
@@ -62,19 +62,19 @@ func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string) 
 	var result []string
 	fileFunc := func(notResolvedPath string) error {
 		if pathMatcher.MatchPath(notResolvedPath) {
-			result = append(result, notResolvedPath)
+			result = append(result, util.GetRelativeToBaseFilepath(relDir, notResolvedPath))
 		}
 
 		return nil
 	}
 
-	isFileExist, err := r.isRegularFileExist(ctx, relDir)
+	isFileExist, err := r.isRegularFileExist(ctx, relDirWithGlobPart)
 	if err != nil {
 		return nil, err
 	}
 
 	if isFileExist {
-		if err := fileFunc(relDir); err != nil {
+		if err := fileFunc(relDirWithGlobPart); err != nil {
 			return nil, err
 		}
 

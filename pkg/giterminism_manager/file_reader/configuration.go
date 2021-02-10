@@ -2,6 +2,7 @@ package file_reader
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
@@ -11,7 +12,7 @@ import (
 
 // WalkConfigurationFilesWithGlob reads the configuration files taking into account the giterminism config.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
-func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, isFileAcceptedCheckFunc func(relPath string) (bool, error), handleFileFunc func(notResolvedPath string, data []byte, err error) error) (err error) {
+func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, isFileAcceptedCheckFunc func(relPath string) (bool, error), handleFileFunc func(relativeToDirNotResolvedPath string, data []byte, err error) error) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("WalkConfigurationFilesWithGlob %q %q", dir, glob).
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -30,16 +31,17 @@ func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 	return
 }
 
-func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, isFileAcceptedCheckFunc func(relPath string) (bool, error), handleFileFunc func(notResolvedPath string, data []byte, err error) error) (err error) {
-	fileRelPathListFromFS, err := r.ListFilesWithGlob(ctx, dir, glob)
+func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, isFileAcceptedCheckFunc func(relPath string) (bool, error), handleFileFunc func(relativeToDirNotResolvedPath string, data []byte, err error) error) (err error) {
+	relToDirFilePathListFromFS, err := r.ListFilesWithGlob(ctx, dir, glob)
 	if err != nil {
 		return err
 	}
 
 	if r.sharedOptions.LooseGiterminism() {
-		for _, relPath := range fileRelPathListFromFS {
+		for _, relToDirPath := range relToDirFilePathListFromFS {
+			relPath := filepath.Join(dir, relToDirPath)
 			data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, isFileAcceptedCheckFunc)
-			if err := handleFileFunc(relPath, data, err); err != nil {
+			if err := handleFileFunc(relToDirPath, data, err); err != nil {
 				return err
 			}
 		}
@@ -47,17 +49,18 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 		return nil
 	}
 
-	fileRelPathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob)
+	relToDirFilePathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob)
 	if err != nil {
 		return err
 	}
 
-	relPathList := util.AddNewStringsToStringArray(fileRelPathListFromFS, fileRelPathListFromCommit...)
+	relToDirPathList := util.AddNewStringsToStringArray(relToDirFilePathListFromFS, relToDirFilePathListFromCommit...)
 
 	var relPathListWithUncommittedFiles []string
-	for _, relPath := range relPathList {
+	for _, relToDirPath := range relToDirPathList {
+		relPath := filepath.Join(dir, relToDirPath)
 		data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, isFileAcceptedCheckFunc)
-		err = handleFileFunc(relPath, data, err)
+		err = handleFileFunc(relToDirPath, data, err)
 		if err != nil {
 			switch err.(type) {
 			case UncommittedFilesError:

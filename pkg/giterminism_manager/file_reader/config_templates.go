@@ -3,11 +3,10 @@ package file_reader
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-
-	"github.com/werf/werf/pkg/util"
 )
 
 var DefaultWerfConfigTemplatesDirName = ".werf"
@@ -46,9 +45,8 @@ func (r FileReader) readConfigTemplateFiles(ctx context.Context, customDirRelPat
 		templatesDirRelPath,
 		"**/*.tmpl",
 		r.giterminismConfig.IsUncommittedConfigTemplateFileAccepted,
-		func(relPath string, data []byte, err error) error {
-			templatePathInsideDir := util.GetRelativeToBaseFilepath(templatesDirRelPath, relPath)
-			return tmplFunc(templatePathInsideDir, data, err)
+		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
+			return tmplFunc(filepath.ToSlash(relativeToDirNotResolvedPath), data, err)
 		},
 	)
 }

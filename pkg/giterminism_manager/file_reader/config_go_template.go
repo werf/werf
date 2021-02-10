@@ -14,12 +14,12 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, glob string) 
 		"",
 		glob,
 		r.giterminismConfig.IsUncommittedConfigGoTemplateRenderingFileAccepted,
-		func(relPath string, data []byte, err error) error {
+		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
 			if err != nil {
 				return err
 			}
 
-			result[filepath.ToSlash(relPath)] = string(data)
+			result[filepath.ToSlash(relativeToDirNotResolvedPath)] = string(data)
 
 			return nil
 		},
