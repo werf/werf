@@ -4,20 +4,24 @@ permalink: /
 layout: default
 ---
 
-<div class="presentation" id="presentation">
-    <div class="presentation__bg" id="presentation-bg"></div>
-    <div class="page__container presentation__container">
-        <div class="presentation__row">
-            <div class="presentation__row-item" id="presentation-title">
-                <div class="presentation__subtitle">Инструмент консистентной доставки</div>
-                <h1 class="presentation__title">What you Git<br/> is what you get!</h1>
-                <!-- <h1 class="presentation__title">What you Git<br/> is what you get!<span title="Что ты git'ишь, то и видишь!">*</span></h1> -->
-                <ul class="presentation__features">
-                    <li>Используем Git как единый источник истины.</li>
-                    <li>Собираем. Деплоим в Kubernetes. Синхронизируем изменения.</li>
-                    <li>Open Source CLI-инструмент. <a href="https://github.com/werf/werf" target="_blank">Написан на Go</a>.</li>
+<div class="intro-scheme" id="intro-scheme">
+    <div class="page__container intro-scheme__container">
+        <img src="/images/intro.svg" class="intro-scheme__scheme" alt="werf"/>
+    </div>
+</div>
+
+<div class="intro">
+    <div class="intro__bg" id="intro-bg"></div>
+    <div class="page__container intro__container">
+        <div class="intro__row">
+            <div class="intro__row-item" id="intro-title">
+                <div class="intro__subtitle">Что это?</div>
+                <h1 class="intro__title">Инструмент<br/>консистентной<br/>доставки</h1>
+                <ul class="intro__features">
+                    <li>CLI-утилита, «склеивающая» Git, Docker, Helm и Kubernetes<br>
+                    с любой CI-системой для реализации CI/CD и подхода GitOps.</li>
                 </ul>
-                <div class="presentation__btns page__btn-group">
+                <div class="intro__btns page__btn-group">
                     <a href="{{ "introduction.html" | true_relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Введение
                     </a>
@@ -28,6 +32,38 @@ layout: default
                         Документация
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="intro">
+    <div class="page__container intro__container">
+        <div class="intro__row">
+            <div class="intro__row-item" id="intro-title">
+                <div class="intro__subtitle">Зачем нужно?</div>
+                <h1 class="intro__title">Быстрый<br/>и эффективный<br/>CI/CD</h1>
+                <ul class="intro__features">
+                    <li>Создавайте эффективные, предсказуемые и целостные<br>
+                    CI/CD-процессы на базе устоявшихся технологий.</li>
+                    <li>С werf быстро начать работу, легко применять<br>
+                    лучшие практики и не нужны велосипеды.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="presentation" id="presentation">
+    <div class="page__container presentation__container">
+        <div class="presentation__row">
+            <div class="presentation__row-item" id="presentation-title">
+                <div class="presentation__subtitle">Как работает?</div>
+                <h1 class="presentation__title">What you Git<br/> is what you get!<span title="Git используется как единый источник истины («гитерминизм»).">*</span></h1>
+                <ul class="presentation__features">
+                    <li>werf не только собирает и деплоит, но и непрерывно<br/>
+                    синхронизирует изменения в Git с состоянием Kubernetes.</li>
+                </ul>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
                 {% include scheme.md %}
@@ -87,7 +123,7 @@ layout: default
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                Это GitOps,<br/>но реализованный <a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>по-другому</b></a>!
+                Это GitOps,<br/>но реализованный<br/><a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>по-другому</b></a>!
             </h1>
             <div class="welcome__subtitle">
                 werf использует Git как единый источник истины и позволяет добиться детерминированного и идемпотентного процесса доставки по всему пайплайну.
