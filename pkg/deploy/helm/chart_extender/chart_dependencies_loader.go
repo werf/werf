@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/werf/werf/pkg/util"
+
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 
 	uuid "github.com/satori/go.uuid"
@@ -24,8 +26,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 )
 
-func GetChartDependenciesCacheDir(lockDigest string) string {
-	return filepath.Join(werf.GetLocalCacheDir(), "helm_chart_dependencies", lockDigest)
+func GetChartDependenciesCacheDir(lockChecksum string) string {
+	return filepath.Join(werf.GetLocalCacheDir(), "helm_chart_dependencies", "1", lockChecksum)
 }
 
 func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, error) {
@@ -87,7 +89,7 @@ loop:
 }
 
 func GetPreparedChartDependenciesDir(ctx context.Context, lockDigest string, lockFileData []byte, chartFileData []byte, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
-	depsDir := GetChartDependenciesCacheDir(lockDigest)
+	depsDir := GetChartDependenciesCacheDir(util.Sha256Hash(string(lockFileData)))
 
 	if _, err := os.Stat(depsDir); os.IsNotExist(err) {
 		if err := logboek.Context(ctx).Default().LogProcess("Building chart dependencies").DoError(func() error {
