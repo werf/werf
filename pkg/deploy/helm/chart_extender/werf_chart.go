@@ -291,6 +291,12 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputV
 
 	for _, f := range wc.HelmChart.Templates {
 		p := filepath.Join(destDir, f.Name)
+		dir := filepath.Dir(p)
+
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("error creating dir %q: %s", dir, err)
+		}
+
 		if err := ioutil.WriteFile(p, append(f.Data, []byte("\n")...), os.ModePerm); err != nil {
 			return nil, fmt.Errorf("unable to write %q: %s", p, err)
 		}
