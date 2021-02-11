@@ -244,20 +244,43 @@ func (repo *Local) getMainStatusResult(ctx context.Context) (*status.Result, err
 	defer repo.mutex.Unlock()
 
 	if repo.statusResult == nil {
-		if err := repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) error {
-			result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}, true))
-			if err != nil {
-				return err
-			}
-
-			repo.statusResult = result
-			return nil
-		}); err != nil {
+		if err := repo.InitAndSetMainStatusResult(ctx); err != nil {
 			return nil, err
 		}
 	}
 
 	return repo.statusResult, nil
+}
+
+func (repo *Local) InitAndSetMainStatusResult(ctx context.Context) (err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("InitAndSetMainStatusResult").
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			err = repo.initAndSetMainStatusResult(ctx)
+
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
+			}
+		})
+
+	return
+}
+
+func (repo *Local) initAndSetMainStatusResult(ctx context.Context) error {
+	return repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) error {
+		result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}, true))
+		if err != nil {
+			return err
+		}
+
+		repo.statusResult = result
+		return nil
+	})
 }
 
 func (repo *Local) IsEmpty(ctx context.Context) (bool, error) {
