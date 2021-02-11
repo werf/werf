@@ -69,10 +69,10 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		return nil, fmt.Errorf("provide work tree cache directory to enable submodules!")
 	}
 
-	commonGitOpts := []string{
+	commonGitOpts := append(getCommonGitOptions(),
 		"-c", "diff.renames=false",
 		"-c", "core.quotePath=false",
-	}
+	)
 	if opts.WithEntireFileContext {
 		commonGitOpts = append(commonGitOpts, "-c", "diff.context=999999999")
 	}

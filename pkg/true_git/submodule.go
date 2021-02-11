@@ -12,10 +12,7 @@ import (
 func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Sync submodules in work tree %q", workTreeDir)
 	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
-		cmd := exec.Command(
-			"git", "-c", "core.autocrlf=false",
-			"submodule", "sync", "--recursive",
-		)
+		cmd := exec.Command("git", append(getCommonGitOptions(), "submodule", "sync", "--recursive")...)
 
 		cmd.Dir = workTreeDir // required for `git submodule` to work
 
@@ -38,8 +35,8 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Update submodules in work tree %q", workTreeDir)
 	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
 		cmd := exec.Command(
-			"git", "-c", "core.autocrlf=false",
-			"submodule", "update", "--checkout", "--force", "--init", "--recursive",
+			"git", append(getCommonGitOptions(),
+				"submodule", "update", "--checkout", "--force", "--init", "--recursive")...,
 		)
 
 		cmd.Dir = workTreeDir // required for `git submodule` to work

@@ -157,7 +157,7 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	))
 
 	gitCommand := fmt.Sprintf(
-		"%s %s apply --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s",
+		"%s %s apply --ignore-whitespace --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s",
 		stapel.OptionalSudoCommand(gm.Owner, gm.Group),
 		stapel.GitBinPath(),
 		applyPatchDirectory,
