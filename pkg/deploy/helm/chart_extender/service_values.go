@@ -22,6 +22,7 @@ type ServiceValuesOptions struct {
 func GetServiceValues(ctx context.Context, projectName string, repo string, imageInfoGetters []*imagePkg.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	globalInfo := map[string]interface{}{
 		"werf": map[string]interface{}{
+			"name":    projectName,
 			"version": werf.Version,
 		},
 		"env": opts.Env,
