@@ -97,14 +97,10 @@
                       </ul>
                     </div>
                 </li>
-                {%- if page.lang == "ru" %}
-                <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].telegram }}" target="_blank" class="page__icon page__icon_telegram"></a></li>
-                <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].twitter }}" target="_blank" class="page__icon page__icon_twitter"></a></li>
-                {%- else %}
-                <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].twitter }}" target="_blank" class="page__icon page__icon_twitter"></a></li>
-                {%- endif %}
-                <li class="header__menu-icon"><a href="https://github.com/werf/werf" rel="noopener noreferrer" target="_blank" class="page__icon page__icon_github"></a></li>
-                <li class="header__menu-icon"><a href="https://community.flant.com/c/werf/6" rel="noopener noreferrer" target="_blank" class="page__icon page__icon_discourse"></a></li>
+                <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].telegram }}" target="_blank" class="page__icon page__icon_telegram" title="Telegram"></a></li>
+                <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].twitter }}" target="_blank" class="page__icon page__icon_twitter" title="Twitter"></a></li>
+                <li class="header__menu-icon"><a href="https://github.com/werf/werf" rel="noopener noreferrer" target="_blank" class="page__icon page__icon_github" title="GitHub"></a></li>
+                <li class="header__menu-icon"><a href="https://github.com/werf/werf/discussions" rel="noopener noreferrer" target="_blank" class="page__icon page__icon_discussions" title="GitHub Discussions"></a></li>
                 <li class="header__menu-icon header__menu-icon_search"><a href="javascript:void(0)" class="page__icon page__icon_search"></a></li>
                 <!-- language button -->
                 <!-- div>
