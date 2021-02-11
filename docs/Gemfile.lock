@@ -9,7 +9,7 @@ GEM
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
     colorator (1.1.0)
-    concurrent-ruby (1.1.7)
+    concurrent-ruby (1.1.8)
     em-websocket (0.5.2)
       eventmachine (>= 0.12.9)
       http_parser.rb (~> 0.6.0)
@@ -19,7 +19,7 @@ GEM
     execjs (2.7.0)
     extras (0.3.0)
       forwardable-extended (~> 2.5)
-    fastimage (2.2.1)
+    fastimage (2.2.2)
     ffi (1.14.2)
     forwardable-extended (2.6.0)
     html-proofer (3.18.5)
@@ -72,14 +72,12 @@ GEM
     liquid-tag-parser (1.9.0)
       extras (~> 0.3)
       liquid (>= 3.0, < 5.0)
-    listen (3.4.0)
+    listen (3.4.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     mercenary (0.3.6)
-    mini_portile2 (2.5.0)
     minitest (5.14.3)
-    nokogiri (1.11.1)
-      mini_portile2 (~> 2.5.0)
+    nokogiri (1.11.1-x86_64-darwin)
       racc (~> 1.4)
     nokogumbo (2.0.4)
       nokogiri (~> 1.8, >= 1.8.4)
@@ -112,7 +110,7 @@ GEM
     yell (2.2.2)
 
 PLATFORMS
-  ruby
+  x86_64-darwin-18
 
 DEPENDENCIES
   html-proofer
@@ -124,4 +122,4 @@ DEPENDENCIES
   sprockets (~> 3.7)
 
 BUNDLED WITH
-   2.1.4
+   2.2.7

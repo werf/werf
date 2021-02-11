@@ -4,19 +4,24 @@ permalink: /
 layout: default
 ---
 
-<div class="presentation" id="presentation">
-    <div class="presentation__bg" id="presentation-bg"></div>
-    <div class="page__container presentation__container">
-        <div class="presentation__row">
-            <div class="presentation__row-item" id="presentation-title">
-                <div class="presentation__subtitle">Consistent delivery tool</div>
-                <h1 class="presentation__title">What you Git<br/> is what you get!</h1>
-                <ul class="presentation__features">
-                    <li>Git as a single source of truth.</li>
-                    <li>Build. Deploy to Kubernetes. Stay in sync.</li>
-                    <li>Open Source CLI tool. <a href="https://github.com/werf/werf" target="_blank">Written in Go</a>.</li>
+<div class="intro-scheme" id="intro-scheme">
+    <div class="page__container intro-scheme__container">
+        <img src="/images/intro.svg" class="intro-scheme__scheme" alt="werf"/>
+    </div>
+</div>
+
+<div class="intro">
+    <div class="intro__bg" id="intro-bg"></div>
+    <div class="page__container intro__container">
+        <div class="intro__row">
+            <div class="intro__row-item" id="intro-title">
+                <div class="intro__subtitle">What is it?</div>
+                <h1 class="intro__title">Consistent<br/>delivery tool</h1>
+                <ul class="intro__features">
+                    <li>The CLI tool glueing Git, Docker, Helm & Kubernetes<br/>
+                    with any CI system to implement CI/CD and GitOps.</li>
                 </ul>
-                <div class="presentation__btns page__btn-group">
+                <div class="intro__btns page__btn-group">
                     <a href="{{ "introduction.html" | true_relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
                         Introduction
                     </a>
@@ -27,6 +32,39 @@ layout: default
                         Documentation
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="intro">
+    <div class="page__container intro__container">
+        <div class="intro__row">
+            <div class="intro__row-item" id="intro-title">
+                <div class="intro__subtitle">Why do I need it?</div>
+                <h1 class="intro__title">Fast & efficient<br/>CI/CD</h1>
+                <ul class="intro__features">
+                    <li>Establish and benefit from efficient,<br/>
+                    robust and integrated CI/CD pipelines<br/>
+                    on top of proven technologies.</li>
+                    <li>With werf, it’s easy to start, to apply best practices<br/>
+                    and to avoid reinventing the wheel.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="presentation" id="presentation">
+    <div class="page__container presentation__container">
+        <div class="presentation__row">
+            <div class="presentation__row-item" id="presentation-title">
+                <div class="presentation__subtitle">How does it work?</div>
+                <h1 class="presentation__title">What you Git<br/> is what you get!<span title="Git is treated as a single source of truth (we call it «Giterminism»).">*</span></h1>
+                <ul class="presentation__features">
+                    <li>werf not only builds & deploys but also continuously<br/>
+                    syncs current Kubernetes state with changes made in Git.</li>
+                </ul>
             </div>
             <div class="presentation__row-item presentation__row-item_scheme">
                 {% include scheme.md %}
