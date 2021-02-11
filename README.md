@@ -3,9 +3,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/werf/werf/discussions"><img src="https://img.shields.io/badge/GitHub-discussions-brightgreen" alt="Discourse forum"/></a>
+  <a href="https://github.com/werf/werf/discussions"><img src="https://img.shields.io/badge/GitHub-discussions-brightgreen" alt="GH Discussions"/></a>
   <a href="https://twitter.com/werf_io"><img src="https://img.shields.io/twitter/follow/werf_io?label=%40werf_io&style=flat-square" alt="Twitter"></a>
-  <a href="https://t.me/werf_ru"><img src="https://img.shields.io/badge/telegram-RU%20chat-179cde.svg?logo=telegram" alt="Telegram chat RU"></a><br>
+  <a href="https://t.me/werf_io"><img src="https://img.shields.io/badge/telegram-chat-179cde.svg?logo=telegram" alt="Telegram chat"></a><br>
   <a href='https://bintray.com/flant/werf/werf/_latestVersion'><img src='https://api.bintray.com/packages/flant/werf/werf/images/download.svg'></a>
   <a href="https://godoc.org/github.com/werf/werf"><img src="https://godoc.org/github.com/werf/werf?status.svg" alt="GoDoc"></a>
   <a href="https://codeclimate.com/github/werf/werf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/bac6f23d5c366c6324b5/test_coverage" /></a>
@@ -120,9 +120,9 @@ Please feel free to reach developers/maintainers and users via [GitHub Discussio
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues).
 
-You're also welcome to follow [@werf_io](https://twitter.com/werf_io) to stay informed about all important news, new articles, etc.
-
-> Finally, we have [this Telegram chat](https://t.me/werf_ru) for Russian-speaking users as well.
+You're also welcome to:
+* follow [@werf_io](https://twitter.com/werf_io) to stay informed about all important news, new articles, etc;
+* join our Telegram chat for announcements and ongoing talks: [werf_io](https://t.me/werf_io). _(There is a Russian-speaking Telegram chat [werf_ru](https://t.me/werf_ru) as well.)_
 
 
 ## License
