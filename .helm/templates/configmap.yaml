@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: multiwerf-data
+data:
+  multiwerf.json: |
+    {{ $.Files.Get "multiwerf.json" | fromJson| toJson }}

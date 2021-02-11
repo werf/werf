@@ -1,0 +1,29 @@
+name: Deploy multiwerf.json
+on:
+  push:
+    branches:
+    - multiwerf
+
+jobs:
+
+  build:
+    name: Converge
+    runs-on: tfprod-werf
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Deploy multiwerf.json to test
+      uses: werf/actions/converge@master
+      with:
+        env: test
+        group: 1.2
+        channel: alpha
+      env:
+        WERF_NAMESPACE: "werfio-ng-test"
+        WERF_LOG_VERBOSE: "on"
+        WERF_KUBE_CONTEXT: dev
+
