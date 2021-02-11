@@ -41,7 +41,7 @@ func IsValidWorkTree(workTree string) (bool, error) {
 }
 
 func IsValidGitDir(gitDir string) (bool, error) {
-	gitArgs := []string{"--git-dir", gitDir, "rev-parse"}
+	gitArgs := append(getCommonGitOptions(), []string{"--git-dir", gitDir, "rev-parse"}...)
 
 	cmd := exec.Command("git", gitArgs...)
 

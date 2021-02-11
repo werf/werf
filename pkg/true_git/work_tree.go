@@ -160,8 +160,8 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 
 	if _, err := os.Stat(workTreeDir); os.IsNotExist(err) {
 		cmd = exec.Command(
-			"git", "-C", repoDir,
-			"worktree", "add", "--force", "--detach", workTreeDir, commit,
+			"git", append(getCommonGitOptions(), "-C", repoDir,
+				"worktree", "add", "--force", "--detach", workTreeDir, commit)...,
 		)
 		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
@@ -174,7 +174,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 	} else if err != nil {
 		return fmt.Errorf("error accessing %s: %s", workTreeDir, err)
 	} else {
-		cmd = exec.Command("git", "checkout", "--force", "--detach", commit)
+		cmd = exec.Command("git", append(getCommonGitOptions(), "checkout", "--force", "--detach", commit)...)
 		cmd.Dir = workTreeDir
 		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
@@ -186,10 +186,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 		}
 	}
 
-	cmd = exec.Command(
-		"git", "-c", "core.autocrlf=false",
-		"reset", "--hard", commit,
-	)
+	cmd = exec.Command("git", append(getCommonGitOptions(), "reset", "--hard", commit)...)
 	cmd.Dir = workTreeDir
 	output = setCommandRecordingLiveOutput(ctx, cmd)
 	if debugWorktreeSwitch() {
@@ -201,8 +198,8 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 	}
 
 	cmd = exec.Command(
-		"git", "--work-tree", workTreeDir,
-		"clean", "-d", "-f", "-f", "-x",
+		"git", append(getCommonGitOptions(), "--work-tree", workTreeDir,
+			"clean", "-d", "-f", "-f", "-x")...,
 	)
 	cmd.Dir = workTreeDir
 	output = setCommandRecordingLiveOutput(ctx, cmd)
@@ -227,11 +224,10 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 			return fmt.Errorf("cannot update submodules: %s", err)
 		}
 
-		cmd = exec.Command(
-			"git", "--work-tree", workTreeDir,
-			"submodule", "foreach", "--recursive",
-			"git", "-c", "core.autocrlf=false", "reset", "--hard",
-		)
+		gitArgs := append(getCommonGitOptions(), "--work-tree", workTreeDir, "submodule", "foreach", "--recursive")
+		gitArgs = append(append(gitArgs, "git"), append(getCommonGitOptions(), "reset", "--hard")...)
+
+		cmd = exec.Command("git", gitArgs...)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
 		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
@@ -242,11 +238,10 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 			return fmt.Errorf("git submodules reset failed: %s\n%s", err, output.String())
 		}
 
-		cmd = exec.Command(
-			"git", "--work-tree", workTreeDir,
-			"submodule", "foreach", "--recursive",
-			"git", "clean", "-d", "-f", "-f", "-x",
-		)
+		gitArgs = append(getCommonGitOptions(), "--work-tree", workTreeDir, "submodule", "foreach", "--recursive")
+		gitArgs = append(append(gitArgs, "git"), append(getCommonGitOptions(), "clean", "-d", "-f", "-f", "-x")...)
+
+		cmd = exec.Command("git", gitArgs...)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
 		output = setCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
@@ -262,7 +257,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 }
 
 func ResolveRepoDir(repoDir string) (string, error) {
-	gitArgs := []string{"--git-dir", repoDir, "rev-parse", "--git-dir"}
+	gitArgs := append(getCommonGitOptions(), "--git-dir", repoDir, "rev-parse", "--git-dir")
 
 	cmd := exec.Command("git", gitArgs...)
 
@@ -281,8 +276,7 @@ type WorktreeDescriptor struct {
 }
 
 func GetWorkTreeList(repoDir string) ([]WorktreeDescriptor, error) {
-	gitArgs := []string{"-C", repoDir, "worktree", "list", "--porcelain"}
-
+	gitArgs := append(getCommonGitOptions(), "-C", repoDir, "worktree", "list", "--porcelain")
 	cmd := exec.Command("git", gitArgs...)
 
 	output, err := cmd.CombinedOutput()

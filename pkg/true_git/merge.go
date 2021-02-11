@@ -50,7 +50,7 @@ func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, co
 				return fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
 			}
 
-			cmd = exec.Command("git", "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "merge", "--no-edit", "--no-ff", commitToMerge)
+			cmd = exec.Command("git", append(getCommonGitOptions(), "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "merge", "--no-edit", "--no-ff", commitToMerge)...)
 			cmd.Dir = workTreeDir
 			output = setCommandRecordingLiveOutput(ctx, cmd)
 			err = cmd.Run()
@@ -61,7 +61,7 @@ func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, co
 				fmt.Printf("[DEBUG MERGE] %s\n%s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), output)
 			}
 
-			cmd = exec.Command("git", "rev-parse", "HEAD")
+			cmd = exec.Command("git", append(getCommonGitOptions(), "rev-parse", "HEAD")...)
 			cmd.Dir = workTreeDir
 			output = setCommandRecordingLiveOutput(ctx, cmd)
 			err = cmd.Run()

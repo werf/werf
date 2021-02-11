@@ -7,7 +7,7 @@ import (
 )
 
 func IsAncestor(ancestorCommit, descendantCommit string, gitDir string) (bool, error) {
-	gitArgs := []string{"-C", gitDir, "merge-base", "--is-ancestor", ancestorCommit, descendantCommit}
+	gitArgs := append(getCommonGitOptions(), "-C", gitDir, "merge-base", "--is-ancestor", ancestorCommit, descendantCommit)
 	cmd := exec.Command("git", gitArgs...)
 
 	output, err := cmd.CombinedOutput()
