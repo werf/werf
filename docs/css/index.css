@@ -147,8 +147,8 @@ body,
     background-image: url('../images/icons/rss.svg');
 }
 
-.page__icon_discourse {
-    background-image: url('../images/icons/discourse.svg');
+.page__icon_discussions {
+    background-image: url('../images/icons/discussions.svg');
 }
 
 .page__icon_block-title {
@@ -1241,4 +1241,14 @@ code {
 
 .error-image img {
   width: 640px;
+}
+
+.tooltip {
+  font-family: 'Open Sans', sans-serif;
+  background: #333;
+  color: white;
+  font-weight: bold;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
 }

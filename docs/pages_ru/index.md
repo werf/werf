@@ -59,8 +59,12 @@ layout: default
         <div class="presentation__row">
             <div class="presentation__row-item" id="presentation-title">
                 <div class="presentation__subtitle">Как работает?</div>
-                <h1 class="presentation__title">What you Git<br/> is what you get!<span title="Git используется как единый источник истины («гитерминизм»).">*</span></h1>
+                <h1 class="presentation__title"
+                    data-toggle="tooltip" title="Что ты Git'ишь, то и видишь!">
+                    What you Git<br/> is what you get!
+                </h1>
                 <ul class="presentation__features">
+                    <li>Git используется как единый источник истины («гитерминизм»).</li>
                     <li>werf не только собирает и деплоит, но и непрерывно<br/>
                     синхронизирует изменения в Git с состоянием Kubernetes.</li>
                 </ul>
@@ -247,19 +251,19 @@ layout: default
     <div class="page__container">
         <div class="community__content">
             <div class="community__title">Растущее дружелюбное сообщество</div>
-            <div class="community__subtitle">Мы всегда на связи с сообществом<br/> в Telegram, Twitter и Discourse.</div>
+            <div class="community__subtitle">Мы всегда на связи с сообществом<br/> в Telegram, Twitter и GitHub Discussions.</div>
             <div class="community__btns">
                 <a href="{{ site.social_links[page.lang].telegram }}" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_telegram"></span>
-                    Мы в Telegram
+                    Telegram
                 </a>
                 <a href="{{ site.social_links[page.lang].twitter }}" target="_blank" class="page__btn page__btn_w community__btn">
                     <span class="page__icon page__icon_twitter"></span>
-                    Мы в Twitter
+                    Twitter
                 </a>
-                <a href="https://community.flant.com/c/werf/6" rel="noopener noreferrer" target="_blank" class="page__btn page__btn_w community__btn">
-                    <span class="page__icon page__icon_discourse"></span>
-                    Мы в Discourse
+                <a href="https://github.com/werf/werf/discussions" rel="noopener noreferrer" target="_blank" class="page__btn page__btn_w community__btn">
+                    <span class="page__icon page__icon_github"></span>
+                    GitHub Discussions
                 </a>
             </div>
         </div>
