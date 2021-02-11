@@ -8,7 +8,7 @@ import (
 
 // FileExists returns true if path exists
 func FileExists(path string) (bool, error) {
-	_, err := os.Stat(path)
+	_, err := os.Lstat(path)
 	if err != nil {
 		if isNotExistError(err) {
 			return false, nil
@@ -21,7 +21,7 @@ func FileExists(path string) (bool, error) {
 }
 
 func RegularFileExists(path string) (bool, error) {
-	fileInfo, err := os.Stat(path)
+	fileInfo, err := os.Lstat(path)
 	if err != nil {
 		if isNotExistError(err) {
 			return false, nil
@@ -34,7 +34,7 @@ func RegularFileExists(path string) (bool, error) {
 }
 
 func DirExists(path string) (bool, error) {
-	fileInfo, err := os.Stat(path)
+	fileInfo, err := os.Lstat(path)
 	if err != nil {
 		if isNotExistError(err) {
 			return false, nil
