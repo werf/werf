@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 type FileReader struct {
@@ -21,11 +22,11 @@ func NewFileReader(sharedOptions sharedOptions) FileReader {
 
 type giterminismConfig interface {
 	IsUncommittedConfigAccepted() bool
-	IsUncommittedConfigTemplateFileAccepted(relPath string) (bool, error)
-	IsUncommittedConfigGoTemplateRenderingFileAccepted(relPath string) (bool, error)
-	IsUncommittedDockerfileAccepted(relPath string) (bool, error)
-	IsUncommittedDockerignoreAccepted(relPath string) (bool, error)
-	IsUncommittedHelmFileAccepted(relPath string) (bool, error)
+	UncommittedConfigTemplateFilePathMatcher() path_matcher.PathMatcher
+	UncommittedConfigGoTemplateRenderingFilePathMatcher() path_matcher.PathMatcher
+	IsUncommittedDockerfileAccepted(relPath string) bool
+	IsUncommittedDockerignoreAccepted(relPath string) bool
+	UncommittedHelmFilePathMatcher() path_matcher.PathMatcher
 }
 
 type sharedOptions interface {

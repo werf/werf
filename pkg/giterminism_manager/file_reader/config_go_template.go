@@ -13,7 +13,7 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, glob string) 
 		ctx,
 		"",
 		glob,
-		r.giterminismConfig.IsUncommittedConfigGoTemplateRenderingFileAccepted,
+		r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().MatchPath,
 		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
 			if err != nil {
 				return err
@@ -31,7 +31,7 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, glob string) 
 }
 
 func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string) ([]byte, error) {
-	data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedConfigGoTemplateRenderingFileAccepted)
+	data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().MatchPath)
 	if err != nil {
 		return nil, fmt.Errorf("{{ .Files.Get %q }}: %s", relPath, err)
 	}

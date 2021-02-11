@@ -10,9 +10,7 @@ func (i Inspector) InspectConfigDockerfileContextAddFile(relPath string) error {
 		return nil
 	}
 
-	if isAccepted, err := i.giterminismConfig.IsConfigDockerfileContextAddFileAccepted(relPath); err != nil {
-		return err
-	} else if isAccepted {
+	if i.giterminismConfig.IsConfigDockerfileContextAddFileAccepted(relPath) {
 		return nil
 	}
 
