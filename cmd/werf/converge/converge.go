@@ -370,13 +370,7 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	if err := wc.SetWerfConfig(werfConfig); err != nil {
 		return err
 	}
-
-	useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
-	if err != nil {
-		return err
-	}
-
-	if vals, err := chart_extender.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, chart_extender.ServiceValuesOptions{Namespace: namespace, Env: *commonCmdData.Environment, CustomTagFunc: useCustomTagFunc}); err != nil {
+	if vals, err := chart_extender.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, chart_extender.ServiceValuesOptions{Namespace: namespace, Env: *commonCmdData.Environment}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else if err := wc.SetServiceValues(vals); err != nil {
 		return err

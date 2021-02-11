@@ -312,13 +312,7 @@ func runRender() error {
 	if err := wc.SetWerfConfig(werfConfig); err != nil {
 		return err
 	}
-
-	useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
-	if err != nil {
-		return err
-	}
-
-	if vals, err := chart_extender.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, chart_extender.ServiceValuesOptions{Namespace: namespace, Env: *commonCmdData.Environment, IsStub: isStub, CustomTagFunc: useCustomTagFunc}); err != nil {
+	if vals, err := chart_extender.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, chart_extender.ServiceValuesOptions{Namespace: namespace, Env: *commonCmdData.Environment, IsStub: isStub}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else if err := wc.SetServiceValues(vals); err != nil {
 		return err
