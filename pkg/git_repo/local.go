@@ -384,21 +384,36 @@ func (repo *Local) GetModifiedLocallyFilePathList(ctx context.Context, matcher p
 func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, dir string, glob string) (files []string, err error) {
 	var prefixWithoutPatterns string
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
-	dir = filepath.Join(dir, prefixWithoutPatterns)
+	dirOrFileWithGlobPrefix := filepath.Join(dir, prefixWithoutPatterns)
 
-	pathMatcher := path_matcher.NewSimplePathMatcher(dir, []string{glob}, true)
+	pathMatcher := path_matcher.NewSimplePathMatcher(dirOrFileWithGlobPrefix, []string{glob}, true)
 	if debugGiterminismManager() {
 		logboek.Context(ctx).Debug().LogLn("pathMatcher:", pathMatcher.String())
 	}
 
 	var result []string
-	if err := repo.WalkCommitFiles(ctx, commit, dir, pathMatcher, func(notResolvedPath string) error {
+	fileFunc := func(notResolvedPath string) error {
 		if pathMatcher.MatchPath(notResolvedPath) {
 			result = append(result, notResolvedPath)
 		}
 
 		return nil
-	}); err != nil {
+	}
+
+	isRegularFile, err := repo.IsCommitFileExist(ctx, commit, dirOrFileWithGlobPrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	if isRegularFile {
+		if err := fileFunc(dirOrFileWithGlobPrefix); err != nil {
+			return nil, err
+		}
+
+		return result, nil
+	}
+
+	if err := repo.WalkCommitFiles(ctx, commit, dirOrFileWithGlobPrefix, pathMatcher, fileFunc); err != nil {
 		return nil, err
 	}
 
