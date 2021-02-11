@@ -45,13 +45,8 @@ type fileReader interface {
 }
 
 type Config struct {
-	Cli    cli    `json:"cli"`
 	Config config `json:"config"`
 	Helm   helm   `json:"helm"`
-}
-
-func (c Config) IsCustomTagsAccepted() bool {
-	return c.Cli.AllowCustomTags
 }
 
 func (c Config) IsUncommittedConfigAccepted() bool {
@@ -100,10 +95,6 @@ func (c Config) IsUncommittedDockerignoreAccepted(relPath string) (bool, error) 
 
 func (c Config) IsUncommittedHelmFileAccepted(relPath string) (bool, error) {
 	return c.Helm.IsUncommittedHelmFileAccepted(relPath)
-}
-
-type cli struct {
-	AllowCustomTags bool `json:"allowCustomTags"`
 }
 
 type config struct {

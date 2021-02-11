@@ -292,22 +292,13 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 	return c.remoteGitRepos[key]
 }
 
-type ShouldBeBuiltOptions struct {
-	CustomTagFuncList []func(string) string
-}
-
-func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) error {
+func (c *Conveyor) ShouldBeBuilt(ctx context.Context) error {
 	if err := c.determineStages(ctx); err != nil {
 		return err
 	}
 
 	phases := []Phase{
-		NewBuildPhase(c, BuildPhaseOptions{
-			ShouldBeBuiltMode: true,
-			BuildOptions: BuildOptions{
-				CustomTagFuncList: opts.CustomTagFuncList,
-			},
-		}),
+		NewBuildPhase(c, BuildPhaseOptions{ShouldBeBuiltMode: true}),
 	}
 
 	if err := c.runPhases(ctx, phases, false); err != nil {

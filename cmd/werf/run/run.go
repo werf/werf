@@ -360,7 +360,7 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	var dockerImageName string
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 		if *commonCmdData.SkipBuild {
-			if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
+			if err := c.ShouldBeBuilt(ctx); err != nil {
 				return err
 			}
 		} else {

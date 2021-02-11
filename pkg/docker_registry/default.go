@@ -32,30 +32,9 @@ func (r *defaultImplementation) DeleteRepo(_ context.Context, _ string) error {
 	return fmt.Errorf("method is not implemented")
 }
 
-func (r *defaultImplementation) CheckRepoImageCustomTag(ctx context.Context, repoImage *image.Info, tag string) error {
-	tagReference := strings.Join([]string{repoImage.Repository, tag}, ":")
-	tagRepoImage, err := r.api.TryGetRepoImage(ctx, tagReference)
-	if err != nil {
-		return err
-	}
-
-	if tagRepoImage == nil {
-		return fmt.Errorf("the custom tag %q not found", tag)
-	}
-
-	if repoImage.ID != tagRepoImage.ID {
-		return fmt.Errorf("the custom tag %q image must be the same as related content-based tag %q image", tag, repoImage.Tag)
-	}
-
-	return nil
-}
-
-func (r *defaultImplementation) TagRepoImage(_ context.Context, repoImage *image.Info, tag string) error {
-	return r.api.tagImage(strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":"), tag)
-}
-
 func (r *defaultImplementation) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
-	return r.api.deleteImageByReference(strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@"))
+	reference := strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@")
+	return r.api.deleteImageByReference(reference)
 }
 
 func (r *defaultImplementation) String() string {
