@@ -177,16 +177,6 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 	return nil, nil
 }
 
-func (storage *RepoStagesStorage) CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage CheckStageCustomTag %s %s\n", stageDescription.Info.Name, tag)
-	return storage.DockerRegistry.CheckRepoImageCustomTag(ctx, stageDescription.Info, tag)
-}
-
-func (storage *RepoStagesStorage) AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage AddStageCustomTag %s %s\n", stageDescription.Info.Name, tag)
-	return storage.DockerRegistry.TagRepoImage(ctx, stageDescription.Info, tag)
-}
-
 func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectName, imageName string) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 

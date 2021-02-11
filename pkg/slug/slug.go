@@ -60,21 +60,17 @@ func validateProject(name string) error {
 }
 
 func DockerTag(name string) string {
-	if err := ValidateDockerTag(name); err != nil {
+	if err := validateDockerTag(name); err != nil {
 		return slug(name, dockerTagMaxSize)
 	}
 	return name
 }
 
-func ValidateDockerTag(name string) error {
+func validateDockerTag(name string) error {
 	if shouldNotBeSlugged(name, dockerTagRegexp, dockerTagMaxSize) {
 		return nil
 	}
-
-	return fmt.Errorf(`%q is not a valid docker tag 
-
- - a tag name must be valid ASCII and may contain lowercase and uppercase letters, digits, underscores, periods and dashes;
- - a tag name may not start with a period or a dash and may contain a maximum of 128 characters.`, name)
+	return fmt.Errorf("docker tag should comply with regex %q and be maximum %d chars", dockerTagRegexp, dockerTagMaxSize)
 }
 
 func KubernetesNamespace(name string) string {

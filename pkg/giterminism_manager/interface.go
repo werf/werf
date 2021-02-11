@@ -42,7 +42,6 @@ type HelmChartExtender interface {
 }
 
 type Inspector interface {
-	InspectCustomTags() error
 	InspectConfigGoTemplateRenderingEnv(ctx context.Context, envName string) error
 	InspectConfigStapelFromLatest() error
 	InspectConfigStapelGitBranch() error
