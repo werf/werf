@@ -37,5 +37,5 @@ func (i Inspector) InspectBuildContextFiles(ctx context.Context, matcher path_ma
 		)
 	}
 
-	return i.fileReader.ExtraWindowsCheckFilesModifiedLocally(ctx, relativeToProjectDirPathList...)
+	return i.fileReader.ExtraCheckFilesModifiedLocally(ctx, relativeToProjectDirPathList...)
 }

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/werf/logboek"
@@ -211,11 +211,7 @@ func (r FileReader) checkFileModifiedLocally(ctx context.Context, relPath string
 		return nil
 	}
 
-	if runtime.GOOS == "windows" {
-		return r.ExtraWindowsCheckFileModifiedLocally(ctx, relPath)
-	}
-
-	return r.NewUncommittedFilesError(relPath)
+	return r.extraCheckFileModifiedLocally(ctx, relPath)
 }
 
 func (r FileReader) HandleValidateSubmodulesErr(err error) error {
@@ -230,11 +226,12 @@ func (r FileReader) HandleValidateSubmodulesErr(err error) error {
 }
 
 // https://github.com/go-git/go-git/issues/227
-func (r FileReader) ExtraWindowsCheckFilesModifiedLocally(ctx context.Context, relPathList ...string) error {
+// https://github.com/go-git/go-git/issues/253
+func (r FileReader) ExtraCheckFilesModifiedLocally(ctx context.Context, relPathList ...string) error {
 	var uncommittedFilePathList []string
 
 	for _, relPath := range relPathList {
-		err := r.ExtraWindowsCheckFileModifiedLocally(ctx, relPath)
+		err := r.extraCheckFileModifiedLocally(ctx, relPath)
 		if err != nil {
 			switch err.(type) {
 			case UncommittedFilesError:
@@ -253,8 +250,7 @@ func (r FileReader) ExtraWindowsCheckFilesModifiedLocally(ctx context.Context, r
 	return nil
 }
 
-// https://github.com/go-git/go-git/issues/227
-func (r FileReader) ExtraWindowsCheckFileModifiedLocally(ctx context.Context, relPath string) error {
+func (r FileReader) extraCheckFileModifiedLocally(ctx context.Context, relPath string) error {
 	isTreeEntryExist, err := r.IsCommitTreeEntryExist(ctx, relPath)
 	if err != nil {
 		return err
@@ -270,13 +266,21 @@ func (r FileReader) ExtraWindowsCheckFileModifiedLocally(ctx context.Context, re
 		commitFileData = data
 	}
 
-	isFileExist, err := r.IsRegularFileExist(ctx, relPath)
+	var fsFileData []byte
+	absPath := r.toProjectDirAbsolutePath(relPath)
+	lstat, err := os.Lstat(absPath)
 	if err != nil {
 		return err
 	}
 
-	var fsFileData []byte
-	if isFileExist {
+	if lstat.Mode()&os.ModeSymlink == os.ModeSymlink {
+		link, err := os.Readlink(absPath)
+		if err != nil {
+			return err
+		}
+
+		fsFileData = []byte(link)
+	} else {
 		data, err := r.ReadFile(ctx, relPath)
 		if err != nil {
 			return err
