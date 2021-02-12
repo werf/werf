@@ -96,7 +96,12 @@ func newLocal(name, workTreeDir, gitDir string) (l *Local, err error) {
 }
 
 func (repo *Local) PlainOpen() (*git.Repository, error) {
-	return git.PlainOpen(repo.WorkTreeDir)
+	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return nil, fmt.Errorf("cannot open git work tree %q: %s", repo.WorkTreeDir, err)
+	}
+
+	return repository, nil
 }
 
 func (repo *Local) SyncWithOrigin(ctx context.Context) error {
@@ -272,15 +277,15 @@ func (repo *Local) InitAndSetMainStatusResult(ctx context.Context) (err error) {
 }
 
 func (repo *Local) initAndSetMainStatusResult(ctx context.Context) error {
-	return repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) error {
-		result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}, true))
-		if err != nil {
-			return err
-		}
+	repository, err := repo.PlainOpen()
 
-		repo.statusResult = result
-		return nil
-	})
+	result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}, true))
+	if err != nil {
+		return err
+	}
+
+	repo.statusResult = result
+	return nil
 }
 
 func (repo *Local) IsEmpty(ctx context.Context) (bool, error) {
@@ -348,9 +353,9 @@ func (repo *Local) ValidateSubmodules(ctx context.Context, matcher path_matcher.
 		return err
 	}
 
-	return repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) error {
-		return statusResult.ValidateSubmodules(repository, repo.headCommit)
-	})
+	repository, err := repo.PlainOpen()
+
+	return statusResult.ValidateSubmodules(repository, repo.headCommit)
 }
 
 // IsFileModifiedLocally checks if the file has worktree or staged changes
@@ -839,9 +844,9 @@ func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) 
 }
 
 func (repo *Local) yieldRepositoryBackedByWorkTree(ctx context.Context, commit string, doFunc func(repository *git.Repository) error) error {
-	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen()
 	if err != nil {
-		return fmt.Errorf("cannot open git work tree %q: %s", repo.WorkTreeDir, err)
+		return err
 	}
 
 	commitHash, err := newHash(commit)
