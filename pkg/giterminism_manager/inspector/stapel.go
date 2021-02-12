@@ -40,9 +40,7 @@ func (i Inspector) InspectConfigStapelMountFromPath(fromPath string) error {
 		return nil
 	}
 
-	if isAccepted, err := i.giterminismConfig.IsConfigStapelMountFromPathAccepted(fromPath); err != nil {
-		return err
-	} else if isAccepted {
+	if i.giterminismConfig.IsConfigStapelMountFromPathAccepted(fromPath) {
 		return nil
 	}
 

@@ -40,7 +40,7 @@ func (r FileReader) NewFileNotFoundInProjectRepositoryError(relPath string) erro
 
 func (r FileReader) NewUncommittedSubmoduleChangesError(submodulePath string, filePathList []string) error {
 	errorMsg := fmt.Sprintf("the submodule %q has modified files and these changes must be committed (do not forget to push new changes to the submodule remote) or discarded:\n\n%s", filepath.ToSlash(submodulePath), prepareListOfFilesString(filePathList))
-	return errors.NewError(errorMsg)
+	return UncommittedFilesError{fmt.Errorf("%s", errorMsg)}
 }
 
 func (r FileReader) NewUncleanSubmoduleError(submodulePath, headCommit, currentCommit, expectedCommit string) error {

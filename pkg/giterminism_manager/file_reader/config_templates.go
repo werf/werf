@@ -44,7 +44,7 @@ func (r FileReader) readConfigTemplateFiles(ctx context.Context, customDirRelPat
 		ctx,
 		templatesDirRelPath,
 		"**/*.tmpl",
-		r.giterminismConfig.IsUncommittedConfigTemplateFileAccepted,
+		r.giterminismConfig.UncommittedConfigTemplateFilePathMatcher(),
 		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
 			return tmplFunc(filepath.ToSlash(relativeToDirNotResolvedPath), data, err)
 		},

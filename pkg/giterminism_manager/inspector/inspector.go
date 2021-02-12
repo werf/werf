@@ -22,8 +22,8 @@ type giterminismConfig interface {
 	IsConfigStapelFromLatestAccepted() bool
 	IsConfigStapelGitBranchAccepted() bool
 	IsConfigStapelMountBuildDirAccepted() bool
-	IsConfigStapelMountFromPathAccepted(fromPath string) (bool, error)
-	IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, error)
+	IsConfigStapelMountFromPathAccepted(fromPath string) bool
+	IsConfigDockerfileContextAddFileAccepted(relPath string) bool
 }
 
 type fileReader interface {

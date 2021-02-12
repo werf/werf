@@ -244,20 +244,43 @@ func (repo *Local) getMainStatusResult(ctx context.Context) (*status.Result, err
 	defer repo.mutex.Unlock()
 
 	if repo.statusResult == nil {
-		if err := repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) error {
-			result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}, true))
-			if err != nil {
-				return err
-			}
-
-			repo.statusResult = result
-			return nil
-		}); err != nil {
+		if err := repo.InitAndSetMainStatusResult(ctx); err != nil {
 			return nil, err
 		}
 	}
 
 	return repo.statusResult, nil
+}
+
+func (repo *Local) InitAndSetMainStatusResult(ctx context.Context) (err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("InitAndSetMainStatusResult").
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			err = repo.initAndSetMainStatusResult(ctx)
+
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
+			}
+		})
+
+	return
+}
+
+func (repo *Local) initAndSetMainStatusResult(ctx context.Context) error {
+	return repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) error {
+		result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}, true))
+		if err != nil {
+			return err
+		}
+
+		repo.statusResult = result
+		return nil
+	})
 }
 
 func (repo *Local) IsEmpty(ctx context.Context) (bool, error) {
@@ -361,21 +384,36 @@ func (repo *Local) GetModifiedLocallyFilePathList(ctx context.Context, matcher p
 func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, dir string, glob string) (files []string, err error) {
 	var prefixWithoutPatterns string
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
-	dir = filepath.Join(dir, prefixWithoutPatterns)
+	dirOrFileWithGlobPrefix := filepath.Join(dir, prefixWithoutPatterns)
 
-	pathMatcher := path_matcher.NewSimplePathMatcher(dir, []string{glob}, true)
+	pathMatcher := path_matcher.NewSimplePathMatcher(dirOrFileWithGlobPrefix, []string{glob}, true)
 	if debugGiterminismManager() {
 		logboek.Context(ctx).Debug().LogLn("pathMatcher:", pathMatcher.String())
 	}
 
 	var result []string
-	if err := repo.WalkCommitFiles(ctx, commit, dir, pathMatcher, func(notResolvedPath string) error {
+	fileFunc := func(notResolvedPath string) error {
 		if pathMatcher.MatchPath(notResolvedPath) {
 			result = append(result, notResolvedPath)
 		}
 
 		return nil
-	}); err != nil {
+	}
+
+	isRegularFile, err := repo.IsCommitFileExist(ctx, commit, dirOrFileWithGlobPrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	if isRegularFile {
+		if err := fileFunc(dirOrFileWithGlobPrefix); err != nil {
+			return nil, err
+		}
+
+		return result, nil
+	}
+
+	if err := repo.WalkCommitFiles(ctx, commit, dirOrFileWithGlobPrefix, pathMatcher, fileFunc); err != nil {
 		return nil, err
 	}
 
@@ -728,6 +766,34 @@ func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPa
 	}
 
 	return content, nil
+}
+
+func (repo *Local) IsCommitTreeEntryDirectory(ctx context.Context, commit, relPath string) (isDirectory bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsCommitTreeEntryDirectory %q %q", commit, relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			isDirectory, err = repo.isCommitTreeEntryDirectory(ctx, commit, relPath)
+
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("isDirectory: %v\nerr: %q\n", isDirectory, err)
+			}
+		})
+
+	return
+}
+
+func (repo *Local) isCommitTreeEntryDirectory(ctx context.Context, commit, relPath string) (bool, error) {
+	entry, err := repo.getCommitTreeEntry(ctx, commit, relPath)
+	if err != nil {
+		return false, err
+	}
+
+	return entry.Mode == filemode.Dir || entry.Mode == filemode.Submodule, nil
 }
 
 func (repo *Local) IsCommitTreeEntryExist(ctx context.Context, commit, relPath string) (exist bool, err error) {

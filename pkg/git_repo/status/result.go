@@ -241,14 +241,14 @@ func (r *Result) ValidateSubmodules(repository *git.Repository, headCommit strin
 
 func (r *Result) IsFileModified(relPath string, options FilterOptions) bool {
 	for _, filePath := range r.filteredFilePathList(options) {
-		if path.Join(r.repositoryFullFilepath, filePath) == filepath.ToSlash(relPath) {
+		if path.Join(r.repositoryFullFilepath, filePath) == filepath.ToSlash(relPath) || util.IsSubpathOfBasePath(relPath, filePath) {
 			return true
 		}
 	}
 
 	if !options.IgnoreSubmodules {
 		for _, sr := range r.submoduleResults {
-			if util.IsSubpathOfBasePath(filepath.ToSlash(sr.repositoryFullFilepath), filepath.ToSlash(relPath)) {
+			if util.IsSubpathOfBasePath(sr.repositoryFullFilepath, relPath) {
 				if sr.submoduleStatus.Current != sr.submoduleStatus.Expected {
 					return true
 				}

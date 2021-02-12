@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/bmatcuk/doublestar"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 func NewConfig(ctx context.Context, fileReader fileReader) (c Config, err error) {
@@ -53,12 +51,12 @@ func (c Config) IsUncommittedConfigAccepted() bool {
 	return c.Config.AllowUncommitted
 }
 
-func (c Config) IsUncommittedConfigTemplateFileAccepted(path string) (bool, error) {
-	return c.Config.IsUncommittedTemplateFileAccepted(path)
+func (c Config) UncommittedConfigTemplateFilePathMatcher() path_matcher.PathMatcher {
+	return c.Config.UncommittedTemplateFilePathMatcher()
 }
 
-func (c Config) IsUncommittedConfigGoTemplateRenderingFileAccepted(path string) (bool, error) {
-	return c.Config.GoTemplateRendering.IsUncommittedFileAccepted(path)
+func (c Config) UncommittedConfigGoTemplateRenderingFilePathMatcher() path_matcher.PathMatcher {
+	return c.Config.GoTemplateRendering.UncommittedFilePathMatcher()
 }
 
 func (c Config) IsConfigGoTemplateRenderingEnvNameAccepted(envName string) (bool, error) {
@@ -77,24 +75,24 @@ func (c Config) IsConfigStapelMountBuildDirAccepted() bool {
 	return c.Config.Stapel.Mount.AllowBuildDir
 }
 
-func (c Config) IsConfigStapelMountFromPathAccepted(fromPath string) (bool, error) {
+func (c Config) IsConfigStapelMountFromPathAccepted(fromPath string) bool {
 	return c.Config.Stapel.Mount.IsFromPathAccepted(fromPath)
 }
 
-func (c Config) IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, error) {
+func (c Config) IsConfigDockerfileContextAddFileAccepted(relPath string) bool {
 	return c.Config.Dockerfile.IsContextAddFileAccepted(relPath)
 }
 
-func (c Config) IsUncommittedDockerfileAccepted(relPath string) (bool, error) {
+func (c Config) IsUncommittedDockerfileAccepted(relPath string) bool {
 	return c.Config.Dockerfile.IsUncommittedAccepted(relPath)
 }
 
-func (c Config) IsUncommittedDockerignoreAccepted(relPath string) (bool, error) {
+func (c Config) IsUncommittedDockerignoreAccepted(relPath string) bool {
 	return c.Config.Dockerfile.IsUncommittedDockerignoreAccepted(relPath)
 }
 
-func (c Config) IsUncommittedHelmFileAccepted(relPath string) (bool, error) {
-	return c.Helm.IsUncommittedHelmFileAccepted(relPath)
+func (c Config) UncommittedHelmFilePathMatcher() path_matcher.PathMatcher {
+	return c.Helm.UncommittedHelmFilePathMatcher()
 }
 
 type config struct {
@@ -105,8 +103,8 @@ type config struct {
 	Dockerfile                dockerfile          `json:"dockerfile"`
 }
 
-func (c config) IsUncommittedTemplateFileAccepted(path string) (bool, error) {
-	return isPathMatched(c.AllowUncommittedTemplates, path)
+func (c config) UncommittedTemplateFilePathMatcher() path_matcher.PathMatcher {
+	return pathMatcher(c.AllowUncommittedTemplates)
 }
 
 type goTemplateRendering struct {
@@ -142,8 +140,8 @@ func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
 	return false, nil
 }
 
-func (r goTemplateRendering) IsUncommittedFileAccepted(path string) (bool, error) {
-	return isPathMatched(r.AllowUncommittedFiles, path)
+func (r goTemplateRendering) UncommittedFilePathMatcher() path_matcher.PathMatcher {
+	return pathMatcher(r.AllowUncommittedFiles)
 }
 
 type stapel struct {
@@ -161,7 +159,7 @@ type mount struct {
 	AllowFromPaths []string `json:"allowFromPaths"`
 }
 
-func (m mount) IsFromPathAccepted(path string) (bool, error) {
+func (m mount) IsFromPathAccepted(path string) bool {
 	return isPathMatched(m.AllowFromPaths, path)
 }
 
@@ -171,15 +169,15 @@ type dockerfile struct {
 	AllowContextAddFiles              []string `json:"allowContextAddFiles"`
 }
 
-func (d dockerfile) IsContextAddFileAccepted(path string) (bool, error) {
+func (d dockerfile) IsContextAddFileAccepted(path string) bool {
 	return isPathMatched(d.AllowContextAddFiles, path)
 }
 
-func (d dockerfile) IsUncommittedAccepted(path string) (bool, error) {
+func (d dockerfile) IsUncommittedAccepted(path string) bool {
 	return isPathMatched(d.AllowUncommitted, path)
 }
 
-func (d dockerfile) IsUncommittedDockerignoreAccepted(path string) (bool, error) {
+func (d dockerfile) IsUncommittedDockerignoreAccepted(path string) bool {
 	return isPathMatched(d.AllowUncommittedDockerignoreFiles, path)
 }
 
@@ -187,34 +185,18 @@ type helm struct {
 	AllowUncommittedFiles []string `json:"allowUncommittedFiles"`
 }
 
-func (h helm) IsUncommittedHelmFileAccepted(path string) (bool, error) {
-	return isPathMatched(h.AllowUncommittedFiles, path)
+func (h helm) UncommittedHelmFilePathMatcher() path_matcher.PathMatcher {
+	return pathMatcher(h.AllowUncommittedFiles)
 }
 
-func isPathMatched(patterns []string, p string) (bool, error) {
-	p = filepath.ToSlash(p)
-	for _, pattern := range patterns {
-		pattern = filepath.ToSlash(pattern)
+func isPathMatched(patterns []string, p string) bool {
+	return pathMatcher(patterns).MatchPath(p)
+}
 
-		matchFunc := func() (bool, error) {
-			exist, err := doublestar.Match(pattern, p)
-			if err != nil {
-				return false, err
-			}
-
-			if exist {
-				return true, nil
-			}
-
-			return doublestar.Match(path.Join(pattern, "**", "*"), p)
-		}
-
-		if matched, err := matchFunc(); err != nil {
-			return false, fmt.Errorf("unable to match path (pattern: %q, path %q): %s", pattern, p, err)
-		} else if matched {
-			return true, nil
-		}
+func pathMatcher(patterns []string) path_matcher.PathMatcher {
+	if len(patterns) != 0 {
+		return path_matcher.NewSimplePathMatcher("", patterns, true)
+	} else {
+		return path_matcher.NewStubPathMatcher("")
 	}
-
-	return false, nil
 }

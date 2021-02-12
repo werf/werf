@@ -45,7 +45,7 @@ func (r FileReader) ReadChartFile(ctx context.Context, path string) ([]byte, err
 }
 
 func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, error) {
-	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedHelmFileAccepted)
+	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.UncommittedHelmFilePathMatcher().MatchPath)
 }
 
 func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*chart.ChartExtenderBufferedFile, error) {
@@ -67,7 +67,7 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.C
 		ctx,
 		relDir,
 		"**/*",
-		r.giterminismConfig.IsUncommittedHelmFileAccepted,
+		r.giterminismConfig.UncommittedHelmFilePathMatcher(),
 		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
 			if err != nil {
 				return err
