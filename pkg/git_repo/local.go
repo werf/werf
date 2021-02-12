@@ -278,6 +278,9 @@ func (repo *Local) InitAndSetMainStatusResult(ctx context.Context) (err error) {
 
 func (repo *Local) initAndSetMainStatusResult(ctx context.Context) error {
 	repository, err := repo.PlainOpen()
+	if err != nil {
+		return err
+	}
 
 	result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}, true))
 	if err != nil {
@@ -354,6 +357,9 @@ func (repo *Local) ValidateSubmodules(ctx context.Context, matcher path_matcher.
 	}
 
 	repository, err := repo.PlainOpen()
+	if err != nil {
+		return err
+	}
 
 	return statusResult.ValidateSubmodules(repository, repo.headCommit)
 }
