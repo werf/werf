@@ -768,6 +768,34 @@ func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPa
 	return content, nil
 }
 
+func (repo *Local) IsCommitTreeEntryDirectory(ctx context.Context, commit, relPath string) (isDirectory bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsCommitTreeEntryDirectory %q %q", commit, relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debugGiterminismManager() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			isDirectory, err = repo.isCommitTreeEntryDirectory(ctx, commit, relPath)
+
+			if debugGiterminismManager() {
+				logboek.Context(ctx).Debug().LogF("isDirectory: %v\nerr: %q\n", isDirectory, err)
+			}
+		})
+
+	return
+}
+
+func (repo *Local) isCommitTreeEntryDirectory(ctx context.Context, commit, relPath string) (bool, error) {
+	entry, err := repo.getCommitTreeEntry(ctx, commit, relPath)
+	if err != nil {
+		return false, err
+	}
+
+	return entry.Mode == filemode.Dir || entry.Mode == filemode.Submodule, nil
+}
+
 func (repo *Local) IsCommitTreeEntryExist(ctx context.Context, commit, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsCommitTreeEntryExist %q %q", commit, relPath).

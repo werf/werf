@@ -13,7 +13,7 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, glob string) 
 		ctx,
 		"",
 		glob,
-		r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().MatchPath,
+		r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher(),
 		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
 			if err != nil {
 				return err

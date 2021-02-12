@@ -81,6 +81,10 @@ func (r FileReader) IsCommitTreeEntryExist(ctx context.Context, relPath string) 
 	return r.sharedOptions.LocalGitRepo().IsCommitTreeEntryExist(ctx, r.sharedOptions.HeadCommit(), r.toWorkTreeRelativePath(relPath))
 }
 
+func (r FileReader) IsCommitTreeEntryDirectory(ctx context.Context, relPath string) (bool, error) {
+	return r.sharedOptions.LocalGitRepo().IsCommitTreeEntryDirectory(ctx, r.sharedOptions.HeadCommit(), r.toWorkTreeRelativePath(relPath))
+}
+
 func (r FileReader) ReadCommitTreeEntryContent(ctx context.Context, relPath string) ([]byte, error) {
 	return r.sharedOptions.LocalGitRepo().ReadCommitTreeEntryContent(ctx, r.sharedOptions.HeadCommit(), r.toWorkTreeRelativePath(relPath))
 }
@@ -197,6 +201,40 @@ func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context,
 	return nil
 }
 
+// IsFileModifiedLocally checks if the file modified locally, not ignored by .gitignore, or inside an unclean submodule repository.
+func (r FileReader) IsFileModifiedLocally(ctx context.Context, relPath string) (modified bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsFileModifiedLocally %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			modified, err = r.isFileModifiedLocally(ctx, relPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("modified: %v\nerr: %q\n", modified, err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) isFileModifiedLocally(ctx context.Context, relPath string) (bool, error) {
+	err := r.checkFileModifiedLocally(ctx, relPath)
+	if err != nil {
+		switch err.(type) {
+		case UncommittedFilesError:
+			return true, nil
+		default:
+			return false, err
+		}
+	}
+
+	return false, nil
+}
+
 func (r FileReader) checkFileModifiedLocally(ctx context.Context, relPath string) error {
 	if err := r.ValidateRelatedSubmodules(ctx, relPath); err != nil {
 		return r.HandleValidateSubmodulesErr(err)
@@ -256,23 +294,44 @@ func (r FileReader) extraCheckFileModifiedLocally(ctx context.Context, relPath s
 		return err
 	}
 
-	var commitFileData []byte
-	if isTreeEntryExist {
-		data, err := r.ReadCommitTreeEntryContent(ctx, relPath)
-		if err != nil {
-			return err
-		}
-
-		commitFileData = data
+	if !isTreeEntryExist {
+		return r.NewUncommittedFilesError(relPath)
 	}
 
-	var fsFileData []byte
+	isCommitTreeEntryDirectory, err := r.IsCommitTreeEntryDirectory(ctx, relPath)
+	if err != nil {
+		return err
+	}
+
+	if isCommitTreeEntryDirectory {
+		return r.NewUncommittedFilesError(relPath)
+	}
+
+	commitFileData, err := r.ReadCommitTreeEntryContent(ctx, relPath)
+	if err != nil {
+		return err
+	}
+
 	absPath := r.toProjectDirAbsolutePath(relPath)
+	isFileExist, err := util.FileExists(absPath)
+	if err != nil {
+		return err
+	}
+
+	if !isFileExist {
+		return r.NewUncommittedFilesError(relPath)
+	}
+
 	lstat, err := os.Lstat(absPath)
 	if err != nil {
 		return err
 	}
 
+	if lstat.IsDir() {
+		return r.NewUncommittedFilesError(relPath)
+	}
+
+	var fsFileData []byte
 	if lstat.Mode()&os.ModeSymlink == os.ModeSymlink {
 		link, err := os.Readlink(absPath)
 		if err != nil {
@@ -295,9 +354,9 @@ func (r FileReader) extraCheckFileModifiedLocally(ctx context.Context, relPath s
 		isDataIdentical = bytes.Equal(commitFileData, localDataWithForcedUnixLineBreak)
 	}
 
-	if isDataIdentical {
-		return nil
+	if !isDataIdentical {
+		return r.NewUncommittedFilesError(relPath)
 	}
 
-	return r.NewUncommittedFilesError(relPath)
+	return nil
 }

@@ -67,7 +67,7 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.C
 		ctx,
 		relDir,
 		"**/*",
-		r.giterminismConfig.UncommittedHelmFilePathMatcher().MatchPath,
+		r.giterminismConfig.UncommittedHelmFilePathMatcher(),
 		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
 			if err != nil {
 				return err
