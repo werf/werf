@@ -114,7 +114,8 @@ type runGitCmdOptions struct {
 }
 
 func runGitCmd(ctx context.Context, args []string, dir string, opts runGitCmdOptions) (*bytes.Buffer, error) {
-	cmd := exec.Command("git", args...)
+	allArgs := append(getCommonGitOptions(), args...)
+	cmd := exec.Command("git", allArgs...)
 	cmd.Dir = dir
 
 	if opts.stdin != nil {

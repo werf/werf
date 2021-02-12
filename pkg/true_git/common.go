@@ -22,3 +22,7 @@ func setCommandRecordingLiveOutput(ctx context.Context, cmd *exec.Cmd) *bytes.Bu
 
 	return recorder
 }
+
+func getCommonGitOptions() []string {
+	return []string{"-c", "core.autocrlf=false"}
+}

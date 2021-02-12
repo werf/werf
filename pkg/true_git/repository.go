@@ -29,7 +29,7 @@ type FetchOptions struct {
 
 func Fetch(ctx context.Context, path string, options FetchOptions) error {
 	command := "git"
-	commandArgs := []string{"-C", path, "fetch"}
+	commandArgs := append(getCommonGitOptions(), "-C", path, "fetch")
 
 	if options.Unshallow {
 		commandArgs = append(commandArgs, "--unshallow")

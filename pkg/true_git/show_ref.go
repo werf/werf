@@ -25,7 +25,7 @@ type ShowRefResult struct {
 }
 
 func ShowRef(repoDir string) (*ShowRefResult, error) {
-	gitArgs := []string{"-C", repoDir, "show-ref", "--head"}
+	gitArgs := append(getCommonGitOptions(), "-C", repoDir, "show-ref", "--head")
 
 	cmd := exec.Command("git", gitArgs...)
 
