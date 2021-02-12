@@ -315,6 +315,7 @@ func runPublish() error {
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
 	}
 
+	// FIXME! do not run render during publish, only save passed values into the bundle
 	valueOpts := &values.Options{
 		ValueFiles:   *commonCmdData.Values,
 		StringValues: *commonCmdData.SetString,
