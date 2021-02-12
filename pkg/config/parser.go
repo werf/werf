@@ -294,6 +294,15 @@ func funcMap(tmpl *template.Template) template.FuncMap {
 		}
 	}
 
+	funcMap["fromYaml"] = func(str string) (map[string]interface{}, error) {
+		m := map[string]interface{}{}
+
+		if err := yaml.Unmarshal([]byte(str), &m); err != nil {
+			return nil, err
+		}
+
+		return m, nil
+	}
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
 		return executeTemplate(tmpl, name, data)
 	}
