@@ -21,7 +21,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -54,7 +53,6 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 		SecretsManager:     secretsManager,
 
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
-		decodedSecretFilesData:                make(map[string]string),
 
 		ExtraValuesData:          NewExtraValuesData(),
 		ChartExtenderContextData: NewChartExtenderContextData(ctx),
@@ -65,8 +63,15 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 	return wc
 }
 
+type WerfChartRuntimeData struct {
+	DecodedSecretValues    map[string]interface{}
+	DecodedSecretFilesData map[string]string
+	SecretValuesToMask     []string
+}
+
 type WerfChart struct {
-	HelmChart *chart.Chart
+	HelmChart   *chart.Chart
+	RuntimeData *WerfChartRuntimeData
 
 	ChartDir                   string
 	SecretValueFiles           []string
@@ -79,9 +84,6 @@ type WerfChart struct {
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	werfConfig                            *config.WerfConfig
-	decodedSecretValues                   map[string]interface{}
-	decodedSecretFilesData                map[string]string
-	secretValuesToMask                    []string
 	serviceValues                         map[string]interface{}
 
 	*ExtraValuesData
@@ -91,6 +93,9 @@ type WerfChart struct {
 // ChartCreated method for the chart.Extender interface
 func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
 	wc.HelmChart = c
+	wc.RuntimeData = &WerfChartRuntimeData{
+		DecodedSecretFilesData: make(map[string]string),
+	}
 	return nil
 }
 
@@ -112,9 +117,9 @@ func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error
 		if data, err := LoadChartSecretDirFilesData(wc.ChartDir, secretDirFiles, encoder); err != nil {
 			return fmt.Errorf("error loading secret files data: %s", err)
 		} else {
-			wc.decodedSecretFilesData = data
-			for _, fileData := range wc.decodedSecretFilesData {
-				wc.secretValuesToMask = append(wc.secretValuesToMask, fileData)
+			wc.RuntimeData.DecodedSecretFilesData = data
+			for _, fileData := range wc.RuntimeData.DecodedSecretFilesData {
+				wc.RuntimeData.SecretValuesToMask = append(wc.RuntimeData.SecretValuesToMask, fileData)
 			}
 		}
 	}
@@ -123,8 +128,8 @@ func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error
 		if values, err := LoadChartSecretValueFiles(wc.ChartDir, secretValuesFiles, encoder); err != nil {
 			return fmt.Errorf("error loading secret value files: %s", err)
 		} else {
-			wc.decodedSecretValues = values
-			wc.secretValuesToMask = append(wc.secretValuesToMask, secretvalues.ExtractSecretValuesFromMap(values)...)
+			wc.RuntimeData.DecodedSecretValues = values
+			wc.RuntimeData.SecretValuesToMask = append(wc.RuntimeData.SecretValuesToMask, secretvalues.ExtractSecretValuesFromMap(values)...)
 		}
 	}
 
@@ -153,7 +158,7 @@ func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]in
 	vals := make(map[string]interface{})
 	chartutil.CoalesceTables(vals, wc.extraValues)   // NOTE: extra values will not be saved into the marshalled release
 	chartutil.CoalesceTables(vals, wc.serviceValues) // NOTE: service values will not be saved into the marshalled release
-	chartutil.CoalesceTables(vals, wc.decodedSecretValues)
+	chartutil.CoalesceTables(vals, wc.RuntimeData.DecodedSecretValues)
 	chartutil.CoalesceTables(vals, inputVals)
 
 	data, err := yaml.Marshal(vals)
@@ -169,11 +174,11 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 			return "", fmt.Errorf("expected relative secret file path, given path %v", secretRelativePath)
 		}
 
-		decodedData, ok := wc.decodedSecretFilesData[secretRelativePath]
+		decodedData, ok := wc.RuntimeData.DecodedSecretFilesData[secretRelativePath]
 
 		if !ok {
 			var secretFiles []string
-			for key := range wc.decodedSecretFilesData {
+			for key := range wc.RuntimeData.DecodedSecretFilesData {
 				secretFiles = append(secretFiles, key)
 			}
 
@@ -210,7 +215,7 @@ func (wc *WerfChart) ReadFile(filePath string) (bool, []byte, error) {
 	return true, res, err
 }
 
-func (wc *WerfChart) GetPostRenderer() (postrender.PostRenderer, error) {
+func (wc *WerfChart) GetPostRenderer() (*helm.ExtraAnnotationsAndLabelsPostRenderer, error) {
 	return wc.extraAnnotationsAndLabelsPostRenderer, nil
 }
 
