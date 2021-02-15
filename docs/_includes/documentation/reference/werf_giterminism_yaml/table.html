@@ -1,0 +1,9 @@
+{% asset configuration-table.css %}
+
+<div class="werf-configuration-table">
+    <table>
+        {% for directive in site.data.werf_giterminism_yaml.directives %}
+            {% include documentation/reference/configuration_table_directive.html directive=directive %}
+        {% endfor %}
+    </table>
+</div>
