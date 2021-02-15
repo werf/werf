@@ -227,11 +227,13 @@ func runConverge() error {
 		return err
 	}
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+	kubeConfigOptions := kube.KubeConfigOptions{
 		Context:          *commonCmdData.KubeContext,
 		ConfigPath:       *commonCmdData.KubeConfig,
 		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-	}}); err != nil {
+	}
+
+	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kubeConfigOptions}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
@@ -304,6 +306,18 @@ func runConverge() error {
 		}
 
 		logboek.LogOptionalLn()
+	}
+
+	actionConfig, err := common.NewActionConfig(ctx, namespace, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	maintenanceHelper, err := common.CreateMaintenanceHelper(ctx, &commonCmdData, actionConfig, kubeConfigOptions)
+	if err != nil {
+		return err
+	}
+	if err := common.Helm3ReleaseExistanceGuard(ctx, release, namespace, maintenanceHelper); err != nil {
+		return fmt.Errorf("helm 3 release existance guard: %s", err)
 	}
 
 	return deploy.Deploy(ctx, projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{

@@ -181,11 +181,13 @@ func runDeploy() error {
 	}
 	ctx = ctxWithDockerCli
 
-	if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
+	kubeConfigOptions := kube.KubeConfigOptions{
 		Context:          *commonCmdData.KubeContext,
 		ConfigPath:       *commonCmdData.KubeConfig,
 		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-	}}); err != nil {
+	}
+
+	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kubeConfigOptions}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
@@ -305,6 +307,18 @@ func runDeploy() error {
 	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
 		return err
+	}
+
+	actionConfig, err := common.NewActionConfig(ctx, namespace, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	maintenanceHelper, err := common.CreateMaintenanceHelper(ctx, &commonCmdData, actionConfig, kubeConfigOptions)
+	if err != nil {
+		return err
+	}
+	if err := common.Helm3ReleaseExistanceGuard(ctx, release, namespace, maintenanceHelper); err != nil {
+		return fmt.Errorf("helm 3 release existance guard: %s", err)
 	}
 
 	logboek.LogOptionalLn()
