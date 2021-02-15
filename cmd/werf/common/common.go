@@ -239,11 +239,11 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 func predefinedValuesByEnvNamePrefix(envNamePrefix string, envNamePrefixesToExcept ...string) []string {
 	var result []string
 
-    env := os.Environ()
-    sort.Strings(env)
+	env := os.Environ()
+	sort.Strings(env)
 
 environLoop:
-    for _, keyValue := range env {
+	for _, keyValue := range env {
 		parts := strings.SplitN(keyValue, "=", 2)
 		if strings.HasPrefix(parts[0], envNamePrefix) {
 			for _, exceptEnvNamePrefix := range envNamePrefixesToExcept {
@@ -322,6 +322,7 @@ func SetupHelmReleaseStorageNamespace(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.HelmReleaseStorageNamespace = new(string)
 
 	defaultValues := []string{
+		os.Getenv("WERF_HELM2_RELEASE_STORAGE_NAMESPACE"),
 		os.Getenv("WERF_HELM_RELEASE_STORAGE_NAMESPACE"),
 		os.Getenv("TILLER_NAMESPACE"),
 		helm.DefaultReleaseStorageNamespace,
@@ -341,9 +342,18 @@ func SetupHelmReleaseStorageNamespace(cmdData *CmdData, cmd *cobra.Command) {
 func SetupHelmReleaseStorageType(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.HelmReleaseStorageType = new(string)
 
-	defaultValue := os.Getenv("WERF_HELM_RELEASE_STORAGE_TYPE")
-	if defaultValue == "" {
-		defaultValue = helm.ConfigMapStorage
+	defaultValues := []string{
+		os.Getenv("WERF_HELM2_RELEASE_STORAGE_TYPE"),
+		os.Getenv("WERF_HELM_RELEASE_STORAGE_TYPE"),
+		helm.ConfigMapStorage,
+	}
+
+	var defaultValue string
+	for _, value := range defaultValues {
+		if value != "" {
+			defaultValue = value
+			break
+		}
 	}
 
 	cmd.Flags().StringVarP(cmdData.HelmReleaseStorageType, "helm-release-storage-type", "", defaultValue, fmt.Sprintf("helm storage driver to use. One of '%[1]s' or '%[2]s' (default $WERF_HELM_RELEASE_STORAGE_TYPE or '%[1]s')", helm.ConfigMapStorage, helm.SecretStorage))

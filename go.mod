@@ -36,6 +36,7 @@ require (
 	github.com/gosuri/uitable v0.0.4
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/go-version v1.2.0
+	github.com/helm/helm-2to3 v0.8.1
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
@@ -56,7 +57,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20200724193237-c3ed55f3b481 // indirect
@@ -76,12 +77,12 @@ require (
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
-	helm.sh/helm/v3 v3.2.4
+	helm.sh/helm/v3 v3.5.1
 	k8s.io/api v0.19.2
-	k8s.io/apimachinery v0.19.2
+	k8s.io/apimachinery v0.20.2
 	k8s.io/cli-runtime v0.19.2
 	k8s.io/client-go v0.19.2
-	k8s.io/helm v0.0.0-00010101000000-000000000000
+	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/kubectl v0.18.6
 	k8s.io/kubernetes v1.18.6 // indirect
