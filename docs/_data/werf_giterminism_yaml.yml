@@ -30,6 +30,8 @@ directives:
             description:
               en: Allow the use of certain environment variables (using env function)
               ru: Разрешить определённые переменные окружения (при использовании функции env)
+            detailsArticle:
+              all: "/documentation/advanced/giterminism.html#env"
           - name: allowUncommittedFiles
             value: "[ glob, ... ]"
             description:
@@ -46,6 +48,8 @@ directives:
             description:
               en: Allow the use of fromLatest directive
               ru: Разрешить использование директивы fromLatest
+            detailsArticle:
+              all: "/documentation/advanced/giterminism.html#fromlatest"
           - name: git
             description:
               en: The rules for the git directive
@@ -56,6 +60,8 @@ directives:
                 description:
                   en: Allow the use of branch directive
                   ru: Разрешить использование директивы branch
+                detailsArticle:
+                  all: "/documentation/advanced/giterminism.html#branch"
           - name: mount
             description:
               en: The rules for the mount directive
@@ -66,11 +72,15 @@ directives:
                 description:
                   en: "Allow the use of build_dir mount ({ from: build_dir, ... })"
                   ru: "Разрешить использование build_dir маунта ({ from: build_dir, ... })"
+                detailsArticle:
+                  all: "/documentation/advanced/giterminism.html#build_dir"
               - name: allowFromPaths
                 value: "[ glob, ... ]"
                 description:
                   en: "Allow the use of certain fromPath mounts ({ fromPath: <path>, ... })"
                   ru: "Разрешить использование определённых fromPath маунтов ({ fromPath: <path>, ... })"
+                detailsArticle:
+                  all: "/documentation/advanced/giterminism.html#frompath"
       - name: dockerfile
         description:
           en: The rules for the dockerfile image
@@ -91,6 +101,8 @@ directives:
             description:
               en: Allow the use of the certain files from the project directory with contextAddFile directive
               ru: Разрешить использование определённых файлов из директории проекта при использовании директивы contextAddFile
+            detailsArticle:
+              all: "/documentation/advanced/giterminism.html#contextaddfile"
   - name: helm
     description:
       en: The rules of loosening giterminism for the helm files (.helm)

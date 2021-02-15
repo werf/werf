@@ -105,6 +105,8 @@ __Синтаксис__:
 ```
 {% endraw %}
 
+> По умолчанию, использование функции `env` запрещено гитерминизмом (подробнее об этом в [статье]({{ "documentation/advanced/giterminism.html" | true_relative_url }}))
+
 ### Файлы проекта
 
 #### .Files.Get

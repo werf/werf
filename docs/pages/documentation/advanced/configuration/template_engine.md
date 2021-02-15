@@ -105,6 +105,8 @@ __Syntax__:
 ```
 {% endraw %}
 
+> By default, the use of the `env` function is not allowed by giterminism (read more about it [here]({{ "documentation/advanced/giterminism.html" | true_relative_url }}))
+
 ### project files
 
 #### .Files.Get

@@ -377,6 +377,8 @@ entries:
 
       - title: Advanced
         f:
+          - title: Giterminism
+            url: /documentation/advanced/giterminism.html
 
           - title: Configuration
             f:
@@ -386,9 +388,6 @@ entries:
 
               - title: Organizing configuration
                 url: /documentation/advanced/configuration/organizing_configuration.html
-
-              - title: Giterminism
-                url: /documentation/advanced/configuration/giterminism.html
 
           - title: Helm
             f:
@@ -528,6 +527,9 @@ entries:
       - title: Документация продвинутого уровня
         f:
 
+          - title: Гитерминизм
+            url: /documentation/advanced/giterminism.html
+
           - title: Конфигурация
             f:
 
@@ -536,9 +538,6 @@ entries:
 
               - title: Организация конфигурации
                 url: /documentation/advanced/configuration/organizing_configuration.html
-
-              - title: Детерминизм
-                url: /documentation/advanced/configuration/giterminism.html
 
           - title: Helm
             f:

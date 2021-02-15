@@ -212,6 +212,8 @@ sections:
         description:
           en: Untracked files for adding to build context. The paths must be relative to context PATH
           ru: Добавление нехранящихся в git файлов в сборочный контекст. Пути должны быть относительно директории контекста
+        detailsArticle:
+          all: "/documentation/advanced/giterminism.html#contextaddfile"
       - name: target
         value: "string"
         description:
@@ -704,12 +706,12 @@ sections:
               en: "The name or GID of the owner’s group"
               ru: "Имя или GID группы"
           - name: includePaths
-            value: "[ string, ... ]"
+            value: "[ glob, ... ]"
             description:
               en: "Globs for including"
               ru: "Глобы добавления"
           - name: excludePaths
-            value: "[ string, ... ]"
+            value: "[ glob, ... ]"
             description:
               en: "Globs for excluding"
               ru: "Глобы исключения"
