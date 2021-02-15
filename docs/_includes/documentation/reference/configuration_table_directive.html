@@ -53,15 +53,15 @@
             {% assign moreDetailsHereText = "здесь" %}
             {% endif %}
 
-            {{ directive.description }}
+            {{ directive.description | get_lang_field_or_raise_error | escape }}
             {%- if directive.default %} ({{ defaultText }} <code class="language-plaintext highlighter-rouge">{{ directive.default | escape }}</code>){% endif -%}
-            {% for link in directive.detailsCustomLinks %}
+            {% for link in (directive.detailsCustomLinks | get_lang_field_or_raise_error) %}
             {%- if link.anchor %}. <a href="{{ link.anchor }}">{{ link.text }}</a>
             {%- elsif link.article %}. <a href="{{ link.article | true_relative_url }}">{{ link.text }}</a>
             {%- elsif link.link %}. <a href="{{ link.link }}">{{ link.text }}</a>{% endif -%}
             {% endfor %}
-            {%- if directive.detailsAnchor %}. {{ moreDetailsText }} <a href="{{ directive.detailsAnchor }}">{{ moreDetailsHereText }}</a>
-            {%- elsif directive.detailsArticle %}. {{ moreDetailsText }} <a href="{{ directive.detailsArticle | true_relative_url }}">{{ moreDetailsHereText }}</a>
+            {%- if (directive.detailsAnchor | get_lang_field_or_raise_error) %}. {{ moreDetailsText }} <a href="{{ directive.detailsAnchor | get_lang_field_or_raise_error }}">{{ moreDetailsHereText }}</a>
+            {%- elsif (directive.detailsArticle | get_lang_field_or_raise_error)%}. {{ moreDetailsText }} <a href="{{ directive.detailsArticle | get_lang_field_or_raise_error | true_relative_url }}">{{ moreDetailsHereText }}</a>
             {%- elsif directive.detailsLink %}. {{ moreDetailsText }} <a href="{{ directive.detailsLink }}">{{ moreDetailsHereText }}</a>{% endif -%}
         </span>
     </td>
@@ -91,7 +91,7 @@ $( "#{{ directiveID }}-btn" ).click(function() {
 {% assign nestedElmIndent = include.indent | plus: 1 %}
 {% assign nestedDirectiveClasses = directiveClasses %}
 {% assign nestedDirectiveCollapsedClasses = directiveCollapsedClasses %}
-{% include documentation/reference/werf_yaml/directive.html directive=directive indent=nestedElmIndent isAttr=true directiveClasses=nestedDirectiveClasses directiveCollapsedClasses=nestedDirectiveCollapsedClasses %}
+{% include documentation/reference/configuration_table_directive.html directive=directive indent=nestedElmIndent isAttr=true directiveClasses=nestedDirectiveClasses directiveCollapsedClasses=nestedDirectiveCollapsedClasses %}
 {% assign directiveClasses = nestedDirectiveClasses %}
 {% assign directiveCollapsedClasses = nestedDirectiveCollapsedClasses %}
 {% endfor %}
@@ -100,7 +100,7 @@ $( "#{{ directiveID }}-btn" ).click(function() {
 {% assign nestedElmIndent = include.indent | plus: 1 %}
 {% assign nestedDirectiveClasses = directiveClasses %}
 {% assign nestedDirectiveCollapsedClasses = directiveCollapsedClasses %}
-{% include documentation/reference/werf_yaml/directive.html directive=directive indent=nestedElmIndent isElm=true elmIndex=forloop.index directiveClasses=nestedDirectiveClasses directiveCollapsedClasses=nestedDirectiveCollapsedClasses %}
+{% include documentation/reference/configuration_table_directive.html directive=directive indent=nestedElmIndent isElm=true elmIndex=forloop.index directiveClasses=nestedDirectiveClasses directiveCollapsedClasses=nestedDirectiveCollapsedClasses %}
 {% assign directiveClasses = nestedDirectiveClasses %}
 {% assign directiveCollapsedClasses = nestedDirectiveCollapsedClasses %}
 {% endfor %}

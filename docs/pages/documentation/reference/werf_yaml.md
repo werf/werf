@@ -243,7 +243,7 @@ You will need an image name when setting up helm templates or running werf comma
 
 ### Dockerfile builder
 
-Werf supports building images using Dockerfiles. Building image from Dockerfiles is the easiest way to start using werf in an existing project.
+Werf supports building images using Dockerfile. Building an image from Dockerfile is the easiest way to start using werf in an existing project.
 
 `werf.yaml` below describes an unnamed image built from `Dockerfile` which reside in the root of the project dir:
 
