@@ -34,15 +34,15 @@
         },
         {
           "name": "beta",
-          "version": "v1.1.23+fix17"
+          "version": "v1.1.23+fix16"
         },
         {
           "name": "ea",
-          "version": "v1.1.23+fix17"
+          "version": "v1.1.23+fix16"
         },
         {
           "name": "stable",
-          "version": "v1.1.23+fix17"
+          "version": "v1.1.23+fix6"
         },
         {
           "name": "rock-solid",
