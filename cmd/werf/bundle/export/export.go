@@ -2,7 +2,6 @@ package export
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -12,13 +11,10 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 
-	"github.com/werf/werf/pkg/deploy/helm"
-
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -294,11 +290,6 @@ func runExport() error {
 		return err
 	}
 
-	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
-		return err
-	}
-
 	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
@@ -313,17 +304,9 @@ func runExport() error {
 		FileValues:   common.GetSetFile(&commonCmdData),
 	}
 
-	postRenderer, err := wc.GetPostRenderer()
-	if err != nil {
-		return err
-	}
-
-	helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, ioutil.Discard, cmd_helm.TemplateCmdOptions{
-		PostRenderer: postRenderer,
-		ValueOpts:    valueOpts,
-	})
-	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{"RELEASE", filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
-		return err
+	chartPath := filepath.Join(giterminismManager.ProjectDir(), chartDir)
+	if _, err := loader.LoadDir(chartPath); err != nil {
+		return fmt.Errorf("error loading chart %q: %s", chartPath, err)
 	}
 
 	destinationDir := cmdData.Destination

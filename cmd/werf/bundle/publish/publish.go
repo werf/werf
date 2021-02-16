@@ -2,7 +2,6 @@ package publish
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -303,11 +302,6 @@ func runPublish() error {
 		return err
 	}
 
-	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
-		return err
-	}
-
 	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
@@ -315,7 +309,6 @@ func runPublish() error {
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
 	}
 
-	// FIXME! do not run render during publish, only save passed values into the bundle
 	valueOpts := &values.Options{
 		ValueFiles:   *commonCmdData.Values,
 		StringValues: *commonCmdData.SetString,
@@ -323,17 +316,9 @@ func runPublish() error {
 		FileValues:   *commonCmdData.SetFile,
 	}
 
-	postRenderer, err := wc.GetPostRenderer()
-	if err != nil {
-		return err
-	}
-
-	helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, ioutil.Discard, cmd_helm.TemplateCmdOptions{
-		PostRenderer: postRenderer,
-		ValueOpts:    valueOpts,
-	})
-	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{"RELEASE", filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
-		return err
+	chartPath := filepath.Join(giterminismManager.ProjectDir(), chartDir)
+	if _, err := loader.LoadDir(chartPath); err != nil {
+		return fmt.Errorf("error loading chart %q: %s", chartPath, err)
 	}
 
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
@@ -350,6 +335,11 @@ func runPublish() error {
 		bundleRef := fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag)
 
 		if err := logboek.Context(ctx).LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
+			actionConfig := new(action.Configuration)
+			if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
+				return err
+			}
+
 			helmChartSaveCmd := cmd_helm.NewChartSaveCmd(actionConfig, logboek.Context(ctx).OutStream())
 			if err := helmChartSaveCmd.RunE(helmChartSaveCmd, []string{bundle.Dir, bundleRef}); err != nil {
 				return fmt.Errorf("error saving bundle to the local chart helm cache: %s", err)
@@ -360,6 +350,11 @@ func runPublish() error {
 		}
 
 		if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", bundleRef).DoError(func() error {
+			actionConfig := new(action.Configuration)
+			if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
+				return err
+			}
+
 			helmChartPushCmd := cmd_helm.NewChartPushCmd(actionConfig, logboek.Context(ctx).OutStream())
 			if err := helmChartPushCmd.RunE(helmChartPushCmd, []string{bundleRef}); err != nil {
 				return fmt.Errorf("error pushing bundle %q: %s", bundleRef, err)
