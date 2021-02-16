@@ -38,12 +38,6 @@ werf render [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
-      --atomic=false
-            Enable auto rollback of the failed release to the previous deployed release version     
-            when current deploy process have failed ($WERF_ATOMIC by default)
-  -R, --auto-rollback=false
-            Enable auto rollback of the failed release to the previous deployed release version     
-            when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
@@ -68,6 +62,8 @@ werf render [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
+      --include-crds=true
+            Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --introspect-before-error=false
@@ -224,18 +220,11 @@ werf render [options]
             
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
-  -t, --timeout=0
-            Resources tracking timeout in seconds
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --use-custom-tag=''
-            Use a tag alias in helm templates instead of an image content-based tag (NOT            
-            RECOMMENDED).
-            For cleaning all aliases and a related content-based tag are treated as one.
-            It is necessary to use the image name shortcut %image% or %image_slug% in the tag       
-            format if there is more than one image in the werf config. 
-            Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g.                                    
-            $WERF_USE_CUSTOM_TAG="%image%-tag").
+      --validate=false
+            Validate your manifests against the Kubernetes cluster you are currently pointing at    
+            (default $WERF_VALIDATE)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple).
             Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, 
