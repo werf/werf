@@ -104,11 +104,11 @@ Go templates are available within YAML configuration. The following functions ar
 * `.Files.Get` and `.Files.Glob` functions to work with project files:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get and .Files.Glob" data-anchorjs-icon=""></a>
 
   <div class="tabs">
-    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
-    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell')">Shell</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible')">Ansible</a>
   </div>
 
-  <div id="ansible" class="tabs__content active" markdown="1">
+  <div id="ansible" class="tabs__content" markdown="1">
 
   **.Files.Get**
 
@@ -160,7 +160,7 @@ Go templates are available within YAML configuration. The following functions ar
   {% endraw %}
   </div>
 
-  <div id="shell" class="tabs__content" markdown="1">
+  <div id="shell" class="tabs__content active" markdown="1">
 
   **.Files.Get**
 

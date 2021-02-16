@@ -105,11 +105,11 @@ permalink: documentation/advanced/configuration/supported_go_templates.html
 * Функции `.Files.Get` и `.Files.Glob` для работы с файлами проекта:<a id="files-get" href="#files-get" class="anchorjs-link " aria-label="Anchor link for: .Files.Get" data-anchorjs-icon=""></a>
 
   <div class="tabs">
-    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible_tab')">Ansible</a>
-    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell_tab')">Shell</a>
+    <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'shell_tab')">Shell</a>
+    <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'ansible_tab')">Ansible</a>
   </div>
 
-  <div id="ansible_tab" class="tabs__content active" markdown="1">
+  <div id="ansible_tab" class="tabs__content" markdown="1">
    
   **.Files.Get**
 
@@ -161,7 +161,7 @@ permalink: documentation/advanced/configuration/supported_go_templates.html
   {% endraw %}
   </div>
 
-  <div id="shell_tab" class="tabs__content" markdown="1">
+  <div id="shell_tab" class="tabs__content active" markdown="1">
 
   **.Files.Get**
 
