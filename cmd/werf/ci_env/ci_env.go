@@ -3,6 +3,7 @@ package ci_env
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,10 +28,11 @@ import (
 )
 
 var cmdData struct {
-	AsFile         bool
-	AsEnvFile      bool
-	OutputFilePath string
-	Shell          string
+	TaggingStrategyStub string
+	AsFile              bool
+	AsEnvFile           bool
+	OutputFilePath      string
+	Shell               string
 }
 
 var commonCmdData common.CmdData
@@ -74,6 +76,8 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	cmd.Flags().BoolVarP(&cmdData.AsEnvFile, "as-env-file", "", common.GetBoolEnvironmentDefaultFalse("WERF_AS_ENV_FILE"), "Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).")
 	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", os.Getenv("WERF_OUTPUT_FILE_PATH"), "Write to custom file (default $WERF_OUTPUT_FILE_PATH).")
 	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", os.Getenv("WERF_SHELL"), "Set to cmdexe, powershell or use the default behaviour that is compatible with any unix shell (default $WERF_SHELL).")
+	cmd.Flags().StringVarP(&cmdData.TaggingStrategyStub, "tagging-strategy", "", "", `stub`)
+	cmd.Flag("tagging-strategy").Hidden = true
 
 	return cmd
 }
@@ -113,6 +117,10 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	ctx = ctxWithDockerCli
+
+	if cmdData.TaggingStrategyStub != "" && cmdData.AsFile {
+		return errors.New("unknown flag: --tagging-strategy")
+	}
 
 	switch cmdData.Shell {
 	case "", "default", "cmdexe", "powershell":
