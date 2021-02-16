@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -43,6 +44,10 @@ func extractSpecReplicas(specReplicas *int32) int {
 }
 
 func (waiter *ResourcesWaiter) WaitForResources(timeout time.Duration, created helmKube.Result) error {
+	if os.Getenv("WERF_DISABLE_RESOURCES_WAITER") == "1" {
+		return nil
+	}
+
 	specs := multitrack.MultitrackSpecs{}
 
 	for _, v := range created {
