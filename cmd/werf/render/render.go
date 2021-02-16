@@ -36,9 +36,9 @@ import (
 )
 
 var cmdData struct {
-	Timeout      int
-	AutoRollback bool
 	RenderOutput string
+	Validate     bool
+	IncludeCRDs  bool
 }
 
 var commonCmdData common.CmdData
@@ -121,9 +121,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
-	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
-	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", common.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
-	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", common.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
+	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", common.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
+	cmd.Flags().BoolVarP(&cmdData.IncludeCRDs, "include-crds", "", common.GetBoolEnvironmentDefaultTrue("WERF_INCLUDE_CRDS"), "Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)")
 
 	cmd.Flags().StringVarP(&cmdData.RenderOutput, "output", "", os.Getenv("WERF_RENDER_OUTPUT"), "Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by default)")
 
@@ -355,6 +354,8 @@ func runRender() error {
 			Values:       common.GetSet(&commonCmdData),
 			FileValues:   common.GetSetFile(&commonCmdData),
 		},
+		Validate:    &cmdData.Validate,
+		IncludeCrds: &cmdData.IncludeCRDs,
 	})
 	return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)})
 }
