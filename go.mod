@@ -85,28 +85,11 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.4.0
 	k8s.io/kubectl v0.20.1
-	k8s.io/kubernetes v1.13.0
 	mvdan.cc/xurls v1.1.0
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
-
-replace k8s.io/api => k8s.io/api v0.19.2
-
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.19.2
-
-replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.19.2
-
-replace k8s.io/client-go => k8s.io/client-go v0.19.2
-
-replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.19.2
-
-replace k8s.io/code-generator => k8s.io/code-generator v0.16.8-beta.0
-
-replace k8s.io/component-base => k8s.io/component-base v0.19.2
-
-replace k8s.io/kubectl => k8s.io/kubectl v0.19.2
 
 replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
 
