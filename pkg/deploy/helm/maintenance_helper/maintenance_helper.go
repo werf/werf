@@ -85,11 +85,10 @@ func (helper *MaintenanceHelper) initHelm2Storage() (*v2_storage.Storage, error)
 }
 
 func (helper *MaintenanceHelper) getResourcesFactory() (util.Factory, error) {
-	configGetter, err := NewKubeConfigGetter("", helper.KubeConfigOptions)
+	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{KubeConfigOptions: helper.KubeConfigOptions})
 	if err != nil {
 		return nil, fmt.Errorf("error creating kube config getter: %s", err)
 	}
-
 	return util.NewFactory(configGetter), nil
 }
 

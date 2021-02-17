@@ -31,16 +31,22 @@ type InitActionConfigOptions struct {
 }
 
 func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, namespace string, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
-	*envSettings.GetNamespaceP() = namespace
+	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{
+		KubeConfigOptions: opts.KubeConfigOptions,
+		Namespace:         namespace,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating kube config getter: %s", err)
+	}
 
+	*envSettings.GetConfigP() = configGetter
+	*envSettings.GetNamespaceP() = namespace
 	if opts.KubeConfigOptions.Context != "" {
 		envSettings.KubeContext = opts.KubeConfigOptions.Context
 	}
 	if opts.KubeConfigOptions.ConfigPath != "" {
 		envSettings.KubeConfig = opts.KubeConfigOptions.ConfigPath
 	}
-	// TODO: ConfigBase64
-
 	if opts.ReleasesHistoryMax != 0 {
 		envSettings.MaxHistory = opts.ReleasesHistoryMax
 	}
