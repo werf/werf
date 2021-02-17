@@ -13,12 +13,8 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart/loader"
 
-	"github.com/werf/werf/pkg/deploy_v2/helm_v3"
-
 	"github.com/werf/werf/pkg/deploy"
 	"github.com/werf/werf/pkg/deploy_v2/lock_manager"
-
-	"helm.sh/helm/v3/pkg/action"
 
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 
@@ -325,9 +321,10 @@ func runDeploy() error {
 		SecretsManager: secretsManager,
 	})
 
-	actionConfig := new(action.Configuration)
-	*cmd_helm.Settings.GetNamespaceP() = namespace
-
+	actionConfig, err := common.NewActionConfig(ctx, namespace, &commonCmdData)
+	if err != nil {
+		return err
+	}
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.ProxyOutStream(), cmd_helm.UpgradeCmdOptions{
 		LoadOptions: loader.LoadOptions{
 			ChartExtender:               wc,
@@ -346,13 +343,6 @@ func runDeploy() error {
 		Atomic:          NewBool(cmdData.AutoRollback),
 		Timeout:         NewDuration(time.Duration(cmdData.Timeout)),
 	})
-
-	if err := helm_v3.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm_v3.InitActionConfigOptions{
-		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
-	}); err != nil {
-		return err
-	}
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
 		return err

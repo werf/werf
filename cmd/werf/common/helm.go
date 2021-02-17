@@ -16,11 +16,16 @@ import (
 
 func NewActionConfig(ctx context.Context, namespace string, commonCmdData *CmdData) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
-	*cmd_helm.Settings.GetNamespaceP() = namespace
 
-	if err := helm_v3.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm_v3.InitActionConfigOptions{
+	if err := helm_v3.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm_v3.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+		KubeConfigOptions: kube.KubeConfigOptions{
+			Context:          *commonCmdData.KubeContext,
+			ConfigPath:       *commonCmdData.KubeConfig,
+			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+		},
+		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 	}); err != nil {
 		return nil, err
 	}
@@ -28,7 +33,15 @@ func NewActionConfig(ctx context.Context, namespace string, commonCmdData *CmdDa
 	return actionConfig, nil
 }
 
-func Helm3ReleaseExistanceGuard(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) error {
+func Helm3ReleaseExistenceGuard(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) error {
+	available, err := maintenanceHelper.CheckHelm3StorageAvailable(ctx)
+	if err != nil {
+		return fmt.Errorf("error checking helm 3 storage availability: %s", err)
+	}
+	if !available {
+		return nil
+	}
+
 	list, err := maintenanceHelper.GetHelm3ReleasesList(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting helm 3 releases list: %s", err)

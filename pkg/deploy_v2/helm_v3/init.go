@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/werf/kubedog/pkg/kube"
+
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 
 	"github.com/werf/logboek"
@@ -72,17 +74,28 @@ func NewEnvSettings(ctx context.Context, namespace string) (res *cli.EnvSettings
 type InitActionConfigOptions struct {
 	StatusProgressPeriod      time.Duration
 	HooksStatusProgressPeriod time.Duration
+	KubeConfigOptions         kube.KubeConfigOptions
+	ReleasesHistoryMax        int
 }
 
-func NewActionConfig(ctx context.Context, envSettings *cli.EnvSettings, opts InitActionConfigOptions) *action.Configuration {
-	actionConfig := &action.Configuration{}
-	if err := InitActionConfig(ctx, envSettings, actionConfig, opts); err != nil {
-		log.Fatal(err)
+func InitActionConfig(ctx context.Context, namespace string, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
+	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{
+		KubeConfigOptions: opts.KubeConfigOptions,
+		Namespace:         namespace,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating kube config getter: %s", err)
 	}
-	return actionConfig
-}
 
-func InitActionConfig(ctx context.Context, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
+	*envSettings.GetConfigP() = configGetter
+	*envSettings.GetNamespaceP() = namespace
+	if opts.KubeConfigOptions.Context != "" {
+		envSettings.KubeContext = opts.KubeConfigOptions.Context
+	}
+	if opts.KubeConfigOptions.ConfigPath != "" {
+		envSettings.KubeConfig = opts.KubeConfigOptions.ConfigPath
+	}
+
 	helmDriver := os.Getenv("HELM_DRIVER")
 	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Context(ctx).Debug().LogF); err != nil {
 		return fmt.Errorf("action config init failed: %s", err)

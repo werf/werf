@@ -317,8 +317,8 @@ func runDeploy() error {
 	if err != nil {
 		return err
 	}
-	if err := common.Helm3ReleaseExistanceGuard(ctx, release, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("helm 3 release existance guard: %s", err)
+	if err := common.Helm3ReleaseExistenceGuard(ctx, release, namespace, maintenanceHelper); err != nil {
+		return fmt.Errorf("helm 3 release existence check: %s", err)
 	}
 
 	logboek.LogOptionalLn()

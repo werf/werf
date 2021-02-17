@@ -316,8 +316,8 @@ func runConverge() error {
 	if err != nil {
 		return err
 	}
-	if err := common.Helm3ReleaseExistanceGuard(ctx, release, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("helm 3 release existance guard: %s", err)
+	if err := common.Helm3ReleaseExistenceGuard(ctx, release, namespace, maintenanceHelper); err != nil {
+		return fmt.Errorf("helm 3 release existence check: %s", err)
 	}
 
 	return deploy.Deploy(ctx, projectName, projectDir, helmChartDir, imagesRepository, imagesInfoGetters, release, namespace, "", tag_strategy.StagesSignature, werfConfig, *commonCmdData.HelmReleaseStorageNamespace, helmReleaseStorageType, deploy.DeployOptions{

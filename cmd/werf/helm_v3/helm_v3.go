@@ -24,6 +24,8 @@ import (
 var commonCmdData cmd_werf_common.CmdData
 
 func NewCmd() *cobra.Command {
+	var namespace string
+
 	actionConfig := new(action.Configuration)
 
 	cmd := &cobra.Command{
@@ -33,13 +35,14 @@ func NewCmd() *cobra.Command {
 
 	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
 
-	cmd.PersistentFlags().StringVarP(cmd_helm.Settings.GetNamespaceP(), "namespace", "n", *cmd_helm.Settings.GetNamespaceP(), "namespace scope for this request")
+	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", *cmd_helm.Settings.GetNamespaceP(), "namespace scope for this request")
 	cmd_werf_common.SetupKubeConfig(&commonCmdData, cmd)
 	cmd_werf_common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	cmd_werf_common.SetupKubeContext(&commonCmdData, cmd)
 	cmd_werf_common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	cmd_werf_common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	cmd_werf_common.SetupLogOptions(&commonCmdData, cmd)
+	cmd_werf_common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	cmd.AddCommand(
 		cmd_helm.NewUninstallCmd(actionConfig, os.Stdout),
@@ -97,11 +100,6 @@ func NewCmd() *cobra.Command {
 
 				ctx := common.BackgroundContext()
 
-				helm_v3.InitActionConfig(ctx, cmd_helm.Settings, actionConfig, helm_v3.InitActionConfigOptions{
-					StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-					HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
-				})
-
 				if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
 					Context:          *commonCmdData.KubeContext,
 					ConfigPath:       *commonCmdData.KubeConfig,
@@ -112,6 +110,19 @@ func NewCmd() *cobra.Command {
 
 				if err := common.InitKubedog(ctx); err != nil {
 					return fmt.Errorf("cannot init kubedog: %s", err)
+				}
+
+				if err := helm_v3.InitActionConfig(ctx, namespace, cmd_helm.Settings, actionConfig, helm_v3.InitActionConfigOptions{
+					StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+					HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+					KubeConfigOptions: kube.KubeConfigOptions{
+						Context:          *commonCmdData.KubeContext,
+						ConfigPath:       *commonCmdData.KubeConfig,
+						ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+					},
+					ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
+				}); err != nil {
+					return err
 				}
 
 				if oldRun != nil {
