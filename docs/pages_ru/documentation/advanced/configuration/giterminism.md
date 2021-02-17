@@ -67,7 +67,7 @@ helm: # giterminism configuration for helm
 
 ### Функции go-шаблонов для доступа к переменным окружения
 
-Функции [`{{ env }}` и `{{ expandenv }}`]({{ "documentation/advanced/configuration/supported_go_templates.html" | true_relative_url }}) доступны для использования только при включении директивы [`config.goTemplateRendering.allowEnvVariables`](#werf-giterminismyaml) конфигурационного файла `werf-giterminism.yaml` (поддерживаются glob-ы).
+Функции [`{{ env }}` и `{{ expandenv }}`]({{ "documentation/advanced/configuration/template_engine.html" | true_relative_url }}) доступны для использования только при включении директивы [`config.goTemplateRendering.allowEnvVariables`](#werf-giterminismyaml) конфигурационного файла `werf-giterminism.yaml` (поддерживаются glob-ы).
 
 ### Директива mount
 

@@ -37,8 +37,8 @@ entries:
           - title: Configuration
             f:
 
-              - title: Supported Go templates
-                url: /documentation/advanced/configuration/supported_go_templates.html
+              - title: Template engine
+                url: /documentation/advanced/configuration/template_engine.html
 
               - title: Organizing configuration
                 url: /documentation/advanced/configuration/organizing_configuration.html
@@ -184,8 +184,8 @@ entries:
           - title: Конфигурация
             f:
 
-              - title: Поддержка Go шаблонов
-                url: /documentation/advanced/configuration/supported_go_templates.html
+              - title: Шаблонизатор
+                url: /documentation/advanced/configuration/template_engine.html
 
               - title: Организация конфигурации
                 url: /documentation/advanced/configuration/organizing_configuration.html
