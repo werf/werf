@@ -111,9 +111,8 @@ werf bundle publish [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info                                                                               
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_LOOSE_GITERMINISM)
+            more info https://werf.io/v1.2-alpha/documentation/advanced/giterminism.html, default   
+            $WERF_LOOSE_GITERMINISM)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL)
       --parallel-tasks-limit=5

@@ -10,7 +10,7 @@ en:
     url: /documentation/reference/cli/overview.html
   /documentation/advanced: &documentation-advanced
     title: Advanced
-    url: /documentation/advanced/configuration/supported_go_templates.html
+    url: /documentation/advanced/giterminism.html
   /documentation/advanced/building_images_with_stapel: &documentation-advanced-building-images-with-stapel
     title: Building images with stapel
     url: documentation/advanced/building_images_with_stapel/base_image.html
@@ -19,7 +19,7 @@ en:
     url: documentation/advanced/development_and_debug/stage_introspection.html
   /documentation/advanced/configuration: &documentation-advanced-configuration
     title: Configuration
-    url: documentation/advanced/configuration/supported_go_templates.html
+    url: documentation/advanced/configuration/organizing_configuration.html
   /documentation/advanced/ci_cd: &documentation-advanced-ci-cd
     title: CI/CD
     url: documentation/advanced/ci_cd/ci_cd_workflow_basics.html

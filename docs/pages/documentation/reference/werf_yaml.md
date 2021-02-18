@@ -55,7 +55,7 @@ deploy:
 ```
 {% endraw %}
 
-**NOTE**. Usage of the `HELM_RELEASE_EXTRA` environment variable should be allowed explicitly in the [werf-giterminism.yaml]({{ "documentation/advanced/configuration/giterminism.html" | true_relative_url }}) configuration in that case.
+**NOTE**. Usage of the `HELM_RELEASE_EXTRA` environment variable should be allowed explicitly in the [werf-giterminism.yaml]({{ "documentation/reference/werf_giterminism_yaml.html" | true_relative_url }}) configuration in that case.
 
 `deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ "documentation/advanced/helm/basics.html#slugging-the-release-name" | true_relative_url }}) to generated helm release name. Default: `true`.
 
@@ -243,7 +243,7 @@ You will need an image name when setting up helm templates or running werf comma
 
 ### Dockerfile builder
 
-Werf supports building images using Dockerfiles. Building image from Dockerfiles is the easiest way to start using werf in an existing project.
+Werf supports building images using Dockerfile. Building an image from Dockerfile is the easiest way to start using werf in an existing project.
 
 `werf.yaml` below describes an unnamed image built from `Dockerfile` which reside in the root of the project dir:
 
