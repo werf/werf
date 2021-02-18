@@ -79,7 +79,7 @@ sidebar: documentation
         </div>
         <div class="overview__step-info">
 <div markdown="1">
- - [Конфигурация]({{ "documentation/advanced/configuration/template_engine.html" | true_relative_url }}) рассказывает и принципах шаблонизации конфигов werf и генерации связанных с развертыванием имен (таких как пространства имен Kubernetes или названия релизов).
+ - [Гитерминизм]({{ "documentation/advanced/giterminism.html" | true_relative_url }}) рассказывает о том как реализован детерминизм с гит, какие он вводит ограничения и почему.
  - [Helm]({{ "documentation/advanced/helm/basics.html" | true_relative_url }})** повествует об основах деплоя: как настраивать werf, что такое helm-чарт и релиз. Здесь можно узнать об основах шаблонизации Kubernetes-ресурсов и способах использования собранных образов, описанных в файле `werf.yaml`, во время деплоя. Также уделяется внимание работе с секретами и приводится различная полезная информация. Этот раздел рекомендуется к прочтению тем, кто желает больше узнать об организации процесса деплоя с помощью werf.
  - [Очистка]({{ "documentation/advanced/cleanup.html" | true_relative_url }}) - в этом разделе рассказвается о концепции процесса очистки в werf и приводятся основные команды для выполнения очистки.
  - [CI/CD]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | true_relative_url }}) — описываются ключевые аспекты организации рабочих процессов в рамках CI/CD с помощью werf. Здесь вы узнаете об использовании werf в GitLab CI/CD, GitHub Actions и других CI/CD системах.
