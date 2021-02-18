@@ -62,12 +62,12 @@ require (
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20200724193237-c3ed55f3b481 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
-	github.com/werf/kubedog v0.4.1-0.20201125180623-08ad3ea6f58c
+	github.com/werf/kubedog v0.4.1-0.20210217184951-324cb08fa2f0
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.4.6
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	google.golang.org/grpc v1.29.1
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
@@ -78,10 +78,10 @@ require (
 	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	helm.sh/helm/v3 v3.5.1
-	k8s.io/api v0.19.2
+	k8s.io/api v0.20.2
 	k8s.io/apimachinery v0.20.2
-	k8s.io/cli-runtime v0.19.2
-	k8s.io/client-go v0.19.2
+	k8s.io/cli-runtime v0.20.2
+	k8s.io/client-go v0.20.2
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/kubectl v0.18.6
@@ -148,6 +148,7 @@ replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402
 
 replace github.com/google/go-containerregistry => github.com/alexey-igrychev/go-containerregistry v0.1.3-0.20200901133051-a73cc6cd741c
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200923113424-67dcadf45d7b
+// replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20200923113424-67dcadf45d7b
 
 replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202092607-295e772eabb1
+replace helm.sh/helm/v3 => ../helm
