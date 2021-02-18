@@ -36,9 +36,8 @@ werf helm get-release [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --loose-giterminism=false
             Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info                                                                               
-            https://werf.io/v1.2-alpha/documentation/advanced/configuration/giterminism.html,       
-            default $WERF_LOOSE_GITERMINISM)
+            more info https://werf.io/v1.2-alpha/documentation/advanced/giterminism.html, default   
+            $WERF_LOOSE_GITERMINISM)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
