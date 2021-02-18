@@ -1,10 +1,10 @@
 ---
-title: Шаблонизатор
+title: Шаблонизатор werf.yaml
 sidebar: documentation
-permalink: documentation/advanced/configuration/template_engine.html
+permalink: documentation/reference/werf_yaml_template_engine.html
 ---
 
-При чтении конфигурации `werf.yaml`, werf использует встроенный движок шаблонов Go ([text/template](https://golang.org/pkg/text/template)), а также расширяет набор функций с помощью [Sprig](#sprig) и [функций werf](#функции-werf).
+При чтении конфигурации `werf.yaml`, werf использует встроенный движок шаблонов Go ([text/template](https://golang.org/pkg/text/template)), а также расширяет набор функций с помощью [Sprig](#функции-sprig) и [функций werf](#функции-werf).
 
 ## Встроенные возможности шаблонизатора Go
 

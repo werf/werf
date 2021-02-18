@@ -369,6 +369,9 @@ entries:
           - title: werf-giterminism.yaml
             url: /documentation/reference/werf_giterminism_yaml.html
 
+          - title: werf.yaml template engine
+            url: /documentation/reference/werf_yaml_template_engine.html
+
           - title: Deploy annotations
             url: /documentation/reference/deploy_annotations.html
 
@@ -383,9 +386,6 @@ entries:
 
           - title: Configuration
             f:
-
-              - title: Template engine
-                url: /documentation/advanced/configuration/template_engine.html
 
               - title: Organizing configuration
                 url: /documentation/advanced/configuration/organizing_configuration.html
@@ -519,6 +519,9 @@ entries:
           - title: werf-giterminism.yaml
             url: /documentation/reference/werf_giterminism_yaml.html
 
+          - title: Шаблонизатор werf.yaml
+            url: /documentation/reference/werf_yaml_template_engine.html
+
           - title: Аннотации для деплоя
             url: /documentation/reference/deploy_annotations.html
 
@@ -533,9 +536,6 @@ entries:
 
           - title: Конфигурация
             f:
-
-              - title: Шаблонизатор
-                url: /documentation/advanced/configuration/template_engine.html
 
               - title: Организация конфигурации
                 url: /documentation/advanced/configuration/organizing_configuration.html

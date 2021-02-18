@@ -538,7 +538,7 @@ shell:
 
 ### Пример использования внешних зависимостей
 
-Параметры _CacheVersion_ можно использовать совместно с [шаблонами Go]({{ "documentation/advanced/configuration/template_engine.html" | true_relative_url }}), чтобы определить зависимость _пользовательской стадии_ от файлов, не находящихся в git-репозитории.
+Параметры _CacheVersion_ можно использовать совместно с [шаблонами Go-шаблонизатора]({{ "documentation/reference/werf_yaml_template_engine.html" | true_relative_url }}), чтобы определить зависимость _пользовательской стадии_ от файлов, не находящихся в git-репозитории.
 
 {% raw %}
 ```yaml

@@ -75,7 +75,7 @@ sidebar: documentation
     <div class="overview__step">
         <div class="overview__step-title">Get the deep knowledge, which you will need eventually during werf usage</div>
         <div class="overview__step-actions">
-            <a class="overview__step-action" href="{{ "documentation/advanced/configuration/template_engine.html" | true_relative_url }}">Advanced</a>
+            <a class="overview__step-action" href="{{ "documentation/advanced/giterminism.html" | true_relative_url }}">Advanced</a>
         </div>
         <div class="overview__step-info">
 <div markdown="1">

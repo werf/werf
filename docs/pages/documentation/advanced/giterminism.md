@@ -19,7 +19,7 @@ The configuration of an application may include the following project files:
 
 - The werf configuration (`werf.yaml` by default) that describes all images, deployment, and cleanup settings.
 - The werf configuration templates (`.werf/**/*.tmpl`).
-- The files that are used with Go-template functions [.Files.Get]({{ "documentation/advanced/configuration/template_engine.html#filesget" | true_relative_url }}) and [.Files.Glob]({{ "documentation/advanced/configuration/template_engine.html#filesglob" | true_relative_url }}).
+- The files that are used with Go-template functions [.Files.Get]({{ "documentation/reference/werf_yaml_template_engine.html#filesget" | true_relative_url }}) and [.Files.Glob]({{ "documentation/reference/werf_yaml_template_engine.html#filesglob" | true_relative_url }}).
 - The helm chart files (`.helm` by default).
 
 > All configuration files must be in the project directory. A symbolic link is supported, but the link must point to a file in the project git repository
@@ -32,7 +32,7 @@ By default, werf prohibits using a particular set of directives and Go-template 
 
 ##### env 
 
-The use of the function [env]({{ "documentation/advanced/configuration/template_engine.html#env" | true_relative_url }}) complicates the sharing and reproducibility of the configuration in CI jobs and among developers because the value of the environment variable affects the final digest of built images and must be identical at all steps of the pipeline and during local development.
+The use of the function [env]({{ "documentation/reference/werf_yaml_template_engine.html#env" | true_relative_url }}) complicates the sharing and reproducibility of the configuration in CI jobs and among developers because the value of the environment variable affects the final digest of built images and must be identical at all steps of the pipeline and during local development.
 
 To activate the `env` function it is necessary to use [werf-giterminism.yaml]({{ "documentation/reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
 

@@ -1,10 +1,10 @@
 ---
-title: Template engine
+title: werf.yaml template engine
 sidebar: documentation
-permalink: documentation/advanced/configuration/template_engine.html
+permalink: documentation/reference/werf_yaml_template_engine.html
 ---
 
-Reading _the werf configuration_, werf uses a built-in Go template engine ([text/template](https://golang.org/pkg/text/template)) and expands the function set with [Sprig](#sprig) and [werf functions](#werf-functions).
+Reading _the werf configuration_, werf uses a built-in Go template engine ([text/template](https://golang.org/pkg/text/template)) and expands the function set with [Sprig](#sprig-functions) and [werf functions](#werf-functions).
 
 ## Built-in Go template features
 
