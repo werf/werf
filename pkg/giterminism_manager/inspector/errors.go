@@ -7,5 +7,5 @@ import (
 )
 
 func NewExternalDependencyFoundError(msg string) error {
-	return errors.NewError(fmt.Sprintf("the configuration with external dependency found in the werf config: %s", msg))
+	return errors.NewError(fmt.Sprintf("the configuration with potential external dependency found in the werf config: %s", msg))
 }
