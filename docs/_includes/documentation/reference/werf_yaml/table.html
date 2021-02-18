@@ -1,11 +1,11 @@
 {% asset configuration-table.css %}
 
 <div class="werf-configuration-table">
-    <table>
-        {% assign counter = 0 %}
+    <table aria-hidden=true>
+        {{ "tableLineCounter" | reset_shared_counter }}
         {% for section in site.data.werf_yaml.sections %}
             <tr id="{{ section.id }}" class="section {{ section.id }}">
-                <td>{% increment counter %}</td>
+                <td>{{ "tableLineCounter" | increment_shared_counter }}</td>
                 <td>
                     ---
                 </td>
