@@ -45,6 +45,7 @@ jobs:
       - name: Prepare
         run: |
           cd docs
+          chmod 777 Gemfile.lock
           mkdir -m 777 .jekyll-cache _site
           bundle install
 
