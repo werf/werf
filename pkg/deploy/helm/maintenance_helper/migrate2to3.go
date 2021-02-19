@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/werf/logboek"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -50,16 +52,6 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 		return fmt.Errorf("unable to get helm 2 release %q info: %s", helm2ReleaseName, err)
 	}
 
-	logboek.Context(ctx).LogOptionalLn()
-	if err := logboek.Context(ctx).Default().LogProcess("Creating helm 3 release %q", helm3ReleaseName).DoError(func() error {
-		if err := maintenanceHelper.CreateHelm3ReleaseMetadataFromHelm2Release(ctx, helm3ReleaseName, helm3Namespace, releaseData); err != nil {
-			return fmt.Errorf("unable to create helm 3 release %q: %s", helm3ReleaseName, err)
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-
 	infos, err := maintenanceHelper.BuildHelm2ResourcesInfos(releaseData)
 	if err != nil {
 		return fmt.Errorf("error building resources infos for release %q: %s", helm2ReleaseName, err)
@@ -75,7 +67,10 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 			helper := resource.NewHelper(info.Client, info.Mapping)
 
 			obj, err := helper.Get(info.Namespace, info.Name)
-			if err != nil {
+			if apierrors.IsNotFound(err) {
+				logboek.Context(ctx).Default().LogF("    %s not found: ignoring\n", info.ObjectName())
+				continue
+			} else if err != nil {
 				return fmt.Errorf("error getting resource %s spec from %q namespace: %s", info.ObjectName(), info.Namespace, err)
 			}
 
@@ -107,6 +102,16 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 			if _, err := helper.Replace(info.Namespace, info.Name, false, obj); err != nil {
 				return fmt.Errorf("error replacing %s: %s", info.ObjectName(), err)
 			}
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	logboek.Context(ctx).LogOptionalLn()
+	if err := logboek.Context(ctx).Default().LogProcess("Creating helm 3 release %q", helm3ReleaseName).DoError(func() error {
+		if err := maintenanceHelper.CreateHelm3ReleaseMetadataFromHelm2Release(ctx, helm3ReleaseName, helm3Namespace, releaseData); err != nil {
+			return fmt.Errorf("unable to create helm 3 release %q: %s", helm3ReleaseName, err)
 		}
 		return nil
 	}); err != nil {
