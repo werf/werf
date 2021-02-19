@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"helm.sh/helm/v3/pkg/postrender"
+
 	"github.com/werf/werf/pkg/giterminism_manager"
 
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
@@ -385,38 +387,8 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	}
 	maintenanceHelper := createMaintenanceHelper(ctx, actionConfig, kubeConfigOptions)
 
-	if helm2Exists, err := checkHelm2ReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("error checking existance of helm 2 release %q: %s", releaseName, err)
-	} else if helm2Exists {
-		logboek.Context(ctx).Warn().LogFDetails("Found existing helm 2 release %q, will try to render helm 3 templates and migrate existing release resources to helm 3\n", releaseName)
-
-		logboek.Context(ctx).Default().LogOptionalLn()
-		if err := logboek.Context(ctx).LogProcess("Rendering helm 3 templates for the current project state").DoError(func() error {
-			actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData)
-			if err != nil {
-				return err
-			}
-
-			helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, ioutil.Discard, cmd_helm.TemplateCmdOptions{
-				PostRenderer: postRenderer,
-				ValueOpts:    valueOpts,
-				Validate:     common.NewBool(true),
-				IncludeCrds:  common.NewBool(true),
-				IsUpgrade:    common.NewBool(true),
-			})
-			return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)})
-		}); err != nil {
-			return err
-		}
-
-		if err := logboek.Context(ctx).Default().LogProcess("Migrating helm 2 release %q to helm 3 in the %q namespace", releaseName, namespace).DoError(func() error {
-			if err := maintenance_helper.Migrate2To3(ctx, releaseName, releaseName, namespace, maintenanceHelper); err != nil {
-				return fmt.Errorf("error migrating existing helm 2 release %q to helm 3 release %q in the namespace %q: %s", releaseName, releaseName, namespace, err)
-			}
-			return nil
-		}); err != nil {
-			return err
-		}
+	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, postRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir)); err != nil {
+		return err
 	}
 
 	actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData)
@@ -467,7 +439,63 @@ func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configura
 	return maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
 }
 
-func checkHelm2ReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
+func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, postRenderer postrender.PostRenderer, valueOpts *values.Options, fullChartDir string) error {
+	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
+		return fmt.Errorf("error checking availability of helm 2 and existance of helm 2 release %q: %s", releaseName, err)
+	} else if !helm2Exists {
+		return nil
+	}
+
+	if helm3Exists, err := checkHelm3ReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
+		return fmt.Errorf("error checking existance of helm 3 release %q: %s", releaseName, err)
+	} else if helm3Exists {
+		// helm 2 exists and helm 3 exists
+		// migration not needed, but we should warn user that some helm 2 release with the same name exists
+
+		logboek.Context(ctx).Warn().LogF("### Helm 2 and helm 3 release %q exists at the same time ###\n", releaseName)
+		logboek.Context(ctx).Warn().LogLn()
+		logboek.Context(ctx).Warn().LogF("Found existing helm 2 release %q while there is existing helm 3 release %q in the %q namespace!\n", releaseName, releaseName, namespace)
+		logboek.Context(ctx).Warn().LogF("Werf will continue deploy process into helm 3 release %q in the %q namespace\n", releaseName, namespace)
+		logboek.Context(ctx).Warn().LogF("To disable this warning please remove old helm 2 release %q metadata (fox example using: kubectl -n kube-system delete cm RELEASE_NAME.VERSION)\n", releaseName)
+		logboek.Context(ctx).Warn().LogLn()
+
+		return nil
+	}
+
+	logboek.Context(ctx).Warn().LogFDetails("Found existing helm 2 release %q, will try to render helm 3 templates and migrate existing release resources to helm 3\n", releaseName)
+
+	logboek.Context(ctx).Default().LogOptionalLn()
+	if err := logboek.Context(ctx).LogProcess("Rendering helm 3 templates for the current project state").DoError(func() error {
+		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData)
+		if err != nil {
+			return err
+		}
+
+		helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, ioutil.Discard, cmd_helm.TemplateCmdOptions{
+			PostRenderer: postRenderer,
+			ValueOpts:    valueOpts,
+			Validate:     common.NewBool(true),
+			IncludeCrds:  common.NewBool(true),
+			IsUpgrade:    common.NewBool(true),
+		})
+		return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, fullChartDir})
+	}); err != nil {
+		return err
+	}
+
+	if err := logboek.Context(ctx).Default().LogProcess("Migrating helm 2 release %q to helm 3 in the %q namespace", releaseName, namespace).DoError(func() error {
+		if err := maintenance_helper.Migrate2To3(ctx, releaseName, releaseName, namespace, maintenanceHelper); err != nil {
+			return fmt.Errorf("error migrating existing helm 2 release %q to helm 3 release %q in the namespace %q: %s", releaseName, releaseName, namespace, err)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkHelm2AvailableAndReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
 	if available, err := maintenanceHelper.CheckHelm2StorageAvailable(ctx); err != nil {
 		return false, err
 	} else if available {
@@ -479,6 +507,20 @@ func checkHelm2ReleaseExists(ctx context.Context, releaseName, namespace string,
 			if releaseName == existingReleaseName {
 				return true, nil
 			}
+		}
+	}
+
+	return false, nil
+}
+
+func checkHelm3ReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
+	existingReleases, err := maintenanceHelper.GetHelm3ReleasesList(ctx)
+	if err != nil {
+		return false, fmt.Errorf("error getting existing helm 3 releases: %s", err)
+	}
+	for _, existingReleaseName := range existingReleases {
+		if releaseName == existingReleaseName {
+			return true, nil
 		}
 	}
 

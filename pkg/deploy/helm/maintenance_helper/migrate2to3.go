@@ -52,7 +52,7 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 	logboek.Context(ctx).LogOptionalLn()
 	if err := logboek.Context(ctx).Default().LogProcess("Creating helm 3 release %q", helm3ReleaseName).DoError(func() error {
 		if err := maintenanceHelper.CreateHelm3ReleaseMetadataFromHelm2Release(ctx, helm3ReleaseName, helm3Namespace, releaseData); err != nil {
-			return fmt.Errorf("unable to create helm 3 release %q: %s", helm3ReleaseName)
+			return fmt.Errorf("unable to create helm 3 release %q: %s", helm3ReleaseName, err)
 		}
 		return nil
 	}); err != nil {
