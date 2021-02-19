@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"k8s.io/apimachinery/pkg/types"
+
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/cli-runtime/pkg/resource"
 )
 
@@ -64,6 +65,8 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 		return fmt.Errorf("error building resources infos for release %q: %s", helm2ReleaseName, err)
 	}
 
+	var metadataAccessor = meta.NewAccessor()
+
 	logboek.Context(ctx).LogOptionalLn()
 	if err := logboek.Context(ctx).Default().LogProcess("Migrating %d resources of the release %q", len(infos), helm2ReleaseName).DoError(func() error {
 		for _, info := range infos {
@@ -71,8 +74,38 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 
 			helper := resource.NewHelper(info.Client, info.Mapping)
 
-			if _, err := helper.Patch(info.Namespace, info.Name, types.StrategicMergePatchType, []byte(fmt.Sprintf(`{"metadata":{"labels":{"app.kubernetes.io/managed-by":"Helm"},"annotations":{"meta.helm.sh/release-name":%q,"meta.helm.sh/release-namespace":%q}}}`, helm3ReleaseName, helm3Namespace)), nil); err != nil {
-				return fmt.Errorf("error patching %s: %s", info.ObjectName(), err)
+			obj, err := helper.Get(info.Namespace, info.Name)
+			if err != nil {
+				return fmt.Errorf("error getting resource %s spec from %q namespace: %s", info.ObjectName(), info.Namespace, err)
+			}
+
+			annotations, err := metadataAccessor.Annotations(obj)
+			if err != nil {
+				return fmt.Errorf("error accessing annotations of %s: %s", info.ObjectName(), err)
+			}
+			if annotations == nil {
+				annotations = make(map[string]string)
+			}
+			annotations["meta.helm.sh/release-name"] = helm3ReleaseName
+			annotations["meta.helm.sh/release-namespace"] = helm3Namespace
+			if err := metadataAccessor.SetAnnotations(obj, annotations); err != nil {
+				return fmt.Errorf("error setting annotations of %s: %s", info.ObjectName(), err)
+			}
+
+			labels, err := metadataAccessor.Labels(obj)
+			if err != nil {
+				return fmt.Errorf("error accessing labels of %s: %s", info.ObjectName(), err)
+			}
+			if labels == nil {
+				labels = make(map[string]string)
+			}
+			labels["app.kubernetes.io/managed-by"] = "Helm"
+			if err := metadataAccessor.SetLabels(obj, labels); err != nil {
+				return fmt.Errorf("error setting labels of %s: %s", info.ObjectName(), err)
+			}
+
+			if _, err := helper.Replace(info.Namespace, info.Name, false, obj); err != nil {
+				return fmt.Errorf("error replacing %s: %s", info.ObjectName(), err)
 			}
 		}
 		return nil
