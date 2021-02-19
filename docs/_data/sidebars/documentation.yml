@@ -392,15 +392,51 @@ entries:
 
           - title: Helm
             f:
+              - title: Overview
+                url: /documentation/advanced/helm/overview.html
 
-              - title: Basics
-                url: /documentation/advanced/helm/basics.html
+              - title: Configuration
+                f:
 
-              - title: Working with secrets
-                url: /documentation/advanced/helm/working_with_secrets.html
+                  - title: Chart
+                    url: /documentation/advanced/helm/configuration/chart.html
 
-              - title: Working with chart dependencies
-                url: /documentation/advanced/helm/working_with_chart_dependencies.html
+                  - title: Templates
+                    url: /documentation/advanced/helm/configuration/templates.html
+
+                  - title: Values
+                    url: /documentation/advanced/helm/configuration/values.html
+
+                  - title: Giterminism
+                    url: /documentation/advanced/helm/configuration/giterminism.html
+
+                  - title: Secrets
+                    url: /documentation/advanced/helm/configuration/secrets.html
+
+                  - title: Chart dependencies
+                    url: /documentation/advanced/helm/configuration/chart_dependencies.html
+
+              - title: Deploy process
+                f:
+                  - title: Steps
+                    url: /documentation/advanced/helm/deploy_process/steps.html
+
+                  - title: Helm hooks
+                    url: /documentation/advanced/helm/deploy_process/helm_hooks.html
+
+                  - title: Annotating and labeling of chart resources
+                    url: /documentation/advanced/helm/deploy_process/annotating_and_labeling.html
+
+              - title: Releases
+                f:
+                  - title: Release
+                    url: /documentation/advanced/helm/releases/release.html
+
+                  - title: Naming
+                    url: /documentation/advanced/helm/releases/naming.html
+
+                  - title: Manage releases
+                    url: /documentation/advanced/helm/releases/manage_releases.html
 
           - title: Cleanup
             url: /documentation/advanced/cleanup.html
