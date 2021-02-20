@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type gitMappingMatchPathEntry struct {
+type gitMappingIsPathMatchedEntry struct {
 	baseBase        string
 	includePaths    []string
 	excludePaths    []string
@@ -16,63 +16,63 @@ type gitMappingMatchPathEntry struct {
 	notMatchedPaths []string
 }
 
-var _ = DescribeTable("git mapping path matcher (MatchPath)", func(e gitMappingMatchPathEntry) {
-	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths, false)
+var _ = DescribeTable("git mapping path matcher (IsPathMatched)", func(e gitMappingIsPathMatchedEntry) {
+	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths)
 
 	for _, matchedPath := range e.matchedPaths {
-		Ω(pathMatcher.MatchPath(matchedPath)).Should(BeTrue())
+		Ω(pathMatcher.IsPathMatched(matchedPath)).Should(BeTrue(), matchedPath)
 	}
 
 	for _, notMatchedPath := range e.notMatchedPaths {
-		Ω(pathMatcher.MatchPath(notMatchedPath)).Should(BeFalse())
+		Ω(pathMatcher.IsPathMatched(notMatchedPath)).Should(BeFalse(), notMatchedPath)
 	}
 },
-	Entry("basePath is equal to the path (includePaths)", gitMappingMatchPathEntry{
+	Entry("basePath is equal to the path (includePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		includePaths:    []string{"d"},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path (excludePaths)", gitMappingMatchPathEntry{
+	Entry("basePath is equal to the path (excludePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:     filepath.Join("a", "b", "c"),
 		excludePaths: []string{"d"},
 		matchedPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path (includePaths and excludePaths)", gitMappingMatchPathEntry{
+	Entry("basePath is equal to the path (includePaths and excludePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		includePaths:    []string{"d"},
 		excludePaths:    []string{"e"},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path, includePath ''", gitMappingMatchPathEntry{
+	Entry("basePath is equal to the path, includePath ''", gitMappingIsPathMatchedEntry{
 		baseBase:     filepath.Join("a", "b", "c"),
 		includePaths: []string{""},
 		matchedPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path, excludePath ''", gitMappingMatchPathEntry{
+	Entry("basePath is equal to the path, excludePath ''", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		excludePaths:    []string{""},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path, includePath '', excludePath ''", gitMappingMatchPathEntry{
+	Entry("basePath is equal to the path, includePath '', excludePath ''", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		includePaths:    []string{""},
 		excludePaths:    []string{""},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c")},
 	}),
 
-	Entry("path is relative to the basePath (includePaths)", gitMappingMatchPathEntry{
+	Entry("path is relative to the basePath (includePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		includePaths:    []string{"d"},
 		matchedPaths:    []string{filepath.Join("a", "b", "c", "d")},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c", "e"), filepath.Join("a", "b", "c", "de")},
 	}),
-	Entry("path is relative to the basePath (excludePaths)", gitMappingMatchPathEntry{
+	Entry("path is relative to the basePath (excludePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		excludePaths:    []string{"d"},
 		matchedPaths:    []string{filepath.Join("a", "b", "c", "e"), filepath.Join("a", "b", "c", "de")},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c", "d")},
 	}),
-	Entry("path is relative to the basePath (includePaths and excludePaths)", gitMappingMatchPathEntry{
+	Entry("path is relative to the basePath (includePaths and excludePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		includePaths:    []string{"d"},
 		excludePaths:    []string{"e"},
@@ -80,41 +80,41 @@ var _ = DescribeTable("git mapping path matcher (MatchPath)", func(e gitMappingM
 		notMatchedPaths: []string{filepath.Join("a", "b", "c", "e")},
 	}),
 
-	Entry("path is not relative to the basePath(includePaths)", gitMappingMatchPathEntry{
+	Entry("path is not relative to the basePath(includePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		includePaths:    []string{"d"},
 		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
-	Entry("path is not relative to the basePath (excludePaths)", gitMappingMatchPathEntry{
+	Entry("path is not relative to the basePath (excludePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		excludePaths:    []string{"d"},
 		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
-	Entry("path is not relative to the basePath (includePaths and excludePaths)", gitMappingMatchPathEntry{
+	Entry("path is not relative to the basePath (includePaths and excludePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		includePaths:    []string{"d"},
 		excludePaths:    []string{"e"},
 		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
 
-	Entry("basePath is relative to the path (includePaths)", gitMappingMatchPathEntry{
+	Entry("basePath is relative to the path (includePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		includePaths:    []string{"d"},
 		notMatchedPaths: []string{filepath.Join("a")},
 	}),
-	Entry("basePath is relative to the path (excludePaths)", gitMappingMatchPathEntry{
+	Entry("basePath is relative to the path (excludePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		excludePaths:    []string{"d"},
 		notMatchedPaths: []string{filepath.Join("a")},
 	}),
-	Entry("basePath is relative to the path (includePaths and excludePaths)", gitMappingMatchPathEntry{
+	Entry("basePath is relative to the path (includePaths and excludePaths)", gitMappingIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		includePaths:    []string{"d"},
 		excludePaths:    []string{"e"},
 		notMatchedPaths: []string{filepath.Join("a")},
 	}),
 
-	Entry("glob completion by default (includePaths)", gitMappingMatchPathEntry{
+	Entry("glob completion by default (includePaths)", gitMappingIsPathMatchedEntry{
 		includePaths: []string{
 			"a",
 			filepath.Join("b", "*"),
@@ -128,7 +128,7 @@ var _ = DescribeTable("git mapping path matcher (MatchPath)", func(e gitMappingM
 			filepath.Join("d", "b", "c", "d"),
 		},
 	}),
-	Entry("glob completion by default (excludePaths)", gitMappingMatchPathEntry{
+	Entry("glob completion by default (excludePaths)", gitMappingIsPathMatchedEntry{
 		excludePaths: []string{
 			"a",
 			filepath.Join("b", "*"),
@@ -142,7 +142,7 @@ var _ = DescribeTable("git mapping path matcher (MatchPath)", func(e gitMappingM
 			filepath.Join("d", "b", "c", "d"),
 		},
 	}),
-	Entry("glob completion by default (includePaths and excludePaths)", gitMappingMatchPathEntry{
+	Entry("glob completion by default (includePaths and excludePaths)", gitMappingIsPathMatchedEntry{
 		includePaths: []string{
 			"a",
 			filepath.Join("b", "*"),
@@ -164,168 +164,129 @@ var _ = DescribeTable("git mapping path matcher (MatchPath)", func(e gitMappingM
 	}),
 )
 
-type gitMappingProcessDirOrSubmodulePath struct {
-	baseBase               string
-	includePaths           []string
-	excludePaths           []string
-	matchedPaths           []string
-	shouldWalkThroughPaths []string
-	notMatchedPaths        []string
+type gitMappingShouldGoThrough struct {
+	baseBase                string
+	includePaths            []string
+	excludePaths            []string
+	shouldGoThroughPaths    []string
+	shouldNotGoThroughPaths []string
 }
 
-var _ = DescribeTable("git mapping path matcher (ProcessDirOrSubmodulePath)", func(e gitMappingProcessDirOrSubmodulePath) {
-	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths, false)
+var _ = DescribeTable("git mapping path matcher (ShouldGoThrough)", func(e gitMappingShouldGoThrough) {
+	pathMatcher := NewGitMappingPathMatcher(e.baseBase, e.includePaths, e.excludePaths)
 
-	for _, matchedPath := range e.matchedPaths {
-		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(matchedPath)
-		Ω(isMatched).Should(BeTrue(), fmt.Sprintln(pathMatcher, "==", matchedPath))
-		Ω(shouldWalkThrough).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", matchedPath))
+	for _, shouldGoThroughPath := range e.shouldGoThroughPaths {
+		shouldGoThrough := pathMatcher.ShouldGoThrough(shouldGoThroughPath)
+		Ω(shouldGoThrough).Should(BeTrue(), fmt.Sprintln(pathMatcher, "==", shouldGoThroughPath))
 	}
 
-	for _, shouldWalkThroughPath := range e.shouldWalkThroughPaths {
-		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(shouldWalkThroughPath)
-		Ω(isMatched).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", shouldWalkThroughPath))
-		Ω(shouldWalkThrough).Should(BeTrue(), fmt.Sprintln(pathMatcher, "==", shouldWalkThroughPath))
-	}
-
-	for _, notMatchedPath := range e.notMatchedPaths {
-		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(notMatchedPath)
-		Ω(isMatched).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", notMatchedPath))
-		Ω(shouldWalkThrough).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", notMatchedPath))
+	for _, shouldNotGoThroughPath := range e.shouldNotGoThroughPaths {
+		shouldGoThrough := pathMatcher.ShouldGoThrough(shouldNotGoThroughPath)
+		Ω(shouldGoThrough).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", shouldNotGoThroughPath))
 	}
 },
-	Entry("basePath is equal to the path (base)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:     filepath.Join("a", "b", "c"),
-		matchedPaths: []string{filepath.Join("a", "b", "c")},
+	Entry("basePath is equal to the path (includePaths)", gitMappingShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		includePaths:         []string{"d"},
+		shouldGoThroughPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path (includePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		includePaths:           []string{"d"},
-		shouldWalkThroughPaths: []string{filepath.Join("a", "b", "c")},
+	Entry("basePath is equal to the path (excludePaths)", gitMappingShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		excludePaths:         []string{"d"},
+		shouldGoThroughPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path (excludePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		excludePaths:           []string{"d"},
-		shouldWalkThroughPaths: []string{filepath.Join("a", "b", "c")},
+	Entry("basePath is equal to the path (includePaths and excludePaths)", gitMappingShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		includePaths:         []string{"d"},
+		excludePaths:         []string{"e"},
+		shouldGoThroughPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path (includePaths and excludePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		includePaths:           []string{"d"},
-		excludePaths:           []string{"e"},
-		shouldWalkThroughPaths: []string{filepath.Join("a", "b", "c")},
+	Entry("basePath is equal to the path, excludePath ''", gitMappingShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		excludePaths:            []string{""},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path, includePath ''", gitMappingProcessDirOrSubmodulePath{
-		baseBase:     filepath.Join("a", "b", "c"),
-		includePaths: []string{""},
-		matchedPaths: []string{filepath.Join("a", "b", "c")},
-	}),
-	Entry("basePath is equal to the path, excludePath ''", gitMappingProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		excludePaths:    []string{""},
-		notMatchedPaths: []string{filepath.Join("a", "b", "c")},
-	}),
-	Entry("basePath is equal to the path, includePath '', excludePath ''", gitMappingProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		includePaths:    []string{""},
-		excludePaths:    []string{""},
-		notMatchedPaths: []string{filepath.Join("a", "b", "c")},
+	Entry("basePath is equal to the path, includePath '', excludePath ''", gitMappingShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		includePaths:            []string{""},
+		excludePaths:            []string{""},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "c")},
 	}),
 
-	Entry("path is relative to the basePath (base)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:     filepath.Join("a", "b", "c"),
-		matchedPaths: []string{filepath.Join("a", "b", "c", "d")},
+	Entry("path is relative to the basePath (includePaths)", gitMappingShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		includePaths:            []string{"d"},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "c", "e"), filepath.Join("a", "b", "c", "de")},
 	}),
-	Entry("path is relative to the basePath (includePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		includePaths:    []string{"d"},
-		matchedPaths:    []string{filepath.Join("a", "b", "c", "d")},
-		notMatchedPaths: []string{filepath.Join("a", "b", "c", "e"), filepath.Join("a", "b", "c", "de")},
+	Entry("path is relative to the basePath (excludePaths)", gitMappingShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		excludePaths:            []string{"d"},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "c", "d")},
 	}),
-	Entry("path is relative to the basePath (excludePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		excludePaths:    []string{"d"},
-		matchedPaths:    []string{filepath.Join("a", "b", "c", "e"), filepath.Join("a", "b", "c", "de")},
-		notMatchedPaths: []string{filepath.Join("a", "b", "c", "d")},
-	}),
-	Entry("path is relative to the basePath (includePaths and excludePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		includePaths:    []string{"d"},
-		excludePaths:    []string{"e"},
-		matchedPaths:    []string{filepath.Join("a", "b", "c", "d")},
-		notMatchedPaths: []string{filepath.Join("a", "b", "c", "e")},
+	Entry("path is relative to the basePath (includePaths and excludePaths)", gitMappingShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		includePaths:            []string{"d"},
+		excludePaths:            []string{"e"},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "c", "e")},
 	}),
 
-	Entry("path is not relative to the basePath (base)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
+	Entry("path is not relative to the basePath (base)", gitMappingShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
-	Entry("path is not relative to the basePath(includePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		includePaths:    []string{"d"},
-		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
+	Entry("path is not relative to the basePath(includePaths)", gitMappingShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		includePaths:            []string{"d"},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
-	Entry("path is not relative to the basePath (excludePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		excludePaths:    []string{"d"},
-		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
+	Entry("path is not relative to the basePath (excludePaths)", gitMappingShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		excludePaths:            []string{"d"},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
-	Entry("path is not relative to the basePath (includePaths and excludePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		includePaths:    []string{"d"},
-		excludePaths:    []string{"e"},
-		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
-	}),
-
-	Entry("basePath is relative to the path (base)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		shouldWalkThroughPaths: []string{filepath.Join("a")},
-	}),
-	Entry("basePath is relative to the path (includePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		includePaths:           []string{"d"},
-		shouldWalkThroughPaths: []string{filepath.Join("a")},
-	}),
-	Entry("basePath is relative to the path (excludePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		excludePaths:           []string{"d"},
-		shouldWalkThroughPaths: []string{filepath.Join("a")},
-	}),
-	Entry("basePath is relative to the path (includePaths and excludePaths)", gitMappingProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		includePaths:           []string{"d"},
-		excludePaths:           []string{"e"},
-		shouldWalkThroughPaths: []string{filepath.Join("a")},
+	Entry("path is not relative to the basePath (includePaths and excludePaths)", gitMappingShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		includePaths:            []string{"d"},
+		excludePaths:            []string{"e"},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
 
-	Entry("glob completion by default (includePaths)", gitMappingProcessDirOrSubmodulePath{
-		includePaths: []string{
-			"a",
-			filepath.Join("b", "*"),
-			filepath.Join("c", "**"),
-			filepath.Join("d", "**", "*"),
-		},
-		matchedPaths: []string{
-			filepath.Join("a", "b", "c", "d"),
-			filepath.Join("b", "b", "c", "d"),
-			filepath.Join("c", "b", "c", "d"),
-			filepath.Join("d", "b", "c", "d"),
-		},
+	Entry("basePath is relative to the path (base)", gitMappingShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		shouldGoThroughPaths: []string{filepath.Join("a")},
 	}),
-	Entry("glob completion by default (excludePaths)", gitMappingProcessDirOrSubmodulePath{
+	Entry("basePath is relative to the path (includePaths)", gitMappingShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		includePaths:         []string{"d"},
+		shouldGoThroughPaths: []string{filepath.Join("a")},
+	}),
+	Entry("basePath is relative to the path (excludePaths)", gitMappingShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		excludePaths:         []string{"d"},
+		shouldGoThroughPaths: []string{filepath.Join("a")},
+	}),
+	Entry("basePath is relative to the path (includePaths and excludePaths)", gitMappingShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		includePaths:         []string{"d"},
+		excludePaths:         []string{"e"},
+		shouldGoThroughPaths: []string{filepath.Join("a")},
+	}),
+
+	Entry("glob completion by default (excludePaths)", gitMappingShouldGoThrough{
 		excludePaths: []string{
 			"a",
 			filepath.Join("b", "*"),
 			filepath.Join("c", "**"),
 			filepath.Join("d", "**", "*"),
 		},
-		notMatchedPaths: []string{
+		shouldNotGoThroughPaths: []string{
 			filepath.Join("a", "b", "c", "d"),
 			filepath.Join("b", "b", "c", "d"),
 			filepath.Join("c", "b", "c", "d"),
 			filepath.Join("d", "b", "c", "d"),
 		},
 	}),
-	Entry("glob completion by default (includePaths and excludePaths)", gitMappingProcessDirOrSubmodulePath{
+	Entry("glob completion by default (includePaths and excludePaths)", gitMappingShouldGoThrough{
 		includePaths: []string{
 			"a",
 			filepath.Join("b", "*"),
@@ -338,7 +299,7 @@ var _ = DescribeTable("git mapping path matcher (ProcessDirOrSubmodulePath)", fu
 			filepath.Join("c", "**"),
 			filepath.Join("d", "**", "*"),
 		},
-		notMatchedPaths: []string{
+		shouldNotGoThroughPaths: []string{
 			filepath.Join("a", "b", "c", "d"),
 			filepath.Join("b", "b", "c", "d"),
 			filepath.Join("c", "b", "c", "d"),

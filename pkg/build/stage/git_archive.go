@@ -51,7 +51,7 @@ func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		if gitMapping.LocalGitRepo != nil {
-			if err := c.GiterminismManager().Inspector().InspectBuildContextFiles(ctx, path_matcher.NewGitMappingPathMatcher(gitMapping.Add, gitMapping.IncludePaths, gitMapping.ExcludePaths, true)); err != nil {
+			if err := c.GiterminismManager().Inspector().InspectBuildContextFiles(ctx, path_matcher.NewGitMappingPathMatcher(gitMapping.Add, gitMapping.IncludePaths, gitMapping.ExcludePaths)); err != nil {
 				return "", err
 			}
 		}

@@ -18,132 +18,121 @@ func newPatternMatcher(patterns []string) *fileutils.PatternMatcher {
 	return m
 }
 
-type dockerfileIgnorePathMatchEntry struct {
+type dockerfileIgnoreIsPathMatchedEntry struct {
 	baseBase        string
 	patternMatcher  *fileutils.PatternMatcher
 	matchedPaths    []string
 	notMatchedPaths []string
 }
 
-var _ = DescribeTable("dockerfile ignore path matcher (MatchPath)", func(e dockerfileIgnorePathMatchEntry) {
-	pathMatcher := NewDockerfileIgnorePathMatcher(e.baseBase, e.patternMatcher, false)
+var _ = DescribeTable("dockerfile ignore path matcher (IsPathMatched)", func(e dockerfileIgnoreIsPathMatchedEntry) {
+	pathMatcher := NewDockerfileIgnorePathMatcher(e.baseBase, e.patternMatcher)
 
 	for _, matchedPath := range e.matchedPaths {
-		Ω(pathMatcher.MatchPath(matchedPath)).Should(BeTrue())
+		Ω(pathMatcher.IsPathMatched(matchedPath)).Should(BeTrue(), matchedPath)
 	}
 
 	for _, notMatchedPath := range e.notMatchedPaths {
-		Ω(pathMatcher.MatchPath(notMatchedPath)).Should(BeFalse())
+		Ω(pathMatcher.IsPathMatched(notMatchedPath)).Should(BeFalse(), notMatchedPath)
 	}
 },
-	Entry("path is relative to the basePath (exclude)", dockerfileIgnorePathMatchEntry{
+	Entry("path is relative to the basePath (exclude)", dockerfileIgnoreIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		patternMatcher:  newPatternMatcher([]string{"d"}),
 		matchedPaths:    []string{filepath.Join("a", "b", "c", "de")},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c", "d"), filepath.Join("a", "b", "c", "d", "e")},
 	}),
-	Entry("path is relative to the basePath (exclude with exclusion)", dockerfileIgnorePathMatchEntry{
+	Entry("path is relative to the basePath (exclude with exclusion)", dockerfileIgnoreIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		patternMatcher:  newPatternMatcher([]string{"d", "!d/e"}),
 		matchedPaths:    []string{filepath.Join("a", "b", "c", "d", "e")},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c", "d")},
 	}),
 
-	Entry("path is not relative to the basePath(exclude)", dockerfileIgnorePathMatchEntry{
+	Entry("path is not relative to the basePath(exclude)", dockerfileIgnoreIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		patternMatcher:  newPatternMatcher([]string{"d"}),
 		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
-	Entry("path is not relative to the basePath (exclude with exclusion)", dockerfileIgnorePathMatchEntry{
+	Entry("path is not relative to the basePath (exclude with exclusion)", dockerfileIgnoreIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		patternMatcher:  newPatternMatcher([]string{"d", "!d/e"}),
 		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
 
-	Entry("basePath is relative to the path (exclude)", dockerfileIgnorePathMatchEntry{
+	Entry("basePath is relative to the path (exclude)", dockerfileIgnoreIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		patternMatcher:  newPatternMatcher([]string{"d"}),
 		notMatchedPaths: []string{filepath.Join("a")},
 	}),
-	Entry("basePath is relative to the path (exclude with exclusion)", dockerfileIgnorePathMatchEntry{
+	Entry("basePath is relative to the path (exclude with exclusion)", dockerfileIgnoreIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		patternMatcher:  newPatternMatcher([]string{"d", "!d/e"}),
 		notMatchedPaths: []string{filepath.Join("a")},
 	}),
 )
 
-type dockerfileIgnoreProcessDirOrSubmodulePath struct {
+type dockerfileIgnoreShouldGoThrough struct {
 	baseBase               string
 	patternMatcher         *fileutils.PatternMatcher
-	matchedPaths           []string
-	shouldWalkThroughPaths []string
-	notMatchedPaths        []string
+	shouldGoThroughPaths   []string
+	shouldNotGoThroughPath []string
 }
 
-var _ = DescribeTable("dockerfile ignore path matcher (ProcessDirOrSubmodulePath)", func(e dockerfileIgnoreProcessDirOrSubmodulePath) {
-	pathMatcher := NewDockerfileIgnorePathMatcher(e.baseBase, e.patternMatcher, false)
+var _ = DescribeTable("dockerfile ignore path matcher (ShouldGoThrough)", func(e dockerfileIgnoreShouldGoThrough) {
+	pathMatcher := NewDockerfileIgnorePathMatcher(e.baseBase, e.patternMatcher)
 
-	for _, matchedPath := range e.matchedPaths {
-		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(matchedPath)
-		Ω(isMatched).Should(BeTrue(), matchedPath)
-		Ω(shouldWalkThrough).Should(BeFalse(), matchedPath)
+	for _, shouldGoThroughPath := range e.shouldGoThroughPaths {
+		shouldGoThrough := pathMatcher.ShouldGoThrough(shouldGoThroughPath)
+		Ω(shouldGoThrough).Should(BeTrue(), shouldGoThroughPath)
 	}
 
-	for _, shouldWalkThroughPath := range e.shouldWalkThroughPaths {
-		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(shouldWalkThroughPath)
-		Ω(isMatched).Should(BeFalse(), shouldWalkThroughPath)
-		Ω(shouldWalkThrough).Should(BeTrue(), shouldWalkThroughPath)
-	}
-
-	for _, notMatchedPath := range e.notMatchedPaths {
-		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(notMatchedPath)
-		Ω(isMatched).Should(BeFalse(), notMatchedPath)
-		Ω(shouldWalkThrough).Should(BeFalse(), notMatchedPath)
+	for _, shouldNotGoThroughPath := range e.shouldNotGoThroughPath {
+		shouldGoThrough := pathMatcher.ShouldGoThrough(shouldNotGoThroughPath)
+		Ω(shouldGoThrough).Should(BeFalse(), shouldNotGoThroughPath)
 	}
 },
-	Entry("path is relative to the basePath (exclude)", dockerfileIgnoreProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		patternMatcher:  newPatternMatcher([]string{"d"}),
-		matchedPaths:    []string{filepath.Join("a", "b", "c", "de")},
-		notMatchedPaths: []string{filepath.Join("a", "b", "c", "d"), filepath.Join("a", "b", "c", "d", "e")},
-	}),
-	Entry("path is relative to the basePath (exclude with exclusion)", dockerfileIgnoreProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		patternMatcher:         newPatternMatcher([]string{"d", "!d/e"}),
-		matchedPaths:           []string{filepath.Join("a", "b", "c", "d", "e")},
-		shouldWalkThroughPaths: []string{filepath.Join("a", "b", "c", "d")},
-	}),
-
-	Entry("basePath is equal to the path (exclude)", dockerfileIgnoreProcessDirOrSubmodulePath{
+	Entry("path is relative to the basePath (exclude)", dockerfileIgnoreShouldGoThrough{
 		baseBase:               filepath.Join("a", "b", "c"),
 		patternMatcher:         newPatternMatcher([]string{"d"}),
-		shouldWalkThroughPaths: []string{filepath.Join("a", "b", "c")},
+		shouldNotGoThroughPath: []string{filepath.Join("a", "b", "c", "d"), filepath.Join("a", "b", "c", "d", "e")},
 	}),
-	Entry("basePath is equal to the path (exclude with exclusion)", dockerfileIgnoreProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		patternMatcher:         newPatternMatcher([]string{"d", "!d/e"}),
-		shouldWalkThroughPaths: []string{filepath.Join("a", "b", "c")},
-	}),
-
-	Entry("path is not relative to the basePath(exclude)", dockerfileIgnoreProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		patternMatcher:  newPatternMatcher([]string{"d"}),
-		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
-	}),
-	Entry("path is not relative to the basePath (exclude with exclusion)", dockerfileIgnoreProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		patternMatcher:  newPatternMatcher([]string{"d", "!d/e"}),
-		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
+	Entry("path is relative to the basePath (exclude with exclusion)", dockerfileIgnoreShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		patternMatcher:       newPatternMatcher([]string{"d", "!d/e"}),
+		shouldGoThroughPaths: []string{filepath.Join("a", "b", "c", "d")},
 	}),
 
-	Entry("basePath is relative to the path (exclude)", dockerfileIgnoreProcessDirOrSubmodulePath{
+	Entry("basePath is equal to the path (exclude)", dockerfileIgnoreShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		patternMatcher:       newPatternMatcher([]string{"d"}),
+		shouldGoThroughPaths: []string{filepath.Join("a", "b", "c")},
+	}),
+	Entry("basePath is equal to the path (exclude with exclusion)", dockerfileIgnoreShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		patternMatcher:       newPatternMatcher([]string{"d", "!d/e"}),
+		shouldGoThroughPaths: []string{filepath.Join("a", "b", "c")},
+	}),
+
+	Entry("path is not relative to the basePath(exclude)", dockerfileIgnoreShouldGoThrough{
 		baseBase:               filepath.Join("a", "b", "c"),
 		patternMatcher:         newPatternMatcher([]string{"d"}),
-		shouldWalkThroughPaths: []string{filepath.Join("a")},
+		shouldNotGoThroughPath: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
-	Entry("basePath is relative to the path (exclude with exclusion)", dockerfileIgnoreProcessDirOrSubmodulePath{
+	Entry("path is not relative to the basePath (exclude with exclusion)", dockerfileIgnoreShouldGoThrough{
 		baseBase:               filepath.Join("a", "b", "c"),
 		patternMatcher:         newPatternMatcher([]string{"d", "!d/e"}),
-		shouldWalkThroughPaths: []string{filepath.Join("a")},
+		shouldNotGoThroughPath: []string{filepath.Join("a", "b", "d"), "b"},
+	}),
+
+	Entry("basePath is relative to the path (exclude)", dockerfileIgnoreShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		patternMatcher:       newPatternMatcher([]string{"d"}),
+		shouldGoThroughPaths: []string{filepath.Join("a")},
+	}),
+	Entry("basePath is relative to the path (exclude with exclusion)", dockerfileIgnoreShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		patternMatcher:       newPatternMatcher([]string{"d", "!d/e"}),
+		shouldGoThroughPaths: []string{filepath.Join("a")},
 	}),
 )

@@ -41,7 +41,7 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 	if r.sharedOptions.LooseGiterminism() {
 		for _, relToDirPath := range relToDirFilePathListFromFS {
 			relPath := filepath.Join(dir, relToDirPath)
-			data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, acceptedFilePathMatcher.MatchPath)
+			data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, acceptedFilePathMatcher.IsPathMatched)
 			if err := handleFileFunc(relToDirPath, data, err); err != nil {
 				return err
 			}
@@ -60,7 +60,7 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 	var relPathListWithUncommittedFiles []string
 	for _, relToDirPath := range relToDirPathList {
 		relPath := filepath.Join(dir, relToDirPath)
-		data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, acceptedFilePathMatcher.MatchPath)
+		data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, acceptedFilePathMatcher.IsPathMatched)
 		err = handleFileFunc(relToDirPath, data, err)
 		if err != nil {
 			switch err.(type) {

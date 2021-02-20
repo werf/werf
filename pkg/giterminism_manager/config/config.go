@@ -190,12 +190,12 @@ func (h helm) UncommittedHelmFilePathMatcher() path_matcher.PathMatcher {
 }
 
 func isPathMatched(patterns []string, p string) bool {
-	return pathMatcher(patterns).MatchPath(p)
+	return pathMatcher(patterns).IsPathMatched(p)
 }
 
 func pathMatcher(patterns []string) path_matcher.PathMatcher {
 	if len(patterns) != 0 {
-		return path_matcher.NewSimplePathMatcher("", patterns, true)
+		return path_matcher.NewSimplePathMatcher("", patterns)
 	} else {
 		return path_matcher.NewStubPathMatcher("")
 	}

@@ -201,7 +201,6 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
-			false,
 		),
 		WithEntireFileContext: opts.WithEntireFileContext,
 		WithBinary:            opts.WithBinary,
@@ -353,7 +352,6 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
-			true,
 		),
 	}
 
@@ -512,7 +510,6 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 		opts.BasePath,
 		opts.IncludePaths,
 		opts.ExcludePaths,
-		false,
 	)
 
 	var mainLsTreeResult *ls_tree.Result
@@ -526,11 +523,7 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 
 	for _, p := range opts.Paths {
 		var pathLsTreeResult *ls_tree.Result
-		pathMatcher := path_matcher.NewSimplePathMatcher(
-			opts.BasePath,
-			[]string{p},
-			false,
-		)
+		pathMatcher := path_matcher.NewSimplePathMatcher(opts.BasePath, []string{p})
 
 		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
 		logProcess.Start()
