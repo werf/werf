@@ -179,7 +179,6 @@ func (repo *Local) GetMergeCommitParents(_ context.Context, commit string) ([]st
 type LsTreeOptions struct {
 	Commit        string
 	UseHeadCommit bool
-	Strict        bool
 }
 
 func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts LsTreeOptions) (*ls_tree.Result, error) {
@@ -219,7 +218,7 @@ func (repo *Local) getMainLsTreeResult(ctx context.Context, opts LsTreeOptions) 
 
 	var lsTreeResult *ls_tree.Result
 	if err := repo.yieldRepositoryBackedByWorkTree(ctx, commit, func(repository *git.Repository) error {
-		r, err := ls_tree.LsTree(ctx, repository, commit, path_matcher.NewSimplePathMatcher("", []string{}, false), opts.Strict)
+		r, err := ls_tree.LsTree(ctx, repository, commit, path_matcher.NewSimplePathMatcher("", []string{}, false))
 		if err != nil {
 			return err
 		}
@@ -454,7 +453,6 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 
 	result, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(resolvedDir, []string{}, true), LsTreeOptions{
 		Commit: commit,
-		Strict: true,
 	})
 	if err != nil {
 		return err
@@ -762,7 +760,6 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPath string) ([]byte, error) {
 	lsTreeResult, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(relPath, []string{}, false), LsTreeOptions{
 		Commit: commit,
-		Strict: true,
 	})
 	if err != nil {
 		return nil, err
@@ -838,7 +835,6 @@ func (repo *Local) isTreeEntryExist(ctx context.Context, commit, relPath string)
 func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) (*ls_tree.LsTreeEntry, error) {
 	lsTreeResult, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(path, []string{}, false), LsTreeOptions{
 		Commit: commit,
-		Strict: true,
 	})
 	if err != nil {
 		return nil, err

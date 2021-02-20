@@ -518,7 +518,7 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 	var mainLsTreeResult *ls_tree.Result
 	if err := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", mainPathMatcher.String()).DoError(func() error {
 		var err error
-		mainLsTreeResult, err = ls_tree.LsTree(ctx, repository, opts.Commit, mainPathMatcher, true)
+		mainLsTreeResult, err = ls_tree.LsTree(ctx, repository, opts.Commit, mainPathMatcher)
 		return err
 	}); err != nil {
 		return nil, err

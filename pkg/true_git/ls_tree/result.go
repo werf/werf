@@ -19,20 +19,18 @@ import (
 )
 
 type Result struct {
-	commit                                  string
-	repositoryFullFilepath                  string
-	lsTreeEntries                           []*LsTreeEntry
-	submodulesResults                       []*SubmoduleResult
-	notInitializedSubmoduleFullFilepathList []string
+	commit                 string
+	repositoryFullFilepath string
+	lsTreeEntries          []*LsTreeEntry
+	submodulesResults      []*SubmoduleResult
 }
 
-func NewResult(commit string, repositoryFullFilepath string, lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, notInitializedSubmoduleFullFilepathList []string) *Result {
+func NewResult(commit string, repositoryFullFilepath string, lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult) *Result {
 	return &Result{
-		commit:                                  commit,
-		repositoryFullFilepath:                  repositoryFullFilepath,
-		lsTreeEntries:                           lsTreeEntries,
-		submodulesResults:                       submodulesResults,
-		notInitializedSubmoduleFullFilepathList: notInitializedSubmoduleFullFilepathList,
+		commit:                 commit,
+		repositoryFullFilepath: repositoryFullFilepath,
+		lsTreeEntries:          lsTreeEntries,
+		submodulesResults:      submodulesResults,
 	}
 }
 
@@ -119,7 +117,7 @@ func (r *Result) LsTree(ctx context.Context, repository *git.Repository, pathMat
 }
 
 func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher) (*Result, error) {
-	res := NewResult(r.commit, r.repositoryFullFilepath, []*LsTreeEntry{}, []*SubmoduleResult{}, []string{})
+	res := NewResult(r.commit, r.repositoryFullFilepath, []*LsTreeEntry{}, []*SubmoduleResult{})
 
 	tree, err := getCommitTree(repository, r.commit)
 	if err != nil {
@@ -176,13 +174,6 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 		}
 	}
 
-	for _, submoduleFullFilepath := range r.notInitializedSubmoduleFullFilepathList {
-		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
-		if isMatched || shouldGoThrough {
-			res.notInitializedSubmoduleFullFilepathList = append(res.notInitializedSubmoduleFullFilepathList, submoduleFullFilepath)
-		}
-	}
-
 	return res, nil
 }
 
@@ -232,13 +223,6 @@ func (r *Result) Checksum(ctx context.Context) string {
 		return nil
 	})
 
-	sort.Strings(r.notInitializedSubmoduleFullFilepathList)
-	for _, submoduleFullFilepath := range r.notInitializedSubmoduleFullFilepathList {
-		checksumArg := fmt.Sprintf("-%s", filepath.ToSlash(submoduleFullFilepath))
-		h.Write([]byte(checksumArg))
-		logboek.Context(ctx).Debug().LogF("Not initialized submodule was added: %s -> %s\n", submoduleFullFilepath, checksumArg)
-	}
-
 	sort.Slice(r.submodulesResults, func(i, j int) bool {
 		return r.submodulesResults[i].repositoryFullFilepath < r.submodulesResults[j].repositoryFullFilepath
 	})
@@ -264,7 +248,7 @@ func (r *Result) Checksum(ctx context.Context) string {
 }
 
 func (r *Result) IsEmpty() bool {
-	return len(r.lsTreeEntries) == 0 && len(r.submodulesResults) == 0 && len(r.notInitializedSubmoduleFullFilepathList) == 0
+	return len(r.lsTreeEntries) == 0 && len(r.submodulesResults) == 0
 }
 
 func (r *Result) lsTreeEntriesWalk(f func(entry *LsTreeEntry) error) error {

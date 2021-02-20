@@ -32,8 +32,8 @@ func newHash(s string) (plumbing.Hash, error) {
 	return h, nil
 }
 
-func LsTree(ctx context.Context, repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher, strict bool) (*Result, error) {
-	r, err := lsTree(ctx, repository, commit, pathMatcher, strict)
+func LsTree(ctx context.Context, repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+	r, err := lsTree(ctx, repository, commit, pathMatcher)
 	if err != nil {
 		return nil, err
 	}
@@ -42,14 +42,8 @@ func LsTree(ctx context.Context, repository *git.Repository, commit string, path
 	return r, nil
 }
 
-func lsTree(ctx context.Context, repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher, strict bool) (*Result, error) {
-	res := NewResult(commit, "", []*LsTreeEntry{}, []*SubmoduleResult{}, []string{})
-
-	worktreeNotInitializedSubmodulePaths, err := notInitializedSubmoduleFullFilepaths(ctx, repository, "", pathMatcher, strict)
-	if err != nil {
-		return nil, err
-	}
-	res.notInitializedSubmoduleFullFilepathList = worktreeNotInitializedSubmodulePaths
+func lsTree(ctx context.Context, repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+	res := NewResult(commit, "", []*LsTreeEntry{}, []*SubmoduleResult{})
 
 	tree, err := getCommitTree(repository, commit)
 	if err != nil {
@@ -146,19 +140,7 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 
 		submoduleRepository, submoduleExpectedCommit, submoduleTree, err := submoduleRepositoryAndTree(ctx, repository, submodule.Config().Path)
 		if err != nil {
-			if err == git.ErrSubmoduleNotInitialized {
-				if debugProcess() {
-					logboek.Context(ctx).Debug().LogFWithCustomStyle(
-						color.GetStyle("danger"),
-						"Submodule is not initialized: path %s will be added to checksum\n",
-						submoduleFullFilepath,
-					)
-				}
-
-				return lsTreeEntries, submodulesResults, nil
-			}
-
-			return nil, nil, fmt.Errorf("getting submodule repository and tree failed (%s): %s", submoduleFullFilepath, err)
+			return nil, nil, fmt.Errorf("getting submodule %q repository and tree failed: %s", submoduleFullFilepath, err)
 		}
 
 		sLsTreeEntries, sSubmodulesResults, err := processSpecificEntryFilepath(ctx, submoduleRepository, submoduleTree, submoduleFullFilepath, submoduleFullFilepath, relTreeEntryFilepath, pathMatcher)
@@ -166,7 +148,7 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 			return nil, nil, err
 		}
 
-		result := NewResult(submoduleExpectedCommit, submoduleFullFilepath, sLsTreeEntries, sSubmodulesResults, []string{})
+		result := NewResult(submoduleExpectedCommit, submoduleFullFilepath, sLsTreeEntries, sSubmodulesResults)
 		submoduleResult := NewSubmoduleResult(submodule.Config().Name, submodule.Config().Path, result)
 
 		if !submoduleResult.IsEmpty() {
@@ -265,19 +247,7 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, 
 		submodulePath := filepath.ToSlash(submoduleFilepath)
 		submoduleRepository, submoduleCommit, submoduleTree, err := submoduleRepositoryAndTree(ctx, repository, submodulePath)
 		if err != nil {
-			if err == git.ErrSubmoduleNotInitialized {
-				if debugProcess() {
-					logboek.Context(ctx).Debug().LogFWithCustomStyle(
-						color.GetStyle("danger"),
-						"Submodule is not initialized: path %s will be added to checksum\n",
-						lsTreeEntry.FullFilepath,
-					)
-				}
-
-				return nil, nil, nil
-			}
-
-			return nil, nil, fmt.Errorf("getting submodule repository and tree failed (%s): %s", lsTreeEntry.FullFilepath, err)
+			return nil, nil, fmt.Errorf("getting submodule %q repository and tree failed: %s", lsTreeEntry.FullFilepath, err)
 		}
 
 		submoduleLsTreeEntrees, submoduleSubmoduleResults, err := lsTreeWalk(ctx, submoduleRepository, submoduleTree, lsTreeEntry.FullFilepath, lsTreeEntry.FullFilepath, pathMatcher)
@@ -307,7 +277,7 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, 
 				panic("unexpected condition " + submodulePath)
 			}
 
-			result := NewResult(submoduleCommit, lsTreeEntry.FullFilepath, submoduleLsTreeEntrees, submoduleSubmoduleResults, []string{})
+			result := NewResult(submoduleCommit, lsTreeEntry.FullFilepath, submoduleLsTreeEntrees, submoduleSubmoduleResults)
 			submoduleResult := NewSubmoduleResult(submoduleName, submodulePath, result)
 
 			if !submoduleResult.IsEmpty() {
@@ -356,54 +326,6 @@ func treeTree(tree *object.Tree, treeFullFilepath, treeDirEntryFullFilepath stri
 	}
 
 	return entryTree, nil
-}
-
-func notInitializedSubmoduleFullFilepaths(ctx context.Context, repository *git.Repository, repositoryFullFilepath string, pathMatcher path_matcher.PathMatcher, strict bool) ([]string, error) {
-	worktree, err := repository.Worktree()
-	if err != nil {
-		return nil, err
-	}
-
-	submodules, err := worktree.Submodules()
-	if err != nil {
-		return nil, err
-	}
-
-	var resultFullFilepaths []string
-	for _, submodule := range submodules {
-		submoduleEntryFilepath := filepath.FromSlash(submodule.Config().Path)
-		submoduleFullFilepath := filepath.Join(repositoryFullFilepath, submoduleEntryFilepath)
-		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
-		if isMatched || shouldGoThrough {
-			submoduleRepository, err := submodule.Repository()
-			if err != nil {
-				if err == git.ErrSubmoduleNotInitialized && !strict {
-					resultFullFilepaths = append(resultFullFilepaths, submoduleFullFilepath)
-
-					if debugProcess() {
-						logboek.Context(ctx).Debug().LogFWithCustomStyle(
-							color.GetStyle("danger"),
-							"Submodule is not initialized: path %s will be added to checksum\n",
-							submoduleFullFilepath,
-						)
-					}
-
-					continue
-				}
-
-				return nil, fmt.Errorf("getting submodule repository failed (%s): %s", submoduleFullFilepath, err)
-			}
-
-			submoduleFullFilepaths, err := notInitializedSubmoduleFullFilepaths(ctx, submoduleRepository, submoduleFullFilepath, pathMatcher, strict)
-			if err != nil {
-				return nil, err
-			}
-
-			resultFullFilepaths = append(resultFullFilepaths, submoduleFullFilepaths...)
-		}
-	}
-
-	return resultFullFilepaths, nil
 }
 
 func submoduleRepositoryAndTree(ctx context.Context, repository *git.Repository, submodulePath string) (*git.Repository, string, *object.Tree, error) {
