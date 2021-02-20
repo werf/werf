@@ -219,7 +219,7 @@ config:
 			},
 			Entry("the env name not allowed", entry{
 				addEnvName:           "NAME",
-				expectedErrSubstring: `error calling env: the configuration with external dependency found in the werf config: env name "NAME" not allowed`,
+				expectedErrSubstring: `error calling env: the configuration with potential external dependency found in the werf config: env name "NAME" not allowed by giterminism`,
 			}),
 			Entry("config.goTemplateRendering.allowEnvVariables (NAME) covers the env name", entry{
 				allowEnvVariablesRegexp: "NAME",
@@ -228,7 +228,7 @@ config:
 			Entry("config.goTemplateRendering.allowEnvVariables (NA.*) does not cover the env name", entry{
 				allowEnvVariablesRegexp: "NA.*",
 				addEnvName:              "NAME",
-				expectedErrSubstring:    `error calling env: the configuration with external dependency found in the werf config: env name "NAME" not allowed`,
+				expectedErrSubstring:    `error calling env: the configuration with potential external dependency found in the werf config: env name "NAME" not allowed by giterminism`,
 			}),
 			Entry("config.goTemplateRendering.allowEnvVariables (/NA.*/) covers the env name", entry{
 				allowEnvVariablesRegexp: "/NA.*/",

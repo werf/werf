@@ -61,7 +61,7 @@ config:
 			},
 			Entry("the contextAddFile a/b/c not allowed", entry{
 				contextAddFile:       "a/b/c",
-				expectedErrSubstring: `the configuration with external dependency found in the werf config: contextAddFile "a/b/c" not allowed`,
+				expectedErrSubstring: `the configuration with potential external dependency found in the werf config: contextAddFile "a/b/c" not allowed by giterminism`,
 			}),
 			Entry("config.dockerfile.allowContextAddFiles (a/b/c) covers the contextAddFile a/b/c", entry{
 				configDockerfileContextAddFilesGlob: "a/b/c",
@@ -75,7 +75,7 @@ config:
 				configDockerfileContextAddFilesGlob: "a/b/c",
 				context:                             "d",
 				contextAddFile:                      "a/b/c",
-				expectedErrSubstring:                `the configuration with external dependency found in the werf config: contextAddFile "d/a/b/c" not allowed`,
+				expectedErrSubstring:                `the configuration with potential external dependency found in the werf config: contextAddFile "d/a/b/c" not allowed by giterminism`,
 			}),
 			Entry("config.dockerfile.allowContextAddFiles (d/a/b/c/) covers the contextAddFile a/b/c inside context d", entry{
 				configDockerfileContextAddFilesGlob: "d/a/b/c",
