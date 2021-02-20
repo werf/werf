@@ -51,7 +51,7 @@ config:
 				}
 			},
 			Entry("the from latest directive not allowed", entry{
-				expectedErrSubstring: "the configuration with external dependency found in the werf config: fromLatest directive not allowed",
+				expectedErrSubstring: "the configuration with potential external dependency found in the werf config: fromLatest directive not allowed by giterminism",
 			}),
 			Entry("the from latest directive allowed", entry{
 				allowStapelFromLatest: true,
@@ -101,7 +101,7 @@ config:
 				}
 			},
 			Entry("the remote git branch not allowed", entry{
-				expectedErrSubstring: "the configuration with external dependency found in the werf config: git branch directive not allowed",
+				expectedErrSubstring: "the configuration with potential external dependency found in the werf config: git branch directive not allowed by giterminism",
 			}),
 			Entry("the remote git branch allowed", entry{
 				allowStapelGitBranch: true,
@@ -150,7 +150,7 @@ config:
 				}
 			},
 			Entry("the build_dir mount not allowed", entry{
-				expectedErrSubstring: `the configuration with external dependency found in the werf config: "mount { from: build_dir, ... }" not allowed`,
+				expectedErrSubstring: `the configuration with potential external dependency found in the werf config: "mount { from: build_dir, ... }" not allowed by giterminism`,
 			}),
 			Entry("the build_dir mount allowed", entry{
 				allowStapelMountBuildDir: true,
@@ -201,7 +201,7 @@ config:
 			},
 			Entry("the from path /a/b/c not allowed", entry{
 				fromPath:             "/a/b/c",
-				expectedErrSubstring: `the configuration with external dependency found in the werf config: "mount { fromPath: /a/b/c, ... }" not allowed`,
+				expectedErrSubstring: `the configuration with potential external dependency found in the werf config: "mount { fromPath: /a/b/c, ... }" not allowed by giterminism`,
 			}),
 			Entry("config.stapel.mount.allowFromPaths (/a/b/c) covers the from path /a/b/c", entry{
 				allowStapelMountFromPathsGlob: "/a/b/c",
