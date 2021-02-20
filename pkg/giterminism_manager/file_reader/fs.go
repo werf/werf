@@ -225,6 +225,10 @@ func (r FileReader) skipFileFunc(acceptedFilePathMatcher path_matcher.PathMatche
 			return true, nil
 		}
 
+		if r.sharedOptions.LooseGiterminism() {
+			return false, nil
+		}
+
 		pathsToCheck := []string{existingRelPath}
 		resolvedFilePath, err := r.ResolveFilePath(ctx, existingRelPath)
 		if err != nil {
