@@ -179,6 +179,7 @@ func (repo *Local) GetMergeCommitParents(_ context.Context, commit string) ([]st
 type LsTreeOptions struct {
 	Commit        string
 	UseHeadCommit bool
+	AllFiles      bool
 }
 
 func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts LsTreeOptions) (*ls_tree.Result, error) {
@@ -189,7 +190,7 @@ func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatc
 
 	var lsTreeResult *ls_tree.Result
 	if err := repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) (err error) {
-		lsTreeResult, err = mainLsTreeResult.LsTree(ctx, repository, pathMatcher)
+		lsTreeResult, err = mainLsTreeResult.LsTree(ctx, repository, pathMatcher, opts.AllFiles)
 		return err
 	}); err != nil {
 		return nil, err
@@ -218,7 +219,7 @@ func (repo *Local) getMainLsTreeResult(ctx context.Context, opts LsTreeOptions) 
 
 	var lsTreeResult *ls_tree.Result
 	if err := repo.yieldRepositoryBackedByWorkTree(ctx, commit, func(repository *git.Repository) error {
-		r, err := ls_tree.LsTree(ctx, repository, commit, path_matcher.NewSimplePathMatcher("", []string{}))
+		r, err := ls_tree.LsTree(ctx, repository, commit, path_matcher.NewSimplePathMatcher("", []string{}), opts.AllFiles)
 		if err != nil {
 			return err
 		}
@@ -449,8 +450,9 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 		return fmt.Errorf("unable to resolve commit file %q: %s", dir, err)
 	}
 
-	result, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(resolvedDir, []string{}, true), LsTreeOptions{
-		Commit: commit,
+	result, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(resolvedDir, []string{}), LsTreeOptions{
+		Commit:   commit,
+		AllFiles: true,
 	})
 	if err != nil {
 		return err

@@ -106,8 +106,8 @@ type LsTreeEntry struct {
 	object.TreeEntry
 }
 
-func (r *Result) LsTree(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher) (*Result, error) {
-	r, err := r.lsTree(ctx, repository, pathMatcher)
+func (r *Result) LsTree(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher, allFiles bool) (*Result, error) {
+	r, err := r.lsTree(ctx, repository, pathMatcher, allFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (r *Result) LsTree(ctx context.Context, repository *git.Repository, pathMat
 	return r, nil
 }
 
-func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher) (*Result, error) {
+func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher, allFiles bool) (*Result, error) {
 	res := NewResult(r.commit, r.repositoryFullFilepath, []*LsTreeEntry{}, []*SubmoduleResult{})
 
 	tree, err := getCommitTree(repository, r.commit)
@@ -130,24 +130,42 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 
 		var err error
 		if lsTreeEntry.FullFilepath == "" {
-			isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(lsTreeEntry.FullFilepath)
-			if isTreeMatched {
-				if debugProcess() {
-					logboek.Context(ctx).Debug().LogLn("Root tree was added")
-				}
-				entryLsTreeEntries = append(entryLsTreeEntries, lsTreeEntry)
-			} else if shouldWalkThrough {
-				if debugProcess() {
-					logboek.Context(ctx).Debug().LogLn("Root tree was checking")
-				}
+			if err := lsTreeDirOrSubmoduleEntryMatchBase(
+				lsTreeEntry.FullFilepath,
+				pathMatcher,
+				allFiles,
+				// add tree func
+				func() error {
+					if debugProcess() {
+						logboek.Context(ctx).Debug().LogLn("Root tree was added")
+					}
 
-				entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, pathMatcher)
-				if err != nil {
-					return nil, err
-				}
+					entryLsTreeEntries = append(entryLsTreeEntries, lsTreeEntry)
+
+					return nil
+				},
+				// check tree func
+				func() error {
+					if debugProcess() {
+						logboek.Context(ctx).Debug().LogLn("Root tree was checking")
+					}
+
+					entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, pathMatcher, allFiles)
+					return err
+				},
+				// skip tree func
+				func() error {
+					if debugProcess() {
+						logboek.Context(ctx).Debug().LogLn("Root tree was skipped")
+					}
+
+					return nil
+				},
+			); err != nil {
+				return nil, err
 			}
 		} else {
-			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, pathMatcher)
+			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, pathMatcher, allFiles)
 			if err != nil {
 				return nil, err
 			}
@@ -163,7 +181,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 			return nil, err
 		}
 
-		sr, err := submoduleResult.lsTree(ctx, submoduleRepository, pathMatcher)
+		sr, err := submoduleResult.lsTree(ctx, submoduleRepository, pathMatcher, allFiles)
 		if err != nil {
 			return nil, err
 		}

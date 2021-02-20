@@ -131,7 +131,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 	logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", opts.PathMatcher.String())
 	logProcess.Start()
-	result, err := ls_tree.LsTree(ctx, repository, opts.Commit, opts.PathMatcher)
+	result, err := ls_tree.LsTree(ctx, repository, opts.Commit, opts.PathMatcher, true)
 	if err != nil {
 		logProcess.Fail()
 		return nil, err
