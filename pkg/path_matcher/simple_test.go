@@ -8,55 +8,55 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type simpleMatchPathEntry struct {
+type simpleIsPathMatchedEntry struct {
 	baseBase        string
 	paths           []string
 	matchedPaths    []string
 	notMatchedPaths []string
 }
 
-var _ = DescribeTable("simple path matcher (MatchPath)", func(e simpleMatchPathEntry) {
-	pathMatcher := NewSimplePathMatcher(e.baseBase, e.paths, false)
+var _ = DescribeTable("simple path matcher (IsPathMatched)", func(e simpleIsPathMatchedEntry) {
+	pathMatcher := NewSimplePathMatcher(e.baseBase, e.paths)
 
 	for _, matchedPath := range e.matchedPaths {
-		Ω(pathMatcher.MatchPath(matchedPath)).Should(BeTrue(), fmt.Sprintln(pathMatcher, "==", matchedPath))
+		Ω(pathMatcher.IsPathMatched(matchedPath)).Should(BeTrue(), fmt.Sprintln(pathMatcher, "==", matchedPath))
 	}
 
 	for _, notMatchedPath := range e.notMatchedPaths {
-		Ω(pathMatcher.MatchPath(notMatchedPath)).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", notMatchedPath))
+		Ω(pathMatcher.IsPathMatched(notMatchedPath)).Should(BeFalse(), fmt.Sprintln(pathMatcher, "!=", notMatchedPath))
 	}
 },
-	Entry("basePath is equal to the path (paths)", simpleMatchPathEntry{
+	Entry("basePath is equal to the path (paths)", simpleIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		paths:           []string{"d"},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c")},
 	}),
-	Entry("basePath is equal to the path, includePath ''", simpleMatchPathEntry{
+	Entry("basePath is equal to the path, includePath ''", simpleIsPathMatchedEntry{
 		baseBase:     filepath.Join("a", "b", "c"),
 		paths:        []string{""},
 		matchedPaths: []string{filepath.Join("a", "b", "c")},
 	}),
 
-	Entry("path is relative to the basePath (paths)", simpleMatchPathEntry{
+	Entry("path is relative to the basePath (paths)", simpleIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		paths:           []string{"d"},
 		matchedPaths:    []string{filepath.Join("a", "b", "c", "d")},
 		notMatchedPaths: []string{filepath.Join("a", "b", "c", "e"), filepath.Join("a", "b", "c", "de")},
 	}),
 
-	Entry("path is not relative to the basePath(paths)", simpleMatchPathEntry{
+	Entry("path is not relative to the basePath(paths)", simpleIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		paths:           []string{"d"},
 		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
 
-	Entry("basePath is relative to the path (paths)", simpleMatchPathEntry{
+	Entry("basePath is relative to the path (paths)", simpleIsPathMatchedEntry{
 		baseBase:        filepath.Join("a", "b", "c"),
 		paths:           []string{"d"},
 		notMatchedPaths: []string{filepath.Join("a")},
 	}),
 
-	Entry("glob completion by default (paths)", simpleMatchPathEntry{
+	Entry("glob completion by default (paths)", simpleIsPathMatchedEntry{
 		paths: []string{
 			"a",
 			filepath.Join("b", "*"),
@@ -72,88 +72,55 @@ var _ = DescribeTable("simple path matcher (MatchPath)", func(e simpleMatchPathE
 	}),
 )
 
-type simpleProcessDirOrSubmodulePath struct {
-	baseBase               string
-	paths                  []string
-	matchedPaths           []string
-	shouldWalkThroughPaths []string
-	notMatchedPaths        []string
+type simpleShouldGoThrough struct {
+	baseBase                string
+	paths                   []string
+	shouldGoThroughPaths    []string
+	shouldNotGoThroughPaths []string
 }
 
-var _ = DescribeTable("simple (ProcessDirOrSubmodulePath)", func(e simpleProcessDirOrSubmodulePath) {
-	pathMatcher := NewSimplePathMatcher(e.baseBase, e.paths, false)
+var _ = DescribeTable("simple (ShouldGoThrough)", func(e simpleShouldGoThrough) {
+	pathMatcher := NewSimplePathMatcher(e.baseBase, e.paths)
 
-	for _, matchedPath := range e.matchedPaths {
-		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(matchedPath)
-		Ω(isMatched).Should(BeTrue())
-		Ω(shouldWalkThrough).Should(BeFalse())
+	for _, shouldGoThroughPath := range e.shouldGoThroughPaths {
+		shouldGoThrough := pathMatcher.ShouldGoThrough(shouldGoThroughPath)
+		Ω(shouldGoThrough).Should(BeTrue())
 	}
 
-	for _, shouldWalkThroughPath := range e.shouldWalkThroughPaths {
-		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(shouldWalkThroughPath)
-		Ω(isMatched).Should(BeFalse())
-		Ω(shouldWalkThrough).Should(BeTrue())
-	}
-
-	for _, notMatchedPath := range e.notMatchedPaths {
-		isMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(notMatchedPath)
-		Ω(isMatched).Should(BeFalse())
-		Ω(shouldWalkThrough).Should(BeFalse())
+	for _, shouldNotGoThroughPath := range e.shouldNotGoThroughPaths {
+		shouldGoThrough := pathMatcher.ShouldGoThrough(shouldNotGoThroughPath)
+		Ω(shouldGoThrough).Should(BeFalse())
 	}
 },
-	Entry("basePath is equal to the path (base)", simpleProcessDirOrSubmodulePath{
-		baseBase:     filepath.Join("a", "b", "c"),
-		matchedPaths: []string{filepath.Join("a", "b", "c")},
-	}),
-	Entry("basePath is equal to the path (paths)", simpleProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		paths:                  []string{"d"},
-		shouldWalkThroughPaths: []string{filepath.Join("a", "b", "c")},
+	Entry("basePath is equal to the path (paths)", simpleShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		paths:                []string{"d"},
+		shouldGoThroughPaths: []string{filepath.Join("a", "b", "c")},
 	}),
 
-	Entry("path is relative to the basePath (base)", simpleProcessDirOrSubmodulePath{
-		baseBase:     filepath.Join("a", "b", "c"),
-		matchedPaths: []string{filepath.Join("a", "b", "c", "d")},
-	}),
-	Entry("path is relative to the basePath (paths)", simpleProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		paths:           []string{"d"},
-		matchedPaths:    []string{filepath.Join("a", "b", "c", "d")},
-		notMatchedPaths: []string{filepath.Join("a", "b", "c", "e"), filepath.Join("a", "b", "c", "de")},
+	Entry("path is relative to the basePath (paths)", simpleShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		paths:                   []string{"d"},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "c", "e"), filepath.Join("a", "b", "c", "de")},
 	}),
 
-	Entry("path is not relative to the basePath (base)", simpleProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
+	Entry("path is not relative to the basePath (base)", simpleShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
-	Entry("path is not relative to the basePath(paths)", simpleProcessDirOrSubmodulePath{
-		baseBase:        filepath.Join("a", "b", "c"),
-		paths:           []string{"d"},
-		notMatchedPaths: []string{filepath.Join("a", "b", "d"), "b"},
-	}),
-
-	Entry("basePath is relative to the path (base)", simpleProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		shouldWalkThroughPaths: []string{filepath.Join("a")},
-	}),
-	Entry("basePath is relative to the path (paths)", simpleProcessDirOrSubmodulePath{
-		baseBase:               filepath.Join("a", "b", "c"),
-		paths:                  []string{"d"},
-		shouldWalkThroughPaths: []string{filepath.Join("a")},
+	Entry("path is not relative to the basePath(paths)", simpleShouldGoThrough{
+		baseBase:                filepath.Join("a", "b", "c"),
+		paths:                   []string{"d"},
+		shouldNotGoThroughPaths: []string{filepath.Join("a", "b", "d"), "b"},
 	}),
 
-	Entry("glob completion by default (paths)", simpleProcessDirOrSubmodulePath{
-		paths: []string{
-			"a",
-			filepath.Join("b", "*"),
-			filepath.Join("c", "**"),
-			filepath.Join("d", "**", "*"),
-		},
-		matchedPaths: []string{
-			filepath.Join("a", "b", "c", "d"),
-			filepath.Join("b", "b", "c", "d"),
-			filepath.Join("c", "b", "c", "d"),
-			filepath.Join("d", "b", "c", "d"),
-		},
+	Entry("basePath is relative to the path (base)", simpleShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		shouldGoThroughPaths: []string{filepath.Join("a")},
+	}),
+	Entry("basePath is relative to the path (paths)", simpleShouldGoThrough{
+		baseBase:             filepath.Join("a", "b", "c"),
+		paths:                []string{"d"},
+		shouldGoThroughPaths: []string{filepath.Join("a")},
 	}),
 )

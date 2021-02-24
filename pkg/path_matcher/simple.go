@@ -6,11 +6,10 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func NewSimplePathMatcher(basePath string, paths []string, greedySearch bool) *SimplePathMatcher {
+func NewSimplePathMatcher(basePath string, paths []string) *SimplePathMatcher {
 	return &SimplePathMatcher{
-		basePathMatcher:  basePathMatcher{basePath: formatPath(basePath)},
-		paths:            formatPaths(paths),
-		isGreedySearchOn: greedySearch,
+		basePathMatcher: basePathMatcher{basePath: formatPath(basePath)},
+		paths:           formatPaths(paths),
 	}
 }
 
@@ -29,10 +28,14 @@ func (f *SimplePathMatcher) Paths() []string {
 }
 
 func (f *SimplePathMatcher) String() string {
-	return fmt.Sprintf("basePath=`%s`, paths=%v, greedySearch=%v", f.basePath, f.paths, f.isGreedySearchOn)
+	return fmt.Sprintf("basePath=`%s`, paths=%v", f.basePath, f.paths)
 }
 
-func (f *SimplePathMatcher) MatchPath(path string) bool {
+func (f *SimplePathMatcher) IsDirOrSubmodulePathMatched(path string) bool {
+	return f.IsPathMatched(path) || f.ShouldGoThrough(path)
+}
+
+func (f *SimplePathMatcher) IsPathMatched(path string) bool {
 	path = formatPath(path)
 
 	if !isRel(path, f.basePath) {
@@ -50,33 +53,32 @@ func (f *SimplePathMatcher) MatchPath(path string) bool {
 	return true
 }
 
-func (f *SimplePathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
-	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(formatPath(path))
-	if f.isGreedySearchOn {
-		return false, isMatched || shouldGoThrough
-	} else {
-		return isMatched, shouldGoThrough
-	}
+func (f *SimplePathMatcher) ShouldGoThrough(path string) bool {
+	return f.shouldGoThrough(formatPath(path))
 }
 
-func (f *SimplePathMatcher) processDirOrSubmodulePath(path string) (bool, bool) {
+func (f *SimplePathMatcher) shouldGoThrough(path string) bool {
 	isBasePathRelativeToPath := isSubDirOf(f.basePath, path)
 	isPathRelativeToBasePath := isSubDirOf(path, f.basePath)
 
 	if isPathRelativeToBasePath || path == f.basePath {
 		if len(f.paths) == 0 {
-			return true, false
+			return false
 		} else if hasUniversalGlob(f.paths) {
-			return true, false
+			return false
 		} else if path == f.basePath {
-			return false, true
+			return true
 		}
-	} else if isBasePathRelativeToPath {
-		return false, true
-	} else { // path is not relative to basePath
-		return false, false
-	}
 
+		return f.shouldGoThroughDetailedCheck(path)
+	} else if isBasePathRelativeToPath {
+		return true
+	} else { // path is not relative to basePath
+		return false
+	}
+}
+
+func (f *SimplePathMatcher) shouldGoThroughDetailedCheck(path string) bool {
 	relPath := rel(path, f.basePath)
 	relPathParts := util.SplitFilepath(relPath)
 	inProgressPaths := f.paths[:]
@@ -90,20 +92,14 @@ func (f *SimplePathMatcher) processDirOrSubmodulePath(path string) (bool, bool) 
 		if len(inProgressPaths) != 0 {
 			inProgressPaths, matchedIncludePaths = matchGlobs(pathPart, inProgressPaths)
 			if len(inProgressPaths) == 0 && len(matchedIncludePaths) == 0 {
-				return false, false
+				return false
 			}
 		}
 	}
 
 	if len(inProgressPaths) != 0 {
-		if hasUniversalGlob(inProgressPaths) {
-			return true, false
-		} else {
-			return false, true
-		}
-	} else if len(matchedIncludePaths) != 0 {
-		return true, false
-	} else {
-		return false, false
+		return !hasUniversalGlob(inProgressPaths)
 	}
+
+	return false
 }

@@ -201,7 +201,6 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
-			false,
 		),
 		WithEntireFileContext: opts.WithEntireFileContext,
 		WithBinary:            opts.WithBinary,
@@ -353,7 +352,6 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 			opts.BasePath,
 			opts.IncludePaths,
 			opts.ExcludePaths,
-			true,
 		),
 	}
 
@@ -512,13 +510,12 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 		opts.BasePath,
 		opts.IncludePaths,
 		opts.ExcludePaths,
-		false,
 	)
 
 	var mainLsTreeResult *ls_tree.Result
 	if err := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", mainPathMatcher.String()).DoError(func() error {
 		var err error
-		mainLsTreeResult, err = ls_tree.LsTree(ctx, repository, opts.Commit, mainPathMatcher, true)
+		mainLsTreeResult, err = ls_tree.LsTree(ctx, repository, opts.Commit, mainPathMatcher, false)
 		return err
 	}); err != nil {
 		return nil, err
@@ -526,16 +523,12 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 
 	for _, p := range opts.Paths {
 		var pathLsTreeResult *ls_tree.Result
-		pathMatcher := path_matcher.NewSimplePathMatcher(
-			opts.BasePath,
-			[]string{p},
-			false,
-		)
+		pathMatcher := path_matcher.NewSimplePathMatcher(opts.BasePath, []string{p})
 
 		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
 		logProcess.Start()
 		var err error
-		pathLsTreeResult, err = mainLsTreeResult.LsTree(ctx, repository, pathMatcher)
+		pathLsTreeResult, err = mainLsTreeResult.LsTree(ctx, repository, pathMatcher, false)
 		if err != nil {
 			logProcess.Fail()
 			return nil, err

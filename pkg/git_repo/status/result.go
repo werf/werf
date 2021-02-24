@@ -59,7 +59,7 @@ func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatche
 		fileStatusFilepath := filepath.FromSlash(fileStatusPath)
 		fileStatusFullFilepath := filepath.Join(r.repositoryFullFilepath, fileStatusFilepath)
 
-		if pathMatcher.MatchPath(fileStatusFullFilepath) {
+		if pathMatcher.IsPathMatched(fileStatusFullFilepath) {
 			res.fileStatusList[fileStatusPath] = fileStatus
 
 			if debugProcess() {
@@ -74,8 +74,7 @@ func (r *Result) Status(ctx context.Context, pathMatcher path_matcher.PathMatche
 	}
 
 	for _, submoduleResult := range r.submoduleResults {
-		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleResult.repositoryFullFilepath)
-		if isMatched || shouldGoThrough {
+		if pathMatcher.IsDirOrSubmodulePathMatched(submoduleResult.repositoryFullFilepath) {
 			if debugProcess() {
 				logboek.Context(ctx).Debug().LogF("Submodule was checking: %s\n", submoduleResult.repositoryFullFilepath)
 			}

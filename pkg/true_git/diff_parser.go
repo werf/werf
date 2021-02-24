@@ -258,7 +258,7 @@ func (p *diffParser) handleDiffBegin(line string) error {
 			}
 
 			path := strings.TrimPrefix(pathWithPrefix, data.Prefix)
-			if !p.PathMatcher.MatchPath(path) {
+			if !p.PathMatcher.IsPathMatched(path) {
 				p.state = ignoreDiff
 				return nil
 			}
@@ -271,7 +271,7 @@ func (p *diffParser) handleDiffBegin(line string) error {
 			trimmedPaths[data.PathWithPrefix] = strconv.Quote(newPathWithPrefix)
 		} else {
 			path := strings.TrimPrefix(data.PathWithPrefix, data.Prefix)
-			if !p.PathMatcher.MatchPath(path) {
+			if !p.PathMatcher.IsPathMatched(path) {
 				p.state = ignoreDiff
 				return nil
 			}

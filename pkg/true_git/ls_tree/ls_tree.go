@@ -32,8 +32,11 @@ func newHash(s string) (plumbing.Hash, error) {
 	return h, nil
 }
 
-func LsTree(ctx context.Context, repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher, strict bool) (*Result, error) {
-	r, err := lsTree(ctx, repository, commit, pathMatcher, strict)
+// LsTree returns the Result with tree entries that satisfy the passed pathMatcher.
+// The function works lazily and does not go through a tree directory unnecessarily.
+// If the result should contain only regular files (without directories and submodules), you should use the allFiles parameter.
+func LsTree(ctx context.Context, repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher, allFiles bool) (*Result, error) {
+	r, err := lsTree(ctx, repository, commit, pathMatcher, allFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -42,14 +45,8 @@ func LsTree(ctx context.Context, repository *git.Repository, commit string, path
 	return r, nil
 }
 
-func lsTree(ctx context.Context, repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher, strict bool) (*Result, error) {
-	res := NewResult(commit, "", []*LsTreeEntry{}, []*SubmoduleResult{}, []string{})
-
-	worktreeNotInitializedSubmodulePaths, err := notInitializedSubmoduleFullFilepaths(ctx, repository, "", pathMatcher, strict)
-	if err != nil {
-		return nil, err
-	}
-	res.notInitializedSubmoduleFullFilepathList = worktreeNotInitializedSubmodulePaths
+func lsTree(ctx context.Context, repository *git.Repository, commit string, pathMatcher path_matcher.PathMatcher, allFiles bool) (*Result, error) {
+	res := NewResult(commit, "", []*LsTreeEntry{}, []*SubmoduleResult{})
 
 	tree, err := getCommitTree(repository, commit)
 	if err != nil {
@@ -58,7 +55,7 @@ func lsTree(ctx context.Context, repository *git.Repository, commit string, path
 
 	baseFilepath := pathMatcher.BaseFilepath()
 	if baseFilepath != "" {
-		lsTreeEntries, submodulesResults, err := processSpecificEntryFilepath(ctx, repository, tree, "", "", pathMatcher.BaseFilepath(), pathMatcher)
+		lsTreeEntries, submodulesResults, err := processSpecificEntryFilepath(ctx, repository, tree, "", "", pathMatcher.BaseFilepath(), pathMatcher, allFiles)
 		if err != nil {
 			return nil, err
 		}
@@ -69,38 +66,56 @@ func lsTree(ctx context.Context, repository *git.Repository, commit string, path
 		return res, nil
 	}
 
-	isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath("")
-	if isTreeMatched {
-		if debugProcess() {
-			logboek.Context(ctx).Debug().LogLn("Root tree was added")
-		}
+	rootEntry := ""
+	if err := lsTreeDirOrSubmoduleEntryMatchBase(
+		rootEntry,
+		pathMatcher,
+		allFiles,
+		// add tree func
+		func() error {
+			if debugProcess() {
+				logboek.Context(ctx).Debug().LogLn("Root tree was added")
+			}
 
-		rootTreeEntry := &LsTreeEntry{
-			FullFilepath: "",
-			TreeEntry: object.TreeEntry{
-				Name: "",
-				Mode: filemode.Dir,
-				Hash: tree.Hash,
-			},
-		}
+			rootTreeEntry := &LsTreeEntry{
+				FullFilepath: "",
+				TreeEntry: object.TreeEntry{
+					Name: "",
+					Mode: filemode.Dir,
+					Hash: tree.Hash,
+				},
+			}
 
-		res.lsTreeEntries = append(res.lsTreeEntries, rootTreeEntry)
-	} else if shouldWalkThrough {
-		if debugProcess() {
-			logboek.Context(ctx).Debug().LogLn("Root tree was checking")
-		}
+			res.lsTreeEntries = append(res.lsTreeEntries, rootTreeEntry)
 
-		lsTreeEntries, submodulesLsTreeEntries, err := lsTreeWalk(ctx, repository, tree, "", "", pathMatcher)
-		if err != nil {
-			return nil, err
-		}
+			return nil
+		},
+		// check tree func
+		func() error {
+			if debugProcess() {
+				logboek.Context(ctx).Debug().LogLn("Root tree was checking")
+			}
 
-		res.lsTreeEntries = lsTreeEntries
-		res.submodulesResults = submodulesLsTreeEntries
-	} else {
-		if debugProcess() {
-			logboek.Context(ctx).Debug().LogLn("Root tree was skipped")
-		}
+			lsTreeEntries, submodulesLsTreeEntries, err := lsTreeWalk(ctx, repository, tree, "", "", pathMatcher, allFiles)
+			if err != nil {
+				return err
+			}
+
+			res.lsTreeEntries = lsTreeEntries
+			res.submodulesResults = submodulesLsTreeEntries
+
+			return nil
+		},
+		// skip tree func
+		func() error {
+			if debugProcess() {
+				logboek.Context(ctx).Debug().LogLn("Root tree was skipped")
+			}
+
+			return nil
+		},
+	); err != nil {
+		return nil, err
 	}
 
 	return res, nil
@@ -125,7 +140,7 @@ func getCommitTree(repository *git.Repository, commit string) (*object.Tree, err
 	return tree, nil
 }
 
-func processSpecificEntryFilepath(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath, treeEntryFilepath string, pathMatcher path_matcher.PathMatcher) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func processSpecificEntryFilepath(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath, treeEntryFilepath string, pathMatcher path_matcher.PathMatcher, allFiles bool) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	worktree, err := repository.Worktree()
 	if err != nil {
 		return nil, nil, err
@@ -146,27 +161,15 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 
 		submoduleRepository, submoduleExpectedCommit, submoduleTree, err := submoduleRepositoryAndTree(ctx, repository, submodule.Config().Path)
 		if err != nil {
-			if err == git.ErrSubmoduleNotInitialized {
-				if debugProcess() {
-					logboek.Context(ctx).Debug().LogFWithCustomStyle(
-						color.GetStyle("danger"),
-						"Submodule is not initialized: path %s will be added to checksum\n",
-						submoduleFullFilepath,
-					)
-				}
-
-				return lsTreeEntries, submodulesResults, nil
-			}
-
-			return nil, nil, fmt.Errorf("getting submodule repository and tree failed (%s): %s", submoduleFullFilepath, err)
+			return nil, nil, fmt.Errorf("getting submodule %q repository and tree failed: %s", submoduleFullFilepath, err)
 		}
 
-		sLsTreeEntries, sSubmodulesResults, err := processSpecificEntryFilepath(ctx, submoduleRepository, submoduleTree, submoduleFullFilepath, submoduleFullFilepath, relTreeEntryFilepath, pathMatcher)
+		sLsTreeEntries, sSubmodulesResults, err := processSpecificEntryFilepath(ctx, submoduleRepository, submoduleTree, submoduleFullFilepath, submoduleFullFilepath, relTreeEntryFilepath, pathMatcher, allFiles)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		result := NewResult(submoduleExpectedCommit, submoduleFullFilepath, sLsTreeEntries, sSubmodulesResults, []string{})
+		result := NewResult(submoduleExpectedCommit, submoduleFullFilepath, sLsTreeEntries, sSubmodulesResults)
 		submoduleResult := NewSubmoduleResult(submodule.Config().Name, submodule.Config().Path, result)
 
 		if !submoduleResult.IsEmpty() {
@@ -185,7 +188,7 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 		return nil, nil, err
 	}
 
-	lsTreeEntries, submodulesLsTreeEntries, err := lsTreeEntryMatch(ctx, repository, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, pathMatcher)
+	lsTreeEntries, submodulesLsTreeEntries, err := lsTreeEntryMatch(ctx, repository, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, pathMatcher, allFiles)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -193,14 +196,14 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 	return lsTreeEntries, submodulesLsTreeEntries, nil
 }
 
-func lsTreeWalk(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, pathMatcher path_matcher.PathMatcher) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func lsTreeWalk(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, pathMatcher path_matcher.PathMatcher, allFiles bool) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	for _, treeEntry := range tree.Entries {
 		lsTreeEntry := &LsTreeEntry{
 			FullFilepath: filepath.Join(treeFullFilepath, treeEntry.Name),
 			TreeEntry:    treeEntry,
 		}
 
-		entryTreeEntries, entrySubmodulesTreeEntries, err := lsTreeEntryMatch(ctx, repository, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, pathMatcher)
+		entryTreeEntries, entrySubmodulesTreeEntries, err := lsTreeEntryMatch(ctx, repository, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, pathMatcher, allFiles)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -212,115 +215,160 @@ func lsTreeWalk(ctx context.Context, repository *git.Repository, tree *object.Tr
 	return
 }
 
-func lsTreeEntryMatch(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, pathMatcher path_matcher.PathMatcher) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func lsTreeEntryMatch(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, pathMatcher path_matcher.PathMatcher, allFiles bool) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	switch lsTreeEntry.Mode {
 	case filemode.Dir:
-		return lsTreeDirEntryMatch(ctx, repository, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, pathMatcher)
+		return lsTreeDirEntryMatch(ctx, repository, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, pathMatcher, allFiles)
 	case filemode.Submodule:
-		return lsTreeSubmoduleEntryMatch(ctx, repository, repositoryFullFilepath, lsTreeEntry, pathMatcher)
+		return lsTreeSubmoduleEntryMatch(ctx, repository, repositoryFullFilepath, lsTreeEntry, pathMatcher, allFiles)
 	default:
 		return lsTreeFileEntryMatch(ctx, lsTreeEntry, pathMatcher)
 	}
 }
 
-func lsTreeDirEntryMatch(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, pathMatcher path_matcher.PathMatcher) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
-	isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(lsTreeEntry.FullFilepath)
-	if isTreeMatched {
-		if debugProcess() {
-			logboek.Context(ctx).Debug().LogLn("Dir entry was added:         ", lsTreeEntry.FullFilepath)
-		}
-		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
-	} else if shouldWalkThrough {
-		if debugProcess() {
-			logboek.Context(ctx).Debug().LogLn("Dir entry was checking:      ", lsTreeEntry.FullFilepath)
-		}
-		entryTree, err := treeTree(tree, treeFullFilepath, lsTreeEntry.FullFilepath)
-		if err != nil {
-			return nil, nil, err
-		}
+func lsTreeDirEntryMatch(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, pathMatcher path_matcher.PathMatcher, allFiles bool) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+	if err := lsTreeDirOrSubmoduleEntryMatchBase(
+		lsTreeEntry.FullFilepath,
+		pathMatcher,
+		allFiles,
+		// add tree func
+		func() error {
+			if debugProcess() {
+				logboek.Context(ctx).Debug().LogLn("Dir entry was added:         ", lsTreeEntry.FullFilepath)
+			}
 
-		return lsTreeWalk(ctx, repository, entryTree, repositoryFullFilepath, lsTreeEntry.FullFilepath, pathMatcher)
+			lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
+
+			return nil
+		},
+		// check tree func
+		func() error {
+			if debugProcess() {
+				logboek.Context(ctx).Debug().LogLn("Dir entry was checking:      ", lsTreeEntry.FullFilepath)
+			}
+
+			entryTree, err := treeTree(tree, treeFullFilepath, lsTreeEntry.FullFilepath)
+			if err != nil {
+				return err
+			}
+
+			lsTreeEntries, submodulesResults, err = lsTreeWalk(ctx, repository, entryTree, repositoryFullFilepath, lsTreeEntry.FullFilepath, pathMatcher, allFiles)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		func() error {
+			if debugProcess() {
+				logboek.Context(ctx).Debug().LogLn("Dir entry was skipped:       ", lsTreeEntry.FullFilepath)
+			}
+
+			return nil
+		},
+	); err != nil {
+		return nil, nil, err
 	}
 
 	return
 }
 
-func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, repositoryFullFilepath string, lsTreeEntry *LsTreeEntry, pathMatcher path_matcher.PathMatcher) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
-	isTreeMatched, shouldWalkThrough := pathMatcher.ProcessDirOrSubmodulePath(lsTreeEntry.FullFilepath)
-	if isTreeMatched {
-		if debugProcess() {
-			logboek.Context(ctx).Debug().LogLn("Submodule entry was added:   ", lsTreeEntry.FullFilepath)
-		}
-		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
-	} else if shouldWalkThrough {
-		if debugProcess() {
-			logboek.Context(ctx).Debug().LogLn("Submodule entry was checking:", lsTreeEntry.FullFilepath)
-		}
+func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, repositoryFullFilepath string, lsTreeEntry *LsTreeEntry, pathMatcher path_matcher.PathMatcher, allFiles bool) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+	if err := lsTreeDirOrSubmoduleEntryMatchBase(
+		lsTreeEntry.FullFilepath,
+		pathMatcher,
+		allFiles,
+		// add tree func
+		func() error {
+			if debugProcess() {
+				logboek.Context(ctx).Debug().LogLn("Submodule entry was added:   ", lsTreeEntry.FullFilepath)
+			}
+			lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
 
-		submoduleFilepath, err := filepath.Rel(repositoryFullFilepath, lsTreeEntry.FullFilepath)
-		if err != nil || submoduleFilepath == "." || submoduleFilepath == ".." || strings.HasPrefix(submoduleFilepath, ".."+string(os.PathSeparator)) {
-			panic(fmt.Sprintf("unexpected paths: %s, %s", repositoryFullFilepath, lsTreeEntry.FullFilepath))
-		}
+			return nil
+		},
+		// check tree func
+		func() error {
+			if debugProcess() {
+				logboek.Context(ctx).Debug().LogLn("Submodule entry was checking:", lsTreeEntry.FullFilepath)
+			}
 
-		submodulePath := filepath.ToSlash(submoduleFilepath)
-		submoduleRepository, submoduleCommit, submoduleTree, err := submoduleRepositoryAndTree(ctx, repository, submodulePath)
-		if err != nil {
-			if err == git.ErrSubmoduleNotInitialized {
-				if debugProcess() {
-					logboek.Context(ctx).Debug().LogFWithCustomStyle(
-						color.GetStyle("danger"),
-						"Submodule is not initialized: path %s will be added to checksum\n",
-						lsTreeEntry.FullFilepath,
-					)
+			submoduleFilepath, err := filepath.Rel(repositoryFullFilepath, lsTreeEntry.FullFilepath)
+			if err != nil || submoduleFilepath == "." || submoduleFilepath == ".." || strings.HasPrefix(submoduleFilepath, ".."+string(os.PathSeparator)) {
+				panic(fmt.Sprintf("unexpected paths: %s, %s", repositoryFullFilepath, lsTreeEntry.FullFilepath))
+			}
+
+			submodulePath := filepath.ToSlash(submoduleFilepath)
+			submoduleRepository, submoduleCommit, submoduleTree, err := submoduleRepositoryAndTree(ctx, repository, submodulePath)
+			if err != nil {
+				return fmt.Errorf("getting submodule %q repository and tree failed: %s", lsTreeEntry.FullFilepath, err)
+			}
+
+			submoduleLsTreeEntrees, submoduleSubmoduleResults, err := lsTreeWalk(ctx, submoduleRepository, submoduleTree, lsTreeEntry.FullFilepath, lsTreeEntry.FullFilepath, pathMatcher, allFiles)
+			if err != nil {
+				return err
+			}
+
+			if len(submoduleLsTreeEntrees) != 0 {
+				w, err := repository.Worktree()
+				if err != nil {
+					return err
 				}
 
-				return nil, nil, nil
-			}
+				ss, err := w.Submodules()
+				if err != nil {
+					return err
+				}
 
-			return nil, nil, fmt.Errorf("getting submodule repository and tree failed (%s): %s", lsTreeEntry.FullFilepath, err)
-		}
+				var submoduleName string
+				for _, s := range ss {
+					if s.Config().Path == submodulePath {
+						submoduleName = s.Config().Name
+					}
+				}
 
-		submoduleLsTreeEntrees, submoduleSubmoduleResults, err := lsTreeWalk(ctx, submoduleRepository, submoduleTree, lsTreeEntry.FullFilepath, lsTreeEntry.FullFilepath, pathMatcher)
-		if err != nil {
-			return nil, nil, err
-		}
+				if submoduleName == "" {
+					panic("unexpected condition " + submodulePath)
+				}
 
-		if len(submoduleLsTreeEntrees) != 0 {
-			w, err := repository.Worktree()
-			if err != nil {
-				return nil, nil, err
-			}
+				result := NewResult(submoduleCommit, lsTreeEntry.FullFilepath, submoduleLsTreeEntrees, submoduleSubmoduleResults)
+				submoduleResult := NewSubmoduleResult(submoduleName, submodulePath, result)
 
-			ss, err := w.Submodules()
-			if err != nil {
-				return nil, nil, err
-			}
-
-			var submoduleName string
-			for _, s := range ss {
-				if s.Config().Path == submodulePath {
-					submoduleName = s.Config().Name
+				if !submoduleResult.IsEmpty() {
+					submodulesResults = append(submodulesResults, submoduleResult)
 				}
 			}
 
-			if submoduleName == "" {
-				panic("unexpected condition " + submodulePath)
-			}
-
-			result := NewResult(submoduleCommit, lsTreeEntry.FullFilepath, submoduleLsTreeEntrees, submoduleSubmoduleResults, []string{})
-			submoduleResult := NewSubmoduleResult(submoduleName, submodulePath, result)
-
-			if !submoduleResult.IsEmpty() {
-				submodulesResults = append(submodulesResults, submoduleResult)
-			}
-		}
+			return nil
+		},
+		// skip tree func
+		func() error {
+			logboek.Context(ctx).Debug().LogLn("Submodule entry was skipped: ", lsTreeEntry.FullFilepath)
+			return nil
+		},
+	); err != nil {
+		return nil, nil, err
 	}
 
 	return
+}
+
+func lsTreeDirOrSubmoduleEntryMatchBase(path string, pathMatched path_matcher.PathMatcher, allFiles bool, addTreeFunc, checkTreeFunc, skipTreeFunc func() error) error {
+	if pathMatched.ShouldGoThrough(path) {
+		return checkTreeFunc()
+	} else if pathMatched.IsPathMatched(path) {
+		if allFiles {
+			return checkTreeFunc()
+		} else {
+			return addTreeFunc()
+		}
+	} else {
+		return skipTreeFunc()
+	}
 }
 
 func lsTreeFileEntryMatch(ctx context.Context, lsTreeEntry *LsTreeEntry, pathMatcher path_matcher.PathMatcher) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
-	if pathMatcher.MatchPath(lsTreeEntry.FullFilepath) {
+	if pathMatcher.IsPathMatched(lsTreeEntry.FullFilepath) {
 		if debugProcess() {
 			logboek.Context(ctx).Debug().LogLn("File entry was added:        ", lsTreeEntry.FullFilepath)
 		}
@@ -356,54 +404,6 @@ func treeTree(tree *object.Tree, treeFullFilepath, treeDirEntryFullFilepath stri
 	}
 
 	return entryTree, nil
-}
-
-func notInitializedSubmoduleFullFilepaths(ctx context.Context, repository *git.Repository, repositoryFullFilepath string, pathMatcher path_matcher.PathMatcher, strict bool) ([]string, error) {
-	worktree, err := repository.Worktree()
-	if err != nil {
-		return nil, err
-	}
-
-	submodules, err := worktree.Submodules()
-	if err != nil {
-		return nil, err
-	}
-
-	var resultFullFilepaths []string
-	for _, submodule := range submodules {
-		submoduleEntryFilepath := filepath.FromSlash(submodule.Config().Path)
-		submoduleFullFilepath := filepath.Join(repositoryFullFilepath, submoduleEntryFilepath)
-		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
-		if isMatched || shouldGoThrough {
-			submoduleRepository, err := submodule.Repository()
-			if err != nil {
-				if err == git.ErrSubmoduleNotInitialized && !strict {
-					resultFullFilepaths = append(resultFullFilepaths, submoduleFullFilepath)
-
-					if debugProcess() {
-						logboek.Context(ctx).Debug().LogFWithCustomStyle(
-							color.GetStyle("danger"),
-							"Submodule is not initialized: path %s will be added to checksum\n",
-							submoduleFullFilepath,
-						)
-					}
-
-					continue
-				}
-
-				return nil, fmt.Errorf("getting submodule repository failed (%s): %s", submoduleFullFilepath, err)
-			}
-
-			submoduleFullFilepaths, err := notInitializedSubmoduleFullFilepaths(ctx, submoduleRepository, submoduleFullFilepath, pathMatcher, strict)
-			if err != nil {
-				return nil, err
-			}
-
-			resultFullFilepaths = append(resultFullFilepaths, submoduleFullFilepaths...)
-		}
-	}
-
-	return resultFullFilepaths, nil
 }
 
 func submoduleRepositoryAndTree(ctx context.Context, repository *git.Repository, submodulePath string) (*git.Repository, string, *object.Tree, error) {

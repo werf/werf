@@ -179,7 +179,7 @@ func (repo *Local) GetMergeCommitParents(_ context.Context, commit string) ([]st
 type LsTreeOptions struct {
 	Commit        string
 	UseHeadCommit bool
-	Strict        bool
+	AllFiles      bool
 }
 
 func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts LsTreeOptions) (*ls_tree.Result, error) {
@@ -190,7 +190,7 @@ func (repo *Local) LsTree(ctx context.Context, pathMatcher path_matcher.PathMatc
 
 	var lsTreeResult *ls_tree.Result
 	if err := repo.yieldRepositoryBackedByWorkTree(ctx, repo.headCommit, func(repository *git.Repository) (err error) {
-		lsTreeResult, err = mainLsTreeResult.LsTree(ctx, repository, pathMatcher)
+		lsTreeResult, err = mainLsTreeResult.LsTree(ctx, repository, pathMatcher, opts.AllFiles)
 		return err
 	}); err != nil {
 		return nil, err
@@ -219,7 +219,7 @@ func (repo *Local) getMainLsTreeResult(ctx context.Context, opts LsTreeOptions) 
 
 	var lsTreeResult *ls_tree.Result
 	if err := repo.yieldRepositoryBackedByWorkTree(ctx, commit, func(repository *git.Repository) error {
-		r, err := ls_tree.LsTree(ctx, repository, commit, path_matcher.NewSimplePathMatcher("", []string{}, false), opts.Strict)
+		r, err := ls_tree.LsTree(ctx, repository, commit, path_matcher.NewSimplePathMatcher("", []string{}), opts.AllFiles)
 		if err != nil {
 			return err
 		}
@@ -282,7 +282,7 @@ func (repo *Local) initAndSetMainStatusResult(ctx context.Context) error {
 		return err
 	}
 
-	result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}, true))
+	result, err := status.Status(ctx, repository, path_matcher.NewSimplePathMatcher("", []string{}))
 	if err != nil {
 		return err
 	}
@@ -299,7 +299,7 @@ func (repo *Local) IsAncestor(_ context.Context, ancestorCommit, descendantCommi
 	return true_git.IsAncestor(ancestorCommit, descendantCommit, repo.GitDir)
 }
 
-func (repo *Local) RemoteOriginUrl(ctx context.Context) (string, error) {
+func (repo *Local) RemoteOriginUrl(_ context.Context) (string, error) {
 	return repo.remoteOriginUrl(repo.WorkTreeDir)
 }
 
@@ -323,11 +323,11 @@ func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, err
 	return repo.isCommitExists(ctx, repo.WorkTreeDir, repo.GitDir, commit)
 }
 
-func (repo *Local) TagsList(ctx context.Context) ([]string, error) {
+func (repo *Local) TagsList(_ context.Context) ([]string, error) {
 	return repo.tagsList(repo.WorkTreeDir)
 }
 
-func (repo *Local) RemoteBranchesList(ctx context.Context) ([]string, error) {
+func (repo *Local) RemoteBranchesList(_ context.Context) ([]string, error) {
 	return repo.remoteBranchesList(repo.WorkTreeDir)
 }
 
@@ -397,14 +397,14 @@ func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, d
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
 	dirOrFileWithGlobPrefix := filepath.Join(dir, prefixWithoutPatterns)
 
-	pathMatcher := path_matcher.NewSimplePathMatcher(dirOrFileWithGlobPrefix, []string{glob}, true)
+	pathMatcher := path_matcher.NewSimplePathMatcher(dirOrFileWithGlobPrefix, []string{glob})
 	if debugGiterminismManager() {
 		logboek.Context(ctx).Debug().LogLn("pathMatcher:", pathMatcher.String())
 	}
 
 	var result []string
 	fileFunc := func(notResolvedPath string) error {
-		if pathMatcher.MatchPath(notResolvedPath) {
+		if pathMatcher.IsPathMatched(notResolvedPath) {
 			result = append(result, notResolvedPath)
 		}
 
@@ -432,9 +432,7 @@ func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, d
 }
 
 func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error {
-	isDirMatched, shouldGoThroughDir := pathMatcher.ProcessDirOrSubmodulePath(dir)
-	possiblyDirMatched := isDirMatched || shouldGoThroughDir
-	if !possiblyDirMatched {
+	if !pathMatcher.IsDirOrSubmodulePathMatched(dir) {
 		return nil
 	}
 
@@ -452,9 +450,9 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 		return fmt.Errorf("unable to resolve commit file %q: %s", dir, err)
 	}
 
-	result, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(resolvedDir, []string{}, true), LsTreeOptions{
-		Commit: commit,
-		Strict: true,
+	result, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(resolvedDir, []string{}), LsTreeOptions{
+		Commit:   commit,
+		AllFiles: true,
 	})
 	if err != nil {
 		return err
@@ -471,9 +469,7 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 			panic(fmt.Sprintf("unexpected condition: %+v", lsTreeEntry))
 		}
 
-		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(notResolvedPath)
-		possiblyMatched := isMatched || shouldGoThrough
-		if !possiblyMatched {
+		if !pathMatcher.IsDirOrSubmodulePathMatched(notResolvedPath) {
 			return nil
 		}
 
@@ -760,9 +756,8 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 }
 
 func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPath string) ([]byte, error) {
-	lsTreeResult, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(relPath, []string{}, false), LsTreeOptions{
+	lsTreeResult, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(relPath, []string{}), LsTreeOptions{
 		Commit: commit,
-		Strict: true,
 	})
 	if err != nil {
 		return nil, err
@@ -836,9 +831,8 @@ func (repo *Local) isTreeEntryExist(ctx context.Context, commit, relPath string)
 }
 
 func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) (*ls_tree.LsTreeEntry, error) {
-	lsTreeResult, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(path, []string{}, false), LsTreeOptions{
+	lsTreeResult, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(path, []string{}), LsTreeOptions{
 		Commit: commit,
-		Strict: true,
 	})
 	if err != nil {
 		return nil, err

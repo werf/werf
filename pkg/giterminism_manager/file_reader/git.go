@@ -44,7 +44,7 @@ func (r FileReader) ValidateRelatedSubmodules(ctx context.Context, relPath strin
 }
 
 func (r FileReader) validateRelatedSubmodules(ctx context.Context, relPath string) error {
-	return r.sharedOptions.LocalGitRepo().ValidateSubmodules(ctx, path_matcher.NewSimplePathMatcher(r.toWorkTreeRelativePath(relPath), nil, true))
+	return r.sharedOptions.LocalGitRepo().ValidateSubmodules(ctx, path_matcher.NewSimplePathMatcher(r.toWorkTreeRelativePath(relPath), nil))
 }
 
 func (r FileReader) IsCommitFileModifiedLocally(ctx context.Context, relPath string) (modified bool, err error) {
