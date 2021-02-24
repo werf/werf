@@ -1,10 +1,10 @@
 ---
 layout: default
 ---
-{%- if page.lang == 'ru' %}
-{%- include ru/guides_banner.html %}
+{%- if site.ssi %}
+<!--#include virtual="/includes/banner.html" -->
 {%- else %}
-{%- include en/guides_banner.html %}
+{%- include {{ page.lang | append: "/banner.html" }} %}
 {%- endif %}
 <div class="page__container">
   {%- include nav-breadcrumbs.html %}

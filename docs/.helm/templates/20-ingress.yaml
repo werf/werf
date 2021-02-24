@@ -11,6 +11,7 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       ssi on;
+      ssi_silent_errors on;
 {{- if eq .Values.global.env "production" }}
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
     # DELETE b4 prod
@@ -31,25 +32,31 @@ spec:
   - host: {{ $host }}
     http:
       paths:
-{{- if or ( eq .Version "master") (eq .Version "wf-werfio3") }}
+{{- if eq .Version "master" }}
       - path: /
+        backend:
+          serviceName: {{ .Chart.Name }}-backend
+          servicePort: http
 {{- else }}
       - path: /{{ .VersionURLNormalized }}
-{{- end }}
         backend:
           serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
           servicePort: http
+{{- end }}
   - host: ru.{{ $host }}
     http:
       paths:
-{{- if or ( eq .Version "master") (eq .Version "wf-werfio3") }}
+{{- if eq .Version "master" }}
       - path: /
+        backend:
+          serviceName: {{ .Chart.Name }}-backend
+          servicePort: http
 {{- else }}
       - path: /{{ .VersionURLNormalized }}
-{{- end }}
         backend:
           serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
-          servicePort: 80
+          servicePort: http
+{{- end }}
 ---
 {{- if eq .Version "master" }}
 apiVersion: certmanager.k8s.io/v1alpha1
