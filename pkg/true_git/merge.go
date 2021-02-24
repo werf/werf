@@ -45,7 +45,7 @@ func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, co
 
 			cmd = exec.Command("git", append(getCommonGitOptions(), "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "merge", "--no-edit", "--no-ff", commitToMerge)...)
 			cmd.Dir = workTreeDir
-			output = setCommandRecordingLiveOutput(ctx, cmd)
+			output = SetCommandRecordingLiveOutput(ctx, cmd)
 			err = cmd.Run()
 			if err != nil {
 				return fmt.Errorf("git merge %q failed: %s\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), err, output.String())
@@ -56,7 +56,7 @@ func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, co
 
 			cmd = exec.Command("git", append(getCommonGitOptions(), "rev-parse", "HEAD")...)
 			cmd.Dir = workTreeDir
-			output = setCommandRecordingLiveOutput(ctx, cmd)
+			output = SetCommandRecordingLiveOutput(ctx, cmd)
 			err = cmd.Run()
 			if err != nil {
 				return fmt.Errorf("git merge failed: %s\n%s", err, output.String())

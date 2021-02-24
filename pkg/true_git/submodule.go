@@ -16,7 +16,7 @@ func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 
 		cmd.Dir = workTreeDir // required for `git submodule` to work
 
-		output := setCommandRecordingLiveOutput(ctx, cmd)
+		output := SetCommandRecordingLiveOutput(ctx, cmd)
 
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
@@ -41,7 +41,7 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 
 		cmd.Dir = workTreeDir // required for `git submodule` to work
 
-		output := setCommandRecordingLiveOutput(ctx, cmd)
+		output := SetCommandRecordingLiveOutput(ctx, cmd)
 
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))

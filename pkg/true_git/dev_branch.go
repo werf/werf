@@ -118,7 +118,7 @@ func runGitCmd(ctx context.Context, args []string, dir string, opts runGitCmdOpt
 		cmd.Stdin = opts.stdin
 	}
 
-	output := setCommandRecordingLiveOutput(ctx, cmd)
+	output := SetCommandRecordingLiveOutput(ctx, cmd)
 
 	err := cmd.Run()
 
