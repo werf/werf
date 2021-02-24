@@ -441,6 +441,9 @@ entries:
           - title: Cleanup
             url: /documentation/advanced/cleanup.html
 
+          - title: Bundles
+            url: /documentation/advanced/bundles.html
+
           - title: CI/CD
             f:
 
@@ -590,6 +593,9 @@ entries:
 
           - title: Очистка
             url: /documentation/advanced/cleanup.html
+
+          - title: Bundles
+            url: /documentation/advanced/bundles.html
 
           - title: CI/CD
             f:
