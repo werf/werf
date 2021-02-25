@@ -6,7 +6,7 @@ layout: default
 
 <div class="intro-scheme" id="intro-scheme">
     <div class="page__container intro-scheme__container">
-        <img src="{{ "images/intro.svg" | true_relative_url }}" class="intro-scheme__scheme" alt="werf"/>
+        {% include intro.md %}
     </div>
 </div>
 

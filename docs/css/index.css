@@ -329,9 +329,23 @@ body,
   position: relative;
 }
 
-.intro-scheme__scheme {
-  width: 50%;
+.intro-scheme__container #intro-animation {
+  width: 60%;
   margin-left: auto;
+  transform: translateX(15%);
+  z-index: 10;
+  position: relative;
+}
+
+.intro-scheme-dot {
+  opacity: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 20px;
+  transform: rotateX(60deg) rotateY(0deg) rotateZ(-45deg);
+  background: #0066ff;
+  position: relative;
+  z-index: 9;
 }
 
 #presentation-scheme-container {
