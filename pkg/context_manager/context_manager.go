@@ -30,7 +30,7 @@ func ContextAddFileChecksum(ctx context.Context, projectDir string, contextDir s
 	var filePathListRelativeToProject []string
 	for _, addFileRelativeToContext := range contextAddFile {
 		addFileRelativeToProject := filepath.Join(contextDir, addFileRelativeToContext)
-		if !matcher.MatchPath(addFileRelativeToProject) {
+		if !matcher.IsPathMatched(addFileRelativeToProject) {
 			continue
 		}
 

@@ -20,19 +20,19 @@ var _ = Describe("path matcher (basePath)", func() {
 			pathMatcherName: "dockerfile ignore",
 			newOnlyWithBasePathFunc: func(basePath string) PathMatcher {
 				pm, _ := fileutils.NewPatternMatcher([]string{})
-				return NewDockerfileIgnorePathMatcher(basePath, pm, false)
+				return NewDockerfileIgnorePathMatcher(basePath, pm)
 			},
 		},
 		{
 			pathMatcherName: "git mapping",
 			newOnlyWithBasePathFunc: func(basePath string) PathMatcher {
-				return NewGitMappingPathMatcher(basePath, []string{}, []string{}, false)
+				return NewGitMappingPathMatcher(basePath, []string{}, []string{})
 			},
 		},
 		{
 			pathMatcherName: "simple",
 			newOnlyWithBasePathFunc: func(basePath string) PathMatcher {
-				return NewSimplePathMatcher(basePath, []string{}, false)
+				return NewSimplePathMatcher(basePath, []string{})
 			},
 		},
 	} {
@@ -40,30 +40,27 @@ var _ = Describe("path matcher (basePath)", func() {
 			var pathMatcher = entry.newOnlyWithBasePathFunc(filepath.Join("a", "b", "c"))
 
 			It("base path is equal to the path", func() {
-				isMatched := pathMatcher.MatchPath(filepath.Join("a", "b", "c"))
+				isMatched := pathMatcher.IsPathMatched(filepath.Join("a", "b", "c"))
 				Ω(isMatched).Should(BeTrue())
 
-				isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(filepath.Join("a", "b", "c"))
-				Ω(isMatched).Should(BeTrue())
+				shouldGoThrough := pathMatcher.ShouldGoThrough(filepath.Join("a", "b", "c"))
 				Ω(shouldGoThrough).Should(BeFalse())
 			})
 
 			It("path is relative to the basePath", func() {
-				isMatched := pathMatcher.MatchPath(filepath.Join("a", "b", "c", "d"))
+				isMatched := pathMatcher.IsPathMatched(filepath.Join("a", "b", "c", "d"))
 				Ω(isMatched).Should(BeTrue())
 
-				isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(filepath.Join("a", "b", "c", "d"))
-				Ω(isMatched).Should(BeTrue())
+				shouldGoThrough := pathMatcher.ShouldGoThrough(filepath.Join("a", "b", "c", "d"))
 				Ω(shouldGoThrough).Should(BeFalse())
 			})
 
 			It("path is not relative to the basePath", func() {
 				for _, path := range []string{filepath.Join("a", "b", "d"), "b"} {
-					isMatched := pathMatcher.MatchPath(path)
+					isMatched := pathMatcher.IsPathMatched(path)
 					Ω(isMatched).Should(BeFalse())
 
-					isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(path)
-					Ω(isMatched).Should(BeFalse())
+					shouldGoThrough := pathMatcher.ShouldGoThrough(path)
 					Ω(shouldGoThrough).Should(BeFalse())
 				}
 			})
@@ -71,11 +68,10 @@ var _ = Describe("path matcher (basePath)", func() {
 			It("basePath is relative to the path", func() {
 				pathMatcher := entry.newOnlyWithBasePathFunc(filepath.Join("a"))
 
-				isMatched := pathMatcher.MatchPath(filepath.Join("a", "b", "c"))
+				isMatched := pathMatcher.IsPathMatched(filepath.Join("a", "b", "c"))
 				Ω(isMatched).Should(BeTrue())
 
-				isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(filepath.Join("a", "b", "c"))
-				Ω(isMatched).Should(BeTrue())
+				shouldGoThrough := pathMatcher.ShouldGoThrough(filepath.Join("a", "b", "c"))
 				Ω(shouldGoThrough).Should(BeFalse())
 			})
 		})

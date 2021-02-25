@@ -11,20 +11,18 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
-func NewGitMappingPathMatcher(basePath string, includePaths, excludePaths []string, greedySearch bool) *GitMappingPathMatcher {
+func NewGitMappingPathMatcher(basePath string, includePaths, excludePaths []string) *GitMappingPathMatcher {
 	return &GitMappingPathMatcher{
-		basePathMatcher:  basePathMatcher{basePath: formatPath(basePath)},
-		includePaths:     formatPaths(includePaths),
-		excludePaths:     formatPaths(excludePaths),
-		isGreedySearchOn: greedySearch,
+		basePathMatcher: basePathMatcher{basePath: formatPath(basePath)},
+		includePaths:    formatPaths(includePaths),
+		excludePaths:    formatPaths(excludePaths),
 	}
 }
 
 type GitMappingPathMatcher struct {
 	basePathMatcher
-	includePaths     []string
-	excludePaths     []string
-	isGreedySearchOn bool
+	includePaths []string
+	excludePaths []string
 }
 
 func (f *GitMappingPathMatcher) BaseFilepath() string {
@@ -32,10 +30,10 @@ func (f *GitMappingPathMatcher) BaseFilepath() string {
 }
 
 func (f *GitMappingPathMatcher) String() string {
-	return fmt.Sprintf("basePath=`%s`, includePaths=%v, excludePaths=%v, greedySearch=%v", f.basePath, f.includePaths, f.excludePaths, f.isGreedySearchOn)
+	return fmt.Sprintf("basePath=`%s`, includePaths=%v, excludePaths=%v", f.basePath, f.includePaths, f.excludePaths)
 }
 
-func (f *GitMappingPathMatcher) MatchPath(path string) bool {
+func (f *GitMappingPathMatcher) IsPathMatched(path string) bool {
 	path = formatPath(path)
 
 	if !isRel(path, f.basePath) {
@@ -59,37 +57,41 @@ func (f *GitMappingPathMatcher) MatchPath(path string) bool {
 	return true
 }
 
-func (f *GitMappingPathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
-	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(formatPath(path))
-	if f.isGreedySearchOn {
-		return false, isMatched || shouldGoThrough
-	}
-	return isMatched, shouldGoThrough
+func (f *GitMappingPathMatcher) IsDirOrSubmodulePathMatched(path string) bool {
+	return f.IsPathMatched(path) || f.ShouldGoThrough(path)
 }
 
-func (f *GitMappingPathMatcher) processDirOrSubmodulePath(path string) (bool, bool) {
+func (f *GitMappingPathMatcher) ShouldGoThrough(path string) bool {
+	return f.shouldGoThrough(formatPath(path))
+}
+
+func (f *GitMappingPathMatcher) shouldGoThrough(path string) bool {
 	isBasePathRelativeToPath := isSubDirOf(f.basePath, path)
 	isPathRelativeToBasePath := isSubDirOf(path, f.basePath)
 
 	if isPathRelativeToBasePath || path == f.basePath {
 		if len(f.includePaths) == 0 && len(f.excludePaths) == 0 {
-			return true, false
+			return false
 		}
 		if hasUniversalGlob(f.excludePaths) {
-			return false, false
+			return false
 		}
 		if hasUniversalGlob(f.includePaths) {
-			return true, false
+			return false
 		}
 		if path == f.basePath {
-			return false, true
+			return true
 		}
-	} else if isBasePathRelativeToPath {
-		return false, true
-	} else { // path is not relative to basePath
-		return false, false
-	}
 
+		return f.shouldGoThroughDetailedCheck(path)
+	} else if isBasePathRelativeToPath {
+		return true
+	} else { // path is not relative to basePath
+		return false
+	}
+}
+
+func (f *GitMappingPathMatcher) shouldGoThroughDetailedCheck(path string) bool {
 	relPath := rel(path, f.basePath)
 	relPathParts := util.SplitFilepath(relPath)
 	inProgressIncludePaths := f.includePaths
@@ -104,7 +106,7 @@ func (f *GitMappingPathMatcher) processDirOrSubmodulePath(path string) (bool, bo
 		if len(inProgressIncludePaths) != 0 {
 			inProgressIncludePaths, matchedIncludePaths = matchGlobs(pathPart, inProgressIncludePaths)
 			if len(inProgressIncludePaths) == 0 && len(matchedIncludePaths) == 0 {
-				return false, false
+				return false
 			}
 		}
 
@@ -112,28 +114,20 @@ func (f *GitMappingPathMatcher) processDirOrSubmodulePath(path string) (bool, bo
 			inProgressExcludePaths, matchedExcludePaths = matchGlobs(pathPart, inProgressExcludePaths)
 			if len(inProgressExcludePaths) == 0 && len(matchedExcludePaths) == 0 {
 				if len(inProgressIncludePaths) == 0 {
-					return true, false
+					return false
 				}
 			}
 		}
 	}
 
-	if len(inProgressExcludePaths) != 0 {
-		return false, !hasUniversalGlob(inProgressExcludePaths)
+	if len(inProgressExcludePaths) != 0 || len(inProgressIncludePaths) != 0 {
+		return !hasUniversalGlob(inProgressExcludePaths)
 	}
-	if len(inProgressIncludePaths) != 0 {
-		if hasUniversalGlob(inProgressIncludePaths) {
-			return true, false
-		}
-		return false, true
+	if len(matchedExcludePaths) != 0 || len(matchedIncludePaths) != 0 {
+		return false
 	}
-	if len(matchedExcludePaths) != 0 {
-		return false, false
-	}
-	if len(matchedIncludePaths) != 0 {
-		return true, false
-	}
-	return false, false
+
+	return false
 }
 
 func matchGlobs(pathPart string, globs []string) (inProgressGlobs []string, matchedGlobs []string) {

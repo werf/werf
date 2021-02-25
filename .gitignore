@@ -24,4 +24,5 @@
 /tests-coverage
 /precompiled_tests_binaries
 
-docs/\.jekyll-cache/
+/docs/\.jekyll-cache/
+/docs/backend/root/

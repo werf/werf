@@ -1,32 +1,48 @@
-<!--#include virtual="/ssi/head.html" -->
+<meta property="og:image" content="{{ site.url }}/images/share.png">
+<meta property="twitter:image" content="{{ site.url }}/images/share.png">
 
-{%- if page.multilang %}
-<link data-proofer-ignore rel="alternate" hreflang="ru" href="{{ site.site_urls.ru }}{{ page.url | relative_url }}" />
-<link data-proofer-ignore rel="alternate" hreflang="en" href="{{ site.site_urls.en }}{{ page.url | relative_url }}" />
-{%- endif %}
+<link rel="apple-touch-icon" sizes="180x180" href="{{ "apple-touch-icon.png" | relative_url }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ "favicon-32x32.png" | relative_url }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ "favicon-16x16.png" | relative_url }}">
+<link rel="manifest" href="{{ "site.webmanifest" | relative_url }}">
+<link rel="mask-icon" href="{{ "safari-pinned-tab.svg" | relative_url }}" color="#5bbad5">
+<meta name="msapplication-TileColor" content="#ffc40d">
+<meta name="theme-color" content="#ffffff">
 
-{%- assign page_url_parts = page.url | split: '/' -%}
-{%- assign max_ind = page_url_parts.size | minus: 2 -%}
-{%- assign title_parts = "" | split: "" -%}
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
 
-{%- for i in (1..max_ind) %}
-{%- capture current_breadcrumb_url %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
-{%- capture next_prepender %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
+{% asset normalize.css %}
+{% asset syntax.css %}
 
-{%- assign breadcrumb = site.data.breadcrumbs[page.lang][current_breadcrumb_url] %}
-{%- unless breadcrumb %}
-{%- assign breadcrumb_err = "Check breadcrumbs.yml: " | append: current_breadcrumb_url | append: " not defined" %}
-{{ breadcrumb_err | raise_error }}
-{% endunless -%}
-{%- assign title_parts = title_parts | push: breadcrumb.title -%}
-{%- endfor %}
-{%- assign title_parts = title_parts | push: page.title -%}
+{% asset tab.css %}
+{% asset header.css %}
+{% asset docs.css %}
+{% asset index.css %}
+{% asset featherlight.min.css %}
 
-{%- assign generated_title = title_parts | reverse | join: " / " %}
-<title>{{ generated_title }} | {{ site.site_title }}</title>
-{% if page.description %}
-    {%- assign description = page.description | strip_html | strip_newlines | truncate: 160 %}
-{% else %}
-    {%- assign description = site.site_description | strip_html | strip_newlines | truncate: 160 %}
-{% endif %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+{% asset jquery.navgoco.min.js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.2.6/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.6.0/MotionPathPlugin.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ScrollMagic/2.0.7/ScrollMagic.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ScrollMagic/2.0.7/plugins/animation.gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bowser/1.9.4/bowser.min.js"></script>
+{% asset masonry.pkgd.min.js %}
+{% asset featherlight.min.js %}
+{% asset toc.js %}
+{% asset details.js %}
+{% asset tab.js %}
+{% asset popup.js %}
+{% asset channels.js %}
+{% asset customscripts.js %}
 
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->

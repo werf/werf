@@ -16,9 +16,13 @@ type MultiPathMatcher struct {
 	PathMatchers []PathMatcher
 }
 
-func (m *MultiPathMatcher) MatchPath(path string) bool {
+func (f *MultiPathMatcher) IsDirOrSubmodulePathMatched(path string) bool {
+	return f.IsPathMatched(path) || f.ShouldGoThrough(path)
+}
+
+func (m *MultiPathMatcher) IsPathMatched(path string) bool {
 	for _, matcher := range m.PathMatchers {
-		if !matcher.MatchPath(path) {
+		if !matcher.IsPathMatched(path) {
 			return false
 		}
 	}
@@ -26,35 +30,14 @@ func (m *MultiPathMatcher) MatchPath(path string) bool {
 	return true
 }
 
-func (m *MultiPathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
-	var isMatchedResults, shouldGoThroughResults []bool
+func (m *MultiPathMatcher) ShouldGoThrough(path string) bool {
 	for _, matcher := range m.PathMatchers {
-		isMatched, shouldGoThrough := matcher.ProcessDirOrSubmodulePath(path)
-		isMatchedResults = append(isMatchedResults, isMatched)
-		shouldGoThroughResults = append(shouldGoThroughResults, shouldGoThrough)
-	}
-
-	var isMatched bool
-	var shouldGoThrough bool
-	for _, isMatchedResult := range isMatchedResults {
-		if !isMatchedResult {
-			isMatched = false
-			break
+		if !matcher.ShouldGoThrough(path) {
+			return false
 		}
-
-		isMatched = true
 	}
 
-	for _, isMatchedResult := range shouldGoThroughResults {
-		if !isMatchedResult {
-			shouldGoThrough = false
-			break
-		}
-
-		shouldGoThrough = true
-	}
-
-	return isMatched, shouldGoThrough
+	return true
 }
 
 func (m *MultiPathMatcher) TrimFileBaseFilepath(path string) string {

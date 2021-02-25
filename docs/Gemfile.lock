@@ -76,7 +76,11 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     mercenary (0.3.6)
+    mini_portile2 (2.5.0)
     minitest (5.14.3)
+    nokogiri (1.11.1)
+      mini_portile2 (~> 2.5.0)
+      racc (~> 1.4)
     nokogiri (1.11.1-x86_64-darwin)
       racc (~> 1.4)
     nokogumbo (2.0.4)
@@ -110,6 +114,7 @@ GEM
     yell (2.2.2)
 
 PLATFORMS
+  ruby
   x86_64-darwin-18
 
 DEPENDENCIES

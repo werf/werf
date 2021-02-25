@@ -45,7 +45,7 @@ func (r FileReader) ReadChartFile(ctx context.Context, path string) ([]byte, err
 }
 
 func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, error) {
-	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.UncommittedHelmFilePathMatcher().MatchPath)
+	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.UncommittedHelmFilePathMatcher().IsPathMatched)
 }
 
 func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*chart.ChartExtenderBufferedFile, error) {

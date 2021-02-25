@@ -25,7 +25,16 @@ en:
     url: documentation/advanced/ci_cd/ci_cd_workflow_basics.html
   /documentation/advanced/helm: &documentation-advanced-helm
     title: Helm
-    url: documentation/advanced/helm/basics.html
+    url: documentation/advanced/helm/overview.html
+  /documentation/advanced/helm/configuration: &documentation-advanced-helm-configuration
+    title: Configuration
+    url: documentation/advanced/helm/configuration/templates.html
+  /documentation/advanced/helm/deploy_process: &documentation-advanced-helm-deploy_process
+    title: Release process
+    url: documentation/advanced/helm/deploy_process/steps.html
+  /documentation/advanced/helm/releases: &documentation-advanced-helm-releases
+    title: Release process
+    url: documentation/advanced/helm/releases/release.html
   /documentation/internals: &documentation-internals
     title: Internals
     url: documentation/internals/build_process.html

@@ -27,10 +27,11 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 	}
 
 	werfInfo := map[string]interface{}{
-		"name":  projectName,
-		"repo":  repo,
-		"env":   opts.Env,
-		"image": map[string]interface{}{},
+		"name":    projectName,
+		"version": werf.Version,
+		"repo":    repo,
+		"env":     opts.Env,
+		"image":   map[string]interface{}{},
 	}
 
 	if opts.Namespace != "" {

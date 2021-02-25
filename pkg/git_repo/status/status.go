@@ -68,7 +68,7 @@ func status(ctx context.Context, repository *git.Repository, repositoryFullFilep
 		fileStatusFilepath := filepath.FromSlash(fileStatusPath)
 		fileStatusFullFilepath := filepath.Join(repositoryFullFilepath, fileStatusFilepath)
 
-		if pathMatcher.MatchPath(fileStatusFullFilepath) {
+		if pathMatcher.IsPathMatched(fileStatusFullFilepath) {
 			result.fileStatusList[fileStatusPath] = fileStatus
 
 			if debugProcess() {
@@ -86,8 +86,7 @@ func status(ctx context.Context, repository *git.Repository, repositoryFullFilep
 		submoduleFilepath := filepath.FromSlash(submodulePath)
 		submoduleFullFilepath := filepath.Join(repositoryFullFilepath, submoduleFilepath)
 
-		matched, shouldGoTrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
-		if matched || shouldGoTrough {
+		if pathMatcher.IsDirOrSubmodulePathMatched(submoduleFullFilepath) {
 			if debugProcess() {
 				logboek.Context(ctx).Debug().LogF("Submodule was checking: %s\n", submoduleFullFilepath)
 			}

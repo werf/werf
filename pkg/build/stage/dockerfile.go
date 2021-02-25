@@ -693,7 +693,7 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminis
 		logProcess = logboek.Context(ctx).Debug().LogProcess("Calculating contextAddFile checksum")
 		logProcess.Start()
 
-		wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BaseFilepath(), wildcards, false)
+		wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BaseFilepath(), wildcards)
 		if contextAddChecksum, err := context_manager.ContextAddFileChecksum(ctx, giterminismManager.ProjectDir(), s.context, s.contextAddFile, wildcardsPathMatcher); err != nil {
 			logProcess.Fail()
 			return "", fmt.Errorf("unable to calculate checksum for contextAddFile files list: %s", err)
@@ -740,7 +740,7 @@ func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, git
 	}
 
 entryNotFoundInGitRepository:
-	wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BaseFilepath(), wildcards, false)
+	wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BaseFilepath(), wildcards)
 
 	localGitRepository, err := giterminismManager.LocalGitRepo().PlainOpen()
 	if err != nil {
@@ -751,7 +751,7 @@ entryNotFoundInGitRepository:
 	if s.mainLsTreeResult != nil {
 		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", wildcardsPathMatcher.String())
 		logProcess.Start()
-		lsTreeResult, err := s.mainLsTreeResult.LsTree(ctx, localGitRepository, wildcardsPathMatcher)
+		lsTreeResult, err := s.mainLsTreeResult.LsTree(ctx, localGitRepository, wildcardsPathMatcher, false)
 		if err != nil {
 			logProcess.Fail()
 			return "", err
@@ -771,7 +771,7 @@ entryNotFoundInGitRepository:
 	if err := giterminismManager.Inspector().InspectBuildContextFiles(ctx, path_matcher.NewMultiPathMatcher(
 		s.dockerignorePathMatcher,
 		wildcardsPathMatcher,
-		path_matcher.NewGitMappingPathMatcher("", []string{}, s.contextAddFileRelativeToProject(), true),
+		path_matcher.NewGitMappingPathMatcher("", []string{}, s.contextAddFileRelativeToProject()),
 	)); err != nil {
 		return "", err
 	}

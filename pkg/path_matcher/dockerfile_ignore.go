@@ -9,18 +9,16 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func NewDockerfileIgnorePathMatcher(basePath string, patternMatcher *fileutils.PatternMatcher, greedySearch bool) *DockerfileIgnorePathMatcher {
+func NewDockerfileIgnorePathMatcher(basePath string, patternMatcher *fileutils.PatternMatcher) *DockerfileIgnorePathMatcher {
 	return &DockerfileIgnorePathMatcher{
-		basePathMatcher:  basePathMatcher{basePath: formatPath(basePath)},
-		patternMatcher:   patternMatcher,
-		isGreedySearchOn: greedySearch,
+		basePathMatcher: basePathMatcher{basePath: formatPath(basePath)},
+		patternMatcher:  patternMatcher,
 	}
 }
 
 type DockerfileIgnorePathMatcher struct {
 	basePathMatcher
-	patternMatcher   *fileutils.PatternMatcher
-	isGreedySearchOn bool
+	patternMatcher *fileutils.PatternMatcher
 }
 
 func (f *DockerfileIgnorePathMatcher) BaseFilepath() string {
@@ -28,10 +26,10 @@ func (f *DockerfileIgnorePathMatcher) BaseFilepath() string {
 }
 
 func (f *DockerfileIgnorePathMatcher) String() string {
-	return fmt.Sprintf("basePath=`%s`, patternMatcher=%v, greedySearch=%v", f.basePath, f.patternMatcher.Patterns(), f.isGreedySearchOn)
+	return fmt.Sprintf("basePath=`%s`, patternMatcher=%v", f.basePath, f.patternMatcher.Patterns())
 }
 
-func (f *DockerfileIgnorePathMatcher) MatchPath(path string) bool {
+func (f *DockerfileIgnorePathMatcher) IsPathMatched(path string) bool {
 	path = formatPath(path)
 
 	if !isRel(path, f.basePath) {
@@ -60,31 +58,34 @@ type pattern struct {
 	isInProgress bool
 }
 
-func (f *DockerfileIgnorePathMatcher) ProcessDirOrSubmodulePath(path string) (bool, bool) {
-	isMatched, shouldGoThrough := f.processDirOrSubmodulePath(formatPath(path))
-	if f.isGreedySearchOn {
-		return false, isMatched || shouldGoThrough
-	} else {
-		return isMatched, shouldGoThrough
-	}
+func (f *DockerfileIgnorePathMatcher) IsDirOrSubmodulePathMatched(path string) bool {
+	return f.IsPathMatched(path) || f.ShouldGoThrough(path)
 }
 
-func (f *DockerfileIgnorePathMatcher) processDirOrSubmodulePath(path string) (bool, bool) {
+func (f *DockerfileIgnorePathMatcher) ShouldGoThrough(path string) bool {
+	return f.shouldGoThrough(formatPath(path))
+}
+
+func (f *DockerfileIgnorePathMatcher) shouldGoThrough(path string) bool {
 	isBasePathRelativeToPath := isSubDirOf(f.basePath, path)
 	isPathRelativeToBasePath := isSubDirOf(path, f.basePath)
 
 	if isPathRelativeToBasePath || path == f.basePath {
 		if f.patternMatcher == nil || len(f.patternMatcher.Patterns()) == 0 {
-			return true, false
+			return false
 		} else if path == f.basePath {
-			return false, true
+			return true
 		}
-	} else if isBasePathRelativeToPath {
-		return false, true
-	} else { // path is not relative to basePath
-		return false, false
-	}
 
+		return f.shouldGoThroughDetailedCheck(path)
+	} else if isBasePathRelativeToPath {
+		return true
+	} else { // path is not relative to basePath
+		return false
+	}
+}
+
+func (f *DockerfileIgnorePathMatcher) shouldGoThroughDetailedCheck(path string) bool {
 	relPath := rel(path, f.basePath)
 	relPathParts := util.SplitFilepath(relPath)
 	var patterns []*pattern
@@ -115,31 +116,14 @@ func (f *DockerfileIgnorePathMatcher) processDirOrSubmodulePath(path string) (bo
 		}
 	}
 
-	isMatched := true
 	shouldGoThrough := false
 	for _, pattern := range patterns {
 		if pattern.isMatched {
-			isMatched = pattern.exclusion
 			shouldGoThrough = false
 		} else if pattern.isInProgress {
-			isMatched = false
 			shouldGoThrough = true
 		}
 	}
 
-	return isMatched, shouldGoThrough
-}
-
-func (f *DockerfileIgnorePathMatcher) hasUniversalIgnoreGlob() bool {
-	for _, pattern := range f.patternMatcher.Patterns() {
-		if pattern.Exclusion() {
-			continue
-		}
-
-		if hasUniversalGlob([]string{pattern.String()}) {
-			return true
-		}
-	}
-
-	return false
+	return shouldGoThrough
 }

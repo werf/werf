@@ -73,7 +73,11 @@
                 </li>
                 {%- endfor %}
                 {%- endfor %}
-                <li id="doc-versions-menu"></li>
+                {%- if site.ssi %}
+                    {% include version-menu-ssi.html %}
+                {%- else %}
+                    <li id="doc-versions-menu"></li>
+                {%- endif %}
                 <li class="header__menu-item header__menu-item_parent">
                     <a href="#">
                         {%- if page.lang == "ru" %}

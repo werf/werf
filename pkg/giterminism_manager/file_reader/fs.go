@@ -54,14 +54,14 @@ func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, 
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
 	relDirOrFileWithGlobPart := filepath.Join(relDir, prefixWithoutPatterns)
 
-	pathMatcher := path_matcher.NewSimplePathMatcher(relDirOrFileWithGlobPart, []string{glob}, true)
+	pathMatcher := path_matcher.NewSimplePathMatcher(relDirOrFileWithGlobPart, []string{glob})
 	if debug() {
 		logboek.Context(ctx).Debug().LogLn("pathMatcher:", pathMatcher.String())
 	}
 
 	var result []string
 	fileFunc := func(notResolvedPath string) error {
-		if pathMatcher.MatchPath(notResolvedPath) {
+		if pathMatcher.IsPathMatched(notResolvedPath) {
 			result = append(result, util.GetRelativeToBaseFilepath(relDir, notResolvedPath))
 		}
 
@@ -95,9 +95,7 @@ func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, 
 }
 
 func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string, pathMatcher path_matcher.PathMatcher, skipFileFunc func(ctx context.Context, r FileReader, existingRelPath string) (bool, error), fileFunc func(notResolvedPath string) error) error {
-	isDirMatched, shouldGoThroughDir := pathMatcher.ProcessDirOrSubmodulePath(relDir)
-	possiblyDirMatched := isDirMatched || shouldGoThroughDir
-	if !possiblyDirMatched {
+	if !pathMatcher.IsDirOrSubmodulePathMatched(relDir) {
 		return nil
 	}
 
@@ -135,10 +133,7 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 		for _, shouldSkipFileFunc := range []func(context.Context, FileReader, string, string) (bool, error){
 			// check requires not resolved parts in path to correctly process symlinks
 			func(_ context.Context, _ FileReader, resolvedRelPath, notResolvedRelPath string) (bool, error) {
-				isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(notResolvedRelPath)
-				possiblyMatched := isMatched || shouldGoThrough
-
-				return !possiblyMatched, nil
+				return !pathMatcher.IsDirOrSubmodulePathMatched(notResolvedRelPath), nil
 			},
 			// skip check expects file path
 			func(ctx context.Context, r FileReader, resolvedRelPath, notResolvedRelPath string) (bool, error) {
@@ -243,11 +238,8 @@ func (r FileReader) skipFileFunc(acceptedFilePathMatcher path_matcher.PathMatche
 		/* If not the file can be skipped */
 		var modified bool
 		for _, relPath := range pathsToCheck {
-			matched, shouldGoThrough := acceptedFilePathMatcher.ProcessDirOrSubmodulePath(existingRelPath)
-			probablyAccepted := matched || shouldGoThrough
-
 			/* The accepted file should be read from fs */
-			if probablyAccepted {
+			if acceptedFilePathMatcher.IsDirOrSubmodulePathMatched(existingRelPath) {
 				return false, nil
 			}
 

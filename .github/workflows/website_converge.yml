@@ -4,6 +4,10 @@ on:
     tags:
       - 'v*'
     branches: [master]
+
+env:
+  WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
+
 jobs:
 
   build:
@@ -29,8 +33,7 @@ jobs:
         channel: alpha
       env:
         WERF_RELEASE: "werfio-ng-${{ env.Version }}-test"
-        WERF_CONFIG: "docs/werf.yaml"
-        WERF_CONFIG_TEMPLATES_DIR: "docs/.werf"
+        WERF_DIR: "docs"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
@@ -43,8 +46,7 @@ jobs:
         channel: alpha
       env:
         WERF_RELEASE: "werfio-ng-${{ env.Version }}-production"
-        WERF_CONFIG: "docs/werf.yaml"
-        WERF_CONFIG_TEMPLATES_DIR: "docs/.werf"
+        WERF_DIR: "docs"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: prod
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"

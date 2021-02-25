@@ -1,7 +1,5 @@
 project: werfio-ng
 configVersion: 1
-deploy:
-  helmChartDir: docs/.helm
 
 ---
 artifact: asset
@@ -24,11 +22,12 @@ ansible:
     with_items:
     - /app/_site/main/
     - /app/_site/ru/
-  - name: "Install common head.html (which use ssi)"
-    shell: cp -f head-common.html head.html
+  - name: "Turn SSI on"
+    shell: |
+      echo -e "\nssi: true\n" >> _config.yml
     args:
       executable: /bin/bash
-      chdir: /app/docs/_includes
+      chdir: /app/docs
   - shell: |
       JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/ --config /app/docs/_config.yml
       JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml
@@ -47,25 +46,66 @@ git:
     install: ['Gemfile','Gemfile.lock']
     beforeSetup: '**/*'
 ---
-image: ~
+image: web
 from: nginx:stable-alpine
 ansible:
   setup:
   - name: "Setup /etc/nginx/nginx.conf"
     copy:
       content: |
-{{ .Files.Get "docs/.werf/nginx.conf" | indent 8 }}
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
       dest: /etc/nginx/nginx.conf
   - copy:
       content: |
-{{ .Files.Get "docs/.werf/robots.txt" | indent 8 }}
+{{ .Files.Get ".werf/robots.txt" | indent 8 }}
       dest: /app/main/robots.txt
   - copy:
       content: |
-{{ .Files.Get "docs/.werf/robots_ru.txt" | indent 8 }}
+{{ .Files.Get ".werf/robots_ru.txt" | indent 8 }}
       dest: /app/ru/robots.txt
 import:
 - artifact: asset
   add: /app/_site
   to: /app/
   before: setup
+---
+artifact: web-backend-artifact
+from: golang:1.15
+ansible:
+  install:
+    - name: Build apis
+      shell: |
+        go get -d -v ./
+        go build -v -o /go/src/app/server /go/src/app/main.go
+      args:
+        executable: /bin/bash
+        chdir: /go/src/app
+git:
+  - add: /docs/backend
+    to: /go/src/app
+    stageDependencies:
+      install: '**/*'
+---
+image: web-backend
+docker:
+  WORKDIR: /app
+from: ubuntu:20.04
+ansible:
+  install:
+    - apt:
+        name: ['git','curl', 'jq', 'vim']
+        state: present
+        update_cache: yes
+import:
+  - artifact: web-backend-artifact
+    add: /go/src/app/server
+    to: /app/server
+    before: setup
+  - artifact: asset
+    add: /app/_site
+    to: /app/root
+    before: setup
+    excludePaths:
+      - "**/documentation/"
+
+
