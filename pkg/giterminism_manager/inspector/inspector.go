@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 type Inspector struct {
@@ -27,8 +28,7 @@ type giterminismConfig interface {
 }
 
 type fileReader interface {
-	HandleValidateSubmodulesErr(err error) error
-	ExtraCheckFilesModifiedLocally(ctx context.Context, relPath ...string) error
+	ValidateStatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) error
 }
 
 type sharedOptions interface {

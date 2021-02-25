@@ -38,22 +38,32 @@ func (r FileReader) NewFileNotFoundInProjectRepositoryError(relPath string) erro
 	return FileNotFoundInProjectRepositoryError{errors.NewError(fmt.Sprintf("the file %q not found in the project git repository", filepath.ToSlash(relPath)))}
 }
 
-func (r FileReader) NewUncommittedSubmoduleChangesError(submodulePath string, filePathList []string) error {
-	errorMsg := fmt.Sprintf("the submodule %q has modified files and these changes must be committed (do not forget to push new changes to the submodule remote) or discarded:\n\n%s", filepath.ToSlash(submodulePath), prepareListOfFilesString(filePathList))
+func (r FileReader) NewSubmoduleAddedAndNotCommittedError(submodulePath string) error {
+	errorMsg := fmt.Sprintf("the added submodule %q must be committed", filepath.ToSlash(submodulePath))
+	return r.newUncommittedFilesErrorBase(errorMsg, filepath.ToSlash(submodulePath))
+}
+
+func (r FileReader) NewSubmoduleDeletedError(submodulePath string) error {
+	errorMsg := fmt.Sprintf("the deleted submodule %q must be committed", filepath.ToSlash(submodulePath))
+	return r.newUncommittedFilesErrorBase(errorMsg, filepath.ToSlash(submodulePath))
+}
+
+func (r FileReader) NewSubmoduleHasUntrackedChangesError(submodulePath string) error {
+	errorMsg := fmt.Sprintf("the submodule %q has untracked changes that must be discarded or committed (do not forget to push new changes to the submodule remote)", filepath.ToSlash(submodulePath))
 	return UncommittedFilesError{fmt.Errorf("%s", errorMsg)}
 }
 
-func (r FileReader) NewUncleanSubmoduleError(submodulePath, headCommit, currentCommit, expectedCommit string) error {
+func (r FileReader) NewSubmoduleHasUncommittedChangesError(submodulePath string) error {
+	errorMsg := fmt.Sprintf("the submodule %q has uncommitted changes that must be discarded or committed (do not forget to push new changes to the submodule remote)", filepath.ToSlash(submodulePath))
+	return UncommittedFilesError{fmt.Errorf("%s", errorMsg)}
+}
+
+func (r FileReader) NewSubmoduleCommitChangedError(submodulePath string) error {
 	expectedAction := "must be committed"
 	if r.sharedOptions.Dev() {
 		expectedAction = "must be staged"
 	}
-	errorMsg := fmt.Sprintf(`the submodule %q is not clean and %s. Do not forget to push the current commit to the submodule remote If this commit exists only locally
-
-Details:
-  commit:                 %q
-  currentWorktreeCommit:  %q
-  expectedWorktreeCommit: %q`, filepath.ToSlash(submodulePath), expectedAction, headCommit, currentCommit, expectedCommit)
+	errorMsg := fmt.Sprintf("the submodule %q is not clean and %s. Do not forget to push the current commit to the submodule remote if this commit exists only locally", filepath.ToSlash(submodulePath), expectedAction)
 
 	return r.newUncommittedFilesErrorBase(errorMsg, filepath.ToSlash(submodulePath))
 }

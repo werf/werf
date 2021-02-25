@@ -234,15 +234,14 @@ func (r FileReader) skipFileFunc(acceptedFilePathMatcher path_matcher.PathMatche
 			pathsToCheck = append(pathsToCheck, resolvedFilePath)
 		}
 
-		/* Check if the file modified locally, not ignored by .gitignore, or inside an unclean submodule repository */
-		/* If not the file can be skipped */
 		var modified bool
 		for _, relPath := range pathsToCheck {
 			/* The accepted file should be read from fs */
-			if acceptedFilePathMatcher.IsDirOrSubmodulePathMatched(existingRelPath) {
+			if acceptedFilePathMatcher.IsDirOrSubmodulePathMatched(relPath) {
 				return false, nil
 			}
 
+			/* The file with changes in worktree/index should not be skipped */
 			modified, err = r.IsFileModifiedLocally(ctx, relPath)
 			if err != nil {
 				return false, err
