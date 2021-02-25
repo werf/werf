@@ -19,7 +19,7 @@ func (r FileReader) LocateChart(ctx context.Context, chartDir string, settings *
 }
 
 func (r FileReader) locateChart(ctx context.Context, chartDir string, _ *cli.EnvSettings) (string, error) {
-	relDir := r.toProjectDirRelativePath(chartDir)
+	relDir := r.absolutePathToProjectDirRelativePath(chartDir)
 
 	files, err := r.loadChartDir(ctx, relDir)
 	if err != nil {
@@ -34,7 +34,7 @@ func (r FileReader) locateChart(ctx context.Context, chartDir string, _ *cli.Env
 }
 
 func (r FileReader) ReadChartFile(ctx context.Context, path string) ([]byte, error) {
-	relPath := r.toProjectDirRelativePath(path)
+	relPath := r.absolutePathToProjectDirRelativePath(path)
 
 	data, err := r.readChartFile(ctx, relPath)
 	if err != nil {
@@ -49,7 +49,7 @@ func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, 
 }
 
 func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*chart.ChartExtenderBufferedFile, error) {
-	relDir := r.toProjectDirRelativePath(chartDir)
+	relDir := r.absolutePathToProjectDirRelativePath(chartDir)
 
 	files, err := r.loadChartDir(ctx, relDir)
 	if err != nil {
