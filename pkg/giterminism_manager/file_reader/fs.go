@@ -322,7 +322,7 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 
 		return nil
 	}(); err != nil {
-		return fmt.Errorf("accepted symlink %q check failed: %s", relPath, err)
+		return fmt.Errorf("accepted file %q check failed: %s", relPath, err)
 	}
 
 	return nil

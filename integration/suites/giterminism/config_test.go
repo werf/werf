@@ -254,7 +254,7 @@ config:
 						skipOnWindows:        true,
 						allowUncommitted:     true,
 						addSymlinks:          map[string]string{werfConfigRelPath: getLinkTo(werfConfigRelPath, werfConfigRelPath)},
-						expectedErrSubstring: `unable to read werf config: accepted symlink "werf.yaml" check failed: too many levels of symbolic links`,
+						expectedErrSubstring: `unable to read werf config: accepted file "werf.yaml" check failed: too many levels of symbolic links`,
 					}),
 					Entry("the broken symlink in commit: werf.yaml -> werf.yaml", symlinkEntry{
 						addAndCommitSymlinks: map[string]string{werfConfigRelPath: getLinkTo(werfConfigRelPath, werfConfigRelPath)},

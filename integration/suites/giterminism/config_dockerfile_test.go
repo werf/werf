@@ -302,7 +302,7 @@ config:
 						"Dockerfile": "a",
 						"a":          dockerfilePath,
 					},
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": accepted symlink "Dockerfile" check failed: the link target "a" should be also accepted by giterminism config`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": accepted file "Dockerfile" check failed: the link target "a" should be also accepted by giterminism config`,
 				}),
 				Entry("config.allowUncommitted (Dockerfile, a) does not cover uncommitted files", entry{
 					skipOnWindows:         true,
@@ -312,7 +312,7 @@ config:
 						"Dockerfile": "a",
 						"a":          dockerfilePath,
 					},
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": accepted symlink "Dockerfile" check failed: the link target "dir/Dockerfile" should be also accepted by giterminism config`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": accepted file "Dockerfile" check failed: the link target "dir/Dockerfile" should be also accepted by giterminism config`,
 				}),
 				Entry("config.allowUncommitted (Dockerfile, a, dir/Dockerfile) covers uncommitted files", entry{
 					skipOnWindows:         true,

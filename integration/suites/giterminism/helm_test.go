@@ -241,7 +241,7 @@ helm:
 						addSymlinks: map[string]string{
 							relativeToProjectDir(".helm/templates"): getLinkTo(relativeToProjectDir(".helm/templates"), relativeToProjectDir("dir/.helm/templates")),
 						},
-						expectedErrSubstring: `unable to locate chart directory: accepted symlink ".helm/templates/template1.yaml" check failed: the link target "dir/.helm/templates" should be also accepted by giterminism config`,
+						expectedErrSubstring: `unable to locate chart directory: accepted file ".helm/templates/template1.yaml" check failed: the link target "dir/.helm/templates" should be also accepted by giterminism config`,
 					}),
 					Entry("helm.allowUncommittedFiles (.helm, dir) covers uncommitted files", symlinkEntry{
 						skipOnWindows:              true,
@@ -307,7 +307,7 @@ helm:
 						addSymlinks: map[string]string{
 							relativeToProjectDir(".helm"): getLinkTo(relativeToProjectDir(".helm"), "helm"),
 						},
-						expectedErrSubstring: `unable to locate chart directory: accepted symlink ".helm/templates/template1.yaml" check failed: the link target "../../helm" should be also accepted by giterminism config`,
+						expectedErrSubstring: `unable to locate chart directory: accepted file ".helm/templates/template1.yaml" check failed: the link target "../../helm" should be also accepted by giterminism config`,
 					})
 				})
 
