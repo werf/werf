@@ -4786,3 +4786,5 @@
 	<polygon points="491.7,263.5 493.2,264.4 493.2,253.2 491.7,252.4 	"/>
 </g>
 </svg>
+<div class="intro-scheme-dot" id="intro-animation-dot"></div>
+<div class="intro-scheme-dot" id="intro-animation-dot2"></div>
