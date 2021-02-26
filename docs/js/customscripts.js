@@ -107,6 +107,7 @@ $(document).ready(function () {
     } else docSubURL = '/documentation/';
 
     var submenu = $('<ul class="header__submenu">');
+    var prev_channel_version = '';
     $.each(releasesInfo.menuChannels, function (j, group) {
       $.each(releasesInfo.orderedChannels, function (i, channel) {
 
@@ -119,10 +120,13 @@ $(document).ready(function () {
         } else channel_version = 'review';
 
         if (channel_version) {
-          var link = $('<a href="/v' + group.group + '-' + channel + docSubURL +'">');
+          var link = $('<a class="header__submenu-item-link" href="/v' + group.group + '-' + channel + docSubURL +'">');
+          var dot_class = channel_version == prev_channel_version ? ' header__submenu-item-dot_special' : '';
+          prev_channel_version = channel_version;
           if (channel !== 'review') {
             link.append('<span class="header__submenu-item-channel"> ' + group.group + '-' + channel + '</span>');
-            link.append('<span class="header__submenu-item-release"> — ' + channel_version + '</span>');
+            link.append('<span class="header__submenu-item-dot' + dot_class + '"></span>');
+            link.append('<span class="header__submenu-item-release">' + channel_version + '</span>');
           }
 
           var item = $('<li class="header__submenu-item">');
@@ -148,7 +152,8 @@ $(document).ready(function () {
 
   toggler.append(currentChannel || 'Versions');
   if (currentChannel && !((currentChannel === 'local') || (currentChannel === 'review'))) {
-    toggler.append('<span class="header__menu-item-extra"> – ' + currentRelease + '</span>');
+    toggler.append('<span class="header__menu-item-dot">');
+    toggler.append('<span class="header__menu-item-extra">' + currentRelease + '</span>');
   }
   menu.prepend(toggler);
 
