@@ -59,12 +59,6 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		return nil, fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
 	}
 
-	if withSubmodules {
-		err := checkSubmoduleConstraint()
-		if err != nil {
-			return nil, err
-		}
-	}
 	if withSubmodules && workTreeCacheDir == "" {
 		return nil, fmt.Errorf("provide work tree cache directory to enable submodules!")
 	}

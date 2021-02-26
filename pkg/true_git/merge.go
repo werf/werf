@@ -31,13 +31,6 @@ func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, co
 			return fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
 		}
 
-		if opts.HasSubmodules {
-			err := checkSubmoduleConstraint()
-			if err != nil {
-				return err
-			}
-		}
-
 		if workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, mergeIntoCommit, opts.HasSubmodules); err != nil {
 			return fmt.Errorf("unable to prepare worktree for commit %v: %s", mergeIntoCommit, err)
 		} else {

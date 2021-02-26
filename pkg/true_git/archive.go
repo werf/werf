@@ -77,13 +77,6 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		return nil, fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
 	}
 
-	if withSubmodules {
-		err := checkSubmoduleConstraint()
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, withSubmodules)
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.Commit, err)

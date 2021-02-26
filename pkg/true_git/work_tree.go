@@ -36,13 +36,6 @@ func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir string, commit s
 			return fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
 		}
 
-		if opts.HasSubmodules {
-			err := checkSubmoduleConstraint()
-			if err != nil {
-				return err
-			}
-		}
-
 		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, opts.HasSubmodules)
 		if err != nil {
 			return fmt.Errorf("cannot prepare worktree: %s", err)

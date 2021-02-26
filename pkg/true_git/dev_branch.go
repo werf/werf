@@ -25,10 +25,6 @@ func SyncDevBranchWithStagedFiles(ctx context.Context, gitDir, workTreeCacheDir,
 			return fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
 		}
 
-		if err := checkSubmoduleConstraint(); err != nil {
-			return err
-		}
-
 		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, true)
 		if err != nil {
 			return fmt.Errorf("unable to prepare worktree for commit %v: %s", commit, err)
