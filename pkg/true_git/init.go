@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	MinGitVersionConstraintValue               = "1.9"
-	MinGitVersionWithSubmodulesConstraintValue = "2.14"
+	MinGitVersionConstraintValue = "2.18"
 )
 
 var (
@@ -25,7 +24,6 @@ var (
 
 	minGitVersionErrorMsg       = fmt.Sprintf("Git version >= %s required", MinGitVersionConstraintValue)
 	forbiddenGitVersionErrorMsg = fmt.Sprintf("Forbidden git versions: %s", strings.Join(ForbiddenGitVersionsConstraintValues, ", "))
-	submodulesVersionErrorMsg   = fmt.Sprintf("To use git submodules install git >= %s", MinGitVersionWithSubmodulesConstraintValue)
 
 	liveGitOutput bool
 )
@@ -50,7 +48,6 @@ func Init(opts Options) error {
 			fmt.Sprintf("Unexpected git version spec %s", v),
 			minGitVersionErrorMsg,
 			forbiddenGitVersionErrorMsg,
-			submodulesVersionErrorMsg,
 		}, ".\n")
 
 		return errors.New(errMsg)
@@ -77,7 +74,6 @@ func getGitCliVersion() (string, error) {
 			fmt.Sprintf("Git version command failed: %s", err),
 			minGitVersionErrorMsg,
 			forbiddenGitVersionErrorMsg,
-			submodulesVersionErrorMsg,
 		}, ".\n")
 
 		return "", errors.New(errMsg)
@@ -122,30 +118,11 @@ func checkVersionConstraints() error {
 			errMsg := strings.Join([]string{
 				minGitVersionErrorMsg,
 				forbiddenGitVersionErrorMsg,
-				submodulesVersionErrorMsg,
 				fmt.Sprintf("Your git version is %s", gitVersion.String()),
 			}, ".\n")
 
 			return errors.New(errMsg)
 		}
-	}
-
-	return nil
-}
-
-func checkSubmoduleConstraint() error {
-	constraint, err := semver.NewConstraint(fmt.Sprintf(">= %s", MinGitVersionWithSubmodulesConstraintValue))
-	if err != nil {
-		panic(err)
-	}
-
-	if !constraint.Check(gitVersion) {
-		errMsg := strings.Join([]string{
-			strings.ToLower(submodulesVersionErrorMsg),
-			fmt.Sprintf("Your git version is %s", gitVersion.String()),
-		}, ".\n")
-
-		return errors.New(errMsg)
 	}
 
 	return nil

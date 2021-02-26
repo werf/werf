@@ -13,5 +13,4 @@ sudo usermod -aG docker $USER
 
 [Git installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
- - Минимальная требуемая версия: 1.9.0.
- - Минимальная версия для использования функционала [Git Submodules](https://git-scm.com/docs/gitsubmodules): 2.14.0
+ - Минимальная требуемая версия: 2.18.0.

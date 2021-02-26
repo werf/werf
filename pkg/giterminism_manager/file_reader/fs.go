@@ -16,11 +16,11 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func (r FileReader) toProjectDirAbsolutePath(relPath string) string {
+func (r FileReader) projectRelativePathToAbsolutePath(relPath string) string {
 	return filepath.Join(r.sharedOptions.ProjectDir(), relPath)
 }
 
-func (r FileReader) toProjectDirRelativePath(absPath string) string {
+func (r FileReader) absolutePathToProjectDirRelativePath(absPath string) string {
 	return util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), absPath)
 }
 
@@ -122,13 +122,13 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 		return fmt.Errorf("unable to resolve file path %q: %s", relDir, err)
 	}
 
-	absDirPath := r.toProjectDirAbsolutePath(resolvedDir)
+	absDirPath := r.projectRelativePathToAbsolutePath(resolvedDir)
 	return filepath.Walk(absDirPath, func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		resolvedRelPath := r.toProjectDirRelativePath(path)
+		resolvedRelPath := r.absolutePathToProjectDirRelativePath(path)
 		notResolvedRelPath := strings.Replace(resolvedRelPath, resolvedDir, relDir, 1)
 		for _, shouldSkipFileFunc := range []func(context.Context, FileReader, string, string) (bool, error){
 			// check requires not resolved parts in path to correctly process symlinks
@@ -234,15 +234,14 @@ func (r FileReader) skipFileFunc(acceptedFilePathMatcher path_matcher.PathMatche
 			pathsToCheck = append(pathsToCheck, resolvedFilePath)
 		}
 
-		/* Check if the file modified locally, not ignored by .gitignore, or inside an unclean submodule repository */
-		/* If not the file can be skipped */
 		var modified bool
 		for _, relPath := range pathsToCheck {
 			/* The accepted file should be read from fs */
-			if acceptedFilePathMatcher.IsDirOrSubmodulePathMatched(existingRelPath) {
+			if acceptedFilePathMatcher.IsDirOrSubmodulePathMatched(relPath) {
 				return false, nil
 			}
 
+			/* The file with changes in worktree/index should not be skipped */
 			modified, err = r.IsFileModifiedLocally(ctx, relPath)
 			if err != nil {
 				return false, err
@@ -323,7 +322,7 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 
 		return nil
 	}(); err != nil {
-		return fmt.Errorf("accepted symlink %q check failed: %s", relPath, err)
+		return fmt.Errorf("accepted file %q check failed: %s", relPath, err)
 	}
 
 	return nil
@@ -378,7 +377,7 @@ func (r FileReader) ReadFile(ctx context.Context, relPath string) (data []byte, 
 }
 
 func (r FileReader) readFile(relPath string) ([]byte, error) {
-	absPath := r.toProjectDirAbsolutePath(relPath)
+	absPath := r.projectRelativePathToAbsolutePath(relPath)
 	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file %q: %s", absPath, err)
@@ -417,7 +416,7 @@ func (r FileReader) isDirectoryExist(ctx context.Context, relPath string) (bool,
 		return false, fmt.Errorf("unable to resolve file path %q: %s", relPath, err)
 	}
 
-	absPath := r.toProjectDirAbsolutePath(resolvedPath)
+	absPath := r.projectRelativePathToAbsolutePath(resolvedPath)
 	exist, err := util.DirExists(absPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check existence of directory %q: %s", absPath, err)
@@ -456,7 +455,7 @@ func (r FileReader) isRegularFileExist(ctx context.Context, relPath string) (boo
 		return false, fmt.Errorf("unable to resolve file path %q: %s", relPath, err)
 	}
 
-	absPath := r.toProjectDirAbsolutePath(resolvedPath)
+	absPath := r.projectRelativePathToAbsolutePath(resolvedPath)
 	exist, err := util.RegularFileExists(absPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check existence of file %q: %s", absPath, err)
@@ -539,7 +538,7 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 	var resolvedPath string
 	for ind := 0; ind < pathPartsLen; ind++ {
 		pathToResolve := filepath.Join(resolvedPath, pathParts[ind])
-		absPathToResolve := r.toProjectDirAbsolutePath(pathToResolve)
+		absPathToResolve := r.projectRelativePathToAbsolutePath(pathToResolve)
 
 		lstat, err := os.Lstat(absPathToResolve)
 
@@ -575,7 +574,7 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 				return "", r.NewFileNotFoundInProjectDirectoryError(resolvedLink)
 			}
 
-			resolvedRelLink := r.toProjectDirRelativePath(resolvedLink)
+			resolvedRelLink := r.absolutePathToProjectDirRelativePath(resolvedLink)
 			if checkSymlinkTargetFunc != nil {
 				if err := checkSymlinkTargetFunc(resolvedRelLink); err != nil {
 					return "", err
