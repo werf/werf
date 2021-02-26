@@ -43,9 +43,9 @@
                                 <ul class="header__submenu">
                                     {% for folderitem in folder.folderitems %}
                                         {%- if folderitem.external_url %}
-                                            <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
+                                            <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank" class="header__submenu-item-link">{{folderitem.title}}</a></li>
                                         {%- else %}
-                                            <li class="header__submenu-item"><a href="{{ folderitem.url | true_relative_url }}">{{folderitem.title}}</a></li>
+                                            <li class="header__submenu-item"><a href="{{ folderitem.url | true_relative_url }}" class="header__submenu-item-link">{{folderitem.title}}</a></li>
                                         {%- endif %}
                                     {%- endfor %}
                                 </ul>
@@ -89,12 +89,12 @@
                     <div class="header__submenu-container">
                       <ul class="header__submenu">
                         <li class="header__submenu-item">
-                            <a data-proofer-ignore href="{{ site.site_urls.en }}{{ page.url | relative_url }}">
+                            <a data-proofer-ignore href="{{ site.site_urls.en }}{{ page.url | relative_url }}" class="header__submenu-item-link">
                                 English
                             </a>
                         </li>
                         <li class="header__submenu-item">
-                            <a data-proofer-ignore href="{{ site.site_urls.ru }}{{ page.url | relative_url }}">
+                            <a data-proofer-ignore href="{{ site.site_urls.ru }}{{ page.url | relative_url }}" class="header__submenu-item-link">
                                 Russian
                             </a>
                         </li>
