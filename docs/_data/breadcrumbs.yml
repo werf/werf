@@ -47,6 +47,9 @@ en:
   /documentation/internals/development: &documentation-internals-development
     title: Development
     url: documentation/internals/development/stapel_image.html
+  /documentation/whats_new_in_v1_2: &documentation-whats-new-in-v1-2
+    title: What's new in v1.2
+    url: documentation/whats_new_in_v1_2/changelog.html
 ru:
   /documentation:
     << : *documentation
