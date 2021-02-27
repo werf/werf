@@ -58,7 +58,8 @@ func logHTTPReq(w *responseWriter, r *http.Request, startTime time.Time) {
 	if skipHTTPRequestLogging(r) {
 		return
 	}
-	logentry := fmt.Sprintf("%s \"%s %s\" %d %v",
+	logentry := fmt.Sprintf("%s %s \"%s %s\" %d %v",
+		r.RemoteAddr,
 		r.Host,
 		r.Method,
 		r.URL.EscapedPath(),
