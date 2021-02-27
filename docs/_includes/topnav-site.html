@@ -26,14 +26,12 @@
                             and page.url != '/installation.html' %} header__menu-item_active{% endif %}
                             {%- if folder.url.size>1 and page.url == '/publications_ru.html'
                             and folder.url == '/publications.html' %} header__menu-item_active{% endif %}
-                            {%- if folder.url.size<2 and page.url.size<2 %} header__menu-item_active{% endif %}
-                            {%- if folder.title == 'Документация' or folder.title == 'Documentation'  %}
-                                {%- if page.relation != 'site' %} header__menu-item_active{% endif %}{% endif %}">
-                            {%- if folder.title == 'Документация' or folder.title == 'Documentation'  %}
+                            {%- if folder.url.size<2 and page.url.size<2 %} header__menu-item_active{% endif %}">
+                            {%- if folder.title == 'Документация' or folder.title == 'Documentation' %}
                                 {%- if page.name == '404.md' %}
                                 <a data-proofer-ignore href="{{ folder.url }}">{{ folder.title }}</a>
                                 {%- else %}
-                                <a href="{% raw %}{{ .MenuDocumentationLink }}{% endraw %}">{{ folder.title }}</a>
+                                <a href="{{ folder.url | true_relative_url }}">{{ folder.title }}</a>
                                 {%- endif %}
                             {%- else if jekyll.environment == "production" %}
                             <a data-proofer-ignore href="{{ folder.url }}">{{ folder.title }}</a>
@@ -45,9 +43,9 @@
                                 <ul class="header__submenu">
                                     {% for folderitem in folder.folderitems %}
                                         {%- if folderitem.external_url %}
-                                            <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank" class="header__submenu-item-link">{{folderitem.title}}</a></li>
+                                            <li class="header__submenu-item"><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
                                         {%- else %}
-                                            <li class="header__submenu-item"><a href="{{ folderitem.url | true_relative_url }}" class="header__submenu-item-link">{{folderitem.title}}</a></li>
+                                            <li class="header__submenu-item"><a href="{{ folderitem.url | true_relative_url }}">{{folderitem.title}}</a></li>
                                         {%- endif %}
                                     {%- endfor %}
                                 </ul>
@@ -75,7 +73,7 @@
                 </li>
                 {%- endfor %}
                 {%- endfor %}
-                {% include version-menu.html %}
+                <!--#include virtual="/includes/version-menu.html" -->
                 <li class="header__menu-item header__menu-item_parent">
                     <a href="#">
                         {%- if page.lang == "ru" %}
@@ -87,12 +85,12 @@
                     <div class="header__submenu-container">
                       <ul class="header__submenu">
                         <li class="header__submenu-item">
-                            <a data-proofer-ignore href="{{ site.site_urls.en }}{{ page.url | relative_url }}" class="header__submenu-item-link">
+                            <a data-proofer-ignore href="{{ site.site_urls.en }}{{ page.url | relative_url }}">
                                 English
                             </a>
                         </li>
                         <li class="header__submenu-item">
-                            <a data-proofer-ignore href="{{ site.site_urls.ru }}{{ page.url | relative_url }}" class="header__submenu-item-link">
+                            <a data-proofer-ignore href="{{ site.site_urls.ru }}{{ page.url | relative_url }}">
                                 Russian
                             </a>
                         </li>

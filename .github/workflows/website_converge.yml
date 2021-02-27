@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - 'v*'
+      - '!v1.1.*'
+      - '!v1.0.*'
     branches: [master]
 
 env:
@@ -33,6 +35,7 @@ jobs:
         channel: alpha
       env:
         WERF_RELEASE: "werfio-ng-${{ env.Version }}-test"
+        WERF_NAMESPACE: "werfio-test"
         WERF_DIR: "docs"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
@@ -46,6 +49,7 @@ jobs:
         channel: alpha
       env:
         WERF_RELEASE: "werfio-ng-${{ env.Version }}-production"
+        WERF_NAMESPACE: "werfio-production"
         WERF_DIR: "docs"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: prod

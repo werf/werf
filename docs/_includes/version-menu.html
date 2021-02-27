@@ -12,7 +12,7 @@
 <div class="header__submenu-container">
     <ul class="header__submenu">
     {{- range (slice .VersionItems 1) }}
-            <li class="header__submenu-item"><a href="/{{ .VersionURL }}{{ $CurrentPageURL }}"><span
+            <li class="header__submenu-item"><a href="/v{{ .Group }}-{{ .Channel }}{{ $CurrentPageURL }}"><span
                     class="header__submenu-item-channel"> {{ .Group }}-{{ .Channel }}</span><span
                     class="header__submenu-item-release"> — {{ .Version }}</span></a></li>
     {{- end }}

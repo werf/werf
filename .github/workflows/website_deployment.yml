@@ -1,38 +1,14 @@
 name: Website Deployment
 on:
-  pull_request:
-    types: [labeled]
   repository_dispatch:
     types: [site-deploy]
 
 jobs:
 
-  unlabel:
-    name: Label taking off
-    if: github.event_name == 'pull_request' && github.event.label.name == 'review docs'
-    runs-on: ubuntu-latest
-    steps:
-
-    - uses: actions/github-script@0.3.0
-      with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
-        script: "github.issues.removeLabel({...context.issue, name: '${{ github.event.label.name }}' })"
-
   deploy:
     name: Deploy
-    if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'review docs')
     runs-on: ubuntu-latest
     steps:
-
-    # TODO: variables[review_sha]=${{ github.sha }} (currently, werf does not fetch PRs' refs)
-    - name: Deploy website to review
-      run: |
-        curl -X POST \
-             -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
-             -F "ref=master" \
-             -F "variables[review_sha]=${{ github.event.pull_request.head.sha }}" \
-             ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
-      if: github.event_name == 'pull_request'
 
     - name: Deploy website to production
       run: |
@@ -40,4 +16,3 @@ jobs:
              -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
              -F "ref=master" \
              ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
-      if: github.event_name == 'repository_dispatch'

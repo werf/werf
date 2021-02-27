@@ -3,6 +3,7 @@ title: Introduction
 permalink: introduction.html
 sidebar: documentation
 description: How werf works?
+relation: site
 ---
 
 {% asset introduction.css %}

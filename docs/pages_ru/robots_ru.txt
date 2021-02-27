@@ -1,3 +1,7 @@
+---
+layout: none
+permalink: /robots.txt
+---
 User-agent: *
 
 Disallow: /latest
