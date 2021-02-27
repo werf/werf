@@ -1,4 +1,4 @@
-name: Website build doc from tag
+name: Build and deploy website
 on:
   push:
     tags:
