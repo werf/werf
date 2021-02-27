@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"html/template"
-	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -19,20 +17,6 @@ import (
 	"time"
 )
 
-func multiwerfHandler(w http.ResponseWriter, r *http.Request) {
-
-	// Only for test purposes
-	data, err := ioutil.ReadFile("multiwerf/multiwerf.json")
-	if err != nil {
-		http.Error(w, "WARNING: Can't open multiwerf.json", 404)
-		log.Printf("WARNING: Can't open multiwerf.json")
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	_, _ = io.WriteString(w, string(data))
-}
-
 // Deprecated
 func ssiHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprintf(w, "<p>SSI handler (%s).</p>", r.URL.Path[1:])
@@ -40,7 +24,7 @@ func ssiHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get some status info
-func apiStatusHandler(w http.ResponseWriter, r *http.Request) {
+func statusHandler(w http.ResponseWriter, r *http.Request) {
 	var msg []string
 	status := "ok"
 

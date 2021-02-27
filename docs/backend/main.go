@@ -16,14 +16,13 @@ func newRouter() *mux.Router {
 	staticFileDirectoryMain := http.Dir("./root/main")
 	staticFileDirectoryRu := http.Dir("./root/ru")
 
-	r.PathPrefix("/api/status").HandlerFunc(apiStatusHandler).Methods("GET")
+	r.PathPrefix("/status").HandlerFunc(statusHandler).Methods("GET")
 	r.PathPrefix("/backend/").HandlerFunc(ssiHandler).Methods("GET")
 	r.PathPrefix("/v{group:[0-9]+.[0-9]+}-{channel:alpha|beta|ea|stable|rock-solid}").HandlerFunc(groupChannelHandler).Methods("GET")
 	r.PathPrefix("/documentation").HandlerFunc(rootDocumentationHandler).Methods("GET")
 	r.PathPrefix("/health").HandlerFunc(healthCheckHandler).Methods("GET")
 	r.Path("/includes/topnav.html").HandlerFunc(topnavHandler).Methods("GET")
 	r.Path("/includes/version-menu.html").HandlerFunc(topnavHandler).Methods("GET")
-	r.Path("/multiwerf").HandlerFunc(multiwerfHandler).Methods("GET")
 	// En static
 	r.PathPrefix("/").Host("werf.io").Handler(serveFilesHandler(staticFileDirectoryMain))
 	r.PathPrefix("/").Host("www.werf.io").Handler(serveFilesHandler(staticFileDirectoryMain))

@@ -137,7 +137,7 @@ func (m *versionMenuType) getChannelsForGroup(group string, releases *ReleasesSt
 		if item.Group == group {
 			for _, channel := range channelsListReverseStability {
 				for _, channelItem := range item.Channels {
-					if channelItem.Name == channel && !(channelItem.Name == m.CurrentChannel && group == m.CurrentGroup) {
+					if channelItem.Name == channel {
 						m.VersionItems = append(m.VersionItems, versionMenuItems{
 							Group:      group,
 							Channel:    channelItem.Name,

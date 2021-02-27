@@ -76,29 +76,6 @@
                 {%- endfor %}
                 {%- endfor %}
                 {% include version-menu.html %}
-                <li class="header__menu-item header__menu-item_parent">
-                    <a href="#">
-                        {%- if page.lang == "ru" %}
-                            Russian
-                        {%- else %}
-                            English
-                        {%- endif %}
-                    </a>
-                    <div class="header__submenu-container">
-                      <ul class="header__submenu">
-                        <li class="header__submenu-item">
-                            <a data-proofer-ignore href="{{ site.site_urls.en }}{{ page.url | relative_url }}" class="header__submenu-item-link">
-                                English
-                            </a>
-                        </li>
-                        <li class="header__submenu-item">
-                            <a data-proofer-ignore href="{{ site.site_urls.ru }}{{ page.url | relative_url }}" class="header__submenu-item-link">
-                                Russian
-                            </a>
-                        </li>
-                      </ul>
-                    </div>
-                </li>
                 <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].telegram }}" target="_blank" class="page__icon page__icon_telegram" title="Telegram"></a></li>
                 <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].twitter }}" target="_blank" class="page__icon page__icon_twitter" title="Twitter"></a></li>
                 <li class="header__menu-icon"><a href="https://github.com/werf/werf" rel="noopener noreferrer" target="_blank" class="page__icon page__icon_github" title="GitHub"></a></li>
