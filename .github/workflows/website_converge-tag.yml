@@ -1,7 +1,10 @@
-name: Build and deploy main website
+name: Build and deploy version documentation
 on:
   push:
-    branches: [master]
+    tags:
+      - 'v*'
+      - '!v1.1.*'
+      - '!v1.0.*'
 
 env:
   WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
@@ -23,10 +26,6 @@ jobs:
       run: |
           echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
 
-    - name: Generate artifacts
-      run: |
-          bash .werf/legacy/generate_artifacts.sh
-
     - name: Deploy website to test
       uses: werf/actions/converge@master
       with:
@@ -37,8 +36,6 @@ jobs:
         WERF_RELEASE: "werfio-ng-${{ env.Version }}-test"
         WERF_NAMESPACE: "werfio-test"
         WERF_DIR: "docs"
-        WERF_CONFIG: "docs/werf-site.yaml"
-        WERF_LOOSE_GITERMINISM: true
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
@@ -53,8 +50,6 @@ jobs:
         WERF_RELEASE: "werfio-ng-${{ env.Version }}-production"
         WERF_NAMESPACE: "werfio-production"
         WERF_DIR: "docs"
-        WERF_CONFIG: "docs/werf-site.yaml"
-        WERF_LOOSE_GITERMINISM: true
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: prod
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"

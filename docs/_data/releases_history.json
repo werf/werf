@@ -1,0 +1,23 @@
+{
+  "history": [
+    {
+      "ts": "1614448827",
+      "date": "2021-02-27T18:00:27Z",
+      "group": "1.2",
+      "channels": [
+        {
+          "name": "alpha",
+          "version": "v1.2.8+fix2"
+        },
+        {
+          "name": "beta",
+          "version": "v1.2.8+fix2"
+        },
+        {
+          "name": "ea",
+          "version": "v1.2.8+fix2"
+        }
+      ]
+    }
+  ]
+}

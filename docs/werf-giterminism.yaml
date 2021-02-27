@@ -1,0 +1,5 @@
+giterminismConfigVersion: 1
+config:
+  allowUncommittedTemplates:
+    - releases.json
+    - releases_history.json
