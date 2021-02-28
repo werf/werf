@@ -25,6 +25,7 @@ jobs:
 
     - name: Generate artifacts
       run: |
+          cd docs
           bash .werf/legacy/generate_artifacts.sh
 
     - name: Deploy website to test
