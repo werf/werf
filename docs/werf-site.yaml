@@ -1,0 +1,132 @@
+project: werfio-ng
+configVersion: 1
+
+---
+artifact: asset
+from: jekyll/builder:3
+ansible:
+  install:
+  - shell: |
+      export PATH=/usr/jekyll/bin/:$PATH
+      gem update bundler
+  - name: "Install Dependencies"
+    shell: bundle install
+    args:
+      executable: /bin/bash
+      chdir: /app/docs
+  beforeSetup:
+  - file:
+      path: "{{`{{ item }}`}}"
+      state: directory
+      mode: 0777
+    with_items:
+    - /app/_site/main/
+    - /app/_site/ru/
+  - name: "releases.json"
+    copy:
+      content: |
+{{ .Files.Get "releases.json" | indent 8 }}
+      dest:  /app/docs/_data/releases.json
+  - name: "Strip escaping sequence from releases.json"
+    shell: |
+      sed -i 's#{% raw %}\ *##; s#{% endraw %}##' /app/docs/_data/releases.json
+    args:
+      executable: /bin/bash
+      warn: false
+  - name: "releases_history.json"
+    copy:
+      content: |
+{{ .Files.Get "releases_history.json" | indent 8 }}
+      dest:  /app/docs/_data/releases_history.json
+  - name: "channels_versions.json"
+    copy:
+      content: |
+{{ .Files.Get "channels_versions.json" | indent 8 }}
+      dest: /app/docs/_data/channels_versions.json
+  - name: "feeds.base64"
+    copy:
+      content: |
+{{ .Files.Get "feeds.tgz.base64" | indent 8 }}
+      dest: /app/docs/feeds.tgz.base64
+  - name: "unpack RSS feeds"
+    shell: |
+      if [ -f feeds.tgz.base64 ] ; then base64 -d feeds.tgz.base64 > feeds.tgz; tar -xzf feeds.tgz  --transform='s/feeds/./' --wildcards '*.xml'; else echo "RSS feeds file feeds.tgz is absent!";  exit 1 ; fi
+      rm feeds.tgz.base64
+      rm feeds.tgz
+    args:
+      executable: /bin/bash
+      warn: false
+      chdir: /app/docs
+  - shell: |
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/ --config /app/docs/_config.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml
+    args:
+      executable: /bin/bash
+      chdir: /app/docs
+git:
+- add: /docs
+  to: /app/docs
+  owner: jekyll
+  group: jekyll
+  excludePaths:
+  - '**/*.sh'
+  - .helm
+  - werf.yaml
+  - .github
+  stageDependencies:
+    install: ['Gemfile','Gemfile.lock']
+    beforeSetup: '**/*'
+---
+image: web
+from: nginx:stable-alpine
+ansible:
+  setup:
+  - name: "Setup /etc/nginx/nginx.conf"
+    copy:
+      content: |
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
+import:
+- artifact: asset
+  add: /app/_site
+  to: /app/
+  before: setup
+---
+artifact: web-backend-artifact
+from: golang:1.15
+ansible:
+  install:
+    - name: Build apis
+      shell: |
+        go get -d -v ./
+        go build -ldflags "-w -s" -v -o /go/src/app/server /go/src/app/
+      args:
+        executable: /bin/bash
+        chdir: /go/src/app
+git:
+  - add: /docs/backend
+    to: /go/src/app
+    stageDependencies:
+      install: '**/*'
+---
+image: web-backend
+docker:
+  WORKDIR: /app
+from: ubuntu:20.04
+ansible:
+  install:
+    - apt:
+        name: ['git','curl', 'jq', 'vim']
+        state: present
+        update_cache: yes
+import:
+  - artifact: web-backend-artifact
+    add: /go/src/app/server
+    to: /app/server
+    before: setup
+  - artifact: asset
+    add: /app/_site
+    to: /app/root
+    before: setup
+    excludePaths:
+      - "**/documentation/"
