@@ -18,6 +18,7 @@ jobs:
 
     - name: Deploy multiwerf.json to test
       uses: werf/actions/converge@master
+      continue-on-error: true
       with:
         env: test
         group: 1.2
