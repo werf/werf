@@ -32,6 +32,14 @@ werf не поддерживает функцию `expandenv` и имеет св
 
 ## Функции werf
 
+### Различные окружения
+
+#### .Env
+
+Переменная `.Env` позволяет организовывать конфигурацию для нескольких сред (testing, staging, production и т.п.) и переключаться между ними с помощью опции `--env=<environment_name>`.
+
+> В helm шаблонах таким же образом может использоваться переменная `.Values.werf.env` (подробнее про служебные значения werf в шаблонах helm [здесь]({{ "documentation/advanced/helm/configuration/values.html#service-values" | true_relative_url }})).
+
 ### Шаблонизация
 
 #### include
