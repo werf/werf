@@ -5,7 +5,7 @@ description: Description of key differences since v1.1
 sidebar: documentation
 ---
 
-This article contains full descriptive list of key changes since v1.1. If you need a fast guide about migration from v1.1 then read [how to migrate from v1.1 to v1.2 article]({{ "/documentation/whats_new_in_v1_2/howto_from_v1_1_to_v1_2.html" | true_relative_url }}).
+This article contains full descriptive list of key changes since v1.1. If you need a fast guide about migration from v1.1 then read [how to migrate from v1.1 to v1.2 article]({{ "/documentation/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html" | true_relative_url }}).
 
 ## Giterminism
 
@@ -66,7 +66,7 @@ Internally werf will commit staged files to dev branch `werf-dev-<commit>`. Dev-
  - `werf converge`, `werf run`, `werf bundle publish` and `werf render` commands will automatically build needed images, which does not exists in the repo.
    - `werf render` will build images only when `--repo` param has been specified.
 
-### Storing images in CI/CD systems
+### Storing of images in CI/CD systems
 
 Use project's container registry repository as `--repo` param for werf commands.
 
@@ -129,6 +129,8 @@ Use project's container registry repository as `--repo` param for werf commands.
    - Set `metadata.version = 1.0.0` if not set.
  - Added `.Values.global.werf.version` service value with werf cli util version.
  - Support setting initial number of replicas when HPA is active for Deployment. Set `"werf.io/replicas-on-creation": NUM` annotation, do not set `spec.replicas` field in templates in such case explicitly.
+     - `spec.replicas` will override `werf.io/replicas-on-creation`.
+     - This annotation is especially useful when HPA is active, [here is the reason]({{ "/documentation/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
 
 ### Working with subcharts
 
@@ -190,7 +192,7 @@ Use project's container registry repository as `--repo` param for werf commands.
 ## Cleanup
 
  - Git history based by default.
-   - Previously this mode was enabled with git-history-based-cleanup-v1.2 option.
+   - Previously this mode was enabled with `--git-history-based-cleanup-v1.2` option.
      - Option has been removed.
  - Removed tag strategy based algorithms completely.
  - `--keep-stages-built-within-last-n-hours` option to keep images that were built within period (2 hours by default).
@@ -266,12 +268,8 @@ User may put werf.yaml (and .helm) into any subdirectory of the project git repo
  - All relative paths specified in the werf.yaml will be calculated relatively to the werf process cwd or `--dir` param.
  - Typically user will run werf from the subdirectory where werf.yaml reside.
  - There is also `--config` option to pass custom werf.yaml config, all relative paths will also be calculated relatively to the werf process cwd or `--dir` param.
- - Added --git-work-tree param (WERF_GIT_WORK_TREE) to specify directory that contains .git in the case when autodetector failed or we want to use specific work tree.
-   - For example when running werf from the submodule of the project we may want to use root repo worktree instead of submodule's work tree.
-
-## Dockerfile
-
- - 
+ - Added `--git-work-tree` param (or `WERF_GIT_WORK_TREE` variable) to specify directory that contains `.git` in the case when autodetector failed or we want to use specific work tree.
+     - For example when running werf from the submodule of the project we may want to use root repo worktree instead of submodule's work tree.
 
 ## Other and internals
 

@@ -197,7 +197,7 @@ entries:
             url: /documentation/whats_new_in_v1_2/changelog.html
           
           - title: How to migrate from v1.1 to v1.2
-            url: /documentation/whats_new_in_v1_2/howto_from_v1_1_to_v1_2.html
+            url: /documentation/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html
 
   ru:
     f:
