@@ -83,7 +83,7 @@ beforeInstall:
 
 #### tpl
 
-Функция `tpl` позволяет обрабатывать строки как Go шаблоны. В качестве аргумента может передаваться контент файла проекта, значение переменной окружения либо произвольная строка.
+Функция `tpl` позволяет обрабатывать строки как Go-шаблоны.
 
 __Синтаксис__:
 {% raw %}
@@ -91,6 +91,76 @@ __Синтаксис__:
 {{ tpl <STRING> <VALUES> }}
 ```
 {% endraw %}
+
+- `<STRING>` — контент файла проекта, значение переменной окружения либо произвольная строка.
+- `<VALUES>` — значения шаблона. При использовании текущего контекста, `.`, в шаблоне можно использовать все шаблоны и значения (в том числе, описанные в файлах директории шаблонов).
+
+##### Пример: использование файлов проекта в качестве шаблонов werf.yaml
+
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_werf_yaml')">werf.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_backend')">backend/werf-partial.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_frontend')">frontend/werf-partial.yaml</a>
+</div>
+
+<div id="tpl_werf_yaml" class="tabs__content active" markdown="1">
+
+{% raw %}
+```yaml
+{{ $_ := set . "BaseImage" "node:14.3" }}
+
+project: app
+configVersion: 1
+---
+
+{{ range $path, $content := .Files.Glob "**/werf-partial.yaml" }}
+{{ tpl $content $ }}
+{{ end }}
+
+{{- define "common install commands" }}
+- npm install
+- npm run build
+{{- end }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_backend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: backend
+from: {{ .BaseImage }}
+git:
+- add: /backend
+  to: /app/backend
+shell:
+  install:
+  - cd /app/backend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_frontend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: frontend
+from: {{ .BaseImage }}
+git:
+- add: /frontend
+  to: /app/frontend
+shell:
+  install:
+  - cd /app/frontend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
 
 ### Переменные окружения
 

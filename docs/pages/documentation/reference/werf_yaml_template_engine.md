@@ -83,7 +83,7 @@ beforeInstall:
 
 #### tpl
 
-The `tpl` function evaluates string as template inside a template. This is useful to render project files or any string.
+The `tpl` function allows evaluating string as a template inside a template.
 
 __Syntax__:
 {% raw %}
@@ -91,6 +91,76 @@ __Syntax__:
 {{ tpl <STRING> <VALUES> }}
 ```
 {% endraw %}
+
+- `<STRING>` — the content of a project file, an environment variable value, or an arbitrary string.
+- `<VALUES>` — the template values. If you use the current context, `.`, all templates and values (including those described in [the template directory](#template-directory) files) can be used in the template.
+
+##### Example: how to use project files as the werf configuration partials
+
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_werf_yaml')">werf.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_backend')">backend/werf-partial.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_frontend')">frontend/werf-partial.yaml</a>
+</div>
+
+<div id="tpl_werf_yaml" class="tabs__content active" markdown="1">
+
+{% raw %}
+```yaml
+{{ $_ := set . "BaseImage" "node:14.3" }}
+
+project: app
+configVersion: 1
+---
+
+{{ range $path, $content := .Files.Glob "**/werf-partial.yaml" }}
+{{ tpl $content $ }}
+{{ end }}
+
+{{- define "common install commands" }}
+- npm install
+- npm run build
+{{- end }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_backend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: backend
+from: {{ .BaseImage }}
+git:
+- add: /backend
+  to: /app/backend
+shell:
+  install:
+  - cd /app/backend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_frontend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: frontend
+from: {{ .BaseImage }}
+git:
+- add: /frontend
+  to: /app/frontend
+shell:
+  install:
+  - cd /app/frontend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
 
 ### environment variables
 
