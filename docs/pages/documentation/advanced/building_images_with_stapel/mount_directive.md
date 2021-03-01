@@ -36,3 +36,5 @@ The implementation allows inheriting mount points from [base image]({{ "document
 
 Also, on `from` stage werf cleans assembly container mount points in a [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | true_relative_url }}).
 Therefore, these folders are empty in an image.
+
+> By default, the use of the `fromPath` directive and `from: build_dir` are not allowed by giterminism (read more about it [here]({{ "/documentation/advanced/giterminism.html#mount" | true_relative_url }}))
