@@ -213,7 +213,7 @@ sections:
           en: Untracked files for adding to build context. The paths must be relative to context PATH
           ru: Добавление нехранящихся в git файлов в сборочный контекст. Пути должны быть относительно директории контекста
         detailsArticle:
-          all: "/documentation/advanced/giterminism.html#contextaddfile"
+          all: "#contextaddfile"
       - name: target
         value: "string"
         description:

@@ -366,11 +366,11 @@ entries:
           - title: werf.yaml
             url: /documentation/reference/werf_yaml.html
 
-          - title: werf-giterminism.yaml
-            url: /documentation/reference/werf_giterminism_yaml.html
-
           - title: werf.yaml template engine
             url: /documentation/reference/werf_yaml_template_engine.html
+
+          - title: werf-giterminism.yaml
+            url: /documentation/reference/werf_giterminism_yaml.html
 
           - title: Deploy annotations
             url: /documentation/reference/deploy_annotations.html
@@ -564,11 +564,11 @@ entries:
           - title: werf.yaml
             url: /documentation/reference/werf_yaml.html
 
-          - title: werf-giterminism.yaml
-            url: /documentation/reference/werf_giterminism_yaml.html
-
           - title: Шаблонизатор werf.yaml
             url: /documentation/reference/werf_yaml_template_engine.html
+
+          - title: werf-giterminism.yaml
+            url: /documentation/reference/werf_giterminism_yaml.html
 
           - title: Аннотации для деплоя
             url: /documentation/reference/deploy_annotations.html

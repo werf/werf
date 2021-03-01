@@ -279,6 +279,29 @@ dockerfile: frontend/Dockerfile
 context: frontend/
 ```
 
+#### contextAddFile
+
+The build context consists of the files from a directory, defined by `context` directive (the project directory by default), from the current project git repository commit.
+
+The `contextAddFile` directive allows adding an arbitrary file from the project directory to the build context.
+
+```yaml
+image: app
+context: app
+contextAddFile:
+ - file1
+ - dir/file2.out
+```
+
+The configuration describes the build context that consists of the following files:
+
+- `app/**/*`  from the current project git repository commit;
+- `app/file1` and `app/dir/file2.out` from the project directory.
+
+The `contextAddFile` files have a higher priority than the files from the current project git repository commit. When these files are crossing, the user will work with files from the project directory.
+
+> By default, the use of the `contextAddFile` directive is not allowed by giterminism (read more about it [here]({{ "documentation/advanced/giterminism.html#contextaddfile" | true_relative_url }}))
+
 ### Stapel builder
 
 Another alternative to building images with Dockerfiles is werf stapel builder, which is tightly integrated with Git and allows really fast incremental rebuilds on changes in the Git files.

@@ -30,3 +30,5 @@ directive_summary: mount
 На стадии `from`, werf добавляет специальные лейблы к образу стадии, согласно описанных точек монтирования. Затем, на каждой стадии, werf использует эти лейблы при  монтировании директорий в сборочный контейнер. Такая реализация позволяет наследовать точки монтирования от [базового образа]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | true_relative_url }}).
 
 Также, нужно иметь в виду, что на стадии `from` werf очищает точки монтирования в [базовом образе]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | true_relative_url }}) (т.е. эти папки будут пусты).
+
+> По умолчанию, использование директивы `fromPath` и `from: build_dir` запрещено гитерминизмом (подробнее об этом в [статье]({{ "/documentation/advanced/giterminism.html#mount" | true_relative_url }}))
