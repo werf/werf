@@ -4,9 +4,11 @@
 {{- $first := index .VersionItems 0 }}
 <a href="#">
 {{- if $first.Group }}
-{{- $first.Group }}-{{  $first.Channel }}<span class="header__menu-item-extra"> – {{ $first.Version }}</span>
+{{- $first.Group }}-{{  $first.Channel }}
+    <span class="header__menu-item-dot"></span>
+    <span class="header__menu-item-extra">{{ $first.Version }}</span>
 {{- else }}
-<span class="header__menu-item-extra">{{ $first.Version }}</span>
+{{ $first.Version }}
 {{- end }}
 </a>
 <div class="header__submenu-container">
