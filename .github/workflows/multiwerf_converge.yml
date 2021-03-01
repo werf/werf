@@ -6,8 +6,8 @@ on:
 
 jobs:
 
-  build:
-    name: Converge
+  deploy_multiwerf_to_test:
+    name: Deploy multiwerf.json to test
     runs-on: tfprod-werf
     steps:
 
@@ -16,9 +16,8 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Deploy multiwerf.json to test
+    - name: Werf converge
       uses: werf/actions/converge@master
-      continue-on-error: true
       with:
         env: test
         group: 1.2
@@ -28,7 +27,17 @@ jobs:
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
 
-    - name: Deploy multiwerf.json to production
+  deploy_multiwerf_to_prod:
+    name: Deploy multiwerf.json to prod
+    runs-on: tfprod-werf
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Werf converge
       uses: werf/actions/converge@master
       with:
         env: production
