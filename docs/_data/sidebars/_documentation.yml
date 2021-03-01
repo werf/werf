@@ -43,12 +43,6 @@ entries:
           - title: Giterminism
             url: /documentation/advanced/giterminism.html
 
-          - title: Configuration
-            f:
-
-              - title: Organizing configuration
-                url: /documentation/advanced/configuration/organizing_configuration.html
-
           - title: Helm
             f:
               - title: Overview
@@ -240,12 +234,6 @@ entries:
 
           - title: Гитерминизм
             url: /documentation/advanced/giterminism.html
-
-          - title: Конфигурация
-            f:
-
-              - title: Организация конфигурации
-                url: /documentation/advanced/configuration/organizing_configuration.html
 
           - title: Helm
             f:

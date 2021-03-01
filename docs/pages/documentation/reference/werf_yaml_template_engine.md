@@ -6,6 +6,8 @@ permalink: documentation/reference/werf_yaml_template_engine.html
 
 Reading _the werf configuration_, werf uses a built-in Go template engine ([text/template](https://golang.org/pkg/text/template)) and expands the function set with [Sprig](#sprig-functions) and [werf functions](#werf-functions).
 
+When organizing the configuration, it can be split into separate files in [template directory](#template-directory).
+
 ## Built-in Go template features
 
 To work effectively, we recommend you looking at all the features, or at least the following sections:
@@ -320,3 +322,186 @@ value: {{ fromYaml "<STRING>" }}
 from: {{- $values.image.from }}
 ```
 {% endraw %}
+
+## Template directory
+
+_Template files_ can be stored in a reserved directory (`.werf` by default) with the extension `.tmpl` (arbitrary nesting `.werf/**/*.tmpl` is supported).
+
+_Template files_ and the werf configuration file define a common context:
+
+- _Template file_ is a complete template and can be used with the [include](#include) function by the relative path ({% raw %}`{{ include "directory/partial.tmpl" . }}`{% endraw %}).
+- The template defined with the `define` function in one _template file_ is available in any other, including the werf configuration file.
+
+### Example: how to use _template files_
+
+<div class="details active">
+<a href="javascript:void(0)" class="details__summary">werf.yaml</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+image: app
+from: java:8-jdk-alpine
+shell:
+  beforeInstall:
+  - mkdir /app
+  - adduser -Dh /home/gordon gordon
+import:
+- artifact: appserver
+  add: '/usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar'
+  to: '/app/AtSea-0.0.1-SNAPSHOT.jar'
+  after: install
+- artifact: storefront
+  add: /usr/src/atsea/app/react-app/build
+  to: /static
+  after: install
+docker:
+  ENTRYPOINT: ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
+  CMD: ["--spring.profiles.active=postgres"]
+---
+{{ include "artifact/appserver.tmpl" . }}
+---
+{{ include "artifact/storefront.tmpl" . }}
+```
+{% endraw %}
+
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">.werf/artifact/appserver.tmpl</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+artifact: appserver
+from: maven:latest
+git:
+- add: '/app'
+  to: '/usr/src/atsea'
+shell:
+  install:
+  - cd /usr/src/atsea
+  - mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:resolve
+  - mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
+```
+{% endraw %}
+
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">.werf/artifact/storefront.tmpl</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+artifact: storefront
+from: node:latest
+git:
+- add: /app/react-app
+  to: /usr/src/atsea/app/react-app
+shell:
+  install:
+  - cd /usr/src/atsea/app/react-app
+  - npm install
+  - npm run build
+```
+{% endraw %}
+
+</div>
+</div>
+
+### Example: how to use templates defined in a _template file_
+
+<div class="details active">
+<a href="javascript:void(0)" class="details__summary">werf.yaml</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+{{ $_ := set . "RubyVersion" "2.3.4" }}
+{{ $_ := set . "BaseImage" "alpine" }}
+
+project: my-project
+configVersion: 1
+---
+
+image: rails
+from: {{ .BaseImage }}
+ansible:
+  beforeInstall:
+  {{- include "(component) mysql client" . }}
+  {{- include "(component) ruby" . }}
+  install:
+  {{- include "(component) Gemfile dependencies" . }}
+```
+{% endraw %}
+
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">.werf/ansible/components.tmpl</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+{{- define "(component) Gemfile dependencies" }}
+  - file:
+      path: /root/.ssh
+      state: directory
+      owner: root
+      group: root
+      recurse: yes
+  - name: "Setup ssh known_hosts used in Gemfile"
+    shell: |
+      set -e
+      ssh-keyscan github.com >> /root/.ssh/known_hosts
+      ssh-keyscan mygitlab.myorg.com >> /root/.ssh/known_hosts
+    args:
+      executable: /bin/bash
+  - name: "Install Gemfile dependencies with bundler"
+    shell: |
+      set -e
+      source /etc/profile.d/rvm.sh
+      cd /app
+      bundle install --without development test --path vendor/bundle
+    args:
+      executable: /bin/bash
+{{- end }}
+
+{{- define "(component) mysql client" }}
+  - name: "Install mysql client"
+    apt:
+      name: "{{`{{ item }}`}}"
+      update_cache: yes
+    with_items:
+    - libmysqlclient-dev
+    - mysql-client
+    - g++
+{{- end }}
+
+{{- define "(component) ruby" }}
+  - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+  - get_url:
+      url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
+      dest: /tmp/rvm-installer
+  - name: "Install rvm"
+    command: bash -e /tmp/rvm-installer
+  - name: "Install ruby {{ .RubyVersion }}"
+    raw: bash -lec {{`{{ item | quote }}`}}
+    with_items:
+    - rvm install {{ .RubyVersion }}
+    - rvm use --default {{ .RubyVersion }}
+    - gem install bundler --no-ri --no-rdoc
+    - rvm cleanup all
+{{- end }}
+```
+{% endraw %}
+
+</div>
+</div>
