@@ -6,6 +6,8 @@ permalink: documentation/reference/werf_yaml_template_engine.html
 
 Reading _the werf configuration_, werf uses a built-in Go template engine ([text/template](https://golang.org/pkg/text/template)) and expands the function set with [Sprig](#sprig-functions) and [werf functions](#werf-functions).
 
+When organizing the configuration, it can be split into separate files in [template directory](#template-directory).
+
 ## Built-in Go template features
 
 To work effectively, we recommend you looking at all the features, or at least the following sections:
@@ -29,6 +31,14 @@ The Sprig library provides over 70 template functions:
 Among all functions, werf does not support the `expandenv` function and has its own implementation for the [env](#env) function.
 
 ## werf functions
+
+### various environments
+
+#### .Env
+
+The `.Env` variable allows organizing configuration for several environments (testing, production, staging, and so on) and switching between them by the `--env=<environment_name>` option.
+
+> In helm templates, there is the `.Values.werf.env` variable that can be used the same way (read more about service werf values in helm templates [here]({{ "documentation/advanced/helm/configuration/values.html#service-values" | true_relative_url }}))
 
 ### templating
 
@@ -83,7 +93,7 @@ beforeInstall:
 
 #### tpl
 
-The `tpl` function evaluates string as template inside a template. This is useful to render project files or any string.
+The `tpl` function allows evaluating string as a template inside a template.
 
 __Syntax__:
 {% raw %}
@@ -91,6 +101,76 @@ __Syntax__:
 {{ tpl <STRING> <VALUES> }}
 ```
 {% endraw %}
+
+- `<STRING>` — the content of a project file, an environment variable value, or an arbitrary string.
+- `<VALUES>` — the template values. If you use the current context, `.`, all templates and values (including those described in [the template directory](#template-directory) files) can be used in the template.
+
+##### Example: how to use project files as the werf configuration partials
+
+<div class="tabs">
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_werf_yaml')">werf.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_backend')">backend/werf-partial.yaml</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'tpl_frontend')">frontend/werf-partial.yaml</a>
+</div>
+
+<div id="tpl_werf_yaml" class="tabs__content active" markdown="1">
+
+{% raw %}
+```yaml
+{{ $_ := set . "BaseImage" "node:14.3" }}
+
+project: app
+configVersion: 1
+---
+
+{{ range $path, $content := .Files.Glob "**/werf-partial.yaml" }}
+{{ tpl $content $ }}
+{{ end }}
+
+{{- define "common install commands" }}
+- npm install
+- npm run build
+{{- end }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_backend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: backend
+from: {{ .BaseImage }}
+git:
+- add: /backend
+  to: /app/backend
+shell:
+  install:
+  - cd /app/backend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
+
+<div id="tpl_frontend" class="tabs__content" markdown="1">
+
+{% raw %}
+```yaml
+image: frontend
+from: {{ .BaseImage }}
+git:
+- add: /frontend
+  to: /app/frontend
+shell:
+  install:
+  - cd /app/frontend
+{{- include "common install commands" . | indent 2 }}
+```
+{% endraw %}
+
+</div>
 
 ### environment variables
 
@@ -250,3 +330,186 @@ value: {{ fromYaml "<STRING>" }}
 from: {{- $values.image.from }}
 ```
 {% endraw %}
+
+## Template directory
+
+_Template files_ can be stored in a reserved directory (`.werf` by default) with the extension `.tmpl` (arbitrary nesting `.werf/**/*.tmpl` is supported).
+
+_Template files_ and the werf configuration file define a common context:
+
+- _Template file_ is a complete template and can be used with the [include](#include) function by the relative path ({% raw %}`{{ include "directory/partial.tmpl" . }}`{% endraw %}).
+- The template defined with the `define` function in one _template file_ is available in any other, including the werf configuration file.
+
+### Example: how to use _template files_
+
+<div class="details active">
+<a href="javascript:void(0)" class="details__summary">werf.yaml</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+image: app
+from: java:8-jdk-alpine
+shell:
+  beforeInstall:
+  - mkdir /app
+  - adduser -Dh /home/gordon gordon
+import:
+- artifact: appserver
+  add: '/usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar'
+  to: '/app/AtSea-0.0.1-SNAPSHOT.jar'
+  after: install
+- artifact: storefront
+  add: /usr/src/atsea/app/react-app/build
+  to: /static
+  after: install
+docker:
+  ENTRYPOINT: ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
+  CMD: ["--spring.profiles.active=postgres"]
+---
+{{ include "artifact/appserver.tmpl" . }}
+---
+{{ include "artifact/storefront.tmpl" . }}
+```
+{% endraw %}
+
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">.werf/artifact/appserver.tmpl</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+artifact: appserver
+from: maven:latest
+git:
+- add: '/app'
+  to: '/usr/src/atsea'
+shell:
+  install:
+  - cd /usr/src/atsea
+  - mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:resolve
+  - mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
+```
+{% endraw %}
+
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">.werf/artifact/storefront.tmpl</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+artifact: storefront
+from: node:latest
+git:
+- add: /app/react-app
+  to: /usr/src/atsea/app/react-app
+shell:
+  install:
+  - cd /usr/src/atsea/app/react-app
+  - npm install
+  - npm run build
+```
+{% endraw %}
+
+</div>
+</div>
+
+### Example: how to use templates defined in a _template file_
+
+<div class="details active">
+<a href="javascript:void(0)" class="details__summary">werf.yaml</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+{{ $_ := set . "RubyVersion" "2.3.4" }}
+{{ $_ := set . "BaseImage" "alpine" }}
+
+project: my-project
+configVersion: 1
+---
+
+image: rails
+from: {{ .BaseImage }}
+ansible:
+  beforeInstall:
+  {{- include "(component) mysql client" . }}
+  {{- include "(component) ruby" . }}
+  install:
+  {{- include "(component) Gemfile dependencies" . }}
+```
+{% endraw %}
+
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">.werf/ansible/components.tmpl</a>
+<div class="details__content" markdown="1">
+
+{% raw %}
+```yaml
+{{- define "(component) Gemfile dependencies" }}
+  - file:
+      path: /root/.ssh
+      state: directory
+      owner: root
+      group: root
+      recurse: yes
+  - name: "Setup ssh known_hosts used in Gemfile"
+    shell: |
+      set -e
+      ssh-keyscan github.com >> /root/.ssh/known_hosts
+      ssh-keyscan mygitlab.myorg.com >> /root/.ssh/known_hosts
+    args:
+      executable: /bin/bash
+  - name: "Install Gemfile dependencies with bundler"
+    shell: |
+      set -e
+      source /etc/profile.d/rvm.sh
+      cd /app
+      bundle install --without development test --path vendor/bundle
+    args:
+      executable: /bin/bash
+{{- end }}
+
+{{- define "(component) mysql client" }}
+  - name: "Install mysql client"
+    apt:
+      name: "{{`{{ item }}`}}"
+      update_cache: yes
+    with_items:
+    - libmysqlclient-dev
+    - mysql-client
+    - g++
+{{- end }}
+
+{{- define "(component) ruby" }}
+  - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+  - get_url:
+      url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
+      dest: /tmp/rvm-installer
+  - name: "Install rvm"
+    command: bash -e /tmp/rvm-installer
+  - name: "Install ruby {{ .RubyVersion }}"
+    raw: bash -lec {{`{{ item | quote }}`}}
+    with_items:
+    - rvm install {{ .RubyVersion }}
+    - rvm use --default {{ .RubyVersion }}
+    - gem install bundler --no-ri --no-rdoc
+    - rvm cleanup all
+{{- end }}
+```
+{% endraw %}
+
+</div>
+</div>
