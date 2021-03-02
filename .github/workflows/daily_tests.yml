@@ -765,6 +765,9 @@ jobs:
       run: |
         # FIXME: determine problems with coverage records and remove seds
         find $WERF_TEST_COVERAGE_DIR -type f -exec \
+          sed -i -e "s|/home/ubuntu/actions-runner/_work/werf/werf|github.com/werf/werf|g" {} +
+
+        find $WERF_TEST_COVERAGE_DIR -type f -exec \
           sed -i -e "s|/home/runner/work/werf/werf|github.com/werf/werf|g" {} +
 
         find $WERF_TEST_COVERAGE_DIR -type f -exec \
