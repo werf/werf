@@ -14,7 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macOS, windows]
+        os: [ubuntu]
+#        os: [ubuntu, macOS, windows]
     runs-on: [self-hosted, "${{ matrix.os }}", builder]
     steps:
 
@@ -100,7 +101,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macOS, windows]
+        os: [ubuntu]
+#        os: [ubuntu, macOS, windows]
     runs-on: ${{ matrix.os }}-latest
     steps:
 
@@ -544,7 +546,8 @@ jobs:
   integration_default_tests_on_self_hosted_runners:
     name: Integration default tests
     needs: precompiled_tests_binaries
-    if: always()
+    if: "false"
+#    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -628,7 +631,8 @@ jobs:
   integration_k8s_per_version_tests_on_self_hosted_runners:
     name: Integration k8s_per_version tests
     needs: precompiled_tests_binaries
-    if: always()
+    if: "false"
+#    if: always()
     strategy:
       fail-fast: false
       matrix:
@@ -722,10 +726,10 @@ jobs:
     - unit_tests
 
     - integration_default_tests
-    - integration_default_tests_on_self_hosted_runners
+#    - integration_default_tests_on_self_hosted_runners
 
     - integration_k8s_per_version_tests
-    - integration_k8s_per_version_tests_on_self_hosted_runners
+#    - integration_k8s_per_version_tests_on_self_hosted_runners
 
     - integration_container_registry_per_implementation_tests
     - integration_k8s_per_version_and_container_registry_per_implementation_tests
