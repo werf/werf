@@ -23,6 +23,10 @@ case "${unameOut}" in
 esac
 
 for package_path in $package_paths; do
+  if [[ $package_path == "./integration/suites/docs/docs/backend" ]] || [[ $package_path == "./integration/suites/docs/docs/_site/backend" ]] || [[ $package_path == "./integration/ci_suites/default/docs/_fixtures/cli/docs/backend" ]]; then
+    continue
+  fi
+
   test_binary_filename=$(basename -- "$package_path")$ext
 	test_binary_path="$tests_binaries_output_dirname"/"$package_path"/"$test_binary_filename"
 	go test -ldflags="-s -w" --tags "dfrunmount dfssh" "$package_path" -coverpkg=./... -c -o "$test_binary_path"
