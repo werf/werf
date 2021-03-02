@@ -9,7 +9,7 @@ werf secrets engine is recommended for storing database passwords, files with en
 The idea is that sensitive data must be stored in a repository served by an application and remain independent from any specific server.
 
 werf supports passing secrets as:
- - separate [secret values]({{ "/documentation/advanced/helm/configuration/values.html#user-defined-secret-values" }}) yaml file (`.helm/secret-values.yaml` by default, or any file passed by the `--secret-values` option);
+ - separate [secret values]({{ "/documentation/advanced/helm/configuration/values.html#user-defined-secret-values" | true_relative_url }}) yaml file (`.helm/secret-values.yaml` by default, or any file passed by the `--secret-values` option);
  - secret files — raw encoded files, which can be used in the templates.
 
 ## Encryption key
@@ -37,7 +37,7 @@ Using the `.werf_secret_key` file is much safer and more convenient, because:
 * users or release engineers are not required to add an encryption key for each launch;
 * the secret value described in the file cannot be included into the cli `~/.bash_history` log.
 
-> **Attention! Do not save the file into the git repository. If you do it, the entire sense of encryption is lost, and anyone who has source files at hand can retrieve all the passwords. `.werf_secret_key` must be kept in `.gitignore`!**
+> **ATTENTION! Do not save the file into the git repository. If you do it, the entire sense of encryption is lost, and anyone who has source files at hand can retrieve all the passwords. `.werf_secret_key` must be kept in `.gitignore`!**
 
 ## Secret key rotation
 
@@ -57,9 +57,9 @@ mysql:
 ```
 
 To manage secret values files use the following commands:
-- [werf helm secret values edit command]({{ "documentation/reference/cli/werf_helm_secret_values_edit.html" | true_relative_url }})
-- [werf helm secret values encrypt command]({{ "documentation/reference/cli/werf_helm_secret_values_encrypt.html" | true_relative_url }})
-- [werf helm secret values decrypt command]({{ "documentation/reference/cli/werf_helm_secret_values_decrypt.html" | true_relative_url }})
+- [`werf helm secret values edit` command]({{ "documentation/reference/cli/werf_helm_secret_values_edit.html" | true_relative_url }})
+- [`werf helm secret values encrypt` command]({{ "documentation/reference/cli/werf_helm_secret_values_encrypt.html" | true_relative_url }})
+- [`werf helm secret values decrypt` command]({{ "documentation/reference/cli/werf_helm_secret_values_decrypt.html" | true_relative_url }})
 
 ### Using in a chart template
 
@@ -92,9 +92,9 @@ Secret files are excellent for storing sensitive data such as certificates and p
 To use secret data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
 To manage secret files use the following commands:
-- [werf helm secret file edit command]({{ "documentation/reference/cli/werf_helm_secret_file_edit.html" | true_relative_url }})
-- [werf helm secret file encrypt command]({{ "documentation/reference/cli/werf_helm_secret_file_encrypt.html" | true_relative_url }})
-- [werf helm secret file decrypt command]({{ "documentation/reference/cli/werf_helm_secret_file_decrypt.html" | true_relative_url }})
+ - [`werf helm secret file edit` command]({{ "documentation/reference/cli/werf_helm_secret_file_edit.html" | true_relative_url }})
+ - [`werf helm secret file encrypt` command]({{ "documentation/reference/cli/werf_helm_secret_file_encrypt.html" | true_relative_url }})
+ - [`werf helm secret file decrypt` command]({{ "documentation/reference/cli/werf_helm_secret_file_decrypt.html" | true_relative_url }})
 
 ### Using in a chart template
 

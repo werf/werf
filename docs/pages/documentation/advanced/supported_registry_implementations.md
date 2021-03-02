@@ -9,7 +9,7 @@ There are several types of commands that are working with the Docker registries 
 
 * During the building process, werf may pull base images from the Docker registry and pull/push _stages_ in distributed builds.
 * [During the cleaning process]({{ "documentation/advanced/cleanup.html" | true_relative_url }}), werf deletes _images_ and _stages_ from the Docker registry.
-* [During the deploying process]({{ "documentation/advanced/helm/basics.html" | true_relative_url }}), werf requires access to the _images_ from the Docker registry and to the _stages_ that could also be stored in the Docker registry.
+* [During the deploying process]({{ "/documentation/advanced/helm/deploy_process/steps.html" | true_relative_url }}), werf requires access to the _images_ from the Docker registry and to the _stages_ that could also be stored in the Docker registry.
 
 **NOTE** You should specify your implementation by `--repo-implementation` CLI option.
 

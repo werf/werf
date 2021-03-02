@@ -578,15 +578,51 @@ entries:
 
           - title: Helm
             f:
+              - title: Обзор
+                url: /documentation/advanced/helm/overview.html
 
-              - title: Основы
-                url: /documentation/advanced/helm/basics.html
+              - title: Конфигурация
+                f:
 
-              - title: Работа с секретами
-                url: /documentation/advanced/helm/working_with_secrets.html
+                  - title: Чарт
+                    url: /documentation/advanced/helm/configuration/chart.html
 
-              - title:  Работа с зависимостями чарта
-                url: /documentation/advanced/helm/working_with_chart_dependencies.html
+                  - title: Шаблоны
+                    url: /documentation/advanced/helm/configuration/templates.html
+
+                  - title: Данные (values)
+                    url: /documentation/advanced/helm/configuration/values.html
+
+                  - title: Гитерминизм
+                    url: /documentation/advanced/helm/configuration/giterminism.html
+
+                  - title: Секреты
+                    url: /documentation/advanced/helm/configuration/secrets.html
+
+                  - title: Зависимости чарта
+                    url: /documentation/advanced/helm/configuration/chart_dependencies.html
+
+              - title: Процесс деплоя
+                f:
+                  - title: Шаги
+                    url: /documentation/advanced/helm/deploy_process/steps.html
+
+                  - title: Helm хуки
+                    url: /documentation/advanced/helm/deploy_process/helm_hooks.html
+
+                  - title: Аннотации и лейблы для ресурсов чарта
+                    url: /documentation/advanced/helm/deploy_process/annotating_and_labeling.html
+
+              - title: Релизы
+                f:
+                  - title: Релиз
+                    url: /documentation/advanced/helm/releases/release.html
+
+                  - title: Именование
+                    url: /documentation/advanced/helm/releases/naming.html
+
+                  - title: Управление релизами
+                    url: /documentation/advanced/helm/releases/manage_releases.html
 
           - title: Очистка
             url: /documentation/advanced/cleanup.html

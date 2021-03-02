@@ -38,7 +38,7 @@ deploy:
 
 ### Имя релиза
 
-werf позволяет определять пользовательский шаблон имени Helm-релиза, который используется во время [процесса деплоя]({{ "documentation/advanced/helm/basics.html#имя-релиза" | true_relative_url }}) для генерации имени релиза:
+werf позволяет определять пользовательский шаблон имени Helm-релиза, который используется во время [процесса деплоя]({{ "/documentation/advanced/helm/releases/naming.html#имя-релиза" | true_relative_url }}) для генерации имени релиза:
 
 ```yaml
 project: PROJECT_NAME
@@ -62,11 +62,11 @@ deploy:
 
 **Замечание** Использование переменной окружения `HELM_RELEASE_EXTRA` в данном случае должно быть явно разрешено в конфиге [werf-giterminism.yaml]({{ "documentation/reference/werf_giterminism_yaml.html" | true_relative_url }}.
 
-`deploy.helmReleaseSlug` включает или отключает [слагификацию]({{ "documentation/advanced/helm/basics.html#слагификация-имени-релиза" | true_relative_url }}) имени Helm-релиза (включен по умолчанию).
+`deploy.helmReleaseSlug` включает или отключает [слагификацию]({{ "/documentation/advanced/helm/releases/naming.html#слагификация-имени-релиза" | true_relative_url }}) имени Helm-релиза (включен по умолчанию).
 
 ### Namespace в Kubernetes 
 
-werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ "documentation/advanced/helm/basics.html#namespace-в-kubernetes" | true_relative_url }}) для генерации имени namespace.
+werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ "/documentation/advanced/helm/releases/naming.html#namespace-в-kubernetes" | true_relative_url }}) для генерации имени namespace.
 
 Пользовательский шаблон namespace Kubernetes определяется в секции мета-информации в файле `werf.yaml`:
 
@@ -80,7 +80,7 @@ deploy:
 
 В качестве значения для `deploy.namespace` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `project` и `env`. Значение шаблона имени namespace по умолчанию: `[[ project ]]-[[ env ]]`.
 
-`deploy.namespaceSlug` включает или отключает [слагификацию]({{ "documentation/advanced/helm/basics.html#слагификация-namespace-kubernetes" | true_relative_url }}) имени namespace Kubernetes. Включен по умолчанию.
+`deploy.namespaceSlug` включает или отключает [слагификацию]({{ "/documentation/advanced/helm/releases/naming.html#слагификация-namespace-kubernetes" | true_relative_url }}) имени namespace Kubernetes. Включен по умолчанию.
 
 ## Очистка
 
@@ -291,7 +291,7 @@ contextAddFile:
   
 Файлы `contextAddFile` имеют больший приоритет, чем файлы из репозитория проекта, поэтому при пересечении пользователь будет работать с ними.
 
-> По умолчанию, использование директивы `contextAddFile` запрещено гитерминизмом (подробнее об этом в [статье]({{ "documentation/advanced/giterminism.html#contextaddfile" | true_relative_url }}))
+> По умолчанию, использование директивы `contextAddFile` запрещено гитерминизмом (подробнее об этом в [статье]({{ "/documentation/advanced/giterminism.html#contextaddfile" | true_relative_url }}))
 
 ### Stapel сборщик
 

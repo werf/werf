@@ -40,19 +40,19 @@ These policies determine which _images_ will be deleted while leaving all others
 
 #### Git history-based cleanup algorithm
 
-The _end-image_ is the result of a building process. It can be associated with an arbitrary number of Docker tags.  The _end-image_ is linked to the werf internal identifier aka the stages [digest]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url }}).
+The _end-image_ is the result of a building process. It can be associated with an arbitrary number of Docker tags.  The _end-image_ is linked to the werf internal identifier aka the stages [digest]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}).
 
-The cleanup algorithm is based on the fact that the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url }}) has information about commits related to publishing tags associated with a specific [digest of image stages]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url }}) (and it does not matter whether an image in the Docker registry was added, modified, or stayed the same). This information includes bundles of commit + _digest_ for a specific `image` in the `werf.yaml`.
+The cleanup algorithm is based on the fact that the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url }}) has information about commits related to publishing tags associated with a specific [digest of image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) (and it does not matter whether an image in the Docker registry was added, modified, or stayed the same). This information includes bundles of commit + _digest_ for a specific `image` in the `werf.yaml`.
 
-Following the results of building and publishing of some commit, the end-image may stay unchanged. However, information about the publishing of a [digest of image stages]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url }}) because of that commit will be added to the stages storage.
+Following the results of building and publishing of some commit, the end-image may stay unchanged. However, information about the publishing of a [digest of image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) because of that commit will be added to the stages storage.
 
-This ensures that the [digest of image stages]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url }}) (of an arbitrary number of associated Docker tags) relates to the git history. Also, this opens up the possibility to effectively clean up outdated images based on the git state and [chosen policies](#custom-policies).  The algorithm scans the git history, selects relevant images, and deletes those that do not fall under any policy. At the same time, the [tags used in Kubernetes](#whitelisting-images) are ignored.
+This ensures that the [digest of image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) (of an arbitrary number of associated Docker tags) relates to the git history. Also, this opens up the possibility to effectively clean up outdated images based on the git state and [chosen policies](#custom-policies).  The algorithm scans the git history, selects relevant images, and deletes those that do not fall under any policy. At the same time, the [tags used in Kubernetes](#whitelisting-images) are ignored.
 
 Let's review the basic steps of the cleanup algorithm:
 
 - [Extracting the data required for a cleanup from the stages storage](#keeping-the-data-in-the-stages-storage-to-use-when-performing-a-cleanup):
     - all [names of the images]({{ "documentation/reference/werf_yaml.html#image-section" | true_relative_url }}) ever built;
-    - a set of pairs consisting of the [digest of the image stages]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url }}) and a commit on which the publication was performed.
+    - a set of pairs consisting of the [digest of the image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) and a commit on which the publication was performed.
 - Obtaining manifests for all tags.
 - Preparing a list of items to clean up:
     - [tags used in Kubernetes](#whitelisting-images) are ignored.
@@ -60,8 +60,8 @@ Let's review the basic steps of the cleanup algorithm:
     - tags grouped by the digest of image stages __(1)__;
     - commits grouped by the digest of image stages __(2)__;
     - a set of git tags and git branches, as well as the rules and crawl depth for scanning each reference based on [user policies](#custom-policies) __(3)__.
-- Searching for commits __(2)__ using the git history __(3)__. The result is [digests of image stages]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url }}) for which no associated commits were found during scanning __(4)__.
-Deleting tags for [digests of image stages]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url }}) __(4)__.
+- Searching for commits __(2)__ using the git history __(3)__. The result is [digests of image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) for which no associated commits were found during scanning __(4)__.
+Deleting tags for [digests of image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) __(4)__.
 
 ##### Custom policies
 
@@ -71,7 +71,7 @@ It is worth noting that the algorithm scans the local state of the git repositor
 
 ##### Keeping the data in the stages storage to use when performing a cleanup
 
-werf saves supplementary data to the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url }}) to optimize its operation and solve some specific cases. This data includes meta-images with bundles consisting of a [digest of image stages]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url }}) and a commit that was used for publishing. It also contains [names of images]({{ "documentation/reference/werf_yaml.html#image-section" | true_relative_url }}) that were ever built.
+werf saves supplementary data to the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url }}) to optimize its operation and solve some specific cases. This data includes meta-images with bundles consisting of a [digest of image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) and a commit that was used for publishing. It also contains [names of images]({{ "documentation/reference/werf_yaml.html#image-section" | true_relative_url }}) that were ever built.
 
 Information about commits is the only source of truth for the algorithm, so if tags lacking such information werf deletes them. 
 

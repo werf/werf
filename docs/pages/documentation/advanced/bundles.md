@@ -47,7 +47,7 @@ Bundle published into the container registry could be deployed into the kubernet
 
 User may choose a version of deployed bundle with `--tag` parameter. By default bundle with the `latest` tag will be deployed.
 
-Werf will check that bundle has been updated in the container registry for the specified tag (or `latest`) and update an application to the latest published bundle version. This ability could be used for automatic updates of the application when a newer application bundle version is available in the container registry. More info in the [auto updating bundles](#auto-updating-bundles).
+Werf will check that bundle has been updated in the container registry for the specified tag (or `latest`) and update an application to the latest published bundle version. This ability could be used for automatic updates of the application when a newer application bundle version is available in the container registry. More info in the [auto updating bundles](#auto-updates-of-bundles).
 
 ## Other commands to work with bundles
 

@@ -15,7 +15,7 @@ When running the `werf converge` command, werf starts the deployment process tha
 
 **NOTE** werf would delete all newly created resources immediately during the ongoing deploy process if this process fails at any of the steps described above!
 
-When executing helm hooks at the step 2 and 6, werf would track these hooks resources until successful termination. Tracking [can be configured](#configure-resource-tracking) for each hook resource.
+When executing helm hooks at the step 2 and 6, werf would track these hooks resources until successful termination. Tracking [can be configured](#resource-tracking) for each hook resource.
 
 ## Resource tracking
 
@@ -36,3 +36,7 @@ In the case of failure during the release process, werf would create a new relea
 There are cases when separate Kubernetes clusters are required for a different environments. You can [configure access to multiple clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters) using kube contexts in a single kube config.
 
 In that case, the `--kube-context=CONTEXT` deploy option should be set manually along with the environment.
+
+## Subcharts
+
+During deploy process werf will render, create and track all resources of all [subcharts]({{ "/documentation/advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}).

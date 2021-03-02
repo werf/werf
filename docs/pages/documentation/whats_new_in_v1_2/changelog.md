@@ -11,9 +11,9 @@ This article contains full descriptive list of key changes since v1.1. If you ne
 
 Werf introduces the so-called giterminism mode. The word is constructed from git and determinism, which means “determined by the git”. All werf configuration files, helm configuration and application files werf reads from the current commit of the git project directory. There is also so called [dev mode](#follow-and-dev) to simplify local development of werf configuration and local development of an application with werf.
 
-More info [at the page]({{ "/documentation/advanced/giterminism.html" | true_true_relative_url }}).
+More info [at the page]({{ "/documentation/advanced/giterminism.html" | true_relative_url }}).
 
-Introduced new giterminism configuration file [`werf-giterminism.yaml`]({{ "/documentation/reference/werf_giterminism_yaml.html" | true_true_relative_url }}).
+Introduced new giterminism configuration file [`werf-giterminism.yaml`]({{ "/documentation/reference/werf_giterminism_yaml.html" | true_relative_url }}).
 
 ## Local development
 

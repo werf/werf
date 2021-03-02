@@ -12,30 +12,32 @@ During deploy process werf will render, create and track all resources of all su
 
 ## Enable subchart for your project
 
-Let's include a `redis` as a dependency for our werf chart using `.helm/Chart.yaml` file:
+ 1. Let's include a `redis` as a dependency for our werf chart using `.helm/Chart.yaml` file:
 
-```yaml
-# .helm/Chart.yaml
-apiVersion: v2
-dependencies:
-  - name: redis
-    version: "12.7.4"
-    repository: "https://charts.bitnami.com/bitnami"
-```
+     ```yaml
+     # .helm/Chart.yaml
+     apiVersion: v2
+     dependencies:
+       - name: redis
+         version: "12.7.4"
+         repository: "https://charts.bitnami.com/bitnami"
+      ```
 
-NOTE: It is not required to define full `Chart.yaml` with name and version fields as for the standard helm. Werf will autogenerate chart name and version based on the `werf.yaml` `project` field settings. See more info in the [chart article]({{ "/documentation/advanced/helm/configuration/chart.html" | true_relative_url }}).
+     **NOTE** It is not required to define full `Chart.yaml` with name and version fields as for the standard helm. Werf will autogenerate chart name and version based on the `werf.yaml` `project` field settings. See more info in the [chart article]({{ "/documentation/advanced/helm/configuration/chart.html" | true_relative_url }}).
 
-Next it is required to generate `.helm/Chart.lock` using `werf helm dependency update` command from the root of the project:
+ 2. Next it is required to generate `.helm/Chart.lock` using `werf helm dependency update` command from the root of the project:
 
-```shell
-werf helm dependency update .helm
-```
+     ```shell
+     werf helm dependency update .helm
+     ```
 
-This command will generate `.helm/Chart.lock` file as well as download all dependencies into the `.helm/charts` directory. `.helm/Chart.lock` file should be committed into the git repository, while `.helm/charts` could be added to the `.gitignore` in such case.
+     This command will generate `.helm/Chart.lock` file as well as download all dependencies into the `.helm/charts` directory.
+     
+ 3. `.helm/Chart.lock` file should be committed into the git repository, while `.helm/charts` could be added to the `.gitignore`.
 
-Later during deploy process with [`werf converge` command]({{ "/documentation/reference/cli/werf_converge.html" | true_relative_url }}) (or [`werf bundle apply` command]({{ "/documentation/reference/cli/werf_bundle_apply.html" | true_relative_url }})) werf will automatically download all dependencies specified in the lock file.
+Later during deploy process (with [`werf converge` command]({{ "/documentation/reference/cli/werf_converge.html" | true_relative_url }}) or [`werf bundle apply` command]({{ "/documentation/reference/cli/werf_bundle_apply.html" | true_relative_url }})), or during templates rendering (with [`werf render` command]({{ "/documentation/reference/cli/werf_render.html" | true_relative_url }})) werf will automatically download all dependencies specified in the lock file `.helm/Chart.lock`.
 
-NOTE: `.helm/Chart.lock` file must be committed into the git repo, more info in the [giterminism article]({{ "/documentation/advanced/helm/configuration/giterminism.html#subcharts-and-giterminism" | true_relative_url }}).
+**NOTE** `.helm/Chart.lock` file must be committed into the git repo, more info in the [giterminism article]({{ "/documentation/advanced/helm/configuration/giterminism.html#subcharts-and-giterminism" | true_relative_url }}).
 
 ## Dependencies configuration
 
@@ -50,16 +52,16 @@ Let's describe format of the `.helm/Chart.yaml` dependencies.
 The `.helm/Chart.lock` file lists the exact versions of immediate dependencies and their dependencies and so forth.
 
 The `werf helm dependency` commands operate on that file, making it easy to synchronize between the desired dependencies and the actual dependencies stored in the `charts` directory:
-* Use [werf helm dependency list]({{ "documentation/reference/cli/werf_helm_dependency_list.html" | true_relative_url }}) to check dependencies and their statuses.
-* Use [werf helm dependency update]({{ "documentation/reference/cli/werf_helm_dependency_update.html" | true_relative_url }}) to update `/charts` based on the contents of `requirements.yaml`.
-* Use [werf helm dependency build]({{ "documentation/reference/cli/werf_helm_dependency_build.html" | true_relative_url }}) to update `/charts` based on the `.helm/Chart.lock` file.
+* Use [`werf helm dependency list`]({{ "documentation/reference/cli/werf_helm_dependency_list.html" | true_relative_url }}) to check dependencies and their statuses.
+* Use [`werf helm dependency update`]({{ "documentation/reference/cli/werf_helm_dependency_update.html" | true_relative_url }}) to update `.helm/charts` based on the contents of `.helm/Chart.yaml`.
+* Use [`werf helm dependency build`]({{ "documentation/reference/cli/werf_helm_dependency_build.html" | true_relative_url }}) to update `.helm/charts` based on the `.helm/Chart.lock` file.
 
-All Chart Repositories that are used in `requirements.yaml` should be configured on the system. The `werf helm repo` commands can be used to interact with Chart Repositories:
-* Use [werf helm repo add]({{ "documentation/reference/cli/werf_helm_repo_add.html" | true_relative_url }}) to add Chart Repository.
-* Use [werf helm repo index]({{ "documentation/reference/cli/werf_helm_repo_index.html" | true_relative_url }}).
-* Use [werf helm repo list]({{ "documentation/reference/cli/werf_helm_repo_list.html" | true_relative_url }}) to list existing Chart Repositories.
-* Use [werf helm repo remove]({{ "documentation/reference/cli/werf_helm_repo_remove.html" | true_relative_url }}) to remove Chart Repository.
-* Use [werf helm repo update]({{ "documentation/reference/cli/werf_helm_repo_update.html" | true_relative_url }}) to update local Chart Repositories indexes.
+All Chart Repositories that are used in `.helm/Chart.yaml` should be configured on the system. The `werf helm repo` commands can be used to interact with Chart Repositories:
+* Use [`werf helm repo add`]({{ "documentation/reference/cli/werf_helm_repo_add.html" | true_relative_url }}) to add Chart Repository.
+* Use [`werf helm repo index`]({{ "documentation/reference/cli/werf_helm_repo_index.html" | true_relative_url }}).
+* Use [`werf helm repo list`]({{ "documentation/reference/cli/werf_helm_repo_list.html" | true_relative_url }}) to list existing Chart Repositories.
+* Use [`werf helm repo remove`]({{ "documentation/reference/cli/werf_helm_repo_remove.html" | true_relative_url }}) to remove Chart Repository.
+* Use [`werf helm repo update`]({{ "documentation/reference/cli/werf_helm_repo_update.html" | true_relative_url }}) to update local Chart Repositories indexes.
 
 werf is compatible with Helm settings, so by default `werf helm dependency` and `werf helm repo` commands use settings from **helm home folder**, `~/.helm`. But you can change it with `--helm-home` option. If you do not have **helm home folder** or want to create another one use `werf helm repo init` command to initialize necessary settings and configure default Chart Repositories.
 
@@ -106,4 +108,4 @@ Only values by keys `mysubchart` and `global` will be available in the subchart 
 
 ## Obsolete requirements.yaml and requirements.lock
 
-An older way of storing dependencies in the `.helm/requirements.yaml` and `.helm/requirements.lock` files is also supported by the werf.
+An older way of storing dependencies in the `.helm/requirements.yaml` and `.helm/requirements.lock` files is also supported by the werf, but it is recommended to use `.helm/Chart.yaml` and `.helm/Chart.lock` instead. 

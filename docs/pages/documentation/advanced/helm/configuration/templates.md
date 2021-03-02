@@ -4,7 +4,7 @@ sidebar: documentation
 permalink: documentation/advanced/helm/configuration/templates.html
 ---
 
-Kubernetes resources definitions are placed are placed in the `.helm/templates` directory and called templates.
+Kubernetes resources definitions are placed in the `.helm/templates` directory and called templates.
 
 This directory contains `*.yaml` YAML files, arbitrary nested folders are acceptable. Each YAML file describes one or several Kubernetes resources separated by three hyphens `---`, for example:
 
@@ -56,7 +56,7 @@ Also, the user can place `*.tpl` files into the `.helm/templates` directory or a
 
 Kubernetes resources needs a full docker image name, including the docker repo and the docker tag, in order to use the docker image in the chart resource specifications. But how do you designate an image contained in the `werf.yaml` file given that the full docker image name for such an image depends on the specified image repository and werf content based tagging?
 
-werf provides a pack of service values, which contain `.Values.werf.image` map, which contain mapping of docker images names by `werf.yaml` image short name. Full description of werf`s service values is available in the [values article]({{ "/documentation/advanced/helm/configuration/values.html" | true_relative_url }}). 
+werf provides a pack of service values, which contain `.Values.werf.image` map, which contain mapping of docker images names by `werf.yaml` image short name. Full description of werf's service values is available in the [values article]({{ "/documentation/advanced/helm/configuration/values.html" | true_relative_url }}). 
 
 ### .Values.werf.image
 
@@ -70,13 +70,13 @@ This map contains full image name which can be used as a value for `image` key i
 
 ##### Examples
 
-To retrieve docker image for an image named `backend` in the werf.yaml, use:
+To retrieve docker image for an image named `backend` in the `werf.yaml`, use:
 
 ```
 .Values.werf.image.backend
 ```
 
-To retrieve docker image for an image named `nginx-assets` in the werf.yaml, use:
+To retrieve docker image for an image named `nginx-assets` in the `werf.yaml`, use:
 
 ```
 index .Values.werf.image "nginx-assets"
@@ -112,6 +112,48 @@ spec:
 
 {% raw %}
 * `{{ .Chart.Name }}` — contains the [project name] specified in the `werf.yaml` config or chart name explicitly defined in the `.helm/Chart.yaml`.
-* `{{ .Release.Name }}` — contains the [release name](#release).
+* `{{ .Release.Name }}` — contains the [release name]({{ "/documentation/advanced/helm/releases/release.html" | true_relative_url }}).
 * `{{ .Files.Get }}` — a function to read file contents into templates; requires the path to file as an argument. The path should be specified relative to the `.helm` directory (files outside the `.helm` folder are ignored).
 {% endraw %}
+
+### Environment
+
+All main werf commands (such as [`werf converge`]({{ "documentation/reference/cli/werf_converge.html" | true_relative_url }}), [`werf build`]({{ "documentation/reference/cli/werf_build.html" | true_relative_url }}), [`werf render`]({{ "documentation/reference/cli/werf_render.html" | true_relative_url }}) etc.).
+
+This param could affect [release name]({{ "/documentation/advanced/helm/releases/naming.html" | true_relative_url }}) and [kubernetes namespace]({{ "/documentation/advanced/helm/releases/naming.html" | true_relative_url }}). Also it is possible to access environment in templates:
+
+{% raw %}
+```
+{{ .Values.werf.env }}
+```
+{% endraw %}
+
+It is acceptable to use this param in templates to generate different templates for different environments. For example:
+
+{% raw %}
+```
+{{ if eq .Values.werf.env "dev" }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regsecret
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: UmVhbGx5IHJlYWxseSByZWVlZWVlZWVlZWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGx5eXl5eXl5eXl5eXl5eXl5eXl5eSBsbGxsbGxsbGxsbGxsbG9vb29vb29vb29vb29vb29vb29vb29vb29vb25ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubmdnZ2dnZ2dnZ2dnZ2dnZ2dnZ2cgYXV0aCBrZXlzCg==
+---
+{{ else }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regsecret
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: {{ .Values.dockerconfigjson }}
+---
+{{ end }}
+```
+{% endraw %}
+
+It is important that `--env ENV` param value available not only in helm templates, but also [in `werf.yaml` templates]({{ "/documentation/reference/werf_yaml_template_engine.html#env" | true_relative_url }}).
+
+More info about service values available [in the article]({{ "/documentation/advanced/helm/configuration/values.html" | true_relative_url }}).

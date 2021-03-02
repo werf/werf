@@ -219,7 +219,7 @@ The `Review` job defines the deployment of a review release to a dynamic environ
 
 The `Stop Review` job deletes the review release and shuts down the GitLab environment (`action: stop`): werf deletes the helm release and the associated Kubernetes namespace with all its contents ([werf dismiss]({{ "documentation/reference/cli/werf_dismiss.html" | true_relative_url }})). You can run the `Stop Review` job manually after the deployment to the review tier is complete, or automatically via the GitLab server (for example, when the corresponding branch is deleted as a result of merging with master, provided that the appropriate option is set in the GitLab interface).
 
-The `werf dismiss` command requires werf.yaml to work, because this file contains [templates for the release name and the namespace]({{ "documentation/advanced/helm/basics.html" | true_relative_url }}). It is not possible to use the source code from the git when deleting a branch, that is why we use werf.yaml (it was saved when the Review job was running), while pulling changes from git is disabled (`GIT_STRATEGY: none`).
+The `werf dismiss` command requires werf.yaml to work, because this file contains [templates for the release name and the namespace]({{ "documentation/advanced/helm/releases/naming.html" | true_relative_url }}). It is not possible to use the source code from the git when deleting a branch, that is why we use werf.yaml (it was saved when the Review job was running), while pulling changes from git is disabled (`GIT_STRATEGY: none`).
 
 Thus, by default, we have the following options for deleting the review environment:
 

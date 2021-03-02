@@ -26,13 +26,13 @@ For example, for the project named `symfony-demo`, the following Helm Release na
 
 You can redefine the release using the `--release NAME` deploy option. In that case werf would use the specified name as is.
 
-You can also define the custom release name in the werf.yaml configuration [by setting `deploy.helmRelease`]({{ "documentation/advanced/helm/basics.html#release-name" | true_relative_url }}).
+You can also define the custom release name in the werf.yaml configuration [by setting `deploy.helmRelease`]({{ "/documentation/reference/werf_yaml.html#release-name" | true_relative_url }}).
 
 ### Slugging the release name
 
 The name of the Helm Release constructed using the template will be slugified according to the [*release slug procedure*]({{ "documentation/internals/names_slug_algorithm.html#basic-algorithm" | true_relative_url }}) to fit the requirements for the release name. This procedure generates a unique and valid Helm Release name.
 
-This is the default behavior. You can disable it by [setting `deploy.helmReleaseSlug=false`]({{ "documentation/advanced/helm/basics.html#release-name" | true_relative_url }}) in the `werf.yaml` configuration.
+This is the default behavior. You can disable it by [setting `deploy.helmReleaseSlug=false`]({{ "/documentation/reference/werf_yaml.html#release-name" | true_relative_url }}) in the `werf.yaml` configuration.
 
 ## Kubernetes namespace
 
@@ -46,10 +46,10 @@ For example, for the project named `symfony-demo`, there can be the following Ku
 
 You can redefine the Kubernetes Namespace using the `--namespace NAMESPACE` deploy option. In that case, werf would use the specified name as is.
 
-You can also define the custom Kubernetes Namespace in the werf.yaml configuration [by setting `deploy.namespace`]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | true_relative_url }}) parameter.
+You can also define the custom Kubernetes Namespace in the werf.yaml configuration [by setting `deploy.namespace`]({{ "/documentation/reference/werf_yaml.html#kubernetes-namespace" | true_relative_url }}) parameter.
 
 ### Slugging Kubernetes namespace
 
 The Kubernetes namespace that is constructed using the template will be slugified to fit the [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements according to the [*namespace slugging procedure*]({{ "documentation/internals/names_slug_algorithm.html#basic-algorithm" | true_relative_url }}) that generates a unique and valid Kubernetes Namespace.
 
-This is default behavior. It can be disabled by [setting `deploy.namespaceSlug=false`]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | true_relative_url }}) in the werf.yaml configuration.
+This is default behavior. It can be disabled by [setting `deploy.namespaceSlug=false`]({{ "/documentation/reference/werf_yaml.html#kubernetes-namespace" | true_relative_url }}) in the werf.yaml configuration.

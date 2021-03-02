@@ -30,10 +30,10 @@ en:
     title: Configuration
     url: documentation/advanced/helm/configuration/templates.html
   /documentation/advanced/helm/deploy_process: &documentation-advanced-helm-deploy_process
-    title: Release process
+    title: Deploy process
     url: documentation/advanced/helm/deploy_process/steps.html
   /documentation/advanced/helm/releases: &documentation-advanced-helm-releases
-    title: Release process
+    title: Releases
     url: documentation/advanced/helm/releases/release.html
   /documentation/internals: &documentation-internals
     title: Internals
@@ -76,6 +76,15 @@ ru:
     << : *documentation-advanced-ci-cd
   /documentation/advanced/helm:
     << : *documentation-advanced-helm
+  /documentation/advanced/helm/configuration:
+    << : *documentation-advanced-helm-configuration
+    title: Конфигурация
+  /documentation/advanced/helm/deploy_process:
+    << : *documentation-advanced-helm-deploy_process
+    title: Процесс деплоя
+  /documentation/advanced/helm/releases:
+    << : *documentation-advanced-helm-releases
+    title: Релизы
   /documentation/internals:
     << : *documentation-internals
     title: Внутренности
