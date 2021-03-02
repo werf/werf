@@ -167,7 +167,7 @@ func hasUniversalGlob(globs []string) bool {
 			return true
 		}
 
-		if strings.TrimRight(glob, "*"+string(os.PathSeparator)) == "" {
+		if trimRightAsterisks(glob) == "" {
 			return true
 		}
 	}
@@ -206,21 +206,23 @@ func isAnyPatternMatched(path string, patterns []string) bool {
 }
 
 func isPathMatched(filePath, pattern string) bool {
-	matched, err := doublestar.PathMatch(pattern, filePath)
-	if err != nil {
-		panic(err)
-	}
-	if matched {
-		return true
-	}
+	for _, p := range []string{
+		trimRightAsterisks(pattern),
+		filepath.Join(pattern, "**", "*"),
+	} {
+		matched, err := doublestar.PathMatch(p, filePath)
+		if err != nil {
+			panic(err)
+		}
 
-	matched, err = doublestar.PathMatch(filepath.Join(pattern, "**", "*"), filePath)
-	if err != nil {
-		panic(err)
-	}
-	if matched {
-		return true
+		if matched {
+			return true
+		}
 	}
 
 	return false
+}
+
+func trimRightAsterisks(pattern string) string {
+	return strings.TrimRight(pattern, "*\\/")
 }
