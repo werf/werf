@@ -93,7 +93,7 @@ docker login registry.mydomain.org/application -uUSER -pPASSWORD
 
 Typically, an application is deployed into different [environments]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html#environment" | true_relative_url }}) (`production`, `staging`, `testing`, etc.).
 
-werf supports the optional `--env` param (or the `WERF_ENV` environment variable) that specifies the name of the environment in use. This environment name affects the [Kubernetes namespace]({{ "documentation/advanced/helm/basics.html#kubernetes-namespace" | true_relative_url }}) and the [Helm release name]({{ "documentation/advanced/helm/basics.html#release-name" | true_relative_url }}). It is recommended to find out the name of the environment as part of the CI/CD job (for example, using built-in environment variables of your CI/CD system) and set the werf `--env` parameter accordingly.
+werf supports the optional `--env` param (or the `WERF_ENV` environment variable) that specifies the name of the environment in use. This environment name affects the [Kubernetes namespace]({{ "/documentation/advanced/helm/releases/naming.html#kubernetes-namespace" | true_relative_url }}) and the [Helm release name]({{ "/documentation/advanced/helm/releases/naming.html#release-name" | true_relative_url }}). It is recommended to find out the name of the environment as part of the CI/CD job (for example, using built-in environment variables of your CI/CD system) and set the werf `--env` parameter accordingly.
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">Example</a>

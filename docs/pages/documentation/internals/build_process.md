@@ -4,7 +4,7 @@ sidebar: documentation
 permalink: documentation/internals/build_process.html
 ---
 
-In this article we describe a build process to build images which described in the werf.yaml configuration file. Build process involves [sequential building of stages]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url }}) for each image described in the configuration.
+In this article we describe a build process to build images which described in the werf.yaml configuration file. Build process involves [sequential building of stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) for each image described in the configuration.
 
 Dockerfile-image, Stapel-image and Stapel-artifact each built by a different type of conveyor. But werf handles each stage of such conveyor in a common way: there is the same [stage selection rules](#stage-selection), the same [stage building and saving rules](#stage-building-and-saving) and also the same [synchronization rules]({{ "documentation/advanced/synchronization.html" | true_relative_url }}) of multiple werf processes running from arbitrary hosts.
 
@@ -14,7 +14,7 @@ werf uses Dockerfile as the principal way to describe how to build an image. Ima
 
 ### How a dockerfile image is being built
 
-werf creates a single [stage]({{ "documentation/internals/stages_and_storage.html#stages" | true_relative_url  }}) called `dockerfile` to build a dockerfile image.
+werf creates a single [stage]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url  }}) called `dockerfile` to build a dockerfile image.
 
 How the `dockerfile` stage is being built:
 

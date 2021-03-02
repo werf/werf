@@ -4,15 +4,13 @@ sidebar: documentation
 permalink: documentation/advanced/helm/configuration/values.html
 ---
 
-The Values is an arbitrary YAML file filled with parameters that you can use in [templates]({{ "/documentation/advanced/helm/configuration/templates.html" | true_relative_url }}).
-
-There are different types of values in werf:
+The Values is an arbitrary YAML file filled with parameters that you can use in [templates]({{ "/documentation/advanced/helm/configuration/templates.html" | true_relative_url }}). All values passed to the chart can be divided by following categories:
 
  - User-defined regular values.
  - User-defined secret values.
  - Service values.
 
-#### User-defined regular values
+## User-defined regular values
 
 You can (optionally) place user-defined regular values into the `.helm/values.yaml` chart file. For example:
 
@@ -41,9 +39,9 @@ The `.helm/values.yaml` file is the default place to store values. You can also 
 * Separate value files by specifying `--values=PATH_TO_FILE` (you can use it repeatedly to pass multiple files) as a werf option.
 * Options `--set key1.key2.key3.array[0]=one`, `--set key1.key2.key3.array[1]=two` (can be used multiple times, [see also]({{ "/documentation/reference/cli/werf_helm_install.html" | true_relative_url }}) `--set-string key=forced_string_value`, and `--set-file key1.data.notes=notes.txt`).
 
-Also note, that all values files, including default `.helm/values.yaml` or any custom values file passed with `--values` option — all of these should be stored in the git repo of the project. More info in the [giterminism article]({{ "documentation/advanced/helm/configuration/giterminism.html" | true_relative_url }}). 
+**NOTE** All values files, including default `.helm/values.yaml` or any custom values file passed with `--values` option — all of these should be stored in the git repo of the project. More info in the [giterminism article]({{ "documentation/advanced/helm/configuration/giterminism.html" | true_relative_url }}). 
 
-#### User-defined secret values
+## User-defined secret values
 
 Secret values are perfect to store passwords and other sensitive data directly in the project repository.
 
@@ -62,7 +60,38 @@ Each value (like `100024fe29e45bf00665d3399f7545f4af63f09cc39790c239e16b1d597842
 
 The `.helm/secret-values.yaml` file is the default place for storing secret values. You can also pass additional user-defined secret values via separate secret value files by specifying `--secret-values=PATH_TO_FILE` (can be used repeatedly to pass multiple files). All such files should be stored in the git repo of the project due to [giterminism]({{ "documentation/advanced/helm/configuration/giterminism.html" | true_relative_url }}).
 
-#### Service values
+**NOTE** All values files, including default `.helm/values.yaml` or any custom values file passed with `--values` option — all of these should be stored in the git repo of the project. More info in the [giterminism article]({{ "documentation/advanced/helm/configuration/giterminism.html" | true_relative_url }}).
+
+### Set parameters
+
+There is an ability to redefine or pass new values using cli params:
+
+ - `--set KEY=VALUE`;
+ - `--set-string KEY=VALUE`;
+ - `--set-file=PATH`;
+ - `--set-docker-config-json-value=true|false`.
+
+**NOTE** All files, specified with `--set-file` option should be stored in the git repo of the project. More info in the [giterminism article]({{ "documentation/advanced/helm/configuration/giterminism.html" | true_relative_url }}).
+
+#### set-docker-config-json-value
+
+When `--set-docker-config-json-value` has been specified werf will set special value `.Values.dockerconfigjson` using current docker config from the environment where werf running (`DOCKER_CONFIG` is supported).
+
+This value `.Values.dockerconfigjson` contains base64 encoded docker config, which is ready to use for example to create a secret to access a container registry:
+
+```
+{{- if .Values.dockerconfigjson -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regsecret
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: {{ .Values.dockerconfigjson }}
+{{- end -}}
+```
+
+## Service values
 
 Service values are set by the werf to pass additional data when rendering chart templates.
 
@@ -85,25 +114,26 @@ global:
 ```
 
 There are following service values:
- - The name of the werf project: `.Values.werf.name` or `.Values.global.werf.name`.
- - Version of the werf cli util: `.Values.werf.version` or `.Values.global.werf.version`.
- - Name of a CI/CD environment used during the current deploy process: `.Values.werf.env` or `.Values.global.env`.
+ - The name of the werf project: `.Values.werf.name`.
+ - Version of the werf cli util: `.Values.werf.version`.
+ - Name of a CI/CD environment used during the current deploy process: `.Values.werf.env`.
  - Container registry repo used during the current deploy process: `.Values.werf.repo`.
  - Full images names used during the current deploy process: `.Values.werf.image.NAME`. More info about using this available in [the templates article]({{ "/documentation/advanced/helm/configuration/templates.html#integration-with-built-images" | true_relative_url }}).
 
-#### Merging the resulting values
+## Merging the resulting values
 
 <!-- This section could be in internals -->
 
 During the deployment process, werf merges all user-defined regular, secret, and service values into the single value map, which is then passed to the template rendering engine to be used in the templates (see [how to use values in the templates](#using-values-in-the-templates)). Values are merged in the following order of priority (the more recent value overwrites the previous one):
 
-1. User-defined regular values from the `.helm/values.yaml`.
-2. User-defined regular values from all cli options `--values=PATH_TO_FILE` in the order specified.
-3. User-defined secret values from `.helm/secret-values.yaml`.
-4. User-defined secret values from all cli options `--secret-values=PATH_TO_FILE` in the order specified.
-5. Service values.
+ 1. User-defined regular values from the `.helm/values.yaml`.
+ 2. User-defined regular values from all cli options `--values=PATH_TO_FILE` in the order specified.
+ 3. User-defined secret values from `.helm/secret-values.yaml`.
+ 4. User-defined secret values from all cli options `--secret-values=PATH_TO_FILE` in the order specified.
+ 5. User-defined values passed with the `--set*` params.
+ 6. Service values.
 
-### Using values in the templates
+## Using values in the templates
 
 werf uses the following syntax for accessing values contained in the chart templates:
 

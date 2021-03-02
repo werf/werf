@@ -1,13 +1,16 @@
 ---
-title: Работа с секретами
+title: Секреты
 sidebar: documentation
-permalink: documentation/advanced/helm/working_with_secrets.html
-author: Alexey Igrychev <alexey.igrychev@flant.com>
+permalink: documentation/advanced/helm/configuration/secrets.html
 ---
 
 Для хранения в репозитории паролей, файлов сертификатов и т.п., рекомендуется использовать подсистему работы с секретами werf.
 
 Идея заключается в том, что конфиденциальные данные должны храниться в репозитории вместе с приложением, и должны оставаться независимыми от какого-либо конкретного сервера.
+
+Werf поддерживает указание секретов следующими способами:
+ - отдельный [values-файл для секретов]({{ "/documentation/advanced/helm/configuration/values.html#пользовательские-секреты" | true_relative_url }}) (`.helm/secret-values-yaml` по умолчанию или любой файл из репозиторий указанный опцией `--secret-values`).
+ - секретные файлы — закодированные файлы в сыром виде без yaml, могут быть использованы в шаблонах.
 
 ## Ключ шифрования
 
@@ -19,7 +22,6 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 > Ключ шифрования должен иметь **шестнадцатеричный дамп** длиной 16, 24, или 32 байта для выбора соответственно алгоритмов AES-128, AES-192, или AES-256. Команда [werf helm secret generate-secret-key]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | true_relative_url }}) возвращает ключ шифрования, подходящий для использования алгоритма AES-128.
 
 Вы можете быстро сгенерировать ключ, используя команду [werf helm secret generate-secret-key]({{ "documentation/reference/cli/werf_helm_secret_generate_secret_key.html" | true_relative_url }}).
-
 ### Работа с переменной окружения WERF_SECRET_KEY
 
 Если при запуске werf доступна переменная окружения WERF_SECRET_KEY, то werf может использовать ключ шифрования из нее.
@@ -32,9 +34,13 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 * пользователям или инженерам, ответственным за запуск/релиз приложения не требуется добавлять ключ шифрования при каждом запуске;
 * значения секрета из файла не будет отражено в истории команд консоли, например в файле `~/.bash_history`.
 
-> **Внимание! Не сохраняйте файл `.werf_secret_key` в git-репозитории. Если вы это сделаете, то потеряете весь смысл шифрования, т.к. любой пользователь с доступом к git-репозиторию, сможет получить ключ шифрования. Поэтому, файл `.werf_secret_key` должен находиться  в исключениях, т.е. в файле `.gitignore`!**
+> **ВНИМАНИЕ! Не сохраняйте файл `.werf_secret_key` в git-репозитории. Если вы это сделаете, то потеряете весь смысл шифрования, т.к. любой пользователь с доступом к git-репозиторию, сможет получить ключ шифрования. Поэтому, файл `.werf_secret_key` должен находиться  в исключениях, т.е. в файле `.gitignore`!**
 
-## Шифрация секретных переменных
+## Ротация ключа шифрования
+
+Werf поддерживает специальную процедуру смены ключа шифрования с помощью команды [`werf helm secret rotate-secret-key`]({{ "documentation/reference/cli/werf_helm_secret_rotate_secret_key.html" | true_relative_url }}).
+
+## Secret values
 
 Файлы с секретными переменными предназначены для хранения секретных данных в виде — `ключ: секрет`. **По умолчанию** werf использует для этого файл `.helm/secret-values.yaml`, но пользователь может указать любое число подобных файлов с помощью параметров запуска.
 
@@ -48,9 +54,9 @@ mysql:
 ```
 
 Для управления файлами с секретными переменными используйте следующие команды:
-- [werf helm secret values edit]({{ "documentation/reference/cli/werf_helm_secret_values_edit.html" | true_relative_url }})
-- [werf helm secret values encrypt]({{ "documentation/reference/cli/werf_helm_secret_values_encrypt.html" | true_relative_url }})
-- [werf helm secret values decrypt]({{ "documentation/reference/cli/werf_helm_secret_values_decrypt.html" | true_relative_url }})
+- [`werf helm secret values edit`]({{ "documentation/reference/cli/werf_helm_secret_values_edit.html" | true_relative_url }})
+- [`werf helm secret values encrypt`]({{ "documentation/reference/cli/werf_helm_secret_values_encrypt.html" | true_relative_url }})
+- [`werf helm secret values decrypt`]({{ "documentation/reference/cli/werf_helm_secret_values_decrypt.html" | true_relative_url }})
 
 ### Использование в шаблонах чарта
 
@@ -67,18 +73,21 @@ env:
 ```
 {% endraw %}
 
-## Шифрование файлов-секретов
+## Секретные файлы
 
 Помимо использования секретов в переменных, в шаблонах также используются файлы, которые нельзя хранить незашифрованными в репозитории. Для размещения таких файлов выделен каталог `.helm/secret`, в котором должны храниться файлы с зашифрованным содержимым.
 
 Чтобы использовать файлы содержащие секретную информацию в шаблонах Helm, вы должны сохранить их в соответствующем виде в каталоге `.helm/secret`.
 
 Для управления файлами, содержащими секретную информацию, используйте следующие команды:
-- [werf helm secret file edit]({{ "documentation/reference/cli/werf_helm_secret_file_edit.html" | true_relative_url }})
-- [werf helm secret file encrypt]({{ "documentation/reference/cli/werf_helm_secret_file_encrypt.html" | true_relative_url }})
-- [werf helm secret file decrypt]({{ "documentation/reference/cli/werf_helm_secret_file_decrypt.html" | true_relative_url }})
+ - [`werf helm secret file edit`]({{ "documentation/reference/cli/werf_helm_secret_file_edit.html" | true_relative_url }})
+ - [`werf helm secret file encrypt`]({{ "documentation/reference/cli/werf_helm_secret_file_encrypt.html" | true_relative_url }})
+ - [`werf helm secret file decrypt`]({{ "documentation/reference/cli/werf_helm_secret_file_decrypt.html" | true_relative_url }})
+
 
 ### Использование в шаблонах чарта
+
+<!-- Move to reference -->
 
 Функция `werf_secret_file` позволяет использовать расшифрованное содержимое секретного файла в шаблоне. Обязательный аргумент функции путь к секретному файлу, относительно папки `.helm/secret`.
 
@@ -86,12 +95,13 @@ env:
 
 {% raw %}
 ```yaml
-...
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myproject-backend-saml
+type: kubernetes.io/tls
 data:
-  tls.key: {{ werf_secret_file "backend-saml/tls.key" | b64enc }}
+  tls.crt: {{ werf_secret_file "backend-saml/stage/tls.crt" | b64enc }}
+  tls.key: {{ werf_secret_file "backend-saml/stage/tls.key" | b64enc }}
 ```
 {% endraw %}
-
-## Смена ключа шифрования
-
-Для перегенерации всех секретных переменных и файлов содержащих секреты с новым ключом шифрования используется команда [werf helm secret rotate-secret-key]({{ "documentation/reference/cli/werf_helm_secret_rotate_secret_key.html" | true_relative_url }}).

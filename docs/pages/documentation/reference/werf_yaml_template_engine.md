@@ -38,7 +38,7 @@ Among all functions, werf does not support the `expandenv` function and has its 
 
 The `.Env` variable allows organizing configuration for several environments (testing, production, staging, and so on) and switching between them by the `--env=<environment_name>` option.
 
-> In helm templates, there is the `.Values.werf.env` variable that can be used the same way (read more about service werf values in helm templates [here]({{ "documentation/advanced/helm/configuration/values.html#service-values" | true_relative_url }}))
+> In helm templates, there is the `.Values.werf.env` variable that can be used the same way (read more about helm templates [here]({{ "/documentation/advanced/helm/configuration/templates.html#environment" | true_relative_url }}))
 
 ### templating
 

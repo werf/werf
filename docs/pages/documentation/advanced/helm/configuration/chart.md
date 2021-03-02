@@ -32,9 +32,10 @@ dependencies:
    repository: "https://charts.bitnami.com/bitnami" 
 ```
 
-By default werf will use [project name]({{ "/documentation/reference/werf_yaml.html#project-name" | true_relative_url }}) from the `werf.yaml` as a chart name, and default version is always `1.0.0`. You can redefine this by placing own `.helm/Chart.yaml` with overrides for chart name or version. For example, to redefine only version of the chart place following `.helm/Chart.yaml`:
+By default werf will use [project name]({{ "/documentation/reference/werf_yaml.html#project-name" | true_relative_url }}) from the `werf.yaml` as a chart name, and default version is always `1.0.0`. You can redefine this by placing own `.helm/Chart.yaml` with overrides for chart name or version:
 
 ```yaml
+name: mychart
 version: 2.4.6
 ```
 

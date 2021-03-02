@@ -19,7 +19,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — enable logging only for specified containers of the resource.
  - [`werf.io/show-service-messages`](#show-service-messages) — enable additional logging of Kubernetes related service messages for resource.
 
-More info about chart templates and other stuff is available in the [deploy basics article.]({{ "documentation/advanced/helm/basics.html" | true_relative_url }})
+More info about chart templates and other stuff is available in the [helm chapter]({{ "documentation/advanced/helm/overview.html" | true_relative_url }}).
 
 ## Replicas on creation
 
