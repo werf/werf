@@ -4,17 +4,15 @@ sidebar: documentation
 permalink: documentation/internals/stages_and_storage.html
 ---
 
-We propose to divide the assembly process into steps. Every step corresponds to the intermediate image (like layers in Docker) with specific functions and assignments.
-In werf, we call every such step a [stage](#stages). So the final image consists of a set of built stages.
-All stages are kept in the [storage](#storage). You can view it as a building cache of an application, however, that isn't a cache but merely a part of a building context.
+We divide the build process of the images described in [the werf configuration file]({{ "documentation/reference/werf_yaml.html" | true_relative_url }}) into stages, with [clear functions and purposes](#stage-dependencies). Each stage corresponds to an intermediate image, like layers in Docker. The final image corresponds to the last built stage for a particular git state and the werf configuration file.
 
-## Stages
+Stages are steps in the build process. A ***stage*** is built from a logically grouped set of config instructions. It takes into account the assembly conditions and rules. Each _stage_ relates to a single Docker image and saved in the [storage](#storage).
 
-Stages are steps in the assembly process. They act as building blocks for constructing images.
-A ***stage*** is built from a logically grouped set of config instructions. It takes into account the assembly conditions and rules.
-Each _stage_ relates to a single Docker image.
+You can consider the stages as a building cache of an application, however, that are not the cache but a part of a building context.
 
-The werf assembly process involves a sequential build of stages using the _stage conveyor_.  A _stage conveyor_ is an ordered sequence of conditions and rules for carrying out stages. werf uses different _stage conveyors_ to assemble various types of images depending on their configuration.
+## Stage conveyor
+
+A _stage conveyor_ is an ordered sequence of conditions and rules for carrying out stages. werf uses different _stage conveyors_ to assemble various types of images depending on their configuration.
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'dockerfile-image-tab')">Dockerfile Image</a>
@@ -42,8 +40,16 @@ The werf assembly process involves a sequential build of stages using the _stage
 
 **The user only needs to write a correct configuration: werf performs the rest of the work with stages**
 
-For each _stage_ at every build, werf calculates the unique identifier of the stage called _stage digest_.
-Each _stage_ is assembled in the ***assembly container*** that is based on the previous _stage_ and saved in the [storage](#storage).
+For each _stage_ at every build, werf calculates the unique identifier of the stage called [stage digest](#stage-digest).
+
+If a _stage_ has no [stage dependencies](#stage-dependencies), it is skipped, and, accordingly, the _stage conveyor_ is reduced by one stage. It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
+
+<a class="google-drawings" href="{{ "images/reference/stages_and_images4.png" | true_relative_url }}" data-featherlight="image">
+<img src="{{ "images/reference/stages_and_images4_preview.png" | true_relative_url }}">
+</a>
+
+## Stage digest
+
 The _stage digest_ is used for [tagging](#stage-naming) a _stage_ (digest is the part of image tag) in the _storage_.
 werf does not build stages that already exist in the _storage_ (similar to caching in Docker yet more complex).
 
@@ -52,14 +58,7 @@ The ***stage digest*** is calculated as the checksum of:
  - previous _stage digest_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
-Digest identifier of the stage represents content of the stage and depends on git history which lead to this content. There may be multiple built images for a single digest. Stage for different git branches can have the same digest, but werf will prevent cache of different git branches from
-being reused for totally different branches, [see stage selection algorithm]({{ "documentation/internals/build_process.html#stage-selection" | true_relative_url }}).
-
-It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
-
-<a class="google-drawings" href="{{ "images/reference/stages_and_images4.png" | true_relative_url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images4_preview.png" | true_relative_url }}">
-</a>
+Digest identifier of the stage represents content of the stage and depends on git history which lead to this content.
 
 ## Stage dependencies
 
@@ -74,7 +73,7 @@ Most _stage dependencies_ are specified in the `werf.yaml`, others relate to a r
 
 The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url }}) _stages dependencies_.
 Each row describes dependencies for a certain stage.
-Left column contains a short description of dependencies, right column includes related `werf.yaml` directives and contains relevant references for more information.
+The left column contains a short description of dependencies, the right column includes related `werf.yaml` directives and contains relevant references for more information.
 
 <div class="tabs">
   <a href="javascript:void(0)" id="image-from-dockerfile-dependencies" class="tabs__btn dependencies-btn active">Dockerfile Image</a>
@@ -163,27 +162,29 @@ $.noConflict();
 
 ## Storage
 
-_Storage_ contains the stages of the project. Stages can be stored in the Docker Repo or locally on a host machine.
+_Storage_ contains the stages of the project. Stages can be stored in the docker registry or locally on a host machine.
+
+Most werf commands use _stages_. Such commands require specifying the location of the _storage_ using the `--repo` key or the `WERF_REPO` environment variable.
 
 There are 2 types of storage:
- 1. _Local storage_. Uses local docker server runtime to store stages as docker-images. Local storage is selected by param. This was the only supported choise for storage prior version v1.1.10.
+ 1. _Local storage_. Uses local docker server runtime to store stages as docker images. 
  2. _Remote storage_. Uses docker registry to store images. Remote storage is selected by param `--repo=DOCKER_REPO_DOMAIN`, for example `--repo=registry.mycompany.com/web/frontend/stages`. **NOTE** Each project should specify unique docker repo domain, that used only by this project.
 
-Stages will be [named differently](#stage-naming) depending on local or remote storage is being used.
+Stages are [named differently](#stage-naming) depending on local or remote storage used.
 
 When docker registry is used as the storage for the project there is also a cache of local docker images on each host where werf is running. This cache is cleared by the werf itself or can be freely removed by other tools (such as `docker rmi`).
 
-It is recommended though to use docker registry as a storage, werf uses this mode with [CI/CD systems by default]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url }}).
+Note that all werf commands that require access to _stages_ must use the same storage. Therefore, when using local storage, all werf commands must be run from the same host. When using remote storage, it does not matter which host werf is run from, as long as it is shared for these calls (applies to commands such as build, converge, cleanup, etc.).
+
+> It is recommended though to use docker registry as a storage, werf uses this mode with [CI/CD systems by default]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url }})
 
 Host requirements to use remote storage:
  - Connection to docker registry.
  - Connection to the Kubernetes cluster (used to synchronize multiple build/publish/deploy processes running from different machines, see more info below).
 
-Note that all werf commands that need an access to the stages should specify the same storage. So if it is a local storage, then all commands should run from the same host. It is irrelevant on which host werf command is running as long as the same remote storage used for the commands like: build, publish, cleanup, deploy, etc.
-
 ### Stage naming
 
-Stages in the _local storage_ are named using the following schema: `PROJECT_NAME:DIGEST-TIMESTAMP_MILLISEC`. For example:
+Stages in the _local storage_ are named using the following schema: `PROJECT_NAME:STAGE_DIGEST-TIMESTAMP_MILLISEC`. For example:
 
 ```
 myproject                   9f3a82975136d66d04ebcb9ce90b14428077099417b6c170e2ef2fef-1589786063772   274bd7e41dd9        16 seconds ago      65.4MB
@@ -193,7 +194,7 @@ myproject                   5e4cb0dcd255ac2963ec0905df3c8c8a9be64bbdfa57467aabea
 myproject                   14df0fe44a98f492b7b085055f6bc82ffc7a4fb55cd97d30331f0a93-1589786048987   54d5e60e052e        31 seconds ago      64.2MB
 ```
 
-Stages in the _remote storage_ are named using the following schema: `DOCKER_REPO_ADDRESS:DIGEST-TIMESTAMP_MILLISEC`. For example:
+Stages in the _remote storage_ are named using the following schema: `DOCKER_REPO_ADDRESS:STAGE_DIGEST-TIMESTAMP_MILLISEC`. For example:
 
 ```
 localhost:5000/myproject-stages                 d4bf3e71015d1e757a8481536eeabda98f51f1891d68b539cc50753a-1589714365467   7c834f0ff026        20 hours ago        66.7MB
@@ -206,4 +207,6 @@ localhost:5000/myproject-stages                 796e905d0cc975e718b3f8b3ea0199ea
 
 _Digest_ identifier of the stage represents content of the stage and depends on git history which lead to this content.
 
-`TIMESTAMP_MILLISEC` is generated during [stage saving procedure]({{ "documentation/internals/build_process.html#stage-building-and-saving" | true_relative_url }}) after stage built. It is guaranteed that timestamp will be unique within specified storage.
+- `PROJECT_NAME` — the project name.
+- `STAGE_DIGEST` — [the stage digest][#stage-digest].
+- `TIMESTAMP_MILLISEC` — the timestamp that is generated during [stage saving procedure]({{ "documentation/internals/build_process.html#stage-building-and-saving" | true_relative_url }}) after stage built. It is guaranteed that timestamp will be unique within specified storage.
