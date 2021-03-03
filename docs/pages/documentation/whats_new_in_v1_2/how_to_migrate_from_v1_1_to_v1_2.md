@@ -23,33 +23,37 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
      - All params are the same as for `werf deploy`.
  - `werf build-and-publish` command has been removed, there is only `werf build` command, usage of which is optional:
      - `werf converge` will build and publish needed images by itself, if not built already.
-     - You may use `werf build` command in "prebuild" CI/CD pipeline stage instead of `werf build-and-publish` command.
+     - You may use `werf build` command in `prebuild` CI/CD pipeline stage instead of `werf build-and-publish` command.
 
 ## 3. Change helm templates
 
  - Use `.Values.werf.image.IMAGE_NAME` instead of `werf_container_image` as follows:
-{% raw %}
+
+    {% raw %}
     ```
     spec:
       template:
         spec:
           containers:
             - name: main
-              image: {{ .Values.werf.image. }}
+              image: {{ .Values.werf.image.myimage }}
     ```
-{% endraw %}
+    {% endraw %}
+
+     - **IMPORTANT** Notice usage of `apiVersion: v2` to allow description of dependencies directly in the `.helm/Chart.yaml` instead of `.helm/dependencies.yaml`.
 
  - Remove `werf_container_env` template usage completely.
  - Use `.Values.werf.env` instead of `.Values.global.env`.
- - Use `"werf.io/replicas-on-creation": NUM` annotation instead of `werf.io/set-replicas-only-on-creation=true`.
-     - **IMPORTANT** remove `spec.replicas` field, more info [in the changelog]({{ "/documentation/whats_new_in_v1_2/changelog.html#configuration" | true_relative_url }}).
+ - Use `"werf.io/replicas-on-creation": "NUM"` annotation instead of `"werf.io/set-replicas-only-on-creation": "true"`.
+     - **IMPORTANT** Specify `"NUM"` as **string** instead of number `NUM`, annotation [will be ignored otherwise]({{ "/documentation/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
+     - **IMPORTANT** Remove `spec.replicas` field, more info [in the changelog]({{ "/documentation/whats_new_in_v1_2/changelog.html#configuration" | true_relative_url }}).
 
 ## 4. Use .helm/Chart.lock for subcharts
 
  - Due to [giterminism]({{ "/documentation/whats_new_in_v1_2/changelog.html#giterminism" | true_relative_url  }}) werf does not allow uncommitted `.helm/charts` dir.
  - To use subcharts specify dependencies in the `.helm/Charts.yaml` like that:
 
-     ```
+     {% raw %}
      ```yaml
      # .helm/Chart.yaml
      apiVersion: v2
@@ -57,7 +61,8 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
       - name: redis
         version: "12.7.4"
         repository: "https://charts.bitnami.com/bitnami"
-    ```
+     ```
+     {% endraw %}
 
  - Add `.helm/charts` into the `.gitignore`.
  - Run `werf helm dependency update` command, which will create `.helm/Chart.lock` file and `.helm/charts` dir.
@@ -76,6 +81,7 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
  - **NOTE** It is not recommended to use environment variables in the `werf.yaml`, more info [in the article]({{ "/documentation/advanced/giterminism.html" | true_relative_url }}).
  - If you use environment variables in your `werf.yaml`, then use the following `werf-giterminism.yaml` snippet (for example to enable `ENV_VAR1` and `ENV_VAR2` variables):
 
+     {% raw %}
      ```
      # werf-giterminism.yaml
      giterminismConfigVersion: 1
@@ -85,32 +91,36 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
            - ENV_VAR1
            - ENV_VAR2
      ```
+     {% endraw %}
 
 ## 7. Adjust werf.yaml configuration
 
  - Change relative include paths from {% raw %}{{ include ".werf/templates/1.tmpl" . }}{% endraw %} to {% raw %}{{ include "templates/1.tmpl" . }}{% endraw %}.
  - Rename `fromImageArtifact` to `fromArtifact`.
+     - **NOTICE** It is not required, but better to change `artifact` and `fromArtifact` to `image` and `fromImage` in such case. See [deprecation note in the changelog]({{ "/documentation/whats_new_in_v1_2/changelog.html#werfyaml" | true_relative_url }}).
 
-## 8. Define custom charts dir in the werf.yaml
+## 8. Define custom .helm chart dir in the werf.yaml
 
  - `--helm-chart-dir` has been removed, use `deploy.helmChartDir` directive in `werf.yaml` like follows:
 
+     {% raw %}
      ```
      configVersion: 1
      deploy:
        helmChartDir: .helm2
      ```
+     {% endraw %}
 
  - Consider using different layout for your project: werf v1.2 supports multiple werf.yaml applications in the single git repo.
-     - Instead of defining a different helmChartDir in your `werf.yaml`, create multiple `werf.yaml` in subfolders of your project.
+     - Instead of defining a different `deploy.helmChartDir` in your `werf.yaml`, create multiple `werf.yaml` in subfolders of your project.
      - Each subfolder will contain own `.helm` directory.
      - Run werf from the subfolder in such case.
-     - All relative paths specified in the werf.yaml should be adjusted to the subfolder where `werf.yaml` stored.
+     - All relative paths specified in the `werf.yaml` should be adjusted to the subfolder where `werf.yaml` stored.
      - Absolute paths specified with `git.add` directive should use absolute paths from the root of the git repo (these paths settings are compatible with 1.1).
 
 ## 9. Migrate to helm 3
 
- - Werf v1.2 performs migration of existing helm 2 release to helm 3 automatically.
+ - werf v1.2 [performs migration of existing helm 2 release to helm 3 automatically]({{ "/documentation/whats_new_in_v1_2/changelog.html#helm-3" | true_relative_url }}).
      - Helm 2 release should have the same name as newly used helm 3 release.
  - Before migrating werf will try to render and validate current `.helm/templates` and continue migration only when render succeeded.
- - **NOTE** Once project has been migrated to helm 3 there is no legal way back to the werf v1.1 and helm 2.
+ - **IMPORTANT** Once project has been migrated to helm 3 there is no legal way back to the werf v1.1 and helm 2.
