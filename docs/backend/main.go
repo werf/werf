@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -17,6 +18,12 @@ func newRouter() *mux.Router {
 	staticFileDirectoryMain := http.Dir("./root/main")
 	staticFileDirectoryRu := http.Dir("./root/ru")
 
+	var ruHostMatch mux.MatcherFunc = func(r *http.Request, rm *mux.RouteMatch) bool {
+		result := false
+		result, _ = regexp.MatchString("^ru\\..*(.+\\.flant\\.com|werf\\.io)$", r.Host)
+		return result
+	}
+
 	r.PathPrefix("/status").HandlerFunc(statusHandler)
 	r.PathPrefix("/backend/").HandlerFunc(ssiHandler)
 	r.PathPrefix("/v{group:[0-9]+.[0-9]+}-{channel:alpha|beta|ea|stable|rock-solid}").HandlerFunc(groupChannelHandler)
@@ -25,17 +32,10 @@ func newRouter() *mux.Router {
 	r.Path("/includes/topnav.html").HandlerFunc(topnavHandler)
 	r.Path("/includes/version-menu.html").HandlerFunc(topnavHandler)
 	r.Path("/404.html").HandlerFunc(notFoundHandler)
-	// En static
-	r.PathPrefix("/").Host("werf.io").Handler(serveFilesHandler(staticFileDirectoryMain))
-	r.PathPrefix("/").Host("www.werf.io").Handler(serveFilesHandler(staticFileDirectoryMain))
-	r.PathPrefix("/").Host("ng.werf.io").Handler(serveFilesHandler(staticFileDirectoryMain))
-	r.PathPrefix("/").Host("werf.test.flant.com").Handler(serveFilesHandler(staticFileDirectoryMain))
-	r.PathPrefix("/").Host("werfng.test.flant.com").Handler(serveFilesHandler(staticFileDirectoryMain))
 	// Ru static
-	r.PathPrefix("/").Host("ru.werf.io").Handler(serveFilesHandler(staticFileDirectoryRu))
-	r.PathPrefix("/").Host("ru.ng.werf.io").Handler(serveFilesHandler(staticFileDirectoryRu))
-	r.PathPrefix("/").Host("ru.werf.test.flant.com").Handler(serveFilesHandler(staticFileDirectoryRu))
-	r.PathPrefix("/").Host("ru.werfng.test.flant.com").Handler(serveFilesHandler(staticFileDirectoryRu))
+	r.MatcherFunc(ruHostMatch).Handler(serveFilesHandler(staticFileDirectoryRu))
+	// Other (En) static
+	r.PathPrefix("/").Handler(serveFilesHandler(staticFileDirectoryMain))
 
 	r.Use(LoggingMiddleware)
 
@@ -58,8 +58,7 @@ func main() {
 		DisableColors: true,
 		FullTimestamp: true,
 	})
-	//log.SetFormatter(&log.JSONFormatter{})
-	//log.SetFlags(log.Ldate | log.Ltime)
+
 	log.Infoln("Started")
 	r := newRouter()
 

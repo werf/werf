@@ -1,0 +1,38 @@
+name: Review env Dismiss
+on:
+  pull_request:
+    types: [closed, unlabeled]
+
+env:
+  WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
+
+jobs:
+
+  dismiss:
+    name: Dismiss
+    runs-on: tfprod-werf
+    if: github.event.label.name == 'review docs' || contains( github.event.pull_request.labels.*.name, 'review docs' )
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Add dev artifacts
+      run: |
+          cp -f docs/.werf/dev/* docs/
+
+    - name: Dismiss
+      uses: werf/actions/dismiss@master
+      continue-on-error: true
+      with:
+        env: review-${{ github.event.number }}
+      env:
+        WERF_DEV: true
+        WERF_LOOSE_GITERMINISM: true
+        WERF_DIR: "docs"
+        WERF_CONFIG: "docs/werf-site.yaml"
+        WERF_LOG_VERBOSE: "on"
+        WERF_KUBE_CONTEXT: dev
+        WERF_SET_GITHUB_REF: "global.github_ref=dev"

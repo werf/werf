@@ -1,5 +1,6 @@
 host:
   production: werf.io
+  dev: werf.dev.flant.com
   _default: werf.test.flant.com
 
 resources:
