@@ -995,7 +995,18 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 		return nil, fmt.Errorf("werf requires project dir — the current working directory or directory specified with --dir option (or WERF_DIR env var) — to be located inside the git work tree: %q is located outside of the git work tree %q", gitWorkTree, workingDir)
 	}
 
-	localGitRepo, err := git_repo.OpenLocalRepo("own", gitWorkTree, git_repo.OpenLocalRepoOptions{Dev: *cmdData.Dev})
+	devMode, err := getDevMode(cmdData)
+	if err != nil {
+		return nil, err
+	}
+
+	var openLocalRepoOptions git_repo.OpenLocalRepoOptions
+	if *cmdData.Dev {
+		openLocalRepoOptions.WithServiceHeadCommit = true
+		openLocalRepoOptions.ServiceHeadCommitOptions.WithStagedChangesOnly = devMode == "strict"
+	}
+
+	localGitRepo, err := git_repo.OpenLocalRepo("own", gitWorkTree, openLocalRepoOptions)
 	if err != nil {
 		return nil, err
 	}

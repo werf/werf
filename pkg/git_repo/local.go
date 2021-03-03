@@ -38,7 +38,12 @@ type Local struct {
 }
 
 type OpenLocalRepoOptions struct {
-	Dev bool
+	WithServiceHeadCommit    bool
+	ServiceHeadCommitOptions ServiceHeadCommit
+}
+
+type ServiceHeadCommit struct {
+	WithStagedChangesOnly bool // all tracked files if false
 }
 
 func OpenLocalRepo(name, workTreeDir string, opts OpenLocalRepoOptions) (l *Local, err error) {
@@ -61,12 +66,16 @@ func OpenLocalRepo(name, workTreeDir string, opts OpenLocalRepoOptions) (l *Loca
 		return l, err
 	}
 
-	if opts.Dev {
-		devHeadCommit, err := true_git.SyncDevBranchWithStagedFiles(
+	if opts.WithServiceHeadCommit {
+		devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceWorktreeBranch(
 			context.Background(),
 			l.GitDir,
+			l.WorkTreeDir,
 			l.getRepoWorkTreeCacheDir(l.getRepoID()),
 			l.headCommit,
+			true_git.SyncSourceWorktreeWithServiceWorktreeBranchOptions{
+				OnlyStagedChanges: opts.ServiceHeadCommitOptions.WithStagedChangesOnly,
+			},
 		)
 		if err != nil {
 			return l, err
