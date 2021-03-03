@@ -87,9 +87,9 @@ config:
 				}
 			}
 		},
-		Entry(".werf/templates/1.tmpl not committed", entry{
+		Entry(".werf/templates/1.tmpl not tracked", entry{
 			addTemplate1:         true,
-			expectedErrSubstring: `unable to read werf config templates: the file ".werf/templates/1.tmpl" must be committed`,
+			expectedErrSubstring: `unable to read werf config templates: the untracked file ".werf/templates/1.tmpl" must be committed`,
 		}),
 		Entry(".werf/templates/1.tmpl committed", entry{
 			addTemplate1:    true,
@@ -101,7 +101,7 @@ config:
 			changeTemplate1AfterCommit: true,
 			expectedErrSubstring:       `unable to read werf config templates: the file ".werf/templates/1.tmpl" must be committed`,
 		}),
-		Entry("config.allowUncommittedTemplates has .werf/templates/1.tmpl, the template file not committed", entry{
+		Entry("config.allowUncommittedTemplates has .werf/templates/1.tmpl, the template file not tracked", entry{
 			allowUncommittedTemplate1: true,
 			addTemplate1:              true,
 		}),
@@ -110,12 +110,12 @@ config:
 			addTemplate1:              true,
 			commitTemplate1:           true,
 		}),
-		Entry("config.allowUncommittedTemplates has .werf/templates/1.tmpl, .werf/templates/2.tmpl not committed", entry{
+		Entry("config.allowUncommittedTemplates has .werf/templates/1.tmpl, .werf/templates/2.tmpl not tracked", entry{
 			allowUncommittedTemplate1: true,
 			addTemplate1:              true,
 			addTemplate2:              true,
 			commitTemplate1:           true,
-			expectedErrSubstring:      `unable to read werf config templates: the file ".werf/templates/2.tmpl" must be committed`,
+			expectedErrSubstring:      `unable to read werf config templates: the untracked file ".werf/templates/2.tmpl" must be committed`,
 		}),
 		Entry("config.allowUncommittedTemplates has .werf/**/*.tmpl", entry{
 			allowUncommittedAllTemplates: true,
