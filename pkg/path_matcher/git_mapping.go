@@ -205,16 +205,12 @@ func isAnyPatternMatched(path string, patterns []string) bool {
 	return false
 }
 
-func isPathMatched(filePath, glob string) bool {
-	// The glob as-is.
-	// The glob without asterisks on the right (path/*/dir/**/*, path/*/dir/**, path/*/dir/*/*/** -> path/*/dir).
-	// The previous glob with the universal part `**/*` (path/*/dir/**/*).
-	for _, g := range []string{
-		glob,
-		trimRightAsterisks(glob),
-		filepath.Join(trimRightAsterisks(glob), "**", "*"),
+func isPathMatched(filePath, pattern string) bool {
+	for _, p := range []string{
+		trimRightAsterisks(pattern),
+		filepath.Join(pattern, "**", "*"),
 	} {
-		matched, err := doublestar.PathMatch(g, filePath)
+		matched, err := doublestar.PathMatch(p, filePath)
 		if err != nil {
 			panic(err)
 		}
