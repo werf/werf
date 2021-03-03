@@ -1,6 +1,5 @@
 ---
 title: Именование
-sidebar: documentation
 permalink: documentation/advanced/helm/releases/naming.html
 ---
 

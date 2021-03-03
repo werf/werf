@@ -1,6 +1,5 @@
 ---
 title: Values
-sidebar: documentation
 permalink: documentation/advanced/helm/configuration/values.html
 ---
 
@@ -79,6 +78,7 @@ When `--set-docker-config-json-value` has been specified werf will set special v
 
 This value `.Values.dockerconfigjson` contains base64 encoded docker config, which is ready to use for example to create a secret to access a container registry:
 
+{% raw %}
 ```
 {{- if .Values.dockerconfigjson -}}
 apiVersion: v1
@@ -90,6 +90,7 @@ data:
   .dockerconfigjson: {{ .Values.dockerconfigjson }}
 {{- end -}}
 ```
+{% endraw %}
 
 ## Service values
 

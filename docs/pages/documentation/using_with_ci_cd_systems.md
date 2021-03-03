@@ -2,7 +2,6 @@
 title: Using with CI/CD systems
 permalink: documentation/using_with_ci_cd_systems.html
 description: Learn the essentials of using werf in any CI/CD system
-sidebar: documentation
 ---
 
 ## Intro

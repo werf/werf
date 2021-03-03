@@ -1,6 +1,5 @@
 ---
 title: Преобразование имен в werf
-sidebar: documentation
 permalink: documentation/internals/names_slug_algorithm.html
 ---
 

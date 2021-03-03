@@ -1,6 +1,5 @@
 ---
 title: Reducing image size and speeding up a build by mounts
-sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/mount_directive.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: mount

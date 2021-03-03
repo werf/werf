@@ -1,6 +1,5 @@
 ---
 title: Overview
-sidebar: documentation
 permalink: documentation/advanced/helm/overview.html
 ---
 

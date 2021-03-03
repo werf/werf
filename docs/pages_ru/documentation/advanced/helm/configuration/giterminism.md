@@ -1,6 +1,5 @@
 ---
 title: Giterminism
-sidebar: documentation
 permalink: documentation/advanced/helm/configuration/giterminism.html
 ---
 

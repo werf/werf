@@ -1,6 +1,5 @@
 ---
 title: werf.yaml template engine
-sidebar: documentation
 permalink: documentation/reference/werf_yaml_template_engine.html
 ---
 

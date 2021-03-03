@@ -1,6 +1,5 @@
 ---
 title: CI/CD workflow basics
-sidebar: documentation
 permalink: documentation/advanced/ci_cd/ci_cd_workflow_basics.html
 ---
 

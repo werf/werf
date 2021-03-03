@@ -137,7 +137,6 @@ func genCliPages(cmd *cobra.Command, pagesDir string) error {
 	fullCommandName := fullCommandFilesystemPath(cmd.CommandPath())
 	cmdPage := fmt.Sprintf(`---
 title: %s
-sidebar: documentation
 permalink: documentation/reference/cli/%s.html
 ---
 
@@ -246,7 +245,6 @@ func genCliSidebar(cmd *cobra.Command, indent int, buf *bytes.Buffer) error {
 func GenCliOverview(cmdGroups templates.CommandGroups, pagesDir string) error {
 	indexPage := `---
 title: Overview of command groups
-sidebar: documentation
 permalink: documentation/reference/cli/overview.html
 toc: false
 ---

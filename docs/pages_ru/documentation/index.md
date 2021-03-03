@@ -3,7 +3,6 @@ title: Обзор
 without_auto_heading: true
 permalink: documentation/index.html
 description: Обширная и понятная документация по werf
-sidebar: documentation
 ---
 
 {%- asset overview.css %}

@@ -1,6 +1,5 @@
 ---
 title: Секреты
-sidebar: documentation
 permalink: documentation/advanced/helm/configuration/secrets.html
 ---
 

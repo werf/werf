@@ -1,6 +1,5 @@
 ---
 title: Образ Stapel
-sidebar: documentation
 permalink: documentation/internals/development/stapel_image.html
 ---
 

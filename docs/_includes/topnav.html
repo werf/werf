@@ -31,9 +31,9 @@
                                 {%- if page.relation != 'site' %} header__menu-item_active{% endif %}{% endif %}">
                             {%- if folder.title == 'Документация' or folder.title == 'Documentation'  %}
                                 {%- if page.name == '404.md' %}
-                                <a data-proofer-ignore href="{{ folder.url }}">{{ folder.title }}</a>
+                                <a href="{{ folder.url }}">{{ folder.title }}</a>
                                 {%- else %}
-                                <a href="{% raw %}{{ .MenuDocumentationLink }}{% endraw %}">{{ folder.title }}</a>
+                                <a data-proofer-ignore href="{% raw %}{{ .MenuDocumentationLink }}{% endraw %}">{{ folder.title }}</a>
                                 {%- endif %}
                             {%- else if jekyll.environment == "production" %}
                             <a data-proofer-ignore href="{{ folder.url }}">{{ folder.title }}</a>

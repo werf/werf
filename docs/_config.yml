@@ -62,7 +62,7 @@ defaults:
       lang: en
       comments: true
       search: true
-      sidebar: sidebar
+      sidebar: documentation
       topnav: topnav
       sitemap_include: true
       multilang: true

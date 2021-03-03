@@ -2,6 +2,7 @@
 title: GitOps CLI tool
 permalink: /
 layout: default
+sidebar: none
 relation: site
 ---
 

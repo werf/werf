@@ -1,6 +1,5 @@
 ---
 title: Очистка
-sidebar: documentation
 permalink: documentation/advanced/cleanup.html
 ---
 

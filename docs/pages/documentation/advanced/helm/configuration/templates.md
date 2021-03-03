@@ -1,6 +1,5 @@
 ---
 title: Templates
-sidebar: documentation
 permalink: documentation/advanced/helm/configuration/templates.html
 ---
 

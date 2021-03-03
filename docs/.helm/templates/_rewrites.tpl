@@ -1,10 +1,13 @@
 {{- define "rewrites" }}
+        rewrite ^/applications_guide(_ru|_en)+(/.+)$   /guides$2 permanent;
+        rewrite ^/applications_guide(/.+)$   /guides$1 permanent;
+
         rewrite ^/documentation/advanced/configuration/supported_go_templates\.html$   /documentation/reference/werf_yaml_template_engine.html permanent;
         rewrite ^/documentation/advanced/configuration/giterminism\.html$   /documentation/advanced/giterminism.html permanent;
 
         # back-redirect after doc refactoring 202011
-        #rewrite ^(/v1\.[01]+(\-[a-z]+)?)/documentation/quickstart\.html$            $1/documentation/guides/getting_started.html permanent;
-        #rewrite ^(/v1\.[^01]+(\-[a-z]+)?)/documentation/guides/getting_started\.html$            $1/documentation/quickstart.html permanent;
+        #rewrite ^(/v1\.[01]+(\-[a-z]+)?)+/documentation/quickstart\.html$            $1/documentation/guides/getting_started.html permanent;
+        #rewrite ^(/v1\.[^01]+(\-[a-z]+)?)+/documentation/guides/getting_started\.html$            $1/documentation/quickstart.html permanent;
 
         # redirect after doc refactoring 202011
         rewrite ^/documentation/configuration/introduction\.html$                   /documentation/reference/werf_yaml.html permanent;
@@ -19,8 +22,8 @@
         rewrite ^/documentation/reference/build_process\.html$                                        /documentation/internals/build_process.html permanent;
         rewrite ^/documentation/reference/stages_and_images\.html$                                    /documentation/internals/stages_and_storage.html permanent;
         rewrite ^/documentation/reference/deploy_process/deploy_into_kubernetes\.html$                /documentation/advanced/helm/overview.html permanent;
-        rewrite ^/documentation/advanced/helm/basics\.html$                                           /documentation/advanced/helm/overview.html permanent;
-        rewrite ^/documentation/reference/deploy_process/working_with_secrets\.html$                  /documentation/advanced/helm/configuration/secrets.html permanent;
+        rewrite ^(/v1\.[01]+(\-[a-z]+)?)+/documentation/advanced/helm/basics\.html$                    $1/documentation/advanced/helm/overview.html permanent;
+        rewrite ^(/v1\.[01]+(\-[a-z]+)?)+/documentation/reference/deploy_process/working_with_secrets\.html$                  /documentation/advanced/helm/configuration/secrets.html permanent;
         rewrite ^/documentation/advanced/helm/working_with_secrets\.html$                             /documentation/advanced/helm/configuration/secrets.html permanent;
 
         rewrite ^/documentation/reference/deploy_process/working_with_chart_dependencies\.html$       /documentation/advanced/helm/working_with_chart_dependencies.html permanent;
@@ -47,7 +50,7 @@
         rewrite ^/documentation/guides/advanced_build/(first_application|multi_images|mounts|artifacts)+\.html$    /documentation/guides.html permanent;
 
 
-        rewrite ^(/v1.1(\-(alpha|beta|ea|stable)+)?)?/documentation/guides/unsupported_ci_cd_integration\.html$ $1/documentation/guides/generic_ci_cd_integration.html permanent;
+        rewrite ^(/v1.1(\-(alpha|beta|ea|stable)+)?)+/documentation/guides/unsupported_ci_cd_integration\.html$ $1/documentation/guides/generic_ci_cd_integration.html permanent;
         rewrite ^(/v1.0(\-(alpha|beta|ea|stable|rock-solid)+)?)+/documentation/guides/generic_ci_cd_integration\.html$ $1/documentation/advanced/ci_cd/generic_ci_cd_integration.html permanent;
         rewrite ^(/v1.0(\-(alpha|beta|ea|stable|rock-solid)+)?)+/documentation/guides/unsupported_ci_cd_integration\.html$ $1/documentation/advanced/ci_cd/generic_ci_cd_integration.html permanent;
 
@@ -62,7 +65,6 @@
         rewrite ^(/v[\d]+\.[\d]+(\-[a-z]+)?)?/reference/?$  $1/documentation/reference/stages_and_images.html permanent;
         rewrite ^(/v[\d]+\.[\d]+(\-[a-z]+)?)?/reference/config\.html$  $1/documentation/configuration/introduction.html permanent;
         rewrite ^(/v[\d]+\.[\d]+(\-[a-z]+)?)?/reference/build/artifact\.html$  /documentation/advanced/building_images_with_stapel/artifacts.html permanent;
-        rewrite ^(/v[\d]+\.[\d]+(\-[a-z]+)?)?/documentation/advanced/building_images_with_stapel/artifacts\.html$  $1/documentation/advanced/building_images_with_stapel/artifacts.html permanent;
         rewrite ^(/v[\d]+\.[\d]+(\-[a-z]+)?)?/reference/build/as_layers\.html$  $1/documentation/reference/development_and_debug/as_layers.html permanent;
         rewrite ^(/v[\d]+\.[\d]+(\-[a-z]+)?)?/reference/build/stage_introspection\.html$  $1/documentation/reference/development_and_debug/stage_introspection.html permanent;
         rewrite ^(/v[\d]+\.[\d]+(\-[a-z]+)?)?/reference/build/(.+)\.html$  $1/documentation/configuration/stapel_image/$3.html permanent;

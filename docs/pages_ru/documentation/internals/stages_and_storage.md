@@ -1,6 +1,5 @@
 ---
 title: Стадии и хранилище
-sidebar: documentation
 permalink: documentation/internals/stages_and_storage.html
 ---
 

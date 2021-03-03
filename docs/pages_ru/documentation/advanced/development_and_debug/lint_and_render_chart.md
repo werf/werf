@@ -1,6 +1,5 @@
 ---
 title: Рендеринг и проверка конфигурации
-sidebar: documentation
 permalink: documentation/advanced/development_and_debug/lint_and_render_chart.html
 ---
 

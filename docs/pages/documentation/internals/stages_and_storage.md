@@ -1,6 +1,5 @@
 ---
 title: Stages and storage
-sidebar: documentation
 permalink: documentation/internals/stages_and_storage.html
 ---
 

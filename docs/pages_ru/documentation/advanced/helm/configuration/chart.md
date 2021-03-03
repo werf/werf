@@ -1,6 +1,5 @@
 ---
 title: Chart
-sidebar: documentation
 permalink: documentation/advanced/helm/configuration/chart.html
 ---
 

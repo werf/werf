@@ -1,6 +1,5 @@
 ---
 title: Importing from images and artifacts
-sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/import_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: import

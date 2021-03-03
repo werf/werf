@@ -1,6 +1,5 @@
 ---
 title: Управление релизами
-sidebar: documentation
 permalink: documentation/advanced/helm/releases/manage_releases.html
 ---
 

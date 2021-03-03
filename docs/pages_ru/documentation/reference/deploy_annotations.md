@@ -1,7 +1,6 @@
 ---
 title: Аннотации для деплоя
 permalink: documentation/reference/deploy_annotations.html
-sidebar: documentation
 toc: false
 ---
 

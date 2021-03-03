@@ -1,6 +1,5 @@
 ---
 title: Процесс сборки
-sidebar: documentation
 permalink: documentation/internals/build_process.html
 ---
 

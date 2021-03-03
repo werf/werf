@@ -47,6 +47,7 @@ jobs:
           cd docs
           chmod 777 Gemfile.lock
           mkdir -m 777 .jekyll-cache _site
+          gem update bundler
           bundle install
 
       - name: Build (ru)

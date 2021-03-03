@@ -1,6 +1,5 @@
 ---
 title: Integration with SSH-agent
-sidebar: documentation
 permalink: documentation/internals/integration_with_ssh_agent.html
 ---
 

@@ -1,6 +1,5 @@
 ---
 title: Импорт из артефактов и образов
-sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/import_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: import

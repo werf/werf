@@ -1,6 +1,5 @@
 ---
 title: Интеграция с GitLab CI/CD
-sidebar: documentation
 permalink: documentation/advanced/ci_cd/gitlab_ci_cd.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---

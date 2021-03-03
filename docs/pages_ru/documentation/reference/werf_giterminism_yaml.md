@@ -1,7 +1,6 @@
 ---
 title: werf-giterminism.yaml
 permalink: documentation/reference/werf_giterminism_yaml.html
-sidebar: documentation
 description: Werf giterminism config file example
 toc: false
 ---

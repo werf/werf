@@ -1,6 +1,5 @@
 ---
 title: Запуск инструкций сборки
-sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/assembly_instructions.html
 directive_summary: shell_and_ansible
 ---

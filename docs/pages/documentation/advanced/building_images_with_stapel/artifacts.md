@@ -1,6 +1,5 @@
 ---
 title: Artifacts
-sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/artifacts.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: artifact

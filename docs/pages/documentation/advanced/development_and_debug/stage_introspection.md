@@ -1,6 +1,5 @@
 ---
 title: Stage Introspection
-sidebar: documentation
 permalink: documentation/advanced/development_and_debug/stage_introspection.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |

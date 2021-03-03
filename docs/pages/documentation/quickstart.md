@@ -2,7 +2,6 @@
 title: Quickstart
 permalink: documentation/quickstart.html
 description: Deploy your first application with werf
-sidebar: documentation
 ---
 
 In this article we will show you how to set up the deployment of an [example application](https://github.com/werf/quickstart-application) (a cool voting app in our case) using werf. It is better to start with a [short introduction](../introduction.html) first if you haven't read it yet.

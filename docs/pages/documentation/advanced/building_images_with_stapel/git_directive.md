@@ -1,6 +1,5 @@
 ---
 title: Adding source code from git repositories
-sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/git_directive.html
 directive_summary: git
 ---

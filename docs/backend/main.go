@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"github.com/gorilla/mux"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
@@ -16,13 +17,13 @@ func newRouter() *mux.Router {
 	staticFileDirectoryMain := http.Dir("./root/main")
 	staticFileDirectoryRu := http.Dir("./root/ru")
 
-	r.PathPrefix("/status").HandlerFunc(statusHandler).Methods("GET")
-	r.PathPrefix("/backend/").HandlerFunc(ssiHandler).Methods("GET")
-	r.PathPrefix("/v{group:[0-9]+.[0-9]+}-{channel:alpha|beta|ea|stable|rock-solid}").HandlerFunc(groupChannelHandler).Methods("GET")
-	r.PathPrefix("/documentation").HandlerFunc(rootDocumentationHandler).Methods("GET")
-	r.PathPrefix("/health").HandlerFunc(healthCheckHandler).Methods("GET")
-	r.Path("/includes/topnav.html").HandlerFunc(topnavHandler).Methods("GET")
-	r.Path("/includes/version-menu.html").HandlerFunc(topnavHandler).Methods("GET")
+	r.PathPrefix("/status").HandlerFunc(statusHandler)
+	r.PathPrefix("/backend/").HandlerFunc(ssiHandler)
+	r.PathPrefix("/v{group:[0-9]+.[0-9]+}-{channel:alpha|beta|ea|stable|rock-solid}").HandlerFunc(groupChannelHandler)
+	r.PathPrefix("/documentation").HandlerFunc(rootDocumentationHandler)
+	r.PathPrefix("/health").HandlerFunc(healthCheckHandler)
+	r.Path("/includes/topnav.html").HandlerFunc(topnavHandler)
+	r.Path("/includes/version-menu.html").HandlerFunc(topnavHandler)
 	// En static
 	r.PathPrefix("/").Host("werf.io").Handler(serveFilesHandler(staticFileDirectoryMain))
 	r.PathPrefix("/").Host("www.werf.io").Handler(serveFilesHandler(staticFileDirectoryMain))
@@ -44,8 +45,21 @@ func newRouter() *mux.Router {
 
 func main() {
 	var wait time.Duration
-	log.SetFlags(log.Ldate | log.Ltime)
-	log.Println("Started")
+	logLevel := os.Getenv("LOG_LEVEL")
+	if strings.ToLower(logLevel) == "debug" {
+		log.SetLevel(log.DebugLevel)
+	} else if strings.ToLower(logLevel) == "trace" {
+		log.SetLevel(log.TraceLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
+	//log.SetFormatter(&log.JSONFormatter{})
+	//log.SetFlags(log.Ldate | log.Ltime)
+	log.Infoln("Started")
 	r := newRouter()
 
 	srv := &http.Server{
@@ -62,7 +76,7 @@ func main() {
 			err = nil
 		}
 		if err != nil {
-			log.Println(err)
+			log.Errorln(err)
 		}
 	}()
 
@@ -72,6 +86,6 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), wait)
 	defer cancel()
 	srv.Shutdown(ctx)
-	log.Println("Shutting down")
+	log.Infoln("Shutting down")
 	os.Exit(0)
 }

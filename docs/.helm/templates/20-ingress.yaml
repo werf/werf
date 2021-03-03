@@ -10,13 +10,13 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header X-Original-URI         $request_uri;
       ssi on;
       ssi_silent_errors on;
 {{- if eq .Version "master" }}
 {{- include "rewrites" . | indent 6 }}
 {{- end }}
 {{- if eq .Values.global.env "production" }}
-      proxy_set_header X-Original-URI         $request_uri;
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 {{- else }}
     nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio
