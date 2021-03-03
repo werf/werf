@@ -3,6 +3,7 @@ package helm
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -54,6 +55,10 @@ func extractSpecReplicas(specReplicas *int32) int {
 }
 
 func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resources helm_kube.ResourceList, timeout time.Duration) error {
+	if os.Getenv("WERF_DISABLE_RESOURCES_WAITER") == "1" {
+		return nil
+	}
+
 	if waiter.KubeInitializer != nil {
 		if err := waiter.KubeInitializer.Init(ctx); err != nil {
 			return fmt.Errorf("kube initializer failed: %s", err)
