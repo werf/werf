@@ -82,6 +82,7 @@ type CmdData struct {
 
 	LooseGiterminism *bool
 	Dev              *bool
+	DevMode          *string
 
 	IntrospectBeforeError *bool
 	IntrospectAfterError  *bool
@@ -159,6 +160,7 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupLooseGiterminism(cmdData, cmd)
 	setupDev(cmdData, cmd)
+	setupDevMode(cmdData, cmd)
 }
 
 func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
@@ -169,6 +171,21 @@ func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
 func setupDev(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dev = new(bool)
 	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), "Enable developer mode (default $WERF_DEV)")
+}
+
+func setupDevMode(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DevMode = new(string)
+
+	defaultValue := "simple"
+	envValue := os.Getenv("WERF_DEV_MODE")
+	if envValue != "" {
+		defaultValue = envValue
+	}
+
+	cmd.Flags().StringVarP(cmdData.DevMode, "dev-mode", "", defaultValue, `Set development mode (default $WERF_DEV_MODE or simple).
+Two development modes are supported:
+- simple: for working with tracked git repository changes
+- strict: for working only with staged git repository changes`)
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -796,6 +813,18 @@ func getUint64EnvVar(varName string) (*uint64, error) {
 	}
 
 	return nil, nil
+}
+
+func getDevMode(cmdData *CmdData) (string, error) {
+	value := *cmdData.DevMode
+	switch value {
+	case "simple", "strict":
+		return value, nil
+	case "":
+		return "", fmt.Errorf("--dev-mode param required")
+	default:
+		return "", fmt.Errorf("bad --dev-mode %q: simple and strict modes are supported", value)
+	}
 }
 
 func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
