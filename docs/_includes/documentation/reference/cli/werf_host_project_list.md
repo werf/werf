@@ -15,7 +15,12 @@ werf host project list [options]
 
 ```shell
       --dev=false
-            Enable developer mode (default $WERF_DEV)
+            Enable development mode (default $WERF_DEV)
+      --dev-mode='simple'
+            Set development mode (default $WERF_DEV_MODE or simple).
+            Two development modes are supported:
+            - simple: for working with tracked git repository changes
+            - strict: for working only with staged git repository changes
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

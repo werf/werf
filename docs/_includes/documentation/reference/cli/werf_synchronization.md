@@ -15,7 +15,12 @@ werf synchronization [options]
 
 ```shell
       --dev=false
-            Enable developer mode (default $WERF_DEV)
+            Enable development mode (default $WERF_DEV)
+      --dev-mode='simple'
+            Set development mode (default $WERF_DEV_MODE or simple).
+            Two development modes are supported:
+            - simple: for working with tracked git repository changes
+            - strict: for working only with staged git repository changes
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --host=''
