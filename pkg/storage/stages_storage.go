@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	LocalStorageAddress             = ":local"
-	DefaultKubernetesStorageAddress = "kubernetes://werf-synchronization"
-	NamelessImageRecordTag          = "__nameless__"
+	LocalStorageAddress              = ":local"
+	DefaultKubernetesStorageAddress  = "kubernetes://werf-synchronization"
+	DefaultHttpSynchronizationServer = "https://synchronization.werf.io"
+	NamelessImageRecordTag           = "__nameless__"
 )
 
 type StagesStorage interface {

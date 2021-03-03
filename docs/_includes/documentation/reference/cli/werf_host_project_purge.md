@@ -101,9 +101,9 @@ werf host project purge [PROJECT_NAME ...] [options]
             Address of synchronizer for multiple werf processes to work with a single repo.
             
             Default:
-            * $WERF_SYNCHRONIZATION or
-            * :local if --repo is not specified or
-            * kubernetes://werf-synchronization if --repo is specified
+             - $WERF_SYNCHRONIZATION, or
+             - :local if --repo is not specified, or
+             - https://synchronization.werf.io if --repo has been specified.
             
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
