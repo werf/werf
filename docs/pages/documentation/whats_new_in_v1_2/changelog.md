@@ -5,11 +5,13 @@ description: Description of key differences since v1.1
 sidebar: documentation
 ---
 
-This article contains full descriptive list of key changes since v1.1. If you need a fast guide about migration from v1.1 then read [how to migrate from v1.1 to v1.2 article]({{ "/documentation/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html" | true_relative_url }}).
+This article contains full descriptive list of changes since v1.1. If you need a fast guide about migration from v1.1 then read [how to migrate from v1.1 to v1.2 article]({{ "/documentation/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html" | true_relative_url }}).
 
 ## Giterminism
 
-Werf introduces the so-called giterminism mode. The word is constructed from git and determinism, which means “determined by the git”. All werf configuration files, helm configuration and application files werf reads from the current commit of the git project directory. There is also so called [dev mode](#follow-and-dev) to simplify local development of werf configuration and local development of an application with werf.
+Werf introduces the so-called giterminism mode. The word is constructed from git and determinism, which means “determined by the git”.
+
+All werf configuration files, helm configuration and application files werf reads from the current commit of the git project directory. There is also so called [dev mode](#follow-and-dev) to simplify local development of werf configuration and local development of an application with werf.
 
 More info [at the page]({{ "/documentation/advanced/giterminism.html" | true_relative_url }}).
 
@@ -19,47 +21,81 @@ Introduced new giterminism configuration file [`werf-giterminism.yaml`]({{ "/doc
 
 ### Follow and dev
 
-All toplevel commands: `werf converge`, `werf run`, `werf bundle publish`, `werf render` and `werf build` — has flags aimed for local development called `--follow` and `--dev`.
+All toplevel commands: `werf converge`, `werf run`, `werf bundle publish`, `werf render` and `werf build` — has two main flags `--follow` and `--dev` aimed for local development.
 
-By default each of these toplevel commands read all needed files from the current commit of the git repo. With `--dev` flag command will read changes from the git index of the project git work tree (files added with `git add` command).
+By default each of these commands reads all needed files from the current commit of the git repo. With the `--dev` flag command will read all tracked/modified files of the project git work tree (note that untracked files are restricted to use).
+
+There is also a third flag `--dev-mode simple|strict` — the mode of `--dev` operation:
+ - in the `simple` mode werf reads all tracked/modified files of the project git work tree (existance of untracked files may cause an error when this file is needed by the werf);
+ - in the `strict` mode werf reads only those files which has been staged for the commit (files from the git index of the project git work tree, added by the user with the `git add` command);
+ - by default `simple` mode is used when `--dev` flag was specified.
 
 Command with the `--follow` flag will work in a loop, where either:
  - a new commit to the project git work tree will cause command rerun — by default;
- - changes to the git index of the project git work tree will cause command rerun — when `--follow` flag is combined with the `--dev` flag.
+ - changes to the git index of the project git work tree will cause command rerun —  when `--follow` flag is combined with the `--dev` flag (regardless of whether `simple` or `strict` development mode `--dev-mode` is used).
 
-Internally werf will commit staged files to dev branch `werf-dev-<commit>`. Dev-mode cache is separated from the main cache when no `--dev` has been specified.
+Internally werf will commit modified/tracked and staged files to dev branch `werf-dev-<commit>`. Dev-mode cache is linked only to those temporal commits and will not interfere with the main cache (when no `--dev` has been specified).
 
 ### Composer support
 
- - `werf compose config` — run docker-compose config command with forwarded image names;
- - `werf compose down` — run docker-compose down command with forwarded image names;
- - `werf compose up` — run docker-compose up command with forwarded image names.
+Werf supports main composer commands. When running these commands werf will set special environment variables with full docker images names of images described in the `werf.yaml`:
+
+```
+WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=application:45f03bdd90c844eb2e61e7e01dae491588d2bdadbd195881b25be9b0-1613371915351
+```
+
+For example, given the following `werf.yaml`:
+
+```
+# werf.yaml
+project: myproj
+configVersion: 1
+---
+image: myimage
+from: alpine
+```
+
+`myimage` full docker image name could be used in the `docker-compose.yml` like that:
+
+```
+version: '3'
+services:
+  web:
+    image: "${WERF_MYIMAGE_DOCKER_IMAGE_NAME}"
+```
+
+Werf provides following compose commands:
+ - [`werf compose config`]({{ "/documentation/reference/cli/werf_compose_config.html" | true_relative_url }}) — run docker-compose config command with forwarded image names;
+ - [`werf compose down`]({{ "/documentation/reference/cli/werf_compose_down.html" | true_relative_url }}) — run docker-compose down command with forwarded image names;
+ - [`werf compose up`]({{ "/documentation/reference/cli/werf_compose_up.html" | true_relative_url }}) — run docker-compose up command with forwarded image names.
 
 ## New bundles functionality
 
- - Allows splitting the process of creation of a new release for application and the process of deploying of this release into the kubernetes.
- - Two steps: 1) publish a bundle for your application version from the application git directory into container registry; 2) deploy published bundle from the container registry into the kubernetes.
+ - Bundles allow splitting the process of creation of a new release of the source code for an application and the process of deploying of this release into the kubernetes.
+ - Bundles are stored in the container registry.
+ - Working with bundles implies two steps: 1) publishing a bundle for your application version from the application git directory into the container registry; 2) deploy published bundle from the container registry into the kubernetes.
  - More info [in the docs]({{ "/documentation/advanced/bundles.html" | true_relative_url }})
 
 ## Change main commands interface and behaviour
 
 ### Interface rework
 
- - single `werf converge` command to build and publish needed images and deploy application into the kubernetes
-   - `werf converge --skip-build` emulates behaviour of old `werf deploy` command
- - removed `werf stages *` and `werf images *` commands
- - there is no more `werf publish` command, because `werf build` command with `--repo` param will publish images with all it's stages automatically
- - there is no more `--tag-by-stages-signature`, `--tag-git-branch`, `--tag-git-commit`, `--tag-git-tag`, `--tag-custom` options, `--tag-by-stages-signature` behaviour is default
-   - forcing of custom tags is not yet available in the v1.2
-   - werf ci-env command only accepts hidden `--tagging-strategy` flag for legacy command call: `werf ci-env --tagging-strategy` without `--as-file` flag.
-     - this flag usages should be completely removed from the ci-env invocations
-     - specified param for this flag does not make a difference, `--tag-by-stages-signature` behaviour will be used anyway
+ - Single `werf converge` command to build and publish needed images into the container registry and deploy application into the kubernetes.
+     - `werf converge --skip-build` emulates behaviour of an old `werf deploy` command.
+         - werf will complain if needed images was not found in the container registry as `werf deploy` did.
+ - Removed `werf stages *` and `werf images *` commands.
+ - There is no more `werf publish` command, because `werf build` command with `--repo` param will publish images with all it's stages into the container registry automatically.
+ - There is no more `--tag-by-stages-signature`, `--tag-git-branch`, `--tag-git-commit`, `--tag-git-tag`, `--tag-custom` options, `--tag-by-stages-signature` behaviour is default.
+     - Forcing of custom tags is [not yet available](https://github.com/werf/werf/issues/2869) in the v1.2
+     - `werf ci-env` command only accepts hidden `--tagging-strategy` flag for legacy command call: `werf ci-env --tagging-strategy` without `--as-file` flag.
+         - This flag usages should be completely removed from the `werf ci-env` invocations.
+         - Specified param for this flag does not make a difference, `--tag-by-stages-signature` behaviour will be used anyway.
 
 ### werf-build and werf-converge commands behaviour
 
  - By default `werf build` command does not require any arguments and will build cache in the local docker server images storage.
- - When running `werf build` with `--repo registry.mydomain.org/project` param werf will lookup for already built images in the local docker server images storage and upload these if found any.
- - `werf converge` command requires `--repo` to work, but will automatically upload into the repo any locally existing images.
+ - When running `werf build` with `--repo registry.mydomain.org/project` param werf will lookup for already built images in the local docker server images storage and upload these if found any (without unnecessary rebuild).
+ - `werf converge` command requires `--repo` to work, but as `werf build` command will automatically upload into the repo any locally existing images.
 
 ### Automatical images building in some toplevel commands
 
@@ -71,96 +107,98 @@ Internally werf will commit staged files to dev branch `werf-dev-<commit>`. Dev-
 Use project's container registry repository as `--repo` param for werf commands.
 
  - `werf ci-env` command for GitLab CI/CD for example will generate `WERF_REPO=$CI_REGISTRY_IMAGE`.
- - Specified `--repo` repository will be used as storage both for built images stages and final images (final images consists of stages anyway).
+ - Specified `--repo` repository will be used as storage both for built [images stages and final images](#always-store-image-stages-in-the-container-registry).
 
 ## Always store image stages in the container registry
 
- - werf-converge always stores images and all its stages in the container registry
- - single `--repo` param to specify storage of images with all its stages
- - due to the usage of content-based tagging final built image is the same as the last stage of this image
-   - and as image consists of multiple stages, all these stages are stored in the container registry anyway
-     - werf build process is host independent and will reuse intermediate stages of image from the container registry as a build cache
- - werf-build command could store built images locally or in container registry
-   - but werf-converge command requires --repo to store images
-   - werf-converge will copy locally built images if available into the specified repo instead of building these images (which was built with werf-build command)
+ - `werf converge` command always stores images and all its stages in the container registry.
+ - Single `--repo` param to specify storage of images with all its stages (there was separate `--stages-storage` and `--images-repo` params in the v1.1).
+ - Due to the usage of content-based tagging final built image is the same as the last stage of this image.
+     - And as image consists of multiple stages, all these stages are stored in the container registry anyway.
+         - So storing of intermediate stages of the image does not create overhead for the container registry.
+         - This makes werf build process host independent, because werf will reuse intermediate stages of an image from the container registry as a build cache.
 
 ## Signatures changes
 
  - **Signature renamed to digest**.
  - All signatures/digests of built images has been changed.
  - Dockerfile images and stapel images will be rebuilt.
-   - Cache from the v1.1 is not valid anymore.
+     - In other words: build cache from the v1.1 is not valid anymore.
 
 ## Stapel builder
 
  - Remove the ability to cache each instruction separately with `asLayers` directive.
 
-## `--env` param is optional
+## Optional env param
 
  - For `werf converge`, `werf render` and `werf bundle publish` commands there is `--env` param.
- - `--env` param affects used helm release name and kubernetes namespace as in v1.1.
-   - When `--env` has been specified helm release will be generated by the template `[[ project ]]-[[ env ]]` and kubernetes namespace will be generated by the same template `[[ project ]]-[[ env ]]` — this is the same as in v1.1.
- - When no `--env` param has been specified, then werf will use `[[ project ]]` template for the helm release and the same `[[ project ]]` template for the kubernetes namespace generation.
+ - `--env` param [affects helm release name and kubernetes namespace]({{ "/documentation/advanced/helm/releases/naming.html" | true_relative_url }}) as in v1.1.
+     - When `--env` has been specified [helm release]({{ "/documentation/advanced/helm/releases/release.html" | true_relative_url }}) name will be generated by the template `[[ project ]]-[[ env ]]` and kubernetes namespace will be generated by the same template `[[ project ]]-[[ env ]]` — this is the same as in v1.1.
+     - When no `--env` param has been specified, then werf will use `[[ project ]]` template for the helm release and the same `[[ project ]]` template for the kubernetes namespace generation.
 
 ## New werf-render command
 
- - `werf render` will build needed images automatically.
- - `werf render` work in giterminism mode.
- - this command allows reproducing exact templates in the same way as it will be rendered in werf-converge command.
+ - [`werf render`]({{ "/documentation/reference/cli/werf_render.html" | true_relative_url }}) will build and publish needed images into the container registry automatically.
+ - This command allows reproducing exact templates in the same way as it will be rendered in [`werf converge`]({{ "/documentation/reference/cli/werf_converge.html" | true_relative_url }}) command.
+ - [`werf render`]({{ "/documentation/reference/cli/werf_render.html" | true_relative_url }}) work in [giterminism mode](#giterminism).
 
 ## Helm
 
 ### Helm 3
 
  - Helm 3 is default and the only choice when deploying with werf v1.2.
- - Already existing helm 2 release will be migrated to helm 3 automatically in the werf-converge command given that helm 2 release has the same name as newly deployed helm 3 release.
-   - **CAUTION** There is no way back once helm 2 release has been migrated to helm 3.
-   - Werf-converge command will check that project helm charts are correctly rendered before running the process of migration.
+ - Already existing helm 2 release will be migrated to helm 3 automatically in the `werf converge` command given that helm 2 release has the same name as newly deployed helm 3 release.
+     - **CAUTION** There is no legal way back once helm 2 release has been migrated to helm 3.
+     - Werf-converge command will check that project helm charts are correctly rendered before running the process of migration.
 
 ### Configuration
 
- - `.Values.werf.image.IMAGE_NAME` instead of `werf_image` template
- - Removed `werf_container_env` helm template function
- - Giterministic loading of all chart files (including subcharts)
+ - `.Values.werf.image.IMAGE_NAME` instead of `werf_image` template.
+ - Removed `werf_container_env` helm template function.
+ - [Giterministic loading](#giterminism) of all chart files (including subcharts).
+     - This is only true for top-level commands like `werf converge` or `werf render`.
+     - Lowlevel helm commands `werf helm *` still load chart files from the local filesystem.
  - Environment passed with `--env` param is available at the `.Values.werf.env`.
- - Fix auto generation of `.helm/Chart.yaml`. This makes Chart.yaml optional, but werf will use it when it exists.
-   - Take `.helm/Chart.yaml` from the repository if exists.
-   - Override `metadata.name` field with werf project name from the `werf.yaml`.
-   - Set `metadata.version = 1.0.0` if not set.
- - Added `.Values.werf.version` service value with werf cli util version.
- - Support setting initial number of replicas when HPA is active for Deployment. Set `"werf.io/replicas-on-creation": NUM` annotation, do not set `spec.replicas` field in templates in such case explicitly.
+ - Fix usage of the `.helm/Chart.yaml`. This makes `.helm/Chart.yaml` optional, but werf will use it when it exists.
+     - Take `.helm/Chart.yaml` from the repository if exists.
+     - Override `metadata.name` field with werf project name from the `werf.yaml`.
+     - Set `metadata.version = 1.0.0` if not set.
+ - Added [`.Values.werf.version` service value]({{ "/documentation/advanced/helm/configuration/values.html#service-values" | true_relative_url }}) with werf cli util version.
+ - Support setting initial number of replicas when HPA is active for Deployment and other resources kinds. Set `"werf.io/replicas-on-creation": NUM` annotation, do not set `spec.replicas` field in templates in such case explicitly.
      - `spec.replicas` will override `werf.io/replicas-on-creation`.
      - This annotation is especially useful when HPA is active, [here is the reason]({{ "/documentation/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
 
 ### Working with subcharts
 
- - Lock file with dependencies should be committed .helm/Chart.lock.
+ - Lock file with dependencies should be committed `.helm/Chart.lock`.
  - Werf will automatically download dependencies charts using this lock file.
- - Typically .helm/charts directory should be added to .gitignore file
- - Werf allows storing chart dependencies directly in the .helm/charts though
-   - These charts will override charts automatically downloaded by the .helm/Chart.lock file
+ - Typically `.helm/charts` directory should be added to `.gitignore` file.
+ - Werf allows storing chart dependencies directly in the `.helm/charts` though.
+     - These charts will override charts automatically downloaded by the `.helm/Chart.lock` file
+ - More info available [in the chart dependencies article]({{ "/documentation/advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}) and [giterminism article]({{ "/documentation/advanced/helm/configuration/giterminism.html#subcharts-and-giterminism" | true_relative_url }}).
 
 ### Deleted werf-helm-deploy-chart command
 
- - Use `werf helm install/upgrade` native helm commands instead.
+Use `werf helm install/upgrade` native helm commands instead of `werf helm deploy-chart`.
 
 ### Better integration with werf-helm-* commands
 
  - `werf helm template` command could be used to render chart templates even if custom werf templates function are used (like `werf_secret_file`).
- - secret files are fully supported by werf-helm-* commands.
- - custom annotations and labels are fully supported by werf-helm-* commands (`--add-annotation` and `--add-label` options).
+ - Secret files are fully supported by `werf helm *` commands.
+ - [Custom annotations and labels]({{ "/documentation/advanced/helm/deploy_process/annotating_and_labeling.html" | true_relative_url }}) are fully supported by `werf helm *` commands (`--add-annotation` and `--add-label` options).
 
 ### Changed service values format
 
- - Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
+Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
 
 ### Deploy process
 
- - Wait until all release resources terminated in the `werf dismiss` command before exiting.
+ - Wait until all release resources terminated before exiting in `werf dismiss` and `werf helm uninstall` commands.
 
 ## werf.yaml
 
  - Rename `fromImageArtifact` to `fromArtifact`
+     - **CAUTION** `fromImageArtifact/fromArtifact` has also been deprecated and will be removed in the v1.3, it is recommended to use `image` and `fromImage` in such case.
  - Removed `--helm-chart-dir` option, define helm chart dir in the `werf.yaml`:
 
     ```
@@ -169,9 +207,9 @@ Use project's container registry repository as `--repo` param for werf commands.
       helmChartDir: .helm
     ```
 
- - Move `--allow-git-shallow-clone`, `--git-unshallow` and `--git-history-synchronization` options into the `werf.yaml`, added [new gitWorktree meta section]({{ "/documentation/reference/werf_yaml.html#git-worktree" | true_relative_url }}). Disabled ci-env generation of old options. Always unshallow git clone by default.
- - Use sprig v3 instead of v2: http://masterminds.github.io/sprig/.
- - New documentation page describing [werf.yaml template engine]({{ "/documentation/reference/werf_yaml_template_engine.html" | true_relative_url }}).
+ - Move `--allow-git-shallow-clone`, `--git-unshallow` and `--git-history-synchronization` options into the `werf.yaml`, added [new `gitWorktree` meta section]({{ "/documentation/reference/werf_yaml.html#git-worktree" | true_relative_url }}). Disabled generation of old options in the `werf ci-env` command. Always unshallow git clone by default.
+ - Use sprig v3 instead of v2: [http://masterminds.github.io/sprig/](http://masterminds.github.io/sprig/).
+ - New documentation page describing [`werf.yaml` template engine]({{ "/documentation/reference/werf_yaml_template_engine.html" | true_relative_url }}).
  - Fix naming for the user template. The template name is the path relative to the templates directory. {% raw %}{{ include ".werf/templates/1.tmpl" . }} => {{ include "templates/1.tmpl" . }}{% endraw %}.
  - Nameless image declaration `image: ~` is deprecated, it is better to always name your images. Will be removed in v1.3.
  - `env "ENVIRONMENT_VARIABLE_NAME"` function requires `ENVIRONMENT_VARIABLE_NAME` variable to exists (it may contain empty value, but should be explicitly defined).
@@ -186,7 +224,7 @@ Use project's container registry repository as `--repo` param for werf commands.
 ## Tagging strategy
 
  - Only content-based.
- - Export of built images coming soon.
+ - Export of built images into arbitrary container registry coming soon.
  - Forcing custom built tags coming soon.
 
 ## Cleanup
@@ -197,25 +235,25 @@ Use project's container registry repository as `--repo` param for werf commands.
  - Removed tag strategy based algorithms completely.
  - `--keep-stages-built-within-last-n-hours` option to keep images that were built within period (2 hours by default).
  - Git-history based cleanup improvement:
-   - The keep policy imagesPerReference.last counts several stages that were built on the same commit as one.
+   - The keep policy `imagesPerReference.last` counts several stages that were built on the same commit as one.
    - Thus, the policy may cover more tags than expected, and this behavior is correct.
 
 ## Caching of stapel artifact/image imports by files checksum
 
  - Suppose we have an artifact which builds some files.
- - This artifact has a stage-dependency in the werf.yaml to rebuild these files when some source files has been changed.
+ - This artifact has a stage-dependency in the `werf.yaml` to rebuild these files when some source files has been changed.
  - When source files has been changed werf rebuilds this artifact.
-   - Because stage-dependency has changed, last artifact stage will also have a different digest.
-   - But after artifact rebuild factual checksum of built files not changed — the same files.
-     - In the v1.1 werf would still perform import of these files into the target image.
-       - As a consequence target image will be unnecessarily rebuilt and redeployed.
-     - In the v1.2 werf would check checksum of imported files and perform reimport only when checksum changed.
+     - Because stage-dependency has changed, last artifact stage will also have a different digest.
+     - But after artifact rebuild factual checksum of built files not changed — the same files.
+         - In the v1.1 werf would still perform import of these files into the target image.
+             - As a consequence target image will be unnecessarily rebuilt and redeployed.
+         - In the v1.2 werf would check checksum of imported files and perform reimport only when checksum changed.
 
 ## Primary and secondary images storage support
 
  - Automatically upload locally built images into the specified `--repo`.
  - Use stages from read-only secondary images storage specified by `--secodary-repo` options (can be specified multiple times).
-   - Suitable stages from the `--secondary-repo` will be copied into the primary `--repo`.
+     - Suitable stages from the `--secondary-repo` will be copied into the primary `--repo`.
 
 ## Built images report format changes
 
@@ -270,16 +308,17 @@ User may put werf.yaml (and .helm) into any subdirectory of the project git repo
  - There is also `--config` option to pass custom werf.yaml config, all relative paths will also be calculated relatively to the werf process cwd or `--dir` param.
  - Added `--git-work-tree` param (or `WERF_GIT_WORK_TREE` variable) to specify directory that contains `.git` in the case when autodetector failed or we want to use specific work tree.
      - For example when running werf from the submodule of the project we may want to use root repo worktree instead of submodule's work tree.
+         - Built stages will be linked to the commits of the root repo in such case.
 
 ## Other and internals
 
  - Added git-archives and git-patches cache in the `~/.werf/local_cache/` along with git-worktrees. Do not create patches and archives in `/tmp` (or `--tmp-dir`).
- -  Remove stages_and_images read-only lock during build process
-   - stages_and_images read only lock is preventive measure against running cleanup and build commands at the same time;
-   - this lock creates unnecessary load on the synchronization server, because this lock working all the time the build process is active for each build process;
-   - it is mostly safe to just omit this lock completely;
-   - also removed unused "image" lock from the lock manager (legacy from v1.1).
-   - also renamed kubernetes-related stage and stage-cache locks to include project name (just for more correctness, incompatible with v1.1 change).
+ -  Remove `stages_and_images` read-only lock during build process
+     - `stages_and_images` read only lock is preventive measure against running cleanup and build commands at the same time;
+     - This lock creates unnecessary load on the synchronization server, because this lock working all the time the build process is active for each build process.
+     - It is mostly safe to just omit this lock completely.
+ - Also removed unused `image` lock from the lock manager (legacy from v1.1).
+ - Also renamed kubernetes-related stage and stage-cache locks to include project name (just for more correctness, incompatible with v1.1 change).
 
 ## Documentation rework
 
