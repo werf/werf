@@ -46,7 +46,17 @@ func (r FileReader) ValidateSubmodules(ctx context.Context, pathMatcher path_mat
 }
 
 func (r FileReader) validateSubmodules(ctx context.Context, pathMatcher path_matcher.PathMatcher) error {
-	return r.sharedOptions.LocalGitRepo().ValidateSubmodules(ctx, pathMatcher, git_repo.ValidateSubmodulesOptions{OnlyWorktreeChanges: r.sharedOptions.Dev()})
+	// untracked files cannot be submodules
+	if r.sharedOptions.Dev() && r.sharedOptions.DevMode() == "simple" {
+		return nil
+	}
+
+	options := git_repo.ValidateSubmodulesOptions{}
+	if r.sharedOptions.Dev() && r.sharedOptions.DevMode() == "strict" {
+		options.OnlyWorktreeChanges = true
+	}
+
+	return r.sharedOptions.LocalGitRepo().ValidateSubmodules(ctx, pathMatcher, options)
 }
 
 func (r FileReader) StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (list []string, err error) {
@@ -69,7 +79,19 @@ func (r FileReader) StatusPathList(ctx context.Context, pathMatcher path_matcher
 }
 
 func (r FileReader) statusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) ([]string, error) {
-	list, err := r.sharedOptions.LocalGitRepo().StatusPathList(ctx, pathMatcher, git_repo.StatusPathListOptions{OnlyWorktreeChanges: r.sharedOptions.Dev()})
+	options := git_repo.StatusPathListOptions{}
+	if r.sharedOptions.Dev() {
+		switch r.sharedOptions.DevMode() {
+		case "simple":
+			options.OnlyUntrackedChanges = true
+		case "strict":
+			options.OnlyWorktreeChanges = true
+		default:
+			panic("unexpected dev mode " + r.sharedOptions.DevMode())
+		}
+	}
+
+	list, err := r.sharedOptions.LocalGitRepo().StatusPathList(ctx, pathMatcher, options)
 	if err != nil {
 		return nil, err
 	}

@@ -1019,6 +1019,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 	return giterminism_manager.NewManager(BackgroundContext(), workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		Dev:              *cmdData.Dev,
+		DevMode:          devMode,
 	})
 }
 

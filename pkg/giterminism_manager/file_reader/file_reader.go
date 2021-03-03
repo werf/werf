@@ -36,6 +36,7 @@ type sharedOptions interface {
 	HeadCommit() string
 	LooseGiterminism() bool
 	Dev() bool
+	DevMode() string
 }
 
 func debug() bool {

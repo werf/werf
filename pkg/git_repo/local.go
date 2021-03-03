@@ -388,7 +388,8 @@ func (repo *Local) ValidateSubmodules(ctx context.Context, pathMatcher path_matc
 }
 
 type StatusPathListOptions struct {
-	OnlyWorktreeChanges bool
+	OnlyWorktreeChanges  bool
+	OnlyUntrackedChanges bool
 }
 
 func (repo *Local) StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts StatusPathListOptions) (list []string, err error) {
@@ -417,24 +418,27 @@ func (repo *Local) statusPathList(ctx context.Context, pathMatcher path_matcher.
 		return nil, err
 	}
 
+	var result []string
+	handlePathListFunc := func(pathList []string) {
+		for _, path := range pathList {
+			if pathMatcher.IsPathMatched(path) {
+				result = util.AddNewStringsToStringArray(result, path)
+			}
+		}
+	}
+
+	handlePathListFunc(statusResult.UntrackedPathList)
+	if opts.OnlyUntrackedChanges {
+		return result, nil
+	}
+
 	var scope status.Scope
 	if opts.OnlyWorktreeChanges {
 		scope = statusResult.Worktree
 	} else {
 		scope = statusResult.IndexWithWorktree()
 	}
-
-	var result []string
-	for _, list := range [][]string{
-		statusResult.UntrackedPathList,
-		scope.PathList,
-	} {
-		for _, path := range list {
-			if pathMatcher.IsPathMatched(path) {
-				result = util.AddNewStringsToStringArray(result, path)
-			}
-		}
-	}
+	handlePathListFunc(scope.PathList)
 
 	for _, submodule := range scope.Submodules {
 		if pathMatcher.IsDirOrSubmodulePathMatched(submodule.Path) {
