@@ -119,7 +119,7 @@ Use project's container registry repository as `--repo` param for werf commands.
 
 ### Configuration
 
- - `.Values.werf.image.IMAGE_NAME` instead of werf_image
+ - `.Values.werf.image.IMAGE_NAME` instead of `werf_image` template
  - Removed `werf_container_env` helm template function
  - Giterministic loading of all chart files (including subcharts)
  - Environment passed with `--env` param is available at the `.Values.werf.env`.
@@ -127,7 +127,7 @@ Use project's container registry repository as `--repo` param for werf commands.
    - Take `.helm/Chart.yaml` from the repository if exists.
    - Override `metadata.name` field with werf project name from the `werf.yaml`.
    - Set `metadata.version = 1.0.0` if not set.
- - Added `.Values.global.werf.version` service value with werf cli util version.
+ - Added `.Values.werf.version` service value with werf cli util version.
  - Support setting initial number of replicas when HPA is active for Deployment. Set `"werf.io/replicas-on-creation": NUM` annotation, do not set `spec.replicas` field in templates in such case explicitly.
      - `spec.replicas` will override `werf.io/replicas-on-creation`.
      - This annotation is especially useful when HPA is active, [here is the reason]({{ "/documentation/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
@@ -152,7 +152,7 @@ Use project's container registry repository as `--repo` param for werf commands.
 
 ### Changed service values format
 
- - Do not use `.Values.global.werf.image` section, use `.Values.werf.image` instead.
+ - Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
 
 ### Deploy process
 
