@@ -134,11 +134,12 @@ func parseOrdinaryRegularFileEntry(result *Result, entry ordinaryEntry) error {
 	worktreeCode := entry.xy[1]
 
 	if stageCode != '.' {
-		result.Index.PathList = append(result.Index.PathList, entry.path)
+		result.Index.pathList = append(result.Index.pathList, entry.path)
+		result.Index.addToChecksum(entry.path, entry.mi, entry.hI)
 	}
 
 	if worktreeCode != '.' {
-		result.Worktree.PathList = append(result.Worktree.PathList, entry.path)
+		result.Worktree.pathList = append(result.Worktree.pathList, entry.path)
 	}
 
 	return nil
@@ -170,11 +171,12 @@ func parseOrdinarySubmoduleEntry(result *Result, entry ordinaryEntry) error {
 	}
 
 	if stageCode != '.' {
-		result.Index.Submodules = append(result.Index.Submodules, newSubmoduleFunc(stageCode))
+		result.Index.submodules = append(result.Index.submodules, newSubmoduleFunc(stageCode))
+		result.Index.addToChecksum(entry.path, entry.mi, entry.hI)
 	}
 
 	if worktreeCode != '.' {
-		result.Worktree.Submodules = append(result.Worktree.Submodules, newSubmoduleFunc(worktreeCode))
+		result.Worktree.submodules = append(result.Worktree.submodules, newSubmoduleFunc(worktreeCode))
 	}
 
 	return nil
@@ -215,11 +217,12 @@ func parseUnmergedEntry(result *Result, entryLine string) error {
 	worktreeCode := entry.xy[1]
 
 	if stageCode != '.' {
-		result.Index.PathList = append(result.Index.PathList, entry.path)
+		result.Index.pathList = append(result.Index.pathList, entry.path)
+		result.Index.addToChecksum(entry.path)
 	}
 
 	if worktreeCode != '.' {
-		result.Worktree.PathList = append(result.Worktree.PathList, entry.path)
+		result.Worktree.pathList = append(result.Worktree.pathList, entry.path)
 	}
 
 	return nil

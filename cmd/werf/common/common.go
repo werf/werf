@@ -737,7 +737,9 @@ func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupFollow(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Follow = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Follow, "follow", "", GetBoolEnvironmentDefaultFalse("WERF_FOLLOW"), "Follow git HEAD and run command for each new commit (default $WERF_FOLLOW)")
+	cmd.Flags().BoolVarP(cmdData.Follow, "follow", "", GetBoolEnvironmentDefaultFalse("WERF_FOLLOW"), `Enable follow mode (default $WERF_FOLLOW).
+The mode allows restarting the command on a new commit.
+In development mode (--dev), it additionally tracks changes in the index state of the git repository, regardless of whether simple or strict development mode (--dev-mode) is used`)
 }
 
 func allStagesNames() []string {

@@ -341,11 +341,11 @@ func (repo *Local) ValidateSubmodules(ctx context.Context, pathMatcher path_matc
 	}
 
 	// No changes related to submodules.
-	if len(scope.Submodules) == 0 {
+	if len(scope.Submodules()) == 0 {
 		return nil
 	}
 
-	for _, submodule := range scope.Submodules {
+	for _, submodule := range scope.Submodules() {
 		if !pathMatcher.IsDirOrSubmodulePathMatched(submodule.Path) {
 			continue
 		}
@@ -438,15 +438,24 @@ func (repo *Local) statusPathList(ctx context.Context, pathMatcher path_matcher.
 	} else {
 		scope = statusResult.IndexWithWorktree()
 	}
-	handlePathListFunc(scope.PathList)
+	handlePathListFunc(scope.PathList())
 
-	for _, submodule := range scope.Submodules {
+	for _, submodule := range scope.Submodules() {
 		if pathMatcher.IsDirOrSubmodulePathMatched(submodule.Path) {
 			result = util.AddNewStringsToStringArray(result, submodule.Path)
 		}
 	}
 
 	return result, nil
+}
+
+func (repo *Local) StatusIndexChecksum(ctx context.Context) (string, error) {
+	statusResult, err := repo.status(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return statusResult.Index.Checksum(), nil
 }
 
 // ListCommitFilesWithGlob returns the list of files by the glob, follows symlinks.
