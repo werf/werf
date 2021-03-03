@@ -34,7 +34,7 @@ func NewGetNamespaceCmd() *cobra.Command {
 	common.SetupConfigPath(&getNamespaceCmdData, cmd)
 	common.SetupEnvironment(&getNamespaceCmdData, cmd)
 
-	common.SetupGiterminismInspectorOptions(&getNamespaceCmdData, cmd)
+	common.SetupGiterminismOptions(&getNamespaceCmdData, cmd)
 
 	common.SetupTmpDir(&getNamespaceCmdData, cmd)
 	common.SetupHomeDir(&getNamespaceCmdData, cmd)

@@ -10,11 +10,16 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/werf/logboek"
 )
 
-func SyncDevBranchWithStagedFiles(ctx context.Context, gitDir, workTreeCacheDir, commit string) (string, error) {
-	var resCommit string
+type SyncSourceWorktreeWithServiceWorktreeBranchOptions struct {
+	OnlyStagedChanges bool
+}
 
+func SyncSourceWorktreeWithServiceWorktreeBranch(ctx context.Context, gitDir, sourceWorkTreeDir, workTreeCacheDir, commit string, opts SyncSourceWorktreeWithServiceWorktreeBranchOptions) (string, error) {
+	var resultCommit string
 	if err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		var err error
 		if gitDir, err = filepath.Abs(gitDir); err != nil {
@@ -25,7 +30,7 @@ func SyncDevBranchWithStagedFiles(ctx context.Context, gitDir, workTreeCacheDir,
 			return fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
 		}
 
-		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, true)
+		destinationWorkTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, true)
 		if err != nil {
 			return fmt.Errorf("unable to prepare worktree for commit %v: %s", commit, err)
 		}
@@ -36,69 +41,105 @@ func SyncDevBranchWithStagedFiles(ctx context.Context, gitDir, workTreeCacheDir,
 		}
 
 		devBranchName := fmt.Sprintf("werf-dev-%s", commit)
-		var isDevBranchExist bool
-		if output, err := runGitCmd(ctx, []string{"branch", "--list", devBranchName}, workTreeDir, runGitCmdOptions{}); err != nil {
-			return err
+		devCommitWithStagedChanges, err := syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorkTreeDir, destinationWorkTreeDir, commit, devBranchName, true)
+		if err != nil {
+			return fmt.Errorf("unable to sync staged changes: %s", err)
+		}
+
+		if opts.OnlyStagedChanges {
+			resultCommit = devCommitWithStagedChanges
 		} else {
-			isDevBranchExist = output.Len() != 0
-		}
-
-		var devHeadCommit string
-		if isDevBranchExist {
-			if _, err := runGitCmd(ctx, []string{"checkout", devBranchName}, workTreeDir, runGitCmdOptions{}); err != nil {
-				return err
+			devBranchName = fmt.Sprintf("werf-dev-%s-%s", commit, devCommitWithStagedChanges)
+			devCommitWithTrackedChanges, err := syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorkTreeDir, destinationWorkTreeDir, devCommitWithStagedChanges, devBranchName, false)
+			if err != nil {
+				return fmt.Errorf("unable to sync tracked changes: %s", err)
 			}
 
-			if output, err := runGitCmd(ctx, []string{"rev-parse", devBranchName}, workTreeDir, runGitCmdOptions{}); err != nil {
-				return err
-			} else {
-				devHeadCommit = strings.TrimSpace(output.String())
-			}
-		} else {
-			if _, err := runGitCmd(ctx, []string{"checkout", "-b", devBranchName, commit}, workTreeDir, runGitCmdOptions{}); err != nil {
-				return err
-			}
-
-			devHeadCommit = commit
-		}
-
-		gitDiffArgs := []string{
-			"-c", "diff.renames=false",
-			"-c", "core.quotePath=false",
-			"diff",
-			"--full-index",
-			"--binary",
-			"--cached",
-			devHeadCommit,
-		}
-		if diffOutput, err := runGitCmd(ctx, gitDiffArgs, gitDir, runGitCmdOptions{}); err != nil {
-			return err
-		} else if len(diffOutput.Bytes()) == 0 {
-			resCommit = devHeadCommit
-		} else {
-			if _, err := runGitCmd(ctx, []string{"apply", "--binary", "--index"}, workTreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {
-				return err
-			}
-
-			gitArgs := []string{"-c", "user.email=werf@werf.io", "-c", "user.name=werf", "commit", "-m", time.Now().String()}
-			if _, err := runGitCmd(ctx, gitArgs, workTreeDir, runGitCmdOptions{}); err != nil {
-				return err
-			}
-
-			if output, err := runGitCmd(ctx, []string{"rev-parse", devBranchName}, workTreeDir, runGitCmdOptions{}); err != nil {
-				return err
-			} else {
-				newDevCommit := strings.TrimSpace(output.String())
-				resCommit = newDevCommit
-			}
-		}
-
-		if _, err := runGitCmd(ctx, []string{"checkout", "--force", "--detach", resCommit}, workTreeDir, runGitCmdOptions{}); err != nil {
-			return err
+			resultCommit = devCommitWithTrackedChanges
 		}
 
 		return nil
 	}); err != nil {
+		return "", err
+	}
+
+	return resultCommit, nil
+}
+
+func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorkTreeDir, destinationWorkTreeDir, commit string, devBranchName string, onlyStagedChanges bool) (string, error) {
+	var isDevBranchExist bool
+	if output, err := runGitCmd(ctx, []string{"branch", "--list", devBranchName}, destinationWorkTreeDir, runGitCmdOptions{}); err != nil {
+		return "", err
+	} else {
+		isDevBranchExist = output.Len() != 0
+	}
+
+	var devHeadCommit string
+	if isDevBranchExist {
+		if _, err := runGitCmd(ctx, []string{"checkout", devBranchName}, destinationWorkTreeDir, runGitCmdOptions{}); err != nil {
+			return "", err
+		}
+
+		if output, err := runGitCmd(ctx, []string{"rev-parse", devBranchName}, destinationWorkTreeDir, runGitCmdOptions{}); err != nil {
+			return "", err
+		} else {
+			devHeadCommit = strings.TrimSpace(output.String())
+		}
+	} else {
+		if _, err := runGitCmd(ctx, []string{"checkout", "-b", devBranchName, commit}, destinationWorkTreeDir, runGitCmdOptions{}); err != nil {
+			return "", err
+		}
+
+		devHeadCommit = commit
+	}
+
+	gitDiffArgs := []string{
+		"-c", "diff.renames=false",
+		"-c", "core.quotePath=false",
+		"diff",
+		"--full-index",
+		"--binary",
+	}
+	if onlyStagedChanges {
+		gitDiffArgs = append(gitDiffArgs, "--cached")
+	}
+	gitDiffArgs = append(gitDiffArgs, devHeadCommit)
+
+	var resCommit string
+	if diffOutput, err := runGitCmd(ctx, gitDiffArgs, sourceWorkTreeDir, runGitCmdOptions{}); err != nil {
+		return "", err
+	} else if len(diffOutput.Bytes()) == 0 {
+		if debug() {
+			logboek.Context(ctx).Debug().LogLn("[DEBUG] Nothing to sync")
+		}
+		resCommit = devHeadCommit
+	} else {
+		if debug() {
+			filesType := "tracked"
+			if onlyStagedChanges {
+				filesType = "staged"
+			}
+			logboek.Context(ctx).Debug().LogF("[DEBUG] Syncing %s files ...\n", filesType)
+		}
+
+		if _, err := runGitCmd(ctx, []string{"apply", "--binary", "--index"}, destinationWorkTreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {
+			return "", err
+		}
+
+		gitArgs := []string{"-c", "user.email=werf@werf.io", "-c", "user.name=werf", "commit", "-m", time.Now().String()}
+		if _, err := runGitCmd(ctx, gitArgs, destinationWorkTreeDir, runGitCmdOptions{}); err != nil {
+			return "", err
+		}
+
+		if output, err := runGitCmd(ctx, []string{"rev-parse", devBranchName}, destinationWorkTreeDir, runGitCmdOptions{}); err != nil {
+			return "", err
+		} else {
+			newDevCommit := strings.TrimSpace(output.String())
+			resCommit = newDevCommit
+		}
+	}
+
+	if _, err := runGitCmd(ctx, []string{"checkout", "--force", "--detach", resCommit}, destinationWorkTreeDir, runGitCmdOptions{}); err != nil {
 		return "", err
 	}
 
@@ -122,7 +163,7 @@ func runGitCmd(ctx context.Context, args []string, dir string, opts runGitCmdOpt
 
 	err := cmd.Run()
 
-	cmdWithArgs := strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " ")
+	cmdWithArgs := strings.Join(append([]string{cmd.Path, "-C " + dir}, cmd.Args[1:]...), " ")
 	if debug() {
 		fmt.Printf("[DEBUG] %s\n%s\n", cmdWithArgs, output)
 	}

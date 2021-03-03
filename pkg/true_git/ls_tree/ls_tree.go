@@ -73,7 +73,7 @@ func lsTree(ctx context.Context, repository *git.Repository, commit string, path
 		allFiles,
 		// add tree func
 		func() error {
-			if debugProcess() {
+			if debug() {
 				logboek.Context(ctx).Debug().LogLn("Root tree was added")
 			}
 
@@ -92,7 +92,7 @@ func lsTree(ctx context.Context, repository *git.Repository, commit string, path
 		},
 		// check tree func
 		func() error {
-			if debugProcess() {
+			if debug() {
 				logboek.Context(ctx).Debug().LogLn("Root tree was checking")
 			}
 
@@ -108,7 +108,7 @@ func lsTree(ctx context.Context, repository *git.Repository, commit string, path
 		},
 		// skip tree func
 		func() error {
-			if debugProcess() {
+			if debug() {
 				logboek.Context(ctx).Debug().LogLn("Root tree was skipped")
 			}
 
@@ -233,7 +233,7 @@ func lsTreeDirEntryMatch(ctx context.Context, repository *git.Repository, tree *
 		allFiles,
 		// add tree func
 		func() error {
-			if debugProcess() {
+			if debug() {
 				logboek.Context(ctx).Debug().LogLn("Dir entry was added:         ", lsTreeEntry.FullFilepath)
 			}
 
@@ -243,7 +243,7 @@ func lsTreeDirEntryMatch(ctx context.Context, repository *git.Repository, tree *
 		},
 		// check tree func
 		func() error {
-			if debugProcess() {
+			if debug() {
 				logboek.Context(ctx).Debug().LogLn("Dir entry was checking:      ", lsTreeEntry.FullFilepath)
 			}
 
@@ -260,7 +260,7 @@ func lsTreeDirEntryMatch(ctx context.Context, repository *git.Repository, tree *
 			return nil
 		},
 		func() error {
-			if debugProcess() {
+			if debug() {
 				logboek.Context(ctx).Debug().LogLn("Dir entry was skipped:       ", lsTreeEntry.FullFilepath)
 			}
 
@@ -280,7 +280,7 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, 
 		allFiles,
 		// add tree func
 		func() error {
-			if debugProcess() {
+			if debug() {
 				logboek.Context(ctx).Debug().LogLn("Submodule entry was added:   ", lsTreeEntry.FullFilepath)
 			}
 			lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
@@ -289,7 +289,7 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, 
 		},
 		// check tree func
 		func() error {
-			if debugProcess() {
+			if debug() {
 				logboek.Context(ctx).Debug().LogLn("Submodule entry was checking:", lsTreeEntry.FullFilepath)
 			}
 
@@ -343,7 +343,10 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, 
 		},
 		// skip tree func
 		func() error {
-			logboek.Context(ctx).Debug().LogLn("Submodule entry was skipped: ", lsTreeEntry.FullFilepath)
+			if debug() {
+				logboek.Context(ctx).Debug().LogLn("Submodule entry was skipped: ", lsTreeEntry.FullFilepath)
+			}
+
 			return nil
 		},
 	); err != nil {
@@ -369,7 +372,7 @@ func lsTreeDirOrSubmoduleEntryMatchBase(path string, pathMatched path_matcher.Pa
 
 func lsTreeFileEntryMatch(ctx context.Context, lsTreeEntry *LsTreeEntry, pathMatcher path_matcher.PathMatcher) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	if pathMatcher.IsPathMatched(lsTreeEntry.FullFilepath) {
-		if debugProcess() {
+		if debug() {
 			logboek.Context(ctx).Debug().LogLn("File entry was added:        ", lsTreeEntry.FullFilepath)
 		}
 		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
@@ -439,7 +442,7 @@ func submoduleRepositoryAndTree(ctx context.Context, repository *git.Repository,
 		return nil, "", nil, fmt.Errorf("cannot get submodule %q status: %s", submodulePath, err)
 	}
 
-	if debugProcess() {
+	if debug() {
 		if !submoduleStatus.IsClean() {
 			logboek.Context(ctx).Debug().LogFWithCustomStyle(
 				color.GetStyle("danger"),
@@ -463,6 +466,6 @@ func submoduleRepositoryAndTree(ctx context.Context, repository *git.Repository,
 	return submoduleRepository, submoduleStatus.Expected.String(), submoduleTree, nil
 }
 
-func debugProcess() bool {
+func debug() bool {
 	return os.Getenv("WERF_DEBUG_LS_TREE_PROCESS") == "1"
 }

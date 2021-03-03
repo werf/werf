@@ -136,7 +136,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 				allFiles,
 				// add tree func
 				func() error {
-					if debugProcess() {
+					if debug() {
 						logboek.Context(ctx).Debug().LogLn("Root tree was added")
 					}
 
@@ -146,7 +146,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 				},
 				// check tree func
 				func() error {
-					if debugProcess() {
+					if debug() {
 						logboek.Context(ctx).Debug().LogLn("Root tree was checking")
 					}
 
@@ -155,7 +155,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 				},
 				// skip tree func
 				func() error {
-					if debugProcess() {
+					if debug() {
 						logboek.Context(ctx).Debug().LogLn("Root tree was skipped")
 					}
 
