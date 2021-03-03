@@ -170,7 +170,7 @@ func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
 
 func setupDev(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dev = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), "Enable developer mode (default $WERF_DEV)")
+	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), "Enable development mode (default $WERF_DEV)")
 }
 
 func setupDevMode(cmdData *CmdData, cmd *cobra.Command) {
