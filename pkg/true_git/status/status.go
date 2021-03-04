@@ -14,34 +14,6 @@ import (
 	"github.com/werf/werf/pkg/true_git"
 )
 
-type Result struct {
-	Index             Scope
-	Worktree          Scope
-	UntrackedPathList []string
-}
-
-func (r *Result) IndexWithWorktree() Scope {
-	return Scope{
-		PathList:   append(r.Index.PathList, r.Worktree.PathList...),
-		Submodules: append(r.Index.Submodules, r.Worktree.Submodules...),
-	}
-}
-
-type Scope struct {
-	PathList   []string
-	Submodules []submodule
-}
-
-type submodule struct {
-	Path                string
-	IsAdded             bool
-	IsDeleted           bool
-	IsModified          bool
-	HasUntrackedChanges bool
-	HasTrackedChanges   bool
-	IsCommitChanged     bool
-}
-
 // Status returns Result with path lists of untracked files and modified files for index and worktree.
 // The function counts each file status as Modified if it is not Unmodified or Untracked ([ADU] == M).
 // The function does not work with ignored, renamed and copied files.
