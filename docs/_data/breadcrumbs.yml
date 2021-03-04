@@ -97,3 +97,6 @@ ru:
   /documentation/internals/development:
     << : *documentation-internals-development
     title: Для разработчиков
+  /documentation/whats_new_in_v1_2:
+    << : *documentation-whats-new-in-v1-2
+    title: Что нового в v1.2
