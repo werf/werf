@@ -14,34 +14,6 @@ import (
 	"github.com/werf/werf/pkg/true_git"
 )
 
-type Result struct {
-	Index             Scope
-	Worktree          Scope
-	UntrackedPathList []string
-}
-
-func (r *Result) IndexWithWorktree() Scope {
-	return Scope{
-		PathList:   append(r.Index.PathList, r.Worktree.PathList...),
-		Submodules: append(r.Index.Submodules, r.Worktree.Submodules...),
-	}
-}
-
-type Scope struct {
-	PathList   []string
-	Submodules []submodule
-}
-
-type submodule struct {
-	Path                string
-	IsAdded             bool
-	IsDeleted           bool
-	IsModified          bool
-	HasUntrackedChanges bool
-	HasTrackedChanges   bool
-	IsCommitChanged     bool
-}
-
 // Status returns Result with path lists of untracked files and modified files for index and worktree.
 // The function counts each file status as Modified if it is not Unmodified or Untracked ([ADU] == M).
 // The function does not work with ignored, renamed and copied files.
@@ -162,11 +134,12 @@ func parseOrdinaryRegularFileEntry(result *Result, entry ordinaryEntry) error {
 	worktreeCode := entry.xy[1]
 
 	if stageCode != '.' {
-		result.Index.PathList = append(result.Index.PathList, entry.path)
+		result.Index.pathList = append(result.Index.pathList, entry.path)
+		result.Index.addToChecksum(entry.path, entry.mi, entry.hI)
 	}
 
 	if worktreeCode != '.' {
-		result.Worktree.PathList = append(result.Worktree.PathList, entry.path)
+		result.Worktree.pathList = append(result.Worktree.pathList, entry.path)
 	}
 
 	return nil
@@ -198,11 +171,12 @@ func parseOrdinarySubmoduleEntry(result *Result, entry ordinaryEntry) error {
 	}
 
 	if stageCode != '.' {
-		result.Index.Submodules = append(result.Index.Submodules, newSubmoduleFunc(stageCode))
+		result.Index.submodules = append(result.Index.submodules, newSubmoduleFunc(stageCode))
+		result.Index.addToChecksum(entry.path, entry.mi, entry.hI)
 	}
 
 	if worktreeCode != '.' {
-		result.Worktree.Submodules = append(result.Worktree.Submodules, newSubmoduleFunc(worktreeCode))
+		result.Worktree.submodules = append(result.Worktree.submodules, newSubmoduleFunc(worktreeCode))
 	}
 
 	return nil
@@ -243,11 +217,12 @@ func parseUnmergedEntry(result *Result, entryLine string) error {
 	worktreeCode := entry.xy[1]
 
 	if stageCode != '.' {
-		result.Index.PathList = append(result.Index.PathList, entry.path)
+		result.Index.pathList = append(result.Index.pathList, entry.path)
+		result.Index.addToChecksum(entry.path)
 	}
 
 	if worktreeCode != '.' {
-		result.Worktree.PathList = append(result.Worktree.PathList, entry.path)
+		result.Worktree.pathList = append(result.Worktree.pathList, entry.path)
 	}
 
 	return nil

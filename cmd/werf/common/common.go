@@ -170,7 +170,8 @@ func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
 
 func setupDev(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dev = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), "Enable development mode (default $WERF_DEV)")
+	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), `Enable development mode (default $WERF_DEV).
+The mode allows working with project files without doing redundant commits during debugging and development`)
 }
 
 func setupDevMode(cmdData *CmdData, cmd *cobra.Command) {
@@ -184,8 +185,8 @@ func setupDevMode(cmdData *CmdData, cmd *cobra.Command) {
 
 	cmd.Flags().StringVarP(cmdData.DevMode, "dev-mode", "", defaultValue, `Set development mode (default $WERF_DEV_MODE or simple).
 Two development modes are supported:
-- simple: for working with tracked git repository changes
-- strict: for working only with staged git repository changes`)
+- simple: for working with the worktree state of the git repository
+- strict: for working with the index state of the git repository`)
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -737,7 +738,9 @@ func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupFollow(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Follow = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Follow, "follow", "", GetBoolEnvironmentDefaultFalse("WERF_FOLLOW"), "Follow git HEAD and run command for each new commit (default $WERF_FOLLOW)")
+	cmd.Flags().BoolVarP(cmdData.Follow, "follow", "", GetBoolEnvironmentDefaultFalse("WERF_FOLLOW"), `Enable follow mode (default $WERF_FOLLOW).
+The mode allows restarting the command on a new commit.
+In development mode (--dev), it additionally tracks changes in the index state of the git repository, regardless of whether simple or strict development mode (--dev-mode) is used`)
 }
 
 func allStagesNames() []string {
