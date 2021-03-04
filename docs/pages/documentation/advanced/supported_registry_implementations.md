@@ -11,24 +11,20 @@ There are several types of commands that are working with the Docker registries 
 * [During the cleaning process]({{ "documentation/advanced/cleanup.html" | true_relative_url }}), werf deletes _images_ and _stages_ from the Docker registry.
 * [During the deploying process]({{ "/documentation/advanced/helm/deploy_process/steps.html" | true_relative_url }}), werf requires access to the _images_ from the Docker registry and to the _stages_ that could also be stored in the Docker registry.
 
-**NOTE** You should specify your implementation by `--repo-implementation` CLI option.
-
-## Supported implementations
-
-|                 	                    | Build              	    | Cleanup                         	                                    |
-| -------------------------------------	| :-----------------------:	| :-------------------------------------------------------------------:	|
-| [_AWS ECR_](#aws-ecr)             	|         **ok**        	|                    **ok (with native API)**                   	    |
-| [_Azure CR_](#azure-cr)            	|         **ok**        	|                            **ok (with native API)**                   |
-| _Default_         	                |         **ok**        	|                            **ok**                            	        |
-| [_Docker Hub_](#docker-hub)      	    |         **ok**        	|                    **ok (with native API)**                   	    |
-| _GCR_             	                |         **ok**        	|                            **ok**                            	        |
-| [_GitHub Packages_](#github-packages) |         **ok**        	| **ok (with native API and only in private GitHub repositories)** 	    |
-| _GitLab Registry_ 	                |         **ok**        	|                            **ok**                            	        |
-| _Harbor_          	                |         **ok**        	|                            **ok**                            	        |
-| _JFrog Artifactory_         	        |         **ok**        	|                            **ok**                            	        |
-| _Quay_                    	        |         **ok**        	|                            **ok**                            	        |
-
-> In the nearest future we will add support for Nexus Registry
+|                                           | Build  | Bundles           | Cleanup               |
+| -------------------------------------     | :----: | :---------------: | :-------------------: |
+| _AWS ECR_                                 | **ok** |         **ok**    |        ***ok**        |
+| _Azure CR_                                | **ok** |         **ok**    |        ***ok**        |
+| _Default_                                 | **ok** |         **ok**    |         **ok**        |
+| _Docker Hub_                              | **ok** | **not supported** |        ***ok**        |
+| _GCR_                                     | **ok** |         **ok**    |         **ok**        |
+| _GitHub Packages_ (docker.pkg.github.com) | **ok** | **not supported** |        ***ok**        |
+| _GitHub Packages_ (ghcr.io)               | **ok** |         **ok**    |   **not supported**   |
+| _GitLab Registry_                         | **ok** |         **ok**    |        ***ok**        |
+| _Harbor_                                  | **ok** |         **ok**    |         **ok**        |
+| _JFrog Artifactory_                       | **ok** |         **ok**    |         **ok**        |
+| _Nexus_                                   | **ok** |   **not tested**  |         **ok**        |
+| _Quay_                                    | **ok** | **not supported** |         **ok**        |
 
 The following implementations are fully supported and do not require additional actions except [docker authorization](#docker-authorization):
 * _Default_.
