@@ -20,5 +20,9 @@
 {%- elsif page.url == entry.url %}
 <li class="{{ item_entry_class }} active"><a href="{{ entry.url | true_relative_url }}">{{entry.title}}</a></li>
 {%- else %}
-<li class="{{ item_entry_class }}"><a href="{{ entry.url | true_relative_url }}">{{entry.title}}</a></li>
+    {%- if page.name == '404.md' %}
+    <li class="{{ item_entry_class }}"><a data-proofer-ignore href="{{ entry.url }}">{{entry.title}}</a></li>
+    {% else %}
+    <li class="{{ item_entry_class }}"><a href="{{ entry.url | true_relative_url }}">{{entry.title}}</a></li>
+    {%- endif %}
 {%- endif %}
