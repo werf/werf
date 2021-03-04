@@ -143,9 +143,9 @@ config:
 				Entry("the dockerfile not found", entry{
 					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" not found in the project git repository`,
 				}),
-				Entry("the dockerfile not tracked", entry{
+				Entry("the dockerfile not committed", entry{
 					addDockerfile:        true,
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the untracked file "Dockerfile" must be committed`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
 				}),
 				Entry("the dockerfile committed", entry{
 					addDockerfile:    true,
@@ -170,18 +170,18 @@ config:
 					configDockerfileAllowUncommittedGlob: "*",
 					addDockerfile:                        true,
 				}),
-				Entry(`config.dockerfile.allowUncommitted (docker*) does not cover the untracked dockerfile "Dockerfile"`, entry{
+				Entry(`config.dockerfile.allowUncommitted (docker*) does not cover the dockerfile "Dockerfile"`, entry{
 					configDockerfileAllowUncommittedGlob: "docker*",
 					addDockerfile:                        true,
-					expectedErrSubstring:                 `unable to read dockerfile "Dockerfile": the untracked file "Dockerfile" must be committed`,
+					expectedErrSubstring:                 `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
 				}),
-				Entry(`config.dockerfile.allowContextAddFiles (Dockerfile) does not cover the untracked dockerfile "Dockerfile" inside context "context"`, entry{
+				Entry(`config.dockerfile.allowContextAddFiles (Dockerfile) does not cover the dockerfile "Dockerfile" inside context "context"`, entry{
 					configDockerfileAllowUncommittedGlob: "Dockerfile",
 					context:                              "context",
 					addDockerfile:                        true,
-					expectedErrSubstring:                 `unable to read dockerfile "context/Dockerfile": the untracked file "context/Dockerfile" must be committed`,
+					expectedErrSubstring:                 `unable to read dockerfile "context/Dockerfile": the file "context/Dockerfile" must be committed`,
 				}),
-				Entry(`config.dockerfile.allowContextAddFiles (context/Dockerfile) covers the untracked dockerfile "Dockerfile" inside context "context"`, entry{
+				Entry(`config.dockerfile.allowContextAddFiles (context/Dockerfile) covers the dockerfile "Dockerfile" inside context "context"`, entry{
 					configDockerfileAllowUncommittedGlob: "context/Dockerfile",
 					context:                              "context",
 					addDockerfile:                        true,
@@ -273,16 +273,16 @@ config:
 						"a":          dockerfilePath,
 					},
 				}),
-				Entry("the dockerfile not tracked: Dockerfile -> a -> dir/Dockerfile (not tracked)", entry{
+				Entry("the dockerfile not committed: Dockerfile -> a -> dir/Dockerfile (not committed)", entry{
 					skipOnWindows: true,
 					addDockerfile: true,
 					addAndCommitSymlinks: map[string]string{
 						"Dockerfile": "a",
 						"a":          dockerfilePath,
 					},
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": symlink "Dockerfile" check failed: the untracked file "dir/Dockerfile" must be committed`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": symlink "Dockerfile" check failed: the file "dir/Dockerfile" must be committed`,
 				}),
-				Entry("the symlink to the config file changed after commit: Dockerfile (changed) -> a -> dir/Dockerfile", entry{
+				Entry("the symlink to the config file changed after commit: werf.yaml (changed) -> a -> dir/werf.yaml", entry{
 					commitDockerfile: true,
 					addDockerfile:    true,
 					addAndCommitSymlinks: map[string]string{
@@ -292,7 +292,7 @@ config:
 					changeSymlinksAfterCommit: map[string]string{
 						"Dockerfile": dockerfilePath,
 					},
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the untracked file "Dockerfile" must be committed`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" must be committed`,
 				}),
 				Entry("config.allowUncommitted (Dockerfile) does not cover uncommitted files", entry{
 					skipOnWindows:         true,
@@ -388,9 +388,9 @@ config:
 				}
 			},
 			Entry("the dockerignore not found", entry{}),
-			Entry("the dockerignore not tracked", entry{
+			Entry("the dockerignore not committed", entry{
 				addDockerignore:      true,
-				expectedErrSubstring: `unable to read dockerignore file ".dockerignore": the untracked file ".dockerignore" must be committed`,
+				expectedErrSubstring: `unable to read dockerignore file ".dockerignore": the file ".dockerignore" must be committed`,
 			}),
 			Entry("the dockerignore committed", entry{
 				addDockerignore:    true,
@@ -411,22 +411,22 @@ config:
 				addDockerignore:    true,
 				commitDockerignore: true,
 			}),
-			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (*) covers the untracked dockerignore ".dockerignore"`, entry{
+			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (*) covers the dockerignore ".dockerignore"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: "*",
 				addDockerignore: true,
 			}),
-			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (docker*) does not cover untracked dockerignore ".dockerignore"`, entry{
+			Entry(`config.dockerfile.allowUncommittedDockerignoreFiles (docker*) does not cover the dockerignore ".dockerignore"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: "docker*",
 				addDockerignore:      true,
-				expectedErrSubstring: `unable to read dockerignore file ".dockerignore": the untracked file ".dockerignore" must be committed`,
+				expectedErrSubstring: `unable to read dockerignore file ".dockerignore": the file ".dockerignore" must be committed`,
 			}),
-			Entry(`config.dockerignore.allowContextAddFiles (.dockerignore) does not cover untracked dockerignore ".dockerignore" inside context "context"`, entry{
+			Entry(`config.dockerignore.allowContextAddFiles (.dockerignore) does not cover the dockerignore ".dockerignore" inside context "context"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: ".dockerignore",
 				context:              "context",
 				addDockerignore:      true,
-				expectedErrSubstring: `unable to read dockerignore file "context/.dockerignore": the untracked file "context/.dockerignore" must be committed`,
+				expectedErrSubstring: `unable to read dockerignore file "context/.dockerignore": the file "context/.dockerignore" must be committed`,
 			}),
-			Entry(`config.dockerignore.allowContextAddFiles (context/.dockerignore) covers untracked dockerignore ".dockerignore" inside context "context"`, entry{
+			Entry(`config.dockerignore.allowContextAddFiles (context/.dockerignore) covers the dockerignore ".dockerignore" inside context "context"`, entry{
 				configDockerfileAllowUncommittedDockerignoreFilesGlob: "context/.dockerignore",
 				context:         "context",
 				addDockerignore: true,

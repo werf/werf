@@ -51,9 +51,9 @@ var _ = Describe("giterminism config", func() {
 			}
 		},
 		Entry("the giterminism config not exist", entry{}),
-		Entry("the giterminism config not tracked", entry{
+		Entry("the giterminism config not committed", entry{
 			addConfig:            true,
-			expectedErrSubstring: `unable to read werf giterminism config: the untracked file "werf-giterminism.yaml" must be committed`,
+			expectedErrSubstring: `unable to read werf giterminism config: the file "werf-giterminism.yaml" must be committed`,
 		}),
 		Entry("the giterminism config committed", entry{
 			addConfig:    true,

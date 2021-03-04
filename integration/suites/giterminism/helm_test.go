@@ -157,18 +157,18 @@ helm:
 					Entry("the chart directory not found", entry{
 						expectedErrSubstring: `unable to locate chart directory: the directory ".helm" not found in the project git repository`,
 					}),
-					Entry(`the template file ".helm/templates/template1.yaml" not tracked`, entry{
+					Entry(`the template file ".helm/templates/template1.yaml" not committed`, entry{
 						addFiles:             []string{relativeToProjectDir(".helm/templates/template1.yaml")},
-						expectedErrSubstring: `unable to locate chart directory: the untracked file ".helm/templates/template1.yaml" must be committed`,
+						expectedErrSubstring: `unable to locate chart directory: the file ".helm/templates/template1.yaml" must be committed`,
 					}),
-					Entry("the template files not tracked", entry{
+					Entry("the template files not committed", entry{
 						addFiles: []string{
 							relativeToProjectDir(".helm/templates/template1.yaml"),
 							relativeToProjectDir(".helm/templates/template2.yaml"),
 							relativeToProjectDir(".helm/templates/template3.yaml"),
 						},
 						commitFiles: []string{relativeToProjectDir(".helm/templates/template1.yaml")},
-						expectedErrSubstring: `unable to locate chart directory: the following untracked files must be committed:
+						expectedErrSubstring: `unable to locate chart directory: the following files must be committed:
 
  - .helm/templates/template2.yaml
  - .helm/templates/template3.yaml
@@ -209,7 +209,7 @@ helm:
 
 `,
 					}),
-					Entry("helm.allowUncommittedFiles (.helm/**/*) covers the not tracked template", entry{
+					Entry("helm.allowUncommittedFiles (.helm/**/*) covers the not committed template", entry{
 						allowUncommittedFilesGlob: ".helm/**/*",
 						addFiles:                  []string{relativeToProjectDir(".helm/templates/template1.yaml")},
 					}))

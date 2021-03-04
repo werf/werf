@@ -155,9 +155,9 @@ config:
 					Entry("the config file not found", entry{
 						expectedErrSubstring: `unable to read werf config: the file "werf.yaml" not found in the project git repository`,
 					}),
-					Entry("the config file not tracked", entry{
+					Entry("the config file not committed", entry{
 						addConfig:            true,
-						expectedErrSubstring: `unable to read werf config: the untracked file "werf.yaml" must be committed`,
+						expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
 					}),
 					Entry("the config file committed", entry{
 						addConfig:    true,
@@ -169,7 +169,7 @@ config:
 						changeConfigAfterCommit: true,
 						expectedErrSubstring:    `unable to read werf config: the file "werf.yaml" must be committed`,
 					}),
-					Entry("config.allowUncommitted allows not tracked config file", entry{
+					Entry("config.allowUncommitted allows not committed config file", entry{
 						allowUncommitted: true,
 						addConfig:        true,
 					}),
@@ -195,25 +195,25 @@ config:
 							aFilePath:         getLinkTo(aFilePath, configFilePath),
 						},
 					}),
-					Entry("the config file not tracked: werf.yaml -> a -> dir/werf.yaml (not tracked)", symlinkEntry{
+					Entry("the config file not committed: werf.yaml -> a -> dir/werf.yaml (not committed)", symlinkEntry{
 						skipOnWindows: true,
 						addConfigFile: true,
 						addAndCommitSymlinks: map[string]string{
 							werfConfigRelPath: getLinkTo(werfConfigRelPath, aFilePath),
 							aFilePath:         getLinkTo(aFilePath, configFilePath),
 						},
-						expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: the untracked file "dir/werf.yaml" must be committed`,
+						expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: the file "dir/werf.yaml" must be committed`,
 					}),
-					Entry("the symlink to the config file not tracked: werf.yaml (not tracked) -> a (not tracked) -> dir/werf.yaml", symlinkEntry{
+					Entry("the symlink to the config file not committed: werf.yaml (not committed) -> a (not committed) -> dir/werf.yaml", symlinkEntry{
 						addConfigFile:    true,
 						commitConfigFile: true,
 						addSymlinks: map[string]string{
 							werfConfigRelPath: getLinkTo(werfConfigRelPath, aFilePath),
 							aFilePath:         getLinkTo(aFilePath, configFilePath),
 						},
-						expectedErrSubstring: `unable to read werf config: the untracked file "werf.yaml" must be committed`,
+						expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
 					}),
-					Entry("the symlink to the config file not tracked: werf.yaml -> a (not tracked) -> dir/werf.yaml", symlinkEntry{
+					Entry("the symlink to the config file not committed: werf.yaml -> a (not committed) -> dir/werf.yaml", symlinkEntry{
 						skipOnWindows:    true,
 						addConfigFile:    true,
 						commitConfigFile: true,
@@ -223,7 +223,7 @@ config:
 						addSymlinks: map[string]string{
 							aFilePath: configFilePath,
 						},
-						expectedErrSubstring: ` unable to read werf config: symlink "werf.yaml" check failed: the untracked file "a" must be committed`,
+						expectedErrSubstring: ` unable to read werf config: symlink "werf.yaml" check failed: the file "a" must be committed`,
 					}),
 					Entry("the symlink to the config file changed after commit: werf.yaml (changed) -> a -> dir/werf.yaml", symlinkEntry{
 						addConfigFile:    true,
@@ -235,9 +235,9 @@ config:
 						changeSymlinksAfterCommit: map[string]string{
 							werfConfigRelPath: getLinkTo(werfConfigRelPath, configFilePath),
 						},
-						expectedErrSubstring: `unable to read werf config: the untracked file "werf.yaml" must be committed`,
+						expectedErrSubstring: `unable to read werf config: the file "werf.yaml" must be committed`,
 					}),
-					Entry("config.allowUncommitted allows not tracked config file", symlinkEntry{
+					Entry("config.allowUncommitted allows not committed config file", symlinkEntry{
 						skipOnWindows:        true,
 						allowUncommitted:     true,
 						addConfigFile:        true,
