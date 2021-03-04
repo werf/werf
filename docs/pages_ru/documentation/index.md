@@ -47,7 +47,7 @@ description: Обширная и понятная документация по 
             <div class="overview__step-num">4</div>
             <div class="overview__step-time">несколько часов</div>
         </div>
-        <div class="overview__step-title">Найди руководство подходящиее твоему проекту</div>
+        <div class="overview__step-title">Найди руководство подходящее твоему проекту</div>
         <div class="overview__step-actions">
             <a class="overview__step-action" href="{{ "documentation/guides.html" | true_relative_url }}">Руководства</a>
         </div>

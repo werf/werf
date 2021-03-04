@@ -1,10 +1,10 @@
-{% assign entry = include.entry %}
-{% assign folder_entry_class = include.folder_entry_class %}
-{% assign item_entry_class = include.item_entry_class %}
+{%- assign entry = include.entry %}
+{%- assign folder_entry_class = include.folder_entry_class %}
+{%- assign item_entry_class = include.item_entry_class %}
 
-{% if entry.hot == true %}
-    {% assign item_entry_class = item_entry_class | append: ' sidebar__item_hot' %}
-{% endif %}
+{%- if entry.hot == true %}
+    {%- assign item_entry_class = item_entry_class | append: ' sidebar__item_hot' %}
+{%- endif %}
 
 {%- if entry.f %}
 <li class="{{ folder_entry_class }}">

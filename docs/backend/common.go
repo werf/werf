@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"sort"
@@ -232,10 +233,22 @@ func getPage(filename string) ([]byte, error) {
 // Get page URL menu requested for with a leading /documentation/
 // E.g /documentation/reference/build_process.html. Or "/documentation/" for unknown cases.
 func getCurrentPageURL(r *http.Request) (result string) {
+	URLtoParse := ""
 	result = "/documentation/"
-	originalURI := r.Header.Get("x-original-uri")
-	if strings.Contains(originalURI, "/documentation/") {
-		items := strings.Split(originalURI, "/documentation/")
+	originalURI, err := url.Parse(r.Header.Get("x-original-uri"))
+
+	if err != nil {
+		return
+	}
+
+	if originalURI.Path == "/404.html" {
+		return
+	} else {
+		URLtoParse = originalURI.Path
+	}
+
+	if strings.Contains(URLtoParse, "/documentation/") {
+		items := strings.Split(URLtoParse, "/documentation/")
 		if len(items) > 1 {
 			result += strings.Join(items[1:], "/documentation/")
 		}
@@ -246,11 +259,26 @@ func getCurrentPageURL(r *http.Request) (result string) {
 // Get version URL page belongs to if request came from concrete documentation version, otherwise empty.
 // E.g for /v1.2.3-plus-fix5/documentation/reference/build_process.html return "v1.2.3-plus-fix5".
 func getVersionURL(r *http.Request) (result string) {
-	result = ""
-	originalURI := r.Header.Get("x-original-uri")
-	if strings.Contains(originalURI, "/documentation/") {
-		result = strings.Split(originalURI, "/documentation/")[0]
+	URLtoParse := ""
+	originalURI, err := url.Parse(r.Header.Get("x-original-uri"))
+
+	if err != nil {
+		return
 	}
+
+	if originalURI.Path == "/404.html" {
+		values, err := url.ParseQuery(originalURI.RawQuery)
+		if err != nil {
+			return
+		}
+		URLtoParse = values.Get("uri")
+	} else {
+		URLtoParse = originalURI.Path
+	}
+	if strings.Contains(URLtoParse, "/documentation/") {
+		result = strings.Split(URLtoParse, "/documentation/")[0]
+	}
+
 	return strings.TrimPrefix(result, "/")
 }
 

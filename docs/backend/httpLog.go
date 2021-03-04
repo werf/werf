@@ -59,8 +59,13 @@ func logHTTPReq(w *responseWriter, r *http.Request, startTime time.Time) {
 	if skipHTTPRequestLogging(r) {
 		return
 	}
+	remoteAddr := r.RemoteAddr
+	if r.Header.Get("x-real-ip") != "" {
+		remoteAddr = r.Header.Get("x-real-ip")
+	}
+
 	logentry := fmt.Sprintf("%s %s %s %s %d %v",
-		r.RemoteAddr,
+		remoteAddr,
 		r.Host,
 		r.Method,
 		r.URL.EscapedPath(),

@@ -49,11 +49,13 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 
 // Redirect to default documentation version
 func rootDocumentationHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debugln("Use handler - rootDocumentationHandler")
 	w.Header().Set("X-Accel-Redirect", fmt.Sprintf("/%v%v", VersionToURL(getRootReleaseVersion()), r.URL.RequestURI()))
 }
 
 // Handles request to /v<group>-<channel>/. E.g. /v1.2-beta/
 func groupChannelHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debugln("Use handler - groupChannelHandler")
 	vars := mux.Vars(r)
 	_ = updateReleasesStatus()
 	var version, URLToRedirect string
@@ -74,7 +76,7 @@ func groupChannelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		log.Errorf("Error validating URL: %v, (validated - https://%s/%v/%v)", err.Error(), r.Host, VersionToURL(version), r.URL.RequestURI())
+		log.Errorf("Error validating URL: %v, (original was https://%s/%v)", err.Error(), r.Host, r.URL.RequestURI())
 		//URLToRedirect = fmt.Sprintf("/404.html")
 		notFoundHandler(w, r)
 	} else {
@@ -125,7 +127,7 @@ func validateURL(URL string) (err error) {
 	if err == nil {
 		place := sort.SearchInts(allowedStatusCodes, resp.StatusCode)
 		if place >= len(allowedStatusCodes) {
-			err = errors.New(fmt.Sprintf("URL %s is not valid", URL))
+			err = errors.New(fmt.Sprintf("%s is not valid", URL))
 		}
 	}
 	return
