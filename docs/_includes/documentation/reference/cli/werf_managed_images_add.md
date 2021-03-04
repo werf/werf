@@ -20,12 +20,14 @@ werf managed-images add [options]
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --dev=false
-            Enable development mode (default $WERF_DEV)
+            Enable development mode (default $WERF_DEV).
+            The mode allows working with project files without doing redundant commits during       
+            debugging and development
       --dev-mode='simple'
             Set development mode (default $WERF_DEV_MODE or simple).
             Two development modes are supported:
-            - simple: for working with tracked git repository changes
-            - strict: for working only with staged git repository changes
+            - simple: for working with the worktree state of the git repository
+            - strict: for working with the index state of the git repository
       --dir=''
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
