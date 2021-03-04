@@ -11,5 +11,5 @@ func (i Inspector) InspectBuildContextFiles(ctx context.Context, matcher path_ma
 		return nil
 	}
 
-	return i.fileReader.ValidateStatusResult(ctx, matcher)
+	return i.fileReader.ValidateStatusPathList(ctx, matcher)
 }
