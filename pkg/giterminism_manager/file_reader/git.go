@@ -18,15 +18,6 @@ func (r FileReader) projectDirRelativePathToWorkTreeRelativePath(relPath string)
 	return filepath.Join(r.sharedOptions.RelativeToGitProjectDir(), relPath)
 }
 
-func (r FileReader) gitRelativePathsToProjectDirRelativePaths(relToGitPaths []string) []string {
-	var result []string
-	for _, path := range relToGitPaths {
-		result = append(result, r.gitRelativePathToProjectDirRelativePath(path))
-	}
-
-	return result
-}
-
 func (r FileReader) gitRelativePathToProjectDirRelativePath(relToGitPath string) string {
 	return util.GetRelativeToBaseFilepath(r.sharedOptions.RelativeToGitProjectDir(), relToGitPath)
 }
@@ -35,20 +26,16 @@ func (r FileReader) isSubpathOfWorkTreeDir(absPath string) bool {
 	return util.IsSubpathOfBasePath(r.sharedOptions.LocalGitRepo().WorkTreeDir, absPath)
 }
 
-func (r FileReader) ValidateFileByStatusResult(ctx context.Context, relPath string) error {
-	return r.ValidateStatusResult(ctx, path_matcher.NewSimplePathMatcher(r.projectDirRelativePathToWorkTreeRelativePath(relPath), nil))
-}
-
-func (r FileReader) ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) (err error) {
+func (r FileReader) ValidateSubmodules(ctx context.Context, pathMatcher path_matcher.PathMatcher) (err error) {
 	logboek.Context(ctx).Debug().
-		LogBlock("ValidateStatusResult %q", pathMatcher.String()).
+		LogBlock("ValidateSubmodules %q", pathMatcher.String()).
 		Options(func(options types.LogBlockOptionsInterface) {
 			if !debug() {
 				options.Mute()
 			}
 		}).
 		Do(func() {
-			err = r.validateStatusResult(ctx, pathMatcher)
+			err = r.validateSubmodules(ctx, pathMatcher)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -58,45 +45,18 @@ func (r FileReader) ValidateStatusResult(ctx context.Context, pathMatcher path_m
 	return
 }
 
-func (r FileReader) validateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error {
-	opts := git_repo.ValidateStatusResultOptions{}
-	if r.sharedOptions.Dev() {
-		switch r.sharedOptions.DevMode() {
-		case "simple":
-			opts.OnlyUntrackedChanges = true
-		case "strict":
-			opts.OnlyWorktreeChanges = true
-		default:
-			panic("unexpected dev mode " + r.sharedOptions.DevMode())
-		}
+func (r FileReader) validateSubmodules(ctx context.Context, pathMatcher path_matcher.PathMatcher) error {
+	// untracked files cannot be submodules
+	if r.sharedOptions.Dev() && r.sharedOptions.DevMode() == "simple" {
+		return nil
 	}
 
-	if err := r.sharedOptions.LocalGitRepo().ValidateStatusResult(ctx, pathMatcher, opts); err != nil {
-		return r.HandleValidateStatusResultError(err)
+	options := git_repo.ValidateSubmodulesOptions{}
+	if r.sharedOptions.Dev() && r.sharedOptions.DevMode() == "strict" {
+		options.OnlyWorktreeChanges = true
 	}
 
-	return nil
-}
-
-func (r FileReader) HandleValidateStatusResultError(err error) error {
-	switch statusErr := err.(type) {
-	case git_repo.UncommittedFilesFoundError:
-		return r.NewUncommittedFilesError(r.gitRelativePathsToProjectDirRelativePaths(statusErr.PathList)...)
-	case git_repo.UntrackedFilesFoundError:
-		return r.NewUntrackedFilesError(r.gitRelativePathsToProjectDirRelativePaths(statusErr.PathList)...)
-	case git_repo.SubmoduleAddedAndNotCommittedError:
-		return r.NewSubmoduleAddedAndNotCommittedError(r.gitRelativePathToProjectDirRelativePath(statusErr.SubmodulePath))
-	case git_repo.SubmoduleDeletedError:
-		return r.NewSubmoduleDeletedError(r.gitRelativePathToProjectDirRelativePath(statusErr.SubmodulePath))
-	case git_repo.SubmoduleHasUntrackedChangesError:
-		return r.NewSubmoduleHasUntrackedChangesError(r.gitRelativePathToProjectDirRelativePath(statusErr.SubmodulePath))
-	case git_repo.SubmoduleHasUncommittedChangesError:
-		return r.NewSubmoduleHasUncommittedChangesError(r.gitRelativePathToProjectDirRelativePath(statusErr.SubmodulePath))
-	case git_repo.SubmoduleCommitChangedError:
-		return r.NewSubmoduleCommitChangedError(r.gitRelativePathToProjectDirRelativePath(statusErr.SubmodulePath))
-	default:
-		return err
-	}
+	return r.sharedOptions.LocalGitRepo().ValidateSubmodules(ctx, pathMatcher, options)
 }
 
 func (r FileReader) StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (list []string, err error) {
@@ -228,7 +188,7 @@ func (r FileReader) CheckCommitFileExistenceAndLocalChanges(ctx context.Context,
 }
 
 func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context, relPath string) error {
-	if err := r.ValidateFileByStatusResult(ctx, relPath); err != nil { // check not resolved path
+	if err := r.checkFileModifiedLocally(ctx, relPath); err != nil { // check not resolved path
 		return err
 	}
 
@@ -252,14 +212,14 @@ func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context,
 		resolvedPath, err := r.ResolveAndCheckCommitFilePath(ctx, relPath, func(resolvedRelPath string) error { // check each symlink target
 			resolvedRelPathRelativeToProjectDir := r.gitRelativePathToProjectDirRelativePath(resolvedRelPath)
 
-			return r.ValidateFileByStatusResult(ctx, resolvedRelPathRelativeToProjectDir)
+			return r.checkFileModifiedLocally(ctx, resolvedRelPathRelativeToProjectDir)
 		})
 		if err != nil {
 			return err
 		}
 
 		if resolvedPath != relPath { // check resolved path
-			if err := r.ValidateFileByStatusResult(ctx, relPath); err != nil {
+			if err := r.checkFileModifiedLocally(ctx, relPath); err != nil {
 				return err
 			}
 		}
@@ -303,4 +263,62 @@ func (r FileReader) isStatusPathListEmpty(ctx context.Context, pathMatcher path_
 	}
 
 	return len(list) != 0, nil
+}
+
+func (r FileReader) checkFileModifiedLocally(ctx context.Context, relPath string) error {
+	return r.ValidateStatusPathList(ctx, path_matcher.NewSimplePathMatcher(r.projectDirRelativePathToWorkTreeRelativePath(relPath), nil))
+}
+
+// ValidateStatusPathList returns an error if there are any changes in worktree or index.
+func (r FileReader) ValidateStatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ValidateStatusPathList %q", pathMatcher.String()).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			err = r.checkFilesModifiedLocally(ctx, pathMatcher)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) checkFilesModifiedLocally(ctx context.Context, pathMatcher path_matcher.PathMatcher) error {
+	list, err := r.StatusPathList(ctx, pathMatcher)
+	if err != nil {
+		return err
+	}
+
+	if len(list) == 0 {
+		return nil
+	}
+
+	if err := r.ValidateSubmodules(ctx, pathMatcher); err != nil {
+		return r.HandleValidateSubmodulesErr(err)
+	}
+
+	return r.NewUncommittedFilesError(list...)
+}
+
+func (r FileReader) HandleValidateSubmodulesErr(err error) error {
+	switch statusErr := err.(type) {
+	case git_repo.SubmoduleAddedAndNotCommittedError:
+		return r.NewSubmoduleAddedAndNotCommittedError(statusErr.SubmodulePath)
+	case git_repo.SubmoduleDeletedError:
+		return r.NewSubmoduleDeletedError(statusErr.SubmodulePath)
+	case git_repo.SubmoduleHasUntrackedChangesError:
+		return r.NewSubmoduleHasUntrackedChangesError(statusErr.SubmodulePath)
+	case git_repo.SubmoduleHasUncommittedChangesError:
+		return r.NewSubmoduleHasUncommittedChangesError(statusErr.SubmodulePath)
+	case git_repo.SubmoduleCommitChangedError:
+		return r.NewSubmoduleCommitChangedError(statusErr.SubmodulePath)
+	default:
+		return err
+	}
 }

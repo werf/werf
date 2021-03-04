@@ -314,47 +314,23 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoID)
 }
 
-type UntrackedFilesFoundError StatusFilesFoundError
-type UncommittedFilesFoundError StatusFilesFoundError
-type StatusFilesFoundError struct {
-	PathList []string
-	error
-}
-
 type SubmoduleAddedAndNotCommittedError SubmoduleErrorBase
 type SubmoduleDeletedError SubmoduleErrorBase
 type SubmoduleHasUntrackedChangesError SubmoduleErrorBase
 type SubmoduleHasUncommittedChangesError SubmoduleErrorBase
 type SubmoduleCommitChangedError SubmoduleErrorBase
+
 type SubmoduleErrorBase struct {
 	SubmodulePath string
 	error
 }
 
-type ValidateStatusResultOptions StatusPathListOptions
+type ValidateSubmodulesOptions StatusPathListOptions
 
-func (repo *Local) ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts ValidateStatusResultOptions) error {
+func (repo *Local) ValidateSubmodules(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts ValidateSubmodulesOptions) error {
 	statusResult, err := repo.status(ctx)
 	if err != nil {
 		return err
-	}
-
-	var untrackedPathList []string
-	for _, path := range statusResult.UntrackedPathList {
-		if pathMatcher.IsPathMatched(path) {
-			untrackedPathList = append(untrackedPathList, path)
-		}
-	}
-
-	if len(untrackedPathList) != 0 {
-		return UntrackedFilesFoundError{
-			PathList: untrackedPathList,
-			error:    fmt.Errorf("untracked files found"),
-		}
-	}
-
-	if opts.OnlyUntrackedChanges {
-		return nil
 	}
 
 	var scope status.Scope
@@ -364,24 +340,6 @@ func (repo *Local) ValidateStatusResult(ctx context.Context, pathMatcher path_ma
 		scope = statusResult.IndexWithWorktree()
 	}
 
-	var uncommittedPathList []string
-	for _, path := range scope.PathList {
-		if pathMatcher.IsPathMatched(path) {
-			uncommittedPathList = append(uncommittedPathList, path)
-		}
-	}
-
-	if len(uncommittedPathList) != 0 {
-		return UncommittedFilesFoundError{
-			PathList: uncommittedPathList,
-			error:    fmt.Errorf("uncommitted files found"),
-		}
-	}
-
-	return repo.validateStatusResultSubmodules(ctx, pathMatcher, scope)
-}
-
-func (repo *Local) validateStatusResultSubmodules(_ context.Context, pathMatcher path_matcher.PathMatcher, scope status.Scope) error {
 	// No changes related to submodules.
 	if len(scope.Submodules()) == 0 {
 		return nil

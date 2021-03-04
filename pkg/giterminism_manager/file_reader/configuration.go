@@ -58,16 +58,12 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 	relToDirPathList := util.AddNewStringsToStringArray(relToDirFilePathListFromFS, relToDirFilePathListFromCommit...)
 
 	var relPathListWithUncommittedFiles []string
-	var relPathListWithUntrackedFiles []string
 	for _, relToDirPath := range relToDirPathList {
 		relPath := filepath.Join(dir, relToDirPath)
 		data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, acceptedFilePathMatcher.IsPathMatched)
 		err = handleFileFunc(relToDirPath, data, err)
 		if err != nil {
 			switch err.(type) {
-			case UntrackedFilesError:
-				relPathListWithUntrackedFiles = append(relPathListWithUntrackedFiles, relPath)
-				continue
 			case UncommittedFilesError:
 				relPathListWithUncommittedFiles = append(relPathListWithUncommittedFiles, relPath)
 				continue
@@ -75,10 +71,6 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 
 			return err
 		}
-	}
-
-	if len(relPathListWithUntrackedFiles) != 0 {
-		return r.NewUntrackedFilesError(relPathListWithUntrackedFiles...)
 	}
 
 	if len(relPathListWithUncommittedFiles) != 0 {
