@@ -12,7 +12,10 @@ werf does not allow working with uncommitted and untracked files. If the files a
 
 > We strongly recommend following this approach, but if necessary, you can loosen giterminism restrictions explicitly and enable the features that require careful use with [werf-giterminism.yaml]({{ "documentation/reference/werf_giterminism_yaml.html" | true_relative_url }})
 
-During development, changing the configuration can be annoying due to the necessity of creating intermediate commits. We are working on dev mode to simplify this process, while keeping the whole logic unchanged. In current versions, dev mode (activated by the `--dev` option) allows you to work with staged changes in the git repository. Add your changes to the index with the `git add` command, and werf takes care of the rest.
+During development or debugging, changing the project files might be annoying due to the necessity of creating redundant commits. We are working on the development mode to simplify this process, while keeping the whole logic unchanged. 
+Currently, the development mode (activated by the `--dev` option) has two different modes (set by the `--dev-mode` option, _simple_ by default):
+- _simple_: for working with the worktree state of the git repository;
+- _strict_: for working with [the index state](http://shafiul.github.io/gitbook/1_the_git_index.html) of the git repository.
 
 ## Configuration
 
