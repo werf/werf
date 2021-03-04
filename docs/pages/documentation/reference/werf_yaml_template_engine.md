@@ -199,6 +199,8 @@ __Syntax__:
 ```
 {% endraw %}
 
+> By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "documentation/advanced/giterminism.html" | true_relative_url }}))
+
 ##### Example: how to add a certain file to stapel image without git directive (shell)
 
 {% raw %}
@@ -250,6 +252,8 @@ __Syntax__:
 {{ .Files.Glob <GLOB> }}
 ```
 {% endraw %}
+
+> By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "documentation/advanced/giterminism.html" | true_relative_url }}))
 
 ##### Example: how to add files by a glob to stapel image without git directive (shell)
 
