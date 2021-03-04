@@ -24,6 +24,7 @@ func newRouter() *mux.Router {
 	r.PathPrefix("/health").HandlerFunc(healthCheckHandler)
 	r.Path("/includes/topnav.html").HandlerFunc(topnavHandler)
 	r.Path("/includes/version-menu.html").HandlerFunc(topnavHandler)
+	r.Path("/404.html").HandlerFunc(notFoundHandler)
 	// En static
 	r.PathPrefix("/").Host("werf.io").Handler(serveFilesHandler(staticFileDirectoryMain))
 	r.PathPrefix("/").Host("www.werf.io").Handler(serveFilesHandler(staticFileDirectoryMain))

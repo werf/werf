@@ -263,9 +263,6 @@ channels:
           наиболее стабильный канал,<br>
           рекомендован для критичных окружений<br>
           со строгими требованиями SLA.
-          the most stable channel<br>
-          and recommended for usage<br>
-          in critical environments with tight SLA
         </div>
       </li>
     </ul>

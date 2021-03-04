@@ -1,4 +1,4 @@
-{% assign sidebar = site.data.sidebars[page.sidebar].entries[page.lang] %}
+{%- assign sidebar = site.data.sidebars[page.sidebar].entries[page.lang] %}
 <ul class="sidebar" id="mysidebar">
   {%- for entry in sidebar.f %}
     {% include sidebar_entry.html entry=entry folder_entry_class="sidebar__item sidebar__item_parent" item_entry_class="sidebar__item" %}
