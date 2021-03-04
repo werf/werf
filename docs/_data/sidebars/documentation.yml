@@ -716,3 +716,12 @@ entries:
 
               - title: Образ Stapel
                 url: /documentation/internals/development/stapel_image.html
+
+      - title: Что нового в v1.2
+        f:
+
+          - title: Changelog
+            url: /documentation/whats_new_in_v1_2/changelog.html
+
+          - title: Как мигрировать с v1.1 на v1.2
+            url: /documentation/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html

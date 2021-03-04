@@ -9,7 +9,7 @@ sidebar: documentation
 
 ## 1. Использовать стратегию тегирования content-based
 
-[Стратегия тегирования content-based]({{ "/documentation/whats_new_in_v1_2/changelog.html#tagging-strategy" | true_relative_url }}) — это выбор по умолчанию и единственно доступный вариант, используемый в werf во время процесса деплоя.
+[Стратегия тегирования content-based]({{ "/documentation/whats_new_in_v1_2/changelog.html#стратегия-тегирования" | true_relative_url }}) — это выбор по умолчанию и единственно доступный вариант, используемый в werf во время процесса деплоя.
 
  - Необходимо удалить параметр `--tagging-strategy` команды `werf ci-env`.
  - Удалены опции `--tag-custom`, `--tag-git-tag`, `--tag-git-branch`, и `--tag-by-stages-signature`.
@@ -53,11 +53,11 @@ sidebar: documentation
  - Необходимо использовать `"werf.io/replicas-on-creation": "NUM"` вместо `"werf.io/set-replicas-only-on-creation": "true"`.
  - Use `"werf.io/replicas-on-creation": "NUM"` annotation instead of `"werf.io/set-replicas-only-on-creation": "true"`.
      - **ВАЖНО.** `"NUM"` должно быть указано **строкой**, а не как число `NUM`, иначе аннотация [будет проигнорирована]({{ "/documentation/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
-     - **ВАЖНО.** При использовании данной аннотации необходимо удалить явное определение поля `spec.replicas`, [больше информации в changelog]({{ "/documentation/whats_new_in_v1_2/changelog.html#configuration" | true_relative_url }}).
+     - **ВАЖНО.** При использовании данной аннотации необходимо удалить явное определение поля `spec.replicas`, [больше информации в changelog]({{ "/documentation/whats_new_in_v1_2/changelog.html#конфигурация" | true_relative_url }}).
 
 ## 4. Использовать .helm/Chart.lock для сабчартов     
 
- - В соответствии с [режимом гитерминизма]({{ "/documentation/whats_new_in_v1_2/changelog.html#giterminism" | true_relative_url  }}) werf не позволяет держать некоммитнутую директорию `.helm/charts/`.
+ - В соответствии с [режимом гитерминизма]({{ "/documentation/whats_new_in_v1_2/changelog.html#гитерминизм" | true_relative_url  }}) werf не позволяет держать некоммитнутую директорию `.helm/charts/`.
  - Для использования сабчартов необходимо определить dependencies в `.helm/Charts.yaml` следующим способом:
 
     {% raw %}
@@ -82,7 +82,7 @@ sidebar: documentation
 ## 5. Использовать очистка на основе истории git
 
  - Опцию `--git-history-based-cleanup-v1.2` необходимо удалить, теперь поведение `werf cleanup` по умолчанию совпадаёт с поведением v1.1 с данной опцией.
- - Больше информации по изменению [в changelog]({{ "/documentation/whats_new_in_v1_2/changelog.html#cleanup" | true_relative_url }}) и [в статье про cleanup]({{ "/documentation/advanced/cleanup.html" | true_relative_url }}).
+ - Больше информации по изменению [в changelog]({{ "/documentation/whats_new_in_v1_2/changelog.html#очистка" | true_relative_url }}) и [в статье про cleanup]({{ "/documentation/advanced/cleanup.html" | true_relative_url }}).
 
 ## 6. Определить используемые переменные окружения в werf-giterminism.yaml
 
