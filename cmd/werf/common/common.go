@@ -170,7 +170,8 @@ func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
 
 func setupDev(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dev = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), "Enable development mode (default $WERF_DEV)")
+	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), `Enable development mode (default $WERF_DEV).
+The mode allows working with project files without doing redundant commits during debugging and development`)
 }
 
 func setupDevMode(cmdData *CmdData, cmd *cobra.Command) {
@@ -184,8 +185,8 @@ func setupDevMode(cmdData *CmdData, cmd *cobra.Command) {
 
 	cmd.Flags().StringVarP(cmdData.DevMode, "dev-mode", "", defaultValue, `Set development mode (default $WERF_DEV_MODE or simple).
 Two development modes are supported:
-- simple: for working with tracked git repository changes
-- strict: for working only with staged git repository changes`)
+- simple: for working with the worktree state of the git repository
+- strict: for working with the index state of the git repository`)
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
