@@ -2,7 +2,6 @@
 title: Changelog
 permalink: documentation/whats_new_in_v1_2/changelog.html
 description: Description of key differences since v1.1
-sidebar: documentation
 ---
 
 This article contains full descriptive list of key changes since v1.1. If you need a fast guide about migration from v1.1 then read [how to migrate from v1.1 to v1.2 article]({{ "/documentation/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html" | true_relative_url }}).

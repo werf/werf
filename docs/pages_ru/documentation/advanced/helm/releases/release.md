@@ -1,6 +1,5 @@
 ---
 title: Релиз
-sidebar: documentation
 permalink: documentation/advanced/helm/releases/release.html
 ---
 

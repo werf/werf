@@ -1,6 +1,5 @@
 ---
 title: Cleanup
-sidebar: documentation
 permalink: documentation/advanced/cleanup.html
 ---
 

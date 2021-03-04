@@ -2,6 +2,7 @@
 title: Quickstart feedback
 permalink: quickstart-success.html
 layout: plain
+sidebar: none
 ---
 
 <div class="feedback__title"><strong>Huge thank you</strong> for letting us know<br> about your first deployment with <span>werf</span>!</div>

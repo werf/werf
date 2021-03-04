@@ -1,6 +1,5 @@
 ---
 title: Аннотации и лейблы для ресурсов чарта
-sidebar: documentation
 permalink: documentation/advanced/helm/deploy_process/annotating_and_labeling.html
 ---
 

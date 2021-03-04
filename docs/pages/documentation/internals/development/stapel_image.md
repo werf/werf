@@ -1,6 +1,5 @@
 ---
 title: Stapel image
-sidebar: documentation
 permalink: documentation/internals/development/stapel_image.html
 ---
 

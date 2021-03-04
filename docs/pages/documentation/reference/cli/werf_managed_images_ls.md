@@ -1,6 +1,5 @@
 ---
 title: werf managed-images ls
-sidebar: documentation
 permalink: documentation/reference/cli/werf_managed_images_ls.html
 ---
 

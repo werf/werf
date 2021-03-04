@@ -1,6 +1,5 @@
 ---
 title: Добавление исходного кода из git-репозиториев
-sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/git_directive.html
 directive_summary: git
 ---

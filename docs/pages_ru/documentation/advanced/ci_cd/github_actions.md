@@ -1,6 +1,5 @@
 ---
 title: Интеграция с GitHub Actions
-sidebar: documentation
 permalink: documentation/advanced/ci_cd/github_actions.html
 author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---

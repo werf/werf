@@ -1,6 +1,5 @@
 ---
 title: Base image
-sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/base_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: base_image

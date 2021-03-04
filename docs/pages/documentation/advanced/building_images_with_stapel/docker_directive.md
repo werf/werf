@@ -1,6 +1,5 @@
 ---
 title: Adding docker instructions
-sidebar: documentation
 permalink: documentation/advanced/building_images_with_stapel/docker_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: docker

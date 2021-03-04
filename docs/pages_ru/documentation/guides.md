@@ -1,7 +1,6 @@
 ---
 title: Руководства
 permalink: documentation/guides.html
-sidebar: documentation
 ---
 
 {%- asset overview.css %}

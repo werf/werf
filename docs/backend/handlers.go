@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"html/template"
-	"log"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -73,10 +74,12 @@ func groupChannelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		log.Printf("Error validating URL: %v, (validated - https://%s/%v/%v)", err.Error(), r.Host, VersionToURL(version), r.URL.RequestURI())
-		URLToRedirect = fmt.Sprintf("/404.html")
+		log.Errorf("Error validating URL: %v, (validated - https://%s/%v/%v)", err.Error(), r.Host, VersionToURL(version), r.URL.RequestURI())
+		//URLToRedirect = fmt.Sprintf("/404.html")
+		notFoundHandler(w, r)
+	} else {
+		w.Header().Set("X-Accel-Redirect", URLToRedirect)
 	}
-	w.Header().Set("X-Accel-Redirect", URLToRedirect)
 }
 
 func validateURL(URL string) (err error) {
@@ -103,6 +106,7 @@ func validateURL(URL string) (err error) {
 
 	for {
 		resp, err = client.Get(URL)
+		log.Tracef("Validating %v (tries-%v):\nStatus - %v\nHeader - %+v,", URL, tries, resp.Status, resp.Header)
 		if err == nil && (resp.StatusCode == 301 || resp.StatusCode == 302) {
 			if len(resp.Header.Get("Location")) > 0 {
 				URL = resp.Header.Get("Location")
@@ -149,19 +153,12 @@ func topnavHandler(w http.ResponseWriter, r *http.Request) {
 
 	_ = versionMenu.getVersionMenuData(r, &ReleasesStatus)
 
-	tplPath := "./root/"
-	if strings.HasPrefix(r.Host, "ru.") {
-		tplPath += "ru"
-	} else {
-		tplPath += "main"
-	}
-
-	tplPath += r.RequestURI
+	tplPath := getRootFilesPath(r) + r.RequestURI
 	tpl := template.Must(template.ParseFiles(tplPath))
 	err := tpl.Execute(w, versionMenu)
 	if err != nil {
 		// Log error or maybe make some magic?
-		log.Printf("Internal Server Error (template error), %v ", err.Error())
+		log.Errorf("Internal Server Error (template error), %v ", err.Error())
 		http.Error(w, "Internal Server Error (template error)", 500)
 	}
 }
@@ -187,5 +184,25 @@ func serveFilesHandler(fs http.FileSystem) http.Handler {
 
 // Redirect to root documentation if request not matches any location (override 404 response)
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("X-Accel-Redirect", fmt.Sprintf("/404.html"))
+	w.WriteHeader(http.StatusNotFound)
+	page404File, err := os.Open(getRootFilesPath(r) + "/404.html")
+	defer page404File.Close()
+	if err != nil {
+		// 404.html file not found!
+		log.Error(w, "404.html file not found")
+		http.Error(w, `<html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>Page Not Found | werf</title><meta name="title" content="Page Not Found | werf">
+</head>
+<body>
+		<h1 class="docs__title">Page Not Found</h1>
+		<p>Sorry, the page you were looking for does not exist.<br>
+Try searching for it or check the URL to see if it looks correct.</p>
+<div class="error-image">
+    <img src="https://werf.io/images/404.png" alt="">
+</div>
+</body></html>`, 404)
+		return
+	}
+	io.Copy(w, page404File)
+	//w.Header().Set("X-Accel-Redirect", fmt.Sprintf("/404.html"))
 }

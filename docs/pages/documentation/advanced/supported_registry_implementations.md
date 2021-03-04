@@ -1,6 +1,5 @@
 ---
 title: Supported registry implementations
-sidebar: documentation
 permalink: documentation/advanced/supported_registry_implementations.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---

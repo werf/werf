@@ -1,7 +1,6 @@
 ---
 title: Deploy annotations
 permalink: documentation/reference/deploy_annotations.html
-sidebar: documentation
 description: Description of annotations which control werf tracking of resources during deploy process
 toc: false
 ---

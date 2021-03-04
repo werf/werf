@@ -2,7 +2,6 @@
 title: How to migrate from v1.1 to v1.2
 permalink: documentation/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html
 description: How to migrate your application from v1.1 to v1.2
-sidebar: documentation
 ---
 
 Simply follow this guide to migrate your project from v1.1 to v1.2.
@@ -29,7 +28,7 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
 ## 3. Change helm templates
 
  - Use `.Values.werf.image.IMAGE_NAME` instead of `werf_container_image` as follows:
-
+{% raw %}
     ```
     spec:
       template:
@@ -38,6 +37,7 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
             - name: main
               image: {{ .Values.werf.image. }}
     ```
+{% endraw %}
 
  - Remove `werf_container_env` template usage completely.
  - Use `.Values.werf.env` instead of `.Values.global.env`.

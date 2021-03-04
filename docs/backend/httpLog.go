@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -43,7 +43,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				log.Printf("err %v, %v", err, debug.Stack())
+				log.Errorf("err %v, %v", err, debug.Stack())
 			}
 		}()
 
@@ -55,10 +55,11 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 }
 
 func logHTTPReq(w *responseWriter, r *http.Request, startTime time.Time) {
+	log.Tracef("%+v", r)
 	if skipHTTPRequestLogging(r) {
 		return
 	}
-	logentry := fmt.Sprintf("%s %s \"%s %s\" %d %v",
+	logentry := fmt.Sprintf("%s %s %s %s %d %v",
 		r.RemoteAddr,
 		r.Host,
 		r.Method,
@@ -66,15 +67,15 @@ func logHTTPReq(w *responseWriter, r *http.Request, startTime time.Time) {
 		w.status,
 		time.Since(startTime))
 	if r.Header.Get("Referer") != "" {
-		logentry += fmt.Sprintf(" \"Referer: %s\"", r.Header.Get("Referer"))
+		logentry += fmt.Sprintf(" referer:%s", r.Header.Get("Referer"))
 	}
 	if r.Header.Get("x-original-uri") != "" {
-		logentry += fmt.Sprintf(" \"x-original-uri: %s\"", r.Header.Get("x-original-uri"))
+		logentry += fmt.Sprintf(" x-original-uri:%s", r.Header.Get("x-original-uri"))
 	}
 	if w.Header().Get("X-Accel-Redirect") != "" {
-		logentry += fmt.Sprintf(" \"x-Redirect: %s\"", w.Header().Get("X-Accel-Redirect"))
+		logentry += fmt.Sprintf(" x-redirect:%s", w.Header().Get("X-Accel-Redirect"))
 	}
-	log.Println(logentry)
+	log.Infoln(logentry)
 }
 
 // Checks to skip logging some requests

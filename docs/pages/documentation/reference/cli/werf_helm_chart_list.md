@@ -1,6 +1,5 @@
 ---
 title: werf helm chart list
-sidebar: documentation
 permalink: documentation/reference/cli/werf_helm_chart_list.html
 ---
 

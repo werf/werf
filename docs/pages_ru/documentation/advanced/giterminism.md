@@ -1,6 +1,5 @@
 ---
 title: Гитерминизм
-sidebar: documentation
 permalink: documentation/advanced/giterminism.html
 change_canonical: true
 ---

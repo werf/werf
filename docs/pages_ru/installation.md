@@ -2,6 +2,7 @@
 title: Installation
 permalink: installation.html
 layout: default
+sidebar: none
 relation: site
 description: Как установить werf?
 versions:

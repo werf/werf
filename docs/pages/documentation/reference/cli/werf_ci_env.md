@@ -1,6 +1,5 @@
 ---
 title: werf ci-env
-sidebar: documentation
 permalink: documentation/reference/cli/werf_ci_env.html
 ---
 

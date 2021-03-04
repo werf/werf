@@ -1,6 +1,5 @@
 ---
 title: Manage releases
-sidebar: documentation
 permalink: documentation/advanced/helm/releases/manage_releases.html
 ---
 

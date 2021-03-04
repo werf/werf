@@ -1,6 +1,5 @@
 ---
 title: GitLab CI/CD
-sidebar: documentation
 permalink: documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html
 ---
 

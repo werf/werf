@@ -1,6 +1,5 @@
 ---
 title: Names slug algorithm
-sidebar: documentation
 permalink: documentation/internals/names_slug_algorithm.html
 ---
 

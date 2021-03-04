@@ -1,6 +1,5 @@
 ---
 title: Интеграция с CI/CD-системами
-sidebar: documentation
 permalink: documentation/advanced/ci_cd/generic_ci_cd_integration.html
 ---
 

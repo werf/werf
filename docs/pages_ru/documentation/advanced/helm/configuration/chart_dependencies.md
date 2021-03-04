@@ -1,6 +1,5 @@
 ---
 title: Зависимости чартов
-sidebar: documentation
 permalink: documentation/advanced/helm/configuration/chart_dependencies.html
 ---
 

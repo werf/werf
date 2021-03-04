@@ -1,6 +1,5 @@
 ---
 title: Helm hooks
-sidebar: documentation
 permalink: documentation/advanced/helm/deploy_process/helm_hooks.html
 ---
 

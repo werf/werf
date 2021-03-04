@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -332,15 +332,25 @@ func getGroups() (groups []string) {
 	return
 }
 
+func getRootFilesPath(r *http.Request) (result string) {
+	result = "./root/"
+	if strings.HasPrefix(r.Host, "ru.") {
+		result += "ru"
+	} else {
+		result += "main"
+	}
+	return
+}
+
 func updateReleasesStatus() error {
 	data, err := ioutil.ReadFile("multiwerf/multiwerf.json")
 	if err != nil {
-		log.Printf("Can't open multiwerf.json (%e)", err)
+		log.Errorf("Can't open multiwerf.json (%e)", err)
 		return err
 	}
 	err = json.Unmarshal(data, &ReleasesStatus)
 	if err != nil {
-		log.Printf("Can't unmarshall multiwerf.json (%e)", err)
+		log.Errorf("Can't unmarshall multiwerf.json (%e)", err)
 		return err
 	}
 	return err

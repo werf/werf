@@ -1,6 +1,5 @@
 ---
 title: Values
-sidebar: documentation
 permalink: documentation/advanced/helm/configuration/values.html
 ---
 
@@ -58,6 +57,7 @@ global:
 
 В данном значении `.Values.dockerconfigjson` будет содержимое конфига docker закодированное в base64 и пригодное для использования например при создании секретов для доступа к container registry:
 
+{% raw %}
 ```
 {{- if .Values.dockerconfigjson -}}
 apiVersion: v1
@@ -69,6 +69,7 @@ data:
   .dockerconfigjson: {{ .Values.dockerconfigjson }}
 {{- end -}}
 ```
+{% endraw %}
 
 ## Пользовательские секреты
 

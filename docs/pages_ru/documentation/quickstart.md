@@ -2,7 +2,6 @@
 title: Быстрый старт
 permalink: documentation/quickstart.html
 description: Разверните ваше первое приложение с werf
-sidebar: documentation
 ---
 
 В этой статье мы покажем, как развернуть простое [приложение](https://github.com/werf/quickstart-application) (для голосования в нашем случае) с помощью werf. Прежде всего рекомендуем ознакомиться с [кратким введением]({{ "introduction.html" | true_relative_url }}), если вы этого еще не сделали.

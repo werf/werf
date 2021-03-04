@@ -1,6 +1,5 @@
 ---
 title: Bundles
-sidebar: documentation
 permalink: documentation/advanced/bundles.html
 change_canonical: true
 ---

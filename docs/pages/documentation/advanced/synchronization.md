@@ -1,6 +1,5 @@
 ---
 title: Synchronization in werf
-sidebar: documentation
 permalink: documentation/advanced/synchronization.html
 ---
 

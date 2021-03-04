@@ -1,6 +1,5 @@
 ---
 title: Overview of command groups
-sidebar: documentation
 permalink: documentation/reference/cli/overview.html
 toc: false
 ---

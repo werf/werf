@@ -1,6 +1,5 @@
 ---
 title: Шаги
-sidebar: documentation
 permalink: documentation/advanced/helm/deploy_process/steps.html
 ---
 

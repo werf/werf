@@ -1,6 +1,5 @@
 ---
 title: Build process
-sidebar: documentation
 permalink: documentation/internals/build_process.html
 ---
 
