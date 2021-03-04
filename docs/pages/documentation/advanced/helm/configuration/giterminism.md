@@ -25,7 +25,7 @@ Werf implements giterminism mode when reading helm configuration. Configuration 
 
  2. Any supplement [user defined values files]({{ "/documentation/advanced/helm/configuration/values.html#user-defined-regular-values" | true_relative_url }}) passed with `--values`, `--secret-values`, `--set-file` options.
 
-**NOTE** Werf has a developer mode, which enables usage of the uncommitted files added to the git index (by the `git add` command). To use developer mode specify `--dev` option for any werf command (such such as `werf converge --dev`).
+**NOTE** werf has the development mode, allowing working with project files without redundant commits during debugging and development. To enable the mode, specify the `--dev` option (e.g., `werf converge --dev`).
 
 ## Subcharts and giterminism
 
