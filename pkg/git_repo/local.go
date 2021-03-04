@@ -365,7 +365,7 @@ func (repo *Local) ValidateStatusResult(ctx context.Context, pathMatcher path_ma
 	}
 
 	var uncommittedPathList []string
-	for _, path := range scope.PathList {
+	for _, path := range scope.PathList() {
 		if pathMatcher.IsPathMatched(path) {
 			uncommittedPathList = append(uncommittedPathList, path)
 		}
