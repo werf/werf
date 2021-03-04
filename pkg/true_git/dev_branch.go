@@ -41,21 +41,9 @@ func SyncSourceWorktreeWithServiceWorktreeBranch(ctx context.Context, gitDir, so
 		}
 
 		devBranchName := fmt.Sprintf("werf-dev-%s", commit)
-		devCommitWithStagedChanges, err := syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorkTreeDir, destinationWorkTreeDir, commit, devBranchName, true)
+		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorkTreeDir, destinationWorkTreeDir, commit, devBranchName, opts.OnlyStagedChanges)
 		if err != nil {
 			return fmt.Errorf("unable to sync staged changes: %s", err)
-		}
-
-		if opts.OnlyStagedChanges {
-			resultCommit = devCommitWithStagedChanges
-		} else {
-			devBranchName = fmt.Sprintf("werf-dev-%s-%s", commit, devCommitWithStagedChanges)
-			devCommitWithTrackedChanges, err := syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorkTreeDir, destinationWorkTreeDir, devCommitWithStagedChanges, devBranchName, false)
-			if err != nil {
-				return fmt.Errorf("unable to sync tracked changes: %s", err)
-			}
-
-			resultCommit = devCommitWithTrackedChanges
 		}
 
 		return nil
