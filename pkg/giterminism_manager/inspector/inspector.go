@@ -28,7 +28,7 @@ type giterminismConfig interface {
 }
 
 type fileReader interface {
-	ValidateStatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) error
+	ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error
 }
 
 type sharedOptions interface {

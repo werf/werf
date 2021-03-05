@@ -8,16 +8,12 @@ import (
 	"github.com/werf/werf/pkg/giterminism_manager/errors"
 )
 
-type UncommittedFilesError struct {
-	error
-}
-type FileNotAcceptedError struct {
-	error
-}
-type FileNotFoundInProjectDirectoryError struct {
-	error
-}
-type FileNotFoundInProjectRepositoryError struct {
+type UntrackedFilesError FileReaderError
+type UncommittedFilesError FileReaderError
+type FileNotAcceptedError FileReaderError
+type FileNotFoundInProjectDirectoryError FileReaderError
+type FileNotFoundInProjectRepositoryError FileReaderError
+type FileReaderError struct {
 	error
 }
 
@@ -40,17 +36,17 @@ func (r FileReader) NewFileNotFoundInProjectRepositoryError(relPath string) erro
 
 func (r FileReader) NewSubmoduleAddedAndNotCommittedError(submodulePath string) error {
 	errorMsg := fmt.Sprintf("the added submodule %q must be committed", filepath.ToSlash(submodulePath))
-	return r.newUncommittedFilesErrorBase(errorMsg, filepath.ToSlash(submodulePath))
+	return r.uncommittedErrorBase(errorMsg, filepath.ToSlash(submodulePath))
 }
 
 func (r FileReader) NewSubmoduleDeletedError(submodulePath string) error {
 	errorMsg := fmt.Sprintf("the deleted submodule %q must be committed", filepath.ToSlash(submodulePath))
-	return r.newUncommittedFilesErrorBase(errorMsg, filepath.ToSlash(submodulePath))
+	return r.uncommittedErrorBase(errorMsg, filepath.ToSlash(submodulePath))
 }
 
 func (r FileReader) NewSubmoduleHasUntrackedChangesError(submodulePath string) error {
 	errorMsg := fmt.Sprintf("the submodule %q has untracked changes that must be discarded or committed (do not forget to push new changes to the submodule remote)", filepath.ToSlash(submodulePath))
-	return UncommittedFilesError{fmt.Errorf("%s", errorMsg)}
+	return UntrackedFilesError{errors.NewError(errorMsg)}
 }
 
 func (r FileReader) NewSubmoduleHasUncommittedChangesError(submodulePath string) error {
@@ -59,34 +55,37 @@ func (r FileReader) NewSubmoduleHasUncommittedChangesError(submodulePath string)
 }
 
 func (r FileReader) NewSubmoduleCommitChangedError(submodulePath string) error {
-	expectedAction := "must be committed"
-	if r.sharedOptions.Dev() {
-		expectedAction = "must be staged"
-	}
-	errorMsg := fmt.Sprintf("the submodule %q is not clean and %s. Do not forget to push the current commit to the submodule remote if this commit exists only locally", filepath.ToSlash(submodulePath), expectedAction)
-
-	return r.newUncommittedFilesErrorBase(errorMsg, filepath.ToSlash(submodulePath))
+	errorMsg := fmt.Sprintf("the submodule %q is not clean and %s. Do not forget to push the current commit to the submodule remote if this commit exists only locally", filepath.ToSlash(submodulePath), r.uncommittedUntrackedExpectedAction())
+	return r.uncommittedErrorBase(errorMsg, filepath.ToSlash(submodulePath))
 }
 
-func (r FileReader) NewUncommittedFilesError(relPaths ...string) error {
-	expectedAction := "must be committed"
-	if r.sharedOptions.Dev() {
-		expectedAction = "must be staged"
-	}
-
+func (r FileReader) NewUntrackedFilesError(relPaths ...string) error {
 	var errorMsg string
 	if len(relPaths) == 1 {
-		errorMsg = fmt.Sprintf("the file %q %s", filepath.ToSlash(relPaths[0]), expectedAction)
+		errorMsg = fmt.Sprintf("the untracked file %q %s", filepath.ToSlash(relPaths[0]), r.uncommittedUntrackedExpectedAction())
 	} else if len(relPaths) > 1 {
-		errorMsg = fmt.Sprintf("the following files %s:\n\n%s", expectedAction, prepareListOfFilesString(relPaths))
+		errorMsg = fmt.Sprintf("the following untracked files %s:\n\n%s", r.uncommittedUntrackedExpectedAction(), prepareListOfFilesString(relPaths))
 	} else {
 		panic("unexpected condition")
 	}
 
-	return UncommittedFilesError{r.newUncommittedFilesErrorBase(errorMsg, strings.Join(formatFilePathList(relPaths), " "))}
+	return UntrackedFilesError{errors.NewError(errorMsg)}
 }
 
-func (r FileReader) newUncommittedFilesErrorBase(errorMsg string, gitAddArg string) error {
+func (r FileReader) NewUncommittedFilesError(relPaths ...string) error {
+	var errorMsg string
+	if len(relPaths) == 1 {
+		errorMsg = fmt.Sprintf("the file %q %s", filepath.ToSlash(relPaths[0]), r.uncommittedUntrackedExpectedAction())
+	} else if len(relPaths) > 1 {
+		errorMsg = fmt.Sprintf("the following files %s:\n\n%s", r.uncommittedUntrackedExpectedAction(), prepareListOfFilesString(relPaths))
+	} else {
+		panic("unexpected condition")
+	}
+
+	return r.uncommittedErrorBase(errorMsg, strings.Join(formatFilePathList(relPaths), " "))
+}
+
+func (r FileReader) uncommittedErrorBase(errorMsg string, gitAddArg string) error {
 	if r.sharedOptions.Dev() {
 		errorMsg = fmt.Sprintf(`%s
 
@@ -94,10 +93,21 @@ To stage the changes use the following command: "git add %s".`, errorMsg, gitAdd
 	} else {
 		errorMsg = fmt.Sprintf(`%s
 
-You might also be interested in developer mode (activated with --dev option) that allows you to work with staged changes without doing redundant commits. Just use "git add <file>..." to include the changes that should be used.`, errorMsg)
+You may be interested in the development mode (activated by the --dev option), which allows working with project files without doing redundant commits during debugging and development.
+Two development modes are supported (controlled with the --dev-mode option):
+- simple (default): for working with the worktree state of the git repository;
+- strict: for working with the index state of the git repository.`, errorMsg)
 	}
 
 	return UncommittedFilesError{errors.NewError(errorMsg)}
+}
+
+func (r FileReader) uncommittedUntrackedExpectedAction() string {
+	if r.sharedOptions.Dev() {
+		return "must be staged"
+	} else {
+		return "must be committed"
+	}
 }
 
 func prepareListOfFilesString(paths []string) string {
