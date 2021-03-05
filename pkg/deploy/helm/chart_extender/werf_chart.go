@@ -196,10 +196,13 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
 	files, err := wc.GiterminismManager.FileReader().LoadChartDir(wc.chartExtenderContext, dir)
 	if err != nil {
-		return true, nil, err
+		return true, nil, fmt.Errorf("giterministic files loader failed: %s", err)
 	}
 
 	res, err := LoadChartDependencies(wc.chartExtenderContext, files, wc.HelmEnvSettings, wc.BuildChartDependenciesOpts)
+	if err != nil {
+		return true, res, fmt.Errorf("chart dependencies loader failed: %s", err)
+	}
 	return true, res, err
 }
 
