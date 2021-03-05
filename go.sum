@@ -1525,6 +1525,8 @@ github.com/werf/kubedog v0.4.1-0.20201125180623-08ad3ea6f58c h1:caA8J/bf3AQgcjo0
 github.com/werf/kubedog v0.4.1-0.20201125180623-08ad3ea6f58c/go.mod h1:b/5MyrNDmxXtr68uucMmZCZmWS3h7cfAcgqtQbHsw5o=
 github.com/werf/kubedog v0.4.1-0.20210217184951-324cb08fa2f0 h1:C5hIzXkcNO0P2IS/6cGPKTKC3ZH9yEFS9N69UvBTF7w=
 github.com/werf/kubedog v0.4.1-0.20210217184951-324cb08fa2f0/go.mod h1:7SuLhuQddKnJri0LiMPoch94b6zAor7X3GvcufmgLqY=
+github.com/werf/kubedog v0.4.1-0.20210305081620-a7419a0e4455 h1:Do0LDiNqK51IYU/aDMJ90XU36ALXufcIvV2uprzF87g=
+github.com/werf/kubedog v0.4.1-0.20210305081620-a7419a0e4455/go.mod h1:7SuLhuQddKnJri0LiMPoch94b6zAor7X3GvcufmgLqY=
 github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea h1:R5tJUhL5a3YfHTrHWyuAdJW3h//fmONrpHJjjAZ79e4=
 github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea/go.mod h1:/CeY6KDiBSCU9PUmjt7zGhqpzp8FAPg/wNVfLZHQGWI=
 github.com/werf/logboek v0.4.3 h1:aXAVLlGT/ZiD8Srj+B71Tw20PtDyuYZSEJZjODNraeA=
