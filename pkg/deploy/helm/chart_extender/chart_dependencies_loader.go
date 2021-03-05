@@ -154,7 +154,7 @@ func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtend
 			}
 		} else {
 			if depsDir, err := GetPreparedChartDependenciesDir(ctx, lock.Digest, lockFile.Data, chartFile.Data, helmEnvSettings, buildChartDependenciesOpts); err != nil {
-				return nil, fmt.Errorf("")
+				return nil, fmt.Errorf("error preparing chart dependencies: %s", err)
 			} else {
 				localFiles, err := loader.GetFilesFromLocalFilesystem(depsDir)
 				if err != nil {
