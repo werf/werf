@@ -103,3 +103,17 @@ werf bundle apply --repo registry.mydomain.io/project --tag-mask v3.5.*
 ```
 
 This bundle apply should check available versions by specified mask `v3.5.*`, select latest version then deploy this version into the kubernetes.
+
+## Supported container registries
+
+| Container registry | Is bundles supported |
+| ------------------ | -------------------- |
+| docker registry    | yes                  |
+| aws ecr            | yes                  |
+| azure cr           | yes                  |
+| docker hub         | [no](https://github.com/werf/werf/issues/3184) |
+| gcr                | yes |
+| gitlab registry    | yes |
+| github packages    | [only new implementation supported](https://github.com/werf/werf/issues/3188) |
+| harbor             | yes | 
+| quay               | [no](https://github.com/werf/werf/issues/3182) |
