@@ -61,34 +61,15 @@ func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, er
 	return metadata, nil
 }
 
-func LoadLock(files []*chart.ChartExtenderBufferedFile) (*chart.Lock, *chart.ChartExtenderBufferedFile, error) {
-	var lock *chart.Lock
-	var lockFile *chart.ChartExtenderBufferedFile
+func GetPreparedChartDependenciesDir(ctx context.Context, conf *ChartDependenciesConfiguration, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
 
-loop:
-	for _, f := range files {
-		switch {
-		case f.Name == "Chart.lock":
-			lock = new(chart.Lock)
-			if err := yaml.Unmarshal(f.Data, &lock); err != nil {
-				return nil, nil, errors.Wrap(err, "cannot load Chart.lock")
-			}
-			lockFile = f
-			break loop
-		case f.Name == "requirements.lock":
-			lock = new(chart.Lock)
-			if err := yaml.Unmarshal(f.Data, &lock); err != nil {
-				return nil, nil, errors.Wrap(err, "cannot load requirements.lock")
-			}
-			lockFile = f
-			break loop
-		}
+	var lockFileData []byte
+	if conf.ChartLockFile != nil {
+		lockFileData = conf.ChartLockFile.Data
+	} else if conf.RequirementsLockFile != nil {
+		lockFileData = conf.RequirementsLockFile.Data
 	}
 
-	return lock, lockFile, nil
-}
-
-func GetPreparedChartDependenciesDir(ctx context.Context, lockDigest string, lockFileData []byte, chartFileData []byte, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
 	depsDir := GetChartDependenciesCacheDir(util.Sha256Hash(string(lockFileData)))
 
 	if _, err := os.Stat(depsDir); os.IsNotExist(err) {
@@ -107,7 +88,7 @@ func GetPreparedChartDependenciesDir(ctx context.Context, lockDigest string, loc
 				SubchartExtenderFactoryFunc: nil,
 			}
 
-			if err := command_helpers.BuildChartDependenciesInDir(ctx, lockFileData, chartFileData, tmpDepsDir, helmEnvSettings, buildChartDependenciesOpts); err != nil {
+			if err := command_helpers.BuildChartDependenciesInDir(ctx, conf.ChartFile, conf.ChartLockFile, conf.RequirementsFile, conf.RequirementsLockFile, tmpDepsDir, helmEnvSettings, buildChartDependenciesOpts); err != nil {
 				return fmt.Errorf("error building chart dependencies: %s", err)
 			}
 
@@ -128,48 +109,85 @@ func GetPreparedChartDependenciesDir(ctx context.Context, lockDigest string, loc
 	return depsDir, nil
 }
 
+type ChartDependenciesConfiguration struct {
+	ChartFile            *chart.ChartExtenderBufferedFile
+	ChartLockFile        *chart.ChartExtenderBufferedFile
+	RequirementsFile     *chart.ChartExtenderBufferedFile
+	RequirementsLockFile *chart.ChartExtenderBufferedFile
+
+	Metadata *chart.Metadata
+}
+
 func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
-	var chartFile *chart.ChartExtenderBufferedFile
+	conf := &ChartDependenciesConfiguration{}
+
 	for _, f := range loadedFiles {
-		if f.Name == "Chart.yaml" {
-			chartFile = f
-			break
+		switch f.Name {
+		case "Chart.yaml":
+			conf.ChartFile = f
+
+			conf.Metadata = new(chart.Metadata)
+			if err := yaml.Unmarshal(f.Data, conf.Metadata); err != nil {
+				return nil, errors.Wrap(err, "cannot load Chart.yaml")
+			}
+			if conf.Metadata.APIVersion == "" {
+				conf.Metadata.APIVersion = chart.APIVersionV1
+			}
+
+		case "Chart.lock":
+			conf.ChartLockFile = f
+		case "requirements.lock":
+			conf.RequirementsLockFile = f
 		}
+	}
+
+	for _, f := range loadedFiles {
+		switch f.Name {
+		case "requirements.yaml":
+			conf.RequirementsFile = f
+
+			if conf.Metadata == nil {
+				conf.Metadata = new(chart.Metadata)
+			}
+			if err := yaml.Unmarshal(f.Data, conf.Metadata); err != nil {
+				return nil, errors.Wrap(err, "cannot load requirements.yaml")
+			}
+		}
+	}
+
+	if conf.ChartFile == nil {
+		return loadedFiles, nil
+	}
+
+	if conf.ChartLockFile == nil && conf.RequirementsLockFile == nil {
+		if len(conf.Metadata.Dependencies) > 0 {
+			logboek.Context(ctx).Error().LogLn("Cannot build chart dependencies and preload charts without lock file (.helm/Chart.lock or .helm/requirements.lock)")
+			logboek.Context(ctx).Error().LogLn("It is recommended to add Chart.lock file to your project repository or remove chart dependencies.")
+			logboek.Context(ctx).Error().LogLn()
+			logboek.Context(ctx).Error().LogLn("To generate a lock file run 'werf helm dependency update .helm' and commit resulting .helm/Chart.lock or .helm/requirements.lock (it is not required to commit whole .helm/charts directory, better add it to the .gitignore).")
+			logboek.Context(ctx).Error().LogLn()
+		}
+
+		return loadedFiles, nil
+	}
+
+	depsDir, err := GetPreparedChartDependenciesDir(ctx, conf, helmEnvSettings, buildChartDependenciesOpts)
+	if err != nil {
+		return nil, fmt.Errorf("error preparing chart dependencies: %s", err)
+	}
+	localFiles, err := loader.GetFilesFromLocalFilesystem(depsDir)
+	if err != nil {
+		return nil, err
 	}
 
 	res := loadedFiles
 
-	if chartFile != nil {
-		if lock, lockFile, err := LoadLock(loadedFiles); err != nil {
-			return nil, fmt.Errorf("error loading chart lock file: %s", err)
-		} else if lock == nil {
-			if metadata, err := LoadMetadata(loadedFiles); err != nil {
-				return nil, fmt.Errorf("error loading chart metadata file: %s", err)
-			} else if len(metadata.Dependencies) > 0 {
-				logboek.Context(ctx).Error().LogLn("Cannot build chart dependencies and preload charts without lock file (.helm/Chart.lock or .helm/requirements.lock)")
-				logboek.Context(ctx).Error().LogLn("It is recommended to add Chart.lock file to your project repository or remove chart dependencies.")
-				logboek.Context(ctx).Error().LogLn()
-				logboek.Context(ctx).Error().LogLn("To generate a lock file run 'werf helm dependency update .helm' and commit resulting .helm/Chart.lock (it is not required to commit whole .helm/charts directory).")
-				logboek.Context(ctx).Error().LogLn()
-			}
-		} else {
-			if depsDir, err := GetPreparedChartDependenciesDir(ctx, lock.Digest, lockFile.Data, chartFile.Data, helmEnvSettings, buildChartDependenciesOpts); err != nil {
-				return nil, fmt.Errorf("error preparing chart dependencies: %s", err)
-			} else {
-				localFiles, err := loader.GetFilesFromLocalFilesystem(depsDir)
-				if err != nil {
-					return nil, err
-				}
-
-				for _, f := range localFiles {
-					if strings.HasPrefix(f.Name, "charts/") {
-						f1 := new(chart.ChartExtenderBufferedFile)
-						*f1 = chart.ChartExtenderBufferedFile(*f)
-						res = append(res, f1)
-						logboek.Context(ctx).Debug().LogF("-- GiterministicFilesLoader: loading subchart %q from dependencies dir %s\n", f.Name, depsDir)
-					}
-				}
-			}
+	for _, f := range localFiles {
+		if strings.HasPrefix(f.Name, "charts/") {
+			f1 := new(chart.ChartExtenderBufferedFile)
+			*f1 = chart.ChartExtenderBufferedFile(*f)
+			res = append(res, f1)
+			logboek.Context(ctx).Debug().LogF("-- LoadChartDependencies: loading subchart %q from the dependencies dir %q\n", f.Name, depsDir)
 		}
 	}
 

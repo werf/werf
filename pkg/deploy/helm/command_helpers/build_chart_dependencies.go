@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 
 	"github.com/werf/logboek"
@@ -22,21 +23,24 @@ type BuildChartDependenciesOptions struct {
 	LoadOptions *loader.LoadOptions
 }
 
-func BuildChartDependenciesInDir(ctx context.Context, lockFileData []byte, chartFileData []byte, targetDir string, helmEnvSettings *cli.EnvSettings, opts BuildChartDependenciesOptions) error {
+func BuildChartDependenciesInDir(ctx context.Context, chartFile *chart.ChartExtenderBufferedFile, chartLockFile *chart.ChartExtenderBufferedFile, requirementsFile *chart.ChartExtenderBufferedFile, requirementsLockFile *chart.ChartExtenderBufferedFile, targetDir string, helmEnvSettings *cli.EnvSettings, opts BuildChartDependenciesOptions) error {
 	logboek.Context(ctx).Debug().LogF("-- BuildChartDependenciesInDir\n")
 
 	if err := os.MkdirAll(targetDir, os.ModePerm); err != nil {
 		return fmt.Errorf("error creating dir %q: %s", targetDir, err)
 	}
 
-	lockFilePath := filepath.Join(targetDir, "Chart.lock")
-	if err := ioutil.WriteFile(lockFilePath, lockFileData, 0644); err != nil {
-		return fmt.Errorf("error writing %q: %s", lockFilePath)
-	}
+	files := []*chart.ChartExtenderBufferedFile{chartFile, chartLockFile, requirementsFile, requirementsLockFile}
 
-	chartFilePath := filepath.Join(targetDir, "Chart.yaml")
-	if err := ioutil.WriteFile(chartFilePath, chartFileData, 0644); err != nil {
-		return fmt.Errorf("error writing %q: %s", chartFilePath)
+	for _, file := range files {
+		if file == nil {
+			continue
+		}
+
+		path := filepath.Join(targetDir, file.Name)
+		if err := ioutil.WriteFile(path, file.Data, 0644); err != nil {
+			return fmt.Errorf("error writing %q: %s", path, err)
+		}
 	}
 
 	man := &downloader.Manager{
