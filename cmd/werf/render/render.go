@@ -357,5 +357,9 @@ func runRender() error {
 		Validate:    &cmdData.Validate,
 		IncludeCrds: &cmdData.IncludeCRDs,
 	})
-	return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)})
+	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
+		return fmt.Errorf("helm templates rendering failed: %s", err)
+	}
+
+	return nil
 }
