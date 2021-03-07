@@ -28,6 +28,8 @@ jobs:
       continue-on-error: true
       with:
         env: review-${{ github.event.number }}
+        group: 1.2
+        channel: alpha
       env:
         WERF_DEV: true
         WERF_LOOSE_GITERMINISM: true
