@@ -1,0 +1,40 @@
+name: Review website
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+env:
+  WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
+
+jobs:
+
+  converge:
+    name: Converge
+    runs-on: tfprod-werf
+    if: github.event.label.name == 'review docs' || contains( github.event.pull_request.labels.*.name, 'review docs' )
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Add dev artifacts
+      run: |
+          cp -f docs/.werf/dev/* docs/
+
+    - name: Converge main site
+      uses: werf/actions/converge@master
+      with:
+        env: review-${{ github.event.number }}
+        group: 1.2
+        channel: alpha
+      env:
+        WERF_DEV: true
+        WERF_LOOSE_GITERMINISM: true
+        WERF_DIR: "docs"
+        WERF_CONFIG: "docs/werf-site.yaml"
+        WERF_LOG_VERBOSE: "on"
+        WERF_KUBE_CONTEXT: dev
+        WERF_SET_GITHUB_REF: "global.github_ref=dev"
+

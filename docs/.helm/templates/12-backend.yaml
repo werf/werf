@@ -1,6 +1,6 @@
 {{- $_ := set . "Version" ( splitList "/" .Values.global.github_ref | last ) }}
 
-{{- if eq .Version "master" }}
+{{- if or (eq .Version "master") (eq .Version "dev") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -85,4 +85,14 @@ spec:
   selector:
     matchLabels:
       service: {{ .Chart.Name }}-backend
+{{- end }}
+{{- if eq .Version "dev" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: multiwerf-data
+data:
+  multiwerf.json: |
+    {{ $.Files.Get "multiwerf-dev.json" | fromJson| toJson }}
 {{- end }}

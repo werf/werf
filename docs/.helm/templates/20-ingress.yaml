@@ -2,6 +2,9 @@
 {{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
 {{- $_ := set . "VersionDNSNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" ) }}
 {{- $host := pluck .Values.global.env .Values.host | first | default .Values.host._default  }}
+{{- if  eq .Version "dev" }}
+{{- $host = ( printf "%s.%s" .Values.global.env (pluck "dev" .Values.host | first | default .Values.host._default ) | lower ) }}
+{{- end }}
 
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
@@ -34,12 +37,13 @@ spec:
   - host: {{ $host }}
     http:
       paths:
-{{- if eq .Version "master" }}
+{{- if or (eq .Version "master") (eq .Version "dev") }}
       - path: /
         backend:
           serviceName: {{ .Chart.Name }}-backend
           servicePort: http
-{{- else }}
+{{- end }}
+{{- if ne .Version "master" }}
       - path: /{{ .VersionURLNormalized }}
         backend:
           serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
@@ -48,12 +52,13 @@ spec:
   - host: ru.{{ $host }}
     http:
       paths:
-{{- if eq .Version "master" }}
+{{- if or (eq .Version "master") (eq .Version "dev") }}
       - path: /
         backend:
           serviceName: {{ .Chart.Name }}-backend
           servicePort: http
-{{- else }}
+{{- end }}
+{{- if ne .Version "master" }}
       - path: /{{ .VersionURLNormalized }}
         backend:
           serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
