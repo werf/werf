@@ -113,6 +113,12 @@ werf compose config [options] [--docker-compose-options="OPTIONS"] [--docker-com
             $WERF_LOOSE_GITERMINISM)
       --repo=''
             Docker Repo to store stages (default $WERF_REPO)
+      --repo-container-registry=''
+            Choose repo container registry.
+            The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
+            github, gitlab, harbor, quay.
+            Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
+            address).
       --repo-docker-hub-password=''
             Docker Hub password (default $WERF_REPO_DOCKER_HUB_PASSWORD)
       --repo-docker-hub-token=''
@@ -125,11 +131,6 @@ werf compose config [options] [--docker-compose-options="OPTIONS"] [--docker-com
             Harbor password (default $WERF_REPO_HARBOR_PASSWORD)
       --repo-harbor-username=''
             Harbor username (default $WERF_REPO_HARBOR_USERNAME)
-      --repo-implementation=''
-            Choose repo implementation.
-            The following docker registry implementations are supported: ecr, acr, default,         
-            dockerhub, gcr, github, gitlab, harbor, quay.
-            Default $WERF_REPO_IMPLEMENTATION or auto mode (detect implementation by a registry).
       --repo-quay-token=''
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --secondary-repo=[]
