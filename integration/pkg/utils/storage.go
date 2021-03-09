@@ -17,7 +17,7 @@ func NewStagesStorage(stagesStorageAddress string, implementationName string, do
 		storage.StagesStorageOptions{
 			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
 				DockerRegistryOptions: dockerRegistryOptions,
-				Implementation:        implementationName,
+				ContainerRegistry:     implementationName,
 			},
 		},
 	)
