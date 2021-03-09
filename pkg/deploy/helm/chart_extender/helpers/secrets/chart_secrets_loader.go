@@ -1,4 +1,4 @@
-package chart_extender
+package secrets
 
 import (
 	"fmt"
@@ -13,6 +13,11 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 
 	"sigs.k8s.io/yaml"
+)
+
+const (
+	DefaultSecretValuesFileName = "secret-values.yaml"
+	SecretDirName               = "secret"
 )
 
 type SecretValuesFilesOptions struct {

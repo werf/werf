@@ -64,5 +64,5 @@ func runSecretEdit(ctx context.Context, filepPath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	return secret_common.SecretEdit(ctx, secrets_manager.NewSecretsManager(workingDir, secrets_manager.SecretsManagerOptions{}), filepPath, true)
+	return secret_common.SecretEdit(ctx, secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{}), workingDir, filepPath, true)
 }

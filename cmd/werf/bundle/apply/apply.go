@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 
 	"github.com/werf/werf/pkg/deploy/lock_manager"
@@ -208,7 +209,7 @@ func runApply() error {
 	bundle := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, chart_extender.BundleOptions{})
 
 	if *commonCmdData.SetDockerConfigJsonValue {
-		if err := chart_extender.WriteDockerConfigJsonValue(ctx, bundle.GetExtraValues(), *commonCmdData.DockerConfig); err != nil {
+		if err := helpers.WriteDockerConfigJsonValue(ctx, bundle.GetExtraValues(), *commonCmdData.DockerConfig); err != nil {
 			return fmt.Errorf("error writing docker config value into bundle extra values: %s", err)
 		}
 	}

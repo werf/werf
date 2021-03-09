@@ -10,7 +10,6 @@ import (
 )
 
 type SecretsManager struct {
-	WorkingDir               string
 	DisableSecretsDecryption bool
 }
 
@@ -18,20 +17,19 @@ type SecretsManagerOptions struct {
 	DisableSecretsDecryption bool
 }
 
-func NewSecretsManager(workingDir string, opts SecretsManagerOptions) *SecretsManager {
+func NewSecretsManager(opts SecretsManagerOptions) *SecretsManager {
 	return &SecretsManager{
-		WorkingDir:               workingDir,
 		DisableSecretsDecryption: opts.DisableSecretsDecryption,
 	}
 }
 
-func (manager *SecretsManager) GetYamlEncoder(ctx context.Context) (*secret.YamlEncoder, error) {
+func (manager *SecretsManager) GetYamlEncoder(ctx context.Context, workingDir string) (*secret.YamlEncoder, error) {
 	if manager.DisableSecretsDecryption {
 		logboek.Context(ctx).Default().LogLnDetails("Secrets decryption disabled")
 		return secret.NewYamlEncoder(nil), nil
 	}
 
-	if key, err := GetRequiredSecretKey(manager.WorkingDir); err != nil {
+	if key, err := GetRequiredSecretKey(workingDir); err != nil {
 		return nil, fmt.Errorf("unable to load secret key: %s", err)
 	} else if enc, err := secret.NewAesEncoder(key); err != nil {
 		return nil, fmt.Errorf("check encryption key: %s", err)

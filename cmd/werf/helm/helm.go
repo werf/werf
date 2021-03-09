@@ -9,6 +9,7 @@ import (
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 
 	helm_secret_decrypt "github.com/werf/werf/cmd/werf/helm/secret/decrypt"
 	helm_secret_encrypt "github.com/werf/werf/cmd/werf/helm/secret/encrypt"
@@ -74,7 +75,7 @@ func NewCmd() *cobra.Command {
 		cmd_helm.NewDependencyCmd(actionConfig, os.Stdout),
 		cmd_helm.NewGetCmd(actionConfig, os.Stdout),
 		cmd_helm.NewHistoryCmd(actionConfig, os.Stdout),
-		cmd_helm.NewLintCmd(os.Stdout),
+		NewLintCmd(actionConfig, wc),
 		cmd_helm.NewListCmd(actionConfig, os.Stdout),
 		NewTemplateCmd(actionConfig, wc),
 		cmd_helm.NewRepoCmd(os.Stdout),
@@ -129,7 +130,7 @@ func NewCmd() *cobra.Command {
 
 				ctx := common.BackgroundContext()
 
-				if vals, err := chart_extender.GetServiceValues(ctx, "PROJECT", "REPO", nil, chart_extender.ServiceValuesOptions{Namespace: namespace, IsStub: true}); err != nil {
+				if vals, err := helpers.GetServiceValues(ctx, "PROJECT", "REPO", nil, helpers.ServiceValuesOptions{Namespace: namespace, IsStub: true}); err != nil {
 					return fmt.Errorf("error creating service values: %s", err)
 				} else {
 					wc.SetStubServiceValues(vals)

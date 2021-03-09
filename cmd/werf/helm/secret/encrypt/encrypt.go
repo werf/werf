@@ -75,16 +75,16 @@ func runSecretEncrypt(ctx context.Context) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	return secretEncrypt(ctx, secrets_manager.NewSecretsManager(workingDir, secrets_manager.SecretsManagerOptions{}))
+	return secretEncrypt(ctx, secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{}), workingDir)
 }
 
-func secretEncrypt(ctx context.Context, m *secrets_manager.SecretsManager) error {
+func secretEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir string) error {
 	var data []byte
 	var encodedData []byte
 	var err error
 
 	var encoder *secret.YamlEncoder
-	if enc, err := m.GetYamlEncoder(ctx); err != nil {
+	if enc, err := m.GetYamlEncoder(ctx, workingDir); err != nil {
 		return err
 	} else {
 		encoder = enc

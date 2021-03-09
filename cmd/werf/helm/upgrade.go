@@ -24,7 +24,7 @@ func NewUpgradeCmd(actionConfig *action.Configuration, wc *chart_extender.WerfCh
 		panic(err.Error())
 	}
 
-	cmd, helmAction := cmd_helm.NewUpgradeCmd(actionConfig, os.Stdout, cmd_helm.UpgradeCmdOptions{
+	cmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, os.Stdout, cmd_helm.UpgradeCmdOptions{
 		PostRenderer: postRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &upgradeCmdData)
@@ -39,20 +39,16 @@ func NewUpgradeCmd(actionConfig *action.Configuration, wc *chart_extender.WerfCh
 
 		releaseName := args[0]
 
-		if chartDir, err := helmAction.ChartPathOptions.LocateChart(args[1], cmd_helm.Settings); err != nil {
-			return err
-		} else {
-			if err := InitRenderRelatedWerfChartParams(ctx, &upgradeCmdData, wc, chartDir); err != nil {
-				return fmt.Errorf("unable to init werf chart: %s", err)
-			}
+		if err := InitRenderRelatedWerfChartParams(ctx, &upgradeCmdData, wc); err != nil {
+			return fmt.Errorf("unable to init werf chart: %s", err)
+		}
 
-			if m, err := lock_manager.NewLockManager(cmd_helm.Settings.Namespace()); err != nil {
-				return fmt.Errorf("unable to create lock manager: %s", err)
-			} else {
-				return command_helpers.LockReleaseWrapper(ctx, releaseName, m, func() error {
-					return oldRunE(cmd, args)
-				})
-			}
+		if m, err := lock_manager.NewLockManager(cmd_helm.Settings.Namespace()); err != nil {
+			return fmt.Errorf("unable to create lock manager: %s", err)
+		} else {
+			return command_helpers.LockReleaseWrapper(ctx, releaseName, m, func() error {
+				return oldRunE(cmd, args)
+			})
 		}
 	}
 

@@ -1,11 +1,11 @@
-package chart_extender
+package helpers
 
 import "context"
 
 type ChartExtenderContextData struct {
-	chartExtenderContext context.Context
+	ChartExtenderContext context.Context
 }
 
 func NewChartExtenderContextData(ctx context.Context) *ChartExtenderContextData {
-	return &ChartExtenderContextData{chartExtenderContext: ctx}
+	return &ChartExtenderContextData{ChartExtenderContext: ctx}
 }
