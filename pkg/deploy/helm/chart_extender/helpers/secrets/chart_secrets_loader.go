@@ -1,4 +1,4 @@
-package chart_extender
+package secrets
 
 import (
 	"fmt"
@@ -15,6 +15,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const (
+	DefaultSecretValuesFileName = "secret-values.yaml"
+	SecretDirName               = "secret"
+)
+
 type SecretValuesFilesOptions struct {
 	CustomFiles []string
 }
@@ -27,8 +32,8 @@ func GetSecretValuesFiles(chartDir string, loadedChartFiles []*chart.ChartExtend
 	}
 
 	var res []*chart.ChartExtenderBufferedFile
-	for _, file := range loadedChartFiles {
-		for _, valuesFilePath := range valuesFilePaths {
+	for _, valuesFilePath := range valuesFilePaths {
+		for _, file := range loadedChartFiles {
 			if file.Name == valuesFilePath {
 				res = append(res, file)
 			}

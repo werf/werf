@@ -40,10 +40,10 @@ func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfCh
 			return err
 		}
 
-		if releaseName, chartDir, err := helmAction.NameAndChart(args); err != nil {
+		if releaseName, _, err := helmAction.NameAndChart(args); err != nil {
 			return err
 		} else {
-			if err := InitRenderRelatedWerfChartParams(ctx, &installCmdData, wc, chartDir); err != nil {
+			if err := InitRenderRelatedWerfChartParams(ctx, &installCmdData, wc); err != nil {
 				return fmt.Errorf("unable to init werf chart: %s", err)
 			}
 

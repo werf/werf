@@ -1,4 +1,4 @@
-package chart_extender
+package helpers
 
 import (
 	"context"

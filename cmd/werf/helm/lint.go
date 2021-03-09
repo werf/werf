@@ -15,24 +15,17 @@ import (
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 )
 
-var templateCmdData cmd_werf_common.CmdData
+var lintCmdData cmd_werf_common.CmdData
 
-func NewTemplateCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
-	postRenderer, err := wc.GetPostRenderer()
-	if err != nil {
-		panic(err.Error())
-	}
-
-	cmd, _ := cmd_helm.NewTemplateCmd(actionConfig, os.Stdout, cmd_helm.TemplateCmdOptions{
-		PostRenderer: postRenderer,
-	})
-	SetupRenderRelatedWerfChartParams(cmd, &templateCmdData)
+func NewLintCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
+	cmd := cmd_helm.NewLintCmd(os.Stdout)
+	SetupRenderRelatedWerfChartParams(cmd, &lintCmdData)
 
 	oldRunE := cmd.RunE
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		ctx := common.BackgroundContext()
 
-		if err := InitRenderRelatedWerfChartParams(ctx, &templateCmdData, wc); err != nil {
+		if err := InitRenderRelatedWerfChartParams(ctx, &lintCmdData, wc); err != nil {
 			return fmt.Errorf("unable to init werf chart: %s", err)
 		}
 

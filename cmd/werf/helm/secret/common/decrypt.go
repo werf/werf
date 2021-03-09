@@ -14,33 +14,33 @@ import (
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 )
 
-func SecretFileDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, filePath, outputFilePath string) error {
+func SecretFileDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir, filePath, outputFilePath string) error {
 	options := &GenerateOptions{
 		FilePath:       filePath,
 		OutputFilePath: outputFilePath,
 		Values:         false,
 	}
 
-	return secretDecrypt(ctx, m, options)
+	return secretDecrypt(ctx, m, workingDir, options)
 }
 
-func SecretValuesDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, filePath, outputFilePath string) error {
+func SecretValuesDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir, filePath, outputFilePath string) error {
 	options := &GenerateOptions{
 		FilePath:       filePath,
 		OutputFilePath: outputFilePath,
 		Values:         true,
 	}
 
-	return secretDecrypt(ctx, m, options)
+	return secretDecrypt(ctx, m, workingDir, options)
 }
 
-func secretDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, options *GenerateOptions) error {
+func secretDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir string, options *GenerateOptions) error {
 	var encodedData []byte
 	var data []byte
 	var err error
 
 	var encoder *secret.YamlEncoder
-	if enc, err := m.GetYamlEncoder(ctx); err != nil {
+	if enc, err := m.GetYamlEncoder(ctx, workingDir); err != nil {
 		return err
 	} else {
 		encoder = enc

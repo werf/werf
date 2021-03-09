@@ -2,8 +2,12 @@ package chart_extender
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"text/template"
 
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers/secrets"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 
 	"helm.sh/helm/v3/pkg/postrender"
@@ -19,19 +23,21 @@ import (
 func NewWerfChartStub(ctx context.Context) *WerfChartStub {
 	return &WerfChartStub{
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
-		ChartExtenderContextData:              NewChartExtenderContextData(ctx),
+		ChartExtenderContextData:              helpers.NewChartExtenderContextData(ctx),
 	}
 }
 
 type WerfChartStub struct {
 	HelmChart        *chart.Chart
+	ChartDir         string
 	SecretsManager   *secrets_manager.SecretsManager
 	SecretValueFiles []string
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	stubServiceValues                     map[string]interface{}
 
-	*ChartExtenderContextData
+	*secrets.SecretsRuntimeData
+	*helpers.ChartExtenderContextData
 }
 
 func (wc *WerfChartStub) SetupSecretsManager(manager *secrets_manager.SecretsManager) {
@@ -53,19 +59,29 @@ func (wc *WerfChartStub) GetPostRenderer() (postrender.PostRenderer, error) {
 // ChartCreated method for the chart.Extender interface
 func (wc *WerfChartStub) ChartCreated(c *chart.Chart) error {
 	wc.HelmChart = c
+	wc.SecretsRuntimeData = secrets.NewSecretsRuntimeData()
 	return nil
 }
 
 // ChartLoaded method for the chart.Extender interface
 func (wc *WerfChartStub) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
-	var opts GetHelmChartMetadataOptions
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting current process working directory: %s", err)
+	}
+
+	if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.SecretValueFiles, wc.ChartDir, cwd, wc.SecretsManager); err != nil {
+		return fmt.Errorf("error decoding secrets: %s", err)
+	}
+
+	var opts helpers.GetHelmChartMetadataOptions
 	opts.DefaultName = "stub_name"
 	opts.DefaultVersion = "1.0.0"
-	wc.HelmChart.Metadata = AutosetChartMetadata(wc.HelmChart.Metadata, opts)
+	wc.HelmChart.Metadata = helpers.AutosetChartMetadata(wc.HelmChart.Metadata, opts)
 
 	wc.HelmChart.Templates = append(wc.HelmChart.Templates, &chart.File{
 		Name: "templates/_werf_helpers.tpl",
-		Data: []byte(ChartTemplateHelpers),
+		Data: []byte(helpers.ChartTemplateHelpers),
 	})
 
 	return nil
@@ -80,6 +96,7 @@ func (wc *WerfChartStub) ChartDependenciesLoaded() error {
 func (wc *WerfChartStub) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
 	vals := make(map[string]interface{})
 	chartutil.CoalesceTables(vals, wc.stubServiceValues)
+	chartutil.CoalesceTables(vals, wc.SecretsRuntimeData.DecodedSecretValues)
 	chartutil.CoalesceTables(vals, inputVals)
 
 	return vals, nil
@@ -90,12 +107,13 @@ func (wc *WerfChartStub) SetupTemplateFuncs(t *template.Template, funcMap templa
 	funcMap["werf_secret_file"] = func(secretRelativePath string) (string, error) {
 		return "stub_data", nil
 	}
-	SetupIncludeWrapperFuncs(funcMap)
-	SetupWerfImageDeprecationFunc(wc.chartExtenderContext, funcMap)
+	helpers.SetupIncludeWrapperFuncs(funcMap)
+	helpers.SetupWerfImageDeprecationFunc(wc.ChartExtenderContext, funcMap)
 }
 
 // LoadDir method for the chart.Extender interface
 func (wc *WerfChartStub) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
+	wc.ChartDir = dir
 	return false, nil, nil
 }
 

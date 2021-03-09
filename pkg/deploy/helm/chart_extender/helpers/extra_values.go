@@ -1,4 +1,4 @@
-package chart_extender
+package helpers
 
 import (
 	"context"
@@ -11,16 +11,16 @@ import (
 	"github.com/werf/logboek"
 )
 
-func NewExtraValuesData() *ExtraValuesData {
-	return &ExtraValuesData{extraValues: make(map[string]interface{})}
+func NewChartExtenderExtraValuesData() *ChartExtenderExtraValuesData {
+	return &ChartExtenderExtraValuesData{ExtraValues: make(map[string]interface{})}
 }
 
-type ExtraValuesData struct {
-	extraValues map[string]interface{}
+type ChartExtenderExtraValuesData struct {
+	ExtraValues map[string]interface{}
 }
 
-func (d *ExtraValuesData) GetExtraValues() map[string]interface{} {
-	return d.extraValues
+func (d *ChartExtenderExtraValuesData) GetExtraValues() map[string]interface{} {
+	return d.ExtraValues
 }
 
 func WriteDockerConfigJsonValue(ctx context.Context, values map[string]interface{}, dockerConfigPath string) error {

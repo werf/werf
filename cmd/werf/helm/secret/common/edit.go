@@ -26,9 +26,9 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, filePath string, values bool) error {
+func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, workingDir, filePath string, values bool) error {
 	var encoder *secret.YamlEncoder
-	if enc, err := m.GetYamlEncoder(ctx); err != nil {
+	if enc, err := m.GetYamlEncoder(ctx, workingDir); err != nil {
 		return err
 	} else {
 		encoder = enc

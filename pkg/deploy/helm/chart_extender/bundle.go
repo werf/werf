@@ -14,6 +14,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chartutil"
 
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -31,11 +32,11 @@ type BundleOptions struct {
 
 func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, opts BundleOptions) *Bundle {
 	return &Bundle{
-		Dir:                        dir,
-		HelmEnvSettings:            helmEnvSettings,
-		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
-		ExtraValuesData:            NewExtraValuesData(),
-		ChartExtenderContextData:   NewChartExtenderContextData(ctx),
+		Dir:                          dir,
+		HelmEnvSettings:              helmEnvSettings,
+		BuildChartDependenciesOpts:   opts.BuildChartDependenciesOpts,
+		ChartExtenderExtraValuesData: helpers.NewChartExtenderExtraValuesData(),
+		ChartExtenderContextData:     helpers.NewChartExtenderContextData(ctx),
 	}
 }
 
@@ -49,8 +50,8 @@ type Bundle struct {
 	HelmEnvSettings            *cli.EnvSettings
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 
-	*ExtraValuesData
-	*ChartExtenderContextData
+	*helpers.ChartExtenderExtraValuesData
+	*helpers.ChartExtenderContextData
 }
 
 func (bundle *Bundle) GetPostRenderer() (*helm.ExtraAnnotationsAndLabelsPostRenderer, error) {
@@ -90,19 +91,19 @@ func (bundle *Bundle) ChartDependenciesLoaded() error {
 // MakeValues method for the chart.Extender interface
 func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
 	vals := make(map[string]interface{})
-	chartutil.CoalesceTables(vals, bundle.extraValues)
+	chartutil.CoalesceTables(vals, bundle.ExtraValues)
 	chartutil.CoalesceTables(vals, inputVals)
 
 	data, err := yaml.Marshal(vals)
-	logboek.Context(bundle.chartExtenderContext).Debug().LogF("-- Bundle.MakeValues result (err=%v):\n%s\n---\n", err, data)
+	logboek.Context(bundle.ChartExtenderContext).Debug().LogF("-- Bundle.MakeValues result (err=%v):\n%s\n---\n", err, data)
 
 	return vals, nil
 }
 
 // SetupTemplateFuncs method for the chart.Extender interface
 func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
-	SetupIncludeWrapperFuncs(funcMap)
-	SetupWerfImageDeprecationFunc(bundle.chartExtenderContext, funcMap)
+	helpers.SetupIncludeWrapperFuncs(funcMap)
+	helpers.SetupWerfImageDeprecationFunc(bundle.ChartExtenderContext, funcMap)
 }
 
 func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*chart.ChartExtenderBufferedFile {
@@ -122,7 +123,7 @@ func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedF
 		return true, nil, err
 	}
 
-	res, err := LoadChartDependencies(bundle.chartExtenderContext, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.BuildChartDependenciesOpts)
+	res, err := LoadChartDependencies(bundle.ChartExtenderContext, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.BuildChartDependenciesOpts)
 	return true, res, err
 }
 
