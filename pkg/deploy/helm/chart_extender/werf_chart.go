@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/mitchellh/copystructure"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 
 	"github.com/werf/werf/pkg/secret"
@@ -19,6 +20,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
 
@@ -153,18 +155,51 @@ func (wc *WerfChart) ChartDependenciesLoaded() error {
 	return nil
 }
 
-// MakeValues method for the chart.Extender interface
-func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
+func (wc *WerfChart) makeValues(inputVals map[string]interface{}, withSecrets bool) (map[string]interface{}, error) {
 	vals := make(map[string]interface{})
 	chartutil.CoalesceTables(vals, wc.extraValues)   // NOTE: extra values will not be saved into the marshalled release
 	chartutil.CoalesceTables(vals, wc.serviceValues) // NOTE: service values will not be saved into the marshalled release
-	chartutil.CoalesceTables(vals, wc.RuntimeData.DecodedSecretValues)
+
+	if withSecrets {
+		chartutil.CoalesceTables(vals, wc.RuntimeData.DecodedSecretValues)
+	}
+
 	chartutil.CoalesceTables(vals, inputVals)
 
 	data, err := yaml.Marshal(vals)
-	logboek.Context(wc.chartExtenderContext).Debug().LogF("-- WerfChart.MakeValues result (err=%v):\n%s\n---\n", err, data)
+	logboek.Context(wc.chartExtenderContext).Debug().LogF("-- WerfChart.makeValues result (err=%v):\n%s\n---\n", err, data)
 
 	return vals, nil
+}
+
+// MakeValues method for the chart.Extender interface
+func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
+	return wc.makeValues(inputVals, true)
+}
+
+func (wc *WerfChart) MakeBundleValues(chrt *chart.Chart, inputVals map[string]interface{}) (map[string]interface{}, error) {
+	vals, err := wc.makeValues(inputVals, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to coalesce werf chart values: %s", err)
+	}
+
+	v, err := copystructure.Copy(vals)
+	if err != nil {
+		return vals, err
+	}
+
+	valsCopy := v.(map[string]interface{})
+	// if we have an empty map, make sure it is initialized
+	if valsCopy == nil {
+		valsCopy = make(map[string]interface{})
+	}
+
+	chartutil.CoalesceChartValues(chrt, valsCopy)
+
+	data, err := yaml.Marshal(vals)
+	logboek.Context(wc.chartExtenderContext).Debug().LogF("-- WerfChart.MakeBundleValues result (err=%v):\n%s\n---\n", err, data)
+
+	return valsCopy, nil
 }
 
 // SetupTemplateFuncs method for the chart.Extender interface
@@ -257,15 +292,27 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputV
 		return nil, fmt.Errorf("unable to create dir %q: %s", destDir, err)
 	}
 
-	if vals, err := wc.MakeValues(inputVals); err != nil {
-		return nil, fmt.Errorf("unable to coalesce input values: %s", err)
-	} else if valsData, err := json.Marshal(vals); err != nil {
+	chartPath := filepath.Join(wc.GiterminismManager.ProjectDir(), wc.ChartDir)
+	chrt, err := loader.LoadDir(chartPath)
+	if err != nil {
+		return nil, fmt.Errorf("error loading chart %q: %s", chartPath, err)
+	}
+
+	vals, err := wc.MakeBundleValues(chrt, inputVals)
+	if err != nil {
+		return nil, fmt.Errorf("unable to construct bundle input values: %s", err)
+	}
+
+	valsData, err := json.MarshalIndent(vals, "", "  ")
+	if err != nil {
 		return nil, fmt.Errorf("unable to prepare values: %s", err)
-	} else {
-		valuesFile := filepath.Join(destDir, "values.yaml")
-		if err := ioutil.WriteFile(valuesFile, append(valsData, []byte("\n")...), os.ModePerm); err != nil {
-			return nil, fmt.Errorf("unable to write %q: %s", valuesFile, err)
-		}
+	}
+
+	logboek.Context(ctx).Debug().LogF("Saving bundle values:\n%s\n---\n", valsData)
+
+	valuesFile := filepath.Join(destDir, "values.yaml")
+	if err := ioutil.WriteFile(valuesFile, append(valsData, []byte("\n")...), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to write %q: %s", valuesFile, err)
 	}
 
 	if wc.HelmChart.Metadata == nil {
