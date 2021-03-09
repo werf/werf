@@ -43,6 +43,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/mailru/easyjson v0.7.2 // indirect
 	github.com/miekg/pkcs11 v1.0.3 // indirect
+	github.com/mitchellh/copystructure v1.0.0
 	github.com/moby/buildkit v0.7.1-0.20200615045306-df35e9818d1f
 	github.com/moby/term v0.0.0-20200611042045-63b9a826fb74 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
@@ -103,4 +104,4 @@ replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 
 replace github.com/deislabs/oras => github.com/werf/oras v0.8.2-0.20210128161614-26d583f169ea
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20210217151756-c4eb2cf94c22
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20210309122251-afbbf154ae85

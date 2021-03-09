@@ -3,7 +3,6 @@ package export
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"helm.sh/helm/v3/pkg/getter"
 
@@ -304,18 +303,13 @@ func runExport() error {
 		FileValues:   common.GetSetFile(&commonCmdData),
 	}
 
-	chartPath := filepath.Join(giterminismManager.ProjectDir(), chartDir)
-	if _, err := loader.LoadDir(chartPath); err != nil {
-		return fmt.Errorf("error loading chart %q: %s", chartPath, err)
-	}
-
 	destinationDir := cmdData.Destination
 	if destinationDir == "" {
 		destinationDir = wc.HelmChart.Metadata.Name
 	}
 
 	p := getter.All(cmd_helm.Settings)
-	if vals, err := valueOpts.MergeValues(p, loader.GlobalLoadOptions.ChartExtender); err != nil {
+	if vals, err := valueOpts.MergeValues(p, wc); err != nil {
 		return err
 	} else if _, err := wc.CreateNewBundle(ctx, destinationDir, vals); err != nil {
 		return fmt.Errorf("unable to create bundle: %s", err)

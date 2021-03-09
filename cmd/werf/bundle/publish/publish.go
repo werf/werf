@@ -316,16 +316,11 @@ func runPublish() error {
 		FileValues:   *commonCmdData.SetFile,
 	}
 
-	chartPath := filepath.Join(giterminismManager.ProjectDir(), chartDir)
-	if _, err := loader.LoadDir(chartPath); err != nil {
-		return fmt.Errorf("error loading chart %q: %s", chartPath, err)
-	}
-
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
 	defer os.RemoveAll(bundleTmpDir)
 
 	p := getter.All(cmd_helm.Settings)
-	if vals, err := valueOpts.MergeValues(p, loader.GlobalLoadOptions.ChartExtender); err != nil {
+	if vals, err := valueOpts.MergeValues(p, wc); err != nil {
 		return err
 	} else if bundle, err := wc.CreateNewBundle(ctx, bundleTmpDir, vals); err != nil {
 		return fmt.Errorf("unable to create bundle: %s", err)
