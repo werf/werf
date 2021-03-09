@@ -28,22 +28,6 @@ jobs:
           cd docs
           bash .werf/legacy/generate_artifacts.sh
 
-    - name: Deploy website to test
-      uses: werf/actions/converge@master
-      with:
-        env: test
-        group: 1.2
-        channel: alpha
-      env:
-        WERF_RELEASE: "werfio-ng-${{ env.Version }}-test"
-        WERF_NAMESPACE: "werfio-test"
-        WERF_DIR: "docs"
-        WERF_CONFIG: "docs/werf-site.yaml"
-        WERF_LOOSE_GITERMINISM: true
-        WERF_LOG_VERBOSE: "on"
-        WERF_KUBE_CONTEXT: dev
-        WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
-
     - name: Deploy website to production
       uses: werf/actions/converge@master
       with:
