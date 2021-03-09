@@ -1,6 +1,6 @@
 {% raw %}
 ```yaml
-name: Cleanup Docker registry
+name: Cleanup container registry
 on:
   schedule:
     - cron:  '0 6 * * *'

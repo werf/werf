@@ -23,7 +23,7 @@ There are 3 types of sycnhronization components:
 
 Werf uses `--synchronization=:local` (local _storage cache_ and local _lock manager_) by default when _local storage_ is used.
 
-Werf uses `--synchronization=https://synchronization.werf.io` (http _storage cache_ and http _lock manager_) by default when docker-registry is used as _storage_.
+Werf uses `--synchronization=https://synchronization.werf.io` (http _storage cache_ and http _lock manager_) by default when container registry is used as _storage_.
 
 User may force arbitrary non-default address of synchronization service components if needed using explicit `--synchronization=:local|(kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH])|(http[s]://DOMAIN)` param.
 

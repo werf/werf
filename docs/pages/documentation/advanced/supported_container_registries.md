@@ -1,14 +1,14 @@
 ---
-title: Supported registry implementations
-permalink: documentation/advanced/supported_registry_implementations.html
+title: Supported container registries
+permalink: documentation/advanced/supported_container_registries.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
 There are several types of commands that are working with the Docker registries and require the appropriate authorization:
 
-* During the building process, werf may pull base images from the Docker registry and pull/push _stages_ in distributed builds.
-* [During the cleaning process]({{ "documentation/advanced/cleanup.html" | true_relative_url }}), werf deletes _images_ and _stages_ from the Docker registry.
-* [During the deploying process]({{ "/documentation/advanced/helm/deploy_process/steps.html" | true_relative_url }}), werf requires access to the _images_ from the Docker registry and to the _stages_ that could also be stored in the Docker registry.
+* During the building process, werf may pull base images from the container registry and pull/push _stages_ in distributed builds.
+* [During the cleaning process]({{ "documentation/advanced/cleanup.html" | true_relative_url }}), werf deletes _images_ and _stages_ from the container registry.
+* [During the deploying process]({{ "/documentation/advanced/helm/deploy_process/steps.html" | true_relative_url }}), werf requires access to the _images_ from the container registry and to the _stages_ that could also be stored in the container registry.
 
 **NOTE** You should specify your implementation by `--repo-implementation` CLI option.
 
@@ -35,7 +35,7 @@ The following implementations are fully supported and do not require additional 
 * _GitLab Registry_.
 * _Harbor_.
 
-_Azure CR_, _AWS ECR_, _Docker Hub_ and _GitHub Packages_ implementations provide Docker Registry API but do not implement the delete tag method and offer it with native API. 
+_Azure CR_, _AWS ECR_, _Docker Hub_ and _GitHub Packages_ implementations provide _Docker Registry API_ but do not implement the delete tag method and offer it with native API. 
 Therefore, werf may require extra credentials for [cleanup commands]({{ "documentation/advanced/cleanup.html" | true_relative_url }}).
 
 ## AWS ECR
@@ -84,7 +84,7 @@ To define credentials check `--repo-github-token` option and related environment
 
 ## Docker Authorization
 
-werf commands do not perform authorization and use the predefined _docker config_ to work with the Docker registry.
+werf commands do not perform authorization and use the predefined _docker config_ to work with the container registry.
 _Docker config_ is a directory with the authorization data for registries and other settings.
 By default, werf uses the same _docker config_ as the Docker utility: `~/.docker`.
 The Docker config directory can be redefined by setting a `--docker-config` option, `$DOCKER_CONFIG`, or `$WERF_DOCKER_CONFIG` environment variables.

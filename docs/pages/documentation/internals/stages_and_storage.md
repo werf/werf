@@ -161,24 +161,24 @@ $.noConflict();
 
 ## Storage
 
-_Storage_ contains the stages of the project. Stages can be stored in the docker registry or locally on a host machine.
+_Storage_ contains the stages of the project. Stages can be stored in the container registry or locally on a host machine.
 
 Most werf commands use _stages_. Such commands require specifying the location of the _storage_ using the `--repo` key or the `WERF_REPO` environment variable.
 
 There are 2 types of storage:
  1. _Local storage_. Uses local docker server runtime to store stages as docker images. 
- 2. _Remote storage_. Uses docker registry to store images. Remote storage is selected by param `--repo=DOCKER_REPO_DOMAIN`, for example `--repo=registry.mycompany.com/web/frontend/stages`. **NOTE** Each project should specify unique docker repo domain, that used only by this project.
+ 2. _Remote storage_. Uses container registry to store images. Remote storage is selected by param `--repo=CONTAINER_REGISTRY_REPO`, for example `--repo=registry.mycompany.com/web/frontend/stages`. **NOTE** Each project should specify unique docker repo domain, that used only by this project.
 
 Stages are [named differently](#stage-naming) depending on local or remote storage used.
 
-When docker registry is used as the storage for the project there is also a cache of local docker images on each host where werf is running. This cache is cleared by the werf itself or can be freely removed by other tools (such as `docker rmi`).
+When container registry is used as the storage for the project there is also a cache of local docker images on each host where werf is running. This cache is cleared by the werf itself or can be freely removed by other tools (such as `docker rmi`).
 
 Note that all werf commands that require access to _stages_ must use the same storage. Therefore, when using local storage, all werf commands must be run from the same host. When using remote storage, it does not matter which host werf is run from, as long as it is shared for these calls (applies to commands such as build, converge, cleanup, etc.).
 
-> It is recommended though to use docker registry as a storage, werf uses this mode with [CI/CD systems by default]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url }})
+> It is recommended though to use container registry as a storage, werf uses this mode with [CI/CD systems by default]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url }})
 
 Host requirements to use remote storage:
- - Connection to docker registry.
+ - Connection to container registry.
  - Connection to the Kubernetes cluster (used to synchronize multiple build/publish/deploy processes running from different machines, see more info below).
 
 ### Stage naming
@@ -193,7 +193,7 @@ myproject                   5e4cb0dcd255ac2963ec0905df3c8c8a9be64bbdfa57467aabea
 myproject                   14df0fe44a98f492b7b085055f6bc82ffc7a4fb55cd97d30331f0a93-1589786048987   54d5e60e052e        31 seconds ago      64.2MB
 ```
 
-Stages in the _remote storage_ are named using the following schema: `DOCKER_REPO_ADDRESS:STAGE_DIGEST-TIMESTAMP_MILLISEC`. For example:
+Stages in the _remote storage_ are named using the following schema: `CONTAINER_REGISTRY_REPO:STAGE_DIGEST-TIMESTAMP_MILLISEC`. For example:
 
 ```
 localhost:5000/myproject-stages                 d4bf3e71015d1e757a8481536eeabda98f51f1891d68b539cc50753a-1589714365467   7c834f0ff026        20 hours ago        66.7MB
@@ -207,5 +207,6 @@ localhost:5000/myproject-stages                 796e905d0cc975e718b3f8b3ea0199ea
 _Digest_ identifier of the stage represents content of the stage and depends on git history which lead to this content.
 
 - `PROJECT_NAME` — the project name.
+- `CONTAINER_REGISTRY_REPO` — the specified container registry repository with the `--repo` option.
 - `STAGE_DIGEST` — [the stage digest][#stage-digest].
 - `TIMESTAMP_MILLISEC` — the timestamp that is generated during [stage saving procedure]({{ "documentation/internals/build_process.html#stage-building-and-saving" | true_relative_url }}) after stage built. It is guaranteed that timestamp will be unique within specified storage.

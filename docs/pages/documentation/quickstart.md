@@ -17,18 +17,18 @@ Make sure you have `werf` command available in your shell before proceeding to t
 werf version
 ```
 
-## Prepare your Kubernetes and Docker Registry
+## Prepare your Kubernetes and container registry
 
-You should have access to the Kubernetes cluster and be able to push images to your Docker Registry. Docker Registry should also be accessible from the Kubernetes cluster to pull images.
+You should have access to the Kubernetes cluster and be able to push images to your container registry. The container registry should also be accessible from the Kubernetes cluster to pull images.
 
-If your Kubernetes and Docker Registry are running already:
+If your Kubernetes and container registry are running already:
 
- 1. Perform the standard docker login procedure into your Docker Registry from your host.
+ 1. Perform the standard docker login procedure into your container registry from your host.
  2. Make sure your Kubernetes cluster is accessible from your host (if the `kubectl` tool is already set up and running, then `werf` will also work just fine).
 
 <br>
 
-Or use one of the following instructions to set up the local Kubernetes cluster and Docker Registry in your OS:
+Or use one of the following instructions to set up the local Kubernetes cluster and container registry in your OS:
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">Windows</a>
@@ -177,7 +177,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     ```
     {% endraw %}
 
- 2. Run the converge command using your Docker Registry for storing images (`localhost:5000/quickstart-application` repository in the case of a local Docker Registry).
+ 2. Run the converge command using your container registry for storing images (`localhost:5000/quickstart-application` repository in the case of a local container registry).
 
     {% raw %}
     ```shell

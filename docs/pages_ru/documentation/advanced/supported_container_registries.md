@@ -1,6 +1,6 @@
 ---
 title: Поддерживаемые Docker Registry
-permalink: documentation/advanced/supported_registry_implementations.html
+permalink: documentation/advanced/supported_container_registries.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 

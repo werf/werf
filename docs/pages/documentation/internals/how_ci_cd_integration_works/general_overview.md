@@ -17,22 +17,22 @@ In the sections below you will learn:
 ## What is ci-env?
 
 werf gathers data from CI/CD systems with the *ci-env command* and sets modes of operation to accomplish the following tasks:
- * Docker registry integration;
+ * Container registry integration;
  * CI/CD pipelines integration;
  * CI/CD configuration integration;
  * Configuring modes of operation in CI/CD systems.
 
-### Docker registry integration
+### Container registry integration
 
 Typically, a CI/CD system can provide each job with:
- 1. Docker registry address.
- 2. Credentials to access the Docker registry.
+ 1. Container registry address.
+ 2. Credentials to access the container registry.
 
-werf ci-env command should provide authorization for all subsequent commands, allowing them to log in to the detected Docker registry using discovered credentials. Learn more [about the docker login below](#docker-registry-login). Also, the [`DOCKER_CONFIG=PATH_TO_TMP_CONFIG`](#docker_config) variable will be set as a result.
+werf ci-env command should provide authorization for all subsequent commands, allowing them to log in to the detected container registry using discovered credentials. Learn more [about the docker login below](#container-registry-login). Also, the [`DOCKER_CONFIG=PATH_TO_TMP_CONFIG`](#docker_config) variable will be set as a result.
 
-The address of the Docker registry will also be used as the basis for the `--repo` parameter. Thus, the [`WERF_REPO=DOCKER_REGISTRY_REPO`](#werf_repo) variable will be set.
+The address of the container registry will also be used as the basis for the `--repo` parameter. Thus, the [`WERF_REPO=CONTAINER_REGISTRY_REPO`](#werf_repo) variable will be set.
 
-Almost all built-in Docker registry implementations in CI/CD systems have their own peculiarities and therefore werf must know which implementation it works with (more about the features of the supported Docker registry implementations [here]({{ "documentation/advanced/supported_registry_implementations.html" | true_relative_url }})). If the registry address unambiguously determines the type of implementation, then nothing is additionally required from the user. Otherwise, the type of implementation should be specified by the `--repo-implementation` option (`$WERF_REPO_IMPLEMENTATION`). The `werf ci-env` command sets a value for the built-in Docker registry, if necessary.
+Almost all built-in container registries in CI/CD systems have their own peculiarities and therefore werf must know which one it works with (more about the features of the supported container registries [here]({{ "documentation/advanced/supported_container_registries.html" | true_relative_url }})). If the repository address unambiguously determines the container registry, then nothing is additionally required from the user. Otherwise, the container registry should be specified by the `--repo-container-registry` option (`$WERF_REPO_CONTAINER_REGISTRY`). The `werf ci-env` command sets a value for the built-in container registry, if necessary.
 
 ### CI/CD pipelines integration
 
@@ -143,19 +143,19 @@ export WERF_ADD_LABEL_MYLABEL_2="labelName2=labelValue2"
 
 Note that `_MYANNOTATION_1`, `_MYANNOTATION_2`, `_MYLABEL_1`, `_MYLABEL_2` suffixes do not affect names or values of annotations and labels, and are used solely to differentiate between multiple environment variables.
 
-### Docker registry login
+### Container registry login
 
-As noted in the [Docker registry integration](#docker-registry-integration), werf performs autologin into the detected docker registry.
+As noted in the [container registry integration](#container-registry-integration), werf performs an automatic login into the detected container registry.
 
 The ci-env command creates a new temporary [docker config](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) in all cases.
 
-The temporary docker config prevents the mutual interference of jobs running concurrently. The temporary docker config-based approach is also more secure than logging into the Docker registry using the system-wide default docker config (`~/.docker`).
+The temporary docker config prevents the mutual interference of jobs running concurrently. The temporary docker config-based approach is also more secure than logging into the container registry using the system-wide default docker config (`~/.docker`).
 
 If a `DOCKER_CONFIG` variable is defined or there is a `~/.docker` file, then werf would *copy* this existing config into a new, temporary one. So any *docker logins* performed before running the `werf ci-env` command will still be active and available using this new temporary config.
 
-After the new tmp config has been created, werf performs additional login into the detected Docker registry.
+After the new tmp config has been created, werf performs an additional login into the detected container registry.
 
-As a result of a [Docker registry integration procedure](#docker-registry-integration), `werf ci-env` would export a `DOCKER_CONFIG` variable that contains a path to the new temporary docker config.
+As a result of a [container registry integration procedure](#container-registry-integration), `werf ci-env` would export a `DOCKER_CONFIG` variable that contains a path to the new temporary docker config.
 
 This config then will be utilized by all subsequent werf commands. Also, it can be used by a `docker login` command to perform any additional custom logins depending on your needs.
 
@@ -171,11 +171,11 @@ A path to the new temporary docker config generated by the [`werf ci-env` comman
 
 #### WERF_REPO
 
-As part of the [Docker registry integration](#docker-registry-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url }}) identifies the Docker registry and defines the `--repo` parameter using `WERF_REPO` environment variable.
+As part of the [container registry integration](#container-registry-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url }}) identifies the container registry and defines the `--repo` parameter using `WERF_REPO` environment variable.
 
-#### WERF_REPO_IMPLEMENTATION
+#### WERF_REPO_CONTAINER_REGISTRY
 
-As part of the [Docker registry integration](#docker-registry-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url }}) defines the `--repo-implementation` parameter using `WERF_REPO_IMPLEMENTATION` in addition to [`WERF_REPO`](#werf_repo).
+As part of the [container registry integration](#container-registry-integration) procedure, [`werf ci-env` command]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url }}) defines the `--repo-container-registry` parameter using `WERF_REPO_CONTAINER_REGISTRY` in addition to [`WERF_REPO`](#werf_repo).
 
 #### WERF_ENV
 

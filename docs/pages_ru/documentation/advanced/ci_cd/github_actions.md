@@ -11,7 +11,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 Рабочий процесс в репозитории (набор GitHub workflow конфигураций) будет строиться на базе следующих заданий:
 * `converge` — задание сборки, публикации образов и выката приложения для одного из контуров кластера;
 * `dismiss` — задание удаления приложения (используется только для review окружений);
-* `cleanup` — задание очистки хранилища стадий и Docker registry.
+* `cleanup` — задание очистки хранилища стадий и container registry.
 
 Ключевыми шагами заданий будут наши комплексные GitHub Actions, [werf/actions](https://github.com/werf/actions), которые сочетают в себе все необходимые шаги по подготовке окружения и выполнения требуемых werf команд. В статье будут рассмотрены примеры использования большинства из них, больше подробностей можно найти в репозитории набора.
 
@@ -94,11 +94,11 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 ```
 {% endraw %}
 
-Конфигурация задания достаточно проста, поэтому хочется сделать акцент на том, чего в ней нет — явной авторизации в Docker registry, вызова `docker login`. 
+Конфигурация задания достаточно проста, поэтому хочется сделать акцент на том, чего в ней нет — явной авторизации в container registry, вызова `docker login`. 
 
-В простейшем случае, при использовании встроенной [Github Packages имплементации Docker registry](https://help.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages), авторизация выполняется автоматически при вызове команды `werf ci-env`. В качестве необходимых аргументов используются переменные окружения GitHub, [секретная переменная `GITHUB_TOKEN`](https://help.github.com/en/actions/configuring-and-managing-workflows/authenticating-with-the-github_token#about-the-github_token-secret), а также имя пользователя (`GITHUB_ACTOR`) инициировавшего запуск workflow.
+В простейшем случае, при использовании встроенного [container registry](https://help.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages), авторизация выполняется автоматически при вызове команды `werf ci-env`. В качестве необходимых аргументов используются переменные окружения GitHub, [секретная переменная `GITHUB_TOKEN`](https://help.github.com/en/actions/configuring-and-managing-workflows/authenticating-with-the-github_token#about-the-github_token-secret), а также имя пользователя (`GITHUB_ACTOR`) инициировавшего запуск workflow.
 
-Если необходимо выполнить авторизацию с произвольными учётными данными или с внешним Docker registry, то необходимо использовать готовый action для вашей имплементации или просто выполнить `docker login` перед использованием werf. 
+Если необходимо выполнить авторизацию с произвольными учётными данными или с внешним container registry, то необходимо использовать готовый action для вашего container registry или просто выполнить `docker login` перед использованием werf. 
 
 Рассмотрим оставшиеся используемые параметры на этом шаге:
 
@@ -373,7 +373,7 @@ curl \
   run: git fetch --prune --unshallow
 ```
 
-В werf встроен эффективный механизм очистки, который позволяет избежать переполнения Docker registry и диска сборочного узла от устаревших и неиспользуемых образов.
+В werf встроен эффективный механизм очистки, который позволяет избежать переполнения container registry и диска сборочного узла от устаревших и неиспользуемых образов.
 Более подробно ознакомиться с функционалом очистки, встроенным в werf, можно [здесь]({{ "documentation/advanced/cleanup.html" | true_relative_url }}).
 
 ## Полный набор конфигураций для готовых workflow

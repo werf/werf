@@ -145,8 +145,8 @@ entries:
               - title: Lint and render chart
                 url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
 
-          - title: Supported registry implementations
-            url: /documentation/advanced/supported_registry_implementations.html
+          - title: Supported container registries
+            url: /documentation/advanced/supported_container_registries.html
 
           - title: Synchronization in werf
             url: /documentation/advanced/synchronization.html
@@ -337,8 +337,8 @@ entries:
               - title: Рендеринг и проверка конфигурации
                 url: /documentation/advanced/development_and_debug/lint_and_render_chart.html
 
-          - title: Поддерживаемые Docker Registry
-            url: /documentation/advanced/supported_registry_implementations.html
+          - title: Поддерживаемые container registries
+            url: /documentation/advanced/supported_container_registries.html
 
           - title: Синхронизация в werf
             url: /documentation/advanced/synchronization.html

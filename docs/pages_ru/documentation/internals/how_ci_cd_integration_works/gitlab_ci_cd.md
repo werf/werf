@@ -11,9 +11,9 @@ permalink: documentation/internals/how_ci_cd_integration_works/gitlab_ci_cd.html
 
 Значение для установки переменной окружения [`WERF_REPO`]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo" | true_relative_url }}) формируется на основе переменной окружения GitLab [`CI_REGISTRY_IMAGE`](https://docs.gitlab.com/ee/ci/variables/).
 
-## WERF_REPO_IMPLEMENTATION
+## WERF_REPO_CONTAINER_REGISTRY
 
-Значение `gitlab` для установки переменной окружения [`WERF_REPO_IMPLEMENTATION`]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo_implementation" | true_relative_url }}) проставляется вдобавок к [`WERF_REPO`](#werf_repo) при использовании встроенного GitLab Container Registry.
+Значение `gitlab` для установки переменной окружения [`WERF_REPO_CONTAINER_REGISTRY`]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo_container_registry" | true_relative_url }}) проставляется вдобавок к [`WERF_REPO`](#werf_repo) при использовании встроенного GitLab Container Registry.
 
 ## WERF_ADD_ANNOTATION_PROJECT_GIT
 
