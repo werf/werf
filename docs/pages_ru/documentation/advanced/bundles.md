@@ -105,16 +105,8 @@ werf bundle apply --repo registry.mydomain.io/project --tag-mask v3.5.*
 
 Данный вызов выката bundle должен проверить наличие версий по указанной маске `v3.5.*`, выбрать последнюю версию в рамках `v3.5` и выкатить её.
 
-## Поддерживаемые container registry
+## Поддерживаемые container registries
 
-| Container registry | Поддержка в bundles  |
-| ------------------ | -------------------- |
-| docker registry    | поддерживается |
-| aws ecr            | поддерживается |
-| azure cr           | поддерживается |
-| docker hub         | [не поддерживается](https://github.com/werf/werf/issues/3184) |
-| gcr                | поддерживается |
-| gitlab registry    | поддерживается |
-| github packages    | [поддерживается только для новой имплементации](https://github.com/werf/werf/issues/3188) |
-| harbor             | поддерживается | 
-| quay               | [не поддерживается](https://github.com/werf/werf/issues/3182) |
+Для работы с bundles достаточно поддержки [спецификации формата изображений Open Container Initiative (OCI)](https://github.com/opencontainers/image-spec) в container registry.
+
+Подробнее про поддерживаемые container registries можно прочитать в отдельной [статье]({{ "/documentation/advanced/supported_container_registries.html" | true_relative_url }}).
