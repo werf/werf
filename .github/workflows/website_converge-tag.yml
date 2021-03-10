@@ -27,10 +27,9 @@ jobs:
           echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
 
     - name: Deploy website to production
-      uses: werf/actions/converge@master
+      uses: werf/actions/converge@v1.2
       with:
         env: production
-        group: 1.2
         channel: alpha
       env:
         WERF_RELEASE: "werfio-ng-${{ env.Version }}-production"
@@ -56,10 +55,9 @@ jobs:
           echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
 
     - name: Deploy website to test
-      uses: werf/actions/converge@master
+      uses: werf/actions/converge@v1.2
       with:
         env: test
-        group: 1.2
         channel: alpha
       env:
         WERF_RELEASE: "werfio-ng-${{ env.Version }}-test"

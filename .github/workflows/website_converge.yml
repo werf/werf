@@ -29,10 +29,9 @@ jobs:
           bash .werf/legacy/generate_artifacts.sh
 
     - name: Deploy website to production
-      uses: werf/actions/converge@master
+      uses: werf/actions/converge@v1.2
       with:
         env: production
-        group: 1.2
         channel: alpha
       env:
         WERF_RELEASE: "werfio-ng-${{ env.Version }}-production"
