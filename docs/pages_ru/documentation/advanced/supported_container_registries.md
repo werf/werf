@@ -10,7 +10,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 Используя заданный адрес репозитория (опция `--repo`) werf пытается автоматически определить container registry. Пользователь может явно указать container registry, используя опцию `--repo-container-registry` или переменную окружения `WERF_REPO_CONTAINER_REGISTRY`.
 
-|                                           | Сборка | Bundles               | Очистка                                        |
+|                                           | Сборка | Бандлы                | Очистка                                        |
 | -------------------------------------     | :----: | :-------------------: | :--------------------------------------------: |
 | _AWS ECR_                                 | **ок** |         **ок**        |            [***ок**](#aws-ecr)                 |
 | _Azure CR_                                | **ок** |         **ок**        |            [***ок**](#azure-cr)                |
@@ -37,9 +37,9 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 > Использование общей _конфигурации Docker_ при параллельном выполнении заданий в CI-системе может приводить к падениям из-за временных доступов и состояния race condition (одно задание влияет на другое, переопределяя доступы в общей _конфигурации Docker_), поэтому для каждого CI-задания мы рекомендуем создавать собственную _конфигурацию Docker_ (команда `werf ci-env` делает это по умолчанию)
 
-## Bundles
+## Бандлы
 
-Для работы с bundles достаточно поддержки [спецификации формата изображений Open Container Initiative (OCI)](https://github.com/opencontainers/image-spec) в container registry.
+Для работы с [бандлами]({{ "documentation/advanced/bundles.html" | true_relative_url }}) достаточно поддержки [спецификации формата образов Open Container Initiative (OCI)](https://github.com/opencontainers/image-spec) в container registry.
 
 ## Очистка
 
