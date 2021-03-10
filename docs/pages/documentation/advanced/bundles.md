@@ -106,14 +106,6 @@ This bundle apply should check available versions by specified mask `v3.5.*`, se
 
 ## Supported container registries
 
-| Container registry | Is bundles supported |
-| ------------------ | -------------------- |
-| docker registry    | yes                  |
-| aws ecr            | yes                  |
-| azure cr           | yes                  |
-| docker hub         | [no](https://github.com/werf/werf/issues/3184) |
-| gcr                | yes |
-| gitlab registry    | yes |
-| github packages    | [only new implementation supported](https://github.com/werf/werf/issues/3188) |
-| harbor             | yes | 
-| quay               | [no](https://github.com/werf/werf/issues/3182) |
+The [Open Container Initiative (OCI) Image Spec](https://github.com/opencontainers/image-spec) support in the container registry is sufficient to work with bundles.
+
+You can read more about supported container registries in a separate [article]({{ "/documentation/advanced/supported_container_registries.html" | true_relative_url }}).
