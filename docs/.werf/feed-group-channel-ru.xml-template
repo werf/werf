@@ -1,6 +1,8 @@
 ---
 layout: null
 permalink: /feed-##GROUP##-##CHANNEL##.xml
+search: exclude
+sitemap_include: false
 ---
 {%- assign group = "##GROUP##" %}
 {%- assign channel = "##CHANNEL##" %}

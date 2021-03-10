@@ -1,6 +1,8 @@
 ---
 layout: none
 permalink: /robots.txt
+search: exclude
+sitemap_include: false
 ---
 User-agent: *
 
