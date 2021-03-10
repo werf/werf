@@ -12,7 +12,7 @@ env:
 jobs:
 
   converge:
-    name: Converge
+    name: Converge to Production
     runs-on: tfprod-werf
     steps:
 
@@ -41,7 +41,7 @@ jobs:
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
 
   converge_test:
-    name: Converge
+    name: Converge to Test
     runs-on: tfprod-werf
     steps:
 
