@@ -19,10 +19,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Add dev artifacts
-      run: |
-          cp -f docs/.werf/dev/* docs/
-
     - name: Converge main site
       uses: werf/actions/converge@v1.2
       with:

@@ -1,0 +1,102 @@
+en:
+  /documentation: &documentation
+    title: Documentation
+    url: /index.html
+  /reference: &documentation-reference
+    title: Reference
+    url: /reference/werf_yaml.html
+  /reference/cli: &documentation-reference-cli
+    title: Command line interface
+    url: /reference/cli/overview.html
+  /advanced: &documentation-advanced
+    title: Advanced
+    url: /advanced/giterminism.html
+  /advanced/building_images_with_stapel: &documentation-advanced-building-images-with-stapel
+    title: Building images with stapel
+    url: advanced/building_images_with_stapel/base_image.html
+  /advanced/development_and_debug: &documentation-advanced-development-and-debug
+    title: Development and debug
+    url: advanced/development_and_debug/stage_introspection.html
+  /advanced/configuration: &documentation-advanced-configuration
+    title: Configuration
+    url: advanced/configuration/organizing_configuration.html
+  /advanced/ci_cd: &documentation-advanced-ci-cd
+    title: CI/CD
+    url: advanced/ci_cd/ci_cd_workflow_basics.html
+  /advanced/helm: &documentation-advanced-helm
+    title: Helm
+    url: advanced/helm/overview.html
+  /advanced/helm/configuration: &documentation-advanced-helm-configuration
+    title: Configuration
+    url: advanced/helm/configuration/templates.html
+  /advanced/helm/deploy_process: &documentation-advanced-helm-deploy_process
+    title: Deploy process
+    url: advanced/helm/deploy_process/steps.html
+  /advanced/helm/releases: &documentation-advanced-helm-releases
+    title: Releases
+    url: advanced/helm/releases/release.html
+  /internals: &documentation-internals
+    title: Internals
+    url: internals/build_process.html
+  /internals/building_of_images: &documentation-internals-building-of-images
+    title: Building of images
+    url: internals/build_process.html
+  /internals/how_ci_cd_integration_works: &documentation-internals-how-ci-cd-integration-works
+    title: How CI/CD integration works
+    url: internals/how_ci_cd_integration_works/general_overview.html
+  /internals/development: &documentation-internals-development
+    title: Development
+    url: internals/development/stapel_image.html
+  /whats_new_in_v1_2: &documentation-whats-new-in-v1-2
+    title: What's new in v1.2
+    url: whats_new_in_v1_2/changelog.html
+ru:
+  /documentation:
+    << : *documentation
+    title: Документация
+  /reference:
+    << : *documentation-reference
+    title: Справочник
+  /reference/cli:
+    << : *documentation-reference-cli
+    title: Интерфейс командной строки
+  /advanced:
+    << : *documentation-advanced
+    title: Документация продвинутого уровня
+  /advanced/building_images_with_stapel:
+    << : *documentation-advanced-building-images-with-stapel
+    title: Сборка образов с помощью Stapel
+  /advanced/development_and_debug:
+    << : *documentation-advanced-development-and-debug
+    title: Разработка и отладка
+  /advanced/configuration:
+    << : *documentation-advanced-configuration
+    title: Конфигурация
+  /advanced/ci_cd:
+    << : *documentation-advanced-ci-cd
+  /advanced/helm:
+    << : *documentation-advanced-helm
+  /advanced/helm/configuration:
+    << : *documentation-advanced-helm-configuration
+    title: Конфигурация
+  /advanced/helm/deploy_process:
+    << : *documentation-advanced-helm-deploy_process
+    title: Процесс деплоя
+  /advanced/helm/releases:
+    << : *documentation-advanced-helm-releases
+    title: Релизы
+  /internals:
+    << : *documentation-internals
+    title: Внутренности
+  /internals/building_of_images:
+    << : *documentation-internals-building-of-images
+    title: Сборка образов
+  /internals/how_ci_cd_integration_works:
+    << : *documentation-internals-how-ci-cd-integration-works
+    title: Как работает интеграция с CI/CD
+  /internals/development:
+    << : *documentation-internals-development
+    title: Для разработчиков
+  /whats_new_in_v1_2:
+    << : *documentation-whats-new-in-v1-2
+    title: Что нового в v1.2

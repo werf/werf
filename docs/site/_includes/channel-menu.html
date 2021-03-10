@@ -1,0 +1,31 @@
+{%- raw %}
+{{ $CurrentPageURL := .CurrentPageURL }}
+{{ $CurrentPageURLRelative := .CurrentPageURLRelative }}
+<li id="doc-versions-menu" class="header__menu-item header__menu-item_parent">
+{{- $first := index .VersionItems 0 }}
+<a data-proofer-ignore href="#">
+{{- if $first.Group }}
+{{- $first.Group }}-{{  $first.Channel }}
+    <span class="header__menu-item-dot"></span>
+    <span class="header__menu-item-extra">{{ $first.Version }}</span>
+{{- else }}
+{{ $first.Version }}
+{{- end }}
+</a>
+<div class="header__submenu-container">
+    <ul class="header__submenu">
+    {{- $prevVersion := "" }}
+    {{- range (slice .VersionItems 1) }}
+            <li class="header__submenu-item">
+                <a data-proofer-ignore class="header__submenu-item-link" href="/documentation/{{ .VersionURL }}{{ $CurrentPageURLRelative }}">
+                    <span class="header__submenu-item-channel"> {{ .Group }}-{{ .Channel }}</span>
+                    <span class="header__submenu-item-dot{{ if eq $prevVersion .Version }} header__submenu-item-dot_special{{ end }}"></span>
+                    <span class="header__submenu-item-release">{{ .Version }}</span>
+                </a>
+            </li>
+        {{ $prevVersion = .Version }}
+    {{- end }}
+    </ul>
+</div>
+</li>
+{% endraw %}

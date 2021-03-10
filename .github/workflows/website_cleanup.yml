@@ -1,0 +1,39 @@
+name: Cleanup Docker registry
+on:
+  schedule:
+    - cron:  '0 6 * * *'
+  repository_dispatch:
+    types: [cleanup]
+
+jobs:
+  cleanup:
+    name: Cleanup
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Fetch all history for all tags and branches
+        run: git fetch --prune --unshallow
+
+      - name: Cleanup documentation
+        uses: werf/actions/converge@v1.2
+        with:
+          env: test
+          channel: alpha
+        env:
+          WERF_DIR: "docs/documentation"
+          WERF_LOG_VERBOSE: "on"
+          WERF_KUBE_CONTEXT: dev
+          WERF_SET_GITHUB_REF: "global.github_ref=master"
+
+      - name: Cleanup site
+        uses: werf/actions/converge@v1.2
+        with:
+          env: test
+          channel: alpha
+        env:
+          WERF_DIR: "docs/site"
+          WERF_LOG_VERBOSE: "on"
+          WERF_KUBE_CONTEXT: dev
+          WERF_SET_GITHUB_REF: "global.github_ref=master"

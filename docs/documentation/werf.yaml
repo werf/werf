@@ -1,0 +1,99 @@
+project: werfio-ng
+configVersion: 1
+
+---
+artifact: asset
+from: jekyll/builder:3
+fromCacheVersion: "1"
+ansible:
+  install:
+  - shell: |
+      export PATH=/usr/jekyll/bin/:$PATH
+      gem update bundler
+  - name: "Install Dependencies"
+    shell: bundle install
+    args:
+      executable: /bin/bash
+      chdir: /app/docs
+  beforeSetup:
+  - file:
+      path: "{{`{{ item }}`}}"
+      state: directory
+      mode: 0777
+    with_items:
+    - /app/_site/main/
+    - /app/_site/ru/
+  - shell: |
+      JEKYLL_ENV=production jekyll build -s /app/docs/documentation  -d /app/_site/main/ --config /app/docs/_config.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs/documentation  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml
+    args:
+      executable: /bin/bash
+      chdir: /app/docs/documentation
+git:
+- add: /docs
+  to: /app/docs
+  owner: jekyll
+  group: jekyll
+  excludePaths:
+  - '**/*.sh'
+  - '**/werf.yaml'
+  - .helm
+  - site
+  - .github
+  stageDependencies:
+    install: ['Gemfile','Gemfile.lock']
+    beforeSetup: '**/*'
+---
+image: web
+from: nginx:stable-alpine
+fromCacheVersion: "1"
+ansible:
+  setup:
+  - name: "Setup /etc/nginx/nginx.conf"
+    copy:
+      content: |
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
+import:
+- artifact: asset
+  add: /app/_site
+  to: /app/
+  before: setup
+---
+artifact: web-backend-artifact
+from: golang:1.15
+ansible:
+  install:
+    - name: Build apis
+      shell: |
+        go get -d -v ./
+        go build -ldflags "-w -s" -v -o /go/src/app/server /go/src/app/
+      args:
+        executable: /bin/bash
+        chdir: /go/src/app
+git:
+  - add: /docs/backend
+    to: /go/src/app
+    stageDependencies:
+      install: '**/*'
+---
+image: web-backend
+docker:
+  WORKDIR: /app
+from: ubuntu:20.04
+fromCacheVersion: "1"
+ansible:
+  install:
+    - apt:
+        name: ['git','curl', 'jq', 'vim']
+        state: present
+        update_cache: yes
+import:
+  - artifact: web-backend-artifact
+    add: /go/src/app/server
+    to: /app/server
+    before: setup
+  - artifact: asset
+    add: /app/_site
+    to: /app/root
+    before: setup

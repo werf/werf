@@ -1,8 +1,8 @@
 _site/
 .sass-cache/
-.jekyll-metadata
-.jekyll-cache
-_pdf
+.jekyll-metadata/
+.jekyll-cache/
+_pdf/
 .idea/
 backend/multiwerf/
 backend/vendor/

@@ -11,6 +11,9 @@ site_urls:
   en: https://werf.io
 site_description: Consistent delivery tool. Git as a single source of truth. Build, deploy to Kubernetes, stay in sync.
 
+assets:
+  precompile: ['**/*.*']
+
 social_links:
   ru:
     twitter: https://twitter.com/werf_io
@@ -29,7 +32,9 @@ exclude:
 - vendor
 - Gemfile
 - Gemfile.lock
+- werf.yaml
 - "*.sh"
+- backend
 - pages_ru/
 
 highlighter: rouge

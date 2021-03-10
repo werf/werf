@@ -96,7 +96,7 @@ func replaceLinks(s string) string {
 	links := xurls.Relaxed.FindAllString(s, -1)
 	for _, link := range links {
 		linkText := link
-		for _, prefix := range []string{"werf.io", "https://werf.io"} {
+		for _, prefix := range []string{"werf.io/documentation", "https://werf.io/documentation"} {
 			if strings.HasPrefix(link, prefix) {
 				link = strings.TrimPrefix(link, prefix)
 				link = fmt.Sprintf("{{ \"%s\" | relative_url }}", link)
@@ -137,10 +137,10 @@ func genCliPages(cmd *cobra.Command, pagesDir string) error {
 	fullCommandName := fullCommandFilesystemPath(cmd.CommandPath())
 	cmdPage := fmt.Sprintf(`---
 title: %s
-permalink: documentation/reference/cli/%s.html
+permalink: reference/cli/%s.html
 ---
 
-{%% include /documentation/reference/cli/%s.md %%}
+{%% include /reference/cli/%s.md %%}
 `, cmd.CommandPath(), fullCommandName, fullCommandName)
 
 	path := filepath.Join(pagesDir, fmt.Sprintf("%s.md", fullCommandName))
@@ -169,7 +169,7 @@ func GenCliSidebar(cmdGroups templates.CommandGroups, sidebarPath string) error 
 cli: &cli
   
   - title: Overview of command groups
-    url: /documentation/reference/cli/overview.html
+    url: /reference/cli/overview.html
 `)
 
 	for _, group := range cmdGroups {
@@ -209,7 +209,7 @@ func genCliSidebar(cmd *cobra.Command, indent int, buf *bytes.Buffer) error {
 
 		commandRecord := fmt.Sprintf(`
 %[1]s- title: %[2]s
-%[1]s  url: /documentation/reference/cli/%[3]s.html
+%[1]s  url: /reference/cli/%[3]s.html
 `, strings.Repeat("  ", indent), cmd.CommandPath(), fullCommandName)
 
 		_, err := buf.WriteString(commandRecord)
@@ -245,7 +245,7 @@ func genCliSidebar(cmd *cobra.Command, indent int, buf *bytes.Buffer) error {
 func GenCliOverview(cmdGroups templates.CommandGroups, pagesDir string) error {
 	indexPage := `---
 title: Overview of command groups
-permalink: documentation/reference/cli/overview.html
+permalink: reference/cli/overview.html
 toc: false
 ---
 
@@ -271,7 +271,7 @@ toc: false
 				fullCommandName = fullCommandFilesystemPath(cmd.Commands()[0].CommandPath())
 			}
 
-			indexPage += fmt.Sprintf(" - [werf %s]({{ \"/documentation/reference/cli/%s.html\" | relative_url }}) — {%% include /documentation/reference/cli/%s.short.md %%}.\n", cmd.Name(), fullCommandName, fullCommandName)
+			indexPage += fmt.Sprintf(" - [werf %s]({{ \"/reference/cli/%s.html\" | relative_url }}) — {%% include /reference/cli/%s.short.md %%}.\n", cmd.Name(), fullCommandName, fullCommandName)
 		}
 
 		doNewline = true

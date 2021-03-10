@@ -2,7 +2,7 @@ package errors
 
 import "fmt"
 
-const docPageURL = "https://werf.io/v1.2-alpha/documentation/advanced/giterminism.html"
+const docPageURL = "https://werf.io/documentation/advanced/giterminism.html"
 
 func NewError(msg string) error {
 	return fmt.Errorf(`%s

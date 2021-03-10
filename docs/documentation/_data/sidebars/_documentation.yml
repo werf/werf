@@ -1,0 +1,372 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+  en:
+    f:
+      - title: Overview
+        url: /index.html
+
+      - title: Quickstart
+        url: /quickstart.html
+
+      - title: Using with CI/CD systems
+        url: /using_with_ci_cd_systems.html
+
+      - title: Reference
+        f:
+
+          - title: werf.yaml
+            url: /reference/werf_yaml.html
+
+          - title: werf.yaml template engine
+            url: /reference/werf_yaml_template_engine.html
+
+          - title: werf-giterminism.yaml
+            url: /reference/werf_giterminism_yaml.html
+
+          - title: Deploy annotations
+            url: /reference/deploy_annotations.html
+
+          - title: Command line interface
+            f: *cli
+
+      - title: Advanced
+        f:
+
+          - title: Giterminism
+            url: /advanced/giterminism.html
+
+          - title: Helm
+            f:
+              - title: Overview
+                url: /advanced/helm/overview.html
+
+              - title: Configuration
+                f:
+
+                  - title: Chart
+                    url: /advanced/helm/configuration/chart.html
+
+                  - title: Templates
+                    url: /advanced/helm/configuration/templates.html
+
+                  - title: Values
+                    url: /advanced/helm/configuration/values.html
+
+                  - title: Giterminism
+                    url: /advanced/helm/configuration/giterminism.html
+
+                  - title: Secrets
+                    url: /advanced/helm/configuration/secrets.html
+
+                  - title: Chart dependencies
+                    url: /advanced/helm/configuration/chart_dependencies.html
+
+              - title: Deploy process
+                f:
+                  - title: Steps
+                    url: /advanced/helm/deploy_process/steps.html
+
+                  - title: Helm hooks
+                    url: /advanced/helm/deploy_process/helm_hooks.html
+
+                  - title: Annotating and labeling of chart resources
+                    url: /advanced/helm/deploy_process/annotating_and_labeling.html
+
+              - title: Releases
+                f:
+                  - title: Release
+                    url: /advanced/helm/releases/release.html
+
+                  - title: Naming
+                    url: /advanced/helm/releases/naming.html
+
+                  - title: Manage releases
+                    url: /advanced/helm/releases/manage_releases.html
+
+          - title: Cleanup
+            url: /advanced/cleanup.html
+
+          - title: Bundles
+            url: /advanced/bundles.html
+
+          - title: CI/CD
+            f:
+
+              - title: CI/CD workflow basics
+                url: /advanced/ci_cd/ci_cd_workflow_basics.html
+
+              - title: Generic CI/CD integration
+                url: /advanced/ci_cd/generic_ci_cd_integration.html
+
+              - title: GitLab CI/CD
+                url: /advanced/ci_cd/gitlab_ci_cd.html
+
+              - title: GitHub Actions
+                url: /advanced/ci_cd/github_actions.html
+
+          - title: Building images with stapel
+            f:
+
+              - title: Base image (required)
+                url: /advanced/building_images_with_stapel/base_image.html
+
+              - title: Adding docker instructions
+                url: /advanced/building_images_with_stapel/docker_directive.html
+
+              - title: Adding source code from git repositories
+                url: /advanced/building_images_with_stapel/git_directive.html
+
+              - title: Running assembly instructions
+                url: /advanced/building_images_with_stapel/assembly_instructions.html
+
+              - title: Reducing image size and speeding up a build by mounts
+                url: /advanced/building_images_with_stapel/mount_directive.html
+
+              - title: Importing from images and artifacts
+                url: /advanced/building_images_with_stapel/import_directive.html
+
+              - title: Artifacts
+                url: /advanced/building_images_with_stapel/artifacts.html
+
+          - title: Development and debug
+            f:
+
+              - title: Stage Introspection
+                url: /advanced/development_and_debug/stage_introspection.html
+
+              - title: Lint and render chart
+                url: /advanced/development_and_debug/lint_and_render_chart.html
+
+          - title: Supported container registries
+            url: /advanced/supported_container_registries.html
+
+          - title: Synchronization in werf
+            url: /advanced/synchronization.html
+
+      - title: Internals
+        f:
+
+          - title: Stages and storage
+            url: /internals/stages_and_storage.html
+
+          - title: Build process
+            url: /internals/build_process.html
+
+          - title: How CI/CD integration works
+            f:
+
+              - title: General overview
+                url: /internals/how_ci_cd_integration_works/general_overview.html
+
+              - title: GitLab CI/CD
+                url: /internals/how_ci_cd_integration_works/gitlab_ci_cd.html
+
+              - title: GitHub Actions
+                url: /internals/how_ci_cd_integration_works/github_actions.html
+
+          - title: Names slug algorithm
+            url: /internals/names_slug_algorithm.html
+
+          - title: Integration with SSH agent
+            url: /internals/integration_with_ssh_agent.html
+
+          - title: Development
+            f:
+
+              - title: Stapel image
+                url: /internals/development/stapel_image.html
+
+      - title: What's new in v1.2
+        f:
+
+          - title: Changelog
+            url: /whats_new_in_v1_2/changelog.html
+          
+          - title: How to migrate from v1.1 to v1.2
+            url: /whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html
+
+  ru:
+    f:
+      - title: Обзор
+        url: /index.html
+
+      - title: Быстрый старт
+        url: /quickstart.html
+
+      - title: Использование в CI/CD системах
+        url: /using_with_ci_cd_systems.html
+
+      - title: Справочник
+        f:
+
+          - title: werf.yaml
+            url: /reference/werf_yaml.html
+
+          - title: Шаблонизатор werf.yaml
+            url: /reference/werf_yaml_template_engine.html
+
+          - title: werf-giterminism.yaml
+            url: /reference/werf_giterminism_yaml.html
+
+          - title: Аннотации для деплоя
+            url: /reference/deploy_annotations.html
+
+          - title: Интерфейс командной строки
+            f: *cli
+
+      - title: Документация продвинутого уровня
+        f:
+
+          - title: Гитерминизм
+            url: /advanced/giterminism.html
+
+          - title: Helm
+            f:
+              - title: Обзор
+                url: /advanced/helm/overview.html
+
+              - title: Конфигурация
+                f:
+
+                  - title: Чарт
+                    url: /advanced/helm/configuration/chart.html
+
+                  - title: Шаблоны
+                    url: /advanced/helm/configuration/templates.html
+
+                  - title: Данные (values)
+                    url: /advanced/helm/configuration/values.html
+
+                  - title: Гитерминизм
+                    url: /advanced/helm/configuration/giterminism.html
+
+                  - title: Секреты
+                    url: /advanced/helm/configuration/secrets.html
+
+                  - title: Зависимости чарта
+                    url: /advanced/helm/configuration/chart_dependencies.html
+
+              - title: Процесс деплоя
+                f:
+                  - title: Шаги
+                    url: /advanced/helm/deploy_process/steps.html
+
+                  - title: Helm хуки
+                    url: /advanced/helm/deploy_process/helm_hooks.html
+
+                  - title: Аннотации и лейблы для ресурсов чарта
+                    url: /advanced/helm/deploy_process/annotating_and_labeling.html
+
+              - title: Релизы
+                f:
+                  - title: Релиз
+                    url: /advanced/helm/releases/release.html
+
+                  - title: Именование
+                    url: /advanced/helm/releases/naming.html
+
+                  - title: Управление релизами
+                    url: /advanced/helm/releases/manage_releases.html
+
+          - title: Очистка
+            url: /advanced/cleanup.html
+
+          - title: Bundles
+            url: /advanced/bundles.html
+
+          - title: CI/CD
+            f:
+
+              - title: Основы организации CI/CD
+                url: /advanced/ci_cd/ci_cd_workflow_basics.html
+
+              - title: Интеграция с CI/CD-системами
+                url: /advanced/ci_cd/generic_ci_cd_integration.html
+
+              - title: Интеграция с GitLab CI/CD
+                url: /advanced/ci_cd/gitlab_ci_cd.html
+
+              - title: Интеграция с GitHub Actions
+                url: /advanced/ci_cd/github_actions.html
+
+          - title: Сборка образов с помощью Stapel
+            f:
+
+              - title: Базовый образ
+                url: /advanced/building_images_with_stapel/base_image.html
+
+              - title: Использование Docker-инструкций
+                url: /advanced/building_images_with_stapel/docker_directive.html
+
+              - title: Добавление исходного кода из git-репозиториев
+                url: /advanced/building_images_with_stapel/git_directive.html
+
+              - title: Запуск инструкций сборки
+                url: /advanced/building_images_with_stapel/assembly_instructions.html
+
+              - title: Ускорение сборки и уменьшение размера за счёт монтирования
+                url: /advanced/building_images_with_stapel/mount_directive.html
+
+              - title: Импорт из артефактов и образов
+                url: /advanced/building_images_with_stapel/import_directive.html
+
+              - title: Артефакты
+                url: /advanced/building_images_with_stapel/artifacts.html
+
+          - title: Разработка и отладка
+            f:
+
+              - title: Интроспекция стадий
+                url: /advanced/development_and_debug/stage_introspection.html
+
+              - title: Рендеринг и проверка конфигурации
+                url: /advanced/development_and_debug/lint_and_render_chart.html
+
+          - title: Поддерживаемые container registries
+            url: /advanced/supported_container_registries.html
+
+          - title: Синхронизация в werf
+            url: /advanced/synchronization.html
+
+      - title: Внутренности
+        f:
+
+          - title: Стадии и хранилище
+            url: /internals/stages_and_storage.html
+
+          - title: Процесс сборки
+            url: /internals/build_process.html
+
+          - title: Как работает интеграция с CI/CD
+            f:
+
+              - title: Общие сведения
+                url: /internals/how_ci_cd_integration_works/general_overview.html
+
+              - title: GitLab CI/CD
+                url: /internals/how_ci_cd_integration_works/gitlab_ci_cd.html
+
+              - title: GitHub Actions
+                url: /internals/how_ci_cd_integration_works/github_actions.html
+
+          - title: Преобразование имен в werf
+            url: /internals/names_slug_algorithm.html
+
+          - title: Интеграция с SSH-агентом
+            url: /internals/integration_with_ssh_agent.html
+
+          - title: Для разработчиков
+            f:
+
+              - title: Образ Stapel
+                url: /internals/development/stapel_image.html
+
+      - title: Что нового в v1.2
+        f:
+
+          - title: Changelog
+            url: /whats_new_in_v1_2/changelog.html
+
+          - title: Как мигрировать с v1.1 на v1.2
+            url: /whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html

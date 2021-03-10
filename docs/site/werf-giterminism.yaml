@@ -1,0 +1,9 @@
+giterminismConfigVersion: 1
+config:
+  goTemplateRendering:
+    allowUncommittedFiles:
+      - releases.json
+      - .werf/artifacts/releases.json
+      - .werf/artifacts/releases_history.json
+      - .werf/artifacts/channels_versions.json
+      - .werf/artifacts/feeds.tgz.base64
