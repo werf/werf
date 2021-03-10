@@ -72,7 +72,7 @@ The action `werf/actions/converge` combines all the necessary steps, sets up an 
 {% raw %}
 ```yaml
 - name: Converge
-  uses: werf/actions/converge@master
+  uses: werf/actions/converge@v1.1
   with:
     env: ANY_ENV_NAME
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
@@ -90,7 +90,7 @@ The `kubectl` interface is already pre-installed on GitHub virtual machines, so 
 {% raw %}
 ```yaml
 - name: Converge
-  uses: werf/actions/converge@master
+  uses: werf/actions/converge@v1.1
   with:
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
 ```
@@ -107,7 +107,7 @@ Now, let us explore other parameters used in this step:
 {% raw %}
 ```yaml
 - name: Converge
-  uses: werf/actions/converge@master
+  uses: werf/actions/converge@v1.1
   with:
     env: ANY_ENV_NAME
   env:
