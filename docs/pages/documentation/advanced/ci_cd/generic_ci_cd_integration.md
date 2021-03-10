@@ -15,9 +15,9 @@ Below, we will outline the most important things to consider while you're creati
 
 ## Ci-env procedures
 
-### Docker registry integration
+### Container registry integration
 
-According to [Docker registry integration]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#docker-registry-integration" | true_relative_url }}) procedure, variables to define:
+According to [container registry integration]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#container-registry-integration" | true_relative_url }}) procedure, variables to define:
  * [`DOCKER_CONFIG`]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#docker_config" | true_relative_url }});
  * [`WERF_REPO`]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo" | true_relative_url }}).
 

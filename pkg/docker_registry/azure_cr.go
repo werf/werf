@@ -91,7 +91,7 @@ func (r *azureCr) parseReference(reference string) (string, string, error) {
 	}
 
 	if !strings.HasSuffix(parsedReference.RegistryStr(), ".azurecr.io") {
-		return "", "", fmt.Errorf("reference %s is not compatible with %s docker registry implementation", reference, r.String())
+		return "", "", fmt.Errorf("reference %s is not compatible with %s container registry", reference, r.String())
 	}
 
 	registryId = strings.TrimSuffix(parsedReference.RegistryStr(), ".azurecr.io")

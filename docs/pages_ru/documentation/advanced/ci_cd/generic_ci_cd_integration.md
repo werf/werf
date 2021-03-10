@@ -15,13 +15,13 @@ permalink: documentation/advanced/ci_cd/generic_ci_cd_integration.html
 
 ## Настройка CI-окружения
 
-### Интеграция с Docker registry
+### Интеграция с container registry
 
-Согласно процедуре [интеграции с Docker registry]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#интеграция-с-docker-registry" | true_relative_url }}) необходимо определить следующие переменные:
+Согласно процедуре [интеграции с container registry]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#интеграция-с-container-registry" | true_relative_url }}) необходимо определить следующие переменные:
  * [`DOCKER_CONFIG`]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#docker_config" | true_relative_url }});
  * [`WERF_REPO`]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html#werf_repo" | true_relative_url }}).
 
-Создадим временную папку для конфигураций docker на базе существующей и определим Docker registry для публикации собранных образов:
+Создадим временную папку для конфигураций docker на базе существующей и определим container registry для публикации собранных образов:
 
 ```shell
 TMP_DOCKER_CONFIG=$(mktemp -d)

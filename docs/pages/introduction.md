@@ -85,21 +85,21 @@ werf is a CLI tool for implementing a full deployment cycle for your application
                 <a href="javascript:void(0)"
                     data-presentation-selector-option="6"
                     data-presentation-selector-stage="Converge">
-                    2. Read images that are already available in the Docker Registry.
+                    2. Read images that are already available in the container registry.
                 </a>
             </div>
             <div class="introduction-presentation__controls-selector-step">
                 <a href="javascript:void(0)"
                     data-presentation-selector-option="7"
                     data-presentation-selector-stage="Converge">
-                    3. Calculate the difference between images required for the current Git commit state and those that are already available in the Docker Registry.
+                    3. Calculate the difference between images required for the current Git commit state and those that are already available in the container registry.
                 </a>
             </div>
             <div class="introduction-presentation__controls-selector-step">
                 <a href="javascript:void(0)"
                     data-presentation-selector-option="8"
                     data-presentation-selector-stage="Converge">
-                    4. Build and publish only those images that do not exist in the Docker Registry (if any).
+                    4. Build and publish only those images that do not exist in the container registry (if any).
                 </a>
             </div>
             <div class="introduction-presentation__controls-selector-step">

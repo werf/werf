@@ -14,7 +14,8 @@ type RepoData struct {
 	IsCommon               bool
 	DesignationStorageName string
 
-	Implementation    *string
+	Implementation    *string // legacy
+	ContainerRegistry *string
 	DockerHubUsername *string
 	DockerHubPassword *string
 	DockerHubToken    *string
@@ -24,12 +25,23 @@ type RepoData struct {
 	QuayToken         *string
 }
 
+func (d *RepoData) GetContainerRegistry() string {
+	if *d.ContainerRegistry != "" {
+		return *d.ContainerRegistry
+	} else if *d.Implementation != "" {
+		return *d.Implementation
+	} else {
+		return ""
+	}
+}
+
 func MergeRepoData(repoDataArr ...*RepoData) *RepoData {
 	res := &RepoData{}
 
 	for _, repoData := range repoDataArr {
-		if res.Implementation == nil || *res.Implementation == "" {
-			res.Implementation = repoData.Implementation
+		if res.GetContainerRegistry() == "" {
+			value := repoData.GetContainerRegistry()
+			res.ContainerRegistry = &value
 		}
 		if res.DockerHubUsername == nil || *res.DockerHubUsername == "" {
 			res.DockerHubUsername = repoData.DockerHubUsername
@@ -57,23 +69,36 @@ func MergeRepoData(repoDataArr ...*RepoData) *RepoData {
 	return res
 }
 
+// legacy
 func SetupImplementationForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
-	var usageTitle string
-	if repoData.IsCommon {
-		usageTitle = "Choose repo implementation"
-	} else {
-		usageTitle = fmt.Sprintf("Choose repo implementation for %s", repoData.DesignationStorageName)
-	}
-
 	repoData.Implementation = new(string)
 	cmd.Flags().StringVarP(
 		repoData.Implementation,
 		paramName,
 		"",
 		getDefaultValueByParamEnvNames(paramEnvNames),
+		"",
+	)
+	cmd.Flag(paramName).Hidden = true
+}
+
+func SetupContainerRegistryForRepoData(repoData *RepoData, cmd *cobra.Command, paramName string, paramEnvNames []string) {
+	var usageTitle string
+	if repoData.IsCommon {
+		usageTitle = "Choose repo container registry"
+	} else {
+		usageTitle = fmt.Sprintf("Choose repo container registry for %s", repoData.DesignationStorageName)
+	}
+
+	repoData.ContainerRegistry = new(string)
+	cmd.Flags().StringVarP(
+		repoData.ContainerRegistry,
+		paramName,
+		"",
+		getDefaultValueByParamEnvNames(paramEnvNames),
 		fmt.Sprintf(`%s.
-The following docker registry implementations are supported: %s.
-Default %s or auto mode (detect implementation by a registry).`,
+The following container registries are supported: %s.
+Default %s or auto mode (detect container registry by repo address).`,
 			usageTitle,
 			strings.Join(docker_registry.ImplementationList(), ", "),
 			strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "),

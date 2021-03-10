@@ -84,7 +84,7 @@ description: Обширная и понятная документация по 
  - [CI/CD]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | true_relative_url }}) — описываются ключевые аспекты организации рабочих процессов в рамках CI/CD с помощью werf. Здесь вы узнаете об использовании werf в GitLab CI/CD, GitHub Actions и других CI/CD системах.
  - [Сборка образов с помощью Stapel]({{ "documentation/reference/werf_yaml.html#секция-image" | true_relative_url }}) рассказывает о кастомном сборщике introduces werf под названием Stapel. Интегрированный в него алгоритм распределенной сборки позволяет организовывать пайплайны сборки, отличающиеся чрезвычайно высокой скоростью работы, с применением распределенного кэширования и инкрементными ре-билдами, базирующимися на Git-истории вашего приложения.
  - [Разработка и отладка]({{ "documentation/advanced/development_and_debug/stage_introspection.html" | true_relative_url }}) повествует об отладке процессов сборки и развертывания приложения в случае, когда что-то пошло не так. Здесь же приводятся инструкции о настройке локальной среду разработки.
- - [Поддерживаемые реализации container registry]({{ "documentation/advanced/supported_registry_implementations.html" | true_relative_url }}) — приводятся общие сведения о поддерживаемых реализациях container registry и рассказывается об авторизации.
+ - [Поддерживаемые container registries]({{ "documentation/advanced/supported_container_registries.html" | true_relative_url }}) содержит информацию об особенностях использования различных container registries.
 </div>
         </div>
     </div>

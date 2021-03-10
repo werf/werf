@@ -23,7 +23,7 @@ permalink: documentation/advanced/synchronization.html
 
 Werf использует `--synchronization=:local` (локальный _кеш хранилища_ и локальный _менеджер блокировок_) по умолчанию, если используется локальное хранилище.
 
-Werf использует `--synchronization=https://synchronization.werf.io` по умолчанию, если используется удалённое хранилище (`--repo=DOCKER_REPO_ADDRESS`).
+Werf использует `--synchronization=https://synchronization.werf.io` по умолчанию, если используется удалённое хранилище (`--repo=CONTAINER_REGISTRY_REPO`).
 
 Пользователь может принудительно указать произвольный адрес компонентов для синхронизации, если это необходимо, с помощью явного указания опции `--synchronization=:local|(kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH])|(http[s]://DOMAIN)`.
 

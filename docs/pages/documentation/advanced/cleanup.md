@@ -41,7 +41,7 @@ These policies determine which _images_ will be deleted while leaving all others
 
 The _end-image_ is the result of a building process. It can be associated with an arbitrary number of Docker tags.  The _end-image_ is linked to the werf internal identifier aka the stages [digest]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}).
 
-The cleanup algorithm is based on the fact that the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url }}) has information about commits related to publishing tags associated with a specific [digest of image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) (and it does not matter whether an image in the Docker registry was added, modified, or stayed the same). This information includes bundles of commit + _digest_ for a specific `image` in the `werf.yaml`.
+The cleanup algorithm is based on the fact that the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url }}) has information about commits related to publishing tags associated with a specific [digest of image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) (and it does not matter whether an image in the container registry was added, modified, or stayed the same). This information includes bundles of commit + _digest_ for a specific `image` in the `werf.yaml`.
 
 Following the results of building and publishing of some commit, the end-image may stay unchanged. However, information about the publishing of a [digest of image stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) because of that commit will be added to the stages storage.
 

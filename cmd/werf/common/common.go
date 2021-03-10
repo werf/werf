@@ -342,7 +342,8 @@ func getFirstExistingEnvVarAsString(envNames ...string) string {
 func SetupCommonRepoData(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.CommonRepoData = &RepoData{IsCommon: true}
 
-	SetupImplementationForRepoData(cmdData.CommonRepoData, cmd, "repo-implementation", []string{"WERF_REPO_IMPLEMENTATION"})
+	SetupImplementationForRepoData(cmdData.CommonRepoData, cmd, "repo-implementation", []string{"WERF_REPO_IMPLEMENTATION"}) // legacy
+	SetupContainerRegistryForRepoData(cmdData.CommonRepoData, cmd, "repo-container-registry", []string{"WERF_REPO_CONTAINER_REGISTRY"})
 	SetupDockerHubUsernameForRepoData(cmdData.CommonRepoData, cmd, "repo-docker-hub-username", []string{"WERF_REPO_DOCKER_HUB_USERNAME"})
 	SetupDockerHubPasswordForRepoData(cmdData.CommonRepoData, cmd, "repo-docker-hub-password", []string{"WERF_REPO_DOCKER_HUB_PASSWORD"})
 	SetupDockerHubTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-docker-hub-token", []string{"WERF_REPO_DOCKER_HUB_TOKEN"})
@@ -862,7 +863,7 @@ func GetOptionalStagesStorageAddress(cmdData *CmdData) string {
 }
 
 func GetStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
-	if err := ValidateRepoImplementation(*cmdData.CommonRepoData.Implementation); err != nil {
+	if err := ValidateRepoContainerRegistry(cmdData.CommonRepoData.GetContainerRegistry()); err != nil {
 		return nil, err
 	}
 
@@ -871,7 +872,7 @@ func GetStagesStorage(stagesStorageAddress string, containerRuntime container_ru
 		containerRuntime,
 		storage.StagesStorageOptions{
 			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
-				Implementation: *cmdData.CommonRepoData.Implementation,
+				ContainerRegistry: cmdData.CommonRepoData.GetContainerRegistry(),
 				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
 					InsecureRegistry:      *cmdData.InsecureRegistry,
 					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -1287,17 +1288,17 @@ func DockerRegistryInit(cmdData *CmdData) error {
 	return docker_registry.Init(BackgroundContext(), *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
-func ValidateRepoImplementation(implementation string) error {
+func ValidateRepoContainerRegistry(containerRegistry string) error {
 	supportedValues := docker_registry.ImplementationList()
 	supportedValues = append(supportedValues, "auto", "")
 
-	for _, supportedImplementation := range supportedValues {
-		if supportedImplementation == implementation {
+	for _, supportedContainerRegistry := range supportedValues {
+		if supportedContainerRegistry == containerRegistry {
 			return nil
 		}
 	}
 
-	return fmt.Errorf("specified docker registry implementation %q is not supported", implementation)
+	return fmt.Errorf("specified container registry %q is not supported", containerRegistry)
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {

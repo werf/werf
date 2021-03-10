@@ -58,15 +58,13 @@ type RepoStagesStorage struct {
 
 type RepoStagesStorageOptions struct {
 	docker_registry.DockerRegistryOptions
-	Implementation string
+	ContainerRegistry string
 }
 
 func NewRepoStagesStorage(repoAddress string, containerRuntime container_runtime.ContainerRuntime, options RepoStagesStorageOptions) (*RepoStagesStorage, error) {
-	implementation := options.Implementation
-
-	dockerRegistry, err := docker_registry.NewDockerRegistry(repoAddress, implementation, options.DockerRegistryOptions)
+	dockerRegistry, err := docker_registry.NewDockerRegistry(repoAddress, options.ContainerRegistry, options.DockerRegistryOptions)
 	if err != nil {
-		return nil, fmt.Errorf("error creating docker registry accessor for repo %q: %s", repoAddress, err)
+		return nil, fmt.Errorf("error creating container registry accessor for repo %q: %s", repoAddress, err)
 	}
 
 	return &RepoStagesStorage{

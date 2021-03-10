@@ -32,9 +32,9 @@ Also, there are some more specific werf commands, such as:
 
 werf is designed to be easily embedded into any CI/CD system. The process is simple and intuitive - just follow the steps below:
 
- 1. Configure a CI/CD job to access the Kubernetes cluster and the Docker Registry.
+ 1. Configure a CI/CD job to access the Kubernetes cluster and the container registry.
  2. Checkout the target git commit in the project repository.
- 3. Call the `werf converge` command to deploy an app, or `werf dismiss` command to terminate the app, or `werf cleanup` to clean up unused docker images from the Docker Registry.
+ 3. Call the `werf converge` command to deploy an app, or `werf dismiss` command to terminate the app, or `werf cleanup` to clean up unused docker images from the container registry.
 
 ### Connecting to the Kubernetes cluster
 
@@ -62,20 +62,20 @@ werf converge
 </div>
 </div>
 
-### Configure a CI/CD job to access the Docker Registry
+### Configure a CI/CD job to access the container registry
 
-You probably need a private Docker Registry if your project involves any custom images (rather than publicly available) that have to be built for the project specifically. In such a case, the Docker Registry instance should be accessible from the CI/CD runner host (to publish newly built images) and from within your Kubernetes cluster (to pull those images).
+You probably need a private container registry if your project involves any custom images (rather than publicly available) that have to be built for the project specifically. In such a case, the container registry instance should be accessible from the CI/CD runner host (to publish newly built images) and from within your Kubernetes cluster (to pull those images).
 
-If you have configured the `docker` tool to access the private Docker Registry from your host, then `werf` would work with this Docker Registry right out-of-the-box, since it uses the same docker config settings (the default `~/.docker/` config directory or the `DOCKER_CONFIG` environment variable).
+If you have configured the `docker` tool to access the private container registry from your host, then `werf` would work with this container registry right out-of-the-box, since it uses the same docker config settings (the default `~/.docker/` config directory or the `DOCKER_CONFIG` environment variable).
 
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">Otherwise, perform the standard docker login procedure into your Docker Registry.</a>
+<a href="javascript:void(0)" class="details__summary">Otherwise, perform the standard docker login procedure into your container registry.</a>
 <div class="details__content" markdown="1">
 ```shell
 docker login registry.mydomain.org/application -uUSER -pPASSWORD
 ```
 
-If you don't want your runner host to be logged into the Docker Registry all the time, perform the docker login procedure in each CI/CD job individually. It is recommended to create a temporary docker config for each CI/CD job (instead of using the default `~/.docker/` config directory) to prevent a conflict of different jobs running on the same runner host while logging in at the same time.
+If you don't want your runner host to be logged into the container registry all the time, perform the docker login procedure in each CI/CD job individually. It is recommended to create a temporary docker config for each CI/CD job (instead of using the default `~/.docker/` config directory) to prevent a conflict of different jobs running on the same runner host while logging in at the same time.
 
 ```shell
 # Job 1

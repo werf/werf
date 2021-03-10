@@ -47,7 +47,7 @@ fromArtifact: <artifact name>
 ```
 
 If a _base image_ is specific to a particular application,
-it is reasonable to store its description with _images_ and _artifacts_ which are used it as opposed to storing the _base image_ in a Docker registry.
+it is reasonable to store its description with _images_ and _artifacts_ which are used it as opposed to storing the _base image_ in a container registry.
 
 Also, this method can be useful if the stages of _stage conveyor_ are not enough for building the image. You can design your _stage conveyor_.
 

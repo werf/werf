@@ -12,7 +12,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 * `build` — стадия сборки и публикации образов приложения;
 * `deploy` — стадия деплоя приложения для одного из контуров кластера;
 * `dismiss` — стадия удаления приложения для review окружения;
-* `cleanup` — стадия очистки хранилища стадий и Docker registry.
+* `cleanup` — стадия очистки хранилища стадий и container registry.
 
 Набор контуров (а равно — окружений GitLab) в кластере Kubernetes может варьироваться в зависимости от многих факторов.
 В статье будут приведены различные варианты организации окружений для следующих:
@@ -37,7 +37,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 
 * Кластер Kubernetes и настроенный для работы с ним `kubectl`.
 * GitLab-сервер версии выше 10.x либо учетная запись на [gitlab.com](https://gitlab.com/).
-* Docker registry, встроенный в GitLab или выделенный.
+* Container registry, встроенный в GitLab или выделенный.
 * Приложение, которое успешно собирается и деплоится с werf.
 * Понимание [основных концептов GitLab CI/CD](https://docs.gitlab.com/ee/ci/).
 
@@ -46,7 +46,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 ![scheme]({% asset howto_gitlabci_scheme.png @path %})
 
 * Кластер Kubernetes.
-* GitLab со встроенным Docker registry.
+* GitLab со встроенным container registry.
 * Узел или группа узлов, с предустановленным werf и зависимостями.
 
 Организовать работу werf внутри Docker-контейнера можно, но мы не поддерживаем данный способ.
@@ -58,7 +58,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 
 В конечном счете werf требует наличия доступа на используемых узлах:
 - к Git-репозиторию кода приложения;
-- к Docker registry;
+- к container registry;
 - к кластеру Kubernetes.
 
 ### Настройка runner
@@ -120,16 +120,16 @@ Build and Publish:
 ```
 {% endraw %}
 
-Забегая вперед, очистка хранилища стадий и Docker registry предполагает запуск соответствующего задания по расписанию.
+Забегая вперед, очистка хранилища стадий и container registry предполагает запуск соответствующего задания по расписанию.
 Так как при очистке не требуется выполнять сборку образов, то указываем `except: [schedules]`, чтобы стадия сборки не запускалась в случае работы pipeline по расписанию.
 
-Конфигурация задания достаточно проста, поэтому хочется сделать акцент на том, чего в ней нет — явной авторизации в Docker registry, вызова `docker login`. 
+Конфигурация задания достаточно проста, поэтому хочется сделать акцент на том, чего в ней нет — явной авторизации в container registry, вызова `docker login`. 
 
-В простейшем случае, при использовании встроенного Docker registry, авторизация выполняется автоматически при вызове команды `werf ci-env`. В качестве необходимых аргументов используются переменные окружения GitLab `CI_JOB_TOKEN` (подробнее про модель разграничения доступа при выполнении заданий в GitLab можно прочитать [здесь](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)) и `CI_REGISTRY_IMAGE`.
+В простейшем случае, при использовании встроенного container registry, авторизация выполняется автоматически при вызове команды `werf ci-env`. В качестве необходимых аргументов используются переменные окружения GitLab `CI_JOB_TOKEN` (подробнее про модель разграничения доступа при выполнении заданий в GitLab можно прочитать [здесь](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)) и `CI_REGISTRY_IMAGE`.
 
 При вызове `werf ci-env` создаётся временный docker config, который используется всеми командами в shell-сессии (в том числе docker). Таким образов, параллельные задания никак не пересекаются при использовании docker и временный токен в конфигурации не перетирается. 
 
-Если необходимо выполнить авторизацию с произвольными учётными данными, `docker login` должен выполняться после вызова `werf ci-env` (подробнее про авторизацию [в отдельной статье]({{ "documentation/advanced/supported_registry_implementations.html#авторизация-docker" | true_relative_url }})).
+Если необходимо выполнить авторизацию с произвольными учётными данными, `docker login` должен выполняться после вызова `werf ci-env` (подробнее про авторизацию [в отдельной статье]({{ "documentation/advanced/supported_container_registries.html#авторизация" | true_relative_url }})).
 
 ## Выкат приложения
 
@@ -509,10 +509,10 @@ Cleanup:
 ```
 {% endraw %}
 
-В werf встроен эффективный механизм очистки, который позволяет избежать переполнения Docker registry и диска сборочного узла от устаревших и неиспользуемых образов.
+В werf встроен эффективный механизм очистки, который позволяет избежать переполнения container registry и диска сборочного узла от устаревших и неиспользуемых образов.
 Более подробно ознакомиться с функционалом очистки, встроенным в werf, можно [здесь]({{ "documentation/advanced/cleanup.html" | true_relative_url }}).
 
-Чтобы использовать очистку, необходимо создать `Personal Access Token` в GitLab с необходимыми правами. С помощью данного токена будет осуществляться авторизация в Docker registry перед очисткой.
+Чтобы использовать очистку, необходимо создать `Personal Access Token` в GitLab с необходимыми правами. С помощью данного токена будет осуществляться авторизация в container registry перед очисткой.
 
 Для вашего тестового проекта вы можете просто создать `Personal Access Token` а вашей учетной записи GitLab. Для этого откройте страницу `Settings` в GitLab (настройки вашего профиля), затем откройте раздел `Access Token`. Укажите имя токена, в разделе Scope отметьте `api` и нажмите `Create personal access token` — вы получите `Personal Access Token`.
 

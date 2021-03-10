@@ -84,21 +84,21 @@ werf — это CLI-инструмент для организации полн�
                 <a href="javascript:void(0)"
                     data-presentation-selector-option="6"
                     data-presentation-selector-stage="Converge">
-                    2. Считываем образы, доступные в Docker Registry.
+                    2. Считываем образы, доступные в container registry.
                 </a>
             </div>
             <div class="introduction-presentation__controls-selector-step">
                 <a href="javascript:void(0)"
                     data-presentation-selector-option="7"
                     data-presentation-selector-stage="Converge">
-                    3. Вычисляем разницу между образами, соответствующими состоянию для текущего Git-коммита и теми, которые уже доступны в реестре Docker.
+                    3. Вычисляем разницу между образами, соответствующими состоянию для текущего Git-коммита и теми, которые уже доступны в container registry.
                 </a>
             </div>
             <div class="introduction-presentation__controls-selector-step">
                 <a href="javascript:void(0)"
                     data-presentation-selector-option="8"
                     data-presentation-selector-stage="Converge">
-                    4. Собираем и публикуем только те образы, которые отсутствуют Docker Registry (если такие имеются).
+                    4. Собираем и публикуем только те образы, которые отсутствуют в container registry (если такие имеются).
                 </a>
             </div>
             <div class="introduction-presentation__controls-selector-step">

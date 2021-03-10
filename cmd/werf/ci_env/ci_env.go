@@ -177,7 +177,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	ciRegistryImageEnv := os.Getenv("CI_REGISTRY_IMAGE")
 	ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
 
-	var repo, repoImplementation string
+	var repo, repoContainerRegistry string
 	var imagesUsername, imagesPassword string
 	var doLogin bool
 	if ciRegistryImageEnv != "" {
@@ -195,7 +195,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 		}
 
 		if werfRepoEnv == "" || strings.HasPrefix(werfRepoEnv, ciRegistryEnv) {
-			repoImplementation = docker_registry.GitLabRegistryImplementationName
+			repoContainerRegistry = docker_registry.GitLabRegistryImplementationName
 		}
 	}
 
@@ -211,8 +211,8 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 	writeHeader(w, "REPO", true)
 	writeEnv(w, "WERF_REPO", repo, false)
-	if repoImplementation != "" {
-		writeEnv(w, "WERF_REPO_IMPLEMENTATION", repoImplementation, false)
+	if repoContainerRegistry != "" {
+		writeEnv(w, "WERF_REPO_CONTAINER_REGISTRY", repoContainerRegistry, false)
 	}
 
 	writeHeader(w, "DEPLOY", true)

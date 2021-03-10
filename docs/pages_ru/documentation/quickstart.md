@@ -19,18 +19,18 @@ description: Разверните ваше первое приложение с 
 werf version
 ```
 
-## Подготовьте свою инсталляцию Kubernetes и Docker Registry
+## Подготовьте свою инсталляцию Kubernetes и container registry
 
-У вас должен быть доступ к кластеру Kubernetes и возможность push'ить образы в Docker Registry. Docker Registry также должен быть доступен из кластера для извлечения образов.
+У вас должен быть доступ к кластеру Kubernetes и возможность push'ить образы в container registry. Container registry также должен быть доступен из кластера для извлечения образов.
 
-Если кластер Kubernetes и реестр Docker у вас уже настроены и работают, достаточно:
+Если кластер Kubernetes и container registry у вас уже настроены и работают, достаточно:
 
- 1. Выполнить стандартный вход в реестр Docker со своего хоста.
+ 1. Выполнить стандартный вход в container registry со своего хоста.
  2. Убедиться, что кластер Kubernetes доступен с хоста (дополнительная настройка `werf`, скорее всего, не потребуется, если у вас уже установлен и работает `kubectl`).
  
 <br>
 
-В ином случае выполните одну из следующих инструкций, чтобы настроить локальный кластер Kubernetes и Docker Registry в вашей системе:
+В ином случае выполните одну из следующих инструкций, чтобы настроить локальный кластер Kubernetes и container registry в вашей системе:
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">Windows</a>
@@ -179,7 +179,7 @@ werf version
     ```
     {% endraw %}
 
- 2. Запустите команду converge, используя Docker Registry для хранения образов (в случае локального репозитория это будет `localhost:5000/quickstart-application`).
+ 2. Запустите команду converge, используя container registry для хранения образов (в случае локального репозитория это будет `localhost:5000/quickstart-application`).
 
     {% raw %}
     ```shell
