@@ -24,7 +24,7 @@ jobs:
           echo WERF_SET_ENV_URL=global.env_url=http://${github_repository_id}-${pr_id}.kube.DOMAIN >> $GITHUB_ENV
   
       - name: Converge
-        uses: werf/actions/converge@master
+        uses: werf/actions/converge@v1.2
         with:
           env: review-${{ github.event.number }}
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}

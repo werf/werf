@@ -71,7 +71,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 {% raw %}
 ```yaml
 - name: Converge
-  uses: werf/actions/converge@master
+  uses: werf/actions/converge@v1.2
   with:
     env: ANY_ENV_NAME
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
@@ -88,7 +88,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 {% raw %}
 ```yaml
 - name: Converge
-  uses: werf/actions/converge@master
+  uses: werf/actions/converge@v1.2
   with:
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
 ```
@@ -105,7 +105,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 {% raw %}
 ```yaml
 - name: Converge
-  uses: werf/actions/converge@master
+  uses: werf/actions/converge@v1.2
   with:
     env: ANY_ENV_NAME
   env:
