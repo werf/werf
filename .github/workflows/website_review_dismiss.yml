@@ -38,3 +38,4 @@ jobs:
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
         WERF_SET_GITHUB_REF: "global.github_ref=dev"
+        WERF_WITH_NAMESPACE: true
