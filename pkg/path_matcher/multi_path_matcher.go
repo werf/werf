@@ -54,5 +54,5 @@ func (m *MultiPathMatcher) String() string {
 		result = append(result, matcher.String())
 	}
 
-	return strings.Join(result, "; ")
+	return strings.Join(result, " && ")
 }
