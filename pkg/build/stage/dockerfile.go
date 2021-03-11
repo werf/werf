@@ -612,10 +612,8 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img c
 
 func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
 	archive, err := giterminismManager.LocalGitRepo().GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
-		FilterOptions: git_repo.FilterOptions{
-			BasePath: filepath.Join(giterminismManager.RelativeToGitProjectDir(), s.context),
-		},
-		Commit: giterminismManager.HeadCommit(),
+		PathMatcher: path_matcher.NewSimplePathMatcher(filepath.Join(giterminismManager.RelativeToGitProjectDir(), s.context), nil),
+		Commit:      giterminismManager.HeadCommit(),
 	})
 	if err != nil {
 		return "", fmt.Errorf("unable to create archive: %s", err)

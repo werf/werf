@@ -194,23 +194,11 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		return nil, fmt.Errorf("cannot open file %s: %s", tmpFile, err)
 	}
 
-	patchOpts := true_git.PatchOptions{
-		FromCommit: opts.FromCommit,
-		ToCommit:   opts.ToCommit,
-		PathMatcher: path_matcher.NewGitMappingPathMatcher(
-			opts.BasePath,
-			opts.IncludePaths,
-			opts.ExcludePaths,
-		),
-		WithEntireFileContext: opts.WithEntireFileContext,
-		WithBinary:            opts.WithBinary,
-	}
-
 	var desc *true_git.PatchDescriptor
 	if hasSubmodules {
-		desc, err = true_git.PatchWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, patchOpts)
+		desc, err = true_git.PatchWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.PatchOptions(opts))
 	} else {
-		desc, err = true_git.Patch(ctx, fileHandler, gitDir, patchOpts)
+		desc, err = true_git.Patch(ctx, fileHandler, gitDir, true_git.PatchOptions(opts))
 	}
 
 	if err != nil {
@@ -346,20 +334,11 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 	defer fileHandler.Close()
 
-	archiveOpts := true_git.ArchiveOptions{
-		Commit: opts.Commit,
-		PathMatcher: path_matcher.NewGitMappingPathMatcher(
-			opts.BasePath,
-			opts.IncludePaths,
-			opts.ExcludePaths,
-		),
-	}
-
 	var desc *true_git.ArchiveDescriptor
 	if hasSubmodules {
-		desc, err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, archiveOpts)
+		desc, err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
 	} else {
-		desc, err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, archiveOpts)
+		desc, err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
 	}
 
 	if err != nil {
@@ -506,11 +485,7 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 		Hash:         sha256.New(),
 	}
 
-	mainPathMatcher := path_matcher.NewGitMappingPathMatcher(
-		opts.BasePath,
-		opts.IncludePaths,
-		opts.ExcludePaths,
-	)
+	mainPathMatcher := opts.PathMatcher
 
 	var mainLsTreeResult *ls_tree.Result
 	if err := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", mainPathMatcher.String()).DoError(func() error {
@@ -523,7 +498,7 @@ func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Reposi
 
 	for _, p := range opts.Paths {
 		var pathLsTreeResult *ls_tree.Result
-		pathMatcher := path_matcher.NewSimplePathMatcher(opts.BasePath, []string{p})
+		pathMatcher := path_matcher.NewSimplePathMatcher(mainPathMatcher.BaseFilepath(), []string{p})
 
 		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
 		logProcess.Start()
