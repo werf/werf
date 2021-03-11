@@ -579,25 +579,37 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 		return "", fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
-	checksumOpts := git_repo.ChecksumOptions{
-		PathMatcher: gm.getPathMatcher(),
-		Paths:       depsPaths,
-		Commit:      commitInfo.Commit,
-	}
+	gitMappingPathMatcher := gm.getPathMatcher()
 
-	checksum, err := gm.GitRepo().GetOrCreateChecksum(ctx, checksumOpts)
-	if err != nil {
-		return "", err
-	}
-
-	for _, p := range checksum.GetNoMatchPaths() {
-		logboek.Context(ctx).Warn().LogF(
-			"WARNING: stage %s dependency path %s has not been found in %s git\n",
-			stageName, p, gm.GitRepo().GetName(),
+	hash := sha256.New()
+	for _, p := range depsPaths {
+		multiPathMatcher := path_matcher.NewMultiPathMatcher(
+			gitMappingPathMatcher,
+			path_matcher.NewSimplePathMatcher(gm.Add, []string{p}),
 		)
-	}
 
-	return checksum.String(), nil
+		checksumOptions := git_repo.ChecksumOptions{
+			PathMatcher: multiPathMatcher,
+			Commit:      commitInfo.Commit,
+		}
+
+		checksum, err := gm.GitRepo().GetOrCreateChecksum(ctx, checksumOptions)
+		if err != nil {
+			return "", err
+		}
+
+		if checksum == "" {
+			logboek.Context(ctx).Warn().LogF(
+				"WARNING: stage %s dependency path %s has not been found in %s git\n",
+				stageName, p, gm.GitRepo().GetName(),
+			)
+		} else {
+			hash.Write([]byte(checksum))
+		}
+	}
+	checksum := fmt.Sprintf("%x", hash.Sum(nil))
+
+	return checksum, nil
 }
 
 func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit string) (int64, error) {

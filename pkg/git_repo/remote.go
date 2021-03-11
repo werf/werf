@@ -286,7 +286,7 @@ func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions)
 	return repo.getOrCreateArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Remote) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (Checksum, error) {
+func (repo *Remote) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (string, error) {
 	return repo.getOrCreateChecksum(ctx, repo.yieldRepositoryBackedByWorkTree, opts)
 }
 

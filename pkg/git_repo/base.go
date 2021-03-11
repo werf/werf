@@ -2,7 +2,6 @@ package git_repo
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/werf/logboek"
 
-	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/true_git/ls_tree"
 	"github.com/werf/werf/pkg/util"
@@ -33,7 +31,7 @@ func NewBase(name string) Base {
 		Cache: Cache{
 			Archives:       make(map[string]Archive),
 			Patches:        make(map[string]Patch),
-			Checksums:      make(map[string]Checksum),
+			Checksums:      make(map[string]string),
 			checksumsMutex: make(map[string]sync.Mutex),
 		},
 	}
@@ -41,7 +39,7 @@ func NewBase(name string) Base {
 
 type Cache struct {
 	Patches   map[string]Patch
-	Checksums map[string]Checksum
+	Checksums map[string]string
 	Archives  map[string]Archive
 
 	patchesMutex   sync.Mutex
@@ -441,8 +439,9 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	return res, nil
 }
 
-func (repo *Base) getOrCreateChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (Checksum, error) {
-	checksumMutex, ok := repo.Cache.checksumsMutex[util.ObjectToHashKey(opts)]
+func (repo *Base) getOrCreateChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (string, error) {
+	checksumID := opts.ID()
+	checksumMutex, ok := repo.Cache.checksumsMutex[checksumID]
 	if !ok {
 		checksumMutex = sync.Mutex{}
 	}
@@ -450,17 +449,17 @@ func (repo *Base) getOrCreateChecksum(ctx context.Context, yieldRepositoryFunc f
 	checksumMutex.Lock()
 	defer checksumMutex.Unlock()
 
-	if _, hasKey := repo.Cache.Checksums[util.ObjectToHashKey(opts)]; !hasKey {
+	if _, hasKey := repo.Cache.Checksums[checksumID]; !hasKey {
 		checksum, err := repo.CreateChecksum(ctx, yieldRepositoryFunc, opts)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
-		repo.Cache.Checksums[util.ObjectToHashKey(opts)] = checksum
+		repo.Cache.Checksums[checksumID] = checksum
 	}
-	return repo.Cache.Checksums[util.ObjectToHashKey(opts)], nil
+	return repo.Cache.Checksums[checksumID], nil
 }
 
-func (repo *Base) CreateChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (checksum Checksum, err error) {
+func (repo *Base) CreateChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (checksum string, err error) {
 	logboek.Context(ctx).Debug().LogProcess("Creating checksum").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
@@ -470,61 +469,20 @@ func (repo *Base) CreateChecksum(ctx context.Context, yieldRepositoryFunc func(c
 	return
 }
 
-func (repo *Base) createChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (cs Checksum, err error) {
+func (repo *Base) createChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (checksum string, err error) {
 	_ = yieldRepositoryFunc(ctx, opts.Commit, func(repository *git.Repository) error {
-		cs, err = repo.checksumWithLsTree(ctx, repository, opts)
+		checksum, err = repo.checksumWithLsTree(ctx, repository, opts)
 		return nil
 	})
 
 	return
 }
 
-func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (Checksum, error) {
-	checksum := &ChecksumDescriptor{
-		NoMatchPaths: make([]string, 0),
-		Hash:         sha256.New(),
+func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (string, error) {
+	lsTreeResult, err := ls_tree.LsTree(ctx, repository, opts.Commit, opts.PathMatcher, false)
+	if err != nil {
+		return "", err
 	}
 
-	mainPathMatcher := opts.PathMatcher
-
-	var mainLsTreeResult *ls_tree.Result
-	if err := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", mainPathMatcher.String()).DoError(func() error {
-		var err error
-		mainLsTreeResult, err = ls_tree.LsTree(ctx, repository, opts.Commit, mainPathMatcher, false)
-		return err
-	}); err != nil {
-		return nil, err
-	}
-
-	for _, p := range opts.Paths {
-		var pathLsTreeResult *ls_tree.Result
-		pathMatcher := path_matcher.NewSimplePathMatcher(mainPathMatcher.BaseFilepath(), []string{p})
-
-		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", pathMatcher.String())
-		logProcess.Start()
-		var err error
-		pathLsTreeResult, err = mainLsTreeResult.LsTree(ctx, repository, pathMatcher, false)
-		if err != nil {
-			logProcess.Fail()
-			return nil, err
-		}
-		logProcess.End()
-
-		var pathChecksum string
-		if !pathLsTreeResult.IsEmpty() {
-			logboek.Context(ctx).Debug().LogBlock("ls-tree result checksum (%s)", pathMatcher.String()).Do(func() {
-				pathChecksum = pathLsTreeResult.Checksum(ctx)
-				logboek.Context(ctx).Debug().LogLn()
-				logboek.Context(ctx).Debug().LogLn(pathChecksum)
-			})
-		}
-
-		if pathChecksum != "" {
-			checksum.Hash.Write([]byte(pathChecksum))
-		} else {
-			checksum.NoMatchPaths = append(checksum.NoMatchPaths, p)
-		}
-	}
-
-	return checksum, nil
+	return lsTreeResult.Checksum(ctx), nil
 }

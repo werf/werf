@@ -6,6 +6,7 @@ import (
 
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -15,8 +16,11 @@ type PatchOptions true_git.PatchOptions
 type ArchiveOptions true_git.ArchiveOptions
 type ChecksumOptions struct {
 	PathMatcher path_matcher.PathMatcher
-	Paths       []string
 	Commit      string
+}
+
+func (opts ChecksumOptions) ID() string {
+	return util.Sha256Hash(opts.Commit, opts.PathMatcher.ID())
 }
 
 type ArchiveType string
@@ -42,7 +46,7 @@ type GitRepo interface {
 	CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error)
 	GetOrCreatePatch(context.Context, PatchOptions) (Patch, error)
 	GetOrCreateArchive(context.Context, ArchiveOptions) (Archive, error)
-	GetOrCreateChecksum(context.Context, ChecksumOptions) (Checksum, error)
+	GetOrCreateChecksum(context.Context, ChecksumOptions) (string, error)
 }
 
 type Patch interface {
@@ -57,11 +61,6 @@ type Archive interface {
 	GetFilePath() string
 	GetType() ArchiveType
 	IsEmpty() bool
-}
-
-type Checksum interface {
-	String() string
-	GetNoMatchPaths() []string
 }
 
 func GetGitRepoCacheDir() string {
