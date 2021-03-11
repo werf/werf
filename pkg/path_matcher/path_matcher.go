@@ -12,6 +12,9 @@ type PathMatcher interface {
 	// The method returns true if there is a possibility of containing the matching files among the child files.
 	IsDirOrSubmodulePathMatched(string) bool
 
+	// ID returns string that unambiguously defines the path matcher
+	ID() string
+
 	TrimFileBaseFilepath(string) string
 	BaseFilepath() string
 	String() string

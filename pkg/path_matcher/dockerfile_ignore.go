@@ -1,8 +1,10 @@
 package path_matcher
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"path/filepath"
+	"sort"
 
 	"github.com/docker/docker/pkg/fileutils"
 
@@ -23,6 +25,28 @@ type DockerfileIgnorePathMatcher struct {
 
 func (f *DockerfileIgnorePathMatcher) BaseFilepath() string {
 	return f.basePath
+}
+
+func (f *DockerfileIgnorePathMatcher) ID() string {
+	h := sha256.New()
+
+	{ // basePath
+		h.Write([]byte(f.basePath))
+	}
+
+	{ // patterns
+		var cleanedPatterns []string
+		for _, pattern := range f.patternMatcher.Patterns() {
+			cleanedPatterns = append(cleanedPatterns, pattern.String())
+		}
+
+		if len(cleanedPatterns) != 0 {
+			sort.Strings(cleanedPatterns)
+			h.Write([]byte(fmt.Sprint(cleanedPatterns)))
+		}
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func (f *DockerfileIgnorePathMatcher) String() string {

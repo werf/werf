@@ -1,6 +1,9 @@
 package path_matcher
 
 import (
+	"crypto/sha256"
+	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -16,8 +19,8 @@ type MultiPathMatcher struct {
 	PathMatchers []PathMatcher
 }
 
-func (f *MultiPathMatcher) IsDirOrSubmodulePathMatched(path string) bool {
-	return f.IsPathMatched(path) || f.ShouldGoThrough(path)
+func (m *MultiPathMatcher) IsDirOrSubmodulePathMatched(path string) bool {
+	return m.IsPathMatched(path) || m.ShouldGoThrough(path)
 }
 
 func (m *MultiPathMatcher) IsPathMatched(path string) bool {
@@ -46,6 +49,20 @@ func (m *MultiPathMatcher) TrimFileBaseFilepath(path string) string {
 
 func (m *MultiPathMatcher) BaseFilepath() string {
 	return m.PathMatchers[0].BaseFilepath()
+}
+
+func (m *MultiPathMatcher) ID() string {
+	h := sha256.New()
+
+	var ids []string
+	for _, matcher := range m.PathMatchers {
+		ids = append(ids, matcher.ID())
+	}
+
+	sort.Strings(ids)
+	h.Write([]byte(fmt.Sprint(ids)))
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func (m *MultiPathMatcher) String() string {
