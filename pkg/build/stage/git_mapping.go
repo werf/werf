@@ -17,6 +17,7 @@ import (
 
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/stapel"
 )
 
@@ -98,12 +99,8 @@ func (gm *GitMapping) GitRepo() git_repo.GitRepo {
 	panic("GitRepo not initialized")
 }
 
-func (gm *GitMapping) getRepoFilterOptions() git_repo.FilterOptions {
-	return git_repo.FilterOptions{
-		BasePath:     gm.Add,
-		IncludePaths: gm.IncludePaths,
-		ExcludePaths: gm.ExcludePaths,
-	}
+func (gm *GitMapping) getPathMatcher() path_matcher.PathMatcher {
+	return path_matcher.NewGitMappingPathMatcher(gm.Add, gm.IncludePaths, gm.ExcludePaths)
 }
 
 func (gm *GitMapping) IsLocal() bool {
@@ -343,9 +340,9 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 	archiveType := git_repo.ArchiveType(prevBuiltImage.GetStageDescription().Info.Labels[gm.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
-		FilterOptions: gm.getRepoFilterOptions(),
-		FromCommit:    fromCommit,
-		ToCommit:      toCommit,
+		PathMatcher: gm.getPathMatcher(),
+		FromCommit:  fromCommit,
+		ToCommit:    toCommit,
 	}
 
 	patch, err := gm.GitRepo().GetOrCreatePatch(ctx, patchOpts)
@@ -420,8 +417,8 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 		}
 
 		archiveOpts := git_repo.ArchiveOptions{
-			FilterOptions: gm.getRepoFilterOptions(),
-			Commit:        toCommit,
+			PathMatcher: gm.getPathMatcher(),
+			Commit:      toCommit,
 		}
 
 		archive, err := gm.GitRepo().GetOrCreateArchive(ctx, archiveOpts)
@@ -452,7 +449,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 		return commands, nil
 	}
 
-	patchFile, err := gm.preparePatchFile(patchOpts, patch)
+	patchFile, err := gm.preparePatchFile(patch)
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare patch file: %s", err)
 	}
@@ -541,8 +538,8 @@ func (gm *GitMapping) applyScript(image container_runtime.ImageInterface, comman
 
 func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string, image container_runtime.ImageInterface) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
-		FilterOptions: gm.getRepoFilterOptions(),
-		Commit:        commit,
+		PathMatcher: gm.getPathMatcher(),
+		Commit:      commit,
 	}
 
 	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, archiveOpts)
@@ -583,9 +580,9 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 	}
 
 	checksumOpts := git_repo.ChecksumOptions{
-		FilterOptions: gm.getRepoFilterOptions(),
-		Paths:         depsPaths,
-		Commit:        commitInfo.Commit,
+		PathMatcher: gm.getPathMatcher(),
+		Paths:       depsPaths,
+		Commit:      commitInfo.Commit,
 	}
 
 	checksum, err := gm.GitRepo().GetOrCreateChecksum(ctx, checksumOpts)
@@ -614,7 +611,7 @@ func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit stri
 	}
 
 	patchOpts := git_repo.PatchOptions{
-		FilterOptions:         gm.getRepoFilterOptions(),
+		PathMatcher:           gm.getPathMatcher(),
 		FromCommit:            fromCommit,
 		ToCommit:              toCommitInfo.Commit,
 		WithEntireFileContext: true,
@@ -702,9 +699,9 @@ func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuilt
 	}
 
 	patchOpts := git_repo.PatchOptions{
-		FilterOptions: gm.getRepoFilterOptions(),
-		FromCommit:    fromCommit,
-		ToCommit:      toCommitInfo.Commit,
+		PathMatcher: gm.getPathMatcher(),
+		FromCommit:  fromCommit,
+		ToCommit:    toCommitInfo.Commit,
 	}
 	patch, err := gm.GitRepo().GetOrCreatePatch(ctx, patchOpts)
 	if err != nil {
@@ -738,9 +735,9 @@ func (gm *GitMapping) baseIsPatchEmpty(ctx context.Context, fromCommit, toCommit
 	}
 
 	patchOpts := git_repo.PatchOptions{
-		FilterOptions: gm.getRepoFilterOptions(),
-		FromCommit:    fromCommit,
-		ToCommit:      toCommit,
+		PathMatcher: gm.getPathMatcher(),
+		FromCommit:  fromCommit,
+		ToCommit:    toCommit,
 	}
 
 	patch, err := gm.GitRepo().GetOrCreatePatch(ctx, patchOpts)
@@ -758,8 +755,8 @@ func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
 	}
 
 	archiveOpts := git_repo.ArchiveOptions{
-		FilterOptions: gm.getRepoFilterOptions(),
-		Commit:        commitInfo.Commit,
+		PathMatcher: gm.getPathMatcher(),
+		Commit:      commitInfo.Commit,
 	}
 
 	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, archiveOpts)
@@ -823,7 +820,7 @@ func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*Containe
 	return fileDesc, nil
 }
 
-func (gm *GitMapping) preparePatchFile(patchOpts git_repo.PatchOptions, patch git_repo.Patch) (*ContainerFileDescriptor, error) {
+func (gm *GitMapping) preparePatchFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
 	return &ContainerFileDescriptor{
 		FilePath:          patch.GetFilePath(),
 		ContainerFilePath: path.Join(gm.ContainerPatchesDir, filepath.Base(patch.GetFilePath())),

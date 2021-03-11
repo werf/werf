@@ -4,33 +4,19 @@ import (
 	"context"
 	"path/filepath"
 
+	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 )
 
 const GitRepoCacheVersion = "4"
 
-type PatchOptions struct {
-	FilterOptions
-	FromCommit, ToCommit string
-
-	WithEntireFileContext bool
-	WithBinary            bool
-}
-
-type ArchiveOptions struct {
-	FilterOptions
-	Commit string
-}
-
+type PatchOptions true_git.PatchOptions
+type ArchiveOptions true_git.ArchiveOptions
 type ChecksumOptions struct {
-	FilterOptions
-	Paths  []string
-	Commit string
-}
-
-type FilterOptions struct {
-	BasePath                   string
-	IncludePaths, ExcludePaths []string
+	PathMatcher path_matcher.PathMatcher
+	Paths       []string
+	Commit      string
 }
 
 type ArchiveType string

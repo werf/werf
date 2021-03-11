@@ -14,8 +14,8 @@ import (
 )
 
 type PatchOptions struct {
-	FromCommit, ToCommit string
 	PathMatcher          path_matcher.PathMatcher
+	FromCommit, ToCommit string
 
 	WithEntireFileContext bool
 	WithBinary            bool
