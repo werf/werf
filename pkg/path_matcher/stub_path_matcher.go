@@ -9,7 +9,7 @@ type StubPathMatcher struct {
 	*SimplePathMatcher
 }
 
-func (f *StubPathMatcher) IsDirOrSubmodulePathMatched(_ string) bool {
+func (m *StubPathMatcher) IsDirOrSubmodulePathMatched(_ string) bool {
 	return false
 }
 
@@ -19,6 +19,10 @@ func (m *StubPathMatcher) IsPathMatched(_ string) bool {
 
 func (m *StubPathMatcher) ShouldGoThrough(_ string) bool {
 	return false
+}
+
+func (m *StubPathMatcher) ID() string {
+	return m.String()
 }
 
 func (m *StubPathMatcher) String() string {

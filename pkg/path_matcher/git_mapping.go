@@ -1,9 +1,11 @@
 package path_matcher
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/werf/werf/pkg/util"
@@ -27,6 +29,30 @@ type GitMappingPathMatcher struct {
 
 func (f *GitMappingPathMatcher) BaseFilepath() string {
 	return f.basePath
+}
+
+func (f *GitMappingPathMatcher) ID() string {
+	h := sha256.New()
+
+	{ // basePath
+		h.Write([]byte(f.basePath))
+	}
+
+	{ // includePaths and excludePaths
+		for _, paths := range [][]string{
+			f.includePaths,
+			f.excludePaths,
+		} {
+			if len(paths) == 0 {
+				continue
+			}
+
+			sort.Strings(paths)
+			h.Write([]byte(fmt.Sprint(paths)))
+		}
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func (f *GitMappingPathMatcher) String() string {

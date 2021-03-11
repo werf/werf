@@ -14,5 +14,9 @@ type PathMatcher interface {
 
 	TrimFileBaseFilepath(string) string
 	BaseFilepath() string
+
+	// ID returns string that unambiguously defines the path matcher
+	ID() string
+
 	String() string
 }

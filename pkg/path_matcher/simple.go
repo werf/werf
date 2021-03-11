@@ -1,7 +1,9 @@
 package path_matcher
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"sort"
 
 	"github.com/werf/werf/pkg/util"
 )
@@ -15,8 +17,7 @@ func NewSimplePathMatcher(basePath string, paths []string) *SimplePathMatcher {
 
 type SimplePathMatcher struct {
 	basePathMatcher
-	paths            []string
-	isGreedySearchOn bool
+	paths []string
 }
 
 func (f *SimplePathMatcher) BaseFilepath() string {
@@ -25,6 +26,23 @@ func (f *SimplePathMatcher) BaseFilepath() string {
 
 func (f *SimplePathMatcher) Paths() []string {
 	return f.paths
+}
+
+func (f *SimplePathMatcher) ID() string {
+	h := sha256.New()
+
+	{ // basePath
+		h.Write([]byte(f.basePath))
+	}
+
+	{ // paths
+		if len(f.paths) != 0 {
+			sort.Strings(f.paths)
+			h.Write([]byte(fmt.Sprint(f.paths)))
+		}
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func (f *SimplePathMatcher) String() string {
