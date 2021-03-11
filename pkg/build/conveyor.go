@@ -1105,7 +1105,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		return nil, err
 	}
 
-	dockerignorePathMatcher := path_matcher.NewDockerfileIgnorePathMatcher(imageFromDockerfileConfig.Context, dockerignorePatternMatcher)
+	dockerignorePathMatcher := path_matcher.NewDockerfileIgnorePathMatcher(filepath.Join(c.GiterminismManager().RelativeToGitProjectDir(), imageFromDockerfileConfig.Context), dockerignorePatternMatcher)
 
 	p, err := parser.Parse(bytes.NewReader(dockerfileData))
 	if err != nil {
