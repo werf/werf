@@ -30,7 +30,6 @@ jobs:
         env: review-${{ github.event.number }}
         channel: alpha
       env:
-        WERF_DEV: true
         WERF_LOOSE_GITERMINISM: true
         WERF_DIR: "docs"
         WERF_CONFIG: "docs/werf-site.yaml"

@@ -4,6 +4,7 @@ configVersion: 1
 ---
 artifact: asset
 from: jekyll/builder:3
+fromCacheVersion: "4"
 ansible:
   install:
   - shell: |

@@ -6,6 +6,28 @@ sidebar: none
 relation: site
 ---
 
+<div class="news-and-updates">
+    <div class="news-and-updates__block">
+        <div class="news-and-updates__title">
+            Новости разработки
+        </div>
+        <div class="news-and-updates__item">
+            <a href="#" target="_blank" class="news-and-updates__item-link">
+                Запускаем тесты на GitLab Runner с werf — на примере SonarQube
+            </a>
+            <div class="news-and-updates__item-sub">
+                05.03.2021
+            </div>
+        </div>
+    </div>
+    <div class="news-and-updates__block">
+        <div class="news-and-updates__title">
+            Последние релизы
+        </div>
+        <div class="news-and-updates__row"></div>
+    </div>
+</div>
+
 <div class="intro-scheme" id="intro-scheme">
     <div class="page__container intro-scheme__container">
         {% include intro.md %}

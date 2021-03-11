@@ -462,3 +462,82 @@ $(document).ready(function() {
     moveDot({timeline: tl,  dot: ia.dot,    path: ia.werf_k8s,      reverse: true,      delay: '=0'   });
   }
 });
+
+// News and updates
+
+$(document).ready(function () {
+  var $nau = $('.news-and-updates');
+
+  function updateNauVisibility() {
+    if ($(document).scrollTop() < 50) {
+      $nau.addClass('news-and-updates__active');
+    } else {
+      $nau.removeClass('news-and-updates__active');
+    }
+  }
+
+  function updateNauContent() {
+    var $releases_container = $('#nau-releases');
+    nau_data.releases.slice(0, 5).forEach(function(item) {
+      $releases_container.append(
+      `<div class="news-and-updates__item">
+          <a href="#" target="_blank" class="news-and-updates__item-link">
+              ${item.tag_name}
+          </a>
+          <div class="news-and-updates__item-sub">
+              ${moment(item.published_at).format('DD.MM.YYYY') }
+          </div>
+      </div>`);
+    });
+
+    var nau_news = nau_data.news.querySelectorAll('item');
+    var nau_news_result = null;
+    var i = 0;
+    do {
+      var item = nau_news[i];
+      var item_description = item.querySelector('description');
+      if (item_description) {
+        if (item_description.innerHTML.indexOf('#changelog')) {
+          nau_news_result = item;
+        }
+      }
+      i = i + 1;
+    } while (i < nau_news.length && nau_news_result == null);
+    if (nau_news_result == null) { nau_news_result = nau_news[0] }
+
+    var $news_container = $('#nau-news');
+    $news_container.append(
+    `<a href="#" target="_blank" class="news-and-updates__item-link">
+        ${nau_news_result.querySelector('description').innerHTML}
+    </a>
+    <div class="news-and-updates__item-sub">
+      ${moment(nau_news_result.querySelector('pubDate').innerHTML).format('DD.MM.YYYY') }
+    </div>`);
+  }
+
+  if ($nau) {
+    var nau_data = JSON.parse(localStorage.getItem('werf_news')) || null;
+    var nau_requests = [
+      $.get("https://api.github.com/repos/werf/werf/releases", function (data) {
+        nau_data.releases = data;
+      }),
+      $.get("https://zapier.com/engine/rss/9718388/werf-io-tweets", function (data) {
+        nau_data.news = data;
+      })
+    ];
+
+    if (nau_data == null || Date.now() > (nau_data['updated_on'] + 1000 * 60 * 60)) {
+      nau_data = {'updated_on': Date.now(), 'news': {}, 'releases': []};
+      $.when.apply($, nau_requests).done(function() {
+        updateNauContent();
+        localStorage.setItem('werf_news', JSON.stringify(nau_data));
+      });
+    } else {
+      updateNauContent();
+    }
+
+    var throttled = _.throttle(updateNauVisibility, 100);
+    $(window).scroll(throttled);
+    updateNauVisibility();
+  }
+});
