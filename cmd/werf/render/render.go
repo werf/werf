@@ -26,9 +26,11 @@ import (
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/host_cleaning"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
@@ -145,6 +147,10 @@ func runRender() error {
 		return err
 	}
 
+	if err := lrumeta.Init(); err != nil {
+		return err
+	}
+
 	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
@@ -187,6 +193,12 @@ func runRender() error {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
+
+	if lock, err := host_cleaning.AcquireSharedHostStorageLock(ctx); err != nil {
+		return fmt.Errorf("failed to acquire shared storage lock: %s", err)
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
 
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)

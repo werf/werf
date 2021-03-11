@@ -12,12 +12,17 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/host_cleaning"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var commonCmdData common.CmdData
+
+var cmdData struct {
+	Force bool
+}
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -57,6 +62,11 @@ It is safe to run this command periodically by automated cleanup job in parallel
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
+	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+
+	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", common.GetBoolEnvironmentDefaultFalse("WERF_FORCE"), "Force deletion of images which are being used by some containers (default $WERF_FORCE)")
+
 	return cmd
 }
 
@@ -75,6 +85,10 @@ func runGC() error {
 		return err
 	}
 
+	if err := lrumeta.Init(); err != nil {
+		return err
+	}
+
 	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
@@ -90,10 +104,13 @@ func runGC() error {
 	ctx = ctxWithDockerCli
 
 	logboek.LogOptionalLn()
-	hostCleanupOptions := host_cleaning.HostCleanupOptions{DryRun: *commonCmdData.DryRun}
-	if err := host_cleaning.HostCleanup(ctx, hostCleanupOptions); err != nil {
-		return err
+
+	hostCleanupOptions := host_cleaning.HostCleanupOptions{
+		AllowedVolumeUsagePercentageThreshold: *commonCmdData.AllowedVolumeUsage,
+		DryRun:                                *commonCmdData.DryRun,
+		Force:                                 cmdData.Force,
+		DockerServerStoragePath:               *commonCmdData.DockerServerStoragePath,
 	}
 
-	return nil
+	return host_cleaning.HostCleanup(ctx, hostCleanupOptions)
 }

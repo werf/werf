@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/host_cleaning"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -36,6 +37,7 @@ import (
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
@@ -123,6 +125,9 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
+	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
@@ -135,6 +140,8 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 }
 
 func runPublish() error {
+	tmp_manager.AutoGCEnabled = true
+
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
@@ -146,6 +153,10 @@ func runPublish() error {
 	}
 
 	if err := image.Init(); err != nil {
+		return err
+	}
+
+	if err := lrumeta.Init(); err != nil {
 		return err
 	}
 
@@ -191,6 +202,16 @@ func runPublish() error {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
+
+	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
+		return fmt.Errorf("host storage GC failed: %s", err)
+	}
+
+	if lock, err := host_cleaning.AcquireSharedHostStorageLock(ctx); err != nil {
+		return fmt.Errorf("failed to acquire shared storage lock: %s", err)
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
 
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)

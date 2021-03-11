@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 
 	"github.com/spf13/cobra"
 
@@ -98,6 +99,9 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
+	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", common.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
 	cmd.Flags().BoolVarP(&cmdData.WithHooks, "with-hooks", "", common.GetBoolEnvironmentDefaultTrue("WERF_WITH_HOOKS"), "Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or true)")
 
@@ -124,6 +128,10 @@ func runDismiss() error {
 		return err
 	}
 
+	if err := lrumeta.Init(); err != nil {
+		return err
+	}
+
 	common.LogKubeContext(kube.Context)
 
 	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
@@ -135,6 +143,10 @@ func runDismiss() error {
 		return err
 	}
 	ctx = ctxWithDockerCli
+
+	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
+		return fmt.Errorf("host storage GC failed: %s", err)
+	}
 
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {

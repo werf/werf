@@ -12,8 +12,10 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/host_cleaning"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
@@ -79,6 +81,9 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupWithoutKube(&commonCmdData, cmd)
 	common.SetupKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd)
 
+	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+
 	return cmd
 }
 
@@ -99,6 +104,10 @@ func runCleanup() error {
 	}
 
 	if err := image.Init(); err != nil {
+		return err
+	}
+
+	if err := lrumeta.Init(); err != nil {
 		return err
 	}
 
@@ -133,6 +142,16 @@ func runCleanup() error {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
+
+	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
+		return fmt.Errorf("host storage GC failed: %s", err)
+	}
+
+	if lock, err := host_cleaning.AcquireSharedHostStorageLock(ctx); err != nil {
+		return fmt.Errorf("failed to acquire shared storage lock: %s", err)
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
 
 	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {

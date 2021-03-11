@@ -15,6 +15,7 @@ import (
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
@@ -86,6 +87,10 @@ func run(projectNames ...string) error {
 	}
 
 	if err := image.Init(); err != nil {
+		return err
+	}
+
+	if err := lrumeta.Init(); err != nil {
 		return err
 	}
 

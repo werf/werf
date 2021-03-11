@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/pkg/host_cleaning"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -23,6 +24,7 @@ import (
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/ssh_agent"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
@@ -220,6 +222,10 @@ func runMain() error {
 		return err
 	}
 
+	if err := lrumeta.Init(); err != nil {
+		return err
+	}
+
 	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
@@ -318,6 +324,12 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
+	hostStorageLock, err := host_cleaning.AcquireSharedHostStorageLock(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to acquire shared storage lock: %s", err)
+	}
+	defer werf.ReleaseHostLock(hostStorageLock)
+
 	imageName := cmdData.ImageName
 	if imageName == "" && len(werfConfig.GetAllImages()) == 1 {
 		imageName = werfConfig.GetAllImages()[0].GetName()
@@ -388,6 +400,8 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
 		return nil
 	} else {
+		werf.ReleaseHostLock(hostStorageLock)
+
 		return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 			return common.WithoutTerminationSignalsTrap(func() error {
 				return docker.CliRun_LiveOutput(ctx, dockerRunArgs...)

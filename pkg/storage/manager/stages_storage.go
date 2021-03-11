@@ -18,6 +18,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/util/parallel"
 )
 
@@ -136,15 +137,21 @@ func (m *StagesStorageManager) FetchStage(ctx context.Context, stg stage.Interfa
 			}).
 			DoError(func() error {
 				logboek.Context(ctx).Info().LogF("Image name: %s\n", stg.GetImage().Name())
+
 				if err := m.StagesStorage.FetchImage(ctx, &container_runtime.DockerImage{Image: stg.GetImage()}); err != nil {
 					return fmt.Errorf("unable to fetch stage %s image %s from storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
 				}
+
 				return nil
 			}); err != nil {
 			return err
 		}
 	} else if err != nil {
 		return err
+	}
+
+	if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, stg.GetImage().Name()); err != nil {
+		return fmt.Errorf("error accessing last recently used images cache: %s", err)
 	}
 
 	return nil
