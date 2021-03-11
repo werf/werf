@@ -32,7 +32,7 @@
 >         fetch-depth: 0
 > 
 >     - name: Deploy
->       uses: werf/actions/deploy@master
+>       uses: werf/actions/deploy@v1.2
 >       with:
 >         env: production
 >         kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}

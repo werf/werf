@@ -24,11 +24,10 @@ jobs:
           cp -f docs/.werf/dev/* docs/
 
     - name: Dismiss
-      uses: werf/actions/dismiss@master
+      uses: werf/actions/dismiss@v1.2
       continue-on-error: true
       with:
         env: review-${{ github.event.number }}
-        group: 1.2
         channel: alpha
       env:
         WERF_DEV: true

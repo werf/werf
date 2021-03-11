@@ -24,10 +24,9 @@ jobs:
           cp -f docs/.werf/dev/* docs/
 
     - name: Converge main site
-      uses: werf/actions/converge@master
+      uses: werf/actions/converge@v1.2
       with:
         env: review-${{ github.event.number }}
-        group: 1.2
         channel: alpha
       env:
         WERF_DEV: true
