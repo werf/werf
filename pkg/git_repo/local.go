@@ -284,7 +284,7 @@ func (repo *Local) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) 
 	return repo.getOrCreateArchive(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Local) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (checksum Checksum, checksumErr error) {
+func (repo *Local) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (string, error) {
 	return repo.getOrCreateChecksum(ctx, repo.yieldRepositoryBackedByWorkTree, opts)
 }
 
