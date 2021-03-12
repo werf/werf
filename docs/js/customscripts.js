@@ -507,8 +507,7 @@ $(document).ready(function () {
         nau_data.releases = data;
       }),
       $.get("https://zapier.com/engine/rss/9718388/werf-io-tweets", function (data) {
-        console.log(data);
-        var rss = new window.DOMParser().parseFromString(data, "text/xml");
+        var rss = data;
         console.log(rss);
         var rss_items = rss.querySelectorAll('item');
         console.log(rss_items);
