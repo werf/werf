@@ -514,6 +514,7 @@ $(document).ready(function () {
         var i = 0;
         do {
           var rss_item = rss_items[i];
+          console.log(rss_item);
           var rss_item_description = rss_item.querySelector('description');
           if (rss_item_description) {
             if (rss_item_description.innerHTML.indexOf('#changelog')) {
