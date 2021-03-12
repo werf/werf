@@ -1319,7 +1319,7 @@ code {
   font-size: 12px;
   line-height: 16px;
   color: #00122c;
-  transition: all 0.3 ease-in-out;
+  transition: all 0.3s ease-in-out;
 }
 
 .news-and-updates__item-link:hover {
@@ -1331,4 +1331,5 @@ code {
   font-size: 10px;
   line-height: 14px;
   opacity: 0.7;
+  margin-top: 2px;
 }

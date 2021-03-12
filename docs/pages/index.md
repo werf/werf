@@ -9,13 +9,13 @@ relation: site
 <div class="news-and-updates">
     <div class="news-and-updates__block">
         <div class="news-and-updates__title">
-            Новости разработки
+            Development news
         </div>
         <div class="news-and-updates__item" id="nau-news"></div>
     </div>
     <div class="news-and-updates__block">
         <div class="news-and-updates__title">
-            Последние релизы
+            Latest releases
         </div>
         <div class="news-and-updates__row" id="nau-releases"></div>
     </div>

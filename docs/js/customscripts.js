@@ -525,14 +525,13 @@ $(document).ready(function () {
         if (rss_result == null) { rss_result = rss_items[0] }
 
         nau_data.news = {
-          title: rss_item.querySelector('description').innerHTML,
-          date: rss_item.querySelector('pubDate').innerHTML
+          title: rss_result.querySelector('description').innerHTML,
+          date: rss_result.querySelector('pubDate').innerHTML
         };
       })
     ];
 
-    // if (nau_data == null || Date.now() > (nau_data['updated_on'] + 1000 * 60 * 60)) {
-    if (true) {
+    if (nau_data == null || Date.now() > (nau_data['updated_on'] + 1000 * 60 * 60)) {
       nau_data = {'updated_on': Date.now(), 'news': {}, 'releases': []};
       $.when.apply($, nau_requests).done(function() {
         updateNauContent();
