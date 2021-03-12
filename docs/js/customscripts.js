@@ -508,15 +508,12 @@ $(document).ready(function () {
       }),
       $.get("https://zapier.com/engine/rss/9718388/werf-io-tweets", function (data) {
         var rss = data;
-        console.log(rss);
         var rss_items = rss.querySelectorAll('item');
-        console.log(rss_items);
         var rss_result = null;
 
         var i = 0;
         do {
           var rss_item = rss_items[i];
-          console.log(rss_item);
           var rss_item_description = rss_item.querySelector('description');
           if (rss_item_description) {
             if (rss_item_description.innerHTML.indexOf('#changelog')) {
