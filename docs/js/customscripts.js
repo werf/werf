@@ -481,7 +481,7 @@ $(document).ready(function () {
     nau_data.releases.slice(0, 5).forEach(function(item) {
       $releases_container.append(
       `<div class="news-and-updates__item">
-          <a href="#" target="_blank" class="news-and-updates__item-link">
+          <a href="${item.html_url}" target="_blank" class="news-and-updates__item-link">
               ${item.tag_name}
           </a>
           <div class="news-and-updates__item-sub">
@@ -507,7 +507,7 @@ $(document).ready(function () {
 
     var $news_container = $('#nau-news');
     $news_container.append(
-    `<a href="#" target="_blank" class="news-and-updates__item-link">
+    `<a href="${nau_news_result.querySelector('title').innerHTML}" target="_blank" class="news-and-updates__item-link">
         ${nau_news_result.querySelector('description').innerHTML}
     </a>
     <div class="news-and-updates__item-sub">
