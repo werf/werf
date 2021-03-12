@@ -492,7 +492,7 @@ $(document).ready(function () {
 
     var $news_container = $('#nau-news');
     $news_container.append(
-    `<a href="#" target="_blank" class="news-and-updates__item-link">
+    `<a href="${nau_data.news.url}" target="_blank" class="news-and-updates__item-link">
     ${nau_data.news.title}
     </a>
     <div class="news-and-updates__item-sub">
@@ -526,7 +526,8 @@ $(document).ready(function () {
 
         nau_data.news = {
           title: rss_result.querySelector('description').innerHTML,
-          date: rss_result.querySelector('pubDate').innerHTML
+          date: rss_result.querySelector('pubDate').innerHTML,
+          url: rss_result.querySelector('title').innerHTML
         };
       })
     ];
