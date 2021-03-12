@@ -490,28 +490,13 @@ $(document).ready(function () {
       </div>`);
     });
 
-    var nau_news = nau_data.news.querySelectorAll('item');
-    var nau_news_result = null;
-    var i = 0;
-    do {
-      var item = nau_news[i];
-      var item_description = item.querySelector('description');
-      if (item_description) {
-        if (item_description.innerHTML.indexOf('#changelog')) {
-          nau_news_result = item;
-        }
-      }
-      i = i + 1;
-    } while (i < nau_news.length && nau_news_result == null);
-    if (nau_news_result == null) { nau_news_result = nau_news[0] }
-
     var $news_container = $('#nau-news');
     $news_container.append(
-    `<a href="${nau_news_result.querySelector('title').innerHTML}" target="_blank" class="news-and-updates__item-link">
-        ${nau_news_result.querySelector('description').innerHTML}
+    `<a href="#" target="_blank" class="news-and-updates__item-link">
+    ${nau_data.news.title}
     </a>
     <div class="news-and-updates__item-sub">
-      ${moment(nau_news_result.querySelector('pubDate').innerHTML).format('DD.MM.YYYY') }
+      ${moment(nau_data.news.date).format('DD.MM.YYYY') }
     </div>`);
   }
 
