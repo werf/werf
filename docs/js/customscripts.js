@@ -495,7 +495,6 @@ $(document).ready(function () {
     var i = 0;
     do {
       var item = nau_news[i];
-      console.log(item_description);
       var item_description = item.querySelector('description');
       if (item_description) {
         if (item_description.innerHTML.indexOf('#changelog')) {
