@@ -450,7 +450,10 @@ func (repo *Local) ListCommitFilesWithGlob(ctx context.Context, commit string, d
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
 	dirOrFileWithGlobPrefix := filepath.Join(dir, prefixWithoutPatterns)
 
-	pathMatcher := path_matcher.NewSimplePathMatcher(dirOrFileWithGlobPrefix, []string{glob})
+	pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		BasePath:     dirOrFileWithGlobPrefix,
+		IncludeGlobs: []string{glob},
+	})
 	if debugGiterminismManager() {
 		logboek.Context(ctx).Debug().LogLn("pathMatcher:", pathMatcher.String())
 	}
@@ -504,8 +507,8 @@ func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir strin
 	}
 
 	result, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
-		PathMatcher: path_matcher.NewSimplePathMatcher(resolvedDir, []string{}),
-		AllFiles:    true,
+		PathScope: resolvedDir,
+		AllFiles:  true,
 	})
 	if err != nil {
 		return err
@@ -810,7 +813,8 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 
 func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPath string) ([]byte, error) {
 	lsTreeResult, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
-		PathMatcher: path_matcher.NewSimplePathMatcher(relPath, []string{}),
+		PathScope: relPath,
+		AllFiles:  false,
 	})
 	if err != nil {
 		return nil, err
@@ -885,7 +889,8 @@ func (repo *Local) isTreeEntryExist(ctx context.Context, commit, relPath string)
 
 func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) (*ls_tree.LsTreeEntry, error) {
 	lsTreeResult, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
-		PathMatcher: path_matcher.NewSimplePathMatcher(path, []string{}),
+		PathScope: path,
+		AllFiles:  false,
 	})
 	if err != nil {
 		return nil, err

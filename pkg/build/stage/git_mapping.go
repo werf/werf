@@ -100,7 +100,11 @@ func (gm *GitMapping) GitRepo() git_repo.GitRepo {
 }
 
 func (gm *GitMapping) getPathMatcher() path_matcher.PathMatcher {
-	return path_matcher.NewGitMappingPathMatcher(gm.Add, gm.IncludePaths, gm.ExcludePaths)
+	return path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		BasePath:     gm.Add,
+		IncludeGlobs: gm.IncludePaths,
+		ExcludeGlobs: gm.ExcludePaths,
+	})
 }
 
 func (gm *GitMapping) IsLocal() bool {
@@ -585,7 +589,11 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 	hash := sha256.New()
 	gitMappingPathMatcher := gm.getPathMatcher()
 	for _, p := range depsPaths {
-		pPathMatcher := path_matcher.NewSimplePathMatcher(gm.Add, []string{p})
+		pPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+			BasePath:     gm.Add,
+			IncludeGlobs: []string{p},
+		})
+
 		multiPathMatcher := path_matcher.NewMultiPathMatcher(
 			gitMappingPathMatcher,
 			pPathMatcher,

@@ -49,7 +49,7 @@ func (opts LsTreeOptions) formattedPathScope() string {
 
 func (opts LsTreeOptions) formattedPathMatcher() path_matcher.PathMatcher {
 	var matchers []path_matcher.PathMatcher
-	matchers = append(matchers, path_matcher.NewSimplePathMatcher(opts.formattedPathScope(), nil))
+	matchers = append(matchers, path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: opts.formattedPathScope()}))
 	if opts.PathMatcher != nil {
 		matchers = append(matchers, opts.PathMatcher)
 	}

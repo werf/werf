@@ -3,7 +3,6 @@ package path_matcher
 import (
 	"crypto/sha256"
 	"fmt"
-	"path/filepath"
 	"sort"
 
 	"github.com/docker/docker/pkg/fileutils"
@@ -11,63 +10,28 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func NewDockerfileIgnorePathMatcher(basePath string, patternMatcher *fileutils.PatternMatcher) *DockerfileIgnorePathMatcher {
-	return &DockerfileIgnorePathMatcher{
-		basePathMatcher: basePathMatcher{basePath: formatPath(basePath)},
-		patternMatcher:  patternMatcher,
-	}
-}
-
-type DockerfileIgnorePathMatcher struct {
-	basePathMatcher
-	patternMatcher *fileutils.PatternMatcher
-}
-
-func (f *DockerfileIgnorePathMatcher) BaseFilepath() string {
-	return f.basePath
-}
-
-func (f *DockerfileIgnorePathMatcher) ID() string {
-	h := sha256.New()
-
-	{ // basePath
-		h.Write([]byte(f.basePath))
-	}
-
-	{ // patterns
-		var cleanedPatterns []string
-		for _, pattern := range f.patternMatcher.Patterns() {
-			cleanedPatterns = append(cleanedPatterns, pattern.String())
-		}
-
-		if len(cleanedPatterns) != 0 {
-			sort.Strings(cleanedPatterns)
-			h.Write([]byte(fmt.Sprint(cleanedPatterns)))
-		}
-	}
-
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
-func (f *DockerfileIgnorePathMatcher) String() string {
-	return fmt.Sprintf("basePath=`%s`, patternMatcher=%v", f.basePath, f.patternMatcher.Patterns())
-}
-
-func (f *DockerfileIgnorePathMatcher) IsPathMatched(path string) bool {
-	path = formatPath(path)
-
-	if !isRel(path, f.basePath) {
-		return false
-	} else if f.patternMatcher == nil || path == f.basePath {
-		return true
-	}
-
-	relpath, err := filepath.Rel(f.basePath, path)
+func newDockerfileIgnorePathMatcher(dockerignorePatterns []string) dockerfileIgnorePathMatcher {
+	m, err := fileutils.NewPatternMatcher(dockerignorePatterns)
 	if err != nil {
 		panic(err)
 	}
 
-	isMatched, err := f.patternMatcher.Matches(relpath)
+	return dockerfileIgnorePathMatcher{
+		patternMatcher: m,
+	}
+}
+
+type dockerfileIgnorePathMatcher struct {
+	patternMatcher *fileutils.PatternMatcher
+}
+
+func (m dockerfileIgnorePathMatcher) IsPathMatched(path string) bool {
+	path = formatPath(path)
+	if m.patternMatcher == nil {
+		return true
+	}
+
+	isMatched, err := m.patternMatcher.Matches(path)
 	if err != nil {
 		panic(err)
 	}
@@ -82,39 +46,26 @@ type pattern struct {
 	isInProgress bool
 }
 
-func (f *DockerfileIgnorePathMatcher) IsDirOrSubmodulePathMatched(path string) bool {
-	return f.IsPathMatched(path) || f.ShouldGoThrough(path)
+func (m dockerfileIgnorePathMatcher) IsDirOrSubmodulePathMatched(path string) bool {
+	return m.IsPathMatched(path) || m.ShouldGoThrough(path)
 }
 
-func (f *DockerfileIgnorePathMatcher) ShouldGoThrough(path string) bool {
-	return f.shouldGoThrough(formatPath(path))
+func (m dockerfileIgnorePathMatcher) ShouldGoThrough(path string) bool {
+	return m.shouldGoThrough(formatPath(path))
 }
 
-func (f *DockerfileIgnorePathMatcher) shouldGoThrough(path string) bool {
-	isBasePathRelativeToPath := isSubDirOf(f.basePath, path)
-	isPathRelativeToBasePath := isSubDirOf(path, f.basePath)
-
-	if isPathRelativeToBasePath || path == f.basePath {
-		if f.patternMatcher == nil || len(f.patternMatcher.Patterns()) == 0 {
-			return false
-		} else if path == f.basePath {
-			return true
-		}
-
-		return f.shouldGoThroughDetailedCheck(path)
-	} else if isBasePathRelativeToPath {
-		return true
-	} else { // path is not relative to basePath
+func (m dockerfileIgnorePathMatcher) shouldGoThrough(path string) bool {
+	if m.patternMatcher == nil || len(m.patternMatcher.Patterns()) == 0 {
 		return false
 	}
-}
 
-func (f *DockerfileIgnorePathMatcher) shouldGoThroughDetailedCheck(path string) bool {
-	relPath := rel(path, f.basePath)
-	relPathParts := util.SplitFilepath(relPath)
+	if path == "" {
+		return true
+	}
+
+	pathParts := util.SplitFilepath(path)
 	var patterns []*pattern
-
-	for _, p := range f.patternMatcher.Patterns() {
+	for _, p := range m.patternMatcher.Patterns() {
 		patterns = append(patterns, &pattern{
 			pattern:      p.String(),
 			exclusion:    p.Exclusion(),
@@ -122,13 +73,13 @@ func (f *DockerfileIgnorePathMatcher) shouldGoThroughDetailedCheck(path string) 
 		})
 	}
 
-	for _, relPathPart := range relPathParts {
+	for _, pathPart := range pathParts {
 		for _, p := range patterns {
 			if !p.isInProgress {
 				continue
 			}
 
-			inProgressGlob, matchedGlob := matchGlob(relPathPart, p.pattern)
+			inProgressGlob, matchedGlob := matchGlob(pathPart, p.pattern)
 			if inProgressGlob != "" {
 				p.pattern = inProgressGlob
 			} else if matchedGlob != "" {
@@ -150,4 +101,24 @@ func (f *DockerfileIgnorePathMatcher) shouldGoThroughDetailedCheck(path string) 
 	}
 
 	return shouldGoThrough
+}
+
+func (m dockerfileIgnorePathMatcher) ID() string {
+	var cleanedPatterns []string
+	for _, pattern := range m.patternMatcher.Patterns() {
+		cleanedPatterns = append(cleanedPatterns, pattern.String())
+	}
+
+	if len(cleanedPatterns) == 0 {
+		return ""
+	}
+
+	h := sha256.New()
+	sort.Strings(cleanedPatterns)
+	h.Write([]byte(fmt.Sprint(cleanedPatterns)))
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func (m dockerfileIgnorePathMatcher) String() string {
+	return fmt.Sprintf("{ patternMatcher=%v }", m.patternMatcher.Patterns())
 }

@@ -6,9 +6,9 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("dockerfile ignore path matcher", func() {
+var _ = Describe("include path matcher", func() {
 	type entry struct {
-		dockerignorePatterns        []string
+		includeGlobs                []string
 		testPath                    string
 		isPathMatched               bool
 		shouldGoThrough             bool
@@ -16,78 +16,78 @@ var _ = Describe("dockerfile ignore path matcher", func() {
 	}
 
 	itBodyFunc := func(e entry) {
-		matcher := newDockerfileIgnorePathMatcher(e.dockerignorePatterns)
+		matcher := newIncludePathMatcher(e.includeGlobs)
 
 		Ω(matcher.IsPathMatched(e.testPath)).Should(BeEquivalentTo(e.isPathMatched))
 		Ω(matcher.ShouldGoThrough(e.testPath)).Should(BeEquivalentTo(e.shouldGoThrough))
 		Ω(matcher.IsDirOrSubmodulePathMatched(e.testPath)).Should(BeEquivalentTo(e.isDirOrSubmodulePathMatched))
 	}
 
-	DescribeTable("empty pattern matcher", itBodyFunc,
+	DescribeTable("empty include globs list", itBodyFunc,
 		Entry("empty test path", entry{
-			dockerignorePatterns:        []string{},
+			includeGlobs:                nil,
 			testPath:                    "",
-			isPathMatched:               true,
-			shouldGoThrough:             false,
-			isDirOrSubmodulePathMatched: true,
-		}),
-		Entry("any test path", entry{
-			dockerignorePatterns:        []string{},
-			testPath:                    "any",
 			isPathMatched:               true,
 			shouldGoThrough:             false,
 			isDirOrSubmodulePathMatched: true,
 		}),
 	)
 
-	DescribeTable("non-empty pattern matcher", itBodyFunc,
+	DescribeTable("non-empty include globs list", itBodyFunc,
 		Entry("empty test path (1)", entry{
-			dockerignorePatterns:        []string{"*"},
+			includeGlobs:                []string{""},
 			testPath:                    "",
-			isPathMatched:               false,
-			shouldGoThrough:             true,
+			isPathMatched:               true,
+			shouldGoThrough:             false,
 			isDirOrSubmodulePathMatched: true,
 		}),
 		Entry("empty test path (2)", entry{
-			dockerignorePatterns:        []string{"any"},
+			includeGlobs:                []string{"dir"},
 			testPath:                    "",
-			isPathMatched:               true,
+			isPathMatched:               false,
 			shouldGoThrough:             true,
 			isDirOrSubmodulePathMatched: true,
 		}),
 		Entry("matched test path (1)", entry{
-			dockerignorePatterns:        []string{"dir1"},
-			testPath:                    "dir2",
-			isPathMatched:               true,
-			shouldGoThrough:             false,
-			isDirOrSubmodulePathMatched: true,
-		}),
-		Entry("matched test path (1)", entry{
-			dockerignorePatterns:        []string{"dir", "!dir/file"},
-			testPath:                    "dir/file",
-			isPathMatched:               true,
-			shouldGoThrough:             false,
-			isDirOrSubmodulePathMatched: true,
-		}),
-		Entry("not matched test path (1)", entry{
-			dockerignorePatterns:        []string{"dir"},
+			includeGlobs:                []string{"dir"},
 			testPath:                    "dir",
-			isPathMatched:               false,
+			isPathMatched:               true,
 			shouldGoThrough:             false,
-			isDirOrSubmodulePathMatched: false,
+			isDirOrSubmodulePathMatched: true,
+		}),
+		Entry("matched test path (2)", entry{
+			includeGlobs:                []string{"dir"},
+			testPath:                    "dir/any",
+			isPathMatched:               true,
+			shouldGoThrough:             false,
+			isDirOrSubmodulePathMatched: true,
 		}),
 		Entry("not matched test path (1)", entry{
-			dockerignorePatterns:        []string{"dir"},
-			testPath:                    "dir/file",
+			includeGlobs:                []string{"dir1"},
+			testPath:                    "dir2",
 			isPathMatched:               false,
 			shouldGoThrough:             false,
 			isDirOrSubmodulePathMatched: false,
 		}),
 		Entry("not matched test path (2)", entry{
-			dockerignorePatterns:        []string{"dir", "!dir/file"},
+			includeGlobs:                []string{"dir/file"},
 			testPath:                    "dir",
 			isPathMatched:               false,
 			shouldGoThrough:             true,
+			isDirOrSubmodulePathMatched: true,
+		}),
+		Entry("glob completion (1)", entry{
+			includeGlobs:                []string{"a"},
+			testPath:                    "a/b/c/d",
+			isPathMatched:               true,
+			shouldGoThrough:             false,
+			isDirOrSubmodulePathMatched: true,
+		}),
+		Entry("glob completion (2)", entry{
+			includeGlobs:                []string{"a/*/*/**/*"},
+			testPath:                    "a/d/c/d",
+			isPathMatched:               true,
+			shouldGoThrough:             false,
 			isDirOrSubmodulePathMatched: true,
 		}),
 	)

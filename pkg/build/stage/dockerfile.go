@@ -239,14 +239,14 @@ func shlexProcessWord(value string, argsArray []string) (string, error) {
 	return resolvedValue, nil
 }
 
-func NewContextChecksum(dockerignorePathMatcher *path_matcher.DockerfileIgnorePathMatcher) *ContextChecksum {
+func NewContextChecksum(dockerignorePathMatcher path_matcher.PathMatcher) *ContextChecksum {
 	return &ContextChecksum{
 		dockerignorePathMatcher: dockerignorePathMatcher,
 	}
 }
 
 type ContextChecksum struct {
-	dockerignorePathMatcher *path_matcher.DockerfileIgnorePathMatcher
+	dockerignorePathMatcher path_matcher.PathMatcher
 }
 
 type dockerfileInstructionInterface interface {
@@ -611,7 +611,7 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img c
 
 func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
 	contextPathRelativeToGitWorkTree := s.contextRelativeToGitWorkTree(giterminismManager)
-	contextPathMatcher := path_matcher.NewSimplePathMatcher(contextPathRelativeToGitWorkTree, nil)
+	contextPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: contextPathRelativeToGitWorkTree})
 
 	archive, err := giterminismManager.LocalGitRepo().GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
 		PathScope: contextPathRelativeToGitWorkTree,
@@ -697,7 +697,10 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminis
 		logProcess = logboek.Context(ctx).Debug().LogProcess("Calculating contextAddFile checksum")
 		logProcess.Start()
 
-		wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.contextRelativeToGitWorkTree(giterminismManager), wildcards)
+		wildcardsPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+			BasePath:     s.contextRelativeToGitWorkTree(giterminismManager),
+			IncludeGlobs: wildcards,
+		})
 		if contextAddChecksum, err := context_manager.ContextAddFileChecksum(ctx, giterminismManager.ProjectDir(), s.context, s.contextAddFile, wildcardsPathMatcher); err != nil {
 			logProcess.Fail()
 			return "", fmt.Errorf("unable to calculate checksum for contextAddFile files list: %s", err)
@@ -720,7 +723,10 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminis
 
 func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, giterminismManager giterminism_manager.Interface, wildcards []string, dockerfileLine string) (string, error) {
 	contextPathRelativeToGitWorkTree := s.contextRelativeToGitWorkTree(giterminismManager)
-	wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(contextPathRelativeToGitWorkTree, wildcards)
+	wildcardsPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		BasePath:     contextPathRelativeToGitWorkTree,
+		IncludeGlobs: wildcards,
+	})
 	lsTreeResultChecksum, err := giterminismManager.LocalGitRepo().GetOrCreateChecksum(ctx, git_repo.ChecksumOptions{
 		LsTreeOptions: git_repo.LsTreeOptions{
 			PathScope: contextPathRelativeToGitWorkTree,
@@ -736,11 +742,15 @@ func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, git
 		return "", err
 	}
 
-	if err := giterminismManager.Inspector().InspectBuildContextFiles(ctx, path_matcher.NewMultiPathMatcher(
-		s.dockerignorePathMatcher,
-		wildcardsPathMatcher,
-		path_matcher.NewGitMappingPathMatcher("", []string{}, s.contextAddFileRelativeToGitWorkTree(giterminismManager)),
-	)); err != nil {
+	pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		ExcludeGlobs: s.contextAddFileRelativeToGitWorkTree(giterminismManager),
+		Matchers: []path_matcher.PathMatcher{
+			wildcardsPathMatcher,
+			s.dockerignorePathMatcher,
+		},
+	})
+
+	if err := giterminismManager.Inspector().InspectBuildContextFiles(ctx, pathMatcher); err != nil {
 		return "", err
 	}
 

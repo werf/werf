@@ -36,7 +36,7 @@ func (r FileReader) isSubpathOfWorkTreeDir(absPath string) bool {
 }
 
 func (r FileReader) ValidateFileByStatusResult(ctx context.Context, relPath string) error {
-	return r.ValidateStatusResult(ctx, path_matcher.NewSimplePathMatcher(r.projectDirRelativePathToWorkTreeRelativePath(relPath), nil))
+	return r.ValidateStatusResult(ctx, path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: r.projectDirRelativePathToWorkTreeRelativePath(relPath)}))
 }
 
 func (r FileReader) ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) (err error) {
@@ -293,7 +293,7 @@ func (r FileReader) IsFileModifiedLocally(ctx context.Context, relPath string) (
 }
 
 func (r FileReader) isFileModifiedLocally(ctx context.Context, relPath string) (bool, error) {
-	return r.isStatusPathListEmpty(ctx, path_matcher.NewSimplePathMatcher(r.projectDirRelativePathToWorkTreeRelativePath(relPath), nil))
+	return r.isStatusPathListEmpty(ctx, path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: r.projectDirRelativePathToWorkTreeRelativePath(relPath)}))
 }
 
 func (r FileReader) isStatusPathListEmpty(ctx context.Context, pathMatcher path_matcher.PathMatcher) (bool, error) {

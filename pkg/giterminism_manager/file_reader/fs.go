@@ -54,7 +54,10 @@ func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, 
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
 	relDirOrFileWithGlobPart := filepath.Join(relDir, prefixWithoutPatterns)
 
-	pathMatcher := path_matcher.NewSimplePathMatcher(relDirOrFileWithGlobPart, []string{glob})
+	pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		BasePath:     relDirOrFileWithGlobPart,
+		IncludeGlobs: []string{glob},
+	})
 	if debug() {
 		logboek.Context(ctx).Debug().LogLn("pathMatcher:", pathMatcher.String())
 	}
