@@ -522,11 +522,32 @@ $(document).ready(function () {
         nau_data.releases = data;
       }),
       $.get("https://zapier.com/engine/rss/9718388/werf-io-tweets", function (data) {
-        nau_data.news = data;
+        var rss = new window.DOMParser().parseFromString(data, "text/xml")
+        var rss_items = rss.querySelectorAll('item');
+        var rss_result = null;
+
+        var i = 0;
+        do {
+          var rss_item = rss_items[i];
+          var rss_item_description = rss_item.querySelector('description');
+          if (rss_item_description) {
+            if (rss_item_description.innerHTML.indexOf('#changelog')) {
+              rss_result = rss_item;
+            }
+          }
+          i = i + 1;
+        } while (i < rss_items.length && rss_result == null);
+        if (rss_result == null) { rss_result = rss_items[0] }
+
+        nau_data.news = {
+          title: rss_item.querySelector('description').innerHTML,
+          date: rss_item.querySelector('pubDate').innerHTML
+        };
       })
     ];
 
-    if (nau_data == null || Date.now() > (nau_data['updated_on'] + 1000 * 60 * 60)) {
+    // if (nau_data == null || Date.now() > (nau_data['updated_on'] + 1000 * 60 * 60)) {
+    if (true) {
       nau_data = {'updated_on': Date.now(), 'news': {}, 'releases': []};
       $.when.apply($, nau_requests).done(function() {
         updateNauContent();
