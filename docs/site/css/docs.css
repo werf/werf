@@ -486,8 +486,12 @@
     border-radius: 4px;
 }
 
+
+.highlight {
+    border-radius: 4px;
+}
+
 .docs pre {
-    border: 2px solid #eef2ff;
     border-radius: 4px;
     padding: 10px;
     overflow-x: auto;

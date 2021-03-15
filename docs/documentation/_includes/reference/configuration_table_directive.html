@@ -35,9 +35,9 @@
         {% for i in (2..include.indent) %}&nbsp;&nbsp;{% endfor %}
         {%- if include.isElm and include.elmIndex == 1 %}-&nbsp;{% elsif include.isAttr or include.isElm %}&nbsp;&nbsp;{% endif -%}
 
-        <span style="color: #008080;">{{ directive.name }}</span>:
+        <span style="color: #66d9ef;">{{ directive.name }}</span>:
 
-        {%- if directive.value %} <span style="color: #d14;">{{ directive.value | escape }}</span>{% endif -%}
+        {%- if directive.value %} <span style="color: #a6e22e;">{{ directive.value | escape }}</span>{% endif -%}
         {%- if directive.required %} <span class="required" data-toggle="tooltip" title="Required">!</span>{% endif -%}
     </td>
     <td class="comment">
