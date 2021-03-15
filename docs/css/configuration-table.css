@@ -136,10 +136,14 @@
     user-select: none;
 }
 
+.werf-configuration-table a {
+    color: #5f9fff im !important;
+}
+
 .tooltip {
     font-family: 'Open Sans', sans-serif;
-    background: #fff;
-    color: #000;
+    background: #000;
+    color: #fff;
     font-weight: bold;
     padding: 4px 8px;
     font-size: 12px;
