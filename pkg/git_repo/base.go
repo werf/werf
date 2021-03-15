@@ -471,19 +471,19 @@ func (repo *Base) CreateChecksum(ctx context.Context, yieldRepositoryFunc func(c
 }
 
 func (repo *Base) createChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (checksum string, err error) {
-	_ = yieldRepositoryFunc(ctx, opts.Commit, func(repository *git.Repository) error {
-		checksum, err = repo.checksumWithLsTree(ctx, repository, opts)
-		return nil
-	})
-
-	return
-}
-
-func (repo *Base) checksumWithLsTree(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (string, error) {
-	lsTreeResult, err := ls_tree.LsTree(ctx, repository, opts.Commit, opts.PathMatcher, false)
+	lsTreeResult, err := repo.lsTreeResult(ctx, yieldRepositoryFunc, opts.Commit, opts.LsTreeOptions)
 	if err != nil {
 		return "", err
 	}
 
 	return lsTreeResult.Checksum(ctx), nil
+}
+
+func (repo *Base) lsTreeResult(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, commit string, opts LsTreeOptions) (result *ls_tree.Result, err error) {
+	_ = yieldRepositoryFunc(ctx, commit, func(repository *git.Repository) error {
+		result, err = ls_tree.LsTree(ctx, repository, commit, opts.PathMatcher, opts.AllFiles)
+		return nil
+	})
+
+	return
 }

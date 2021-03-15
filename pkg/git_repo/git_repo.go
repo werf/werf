@@ -14,9 +14,13 @@ const GitRepoCacheVersion = "4"
 
 type PatchOptions true_git.PatchOptions
 type ArchiveOptions true_git.ArchiveOptions
-type ChecksumOptions struct {
+type LsTreeOptions struct {
 	PathMatcher path_matcher.PathMatcher
-	Commit      string
+	AllFiles    bool
+}
+type ChecksumOptions struct {
+	LsTreeOptions
+	Commit string
 }
 
 func (opts ChecksumOptions) ID() string {

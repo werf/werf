@@ -589,8 +589,11 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 		)
 
 		checksumOptions := git_repo.ChecksumOptions{
-			PathMatcher: multiPathMatcher,
-			Commit:      commitInfo.Commit,
+			LsTreeOptions: git_repo.LsTreeOptions{
+				PathMatcher: multiPathMatcher,
+				AllFiles:    false,
+			},
+			Commit: commitInfo.Commit,
 		}
 
 		checksum, err := gm.GitRepo().GetOrCreateChecksum(ctx, checksumOptions)
