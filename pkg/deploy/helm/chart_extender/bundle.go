@@ -32,11 +32,11 @@ type BundleOptions struct {
 
 func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, opts BundleOptions) *Bundle {
 	return &Bundle{
-		Dir:                          dir,
-		HelmEnvSettings:              helmEnvSettings,
-		BuildChartDependenciesOpts:   opts.BuildChartDependenciesOpts,
-		ChartExtenderExtraValuesData: helpers.NewChartExtenderExtraValuesData(),
-		ChartExtenderContextData:     helpers.NewChartExtenderContextData(ctx),
+		Dir:                            dir,
+		HelmEnvSettings:                helmEnvSettings,
+		BuildChartDependenciesOpts:     opts.BuildChartDependenciesOpts,
+		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
+		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
 	}
 }
 
@@ -50,7 +50,7 @@ type Bundle struct {
 	HelmEnvSettings            *cli.EnvSettings
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 
-	*helpers.ChartExtenderExtraValuesData
+	*helpers.ChartExtenderServiceValuesData
 	*helpers.ChartExtenderContextData
 }
 
@@ -91,7 +91,8 @@ func (bundle *Bundle) ChartDependenciesLoaded() error {
 // MakeValues method for the chart.Extender interface
 func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
 	vals := make(map[string]interface{})
-	chartutil.CoalesceTables(vals, bundle.ExtraValues)
+
+	chartutil.CoalesceTables(vals, bundle.ServiceValues)
 	chartutil.CoalesceTables(vals, inputVals)
 
 	data, err := yaml.Marshal(vals)
