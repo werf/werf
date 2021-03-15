@@ -30,14 +30,18 @@ func (m *MultiPathMatcher) IsPathMatched(path string) bool {
 	return true
 }
 
+// ShouldGoThrough returns true if the ShouldGoThrough method of at least one matcher returns true and the path partially or completely matched by others (IsDirOrSubmodulePathMatched returns true)
 func (m *MultiPathMatcher) ShouldGoThrough(path string) bool {
+	var shouldGoThrough bool
 	for _, matcher := range m.PathMatchers {
-		if !matcher.ShouldGoThrough(path) {
+		if matcher.ShouldGoThrough(path) {
+			shouldGoThrough = true
+		} else if !matcher.IsPathMatched(path) {
 			return false
 		}
 	}
 
-	return true
+	return shouldGoThrough
 }
 
 func (m *MultiPathMatcher) TrimFileBaseFilepath(path string) string {
