@@ -108,6 +108,10 @@ type CmdData struct {
 	ScanContextNamespaceOnly *bool
 
 	Tag *string
+
+	// Host storage GC options
+	AllowedVolumeUsage      *int64
+	DockerServerStoragePath *string
 }
 
 const (
@@ -247,7 +251,7 @@ func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 func SetupKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KeepStagesBuiltWithinLastNHours = new(uint64)
 
-	envValue, err := getUint64EnvVar("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
+	envValue, err := GetUint64EnvVar("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
 	if err != nil {
 		TerminateWithError(err.Error(), 1)
 	}
@@ -389,7 +393,7 @@ func SetupStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
 func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ReleasesHistoryMax = new(int)
 
-	defaultValueP, err := getIntEnvVar("WERF_RELEASES_HISTORY_MAX")
+	defaultValueP, err := GetIntEnvVar("WERF_RELEASES_HISTORY_MAX")
 	if err != nil {
 		TerminateWithError(fmt.Sprintf("bad WERF_RELEASES_HISTORY_MAX value: %s", err), 1)
 	}
@@ -411,7 +415,7 @@ func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 func statusProgressPeriodDefaultValue() *int64 {
 	defaultValue := int64(5)
 
-	v, err := getIntEnvVar("WERF_STATUS_PROGRESS_PERIOD_SECONDS")
+	v, err := GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD_SECONDS")
 	if err != nil {
 		TerminateWithError(err.Error(), 1)
 	}
@@ -441,7 +445,7 @@ func SetupHooksStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
 func hooksStatusProgressPeriodDefaultValue() *int64 {
 	defaultValue := statusProgressPeriodDefaultValue()
 
-	v, err := getIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS")
+	v, err := GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS")
 	if err != nil {
 		TerminateWithError(err.Error(), 1)
 	}
@@ -787,7 +791,15 @@ func getInt64EnvVar(varName string) (*int64, error) {
 	return nil, nil
 }
 
-func getIntEnvVar(varName string) (*int64, error) {
+func GetIntEnvVarStrict(varName string) *int64 {
+	valP, err := GetIntEnvVar(varName)
+	if err != nil {
+		TerminateWithError(fmt.Sprintf("bad %s value: %s", varName, err), 1)
+	}
+	return valP
+}
+
+func GetIntEnvVar(varName string) (*int64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vInt, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
@@ -803,7 +815,7 @@ func getIntEnvVar(varName string) (*int64, error) {
 	return nil, nil
 }
 
-func getUint64EnvVar(varName string) (*uint64, error) {
+func GetUint64EnvVar(varName string) (*uint64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vUint, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {

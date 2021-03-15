@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/pkg/host_cleaning"
 
 	"github.com/spf13/cobra"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/ssh_agent"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
@@ -109,6 +111,9 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 	common.SetupFollow(&commonCmdData, cmd)
 
+	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+
 	return cmd
 }
 
@@ -124,6 +129,10 @@ func runMain(ctx context.Context, args []string) error {
 	}
 
 	if err := image.Init(); err != nil {
+		return err
+	}
+
+	if err := lrumeta.Init(); err != nil {
 		return err
 	}
 
@@ -191,6 +200,16 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
+
+	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
+		return fmt.Errorf("host storage GC failed: %s", err)
+	}
+
+	if lock, err := host_cleaning.AcquireSharedHostStorageLock(ctx); err != nil {
+		return fmt.Errorf("failed to acquire shared storage lock: %s", err)
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 

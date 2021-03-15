@@ -11,6 +11,7 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/pkg/host_cleaning"
 
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
@@ -37,6 +38,7 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
@@ -147,6 +149,9 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupFollow(&commonCmdData, cmd)
 
+	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", common.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", common.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
@@ -166,6 +171,10 @@ func runMain(ctx context.Context) error {
 	}
 
 	if err := image.Init(); err != nil {
+		return err
+	}
+
+	if err := lrumeta.Init(); err != nil {
 		return err
 	}
 
@@ -237,6 +246,16 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
+
+	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
+		return fmt.Errorf("host storage GC failed: %s", err)
+	}
+
+	if lock, err := host_cleaning.AcquireSharedHostStorageLock(ctx); err != nil {
+		return fmt.Errorf("failed to acquire shared storage lock: %s", err)
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
 
 	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
 	if err != nil {
