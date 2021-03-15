@@ -10,10 +10,12 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/util"
 )
 
-func makeDiffParser(out io.Writer, pathMatcher path_matcher.PathMatcher) *diffParser {
+func makeDiffParser(out io.Writer, pathScope string, pathMatcher path_matcher.PathMatcher) *diffParser {
 	return &diffParser{
+		PathScope:   pathScope,
 		PathMatcher: pathMatcher,
 		Out:         out,
 		OutLines:    0,
@@ -37,6 +39,8 @@ const (
 )
 
 type diffParser struct {
+	// the PathScope option determines the directory or file that will get into the result (similar to <pathspec> in the git commands)
+	PathScope   string
 	PathMatcher path_matcher.PathMatcher
 
 	Out                 io.Writer
@@ -392,7 +396,20 @@ func (p *diffParser) handleNewFilePath(line string) error {
 }
 
 func (p *diffParser) trimFileBaseFilepath(path string) string {
-	return filepath.ToSlash(p.PathMatcher.TrimFileBaseFilepath(filepath.FromSlash(path)))
+	path = filepath.FromSlash(path)
+	pathScope := filepath.FromSlash(p.PathScope)
+
+	var result string
+	if pathScope == path {
+		// The path is always a path to a file, not a directory.
+		// Thus if opts.PathScope is equal the path, then opts.PathScope is a path to a file.
+		// Use file name in this case by convention.
+		result = filepath.Base(path)
+	} else {
+		result = util.GetRelativeToBaseFilepath(pathScope, path)
+	}
+
+	return filepath.ToSlash(result)
 }
 
 func (p *diffParser) handleDeleteFilePath(line string) error {

@@ -606,9 +606,11 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img c
 }
 
 func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
-	contextPathMatcher := path_matcher.NewSimplePathMatcher(filepath.Join(giterminismManager.RelativeToGitProjectDir(), s.context), nil)
+	contextPathRelativeToGitWorkTree := filepath.Join(giterminismManager.RelativeToGitProjectDir(), s.context)
+	contextPathMatcher := path_matcher.NewSimplePathMatcher(contextPathRelativeToGitWorkTree, nil)
 
 	archive, err := giterminismManager.LocalGitRepo().GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
+		PathScope: contextPathRelativeToGitWorkTree,
 		PathMatcher: path_matcher.NewMultiPathMatcher(
 			contextPathMatcher,
 			s.dockerignorePathMatcher,

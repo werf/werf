@@ -340,6 +340,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 	archiveType := git_repo.ArchiveType(prevBuiltImage.GetStageDescription().Info.Labels[gm.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		FromCommit:  fromCommit,
 		ToCommit:    toCommit,
@@ -417,6 +418,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 		}
 
 		archiveOpts := git_repo.ArchiveOptions{
+			PathScope:   gm.Add,
 			PathMatcher: gm.getPathMatcher(),
 			Commit:      toCommit,
 		}
@@ -538,6 +540,7 @@ func (gm *GitMapping) applyScript(image container_runtime.ImageInterface, comman
 
 func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string, image container_runtime.ImageInterface) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		Commit:      commit,
 	}
@@ -626,6 +629,7 @@ func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit stri
 	}
 
 	patchOpts := git_repo.PatchOptions{
+		PathScope:             gm.Add,
 		PathMatcher:           gm.getPathMatcher(),
 		FromCommit:            fromCommit,
 		ToCommit:              toCommitInfo.Commit,
@@ -714,6 +718,7 @@ func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuilt
 	}
 
 	patchOpts := git_repo.PatchOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		FromCommit:  fromCommit,
 		ToCommit:    toCommitInfo.Commit,
@@ -750,6 +755,7 @@ func (gm *GitMapping) baseIsPatchEmpty(ctx context.Context, fromCommit, toCommit
 	}
 
 	patchOpts := git_repo.PatchOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		FromCommit:  fromCommit,
 		ToCommit:    toCommit,
@@ -770,6 +776,7 @@ func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
 	}
 
 	archiveOpts := git_repo.ArchiveOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		Commit:      commitInfo.Commit,
 	}
