@@ -79,7 +79,11 @@
                 <li class="header__menu-icon"><a href="https://github.com/werf/werf" rel="noopener noreferrer" target="_blank" class="page__icon page__icon_github" title="GitHub"></a></li>
                 <li class="header__menu-icon"><a href="https://github.com/werf/werf/discussions" rel="noopener noreferrer" target="_blank" class="page__icon page__icon_discussions" title="GitHub Discussions"></a></li>
                 <li class="header__menu-icon header__menu-icon_search"><a href="javascript:void(0)" class="page__icon page__icon_search"></a></li>
+                {% raw %}
+                {{ $CurrentPageURL := .CurrentPageURL }}
+                {{ $CurrentPageURLRelative := .CurrentPageURLRelative }}
                 {{- if and .CurrentGroup .CurrentChannel }}{{ $CurrentPageURL = printf "v%s-%s%s" .CurrentGroup .CurrentChannel $CurrentPageURL }}{{ end }}
+                {% endraw %}
                 <li class="header__menu-item submenu-parent">
                     <a href="#">
                         {%- if page.lang == "ru" %}
