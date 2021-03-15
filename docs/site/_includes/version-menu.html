@@ -1,26 +1,26 @@
 {%- raw %}
 {{ $CurrentPageURL := .CurrentPageURL }}
 {{ $CurrentPageURLRelative := .CurrentPageURLRelative }}
-<li id="doc-versions-menu" class="header__menu-item header__menu-item_parent" style="display: none">
+<li id="doc-versions-menu" class="submenu-parent" style="display: none">
 {{- $first := index .VersionItems 0 }}
 <a data-proofer-ignore href="#">
 {{- if $first.Group }}
 {{- $first.Group }}-{{  $first.Channel }}
-    <span class="header__menu-item-dot"></span>
-    <span class="header__menu-item-extra">{{ $first.Version }}</span>
+    <span class="menu-item-dot"></span>
+    <span class="menu-item-extra">{{ $first.Version }}</span>
 {{- else }}
 {{ $first.Version }}
 {{- end }}
 </a>
-<div class="header__submenu-container">
-    <ul class="header__submenu">
+<div class="submenu-container">
+    <ul class="submenu">
     {{- $prevVersion := "" }}
     {{- range (slice .VersionItems 1) }}
-            <li class="header__submenu-item">
-                <a data-proofer-ignore class="header__submenu-item-link" href="/documentation/{{ .VersionURL }}{{ $CurrentPageURLRelative }}">
-                    <span class="header__submenu-item-channel"> {{ .Group }}-{{ .Channel }}</span>
-                    <span class="header__submenu-item-dot{{ if eq $prevVersion .Version }} header__submenu-item-dot_special{{ end }}"></span>
-                    <span class="header__submenu-item-release">{{ .Version }}</span>
+            <li class="submenu-item">
+                <a data-proofer-ignore class="submenu-item-link" href="/documentation/{{ .VersionURL }}{{ $CurrentPageURLRelative }}">
+                    <span class="submenu-item-channel"> {{ .Group }}-{{ .Channel }}</span>
+                    <span class="submenu-item-dot{{ if eq $prevVersion .Version }} submenu-item-dot_special{{ end }}"></span>
+                    <span class="submenu-item-release">{{ .Version }}</span>
                 </a>
             </li>
         {{ $prevVersion = .Version }}
@@ -28,28 +28,4 @@
     </ul>
 </div>
 </li>
-{{- if and .CurrentGroup .CurrentChannel }}{{ $CurrentPageURL = printf "v%s-%s%s" .CurrentGroup .CurrentChannel $CurrentPageURL }}{{ end }}
 {% endraw %}
-<li class="header__menu-item header__menu-item_parent">
-    <a href="#">
-        {%- if page.lang == "ru" %}
-            Russian
-        {%- else %}
-            English
-        {%- endif %}
-    </a>
-    <div class="header__submenu-container">
-      <ul class="header__submenu">
-        <li data-proofer-ignore class="header__submenu-item">
-            <a data-proofer-ignore href="{{ site.site_urls.en }}{% raw %}{{ $CurrentPageURL }}{% endraw %}" class="header__submenu-item-link">
-                English
-            </a>
-        </li>
-        <li data-proofer-ignore class="header__submenu-item">
-            <a data-proofer-ignore href="{{ site.site_urls.ru }}{% raw %}{{ $CurrentPageURL }}{% endraw %}" class="header__submenu-item-link">
-                Russian
-            </a>
-        </li>
-      </ul>
-    </div>
-</li>

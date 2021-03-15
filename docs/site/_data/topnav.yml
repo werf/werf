@@ -7,12 +7,7 @@ topnav:
      - title: Installation
        url: /installation.html
      - title: Documentation
-       url: /documentation/
-       folderitems:
-       - title: v1.1
-         url: /documentation/v1.1/
-       - title: v1.2
-         url: /documentation/v1.2/
+       url: /documentation/v1.2/
      - title: Publications
        url: /publications.html
      - title: Guides
@@ -24,12 +19,7 @@ topnav:
      - title: Установка
        url: /installation.html
      - title: Документация
-       url: /documentation/
-       folderitems:
-       - title: v1.1
-         url: /documentation/v1.1/
-       - title: v1.2
-         url: /documentation/v1.2/
+       url: /documentation/v1.2/
      - title: Публикации
        url: /publications.html
      - title: Руководства

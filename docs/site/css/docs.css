@@ -1,12 +1,11 @@
 .breadcrumbs {
-    opacity: 0.3;
+    color: #bbb;
     font-size: 14px;
     font-weight: normal;
     font-style: normal;
     font-stretch: normal;
     line-height: 1.71;
     letter-spacing: -0.3px;
-    color: #00122c;
     list-style-type: none;
     margin: 25px 0;
     padding: 0;
@@ -16,17 +15,17 @@
     justify-content: flex-start;
 }
 
-.breadcrumbs li:not(:last-child)::after {
+.breadcrumbs > li:not(:last-child)::after {
     content: '/';
     margin: 0 15px;
 }
 
-.breadcrumbs li a {
-    color: #00122c;
+.breadcrumbs > li a {
+    color: #bbb;
     text-decoration: none;
 }
 
-.breadcrumbs li a:hover {
+.breadcrumbs > li a:hover {
     text-decoration: underline;
 }
 

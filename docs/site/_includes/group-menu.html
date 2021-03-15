@@ -1,17 +1,16 @@
-<div display="block">
 {%- raw %}
 {{ $CurrentPageURL := .CurrentPageURL }}
 {{ $CurrentPageURLRelative := .CurrentPageURLRelative }}
-<li id="group-versions-menu" class="header__menu-item header__menu-item_parent">
+<li id="group-versions-menu" class="submenu-parent">
     {{- $first := index .VersionItems 0 }}
     <a data-proofer-ignore href="#">{{- if $first.Group }}v{{- $first.Group }}{{- else }}{{ $first.Version }}{{- end }}</a>
-    <div class="header__submenu-container">
-        <ul class="header__submenu">
+    <div class="submenu-container">
+        <ul class="submenu">
         {{- $prevVersion := "" }}
         {{- range (slice .VersionItems 1) }}
-                <li class="header__submenu-item">
-                    <a data-proofer-ignore class="header__submenu-item-link" href="/documentation/v{{ .Group }}{{ $CurrentPageURLRelative }}">
-                        <span class="header__submenu-item-channel"> {{ .Group }}</span>
+                <li class="submenu-item">
+                    <a data-proofer-ignore class="submenu-item-link" href="/documentation/v{{ .Group }}{{ $CurrentPageURLRelative }}">
+                        <span class="submenu-item-channel"> {{ .Group }}</span>
                     </a>
                 </li>
             {{ $prevVersion = .Version }}
@@ -20,4 +19,3 @@
     </div>
 </li>
 {% endraw %}
-</div>
