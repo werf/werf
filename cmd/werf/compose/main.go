@@ -362,6 +362,12 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 			}
 		}
 
+		for _, imageName := range c.GetExportedImagesNames() {
+			if err := c.FetchLastImageStage(ctx, imageName); err != nil {
+				return err
+			}
+		}
+
 		envArray = c.GetImagesEnvArray()
 
 		return nil

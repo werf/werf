@@ -324,6 +324,20 @@ func (c *Conveyor) GetImageInfoGetters() (images []*imagePkg.InfoGetter) {
 	return images
 }
 
+func (c *Conveyor) GetExportedImagesNames() []string {
+	var res []string
+
+	for _, img := range c.images {
+		if img.isArtifact {
+			continue
+		}
+
+		res = append(res, img.name)
+	}
+
+	return res
+}
+
 func (c *Conveyor) GetImagesEnvArray() []string {
 	var envArray []string
 	for _, img := range c.images {
