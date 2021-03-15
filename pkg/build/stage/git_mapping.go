@@ -593,6 +593,7 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 
 		checksumOptions := git_repo.ChecksumOptions{
 			LsTreeOptions: git_repo.LsTreeOptions{
+				PathScope:   gm.Add,
 				PathMatcher: multiPathMatcher,
 				AllFiles:    false,
 			},

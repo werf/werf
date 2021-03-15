@@ -4,8 +4,8 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/true_git/ls_tree"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -14,10 +14,7 @@ const GitRepoCacheVersion = "4"
 
 type PatchOptions true_git.PatchOptions
 type ArchiveOptions true_git.ArchiveOptions
-type LsTreeOptions struct {
-	PathMatcher path_matcher.PathMatcher
-	AllFiles    bool
-}
+type LsTreeOptions ls_tree.LsTreeOptions
 type ChecksumOptions struct {
 	LsTreeOptions
 	Commit string

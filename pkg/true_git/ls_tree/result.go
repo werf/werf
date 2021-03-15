@@ -14,8 +14,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
-
-	"github.com/werf/werf/pkg/path_matcher"
 )
 
 type Result struct {
@@ -106,8 +104,8 @@ type LsTreeEntry struct {
 	object.TreeEntry
 }
 
-func (r *Result) LsTree(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher, allFiles bool) (*Result, error) {
-	r, err := r.lsTree(ctx, repository, pathMatcher, allFiles)
+func (r *Result) LsTree(ctx context.Context, repository *git.Repository, opts LsTreeOptions) (*Result, error) {
+	r, err := r.lsTree(ctx, repository, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +114,7 @@ func (r *Result) LsTree(ctx context.Context, repository *git.Repository, pathMat
 	return r, nil
 }
 
-func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMatcher path_matcher.PathMatcher, allFiles bool) (*Result, error) {
+func (r *Result) lsTree(ctx context.Context, repository *git.Repository, opts LsTreeOptions) (*Result, error) {
 	res := NewResult(r.commit, r.repositoryFullFilepath, []*LsTreeEntry{}, []*SubmoduleResult{})
 
 	tree, err := getCommitTree(repository, r.commit)
@@ -132,8 +130,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 		if lsTreeEntry.FullFilepath == "" {
 			if err := lsTreeDirOrSubmoduleEntryMatchBase(
 				lsTreeEntry.FullFilepath,
-				pathMatcher,
-				allFiles,
+				opts,
 				// add tree func
 				func() error {
 					if debug() {
@@ -150,7 +147,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 						logboek.Context(ctx).Debug().LogLn("Root tree was checking")
 					}
 
-					entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, pathMatcher, allFiles)
+					entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, opts)
 					return err
 				},
 				// skip tree func
@@ -165,7 +162,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 				return nil, err
 			}
 		} else {
-			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, pathMatcher, allFiles)
+			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, opts)
 			if err != nil {
 				return nil, err
 			}
@@ -181,7 +178,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, pathMat
 			return nil, err
 		}
 
-		sr, err := submoduleResult.lsTree(ctx, submoduleRepository, pathMatcher, allFiles)
+		sr, err := submoduleResult.lsTree(ctx, submoduleRepository, opts)
 		if err != nil {
 			return nil, err
 		}

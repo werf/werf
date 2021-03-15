@@ -90,7 +90,7 @@ func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, 
 		return result, nil
 	}
 
-	err = r.walkFilesWithPathMatcher(ctx, pathMatcher.BaseFilepath(), pathMatcher, skipFileFunc, fileFunc)
+	err = r.walkFilesWithPathMatcher(ctx, relDirOrFileWithGlobPart, pathMatcher, skipFileFunc, fileFunc)
 	return result, err
 }
 
