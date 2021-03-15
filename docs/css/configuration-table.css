@@ -1,5 +1,7 @@
 .werf-configuration-table {
     border-radius: 4px;
+    color: #f8f8f2;
+    background-color: #272822;
 }
 
 .werf-configuration-table table {
