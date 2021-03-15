@@ -208,12 +208,6 @@ func runApply() error {
 
 	bundle := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, chart_extender.BundleOptions{})
 
-	if *commonCmdData.SetDockerConfigJsonValue {
-		if err := helpers.WriteDockerConfigJsonValue(ctx, bundle.GetExtraValues(), *commonCmdData.DockerConfig); err != nil {
-			return fmt.Errorf("error writing docker config value into bundle extra values: %s", err)
-		}
-	}
-
 	postRenderer, err := bundle.GetPostRenderer()
 	if err != nil {
 		return err
@@ -222,6 +216,17 @@ func runApply() error {
 	postRenderer.Add(userExtraAnnotations, userExtraLabels)
 	if *commonCmdData.Environment != "" {
 		postRenderer.Add(map[string]string{"project.werf.io/env": *commonCmdData.Environment}, nil)
+	}
+
+	if vals, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+		Env:                      *commonCmdData.Environment,
+		Namespace:                namespace,
+		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
+		DockerConfigPath:         *commonCmdData.DockerConfig,
+	}); err != nil {
+		return fmt.Errorf("error creating service values: %s", err)
+	} else {
+		bundle.SetServiceValues(vals)
 	}
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{

@@ -51,8 +51,8 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
 
-		ChartExtenderExtraValuesData: helpers.NewChartExtenderExtraValuesData(),
-		ChartExtenderContextData:     helpers.NewChartExtenderContextData(ctx),
+		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
+		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
 	}
 
 	wc.extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
@@ -80,10 +80,9 @@ type WerfChart struct {
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	werfConfig                            *config.WerfConfig
-	serviceValues                         map[string]interface{}
 
 	*secrets.SecretsRuntimeData
-	*helpers.ChartExtenderExtraValuesData
+	*helpers.ChartExtenderServiceValuesData
 	*helpers.ChartExtenderContextData
 }
 
@@ -122,8 +121,8 @@ func (wc *WerfChart) ChartDependenciesLoaded() error {
 
 func (wc *WerfChart) makeValues(inputVals map[string]interface{}, withSecrets bool) (map[string]interface{}, error) {
 	vals := make(map[string]interface{})
-	chartutil.CoalesceTables(vals, wc.ExtraValues)   // NOTE: extra values will not be saved into the marshalled release
-	chartutil.CoalesceTables(vals, wc.serviceValues) // NOTE: service values will not be saved into the marshalled release
+
+	chartutil.CoalesceTables(vals, wc.ServiceValues) // NOTE: service values will not be saved into the marshalled release
 
 	if withSecrets {
 		chartutil.CoalesceTables(vals, wc.SecretsRuntimeData.DecodedSecretValues)
@@ -237,11 +236,6 @@ func (wc *WerfChart) SetEnv(env string) error {
 		"project.werf.io/env": env,
 	}, nil)
 
-	return nil
-}
-
-func (wc *WerfChart) SetServiceValues(vals map[string]interface{}) error {
-	wc.serviceValues = vals
 	return nil
 }
 

@@ -353,16 +353,16 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	if err := wc.SetWerfConfig(werfConfig); err != nil {
 		return err
 	}
-	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{Namespace: namespace, Env: *commonCmdData.Environment}); err != nil {
-		return fmt.Errorf("error creating service values: %s", err)
-	} else if err := wc.SetServiceValues(vals); err != nil {
-		return err
-	}
 
-	if *commonCmdData.SetDockerConfigJsonValue {
-		if err := helpers.WriteDockerConfigJsonValue(ctx, wc.GetExtraValues(), *commonCmdData.DockerConfig); err != nil {
-			return fmt.Errorf("error writing docker config value into werf chart extra values: %s", err)
-		}
+	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+		Namespace:                namespace,
+		Env:                      *commonCmdData.Environment,
+		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
+		DockerConfigPath:         *commonCmdData.DockerConfig,
+	}); err != nil {
+		return fmt.Errorf("error creating service values: %s", err)
+	} else {
+		wc.SetServiceValues(vals)
 	}
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{

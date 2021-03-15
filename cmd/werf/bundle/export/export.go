@@ -284,10 +284,11 @@ func runExport() error {
 	if err := wc.SetWerfConfig(werfConfig); err != nil {
 		return err
 	}
+
 	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{Env: *commonCmdData.Environment}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
-	} else if err := wc.SetServiceValues(vals); err != nil {
-		return err
+	} else {
+		wc.SetServiceValues(vals)
 	}
 
 	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
