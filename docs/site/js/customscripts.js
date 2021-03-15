@@ -361,3 +361,89 @@ $(document).ready(function() {
     moveDot({timeline: tl,  dot: ia.dot,    path: ia.werf_k8s,      reverse: true,      delay: '=0'   });
   }
 });
+
+// News and updates
+
+$(document).ready(function () {
+  var $nau = $('.news-and-updates');
+
+  function updateNauVisibility() {
+    if ($(document).scrollTop() < 50) {
+      $nau.addClass('news-and-updates__active');
+    } else {
+      $nau.removeClass('news-and-updates__active');
+    }
+  }
+
+  function updateNauContent() {
+    var $releases_container = $('#nau-releases');
+    nau_data.releases.slice(0, 5).forEach(function(item) {
+      $releases_container.append(
+      `<div class="news-and-updates__item">
+          <a href="${item.html_url}" target="_blank" class="news-and-updates__item-link">
+              ${item.tag_name}
+          </a>
+          <div class="news-and-updates__item-sub">
+              ${moment(item.published_at).format('DD.MM.YYYY') }
+          </div>
+      </div>`);
+    });
+
+    var $news_container = $('#nau-news');
+    $news_container.append(
+    `<a href="${nau_data.news.url}" target="_blank" class="news-and-updates__item-link">
+    ${nau_data.news.title}
+    </a>
+    <div class="news-and-updates__item-sub">
+      ${moment(nau_data.news.date).format('DD.MM.YYYY') }
+    </div>`);
+  }
+
+  if ($nau) {
+    var nau_data = JSON.parse(localStorage.getItem('werf_news')) || null;
+    var nau_requests = [
+      $.get("https://api.github.com/repos/werf/werf/releases", function (data) {
+        nau_data.releases = data;
+      }),
+      $.get("https://zapier.com/engine/rss/9718388/werf-io-tweets", function (data) {
+        var rss = data;
+        var rss_items = rss.querySelectorAll('item');
+        var rss_result = null;
+
+        var i = 0;
+        do {
+          var rss_item = rss_items[i];
+          var rss_item_description = rss_item.querySelector('description');
+          if (rss_item_description) {
+            if (rss_item_description.innerHTML.indexOf('#changelog')) {
+              rss_result = rss_item;
+            }
+          }
+          i = i + 1;
+        } while (i < rss_items.length && rss_result == null);
+        if (rss_result == null) { rss_result = rss_items[0] }
+
+        nau_data.news = {
+          title: rss_result.querySelector('description').innerHTML,
+          date: rss_result.querySelector('pubDate').innerHTML,
+          url: rss_result.querySelector('title').innerHTML
+        };
+      })
+    ];
+
+    if (nau_data == null || Date.now() > (nau_data['updated_on'] + 1000 * 60 * 60)) {
+      nau_data = {'updated_on': Date.now(), 'news': {}, 'releases': []};
+      $.when.apply($, nau_requests).done(function() {
+        updateNauContent();
+        localStorage.setItem('werf_news', JSON.stringify(nau_data));
+      });
+    } else {
+      updateNauContent();
+    }
+
+    var throttled = _.throttle(updateNauVisibility, 100);
+    $(window).scroll(throttled);
+    updateNauVisibility();
+  }
+});
+

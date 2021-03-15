@@ -1266,3 +1266,70 @@ code {
   font-size: 12px;
   border-radius: 4px;
 }
+
+.news-and-updates {
+  position: fixed;
+  z-index: 420;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  border-radius: 10px;
+  background: #FFFFFF;
+  box-shadow: 0 10px 40px 0 rgba(0, 18, 44, 0.1);
+
+  box-sizing: border-box;
+  width: 1160px;
+  padding: 20px 25px;
+
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.news-and-updates__active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.news-and-updates__block {
+  width: 45%;
+}
+
+.news-and-updates__title {
+  font-weight: bold;
+  font-size: 12px;
+  line-height: 16px;
+  color: #0066FF;
+}
+
+.news-and-updates__row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.news-and-updates__item-link {
+  text-decoration: none;
+  font-size: 12px;
+  line-height: 16px;
+  color: #00122c;
+  transition: all 0.3s ease-in-out;
+}
+
+.news-and-updates__item-link:hover {
+  color: #0066FF;
+}
+
+.news-and-updates__item-sub {
+  color: #00122c;
+  font-size: 10px;
+  line-height: 14px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
