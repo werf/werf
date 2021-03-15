@@ -137,7 +137,11 @@
 }
 
 .werf-configuration-table a {
-    color: #5f9fff im !important;
+    color: #5f9fff !important;
+}
+
+.werf-configuration-table code {
+    background: #000;
 }
 
 .tooltip {
