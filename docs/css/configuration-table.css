@@ -1,5 +1,5 @@
 .werf-configuration-table {
-    border: 2px solid #eef2ff;
+    border-radius: 4px;
 }
 
 .werf-configuration-table table {
@@ -56,7 +56,7 @@
 }
 
 .werf-configuration-table table tr.section {
-    background: rgba(0,0,0,0.04);
+    background: rgba(255,255,255,0.04);
 }
 
 .werf-configuration-table table tr.directive td:last-child {
@@ -84,7 +84,7 @@
     width: 12px;
     border-radius: 10px;
     cursor: pointer;
-    background: #eef2ff;
+    background: #fff;
     position: relative;
     right: -4px;
     transition: all 0.1s ease-in-out;
@@ -109,7 +109,7 @@
 }
 
 .werf-configuration-table table tr:not(.section):hover {
-    background: rgba(0,0,0,0.04);
+    background: rgba(255,255,255,0.04);
 }
 
 .werf-configuration-table table tr:hover td:last-child,
@@ -128,16 +128,16 @@
     height: 12px;
     border-radius: 50%;
     cursor: pointer;
-    background: #000;
-    color: #fff;
+    background: #fff;
+    color: #000;
     font-weight: 900;
     user-select: none;
 }
 
 .tooltip {
     font-family: 'Open Sans', sans-serif;
-    background: #333;
-    color: white;
+    background: #fff;
+    color: #000;
     font-weight: bold;
     padding: 4px 8px;
     font-size: 12px;
