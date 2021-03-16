@@ -12,14 +12,14 @@ werf tries to automatically detect the type of container registry using the repo
 
 |                                           | Build  | Bundles           | Cleanup                                             |
 | -------------------------------------     | :----: | :---------------: | :-------------------------------------------------: |
-| _AWS ECR_                                 | **ok** |         **ok**    |        ***ok**(#aws-ecr)                            |
-| _Azure CR_                                | **ok** |         **ok**    |        ***ok**(#azure-cr)                           |
+| _AWS ECR_                                 | **ok** |         **ok**    |       [***ok**](#aws-ecr)                           |
+| _Azure CR_                                | **ok** |         **ok**    |       [***ok**](#azure-cr)                          |
 | _Default_                                 | **ok** |         **ok**    |         **ok**                                      |
-| _Docker Hub_                              | **ok** | **not supported** |        ***ok**(#docker-hub)                         |
+| _Docker Hub_                              | **ok** | **not supported** |       [***ok**](#docker-hub)                        |
 | _GCR_                                     | **ok** |         **ok**    |         **ok**                                      |
-| _GitHub Packages_ (docker.pkg.github.com) | **ok** | **not supported** |        ***ok**(#github-packages-dockerpkggithubcom) |
+| _GitHub Packages_ (docker.pkg.github.com) | **ok** | **not supported** |      [***ok**](#github-packages-dockerpkggithubcom) |
 | _GitHub Packages_ (ghcr.io)               | **ok** |         **ok**    |   **not supported**                                 |
-| _GitLab Registry_                         | **ok** |         **ok**    |        ***ok**(#gitlab-registry)                    |
+| _GitLab Registry_                         | **ok** |         **ok**    |       [***ok**](#gitlab-registry)                   |
 | _Harbor_                                  | **ok** |         **ok**    |         **ok**                                      |
 | _JFrog Artifactory_                       | **ok** |         **ok**    |         **ok**                                      |
 | _Nexus_                                   | **ok** |   **not tested**  |         **ok**                                      |
@@ -29,7 +29,7 @@ werf tries to automatically detect the type of container registry using the repo
 
 When interacting with the container registry, werf commands use the information available in the Docker configuration. By default, they use the `~/.docker` directory or an alternative path set by the `WERF_DOCKER_CONFIG` (or `DOCKER_CONFIG`) environment variable.
 
-> The _Docker configuration_ is a directory where authorization data (and Docker settings) are stored (these data are used for accessing various container registries).
+> The _Docker configuration_ is a directory where authorization data (and Docker settings) are stored (these data are used for accessing various container registries)
 
 For authorization, you can use `docker login` / `oras login` commands as well as solutions provided by container registries.
 
@@ -39,7 +39,7 @@ For CI jobs, we recommend using the [werf ci-env]({{ "documentation/reference/cl
 
 ## Bundles
 
-To use [bundles]({{ "documentation/advanced/bundles.html" | true_relative_url }}), the container registry must support the [specifications of Open Container Initiative (OCI) for images](https://github.com/opencontainers/image-spec).
+To use [bundles]({{ "documentation/advanced/bundles.html" | true_relative_url }}), the container registry must support the [OCI Image Format Specification](https://github.com/opencontainers/image-spec).
 
 ## Clean up
 
