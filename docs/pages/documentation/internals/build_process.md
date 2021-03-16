@@ -53,7 +53,7 @@ docker run \
   -ec eval $(echo c2V0IC14 | /.werf/stapel/embedded/bin/base64 --decode)
 ```
 
-Learn more about the `werf.yaml` build configuration file in the [corresponding section]({{ "documentation/reference/werf_yaml.html#stapel-сборщик" | true_relative_url }}).
+Learn more about the `werf.yaml` build configuration file in the [corresponding section]({{ "documentation/reference/werf_yaml.html#stapel-builder" | true_relative_url }}).
 
 ### How the Stapel builder processes CMD and ENTRYPOINT
 
