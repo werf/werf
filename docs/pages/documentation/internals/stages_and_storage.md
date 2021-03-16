@@ -209,4 +209,4 @@ _Digest_ identifier of the stage represents content of the stage and depends on 
 - `PROJECT_NAME` — the project name.
 - `CONTAINER_REGISTRY_REPO` — the specified container registry repository with the `--repo` option.
 - `STAGE_DIGEST` — [the stage digest][#stage-digest].
-- `TIMESTAMP_MILLISEC` — the timestamp that is generated during [stage saving procedure]({{ "documentation/internals/build_process.html#stage-building-and-saving" | true_relative_url }}) after stage built. It is guaranteed that timestamp will be unique within specified storage.
+- `TIMESTAMP_MILLISEC` — the timestamp that is generated during [stage saving procedure]({{ "documentation/internals/build_process.html#saving-stages-to-the-storage" | true_relative_url }}) after stage built. It is guaranteed that timestamp will be unique within specified storage.
