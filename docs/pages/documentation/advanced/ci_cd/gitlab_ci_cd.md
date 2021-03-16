@@ -131,7 +131,7 @@ In the simplest case, if an integrated container registry is used, then the auth
 
 As a result of the `werf ci-env` command, a temporary docker config is created. It is used by all the commands in the shell session (including docker). It means that parallel tasks do not overlap when using docker, and the temporary token is preserved (not overwritten) in the configuration.
 
-If you need to authorize using the custom credentials, the `docker login` command must be executed after invoking `werf ci-env` (this [article]({{ "documentation/advanced/supported_container_registries.html#docker-authorization" | true_relative_url }}) sheds more light on authorization).
+If you need to authorize using the custom credentials, the `docker login` command must be executed after invoking `werf ci-env` (this [article]({{ "documentation/advanced/supported_container_registries.html#authorization" | true_relative_url }}) sheds more light on authorization).
 
 ## Deploying an application
 
