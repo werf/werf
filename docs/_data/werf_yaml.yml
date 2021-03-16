@@ -603,8 +603,8 @@ sections:
             detailsLink: "https://docs.docker.com/engine/reference/builder/#entrypoint"
             detailsCustomLinks:
               en:
-                - text: "How stapel builder processes CMD and ENTRYPOINT"
-                  article: "/documentation/internals/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint"
+                - text: "How the Stapel builder processes CMD and ENTRYPOINT"
+                  article: "/documentation/internals/build_process.html#how-the-stapel-builder-processes-cmd-and-entrypoint"
               ru:
                 - text: "Как сборщик Stapel работает с CMD и ENTRYPOINT"
                   article: "/documentation/internals/build_process.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
@@ -616,8 +616,8 @@ sections:
             detailsLink: "https://docs.docker.com/engine/reference/builder/#cmd"
             detailsCustomLinks:
               en:
-                - text: "How stapel builder processes CMD and ENTRYPOINT"
-                  article: "/documentation/internals/build_process.html#how-stapel-builder-processes-cmd-and-entrypoint"
+                - text: "How the Stapel builder processes CMD and ENTRYPOINT"
+                  article: "/documentation/internals/build_process.html#how-the-stapel-builder-processes-cmd-and-entrypoint"
               ru:
                 - text: "Как сборщик Stapel работает с CMD и ENTRYPOINT"
                   article: "/documentation/internals/build_process"
