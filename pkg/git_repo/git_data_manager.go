@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	GitArchivesCacheVersion = "2"
-	GitPatchesCacheVersion  = "2"
+	GitArchivesCacheVersion = "3"
+	GitPatchesCacheVersion  = "3"
 )
 
 var (
