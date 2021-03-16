@@ -18,6 +18,7 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/util"
 )
 
 func newHash(s string) (plumbing.Hash, error) {
@@ -37,6 +38,14 @@ type LsTreeOptions struct {
 	PathScope   string
 	PathMatcher path_matcher.PathMatcher
 	AllFiles    bool
+}
+
+func (opts LsTreeOptions) ID() string {
+	return util.Sha256Hash(
+		opts.PathScope,
+		opts.PathMatcher.ID(),
+		fmt.Sprint(opts.AllFiles),
+	)
 }
 
 func (opts LsTreeOptions) formattedPathScope() string {

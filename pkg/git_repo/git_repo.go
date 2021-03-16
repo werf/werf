@@ -21,7 +21,7 @@ type ChecksumOptions struct {
 }
 
 func (opts ChecksumOptions) ID() string {
-	return util.Sha256Hash(opts.Commit, opts.PathMatcher.ID())
+	return util.Sha256Hash(opts.Commit, ls_tree.LsTreeOptions(opts.LsTreeOptions).ID())
 }
 
 type ArchiveType string

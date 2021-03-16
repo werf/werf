@@ -28,6 +28,14 @@ type ArchiveOptions struct {
 	PathMatcher path_matcher.PathMatcher
 }
 
+func (opts ArchiveOptions) ID() string {
+	return util.Sha256Hash(
+		opts.Commit,
+		opts.PathScope,
+		opts.PathMatcher.ID(),
+	)
+}
+
 type ArchiveDescriptor struct {
 	Type    ArchiveType
 	IsEmpty bool

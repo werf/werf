@@ -16,7 +16,6 @@ import (
 
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/true_git/ls_tree"
-	"github.com/werf/werf/pkg/util"
 )
 
 type Base struct {
@@ -125,14 +124,15 @@ func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID
 	repo.Cache.patchesMutex.Lock()
 	defer repo.Cache.patchesMutex.Unlock()
 
-	if _, hasKey := repo.Cache.Patches[util.ObjectToHashKey(opts)]; !hasKey {
+	patchID := true_git.PatchOptions(opts).ID()
+	if _, hasKey := repo.Cache.Patches[patchID]; !hasKey {
 		patch, err := repo.CreatePatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
 		if err != nil {
 			return nil, err
 		}
-		repo.Cache.Patches[util.ObjectToHashKey(opts)] = patch
+		repo.Cache.Patches[patchID] = patch
 	}
-	return repo.Cache.Patches[util.ObjectToHashKey(opts)], nil
+	return repo.Cache.Patches[patchID], nil
 }
 
 func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (patch Patch, err error) {
@@ -274,14 +274,15 @@ func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repo
 	repo.Cache.archivesMutex.Lock()
 	defer repo.Cache.archivesMutex.Unlock()
 
-	if _, hasKey := repo.Cache.Archives[util.ObjectToHashKey(opts)]; !hasKey {
+	archiveID := true_git.ArchiveOptions(opts).ID()
+	if _, hasKey := repo.Cache.Archives[archiveID]; !hasKey {
 		archive, err := repo.CreateArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
 		if err != nil {
 			return nil, err
 		}
-		repo.Cache.Archives[util.ObjectToHashKey(opts)] = archive
+		repo.Cache.Archives[archiveID] = archive
 	}
-	return repo.Cache.Archives[util.ObjectToHashKey(opts)], nil
+	return repo.Cache.Archives[archiveID], nil
 }
 
 func (repo *Base) CreateArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (archive Archive, err error) {
