@@ -4,6 +4,7 @@ configVersion: 1
 ---
 artifact: asset
 from: jekyll/builder:3
+fromCacheVersion: "1"
 ansible:
   install:
   - shell: |
@@ -44,6 +45,7 @@ git:
 ---
 image: web
 from: nginx:stable-alpine
+fromCacheVersion: "1"
 ansible:
   setup:
   - name: "Setup /etc/nginx/nginx.conf"
@@ -78,6 +80,7 @@ image: web-backend
 docker:
   WORKDIR: /app
 from: ubuntu:20.04
+fromCacheVersion: "1"
 ansible:
   install:
     - apt:
