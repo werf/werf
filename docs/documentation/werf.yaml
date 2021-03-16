@@ -4,7 +4,7 @@ configVersion: 1
 ---
 artifact: asset
 from: jekyll/builder:3
-fromCacheVersion: "1"
+fromCacheVersion: "20210316"
 ansible:
   install:
   - shell: |
@@ -14,7 +14,7 @@ ansible:
     shell: bundle install
     args:
       executable: /bin/bash
-      chdir: /app/docs
+      chdir: /app/docs/documentation
   beforeSetup:
   - file:
       path: "{{`{{ item }}`}}"
@@ -41,12 +41,12 @@ git:
   - site
   - .github
   stageDependencies:
-    install: ['Gemfile','Gemfile.lock']
+    install: ['documentation/Gemfile','documentation/Gemfile.lock']
     beforeSetup: '**/*'
 ---
 image: web
 from: nginx:stable-alpine
-fromCacheVersion: "1"
+fromCacheVersion: "20210316"
 ansible:
   setup:
   - name: "Setup /etc/nginx/nginx.conf"

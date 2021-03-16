@@ -14,7 +14,7 @@ ansible:
     shell: bundle install
     args:
       executable: /bin/bash
-      chdir: /app/docs
+      chdir: /app/docs/site
   beforeSetup:
   - file:
       path: "{{`{{ item }}`}}"
@@ -77,7 +77,7 @@ git:
   - documentation
   - .github
   stageDependencies:
-    install: ['Gemfile','Gemfile.lock']
+    install: ['site/Gemfile','site/Gemfile.lock']
     beforeSetup: '**/*'
 ---
 image: web
