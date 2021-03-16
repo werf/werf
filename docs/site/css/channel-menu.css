@@ -1,3 +1,12 @@
 .channel-menu {
     float: right;
+    color: #bbb;
+    font-size: 14px;
+    font-weight: normal;
+    font-style: normal;
+    font-stretch: normal;
+    line-height: 1.71;
+    letter-spacing: -0.3px;
+    margin: 25px 0;
+    padding: 0;
 }

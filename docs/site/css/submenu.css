@@ -18,6 +18,7 @@
     background: #FFFFFF;
     box-shadow: 0 10px 40px 0 rgba(0,18,44,0.1);
     border-radius: 10px;
+    line-height: 1.16;
 }
 
 .submenu-item-link {
@@ -26,10 +27,13 @@
     align-items: center;
     font-size: 14px;
     white-space: nowrap;
-    color: #00122C;
+    color: #00122C !important;
     letter-spacing: -0.26px;
-    /* line-height: 24px; */
     margin: 15px 0;
+}
+
+.submenu-item-link:hover {
+    color: #0066FF;
 }
 
 .submenu-item:first-child .submenu-item-link {

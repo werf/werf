@@ -15,18 +15,28 @@
     justify-content: flex-start;
 }
 
-.breadcrumbs > li:not(:last-child)::after {
+.breadcrumbs__item:not(:last-child)::after {
     content: '/';
     margin: 0 15px;
 }
 
-.breadcrumbs > li a {
+.breadcrumbs__item > a {
     color: #bbb;
     text-decoration: none;
 }
 
-.breadcrumbs > li a:hover {
+.breadcrumbs__item > a:hover {
     text-decoration: underline;
+}
+
+.breadcrumbs__item > a:after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: url(../images/icons/dropdown.svg);
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin-left: 5px;
 }
 
 .layout-sidebar {

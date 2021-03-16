@@ -1,7 +1,7 @@
 {%- raw %}
 {{ $CurrentPageURL := .CurrentPageURL }}
 {{ $CurrentPageURLRelative := .CurrentPageURLRelative }}
-<li id="group-versions-menu" class="submenu-parent">
+<li id="group-versions-menu" class="breadcrumbs__item breadcrumbs__item_parent submenu-parent">
     {{- $first := index .VersionItems 0 }}
     <a data-proofer-ignore href="#">{{- if $first.Group }}v{{- $first.Group }}{{- else }}{{ $first.Version }}{{- end }}</a>
     <div class="submenu-container">

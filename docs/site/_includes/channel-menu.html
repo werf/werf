@@ -1,16 +1,13 @@
 {%- raw %}
 {{ $CurrentPageURL := .CurrentPageURL }}
 {{ $CurrentPageURLRelative := .CurrentPageURLRelative }}
-<div id="doc-versions-menu" class="channel-menu">
-{{- $first := index .VersionItems 0 }}
+<div id="doc-versions-menu" class="channel-menu submenu-parent">
 <a data-proofer-ignore href="#">
-{{- if $first.Group }}
-{{- $first.Group }}-{{  $first.Channel }}
-    <span class="menu-item-dot"></span>
-    <span class="menu-item-extra">{{ $first.Version }}</span>
-{{- else }}
-{{ $first.Version }}
-{{- end }}
+    {%- if page.lang == "ru" %}
+        Перейти к определённой версии
+    {%- else %}
+        Go to specific version
+    {%- endif %}
 </a>
 <div class="submenu-container">
     <ul class="submenu">
