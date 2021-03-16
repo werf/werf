@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/util"
 )
 
 type PatchOptions struct {
@@ -21,6 +22,17 @@ type PatchOptions struct {
 
 	WithEntireFileContext bool
 	WithBinary            bool
+}
+
+func (opts PatchOptions) ID() string {
+	return util.Sha256Hash(
+		opts.FromCommit,
+		opts.ToCommit,
+		opts.PathScope,
+		opts.PathMatcher.ID(),
+		fmt.Sprint(opts.WithBinary),
+		fmt.Sprint(opts.WithEntireFileContext),
+	)
 }
 
 type PatchDescriptor struct {
