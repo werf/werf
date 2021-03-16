@@ -33,7 +33,7 @@ When interacting with the container registry, werf commands use the information 
 
 For authorization, you can use `docker login` / `oras login` commands as well as solutions provided by container registries.
 
-For CI jobs, we recommend using the [werf ci-env]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url }}) command. It creates a temporary _Docker configuration_ based on a user configuration and performs authorization (if the container registry's CI is used) using CI environment variables. See the [relevant section]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" / true_relative_url }}) of the documentation for more information about integrating werf with CI systems.
+For CI jobs, we recommend using the [werf ci-env]({{ "documentation/reference/cli/werf_ci_env.html" | true_relative_url }}) command. It creates a temporary _Docker configuration_ based on a user configuration and performs authorization (if the container registry's CI is used) using CI environment variables. See the [relevant section]({{ "documentation/internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url }}) of the documentation for more information about integrating werf with CI systems.
 
 > The usage of a shared _Docker configuration_ when running parallel jobs in a CI system may lead to a job failure because of a race condition and conflicting temporary credentials (one job interferes with another by overriding temporary credentials in the shared _Docker configuration_). That is why we recommend creating a dedicated _Docker configuration_ for each CI job (the `werf ci-env` command does this by default)
 
