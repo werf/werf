@@ -3,81 +3,126 @@ title: Build process
 permalink: documentation/internals/build_process.html
 ---
 
-In this article we describe a build process to build images which described in the werf.yaml configuration file. Build process involves [sequential building of stages]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url }}) for each image described in the configuration.
+The build process in werf implies a [sequential assembly of stages]({{ "documentation/internals/stages_and_storage.html#stage-conveyor" | true_relative_url }}) for images defined in [werf.yaml]({{ "documentation/reference/werf_yaml.html" | true_relative_url }}).
 
-Dockerfile-image, Stapel-image and Stapel-artifact each built by a different type of conveyor. But werf handles each stage of such conveyor in a common way: there is the same [stage selection rules](#stage-selection), the same [stage building and saving rules](#stage-building-and-saving) and also the same [synchronization rules]({{ "documentation/advanced/synchronization.html" | true_relative_url }}) of multiple werf processes running from arbitrary hosts.
+While the [stage pipelines]({{ "documentation/internals/stages_and_storage.html#stage-conveyor" | true_relative_url }}) for the Dockerfile image, Stapel image, and Stapel artifact are unique, each stage follows the same rules for [selecting](#selecting-stages), [saving](#saving-stages-to-the-storage), [caching & locking]({{ "documentation/advanced/synchronization.html" | true_relative_url }}) in parallel runs.
 
-## Dockerfile image
+## Building a stage of the Dockerfile image
 
-werf uses Dockerfile as the principal way to describe how to build an image. Images built with Dockerfile will be referred to as **dockerfile images** ([learn more about a dockerfile image]({{ "documentation/reference/werf_yaml.html#dockerfile-builder" | true_relative_url  }})).
+werf creates a single [stage]({{ "documentation/internals/stages_and_storage.html#stage-conveyor" | true_relative_url }}) called `dockerfile` to build a Dockerfile image.
 
-### How a dockerfile image is being built
+Currently, werf uses the standard commands of the built-in Docker client (in a way similar to invoking the `docker build` command) as well as arguments defined in `werf.yaml` to build a stage. The cache created during the build is used as if it is created via a regular docker client (werf isn't involved in the process).
 
-werf creates a single [stage]({{ "/documentation/internals/stages_and_storage.html" | true_relative_url  }}) called `dockerfile` to build a dockerfile image.
+The distinctive feature of werf is that it uses the git repository (instead of the project directory) as a source of files for the build context. All files in the directory specified by the `context` directive  (by default, this is the project directory) are coming from the current commit in the project repository (you can learn more about giterminism in a [separate article])({{ "documentation/advanced/giterminism.html#dockerfile-image" | true_relative_url }})).
 
-How the `dockerfile` stage is being built:
+Here is an example of a command to build a `dockerfile` stage:
 
- 1. Stage digest is calculated based on specified `Dockerfile` and its contents. This digest represents the resulting image state.
- 2. werf does not perform a new docker build if an image with this digest already exists in the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url  }}).
- 3. werf performs a regular docker build if there is no image with the specified digest in the [stage storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url  }}). werf uses the standard build command of the built-in docker client (which is analogous to the `docker build` command). The local docker cache will be created and used as in the case of a regular docker client.
- 4. When the docker image is complete, werf places the resulting `dockerfile` stage into the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url  }}) (while tagging the resulting docker image with the calculated digest) if the [`:local` stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url  }}) parameter is set.
+```shell
+docker build --file=Dockerfile - < ~/.werf/service/tmp/context/4b9d6bc2-a549-42f9-86b8-4032c146f888
+```
 
-See the [configuration article]({{ "documentation/reference/werf_yaml.html#dockerfile-builder" | true_relative_url  }}) for the werf.yaml configuration details.
+Learn more about the `werf.yaml` build configuration file in the [corresponding section]({{ "documentation/reference/werf_yaml.html#dockerfile-builder" | true_relative_url }}).
 
-## Stapel image and artifact
+## Building a stage of the Stapel image and Stapel artifact
 
-Also, werf has an alternative tool for building images. The so-called stapel builder:
+During the build, the stage instructions are assumed to be run in a container based on the previously built stage or the [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html#from-fromlatest" | true_relative_url }}). Hereinafter, such a container will be referred to as a **build container**. 
 
- * provides an integration with the git and incremental rebuilds based on the git repo history;
- * allows using ansible tasks to describe instructions needed to build an image;
- * allows sharing a common cache between builds with mounts;
- * reduces image size by detaching source data and build tools.
+Before starting the _build container_, werf prepares a set of instructions that depends on the stage type. It contains both werf service commands and [user commands]({{ "documentation/advanced/building_images_with_stapel/assembly_instructions.html" | true_relative_url }}) specified in the `werf.yaml` configuration file. For example, service commands may include adding files, applying patches, running ansible tasks, and so on.
 
-The image built with a stapel builder will be referred to as a **stapel image**.
+The Stapel builder uses its own set of tools and libraries and runs independently of the base image. When starting the _build container_, werf mounts a special service image `flant/werf-stapel` that contains all the necessary tools and libraries. You may find more info about the stapel image in the [article]({{ "documentation/internals/development/stapel_image.html" | true_relative_url }}).
 
-See [stapel image]({{ "documentation/reference/werf_yaml.html#image-section" | true_relative_url  }}) and [stapel artifact]({{ "documentation/advanced/building_images_with_stapel/artifacts.html" | true_relative_url  }}) articles for more details.
+The [socket of the host's SSH agent]({{ "documentation/internals/integration_with_ssh_agent.html" | true_relative_url }}) is forwarded to the _build container_. Also, werf can use [custom mounts]({{ "documentation/advanced/building_images_with_stapel/mount_directive.html" | true_relative_url }}).
 
-### How stapel images and artifacts are built
+Note that during the building, werf ignores some parameters of the base image manifest, overwriting them with the following values:
 
-Each stapel image or an artifact consists of several stages. The same mechanics is used to build every stage.
+- `--user=0:0`;
+- `--workdir=/`;
+- `--entrypoint=/.werf/stapel/embedded/bin/bash`.
 
-werf generates a specific **list of instructions** needed to build a stage. Instructions depend on the particular stage type and may contain internal service commands generated by werf along with user-specified shell commands. For example, werf may generate instructions to apply a prepared patch from a mounted text file using git cli util.
+The final sequence of parameters for initiating a build of any stage might look as follows:
 
-All generated instructions to build the current stage are supposed to be run in a container that is based on the previous stage. This container will be referred to as a **build container**.
+```shell
+docker run \
+  --volume=/tmp/ssh-ln8yCMlFLZob/agent.17554:/.werf/tmp/ssh-auth-sock \
+  --volumes-from=stapel_0.6.1 \
+  --env=SSH_AUTH_SOCK=/.werf/tmp/ssh-auth-sock \
+  --user=0:0 \ 
+  --workdir=/ \
+  --entrypoint=/.werf/stapel/embedded/bin/bash \
+  sha256:d6e46aa2470df1d32034c6707c8041158b652f38d2a9ae3d7ad7e7532d22ebe0 \
+  -ec eval $(echo c2V0IC14 | /.werf/stapel/embedded/bin/base64 --decode)
+```
 
-werf runs instructions from the list in the build container (as you know, it is based on the previous stage). The resulting container state is then committed as a new stage and saved into the [stages storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url  }}).
+Learn more about the `werf.yaml` build configuration file in the [corresponding section]({{ "documentation/reference/werf_yaml.html#stapel-сборщик" | true_relative_url }}).
 
-werf has a special service image called `flant/werf-stapel`. It contains a chroot `/.werf/stapel` with all the necessary tools and libraries to build images with a stapel builder. You may find more info about the stapel image [in the article]({{ "documentation/internals/development/stapel_image.html" | true_relative_url  }}).
+### How the Stapel builder processes CMD and ENTRYPOINT
 
-`flant/werf-stapel` is mounted into every build container so that all precompiled tools are available in every stage being built and may be used in the instructions list.
+To build a stage, werf starts container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the values of the [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | true_relative_url }}). If these values are not set in the base image, werf resets them as follows:
 
-### How stapel builder processes CMD and ENTRYPOINT
+- `[]` для `CMD`;
+- `[""]` для `ENTRYPOINT`.
 
-To build a stage image, werf launches a container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the [base image]({{ "documentation/advanced/building_images_with_stapel/base_image.html" | true_relative_url  }}) values. If the base image does not have corresponding values, werf resets service to the special empty values:
-* `[]` for `CMD`;
-* `[""]` for `ENTRYPOINT`.
+Also, werf resets (uses special empty values) `ENTRYPOINT` of the base image if the `CMD` parameter is specified in the configuration (`docker.CMD`).
 
-Also, werf uses the special empty value in place of a base image's `ENTRYPOINT` if a user specifies `CMD` (`docker.CMD`).
+Otherwise, the behavior of werf is similar to that of [Docker](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
 
-Otherwise, werf behavior is similar to [docker's](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
+## Selecting stages
 
-## Stage selection
+The stage selection algorithm in werf includes the following steps:
 
-Werf stage selection algorithm is based on the git commits ancestry detection:
+1. The [stage digest]({{ "documentation/internals/stages_and_storage.html#stage-digest" | true_relative_url }}) is calculated.
+2. All the suitable stages are selected (multiple stages in the [storage]({{ "documentation/internals/stages_and_storage.html#storage" | true_relative_url }}) can be associated with a single digest).
+3. The stage with the oldest `TIMESTAMP_MILLISEC` is selected (refer to [this article]({{ "documentation/internals/stages_and_storage.html#stage-naming" | true_relative_url }}) to learn more about the naming of stages).
 
- 1. Calculate a stage digest for some stage.
- 2. There may be multiple stages in the stages storage by this digest — so select all suitable stages by the digest.
- 3. If current stage is related to git (git-archive, user stage with git patch, git cache or git latest patch), then select only those stages which are related to the commit that is ancestor of current git commit.
- 4. Select the _oldest_ by the `TIMESTAMP_MILLISEC` from the remaining stages.
+### Additional steps for Stapel images and artifacts
 
-There may be multiple built images for a single digest. Stage for different git branches can have the same digest, but werf will prevent cache of different git branches from being reused for different branch.
+The check for the ancestry of git commits is added to the basic algorithm. After step **2**, additional filtering based on the git history is performed. Only stages associated with commits that are the ancestors of the current commit are selected if the current stage is associated with git (the git-archive stage, the custom stage with git patches, or the git-latest-patch stage). Thus, the commits in neighboring branches are discarded.
 
-## Stage building and saving
+There can be a situation when several built images have the same digest. Moreover, stages related to different git branches can have the same digest. However, werf is guaranteed to prevent cache reuse between unrelated branches. The cache in different branches can only be reused if it is associated with a commit that serves as a basis for both branches.
 
-If suitable stage has not been found by target digest during stage selection, werf starts building a new image for stage.
+## Saving stages to the storage
 
-Note that multiple processes (on a single or multiple hosts) may start building the same stage at the same time. Werf uses optimistic locking when saving newly built image into the stages storage: when a new stage has been built werf locks stages storage and saves newly built stage image into storage stages cache only if there are no suitable already existing stages exists. Newly saved image will have a guaranteed unique identifier `TIMESTAMP_MILLISEC`. In the case when already existing stage has been found in the stages storage werf will discard newly built image and use already existing one as a cache.
+Multiple werf processes (on a single or several hosts) can initiate a parallel build of the same stage at the same time because that stage is not yet in the repository.
 
-In other words: the first process which finishes the build (the fastest one) will have a chance to save newly built stage into the stages storage. The slow build process will not block faster processes from saving build results and building next stages.
+werf uses an optimistic locking while saving a newly built image to the storage. When the build of the new image is complete, werf blocks the storage for any operations with the target digest:
 
-To select stages and save new ones into the stages storage werf uses [synchronization service components]({{ "documentation/advanced/synchronization.html" | true_relative_url  }}) to coordinate multiple werf processes and store stages cache needed for werf builder.
+- If no suitable image emerges in the repository while the building process continues, werf saves the newly built image using the `TIMESTAMP_MILLISEC` ID that is guaranteed to be unique.
+- If a suitable image is saved to the repository while the building process continues, werf discards the newly built image and uses the image in the repository instead.
+
+In other words, the first process that finishes the build (the fastest one) is granted a chance to save the newly built stage to the storage. Thus, the slower build processes don't block the faster ones in a parallel and distributed environment.
+
+When selecting and saving new stages to the storage, werf uses a [lock manager]({{ "documentation/advanced/synchronization.html" | true_relative_url }}) to coordinate the work of several werf processes.
+
+## Parallel build
+
+The parallel assembly in werf is managed by `--parallel` (`-p`) and `--parallel-tasks-limit` parameters. By default, it is enabled and limited to building five images in parallel.
+
+After building a tree of image dependencies, werf splits the assembly process into stages. Each stage contains a set of independent images that can be built in parallel.
+
+```shell
+┌ Concurrent builds plan (no more than 5 images at the same time)
+│ Set #0:
+│ - ⛵ image common-base
+│ - 🛸 artifact jq
+│ - 🛸 artifact libjq
+│ - 🛸 artifact kcov
+│ 
+│ Set #1:
+│ - ⛵ image base-for-go
+│ 
+│ Set #2:
+│ - 🛸 artifact terraform-provider-vsphere
+│ - 🛸 artifact terraform-provider-gcp
+│ - 🛸 artifact candictl
+│ - ⛵ image candictl-tests
+│ - 🛸 artifact helm
+│ - 🛸 artifact controller
+│ 
+│ Set #3:
+│ - ⛵ image base
+│ 
+│ Set #4:
+│ - ⛵ image tests
+│ - ⛵ image app
+└ Concurrent builds plan (no more than 5 images at the same time)
+```
