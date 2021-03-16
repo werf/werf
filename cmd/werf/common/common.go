@@ -1007,7 +1007,9 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 		return nil, err
 	}
 
-	if !util.IsSubpathOfBasePath(util.GetAbsoluteFilepath(gitWorkTree), workingDir) {
+	isWorkingDirInsideGitWorkTree := util.IsSubpathOfBasePath(gitWorkTree, workingDir)
+	areWorkingDirAndGitWorkTreeTheSame := gitWorkTree == workingDir
+	if !(isWorkingDirInsideGitWorkTree || areWorkingDirAndGitWorkTreeTheSame) {
 		return nil, fmt.Errorf("werf requires project dir — the current working directory or directory specified with --dir option (or WERF_DIR env var) — to be located inside the git work tree: %q is located outside of the git work tree %q", gitWorkTree, workingDir)
 	}
 

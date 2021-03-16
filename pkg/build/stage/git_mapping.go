@@ -100,7 +100,11 @@ func (gm *GitMapping) GitRepo() git_repo.GitRepo {
 }
 
 func (gm *GitMapping) getPathMatcher() path_matcher.PathMatcher {
-	return path_matcher.NewGitMappingPathMatcher(gm.Add, gm.IncludePaths, gm.ExcludePaths)
+	return path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		BasePath:     gm.Add,
+		IncludeGlobs: gm.IncludePaths,
+		ExcludeGlobs: gm.ExcludePaths,
+	})
 }
 
 func (gm *GitMapping) IsLocal() bool {
@@ -340,6 +344,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 	archiveType := git_repo.ArchiveType(prevBuiltImage.GetStageDescription().Info.Labels[gm.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		FromCommit:  fromCommit,
 		ToCommit:    toCommit,
@@ -417,6 +422,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 		}
 
 		archiveOpts := git_repo.ArchiveOptions{
+			PathScope:   gm.Add,
 			PathMatcher: gm.getPathMatcher(),
 			Commit:      toCommit,
 		}
@@ -538,6 +544,7 @@ func (gm *GitMapping) applyScript(image container_runtime.ImageInterface, comman
 
 func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string, image container_runtime.ImageInterface) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		Commit:      commit,
 	}
@@ -579,25 +586,45 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 		return "", fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
-	checksumOpts := git_repo.ChecksumOptions{
-		PathMatcher: gm.getPathMatcher(),
-		Paths:       depsPaths,
-		Commit:      commitInfo.Commit,
-	}
+	hash := sha256.New()
+	gitMappingPathMatcher := gm.getPathMatcher()
+	for _, p := range depsPaths {
+		pPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+			BasePath:     gm.Add,
+			IncludeGlobs: []string{p},
+		})
 
-	checksum, err := gm.GitRepo().GetOrCreateChecksum(ctx, checksumOpts)
-	if err != nil {
-		return "", err
-	}
-
-	for _, p := range checksum.GetNoMatchPaths() {
-		logboek.Context(ctx).Warn().LogF(
-			"WARNING: stage %s dependency path %s has not been found in %s git\n",
-			stageName, p, gm.GitRepo().GetName(),
+		multiPathMatcher := path_matcher.NewMultiPathMatcher(
+			gitMappingPathMatcher,
+			pPathMatcher,
 		)
-	}
 
-	return checksum.String(), nil
+		checksumOptions := git_repo.ChecksumOptions{
+			LsTreeOptions: git_repo.LsTreeOptions{
+				PathScope:   gm.Add,
+				PathMatcher: multiPathMatcher,
+				AllFiles:    false,
+			},
+			Commit: commitInfo.Commit,
+		}
+
+		checksum, err := gm.GitRepo().GetOrCreateChecksum(ctx, checksumOptions)
+		if err != nil {
+			return "", err
+		}
+
+		if checksum == "" {
+			logboek.Context(ctx).Warn().LogF(
+				"WARNING: stage %s dependency path %s has not been found in %s git\n",
+				stageName, p, gm.GitRepo().GetName(),
+			)
+		} else {
+			hash.Write([]byte(checksum))
+		}
+	}
+	checksum := fmt.Sprintf("%x", hash.Sum(nil))
+
+	return checksum, nil
 }
 
 func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit string) (int64, error) {
@@ -611,6 +638,7 @@ func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit stri
 	}
 
 	patchOpts := git_repo.PatchOptions{
+		PathScope:             gm.Add,
 		PathMatcher:           gm.getPathMatcher(),
 		FromCommit:            fromCommit,
 		ToCommit:              toCommitInfo.Commit,
@@ -699,6 +727,7 @@ func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuilt
 	}
 
 	patchOpts := git_repo.PatchOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		FromCommit:  fromCommit,
 		ToCommit:    toCommitInfo.Commit,
@@ -735,6 +764,7 @@ func (gm *GitMapping) baseIsPatchEmpty(ctx context.Context, fromCommit, toCommit
 	}
 
 	patchOpts := git_repo.PatchOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		FromCommit:  fromCommit,
 		ToCommit:    toCommit,
@@ -755,6 +785,7 @@ func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
 	}
 
 	archiveOpts := git_repo.ArchiveOptions{
+		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		Commit:      commitInfo.Commit,
 	}

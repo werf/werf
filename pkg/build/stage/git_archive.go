@@ -8,7 +8,6 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -51,7 +50,7 @@ func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		if gitMapping.LocalGitRepo != nil {
-			if err := c.GiterminismManager().Inspector().InspectBuildContextFiles(ctx, path_matcher.NewGitMappingPathMatcher(gitMapping.Add, gitMapping.IncludePaths, gitMapping.ExcludePaths)); err != nil {
+			if err := c.GiterminismManager().Inspector().InspectBuildContextFiles(ctx, gitMapping.getPathMatcher()); err != nil {
 				return "", err
 			}
 		}

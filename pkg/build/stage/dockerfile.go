@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gookit/color"
-
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
@@ -26,7 +24,6 @@ import (
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/true_git/ls_tree"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -75,10 +72,14 @@ type DockerRunArgs struct {
 	ssh            string
 }
 
-func (d *DockerRunArgs) contextAddFileRelativeToProject() []string {
+func (d *DockerRunArgs) contextRelativeToGitWorkTree(giterminismManager giterminism_manager.Interface) string {
+	return filepath.Join(giterminismManager.RelativeToGitProjectDir(), d.context)
+}
+
+func (d *DockerRunArgs) contextAddFileRelativeToGitWorkTree(giterminismManager giterminism_manager.Interface) []string {
 	var result []string
 	for _, addFile := range d.contextAddFile {
-		result = append(result, filepath.Join(d.context, addFile))
+		result = append(result, filepath.Join(d.contextRelativeToGitWorkTree(giterminismManager), addFile))
 	}
 
 	return result
@@ -238,16 +239,14 @@ func shlexProcessWord(value string, argsArray []string) (string, error) {
 	return resolvedValue, nil
 }
 
-func NewContextChecksum(dockerignorePathMatcher *path_matcher.DockerfileIgnorePathMatcher) *ContextChecksum {
+func NewContextChecksum(dockerignorePathMatcher path_matcher.PathMatcher) *ContextChecksum {
 	return &ContextChecksum{
 		dockerignorePathMatcher: dockerignorePathMatcher,
 	}
 }
 
 type ContextChecksum struct {
-	dockerignorePathMatcher *path_matcher.DockerfileIgnorePathMatcher
-
-	mainLsTreeResult *ls_tree.Result
+	dockerignorePathMatcher path_matcher.PathMatcher
 }
 
 type dockerfileInstructionInterface interface {
@@ -611,9 +610,11 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img c
 }
 
 func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
-	contextPathMatcher := path_matcher.NewSimplePathMatcher(filepath.Join(giterminismManager.RelativeToGitProjectDir(), s.context), nil)
+	contextPathRelativeToGitWorkTree := s.contextRelativeToGitWorkTree(giterminismManager)
+	contextPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: contextPathRelativeToGitWorkTree})
 
 	archive, err := giterminismManager.LocalGitRepo().GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
+		PathScope: contextPathRelativeToGitWorkTree,
 		PathMatcher: path_matcher.NewMultiPathMatcher(
 			contextPathMatcher,
 			s.dockerignorePathMatcher,
@@ -696,7 +697,10 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminis
 		logProcess = logboek.Context(ctx).Debug().LogProcess("Calculating contextAddFile checksum")
 		logProcess.Start()
 
-		wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BaseFilepath(), wildcards)
+		wildcardsPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+			BasePath:     s.contextRelativeToGitWorkTree(giterminismManager),
+			IncludeGlobs: wildcards,
+		})
 		if contextAddChecksum, err := context_manager.ContextAddFileChecksum(ctx, giterminismManager.ProjectDir(), s.context, s.contextAddFile, wildcardsPathMatcher); err != nil {
 			logProcess.Fail()
 			return "", fmt.Errorf("unable to calculate checksum for contextAddFile files list: %s", err)
@@ -718,64 +722,35 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminis
 }
 
 func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, giterminismManager giterminism_manager.Interface, wildcards []string, dockerfileLine string) (string, error) {
-	if s.mainLsTreeResult == nil {
-		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", s.dockerignorePathMatcher.String())
-		logProcess.Start()
-		result, err := giterminismManager.LocalGitRepo().LsTree(ctx, s.dockerignorePathMatcher, git_repo.LsTreeOptions{UseHeadCommit: true})
-		if err != nil {
-			if err.Error() == "entry not found" {
-				logboek.Context(ctx).Debug().LogFWithCustomStyle(
-					color.GetStyle("danger"),
-					"Entry %s is not found\n",
-					s.dockerignorePathMatcher.BaseFilepath(),
-				)
-				logProcess.End()
-				goto entryNotFoundInGitRepository
-			}
-
-			logProcess.Fail()
-			return "", err
-		} else {
-			logProcess.End()
-		}
-
-		s.mainLsTreeResult = result
-	}
-
-entryNotFoundInGitRepository:
-	wildcardsPathMatcher := path_matcher.NewSimplePathMatcher(s.dockerignorePathMatcher.BaseFilepath(), wildcards)
-
-	localGitRepository, err := giterminismManager.LocalGitRepo().PlainOpen()
+	contextPathRelativeToGitWorkTree := s.contextRelativeToGitWorkTree(giterminismManager)
+	wildcardsPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		BasePath:     contextPathRelativeToGitWorkTree,
+		IncludeGlobs: wildcards,
+	})
+	lsTreeResultChecksum, err := giterminismManager.LocalGitRepo().GetOrCreateChecksum(ctx, git_repo.ChecksumOptions{
+		LsTreeOptions: git_repo.LsTreeOptions{
+			PathScope: contextPathRelativeToGitWorkTree,
+			PathMatcher: path_matcher.NewMultiPathMatcher(
+				s.dockerignorePathMatcher,
+				wildcardsPathMatcher,
+			),
+			AllFiles: false,
+		},
+		Commit: giterminismManager.HeadCommit(),
+	})
 	if err != nil {
 		return "", err
 	}
 
-	var lsTreeResultChecksum string
-	if s.mainLsTreeResult != nil {
-		logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", wildcardsPathMatcher.String())
-		logProcess.Start()
-		lsTreeResult, err := s.mainLsTreeResult.LsTree(ctx, localGitRepository, wildcardsPathMatcher, false)
-		if err != nil {
-			logProcess.Fail()
-			return "", err
-		} else {
-			logProcess.End()
-		}
+	pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		ExcludeGlobs: s.contextAddFileRelativeToGitWorkTree(giterminismManager),
+		Matchers: []path_matcher.PathMatcher{
+			wildcardsPathMatcher,
+			s.dockerignorePathMatcher,
+		},
+	})
 
-		if !lsTreeResult.IsEmpty() {
-			logboek.Context(ctx).Debug().LogBlock("ls-tree result checksum (%s)", wildcardsPathMatcher.String()).Do(func() {
-				lsTreeResultChecksum = lsTreeResult.Checksum(ctx)
-				logboek.Context(ctx).Debug().LogOptionalLn()
-				logboek.Context(ctx).Debug().LogLn(lsTreeResultChecksum)
-			})
-		}
-	}
-
-	if err := giterminismManager.Inspector().InspectBuildContextFiles(ctx, path_matcher.NewMultiPathMatcher(
-		s.dockerignorePathMatcher,
-		wildcardsPathMatcher,
-		path_matcher.NewGitMappingPathMatcher("", []string{}, s.contextAddFileRelativeToProject()),
-	)); err != nil {
+	if err := giterminismManager.Inspector().InspectBuildContextFiles(ctx, pathMatcher); err != nil {
 		return "", err
 	}
 

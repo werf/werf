@@ -20,7 +20,11 @@ import (
 )
 
 type ArchiveOptions struct {
-	Commit      string
+	Commit string
+
+	// the PathScope option determines the directory or file that will get into the result (similar to <pathspec> in the git commands)
+	PathScope string
+
 	PathMatcher path_matcher.PathMatcher
 }
 
@@ -91,14 +95,14 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		IsEmpty: true,
 	}
 
-	absBasePath := filepath.Join(workTreeDir, opts.PathMatcher.BaseFilepath())
+	absBasePath := filepath.Join(workTreeDir, opts.PathScope)
 	exist, err := util.FileExists(absBasePath)
 	if err != nil {
 		return nil, fmt.Errorf("file exists %s failed: %s", absBasePath, err)
 	}
 
 	if !exist {
-		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathMatcher.BaseFilepath())
+		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathScope)
 	}
 
 	info, err := os.Lstat(absBasePath)
@@ -124,7 +128,11 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 	logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", opts.PathMatcher.String())
 	logProcess.Start()
-	result, err := ls_tree.LsTree(ctx, repository, opts.Commit, opts.PathMatcher, true)
+	result, err := ls_tree.LsTree(ctx, repository, opts.Commit, ls_tree.LsTreeOptions{
+		PathScope:   opts.PathScope,
+		PathMatcher: opts.PathMatcher,
+		AllFiles:    true,
+	})
 	if err != nil {
 		logProcess.Fail()
 		return nil, err
@@ -140,7 +148,17 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 		gitFileMode := lsTreeEntry.Mode
 		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.FullFilepath)
-		relToBasePathFilepath := opts.PathMatcher.TrimFileBaseFilepath(lsTreeEntry.FullFilepath)
+
+		var relToBasePathFilepath string
+		if filepath.FromSlash(opts.PathScope) == lsTreeEntry.FullFilepath {
+			// lsTreeEntry.FullFilepath is always a path to a file, not a directory.
+			// Thus if opts.PathScope is equal lsTreeEntry.FullFilepath, then opts.PathScope is a path to a file.
+			// Use file name in this case by convention.
+			relToBasePathFilepath = filepath.Base(lsTreeEntry.FullFilepath)
+		} else {
+			relToBasePathFilepath = util.GetRelativeToBaseFilepath(opts.PathScope, lsTreeEntry.FullFilepath)
+		}
+
 		tarEntryName := filepath.ToSlash(relToBasePathFilepath)
 		info, err := os.Lstat(absFilepath)
 		if err != nil {

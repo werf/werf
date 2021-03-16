@@ -3,6 +3,7 @@ package util
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 )
 
@@ -83,8 +84,16 @@ func IsSubpathOfBasePath(basePath, path string) bool {
 		return false
 	}
 
-	for i := range basePathParts {
-		if basePathParts[i] != pathParts[i] {
+	if reflect.DeepEqual(basePathParts, pathParts) {
+		return false
+	}
+
+	for ind := range basePathParts {
+		if basePathParts[ind] == "" {
+			continue
+		}
+
+		if basePathParts[ind] != pathParts[ind] {
 			return false
 		}
 	}

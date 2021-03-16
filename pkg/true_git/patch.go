@@ -14,6 +14,8 @@ import (
 )
 
 type PatchOptions struct {
+	// the PathScope option determines the directory or file that will get into the result (similar to <pathspec> in the git commands)
+	PathScope            string
 	PathMatcher          path_matcher.PathMatcher
 	FromCommit, ToCommit string
 
@@ -178,7 +180,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		out = io.MultiWriter(out, os.Stdout)
 	}
 
-	p := makeDiffParser(out, opts.PathMatcher)
+	p := makeDiffParser(out, opts.PathScope, opts.PathMatcher)
 
 WaitForData:
 	for {

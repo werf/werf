@@ -195,8 +195,8 @@ func isPathMatched(patterns []string, p string) bool {
 
 func pathMatcher(patterns []string) path_matcher.PathMatcher {
 	if len(patterns) != 0 {
-		return path_matcher.NewSimplePathMatcher("", patterns)
+		return path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{IncludeGlobs: patterns})
 	} else {
-		return path_matcher.NewStubPathMatcher("")
+		return path_matcher.NewFalsePathMatcher()
 	}
 }

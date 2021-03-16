@@ -13,9 +13,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/docker/docker/builder/dockerignore"
-	"github.com/docker/docker/pkg/fileutils"
 	"github.com/gookit/color"
+
+	"github.com/docker/docker/builder/dockerignore"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
@@ -1114,12 +1114,10 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		}
 	}
 
-	dockerignorePatternMatcher, err := fileutils.NewPatternMatcher(dockerignorePatterns)
-	if err != nil {
-		return nil, err
-	}
-
-	dockerignorePathMatcher := path_matcher.NewDockerfileIgnorePathMatcher(filepath.Join(c.GiterminismManager().RelativeToGitProjectDir(), imageFromDockerfileConfig.Context), dockerignorePatternMatcher)
+	dockerignorePathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		BasePath:             filepath.Join(c.GiterminismManager().RelativeToGitProjectDir(), imageFromDockerfileConfig.Context),
+		DockerignorePatterns: dockerignorePatterns,
+	})
 
 	p, err := parser.Parse(bytes.NewReader(dockerfileData))
 	if err != nil {
