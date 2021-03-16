@@ -1,6 +1,5 @@
 .introduction-presentation {
   width: 1160px;
-  margin-left: -300px;
   margin-top: 15px;
 }
 
@@ -32,7 +31,7 @@
   line-height: 1.5;
   max-width: 400px;
   width: 260px;
-  margin-right: 40px;
+  margin-left: 40px;
   padding-top: 20px;
 }
 

@@ -1,8 +1,13 @@
 ---
 layout: default
 ---
+{% if page.banner == 'guides' %}
+{%- include {{ page.lang }}/guides_banner.html %}
+{% endif %}
 <div class="page__container">
+  {% if page.breadcrumbs != 'none' %}
   {%- include nav-breadcrumbs.html %}
+  {% endif %}
   <div class="docs">
     {{ content }}
   </div>

@@ -4,7 +4,7 @@ configVersion: 1
 ---
 artifact: asset
 from: jekyll/builder:3
-fromCacheVersion: "20210316"
+fromCacheVersion: 20210318
 ansible:
   install:
   - shell: |
@@ -46,7 +46,6 @@ git:
 ---
 image: web
 from: nginx:stable-alpine
-fromCacheVersion: "20210316"
 ansible:
   setup:
   - name: "Setup /etc/nginx/nginx.conf"
@@ -59,41 +58,3 @@ import:
   add: /app/_site
   to: /app/
   before: setup
----
-artifact: web-backend-artifact
-from: golang:1.15
-ansible:
-  install:
-    - name: Build apis
-      shell: |
-        go get -d -v ./
-        go build -ldflags "-w -s" -v -o /go/src/app/server /go/src/app/
-      args:
-        executable: /bin/bash
-        chdir: /go/src/app
-git:
-  - add: /docs/backend
-    to: /go/src/app
-    stageDependencies:
-      install: '**/*'
----
-image: web-backend
-docker:
-  WORKDIR: /app
-from: ubuntu:20.04
-fromCacheVersion: "1"
-ansible:
-  install:
-    - apt:
-        name: ['git','curl', 'jq', 'vim']
-        state: present
-        update_cache: yes
-import:
-  - artifact: web-backend-artifact
-    add: /go/src/app/server
-    to: /app/server
-    before: setup
-  - artifact: asset
-    add: /app/_site
-    to: /app/root
-    before: setup

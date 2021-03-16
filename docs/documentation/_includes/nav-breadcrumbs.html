@@ -22,5 +22,14 @@
       {% endif -%}
       {%- endfor %}
    </ol>
-   <!--#include virtual="/includes/channel-menu.html" -->
+   <div id="doc-versions-menu" class="channel-menu submenu-parent">
+      <a data-proofer-ignore href="#">
+          {%- if page.lang == "ru" %}
+              Перейти к определённой версии
+          {%- else %}
+              Go to specific version
+          {%- endif %}
+      </a>
+      <!--#include virtual="/includes/channel-menu.html" -->
+   </div>
 </div>

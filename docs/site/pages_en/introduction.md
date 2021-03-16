@@ -1,16 +1,15 @@
 ---
 title: Introduction
-permalink: introduction.html
-layout: default
-sidebar: none
 description: How werf works?
+permalink: introduction.html
+layout: plain
+banner: guides
+breadcrumbs: none
 ---
 
 {% asset introduction.css %}
 {% asset introduction.js %}
-
-<div class="page__container">
-
+<div markdown="1">
 ## What is werf?
 
 werf is a CLI tool for implementing a full deployment cycle for your application using Git as a single source of truth. werf can:
@@ -23,6 +22,7 @@ werf is a CLI tool for implementing a full deployment cycle for your application
  - Clean up irrelevant and unused images.
 
 ## How it works?
+</div>
 <div id="introduction-presentation" class="introduction-presentation">
     <div id="introduction-presentation-controls" class="introduction-presentation__controls">
         <a href="javascript:void(0)" class="introduction-presentation__controls-nav">
@@ -232,7 +232,7 @@ At this step, werf calculates the target image names. Image names may change or 
         </div>
     </div>
 </div>
-
+<div markdown="1">
 ## What is converge?
 
 **Converge** is the process of building docker images (and re-building them in response to changes), deploying an application into the Kubernetes cluster (and re-deploying it when necessary), and making sure that the application is up and running.
@@ -254,5 +254,4 @@ _NOTE: If your application does not use custom docker images (e.g., it uses only
 Deploy your first demo application with this [quickstart]({{ "documentation/quickstart.html" | true_relative_url }}) or check the [guides]({{ "documentation/guides.html" | true_relative_url }}) – they cover the configuration of a wide variety of applications based on different programming languages and frameworks. We recommend finding a manual suitable for your application and follow instructions.
 
 Refer to [this article]({{ "documentation/advanced/ci_cd/ci_cd_workflow_basics.html" | true_relative_url }}) if you feel like you are ready to dig deeper into the general overview of CI/CD workflows that can be implemented with werf.
-
 </div>

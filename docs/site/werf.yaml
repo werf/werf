@@ -4,7 +4,7 @@ configVersion: 1
 ---
 artifact: asset
 from: jekyll/builder:3
-fromCacheVersion: 20200316
+fromCacheVersion: 20210318
 ansible:
   install:
   - shell: |
@@ -97,6 +97,7 @@ import:
 ---
 artifact: web-backend-artifact
 from: golang:1.15
+fromCacheVersion: 20210318
 ansible:
   install:
     - name: Build apis

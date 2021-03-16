@@ -28,7 +28,7 @@ jobs:
       uses: werf/actions/converge@v1.2
       with:
         env: test
-        channel: beta
+        channel: alpha
       env:
         WERF_RELEASE: "werfio-${{ env.Version }}-test"
         WERF_NAMESPACE: "werfio-test"
@@ -61,7 +61,7 @@ jobs:
       uses: werf/actions/converge@v1.2
       with:
         env: test
-        channel: beta
+        channel: alpha
       env:
         WERF_RELEASE: "werfio-site-test"
         WERF_NAMESPACE: "werfio-test"

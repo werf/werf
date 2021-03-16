@@ -2,15 +2,7 @@
 {{ $CurrentPageURL := .CurrentPageURL }}
 {{ $CurrentPageURLRelative := .CurrentPageURLRelative }}
 {% endraw %}
-<div id="doc-versions-menu" class="channel-menu submenu-parent">
-<a data-proofer-ignore href="#">
-    {%- if page.lang == "ru" %}
-        Перейти к определённой версии
-    {%- else %}
-        Go to specific version
-    {%- endif %}
-    {{ page.lang }}
-</a>
+{%- raw %}
 <div class="submenu-container">
     <ul class="submenu">
     {{- $prevVersion := "" }}
@@ -26,4 +18,4 @@
     {{- end }}
     </ul>
 </div>
-</div>
+{% endraw %}

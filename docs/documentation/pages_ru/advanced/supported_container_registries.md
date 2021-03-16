@@ -39,7 +39,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 ## Бандлы
 
-Для работы с [бандлами]({{ "documentation/advanced/bundles.html" | true_relative_url }}) достаточно поддержки [спецификации формата образов Open Container Initiative (OCI)](https://github.com/opencontainers/image-spec) в container registry.
+Для работы с [бандлами]({{ "advanced/bundles.html" | true_relative_url }}) достаточно поддержки [спецификации формата образов Open Container Initiative (OCI)](https://github.com/opencontainers/image-spec) в container registry.
 
 ## Очистка
 
