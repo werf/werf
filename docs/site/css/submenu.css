@@ -28,12 +28,13 @@
     font-size: 14px;
     white-space: nowrap;
     color: #00122C !important;
+    text-decoration: none;
     letter-spacing: -0.26px;
     margin: 15px 0;
 }
 
 .submenu-item-link:hover {
-    color: #0066FF;
+    color: #0066FF !important;
 }
 
 .submenu-item:first-child .submenu-item-link {
@@ -50,11 +51,11 @@
 }
 
 .submenu-item-link:hover .submenu-item-channel {
-    color: #0066FF;
+    color: #0066FF !important;
 }
 
 .submenu-item-release {
-    color: #939fb1;
+    color: #939fb1 !important;
     font-size: 12px;
 }
 
@@ -68,7 +69,7 @@
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: #939fb1;
+    background: #939fb1 !important;
     position: relative;
     opacity: 0.5;
 }
@@ -80,11 +81,11 @@
     left: 2px;
     width: 1px;
     height: 30px;
-    background: #939fb1;
+    background: #939fb1 !important;
 }
 
 .submenu-item a:hover .submenu-item-release {
-    color: #0066FF;
+    color: #0066FF !important;
 }
 
 .submenu-parent {

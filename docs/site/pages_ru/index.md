@@ -8,13 +8,13 @@ sidebar: none
 <div class="news-and-updates">
     <div class="news-and-updates__block">
         <div class="news-and-updates__title">
-            Development news
+            Новости разработки
         </div>
         <div class="news-and-updates__item" id="nau-news"></div>
     </div>
     <div class="news-and-updates__block">
         <div class="news-and-updates__title">
-            Latest releases
+            Последние релизы
         </div>
         <div class="news-and-updates__row" id="nau-releases"></div>
     </div>

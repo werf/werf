@@ -10,7 +10,7 @@
         {{- range (slice .VersionItems 1) }}
                 <li class="submenu-item">
                     <a data-proofer-ignore class="submenu-item-link" href="/documentation/v{{ .Group }}{{ $CurrentPageURLRelative }}">
-                        <span class="submenu-item-channel"> {{ .Group }}</span>
+                        v{{ .Group }}
                     </a>
                 </li>
             {{ $prevVersion = .Version }}

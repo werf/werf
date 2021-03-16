@@ -102,11 +102,11 @@
     text-decoration: none;
 }
 
-.header__menu-item a:hover {
+.header__menu-item:hover > a {
     color: #0066FF;
 }
 
-.header__menu-item_active a {
+.header__menu-item_active > a {
     color: #0066FF;
 }
 

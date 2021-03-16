@@ -1,25 +1,26 @@
-<!--#include virtual="/includes/channel-menu.html" -->
+<div class="breadcrumbs-container">
+   <ol class="breadcrumbs">
+      <!--#include virtual="/includes/group-menu.html" -->
+      {%- assign page_url_parts = page.url | split: '/' -%}
+      {%- assign max_ind = page_url_parts.size | minus: 1 -%}
 
-<ol class="breadcrumbs">
-   <!--#include virtual="/includes/group-menu.html" -->
-   {%- assign page_url_parts = page.url | split: '/' -%}
-   {%- assign max_ind = page_url_parts.size | minus: 1 -%}
+      {%- for i in (1..max_ind) %}
+      {%- if forloop.last %}
+      <li class="breadcrumbs__item">{{ page.title }}</li>
+      {% else %}
+      {%- capture current_breadcrumb_url %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
+      {%- capture next_prepender %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
 
-   {%- for i in (1..max_ind) %}
-   {%- if forloop.last %}
-   <li class="breadcrumbs__item">{{ page.title }}</li>
-   {% else %}
-   {%- capture current_breadcrumb_url %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
-   {%- capture next_prepender %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
-
-   {%- assign breadcrumb = site.data.breadcrumbs[page.lang][current_breadcrumb_url] %}
-   {%- unless breadcrumb %}
-   {%- assign breadcrumb_err = "Check breadcrumbs.yml: " | append: current_breadcrumb_url | append: " not defined" %}
-   {{ breadcrumb_err | raise_error }}
-   {% endunless -%}
-   <li class="breadcrumbs__item">
-      <a href="{{ breadcrumb.url | true_relative_url }}">{{ breadcrumb.title }}</a>
-   </li>
-   {% endif -%}
-   {%- endfor %}
-</ol>
+      {%- assign breadcrumb = site.data.breadcrumbs[page.lang][current_breadcrumb_url] %}
+      {%- unless breadcrumb %}
+      {%- assign breadcrumb_err = "Check breadcrumbs.yml: " | append: current_breadcrumb_url | append: " not defined" %}
+      {{ breadcrumb_err | raise_error }}
+      {% endunless -%}
+      <li class="breadcrumbs__item">
+         <a href="{{ breadcrumb.url | true_relative_url }}">{{ breadcrumb.title }}</a>
+      </li>
+      {% endif -%}
+      {%- endfor %}
+   </ol>
+   <!--#include virtual="/includes/channel-menu.html" -->
+</div>
