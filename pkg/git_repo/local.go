@@ -32,6 +32,9 @@ type Local struct {
 
 	headCommit string
 
+	nonThreadSafeRepository      *git.Repository
+	nonThreadSafeRepositoryMutex sync.Mutex
+
 	statusResult *status.Result
 	mutex        sync.Mutex
 }
@@ -45,7 +48,7 @@ type ServiceHeadCommit struct {
 	WithStagedChangesOnly bool // all tracked files if false
 }
 
-func OpenLocalRepo(name, workTreeDir string, opts OpenLocalRepoOptions) (l *Local, err error) {
+func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocalRepoOptions) (l *Local, err error) {
 	_, err = git.PlainOpenWithOptions(workTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		if err == git.ErrRepositoryNotExists {
@@ -83,6 +86,21 @@ func OpenLocalRepo(name, workTreeDir string, opts OpenLocalRepoOptions) (l *Loca
 		l.headCommit = devHeadCommit
 	}
 
+	{
+		if err := l.yieldRepositoryBackedByWorkTree(ctx, l.headCommit, func(repository *git.Repository) error {
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+
+		repository, err := l.PlainOpen()
+		if err != nil {
+			return nil, err
+		}
+
+		l.nonThreadSafeRepository = repository
+	}
+
 	return l, nil
 }
 
@@ -100,6 +118,13 @@ func newLocal(name, workTreeDir, gitDir string) (l *Local, err error) {
 	}
 
 	return l, nil
+}
+
+func (repo *Local) withNonThreadSafeRepository(f func(*git.Repository) error) error {
+	repo.nonThreadSafeRepositoryMutex.Lock()
+	defer repo.nonThreadSafeRepositoryMutex.Unlock()
+
+	return f(repo.nonThreadSafeRepository)
 }
 
 func (repo *Local) PlainOpen() (*git.Repository, error) {
@@ -223,12 +248,22 @@ func (repo *Local) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) 
 	return repo.getOrCreateArchive(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
-func (repo *Local) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (string, error) {
-	return repo.getOrCreateChecksum(ctx, repo.yieldRepositoryBackedByWorkTree, opts)
+func (repo *Local) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (checksum string, err error) {
+	err = repo.withNonThreadSafeRepository(func(repository *git.Repository) error {
+		checksum, err = repo.getOrCreateChecksum(ctx, repository, opts)
+		return err
+	})
+
+	return
 }
 
-func (repo *Local) lsTreeResult(ctx context.Context, commit string, opts LsTreeOptions) (*ls_tree.Result, error) {
-	return repo.Base.lsTreeResult(ctx, repo.yieldRepositoryBackedByWorkTree, commit, opts)
+func (repo *Local) lsTreeResult(ctx context.Context, commit string, opts LsTreeOptions) (lsTreeResult *ls_tree.Result, err error) {
+	err = repo.withNonThreadSafeRepository(func(repository *git.Repository) error {
+		lsTreeResult, err = repo.Base.lsTreeResult(ctx, repository, commit, opts)
+		return err
+	})
+
+	return
 }
 
 func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, error) {
@@ -821,14 +856,12 @@ func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPa
 	}
 
 	var content []byte
-	if err := repo.yieldRepositoryBackedByWorkTree(ctx, commit, func(repository *git.Repository) error {
+	err = repo.withNonThreadSafeRepository(func(repository *git.Repository) error {
 		content, err = lsTreeResult.LsTreeEntryContent(repository, relPath)
 		return err
-	}); err != nil {
-		return nil, err
-	}
+	})
 
-	return content, nil
+	return content, err
 }
 
 func (repo *Local) IsCommitTreeEntryDirectory(ctx context.Context, commit, relPath string) (isDirectory bool, err error) {

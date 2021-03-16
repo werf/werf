@@ -26,7 +26,7 @@ func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx cont
 		var currentHeadCommit string
 		var currentIndexChecksum string
 
-		repo, err := git_repo.OpenLocalRepo("own", gitWorkTree, git_repo.OpenLocalRepoOptions{})
+		repo, err := git_repo.OpenLocalRepo(BackgroundContext(), "own", gitWorkTree, git_repo.OpenLocalRepoOptions{})
 		if err != nil {
 			return err
 		}

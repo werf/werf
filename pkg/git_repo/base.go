@@ -440,7 +440,7 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	return res, nil
 }
 
-func (repo *Base) getOrCreateChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (string, error) {
+func (repo *Base) getOrCreateChecksum(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (string, error) {
 	checksumID := opts.ID()
 	checksumMutex, ok := repo.Cache.checksumsMutex[checksumID]
 	if !ok {
@@ -451,7 +451,7 @@ func (repo *Base) getOrCreateChecksum(ctx context.Context, yieldRepositoryFunc f
 	defer checksumMutex.Unlock()
 
 	if _, hasKey := repo.Cache.Checksums[checksumID]; !hasKey {
-		checksum, err := repo.CreateChecksum(ctx, yieldRepositoryFunc, opts)
+		checksum, err := repo.CreateChecksum(ctx, repository, opts)
 		if err != nil {
 			return "", err
 		}
@@ -461,18 +461,18 @@ func (repo *Base) getOrCreateChecksum(ctx context.Context, yieldRepositoryFunc f
 	return repo.Cache.Checksums[checksumID], nil
 }
 
-func (repo *Base) CreateChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (checksum string, err error) {
+func (repo *Base) CreateChecksum(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (checksum string, err error) {
 	logboek.Context(ctx).Debug().LogProcess("Creating checksum").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
-		checksum, err = repo.createChecksum(ctx, yieldRepositoryFunc, opts)
+		checksum, err = repo.createChecksum(ctx, repository, opts)
 	})
 
 	return
 }
 
-func (repo *Base) createChecksum(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, opts ChecksumOptions) (checksum string, err error) {
-	lsTreeResult, err := repo.lsTreeResult(ctx, yieldRepositoryFunc, opts.Commit, opts.LsTreeOptions)
+func (repo *Base) createChecksum(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (checksum string, err error) {
+	lsTreeResult, err := repo.lsTreeResult(ctx, repository, opts.Commit, opts.LsTreeOptions)
 	if err != nil {
 		return "", err
 	}
@@ -480,11 +480,6 @@ func (repo *Base) createChecksum(ctx context.Context, yieldRepositoryFunc func(c
 	return lsTreeResult.Checksum(ctx), nil
 }
 
-func (repo *Base) lsTreeResult(ctx context.Context, yieldRepositoryFunc func(ctx context.Context, commit string, doFunc func(*git.Repository) error) error, commit string, opts LsTreeOptions) (result *ls_tree.Result, err error) {
-	_ = yieldRepositoryFunc(ctx, commit, func(repository *git.Repository) error {
-		result, err = ls_tree.LsTree(ctx, repository, commit, ls_tree.LsTreeOptions(opts))
-		return nil
-	})
-
-	return
+func (repo *Base) lsTreeResult(ctx context.Context, repository *git.Repository, commit string, opts LsTreeOptions) (result *ls_tree.Result, err error) {
+	return ls_tree.LsTree(ctx, repository, commit, ls_tree.LsTreeOptions(opts))
 }
