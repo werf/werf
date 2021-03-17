@@ -1,6 +1,7 @@
 package export
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -8,7 +9,6 @@ import (
 
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/host_cleaning"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
@@ -54,7 +54,9 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			logboek.Streams().Mute()
 			logboek.SetAcceptedLevel(level.Error)
@@ -66,7 +68,9 @@ func NewCmd() *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(runExport)
+			return common.LogRunningTime(func() error {
+				return runExport(ctx)
+			})
 		},
 	}
 
@@ -118,6 +122,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
+	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
@@ -127,11 +132,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runExport() error {
-	tmp_manager.AutoGCEnabled = true
-
-	ctx := common.BackgroundContext()
-
+func runExport(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -166,6 +167,12 @@ func runExport() error {
 	}
 	ctx = ctxWithDockerCli
 
+	defer func() {
+		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
+			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
+		}
+	}()
+
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
 		return err
@@ -190,16 +197,6 @@ func runExport() error {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
-
-	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
-		return fmt.Errorf("host storage GC failed: %s", err)
-	}
-
-	if lock, err := host_cleaning.AcquireSharedHostStorageLock(ctx); err != nil {
-		return fmt.Errorf("failed to acquire shared storage lock: %s", err)
-	} else {
-		defer werf.ReleaseHostLock(lock)
-	}
 
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)

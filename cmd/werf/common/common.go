@@ -110,6 +110,7 @@ type CmdData struct {
 	Tag *string
 
 	// Host storage GC options
+	DisableAutoHostCleanup   *bool
 	AllowedVolumeUsage       *uint
 	AllowedVolumeUsageMargin *uint
 	DockerServerStoragePath  *string

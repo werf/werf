@@ -62,6 +62,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
+	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
@@ -114,5 +115,5 @@ func runGC() error {
 		DockerServerStoragePath:            *commonCmdData.DockerServerStoragePath,
 	}
 
-	return host_cleaning.HostCleanup(ctx, hostCleanupOptions)
+	return host_cleaning.RunHostCleanup(ctx, hostCleanupOptions)
 }

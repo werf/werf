@@ -2,7 +2,6 @@ package tmp_manager
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -16,18 +15,6 @@ func CreateProjectDir(ctx context.Context) (string, error) {
 	if err := registerCreatedPath(newDir, filepath.Join(GetCreatedTmpDirs(), projectsServiceDir)); err != nil {
 		os.RemoveAll(newDir)
 		return "", err
-	}
-
-	shouldRunGC, err := checkShouldRunGC()
-	if err != nil {
-		return "", err
-	}
-
-	if shouldRunGC {
-		err := runGC(ctx)
-		if err != nil {
-			return "", fmt.Errorf("tmp manager GC failed: %s", err)
-		}
 	}
 
 	return newDir, nil

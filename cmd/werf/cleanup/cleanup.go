@@ -1,6 +1,7 @@
 package cleanup
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -12,7 +13,6 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/host_cleaning"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/lrumeta"
@@ -37,7 +37,9 @@ The command works according to special rules called cleanup policies, which the 
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, converge and host cleanup.`),
 		Example: `  $ werf cleanup --repo registry.mydomain.com/myproject/werf`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -45,7 +47,9 @@ It is safe to run this command periodically (daily is enough) by automated clean
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(runCleanup)
+			return common.LogRunningTime(func() error {
+				return runCleanup(ctx)
+			})
 		},
 	}
 
@@ -81,6 +85,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupWithoutKube(&commonCmdData, cmd)
 	common.SetupKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd)
 
+	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
@@ -88,10 +93,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	return cmd
 }
 
-func runCleanup() error {
-	tmp_manager.AutoGCEnabled = true
-	ctx := common.BackgroundContext()
-
+func runCleanup(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -126,6 +128,12 @@ func runCleanup() error {
 	}
 	ctx = ctxWithDockerCli
 
+	defer func() {
+		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
+			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
+		}
+	}()
+
 	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
@@ -143,16 +151,6 @@ func runCleanup() error {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
-
-	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
-		return fmt.Errorf("host storage GC failed: %s", err)
-	}
-
-	if lock, err := host_cleaning.AcquireSharedHostStorageLock(ctx); err != nil {
-		return fmt.Errorf("failed to acquire shared storage lock: %s", err)
-	} else {
-		defer werf.ReleaseHostLock(lock)
-	}
 
 	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {

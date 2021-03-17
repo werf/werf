@@ -25,5 +25,5 @@ var _ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.Synchro
 var _ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 
 var _ = ginkgo.BeforeEach(func() {
-	SuiteData.Stubs.SetEnv("WERF_DISABLE_AUTO_GC", "1")
+	SuiteData.Stubs.SetEnv("WERF_DISABLE_AUTO_HOST_CLEANUP", "1")
 })

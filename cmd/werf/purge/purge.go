@@ -16,7 +16,6 @@ import (
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
@@ -76,6 +75,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
+	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
@@ -87,7 +87,6 @@ WARNING: Do not run this command during any other werf command is working on the
 }
 
 func runPurge() error {
-	tmp_manager.AutoGCEnabled = true
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
@@ -167,10 +166,6 @@ func runPurge() error {
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
 
-	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
-		return fmt.Errorf("host storage GC failed: %s", err)
-	}
-
 	if stagesStorage.Address() != storage.LocalStorageAddress && *commonCmdData.Parallel {
 		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
@@ -185,6 +180,8 @@ func runPurge() error {
 		RmContainersThatUseWerfImages: cmdData.Force,
 		DryRun:                        *commonCmdData.DryRun,
 	}
+
+	// TODO: host_cleaning: purge
 
 	logboek.LogOptionalLn()
 	if err := cleaning.Purge(ctx, projectName, storageManager, storageLockManager, purgeOptions); err != nil {

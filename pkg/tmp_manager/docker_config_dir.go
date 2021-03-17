@@ -45,17 +45,5 @@ func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string
 		return "", err
 	}
 
-	shouldRunGC, err := checkShouldRunGC()
-	if err != nil {
-		return "", err
-	}
-
-	if shouldRunGC {
-		err := runGC(ctx)
-		if err != nil {
-			return "", fmt.Errorf("tmp manager GC failed: %s", err)
-		}
-	}
-
 	return newDir, nil
 }
