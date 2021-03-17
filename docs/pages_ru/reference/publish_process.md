@@ -1,7 +1,7 @@
 ---
 title: Публикация (publish)
 sidebar: documentation
-permalink: documentation/reference/publish_process.html
+permalink: reference/publish_process.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -12,7 +12,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 <!--## What can be published-->
 
-<!--The result of werf [build commands]({{ site.baseurl }}/documentation/cli/build/build.html) is a _stages_ in _stages storage_ related to images defined in the `werf.yaml` config. -->
+<!--The result of werf [build commands]({{ site.baseurl }}/cli/build/build.html) is a _stages_ in _stages storage_ related to images defined in the `werf.yaml` config. -->
 <!--werf can be used to publish either:-->
 
 <!--* Images. These can only be used as _images for running_. -->
@@ -29,7 +29,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 <!--To publish stages cache of a image from the config werf implements the **stages publish procedure**. It consists of the following steps:-->
 
 <!-- 1. Create temporary image names aliases for all docker images in stages cache, so that:-->
-<!--     - [docker repository name](https://docs.docker.com/glossary/?term=repository) is a `REPO` parameter specified by the user without changes ([details about `REPO`]({{ site.baseurl }}/documentation/reference/registry/image_naming.html#repo-parameter)).-->
+<!--     - [docker repository name](https://docs.docker.com/glossary/?term=repository) is a `REPO` parameter specified by the user without changes ([details about `REPO`]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter)).-->
 <!--     - [docker tag name](https://docs.docker.com/glossary/?term=tag) constructed as a signature prefixed with a word `image-stage-` (for example `image-stage-41772c141b158349804ad27b354247df8984ead077a5dd601f3940536ebe9a11`).-->
 <!-- 2. Push images by newly created aliases into Docker registry.-->
 <!-- 3. Delete temporary image names aliases.-->
@@ -55,15 +55,15 @@ docker rmi REPO:TAG
  3. Публикация образа-псевдонима в Docker registry.
  4. Удаление временного образа-псевдонима.
 
-В werf реализована иная логика публикации [образа]({{ site.baseurl }}/documentation/reference/stages_and_images.html#образы), описанного в конфигурации:
+В werf реализована иная логика публикации [образа]({{ site.baseurl }}/reference/stages_and_images.html#образы), описанного в конфигурации:
 
- 1. Создание **нового образа** с определенным именем на основе соответствующего собранного образа. В созданном образе хранится информация о применяемой схеме тегирования, необходимая для внутреннего использования werf (эта информация сохраняется с использованием docker labels). Далее, такая информация будет упоминаться как **мета-информация** образа. werf использует мета-информацию образа в [процессе деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#интеграция-с-собранными-образами) и [процессе очистки]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+ 1. Создание **нового образа** с определенным именем на основе соответствующего собранного образа. В созданном образе хранится информация о применяемой схеме тегирования, необходимая для внутреннего использования werf (эта информация сохраняется с использованием docker labels). Далее, такая информация будет упоминаться как **мета-информация** образа. werf использует мета-информацию образа в [процессе деплоя]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#интеграция-с-собранными-образами) и [процессе очистки]({{ site.baseurl }}/reference/cleaning_process.html).
  2. Публикация созданного образа в Docker registry.
  3. Удаление образа, созданного на этапе 1.
 
 Далее, такой процесс будет называться **процессом публикации образа**.
 
-Результатом процесса публикации образа является образ, именованный согласно [*правил именования образов*](#именование-образов) и загруженный в Docker registry. Все эти шаги выполняются с помощью команды [werf publish]({{ site.baseurl }}/documentation/cli/main/publish.html) или [werf build-and-publish]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html).
+Результатом процесса публикации образа является образ, именованный согласно [*правил именования образов*](#именование-образов) и загруженный в Docker registry. Все эти шаги выполняются с помощью команды [werf publish]({{ site.baseurl }}/cli/main/publish.html) или [werf build-and-publish]({{ site.baseurl }}/cli/main/build_and_publish.html).
 
 ## Именование образов
 
@@ -90,7 +90,7 @@ docker rmi REPO:TAG
 Значение, указываемое для параметра `--images-repo` может быть также передано через переменную окружения `$WERF_IMAGES_REPO`.
 
 Значение, указываемое для параметра `--images-repo-mode` может быть также передано через переменную окружения `$WERF_IMAGES_REPO_MODE`. 
-Пользователь может использовать различные Docker registry имплементации и некоторые из них имеют ограничения и различные значения по умолчанию для _images repo_ (подробнее о [работе с различными Docker registry имплементациями и их особенностях]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html)).
+Пользователь может использовать различные Docker registry имплементации и некоторые из них имеют ограничения и различные значения по умолчанию для _images repo_ (подробнее о [работе с различными Docker registry имплементациями и их особенностях]({{ site.baseurl }}/reference/working_with_docker_registries.html)).
 
 > Именование образов должно быть одинаковым при выполнении команд _publish_, _build-and-publish_, _deploy_, а также команд процесса очистки. В противном случае вы можете получить не работающий pipeline и потерю образов и стадий по результатам работы очистки
 
@@ -104,9 +104,9 @@ docker rmi REPO:TAG
 | `--tag-custom TAG`           | Тегирование осуществляется по указанному произвольному тегу                                                  |
 | `--tag-by-stages-signature`  | Тегирование каждого образа по _сигнатуре стадий_ этого образа                                                |
 
-Все передаваемые параметры тегирования валидируются, с учетом стандартных ограничений Docker на содержание имени тега образа. При необходимости, вы можете использовать _слагификацию_ (slug, slugify — преобразование текста к виду, удобному для восприятия человеком) тегов, читай подробнее об этом в соответствующей [статье]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+Все передаваемые параметры тегирования валидируются, с учетом стандартных ограничений Docker на содержание имени тега образа. При необходимости, вы можете использовать _слагификацию_ (slug, slugify — преобразование текста к виду, удобному для восприятия человеком) тегов, читай подробнее об этом в соответствующей [статье]({{ site.baseurl }}/reference/toolbox/slug.html).
 
-Используя параметры `--tag-*`, вы не просто указываете тег, которым нужно протегировать образ, а также определяете стратегию тегирования. Стратегия тегирования влияет на операцию очистки. В частности, [политика очистки]({{ site.baseurl }}/documentation/reference/cleaning_process.html#очистка-по-политикам) выбирается в зависимости от стратегии тегирования, а в случае использования стратегии тегирования по произвольному тегу политика очистки не применяется совсем.
+Используя параметры `--tag-*`, вы не просто указываете тег, которым нужно протегировать образ, а также определяете стратегию тегирования. Стратегия тегирования влияет на операцию очистки. В частности, [политика очистки]({{ site.baseurl }}/reference/cleaning_process.html#очистка-по-политикам) выбирается в зависимости от стратегии тегирования, а в случае использования стратегии тегирования по произвольному тегу политика очистки не применяется совсем.
 
 Использование параметров тегирования `--tag-git-*` подразумевает указание аргументов в виде значений тегов, веток и коммитов git. Все такие параметры разработаны с учетом совместимости с современными CI/CD системами, в которых выполнение задания pipeline CI происходит в отдельном экземпляре git-дерева для конкретного git-коммита, а имена тега, ветки и хэш коммита передаются через переменные окружения (например, для GitLab CI это `CI_COMMIT_TAG`, `CI_COMMIT_REF_NAME` и `CI_COMMIT_SHA`).
 
@@ -128,13 +128,13 @@ _Сигнатура стадий_ же напротив не будет меня
 
 Также можно сказать, что тегирование по _сигнатуре стадий_ является более надежным методом тегирования, нежели тегирование по git-веткам, потому что содержимое результирующего образа не зависит от порядка запуска и выполнения задач в CI/CD системе. Сигнатура стадий приводит к стабильным неизменяемым образам, имя которых является адресом определенного содержимого этих образов.
 
-Чтобы получить корректные имена образов в конфигурации деплоя необходимо использовать шаблон генерации имени образа [`werf_container_image`]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
+Чтобы получить корректные имена образов в конфигурации деплоя необходимо использовать шаблон генерации имени образа [`werf_container_image`]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
 
-`Stages-signature` — это стратегия тегирования образов по умолчанию в werf и является единственным рекомендуемым выбором. Стратегии тегирования также объясняются [в статьях про интеграцию werf в CI/CD системы]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#режимы-тегирования-при-использовании-ci-env-переменных).
+`Stages-signature` — это стратегия тегирования образов по умолчанию в werf и является единственным рекомендуемым выбором. Стратегии тегирования также объясняются [в статьях про интеграцию werf в CI/CD системы]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#режимы-тегирования-при-использовании-ci-env-переменных).
 
 ### Объединение параметров
 
-Любые параметры тегирования могут использоваться одновременно в любом порядке при выполнении команды [werf publish]({{ site.baseurl }}/documentation/cli/main/publish.html) или [werf build-and-publish]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html). В случае передачи нескольких параметров тегирования, werf создает отдельный образ на каждый переданный параметр тегирования, согласно каждому описанному в конфигурации проекта образу.
+Любые параметры тегирования могут использоваться одновременно в любом порядке при выполнении команды [werf publish]({{ site.baseurl }}/cli/main/publish.html) или [werf build-and-publish]({{ site.baseurl }}/cli/main/build_and_publish.html). В случае передачи нескольких параметров тегирования, werf создает отдельный образ на каждый переданный параметр тегирования, согласно каждому описанному в конфигурации проекта образу.
 
 ## Примеры
 
@@ -200,7 +200,7 @@ werf publish --stages-storage :local --images-repo registry.hello.com/web/core/s
  * `registry.hello.com/web/core/system/backend:features-myfeature169-3167bc8c`;
  * `registry.hello.com/web/core/system/frontend:features-myfeature169-3167bc8c`.
 
-Обратите внимание, что команда [`werf slugify`]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) генерирует значение, допустимое для использования в качестве Docker-тега. Читайте подробнее про команду _slug_ [в соответствующем разделе]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+Обратите внимание, что команда [`werf slugify`]({{ site.baseurl }}/cli/toolbox/slugify.html) генерирует значение, допустимое для использования в качестве Docker-тега. Читайте подробнее про команду _slug_ [в соответствующем разделе]({{ site.baseurl }}/reference/toolbox/slug.html).
 
 ### Тегирование образов по содержимому в GitLab CI
 
@@ -240,7 +240,7 @@ werf publish --stages-storage :local
  * `registry.hello.com/web/core/system/backend:core-feature-add-settings-df80fdc3`;
  * `registry.hello.com/web/core/system/frontend:core-feature-add-settings-df80fdc3`.
 
-Обратите внимание, что werf автоматически применяет слагификацию к Docker-тегу `core/feature/ADD_SETTINGS`, — он будет конвертирован в тег `core-feature-add-settings-df80fdc3`. Эта конвертация выполняется при вызове команды `werf ci-env`, которая определяет название ветки из переменных окружения задания GitLab CI, слагифицирует его и заносит результат в переменную окружения `WERF_TAG_GIT_BRANCH` (альтернативный путь установки значения параметра `--tag-git-branch`). Читайте подробнее про команду _slug_ [в соответствующем разделе]({{ site.baseurl }}/documentation/reference/toolbox/slug.html).
+Обратите внимание, что werf автоматически применяет слагификацию к Docker-тегу `core/feature/ADD_SETTINGS`, — он будет конвертирован в тег `core-feature-add-settings-df80fdc3`. Эта конвертация выполняется при вызове команды `werf ci-env`, которая определяет название ветки из переменных окружения задания GitLab CI, слагифицирует его и заносит результат в переменную окружения `WERF_TAG_GIT_BRANCH` (альтернативный путь установки значения параметра `--tag-git-branch`). Читайте подробнее про команду _slug_ [в соответствующем разделе]({{ site.baseurl }}/reference/toolbox/slug.html).
 
 ### Безымянный образ в задании GitLab CI
 

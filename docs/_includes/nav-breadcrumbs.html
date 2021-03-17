@@ -1,27 +1,35 @@
-<ol class="breadcrumbs">
-   <li><a data-proofer-ignore href="{{ "/" | relative_url }}">{{ site.breadcrumbs.hometext | default: "Home" }}</a></li>
+<div class="breadcrumbs-container">
+   <ol class="breadcrumbs">
+      <!--#include virtual="/includes/group-menu.html" -->
+      {%- assign page_url_parts = page.url | split: '/' -%}
+      {%- assign max_ind = page_url_parts.size | minus: 1 -%}
 
-   {%- capture page_url_without_index_html %}{{ page.url | remove: "/index.html" }}{% endcapture %}
-   {%- assign splitted_url_parts = page_url_without_index_html | split: '/' %}
-   {%- capture forLoopMaxInt %}{{ splitted_url_parts.size | minus: 1 }}{% endcapture %}
-   {%- for i in (1..forLoopMaxInt) %}
-      {%- capture current_breadcrumb_url %}{{next_prepender}}/{{ splitted_url_parts[i] }}{% endcapture %}
-      {%- capture next_prepender %}{{next_prepender}}/{{ splitted_url_parts[i] }}{% endcapture %}
+      {%- for i in (1..max_ind) %}
+      {%- if forloop.last %}
+      <li class="breadcrumbs__item">{{ page.title }}</li>
+      {% else %}
+      {%- capture current_breadcrumb_url %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
+      {%- capture next_prepender %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
 
-      {%- if page.lang == "ru" %}
-        {%- assign breadcrumb = site.data.breadcrumbs_ru[current_breadcrumb_url] %}
-      {%- else %}
-        {%- assign breadcrumb = site.data.breadcrumbs[current_breadcrumb_url] %}
-      {%- endif %}
-
-      {%- if breadcrumb %}
-      <li>
-         <a href="{{ breadcrumb.url | relative_url }}">{{ breadcrumb.title }}</a>
+      {%- assign breadcrumb = site.data.breadcrumbs[page.lang][current_breadcrumb_url] %}
+      {%- unless breadcrumb %}
+      {%- assign breadcrumb_err = "Check breadcrumbs.yml: " | append: current_breadcrumb_url | append: " not defined" %}
+      {{ breadcrumb_err | raise_error }}
+      {% endunless -%}
+      <li class="breadcrumbs__item">
+         <a href="{{ breadcrumb.url | true_relative_url }}">{{ breadcrumb.title }}</a>
       </li>
-      {%- endif %}
-   {%- endfor %}
-
-   {%- if splitted_url_parts.last contains '.html' %}
-   <li>{{page.title}}</li>
-   {%- endif %}
-</ol>
+      {% endif -%}
+      {%- endfor %}
+   </ol>
+   <div id="doc-versions-menu" class="channel-menu submenu-parent">
+      <a data-proofer-ignore href="#">
+          {%- if page.lang == "ru" %}
+              Перейти к определённой версии
+          {%- else %}
+              Go to specific version
+          {%- endif %}
+      </a>
+      <!--#include virtual="/includes/channel-menu.html" -->
+   </div>
+</div>

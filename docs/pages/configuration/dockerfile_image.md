@@ -1,11 +1,11 @@
 ---
 title: Dockerfile Image
 sidebar: documentation
-permalink: documentation/configuration/dockerfile_image.html
+permalink: configuration/dockerfile_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
-  <a class="google-drawings" href="../../images/configuration/dockerfile_image1.png" data-featherlight="image">
-    <img src="../../images/configuration/dockerfile_image1_preview.png">
+  <a class="google-drawings" href="../images/configuration/dockerfile_image1.png" data-featherlight="image">
+    <img src="../images/configuration/dockerfile_image1_preview.png">
   </a>
 
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name... || ~&gt;</span>

@@ -1,7 +1,7 @@
 ---
 title: Очистка
 sidebar: documentation
-permalink: documentation/configuration/cleanup.html
+permalink: configuration/cleanup.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">cleanup</span><span class="pi">:</span>
@@ -22,7 +22,7 @@ summary: |
 
 ## Конфигурация политик очистки
 
-Конфигурация очистки состоит из набора политик, `keepPolicies`, по которым выполняется выборка значимых образов на основе истории git. Таким образом, в результате [очистки]({{ site.baseurl }}/documentation/reference/cleaning_process.html#алгоритм-работы-очистки-по-истории-git) __неудовлетворяющие политикам образы удаляются__.
+Конфигурация очистки состоит из набора политик, `keepPolicies`, по которым выполняется выборка значимых образов на основе истории git. Таким образом, в результате [очистки]({{ site.baseurl }}/reference/cleaning_process.html#алгоритм-работы-очистки-по-истории-git) __неудовлетворяющие политикам образы удаляются__.
 
 Каждая политика состоит из двух частей: 
 - `references` определяет множество references, git-тегов или git-веток, которые будут использоваться при сканировании.

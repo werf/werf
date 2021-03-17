@@ -1,16 +1,16 @@
 ---
 title: Working with Docker registries
 sidebar: documentation
-permalink: documentation/reference/working_with_docker_registries.html
+permalink: reference/working_with_docker_registries.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
 There are several types of commands that are working with the Docker registries and require the appropriate authorization:
 
-* [During the building process]({{ site.baseurl }}/documentation/reference/build_process.html), werf may pull base images from the Docker registry and pull/push _stages_ in distributed builds.
-* [During the publishing process]({{ site.baseurl }}/documentation/reference/publish_process.html), werf creates and updates _images_ in the Docker registry.
-* [During the cleaning process]({{ site.baseurl }}/documentation/reference/cleaning_process.html), werf deletes _images_ and _stages_ from the Docker registry.
-* [During the deploying process]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html), werf requires access to the _images_ from the Docker registry and to the _stages_ that could also be stored in the Docker registry.
+* [During the building process]({{ site.baseurl }}/reference/build_process.html), werf may pull base images from the Docker registry and pull/push _stages_ in distributed builds.
+* [During the publishing process]({{ site.baseurl }}/reference/publish_process.html), werf creates and updates _images_ in the Docker registry.
+* [During the cleaning process]({{ site.baseurl }}/reference/cleaning_process.html), werf deletes _images_ and _stages_ from the Docker registry.
+* [During the deploying process]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html), werf requires access to the _images_ from the Docker registry and to the _stages_ that could also be stored in the Docker registry.
 
 ## Supported implementations
 
@@ -37,12 +37,12 @@ The following implementations are fully supported and do not require additional 
 
 There are two main issues for the rest:
 1. _Azure CR_, _AWS ECR_, _Docker Hub_ and _GitHub Packages_ implementations provide Docker Registry API but do not implement the delete tag method and offer it with native API. 
-Therefore, werf may require extra credentials for [cleanup commands]({{ site.baseurl }}/documentation/reference/cleaning_process.html). 
+Therefore, werf may require extra credentials for [cleanup commands]({{ site.baseurl }}/reference/cleaning_process.html).
 2. Some implementations do not support nested repositories (_Docker Hub_, _GitHub Packages_ and _Quay_) or support, but the user should create repositories manually using UI or API (_AWS ECR_). Thus, _multirepo_ images repo mode might require specific use.
 
 ## How to store images
 
-The _images repo_ and _images repo mode_ params define where and how to store images (read more about [image naming]({{ site.baseurl }}/documentation/reference/publish_process.html#naming-images)).
+The _images repo_ and _images repo mode_ params define where and how to store images (read more about [image naming]({{ site.baseurl }}/reference/publish_process.html#naming-images)).
 
 The _images repo_ can be **registry** or **repository** address.
 
@@ -81,7 +81,7 @@ The user can use both _images repo modes_ but should manually create repositorie
 ### How to cleanup stages and images
 
 werf deletes tags from _AWS ECR_ with _AWS SDK_. 
-Therefore, before using [cleanup commands]({{ site.baseurl }}/documentation/reference/cleaning_process.html) the user should:
+Therefore, before using [cleanup commands]({{ site.baseurl }}/reference/cleaning_process.html) the user should:
 * [Set up _AWS CLI_ installation](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration) (`aws configure`) or 
 * Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
       
@@ -238,7 +238,7 @@ By default, werf uses the same _docker config_ as the Docker utility: `~/.docker
 The Docker config directory can be redefined by setting a `--docker-config` option, `$DOCKER_CONFIG`, or `$WERF_DOCKER_CONFIG` environment variables.
 The option and variables are the same as the `docker --config` regular option.
 
-To define the _docker config_, you can use `login` — the regular directive of a Docker client, or, if you are using a CI system, [ci-env command]({{ site.baseurl }}/documentation/cli/toolbox/ci_env.html) in werf ([learn more about how to plug werf into CI systems]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html)).
+To define the _docker config_, you can use `login` — the regular directive of a Docker client, or, if you are using a CI system, [ci-env command]({{ site.baseurl }}/cli/toolbox/ci_env.html) in werf ([learn more about how to plug werf into CI systems]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html)).
 
 > In the case of several CI jobs running simultaneously, executing `docker login` can lead to failed jobs because of a race condition and conflicting temporary credentials.
 One job affects another job by overriding temporary credentials in the _Docker config_.

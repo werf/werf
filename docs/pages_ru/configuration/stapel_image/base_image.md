@@ -1,7 +1,7 @@
 ---
 title: Базовый образ
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/base_image.html
+permalink: configuration/stapel_image/base_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: base_image
 ---
@@ -53,7 +53,7 @@ herebyIAdmitThatFromLatestMightBreakReproducibility: true
 
 ## fromImage и fromImageArtifact
 
-В качестве _базового образа_ можно указывать не только образ из локального хранилища или Docker registry, но и имя другого _образа_ или [_артефакта_]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromImageArtifact` соответственно.
+В качестве _базового образа_ можно указывать не только образ из локального хранилища или Docker registry, но и имя другого _образа_ или [_артефакта_]({{ site.baseurl }}/configuration/stapel_artifact.html), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromImageArtifact` соответственно.
 
 ```yaml
 fromImage: <image name>
@@ -65,8 +65,8 @@ fromImageArtifact: <artifact name>
 Также эта рекомендация будет полезной, если вам, по каким-либо причинам, не хватает существующего _конвейера стадий_.
 Используя в качестве _базового образа_ образ, описанный в том же `werf.yaml`, вы по сути можете построить свой _конвейер стадий_.
 
-<a class="google-drawings" href="../../../images/configuration/base_image2.png" data-featherlight="image">
-<img src="../../../images/configuration/base_image2_preview.png">
+<a class="google-drawings" href="../../images/configuration/base_image2.png" data-featherlight="image">
+<img src="../../images/configuration/base_image2_preview.png">
 </a>
 
 ## fromCacheVersion

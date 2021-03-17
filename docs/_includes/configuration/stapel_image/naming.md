@@ -30,9 +30,9 @@ image: [main-front,main-back]
 ```
 
 You can use _image name_ for most commands to execute ones for specific _image(s)_:
-* [werf build \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/cli/main/build.html)
-* [werf publish \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/cli/main/publish.html)
-* [werf build-and-publish \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html)
-* [werf run \[options\] \[IMAGE_NAME\] \[-- COMMAND ARG...\]]({{ site.baseurl }}/documentation/cli/main/run.html)
+* [werf build \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/cli/main/build.html)
+* [werf publish \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/cli/main/publish.html)
+* [werf build-and-publish \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/cli/main/build_and_publish.html)
+* [werf run \[options\] \[IMAGE_NAME\] \[-- COMMAND ARG...\]]({{ site.baseurl }}/cli/main/run.html)
 
-Also, _image name_ is used for naming when publishing built image into registry (read about it in separate [article]({{ site.baseurl }}/documentation/reference/publish_process.html)).
+Also, _image name_ is used for naming when publishing built image into registry (read about it in separate [article]({{ site.baseurl }}/reference/publish_process.html)).

@@ -1,7 +1,7 @@
 ---
 title: Ускорение сборки и уменьшение размера за счёт маунтов
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/mount_directive.html
+permalink: configuration/stapel_image/mount_directive.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: mount
 ---
@@ -27,6 +27,6 @@ directive_summary: mount
 
 > werf монтирует служебные директории с возможностью чтения и записи при каждой сборке, но в образе содержимого этих директорий не будет. Если вам необходимо сохранить какие-либо данные из этих директорий непосредственно в образе, то вы должны их скопировать при сборке
 
-На стадии `from`, werf добавляет специальные лейблы к образу стадии, согласно описанных точек монтирования. Затем, на каждой стадии, werf использует эти лейблы при  монтировании директорий в сборочный контейнер. Такая реализация позволяет наследовать точки монтирования от [базового образа]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html).
+На стадии `from`, werf добавляет специальные лейблы к образу стадии, согласно описанных точек монтирования. Затем, на каждой стадии, werf использует эти лейблы при  монтировании директорий в сборочный контейнер. Такая реализация позволяет наследовать точки монтирования от [базового образа]({{ site.baseurl }}/configuration/stapel_image/base_image.html).
 
-Также, нужно иметь в виду, что на стадии `from` werf очищает точки монтирования в [базовом образе]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html) (т.е. эти папки будут пусты).
+Также, нужно иметь в виду, что на стадии `from` werf очищает точки монтирования в [базовом образе]({{ site.baseurl }}/configuration/stapel_image/base_image.html) (т.е. эти папки будут пусты).

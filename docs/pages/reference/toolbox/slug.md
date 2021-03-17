@@ -1,7 +1,7 @@
 ---
 title: Slug
 sidebar: documentation
-permalink: documentation/reference/toolbox/slug.html
+permalink: reference/toolbox/slug.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -45,13 +45,13 @@ The actions are the same for all slugs since they are restrictive enough to sati
 
 ## Usage
 
-The slug may be applied to an arbitrary string via the [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html).
+The slug may be applied to an arbitrary string via the [`werf slugify` command]({{ site.baseurl }}/cli/toolbox/slugify.html).
 
-werf automatically applies slug in CI/CD systems such as GitLab CI. See [plugging into CI/CD]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html) for more details. The basic principles are:
+werf automatically applies slug in CI/CD systems such as GitLab CI. See [plugging into CI/CD]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html) for more details. The basic principles are:
  * the slug is auto-applied to parameters that are automatically obtained from the environment of CI/CD systems;
  * the slug isn't auto-applied to parameters that are specified manually via `--tag-*`, `--release` or `--namespace`; in this case, parameters are only validated to comply with the requirements.
 
-The user should run the [`werf slugify` command]({{ site.baseurl }}/documentation/cli/toolbox/slugify.html) explicitly to apply slug to parameters specified manually with `--tag-*`, `--release`, or `--namespace` user should call , for example:
+The user should run the [`werf slugify` command]({{ site.baseurl }}/cli/toolbox/slugify.html) explicitly to apply slug to parameters specified manually with `--tag-*`, `--release`, or `--namespace` user should call , for example:
 
 ```shell
 werf publish --tag-git-branch $(werf slugify --format docker-tag "Features/MyBranch#123") ...

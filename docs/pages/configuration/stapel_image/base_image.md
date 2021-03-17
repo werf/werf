@@ -1,7 +1,7 @@
 ---
 title: Base image
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/base_image.html
+permalink: configuration/stapel_image/base_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: base_image
 ---
@@ -48,7 +48,7 @@ herebyIAdmitThatFromLatestMightBreakReproducibility: true
 
 ## fromImage and fromImageArtifact
 
-Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html), that is described in the same `werf.yaml`.
+Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ site.baseurl }}/configuration/stapel_artifact.html), that is described in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>
@@ -60,8 +60,8 @@ it is reasonable to store its description with _images_ and _artifacts_ which ar
 
 Also, this method can be useful if the stages of _stage conveyor_ are not enough for building the image. You can design your _stage conveyor_.
 
-<a class="google-drawings" href="../../../images/configuration/base_image2.png" data-featherlight="image">
-<img src="../../../images/configuration/base_image2_preview.png" alt="Conveyor with fromImage and fromImageArtifact stages">
+<a class="google-drawings" href="../../images/configuration/base_image2.png" data-featherlight="image">
+<img src="../../images/configuration/base_image2_preview.png" alt="Conveyor with fromImage and fromImageArtifact stages">
 </a>
 
 ## fromCacheVersion

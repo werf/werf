@@ -57,15 +57,15 @@
 <body>
   <div class="page">
     <div class="page__content">
-      {%- include topnav.html %}
-
+      <!--#include virtual="/includes/topnav.html" -->
       <!-- Page Content -->
       {{ content }}
     </div>
 
-    {%- include footer.html %}
+    <!--#include virtual="/includes/footer.html" -->
   </div>
 
+  {%- if site.url == 'https://werf.io' or site.url == 'https://ru.werf.io' %}
   <!-- Yandex.Metrika counter -->
   <script type="text/javascript" >
     (function (d, w, c) {
@@ -94,5 +94,6 @@
   </script>
   <noscript><div><img src="https://mc.yandex.ru/watch/49679848" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
   <!-- /Yandex.Metrika counter -->
+  {%- endif %}
 </body>
 </html>

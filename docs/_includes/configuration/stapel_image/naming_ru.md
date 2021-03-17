@@ -28,9 +28,9 @@ image: [main-front,main-back]
 ```
 
 Имя образа может быть использовано в большинстве команд:
-* [werf build \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/cli/main/build.html)
-* [werf publish \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/cli/main/publish.html)
-* [werf build-and-publish \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/documentation/cli/main/build_and_publish.html)
-* [werf run \[options\] \[IMAGE_NAME\] \[-- COMMAND ARG...\]]({{ site.baseurl }}/documentation/cli/main/run.html)
+* [werf build \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/cli/main/build.html)
+* [werf publish \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/cli/main/publish.html)
+* [werf build-and-publish \[IMAGE_NAME...\] \[options\]]({{ site.baseurl }}/cli/main/build_and_publish.html)
+* [werf run \[options\] \[IMAGE_NAME\] \[-- COMMAND ARG...\]]({{ site.baseurl }}/cli/main/run.html)
 
-Также имя образа используется при загрузке собранного образа в Docker registry (читайте подробнее в соответствующей [статье]({{ site.baseurl }}/documentation/reference/publish_process.html)).
+Также имя образа используется при загрузке собранного образа в Docker registry (читайте подробнее в соответствующей [статье]({{ site.baseurl }}/reference/publish_process.html)).

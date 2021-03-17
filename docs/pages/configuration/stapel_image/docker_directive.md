@@ -1,7 +1,7 @@
 ---
 title: Adding docker instructions
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/docker_directive.html
+permalink: configuration/stapel_image/docker_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: docker
 ---
@@ -35,6 +35,6 @@ docker:
 Defined docker instructions are applied on the last stage called `docker_instructions`.
 Thus, instructions do not affect other stages, ones just will be applied to a built image.
 
-If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html) with these variables.
+If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ site.baseurl }}/configuration/stapel_image/base_image.html) with these variables.
 
-> Tip: you can also implement exporting environment variables right in [_user stage_]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html#what-are-user-stages) instructions
+> Tip: you can also implement exporting environment variables right in [_user stage_]({{ site.baseurl }}/configuration/stapel_image/assembly_instructions.html#what-are-user-stages) instructions

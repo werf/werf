@@ -1,7 +1,7 @@
 ---
 title: Использование артефактов
 sidebar: documentation
-permalink: documentation/guides/advanced_build/artifacts.html
+permalink: guides/advanced_build/artifacts.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
@@ -9,13 +9,13 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 Часто в процессе сборки образа приложения происходит скачивание временных файлов — пакетов установки, архивов программ и т.п. В результате в образе могут оставаться файлы, которые необходимы в процессе сборки, но уже не требуется конечному пользователю собранного образа для запуска приложения.
 
-werf может [импортировать]({{ site.baseurl }}/documentation/configuration/stapel_image/import_directive.html) ресурсы из других образов и образов [артефактов]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html). Это позволяет вынести часть процесса сборки (сборку вспомогательных инструментов) в отдельный образ, копируя в конечный образ приложения только необходимые файлы. Этот функционал werf похож на [соответствующий в Docker](https://docs.docker.com/develop/develop-images/multistage-build/) (поддерживаемый, начиная с Docker версии 17.05), но в werf имеется больше возможностей, в частности, по импорту файлов.
+werf может [импортировать]({{ site.baseurl }}/configuration/stapel_image/import_directive.html) ресурсы из других образов и образов [артефактов]({{ site.baseurl }}/configuration/stapel_artifact.html). Это позволяет вынести часть процесса сборки (сборку вспомогательных инструментов) в отдельный образ, копируя в конечный образ приложения только необходимые файлы. Этот функционал werf похож на [соответствующий в Docker](https://docs.docker.com/develop/develop-images/multistage-build/) (поддерживаемый, начиная с Docker версии 17.05), но в werf имеется больше возможностей, в частности, по импорту файлов.
 
 В руководстве сначала рассматривается сборка тестового приложения на GO, а затем оно оптимизируется для существенного уменьшения размера конечного образа с использованием артефактов.
 
 ## Требования
 
-* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#установка-зависимостей).
+* Установленные [зависимости werf]({{ site.baseurl }}/guides/installation.html#установка-зависимостей).
 * Установленный [multiwerf](https://github.com/werf/multiwerf).
 
 ### Выбор версии werf
@@ -108,7 +108,7 @@ werf-stages-storage/gowebapp   84d7...44992265   07cdc430e1c8      10 minutes ag
 
 ## Оптимизация сборки приложения с использованием артефактов
 
-Непосредственно для запуска приложения необходимы только файлы в папке `/app`, поэтому из образа можно удалить скачанные пакеты и сам компилятор Go. Использование функционала [артефактов в werf]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) позволяет импортировать в образ только конкретные файлы.
+Непосредственно для запуска приложения необходимы только файлы в папке `/app`, поэтому из образа можно удалить скачанные пакеты и сам компилятор Go. Использование функционала [артефактов в werf]({{ site.baseurl }}/configuration/stapel_artifact.html) позволяет импортировать в образ только конкретные файлы.
 
 ### Сборка
 

@@ -1,7 +1,7 @@
 ---
 title: Интеграция с GitLab CI
 sidebar: documentation
-permalink: documentation/guides/gitlab_ci_cd_integration.html
+permalink: guides/gitlab_ci_cd_integration.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
@@ -17,9 +17,9 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 
 Набор контуров (а равно — окружений GitLab) в кластере Kubernetes может варьироваться в зависимости от многих факторов.
 В статье будут приведены различные варианты организации окружений для следующих:
-* [Контур production]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#production).
-* [Контур staging]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
-* [Контур review]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
+* [Контур production]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#production).
+* [Контур staging]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#staging).
+* [Контур review]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#review).
 
 Далее последовательно рассматриваются стадии pipeline и различные варианты их организации. Изложение построено от общего к частному. В конце статьи приведены [окончательные версии `.gitlab-ci.yml`](#полный-gitlab-ciyml-для-готовых-workflow) для готовых workflow.
 
@@ -32,7 +32,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 
 Для выкатов review окружения и staging и production окружений предложены самые популярные варианты по организации. Каждый вариант для staging и production окружений сопровождается всевозможными способами отката релиза в production.
 
-> С общей информацией по организации CI/CD с помощью werf, а также информацией по конструированию своего workflow, можно ознакомиться в [общей статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html)
+> С общей информацией по организации CI/CD с помощью werf, а также информацией по конструированию своего workflow, можно ознакомиться в [общей статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html)
 
 ## Требования
 
@@ -80,7 +80,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
    ```
 
 1. Установим [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) и настроим `kubectl`, если они не были установлены ранее.
-1. Установим [зависимости werf]({{ site.baseurl }}/documentation/guides/getting_started.html#требования).
+1. Установим [зависимости werf]({{ site.baseurl }}/guides/getting_started.html#требования).
 1. Установим [multiwerf](https://github.com/werf/multiwerf) пользователем `gitlab-runner`:
 
    ```shell
@@ -130,7 +130,7 @@ Build and Publish:
 
 При вызове `werf ci-env` создаётся временный docker config, который используется всеми командами в shell-сессии (в том числе docker). Таким образов, параллельные задания никак не пересекаются при использовании docker и временный токен в конфигурации не перетирается. 
 
-Если необходимо выполнить авторизацию с произвольными учётными данными, `docker login` должен выполняться после вызова `werf ci-env` (подробнее про авторизацию [в отдельной статье]({{ site.baseurl }}/documentation/reference/working_with_docker_registries.html#авторизация-docker)).   
+Если необходимо выполнить авторизацию с произвольными учётными данными, `docker login` должен выполняться после вызова `werf ci-env` (подробнее про авторизацию [в отдельной статье]({{ site.baseurl }}/reference/working_with_docker_registries.html#авторизация-docker)).
 
 ## Выкат приложения
 
@@ -215,9 +215,9 @@ Stop Review:
 
 В задание `Review` описывается выкат review-релиза в динамическое окружение, в основу имени которого закладывается уникальный идентификатор MR. Параметр `auto_stop_in` позволяет указать период отсутствия активности в MR, после которого окружение GitLab будет автоматически остановлено. Остановка окружения GitLab сама по себе никак не влияет на ресурсы в кластере, review-релиз, поэтому в дополнении необходимо определить задание, которое вызывается при остановке (`on_stop`). В нашем случае, это задание `Stop Review`. 
 
-Задание `Stop Review` выполняет удаление review-релиза, а также остановку окружения GitLab (`action: stop`): werf удаляет helm-релиз и namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)). Задание `Stop Review` может быть запущено вручную после деплоя на review контур, а также автоматически GitLab-сервером, например, при удалении соответствующей ветки в результате слияния ветки с master и указания соответствующей опции в интерфейсе GitLab.
+Задание `Stop Review` выполняет удаление review-релиза, а также остановку окружения GitLab (`action: stop`): werf удаляет helm-релиз и namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/cli/main/dismiss.html)). Задание `Stop Review` может быть запущено вручную после деплоя на review контур, а также автоматически GitLab-сервером, например, при удалении соответствующей ветки в результате слияния ветки с master и указания соответствующей опции в интерфейсе GitLab.
 
-Для выполнения `werf dismiss` требуется werf.yaml, так как в нём содержаться [шаблоны имени релиза и namespace]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html). При удалении ветки нет возможности использовать исходники из git, поэтому в задании `Stop Review` используется werf.yaml, сохранённый при выполнении задания `Review`, и отключено подтягивание изменений из git (`GIT_STRATEGY: none`). 
+Для выполнения `werf dismiss` требуется werf.yaml, так как в нём содержаться [шаблоны имени релиза и namespace]({{ site.baseurl }}/configuration/deploy_into_kubernetes.html). При удалении ветки нет возможности использовать исходники из git, поэтому в задании `Stop Review` используется werf.yaml, сохранённый при выполнении задания `Review`, и отключено подтягивание изменений из git (`GIT_STRATEGY: none`).
 
 Таким образом, по умолчанию закладываем следующие варианты удаления review окружения:
 * вручную;
@@ -229,7 +229,7 @@ Stop Review:
 
 #### №1 Вручную 
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-по-кнопке)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-по-кнопке)
 
 При таком подходе пользователь выкатывает и удаляет окружение по кнопке в pipeline.
 
@@ -272,7 +272,7 @@ Stop Review:
 
 #### №2 Автоматически по имени ветки
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
 
 В предложенном ниже варианте автоматический релиз выполняется для каждого коммита в MR, в случае, если имя git-ветки имеет префикс `review-`. 
 
@@ -312,7 +312,7 @@ Stop Review:
 
 #### №3 Полуавтоматический режим с лейблом (рекомендованный)
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
 
 Полуавтоматический режим с лейблом — это комплексное решение, объединяющие первые два варианта. 
 
@@ -398,7 +398,7 @@ Stop Review:
 
 #### №1 Fast and Furious (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-pull-request-по-кнопке)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-pull-request-по-кнопке)
 
 Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно по кнопке в MR.
 
@@ -427,7 +427,7 @@ Deploy to Production:
 
 #### №2 Push the Button
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически)
 
 Выкат **production** осуществляется по кнопке у коммита в master, а выкат в **staging** происходит автоматически при любых изменениях в master.
 
@@ -456,7 +456,7 @@ Deploy to Production:
 
 #### №3 Tag everything (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке)
 
 Выкат в **production** выполняется при проставлении тега, а в **staging** по кнопке у коммита в master.
 
@@ -486,7 +486,7 @@ Deploy to Production:
 
 #### №4 Branch, branch, branch!
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-ветки-автоматически)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-ветки-автоматически)
 
 Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
 
@@ -531,7 +531,7 @@ Cleanup:
 {% endraw %}
 
 В werf встроен эффективный механизм очистки, который позволяет избежать переполнения Docker registry и диска сборочного узла от устаревших и неиспользуемых образов.
-Более подробно ознакомиться с функционалом очистки, встроенным в werf, можно [здесь]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+Более подробно ознакомиться с функционалом очистки, встроенным в werf, можно [здесь]({{ site.baseurl }}/reference/cleaning_process.html).
 
 Чтобы использовать очистку, необходимо создать `Personal Access Token` в GitLab с необходимыми правами. С помощью данного токена будет осуществляться авторизация в Docker registry перед очисткой.
 
@@ -555,7 +555,7 @@ Cleanup:
 ### Детали workflow 
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№3 Полуавтоматический режим с лейблом (рекомендованный)](#3-полуавтоматический-режим-с-лейблом-рекомендованный).
@@ -689,7 +689,7 @@ Cleanup:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#2-push-the-button)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
@@ -790,7 +790,7 @@ Cleanup:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#3-tag-everything)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
@@ -891,7 +891,7 @@ Cleanup:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№2 Автоматически по имени ветки](#2-автоматически-по-имени-ветки).

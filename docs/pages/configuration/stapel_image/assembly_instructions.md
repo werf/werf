@@ -1,13 +1,13 @@
 ---
 title: Running assembly instructions
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/assembly_instructions.html
+permalink: configuration/stapel_image/assembly_instructions.html
 directive_summary: shell_and_ansible
 ---
 
 ## What are user stages?
 
-***User stage*** is a [_stage_]({{ site.baseurl }}/documentation/reference/stages_and_images.html) containing _assembly instructions_ from config.
+***User stage*** is a [_stage_]({{ site.baseurl }}/reference/stages_and_images.html) containing _assembly instructions_ from config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create the specific docker layer by executing assembly instructions contained within the respective stage.
 
 ## Motivation behind stages
@@ -115,7 +115,7 @@ shell:
 
 _Shell assembly instructions_ are made up of arrays. Each array consists of bash commands for the related _user stage_. Commands for each stage are executed as a single `RUN` instruction in Dockerfile. Thus, werf creates one layer for each _user stage_.
 
-werf provides distribution-agnostic bash binary, so you do not need a bash binary in the [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html). 
+werf provides distribution-agnostic bash binary, so you do not need a bash binary in the [base image]({{ site.baseurl }}/configuration/stapel_image/base_image.html).
 
 ```yaml
 beforeInstall:
@@ -244,7 +244,7 @@ An attempt to do a _werf config_ with the module not in this list will lead to a
 
 ### Copying files
 
-[Git mappings]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage signature_, and file changes lead to the rebuild of the _user stage_.
+[Git mappings]({{ site.baseurl }}/configuration/stapel_image/git_directive.html) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage signature_, and file changes lead to the rebuild of the _user stage_.
 
 Here is an example of copying `nginx.conf` into an image:
 
@@ -315,14 +315,14 @@ src: {{`{{item}}`}}
 
 ## Dependencies of user stages
 
-werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ site.baseurl }}/documentation/reference/stages_and_images.html), _stages_ are built one by one, and the _signature_ is calculated for each _stage_. _Signatures_ have various dependencies. When dependencies change, the _stage signature_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
+werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ site.baseurl }}/reference/stages_and_images.html), _stages_ are built one by one, and the _signature_ is calculated for each _stage_. _Signatures_ have various dependencies. When dependencies change, the _stage signature_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
 
 You can use these dependencies to shape the rebuilding process of _user stages_. _Signatures_ of user stages  (and, therefore, the rebuilding process) depend on:
 
 - changes in assembly instructions
 - changes of _cacheVersion directives_
 - changes in the git repository
-- changes in files being imported from [artifacts]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html)
+- changes in files being imported from [artifacts]({{ site.baseurl }}/configuration/stapel_artifact.html)
 
 The first three dependencies are described below in more detail.
 
@@ -390,8 +390,8 @@ In other words, the contents of assembly instructions will change with each subs
 
 ## Dependency on changes in the git repo
 
-<a class="google-drawings" href="../../../images/configuration/assembly_instructions3.png" data-featherlight="image">
-    <img src="../../../images/configuration/assembly_instructions3_preview.png" alt="Dependency on git repo changes">
+<a class="google-drawings" href="../../images/configuration/assembly_instructions3.png" data-featherlight="image">
+    <img src="../../images/configuration/assembly_instructions3_preview.png" alt="Dependency on git repo changes">
   </a>
 
 The _git mapping reference_ states that there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ runs after the _beforeInstall_ user stage, and _gitLatestPatch_ runs after the _setup_ user stage if there are changes in the local git repository. Thus, in order to execute assembly instructions using the latest version of the source code, you can initiate the rebuilding of the _beforeInstall_ stage (by changing _cacheVersion_ or its instructions).
@@ -506,7 +506,7 @@ You can use this image as a base for multiple applications if images from hub.do
 
 ### Example of using external dependencies
 
-You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/documentation/configuration/introduction.html#go-templates) to define dependency of the _user stage_ on files outside of the git tree.
+You can use _CacheVersion directives_ jointly with [go templates]({{ site.baseurl }}/configuration/introduction.html#go-templates) to define dependency of the _user stage_ on files outside of the git tree.
 
 {% raw %}
 ```yaml

@@ -1,7 +1,7 @@
 ---
 title: Использование монтирования
 sidebar: documentation
-permalink: documentation/guides/advanced_build/mounts.html
+permalink: guides/advanced_build/mounts.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
@@ -11,7 +11,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Требования
 
-* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#установка-зависимостей).
+* Установленные [зависимости werf]({{ site.baseurl }}/guides/installation.html#установка-зависимостей).
 * Установленный [multiwerf](https://github.com/werf/multiwerf).
 
 ### Выбор версии werf
@@ -146,7 +146,7 @@ mount:
   to: /var/cache/apt
 ```
 
-Читайте больше об инструкциях монтирования [здесь]({{ site.baseurl }}/documentation/configuration/stapel_image/mount_directive.html).
+Читайте больше об инструкциях монтирования [здесь]({{ site.baseurl }}/configuration/stapel_image/mount_directive.html).
 
 В результате добавленных инструкций папка `/var/lib/apt/lists` будет наполняться во время сборки, но в конченом образе она будет пуста.
 
@@ -350,4 +350,4 @@ sudo du -kh --max-depth=1 ~/.werf/shared_context/mounts/projects/gowebapp
 ## Что можно улучшить
 
 * Использовать вместо базового образа Ubuntu образ меньшего размера, например, [alpine](https://hub.docker.com/_/alpine/) или [golang](https://hub.docker.com/_/golang/).
-* Использовать [артефакты]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html). В большинстве случаев может дать еще большую оптимизацию по размеру. Размер папки `/app` в образе примерно 15Мб (можете проверить, выполнив `werf run --stages-storage :local --docker-options="--rm" gowebapp -- du -kh --max-depth=0 /app`). Соответственно, можно выполнить сборку приложения, поместив результат в папку `/app` в артефакте, а затем импортировать в конечный образ приложения только содержимое папки `/app`.
+* Использовать [артефакты]({{ site.baseurl }}/configuration/stapel_artifact.html). В большинстве случаев может дать еще большую оптимизацию по размеру. Размер папки `/app` в образе примерно 15Мб (можете проверить, выполнив `werf run --stages-storage :local --docker-options="--rm" gowebapp -- du -kh --max-depth=0 /app`). Соответственно, можно выполнить сборку приложения, поместив результат в папку `/app` в артефакте, а затем импортировать в конечный образ приложения только содержимое папки `/app`.

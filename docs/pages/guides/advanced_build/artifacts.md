@@ -1,7 +1,7 @@
 ---
 title: Artifacts
 sidebar: documentation
-permalink: documentation/guides/advanced_build/artifacts.html
+permalink: guides/advanced_build/artifacts.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
@@ -9,13 +9,13 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 When you build an application image, it is often necessary to download temporary files or packages for build. In the results, the application image contains files that are not needed to run the application.
 
-werf can [import]({{ site.baseurl }}/documentation/configuration/stapel_image/import_directive.html) resources from images and [artifacts]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html). Thus you can isolate build process and tools in other images and then copy result files to reduce the image size. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but has more advanced files importing options.
+werf can [import]({{ site.baseurl }}/configuration/stapel_image/import_directive.html) resources from images and [artifacts]({{ site.baseurl }}/configuration/stapel_artifact.html). Thus you can isolate build process and tools in other images and then copy result files to reduce the image size. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but has more advanced files importing options.
 
 In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce image size with using artifacts.
 
 ## Requirements
 
-* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#installing-dependencies) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/guides/installation.html#installing-dependencies) on the host system.
 
 * Installed [multiwerf](https://github.com/werf/multiwerf) on the host system.
 
@@ -113,7 +113,7 @@ Pay attention, that the image size of the application is **above 800 MB**.
 
 The config above can be optimized to improve the efficiency of the build process.
 
-The only the files in the `/app` folder are needed to run the application. So we don't need Go itself and downloaded packages. The use of [werf artifacts]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) makes it possible to import only specified files into another image.
+The only the files in the `/app` folder are needed to run the application. So we don't need Go itself and downloaded packages. The use of [werf artifacts]({{ site.baseurl }}/configuration/stapel_artifact.html) makes it possible to import only specified files into another image.
 
 ### Building
 

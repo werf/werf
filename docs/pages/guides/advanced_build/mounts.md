@@ -1,7 +1,7 @@
 ---
 title: Mounts
 sidebar: documentation
-permalink: documentation/guides/advanced_build/mounts.html
+permalink: guides/advanced_build/mounts.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
@@ -11,7 +11,7 @@ In this article, we will build an example Go application. Then we will optimize 
 
 ## Requirements
 
-* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#installing-dependencies) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/guides/installation.html#installing-dependencies) on the host system.
 * Installed [multiwerf](https://github.com/werf/multiwerf) on the host system.
 
 ### Select werf version
@@ -149,7 +149,7 @@ mount:
   to: /var/cache/apt
 ```
 
-Read more about mount directives [here]({{ site.baseurl }}/documentation/configuration/stapel_image/mount_directive.html).
+Read more about mount directives [here]({{ site.baseurl }}/configuration/stapel_image/mount_directive.html).
 
 The `/var/lib/apt/lists` directory is filling in the build-time, but in the image, it is empty.
 
@@ -359,5 +359,5 @@ The total size difference between images with and without using mounts is about 
 ## What Can Be Improved
 
 * Use a smaller base image instead of ubuntu, such as [alpine](https://hub.docker.com/_/alpine/) or [golang](https://hub.docker.com/_/golang/).
-* Using [werf artifacts]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) in many cases can give more efficient.
+* Using [werf artifacts]({{ site.baseurl }}/configuration/stapel_artifact.html) in many cases can give more efficient.
   The size of `/app` directory in the image is about only 15 MB (you can check it by executing `werf run --stages-storage :local --docker-options="--rm" gowebapp -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in werf artifact and then import only the resulting `/app` directory.

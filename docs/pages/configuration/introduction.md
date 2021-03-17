@@ -1,7 +1,7 @@
 ---
 title: Introduction
 sidebar: documentation
-permalink: documentation/configuration/introduction.html
+permalink: configuration/introduction.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -41,11 +41,11 @@ OTHER_FIELDS
 
 Config section with the key `project: PROJECT_NAME` and `configVersion: CONFIG_VERSION` is the meta config section. This is required section. There should be only one meta config section in a single `werf.yaml` configuration.
 
-There are other directives, `deploy` and `cleanup`, described in separate articles: [deploy to Kubernetes]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html) and [cleanup policies]({{ site.baseurl }}/documentation/configuration/cleanup.html).
+There are other directives, `deploy` and `cleanup`, described in separate articles: [deploy to Kubernetes]({{ site.baseurl }}/configuration/deploy_into_kubernetes.html) and [cleanup policies]({{ site.baseurl }}/configuration/cleanup.html).
 
 #### Project name
 
-`project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html)). This is single required field of meta configuration.
+`project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/configuration/deploy_into_kubernetes.html)). This is single required field of meta configuration.
 
 Project name should be unique within group of projects that shares build hosts and deployed into the same Kubernetes cluster (i.e. unique across all groups within the same gitlab).
 
@@ -84,7 +84,7 @@ OTHER_FIELDS
 
 ### Artifact config section
 
-Artifact config section also defines instructions to build one independent artifact docker image. Arifact is a secondary image aimed to isolate a build process and build tools resources (environments, software, data, see [artifacts article for the details]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html)). There may be multiple artifact config sections for multiple artifact config sections defined in the same `werf.yaml` config.
+Artifact config section also defines instructions to build one independent artifact docker image. Arifact is a secondary image aimed to isolate a build process and build tools resources (environments, software, data, see [artifacts article for the details]({{ site.baseurl }}/configuration/stapel_artifact.html)). There may be multiple artifact config sections for multiple artifact config sections defined in the same `werf.yaml` config.
 
 Config section with the key `artifact: IMAGE_NAME` is the artifact config section. `artifact` defines short name of the artifact to be referred to from another config sections. This name must be unique in a single `werf.yaml` config.
 

@@ -1,7 +1,7 @@
 ---
 title: Деплой в Kubernetes
 sidebar: documentation
-permalink: documentation/guides/deploy_into_kubernetes.html
+permalink: guides/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -13,11 +13,11 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Требования
 
- * Работающий кластер Kubernetes. Для выполнения примера вы можете использовать как обычный Kubernetes-кластер, так и Minikube. Если вы решили использовать Minikube, прочитайте [статью о настройке Minikube]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html), чтобы запустить Minikube и Docker registry.
+ * Работающий кластер Kubernetes. Для выполнения примера вы можете использовать как обычный Kubernetes-кластер, так и Minikube. Если вы решили использовать Minikube, прочитайте [статью о настройке Minikube]({{ site.baseurl }}/reference/development_and_debug/setup_minikube.html), чтобы запустить Minikube и Docker registry.
  * Работающий Docker registry.
    * Доступ от хостов Kubernetes с правами на push образов в Docker registry.
    * Доступ от хостов Kubernetes с правами на pull образов в Docker registry.
- * Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#установка-зависимостей).
+ * Установленные [зависимости werf]({{ site.baseurl }}/guides/installation.html#установка-зависимостей).
  * Установленный [multiwerf](https://github.com/werf/multiwerf).
  * Установленный и сконфигурированный `kubectl` для доступа в кластер Kubernetes (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
@@ -168,11 +168,11 @@ spec:
 В нашем случае образ безымянный (`~`), поэтому функция принимает только контекст без имени. 
 Функция добавит тег на основе используемой схемы тегирования. 
 В зависимости от схемы тегирования функция также может вернуть поле `imagePullPolicy` с определённым значением.
-Более подробно о функции можно прочитать [в соответствующей статье]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
+Более подробно о функции можно прочитать [в соответствующей статье]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
 
 Функция `werf_container_env` позволяет сгенерировать служебные значения в секции `env`, которые влияют на перезапуск pod'ов при изменении образа.
 В качестве аргументов также принимаются контекст и имя образа из `werf.yaml`.
-Подробнее про логику работы и особенности можно прочитать в [статье]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env)).
+Подробнее про логику работы и особенности можно прочитать в [статье]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env)).
 
 ### Frontend
 
@@ -216,15 +216,15 @@ werf deploy --stages-storage :local --images-repo :minikube --tag-custom myapp -
 
 После запуска команды, werf создаст соответствующие ресурсы в Kubernetes и будет отслеживать статус Deployment `myapp-backend` до его готовности (готовности всех pod'ов) либо ошибки.
 
-Для того чтобы сформировать правильные имя Helm-релиза и namespace требуется указать [окружение]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#окружение) с помощью параметра `--env`.
+Для того чтобы сформировать правильные имя Helm-релиза и namespace требуется указать [окружение]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#окружение) с помощью параметра `--env`.
 
 В результате будет создан Helm-релиз с именем `myapp-dev`. 
-Название Helm-релиза состоит из [имени проекта]({{ site.baseurl }}/documentation/configuration/introduction.html#имя-проекта) `myapp` (указанного в `werf.yaml`) и переданного названия окружения — `dev`. 
-Более подробно про формирование имен Helm-релизов можно посмотреть в [документации]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#имя-релиза).
+Название Helm-релиза состоит из [имени проекта]({{ site.baseurl }}/configuration/introduction.html#имя-проекта) `myapp` (указанного в `werf.yaml`) и переданного названия окружения — `dev`.
+Более подробно про формирование имен Helm-релизов можно посмотреть в [документации]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#имя-релиза).
 
 При создании объектов Kubernetes будет использоваться namespace `myapp-dev`. 
-Имя namespace также по умолчанию состоит из [имени проекта]({{ site.baseurl }}/documentation/configuration/introduction.html#имя-проекта) `myapp` (указанного в `werf.yaml`) и переданного названия окружения — `dev`. 
-Более подробно про формирование namespace в Kubernetes можно посмотреть в [документации]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace).
+Имя namespace также по умолчанию состоит из [имени проекта]({{ site.baseurl }}/configuration/introduction.html#имя-проекта) `myapp` (указанного в `werf.yaml`) и переданного названия окружения — `dev`.
+Более подробно про формирование namespace в Kubernetes можно посмотреть в [документации]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace).
 
 ## Проверка работы приложения
 
@@ -251,4 +251,4 @@ werf dismiss --env dev --with-namespace
 
 ## Читайте также
 
-Более подробно об особенностях и возможностях деплоя приложений с помощью werf, например, об использовании секретов [читайте в руководстве]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
+Более подробно об особенностях и возможностях деплоя приложений с помощью werf, например, об использовании секретов [читайте в руководстве]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html).

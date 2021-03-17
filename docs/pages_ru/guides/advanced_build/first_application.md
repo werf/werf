@@ -1,7 +1,7 @@
 ---
 title: Первое приложение
 sidebar: documentation
-permalink: documentation/guides/advanced_build/first_application.html
+permalink: guides/advanced_build/first_application.html
 author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 ---
 
@@ -22,7 +22,7 @@ author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 ## Требования
 
 * Минимальные знания [Docker](https://www.docker.com/) и [инструкций Dockerfile'а](https://docs.docker.com/engine/reference/builder/).
-* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#установка-зависимостей).
+* Установленные [зависимости werf]({{ site.baseurl }}/guides/installation.html#установка-зависимостей).
 * Установленный [multiwerf](https://github.com/werf/multiwerf).
 
 ### Выбор версии werf
@@ -244,4 +244,4 @@ author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 * Если хранить файл в Git-репозитории, то при его копировании можно сразу же, в той же команде, указывать необходимые права.
 * Лучше использовать `composer install` вместо `composer update`, чтобы устанавливать зависимости согласно версиям, закрепленным в файлах `composer.lock`, `package.json` и `yarn.lock`. Также при сборке необходима проверка этих файлов и запуск `composer install` при их изменении. Для этого в werf предусмотрена директива `stageDependencies`.
 
-Решение этих задач рассматривается в [соответствующем разделе документации]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html).
+Решение этих задач рассматривается в [соответствующем разделе документации]({{ site.baseurl }}/configuration/stapel_image/git_directive.html).

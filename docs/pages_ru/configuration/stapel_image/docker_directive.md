@@ -1,7 +1,7 @@
 ---
 title: Использование Docker-инструкций
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/docker_directive.html
+permalink: configuration/stapel_image/docker_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: docker
 ---
@@ -36,4 +36,4 @@ docker:
 Указанные в конфигурации Docker-инструкции применяются на последней стадии конвейера стадий, стадии `docker_instructions`. 
 Поэтому указание Docker-инструкций в `werf.yaml` никак не влияет на сам процесс сборки, а только добавляет данные к уже собранному образу.
 
-Если вам требуются определённые переменные окружения во время сборки (например, `TERM`), то вам необходимо использовать [базовый образ]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html), в котором эти переменные окружения установлен или экспортировать их в [_пользовательской стадии_]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html#пользовательские-стадии).
+Если вам требуются определённые переменные окружения во время сборки (например, `TERM`), то вам необходимо использовать [базовый образ]({{ site.baseurl }}/configuration/stapel_image/base_image.html), в котором эти переменные окружения установлен или экспортировать их в [_пользовательской стадии_]({{ site.baseurl }}/configuration/stapel_image/assembly_instructions.html#пользовательские-стадии).

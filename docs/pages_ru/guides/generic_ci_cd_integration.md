@@ -1,17 +1,17 @@
 ---
 title: Интеграция с CI/CD-системами
 sidebar: documentation
-permalink: documentation/guides/generic_ci_cd_integration.html
+permalink: guides/generic_ci_cd_integration.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 В настоящий момент официально поддерживается и полностью протестирована работа werf со следующими CI-системами:
- * [GitLab CI]({{ site.baseurl }}/documentation/guides/gitlab_ci_cd_integration.html);
- * [GitHub Actions]({{ site.baseurl }}/documentation/guides/github_ci_cd_integration.html).
+ * [GitLab CI]({{ site.baseurl }}/guides/gitlab_ci_cd_integration.html);
+ * [GitHub Actions]({{ site.baseurl }}/guides/github_ci_cd_integration.html).
 
 Если вы используете одну из них — обращайтесь к соответствующим руководствам. В дальнейшем этот список будет пополняться и другими CI-решениями. Если вы заинтересованы в поддержке конкретной системы — пожалуйста, дайте нам знать в [этом issue](https://github.com/werf/werf/issues/1617).
 
-В общем случае, для интеграции werf с CI/CD-системой требуется написать собственный скрипт в соответствии с инструкциями из документации «[Что такое переменные ci-env?]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#что-такое-ci-env-переменные)». Получившийся скрипт необходимо использовать вместо вызова команды `werf ci-env`. Так же, как и команда, скрипт должен выполняться перед использованием команд werf в начале задания CI/CD.
+В общем случае, для интеграции werf с CI/CD-системой требуется написать собственный скрипт в соответствии с инструкциями из документации «[Что такое переменные ci-env?]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#что-такое-ci-env-переменные)». Получившийся скрипт необходимо использовать вместо вызова команды `werf ci-env`. Так же, как и команда, скрипт должен выполняться перед использованием команд werf в начале задания CI/CD.
 
 В этом руководстве мы пошагово пройдём по основным моментам, которые необходимо учесть при создании такого скрипта интеграции с CI.
 
@@ -19,9 +19,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ### Интеграция с Docker registry
 
-Согласно процедуре [интеграции с Docker registry]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#интеграция-с-docker-registry) необходимо определить следующие переменные:
- * [`DOCKER_CONFIG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#docker_config);
- * [`WERF_IMAGES_REPO`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_images_repo).
+Согласно процедуре [интеграции с Docker registry]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#интеграция-с-docker-registry) необходимо определить следующие переменные:
+ * [`DOCKER_CONFIG`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#docker_config);
+ * [`WERF_IMAGES_REPO`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_images_repo).
 
 Создадим временную папку для конфигураций docker на базе существующей и определим Docker registry для публикации собранных образов:
 
@@ -35,30 +35,30 @@ export WERF_IMAGES_REPO=registry.company.com/project
 
 ### Интеграция с Git
 
-Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#интеграция-с-git) по интеграции с git необходимо определить следующие переменные:
- * [`WERF_TAG_GIT_TAG`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_tag);
- * [`WERF_TAG_GIT_BRANCH`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_tag_git_branch).
+Согласно [описанным шагам]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#интеграция-с-git) по интеграции с git необходимо определить следующие переменные:
+ * [`WERF_TAG_GIT_TAG`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_tag_git_tag);
+ * [`WERF_TAG_GIT_BRANCH`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_tag_git_branch).
 
 ### Интеграция с CI/CD pipeline'ами
 
-Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#интеграция-с-настройками-cicd-pipeline) по интеграции с CI/CD pipeline необходимо определить следующие переменные:
- * [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_project_git);
- * [`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_add_annotation_ci_commit).
+Согласно [описанным шагам]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#интеграция-с-настройками-cicd-pipeline) по интеграции с CI/CD pipeline необходимо определить следующие переменные:
+ * [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_add_annotation_project_git);
+ * [`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_add_annotation_ci_commit).
 
 ### Интеграция с CI/CD процессами
 
-Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#интеграция-с-настройками-cicd) по интеграции с CI/CD процессами необходимо определить следующие переменные:
- * [`WERF_ENV`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_env).
+Согласно [описанным шагам]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#интеграция-с-настройками-cicd) по интеграции с CI/CD процессами необходимо определить следующие переменные:
+ * [`WERF_ENV`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_env).
 
 ### Общая интеграция с CI/CD системами
 
-Согласно [описанным шагам]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#настройка-режима-работы-в-cicd-системе) по общей интеграции с CI/CD системами необходимо определить следующие переменные:
- * [`WERF_GIT_TAG_STRATEGY_LIMIT`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_limit);
- * [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_expiry_days);
- * [`WERF_LOG_COLOR_MODE`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_color_mode);
- * [`WERF_LOG_PROJECT_DIR`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_project_dir);
- * [`WERF_ENABLE_PROCESS_EXTERMINATOR`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_enable_process_exterminator);
- * [`WERF_LOG_TERMINAL_WIDTH`]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html#werf_log_terminal_width).
+Согласно [описанным шагам]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#настройка-режима-работы-в-cicd-системе) по общей интеграции с CI/CD системами необходимо определить следующие переменные:
+ * [`WERF_GIT_TAG_STRATEGY_LIMIT`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_limit);
+ * [`WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_git_tag_strategy_expiry_days);
+ * [`WERF_LOG_COLOR_MODE`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_log_color_mode);
+ * [`WERF_LOG_PROJECT_DIR`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_log_project_dir);
+ * [`WERF_ENABLE_PROCESS_EXTERMINATOR`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_enable_process_exterminator);
+ * [`WERF_LOG_TERMINAL_WIDTH`]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html#werf_log_terminal_width).
 
 ## Пример скрипта настройки CI-окружения
 
@@ -86,7 +86,7 @@ export WERF_ENABLE_PROCESS_EXTERMINATOR=1
 export WERF_LOG_TERMINAL_WIDTH=95
 ```
 
-> Исправьте скрипт для работы в своей CI/CD-системе: измените присваиваемые значения переменных `WERF_*` согласно конкретному случаю. Будет полезно ознакомиться и ориентироваться на статью по [интеграции с GitLab CI]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/gitlab_ci.html), чтобы понимать, какие значения для переменных стоит использовать.
+> Исправьте скрипт для работы в своей CI/CD-системе: измените присваиваемые значения переменных `WERF_*` согласно конкретному случаю. Будет полезно ознакомиться и ориентироваться на статью по [интеграции с GitLab CI]({{ site.baseurl }}/reference/plugging_into_cicd/gitlab_ci.html), чтобы понимать, какие значения для переменных стоит использовать.
 
 Также создадим скрипт `werf-ci-env-cleanup.sh` со следующим содержимым:
 

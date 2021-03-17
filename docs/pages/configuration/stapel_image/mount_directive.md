@@ -1,7 +1,7 @@
 ---
 title: Reducing image size and speeding up a build by mounts
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/mount_directive.html
+permalink: configuration/stapel_image/mount_directive.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: mount
 ---
@@ -32,7 +32,7 @@ If you need to keep assembly data from these directories in an image, you should
 
 On `from` stage werf adds mount points definitions to stage image labels.
 Then each stage uses these definitions for adding volumes to an assembly container.
-The implementation allows inheriting mount points from [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html).
+The implementation allows inheriting mount points from [base image]({{ site.baseurl }}/configuration/stapel_image/base_image.html).
 
-Also, on `from` stage werf cleans assembly container mount points in a [base image]({{ site.baseurl }}/documentation/configuration/stapel_image/base_image.html).
+Also, on `from` stage werf cleans assembly container mount points in a [base image]({{ site.baseurl }}/configuration/stapel_image/base_image.html).
 Therefore, these folders are empty in an image.

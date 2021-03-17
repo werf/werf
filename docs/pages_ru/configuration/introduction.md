@@ -1,7 +1,7 @@
 ---
 title: Общие сведения
 sidebar: documentation
-permalink: documentation/configuration/introduction.html
+permalink: configuration/introduction.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -42,12 +42,12 @@ OTHER_FIELDS
 Секция мета-информации, **обязательная** секция конфигурации, содержащая ключи `project: PROJECT_NAME` и `configVersion: CONFIG_VERSION`. 
 В каждом файле конфигурации `werf.yaml` должна быть только одна секция мета-информации.
 
-Директивы `deploy` и `cleanup` вынесены в отдельные статьи, [развертывание в Kubernetes]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html) и [политики очистки]({{ site.baseurl }}/documentation/configuration/cleanup.html). 
+Директивы `deploy` и `cleanup` вынесены в отдельные статьи, [развертывание в Kubernetes]({{ site.baseurl }}/configuration/deploy_into_kubernetes.html) и [политики очистки]({{ site.baseurl }}/configuration/cleanup.html).
 
 #### Имя проекта
 
 Ключ `project` определяет уникальное имя проекта вашего приложения. 
-Имя проекта влияет на имена образов в _stages storage_, namespace в Kubernetes, имя Helm-релиза и зависящие от него имена (смотри подробнее про [развертывание в Kubernetes]({{ site.baseurl }}/documentation/configuration/deploy_into_kubernetes.html)). 
+Имя проекта влияет на имена образов в _stages storage_, namespace в Kubernetes, имя Helm-релиза и зависящие от него имена (смотри подробнее про [развертывание в Kubernetes]({{ site.baseurl }}/configuration/deploy_into_kubernetes.html)).
 Ключ `project` — единственное обязательное поле секции мета-информации.
 
 Имя проекта должно быть уникальным в пределах группы проектов, собираемых на одном сборочном узле и развертываемых на один и тот же кластер Kubernetes (например, уникальным в пределах всех групп одного GitLab).
@@ -91,7 +91,7 @@ OTHER_FIELDS
 ### Секция артефакта
 
 Секция артефакта также содержит инструкции, описывающие правила сборки одного независимого образа артефактов. 
-Образ артефакта — это вспомогательный образ, предназначенный для изолирования сборочного окружения, инструментов и данных, от конечного образа приложения (подробнее [здесь]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html)).
+Образ артефакта — это вспомогательный образ, предназначенный для изолирования сборочного окружения, инструментов и данных, от конечного образа приложения (подробнее [здесь]({{ site.baseurl }}/configuration/stapel_artifact.html)).
 В одном файле конфигурации `werf.yaml` может быть произвольное количество секций артефактов.
 
 Секция артефакта определяется по наличию в секции конфигурации ключа `artifact: IMAGE_NAME`, где `IMAGE_NAME` — произвольное имя, на которое можно ссылаться из других секций конфигурации. 

@@ -1,7 +1,7 @@
 ---
 title: Установка
 sidebar: documentation
-permalink: documentation/guides/installation.html
+permalink: guides/installation.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
