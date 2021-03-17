@@ -13,10 +13,12 @@ import (
 )
 
 type HostCleanupOptions struct {
-	DryRun                                bool
-	AllowedVolumeUsagePercentageThreshold int64
-	Force                                 bool
-	DockerServerStoragePath               string
+	AllowedVolumeUsagePercentage       *uint
+	AllowedVolumeUsageMarginPercentage *uint
+
+	DryRun                  bool
+	Force                   bool
+	DockerServerStoragePath string
 }
 
 func HostCleanup(ctx context.Context, options HostCleanupOptions) error {
@@ -26,12 +28,7 @@ func HostCleanup(ctx context.Context, options HostCleanupOptions) error {
 		}
 
 		return logboek.Context(ctx).Default().LogProcess("Running GC for local docker server").DoError((func() error {
-			return RunGCForLocalDockerServer(ctx, LocalDockerServerGCOptions{
-				AllowedVolumeUsagePercentageThreshold: options.AllowedVolumeUsagePercentageThreshold,
-				DryRun:                                options.DryRun,
-				Force:                                 options.Force,
-				DockerServerStoragePath:               options.DockerServerStoragePath,
-			})
+			return RunGCForLocalDockerServer(ctx, options)
 		}))
 	})
 }

@@ -110,8 +110,9 @@ type CmdData struct {
 	Tag *string
 
 	// Host storage GC options
-	AllowedVolumeUsage      *int64
-	DockerServerStoragePath *string
+	AllowedVolumeUsage       *uint
+	AllowedVolumeUsageMargin *uint
+	DockerServerStoragePath  *string
 }
 
 const (
@@ -813,6 +814,14 @@ func GetIntEnvVar(varName string) (*int64, error) {
 	}
 
 	return nil, nil
+}
+
+func GetUint64EnvVarStrict(varName string) *uint64 {
+	valP, err := GetUint64EnvVar(varName)
+	if err != nil {
+		TerminateWithError(fmt.Sprintf("bad %s value: %s", varName, err), 1)
+	}
+	return valP
 }
 
 func GetUint64EnvVar(varName string) (*uint64, error) {

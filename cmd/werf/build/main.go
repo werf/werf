@@ -112,6 +112,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	return cmd

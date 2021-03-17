@@ -24,6 +24,13 @@ werf host cleanup [options]
 {{ header }} Options
 
 ```shell
+      --allowed-volume-usage=80
+            Set allowed percentage of docker storage volume usage which will cause garbage          
+            collection of local docker images (default 80% or $WERF_ALLOWED_VOLUME_USAGE)
+      --allowed-volume-usage-margin=10
+            During garbage collection werf would delete images until volume usage becomes below     
+            "allowed-volume-usage - allowed-volume-usage-margin" level (default 10% or              
+            $WERF_ALLOWED_VOLUME_USAGE_MARGIN)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -36,8 +43,14 @@ werf host cleanup [options]
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
+      --docker-server-storage-path=''
+            Use specified path to the local docker server storage to check docker storage volume    
+            usage while performing garbage collection of local docker images (detect local docker   
+            server storage path by default or use $WERF_DOCKER_SERVER_STORAGE_PATH)
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
+      --force=false
+            Force deletion of images which are being used by some containers (default $WERF_FORCE)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto'

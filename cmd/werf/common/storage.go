@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -14,11 +15,12 @@ func RunHostStorageGC(ctx context.Context, cmdData *CmdData) error {
 		return nil
 	}
 
-	opts := host_cleaning.LocalDockerServerGCOptions{
-		DryRun:                                false,
-		Force:                                 false,
-		AllowedVolumeUsagePercentageThreshold: *cmdData.AllowedVolumeUsage,
-		DockerServerStoragePath:               *cmdData.DockerServerStoragePath,
+	opts := host_cleaning.HostCleanupOptions{
+		DryRun:                             false,
+		Force:                              false,
+		AllowedVolumeUsagePercentage:       cmdData.AllowedVolumeUsage,
+		AllowedVolumeUsageMarginPercentage: cmdData.AllowedVolumeUsageMargin,
+		DockerServerStoragePath:            *cmdData.DockerServerStoragePath,
 	}
 
 	shouldRun, err := host_cleaning.ShouldRunGCForLocalDockerServer(ctx, opts)
@@ -35,13 +37,35 @@ func RunHostStorageGC(ctx context.Context, cmdData *CmdData) error {
 }
 
 func SetupAllowedVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
-	var defaultAllowedVolumeUsage int64
-	if v := GetIntEnvVarStrict("WERF_ALLOWED_VOLUME_USAGE"); v != nil {
-		defaultAllowedVolumeUsage = *v
+	envVarName := "WERF_ALLOWED_VOLUME_USAGE"
+	var defaultVal uint
+	if v := GetUint64EnvVarStrict(envVarName); v != nil {
+		defaultVal = uint(*v)
+	} else {
+		defaultVal = uint(host_cleaning.DefaultAllowedVolumeUsagePercentage)
+	}
+	if defaultVal > 100 {
+		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
 	}
 
-	cmdData.AllowedVolumeUsage = new(int64)
-	cmd.Flags().Int64VarP(cmdData.AllowedVolumeUsage, "allowed-volume-usage", "", defaultAllowedVolumeUsage, "Set allowed percentage threshold of docker storage volume usage which will cause garbage collection of local docker images (default 80% or $WERF_ALLOWED_VOLUME_USAGE)")
+	cmdData.AllowedVolumeUsage = new(uint)
+	cmd.Flags().UintVarP(cmdData.AllowedVolumeUsage, "allowed-volume-usage", "", defaultVal, fmt.Sprintf("Set allowed percentage of docker storage volume usage which will cause garbage collection of local docker images (default %d%% or $WERF_ALLOWED_VOLUME_USAGE)", uint(host_cleaning.DefaultAllowedVolumeUsagePercentage)))
+}
+
+func SetupAllowedVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Command) {
+	envVarName := "WERF_ALLOWED_VOLUME_USAGE_MARGIN"
+	var defaultVal uint
+	if v := GetUint64EnvVarStrict(envVarName); v != nil {
+		defaultVal = uint(*v)
+	} else {
+		defaultVal = uint(host_cleaning.DefaultAllowedVolumeUsageMarginPercentage)
+	}
+	if defaultVal > 100 {
+		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
+	}
+
+	cmdData.AllowedVolumeUsageMargin = new(uint)
+	cmd.Flags().UintVarP(cmdData.AllowedVolumeUsageMargin, "allowed-volume-usage-margin", "", defaultVal, fmt.Sprintf("During garbage collection werf would delete images until volume usage becomes below \"allowed-volume-usage - allowed-volume-usage-margin\" level (default %d%% or $WERF_ALLOWED_VOLUME_USAGE_MARGIN)", uint(host_cleaning.DefaultAllowedVolumeUsageMarginPercentage)))
 }
 
 func SetupDockerServerStoragePath(cmdData *CmdData, cmd *cobra.Command) {
