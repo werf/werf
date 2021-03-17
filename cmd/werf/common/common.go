@@ -1033,7 +1033,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 		openLocalRepoOptions.ServiceHeadCommitOptions.WithStagedChangesOnly = devMode == "strict"
 	}
 
-	localGitRepo, err := git_repo.OpenLocalRepo("own", gitWorkTree, openLocalRepoOptions)
+	localGitRepo, err := git_repo.OpenLocalRepo(BackgroundContext(), "own", gitWorkTree, openLocalRepoOptions)
 	if err != nil {
 		return nil, err
 	}
