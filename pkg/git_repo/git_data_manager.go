@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	GitArchivesCacheVersion = "3"
-	GitPatchesCacheVersion  = "3"
+	GitArchivesCacheVersion = "4"
+	GitPatchesCacheVersion  = "4"
 )
 
 var (
@@ -107,7 +107,7 @@ func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID str
 		defer werf.ReleaseHostLock(lock)
 	}
 
-	if _, lock, err := werf.AcquireHostLock(ctx, fmt.Sprintf("git_archive.%s_%s", repoID, util.ObjectToHashKey(opts)), lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := werf.AcquireHostLock(ctx, fmt.Sprintf("git_archive.%s_%s", repoID, true_git.ArchiveOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
 		return nil, err
 	} else {
 		defer werf.ReleaseHostLock(lock)
@@ -185,7 +185,7 @@ func (manager *GitDataManager) CreatePatchFile(ctx context.Context, repoID strin
 		defer werf.ReleaseHostLock(lock)
 	}
 
-	if _, lock, err := werf.AcquireHostLock(ctx, fmt.Sprintf("git_patch.%s_%s", repoID, util.ObjectToHashKey(opts)), lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := werf.AcquireHostLock(ctx, fmt.Sprintf("git_patch.%s_%s", repoID, true_git.PatchOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
 		return nil, err
 	} else {
 		defer werf.ReleaseHostLock(lock)
@@ -220,17 +220,17 @@ func (manager *GitDataManager) CreatePatchFile(ctx context.Context, repoID strin
 }
 
 func patchMetadataFileName(repoID string, opts PatchOptions) string {
-	return fmt.Sprintf("%s_%s.meta.json", repoID, util.ObjectToHashKey(opts))
+	return fmt.Sprintf("%s_%s.meta.json", repoID, true_git.PatchOptions(opts).ID())
 }
 
 func patchFileName(repoID string, opts PatchOptions) string {
-	return fmt.Sprintf("%s_%s.patch", repoID, util.ObjectToHashKey(opts))
+	return fmt.Sprintf("%s_%s.patch", repoID, true_git.PatchOptions(opts).ID())
 }
 
 func archiveMetadataFileName(repoID string, opts ArchiveOptions) string {
-	return fmt.Sprintf("%s_%s.meta.json", repoID, util.ObjectToHashKey(opts))
+	return fmt.Sprintf("%s_%s.meta.json", repoID, true_git.ArchiveOptions(opts).ID())
 }
 
 func archiveFileName(repoID string, opts ArchiveOptions) string {
-	return fmt.Sprintf("%s_%s.tar", repoID, util.ObjectToHashKey(opts))
+	return fmt.Sprintf("%s_%s.tar", repoID, true_git.ArchiveOptions(opts).ID())
 }
