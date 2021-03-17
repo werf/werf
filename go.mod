@@ -15,8 +15,9 @@ require (
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
-	github.com/docker/cli v0.0.0-20200803101120-f4f962292d47
-	github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
+	github.com/containerd/containerd v1.5.0-beta.4 // indirect
+	github.com/docker/cli v20.10.5+incompatible
+	github.com/docker/docker v20.10.5+incompatible
 	github.com/docker/go v1.5.1-1 // indirect
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -45,13 +46,12 @@ require (
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.0.0
-	github.com/moby/buildkit v0.7.1-0.20200615045306-df35e9818d1f
-	github.com/moby/term v0.0.0-20200611042045-63b9a826fb74 // indirect
+	github.com/moby/buildkit v0.8.2
+	github.com/moby/sys/symlink v0.1.0 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
 	github.com/oleiade/reflections v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
-	github.com/opencontainers/runc v1.0.0-rc8.0.20190926000215-3e425f80a8c9 // indirect
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1
@@ -63,7 +63,6 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/theupdateframework/notary v0.6.1 // indirect
-	github.com/tonistiigi/fsutil v0.0.0-20200724193237-c3ed55f3b481 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
 	github.com/werf/kubedog v0.4.1-0.20210305081605-676b007fb936
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
@@ -71,13 +70,13 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
-	golang.org/x/net v0.0.0-20201216054612-986b41b23924
+	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/ini.v1 v1.57.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.5.1
 	k8s.io/api v0.20.2
 	k8s.io/apimachinery v0.20.2
@@ -92,10 +91,6 @@ require (
 	sigs.k8s.io/yaml v1.2.0
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
-
-replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200728121027-0f41a77c6993+incompatible
-
-replace github.com/containerd/containerd => github.com/containerd/containerd v1.3.1-0.20200508210449-c80284d4b529
 
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 
