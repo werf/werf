@@ -131,6 +131,72 @@ func ShouldRunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOption
 	return vu.Percentage > allowedVolumeUsage, nil
 }
 
+type LocalDockerServerStorageCheckResult struct {
+	VolumeUsage      VolumeUsage
+	TotalImagesBytes uint64
+	ImagesDescs      []*LocalImageDesc
+}
+
+func (checkResult *LocalDockerServerStorageCheckResult) GetBytesToFree(targetVolumeUsage float64) uint64 {
+	allowedVolumeUsageToFree := checkResult.VolumeUsage.Percentage - targetVolumeUsage
+	bytesToFree := uint64((float64(checkResult.VolumeUsage.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
+	return bytesToFree
+}
+
+func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePath string) (*LocalDockerServerStorageCheckResult, error) {
+	res := &LocalDockerServerStorageCheckResult{}
+
+	vu, err := GetVolumeUsageByPath(ctx, dockerServerStoragePath)
+	if err != nil {
+		return nil, fmt.Errorf("error getting volume usage by path %q: %s", dockerServerStoragePath, err)
+	}
+	res.VolumeUsage = vu
+
+	filterSet := filters.NewArgs()
+	filterSet.Add("label", fmt.Sprintf("%s", image.WerfLabel))
+	filterSet.Add("label", fmt.Sprintf("%s", image.WerfStageDigestLabel))
+	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get docker images: %s", err)
+	}
+
+	for _, imageSummary := range images {
+		data, _ := json.Marshal(imageSummary)
+		logboek.Context(ctx).Debug().LogF("Image summary:\n%s\n---\n", data)
+
+		res.TotalImagesBytes += uint64(imageSummary.Size)
+
+		lastUsedAt := time.Unix(imageSummary.Created, 0)
+
+		for _, ref := range imageSummary.RepoTags {
+			if ref == "<none>:<none>" {
+				continue
+			}
+
+			lastRecentlyUsedAt, err := lrumeta.CommonLRUImagesCache.GetImageLastAccessTime(ctx, ref)
+			if err != nil {
+				return nil, fmt.Errorf("error accessing last recently used images cache: %s", err)
+			}
+
+			if lastRecentlyUsedAt.IsZero() {
+				continue
+			}
+
+			lastUsedAt = lastRecentlyUsedAt
+		}
+
+		desc := &LocalImageDesc{
+			ImageSummary: imageSummary,
+			LastUsedAt:   lastUsedAt,
+		}
+		res.ImagesDescs = append(res.ImagesDescs, desc)
+	}
+
+	sort.Sort(ImagesLruSort(res.ImagesDescs))
+
+	return res, nil
+}
+
 func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) error {
 	if _, lock, err := werf.AcquireHostLock(ctx, LockName, lockgate.AcquireOptions{}); err != nil {
 		return fmt.Errorf("unable to acquire host lock %q: %s", LockName, err)
@@ -140,6 +206,7 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 
 	allowedVolumeUsage := getAllowedVolumeUsagePercentage(opts)
 	allowedVolumeUsageMargin := getAllowedVolumeUsageMarginPercentage(allowedVolumeUsage, opts)
+	targetVolumeUsage := allowedVolumeUsage - allowedVolumeUsageMargin
 
 	dockerServerStoragePath, err := getDockerServerStoragePath(ctx, opts)
 	if err != nil {
@@ -150,89 +217,39 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 		return nil
 	}
 
-	for {
-		// Remove all images by old cache-version without lru? — No, not correct. These will be cleaned up by lru anyway.
-		// TODO: Filter out local stages
+	checkResult, err := GetLocalDockerServerStorageCheck(ctx, dockerServerStoragePath)
+	if err != nil {
+		return fmt.Errorf("error getting local docker server storage check: %s", err)
+	}
 
-		vu, err := GetVolumeUsageByPath(ctx, dockerServerStoragePath)
-		if err != nil {
-			return fmt.Errorf("error getting volume usage by path %q: %s", dockerServerStoragePath, err)
-		}
+	bytesToFree := checkResult.GetBytesToFree(targetVolumeUsage)
 
-		if vu.Percentage <= allowedVolumeUsage {
-			logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
-				logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
-				logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-				logboek.Context(ctx).Default().LogF("Allowed usage allowedVolumeUsage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage), utils.BlueF("%0.2f%%", allowedVolumeUsage), utils.GreenF("OK"))
-			})
-
-			break
-		}
-
-		targetVolumeUsage := allowedVolumeUsage - allowedVolumeUsageMargin
-		allowedVolumeUsageToFree := vu.Percentage - targetVolumeUsage
-		bytesToFree := uint64(float64(vu.TotalBytes) / 100.0 * allowedVolumeUsageToFree)
-
-		filterSet := filters.NewArgs()
-		filterSet.Add("label", fmt.Sprintf("%s", image.WerfLabel))
-		filterSet.Add("label", fmt.Sprintf("%s", image.WerfStageDigestLabel))
-		images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
-		if err != nil {
-			return fmt.Errorf("unable tio get docker images: %s", err)
-		}
-
-		var totalImagesBytes uint64
-		var imagesDescs []*LocalImageDesc
-
-		for _, imageSummary := range images {
-			data, _ := json.Marshal(imageSummary)
-			logboek.Context(ctx).Debug().LogF("Image summary:\n%s\n---\n", data)
-
-			totalImagesBytes += uint64(imageSummary.Size)
-
-			lastUsedAt := time.Unix(imageSummary.Created, 0)
-
-			for _, ref := range imageSummary.RepoTags {
-				if ref == "<none>:<none>" {
-					continue
-				}
-
-				lastRecentlyUsedAt, err := lrumeta.CommonLRUImagesCache.GetImageLastAccessTime(ctx, ref)
-				if err != nil {
-					return fmt.Errorf("error accessing last recently used images cache: %s", err)
-				}
-
-				if lastRecentlyUsedAt.IsZero() {
-					continue
-				}
-
-				lastUsedAt = lastRecentlyUsedAt
-			}
-
-			desc := &LocalImageDesc{
-				ImageSummary: imageSummary,
-				LastUsedAt:   lastUsedAt,
-			}
-			imagesDescs = append(imagesDescs, desc)
-		}
-
-		sort.Sort(ImagesLruSort(imagesDescs))
-
+	if checkResult.VolumeUsage.Percentage <= allowedVolumeUsage {
 		logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
 			logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
-			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage), utils.BlueF("%0.2f%%", allowedVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
-			logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% = %s\n", allowedVolumeUsage, allowedVolumeUsageMargin, utils.BlueF("%0.2f%%", targetVolumeUsage))
-			logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
-			logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d (~ %s)", len(imagesDescs), humanize.Bytes(totalImagesBytes)))
+			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
+			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", allowedVolumeUsage), utils.GreenF("OK"))
 		})
 
+		return nil
+	}
+
+	logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
+		logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
+		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
+		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.YellowF("%0.2f%%", allowedVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% = %s\n", allowedVolumeUsage, allowedVolumeUsageMargin, utils.BlueF("%0.2f%%", targetVolumeUsage))
+		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
+		logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d (~ %s)", len(checkResult.ImagesDescs), humanize.Bytes(checkResult.TotalImagesBytes)))
+	})
+
+	for {
 		var freedBytes uint64
 		var freedImagesCount uint64
 
-		if len(imagesDescs) > 0 {
+		if len(checkResult.ImagesDescs) > 0 {
 			if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for least recently used docker images created by werf").DoError(func() error {
-				for _, desc := range imagesDescs {
+				for _, desc := range checkResult.ImagesDescs {
 					imageRemovalFailed := false
 					for _, ref := range desc.ImageSummary.RepoTags {
 						var args []string
@@ -311,6 +328,31 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 		}
 
 		logboek.Context(ctx).Default().LogOptionalLn()
+
+		checkResult, err = GetLocalDockerServerStorageCheck(ctx, dockerServerStoragePath)
+		if err != nil {
+			return fmt.Errorf("error getting local docker server storage check: %s", err)
+		}
+
+		if checkResult.VolumeUsage.Percentage <= targetVolumeUsage {
+			logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
+				logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
+				logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
+				logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", targetVolumeUsage), utils.GreenF("OK"))
+			})
+
+			break
+		}
+
+		bytesToFree = checkResult.GetBytesToFree(targetVolumeUsage)
+
+		logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
+			logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
+			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
+			logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
+			logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
+			logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d (~ %s)", len(checkResult.ImagesDescs), humanize.Bytes(checkResult.TotalImagesBytes)))
+		})
 	}
 
 	return nil
