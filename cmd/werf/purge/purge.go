@@ -77,6 +77,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)

@@ -82,6 +82,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd)
 
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	return cmd

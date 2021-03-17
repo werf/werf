@@ -150,6 +150,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")

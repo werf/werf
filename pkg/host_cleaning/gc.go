@@ -28,8 +28,10 @@ import (
 )
 
 const (
-	DefaultAllowedVolumeUsagePercentageThreshold float64 = 80.0
-	LockName                                             = "host_cleaning.GC"
+	DefaultAllowedVolumeUsagePercentage       float64 = 80.0
+	DefaultAllowedVolumeUsageMarginPercentage float64 = 10.0
+	LockName                                          = "host_cleaning.GC"
+	MinImagesToDelete                                 = 10
 )
 
 // AcquireSharedStorageLock should be called in every process that normally work with the storage
@@ -69,24 +71,32 @@ func GetLocalDockerServerStoragePath(ctx context.Context) (string, error) {
 	return storagePath, nil
 }
 
-type LocalDockerServerGCOptions struct {
-	AllowedVolumeUsagePercentageThreshold int64
-	DryRun                                bool
-	Force                                 bool
-	DockerServerStoragePath               string
-}
-
-func getAllowedVolumeUsagePercentageThreshold(opts LocalDockerServerGCOptions) float64 {
-	var percentageThreshold float64
-	if opts.AllowedVolumeUsagePercentageThreshold > 0 {
-		percentageThreshold = float64(opts.AllowedVolumeUsagePercentageThreshold)
+func getAllowedVolumeUsagePercentage(opts HostCleanupOptions) float64 {
+	var res float64
+	if opts.AllowedVolumeUsagePercentage != nil {
+		res = float64(*opts.AllowedVolumeUsagePercentage)
 	} else {
-		percentageThreshold = DefaultAllowedVolumeUsagePercentageThreshold
+		res = DefaultAllowedVolumeUsagePercentage
 	}
-	return percentageThreshold
+	return res
 }
 
-func getDockerServerStoragePath(ctx context.Context, opts LocalDockerServerGCOptions) (string, error) {
+func getAllowedVolumeUsageMarginPercentage(allowedVolumeUsagePercentage float64, opts HostCleanupOptions) float64 {
+	var res float64
+	if *opts.AllowedVolumeUsageMarginPercentage != 0 {
+		res = float64(*opts.AllowedVolumeUsageMarginPercentage)
+	} else {
+		res = DefaultAllowedVolumeUsageMarginPercentage
+	}
+
+	if res > allowedVolumeUsagePercentage {
+		res = allowedVolumeUsagePercentage
+	}
+
+	return res
+}
+
+func getDockerServerStoragePath(ctx context.Context, opts HostCleanupOptions) (string, error) {
 	var dockerServerStoragePath string
 	if opts.DockerServerStoragePath != "" {
 		dockerServerStoragePath = opts.DockerServerStoragePath
@@ -101,8 +111,8 @@ func getDockerServerStoragePath(ctx context.Context, opts LocalDockerServerGCOpt
 	return dockerServerStoragePath, nil
 }
 
-func ShouldRunGCForLocalDockerServer(ctx context.Context, opts LocalDockerServerGCOptions) (bool, error) {
-	percentageThreshold := getAllowedVolumeUsagePercentageThreshold(opts)
+func ShouldRunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) (bool, error) {
+	allowedVolumeUsage := getAllowedVolumeUsagePercentage(opts)
 
 	dockerServerStoragePath, err := getDockerServerStoragePath(ctx, opts)
 	if err != nil {
@@ -118,17 +128,18 @@ func ShouldRunGCForLocalDockerServer(ctx context.Context, opts LocalDockerServer
 		return false, fmt.Errorf("error getting volume usage by path %q: %s", dockerServerStoragePath, err)
 	}
 
-	return vu.Percentage > percentageThreshold, nil
+	return vu.Percentage > allowedVolumeUsage, nil
 }
 
-func RunGCForLocalDockerServer(ctx context.Context, opts LocalDockerServerGCOptions) error {
+func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) error {
 	if _, lock, err := werf.AcquireHostLock(ctx, LockName, lockgate.AcquireOptions{}); err != nil {
 		return fmt.Errorf("unable to acquire host lock %q: %s", LockName, err)
 	} else {
 		defer werf.ReleaseHostLock(lock)
 	}
 
-	percentageThreshold := getAllowedVolumeUsagePercentageThreshold(opts)
+	allowedVolumeUsage := getAllowedVolumeUsagePercentage(opts)
+	allowedVolumeUsageMargin := getAllowedVolumeUsageMarginPercentage(allowedVolumeUsage, opts)
 
 	dockerServerStoragePath, err := getDockerServerStoragePath(ctx, opts)
 	if err != nil {
@@ -148,18 +159,19 @@ func RunGCForLocalDockerServer(ctx context.Context, opts LocalDockerServerGCOpti
 			return fmt.Errorf("error getting volume usage by path %q: %s", dockerServerStoragePath, err)
 		}
 
-		if vu.Percentage <= percentageThreshold {
+		if vu.Percentage <= allowedVolumeUsage {
 			logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
 				logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
 				logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-				logboek.Context(ctx).Default().LogF("Allowed usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage), utils.BlueF("%0.2f%%", percentageThreshold), utils.GreenF("OK"))
+				logboek.Context(ctx).Default().LogF("Allowed usage allowedVolumeUsage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage), utils.BlueF("%0.2f%%", allowedVolumeUsage), utils.GreenF("OK"))
 			})
 
 			break
 		}
 
-		percentageToFree := vu.Percentage - percentageThreshold
-		bytesToFree := uint64(float64(vu.TotalBytes) / 100.0 * percentageToFree)
+		targetVolumeUsage := allowedVolumeUsage - allowedVolumeUsageMargin
+		allowedVolumeUsageToFree := vu.Percentage - targetVolumeUsage
+		bytesToFree := uint64(float64(vu.TotalBytes) / 100.0 * allowedVolumeUsageToFree)
 
 		filterSet := filters.NewArgs()
 		filterSet.Add("label", fmt.Sprintf("%s", image.WerfLabel))
@@ -209,7 +221,8 @@ func RunGCForLocalDockerServer(ctx context.Context, opts LocalDockerServerGCOpti
 		logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
 			logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage), utils.BlueF("%0.2f%%", percentageThreshold), utils.RedF("HIGH DISK USAGE"))
+			logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage), utils.BlueF("%0.2f%%", allowedVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
+			logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% = %s\n", allowedVolumeUsage, allowedVolumeUsageMargin, utils.BlueF("%0.2f%%", targetVolumeUsage))
 			logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
 			logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d (~ %s)", len(imagesDescs), humanize.Bytes(totalImagesBytes)))
 		})
@@ -248,6 +261,10 @@ func RunGCForLocalDockerServer(ctx context.Context, opts LocalDockerServerGCOpti
 					if !imageRemovalFailed {
 						freedBytes += uint64(desc.ImageSummary.Size)
 						freedImagesCount++
+					}
+
+					if freedImagesCount < MinImagesToDelete {
+						continue
 					}
 
 					if freedBytes > bytesToFree {

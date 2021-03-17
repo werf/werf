@@ -126,6 +126,7 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
