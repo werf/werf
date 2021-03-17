@@ -26,6 +26,13 @@ werf cleanup [options]
 {{ header }} Options
 
 ```shell
+      --allowed-volume-usage=80
+            Set allowed percentage of docker storage volume usage which will cause garbage          
+            collection of local docker images (default 80% or $WERF_ALLOWED_VOLUME_USAGE)
+      --allowed-volume-usage-margin=10
+            During garbage collection werf would delete images until volume usage becomes below     
+            "allowed-volume-usage - allowed-volume-usage-margin" level (default 10% or              
+            $WERF_ALLOWED_VOLUME_USAGE_MARGIN)
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
@@ -48,6 +55,10 @@ werf cleanup [options]
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and delete images from the specified    
             repo
+      --docker-server-storage-path=''
+            Use specified path to the local docker server storage to check docker storage volume    
+            usage while performing garbage collection of local docker images (detect local docker   
+            server storage path by default or use $WERF_DOCKER_SERVER_STORAGE_PATH)
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=''

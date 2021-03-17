@@ -53,6 +53,13 @@ werf converge --repo registry.mydomain.com/web --env production
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --allowed-volume-usage=80
+            Set allowed percentage of docker storage volume usage which will cause garbage          
+            collection of local docker images (default 80% or $WERF_ALLOWED_VOLUME_USAGE)
+      --allowed-volume-usage-margin=10
+            During garbage collection werf would delete images until volume usage becomes below     
+            "allowed-volume-usage - allowed-volume-usage-margin" level (default 10% or              
+            $WERF_ALLOWED_VOLUME_USAGE_MARGIN)
       --atomic=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_ATOMIC by default)
@@ -81,6 +88,10 @@ werf converge --repo registry.mydomain.com/web --env production
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
             repo, to pull base images
+      --docker-server-storage-path=''
+            Use specified path to the local docker server storage to check docker storage volume    
+            usage while performing garbage collection of local docker images (detect local docker   
+            server storage path by default or use $WERF_DOCKER_SERVER_STORAGE_PATH)
       --env=''
             Use specified environment (default $WERF_ENV)
       --follow=false
