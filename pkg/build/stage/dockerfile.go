@@ -107,9 +107,18 @@ func NewDockerStages(dockerStages []instructions.Stage, dockerBuildArgsHash map[
 	}
 
 	ds.dockerMetaArgsHash = map[string]string{}
-	for _, arg := range dockerMetaArgs {
-		if _, _, err := ds.addDockerMetaArg(arg.Key, arg.ValueString()); err != nil {
-			return nil, err
+	for _, argInstruction := range dockerMetaArgs {
+		for _, keyValuePairOptional := range argInstruction.Args {
+			key := keyValuePairOptional.Key
+
+			var value string
+			if keyValuePairOptional.Value != nil {
+				value = *keyValuePairOptional.Value
+			}
+
+			if _, _, err := ds.addDockerMetaArg(key, value); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -504,12 +513,21 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 
 	switch c := cmd.(type) {
 	case *instructions.ArgCommand:
-		resolvedKey, resolvedValue, err := processArgFunc(c.Key, c.ValueString())
-		if err != nil {
-			return nil, nil, err
-		}
+		for _, keyValuePairOptional := range c.Args {
+			key := keyValuePairOptional.Key
 
-		dependencies = append(dependencies, fmt.Sprintf("ARG %s=%s", resolvedKey, resolvedValue))
+			var value string
+			if keyValuePairOptional.Value != nil {
+				value = *keyValuePairOptional.Value
+			}
+
+			resolvedKey, resolvedValue, err := processArgFunc(key, value)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			dependencies = append(dependencies, fmt.Sprintf("ARG %s=%s", resolvedKey, resolvedValue))
+		}
 	case *instructions.EnvCommand:
 		for _, keyValuePair := range c.Env {
 			resolvedKey, resolvedValue, err := processEnvFunc(keyValuePair.Key, keyValuePair.Value)
