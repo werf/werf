@@ -24,7 +24,7 @@ type ComplexScope struct {
 func (s ComplexScope) PathList() []string {
 	var result []string
 	for _, scope := range s.scopes {
-		result = append(result, scope.PathList()...)
+		result = util.AddNewStringsToStringArray(result, scope.PathList()...)
 	}
 	return result
 }
