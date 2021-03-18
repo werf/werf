@@ -10,6 +10,7 @@ import (
 	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/util/parallel/constant"
 )
 
 type DoTasksOptions struct {
@@ -79,7 +80,8 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 			workersBuffs = append(workersBuffs, workerBuf)
 			worker = &bufWorker{buf: workerBuf}
 
-			workerContext = logboek.NewContext(ctx, logboek.Context(ctx).NewSubLogger(workerBuf, workerBuf))
+			ctxWithBackgroundTaskID := context.WithValue(ctx, constant.CtxBackgroundTaskIDKey, i)
+			workerContext = logboek.NewContext(ctxWithBackgroundTaskID, logboek.Context(ctx).NewSubLogger(workerBuf, workerBuf))
 			logboek.Context(workerContext).Streams().SetPrefixStyle(style.Highlight())
 
 			if options.InitDockerCLIForEachWorker {
