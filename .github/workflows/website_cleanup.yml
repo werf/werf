@@ -1,0 +1,23 @@
+name: Cleanup site container repository
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  repository_dispatch:
+    types: [cleanup]
+
+jobs:
+  cleanup:
+    name: Cleanup
+    runs-on: tfprod-werf
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Fetch all history for all tags and branches
+        run: git fetch --prune --unshallow
+
+      - name: Cleanup
+        uses: werf/actions/cleanup@v1.2
+        env:
+          WERF_DIR: "docs/documentation"
+          WERF_VERBOSE: "1"
