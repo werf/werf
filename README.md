@@ -259,7 +259,7 @@ Following guides demonstrate the key features of werf and help you to start usin
 
 <!-- WERF DOCS PARTIAL BEGIN: Docs and support -->
 
-[Make your first werf application](https://werf.io/documentation/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
+[Make your first werf application](https://werf.io/documentation/v1.1/guides/getting_started.html) or plunge into the complete [documentation](https://werf.io/).
 
 We are always in contact with the community through [Twitter](https://twitter.com/werf_io) and [Slack](https://cloud-native.slack.com/messages/CHY2THYUU). Join us!
 

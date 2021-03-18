@@ -1,48 +1,48 @@
 /documentation:
   title: Документация
-  url: /documentation/index.html
-/documentation/configuration:
+  url: /index.html
+/configuration:
   title: Конфигурация
-  url: /documentation/configuration/introduction.html
-/documentation/configuration/stapel_image:
+  url: /configuration/introduction.html
+/configuration/stapel_image:
   title: Stapel-образ
-  url: /documentation/configuration/stapel_image/naming.html
-/documentation/reference:
+  url: /configuration/stapel_image/naming.html
+/reference:
   title: Справочник
-  url: /documentation/reference/stages_and_images.html
-/documentation/reference/deploy_process:
+  url: /reference/stages_and_images.html
+/reference/deploy_process:
   title: Деплой
-  url: /documentation/reference/deploy_process/deploy_into_kubernetes.html
-/documentation/reference/plugging_into_cicd:
+  url: /reference/deploy_process/deploy_into_kubernetes.html
+/reference/plugging_into_cicd:
   title: Интеграция с CI/CD
-  url: /documentation/reference/plugging_into_cicd/overview.html
-/documentation/reference/development_and_debug:
+  url: /reference/plugging_into_cicd/overview.html
+/reference/development_and_debug:
   title: Разработка и отладка
-  url: /documentation/reference/development_and_debug/setup_minikube.html
-/documentation/reference/toolbox:
+  url: /reference/development_and_debug/setup_minikube.html
+/reference/toolbox:
   title: Toolbox
-  url: /documentation/reference/toolbox/slug.html
-/documentation/guides:
+  url: /reference/toolbox/slug.html
+/guides:
   title: Руководства
-  url: /documentation/guides/installation.html
-/documentation/guides/advanced_build:
+  url: /guides/installation.html
+/guides/advanced_build:
   title: Расширенная сборка
-  url: /documentation/guides/advanced_build/first_application.html
-/documentation/cli:
+  url: /guides/advanced_build/first_application.html
+/cli:
   title: CLI Commands
-  url: /documentation/cli/main/build.html
-/documentation/cli/main:
+  url: /cli/main/build.html
+/cli/main:
   title: Main Commands
-  url: /documentation/cli/main/build.html
-/documentation/cli/toolbox:
+  url: /cli/main/build.html
+/cli/toolbox:
   title: Toolbox
-  url: /documentation/cli/toolbox/slugify.html
-/documentation/cli/management:
+  url: /cli/toolbox/slugify.html
+/cli/management:
   title: Lowlevel Management Commands
-  url: /documentation/cli/management/stages/build.html
-/documentation/cli/other:
+  url: /cli/management/stages/build.html
+/cli/other:
   title: Other
-  url: /documentation/cli/other/completion.html
-/documentation/development:
+  url: /cli/other/completion.html
+/development:
   title: Разработка
-  url: /documentation/development/stapel.html
+  url: /development/stapel.html

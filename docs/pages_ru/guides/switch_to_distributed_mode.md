@@ -1,11 +1,11 @@
 ---
 title: Переключение на распределённый режим
 sidebar: documentation
-permalink: documentation/guides/switch_to_distributed_mode.html
+permalink: guides/switch_to_distributed_mode.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Допустим имеется какой-то проект в Gitlab CI/CD, который использует werf и [хранилище стадий :local]({{ site.baseurl }}/documentation/reference/stages_and_images.html#хранилище-стадий). В данной статье приведены шаги для переключения такого проекта на удалённое хранилище стадий. Удалённое хранилище стадий позволяет запускать werf с произвольных хостов открывая возможность распределённой работы werf.
+Допустим имеется какой-то проект в Gitlab CI/CD, который использует werf и [хранилище стадий :local]({{ site.baseurl }}/reference/stages_and_images.html#хранилище-стадий). В данной статье приведены шаги для переключения такого проекта на удалённое хранилище стадий. Удалённое хранилище стадий позволяет запускать werf с произвольных хостов открывая возможность распределённой работы werf.
 
 Требуемая версия werf: >= v1.1.10.
 

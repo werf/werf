@@ -1,7 +1,7 @@
 ---
 title: Resources update methods and adoption
 sidebar: documentation
-permalink: documentation/reference/deploy_process/resources_update_methods_and_adoption.html
+permalink: reference/deploy_process/resources_update_methods_and_adoption.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

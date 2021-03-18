@@ -1,7 +1,7 @@
 ---
 title: Multi-images application
 sidebar: documentation
-permalink: documentation/guides/advanced_build/multi_images.html
+permalink: guides/advanced_build/multi_images.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
@@ -15,7 +15,7 @@ In this article, we will build an example application — [AtSea Shop](https://g
 
 ## Requirements
 
-* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#installing-dependencies) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/guides/installation.html#installing-dependencies) on the host system.
 * Installed [multiwerf](https://github.com/werf/multiwerf) on the host system.
 
 ### Select werf version
@@ -36,7 +36,7 @@ It's frontend written in React and backend written in Java Spring Boot. There wi
 
 ### Backend
 
-It is the `app` image. The backend container handles HTTP requests from the frontend container. The source code of the application is in the `/app` directory. It consists of Java application and ReactJS application. To build the backend image there are two artifact images (read more about artifacts [here]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html)) - `storefront` and `appserver`.
+It is the `app` image. The backend container handles HTTP requests from the frontend container. The source code of the application is in the `/app` directory. It consists of Java application and ReactJS application. To build the backend image there are two artifact images (read more about artifacts [here]({{ site.baseurl }}/configuration/stapel_artifact.html)) - `storefront` and `appserver`.
 
 Image of the backend base on the official java image. It uses files from artifacts and doesn't need any steps for downloading packages or building.
 
@@ -88,7 +88,7 @@ shell:
 
 #### Appserver artifact
 
-Builds a Java code. werf imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar` into the `/app` directory of the `app` image. To increase the efficiency of the building `appserver` image, build instructions divided into two stages — _install_ and _setup_. Also, the `/usr/share/maven/ref/repository` directory mounts with the `build_dir` directives to allow some caching (read more about mount directives [here]({{ site.baseurl }}/documentation/configuration/stapel_image/mount_directive.html)).
+Builds a Java code. werf imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar` into the `/app` directory of the `app` image. To increase the efficiency of the building `appserver` image, build instructions divided into two stages — _install_ and _setup_. Also, the `/usr/share/maven/ref/repository` directory mounts with the `build_dir` directives to allow some caching (read more about mount directives [here]({{ site.baseurl }}/configuration/stapel_image/mount_directive.html)).
 
 ```yaml
 artifact: appserver
@@ -426,6 +426,6 @@ docker stop reverse_proxy app database payment_gw
 We've described all project images in a one config.
 
 The example above shows the benefits:
-* If your project has similar images, you can share some piece of images by mounting their folder with the `build_dir` directive (read more about mounts [here]({{ site.baseurl }}/documentation/configuration/stapel_image/mount_directive.html)).
+* If your project has similar images, you can share some piece of images by mounting their folder with the `build_dir` directive (read more about mounts [here]({{ site.baseurl }}/configuration/stapel_image/mount_directive.html)).
 * You can share artifacts between images in single config.
 * Common templates can be used in single config to describe configuration of multiple images.

@@ -1,7 +1,7 @@
 ---
 title: Интеграция с GitHub Actions 
 sidebar: documentation
-permalink: documentation/guides/github_ci_cd_integration.html
+permalink: guides/github_ci_cd_integration.html
 author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
@@ -18,9 +18,9 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 
 Набор контуров в кластере Kubernetes может варьироваться в зависимости от многих факторов.
 В статье будут приведены различные варианты организации окружений для следующих:
-* [Контур production]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#production).
-* [Контур staging]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
-* [Контур review]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
+* [Контур production]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#production).
+* [Контур staging]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#staging).
+* [Контур review]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#review).
 
 Далее последовательно рассматриваются задания и различные варианты их организации. Изложение построено от общего к частному. В конце статьи приведён [полный набор конфигураций для готовых workflow](#полный-набор-конфигураций-для-готовых-workflow).
 
@@ -33,7 +33,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 
 Для выкатов review окружения, а также staging и production окружений предложены самые популярные варианты по организации. Каждый вариант для staging и production окружений сопровождается всевозможными способами отката релиза в production.
 
-> С общей информацией по организации CI/CD с помощью werf, а также информацией по конструированию своего workflow, можно ознакомиться в [общей статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html)
+> С общей информацией по организации CI/CD с помощью werf, а также информацией по конструированию своего workflow, можно ознакомиться в [общей статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html)
 
 ## Требования
 
@@ -165,7 +165,7 @@ on:
     types: [closed]
 ```
 
-На шаге `Dismiss` выполняется удаление review-релиза: werf удаляет helm-релиз и namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)).
+На шаге `Dismiss` выполняется удаление review-релиза: werf удаляет helm-релиз и namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ site.baseurl }}/cli/main/dismiss.html)).
 
 Далее разберём основные стратегии при организации выката review окружения. 
 
@@ -173,7 +173,7 @@ on:
 
 #### №1 Вручную
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-по-кнопке)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-по-кнопке)
 
 При таком подходе пользователь выкатывает и удаляет окружение, проставляя соответствующий лейбл (`review_start` или `review_stop`) в PR.
 
@@ -213,7 +213,7 @@ labels:
 
 #### №2 Автоматически по имени ветки
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-review-из-ветки-по-шаблону-автоматически)
 
 В предложенном ниже варианте автоматический релиз выполняется для каждого коммита в PR, в случае, если имя git-ветки содержит `review`. 
 
@@ -236,7 +236,7 @@ on:
 
 #### №3 Полуавтоматический режим с лейблом (рекомендованный)
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации)
 
 Полуавтоматический режим с лейблом — это комплексное решение, объединяющие первые два варианта. 
 
@@ -263,7 +263,7 @@ pull_request:
 
 #### №1 Fast and Furious (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-pull-request-по-кнопке)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-автоматически) и [Выкат на production-like из pull request по кнопке]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-pull-request-по-кнопке)
 
 Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно только проставив соответствующий лейбл в PR.
 
@@ -275,7 +275,7 @@ pull_request:
 
 #### №2 Push the Button (*)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-из-master-по-кнопке) и [Выкат на staging из master автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-автоматически)
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
 
@@ -312,7 +312,7 @@ curl \
 
 #### №3 Tag everything (*)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-из-тега-автоматически) и [Выкат на staging из master по кнопке]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-staging-из-master-по-кнопке)
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
 
@@ -347,7 +347,7 @@ curl \
 
 #### №4 Branch, branch, branch!
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-ветки-автоматически)
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-из-ветки-автоматически) и [Выкат на production-like из ветки автоматически]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#выкат-на-production-like-из-ветки-автоматически)
 
 Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
 
@@ -375,7 +375,7 @@ curl \
 ```
 
 В werf встроен эффективный механизм очистки, который позволяет избежать переполнения Docker registry и диска сборочного узла от устаревших и неиспользуемых образов.
-Более подробно ознакомиться с функционалом очистки, встроенным в werf, можно [здесь]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+Более подробно ознакомиться с функционалом очистки, встроенным в werf, можно [здесь]({{ site.baseurl }}/reference/cleaning_process.html).
 
 ## Полный набор конфигураций для готовых workflow
 
@@ -391,7 +391,7 @@ curl \
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
 
 * Выкат на review контур по стратегии [№3 Полуавтоматический режим с лейблом (рекомендованный)](#3-полуавтоматический-режим-с-лейблом-рекомендованный).
 * Выкат на staging и production контуры осуществляется по стратегии [№1 Fast and Furious (рекомендованный)](#1-fast-and-furious-рекомендованный).
@@ -409,7 +409,7 @@ curl \
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#2-push-the-button)
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
 
@@ -429,7 +429,7 @@ curl \
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#3-tag-everything)
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_ru.md %}
 
@@ -449,7 +449,7 @@ curl \
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
+> Подробнее про workflow можно почитать в отдельной [статье]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
 
 * Выкат на review контур по стратегии [№2 Автоматически по имени ветки](#2-автоматически-по-имени-ветки).
 * Выкат на staging и production контуры осуществляется по стратегии [№4 Branch, branch, branch!](#4-branch-branch-branch).

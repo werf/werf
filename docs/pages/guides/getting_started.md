@@ -1,7 +1,7 @@
 ---
 title: Getting started
 sidebar: documentation
-permalink: documentation/guides/getting_started.html
+permalink: guides/getting_started.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
@@ -14,7 +14,7 @@ For example, we choose simple project — [Linux Tweet App](https://github.com/d
 ## Requirements
 
 * Minimal knowledge of [Docker](https://www.docker.com/) and [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/).
-* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#installing-dependencies) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/guides/installation.html#installing-dependencies) on the host system.
 * Installed [multiwerf](https://github.com/werf/multiwerf) on the host system.
 
 ### Select werf version
@@ -83,11 +83,11 @@ Add a special file called `werf.yaml` to the source code and define application 
 ## What's next?
 
 Firstly, you can plunge into the relevant documentation:
-* [werf configuration file]({{ site.baseurl }}/documentation/configuration/introduction.html).
-* [Dockerfile Image: complete directive list]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html).
-* [Build procedure]({{ site.baseurl }}/documentation/reference/build_process.html).
-* [Publish procedure]({{ site.baseurl }}/documentation/reference/publish_process.html).
+* [werf configuration file]({{ site.baseurl }}/configuration/introduction.html).
+* [Dockerfile Image: complete directive list]({{ site.baseurl }}/configuration/dockerfile_image.html).
+* [Build procedure]({{ site.baseurl }}/reference/build_process.html).
+* [Publish procedure]({{ site.baseurl }}/reference/publish_process.html).
 
 Or go further:
-* [Deploy an application to a Kubernetes cluster]({{ site.baseurl }}/documentation/guides/deploy_into_kubernetes.html).
-* [Advanced build with Stapel image]({{ site.baseurl }}/documentation/guides/advanced_build/first_application.html).
+* [Deploy an application to a Kubernetes cluster]({{ site.baseurl }}/guides/deploy_into_kubernetes.html).
+* [Advanced build with Stapel image]({{ site.baseurl }}/guides/advanced_build/first_application.html).

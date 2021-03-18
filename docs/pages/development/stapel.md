@@ -1,7 +1,7 @@
 ---
 title: Stapel
 sidebar: documentation
-permalink: documentation/development/stapel.html
+permalink: development/stapel.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -26,7 +26,7 @@ The base of stapel is a Glibc library and linker (`/.werf/stapel/lib/libc-VERSIO
 
 Stapel filesystem `/.werf/stapel` is intent to be mounted into build container based on some base image. Tools from stapel can then be used for some purposes. As stapel tools does not have external dependencies stapel image can be mounted into any base image (alpine linux with musl libc, or ubuntu with glibc — does not matter) and tools will work as expected.
 
-werf mounts _stapel image_ into each build container when building docker images with _stapel builder_ to enable ansible, git service operations and for other service purposes. More info about _stapel builder_ are available [in the article]({{ site.baseurl }}/documentation/reference/build_process.html#stapel-image-and-artifact).
+werf mounts _stapel image_ into each build container when building docker images with _stapel builder_ to enable ansible, git service operations and for other service purposes. More info about _stapel builder_ are available [in the article]({{ site.baseurl }}/reference/build_process.html#stapel-image-and-artifact).
 
 ## Change, update and rebuild stapel
 

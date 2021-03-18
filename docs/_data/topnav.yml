@@ -3,18 +3,18 @@
 topnav:
   en:
      - title: Installation
-       url: /documentation/guides/installation.html
+       url: /guides/installation.html
      - title: Documentation
-       url: /documentation/
+       url: /
      - title: Publications
        url: /publications.html
      - title: Releases
        url: /releases.html
   ru:
      - title: Установка
-       url: /documentation/guides/installation.html
+       url: /guides/installation.html
      - title: Документация
-       url: /documentation/
+       url: /
      - title: Публикации
        url: /publications.html
      - title: Релизы

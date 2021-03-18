@@ -2,14 +2,9 @@
 layout: sidebar
 ---
 <div class="docs">
-
-    {%- if page.lang == 'ru' %}
-    {%- include outdated-warning_ru.html %}
-    {%- else %}
-    {%- include outdated-warning.html %}
-    {%- endif %}
-
+    {% unless page.without_auto_heading %}
     <h1 class="docs__title">{{ page.title }}</h1>
+    {% endunless %}
 
     {%- if page.simple_map == true %}
 

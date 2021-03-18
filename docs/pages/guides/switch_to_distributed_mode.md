@@ -1,11 +1,11 @@
 ---
 title: Switch to distributed mode
 sidebar: documentation
-permalink: documentation/guides/switch_to_distributed_mode.html
+permalink: guides/switch_to_distributed_mode.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Let's say you have some project in Gitlab CI/CD, that uses werf and [`:local` stages storage]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stages-storage). In this article we provide steps to switch such project to remote stages storage. Remote stages storage allows running werf from multiple hosts in a distributed manner.
+Let's say you have some project in Gitlab CI/CD, that uses werf and [`:local` stages storage]({{ site.baseurl }}/reference/stages_and_images.html#stages-storage). In this article we provide steps to switch such project to remote stages storage. Remote stages storage allows running werf from multiple hosts in a distributed manner.
 
 Required werf version: >= v1.1.10.
 

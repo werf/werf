@@ -1,7 +1,7 @@
 ---
 title: Cleanup
 sidebar: documentation
-permalink: documentation/configuration/cleanup.html
+permalink: configuration/cleanup.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">cleanup</span><span class="pi">:</span>
@@ -22,7 +22,7 @@ summary: |
 
 ## Configuring cleanup policies
 
-The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ site.baseurl }}/documentation/reference/cleaning_process.html#git-history-based-cleanup-algorithm), __images not meeting the criteria of any policy are deleted__.
+The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ site.baseurl }}/reference/cleaning_process.html#git-history-based-cleanup-algorithm), __images not meeting the criteria of any policy are deleted__.
 
 Each policy consists of two parts:
 

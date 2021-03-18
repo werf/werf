@@ -1,7 +1,7 @@
 ---
 title: Первые шаги
 sidebar: documentation
-permalink: documentation/guides/getting_started.html
+permalink: guides/getting_started.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
@@ -12,7 +12,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 ## Требования
 
 * Минимальные знания [Docker](https://www.docker.com/) и структуры [Dockerfile](https://docs.docker.com/engine/reference/builder/).
-* Установленные [зависимости werf]({{ site.baseurl }}/documentation/guides/installation.html#установка-зависимостей).
+* Установленные [зависимости werf]({{ site.baseurl }}/guides/installation.html#установка-зависимостей).
 * Установленный [multiwerf](https://github.com/werf/multiwerf).
 
 ### Выбор версии werf
@@ -81,11 +81,11 @@ author: Artem Kladov <artem.kladov@flant.com>
 ## Что дальше?
 
 Вначале ознакомьтесь с документацией по теме:
-* [werf configuration file]({{ site.baseurl }}/documentation/configuration/introduction.html).
-* [Dockerfile Image: complete directive list]({{ site.baseurl }}/documentation/configuration/dockerfile_image.html).
-* [Build procedure]({{ site.baseurl }}/documentation/reference/build_process.html).
-* [Publish procedure]({{ site.baseurl }}/documentation/reference/publish_process.html).
+* [werf configuration file]({{ site.baseurl }}/configuration/introduction.html).
+* [Dockerfile Image: complete directive list]({{ site.baseurl }}/configuration/dockerfile_image.html).
+* [Build procedure]({{ site.baseurl }}/reference/build_process.html).
+* [Publish procedure]({{ site.baseurl }}/reference/publish_process.html).
 
 Либо переходите к знакомству со следующими примерами:
-* [Deploy an application to a Kubernetes cluster]({{ site.baseurl }}/documentation/guides/deploy_into_kubernetes.html).
-* [Advanced build with Stapel image]({{ site.baseurl }}/documentation/guides/advanced_build/first_application.html).
+* [Deploy an application to a Kubernetes cluster]({{ site.baseurl }}/guides/deploy_into_kubernetes.html).
+* [Advanced build with Stapel image]({{ site.baseurl }}/guides/advanced_build/first_application.html).

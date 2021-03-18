@@ -1,7 +1,7 @@
 ---
 title: Stages and Images
 sidebar: documentation
-permalink: documentation/reference/stages_and_images.html
+permalink: reference/stages_and_images.html
 author: Alexey Igrychev, Timofey Kirillov <alexey.igrychev@flant.com,timofey.kirillov@flant.com>
 ---
 
@@ -24,20 +24,20 @@ The werf assembly process involves a sequential build of stages using the _stage
 </div>
 
 <div id="dockerfile-image-tab" class="tabs__content active">
-<a class="google-drawings" href="../../images/reference/stages_and_images1.png" data-featherlight="image">
-<img src="../../images/reference/stages_and_images1_preview.png">
+<a class="google-drawings" href="../images/reference/stages_and_images1.png" data-featherlight="image">
+<img src="../images/reference/stages_and_images1_preview.png">
 </a>
 </div>
 
 <div id="stapel-image-tab" class="tabs__content">
-<a class="google-drawings" href="../../images/reference/stages_and_images2.png" data-featherlight="image">
-<img src="../../images/reference/stages_and_images2_preview.png" >
+<a class="google-drawings" href="../images/reference/stages_and_images2.png" data-featherlight="image">
+<img src="../images/reference/stages_and_images2_preview.png" >
 </a>
 </div>
 
 <div id="stapel-artifact-tab" class="tabs__content">
-<a class="google-drawings" href="../../images/reference/stages_and_images3.png" data-featherlight="image">
-<img src="../../images/reference/stages_and_images3_preview.png">
+<a class="google-drawings" href="../images/reference/stages_and_images3.png" data-featherlight="image">
+<img src="../images/reference/stages_and_images3_preview.png">
 </a>
 </div>
 
@@ -49,17 +49,17 @@ The _stage signature_ is used for [tagging](#stage-naming) a _stage_ (signature 
 werf does not build stages that already exist in the _stages storage_ (similar to caching in Docker yet more complex).
 
 The ***stage signature*** is calculated as the checksum of:
- - checksum of [stage dependencies]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-dependencies);
+ - checksum of [stage dependencies]({{ site.baseurl }}/reference/stages_and_images.html#stage-dependencies);
  - previous _stage signature_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
 Signature identifier of the stage represents content of the stage and depends on git history which lead to this content. There may be multiple built images for a single signature. Stage for different git branches can have the same signature, but werf will prevent cache of different git branches from
-being reused for totally different branches, [see stage selection algorithm]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-selection).
+being reused for totally different branches, [see stage selection algorithm]({{ site.baseurl }}/reference/stages_and_images.html#stage-selection).
 
 It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
 
-<a class="google-drawings" href="../../images/reference/stages_and_images4.png" data-featherlight="image">
-<img src="../../images/reference/stages_and_images4_preview.png">
+<a class="google-drawings" href="../images/reference/stages_and_images4.png" data-featherlight="image">
+<img src="../images/reference/stages_and_images4_preview.png">
 </a>
 
 ## Stage dependencies
@@ -73,7 +73,7 @@ _Stage dependency_ is a piece of data that affects the stage _signature_. Stage 
 
 Most _stage dependencies_ are specified in the `werf.yaml`, others relate to a runtime.
 
-The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ site.baseurl }}/documentation/configuration/stapel_artifact.html) _stages dependencies_.
+The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ site.baseurl }}/configuration/stapel_artifact.html) _stages dependencies_.
 Each row describes dependencies for a certain stage.
 Left column contains a short description of dependencies, right column includes related `werf.yaml` directives and contains relevant references for more information.
 
@@ -176,7 +176,7 @@ Stages will be [named differently](#stage-naming) depending on local or remote s
 
 When docker registry is used as the stages storage for the project there is also a cache of local docker images on each host where werf is running. This cache is cleared by the werf itself or can be freely removed by other tools (such as `docker rmi`).
 
-It is recommended though to use docker registry as a stages storage, werf uses this mode with [CI/CD systems by default]({{ site.baseurl }}/documentation/reference/plugging_into_cicd/overview.html).
+It is recommended though to use docker registry as a stages storage, werf uses this mode with [CI/CD systems by default]({{ site.baseurl }}/reference/plugging_into_cicd/overview.html).
 
 Host requirements to use remote stages storage:
  - Connection to docker registry.
@@ -241,22 +241,22 @@ _Stages signature_ of the image is a signature which represents content of the i
  - git commit-id related with the last non empty image stage (if this last stage is git-related).
 
 The ***stage signature*** is calculated as the checksum of:
- - checksum of [stage dependencies]({{ site.baseurl }}/documentation/reference/stages_and_images.html#stage-dependencies);
+ - checksum of [stage dependencies]({{ site.baseurl }}/reference/stages_and_images.html#stage-dependencies);
  - previous _stage signature_;
  - git commit-id related with the previous stage (if previous stage is git-related).
 
-This signature used in [content based tagging]({{ site.baseurl }}/documentation/reference/publish_process.html#content-based-tagging) and used to import files from artifacts or images (stages signature of artifact or image will affect imports stage signature of the target image).
+This signature used in [content based tagging]({{ site.baseurl }}/reference/publish_process.html#content-based-tagging) and used to import files from artifacts or images (stages signature of artifact or image will affect imports stage signature of the target image).
 
 ## Images
 
-_Image_ is a **ready-to-use** Docker image corresponding to a specific application state and [tagging strategy]({{ site.baseurl }}/documentation/reference/publish_process.html).
+_Image_ is a **ready-to-use** Docker image corresponding to a specific application state and [tagging strategy]({{ site.baseurl }}/reference/publish_process.html).
 
 As mentioned [above](#stages), _stages_ are steps in the assembly process. They act as building blocks for constructing _images_.
-Unlike images, _stages_ are not intended for the direct use. The main difference between images and stages is in [cleaning policies]({{ site.baseurl }}/documentation/reference/cleaning_process.html#cleanup-policies) due to the stored meta-information.
+Unlike images, _stages_ are not intended for the direct use. The main difference between images and stages is in [cleaning policies]({{ site.baseurl }}/reference/cleaning_process.html#cleanup-policies) due to the stored meta-information.
 The process of cleaning up the _stages storage_ is only based on the related images in the _images repo_.
 
 werf creates _images_ using the _stages storage_.
-Currently, _images_ can only be created during the [_publishing process_]({{ site.baseurl }}/documentation/reference/publish_process.html) and saved in the _images repo_.
+Currently, _images_ can only be created during the [_publishing process_]({{ site.baseurl }}/reference/publish_process.html) and saved in the _images repo_.
 
 Images should be defined in the werf configuration file `werf.yaml`.
 
@@ -311,8 +311,8 @@ User may force arbitrary non-default address of synchronization service componen
    - This means after werf stages switch-from-local is done, any werf command that specifies `:local` stages-storage for the project will fail preventing storing and using build results from different stages-storages.
    - Note that project is blocked after all existing stages has been synced.
 
-See [switching to distributed mode article]({{ site.baseurl }}/documentation/guides/switch_to_distributed_mode.html) for guided steps.
+See [switching to distributed mode article]({{ site.baseurl }}/guides/switch_to_distributed_mode.html) for guided steps.
 
 ## Further reading
 
-Learn more about the [build process of stapel and Dockerfile builders]({{ site.baseurl }}/documentation/reference/build_process.html).
+Learn more about the [build process of stapel and Dockerfile builders]({{ site.baseurl }}/reference/build_process.html).

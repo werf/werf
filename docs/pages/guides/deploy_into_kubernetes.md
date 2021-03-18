@@ -1,7 +1,7 @@
 ---
 title: Deploy into Kubernetes
 sidebar: documentation
-permalink: documentation/guides/deploy_into_kubernetes.html
+permalink: guides/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -13,7 +13,7 @@ werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
 ## Requirements
 
- * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/documentation/reference/development_and_debug/setup_minikube.html) to set up local minikube instance with Docker registry.
+ * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/reference/development_and_debug/setup_minikube.html) to set up local minikube instance with Docker registry.
 
  * Working Docker registry.
 
@@ -21,7 +21,7 @@ werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
    * Accessible from Kubernetes nodes to pull images from the Docker registry.
 
- * Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#installing-dependencies) on the host system.
+ * Installed [werf dependencies]({{ site.baseurl }}/guides/installation.html#installing-dependencies) on the host system.
 
  * Installed [multiwerf](https://github.com/werf/multiwerf) on the host system.
 
@@ -177,10 +177,10 @@ Construction {% raw %}`{{ werf_container_image . | indent 8 }}`{% endraw %} is a
 * may generate other related fields (such as imagePullPolicy) based on some external conditions.
 
 Go template function `werf_container_image` is the valid way to specify image **from config** in Kubernetes resource configuration. 
-There may be multiple images described in config [see the reference for details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
+There may be multiple images described in config [see the reference for details]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#werf_container_image).
 
 Construction {% raw %}`{{ werf_container_env . | indent 8 }}`{% endraw %} is another addition of werf to helm which *may* generate environment variables section for the Kubernetes resource. 
-It is needed for Kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env).
+It is needed for Kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#werf_container_env).
 
 Finally, in this configuration Service `myapp-backend` specified to access Pods of Deployment `myapp-backend`.
 
@@ -225,11 +225,11 @@ werf deploy --stages-storage :local --images-repo :minikube --tag-custom myapp -
 
 With this command werf will create all Kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running).
 
-[Environment]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#environment) `--env` is a required param needed to generate helm release name and kubernetes namespace.
+[Environment]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#environment) `--env` is a required param needed to generate helm release name and kubernetes namespace.
 
-Helm release with name `myapp-dev` will be created. This name consists of [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-config-section) `myapp` (which you've placed in the `werf.yaml`) and specified environment `dev`. Check docs for details about [helm release name generation]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#release-name).
+Helm release with name `myapp-dev` will be created. This name consists of [project name]({{ site.baseurl }}/configuration/introduction.html#meta-config-section) `myapp` (which you've placed in the `werf.yaml`) and specified environment `dev`. Check docs for details about [helm release name generation]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#release-name).
 
-Kubernetes namespace `myapp-dev` will also be used. This name also consists of [project name]({{ site.baseurl }}/documentation/configuration/introduction.html#meta-config-section) `myapp` and specified environment `dev`. Check docs for details about [Kubernetes namespace generation]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace).
+Kubernetes namespace `myapp-dev` will also be used. This name also consists of [project name]({{ site.baseurl }}/configuration/introduction.html#meta-config-section) `myapp` and specified environment `dev`. Check docs for details about [Kubernetes namespace generation]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace).
 
 ## Check your application
 
@@ -257,4 +257,4 @@ werf dismiss --env dev --with-namespace
 
 ## See also
 
-For all werf deploy features such as secrets [take a look at reference]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html).
+For all werf deploy features such as secrets [take a look at reference]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html).

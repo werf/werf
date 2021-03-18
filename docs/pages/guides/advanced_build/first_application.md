@@ -1,7 +1,7 @@
 ---
 title: First application
 sidebar: documentation
-permalink: documentation/guides/advanced_build/first_application.html
+permalink: guides/advanced_build/first_application.html
 author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 ---
 
@@ -23,7 +23,7 @@ Also, we will check that the application works and push the image in a Docker re
 ## Requirements
 
 * Minimal knowledge of [Docker](https://www.docker.com/) and [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/).
-* Installed [werf dependencies]({{ site.baseurl }}/documentation/guides/installation.html#installing-dependencies) on the host system.
+* Installed [werf dependencies]({{ site.baseurl }}/guides/installation.html#installing-dependencies) on the host system.
 * Installed [multiwerf](https://github.com/werf/multiwerf) on the host system.
 
 ### Select werf version
@@ -247,4 +247,4 @@ This example has space for further improvement:
 * As we copy files with a git command, we can set file permissions with the same command.
 * `composer install` instead of `composer update` should be used to install dependencies with versions fixed in files `composer.lock`, `package.json` and `yarn.lock`. Also, it's best to first check these files and run `composer install` when needed. To solve this problem werf have so-called `stageDependencies` directive.
 
-These issues are further discussed in [reference]({{ site.baseurl }}/documentation/configuration/stapel_image/git_directive.html).
+These issues are further discussed in [reference]({{ site.baseurl }}/configuration/stapel_image/git_directive.html).

@@ -1,7 +1,7 @@
 ---
 title: Настройка Minikube
 sidebar: documentation
-permalink: documentation/reference/development_and_debug/setup_minikube.html
+permalink: reference/development_and_debug/setup_minikube.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 

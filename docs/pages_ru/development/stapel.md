@@ -1,7 +1,7 @@
 ---
 title: Stapel
 sidebar: documentation
-permalink: documentation/development/stapel.html
+permalink: development/stapel.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
@@ -33,7 +33,7 @@ Stapel — это [LFS-дистрибутив](http://www.linuxfromscratch.org/l
 
 werf монтирует _образ Stapel_ в каждый сборочный контейнер во время процесса сборки Docker-образа _сборщиком Stapel_.
 Это делает доступным работу Ansible, выполнение операций с Git и других важных функций.
-Читайте подробнее о _сборщике Stapel_ в соответствующей [статье]({{ site.baseurl }}/documentation/reference/build_process.html#stapel-образ-и-stapel-артефакт).
+Читайте подробнее о _сборщике Stapel_ в соответствующей [статье]({{ site.baseurl }}/reference/build_process.html#stapel-образ-и-stapel-артефакт).
 
 ## Обновление Stapel
 

@@ -1,7 +1,7 @@
 ---
 title: Adding source code from git repositories
 sidebar: documentation
-permalink: documentation/configuration/stapel_image/git_directive.html
+permalink: configuration/stapel_image/git_directive.html
 directive_summary: git
 ---
 
@@ -50,7 +50,7 @@ The _git mapping_ configuration for a local repository has the following paramet
 - `group` — the name or gid of the owner’s group;
 - `excludePaths` — a set of masks to exclude files or directories during recursive copying. Paths in masks must be specified relative to add;
 - `includePaths` — a set of masks to include files or directories during recursive copying. Paths in masks must be specified relative to add;
-- `stageDependencies` — a set of masks to monitor for changes that lead to rebuilds of the user stages. This is reviewed in detail in the [Running assembly instructions]({{ site.baseurl }}/documentation/configuration/stapel_image/assembly_instructions.html) reference.
+- `stageDependencies` — a set of masks to monitor for changes that lead to rebuilds of the user stages. This is reviewed in detail in the [Running assembly instructions]({{ site.baseurl }}/configuration/stapel_image/assembly_instructions.html) reference.
 
 The configuration of a _git mapping_ for a remote repository has some additional parameters:
 - `url` — address of the remote repository;

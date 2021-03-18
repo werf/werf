@@ -1,15 +1,15 @@
 ---
 title: Деплой в Kubernetes
 sidebar: documentation
-permalink: documentation/configuration/deploy_into_kubernetes.html
+permalink: configuration/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 ## Имя релиза
 
-werf позволяет определять пользовательский шаблон имени Helm-релиза, который используется во время [процесса деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#имя-релиза) для генерации имени релиза.
+werf позволяет определять пользовательский шаблон имени Helm-релиза, который используется во время [процесса деплоя]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#имя-релиза) для генерации имени релиза.
 
-Пользовательский шаблон имени релиза определяется в [секции мета-информации]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-мета-информации) в файле `werf.yaml`:
+Пользовательский шаблон имени релиза определяется в [секции мета-информации]({{ site.baseurl }}/configuration/introduction.html#секция-мета-информации) в файле `werf.yaml`:
 
 ```yaml
 project: PROJECT_NAME
@@ -19,11 +19,11 @@ deploy:
   helmReleaseSlug: false
 ```
 
-`deploy.helmReleaseSlug` включает или отключает [слагификацию]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#слагификация-имени-релиза) имени Helm-релиза. Включен по умолчанию.
+`deploy.helmReleaseSlug` включает или отключает [слагификацию]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#слагификация-имени-релиза) имени Helm-релиза. Включен по умолчанию.
 
 В качестве значения для `deploy.helmRelease` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `project` и `env`. Значение шаблона имени релиза по умолчанию: `[[ project ]]-[[ env ]]`.
 
-Т.к. в качестве значения для `deploy.helmRelease` указывается Go-шаблон, то возможно использование соответствующих [функций werf]({{ site.baseurl }}/documentation/configuration/introduction.html#шаблоны-go) (впрочем, как и для любых других параметров в конфигурации). Например, вы можете комбинировать переменные доступные в Go-шаблоне с переменными окружения следующим образом:
+Т.к. в качестве значения для `deploy.helmRelease` указывается Go-шаблон, то возможно использование соответствующих [функций werf]({{ site.baseurl }}/configuration/introduction.html#шаблоны-go) (впрочем, как и для любых других параметров в конфигурации). Например, вы можете комбинировать переменные доступные в Go-шаблоне с переменными окружения следующим образом:
 {% raw %}
 ```yaml
 deploy:
@@ -34,9 +34,9 @@ deploy:
 
 ## Namespace в Kubernetes 
 
-werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) для генерации имени namespace.
+werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#kubernetes-namespace) для генерации имени namespace.
 
-Пользовательский шаблон namespace Kubernetes определяется в [секции мета-информации]({{ site.baseurl }}/documentation/configuration/introduction.html#секция-мета-информации) в файле `werf.yaml`:
+Пользовательский шаблон namespace Kubernetes определяется в [секции мета-информации]({{ site.baseurl }}/configuration/introduction.html#секция-мета-информации) в файле `werf.yaml`:
 
 
 ```yaml
@@ -49,4 +49,4 @@ deploy:
 
 В качестве значения для `deploy.namespace` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `project` и `env`. Значение шаблона имени namespace по умолчанию: `[[ project ]]-[[ env ]]`.
 
-`deploy.namespaceSlug` включает или отключает [слагификацию]({{ site.baseurl }}/documentation/reference/deploy_process/deploy_into_kubernetes.html#слагификация-namespace-kubernetes) имени namespace Kubernetes. Включен по умолчанию.
+`deploy.namespaceSlug` включает или отключает [слагификацию]({{ site.baseurl }}/reference/deploy_process/deploy_into_kubernetes.html#слагификация-namespace-kubernetes) имени namespace Kubernetes. Включен по умолчанию.

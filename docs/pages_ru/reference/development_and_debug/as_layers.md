@@ -1,7 +1,7 @@
 ---
 title: Директива asLayers и раздельное кэширование инструкций
 sidebar: documentation
-permalink: documentation/reference/development_and_debug/as_layers.html
+permalink: reference/development_and_debug/as_layers.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">asLayers</span><span class="pi">:</span> <span class="s">true</span>
@@ -19,7 +19,7 @@ summary: |
 
 По умолчанию режим раздельного кжширования выключен, т.е. `asLayers: false`. В этом случае работает обычный режим кэширования стадий, когда на все инструкции каждой стадии создается один Docker-слой.
 
-В режиме раздельного кэширования использование параметров [интроспекции]({{site.baseurl}}/documentation/reference/development_and_debug/stage_introspection.html) `--introspect-before-error` и `--introspect-error` позволяет получать окружение (попадать в контейнер) до или после выполнения ошибочной инструкции соответственно.
+В режиме раздельного кэширования использование параметров [интроспекции]({{site.baseurl}}/reference/development_and_debug/stage_introspection.html) `--introspect-before-error` и `--introspect-error` позволяет получать окружение (попадать в контейнер) до или после выполнения ошибочной инструкции соответственно.
 
 Изменение режима кэширования регулируется только директивой _asLayes_. Остальные инструкции конфигурации остаются без изменений.
 

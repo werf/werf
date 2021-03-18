@@ -1,7 +1,7 @@
 ---
 title: GitHub Actions integration
 sidebar: documentation
-permalink: documentation/guides/github_ci_cd_integration.html
+permalink: guides/github_ci_cd_integration.html
 author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
@@ -19,9 +19,9 @@ Jobs are based on comprehensive GitHub Actions, [werf/actions](https://github.co
 
 The specific set of tiers in the Kubernetes cluster depends on many various factors. In this article, we will examine various options for setting up environments for the following tiers:
 
-* [The production tier]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#production).
-* [The staging tier]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#staging).
-* [The review tier]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#review).
+* [The production tier]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#production).
+* [The staging tier]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#staging).
+* [The review tier]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#review).
 
 The detailed description of various jobs and different options for their implementation are available below. We will start with general terms and then move on to the particularities. You may find the [complete set of various configurations for ready-made workflows](#complete-set-of-configurations-for-ready-made-workflows) at the end of this article.
 
@@ -35,7 +35,7 @@ Regardless of the workflow in question, all configuration versions are subject t
 
 We provide various configuration options for deploying to review, staging, and production environments. Each option for the staging and production environments is complemented by several ways to roll back the release in production.
 
-> You can learn more about implementing the CI/CD approach using werf and constructing the custom workflow in the [introductory article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html).
+> You can learn more about implementing the CI/CD approach using werf and constructing the custom workflow in the [introductory article]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html).
 
 ## Requirements
 * The Kubernetes cluster.
@@ -166,7 +166,7 @@ on:
     types: [closed]
 ```
 
-The review release is deleted at the `Dismiss` step: werf deletes the helm release and the namespace in Kubernetes with all its contents ([werf dismiss]({{ site.baseurl }}/documentation/cli/main/dismiss.html)).
+The review release is deleted at the `Dismiss` step: werf deletes the helm release and the namespace in Kubernetes with all its contents ([werf dismiss]({{ site.baseurl }}/cli/main/dismiss.html)).
 
 Now, let us explore the main strategies to deploy the review environment.
 
@@ -174,7 +174,7 @@ Now, let us explore the main strategies to deploy the review environment.
 
 #### 1. Manually
 
-> This option implements the approach described in the [Deploy to review using a pull request at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#deploy-to-review-using-a-pull-request-at-the-click-of-a-button) section
+> This option implements the approach described in the [Deploy to review using a pull request at the click of a button]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#deploy-to-review-using-a-pull-request-at-the-click-of-a-button) section
 
 In this approach, the user deploys and deletes the environment by assigning the appropriate label (`review_start` or `review_stop`) in the PR.
 
@@ -211,7 +211,7 @@ labels:
 
 #### 2. Automatically using a branch name
 
-> This option implements the approach described in the [Automatically deploy to review from a branch using a pattern]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-review-from-a-branch-using-a-pattern) section.
+> This option implements the approach described in the [Automatically deploy to review from a branch using a pattern]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#automatically-deploy-to-review-from-a-branch-using-a-pattern) section.
 
 In the configuration below, the code is automatically released with every commit in the PR (if the name of the git branch contains the `review` prefix).
 
@@ -235,7 +235,7 @@ on:
 
 #### 3. Semi-automatic mode using a label (recommended)
 
-> This option implements the approach described in the [Automatically deploy to review using a pull request; manual triggering]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-review-using-a-pull-request-manual-triggering)
+> This option implements the approach described in the [Automatically deploy to review using a pull request; manual triggering]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#automatically-deploy-to-review-using-a-pull-request-manual-triggering)
 
 Semi-automatic mode with a label is a comprehensive solution that combines the previous two options.
 
@@ -261,7 +261,7 @@ In our case, these environments are the most important ones. Thus, the names of 
 
 #### 1. Fast and Furious (recommended)
 
-> This option implements the approaches described in the [Automatically deploy to production from master]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-from-master) and [Deploy to production-like using a pull request at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button) sections 
+> This option implements the approaches described in the [Automatically deploy to production from master]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-from-master) and [Deploy to production-like using a pull request at the click of a button]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#deploy-to-production-like-using-a-pull-request-at-the-click-of-a-button) sections
 
 The code is automatically deployed to **production** in response to any changes in master. At the same time, you can deploy an application to **staging** by clicking the button in the PR.
 
@@ -274,7 +274,7 @@ Options for rolling back changes in production:
 
 #### 2. Push the button (*)
 
-> This option implements the approaches described in the [Deploy to production from master at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#deploy-to-production-from-master-at-the-click-of-a-button) and [Automatically deploy to staging from master]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-staging-from-master) sections
+> This option implements the approaches described in the [Deploy to production from master at the click of a button]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#deploy-to-production-from-master-at-the-click-of-a-button) and [Automatically deploy to staging from master]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#automatically-deploy-to-staging-from-master) sections
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
@@ -309,7 +309,7 @@ Options for rolling back changes in production: by rolling out a stable PR and t
 
 #### 3. Tag everything (*)
 
-> This option implements the approaches described in the [Automatically deploy to production using a tag]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-using-a-tag) and [Deploy to staging from master at the click of a button]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#deploy-to-staging-from-master-at-the-click-of-a-button) sections
+> This option implements the approaches described in the [Automatically deploy to production using a tag]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-using-a-tag) and [Deploy to staging from master at the click of a button]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#deploy-to-staging-from-master-at-the-click-of-a-button) sections
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
@@ -342,7 +342,7 @@ Options for rolling back changes in production: by assigning a new tag to the ol
 
 #### 4. Branch, branch, branch!
 
-> This option implements the approaches described in the [Automatically deploy to production from a branch]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-from-a-branch) and [Automatically deploy to production-like from a branch]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-like-from-a-branch) sections
+> This option implements the approaches described in the [Automatically deploy to production from a branch]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-from-a-branch) and [Automatically deploy to production-like from a branch]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#automatically-deploy-to-production-like-from-a-branch) sections
 
 The code is deployed to **production** automatically; rolling out to **staging** is performed in response to changes in the master branch.
 
@@ -370,7 +370,7 @@ Most cleaning policies in werf are based on git primitives (commit, branch, and 
   run: git fetch --prune --unshallow
 ```
   
-werf has an efficient built-in cleanup mechanism to avoid overflowing the Docker registry and the disk space on the building node with outdated and unused images. You can learn more about the werf's cleanup functionality [here]({{ site.baseurl }}/documentation/reference/cleaning_process.html).
+werf has an efficient built-in cleanup mechanism to avoid overflowing the Docker registry and the disk space on the building node with outdated and unused images. You can learn more about the werf's cleanup functionality [here]({{ site.baseurl }}/reference/cleaning_process.html).
 
 ## Complete set of configurations for ready-made workflows
 
@@ -386,7 +386,7 @@ werf has an efficient built-in cleanup mechanism to avoid overflowing the Docker
 Workflow details
 {:.no_toc}
 
-> You can learn more about this workflow in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
+> You can learn more about this workflow in the [article]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#1-fast-and-furious)
 
 * Deploying to the review tier via the strategy [No. 3 Semi-automatic mode using a label (recommended)](#3-semi-automatic-mode-using-a-label-recommended).
 * Deploying to staging and production tiers via the strategy [No. 1 Fast and Furious (recommended)](#1-fast-and-furious-recommended).
@@ -404,7 +404,7 @@ Workflow details
 Workflow details
 {:.no_toc}
 
-> You can learn more about this workflow in the [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#2-push-the-button)
+> You can learn more about this workflow in the [article]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#2-push-the-button)
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
@@ -424,7 +424,7 @@ Related configuration files
 ### Workflow components
 {:.no_toc}
 
-> You can learn more about this workflow in the related [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#3-tag-everything)
+> You can learn more about this workflow in the related [article]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#3-tag-everything)
 
 {% include /guides/github_ci_cd_integration/not_recommended_approach_en.md %}
 
@@ -444,7 +444,7 @@ Related configuration files
 ### Workflow details
 {:.no_toc}
 
-> You can learn more about this workflow in the related [article]({{ site.baseurl }}/documentation/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
+> You can learn more about this workflow in the related [article]({{ site.baseurl }}/reference/ci_cd_workflows_overview.html#4-branch-branch-branch)
 
 * Deploying to the review tier using the strategy [No. 2 Automatically using a branch name](#2-automatically-using-a-branch-name.
 * Deploying to staging and production tiers is carried out according to the strategy [No. 4 Branch, branch, branch!](#4-branch-branch-branch).
