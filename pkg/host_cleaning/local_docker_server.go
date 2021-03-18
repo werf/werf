@@ -19,6 +19,7 @@ import (
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage/lrumeta"
@@ -30,18 +31,8 @@ import (
 const (
 	DefaultAllowedVolumeUsagePercentage       float64 = 80.0
 	DefaultAllowedVolumeUsageMarginPercentage float64 = 10.0
-	LockName                                          = "host_cleaning.GC"
 	MinImagesToDelete                                 = 10
 )
-
-// AcquireSharedStorageLock should be called in every process that normally work with the storage
-func AcquireSharedHostStorageLock(ctx context.Context) (lockgate.LockHandle, error) {
-	_, lock, err := werf.AcquireHostLock(ctx, LockName, lockgate.AcquireOptions{Shared: true})
-	if err != nil {
-		return lockgate.LockHandle{}, fmt.Errorf("unable to acquire host lock %q: %s", LockName, err)
-	}
-	return lock, nil
-}
 
 func GetLocalDockerServerStoragePath(ctx context.Context) (string, error) {
 	dockerInfo, err := docker.Info(ctx)
@@ -111,7 +102,7 @@ func getDockerServerStoragePath(ctx context.Context, opts HostCleanupOptions) (s
 	return dockerServerStoragePath, nil
 }
 
-func ShouldRunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) (bool, error) {
+func ShouldRunAutoGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) (bool, error) {
 	allowedVolumeUsage := getAllowedVolumeUsagePercentage(opts)
 
 	dockerServerStoragePath, err := getDockerServerStoragePath(ctx, opts)
@@ -198,12 +189,6 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 }
 
 func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) error {
-	if _, lock, err := werf.AcquireHostLock(ctx, LockName, lockgate.AcquireOptions{}); err != nil {
-		return fmt.Errorf("unable to acquire host lock %q: %s", LockName, err)
-	} else {
-		defer werf.ReleaseHostLock(lock)
-	}
-
 	allowedVolumeUsage := getAllowedVolumeUsagePercentage(opts)
 	allowedVolumeUsageMargin := getAllowedVolumeUsageMarginPercentage(allowedVolumeUsage, opts)
 	targetVolumeUsage := allowedVolumeUsage - allowedVolumeUsageMargin
@@ -238,7 +223,7 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 		logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
 		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
 		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.YellowF("%0.2f%%", allowedVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% = %s\n", allowedVolumeUsage, allowedVolumeUsageMargin, utils.BlueF("%0.2f%%", targetVolumeUsage))
+		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", allowedVolumeUsage, allowedVolumeUsageMargin, utils.BlueF("%0.2f%%", targetVolumeUsage))
 		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
 		logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d (~ %s)", len(checkResult.ImagesDescs), humanize.Bytes(checkResult.TotalImagesBytes)))
 	})
@@ -246,17 +231,34 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 	for {
 		var freedBytes uint64
 		var freedImagesCount uint64
+		var acquiredHostLocks []lockgate.LockHandle
 
 		if len(checkResult.ImagesDescs) > 0 {
 			if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for least recently used docker images created by werf").DoError(func() error {
+			DeleteImages:
 				for _, desc := range checkResult.ImagesDescs {
 					imageRemovalFailed := false
+
 					for _, ref := range desc.ImageSummary.RepoTags {
 						var args []string
 
 						if ref == "<none>:<none>" {
 							args = append(args, desc.ImageSummary.ID)
 						} else {
+							lockName := container_runtime.ImageLockName(ref)
+
+							isLocked, lock, err := werf.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{NonBlocking: true})
+							if err != nil {
+								return fmt.Errorf("error locking image %q: %s", lockName, err)
+							}
+
+							if !isLocked {
+								logboek.Context(ctx).Default().LogFDetails("Image %q is locked at the moment: skip removal\n", ref)
+								continue DeleteImages
+							}
+
+							acquiredHostLocks = append(acquiredHostLocks, lock)
+
 							args = append(args, ref)
 						}
 
@@ -295,9 +297,22 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 			}); err != nil {
 				return err
 			}
-		} else {
+		}
+
+		if freedImagesCount == 0 {
 			logboek.Context(ctx).Warn().LogF("WARNING: Detected high docker storage volume usage, while no werf images available to cleanup!\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: Werf tries to maintain host clean by deleting:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:  - old unused files from werf caches (which are stored in the ~/.werf/local_cache);\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:  - old temporary service files /tmp/werf-project-data-* and /tmp/werf-config-render-*;\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:  - least recently used werf images (only >= v1.2 werf images could be removed, note that werf <= v1.1 images will not be deleted by this cleanup);\n")
 			logboek.Context(ctx).Warn().LogOptionalLn()
+		}
+
+		for _, lock := range acquiredHostLocks {
+			if err := werf.ReleaseHostLock(lock); err != nil {
+				return fmt.Errorf("unable to release lock %q: %s", lock.LockName, err)
+			}
 		}
 
 		commonOptions := CommonOptions{
@@ -435,8 +450,26 @@ func safeContainersCleanup(ctx context.Context, options CommonOptions) error {
 			continue
 		}
 
-		if err := containersRemove(ctx, []types.Container{container}, options); err != nil {
-			return fmt.Errorf("failed to remove container %s: %s", logContainerName(container), err)
+		if err := func() error {
+			containerLockName := container_runtime.ContainerLockName(containerName)
+			isLocked, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{NonBlocking: true})
+			if err != nil {
+				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)
+			}
+
+			if !isLocked {
+				logboek.Context(ctx).Default().LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
+				return nil
+			}
+			defer werf.ReleaseHostLock(lock)
+
+			if err := containersRemove(ctx, []types.Container{container}, options); err != nil {
+				return fmt.Errorf("failed to remove container %s: %s", logContainerName(container), err)
+			}
+
+			return nil
+		}(); err != nil {
+			return err
 		}
 	}
 

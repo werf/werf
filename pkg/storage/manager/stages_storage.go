@@ -10,6 +10,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
@@ -20,6 +21,7 @@ import (
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/util/parallel"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var ErrShouldResetStagesStorageCache = errors.New("should reset storage cache")
@@ -41,6 +43,9 @@ type StagesStorageManager struct {
 	StagesStorageCache storage.StagesStorageCache
 
 	SecondaryStagesStorageList []storage.StagesStorage
+
+	// These will be released automatically when current process exits
+	SharedHostImagesLocks []lockgate.LockHandle
 }
 
 func newStagesStorageManager(projectName string, stagesStorage storage.StagesStorage, secondaryStagesStorageList []storage.StagesStorage, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *StagesStorageManager {
@@ -121,7 +126,24 @@ func (m *StagesStorageManager) ForEachDeleteStage(ctx context.Context, options F
 	})
 }
 
+func (m *StagesStorageManager) LockStageImage(ctx context.Context, imageName string) error {
+	imageLockName := container_runtime.ImageLockName(imageName)
+
+	_, lock, err := werf.AcquireHostLock(ctx, imageLockName, lockgate.AcquireOptions{Shared: true})
+	if err != nil {
+		return fmt.Errorf("error locking %q shared lock: %s", imageLockName, err)
+	}
+
+	m.SharedHostImagesLocks = append(m.SharedHostImagesLocks, lock)
+
+	return nil
+}
+
 func (m *StagesStorageManager) FetchStage(ctx context.Context, stg stage.Interface) error {
+	if err := m.LockStageImage(ctx, stg.GetImage().Name()); err != nil {
+		return fmt.Errorf("error locking stage image %q: %s", stg.GetImage().Name(), err)
+	}
+
 	logboek.Context(ctx).Debug().LogF("-- StagesManager.FetchStage %s\n", stg.LogDetailedName())
 	if freshStageDescription, err := m.StagesStorage.GetStageDescription(ctx, m.ProjectName, stg.GetImage().GetStageDescription().StageID.Digest, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
 		return err

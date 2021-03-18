@@ -10,29 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/werf/lockgate"
-
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
-var (
-	AutoGCEnabled bool
-)
-
-func runGC(ctx context.Context) error {
-	return werf.WithHostLock(ctx, "gc", lockgate.AcquireOptions{}, func() error {
-		return GC(ctx, false)
-	})
-}
-
-func checkShouldRunGC() (bool, error) {
-	if !isAutoGCEnabled() {
-		return false, nil
-	}
-
+func ShouldRunAutoGC() (bool, error) {
 	releasedProjectsDir := filepath.Join(GetReleasedTmpDirs(), projectsServiceDir)
 	if _, err := os.Stat(releasedProjectsDir); !os.IsNotExist(err) {
 		var err error
@@ -79,10 +63,6 @@ func checkShouldRunGC() (bool, error) {
 	}
 
 	return false, nil
-}
-
-func isAutoGCEnabled() bool {
-	return AutoGCEnabled && os.Getenv("WERF_DISABLE_AUTO_GC") != "1"
 }
 
 func GC(ctx context.Context, dryRun bool) error {

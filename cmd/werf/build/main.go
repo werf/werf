@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/host_cleaning"
 
 	"github.com/spf13/cobra"
 
@@ -55,6 +54,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := common.BackgroundContext()
+
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
@@ -111,6 +111,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 	common.SetupFollow(&commonCmdData, cmd)
 
+	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
@@ -119,8 +120,6 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 }
 
 func runMain(ctx context.Context, args []string) error {
-	tmp_manager.AutoGCEnabled = true
-
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -154,6 +153,12 @@ func runMain(ctx context.Context, args []string) error {
 		return err
 	}
 	ctx = ctxWithDockerCli
+
+	defer func() {
+		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
+			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
+		}
+	}()
 
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
@@ -201,16 +206,6 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
-
-	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
-		return fmt.Errorf("host storage GC failed: %s", err)
-	}
-
-	if lock, err := host_cleaning.AcquireSharedHostStorageLock(ctx); err != nil {
-		return fmt.Errorf("failed to acquire shared storage lock: %s", err)
-	} else {
-		defer werf.ReleaseHostLock(lock)
-	}
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 

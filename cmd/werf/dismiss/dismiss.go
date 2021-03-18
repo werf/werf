@@ -1,6 +1,7 @@
 package dismiss
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
@@ -56,7 +56,9 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
   $ werf dismiss --release myrelease --namespace myns`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -64,7 +66,9 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(runDismiss)
+			return common.LogRunningTime(func() error {
+				return runDismiss(ctx)
+			})
 		},
 	}
 
@@ -99,6 +103,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
+	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
@@ -109,10 +114,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	return cmd
 }
 
-func runDismiss() error {
-	tmp_manager.AutoGCEnabled = true
-	ctx := common.BackgroundContext()
-
+func runDismiss(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -144,10 +146,6 @@ func runDismiss() error {
 		return err
 	}
 	ctx = ctxWithDockerCli
-
-	if err := common.RunHostStorageGC(ctx, &commonCmdData); err != nil {
-		return fmt.Errorf("host storage GC failed: %s", err)
-	}
 
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {

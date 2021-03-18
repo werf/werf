@@ -618,7 +618,7 @@ jobs:
     - name: Test (windows)
       run: |
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
-        WERF_DISABLE_AUTO_GC=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+        WERF_DISABLE_AUTO_HOST_CLEANUP=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       if: matrix.os == 'windows'
 
@@ -706,7 +706,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
-        WERF_DISABLE_AUTO_GC=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
+        WERF_DISABLE_AUTO_HOST_CLEANUP=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ./ginkgo -p -keepGoing $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}

@@ -6,38 +6,35 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/host_cleaning"
 )
 
-func RunHostStorageGC(ctx context.Context, cmdData *CmdData) error {
-	if os.Getenv("WERF_ENABLE_HOST_STORAGE_GC") != "1" {
+func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData) error {
+	if *cmdData.DisableAutoHostCleanup {
 		return nil
 	}
 
-	opts := host_cleaning.HostCleanupOptions{
+	if *cmdData.AllowedVolumeUsageMargin >= *cmdData.AllowedVolumeUsage {
+		return fmt.Errorf("incompatible params --allowed-volume-usage=%d and --allowed-volume-usage-margin=%d: margin percentage should be less than allowed volume usage level percentage", *cmdData.AllowedVolumeUsage, *cmdData.AllowedVolumeUsageMargin)
+	}
+
+	return host_cleaning.RunAutoHostCleanup(ctx, host_cleaning.HostCleanupOptions{
 		DryRun:                             false,
 		Force:                              false,
 		AllowedVolumeUsagePercentage:       cmdData.AllowedVolumeUsage,
 		AllowedVolumeUsageMarginPercentage: cmdData.AllowedVolumeUsageMargin,
 		DockerServerStoragePath:            *cmdData.DockerServerStoragePath,
-	}
-
-	shouldRun, err := host_cleaning.ShouldRunGCForLocalDockerServer(ctx, opts)
-	if err != nil {
-		return err
-	}
-	if !shouldRun {
-		return nil
-	}
-
-	return logboek.Context(ctx).Default().LogProcess("Running host storage GC").DoError(func() error {
-		return host_cleaning.RunGCForLocalDockerServer(ctx, opts)
 	})
+}
+
+func SetupDisableAutoHostCleanup(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DisableAutoHostCleanup = new(bool)
+	cmd.Flags().BoolVarP(cmdData.DisableAutoHostCleanup, "disable-auto-host-cleanup", "", GetBoolEnvironmentDefaultTrue("WERF_DISABLE_AUTO_HOST_CLEANUP"), "Disable auto host cleanup procedure in main werf commands like werf-build, werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)") // FIXME: enable by default
 }
 
 func SetupAllowedVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
 	envVarName := "WERF_ALLOWED_VOLUME_USAGE"
+
 	var defaultVal uint
 	if v := GetUint64EnvVarStrict(envVarName); v != nil {
 		defaultVal = uint(*v)
@@ -54,6 +51,7 @@ func SetupAllowedVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupAllowedVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Command) {
 	envVarName := "WERF_ALLOWED_VOLUME_USAGE_MARGIN"
+
 	var defaultVal uint
 	if v := GetUint64EnvVarStrict(envVarName); v != nil {
 		defaultVal = uint(*v)
