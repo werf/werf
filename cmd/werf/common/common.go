@@ -170,7 +170,7 @@ func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LooseGiterminism = new(bool)
-	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://werf.io/v1.2-alpha/documentation/advanced/giterminism.html, default $WERF_LOOSE_GITERMINISM)")
+	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://werf.io/documentation/advanced/giterminism.html, default $WERF_LOOSE_GITERMINISM)")
 }
 
 func setupDev(cmdData *CmdData, cmd *cobra.Command) {

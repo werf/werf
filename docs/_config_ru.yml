@@ -5,7 +5,15 @@ site_lang: ru
 site_description: Инструмент консистентной доставки. Используем Git как единый источник истины. Собираем, деплоим в Kubernetes, синхронизируем изменения.
 
 exclude:
-- pages/
+- pages_en/
+- .idea/
+- .gitignore
+- vendor
+- Gemfile
+- Gemfile.lock
+- werf.yaml
+- "*.sh"
+- backend
 
 include:
 - pages_ru/

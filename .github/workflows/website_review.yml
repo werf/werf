@@ -19,10 +19,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Add dev artifacts
-      run: |
-          cp -f docs/.werf/dev/* docs/
-
     - name: Converge main site
       uses: werf/actions/converge@v1.2
       with:
@@ -30,8 +26,7 @@ jobs:
         channel: alpha
       env:
         WERF_LOOSE_GITERMINISM: true
-        WERF_DIR: "docs"
-        WERF_CONFIG: "docs/werf-site.yaml"
+        WERF_DIR: "docs/site"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
         WERF_SET_GITHUB_REF: "global.github_ref=dev"

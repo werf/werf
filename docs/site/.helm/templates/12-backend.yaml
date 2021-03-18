@@ -1,0 +1,103 @@
+{{- $_ := set . "Version" ( splitList "/" .Values.global.github_ref | last ) }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  annotations:
+    "werf.io/replicas-on-creation": "1"
+  labels:
+    service: backend
+spec:
+  minReadySeconds: 5
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      service: backend
+  template:
+    metadata:
+      labels:
+        service: backend
+    spec:
+      imagePullSecrets:
+        - name: github-werfio
+      containers:
+        - name: backend
+          command: ["/app/server"]
+          image: {{ index .Values.werf.image "web-backend" }}
+{{- include "resources" . | indent 10 }}
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          env:
+          - name: ACTIVE_RELEASE
+            value: {{ .Values.global.active_release | quote }}
+          - name: LOG_LEVEL
+            value: "info"
+{{- if ne .Values.global.env "production" }}
+          - name: URL_VALIDATION
+            value: "false"
+{{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          volumeMounts:
+            - name: multiwerf
+              mountPath: /app/multiwerf
+      volumes:
+        - name: multiwerf
+          configMap:
+            name: multiwerf-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  clusterIP: None
+  selector:
+    service: backend
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+---
+apiVersion: autoscaling.k8s.io/v1beta2
+kind: VerticalPodAutoscaler
+metadata:
+  name: backend
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: backend
+  updatePolicy:
+    updateMode: "Initial"
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: backend
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      service: backend
+{{- if ne .Values.global.env "production" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: multiwerf-data
+data:
+  # It is needed if deploying to empty environment
+  multiwerf.json: |
+    {{ $.Files.Get "multiwerf-dev.json" | fromJson| toJson }}
+{{- end }}

@@ -9,7 +9,7 @@ env:
 jobs:
 
   converge:
-    name: Converge
+    name: Converge to Production
     runs-on: tfprod-werf
     steps:
 
@@ -18,15 +18,15 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set Helm release name
+    - name: Set version name
       id: value_set
       run: |
           echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
 
     - name: Generate artifacts
       run: |
-          cd docs
-          bash .werf/legacy/generate_artifacts.sh
+          cd docs/site/.werf/artifacts
+          bash generate_artifacts.sh
 
     - name: Deploy website to production
       uses: werf/actions/converge@v1.2
@@ -34,11 +34,10 @@ jobs:
         env: production
         channel: alpha
       env:
-        WERF_RELEASE: "werfio-ng-${{ env.Version }}-production"
+        WERF_RELEASE: "werfio-site-production"
         WERF_NAMESPACE: "werfio-production"
-        WERF_DIR: "docs"
-        WERF_CONFIG: "docs/werf-site.yaml"
         WERF_LOOSE_GITERMINISM: true
+        WERF_DIR: "docs/site"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: prod
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"

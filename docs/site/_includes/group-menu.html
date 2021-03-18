@@ -1,0 +1,21 @@
+{%- raw %}
+{{ $CurrentPageURL := .CurrentPageURL }}
+{{ $CurrentPageURLRelative := .CurrentPageURLRelative }}
+<li id="group-versions-menu" class="breadcrumbs__item breadcrumbs__item_parent submenu-parent">
+    {{- $first := index .VersionItems 0 }}
+    <a data-proofer-ignore href="#">{{- if $first.Group }}v{{- $first.Group }}{{- else }}{{ $first.Version }}{{- end }}</a>
+    <div class="submenu-container">
+        <ul class="submenu">
+        {{- $prevVersion := "" }}
+        {{- range (slice .VersionItems 1) }}
+                <li class="submenu-item">
+                    <a data-proofer-ignore class="submenu-item-link" href="/documentation/v{{ .Group }}{{ $CurrentPageURLRelative }}">
+                        v{{ .Group }}
+                    </a>
+                </li>
+            {{ $prevVersion = .Version }}
+        {{- end }}
+        </ul>
+    </div>
+</li>
+{% endraw %}

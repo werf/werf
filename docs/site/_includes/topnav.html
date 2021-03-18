@@ -1,0 +1,129 @@
+<div class="header">
+    <div class="page__container">
+        <div class="header__content">
+            <a data-proofer-ignore href="/">
+                <img src="/images/werf-logo.svg" alt="werf"/>
+            </a>
+
+            <ul class="header__menu">
+                <!-- toggle sidebar button -->
+                <!-- entries without drop-downs appear here -->
+
+                {%- assign topnav = site.data[page.topnav] %}
+                {%- assign topnav_dropdowns = site.data[page.topnav].topnav_dropdowns %}
+
+                    {%- for folder in topnav.topnav[page.lang] -%}
+                        {% comment %}
+                        Notice:
+                            Liquid engine is very poor in working with boolean logic.
+                            Also, somehow, it can not check equality of folder.url == '/' and page.url=='/' - something buggy here.
+                            That's why below lines of li class are such ugly.
+                        {% endcomment %}
+                        <li class="header__menu-item submenu-parent
+                            {%- if folder.folderitems %} header__menu-item_parent{% endif %}
+                            {%- if folder.url.size>1 and page.url == folder.url %} header__menu-item_active{% endif %}
+                            {%- if folder.url.size>1 and page.url != folder.url and page.url contains folder.url
+                            and page.url != '/installation.html' %} header__menu-item_active{% endif %}
+                            {%- if folder.url.size>1 and page.url == '/publications_ru.html'
+                            and folder.url == '/publications.html' %} header__menu-item_active{% endif %}
+                            {%- if folder.url.size<2 and page.url.size<2 %} header__menu-item_active{% endif %}">
+                            {%- if folder.title == 'Документация' or folder.title == 'Documentation' %}
+                                {%- if page.name == '404.md' %}
+                                <a data-proofer-ignore href="{{ folder.url }}">{{ folder.title }}</a>
+                                {%- else %}
+                                <a href="{{ folder.url }}">{{ folder.title }}</a>
+                                {%- endif %}
+                            {%- else if jekyll.environment == "production" %}
+                            <a data-proofer-ignore href="{{ folder.url }}">{{ folder.title }}</a>
+                            {%- else %}
+                            <a href="{{ folder.url | true_relative_url }}">{{ folder.title }}</a>
+                            {%- endif %}
+                            {%- if folder.folderitems %}
+                            <div class="submenu-container">
+                                <ul class="submenu">
+                                    {% for folderitem in folder.folderitems %}
+                                        {%- if folderitem.external_url %}
+                                            <li class="submenu-item"><a href="{{ folderitem.external_url }}" target="_blank" class="submenu-item-link">{{folderitem.title}}</a></li>
+                                        {%- else %}
+                                            <li class="submenu-item"><a href="{{ folderitem.url | true_relative_url }}" class="submenu-item-link">{{folderitem.title}}</a></li>
+                                        {%- endif %}
+                                    {%- endfor %}
+                                </ul>
+                            </div>
+                            {%- endif %}
+                        </li>
+                {%- endfor %}
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                {%- for entry in topnav_dropdowns %}
+                {%- for folder in entry.folders %}
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ folder.title }}<b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        {%- for folderitem in folder.folderitems %}
+                        {%- if folderitem.external_url %}
+                        <li><a href="{{ folderitem.external_url }}" target="_blank">{{folderitem.title}}</a></li>
+                        {%- elsif page.url contains folderitem.url %}
+                        <li class="dropdownActive"><a href="{{ folderitem.url | true_relative_url }}">{{folderitem.title}}</a></li>
+                        {%- else %}
+                        <li><a href="{{ folderitem.url | true_relative_url }}">{{folderitem.title}}</a></li>
+                        {%- endif %}
+                        {%- endfor %}
+                    </ul>
+                </li>
+                {%- endfor %}
+                {%- endfor %}
+                <li class="header__menu-item header__menu-item_parent submenu-parent">
+                    <a href="#">
+                        {%- if page.lang == "ru" %}
+                            Russian
+                        {%- else %}
+                            English
+                        {%- endif %}
+                    </a>
+                    <div class="submenu-container">
+                      <ul class="submenu">
+                        <li data-proofer-ignore class="submenu-item">
+                            <a data-proofer-ignore href="{{ site.site_urls.en }}{{ page.url }}" class="submenu-item-link">
+                                English
+                            </a>
+                        </li>
+                        <li data-proofer-ignore class="submenu-item">
+                            <a data-proofer-ignore href="{{ site.site_urls.ru }}{{ page.url }}" class="submenu-item-link">
+                                Russian
+                            </a>
+                        </li>
+                      </ul>
+                    </div>
+                </li>
+                <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].telegram }}" target="_blank" class="page__icon page__icon_telegram" title="Telegram"></a></li>
+                <li class="header__menu-icon"><a href="{{ site.social_links[site.site_lang].twitter }}" target="_blank" class="page__icon page__icon_twitter" title="Twitter"></a></li>
+                <li class="header__menu-icon"><a href="https://github.com/werf/werf" rel="noopener noreferrer" target="_blank" class="page__icon page__icon_github" title="GitHub"></a></li>
+                <li class="header__menu-icon"><a href="https://github.com/werf/werf/discussions" rel="noopener noreferrer" target="_blank" class="page__icon page__icon_discussions" title="GitHub Discussions"></a></li>
+                <li class="header__menu-icon header__menu-icon_search"><a href="javascript:void(0)" class="page__icon page__icon_search"></a></li>
+                <!-- div>
+                     {% if page.ref %}
+                       {% assign pages=site.pages | where:"ref", page.ref | sort: 'lang' %}
+                       {% if pages.size > 1 %}
+                         {% for _page in pages %}
+                            <a href="{{ _page.url | true_relative_url }}" class="publications__btn {% if _page.url == page.url %}active{% endif %}">{{ _page.lang }}</a>
+                         {% endfor %}
+                       {% endif %}
+                     {% endif %}
+                </div -->
+            </ul>
+        </div>
+    </div>
+</div>
+{% include /slack_popup.html %}
+
+<div class="header-dummy"></div>
+<div class="topsearch">
+    <div class="page__container">
+        <form action="https://www.google.com/search" class="topsearch__form" method="get" name="searchform" target="_blank">
+            <input name="sitesearch" type="hidden" value="{% if page.lang == "ru" %}ru.{% endif %}werf.io">
+            <input autocomplete="on" class="page__input topsearch__input" name="q" placeholder="{% if page.lang == "ru" %}Поиск по документации{% else %}Search the documentation{% endif %}" required="required"  type="text">
+            <button type="submit" class="page__icon page__icon_search topsearch__btn"></button>
+        </form>
+    </div>
+</div>

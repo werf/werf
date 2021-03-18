@@ -1,0 +1,155 @@
+.werf-configuration-table {
+    border-radius: 4px;
+    color: #f8f8f2;
+    background-color: #272822;
+}
+
+.werf-configuration-table table {
+    font-family: 'Source Code Pro', monospace;
+    border: none !important;
+}
+
+.werf-configuration-table table tr,
+.werf-configuration-table table tr td {
+    border: none !important;
+}
+
+.werf-configuration-table table tr td {
+    vertical-align: top;
+    line-height: unset !important;
+    font-size: 12px !important;
+    padding: 5px 8px !important;
+}
+
+.werf-configuration-table table tr td:first-child {
+    padding-left: 15px !important;
+    text-align: right;
+    user-select: none;
+}
+
+.werf-configuration-table table tr:not(.dots) td:first-child {
+    transition: all 0.1s ease-in-out;
+    opacity: 0.5;
+}
+
+.werf-configuration-table table tr td:nth-child(2) {
+    width: 50%;
+}
+
+.werf-configuration-table table tr td:last-child {
+    padding-right: 15px !important;
+}
+
+.werf-configuration-table table tr:first-child td {
+    padding-top: 10px !important;
+}
+
+.werf-configuration-table table tr:last-child td {
+    padding-bottom: 10px !important;
+}
+
+.werf-configuration-table table tr td.comment {
+    user-select: none;
+}
+
+.werf-configuration-table table tr {
+    background: transparent;
+    transition: all 0.1s ease-in-out;
+}
+
+.werf-configuration-table table tr.section {
+    background: rgba(255,255,255,0.04);
+}
+
+.werf-configuration-table table tr.directive td:last-child {
+    background: transparent;
+    transition: all 0.1s ease-in-out;
+    opacity: 0.5;
+}
+
+.werf-configuration-table table tr td span {
+    font-size: 12px;
+}
+
+.werf-configuration-table table tr.dots td {
+    padding: 5px 8px !important;
+    user-select: none;
+}
+
+.werf-configuration-table span.btn {
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    height: 12px;
+    width: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #fff;
+    position: relative;
+    right: -4px;
+    transition: all 0.1s ease-in-out;
+}
+
+.werf-configuration-table span.btn:hover {
+    background: rgba(0,0,0,0.1);
+}
+
+.werf-configuration-table span.btn::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background-image: url(/images/icons/dropdown.svg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.werf-configuration-table table tr[class*="collapsed-"] {
+    display: none;
+}
+
+.werf-configuration-table table tr:not(.section):hover {
+    background: rgba(255,255,255,0.04);
+}
+
+.werf-configuration-table table tr:hover td:last-child,
+.werf-configuration-table table tr:hover td:first-child {
+    opacity: 1;
+}
+
+.werf-configuration-table .required {
+    font-size: 10px;
+    font-family: 'Open Sans', sans-serif;
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    background: #fff;
+    color: #000;
+    font-weight: 900;
+    user-select: none;
+}
+
+.werf-configuration-table a {
+    color: #5f9fff !important;
+}
+
+.werf-configuration-table code {
+    background: #000;
+}
+
+.tooltip {
+    font-family: 'Open Sans', sans-serif;
+    background: #000;
+    color: #fff;
+    font-weight: bold;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+}

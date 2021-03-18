@@ -21,7 +21,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 <p align="center">
   <a href="https://werf.io/introduction.html">
-    <img src="https://github.com/werf/werf/raw/master/docs/images/werf-schema.png" width=80%>
+    <img src="https://github.com/werf/werf/raw/master/docs/site/images/werf-schema.png" width=80%>
   </a>
 </p>
 

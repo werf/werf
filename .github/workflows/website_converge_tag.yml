@@ -1,0 +1,68 @@
+name: Build and deploy version documentation
+on:
+  push:
+    tags:
+      - 'v*'
+      - '!v1.1.*'
+      - '!v1.0.*'
+
+env:
+  WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
+
+jobs:
+
+  converge:
+    name: Converge to Production
+    runs-on: tfprod-werf
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set version name
+      id: value_set
+      run: |
+          echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
+
+    - name: Deploy website to production
+      uses: werf/actions/converge@v1.2
+      with:
+        env: production
+        channel: alpha
+      env:
+        WERF_RELEASE: "werfio-${{ env.Version }}-production"
+        WERF_NAMESPACE: "werfio-production"
+        WERF_DIR: "docs/documentation"
+        WERF_LOG_VERBOSE: "on"
+        WERF_KUBE_CONTEXT: prod
+        WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
+
+  converge_test:
+    name: Converge to Test
+    runs-on: tfprod-werf
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set version name
+      id: value_set
+      run: |
+          echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
+
+    - name: Deploy website to test
+      uses: werf/actions/converge@v1.2
+      with:
+        env: test
+        channel: alpha
+      env:
+        WERF_RELEASE: "werfio-${{ env.Version }}-test"
+        WERF_NAMESPACE: "werfio-test"
+        WERF_DIR: "docs/documentation"
+        WERF_LOG_VERBOSE: "on"
+        WERF_KUBE_CONTEXT: dev
+        WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"

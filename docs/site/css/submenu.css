@@ -1,0 +1,97 @@
+.submenu-container {
+    display: none;
+    position: absolute;
+    left: -20px;
+    top: 10px;
+    z-index: 1000;
+    padding-top: 10px;
+    min-width: 100%;
+}
+
+.submenu {
+    float: left;
+    box-sizing: border-box;
+    list-style-type: none;
+    padding: 15px 20px;
+    margin: 0;
+    min-width: 100%;
+    background: #FFFFFF;
+    box-shadow: 0 10px 40px 0 rgba(0,18,44,0.1);
+    border-radius: 10px;
+    line-height: 1.16;
+}
+
+.submenu-item-link {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    font-size: 14px;
+    white-space: nowrap;
+    color: #00122C !important;
+    text-decoration: none;
+    letter-spacing: -0.26px;
+    margin: 15px 0;
+}
+
+.submenu-item-link:hover {
+    color: #0066FF !important;
+}
+
+.submenu-item:first-child .submenu-item-link {
+    margin-top: 0px;
+}
+
+.submenu-item:last-child .submenu-item-link {
+    margin-bottom: 0px;
+}
+
+.submenu-item-channel {
+    display: inline-block;
+    width: 90px;
+}
+
+.submenu-item-link:hover .submenu-item-channel {
+    color: #0066FF !important;
+}
+
+.submenu-item-release {
+    color: #939fb1 !important;
+    font-size: 12px;
+}
+
+.submenu-item-link:hover .submenu-item-release {
+    color: #939fb1 !important;
+}
+
+.submenu-item-dot {
+    display: block;
+    margin: 0 10px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #939fb1 !important;
+    position: relative;
+    opacity: 0.5;
+}
+.submenu-item-dot_special::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    width: 1px;
+    height: 30px;
+    background: #939fb1 !important;
+}
+
+.submenu-item a:hover .submenu-item-release {
+    color: #0066FF !important;
+}
+
+.submenu-parent {
+    position: relative;
+}
+
+.submenu-parent:hover .submenu-container {
+    display: block;
+}

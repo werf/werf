@@ -1,0 +1,21 @@
+{%- raw %}
+{{ $CurrentPageURL := .CurrentPageURL }}
+{{ $CurrentPageURLRelative := .CurrentPageURLRelative }}
+{% endraw %}
+{%- raw %}
+<div class="submenu-container">
+    <ul class="submenu">
+    {{- $prevVersion := "" }}
+    {{- range (slice .VersionItems 1) }}
+            <li class="submenu-item">
+                <a data-proofer-ignore class="submenu-item-link" href="/documentation/{{ .VersionURL }}{{ $CurrentPageURLRelative }}">
+                    <span class="submenu-item-channel"> {{ .Group }}-{{ .Channel }}</span>
+                    <span class="submenu-item-dot{{ if eq $prevVersion .Version }} submenu-item-dot_special{{ end }}"></span>
+                    <span class="submenu-item-release">{{ .Version }}</span>
+                </a>
+            </li>
+        {{ $prevVersion = .Version }}
+    {{- end }}
+    </ul>
+</div>
+{% endraw %}
