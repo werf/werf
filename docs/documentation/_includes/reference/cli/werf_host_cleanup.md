@@ -40,6 +40,9 @@ werf host cleanup [options]
             Two development modes are supported:
             - simple: for working with the worktree state of the git repository
             - strict: for working with the index state of the git repository
+      --disable-auto-host-cleanup=true
+            Disable auto host cleanup procedure in main werf commands like werf-build,              
+            werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
