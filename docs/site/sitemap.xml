@@ -4,18 +4,15 @@ search: exclude
 ---
 
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
-    {%- assign pages_in_main_lang=site.pages | where: "lang", site.site_lang | where: "sitemap_include", true %}
-    {%- for page in pages_in_main_lang %}
-    <url>
-        <loc>{{ page.url | absolute_url }}</loc>
-        <xhtml:link rel="alternate" hreflang="ru" href="{{ site.site_urls.ru }}{{ page.url | relative_url }}" />
-        <xhtml:link rel="alternate" hreflang="en" href="{{ site.site_urls.en }}{{ page.url | relative_url }}" />
-        <lastmod>{{site.time | date: '%Y-%m-%d' }}</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.5</priority>
-    </url>
-    {%- endfor %}
-</urlset>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+   <sitemap>
+      <loc>{{ site.url }}/documentation/v1.2/sitemap.xml</loc>
+   </sitemap>
+   <sitemap>
+      <loc>{{ site.url }}/documentation/v1.1/sitemap.xml</loc>
+   </sitemap>
+   <sitemap>
+      <loc>{{ site.url }}/sitemap-site.xml</loc>
+   </sitemap>
+</sitemapindex>

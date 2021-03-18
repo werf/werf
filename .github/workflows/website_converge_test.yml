@@ -1,8 +1,7 @@
 name: Build and deploy web test environment
-# TODO!!!
 on:
-  push:
-    branches-ignore: [master]
+  pull_request:
+    types: [labeled, synchronize]
 
 env:
   WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
@@ -11,6 +10,7 @@ jobs:
 
   converge_test_doc:
     name: Converge documentation
+    if: github.event.label.name == 'test docs' || contains( github.event.pull_request.labels.*.name, 'test docs' )
     runs-on: tfprod-werf
     steps:
 
@@ -51,11 +51,6 @@ jobs:
       id: value_set
       run: |
           echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
-
-      #    - name: Generate artifacts
-      #      run: |
-      #          cd docs/site/.werf/artifacts
-      #          bash generate_artifacts.sh
 
     - name: Deploy website to test
       uses: werf/actions/converge@v1.2
