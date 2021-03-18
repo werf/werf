@@ -16,6 +16,8 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
+
+	parallelConstant "github.com/werf/werf/pkg/util/parallel/constant"
 )
 
 func CreateImage(ctx context.Context, ref string, labels map[string]string) error {
@@ -191,8 +193,22 @@ func doCliBuild(c command.Cli, args ...string) error {
 }
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args ...string) error {
-	if err := os.Setenv("DOCKER_BUILDKIT", "0"); err != nil {
-		return err
+	dockerBuildkitEnvName := "DOCKER_BUILDKIT"
+	dockerBuildkitEnvValue := os.Getenv(dockerBuildkitEnvName)
+
+	switch dockerBuildkitEnvValue {
+	case "":
+		// disable buildkit by default
+		if err := os.Setenv(dockerBuildkitEnvName, "0"); err != nil {
+			return err
+		}
+	case "1":
+		// disable buildkit output in background tasks due to https://github.com/docker/cli/issues/2889
+		// there is no true way to get output, because buildkit uses the standard output and error streams instead of defined ones in the cli instance
+		if ctx.Value(parallelConstant.CtxBackgroundTaskIDKey) != nil {
+			logboek.Context(ctx).Warn().LogLn("WARNING: BuildKit output in background tasks is not supported (--quiet) due to https://github.com/docker/cli/issues/2889")
+			args = append(args, "--quiet")
+		}
 	}
 
 	return cliWithCustomOptions(ctx, []command.DockerCliOption{
