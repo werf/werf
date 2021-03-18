@@ -97,7 +97,7 @@ jobs:
   unit_tests:
     name: Unit tests
     needs: precompiled_tests_binaries
-    if: always()
+    if: ${{ success() || failure() }}
     strategy:
       fail-fast: false
       matrix:
@@ -135,7 +135,7 @@ jobs:
   integration_default_tests:
     name: Integration default tests
     needs: precompiled_tests_binaries
-    if: always()
+    if: ${{ success() || failure() }}
     strategy:
       fail-fast: false
       matrix:
@@ -194,7 +194,7 @@ jobs:
   integration_k8s_per_version_tests:
     name: Integration k8s_per_version tests
     needs: precompiled_tests_binaries
-    if: always()
+    if: ${{ success() || failure() }}
     strategy:
       fail-fast: false
       matrix:
@@ -257,7 +257,7 @@ jobs:
   integration_k8s_per_version_and_container_registry_per_implementation_tests:
     name: Integration k8s_per_version_and_container_registry_per_implementation tests
     needs: precompiled_tests_binaries
-    if: always()
+    if: ${{ success() || failure() }}
     strategy:
       fail-fast: false
       matrix:
