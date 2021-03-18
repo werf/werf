@@ -23,7 +23,7 @@ case "${unameOut}" in
 esac
 
 for package_path in $package_paths; do
-  if [[ $package_path == "./integration/suites/docs/docs/backend" ]] || [[ $package_path == "./integration/suites/docs/docs/_site/backend" ]] || [[ $package_path == "./integration/ci_suites/default/docs/_fixtures/cli/docs/backend" ]]; then
+  if [[ $package_path == "./integration/suites/docs/docs/backend" ]] || [[ $package_path == "./integration/suites/docs/docs/site/_site/backend" ]] || [[ $package_path == "./integration/ci_suites/default/docs/_fixtures/cli/docs/site/backend" ]]; then
     continue
   fi
 
