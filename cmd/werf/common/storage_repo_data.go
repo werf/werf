@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/logboek"
+
 	"github.com/werf/werf/pkg/docker_registry"
 )
 
@@ -29,6 +31,7 @@ func (d *RepoData) GetContainerRegistry() string {
 	if *d.ContainerRegistry != "" {
 		return *d.ContainerRegistry
 	} else if *d.Implementation != "" {
+		logboek.Context(BackgroundContext()).Warn().LogLn("DEPRECATION WARNING: The option --repo-implementation ($WERF_REPO_IMPLEMENTATION) is renamed to --repo-container-registry ($WERF_REPO_CONTAINER_REGISTRY) and will be removed in v1.3!")
 		return *d.Implementation
 	} else {
 		return ""
