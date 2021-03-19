@@ -19,6 +19,7 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/pkg/util"
 )
 
 type GitMapping struct {
@@ -801,19 +802,19 @@ func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
 func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFileDescriptor, error) {
 	return &ContainerFileDescriptor{
 		FilePath:          archive.GetFilePath(),
-		ContainerFilePath: path.Join(gm.ContainerArchivesDir, filepath.Base(archive.GetFilePath())),
+		ContainerFilePath: path.Join(gm.ContainerArchivesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.ArchivesCacheDir, archive.GetFilePath()))),
 	}, nil
 }
 
 func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
-	fileName := fmt.Sprintf("%s.paths_list", filepath.Base(patch.GetFilePath()))
-	filePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fileName)
+	filePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fmt.Sprintf("%s.paths_list", filepath.Base(patch.GetFilePath())))
+	containerFilePath := path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.PatchesCacheDir, patch.GetFilePath())))
 
 	//FIXME: create this file using GitDataManager
 
 	fileDesc := &ContainerFileDescriptor{
 		FilePath:          filePath,
-		ContainerFilePath: path.Join(gm.ContainerPatchesDir, fileName),
+		ContainerFilePath: path.Join(gm.ContainerPatchesDir, containerFilePath),
 	}
 
 	fileExists := true
@@ -854,7 +855,7 @@ func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*Containe
 func (gm *GitMapping) preparePatchFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
 	return &ContainerFileDescriptor{
 		FilePath:          patch.GetFilePath(),
-		ContainerFilePath: path.Join(gm.ContainerPatchesDir, filepath.Base(patch.GetFilePath())),
+		ContainerFilePath: path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.PatchesCacheDir, patch.GetFilePath()))),
 	}, nil
 }
 

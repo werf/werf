@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/util/timestamps"
 
 	"gopkg.in/ini.v1"
 
@@ -105,9 +106,27 @@ func (repo *Remote) isCloneExists() (bool, error) {
 	return false, nil
 }
 
+func (repo *Remote) updateLastAccessAt(ctx context.Context, repoPath string) error {
+	path := filepath.Join(repoPath, "last_access_at")
+
+	if _, lock, err := werf.AcquireHostLock(ctx, path, lockgate.AcquireOptions{}); err != nil {
+		return fmt.Errorf("error locking path %q: %s", path, err)
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
+
+	return timestamps.WriteTimestampFile(path, time.Now())
+}
+
 func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 	if repo.IsDryRun {
 		return false, nil
+	}
+
+	if lock, err := lockGC(ctx, true); err != nil {
+		return false, err
+	} else {
+		defer werf.ReleaseHostLock(lock)
 	}
 
 	var err error
@@ -117,6 +136,9 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	if exists {
+		if err := repo.updateLastAccessAt(ctx, repo.GetClonePath()); err != nil {
+			return false, fmt.Errorf("error updating last access at timestamp: %s", err)
+		}
 		return false, nil
 	}
 
@@ -126,6 +148,10 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 			return err
 		}
 		if exists {
+			if err := repo.updateLastAccessAt(ctx, repo.GetClonePath()); err != nil {
+				return fmt.Errorf("error updating last access at timestamp: %s", err)
+			}
+
 			return nil
 		}
 
@@ -149,6 +175,10 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		})
 		if err != nil {
 			return err
+		}
+
+		if err := repo.updateLastAccessAt(ctx, tmpPath); err != nil {
+			return fmt.Errorf("error updating last access at timestamp: %s", err)
 		}
 
 		if err := os.Rename(tmpPath, repo.GetClonePath()); err != nil {
@@ -321,6 +351,12 @@ func (repo *Remote) RemoteBranchesList(_ context.Context) ([]string, error) {
 }
 
 func (repo *Remote) yieldRepositoryBackedByWorkTree(ctx context.Context, commit string, doFunc func(repository *git.Repository) error) error {
+	if lock, err := lockGC(ctx, true); err != nil {
+		return err
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
+
 	repository, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return fmt.Errorf("cannot open git repository %q: %s", repo.GetClonePath(), err)

@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/lockgate"
 
+	"github.com/werf/werf/pkg/util/timestamps"
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/logboek"
@@ -53,6 +54,11 @@ func withWorkTreeCacheLock(ctx context.Context, workTreeCacheDir string, f func(
 func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, commit string, withSubmodules bool) (string, error) {
 	if err := os.MkdirAll(workTreeCacheDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("unable to create dir %s: %s", workTreeCacheDir, err)
+	}
+
+	lastAccessAtPath := filepath.Join(workTreeCacheDir, "last_access_at")
+	if err := timestamps.WriteTimestampFile(lastAccessAtPath, time.Now()); err != nil {
+		return "", fmt.Errorf("error writing timestamp file %q: %s", lastAccessAtPath, err)
 	}
 
 	gitDirPath := filepath.Join(workTreeCacheDir, "git_dir")

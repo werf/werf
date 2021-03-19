@@ -65,11 +65,7 @@ func ShouldRunAutoGC() (bool, error) {
 	return false, nil
 }
 
-func GC(ctx context.Context, dryRun bool) error {
-	return logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error { return gc(ctx, dryRun) })
-}
-
-func gc(ctx context.Context, dryRun bool) error {
+func RunGC(ctx context.Context, dryRun bool) error {
 	projectDirsToRemove := []string{}
 	pathsToRemove := []string{}
 
