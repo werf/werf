@@ -5,16 +5,14 @@ search: exclude
 sitemap_include: false
 ---
 User-agent: *
-
 Disallow: *.js
 Disallow: *?*
-
+Allow: /
 Allow: /documentation/v1.1
 Allow: /documentation/v1.2
 Disallow: /documentation/v
 Disallow: /documentation/v1.2.
 Disallow: /documentation/v1.1.
-
 Sitemap: {{ site.url }}/sitemap.xml
 Host: {{ site.url }}
 

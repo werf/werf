@@ -19,10 +19,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Add dev artifacts
-      run: |
-          cp -f docs/.werf/dev/* docs/
-
     - name: Dismiss
       uses: werf/actions/dismiss@v1.2
       continue-on-error: true
