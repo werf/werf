@@ -249,15 +249,25 @@ func (phase *BuildPhase) addManagedImage(ctx context.Context, img *Image) error 
 func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) error {
 	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Processing image %s git metadata", img.GetName())).
 		DoError(func() error {
-			headCommit := phase.Conveyor.giterminismManager.HeadCommit()
+			var commits []string
 
-			exists, err := phase.Conveyor.StorageManager.StagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, img.GetStageID())
-			if err != nil {
-				return fmt.Errorf("unable to get image %s metadata by commit %s and stage ID %s: %s", img.GetName(), headCommit, img.GetStageID(), err)
+			headCommit := phase.Conveyor.giterminismManager.HeadCommit()
+			commits = append(commits, headCommit)
+
+			if phase.Conveyor.GetLocalGitRepoVirtualMergeOptions().VirtualMerge {
+				fromCommit := phase.Conveyor.GetLocalGitRepoVirtualMergeOptions().VirtualMergeFromCommit
+				commits = append(commits, fromCommit)
 			}
 
-			if !exists {
-				return phase.Conveyor.StorageManager.StagesStorage.PutImageMetadata(ctx, phase.Conveyor.projectName(), img.GetName(), headCommit, img.GetStageID())
+			for _, commit := range commits {
+				exists, err := phase.Conveyor.StorageManager.StagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID())
+				if err != nil {
+					return fmt.Errorf("unable to get image %s metadata by commit %s and stage ID %s: %s", img.GetName(), commit, img.GetStageID(), err)
+				}
+
+				if !exists {
+					return phase.Conveyor.StorageManager.StagesStorage.PutImageMetadata(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID())
+				}
 			}
 
 			return nil
