@@ -169,7 +169,7 @@ func (helper *MaintenanceHelper) CreateHelm3ReleaseMetadataFromHelm2Release(ctx 
 	}
 
 	if err := helper.v3ActionConfig.Releases.Create(rls); err != nil {
-		return fmt.Errorf("error saving helm 3 release %q into storage: %s", err)
+		return fmt.Errorf("error saving helm 3 release %q into storage: %s", release, err)
 	}
 
 	return nil
@@ -236,7 +236,7 @@ func (helper *MaintenanceHelper) DeleteHelm2ReleaseMetadata(ctx context.Context,
 
 	for _, rel := range releases {
 		if _, err := storage.Delete(rel.Name, rel.Version); err != nil {
-			return fmt.Errorf("error deleting helm 2 release %q version %d: %s", rel.Name, rel.Version)
+			return fmt.Errorf("error deleting helm 2 release %q version %d: %s", rel.Name, rel.Version, err)
 		}
 	}
 

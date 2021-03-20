@@ -20,14 +20,33 @@ jobs:
         github-token: ${{secrets.GITHUB_TOKEN}}
         script: "github.issues.removeLabel({...context.issue, name: '${{ github.event.label.name }}' })"
 
-  precompiled_tests_binaries:
-    name: Precompiled tests binaries
+  unit_tests:
+    name: Unit tests
+    if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run tests')
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu, macOS, windows ]
-    runs-on: [ self-hosted, "${{ matrix.os }}", builder ]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.14
+        id: go
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Test
+        run: go test ./pkg/... ./cmd/...
+        shell: bash
+
+  precompiled_tests_binaries:
+    name: Precompiled tests binaries
     if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run tests')
+    runs-on: ubuntu-latest
     steps:
 
     - name: Set up Go 1.14
@@ -39,29 +58,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Compile tests binaries
+    - name: Compile integration tests binaries
       run: |
-        # unit tests binaries
-        ./scripts/tests/precompiled_tests_binaries.sh ./cmd ./precompiled_tests_binaries/unit
-        ./scripts/tests/precompiled_tests_binaries.sh ./pkg ./precompiled_tests_binaries/unit
-
-        # integration tests binaries
         ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/default ./precompiled_tests_binaries/integration_default
         ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/k8s_per_version ./precompiled_tests_binaries/integration_k8s_per_version
         ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/container_registry_per_implementation ./precompiled_tests_binaries/integration_container_registry_per_implementation
         ./scripts/tests/precompiled_tests_binaries.sh ./integration/ci_suites/k8s_per_version_and_container_registry_per_implementation ./precompiled_tests_binaries/integration_k8s_per_version_and_container_registry_per_implementation
-
       shell: bash
 
-    - name: Compile tests werf binary (ubuntu)
+    - name: Compile tests werf binary
       run: GOBIN=$PWD ./go-build.sh
-      if: matrix.os == 'ubuntu'
-
-    - name: Upload unit tests binaries
-      uses: actions/upload-artifact@master
-      with:
-        name: "${{ matrix.os }}_unit_tests_binaries"
-        path: precompiled_tests_binaries/unit
 
     - name: Upload integration default tests binaries
       uses: actions/upload-artifact@master
@@ -87,64 +93,24 @@ jobs:
         name: "${{ matrix.os }}_integration_k8s_per_version_and_container_registry_per_implementation_tests_binaries"
         path: precompiled_tests_binaries/integration_k8s_per_version_and_container_registry_per_implementation
 
-    - name: Upload werf binary (ubuntu)
+    - name: Upload werf binary
       uses: actions/upload-artifact@master
       with:
         name: "${{ matrix.os }}_werf_binary"
         path: werf
-      if: matrix.os == 'ubuntu'
-
-  unit_tests:
-    name: Unit tests
-    needs: precompiled_tests_binaries
-    if: ${{ success() || failure() }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu, macOS, windows]
-    runs-on: ${{ matrix.os }}-latest
-    steps:
-
-    - name: Set up Go 1.14
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.14
-      id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Download unit tests binaries
-      uses: actions/download-artifact@master
-      with:
-        name: "${{ matrix.os }}_unit_tests_binaries"
-        path: .
-
-    - name: Prepare environment
-      run: find . -type f \( -name '*.test' -or -name '*.test.exe' \) -exec chmod +x {} \;
-      shell: bash
-
-    - name: Test
-      run: |
-        test_binaries=$(find . -type f \( -name '*.test' -or -name '*.test.exe' \))
-        for test_binary in $test_binaries; do
-          $test_binary -test.v
-        done
-      shell: bash
 
   integration_default_tests:
     name: Integration default tests
     needs: precompiled_tests_binaries
-    if: ${{ success() || failure() }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
+        os: [ubuntu-latest]
         extra-find-args:
         - "-name 'git.test'"
         - "-name 'ansible.test'"
         - "! -name 'git.test' ! -name 'ansible.test'"
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     steps:
 
     - name: Set up Go 1.14
@@ -192,16 +158,15 @@ jobs:
       shell: bash
 
   integration_k8s_per_version_tests:
-    name: Integration k8s_per_version tests
+    name: Integration k8s per version tests
     needs: precompiled_tests_binaries
     if: ${{ success() || failure() }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
+        os: [ubuntu-latest]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
-
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     steps:
 
     - name: Set up Go 1.14
@@ -263,7 +228,6 @@ jobs:
       matrix:
         os: [ubuntu]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
-
     runs-on: ${{ matrix.os }}-latest
     env:
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
