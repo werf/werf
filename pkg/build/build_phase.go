@@ -266,7 +266,9 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 				}
 
 				if !exists {
-					return phase.Conveyor.StorageManager.StagesStorage.PutImageMetadata(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID())
+					if err := phase.Conveyor.StorageManager.StagesStorage.PutImageMetadata(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID()); err != nil {
+						return fmt.Errorf("unable to put image %s metadata by commit %s and stage ID %s: %s", img.GetName(), commit, img.GetStageID(), err)
+					}
 				}
 			}
 
