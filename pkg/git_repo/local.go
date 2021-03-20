@@ -20,6 +20,7 @@ import (
 	"github.com/werf/werf/pkg/true_git/ls_tree"
 	"github.com/werf/werf/pkg/true_git/status"
 	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var ErrLocalRepositoryNotExists = git.ErrRepositoryNotExists
@@ -69,6 +70,12 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 	}
 
 	if opts.WithServiceHeadCommit {
+		if lock, err := lockGC(ctx, true); err != nil {
+			return nil, err
+		} else {
+			defer werf.ReleaseHostLock(lock)
+		}
+
 		devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceWorktreeBranch(
 			context.Background(),
 			l.GitDir,
@@ -956,6 +963,12 @@ func (repo *Local) yieldRepositoryBackedByWorkTree(ctx context.Context, commit s
 	}
 
 	if hasSubmodules {
+		if lock, err := lockGC(ctx, true); err != nil {
+			return err
+		} else {
+			defer werf.ReleaseHostLock(lock)
+		}
+
 		return true_git.WithWorkTree(ctx, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
 			repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GitDir, preparedWorkTreeDir)
 			if err != nil {

@@ -10,7 +10,7 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-const GitRepoCacheVersion = "4"
+const GitReposCacheVersion = "5"
 
 type PatchOptions true_git.PatchOptions
 type ArchiveOptions true_git.ArchiveOptions
@@ -65,5 +65,5 @@ type Archive interface {
 }
 
 func GetGitRepoCacheDir() string {
-	return filepath.Join(werf.GetLocalCacheDir(), "git_repos", GitRepoCacheVersion)
+	return filepath.Join(werf.GetLocalCacheDir(), "git_repos", GitReposCacheVersion)
 }

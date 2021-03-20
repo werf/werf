@@ -15,7 +15,6 @@ import (
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/dustin/go-humanize"
-	"github.com/minio/minio/pkg/disk"
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -23,15 +22,14 @@ import (
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage/lrumeta"
+	"github.com/werf/werf/pkg/volumeutils"
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/kubedog/pkg/utils"
 )
 
 const (
-	DefaultAllowedVolumeUsagePercentage       float64 = 80.0
-	DefaultAllowedVolumeUsageMarginPercentage float64 = 10.0
-	MinImagesToDelete                                 = 10
+	MinImagesToDelete = 10
 )
 
 func GetLocalDockerServerStoragePath(ctx context.Context) (string, error) {
@@ -62,35 +60,10 @@ func GetLocalDockerServerStoragePath(ctx context.Context) (string, error) {
 	return storagePath, nil
 }
 
-func getAllowedVolumeUsagePercentage(opts HostCleanupOptions) float64 {
-	var res float64
-	if opts.AllowedVolumeUsagePercentage != nil {
-		res = float64(*opts.AllowedVolumeUsagePercentage)
-	} else {
-		res = DefaultAllowedVolumeUsagePercentage
-	}
-	return res
-}
-
-func getAllowedVolumeUsageMarginPercentage(allowedVolumeUsagePercentage float64, opts HostCleanupOptions) float64 {
-	var res float64
-	if *opts.AllowedVolumeUsageMarginPercentage != 0 {
-		res = float64(*opts.AllowedVolumeUsageMarginPercentage)
-	} else {
-		res = DefaultAllowedVolumeUsageMarginPercentage
-	}
-
-	if res > allowedVolumeUsagePercentage {
-		res = allowedVolumeUsagePercentage
-	}
-
-	return res
-}
-
-func getDockerServerStoragePath(ctx context.Context, opts HostCleanupOptions) (string, error) {
+func getDockerServerStoragePath(ctx context.Context, dockerServerStoragePathOption string) (string, error) {
 	var dockerServerStoragePath string
-	if opts.DockerServerStoragePath != "" {
-		dockerServerStoragePath = opts.DockerServerStoragePath
+	if dockerServerStoragePathOption != "" {
+		dockerServerStoragePath = dockerServerStoragePathOption
 	} else {
 		path, err := GetLocalDockerServerStoragePath(ctx)
 		if err != nil {
@@ -102,28 +75,21 @@ func getDockerServerStoragePath(ctx context.Context, opts HostCleanupOptions) (s
 	return dockerServerStoragePath, nil
 }
 
-func ShouldRunAutoGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) (bool, error) {
-	allowedVolumeUsage := getAllowedVolumeUsagePercentage(opts)
-
-	dockerServerStoragePath, err := getDockerServerStoragePath(ctx, opts)
-	if err != nil {
-		return false, fmt.Errorf("error getting local docker server storage path: %s", err)
-	}
-
+func ShouldRunAutoGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage float64, dockerServerStoragePath string) (bool, error) {
 	if dockerServerStoragePath == "" {
 		return false, nil
 	}
 
-	vu, err := GetVolumeUsageByPath(ctx, dockerServerStoragePath)
+	vu, err := volumeutils.GetVolumeUsageByPath(ctx, dockerServerStoragePath)
 	if err != nil {
 		return false, fmt.Errorf("error getting volume usage by path %q: %s", dockerServerStoragePath, err)
 	}
 
-	return vu.Percentage > allowedVolumeUsage, nil
+	return vu.Percentage > allowedVolumeUsagePercentage, nil
 }
 
 type LocalDockerServerStorageCheckResult struct {
-	VolumeUsage      VolumeUsage
+	VolumeUsage      volumeutils.VolumeUsage
 	TotalImagesBytes uint64
 	ImagesDescs      []*LocalImageDesc
 }
@@ -137,15 +103,15 @@ func (checkResult *LocalDockerServerStorageCheckResult) GetBytesToFree(targetVol
 func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePath string) (*LocalDockerServerStorageCheckResult, error) {
 	res := &LocalDockerServerStorageCheckResult{}
 
-	vu, err := GetVolumeUsageByPath(ctx, dockerServerStoragePath)
+	vu, err := volumeutils.GetVolumeUsageByPath(ctx, dockerServerStoragePath)
 	if err != nil {
 		return nil, fmt.Errorf("error getting volume usage by path %q: %s", dockerServerStoragePath, err)
 	}
 	res.VolumeUsage = vu
 
 	filterSet := filters.NewArgs()
-	filterSet.Add("label", fmt.Sprintf("%s", image.WerfLabel))
-	filterSet.Add("label", fmt.Sprintf("%s", image.WerfStageDigestLabel))
+	filterSet.Add("label", image.WerfLabel)
+	filterSet.Add("label", image.WerfStageDigestLabel)
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get docker images: %s", err)
@@ -188,19 +154,12 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 	return res, nil
 }
 
-func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) error {
-	allowedVolumeUsage := getAllowedVolumeUsagePercentage(opts)
-	allowedVolumeUsageMargin := getAllowedVolumeUsageMarginPercentage(allowedVolumeUsage, opts)
-	targetVolumeUsage := allowedVolumeUsage - allowedVolumeUsageMargin
-
-	dockerServerStoragePath, err := getDockerServerStoragePath(ctx, opts)
-	if err != nil {
-		return fmt.Errorf("error getting local docker server storage path: %s", err)
-	}
-
+func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage float64, dockerServerStoragePath string, force, dryRun bool) error {
 	if dockerServerStoragePath == "" {
 		return nil
 	}
+
+	targetVolumeUsage := allowedVolumeUsagePercentage - allowedVolumeUsageMarginPercentage
 
 	checkResult, err := GetLocalDockerServerStorageCheck(ctx, dockerServerStoragePath)
 	if err != nil {
@@ -209,11 +168,11 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 
 	bytesToFree := checkResult.GetBytesToFree(targetVolumeUsage)
 
-	if checkResult.VolumeUsage.Percentage <= allowedVolumeUsage {
+	if checkResult.VolumeUsage.Percentage <= allowedVolumeUsagePercentage {
 		logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
 			logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", allowedVolumeUsage), utils.GreenF("OK"))
+			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", allowedVolumeUsagePercentage), utils.GreenF("OK"))
 		})
 
 		return nil
@@ -222,8 +181,8 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 	logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
 		logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
 		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.YellowF("%0.2f%%", allowedVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", allowedVolumeUsage, allowedVolumeUsageMargin, utils.BlueF("%0.2f%%", targetVolumeUsage))
+		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.YellowF("%0.2f%%", allowedVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsage))
 		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
 		logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d (~ %s)", len(checkResult.ImagesDescs), humanize.Bytes(checkResult.TotalImagesBytes)))
 	})
@@ -262,12 +221,12 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 							args = append(args, ref)
 						}
 
-						if opts.Force {
+						if force {
 							args = append(args, "--force")
 						}
 
 						logboek.Context(ctx).Default().LogF("Removing %s\n", ref)
-						if opts.DryRun {
+						if dryRun {
 							continue
 						}
 
@@ -316,11 +275,11 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 		}
 
 		commonOptions := CommonOptions{
-			RmContainersThatUseWerfImages: opts.Force,
-			SkipUsedImages:                !opts.Force,
-			RmiForce:                      opts.Force,
+			RmContainersThatUseWerfImages: force,
+			SkipUsedImages:                !force,
+			RmiForce:                      force,
 			RmForce:                       true,
-			DryRun:                        opts.DryRun,
+			DryRun:                        dryRun,
 		}
 
 		if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for docker containers created by werf").DoError(func() error {
@@ -338,7 +297,7 @@ func RunGCForLocalDockerServer(ctx context.Context, opts HostCleanupOptions) err
 		if freedImagesCount == 0 {
 			break
 		}
-		if opts.DryRun {
+		if dryRun {
 			break
 		}
 
@@ -385,26 +344,6 @@ func (a ImagesLruSort) Less(i, j int) bool {
 	return a[i].LastUsedAt.Before(a[j].LastUsedAt)
 }
 func (a ImagesLruSort) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-
-type VolumeUsage struct {
-	UsedBytes  uint64
-	TotalBytes uint64
-	Percentage float64
-}
-
-func GetVolumeUsageByPath(ctx context.Context, path string) (VolumeUsage, error) {
-	di, err := disk.GetInfo(path)
-	if err != nil {
-		return VolumeUsage{}, fmt.Errorf("unable to get disk info: %s", err)
-	}
-
-	usedBytes := di.Total - di.Free
-	return VolumeUsage{
-		UsedBytes:  usedBytes,
-		TotalBytes: di.Total,
-		Percentage: (float64(usedBytes) / float64(di.Total)) * 100,
-	}, nil
-}
 
 func safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error {
 	images, err := werfImagesByFilterSet(ctx, danglingFilterSet())

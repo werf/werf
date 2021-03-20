@@ -16,6 +16,7 @@ import (
 
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/true_git/ls_tree"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type Base struct {
@@ -146,6 +147,12 @@ func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, wor
 }
 
 func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
+	if lock, err := lockGC(ctx, true); err != nil {
+		return nil, err
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
+
 	if patch, err := CommonGitDataManager.GetPatchFile(ctx, repoID, opts); err != nil {
 		return nil, err
 	} else if patch != nil {
@@ -227,6 +234,12 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 }
 
 func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, workTreeCacheDir string, fromCommit, toCommit string) (string, error) {
+	if lock, err := lockGC(ctx, true); err != nil {
+		return "", err
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
+
 	repository, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo at %s: %s", path, err)
@@ -296,6 +309,12 @@ func (repo *Base) CreateArchive(ctx context.Context, repoPath, gitDir, repoID, w
 }
 
 func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
+	if lock, err := lockGC(ctx, true); err != nil {
+		return nil, err
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
+
 	if archive, err := CommonGitDataManager.GetArchiveFile(ctx, repoID, opts); err != nil {
 		return nil, err
 	} else if archive != nil {
