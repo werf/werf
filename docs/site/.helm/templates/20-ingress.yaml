@@ -2,7 +2,7 @@
 {{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
 {{- $_ := set . "VersionDNSNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" ) }}
 {{- $host := pluck .Values.werf.env .Values.host | first | default .Values.host._default  }}
-{{- if  eq .Version "dev" }}
+{{- if  hasPrefix "review" .Values.werf.env }}
 {{- $host = ( printf "%s.%s" .Values.werf.env (pluck "dev" .Values.host | first | default .Values.host._default ) | lower ) }}
 {{- end }}
 

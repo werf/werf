@@ -1,4 +1,4 @@
-name: Build and deploy version documentation
+name: Converge documentation
 on:
   push:
     tags:
@@ -12,7 +12,7 @@ env:
 jobs:
 
   converge:
-    name: Converge to Production
+    name: Converge documentation to Production
     runs-on: tfprod-werf
     steps:
 
@@ -26,11 +26,10 @@ jobs:
       run: |
           echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
 
-    - name: Deploy website to production
+    - name: Converge
       uses: werf/actions/converge@v1.2
       with:
         env: production
-        channel: alpha
       env:
         WERF_RELEASE: "werfio-${{ env.Version }}-production"
         WERF_NAMESPACE: "werfio-production"
@@ -40,7 +39,7 @@ jobs:
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
 
   converge_test:
-    name: Converge to Test
+    name: Converge documentation to Test
     runs-on: tfprod-werf
     steps:
 
@@ -54,11 +53,10 @@ jobs:
       run: |
           echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
 
-    - name: Deploy website to test
+    - name: Converge
       uses: werf/actions/converge@v1.2
       with:
         env: test
-        channel: alpha
       env:
         WERF_RELEASE: "werfio-${{ env.Version }}-test"
         WERF_NAMESPACE: "werfio-test"

@@ -1,4 +1,4 @@
-name: Build and deploy main website
+name: Converge website
 on:
   push:
     branches: [master]
@@ -9,7 +9,7 @@ env:
 jobs:
 
   converge:
-    name: Converge to Production
+    name: Converge site to Production
     runs-on: tfprod-werf
     steps:
 
@@ -28,11 +28,10 @@ jobs:
           cd docs/site/.werf/artifacts
           bash generate_artifacts.sh
 
-    - name: Deploy website to production
+    - name: Converge
       uses: werf/actions/converge@v1.2
       with:
         env: production
-        channel: alpha
       env:
         WERF_RELEASE: "werfio-site-production"
         WERF_NAMESPACE: "werfio-production"

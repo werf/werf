@@ -24,8 +24,8 @@ jobs:
       continue-on-error: true
       with:
         env: review-${{ github.event.number }}
-        channel: alpha
       env:
+        WERF_RELEASE: "werfio-site"
         WERF_LOOSE_GITERMINISM: true
         WERF_DIR: "docs/site"
         WERF_LOG_VERBOSE: "on"
