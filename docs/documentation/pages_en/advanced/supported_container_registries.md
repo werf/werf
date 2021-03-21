@@ -75,7 +75,7 @@ HUB_PASSWORD=password
 HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${HUB_USERNAME}'", "password": "'${HUB_PASSWORD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .tокen)
 ```
 
-> You can't use the [personal access token](https://docs.docker.com/docker-hub/access-tокens/) as a _token_ since the deletion of resources is only possible using the user's primary credentials.
+> You can't use the [personal access token](https://docs.docker.com/docker-hub/access-tokens/) as a _token_ since the deletion of resources is only possible using the user's primary credentials.
 
 You can use the following options (or their respective environment variables) to set the said parameters:
 

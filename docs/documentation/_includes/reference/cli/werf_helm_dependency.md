@@ -20,10 +20,10 @@ For example, this Chart.yaml declares two dependencies:
     dependencies:
     - name: nginx
       version: &#34;1.2.3&#34;
-      repository: &#34;[https://example.com/charts&#34](https://example.com/charts&#34);
+      repository: &#34;https://example.com/charts&#34;
     - name: memcached
       version: &#34;3.2.1&#34;
-      repository: &#34;[https://another.example.com/charts&#34](https://another.example.com/charts&#34);
+      repository: &#34;https://another.example.com/charts&#34;
 
 
 The &#39;name&#39; should be the name of a chart, where that name must match the name
