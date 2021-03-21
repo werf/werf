@@ -72,28 +72,13 @@ git:
   excludePaths:
   - '**/*.sh'
   - '**/werf.yaml'
-  - .helm
+  - site/.helm
   - site/backend
-  - documentation
+  - site/documentation
   - .github
   stageDependencies:
     install: ['site/Gemfile','site/Gemfile.lock']
     beforeSetup: '**/*'
----
-image: web
-from: nginx:stable-alpine
-ansible:
-  setup:
-  - name: "Setup /etc/nginx/nginx.conf"
-    copy:
-      content: |
-{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
-      dest: /etc/nginx/nginx.conf
-import:
-- artifact: asset
-  add: /app/_site
-  to: /app/
-  before: setup
 ---
 artifact: web-backend-artifact
 from: golang:1.15

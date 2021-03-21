@@ -134,9 +134,12 @@
 }
 
 .overview__framework-logo {
-  filter: grayscale(1);
-  opacity: 0.55;
-  transition: all 1000ms ease;
+}
+
+.overview__framework-logo_disabled {
+    filter: grayscale(1);
+    opacity: 0.55;
+    transition: all 1000ms ease;
 }
 
 .overview__framework:hover .overview__framework-logo {

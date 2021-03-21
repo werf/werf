@@ -37,8 +37,8 @@ git:
   excludePaths:
   - '**/*.sh'
   - '**/werf.yaml'
-  - .helm
-  - site
+  - documentation/.helm
+  - documentation/site
   - .github
   stageDependencies:
     install: ['documentation/Gemfile','documentation/Gemfile.lock']
