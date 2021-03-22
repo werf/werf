@@ -5,6 +5,7 @@ site_title: werf
 company_name: Flant
 company_url: https://flant.com
 url: https://werf.io
+canonical_url_prefix: /documentation/v1.1
 site_lang: en
 site_urls:
   ru: https://ru.werf.io
