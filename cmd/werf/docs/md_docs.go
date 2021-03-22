@@ -99,12 +99,24 @@ func replaceLinks(s string) string {
 		for _, prefix := range []string{"werf.io/documentation", "https://werf.io/documentation"} {
 			if strings.HasPrefix(link, prefix) {
 				link = strings.TrimPrefix(link, prefix)
-				link = fmt.Sprintf("{{ \"%s\" | relative_url }}", link)
+				link = fmt.Sprintf("{{ \"%s\" | true_relative_url }}", link)
 				break
 			}
 		}
 
-		s = strings.Replace(s, linkText, fmt.Sprintf("[%s](%s)", linkText, link), -1)
+		isSkipLink := false
+		trimmedLink := strings.TrimPrefix(link, "https://")
+		trimmedLink = strings.TrimPrefix(trimmedLink, "http://")
+		for _, prefix := range []string{"another.example.com", "example.com", "localhost"} {
+			if strings.HasPrefix(trimmedLink, prefix) {
+				isSkipLink = true
+				break
+			}
+		}
+
+		if !isSkipLink {
+			s = strings.Replace(s, linkText, fmt.Sprintf("[%s](%s)", linkText, link), -1)
+		}
 	}
 
 	return s
@@ -271,7 +283,7 @@ toc: false
 				fullCommandName = fullCommandFilesystemPath(cmd.Commands()[0].CommandPath())
 			}
 
-			indexPage += fmt.Sprintf(" - [werf %s]({{ \"/reference/cli/%s.html\" | relative_url }}) — {%% include /reference/cli/%s.short.md %%}.\n", cmd.Name(), fullCommandName, fullCommandName)
+			indexPage += fmt.Sprintf(" - [werf %s]({{ \"/reference/cli/%s.html\" | true_relative_url }}) — {%% include /reference/cli/%s.short.md %%}.\n", cmd.Name(), fullCommandName, fullCommandName)
 		}
 
 		doNewline = true

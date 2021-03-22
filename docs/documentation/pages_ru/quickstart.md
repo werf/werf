@@ -247,7 +247,7 @@ minikube service --namespace quickstart-application --url result
 
  3. Шаблоны для компонентов приложения `vote`, `db`, `redis`, `result` и `worker` описаны в каталоге `.helm/templates/`. Схема ниже показывает, как компоненты взаимодействуют между собой:
 
-  ![architecture]({{ "images/quickstart-architecture.svg" | true_relative_url }})
+  ![Схема взаимодействия компонентов]({{ "images/quickstart-architecture.svg" | true_relative_url }})
 
    - Фронтенд-приложение на Python или ASP.NET Core позволяет пользователю проголосовать за один из двух вариантов;
    - Очередь на базе Redis или NATS получает новые голоса;

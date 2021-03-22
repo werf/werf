@@ -11,7 +11,7 @@ Environment is a required param for the dismiss by default, because it is needed
 Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
 Read more info about Helm Release name, Kubernetes Namespace and how to change it:                  
-[https://werf.io/documentation/advanced/helm/releases/naming.html]({{ "/advanced/helm/releases/naming.html" | relative_url }})
+[https://werf.io/documentation/advanced/helm/releases/naming.html]({{ "/advanced/helm/releases/naming.html" | true_relative_url }})
 
 {{ header }} Syntax
 

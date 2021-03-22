@@ -75,7 +75,7 @@ HUB_PASSWORD=password
 HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${HUB_USERNAME}'", "password": "'${HUB_PASSWORD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .tокen)
 ```
 
-> В качестве _token_ нельзя использовать [personal access tокen](https://docs.docker.com/docker-hub/access-tокens/), т.к. удаление ресурсов возможно только при использовании основных учётных данных пользователя
+> В качестве _token_ нельзя использовать [personal access tокen](https://docs.docker.com/docker-hub/access-tokens/), т.к. удаление ресурсов возможно только при использовании основных учётных данных пользователя
 
 Для того, чтобы задать параметры, следует использовать следующие опции или соответствующие им переменные окружения:
 - `--repo-docker-hub-tокen` или

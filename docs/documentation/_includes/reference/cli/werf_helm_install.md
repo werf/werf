@@ -53,8 +53,8 @@ There are five different ways you can express the chart you want to install:
 1. By chart reference: helm install mymaria example/mariadb
 2. By path to a packaged chart: helm install mynginx ./nginx-1.2.3.tgz
 3. By path to an unpacked chart directory: helm install mynginx ./nginx
-4. By absolute URL: helm install mynginx [[https://example.com/charts/](https://example.com/charts/)nginx-1.2.3.tgz]([https://example.com/charts/](https://example.com/charts/)nginx-1.2.3.tgz)
-5. By chart reference and repo url: helm install --repo [https://example.com/charts/](https://example.com/charts/) mynginx nginx
+4. By absolute URL: helm install mynginx https://example.com/charts/nginx-1.2.3.tgz
+5. By chart reference and repo url: helm install --repo https://example.com/charts/ mynginx nginx
 
 CHART REFERENCES
 
