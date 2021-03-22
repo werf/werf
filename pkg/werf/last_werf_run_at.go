@@ -11,11 +11,11 @@ import (
 )
 
 func getWerfLastRunAtPath() string {
-	return filepath.Join(GetServiceDir(), "var", "last_werf_run_at")
+	return filepath.Join(GetServiceDir(), "info", "v1.2", "last_werf_run_at")
 }
 
 func getWerfFirstRunAtPath() string {
-	return filepath.Join(GetServiceDir(), "var", "first_werf_run_at")
+	return filepath.Join(GetServiceDir(), "info", "v1.2", "first_werf_run_at")
 }
 
 func SetWerfLastRunAt(ctx context.Context) error {
