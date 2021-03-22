@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 
 	"github.com/spf13/cobra"
 
@@ -64,6 +65,10 @@ func run() error {
 	}
 
 	if err := image.Init(); err != nil {
+		return err
+	}
+
+	if err := lrumeta.Init(); err != nil {
 		return err
 	}
 

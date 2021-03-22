@@ -22,6 +22,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/util/parallel"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -227,6 +228,10 @@ func (m *StagesStorageManager) FetchStage(ctx context.Context, stg stage.Interfa
 		}
 	} else if err != nil {
 		return err
+	}
+
+	if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, stg.GetImage().Name()); err != nil {
+		return fmt.Errorf("error accessing last recently used images cache: %s", err)
 	}
 
 	return nil
