@@ -109,12 +109,41 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 	}
 	res.VolumeUsage = vu
 
-	filterSet := filters.NewArgs()
-	filterSet.Add("label", image.WerfLabel)
-	filterSet.Add("label", image.WerfStageDigestLabel)
-	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
-	if err != nil {
-		return nil, fmt.Errorf("unable to get docker images: %s", err)
+	var images []types.ImageSummary
+
+	{
+		filterSet := filters.NewArgs()
+		filterSet.Add("label", image.WerfLabel)
+		filterSet.Add("label", image.WerfStageDigestLabel)
+
+		imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+		if err != nil {
+			return nil, fmt.Errorf("unable to get werf docker images: %s", err)
+		}
+		images = append(images, imgs...)
+	}
+
+	{
+		filterSet := filters.NewArgs()
+		filterSet.Add("label", image.WerfLabel)
+		filterSet.Add("label", "werf-stage-signature") // v1.1 legacy images
+
+		imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+		if err != nil {
+			return nil, fmt.Errorf("unable to get werf v1.1 legacy docker images: %s", err)
+		}
+
+	ExcludeLocalV1_1StagesStorage:
+		for _, img := range imgs {
+			for _, ref := range img.RepoTags {
+				// Do not remove stages-storage=:local images, because this is primary stages storage data, and it can only be cleaned by the werf-cleanup command
+				if strings.HasPrefix(ref, "werf-stages-storage/") {
+					continue ExcludeLocalV1_1StagesStorage
+				}
+			}
+
+			images = append(images, img)
+		}
 	}
 
 	for _, imageSummary := range images {
