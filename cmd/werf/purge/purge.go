@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/lrumeta"
@@ -93,7 +94,12 @@ func runPurge() error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := git_repo.Init(); err != nil {
+	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting host git data manager: %s", err)
+	}
+
+	if err := git_repo.Init(gitDataManager); err != nil {
 		return err
 	}
 

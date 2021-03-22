@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/pkg/git_repo/gitdata"
 
 	"github.com/spf13/cobra"
 
@@ -75,7 +76,12 @@ func runSecretEncrypt(ctx context.Context, filePath string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := git_repo.Init(); err != nil {
+	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting host git data manager: %s", err)
+	}
+
+	if err := git_repo.Init(gitDataManager); err != nil {
 		return err
 	}
 

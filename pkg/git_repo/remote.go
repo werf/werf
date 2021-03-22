@@ -123,7 +123,7 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	if lock, err := lockGC(ctx, true); err != nil {
+	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return false, err
 	} else {
 		defer werf.ReleaseHostLock(lock)
@@ -351,7 +351,7 @@ func (repo *Remote) RemoteBranchesList(_ context.Context) ([]string, error) {
 }
 
 func (repo *Remote) yieldRepositoryBackedByWorkTree(ctx context.Context, commit string, doFunc func(repository *git.Repository) error) error {
-	if lock, err := lockGC(ctx, true); err != nil {
+	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return err
 	} else {
 		defer werf.ReleaseHostLock(lock)

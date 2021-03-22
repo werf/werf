@@ -70,7 +70,7 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 	}
 
 	if opts.WithServiceHeadCommit {
-		if lock, err := lockGC(ctx, true); err != nil {
+		if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 			return nil, err
 		} else {
 			defer werf.ReleaseHostLock(lock)
@@ -963,7 +963,7 @@ func (repo *Local) yieldRepositoryBackedByWorkTree(ctx context.Context, commit s
 	}
 
 	if hasSubmodules {
-		if lock, err := lockGC(ctx, true); err != nil {
+		if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 			return err
 		} else {
 			defer werf.ReleaseHostLock(lock)

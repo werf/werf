@@ -294,6 +294,8 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 			logboek.Context(ctx).Warn().LogF("WARNING:  - old unused files from werf caches (which are stored in the ~/.werf/local_cache);\n")
 			logboek.Context(ctx).Warn().LogF("WARNING:  - old temporary service files /tmp/werf-project-data-* and /tmp/werf-config-render-*;\n")
 			logboek.Context(ctx).Warn().LogF("WARNING:  - least recently used werf images (only >= v1.2 werf images could be removed, note that werf <= v1.1 images will not be deleted by this cleanup);\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: Werf-host-cleanup procedure of v1.2 werf version will not cleanup --stages-storage=:local stages of v1.1 werf version, because this is primary stages storage data, and it can only be cleaned by the regular per-project werf-cleanup command with git-history based algorithm.\n")
 			logboek.Context(ctx).Warn().LogOptionalLn()
 		}
 
