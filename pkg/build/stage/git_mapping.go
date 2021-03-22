@@ -802,19 +802,19 @@ func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
 func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFileDescriptor, error) {
 	return &ContainerFileDescriptor{
 		FilePath:          archive.GetFilePath(),
-		ContainerFilePath: path.Join(gm.ContainerArchivesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.ArchivesCacheDir, archive.GetFilePath()))),
+		ContainerFilePath: path.Join(gm.ContainerArchivesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetArchivesCacheDir(), archive.GetFilePath()))),
 	}, nil
 }
 
 func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
-	filePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fmt.Sprintf("%s.paths_list", filepath.Base(patch.GetFilePath())))
-	containerFilePath := path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.PatchesCacheDir, patch.GetFilePath())))
-
 	//FIXME: create this file using GitDataManager
 
+	pathsListFilePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fmt.Sprintf("%s.paths_list", filepath.Base(patch.GetFilePath())))
+	containerFilePath := path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetPatchesCacheDir(), pathsListFilePath)))
+
 	fileDesc := &ContainerFileDescriptor{
-		FilePath:          filePath,
-		ContainerFilePath: path.Join(gm.ContainerPatchesDir, containerFilePath),
+		FilePath:          pathsListFilePath,
+		ContainerFilePath: containerFilePath,
 	}
 
 	fileExists := true
@@ -855,7 +855,7 @@ func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*Containe
 func (gm *GitMapping) preparePatchFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
 	return &ContainerFileDescriptor{
 		FilePath:          patch.GetFilePath(),
-		ContainerFilePath: path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.PatchesCacheDir, patch.GetFilePath()))),
+		ContainerFilePath: path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetPatchesCacheDir(), patch.GetFilePath()))),
 	}, nil
 }
 

@@ -78,7 +78,7 @@ func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, prevBuil
 		}
 	}
 
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.ArchivesCacheDir, s.ContainerArchivesDir))
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 
 	return nil

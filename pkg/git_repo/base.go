@@ -147,7 +147,7 @@ func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, wor
 }
 
 func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
-	if lock, err := lockGC(ctx, true); err != nil {
+	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
 		defer werf.ReleaseHostLock(lock)
@@ -234,7 +234,7 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 }
 
 func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, workTreeCacheDir string, fromCommit, toCommit string) (string, error) {
-	if lock, err := lockGC(ctx, true); err != nil {
+	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return "", err
 	} else {
 		defer werf.ReleaseHostLock(lock)
@@ -309,7 +309,7 @@ func (repo *Base) CreateArchive(ctx context.Context, repoPath, gitDir, repoID, w
 }
 
 func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
-	if lock, err := lockGC(ctx, true); err != nil {
+	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
 		defer werf.ReleaseHostLock(lock)

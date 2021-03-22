@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/giterminism_manager"
 
 	"github.com/spf13/cobra"
@@ -124,7 +125,12 @@ func runMain(ctx context.Context, args []string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	if err := git_repo.Init(); err != nil {
+	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting host git data manager: %s", err)
+	}
+
+	if err := git_repo.Init(gitDataManager); err != nil {
 		return err
 	}
 
