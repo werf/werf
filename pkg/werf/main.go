@@ -155,5 +155,13 @@ func Init(tmpDirOption, homeDirOption string) error {
 		hostLocker = locker
 	}
 
+	if err := SetWerfFirstRunAt(context.Background()); err != nil {
+		return fmt.Errorf("error setting werf first run at timestamp: %s", err)
+	}
+
+	if err := SetWerfLastRunAt(context.Background()); err != nil {
+		return fmt.Errorf("error setting werf last run at timestamp: %s", err)
+	}
+
 	return nil
 }
