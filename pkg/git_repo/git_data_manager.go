@@ -29,11 +29,22 @@ var (
 )
 
 func Init() error {
-	CommonGitDataManager = NewGitDataManager(
-		filepath.Join(werf.GetLocalCacheDir(), "git_archives", GitArchivesCacheVersion),
-		filepath.Join(werf.GetLocalCacheDir(), "git_patches", GitPatchesCacheVersion),
-		filepath.Join(werf.GetServiceDir(), "tmp", "git_data"),
-	)
+	archivesCacheDir := filepath.Join(werf.GetLocalCacheDir(), "git_archives", GitArchivesCacheVersion)
+	patchesCacheDir := filepath.Join(werf.GetLocalCacheDir(), "git_patches", GitPatchesCacheVersion)
+	tmpGitDataDir := filepath.Join(werf.GetServiceDir(), "tmp", "git_data")
+
+	if err := os.MkdirAll(archivesCacheDir, os.ModePerm); err != nil {
+		return fmt.Errorf("unable to create dir %q: %s", archivesCacheDir, err)
+	}
+	if err := os.MkdirAll(patchesCacheDir, os.ModePerm); err != nil {
+		return fmt.Errorf("unable to create dir %q: %s", patchesCacheDir, err)
+	}
+	if err := os.MkdirAll(tmpGitDataDir, os.ModePerm); err != nil {
+		return fmt.Errorf("unable to create dir %q: %s", tmpGitDataDir, err)
+	}
+
+	CommonGitDataManager = NewGitDataManager(archivesCacheDir, patchesCacheDir, tmpGitDataDir)
+
 	return nil
 }
 
