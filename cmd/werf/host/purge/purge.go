@@ -11,6 +11,7 @@ import (
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/host_cleaning"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -71,6 +72,10 @@ func runReset() error {
 	}
 
 	if err := image.Init(); err != nil {
+		return err
+	}
+
+	if err := lrumeta.Init(); err != nil {
 		return err
 	}
 

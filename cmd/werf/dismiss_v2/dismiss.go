@@ -7,6 +7,7 @@ import (
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
 
 	"github.com/werf/werf/pkg/deploy_v2/lock_manager"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 
 	"github.com/werf/werf/pkg/deploy_v2/werf_chart"
 
@@ -102,6 +103,10 @@ func runDismiss() error {
 	}
 
 	if err := image.Init(); err != nil {
+		return err
+	}
+
+	if err := lrumeta.Init(); err != nil {
 		return err
 	}
 
