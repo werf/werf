@@ -55,7 +55,7 @@ werf cleanup [options]
             $WERF_GIT_COMMIT_STRATEGY_LIMIT
       --git-history-based-cleanup=true
             Use git history based cleanup (default $WERF_GIT_HISTORY_BASED_CLEANUP)
-      --git-history-based-cleanup-v1.2=false
+      --git-history-based-cleanup-v1.2=true
             Use git history based cleanup and delete images tags without related image metadata     
             (default $WERF_GIT_HISTORY_BASED_CLEANUP_v1_2)
       --git-history-synchronization=false
