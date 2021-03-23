@@ -7,7 +7,6 @@ description: Как установить werf?
 versions:
   - 1.2
   - 1.1
-  - 1.0
 channels:
   - alpha
   - beta
@@ -34,8 +33,6 @@ channels:
           data-install-tab-group="version" data-install-tab="1.2">1.2</a>
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="version" data-install-tab="1.1">1.1</a>
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="version" data-install-tab="1.0">1.0</a>
       </div>
     </div><!-- /selector -->
     <div class="installation-selector">
