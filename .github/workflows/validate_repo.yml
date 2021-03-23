@@ -1,19 +1,13 @@
 name: Git repo Validation
 
 on:
-  push:
   pull_request:
     types:
       - opened
       - edited
       - reopened
       - synchronize
-  pull_request_target:
-    types:
-      - opened
-      - edited
-      - reopened
-      - synchronize
+
 
 jobs:
   type_check:
