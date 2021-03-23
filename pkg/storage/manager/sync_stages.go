@@ -13,7 +13,6 @@ import (
 type SyncStagesOptions struct {
 	RemoveSource      bool
 	CleanupLocalCache bool
-	WithoutLock       bool
 }
 
 // SyncStages will make sure, that destination stages storage contains all stages from source stages storage.
@@ -30,14 +29,6 @@ func SyncStages(ctx context.Context, projectName string, fromStagesStorage stora
 			logProcess.Fail()
 		}
 	}()
-
-	if !opts.WithoutLock {
-		if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: true}); err != nil {
-			return fmt.Errorf("unable to lock stages and images of project %q: %s", projectName, err)
-		} else {
-			defer storageLockManager.Unlock(ctx, lock)
-		}
-	}
 
 	logboek.Context(ctx).Default().LogFDetails("Source      — %s\n", fromStagesStorage.String())
 	logboek.Context(ctx).Default().LogFDetails("Destination — %s\n", toStagesStorage.String())

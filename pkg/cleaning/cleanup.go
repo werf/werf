@@ -2,7 +2,6 @@ package cleaning
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -19,12 +18,6 @@ type CleanupOptions struct {
 
 func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options CleanupOptions) error {
 	m := newCleanupManager(projectName, storageManager, options)
-
-	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
-		return fmt.Errorf("unable to lock stages and images: %s", err)
-	} else {
-		defer storageLockManager.Unlock(ctx, lock)
-	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Running images cleanup").
 		Options(func(options types.LogProcessOptionsInterface) {

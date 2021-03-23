@@ -47,12 +47,6 @@ type ImagesCleanupOptions struct {
 func ImagesCleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options ImagesCleanupOptions) error {
 	m := newImagesCleanupManager(projectName, storageManager, options)
 
-	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
-		return fmt.Errorf("unable to lock stages and images: %s", err)
-	} else {
-		defer storageLockManager.Unlock(ctx, lock)
-	}
-
 	return logboek.Context(ctx).Default().LogProcess("Running images cleanup").
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(style.Highlight())
