@@ -201,6 +201,7 @@ werf предоставляет следующие команды compose:
 
  - Директива `fromImageArtifact` переименована в `fromArtifact`.
      - **ПРЕДУПРЕЖДЕНИЕ.** Директива `fromImageArtifact/fromArtifact` не рекомендована к использованию и будет удалена в v1.3 из-за неочевидной работы механизма наложения патчей в получившейся конфигурации. Рекомендуется уже сейчас перейти на `image` и `fromImage` вместо `artifact` и `fromArtifact`.
+ - Директивы `herebyIAdmitThatFromLatestMightBreakReproducibility` и `herebyIAdmitThatBranchMightBreakReproducibility` удалены. Теперь при использовании директив `fromLatest` и `git.branch` необходимо ослаблять правила [гитерминизма]({{ "/advanced/giterminism.html" | true_relative_url }}), используя соответствующие директивы в [werf-giterminism.yaml]({{ "/reference/werf_giterminism_yaml.html" | true_relative_url }}).
  - Удалена опция `--helm-chart-dir`, директория helm-чарта определяется в `werf.yaml`:
 
     ```yaml
