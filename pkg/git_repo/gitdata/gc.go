@@ -121,6 +121,10 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	}
 
 	targetVolumeUsagePercentage := allowedVolumeUsagePercentage - allowedVolumeUsageMarginPercentage
+	if targetVolumeUsagePercentage < 0 {
+		targetVolumeUsagePercentage = 0
+	}
+
 	bytesToFree := getBytesToFree(vu, targetVolumeUsagePercentage)
 
 	if vu.Percentage <= allowedVolumeUsagePercentage {

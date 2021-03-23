@@ -35,13 +35,24 @@ werf dismiss [options]
 {{ header }} Options
 
 ```shell
-      --allowed-volume-usage=80
-            Set allowed percentage of docker storage volume usage which will cause garbage          
-            collection of local docker images (default 80% or $WERF_ALLOWED_VOLUME_USAGE)
-      --allowed-volume-usage-margin=10
-            During garbage collection werf would delete images until volume usage becomes below     
-            "allowed-volume-usage - allowed-volume-usage-margin" level (default 10% or              
-            $WERF_ALLOWED_VOLUME_USAGE_MARGIN)
+      --allowed-docker-storage-volume-usage=80
+            Set allowed percentage of docker storage volume usage which will cause cleanup of least 
+            recently used local docker images (default 80% or                                       
+            $WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE)
+      --allowed-docker-storage-volume-usage-margin=10
+            During cleanup of least recently used local docker images werf would delete images      
+            until volume usage becomes below "allowed-docker-storage-volume-usage -                 
+            allowed-docker-storage-volume-usage-margin" level (default 10% or                       
+            $WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN)
+      --allowed-local-cache-volume-usage=80
+            Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
+            which will cause cleanup of least recently used data from the local cache (default 80%  
+            or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
+      --allowed-local-cache-volume-usage-margin=10
+            During cleanup of least recently used local docker images werf would delete images      
+            until volume usage becomes below "allowed-docker-storage-volume-usage -                 
+            allowed-docker-storage-volume-usage-margin" level (default 10% or                       
+            $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
@@ -59,7 +70,7 @@ werf dismiss [options]
       --dir=''
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
-      --disable-auto-host-cleanup=true
+      --disable-auto-host-cleanup=false
             Disable auto host cleanup procedure in main werf commands like werf-build,              
             werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)
       --docker-config=''

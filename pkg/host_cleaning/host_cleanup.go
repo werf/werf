@@ -13,41 +13,30 @@ import (
 )
 
 const (
-	DefaultAllowedVolumeUsagePercentage       float64 = 80.0
-	DefaultAllowedVolumeUsageMarginPercentage float64 = 10.0
+	DefaultAllowedDockerStorageVolumeUsagePercentage       float64 = 80.0
+	DefaultAllowedDockerStorageVolumeUsageMarginPercentage float64 = 10.0
+	DefaultAllowedLocalCacheVolumeUsagePercentage          float64 = 80.0
+	DefaultAllowedLocalCacheVolumeUsageMarginPercentage    float64 = 10.0
 )
 
 type HostCleanupOptions struct {
-	AllowedVolumeUsagePercentage       *uint
-	AllowedVolumeUsageMarginPercentage *uint
+	AllowedDockerStorageVolumeUsagePercentage       *uint
+	AllowedDockerStorageVolumeUsageMarginPercentage *uint
+	AllowedLocalCacheVolumeUsagePercentage          *uint
+	AllowedLocalCacheVolumeUsageMarginPercentage    *uint
 
 	DryRun                  bool
 	Force                   bool
 	DockerServerStoragePath string
 }
 
-func getAllowedVolumeUsagePercentage(allowedVolumeUsagePercentageOption *uint) float64 {
+func getOptionValueOrDefault(optionValue *uint, defaultValue float64) float64 {
 	var res float64
-	if allowedVolumeUsagePercentageOption != nil {
-		res = float64(*allowedVolumeUsagePercentageOption)
+	if optionValue != nil {
+		res = float64(*optionValue)
 	} else {
-		res = DefaultAllowedVolumeUsagePercentage
+		res = defaultValue
 	}
-	return res
-}
-
-func getAllowedVolumeUsageMarginPercentage(allowedVolumeUsagePercentage float64, allowedVolumeUsagePercentageMarginOption *uint) float64 {
-	var res float64
-	if allowedVolumeUsagePercentageMarginOption != nil {
-		res = float64(*allowedVolumeUsagePercentageMarginOption)
-	} else {
-		res = DefaultAllowedVolumeUsageMarginPercentage
-	}
-
-	if res > allowedVolumeUsagePercentage {
-		res = allowedVolumeUsagePercentage
-	}
-
 	return res
 }
 
@@ -88,11 +77,14 @@ func RunHostCleanup(ctx context.Context, options HostCleanupOptions) error {
 		return err
 	}
 
-	allowedVolumeUsagePercentage := getAllowedVolumeUsagePercentage(options.AllowedVolumeUsagePercentage)
-	allowedVolumeUsageMarginPercentage := getAllowedVolumeUsageMarginPercentage(getAllowedVolumeUsagePercentage(options.AllowedVolumeUsagePercentage), options.AllowedVolumeUsageMarginPercentage)
+	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
+	allowedLocalCacheVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsageMarginPercentage, DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
+
+	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
+	allowedDockerStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsageMarginPercentage, DefaultAllowedDockerStorageVolumeUsageMarginPercentage)
 
 	if err := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
-		if err := gitdata.RunGC(ctx, allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage); err != nil {
+		if err := gitdata.RunGC(ctx, allowedLocalCacheVolumeUsagePercentage, allowedLocalCacheVolumeUsageMarginPercentage); err != nil {
 			return fmt.Errorf("git repo GC failed: %s", err)
 		}
 		return nil
@@ -106,7 +98,7 @@ func RunHostCleanup(ctx context.Context, options HostCleanupOptions) error {
 	}
 
 	return logboek.Context(ctx).Default().LogProcess("Running GC for local docker server").DoError(func() error {
-		if err := RunGCForLocalDockerServer(ctx, allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage, dockerServerStoragePath, options.Force, options.DryRun); err != nil {
+		if err := RunGCForLocalDockerServer(ctx, allowedDockerStorageVolumeUsagePercentage, allowedDockerStorageVolumeUsageMarginPercentage, dockerServerStoragePath, options.Force, options.DryRun); err != nil {
 			return fmt.Errorf("local docker server GC failed: %s", err)
 		}
 		return nil
@@ -131,9 +123,10 @@ func ShouldRunAutoHostCleanup(ctx context.Context, options HostCleanupOptions) (
 		return true, nil
 	}
 
-	allowedVolumeUsagePercentage := getAllowedVolumeUsagePercentage(options.AllowedVolumeUsagePercentage)
+	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
+	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
 
-	shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedVolumeUsagePercentage)
+	shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsagePercentage)
 	if err != nil {
 		return false, fmt.Errorf("failed to check git repo GC: %s", err)
 	}
@@ -146,7 +139,7 @@ func ShouldRunAutoHostCleanup(ctx context.Context, options HostCleanupOptions) (
 		return false, fmt.Errorf("error getting local docker server storage path: %s", err)
 	}
 
-	shouldRun, err = ShouldRunAutoGCForLocalDockerServer(ctx, allowedVolumeUsagePercentage, dockerServerStoragePath)
+	shouldRun, err = ShouldRunAutoGCForLocalDockerServer(ctx, allowedDockerStorageVolumeUsagePercentage, dockerServerStoragePath)
 	if err != nil {
 		return false, fmt.Errorf("failed to check local docker server host cleaner GC: %s", err)
 	}
