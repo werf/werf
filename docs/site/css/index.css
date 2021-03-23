@@ -124,31 +124,31 @@ body,
 }
 
 .page__icon_slack {
-  background-image: url('../images/icons/slack.svg');
+  background-image: url('/images/icons/slack.svg');
 }
 
 .page__icon_telegram {
-  background-image: url('../images/icons/telegram.svg');
+  background-image: url('/images/icons/telegram.svg');
 }
 
 .page__icon_twitter {
-  background-image: url('../images/icons/twitter.svg');
+  background-image: url('/images/icons/twitter.svg');
 }
 
 .page__icon_github {
-  background-image: url('../images/icons/github.svg');
+  background-image: url('/images/icons/github.svg');
 }
 
 .page__icon_search {
-  background-image: url('../images/icons/search.svg');
+  background-image: url('/images/icons/search.svg');
 }
 
 .page__icon_rss {
-    background-image: url('../images/icons/rss.svg');
+    background-image: url('/images/icons/rss.svg');
 }
 
 .page__icon_discussions {
-    background-image: url('../images/icons/discussions.svg');
+    background-image: url('/images/icons/discussions.svg');
 }
 
 .page__icon_block-title {
@@ -201,7 +201,7 @@ body,
 }
 
 .page__icon_heart {
-  background-image: url('../images/icons/heart.png');
+  background-image: url('/images/icons/heart.png');
 }
 
 .intro {
@@ -228,7 +228,7 @@ body,
   width: 1331px;
   height: 1785px;
   background-repeat: no-repeat;
-  background-image: url('../images/backgrounds/presentation.svg');
+  background-image: url('/images/backgrounds/presentation.svg');
 }
 
 .intro__row {
@@ -532,7 +532,7 @@ body,
   height: 769px;
   background-position: top right;
   background-repeat: no-repeat;
-  background-image: url('../images/backgrounds/welcome.svg');
+  background-image: url('/images/backgrounds/welcome.svg');
 }
 
 .welcome__content {
@@ -614,7 +614,7 @@ body,
   top: -20px;
   right: -20px;
   background-repeat: no-repeat;
-  background-image: url('../images/illustrations/stats.svg');
+  background-image: url('/images/illustrations/stats.svg');
   z-index: 3;
 }
 
@@ -686,7 +686,7 @@ body,
   padding-bottom: 100px;
   background-repeat: no-repeat;
   background-position: center 120px;
-  background-image: url('../images/backgrounds/features.svg');
+  background-image: url('/images/backgrounds/features.svg');
   z-index: 2;
 }
 
@@ -722,31 +722,31 @@ body,
 }
 
 .features__list-item-icon_lifecycle {
-  background-image: url('../images/icons/feature-lifecycle.svg');
+  background-image: url('/images/icons/feature-lifecycle.svg');
 }
 
 .features__list-item-icon_easy {
-  background-image: url('../images/icons/feature-easy.svg');
+  background-image: url('/images/icons/feature-easy.svg');
 }
 
 .features__list-item-icon_config {
-  background-image: url('../images/icons/feature-config.svg');
+  background-image: url('/images/icons/feature-config.svg');
 }
 
 .features__list-item-icon_size {
-  background-image: url('../images/icons/feature-size.svg');
+  background-image: url('/images/icons/feature-size.svg');
 }
 
 .features__list-item-icon_helm {
-  background-image: url('../images/icons/feature-helm.svg');
+  background-image: url('/images/icons/feature-helm.svg');
 }
 
 .features__list-item-icon_debug {
-  background-image: url('../images/icons/feature-debug.svg');
+  background-image: url('/images/icons/feature-debug.svg');
 }
 
 .features__list-item-icon_kubernetes {
-  background-image: url('../images/icons/feature-kubernetes.svg');
+  background-image: url('/images/icons/feature-kubernetes.svg');
 }
 
 .features__list-item-title {
@@ -815,7 +815,7 @@ body,
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
-  background-image: url('../images/backgrounds/feature_special.svg');
+  background-image: url('/images/backgrounds/feature_special.svg');
 }
 
 .features__list-item_special:after {
@@ -830,7 +830,7 @@ body,
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
-  background-image: url('../images/backgrounds/feature_special2.svg');
+  background-image: url('/images/backgrounds/feature_special2.svg');
 }
 
 .reliability {
@@ -861,7 +861,7 @@ body,
     background-repeat: no-repeat;
     background-position: center right;
     background-size: contain;
-    background-image: url(../images/backgrounds/intro.svg);
+    background-image: url('/images/backgrounds/intro.svg');
 }
 
 .reliability__title {
@@ -900,7 +900,7 @@ body,
   top: -220px;
   right: 0px;
   background-repeat: no-repeat;
-  background-image: url('../images/backgrounds/community.svg');
+  background-image: url('/images/backgrounds/community.svg');
   background-position: center;
   z-index: -1;
 }
@@ -928,7 +928,7 @@ body,
   left: 62px;
   top: -90px;
   background-repeat: no-repeat;
-  background-image: url('../images/illustrations/community.svg');
+  background-image: url('/images/illustrations/community.svg');
   background-position: center;
 }
 
@@ -941,7 +941,7 @@ body,
   right: -50px;
   top: -140px;
   background-repeat: no-repeat;
-  background-image: url('../images/illustrations/community2.svg');
+  background-image: url('/images/illustrations/community2.svg');
   background-position: center;
 }
 
@@ -982,7 +982,7 @@ body,
   height: 147px;
   background-repeat: no-repeat;
   background-position: top right;
-  background-image: url('../images/illustrations/documentation.svg');
+  background-image: url('/images/illustrations/documentation.svg');
 }
 
 .documentation__info {
@@ -1103,7 +1103,7 @@ body,
   margin-left: 15px;
   background-repeat: no-repeat;
   background-position: center center;
-  background-image: url('../images/icons/star.svg');
+  background-image: url('/images/icons/star.svg');
   border-left: solid 2px #f3f8ff;
 }
 
@@ -1168,7 +1168,7 @@ code {
   display: block;
   width: 100px;
   height: 100px;
-  background-image: url('../images/icons/slack.svg');
+  background-image: url('/images/icons/slack.svg');
   background-size: contain;
   filter: brightness(0) invert(100%);
   position: absolute;
@@ -1185,7 +1185,7 @@ code {
   right: -60px;
   bottom: -100px;
   background-repeat: no-repeat;
-  background-image: url(../images/illustrations/community2.svg);
+  background-image: url('/images/illustrations/community2.svg');
   background-position: center;
 }
 

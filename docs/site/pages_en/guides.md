@@ -7,6 +7,7 @@ breadcrumbs: none
 ---
 
 <link rel="stylesheet" type="text/css" href="{{ assets["overview.css"].digest_path | relative_url }}" />
+<link rel="stylesheet" type="text/css" href="{{ assets["guides.css"].digest_path | relative_url }}" />
 
 <h1 class="docs__title">Guides</h1>
 <p>These guides provide reasonably detailed information that combines the theory and practice of development (Dev) and operation (Ops).</p>
@@ -17,4 +18,4 @@ breadcrumbs: none
 
 <p>Each version of the tutorial takes into account the specifics of the programming language/framework and includes examples of the application source code and infrastructure (IaC).</p>
 
-{% include en/guides/tiles.html %}
+<!--#include virtual="/guides/includes/landing-tiles.html" -->

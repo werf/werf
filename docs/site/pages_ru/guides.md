@@ -7,6 +7,7 @@ breadcrumbs: none
 ---
 
 <link rel="stylesheet" type="text/css" href="{{ assets["overview.css"].digest_path | relative_url }}" />
+<link rel="stylesheet" type="text/css" href="{{ assets["guides.css"].digest_path | relative_url }}" />
 
 <h1 class="docs__title">Руководства</h1>
 <p>Это достаточно подробное руководство, сочетающее теорию и практику разработки (Dev) и эксплуатации (Ops).</p>
@@ -17,4 +18,4 @@ breadcrumbs: none
 
 <p>В каждом из вариантов самоучителя учтена специфика языка/фреймворка и приложены примеры исходных кодов приложения и инфраструктуры (IaC).</p>
 
-{% include ru/guides/tiles.html %}
+<!--#include virtual="/guides/includes/landing-tiles.html" -->

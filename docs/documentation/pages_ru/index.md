@@ -6,6 +6,7 @@ description: Обширная и понятная документация по 
 ---
 
 <link rel="stylesheet" type="text/css" href="{{ assets["overview.css"].digest_path | true_relative_url }}" />
+<link rel="stylesheet" type="text/css" href="/css/guides.css" />
 
 <div class="overview">
     <div class="overview__title">Обязательно к прочтению</div>
@@ -55,7 +56,7 @@ description: Обширная и понятная документация по 
             Раздел содержит массу информации о настройке выката для приложений. Здесь можно найти руководство, подходящее для вашего проекта (по языку программирования, фреймворку, системе CI/CD и т.п.) и развернуть первое настоящее приложение в кластер Kubernetes с помощью werf.
         </div>
     </div>
-    <!--#include virtual="/includes/guides-tiles.html" -->
+    <!--#include virtual="/guides/includes/landing-tiles.html" -->
     <div class="overview__title">Справочник</div>
     <div class="overview__step">
         <div class="overview__step-title">Найди структурированную информацию о конфигурировании werf и его командах</div>
