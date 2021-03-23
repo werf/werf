@@ -45,6 +45,9 @@ type StagesStorageManager struct {
 	StorageLockManager storage.LockManager
 	StagesStorage      storage.StagesStorage
 	StagesStorageCache storage.StagesStorageCache
+
+	// These will be released automatically when current process exits
+	SharedHostImagesLocks []lockgate.LockHandle
 }
 
 func newStagesStorageManager(projectName string, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *StagesStorageManager {
@@ -203,7 +206,24 @@ func (m *StagesStorageManager) ForEachDeleteStage(ctx context.Context, options F
 	})
 }
 
+func (m *StagesStorageManager) LockStageImage(ctx context.Context, imageName string) error {
+	imageLockName := container_runtime.ImageLockName(imageName)
+
+	_, lock, err := werf.AcquireHostLock(ctx, imageLockName, lockgate.AcquireOptions{Shared: true})
+	if err != nil {
+		return fmt.Errorf("error locking %q shared lock: %s", imageLockName, err)
+	}
+
+	m.SharedHostImagesLocks = append(m.SharedHostImagesLocks, lock)
+
+	return nil
+}
+
 func (m *StagesStorageManager) FetchStage(ctx context.Context, stg stage.Interface) error {
+	if err := m.LockStageImage(ctx, stg.GetImage().Name()); err != nil {
+		return fmt.Errorf("error locking stage image %q: %s", stg.GetImage().Name(), err)
+	}
+
 	logboek.Context(ctx).Debug().LogF("-- StagesManager.FetchStage %s\n", stg.LogDetailedName())
 	if freshStageDescription, err := m.StagesStorage.GetStageDescription(ctx, m.ProjectName, stg.GetImage().GetStageDescription().StageID.Signature, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
 		return err
