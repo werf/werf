@@ -303,7 +303,7 @@ werf applies the following algorithm for using the ssh-agent:
 
 ## More details: gitArchive, gitCache, gitLatestPatch
 
-Let us review the process of adding files to the resulting image in more detail. As is was stated earlier, the docker image contains multiple layers. To understand what layers werf create, let's consider the building actions based on three sample commits: `1`, `2` and `3`:
+Let us review the process of adding files to the resulting image in more detail. As it was stated earlier, the docker image contains multiple layers. To understand what layers werf create, let's consider the building actions based on three sample commits: `1`, `2` and `3`:
 
 - Build of a commit No. 1. All files are added to a single layer depending on the configuration of the _git mappings_. This is done with the help of the git archive command. The resulting layer corresponds to the _gitArchive_ stage.
 - Build of a commit No. 2. Another layer is added. In it, files are modified by applying a patch. This layer corresponds to the _gitLatestPatch_ stage.

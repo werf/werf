@@ -15,9 +15,9 @@ werf supports any CI/CD system out-of-the-box. Furthermore, there is enhanced su
  - [GitLab CI/CD]({{ "advanced/ci_cd/gitlab_ci_cd.html" | true_relative_url }});
  - [GitHub Actions]({{ "advanced/ci_cd/github_actions.html" | true_relative_url }}).
 
-## Werf commands you will need
+## werf commands you will need
 
-Werf provides the following basic commands that serve as building blocks to construct your pipelines:
+werf provides the following basic commands that serve as building blocks to construct your pipelines:
 
  - `werf converge`;
  - `werf dismiss`;

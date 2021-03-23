@@ -19,7 +19,7 @@ The chart is a set of configuration files which describe an application. Chart f
   secret-values.yaml
 ```
 
-Werf chart has an optional `.helm/Chart.yaml` description file, which is fully compatible with [helm`s `Chart.yaml`](https://helm.sh/docs/topics/charts/) and could contain following content:
+werf chart has an optional `.helm/Chart.yaml` description file, which is fully compatible with [helm`s `Chart.yaml`](https://helm.sh/docs/topics/charts/) and could contain following content:
 
 ```yaml
 apiVersion: v2
@@ -31,7 +31,7 @@ dependencies:
    repository: "https://charts.bitnami.com/bitnami" 
 ```
 
-By default werf will use [project name]({{ "/reference/werf_yaml.html#project-name" | true_relative_url }}) from the `werf.yaml` as a chart name, and default version is always `1.0.0`. You can redefine this by placing own `.helm/Chart.yaml` with overrides for chart name or version:
+By default, werf will use [project name]({{ "/reference/werf_yaml.html#project-name" | true_relative_url }}) from the `werf.yaml` as a chart name, and default version is always `1.0.0`. You can redefine this by placing own `.helm/Chart.yaml` with overrides for chart name or version:
 
 ```yaml
 name: mychart

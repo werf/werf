@@ -28,7 +28,7 @@ werf mounts _stapel image_ into each build container when building docker images
 
 ## Change, update and rebuild stapel
 
-Stapel image needs to be updated time to time to update ansible or when new version of [LFS](http://www.linuxfromscratch.org/lfs/view/stable) is available.
+Stapel image periodically needs to be updated to actualize ansible or when new version of [LFS](http://www.linuxfromscratch.org/lfs/view/stable) is available.
 
 1.  Make necessary changes to build instructions in `stapel` directory.
 2.  Update omnibus bundle:

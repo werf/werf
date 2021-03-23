@@ -40,4 +40,4 @@ Tracking behaviour can be configured for each resource using [resource annotatio
 
 ## Сабчарты
 
-Во время процесса деплоя  werf выполнит рендер, создаст все требуемые ресурсы указанные во всех [используемых сабчартах]({{ "/advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}) и будет отслеживать каждый из этих ресурсов до состояния готовности.
+Во время процесса деплоя werf выполнит рендер, создаст все требуемые ресурсы указанные во всех [используемых сабчартах]({{ "/advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}) и будет отслеживать каждый из этих ресурсов до состояния готовности.

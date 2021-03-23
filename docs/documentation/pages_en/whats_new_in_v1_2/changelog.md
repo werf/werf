@@ -8,7 +8,7 @@ This article contains full descriptive list of changes since v1.1. If you need a
 
 ## Giterminism
 
-Werf introduces the so-called giterminism mode. The word is constructed from git and determinism, which means “determined by the git”.
+werf introduces the so-called giterminism mode. The word is constructed from git and determinism, which means “determined by the git”.
 
 All werf configuration files, helm configuration and application files werf reads from the current commit of the git project directory. There is also so called [dev mode](#follow-and-dev) to simplify local development of werf configuration and local development of an application with werf.
 
@@ -22,10 +22,10 @@ Introduced new giterminism configuration file [`werf-giterminism.yaml`]({{ "/ref
 
 All toplevel commands: `werf converge`, `werf run`, `werf bundle publish`, `werf render` and `werf build` — has two main flags `--follow` and `--dev` aimed for local development.
 
-By default each of these commands reads all needed files from the current commit of the git repo. With the `--dev` flag command will read all tracked/modified files of the project git work tree (note that untracked files are restricted to use).
+By default, each of these commands reads all needed files from the current commit of the git repo. With the `--dev` flag command will read all tracked/modified files of the project git work tree (note that untracked files are restricted to use).
 
 There is also a third flag `--dev-mode simple|strict` — the mode of `--dev` operation:
- - in the `simple` mode werf reads all tracked/modified files of the project git work tree (existance of untracked files may cause an error when this file is needed by the werf);
+ - in the `simple` mode werf reads all tracked/modified files of the project git work tree (existence of untracked files may cause an error when this file is needed by the werf);
  - in the `strict` mode werf reads only those files which has been staged for the commit (files from the git index of the project git work tree, added by the user with the `git add` command);
  - by default `simple` mode is used when `--dev` flag was specified.
 
@@ -37,7 +37,7 @@ Internally werf will commit modified/tracked and staged files to dev branch `wer
 
 ### Composer support
 
-Werf supports main composer commands. When running these commands werf will set special environment variables with full docker images names of images described in the `werf.yaml`:
+werf supports main composer commands. When running these commands werf will set special environment variables with full docker images names of images described in the `werf.yaml`:
 
 ```
 WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=application:45f03bdd90c844eb2e61e7e01dae491588d2bdadbd195881b25be9b0-1613371915351
@@ -45,7 +45,7 @@ WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=application:45f03bdd90c844eb2
 
 For example, given the following `werf.yaml`:
 
-```
+```yaml
 # werf.yaml
 project: myproj
 configVersion: 1
@@ -56,14 +56,14 @@ from: alpine
 
 `myimage` full docker image name could be used in the `docker-compose.yml` like that:
 
-```
+```yaml
 version: '3'
 services:
   web:
     image: "${WERF_MYIMAGE_DOCKER_IMAGE_NAME}"
 ```
 
-Werf provides following compose commands:
+werf provides following compose commands:
  - [`werf compose config`]({{ "/reference/cli/werf_compose_config.html" | true_relative_url }}) — run docker-compose config command with forwarded image names;
  - [`werf compose down`]({{ "/reference/cli/werf_compose_down.html" | true_relative_url }}) — run docker-compose down command with forwarded image names;
  - [`werf compose up`]({{ "/reference/cli/werf_compose_up.html" | true_relative_url }}) — run docker-compose up command with forwarded image names.
@@ -93,12 +93,12 @@ Werf provides following compose commands:
 ### werf-build and werf-converge commands behaviour
 
  - By default `werf build` command does not require any arguments and will build cache in the local docker server images storage.
- - When running `werf build` with `--repo registry.mydomain.org/project` param werf will lookup for already built images in the local docker server images storage and upload these if found any (without unnecessary rebuild).
+ - When running `werf build` with `--repo registry.mydomain.org/project` param werf will lookup for already built images in the local docker server images storage and upload them if found any (without unnecessary rebuild).
  - `werf converge` command requires `--repo` to work, but as `werf build` command will automatically upload into the repo any locally existing images.
 
 ### Automatical images building in some toplevel commands
 
- - `werf converge`, `werf run`, `werf bundle publish` and `werf render` commands will automatically build needed images, which does not exists in the repo.
+ - `werf converge`, `werf run`, `werf bundle publish` and `werf render` commands will automatically build needed images, which does not exist in the repo.
    - `werf render` will build images only when `--repo` param has been specified.
 
 ### Storing of images in CI/CD systems
@@ -117,7 +117,7 @@ Use project's container registry repository as `--repo` param for werf commands.
          - So storing of intermediate stages of the image does not create overhead for the container registry.
          - This makes werf build process host independent, because werf will reuse intermediate stages of an image from the container registry as a build cache.
 
-## Signatures changes
+## Signature changes
 
  - **Signature renamed to digest**.
  - All signatures/digests of built images has been changed.
@@ -146,9 +146,9 @@ Use project's container registry repository as `--repo` param for werf commands.
 ### Helm 3
 
  - Helm 3 is default and the only choice when deploying with werf v1.2.
- - Already existing helm 2 release will be migrated to helm 3 automatically in the `werf converge` command given that helm 2 release has the same name as newly deployed helm 3 release.
+ - An already existing helm 2 release will be migrated to helm 3 automatically in the `werf converge` command given that helm 2 release has the same name as newly deployed helm 3 release.
      - **CAUTION** There is no legal way back once helm 2 release has been migrated to helm 3.
-     - Werf-converge command will check that project helm charts are correctly rendered before running the process of migration.
+     - werf-converge command will check that project helm charts are correctly rendered before running the process of migration.
 
 ### Configuration
 
@@ -156,7 +156,7 @@ Use project's container registry repository as `--repo` param for werf commands.
  - Removed `werf_container_env` helm template function.
  - [Giterministic loading](#giterminism) of all chart files (including subcharts).
      - This is only true for top-level commands like `werf converge` or `werf render`.
-     - Lowlevel helm commands `werf helm *` still load chart files from the local filesystem.
+     - Low-level helm commands `werf helm *` still load chart files from the local filesystem.
  - Environment passed with `--env` param is available at the `.Values.werf.env`.
  - Fix usage of the `.helm/Chart.yaml`. This makes `.helm/Chart.yaml` optional, but werf will use it when it exists.
      - Take `.helm/Chart.yaml` from the repository if exists.
@@ -170,9 +170,9 @@ Use project's container registry repository as `--repo` param for werf commands.
 ### Working with subcharts
 
  - Lock file with dependencies should be committed `.helm/Chart.lock`.
- - Werf will automatically download dependencies charts using this lock file.
+ - werf will automatically download dependencies charts using this lock file.
  - Typically `.helm/charts` directory should be added to `.gitignore` file.
- - Werf allows storing chart dependencies directly in the `.helm/charts` though.
+ - werf allows storing chart dependencies directly in the `.helm/charts` though.
      - These charts will override charts automatically downloaded by the `.helm/Chart.lock` file
  - More info available [in the chart dependencies article]({{ "/advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}) and [giterminism article]({{ "/advanced/helm/configuration/giterminism.html#subcharts-and-giterminism" | true_relative_url }}).
 
@@ -200,7 +200,7 @@ Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
      - **CAUTION** `fromImageArtifact/fromArtifact` has also been deprecated and will be removed in the v1.3, it is recommended to use `image` and `fromImage` in such case.
  - Removed `--helm-chart-dir` option, define helm chart dir in the `werf.yaml`:
 
-    ```
+    ```yaml
     configVersion: 1
     deploy:
       helmChartDir: .helm
@@ -258,8 +258,8 @@ Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
 
 `werf converge`, `werf build`, `werf run`, `werf bundle publish` and `werf render` commands has `--report-path` and `--report-format` options. `--report-path` option enables generation of built images report in the following format:
 
-```
-# werf build --report-path images.json --report-format json
+```shell
+$ werf build --report-path images.json --report-format json
 
 {
   "Images": {
@@ -290,8 +290,8 @@ Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
 
 or
 
-```
-# werf build --report-path images.sh --report-format envfile
+```shell
+$ werf build --report-path images.sh --report-format envfile
 
 WERF_RESULT_DOCKER_IMAGE_NAME=quickstart-application:32e88a6a19a425c9254374ee2899b365876de31ac7d6857b523696a1-1613371915843
 WERF_WORKER_DOCKER_IMAGE_NAME=quickstart-application:1b16118e7d5c67aa3c61fc0f8d49b3eccf8f72810f01c33a40290418-1613371916044
@@ -303,9 +303,9 @@ WERF_VOTE_DOCKER_IMAGE_NAME=quickstart-application:45f03bdd90c844eb2e61e7e01dae4
 User may put werf.yaml (and .helm) into any subdirectory of the project git repo.
 
  - All relative paths specified in the werf.yaml will be calculated relatively to the werf process cwd or `--dir` param.
- - Typically user will run werf from the subdirectory where werf.yaml reside.
+ - Typically, user will run werf from the subdirectory where werf.yaml reside.
  - There is also `--config` option to pass custom werf.yaml config, all relative paths will also be calculated relatively to the werf process cwd or `--dir` param.
- - Added `--git-work-tree` param (or `WERF_GIT_WORK_TREE` variable) to specify directory that contains `.git` in the case when autodetector failed or we want to use specific work tree.
+ - Added `--git-work-tree` param (or `WERF_GIT_WORK_TREE` variable) to specify a directory that contains `.git` in the case when autodetect failed, or we want to use specific work tree.
      - For example when running werf from the submodule of the project we may want to use root repo worktree instead of submodule's work tree.
          - Built stages will be linked to the commits of the root repo in such case.
 

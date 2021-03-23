@@ -3,7 +3,7 @@ title: Generic CI/CD integration
 permalink: advanced/ci_cd/generic_ci_cd_integration.html
 ---
 
-Currently, the following CI systems are officialy supported and fully tested to be used with werf:
+Currently, the following CI systems are officially supported and fully tested to be used with werf:
  * [GitLab CI]({{ "advanced/ci_cd/gitlab_ci_cd.html" | true_relative_url }});
  * [GitHub Actions]({{ "advanced/ci_cd/github_actions.html" | true_relative_url }}).
 

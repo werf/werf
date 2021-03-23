@@ -8,7 +8,7 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
 
 ## 0. Restriction of mounts usage
 
-**IMPORTANT** There are v1.1 configurations that heavily use **`mount from build_dir`** and **`mount fromPath`** directives for such cases like caching of external dependencies (`Gemfile`, or `package.json`, or `go.mod`, etc.). While such `mount` directives still supported by the werf v1.2, it is not recommended for usage and is disabled by default by the [giterminism mode]({{ "/whats_new_in_v1_2/changelog.html#giterminism" | true_relative_url }}) (except `mount from tmp_dir` — this has not been forbidden) because it may lead to harmful, unreliable, host-dependent and undeterministic builds. For such configurations there will be added a new feature to store such cache in the docker images, this feature is planned to be added into the werf v1.2, but it is [**not implemented yet**](https://github.com/werf/werf/issues/3318). So if your configuration uses such mounts, then there are several options:
+**IMPORTANT** There are v1.1 configurations that heavily use **`mount from build_dir`** and **`mount fromPath`** directives for such cases like caching of external dependencies (`Gemfile`, or `package.json`, or `go.mod`, etc.). While such `mount` directives still supported by the werf v1.2, it is not recommended for usage and is disabled by default by the [giterminism mode]({{ "/whats_new_in_v1_2/changelog.html#giterminism" | true_relative_url }}) (except `mount from tmp_dir` — this has not been forbidden) because it may lead to harmful, unreliable, host-dependent and nondeterministic builds. For such configurations there will be added a new feature to store such cache in the docker images, this feature is planned to be added into the werf v1.2, but it is [**not implemented yet**](https://github.com/werf/werf/issues/3318). So if your configuration uses such mounts, then there are several options:
  1. Keep using v1.1 version until this feature is [added into the werf v1.2](https://github.com/werf/werf/issues/3318).
  2. Completely remove mounts usage and wait until this feature is [added into the werf v1.2](https://github.com/werf/werf/issues/3318).
  3. Describe and enable your mounts in werf v1.2 using the [`werf-giterminism.yaml`](https://werf.io/documentation/reference/werf_giterminism_yaml.html) (**not recommended**).
@@ -19,7 +19,7 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
 
  - Remove `--tagging-strategy ...` param of `werf ci-env` command.
  - Remove `--tag-custom`, `--tag-git-tag`, `--tag-git-branch`, `--tag-by-stages-signature` params.
- - In the case when you need a certain docker tag for a built image to exist in the container registry to be used outside of the werf, then use `--report-path` and `--report-format` options like follows:
+ - In the case when you need a certain docker tag for a built image to exist in the container registry to be used outside the werf, then use `--report-path` and `--report-format` options like follows:
      - `werf build/converge --report-path=images-report.json --repo REPO`;
      - `docker tag REPO:$(cat images-report.json | jq .Images.IMAGE_NAME_FROM_WERF_YAML.DockerImageName) REPO:mytag`;
      - `docker push REPO:mytag`.
@@ -74,13 +74,13 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
  - Add `.helm/charts` into the `.gitignore`.
  - Run `werf helm dependency update` command, which will create `.helm/Chart.lock` file and `.helm/charts` dir.
  - Commit `.helm/Chart.lock` file into the project git repo.
- - Werf will automatically download subcharts into the cache and load subchart files in `werf converge` command (and other toplevel commands which require helm chart).
+ - werf will automatically download subcharts into the cache and load subchart files in `werf converge` command (and other toplevel commands which require helm chart).
  - More info [in the docs]({{ "advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}).
 
 ## 5. Cleanup by git history
 
  - Remove `--git-history-based-cleanup-v1.2` option for a cleanup.
-     - Werf always uses git-history cleanup in the v1.2.
+     - werf always uses git-history cleanup in the v1.2.
  - More info [in the changelog]({{ "/whats_new_in_v1_2/changelog.html#cleanup" | true_relative_url }}) and [in the cleanup article]({{ "/advanced/cleanup.html" | true_relative_url }}).
 
 ## 6. Define environment variables in werf-giterminism.yaml

@@ -15,7 +15,7 @@ sitemap_include: false
 >
 	<channel>
 		<title>Events on {{ group }} {{ channel }} werf update channel</title>
-		<description>Werf version changes events on the update channel {{ group }} {{ channel }}.</description>
+		<description>werf version changes events on the update channel {{ group }} {{ channel }}.</description>
 		<sy:updatePeriod>daily</sy:updatePeriod>
 		<sy:updateFrequency>1</sy:updateFrequency>
 		<link>{{ site.url }}/releases.html</link>

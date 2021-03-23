@@ -9,7 +9,7 @@ This article contains description of annotations which control werf resource ope
 
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — defines number of replicas that should be set only when creating resource initially (useful for HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — defines a condition when werf should stop tracking of the resource.
- - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occured after failures threshold has been reached for the resource during deploy process.
+ - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occurred after failures threshold has been reached for the resource during deploy process.
  - [`werf.io/failures-allowed-per-replica`](#failures-allowed-per-replica) — defines a threshold of failures after which resource will be considered as failed and werf will handle this situation using [fail mode](#fail-mode).
  - [`werf.io/log-regex`](#log-regex) — specifies a template for werf to show only those log lines of the resource that fit the specified regex template.
  - [`werf.io/log-regex-for-CONTAINER_NAME`](#log-regex-for-container) — specifies a template for werf to show only those log lines of the resource container that fit the specified regex template.
@@ -50,7 +50,7 @@ Defines a condition when werf should stop tracking of the resource:
 
 `"werf.io/fail-mode": FailWholeDeployProcessImmediately|HopeUntilEndOfDeployProcess|IgnoreAndContinueDeployProcess`
 
-Defines how werf will handle a resource failure condition which occured after failures threshold has been reached for the resource during deploy process:
+Defines how werf will handle a resource failure condition which occurred after failures threshold has been reached for the resource during deploy process:
  * `FailWholeDeployProcessImmediately` (default) — the entire deploy process will fail with an error if an error occurs for some resource.
  * `HopeUntilEndOfDeployProcess` — when an error occurred for the resource, set this resource into the "hope" mode, and continue tracking other resources. If all remained resources are ready or in the "hope" mode, transit the resource back to "normal" and fail the whole deploy process if an error for this resource occurs once again.
  * `IgnoreAndContinueDeployProcess` — resource errors do not affect the deployment process.

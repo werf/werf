@@ -14,9 +14,9 @@ werf содержит два инструмента для выполнения 
 
 Во время рендеринга шаблонов werf возвращает содержимое всех manifest-файлов шаблона выполняя, в том числе и все Go-шаблоны.
 
-Для получения отрендеренного manifest-файла шаблона необходимо использовать команду [werf helm template]({{ "reference/cli/werf_helm_template.html" | true_relative_url }}). Этой команде можно передавать все те-же параметры что и команде [`werf converge`]({{ "reference/cli/werf_converge.html" | true_relative_url }}), в том числе передавать дополнительные [переменные]({{ "/advanced/helm/configuration/values.html" | true_relative_url }}), адрес репозитория Docker-образов и другие параметры.
+Для получения отрендеренного manifest-файла шаблона необходимо использовать команду [werf helm template]({{ "reference/cli/werf_helm_template.html" | true_relative_url }}). Этой команде можно передавать все те-же параметры, что и команде [`werf converge`]({{ "reference/cli/werf_converge.html" | true_relative_url }}), в том числе передавать дополнительные [переменные]({{ "/advanced/helm/configuration/values.html" | true_relative_url }}), адрес репозитория Docker-образов и другие параметры.
 
-Рендеринг помогает при отладке проблем деплоя связанных с ошибками в шаблонах, YAML-формате, описании объектов Kubernetes и т.д..
+Рендеринг помогает при отладке проблем деплоя связанных с ошибками в шаблонах, YAML-формате, описании объектов Kubernetes и т.д.
 
 ## Линтер
 
@@ -28,4 +28,4 @@ werf содержит два инструмента для выполнения 
  * Возможные проблемы безопасности ([скоро](https://github.com/werf/werf/issues/1317)).
 
 Для запуска линтера необходимо выполнить команду [`werf helm lint`]({{ "reference/cli/werf_helm_lint.html" | true_relative_url }}). Ее можно выполнять как локально, так и в рамках pipeline CI/CD систем в качестве автоматического теста чарта на ошибки.
-Этой команде можно передавать все те-же параметры что и команде [`werf converge`]({{ "reference/cli/werf_converge.html" | true_relative_url }}), в том числе  передавать дополнительные [переменные]({{ "advanced/helm/configuration/values.html" | true_relative_url }}), адрес репозитория Docker-образов и другие параметры.
+Этой команде можно передавать все те-же параметры, что и команде [`werf converge`]({{ "reference/cli/werf_converge.html" | true_relative_url }}), в том числе передавать дополнительные [переменные]({{ "advanced/helm/configuration/values.html" | true_relative_url }}), адрес репозитория Docker-образов и другие параметры.

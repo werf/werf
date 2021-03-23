@@ -58,7 +58,7 @@ We suggest the same, but using [_images_]({{ "reference/werf_yaml.html#image-sec
 * Historically, _imports_ appeared much earlier than Docker multi-stage, and
 * werf gives more flexibility working with auxiliary images
 
-Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}) or [_artifact_]({{ "reference/werf_yaml.html#image-section)" | true_relative_url }}). `import` is an array of records. Each record should contain the following:
+Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}) or [_artifact_]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}). `import` is an array of records. Each record should contain the following:
 
 - `image: <image name>` or `artifact: <artifact name>`: _source image_, image name from which you want to copy files.
 - `stage: <stage name>`: _source image stage_, particular stage of _source_image_ from which you want to copy files.

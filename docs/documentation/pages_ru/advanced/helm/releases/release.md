@@ -9,7 +9,7 @@ permalink: advanced/helm/releases/release.html
 
 Информация о каждой версии релиза хранится в самом кластере Kubernetes. werf поддерживает сохранение в произвольном namespace в объектах Secret или ConfigMap.
 
-По умолчанию, werf хранит информацию о релизах в объектах Secret в целевом namespace, куда происходит деплой приложения. Это полностью совместимо с конфигурацией по умолчанию по хранению релизов в [Helm 3](https://helm.sh)  , что полностью совместимо с конфигурацией [Helm 2](https://helm.sh) по умолчанию. Место хранения информации о релизах может быть указано при деплое с помощью параметров werf: `--helm-release-storage-namespace=NS` и `--helm-release-storage-type=configmap|secret`.
+По умолчанию, werf хранит информацию о релизах в объектах Secret в целевом namespace, куда происходит деплой приложения. Это полностью совместимо с конфигурацией по умолчанию по хранению релизов в [Helm 3](https://helm.sh), что полностью совместимо с конфигурацией [Helm 2](https://helm.sh) по умолчанию. Место хранения информации о релизах может быть указано при деплое с помощью параметров werf: `--helm-release-storage-namespace=NS` и `--helm-release-storage-type=configmap|secret`.
 
 Для получения информации обо всех созданных релизах можно использовать команду [werf helm list]({{ "reference/cli/werf_helm_list.html" | true_relative_url }}), а для просмотра истории конкретного релиза [werf helm history]({{ "reference/cli/werf_helm_history.html" | true_relative_url }}).
 
@@ -23,4 +23,4 @@ werf полностью совместим с уже установленным 
 
 ### Совместимость с Helm 2
 
-Существующие релизы helm 2 (созданные например через werf v1.1) могут быть сконвертированы в helm 3 либо автоматически во время работы команды [`werf converge`]({{ "/reference/cli/werf_converge.html" | true_relative_url }}), либо с помощью команды [`werf helm migrate2to3`]({{ "/reference/cli/werf_helm_migrate2to3.html" | true_relative_url }}).
+Существующие релизы helm 2 (созданные например через werf v1.1) могут быть конвертированы в helm 3 либо автоматически во время работы команды [`werf converge`]({{ "/reference/cli/werf_converge.html" | true_relative_url }}), либо с помощью команды [`werf helm migrate2to3`]({{ "/reference/cli/werf_helm_migrate2to3.html" | true_relative_url }}).

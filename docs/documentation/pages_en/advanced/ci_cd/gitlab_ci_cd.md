@@ -62,7 +62,7 @@ werf requires access to the following nodes it uses:
 - to the container registry;
 - to the Kubernetes cluster.
 
-### Seting up the runner
+### Setting up the runner
 
 Let us install and configure the GitLab runner on the node where werf will be run:
 
@@ -393,7 +393,7 @@ We use the GitLab API to check whether an MR has a label. Since the `CI_JOB_TOKE
 
 The scenarios described below are the most effective combinations of rules for deploying **staging** and **production** environments.
 
-In our case, these environments are the most inportant ones. Thus, the names of the scenarios correspond to the names of ready-made workflows presented at the [end of the article](#the-complete-gitlab-ciyml-for-ready-made-workflows).
+In our case, these environments are the most important ones. Thus, the names of the scenarios correspond to the names of ready-made workflows presented at the [end of the article](#the-complete-gitlab-ciyml-for-ready-made-workflows).
 
 #### 1. Fast and Furious (recommended)
 
@@ -424,7 +424,7 @@ Deploy to Production:
 Options for rolling back changes in production:
 
 - by [revert](https://git-scm.com/docs/git-revert)-ing changes in master (**recommended**);
-- by rolliing out a stable MR or via the [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) button.
+- by rolling out a stable MR or via the [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) button.
 
 #### 2. Push the button
 

@@ -57,7 +57,7 @@ Also, this method can be useful if the stages of _stage conveyor_ are not enough
 
 ## fromCacheVersion
 
-The `fromCacheVersion` directive allows to manage image reassembly.
+The `fromCacheVersion` directive allows managing image reassembly.
 
 ```yaml
 fromCacheVersion: <arbitrary string>

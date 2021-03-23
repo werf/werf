@@ -65,13 +65,13 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 
 На узле, где предполагается запуск werf, установим и настроим GitLab-runner:
 1. Создадим проект в GitLab и добавим push кода приложения.
-1. Получим токен регистрации GitLab-runner'а:
+1. Получим токен регистрации GitLab-runner:
    * заходим в проекте в GitLab `Settings` —> `CI/CD`;
    * во вкладке `Runners` необходимый токен находится в секции `Setup a specific Runner manually`.
 1. Установим GitLab-runner [по инструкции](https://docs.gitlab.com/runner/install/linux-manually.html).
 1. Зарегистрируем `gitlab-runner`, выполнив [шаги](https://docs.gitlab.com/runner/register/index.html) за исключением следующих моментов:
-   * используем `werf` в качестве тега runner'а;
-   * используем `shell` в качестве executor для runner'а.
+   * используем `werf` в качестве тега runner;
+   * используем `shell` в качестве executor для runner.
 1. Добавим пользователя `gitlab-runner` в группу `docker`.
 
    ```shell
@@ -214,7 +214,7 @@ Stop Review:
 
 В задание `Review` описывается выкат review-релиза в динамическое окружение, в основу имени которого закладывается уникальный идентификатор MR. Параметр `auto_stop_in` позволяет указать период отсутствия активности в MR, после которого окружение GitLab будет автоматически остановлено. Остановка окружения GitLab сама по себе никак не влияет на ресурсы в кластере, review-релиз, поэтому в дополнении необходимо определить задание, которое вызывается при остановке (`on_stop`). В нашем случае, это задание `Stop Review`. 
 
-Задание `Stop Review` выполняет удаление review-релиза, а также остановку окружения GitLab (`action: stop`): werf удаляет helm-релиз и namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ "reference/cli/werf_dismiss.html)" | true_relative_url }}). Задание `Stop Review` может быть запущено вручную после деплоя на review контур, а также автоматически GitLab-сервером, например, при удалении соответствующей ветки в результате слияния ветки с master и указания соответствующей опции в интерфейсе GitLab.
+Задание `Stop Review` выполняет удаление review-релиза, а также остановку окружения GitLab (`action: stop`): werf удаляет helm-релиз и namespace в Kubernetes со всем его содержимым ([werf dismiss]({{ "reference/cli/werf_dismiss.html" | true_relative_url }})). Задание `Stop Review` может быть запущено вручную после деплоя на review контур, а также автоматически GitLab-сервером, например, при удалении соответствующей ветки в результате слияния ветки с master и указания соответствующей опции в интерфейсе GitLab.
 
 Для выполнения `werf dismiss` требуется werf.yaml, так как в нём содержаться [шаблоны имени релиза и namespace]({{ "/advanced/helm/releases/naming.html" | true_relative_url }}). При удалении ветки нет возможности использовать исходники из git, поэтому в задании `Stop Review` используется werf.yaml, сохранённый при выполнении задания `Review`, и отключено подтягивание изменений из git (`GIT_STRATEGY: none`).
 

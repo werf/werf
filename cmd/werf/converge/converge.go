@@ -479,7 +479,7 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 		logboek.Context(ctx).Warn().LogF("### Helm 2 and helm 3 release %q exists at the same time ###\n", releaseName)
 		logboek.Context(ctx).Warn().LogLn()
 		logboek.Context(ctx).Warn().LogF("Found existing helm 2 release %q while there is existing helm 3 release %q in the %q namespace!\n", releaseName, releaseName, namespace)
-		logboek.Context(ctx).Warn().LogF("Werf will continue deploy process into helm 3 release %q in the %q namespace\n", releaseName, namespace)
+		logboek.Context(ctx).Warn().LogF("werf will continue deploy process into helm 3 release %q in the %q namespace\n", releaseName, namespace)
 		logboek.Context(ctx).Warn().LogF("To disable this warning please remove old helm 2 release %q metadata (fox example using: kubectl -n kube-system delete cm RELEASE_NAME.VERSION)\n", releaseName)
 		logboek.Context(ctx).Warn().LogLn()
 

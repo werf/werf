@@ -3,7 +3,7 @@ title: Chart dependencies
 permalink: advanced/helm/configuration/chart_dependencies.html
 ---
 
-**Subchart** is a helm chart that included into the current chart as a dependency. Werf allows usage of subcharts the same way [as helm](https://helm.sh/docs/topics/charts/). The chart can include arbitrary number of subcharts. Usage of werf project itself as a subchart in another werf project is not supported for now.
+**Subchart** is a helm chart that included into the current chart as a dependency. werf allows usage of subcharts the same way [as helm](https://helm.sh/docs/topics/charts/). The chart can include arbitrary number of subcharts. Usage of werf project itself as a subchart in another werf project is not supported for now.
 
 Subcharts are placed in the directory `.helm/charts/SUBCHART_DIR`. Each subchart in the `SUBCHART_DIR` is a chart by itself with the similar files structure (which can also have own recursive subcharts).
 
@@ -22,7 +22,7 @@ During deploy process werf will render, create and track all resources of all su
          repository: "https://charts.bitnami.com/bitnami"
       ```
 
-     **NOTE** It is not required to define full `Chart.yaml` with name and version fields as for the standard helm. Werf will autogenerate chart name and version based on the `werf.yaml` `project` field settings. See more info in the [chart article]({{ "/advanced/helm/configuration/chart.html" | true_relative_url }}).
+     **NOTE** It is not required to define full `Chart.yaml` with name and version fields as for the standard helm. werf will autogenerate chart name and version based on the `werf.yaml` `project` field settings. See more info in the [chart article]({{ "/advanced/helm/configuration/chart.html" | true_relative_url }}).
 
  2. Next it is required to generate `.helm/Chart.lock` using `werf helm dependency update` command from the root of the project:
 
