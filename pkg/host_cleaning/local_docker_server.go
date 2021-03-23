@@ -146,6 +146,7 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 		}
 	}
 
+CreateImagesDescs:
 	for _, imageSummary := range images {
 		data, _ := json.Marshal(imageSummary)
 		logboek.Context(ctx).Debug().LogF("Image summary:\n%s\n---\n", data)
@@ -154,9 +155,11 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 
 		lastUsedAt := time.Unix(imageSummary.Created, 0)
 
+	CheckEachRef:
 		for _, ref := range imageSummary.RepoTags {
+			// IMPORTANT: ignore none images, these may be either orphans or just built fresh images and we shall not delete these
 			if ref == "<none>:<none>" {
-				continue
+				continue CreateImagesDescs
 			}
 
 			lastRecentlyUsedAt, err := lrumeta.CommonLRUImagesCache.GetImageLastAccessTime(ctx, ref)
@@ -165,10 +168,11 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 			}
 
 			if lastRecentlyUsedAt.IsZero() {
-				continue
+				continue CheckEachRef
 			}
 
 			lastUsedAt = lastRecentlyUsedAt
+			break
 		}
 
 		desc := &LocalImageDesc{
@@ -296,7 +300,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 			logboek.Context(ctx).Warn().LogF("WARNING: Werf tries to maintain host clean by deleting:\n")
 			logboek.Context(ctx).Warn().LogF("WARNING:  - old unused files from werf caches (which are stored in the ~/.werf/local_cache);\n")
 			logboek.Context(ctx).Warn().LogF("WARNING:  - old temporary service files /tmp/werf-project-data-* and /tmp/werf-config-render-*;\n")
-			logboek.Context(ctx).Warn().LogF("WARNING:  - least recently used werf images (only >= v1.2 werf images could be removed, note that werf <= v1.1 images will not be deleted by this cleanup);\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:  - least recently used werf images.\n")
 			logboek.Context(ctx).Warn().LogF("WARNING:\n")
 			logboek.Context(ctx).Warn().LogF("WARNING: Werf-host-cleanup procedure of v1.2 werf version will not cleanup --stages-storage=:local stages of v1.1 werf version, because this is primary stages storage data, and it can only be cleaned by the regular per-project werf-cleanup command with git-history based algorithm.\n")
 			logboek.Context(ctx).Warn().LogOptionalLn()

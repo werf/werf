@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -73,6 +74,13 @@ func processUsedImages(ctx context.Context, images []types.ImageSummary, options
 
 	if err := containersRemove(ctx, containersToRemove, options); err != nil {
 		return nil, err
+	}
+
+	for _, img := range images {
+		// IMPORTANT: Prevent freshly built images, but not saved into the stages storage yet from being deleted
+		if time.Since(time.Unix(img.Created, 0)) < 3*time.Hour {
+			imagesToExclude = append(imagesToExclude, img)
+		}
 	}
 
 	for _, img := range imagesToExclude {
