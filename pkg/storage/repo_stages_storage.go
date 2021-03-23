@@ -270,11 +270,20 @@ func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_
 	}
 }
 
-func (storage *RepoStagesStorage) ShouldFetchImage(_ context.Context, img container_runtime.Image) (bool, error) {
-	switch storage.ContainerRuntime.(type) {
+func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_runtime.Image) (bool, error) {
+	switch containerRuntime := storage.ContainerRuntime.(type) {
 	case *container_runtime.LocalDockerServerRuntime:
+
 		dockerImage := img.(*container_runtime.DockerImage)
-		return !dockerImage.Image.IsExistsLocally(), nil
+
+		if inspect, err := containerRuntime.GetImageInspect(ctx, dockerImage.Image.Name()); err != nil {
+			return false, fmt.Errorf("unable to get inspect for image %s: %s", dockerImage.Image.Name(), err)
+		} else if inspect != nil {
+			dockerImage.Image.SetInspect(inspect)
+			return false, nil
+		}
+
+		return true, nil
 	default:
 		panic("not implemented")
 	}
