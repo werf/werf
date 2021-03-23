@@ -109,11 +109,13 @@ type CmdData struct {
 
 	Tag *string
 
-	// Host storage GC options
-	DisableAutoHostCleanup   *bool
-	AllowedVolumeUsage       *uint
-	AllowedVolumeUsageMargin *uint
-	DockerServerStoragePath  *string
+	// Host storage cleanup options
+	DisableAutoHostCleanup                *bool
+	DockerServerStoragePath               *string
+	AllowedDockerStorageVolumeUsage       *uint
+	AllowedDockerStorageVolumeUsageMargin *uint
+	AllowedLocalCacheVolumeUsage          *uint
+	AllowedLocalCacheVolumeUsageMargin    *uint
 }
 
 const (

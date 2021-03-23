@@ -64,8 +64,10 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
-	common.SetupAllowedVolumeUsage(&commonCmdData, cmd)
-	common.SetupAllowedVolumeUsageMargin(&commonCmdData, cmd)
+	common.SetupAllowedDockerStorageVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedDockerStorageVolumeUsageMargin(&commonCmdData, cmd)
+	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", common.GetBoolEnvironmentDefaultFalse("WERF_FORCE"), "Force deletion of images which are being used by some containers (default $WERF_FORCE)")
@@ -114,11 +116,13 @@ func runGC() error {
 	logboek.LogOptionalLn()
 
 	hostCleanupOptions := host_cleaning.HostCleanupOptions{
-		AllowedVolumeUsagePercentage:       commonCmdData.AllowedVolumeUsage,
-		AllowedVolumeUsageMarginPercentage: commonCmdData.AllowedVolumeUsageMargin,
-		DryRun:                             *commonCmdData.DryRun,
-		Force:                              cmdData.Force,
-		DockerServerStoragePath:            *commonCmdData.DockerServerStoragePath,
+		DryRun: *commonCmdData.DryRun,
+		Force:  cmdData.Force,
+		AllowedDockerStorageVolumeUsagePercentage:       commonCmdData.AllowedDockerStorageVolumeUsage,
+		AllowedDockerStorageVolumeUsageMarginPercentage: commonCmdData.AllowedDockerStorageVolumeUsageMargin,
+		AllowedLocalCacheVolumeUsagePercentage:          commonCmdData.AllowedLocalCacheVolumeUsage,
+		AllowedLocalCacheVolumeUsageMarginPercentage:    commonCmdData.AllowedLocalCacheVolumeUsageMargin,
+		DockerServerStoragePath:                         *commonCmdData.DockerServerStoragePath,
 	}
 
 	return host_cleaning.RunHostCleanup(ctx, hostCleanupOptions)

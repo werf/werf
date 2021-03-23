@@ -189,6 +189,9 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 	}
 
 	targetVolumeUsage := allowedVolumeUsagePercentage - allowedVolumeUsageMarginPercentage
+	if targetVolumeUsage < 0 {
+		targetVolumeUsage = 0
+	}
 
 	checkResult, err := GetLocalDockerServerStorageCheck(ctx, dockerServerStoragePath)
 	if err != nil {
