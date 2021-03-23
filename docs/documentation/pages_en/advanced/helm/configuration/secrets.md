@@ -5,7 +5,7 @@ permalink: advanced/helm/configuration/secrets.html
 
 werf secrets engine is recommended for storing database passwords, files with encryption certificates, etc.
 
-The idea is that sensitive data must be stored in a repository served by an application and remain independent from any specific server.
+The idea is that sensitive data must be stored in a repository served by an application and remain independent of any specific server.
 
 werf supports passing secrets as:
  - separate [secret values]({{ "/advanced/helm/configuration/values.html#user-defined-secret-values" | true_relative_url }}) yaml file (`.helm/secret-values.yaml` by default, or any file passed by the `--secret-values` option);

@@ -3,7 +3,7 @@ title: Зависимости чартов
 permalink: advanced/helm/configuration/chart_dependencies.html
 ---
 
-**Сабчарт** — это хельм чарт, который включён в текущий чарт в качестве зависимости. Werf позволяет использование сабчартов тем же способом [как хельм](https://helm.sh/docs/topics/charts/). Чарт может включать произвольное количество зависимых сабчартов. Использование проекта werf в качестве сабчарта в другом проекте werf на данный момент не поддерживается.
+**Сабчарт** — это helm-чарт, который включён в текущий чарт в качестве зависимости. Werf позволяет использование сабчартов тем же способом [как helm](https://helm.sh/docs/topics/charts/). Чарт может включать произвольное количество зависимых сабчартов. Использование проекта werf в качестве сабчарта в другом проекте werf на данный момент не поддерживается.
 
 Сабчарты располагаются в директории `.helm/charts/SUBCHART_DIR`. Каждый сабчарт в директории `SUBCHART_DIR` сам по себе является чартом и имеет схожую файловую структуру (каждый сабчарт может в свою очередь также содержать сабчарт).
 
@@ -22,7 +22,7 @@ permalink: advanced/helm/configuration/chart_dependencies.html
          repository: "https://charts.bitnami.com/bitnami"
      ```
 
-     **ЗАМЕЧАНИЕ.** Не обязательно определять полный `Chart.yaml` с именем и версией как для стандартнго хельм-чарта. Werf генерирует имя чарта и версию на основе директивы `project` из файла `werf.yaml`. См. больше информации [в статье про чарты]({{ "/advanced/helm/configuration/chart.html" | true_relative_url }}).
+     **ЗАМЕЧАНИЕ.** Необязательно определять полный `Chart.yaml` с именем и версией как для стандартного helm-чарта. Werf генерирует имя чарта и версию на основе директивы `project` из файла `werf.yaml`. См. больше информации [в статье про чарты]({{ "/advanced/helm/configuration/chart.html" | true_relative_url }}).
 
  2. Далее требуется сгенерировать `.helm/Chart.lock` с помощью команды `werf helm dependency update`.
 
@@ -34,7 +34,7 @@ permalink: advanced/helm/configuration/chart_dependencies.html
 
  3. Файл `.helm/Chart.lock` следует коммитнуть в git репозиторий, а директорию `.helm/charts` можно добавить в `.gitignore`.
 
-Позднее, во время процесса деплоя (командой [`werf converge`]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) или [`werf bundle apply`]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }})) или ренедринга шаблонов (командой [`werf render`]({{ "/reference/cli/werf_render.html" | true_relative_url }})), werf автоматически скачает все зависимости указанные в lock-файле `.helm/Chart.lock`.
+Позднее, во время процесса деплоя (командой [`werf converge`]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) или [`werf bundle apply`]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }})) или рендеринга шаблонов (командой [`werf render`]({{ "/reference/cli/werf_render.html" | true_relative_url }})), werf автоматически скачает все зависимости указанные в lock-файле `.helm/Chart.lock`.
 
 **ЗАМЕЧАНИЕ.** Файл `.helm/Chart.lock` должен быть коммитнут в git репозиторий, больше информации [в статье про гитерминизм]({{ "/advanced/helm/configuration/giterminism.html#сабчарты-и-гитерминизм" | true_relative_url }}).
 
@@ -50,7 +50,7 @@ permalink: advanced/helm/configuration/chart_dependencies.html
 
 Файл `.helm/Chart.lock` содержит точные версии прямых зависимостей, версии зависимостей прямых зависимостей и т.д.
 
-The `werf helm dependency` commands operate on that file, making it easy to synchronize between the desired dependencies and the actual dependencies stored in the `charts` directory:
+The `werf helm dependency` commands operate on that file, making it easy to synchronize between the desired dependencies, and the actual dependencies stored in the `charts` directory:
 * Use [werf helm dependency list]({{ "reference/cli/werf_helm_dependency_list.html" | true_relative_url }}) to check dependencies and their statuses.
 * Use [werf helm dependency update]({{ "reference/cli/werf_helm_dependency_update.html" | true_relative_url }}) to update `/charts` based on the contents of `requirements.yaml`.
 * Use [werf helm dependency build]({{ "reference/cli/werf_helm_dependency_build.html" | true_relative_url }}) to update `/charts` based on the `.helm/Chart.lock` file.

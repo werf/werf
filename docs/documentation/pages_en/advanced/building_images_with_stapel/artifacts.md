@@ -84,7 +84,7 @@ Read about working with _assembly instructions_ in the corresponding [article]({
 
 Unlike [*stapel image*]({{ "advanced/building_images_with_stapel/assembly_instructions.html" | true_relative_url }}), *stapel artifact* does not have a git latest patch stage.
 
-Git latest patch stage is supposed to be updated on every commit, which brings new changes to files. *Stapel artifact* though is recommended to be used as a deeply cached image, which will be updated in rare cases, when some special files changed.
+The git latest patch stage is supposed to be updated on every commit, which brings new changes to files. *Stapel artifact* though is recommended to be used as a deeply cached image, which will be updated in rare cases, when some special files changed.
 
 For example: import git into *stapel artifact* and rebuild assets in this artifact only when dependent assets files in git has changes. For every other change in git where non-dependent files has been changed assets will not be rebuilt.
 

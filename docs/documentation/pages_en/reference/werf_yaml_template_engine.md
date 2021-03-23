@@ -175,7 +175,7 @@ shell:
 
 #### env
 
-The `env` function reads an environment variable. The environment variable must be set but the value can be empty.
+The `env` function reads an environment variable. The environment variable must be set, but the value can be empty.
 
 __Syntax__:
 {% raw %}

@@ -65,29 +65,29 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 ### Docker Hub
 
-При удалении тегов werf использует _Docker Hub API_, поэтому при очистке container registry необходимо определить _tокen_ или _username_ и _password_.
+При удалении тегов werf использует _Docker Hub API_, поэтому при очистке container registry необходимо определить _token_ или _username_ и _password_.
 
 Для получения _token_ можно использовать следующий скрипт:
 
 ```shell
 HUB_USERNAME=username
 HUB_PASSWORD=password
-HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${HUB_USERNAME}'", "password": "'${HUB_PASSWORD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .tокen)
+HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${HUB_USERNAME}'", "password": "'${HUB_PASSWORD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
 ```
 
-> В качестве _token_ нельзя использовать [personal access tокen](https://docs.docker.com/docker-hub/access-tokens/), т.к. удаление ресурсов возможно только при использовании основных учётных данных пользователя
+> В качестве _token_ нельзя использовать [personal access token](https://docs.docker.com/docker-hub/access-tokens/), т.к. удаление ресурсов возможно только при использовании основных учётных данных пользователя
 
 Для того, чтобы задать параметры, следует использовать следующие опции или соответствующие им переменные окружения:
-- `--repo-docker-hub-tокen` или
+- `--repo-docker-hub-token` или
 - `--repo-docker-hub-username` и `--repo-docker-hub-password`.
 
 ### GitHub Packages (docker.pkg.github.com)
 
-При удалении тегов werf использует _GitHub GraphQL API_, поэтому при очистке container registry необходимо определить _tокen_ с `read:packages`, `write:packages`, `delete:packages` и `repo` scopes.
+При удалении тегов werf использует _GitHub GraphQL API_, поэтому при очистке container registry необходимо определить _token_ с `read:packages`, `write:packages`, `delete:packages` и `repo` scopes.
 
 > GitHub [не поддерживает](https://help.github.com/en/packages/publishing-and-managing-packages/deleting-a-package) удаление версий package в публичных репозиториях
 
-Для того, чтобы задать параметры, следует использовать опцию `--repo-github-tокen` или соответствующую переменную окружения.
+Для того, чтобы задать параметры, следует использовать опцию `--repo-github-token` или соответствующую переменную окружения.
 
 ### GitLab Registry
 

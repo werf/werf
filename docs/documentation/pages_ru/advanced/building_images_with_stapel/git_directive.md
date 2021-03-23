@@ -78,7 +78,7 @@ git:
 ```
 
 <div class="tabs">
-  <a href="javascript:void(0)" class="tabs__btn btn__example1 active" onclick="openTab(event, 'btn__example1', 'tab__example1', 'git-mapping-01-source')">Cтруктура в репозитории</a>
+  <a href="javascript:void(0)" class="tabs__btn btn__example1 active" onclick="openTab(event, 'btn__example1', 'tab__example1', 'git-mapping-01-source')">Структура в репозитории</a>
   <a href="javascript:void(0)" class="tabs__btn btn__example1" onclick="openTab(event, 'btn__example1', 'tab__example1', 'git-mapping-01-dest')">Структура в конечном образе</a>
 </div>
 <div id="git-mapping-01-source" class="tabs__content tab__example1 active">
@@ -99,7 +99,7 @@ git:
 ```
 
 <div class="tabs">
-  <a href="javascript:void(0)" class="tabs__btn btn__example2 active" onclick="openTab(event, 'btn__example2', 'tab__example2', 'git-mapping-02-source')">Cтруктура в репозитории</a>
+  <a href="javascript:void(0)" class="tabs__btn btn__example2 active" onclick="openTab(event, 'btn__example2', 'tab__example2', 'git-mapping-02-source')">Структура в репозитории</a>
   <a href="javascript:void(0)" class="tabs__btn btn__example2" onclick="openTab(event, 'btn__example2', 'tab__example2', 'git-mapping-02-dest')">Структура в конечном образе</a>
 </div>
 <div id="git-mapping-02-source" class="tabs__content tab__example2 active">
@@ -224,7 +224,7 @@ includePaths:
 # удовлетворяет всем php файлам, расположенным конкретно в папке /src
 - '*.php'
 
-# удовлетворяет всем phph файлам рекурсивно, начиная с папки /src
+# удовлетворяет всем php файлам рекурсивно, начиная с папки /src
 # (также удовлетворяет файлам *.php, т.к. '.' включается шаблон **)
 - '**/*.php'
 
@@ -396,7 +396,7 @@ werf использует следующий алгоритм для опред�
 
 ### Rebase и _git-стадии_
 
-Каждая git-стадия хранит служебные лейблы с SHA коммитами, которые использовались при сборки стадии.
+Каждая git-стадия хранит служебные лейблы с SHA коммитами, которые использовались при сборке стадии.
 Эти коммиты будут использоваться при сборке следующей git-стадии при создании патчей (по сути это `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` для каждого _git-mapping_).
 
 Если в стадии сохранён коммит, который отсутствует в git-репозитории (например, после выполнения rebase), werf пересоберёт эту стадию, используя актуальный коммит.

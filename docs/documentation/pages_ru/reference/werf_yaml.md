@@ -59,7 +59,7 @@ deploy:
 ```
 {% endraw %}
 
-**Замечание** Использование переменной окружения `HELM_RELEASE_EXTRA` в данном случае должно быть явно разрешено в конфиге [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}.
+**Замечание** Использование переменной окружения `HELM_RELEASE_EXTRA` в данном случае должно быть явно разрешено в конфиге [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}).
 
 `deploy.helmReleaseSlug` включает или отключает [слагификацию]({{ "/advanced/helm/releases/naming.html#слагификация-имени-релиза" | true_relative_url }}) имени Helm-релиза (включен по умолчанию).
 

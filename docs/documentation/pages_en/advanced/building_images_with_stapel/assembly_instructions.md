@@ -6,7 +6,7 @@ directive_summary: shell_and_ansible
 
 ## What are user stages?
 
-***User stage*** is a [_stage_]({{ "internals/stages_and_storage.html" | true_relative_url }}) containing _assembly instructions_ from config.
+***User stage*** is a [_stage_]({{ "internals/stages_and_storage.html" | true_relative_url }}) containing _assembly instructions_ from the config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create the specific docker layer by executing assembly instructions contained within the respective stage.
 
 ## Motivation behind stages
@@ -239,11 +239,11 @@ One of the ideas at the core of werf is idempotent builds. werf must generate th
 - [System modules](https://docs.ansible.com/ansible/2.5/modules/list_of_system_modules.html): user, group, getent, locale_gen, timezone, cron, and other.
 - [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
 
-An attempt to do a _werf config_ with the module not in this list will lead to an error and a failed build. Feel free to report an [issue](https://github.com/werf/werf/issues/new) if some module should be enabled.
+An attempt to do a _werf config_ with the module not in this list will lead to an error, and a failed build. Feel free to report an [issue](https://github.com/werf/werf/issues/new) if some module should be enabled.
 
 ### Copying files
 
-[Git mappings]({{ "advanced/building_images_with_stapel/git_directive.html" | true_relative_url }}) are the preferred way of copying files into an image. werf cannot detect changes to files referred in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage digest_, and file changes lead to the rebuild of the _user stage_.
+[Git mappings]({{ "advanced/building_images_with_stapel/git_directive.html" | true_relative_url }}) are the preferred way of copying files into an image. werf cannot detect changes to the files referred to in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage digest_, and file changes lead to the rebuild of the _user stage_.
 
 Here is an example of copying `nginx.conf` into an image:
 
@@ -487,7 +487,7 @@ subsequent stages), you need to change the value of the `installCacheVersion` pa
 
 > Note that `cacheVersion` and `beforeInstallCacheVersion` directives have the same effect. Changing them triggers the rebuild of the _beforeInstall_ stage and all subsequent stages.
 
-### Example. Universal image for multiple applications
+### Example. The universal image for multiple applications
 
 An image containing shared system packages can be defined in a separate `werf.yaml` file. You can use the `cacheVersion` value for rebuilding this image to refresh packages’ versions.
 
@@ -501,11 +501,11 @@ shell:
   - apt install ...
 ```
 
-You can use this image as a base for multiple applications if images from hub.docker.com do not quite suit your needs.
+You can use this image as a base for multiple applications if images from _hub.docker.com_ do not quite suit your needs.
 
 ### Example of using external dependencies
 
-You can use _CacheVersion directives_ jointly with [go templates]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}) to define dependency of the _user stage_ on files outside of the git tree.
+You can use _CacheVersion directives_ jointly with [go templates]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}) to define dependency of the _user stage_ on files outside the git tree.
 
 {% raw %}
 ```yaml

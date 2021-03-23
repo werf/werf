@@ -185,7 +185,7 @@ sections:
   - id: dockerfile-image-section
     description:
       en: "Dockerfile image section: optional, define as many image sections as you need"
-      ru: "Cекция Dockerfile image: может использоваться произвольное количество секций"
+      ru: "Секция Dockerfile image: может использоваться произвольное количество секций"
     directives:
       - &dockerfile-image-section-image
         name: image
@@ -242,7 +242,7 @@ sections:
   - id: stapel-section
     description:
       en: "Stapel image/artifact section: optional, define as many image sections as you need"
-      ru: "Cекция Stapel image/artifact: может использоваться произвольное количество секций"
+      ru: "Секция Stapel image/artifact: может использоваться произвольное количество секций"
     isCollapsedByDefault: true
     directives:
       - << : *dockerfile-image-section-image

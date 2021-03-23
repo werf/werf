@@ -19,7 +19,7 @@ permalink: advanced/helm/configuration/chart.html
   secret-values.yaml
 ```
 
-Чарт werf может содержать опциональный файл `.helm/Chart.yaml` с описанием чарта, который полностью совместим [с хельмовым `Chart.yaml`](https://helm.sh/docs/topics/charts/) и может содержать примерно следующее:
+Чарт werf может содержать опциональный файл `.helm/Chart.yaml` с описанием чарта, который полностью совместим с [`Chart.yaml`](https://helm.sh/docs/topics/charts/) и может содержать примерно следующее:
 
 ```yaml
 apiVersion: v2

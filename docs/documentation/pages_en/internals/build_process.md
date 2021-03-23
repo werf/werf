@@ -13,7 +13,7 @@ werf creates a single [stage]({{ "/internals/stages_and_storage.html#stage-conve
 
 Currently, werf uses the standard commands of the built-in Docker client (in a way similar to invoking the `docker build` command) as well as arguments defined in `werf.yaml` to build a stage. The cache created during the build is used as if it is created via a regular docker client (werf isn't involved in the process).
 
-The distinctive feature of werf is that it uses the git repository (instead of the project directory) as a source of files for the build context. All files in the directory specified by the `context` directive  (by default, this is the project directory) are coming from the current commit in the project repository (you can learn more about giterminism in a [separate article])({{ "/advanced/giterminism.html#dockerfile-image" | true_relative_url }})).
+The distinctive feature of werf is that it uses the git repository (instead of the project directory) as a source of files for the build context. All files in the directory specified by the `context` directive  (by default, this is the project directory) are coming from the current commit in the project repository (you can learn more about giterminism in a [separate article]({{ "/advanced/giterminism.html#dockerfile-image" | true_relative_url }})).
 
 Here is an example of a command to build a `dockerfile` stage:
 
@@ -76,7 +76,7 @@ The stage selection algorithm in werf includes the following steps:
 
 ### Additional steps for Stapel images and artifacts
 
-The check for the ancestry of git commits is added to the basic algorithm. After step **2**, additional filtering based on the git history is performed. Only stages associated with commits that are the ancestors of the current commit are selected if the current stage is associated with git (the git-archive stage, the custom stage with git patches, or the git-latest-patch stage). Thus, the commits in neighboring branches are discarded.
+The check for the ancestry of git commits is added to the basic algorithm. After the step **2**, additional filtering based on the git history is performed. Only stages associated with commits that are the ancestors of the current commit are selected if the current stage is associated with git (the git-archive stage, the custom stage with git patches, or the git-latest-patch stage). Thus, the commits in neighboring branches are discarded.
 
 There can be a situation when several built images have the same digest. Moreover, stages related to different git branches can have the same digest. However, werf is guaranteed to prevent cache reuse between unrelated branches. The cache in different branches can only be reused if it is associated with a commit that serves as a basis for both branches.
 
@@ -95,7 +95,7 @@ When selecting and saving new stages to the storage, werf uses a [lock manager](
 
 ## Parallel build
 
-The parallel assembly in werf is managed by `--parallel` (`-p`) and `--parallel-tasks-limit` parameters. By default, it is enabled and limited to building five images in parallel.
+The parallel assembly in werf is managed by `--parallel` (`-p`) and `--parallel-tasks-limit` parameters. By default, it is enabled and limited to build five images in parallel.
 
 After building a tree of image dependencies, werf splits the assembly process into stages. Each stage contains a set of independent images that can be built in parallel.
 

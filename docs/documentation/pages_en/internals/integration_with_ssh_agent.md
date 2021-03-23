@@ -8,7 +8,7 @@ werf might require user ssh-keys in the following cases:
 1. To clone remote git repositories that are specified in the werf.yaml configuration.
 2. To provide access to external data over ssh for instructions for building images.
 
-By default (without any options) werf will try to use the system ssh-agent by checking `SSH_AUTH_SOCK` environment variable.
+By default, (without any options) werf will try to use the system ssh-agent by checking `SSH_AUTH_SOCK` environment variable.
 
 If there is no ssh-agent running in the system, werf will try to behave like a ssh-client by using the default ssh-keys of the user that runs werf (i.e., `~/.ssh/id_rsa|id_dsa`). If werf detects one of these files, it starts a temporary ssh-agent and adds these keys to it.
 

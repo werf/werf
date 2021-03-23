@@ -5,7 +5,7 @@ description: Description of key differences since v1.1
 sidebar: documentation
 ---
 
-Данная статья содержит полный список изменений с версии v1.1. Если требуется инструкция по переводу проекта с v1.1, тогда следует обратится [к статье про миграцию с v1.1 на v1.2]({{ "/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html" | true_relative_url }}).
+Данная статья содержит полный список изменений с версии v1.1. Если требуется инструкция по переводу проекта с v1.1, тогда следует обратиться [к статье про миграцию с v1.1 на v1.2]({{ "/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html" | true_relative_url }}).
 
 ## Гитерминизм
 
@@ -46,7 +46,7 @@ WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=application:45f03bdd90c844eb2
 
 Например, если имеется следующий `werf.yaml`:
 
-```
+```yaml
 # werf.yaml
 project: myproj
 configVersion: 1
@@ -57,7 +57,7 @@ from: alpine
 
 Полное имя docker-образа для `myimage` может быть использовано в `docker-compose.yml` следующим образом:
 
-```
+```yaml
 version: '3'
 services:
   web:
@@ -83,10 +83,10 @@ Werf предоставляет следующие команды compose:
  - Единая команда `werf converge` для сборки и публикации требуемых образов в container registry и деплоя приложения в kubernetes.
  - Single `werf converge` command to build and publish needed images and deploy application into the kubernetes.
      - Вызов команды с опцией `werf converge --skip-build` эмулирует поведение ранее существующей команды `werf deploy`.
-         - werf упадёт с ошибкой если требуемые образы не будут найдены в container registry, также как падал с ошибкой `werf deploy`.
+         - werf упадёт с ошибкой если требуемые образы не будут найдены в container registry, так же как падал с ошибкой `werf deploy`.
  - Удалены команды `werf stages *` и `werf images *`.
- - Более нету команды `werf publish`, потому что команда `werf build` с параметром `--repo` загрузит образы и все стадии, из которых они состоят, в container registry автоматически.
- - Более нету флагов тегирования: `--tag-by-stages-signature`, `--tag-git-branch`, `--tag-git-commit`, `--tag-git-tag` и `--tag-custom`, werf всегда использует поведение ранее включаемое флагом `--tag-by-stages-signature`.
+ - Более нет команды `werf publish`, потому что команда `werf build` с параметром `--repo` загрузит образы и все стадии, из которых они состоят, в container registry автоматически.
+ - Более нет флагов тегирования: `--tag-by-stages-signature`, `--tag-git-branch`, `--tag-git-commit`, `--tag-git-tag` и `--tag-custom`, werf всегда использует поведение ранее включаемое флагом `--tag-by-stages-signature`.
      - Принудительное использование произвольных тегов [пока не поддерживается](https://github.com/werf/werf/issues/2869) в v1.2.
      - Команда `werf ci-env` принимает скрытый параметр `--tagging-strategy` по соображениям совместимости для следующего варианта вызова: `werf ci-env --tagging-strategy` без опции `--as-file`.
          - Использование данного флага должно быть удалено из всех вызовов команды `werf ci-env`.
@@ -96,7 +96,7 @@ Werf предоставляет следующие команды compose:
 
  - По умолчанию команда `werf build` не требует никаких аргументов и будет собирать образы используя локальный docker server в качестве хранилища.
  - При запуске `werf build` с флагом `--repo registry.mydomain.org/project` werf будет искать локально собранные образы и если найдёт, то загрузит их в указанный repo (лишней пересборки не будет).
- - Команда `werf converge` требует параметр `--repo` для работы, и также как `werf build` автоматически загрузит в repo локально существующие образы.
+ - Команда `werf converge` требует параметр `--repo` для работы, и, так же как `werf build`, автоматически загрузит в repo локально существующие образы.
 
 ### Автоматическая сборка образов в командах верхнего уровня
 
@@ -112,7 +112,7 @@ Werf предоставляет следующие команды compose:
 
 ## Werf всегда хранит стадии в container registry
 
- - Команда `werf converge` всегда хранит образы и стадии, из которых они состоят, в container regsitry.
+ - Команда `werf converge` всегда хранит образы и стадии, из которых они состоят, в container registry.
  - Единый параметр `--repo` используется для указания хранилища образов и стадий этих образов (ранее в v1.1 было 2 параметра `--stages-storage` и `--images-repo`).
  - Благодаря использованию content-based тегирования финальный образ совпадает с последней сборочной стадией этого образа.
      - Т.к. образы состоят из набора слоёв, все эти слои всё равно хранятся в container registry.
@@ -121,8 +121,8 @@ Werf предоставляет следующие команды compose:
 
 ## Изменения сигнатур
 
- - **Сигнатуры переименованы в дайжесты** (signature => digest).
- - Все дайжесты уже собранных образов изменились.
+ - **Сигнатуры переименованы в дайджесты** (signature => digest).
+ - Все дайджесты уже собранных образов изменились.
  - Образы собранные через сборщик как Dockerfile, так и stapel, будут пересобраны.
      - Другими словами сборочный кеш из v1.1 более не валиден.
 
@@ -134,7 +134,7 @@ Werf предоставляет следующие команды compose:
 
  - Для команд `werf converge`, `werf render` and `werf bundle publish` существует параметр `--env`.
  - `--env` [влияет на имя helm релиза и kubernetes namespace]({{ "/advanced/helm/releases/naming.html" | true_relative_url }}) также как в v1.1.
-     - При указании параметра `--env` имя [helm релиза]({{ "/advanced/helm/releases/release.html" | true_relative_url }}) будет сгенерировано по шаблону `[[ project ]]-[[ env ]]` и namespace в kubernetes будет сгенрирован по такому же шаблону `[[ project ]]-[[ env ]]` — также как в версии v1.1.
+     - При указании параметра `--env` имя [helm релиза]({{ "/advanced/helm/releases/release.html" | true_relative_url }}) будет сгенерировано по шаблону `[[ project ]]-[[ env ]]` и namespace в kubernetes будет сгенерирован по такому же шаблону `[[ project ]]-[[ env ]]` — так же как в версии v1.1.
      - Когда параметр `--env` не указан, werf будет использовать шаблон `[[ project ]]` для генерации имени [helm релиза]({{ "/advanced/helm/releases/release.html" | true_relative_url }}) и такой же шаблон `[[ project ]]` для генерации namespace в kubernetes.
 
 ## Новая команда werf-render
@@ -148,15 +148,15 @@ Werf предоставляет следующие команды compose:
 ### Helm 3
 
  - Helm 3 используется по умолчанию, и это единственная версия helm доступная для использования в v1.2.
- - Уже существующие релизы helm 3 будут смигрированы на helm 3 автоматически в команде `werf converge` при условии что имя релиза helm 2 совпадает с именем нового релиза helm 3.
-     - **ПРЕДУПРЕЖДЕНИЕ.**  Как только релиз helm 2 сконвертирован в helm 3 пути назад нет.
+ - Уже существующие релизы helm 3 будут смигрированы на helm 3 автоматически в команде `werf converge` при условии, что имя релиза helm 2 совпадает с именем нового релиза helm 3.
+     - **ПРЕДУПРЕЖДЕНИЕ.** Как только релиз helm 2 конвертирован в helm 3 пути назад нет.
      - Прежде чем мигрировать релиз helm 2 в helm 3, команда `werf converge` проверит, что текущие шаблоны корректно рендерятся и валидируются.
 
 ### Конфигурация
 
  - `.Values.werf.image.IMAGE_NAME` вместо шаблона `werf_image`.
  - Удалена функция шаблонов `werf_container_env`.
- - Загрузка всех конфигурационный файлов чарта происходит в режиме [гитерминизма](#гитерминизм).
+ - Загрузка всех конфигурационных файлов чарта происходит в режиме [гитерминизма](#гитерминизм).
      - Данный режим используется только для высокоуровневых команд вроде `werf converge` и `werf render`.
      - Низкоуровневые helm-команды `werf helm *` работают в обычном режиме и загружают файлы из локальной файловой системы.
  - Окружение, переданное опцией `--env`, доступно для использования через `.Values.werf.env`.
@@ -200,10 +200,10 @@ Werf предоставляет следующие команды compose:
 ## werf.yaml
 
  - Директива `fromImageArtifact` переименована в `fromArtifact`.
-     - **ПРЕДУПРЕЖДЕНИЕ.** Директива `fromImageArtifact/fromArtifact` не рекомендована к использованию и будет удалёна в v1.3 из-за неочевидной работы механизма наложения патчей в получившейся конфигурации. Рекомендуется уже сейчас перейти на `image` и `fromImage` вместо `artifact` и `fromArtifact`.
+     - **ПРЕДУПРЕЖДЕНИЕ.** Директива `fromImageArtifact/fromArtifact` не рекомендована к использованию и будет удалена в v1.3 из-за неочевидной работы механизма наложения патчей в получившейся конфигурации. Рекомендуется уже сейчас перейти на `image` и `fromImage` вместо `artifact` и `fromArtifact`.
  - Удалена опция `--helm-chart-dir`, директория helm-чарта определяется в `werf.yaml`:
 
-    ```
+    ```yaml
     configVersion: 1
     deploy:
       helmChartDir: .helm
@@ -217,7 +217,7 @@ Werf предоставляет следующие команды compose:
  - Функция `env "ENVIRONMENT_VARIABLE_NAME"` теперь требует наличия переменной `ENVIRONMENT_VARIABLE_NAME` (переменная может содержать пустое значение, но она должна быть явно определена).
  - Новая функция `required` даёт разработчикам возможность определить значение, которое требуется для рендера конфига. Если это значение пустое, то рендер сообщит об ошибке с помощью текста указанного в директиве `required`:
 
-   {% raw %}
+    {% raw %}
     ```
     {{ required "A valid <anything> value required!" <anything> }}
     ```
@@ -231,19 +231,19 @@ Werf предоставляет следующие команды compose:
 
 ## Очистка
 
- - Очистка на основе истоии git по умолчанию.
+ - Очистка на основе истории git по умолчанию.
      - В v1.1 такой режим работы включался опцией `--git-history-based-cleanup-v1.2` (в v1.2 опция удалена).
  - Полностью удалены алгоритмы очистки на основе различных стратегий тегирования.
  - Опция `--keep-stages-built-within-last-n-hours` для сохранения образов, которые были собраны в указанный период до текущего момента (по умолчанию 2 часа).
  - Улучшения алгоритма очистки на основе истории git:
-     - Политика сохранения образов образов по директиве `imagesPerReference.last` учитывает, что может существовать несколько стадий образа, основанных на одном и том же коммите. Эти образы сохраняются и засчитываются как один для директивы `imagesPerReference.last`. Другими словами: `imagesPerReference.last` — это про количество коммитом, для одного коммита может существовать несколько образов.
+     - Политика сохранения образов по директиве `imagesPerReference.last` учитывает, что может существовать несколько стадий образа, основанных на одном и том же коммите. Эти образы сохраняются и засчитываются как один для директивы `imagesPerReference.last`. Другими словами: `imagesPerReference.last` — это про количество коммитом, для одного коммита может существовать несколько образов.
 
 ## Кеширование импортов из artifact/image по контрольной сумме
 
- - Представим, что имеется артифакт, который собирает некоторые файлы.
- - Данный артифакт имеет stage-dependency в `werf.yaml` для пересборки этих файлов, когда исходные зависимые файлы поменялись.
+ - Представим, что имеется артефакт, который собирает некоторые файлы.
+ - Данный артефакт имеет stage-dependency в `werf.yaml` для пересборки этих файлов, когда исходные зависимые файлы поменялись.
  - При очередном изменении исходных файлов вызывает пересборку артефакта.
-     - Т.к. изменился stage-dependency, то последняя стадия артефакта будет иметь другой дайжест.
+     - Т.к. изменился stage-dependency, то последняя стадия артефакта будет иметь другой дайджест.
      - Однако после пересборки артефакта фактическая контрольная сумма файлов, которые были собраны не поменялась — получились точно такие же файлы.
          - В версии v1.1 werf всё равно выполнит переимпорт этих файлов в целевой образ.
              - Как последствие целевой образ будет пересобран и перевыкачен.
@@ -259,8 +259,8 @@ Werf предоставляет следующие команды compose:
 
 Команды `werf converge`, `werf build`, `werf run`, `werf bundle publish` и `werf render` имеют опции `--report-path` и `--report-format`. `--report-path` включает генерацию в следующем формате:
 
-```
-# werf build --report-path images.json --report-format json
+```shell
+$ werf build --report-path images.json --report-format json
 
 {
   "Images": {
@@ -291,8 +291,8 @@ Werf предоставляет следующие команды compose:
 
 или
 
-```
-# werf build --report-path images.sh --report-format envfile
+```shell
+$ werf build --report-path images.sh --report-format envfile
 
 WERF_RESULT_DOCKER_IMAGE_NAME=quickstart-application:32e88a6a19a425c9254374ee2899b365876de31ac7d6857b523696a1-1613371915843
 WERF_WORKER_DOCKER_IMAGE_NAME=quickstart-application:1b16118e7d5c67aa3c61fc0f8d49b3eccf8f72810f01c33a40290418-1613371916044
@@ -311,15 +311,15 @@ WERF_VOTE_DOCKER_IMAGE_NAME=quickstart-application:45f03bdd90c844eb2e61e7e01dae4
          - Чтобы сборочный кеш был связан с коммитами в главном репозитории.
 
  - All relative paths specified in the werf.yaml will be calculated relatively to the werf process cwd or `--dir` param.
- - Typically user will run werf from the subdirectory where werf.yaml reside.
+ - Typically, user will run werf from the subdirectory where werf.yaml reside.
  - There is also `--config` option to pass custom werf.yaml config, all relative paths will also be calculated relatively to the werf process cwd or `--dir` param.
- - Added `--git-work-tree` param (or `WERF_GIT_WORK_TREE` variable) to specify directory that contains `.git` in the case when autodetector failed or we want to use specific work tree.
+ - Added `--git-work-tree` param (or `WERF_GIT_WORK_TREE` variable) to specify a directory that contains `.git` in the case when autodetect failed, or we want to use specific work tree.
      - For example when running werf from the submodule of the project we may want to use root repo worktree instead of submodule's work tree.
 
 ## Разное и внутренности
 
  - Добавлен кеш git-архивов и git-патчей в `~/.werf/local_cache/` по аналогии с уже существующем кешом git-worktree. Патчи и архивы более не создаются в `/tmp/` (и `--tmp-dir` соответственно).
- - Удалёна блокировка `stages_and_images` во время сборочного процесса.
+ - Удалена блокировка `stages_and_images` во время сборочного процесса.
      - `stages_and_images` — это вспомогательная блокировка, которая ранее предотвращала одновременный запуск `werf cleanup` и `werf build`.
      - В текущей версии данная блокировка может быть проигнорирована без последствий.
      - Данная блокировка создаёт излишнюю нагрузку на сервер синхронизации, потому что она активна во время всего процесса сборки.

@@ -23,7 +23,7 @@ We also recommend you to read one the following guides about configuring the spe
 
 Generally, end users interact with an application in the production environment. It is also the target environment for all application code changes made by application developers.
 
-Also, there are so-called _production-like_ environments. Production-like environments are separate from production but have the same hardware and software configuration, network infrastructure, operating system, software versions, etc. In the real world, there may be some differences, though. Still, each project defines its acceptable risks related to differences between production-like and production environments. Examples of production-like environments – [staging](#staging) and [testing](#testing) – are provided below.
+Also, there are so-called _production-like_ environments. Production-like environments are separate from production but have the same hardware and software configuration, network infrastructure, operating system, software versions, etc. In the real world, there may be some differences, though. Still, each project defines its acceptable risks related to the difference between production-like and production environments. Examples of production-like environments – [staging](#staging) and [testing](#testing) – are provided below.
 
 #### Staging
 
@@ -37,7 +37,7 @@ Testing is a [production-like environment](#production) with the following goal:
 
 #### Review
 
-Review is a dynamic (temporary) environment used by application developers to test newly written code and conduct experiments not allowed in [production-like environmnets](#production).    
+Review is a dynamic (temporary) environment used by application developers to test newly written code and conduct experiments not allowed in [production-like environments](#production).    
 
 It is possible to dynamically create an arbitrary number of review environments (as resources permit). Application developer usually creates and terminates such an environment using a CI/CD system. Also, a review environment could be automatically removed after a period of inactivity.
 
@@ -101,7 +101,7 @@ If you want to learn more about how to create a workflow, or no instructions exi
 
 ## Workflow components for various environments
 
-Next, we will discuss various options for rolling out to production and other environments in conjunction with git. Each section describes a building block that you can use to work with a specific environment. We will call such a block a "workflow block". You can build your own workflow using workflow blocks or make use of a ready-made configuration (see [Ready-made workflow configurations](#ready-made-workflow-configurations) below).
+Next, we will discuss various options for rolling out to production and other environments in conjunction with the git. Each section describes a building block that you can use to work with a specific environment. We will call such a block a "workflow block". You can build your own workflow using workflow blocks or make use of a ready-made configuration (see [Ready-made workflow configurations](#ready-made-workflow-configurations) below).
 
 Review environments are created and deleted dynamically as per the developers' request. Thus, there are some specificities when deploying code to these environments. In the review-related sections, we will describe how to create as well as delete a review environment.
 
@@ -173,7 +173,7 @@ The state of the branch reflects the state of the environment at any given time.
 
 Rollback options:
  - Recommended: rollback via reverting the commit in the master branch. In this case, the state of the branch is kept synchronized with the state of the environment, so this is the preferred option for preserving schema integrity.
- - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps)..
+ - By means of the CI/CD system; the user can [manually](#run-a-pipeline-manually) run the pipeline on an old commit (e.g., in GitLab CI/CD, the "rollback" button performs precisely these steps).
 
 ### Deploy to staging from master at the click of a button
 

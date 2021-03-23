@@ -114,9 +114,10 @@ global:
     version: v1.2.7
 ```
 
-There are following service values:
+Существуют следующие сервисные значения:
+
  - Имя проекта из файла конфигурации `werf.yaml`: `.Values.werf.name`.
- - Версия используемой : `.Values.werf.version`.
+ - Используемая версия werf: `.Values.werf.version`.
  - Название окружения CI/CD системы, используемое во время деплоя: `.Values.werf.env`.
  - Адрес container registry репозитория, используемый во время деплоя: `.Values.werf.repo`.
  - Полное имя и тег Docker-образа для каждого описанного в файле конфигурации `werf.yaml` образа: `.Values.werf.image.NAME`. Больше информации про использование этих значений доступно [в статье про шаблоны]({{ "/advanced/helm/configuration/templates.html#интеграция-с-собранными-образами" | true_relative_url }}).
