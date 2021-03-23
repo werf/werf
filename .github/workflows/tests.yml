@@ -72,31 +72,31 @@ jobs:
     - name: Upload integration default tests binaries
       uses: actions/upload-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_default_tests_binaries"
+        name: "ubuntu_integration_default_tests_binaries"
         path: precompiled_tests_binaries/integration_default
 
     - name: Upload integration k8s_per_version tests binaries
       uses: actions/upload-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_k8s_per_version_tests_binaries"
+        name: "ubuntu_integration_k8s_per_version_tests_binaries"
         path: precompiled_tests_binaries/integration_k8s_per_version
 
     - name: Upload integration container_registry_per_implementation tests binaries
       uses: actions/upload-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_container_registry_per_implementation_tests_binaries"
+        name: "ubuntu_integration_container_registry_per_implementation_tests_binaries"
         path: precompiled_tests_binaries/integration_container_registry_per_implementation
 
     - name: Upload integration k8s_per_version_and_container_registry_per_implementation tests binaries
       uses: actions/upload-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_k8s_per_version_and_container_registry_per_implementation_tests_binaries"
+        name: "ubuntu_integration_k8s_per_version_and_container_registry_per_implementation_tests_binaries"
         path: precompiled_tests_binaries/integration_k8s_per_version_and_container_registry_per_implementation
 
     - name: Upload werf binary
       uses: actions/upload-artifact@master
       with:
-        name: "${{ matrix.os }}_werf_binary"
+        name: "ubuntu_werf_binary"
         path: werf
 
   integration_default_tests:
@@ -105,12 +105,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         extra-find-args:
         - "-name 'git.test'"
         - "-name 'ansible.test'"
         - "! -name 'git.test' ! -name 'ansible.test'"
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
 
     - name: Set up Go 1.14
@@ -132,13 +131,13 @@ jobs:
     - name: Download integration default tests binaries
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_default_tests_binaries"
+        name: "ubuntu_integration_default_tests_binaries"
         path: .
 
     - name: Download werf binary
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_werf_binary"
+        name: "ubuntu_werf_binary"
         path: .
 
     - name: Prepare environment
@@ -164,9 +163,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
 
     - name: Set up Go 1.14
@@ -181,13 +179,13 @@ jobs:
     - name: Download integration k8s_per_version tests binaries
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_k8s_per_version_tests_binaries"
+        name: "ubuntu_integration_k8s_per_version_tests_binaries"
         path: .
 
     - name: Download werf binary
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_werf_binary"
+        name: "ubuntu_werf_binary"
         path: .
 
     - name: Prepare environment
@@ -226,9 +224,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
         k8s_version: [1.16, 1.17, 1.18, 1.19]
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ubuntu-latest
     env:
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
       WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
@@ -284,13 +281,13 @@ jobs:
     - name: Download integration k8s_per_version_and_container_registry_per_implementation tests binaries
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_integration_k8s_per_version_and_container_registry_per_implementation_tests_binaries"
+        name: "ubuntu_integration_k8s_per_version_and_container_registry_per_implementation_tests_binaries"
         path: .
 
     - name: Download werf binary
       uses: actions/download-artifact@master
       with:
-        name: "${{ matrix.os }}_werf_binary"
+        name: "ubuntu_werf_binary"
         path: .
 
     - name: Login (acr)
