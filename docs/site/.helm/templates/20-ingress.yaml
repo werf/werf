@@ -65,7 +65,11 @@ spec:
   secretName: tls-{{ $host }}
   issuerRef:
     kind: ClusterIssuer
+{{- if hasPrefix "review" .Values.werf.env }}
+    name: letsencrypt-staging
+{{- else }}
     name: letsencrypt
+{{- end }}
   commonName: {{ $host }}
   dnsNames:
   - {{ $host }}
