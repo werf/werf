@@ -1,0 +1,42 @@
+name: Git repo Validation
+
+on:
+  push:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+jobs:
+  type_check:
+    name: Check type
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check Commit Type
+      uses: gsactions/commit-message-checker@v1
+      with:
+        pattern: '^\[.+\] .+$'
+        flags: 'gm'
+        error: 'Your first line has to contain a commit type like "[BUGFIX]".'
+
+  length_check:
+    name: Check length
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check commit line length
+      uses: gsactions/commit-message-checker@v1
+      with:
+        pattern: '^[^#].{10,}'
+        error: 'The commit message length should be more than 10 characters.'
+        excludeDescription: 'true'
+        excludeTitle: 'true'
+        checkAllCommitMessages: 'true'
+        accessToken: ${{ secrets.GITHUB_TOKEN }}

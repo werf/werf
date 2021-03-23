@@ -14,16 +14,6 @@ jobs:
     runs-on: tfprod-werf
     steps:
 
-    - name: Check commit line length
-      uses: gsactions/commit-message-checker@v1
-      with:
-        pattern: '^[^#].{10,}'
-        error: 'The commit message length should be more than 10 characters.'
-        excludeDescription: 'true'
-        excludeTitle: 'true'
-        checkAllCommitMessages: 'true'
-        accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
-
     - name: Checkout code
       uses: actions/checkout@v2
       with:
