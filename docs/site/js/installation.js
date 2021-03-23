@@ -9,7 +9,7 @@ $(document).ready(function () {
 
   var defaults = {
     version: '1.2',
-    channel: 'beta',
+    channel: 'ea',
     os: default_os,
     method: 'multiwerf'
   }
@@ -33,18 +33,18 @@ $(document).ready(function () {
     window.history.replaceState(null, null, url.toString());
 
     // Update buttons status
-    if (group == "version" && param == "1.2") {
-      $(`[data-install-tab="rock-solid"]`).hide();
-      $(`[data-install-tab="stable"]`).hide();
-
-      doInstallSelect(group, param)
-      doInstallSelect("channel", "ea")
-      return
-    } else if (group == "version") {
-      $(`[data-install-tab="rock-solid"]`).show();
-      $(`[data-install-tab="stable"]`).show();
-      $(`[data-install-tab="ea"]`).show();
-      $(`[data-install-tab="beta"]`).show();
+    if (group == "version" ) {
+      if (param == "1.2") {
+        $(`[data-install-tab="rock-solid"]`).hide();
+        $(`[data-install-tab="stable"]`).hide();
+        doInstallSelect("channel", "ea")
+      } else if (group == "version") {
+        $(`[data-install-tab="rock-solid"]`).show();
+        $(`[data-install-tab="stable"]`).show();
+        $(`[data-install-tab="ea"]`).show();
+        $(`[data-install-tab="beta"]`).show();
+        doInstallSelect("channel", "stable")
+      }
     }
 
     doInstallSelect(group, param)
