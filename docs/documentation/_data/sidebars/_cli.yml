@@ -216,6 +216,15 @@ cli: &cli
       - title: werf helm pull
         url: /reference/cli/werf_helm_pull.html
 
+      - title: werf helm registry
+        f:
+
+        - title: werf helm registry login
+          url: /reference/cli/werf_helm_registry_login.html
+
+        - title: werf helm registry logout
+          url: /reference/cli/werf_helm_registry_logout.html
+
       - title: werf helm repo
         f:
 

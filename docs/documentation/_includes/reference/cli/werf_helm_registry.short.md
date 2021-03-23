@@ -1,0 +1,1 @@
+login to or logout from a registry
