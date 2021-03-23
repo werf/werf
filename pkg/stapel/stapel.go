@@ -13,6 +13,7 @@ import (
 )
 
 const VERSION = "0.6.1"
+const IMAGE = "flant/werf-stapel"
 
 func getVersion() string {
 	version := VERSION
@@ -22,8 +23,16 @@ func getVersion() string {
 	return version
 }
 
+func getImage() string {
+	image := IMAGE
+	if i := os.Getenv("WERF_STAPEL_IMAGE_NAME"); i != "" {
+		image = i
+	}
+	return image
+}
+
 func ImageName() string {
-	return fmt.Sprintf("flant/werf-stapel:%s", getVersion())
+	return fmt.Sprintf("%s:%s", getImage(), getVersion())
 }
 
 func getContainer() container {
