@@ -2,7 +2,7 @@ package cleaning
 
 import (
 	"context"
-	"fmt"
+
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
@@ -18,12 +18,6 @@ type StagesPurgeOptions struct {
 
 func StagesPurge(ctx context.Context, projectName string, storageLockManager storage.LockManager, storageManager *manager.StorageManager, options StagesPurgeOptions) error {
 	m := newStagesPurgeManager(projectName, storageManager, options)
-
-	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{GetOrCreateImagesOnly: false}); err != nil {
-		return fmt.Errorf("unable to lock stages and images: %s", err)
-	} else {
-		defer storageLockManager.Unlock(ctx, lock)
-	}
 
 	return logboek.Context(ctx).Default().LogProcess("Running stages purge").
 		Options(func(options types.LogProcessOptionsInterface) {

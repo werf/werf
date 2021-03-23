@@ -33,11 +33,6 @@ func (manager *GenericLockManager) LockImage(ctx context.Context, projectName, i
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 
-func (manager *GenericLockManager) LockStagesAndImages(ctx context.Context, projectName string, opts LockStagesAndImagesOptions) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericStagesAndImagesLockName(projectName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{Shared: opts.GetOrCreateImagesOnly}))
-	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
-}
-
 func (manager *GenericLockManager) Unlock(ctx context.Context, lock LockHandle) error {
 	err := manager.Locker.Release(lock.LockgateHandle)
 	if err != nil {
@@ -56,8 +51,4 @@ func genericStageCacheLockName(projectName, signature string) string {
 
 func genericImageLockName(imageName string) string {
 	return fmt.Sprintf("%s.image", imageName)
-}
-
-func genericStagesAndImagesLockName(projectName string) string {
-	return fmt.Sprintf("%s.stages_and_images", projectName)
 }

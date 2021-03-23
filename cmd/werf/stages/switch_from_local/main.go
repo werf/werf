@@ -150,15 +150,9 @@ func runSwitch() error {
 		return err
 	}
 
-	if lock, err := storageLockManager.LockStagesAndImages(ctx, projectName, storage.LockStagesAndImagesOptions{}); err != nil {
-		return err
-	} else {
-		defer storageLockManager.Unlock(ctx, lock)
-	}
-
 	if err := storageManager.SetStagesSwitchFromLocalBlock(ctx, toStagesStorage); err != nil {
 		return err
 	}
 
-	return manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, manager.SyncStagesOptions{RemoveSource: true, CleanupLocalCache: true, WithoutLock: true})
+	return manager.SyncStages(ctx, projectName, fromStagesStorage, toStagesStorage, storageLockManager, containerRuntime, manager.SyncStagesOptions{RemoveSource: true, CleanupLocalCache: true})
 }

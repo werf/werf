@@ -93,15 +93,6 @@ func (manager *KuberntesLockManager) LockImage(ctx context.Context, projectName,
 	}
 }
 
-func (manager *KuberntesLockManager) LockStagesAndImages(ctx context.Context, projectName string, opts LockStagesAndImagesOptions) (LockHandle, error) {
-	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
-		return LockHandle{}, err
-	} else {
-		_, lock, err := locker.Acquire(kuberntesStagesAndImagesLockName(projectName), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{Shared: opts.GetOrCreateImagesOnly}))
-		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
-	}
-}
-
 func (manager *KuberntesLockManager) Unlock(ctx context.Context, lock LockHandle) error {
 	if locker, err := manager.getLockerForProject(ctx, lock.ProjectName); err != nil {
 		return err
@@ -125,8 +116,4 @@ func kubernetesStageCacheLockName(_, signature string) string {
 
 func kuberntesImageLockName(_, imageName string) string {
 	return fmt.Sprintf("image/%s", imageName)
-}
-
-func kuberntesStagesAndImagesLockName(_ string) string {
-	return fmt.Sprintf("stages_and_images")
 }
