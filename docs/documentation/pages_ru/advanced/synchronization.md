@@ -16,14 +16,14 @@ permalink: advanced/synchronization.html
    - Локальный _менеджер блокировок_ использует файловые блокировки, предоставляемые операционной системой.
  2. Kubernetes. Включается опцией `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]`.
   - _Кеш хранилища_ в Kubernetes использует для каждого проекта отдельный ConfigMap `cm/PROJECT_NAME`, который создается в указанном `NAMESPACE`.
-  - _Менеджер блокировок_ в Kubernetes использует ConfigMap по имени проекта `cm/PROJECT_NAME` (тот же самый что и для кеша хранилища) для хранения распределённых блокировок в аннотациях этого ConfigMap. Werf использует [библиотека lockgate](https://github.com/werf/lockgate), которая реализует распределённые блокировки с помощью обновления аннотаций в ресурсах Kubernetes.
+  - _Менеджер блокировок_ в Kubernetes использует ConfigMap по имени проекта `cm/PROJECT_NAME` (тот же самый что и для кеша хранилища) для хранения распределённых блокировок в аннотациях этого ConfigMap. werf использует [библиотека lockgate](https://github.com/werf/lockgate), которая реализует распределённые блокировки с помощью обновления аннотаций в ресурсах Kubernetes.
  3. Http. Включается опцией `--synchronization=http[s]://DOMAIN`.
   - Есть публичный сервер синхронизации доступный по домену `https://synchronization.werf.io`.
   - Собственный http сервер синхронизации может быть запущен командой `werf synchronization`. 
 
-Werf использует `--synchronization=:local` (локальный _кеш хранилища_ и локальный _менеджер блокировок_) по умолчанию, если используется локальное хранилище.
+werf использует `--synchronization=:local` (локальный _кеш хранилища_ и локальный _менеджер блокировок_) по умолчанию, если используется локальное хранилище.
 
-Werf использует `--synchronization=https://synchronization.werf.io` по умолчанию, если используется удалённое хранилище (`--repo=CONTAINER_REGISTRY_REPO`).
+werf использует `--synchronization=https://synchronization.werf.io` по умолчанию, если используется удалённое хранилище (`--repo=CONTAINER_REGISTRY_REPO`).
 
 Пользователь может принудительно указать произвольный адрес компонентов для синхронизации, если это необходимо, с помощью явного указания опции `--synchronization=:local|(kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH])|(http[s]://DOMAIN)`.
 

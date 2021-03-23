@@ -8,7 +8,7 @@ This article contains full descriptive list of changes since v1.1. If you need a
 
 ## Giterminism
 
-Werf introduces the so-called giterminism mode. The word is constructed from git and determinism, which means “determined by the git”.
+werf introduces the so-called giterminism mode. The word is constructed from git and determinism, which means “determined by the git”.
 
 All werf configuration files, helm configuration and application files werf reads from the current commit of the git project directory. There is also so called [dev mode](#follow-and-dev) to simplify local development of werf configuration and local development of an application with werf.
 
@@ -37,7 +37,7 @@ Internally werf will commit modified/tracked and staged files to dev branch `wer
 
 ### Composer support
 
-Werf supports main composer commands. When running these commands werf will set special environment variables with full docker images names of images described in the `werf.yaml`:
+werf supports main composer commands. When running these commands werf will set special environment variables with full docker images names of images described in the `werf.yaml`:
 
 ```
 WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=application:45f03bdd90c844eb2e61e7e01dae491588d2bdadbd195881b25be9b0-1613371915351
@@ -63,7 +63,7 @@ services:
     image: "${WERF_MYIMAGE_DOCKER_IMAGE_NAME}"
 ```
 
-Werf provides following compose commands:
+werf provides following compose commands:
  - [`werf compose config`]({{ "/reference/cli/werf_compose_config.html" | true_relative_url }}) — run docker-compose config command with forwarded image names;
  - [`werf compose down`]({{ "/reference/cli/werf_compose_down.html" | true_relative_url }}) — run docker-compose down command with forwarded image names;
  - [`werf compose up`]({{ "/reference/cli/werf_compose_up.html" | true_relative_url }}) — run docker-compose up command with forwarded image names.
@@ -148,7 +148,7 @@ Use project's container registry repository as `--repo` param for werf commands.
  - Helm 3 is default and the only choice when deploying with werf v1.2.
  - An already existing helm 2 release will be migrated to helm 3 automatically in the `werf converge` command given that helm 2 release has the same name as newly deployed helm 3 release.
      - **CAUTION** There is no legal way back once helm 2 release has been migrated to helm 3.
-     - Werf-converge command will check that project helm charts are correctly rendered before running the process of migration.
+     - werf-converge command will check that project helm charts are correctly rendered before running the process of migration.
 
 ### Configuration
 
@@ -170,9 +170,9 @@ Use project's container registry repository as `--repo` param for werf commands.
 ### Working with subcharts
 
  - Lock file with dependencies should be committed `.helm/Chart.lock`.
- - Werf will automatically download dependencies charts using this lock file.
+ - werf will automatically download dependencies charts using this lock file.
  - Typically `.helm/charts` directory should be added to `.gitignore` file.
- - Werf allows storing chart dependencies directly in the `.helm/charts` though.
+ - werf allows storing chart dependencies directly in the `.helm/charts` though.
      - These charts will override charts automatically downloaded by the `.helm/Chart.lock` file
  - More info available [in the chart dependencies article]({{ "/advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}) and [giterminism article]({{ "/advanced/helm/configuration/giterminism.html#subcharts-and-giterminism" | true_relative_url }}).
 

@@ -19,7 +19,7 @@ The chart is a set of configuration files which describe an application. Chart f
   secret-values.yaml
 ```
 
-Werf chart has an optional `.helm/Chart.yaml` description file, which is fully compatible with [helm`s `Chart.yaml`](https://helm.sh/docs/topics/charts/) and could contain following content:
+werf chart has an optional `.helm/Chart.yaml` description file, which is fully compatible with [helm`s `Chart.yaml`](https://helm.sh/docs/topics/charts/) and could contain following content:
 
 ```yaml
 apiVersion: v2

@@ -74,13 +74,13 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
  - Add `.helm/charts` into the `.gitignore`.
  - Run `werf helm dependency update` command, which will create `.helm/Chart.lock` file and `.helm/charts` dir.
  - Commit `.helm/Chart.lock` file into the project git repo.
- - Werf will automatically download subcharts into the cache and load subchart files in `werf converge` command (and other toplevel commands which require helm chart).
+ - werf will automatically download subcharts into the cache and load subchart files in `werf converge` command (and other toplevel commands which require helm chart).
  - More info [in the docs]({{ "advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}).
 
 ## 5. Cleanup by git history
 
  - Remove `--git-history-based-cleanup-v1.2` option for a cleanup.
-     - Werf always uses git-history cleanup in the v1.2.
+     - werf always uses git-history cleanup in the v1.2.
  - More info [in the changelog]({{ "/whats_new_in_v1_2/changelog.html#cleanup" | true_relative_url }}) and [in the cleanup article]({{ "/advanced/cleanup.html" | true_relative_url }}).
 
 ## 6. Define environment variables in werf-giterminism.yaml

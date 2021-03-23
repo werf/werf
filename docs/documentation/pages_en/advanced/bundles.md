@@ -4,11 +4,11 @@ permalink: advanced/bundles.html
 change_canonical: true
 ---
 
-Standard werf usage flow implies usage of [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command to deploy a new version of your application into kubernetes. Werf-converge command consists of:
+Standard werf usage flow implies usage of [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command to deploy a new version of your application into kubernetes. werf-converge command consists of:
  - building and publishing needed images into the container registry;
  - actualizing application running in the kubernetes cluster.
 
-Werf allows splitting the process of releasing a new application version and deploy process of this new version into the kubernetes with so called **bundles**.
+werf allows splitting the process of releasing a new application version and deploy process of this new version into the kubernetes with so called **bundles**.
 
 **Bundle** is a collection of images and deployment configurations of the application version published into the container registry, which is ready to be deployed into the kubernetes cluster. Deployment of an application with bundles implies 2 steps:
  1. Publishing of a bundle version.
@@ -20,9 +20,9 @@ Bundles allow implementing hybrid push-pull model to deploy an application. Publ
 
 ## Bundles publication
 
-Werf publishes bundles with the [werf-bundle-publish]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command. This command accepts arguments analogous to the [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command and **requires project git directory** to run.
+werf publishes bundles with the [werf-bundle-publish]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command. This command accepts arguments analogous to the [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command and **requires project git directory** to run.
 
-Werf-bundle-publish command consists of:
+werf-bundle-publish command consists of:
  - building and publishing needed images into the container registry (the same way werf-converge does);
  - publishing of project's [helm chart]({{ "/advanced/helm/configuration/chart.html" | true_relative_url }}) files into the container registry;
  - saving of passed [helm chart values]({{ "/advanced/helm/configuration/values.html" | true_relative_url }}) params in the published bundle;
@@ -38,7 +38,7 @@ When publishing a bundle by the tag which already exists in the container regist
 
 Bundle published into the container registry could be deployed into the kubernetes by the werf.
 
-[Werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command used to deploy a published bundle version into the kubernetes. This command **does not need a project git directory** to run, because bundle contains all needed files and images to deploy an application. This command accepts params which is analogous to [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command.
+[werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command used to deploy a published bundle version into the kubernetes. This command **does not need a project git directory** to run, because bundle contains all needed files and images to deploy an application. This command accepts params which is analogous to [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command.
 
 [Values for helm chart]({{ "/advanced/helm/configuration/values.html" | true_relative_url }}), [annotations and labels]({{ "/advanced/helm/deploy_process/annotating_and_labeling.html" | true_relative_url }}) which has been passed to the [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command will be united with the values, annotations and labels, which has been passed during publication of the bundle being applied.
 
@@ -46,13 +46,13 @@ Bundle published into the container registry could be deployed into the kubernet
 
 User may choose a version of deployed bundle with `--tag` parameter. By default, bundle with the `latest` tag will be deployed.
 
-Werf will check that bundle has been updated in the container registry for the specified tag (or `latest`) and update an application to the latest published bundle version. This ability could be used for automatic updates of the application when a newer application bundle version is available in the container registry. More info in the [auto updating bundles](#auto-updates-of-bundles).
+werf will check that bundle has been updated in the container registry for the specified tag (or `latest`) and update an application to the latest published bundle version. This ability could be used for automatic updates of the application when a newer application bundle version is available in the container registry. More info in the [auto updating bundles](#auto-updates-of-bundles).
 
 ## Other commands to work with bundles
 
 ### Export bundle into the directory
 
-[Werf-bundle-export]({{ "/reference/cli/werf_bundle_export.html" | true_relative_url }}) command will create bundle directory in the same way as it will be published into the container registry.
+[werf-bundle-export]({{ "/reference/cli/werf_bundle_export.html" | true_relative_url }}) command will create bundle directory in the same way as it will be published into the container registry.
 
 This command works the same way as [werf-bundle-publish]({{ "/reference/cli/werf_bundle_publish.html" | true_relative_url }}), has the same parameters and **requires project git directory** to run.
 
@@ -60,7 +60,7 @@ This command is useful to inspect a bundle before publishing and for debug purpo
 
 ### Download published bundle
 
-[Werf-bundle-download]({{ "/reference/cli/werf_bundle_download.html" | true_relative_url }}) command allows downloading published bundle into the directory.
+[werf-bundle-download]({{ "/reference/cli/werf_bundle_download.html" | true_relative_url }}) command allows downloading published bundle into the directory.
 
 This command works the same way as [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) does, has the same parameters and **does not need a project git directory** to run.
 
@@ -90,7 +90,7 @@ werf bundle apply --repo registry.mydomain.io/project --tag v3.4.9 --env product
 
 ## Auto updates of bundles
 
-Werf supports automatical redeployment of the bundle, which has been published by some statical tag like `latest` or `main`. Werf will update bundle by such tag in the container registry each time publish command has been called.
+werf supports automatical redeployment of the bundle, which has been published by some statical tag like `latest` or `main`. werf will update bundle by such tag in the container registry each time publish command has been called.
 
 When deploying bundle by such tag werf will download the latest actual version of the bundle published into the container registry.
 

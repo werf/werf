@@ -7,7 +7,7 @@ permalink: advanced/helm/configuration/secrets.html
 
 Идея заключается в том, что конфиденциальные данные должны храниться в репозитории вместе с приложением, и должны оставаться независимыми от какого-либо конкретного сервера.
 
-Werf поддерживает указание секретов следующими способами:
+werf поддерживает указание секретов следующими способами:
  - отдельный [values-файл для секретов]({{ "/advanced/helm/configuration/values.html#пользовательские-секреты" | true_relative_url }}) (`.helm/secret-values-yaml` по умолчанию или любой файл из репозитория, указанный опцией `--secret-values`).
  - секретные файлы — закодированные файлы в сыром виде без yaml, могут быть использованы в шаблонах.
 
@@ -37,7 +37,7 @@ Werf поддерживает указание секретов следующи
 
 ## Ротация ключа шифрования
 
-Werf поддерживает специальную процедуру смены ключа шифрования с помощью команды [`werf helm secret rotate-secret-key`]({{ "reference/cli/werf_helm_secret_rotate_secret_key.html" | true_relative_url }}).
+werf поддерживает специальную процедуру смены ключа шифрования с помощью команды [`werf helm secret rotate-secret-key`]({{ "reference/cli/werf_helm_secret_rotate_secret_key.html" | true_relative_url }}).
 
 ## Secret values
 
