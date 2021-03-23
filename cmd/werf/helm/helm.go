@@ -99,6 +99,7 @@ func NewCmd() *cobra.Command {
 		NewGetNamespaceCmd(),
 		NewGetReleaseCmd(),
 		NewMigrate2To3Cmd(),
+		cmd_helm.NewRegistryCmd(actionConfig, os.Stdout),
 	)
 
 	cmd_helm.LoadPlugins(cmd, os.Stdout)
