@@ -21,7 +21,7 @@
 <li class="{{ item_entry_class }} active"><a href="{{ entry.url | true_relative_url }}">{{entry.title}}</a></li>
 {%- else %}
     {%- if page.name == '404.md' %}
-    <li class="{{ item_entry_class }}"><a data-proofer-ignore href="{{ entry.url }}">{{entry.title}}</a></li>
+    <li class="{{ item_entry_class }}"><a data-proofer-ignore href="{{ site.canonical_url_prefix }}{{ entry.url | relative_url }}">{{entry.title}}</a></li>
     {% else %}
     <li class="{{ item_entry_class }}"><a href="{{ entry.url | true_relative_url }}">{{entry.title}}</a></li>
     {%- endif %}
