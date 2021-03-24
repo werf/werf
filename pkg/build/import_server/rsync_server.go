@@ -41,7 +41,7 @@ func RunRsyncServer(ctx context.Context, dockerImageName string, tmpDir string) 
 
 	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to get or create stapel container: %s", err)
 	}
 
 	secretsFilePath := path.Join(tmpDir, "rsyncd.secrets")
@@ -87,6 +87,7 @@ strict modes = false
 	}
 	logboek.Context(ctx).Debug().LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
 	if output, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
+		logboek.Context(ctx).Error().LogF("Unable to run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
 		logboek.Context(ctx).Error().LogF("%s", output)
 		return nil, err
 	}
