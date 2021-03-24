@@ -198,7 +198,8 @@ Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
 
  - Rename `fromImageArtifact` to `fromArtifact`
      - **CAUTION** `fromImageArtifact/fromArtifact` has also been deprecated and will be removed in the v1.3, it is recommended to use `image` and `fromImage` in such case.
- - Removed `--helm-chart-dir` option, define helm chart dir in the `werf.yaml`:
+ - Remove the `herebyIAdmitThatFromLatestMightBreakReproducibility` and `herebyIAdmitThatBranchMightBreakReproducibility` directives. Now when using the directives `fromLatest` and `git.branch` you must loosen the [giterminism]({{ "/advanced/giterminism.html" | true_relative_url }}) rules with the corresponding directives in [werf-giterminism.yaml]({{ "/reference/werf_giterminism_yaml.html" | true_relative_url }}).
+ - Remove `--helm-chart-dir` option, define helm chart dir in the `werf.yaml`:
 
     ```yaml
     configVersion: 1
