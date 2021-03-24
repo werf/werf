@@ -209,6 +209,18 @@ func (c *Conveyor) GetImportServer(ctx context.Context, imageName, stageName str
 
 	var srv *import_server.RsyncServer
 
+	var stg stage.Interface
+
+	if stageName != "" {
+		stg = c.getImageStage(imageName, stageName)
+	} else {
+		stg = c.GetImage(imageName).GetLastNonEmptyStage()
+	}
+
+	if err := c.StorageManager.FetchStage(ctx, stg); err != nil {
+		return nil, fmt.Errorf("unable to fetch stage %s: %s", stg.GetImage().Name(), err)
+	}
+
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName)).
 		DoError(func() error {
 			var tmpDir string
