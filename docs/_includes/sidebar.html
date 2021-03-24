@@ -11,7 +11,11 @@
             {%- elsif page.url == folderitem.url %}
                 <li class="sidebar__submenu-item active"><a href="{{ folderitem.url | relative_url }}">{{folderitem.title}}</a></li>
             {%- else %}
-                <li class="sidebar__submenu-item"><a href="{{ folderitem.url | relative_url }}">{{folderitem.title}}</a></li>
+                {%- if page.name == '404.md' %}
+                    <li class="sidebar__submenu-item"><a href="{{ site.canonical_url_prefix }}{{ folderitem.url | relative_url }}">{{folderitem.title}}</a></li>
+                {% else %}
+                    <li class="sidebar__submenu-item"><a href="{{ folderitem.url | relative_url }}">{{folderitem.title}}</a></li>
+                {%- endif %}
             {%- endif %}
         {%- endfor %}
         </ul>
@@ -31,7 +35,11 @@
                   {%- elsif page.url == subfolderitem.url %}
                   <li class="sidebar__submenu-item active"><a href="{{ subfolderitem.url | relative_url }}">{{subfolderitem.title}}</a></li>
                   {%- else %}
-                  <li class="sidebar__submenu-item"><a href="{{ subfolderitem.url | relative_url }}">{{subfolderitem.title}}</a></li>
+                    {%- if page.name == '404.md' %}
+                      <li class="sidebar__submenu-item"><a href="{{ site.canonical_url_prefix }}{{ subfolderitem.url | relative_url }}">{{subfolderitem.title}}</a></li>
+                    {% else %}
+                      <li class="sidebar__submenu-item"><a href="{{ subfolderitem.url | relative_url }}">{{subfolderitem.title}}</a></li>
+                    {%- endif %}
                   {%- endif %}
                   {%- endfor %}
                 </ul>
@@ -41,7 +49,11 @@
             {%- elsif page.url == subfolders.url %}
               <li class="sidebar__submenu-item active"><a href="{{ subfolders.url | relative_url }}">{{subfolders.title}}</a></li>
             {%- else %}
-              <li class="sidebar__submenu-item"><a href="{{ subfolders.url | relative_url }}">{{subfolders.title}}</a></li>
+                {%- if page.name == '404.md' %}
+                  <li class="sidebar__submenu-item"><a href="{{ site.canonical_url_prefix }}{{ subfolders.url | relative_url }}">{{subfolders.title}}</a></li>
+                {% else %}
+                  <li class="sidebar__submenu-item"><a href="{{ subfolders.url | relative_url }}">{{subfolders.title}}</a></li>
+                {%- endif %}
             {%- endif %}
             {%- endfor %}
             </ul>
@@ -51,7 +63,11 @@
     {%- elsif page.url == folder.url %}
         <li class="sidebar__item active"><a href="{{ folder.url | relative_url }}">{{folder.title}}</a></li>
     {%- else %}
-        <li class="sidebar__item"><a href="{{ folder.url | relative_url }}">{{folder.title}}</a></li>
+        {%- if page.name == '404.md' %}
+            <li class="sidebar__item"><a href="{{ site.canonical_url_prefix }}{{ folder.url | relative_url }}">{{folder.title}}</a></li>
+        {% else %}
+            <li class="sidebar__item"><a href="{{ folder.url | relative_url }}">{{folder.title}}</a></li>
+        {%- endif %}
     {%- endif %}
   {%- endfor %}
 </ul>
