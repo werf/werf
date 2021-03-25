@@ -325,10 +325,10 @@ func (m *StagesStorageManager) GetStagesBySignature(ctx context.Context, stageNa
 	}
 
 	logboek.Context(ctx).Info().LogF(
-		"Stage %s cache by signature %s is not exists in the stages storage cache: resetting stages storage cache\n",
-		stageName, stageSig,
+		"Stage %s cache by signature %s is not exists in the stages storage cache: will request fresh stages from stages storage and set stages storage cache by signature %s\n",
+		stageName, stageSig, stageSig,
 	)
-	return m.atomicGetStagesBySignatureWithCacheReset(ctx, stageName, stageSig)
+	return m.atomicGetStagesBySignatureWithStagesStorageCacheStore(ctx, stageName, stageSig)
 }
 
 func (m *StagesStorageManager) getStagesBySignatureFromCache(ctx context.Context, stageName, stageSig string) (bool, []*image.StageDescription, error) {
@@ -358,7 +358,7 @@ func (m *StagesStorageManager) getStagesBySignatureFromCache(ctx context.Context
 	return cacheExists, stages, err
 }
 
-func (m *StagesStorageManager) atomicGetStagesBySignatureWithCacheReset(ctx context.Context, stageName, stageSig string) ([]*image.StageDescription, error) {
+func (m *StagesStorageManager) atomicGetStagesBySignatureWithStagesStorageCacheStore(ctx context.Context, stageName, stageSig string) ([]*image.StageDescription, error) {
 	if lock, err := m.StorageLockManager.LockStageCache(ctx, m.ProjectName, stageSig); err != nil {
 		return nil, fmt.Errorf("error locking project %s stage %s cache: %s", m.ProjectName, stageSig, err)
 	} else {
@@ -381,7 +381,8 @@ func (m *StagesStorageManager) atomicGetStagesBySignatureWithCacheReset(ctx cont
 		return nil, err
 	}
 
-	var stages []*image.StageDescription
+	var validStages []*image.StageDescription
+	var validStageIDs []image.StageID
 	for _, stageID := range stageIDs {
 		if stageDesc, err := m.getStageDescription(ctx, stageID, getStageDescriptionOptions{StageShouldExist: false, WithManifestCache: true}); err != nil {
 			return nil, err
@@ -389,13 +390,14 @@ func (m *StagesStorageManager) atomicGetStagesBySignatureWithCacheReset(ctx cont
 			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
 			continue
 		} else {
-			stages = append(stages, stageDesc)
+			validStages = append(validStages, stageDesc)
+			validStageIDs = append(validStageIDs, stageID)
 		}
 	}
 
 	if err := logboek.Context(ctx).Info().LogProcess("Storing %s stages by signature %s into stages storage cache", stageName, stageSig).
 		DoError(func() error {
-			if err := m.StagesStorageCache.StoreStagesBySignature(ctx, m.ProjectName, stageSig, stageIDs); err != nil {
+			if err := m.StagesStorageCache.StoreStagesBySignature(ctx, m.ProjectName, stageSig, validStageIDs); err != nil {
 				return fmt.Errorf("error storing stage %s images by signature %s into stages storage cache: %s", stageName, stageSig, err)
 			}
 			return nil
@@ -403,7 +405,7 @@ func (m *StagesStorageManager) atomicGetStagesBySignatureWithCacheReset(ctx cont
 		return nil, err
 	}
 
-	return stages, nil
+	return validStages, nil
 }
 
 type getStageDescriptionOptions struct {
