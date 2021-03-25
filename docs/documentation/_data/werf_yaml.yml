@@ -207,13 +207,13 @@ sections:
         description:
           en: Build context PATH inside project directory
           ru: Путь к контексту внутри папки проекта
-      - name: contextAddFile
+      - name: contextAddFiles
         value: "[ string, ... ]"
         description:
-          en: Untracked files for adding to build context. The paths must be relative to context PATH
-          ru: Добавление нехранящихся в git файлов в сборочный контекст. Пути должны быть относительно директории контекста
+          en: Untracked files and directories for adding to build context. The paths must be relative to context PATH
+          ru: Добавление нехранящихся в git файлов и директорий в сборочный контекст. Пути должны быть относительно директории контекста
         detailsAnchor:
-          all: "#contextaddfile"
+          all: "#contextaddfiles"
       - name: target
         value: "string"
         description:

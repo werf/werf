@@ -7,17 +7,17 @@ import (
 )
 
 type ImageFromDockerfile struct {
-	Name           string
-	Dockerfile     string
-	Context        string
-	ContextAddFile []string
-	Target         string
-	Args           map[string]interface{}
-	AddHost        []string
-	Network        string
-	SSH            string
+	Name            string
+	Dockerfile      string
+	Context         string
+	ContextAddFiles []string
+	Target          string
+	Args            map[string]interface{}
+	AddHost         []string
+	Network         string
+	SSH             string
 
-	raw *rawImageFromDockerfile
+	raw             *rawImageFromDockerfile
 }
 
 func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.Interface) error {
@@ -25,12 +25,12 @@ func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.In
 		return newDetailedConfigError("`context: PATH` should be relative to project directory!", nil, c.raw.doc)
 	} else if c.Dockerfile != "" && !isRelativePath(c.Dockerfile) {
 		return newDetailedConfigError("`dockerfile: PATH` required and should be relative to context!", nil, c.raw.doc)
-	} else if !allRelativePaths(c.ContextAddFile) {
-		return newDetailedConfigError("`contextAddFile: [PATH, ...]|PATH` each path should be relative to context!", nil, c.raw.doc)
+	} else if !allRelativePaths(c.ContextAddFiles) {
+		return newDetailedConfigError("`contextAddFiles: [PATH, ...]|PATH` each path should be relative to context!", nil, c.raw.doc)
 	}
 
-	if len(c.ContextAddFile) != 0 {
-		for _, contextAddFile := range c.ContextAddFile {
+	if len(c.ContextAddFiles) != 0 {
+		for _, contextAddFile := range c.ContextAddFiles {
 			if err := giterminismManager.Inspector().InspectConfigDockerfileContextAddFile(filepath.Join(c.Context, contextAddFile)); err != nil {
 				return newDetailedConfigError(err.Error(), nil, c.raw.doc)
 			}

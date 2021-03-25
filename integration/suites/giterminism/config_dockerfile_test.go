@@ -19,11 +19,11 @@ var _ = Describe("config dockerfile", func() {
 FROM alpine
 `
 
-	Context("contextAddFile", func() {
+	Context("contextAddFiles", func() {
 		type entry struct {
 			configDockerfileContextAddFilesGlob string
 			context                             string
-			contextAddFile                      string
+			contextAddFiles                     string
 			expectedErrSubstring                string
 		}
 
@@ -33,8 +33,8 @@ FROM alpine
 image: test
 dockerfile: Dockerfile
 context: %s
-contextAddFile: [%s]
-`, e.context, e.contextAddFile))
+contextAddFiles: [%s]
+`, e.context, e.contextAddFiles))
 				gitAddAndCommit("werf.yaml")
 
 				if e.configDockerfileContextAddFilesGlob != "" {
@@ -60,27 +60,27 @@ config:
 				}
 			},
 			Entry("the contextAddFile a/b/c not allowed", entry{
-				contextAddFile:       "a/b/c",
+				contextAddFiles:      "a/b/c",
 				expectedErrSubstring: `the configuration with potential external dependency found in the werf config: contextAddFile "a/b/c" not allowed by giterminism`,
 			}),
 			Entry("config.dockerfile.allowContextAddFiles (a/b/c) covers the contextAddFile a/b/c", entry{
 				configDockerfileContextAddFilesGlob: "a/b/c",
-				contextAddFile:                      "a/b/c",
+				contextAddFiles:                     "a/b/c",
 			}),
 			Entry("config.dockerfile.allowContextAddFiles (**/*) covers the contextAddFile a/b/c", entry{
 				configDockerfileContextAddFilesGlob: "**/*",
-				contextAddFile:                      "a/b/c",
+				contextAddFiles:                     "a/b/c",
 			}),
 			Entry("config.dockerfile.allowContextAddFiles (a/b/c/) does not cover the contextAddFile a/b/c inside context d", entry{
 				configDockerfileContextAddFilesGlob: "a/b/c",
 				context:                             "d",
-				contextAddFile:                      "a/b/c",
+				contextAddFiles:                     "a/b/c",
 				expectedErrSubstring:                `the configuration with potential external dependency found in the werf config: contextAddFile "d/a/b/c" not allowed by giterminism`,
 			}),
 			Entry("config.dockerfile.allowContextAddFiles (d/a/b/c/) covers the contextAddFile a/b/c inside context d", entry{
 				configDockerfileContextAddFilesGlob: "d/a/b/c",
 				context:                             "d",
-				contextAddFile:                      "a/b/c",
+				contextAddFiles:                     "a/b/c",
 			}),
 		)
 	})

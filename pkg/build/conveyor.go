@@ -1078,7 +1078,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	img.name = imageFromDockerfileConfig.Name
 	img.isDockerfileImage = true
 
-	for _, contextAddFile := range imageFromDockerfileConfig.ContextAddFile {
+	for _, contextAddFile := range imageFromDockerfileConfig.ContextAddFiles {
 		relContextAddFile := filepath.Join(imageFromDockerfileConfig.Context, contextAddFile)
 		absContextAddFile := filepath.Join(c.projectDir, relContextAddFile)
 		exist, err := util.FileExists(absContextAddFile)
@@ -1167,7 +1167,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 			imageFromDockerfileConfig.Dockerfile,
 			imageFromDockerfileConfig.Target,
 			imageFromDockerfileConfig.Context,
-			imageFromDockerfileConfig.ContextAddFile,
+			imageFromDockerfileConfig.ContextAddFiles,
 			imageFromDockerfileConfig.Args,
 			imageFromDockerfileConfig.AddHost,
 			imageFromDockerfileConfig.Network,

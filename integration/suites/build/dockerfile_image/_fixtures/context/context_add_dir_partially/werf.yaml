@@ -1,0 +1,11 @@
+project: none
+configVersion: 1
+---
+
+image: ~
+dockerfile: Dockerfile
+contextAddFiles:
+  - test/dir/nestedDir
+  - test/dir/nestedDir/doubleNestedFile
+  - test/dir/nestedFile
+  - test/dir/nestedSymlink

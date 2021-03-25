@@ -7,15 +7,16 @@ import (
 )
 
 type rawImageFromDockerfile struct {
-	Images         []string               `yaml:"-"`
-	Dockerfile     string                 `yaml:"dockerfile,omitempty"`
-	Context        string                 `yaml:"context,omitempty"`
-	ContextAddFile interface{}            `yaml:"contextAddFile,omitempty"`
-	Target         string                 `yaml:"target,omitempty"`
-	Args           map[string]interface{} `yaml:"args,omitempty"`
-	AddHost        interface{}            `yaml:"addHost,omitempty"`
-	Network        string                 `yaml:"network,omitempty"`
-	SSH            string                 `yaml:"ssh,omitempty"`
+	Images          []string               `yaml:"-"`
+	Dockerfile      string                 `yaml:"dockerfile,omitempty"`
+	Context         string                 `yaml:"context,omitempty"`
+	ContextAddFile  interface{}            `yaml:"contextAddFile,omitempty"`
+	ContextAddFiles interface{}            `yaml:"contextAddFiles,omitempty"`
+	Target          string                 `yaml:"target,omitempty"`
+	Args            map[string]interface{} `yaml:"args,omitempty"`
+	AddHost         interface{}            `yaml:"addHost,omitempty"`
+	Network         string                 `yaml:"network,omitempty"`
+	SSH             string                 `yaml:"ssh,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -84,9 +85,21 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	image.Dockerfile = c.Dockerfile
 	image.Context = c.Context
 
-	image.ContextAddFile, err = InterfaceToStringArray(c.ContextAddFile, nil, c.doc)
+	contextAddFile, err := InterfaceToStringArray(c.ContextAddFile, nil, c.doc)
 	if err != nil {
 		return nil, err
+	}
+	contextAddFiles, err := InterfaceToStringArray(c.ContextAddFiles, nil, c.doc)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(contextAddFile) > 0 && len(contextAddFiles) > 0 {
+		return nil, newDetailedConfigError("only one out of contextAddFiles and contextAddFile directives can be used at a time, but both specified in werf.yaml. Move everything out of the contextAddFile: [] directive into the contextAddFiles: [] directive and remove contextAddFile: [] from werf.yaml", nil, c.doc)
+	} else if len(contextAddFile) > 0 {
+		image.ContextAddFiles = contextAddFile
+	} else {
+		image.ContextAddFiles = contextAddFiles
 	}
 
 	image.Target = c.Target

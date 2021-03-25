@@ -26,42 +26,80 @@ func GetTmpArchivePath() string {
 	return filepath.Join(GetTmpDir(), uuid.NewV4().String())
 }
 
-func ContextAddFileChecksum(ctx context.Context, projectDir string, contextDir string, contextAddFile []string, matcher path_matcher.PathMatcher) (string, error) {
-	var filePathListRelativeToProject []string
-	for _, addFileRelativeToContext := range contextAddFile {
-		addFileRelativeToProject := filepath.Join(contextDir, addFileRelativeToContext)
-		if !matcher.IsPathMatched(addFileRelativeToProject) {
-			continue
+func GetContextAddFilesPaths(projectDir string, contextDir string, contextAddFiles []string) ([]string, error) {
+	var addFilePaths []string
+	for _, addFile := range contextAddFiles {
+		addFilePath := filepath.Join(projectDir, contextDir, addFile)
+
+		addFileInfo, err := os.Lstat(addFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get file info for contextAddFile %q: %s", addFilePath, err)
 		}
 
-		filePathListRelativeToProject = append(filePathListRelativeToProject, addFileRelativeToProject)
+		if addFileInfo.IsDir() {
+			if err := filepath.Walk(addFilePath, func(path string, fileInfo os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if fileInfo.IsDir() {
+					return nil
+				}
+				addFilePaths = append(addFilePaths, path)
+				return nil
+			}); err != nil {
+				return nil, fmt.Errorf("error occured when recursively walking the contextAddFile dir %q: %s", addFilePath, err)
+			}
+		} else {
+			addFilePaths = append(addFilePaths, addFilePath)
+		}
 	}
 
-	if len(filePathListRelativeToProject) == 0 {
+	return util.UniqStrings(addFilePaths), nil
+}
+
+func ContextAddFilesChecksum(ctx context.Context, projectDir string, contextDir string, contextAddFiles []string, matcher path_matcher.PathMatcher) (string, error) {
+	addFilePaths, err := GetContextAddFilesPaths(projectDir, contextDir, contextAddFiles)
+	if err != nil {
+		return "", err
+	}
+
+	var projectRelativeAddFilePaths []string
+	for _, addFilePath := range addFilePaths {
+		projectRelativeAddFilePath, err := filepath.Rel(projectDir, addFilePath)
+		if err != nil {
+			return "", fmt.Errorf("unable to get context relative path for %q: %s", addFilePath, err)
+		}
+		if !matcher.IsPathMatched(projectRelativeAddFilePath) {
+			continue
+		}
+		projectRelativeAddFilePaths = append(projectRelativeAddFilePaths, projectRelativeAddFilePath)
+	}
+
+	if len(projectRelativeAddFilePaths) == 0 {
 		return "", nil
 	}
 
 	h := sha256.New()
-	for _, pathRelativeToProject := range filePathListRelativeToProject {
-		pathWithSlashes := filepath.ToSlash(pathRelativeToProject)
-		h.Write([]byte(pathWithSlashes))
+	for _, projectRelativeAddFilePath := range projectRelativeAddFilePaths {
+		projectRelativeAddFilePath = filepath.ToSlash(projectRelativeAddFilePath)
+		h.Write([]byte(projectRelativeAddFilePath))
 
-		absolutePath := filepath.Join(projectDir, pathRelativeToProject)
-		if exists, err := util.RegularFileExists(absolutePath); err != nil {
-			return "", fmt.Errorf("unable to check existence of file %q: %s", absolutePath, err)
+		addFilePath := filepath.Join(projectDir, projectRelativeAddFilePath)
+		if exists, err := util.RegularFileExists(addFilePath); err != nil {
+			return "", fmt.Errorf("unable to check existence of file %q: %s", addFilePath, err)
 		} else if !exists {
 			continue
 		}
 
 		if err := func() error {
-			f, err := os.Open(absolutePath)
+			f, err := os.Open(addFilePath)
 			if err != nil {
-				return fmt.Errorf("unable to open %q: %s", absolutePath, err)
+				return fmt.Errorf("unable to open %q: %s", addFilePath, err)
 			}
 			defer f.Close()
 
 			if _, err := io.Copy(h, f); err != nil {
-				return fmt.Errorf("unable to copy file %q: %s", absolutePath, err)
+				return fmt.Errorf("unable to copy file %q: %s", addFilePath, err)
 			}
 
 			return nil
@@ -69,27 +107,33 @@ func ContextAddFileChecksum(ctx context.Context, projectDir string, contextDir s
 			return "", err
 		}
 
-		logboek.Context(ctx).Debug().LogF("File was added: %q\n", pathWithSlashes)
+		logboek.Context(ctx).Debug().LogF("File was added: %q\n", projectRelativeAddFilePath)
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func AddContextAddFileToContextArchive(ctx context.Context, originalArchivePath string, projectDir string, contextDir string, contextAddFile []string) (string, error) {
+func AddContextAddFilesToContextArchive(ctx context.Context, originalArchivePath string, projectDir string, contextDir string, contextAddFiles []string) (string, error) {
 	destinationArchivePath := GetTmpArchivePath()
 
-	pathsToExcludeFromSourceArchive := contextAddFile
+	pathsToExcludeFromSourceArchive := contextAddFiles
 	if err := util.CreateArchiveBasedOnAnotherOne(ctx, originalArchivePath, destinationArchivePath, pathsToExcludeFromSourceArchive, func(tw *tar.Writer) error {
-		for _, contextAddFile := range contextAddFile {
-			sourceFilePath := filepath.Join(projectDir, contextDir, contextAddFile)
-			tarEntryName := filepath.ToSlash(contextAddFile)
-			if err := util.CopyFileIntoTar(tw, tarEntryName, sourceFilePath); err != nil {
-				return fmt.Errorf("unable to add contextAddFile %q to archive %q: %s", sourceFilePath, destinationArchivePath, err)
-			}
-
-			logboek.Context(ctx).Debug().LogF("Extra file was added: %q\n", tarEntryName)
+		addFilePathsToCopy, err := GetContextAddFilesPaths(projectDir, contextDir, contextAddFiles)
+		if err != nil {
+			return err
 		}
 
+		for _, addFilePathToCopy := range addFilePathsToCopy {
+			tarEntryName, err := filepath.Rel(filepath.Join(projectDir, contextDir), addFilePathToCopy)
+			if err != nil {
+				return fmt.Errorf("unable to get context relative path for %q: %s", addFilePathToCopy, err)
+			}
+			tarEntryName = filepath.ToSlash(tarEntryName)
+			if err := util.CopyFileIntoTar(tw, tarEntryName, addFilePathToCopy); err != nil {
+				return fmt.Errorf("unable to add contextAddFile %q to archive %q: %s", addFilePathToCopy, destinationArchivePath, err)
+			}
+			logboek.Context(ctx).Debug().LogF("Extra file was added to the current context: %q\n", tarEntryName)
+		}
 		return nil
 	}); err != nil {
 		return "", err
