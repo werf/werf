@@ -41,7 +41,7 @@ var _ = Describe("Bundles", func() {
 
 				kube.Client.CoreV1().Namespaces().Delete(context.Background(), SuiteData.ProjectName, metav1.DeleteOptions{})
 
-				liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "purge", "--force")
+				liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "host", "purge", "--force")
 				os.RemoveAll(SuiteData.ProjectName)
 
 				SuiteData.TeardownRepo(context.Background(), SuiteData.Repo, implementationName, SuiteData.StubsData)

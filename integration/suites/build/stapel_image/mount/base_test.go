@@ -14,7 +14,7 @@ var _ = AfterEach(func() {
 	utils.RunSucceedCommand(
 		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
-		"purge", "--force",
+		"host", "purge", "--force",
 	)
 })
 

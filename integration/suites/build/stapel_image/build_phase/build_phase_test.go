@@ -61,7 +61,7 @@ var _ = Describe("Build phase", func() {
 		})
 
 		AfterEach(func() {
-			werfPurge("build_phase-001", liveexec.ExecCommandOptions{})
+			werfHostPurge("build_phase-001", liveexec.ExecCommandOptions{}, "--force")
 
 			os.RemoveAll("build_phase_repo1")
 			os.RemoveAll("build_phase_repo2")

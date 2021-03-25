@@ -24,8 +24,8 @@ func werfRunOutput(dir string, extraArgs ...string) string {
 	return string(output)
 }
 
-func werfPurge(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, utils.WerfBinArgs(append([]string{"purge"}, extraArgs...)...)...)
+func werfHostPurge(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
+	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, utils.WerfBinArgs(append([]string{"host", "purge"}, extraArgs...)...)...)
 }
 
 var _ = Describe("Stapel imports", func() {
@@ -35,7 +35,7 @@ var _ = Describe("Stapel imports", func() {
 
 	Context("importing files and directories from artifact", func() {
 		AfterEach(func() {
-			werfPurge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("should allow importing files and directories, optionally rename files and directories and merge directories", func() {
@@ -80,7 +80,7 @@ var _ = Describe("Stapel imports", func() {
 
 	Context("caching by import source checksum", func() {
 		AfterEach(func() {
-			werfPurge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--force")
 		})
 
 		It("should cache image when import source checksum was not changed", func() {
