@@ -21,9 +21,6 @@ const (
 	LocalStage_ImageRepoFormat = "%s"
 	LocalStage_ImageFormat     = "%s:%s-%d"
 
-	LocalImageMetadataByCommitRecord_ImageNameFormat = "werf-images-metadata-by-commit/%s"
-	LocalImageMetadataByCommitRecord_TagFormat       = "%s_%s_%s"
-
 	LocalImportMetadata_ImageNameFormat = "werf-import-metadata/%s"
 	LocalImportMetadata_TagFormat       = "%s"
 
@@ -146,104 +143,24 @@ func (storage *LocalDockerServerStagesStorage) StoreImage(ctx context.Context, i
 	return storage.LocalDockerServerRuntime.TagImageByName(ctx, img)
 }
 
-func (storage *LocalDockerServerStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageName, commit, stageID string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.PutImageMetadata %s %s %s %s\n", projectName, imageName, commit, stageID)
-
-	fullImageName := makeLocalImageMetadataName(projectName, imageName, commit, stageID)
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.PutImageMetadata full image name: %s\n", fullImageName)
-
-	if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
-		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
-	} else if exists {
-		return nil
-	}
-
-	if err := docker.CreateImage(ctx, fullImageName, nil); err != nil {
-		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
-	}
-
-	logboek.Context(ctx).Info().LogF("Put image %s commit %s stage ID %s\n", imageName, commit, stageID)
-
+func (storage *LocalDockerServerStagesStorage) PutImageMetadata(_ context.Context, _, _, _, _ string) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) RmImageMetadata(ctx context.Context, projectName, imageNameOrID, commit, stageID string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.RmImageMetadata %s %s %s %s\n", projectName, imageNameOrID, commit, stageID)
-
-	fullImageName, err := storage.selectFullImageMetadataName(ctx, projectName, imageNameOrID, commit, stageID)
-	if err != nil {
-		return err
-	}
-
-	if fullImageName == "" {
-		return nil
-	}
-
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.RmImageMetadata full image name: %s\n", fullImageName)
-	if err := docker.CliRmi(ctx, "--force", fullImageName); err != nil {
-		return fmt.Errorf("unable to remove image %s: %s", fullImageName, err)
-	}
-
-	logboek.Context(ctx).Info().LogF("Removed image %s commit %s stage ID %s\n", imageNameOrID, commit, stageID)
-
+func (storage *LocalDockerServerStagesStorage) RmImageMetadata(_ context.Context, _, _, _, _ string) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) selectFullImageMetadataName(ctx context.Context, projectName, imageNameOrID, commit, stageID string) (string, error) {
-	for _, fullImageName := range []string{
-		makeLocalImageMetadataName(projectName, imageNameOrID, commit, stageID),
-		makeLocalImageMetadataNameByImageID(projectName, imageNameOrID, commit, stageID),
-	} {
-		if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
-			return "", fmt.Errorf("unable to check existence of image %s: %s", fullImageName, err)
-		} else if exists {
-			return fullImageName, nil
-		}
-	}
-
+func (storage *LocalDockerServerStagesStorage) selectFullImageMetadataName(_ context.Context, _, _, _, _ string) (string, error) {
 	return "", nil
 }
 
-func (storage *LocalDockerServerStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageName, commit, stageID string) (bool, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.IsImageMetadataExist %s %s %s %s\n", projectName, imageName, commit, stageID)
-
-	fullImageName := makeLocalImageMetadataName(projectName, imageName, commit, stageID)
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.IsImageMetadataExist full image name: %s\n", fullImageName)
-
-	return docker.ImageExist(ctx, fullImageName)
+func (storage *LocalDockerServerStagesStorage) IsImageMetadataExist(_ context.Context, _, _, _, _ string) (bool, error) {
+	return false, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameList []string) (map[string]map[string][]string, map[string]map[string][]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetImageNameStageIDCommitList %s\n", projectName)
-
-	filterSet := filters.NewArgs()
-	filterSet.Add("reference", fmt.Sprintf(LocalImageMetadataByCommitRecord_ImageNameFormat, projectName))
-
-	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get docker images: %s", err)
-	}
-
-	var tags []string
-	for _, img := range images {
-		for _, repoTag := range img.RepoTags {
-			_, tag := image.ParseRepositoryAndTag(repoTag)
-			tags = append(tags, tag)
-		}
-	}
-
-	return groupImageMetadataTagsByImageName(ctx, imageNameList, tags, "")
-}
-
-func makeLocalImageMetadataName(projectName, imageName, commit, stageID string) string {
-	return makeLocalImageMetadataNameByImageID(projectName, imageNameID(imageName), commit, stageID)
-}
-
-func makeLocalImageMetadataNameByImageID(projectName, imageID, commit, stageID string) string {
-	return strings.Join([]string{
-		fmt.Sprintf(LocalImageMetadataByCommitRecord_ImageNameFormat, projectName),
-		fmt.Sprintf(LocalImageMetadataByCommitRecord_TagFormat, imageID, commit, stageID),
-	}, ":")
+func (storage *LocalDockerServerStagesStorage) GetAllAndGroupImageMetadataByImageName(_ context.Context, _ string, _ []string) (map[string]map[string][]string, map[string]map[string][]string, error) {
+	return map[string]map[string][]string{}, map[string]map[string][]string{}, nil
 }
 
 func (storage *LocalDockerServerStagesStorage) GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error) {

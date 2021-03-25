@@ -56,6 +56,14 @@ func HostPurge(ctx context.Context, options HostPurgeOptions) error {
 			return err
 		}
 
+		localMetadataImageRecordImageNameFormat := "werf-images-metadata-by-commit/%s" // legacy
+		filterSet = filters.NewArgs()
+		filterSet.Add("reference", fmt.Sprintf(localMetadataImageRecordImageNameFormat, "*"))
+
+		if err := werfImagesFlushByFilterSet(ctx, filterSet, commonOptions); err != nil {
+			return err
+		}
+
 		return nil
 	}); err != nil {
 		return err
