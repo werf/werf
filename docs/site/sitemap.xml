@@ -15,4 +15,7 @@ search: exclude
    <sitemap>
       <loc>{{ site.url }}/sitemap-site.xml</loc>
    </sitemap>
+   <sitemap>
+      <loc>{{ site.url }}/guides/sitemap.xml</loc>
+   </sitemap>
 </sitemapindex>
