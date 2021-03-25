@@ -14,7 +14,6 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/true_git"
@@ -22,20 +21,16 @@ import (
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
-var cmdData struct {
-	Force bool
-}
-
 var commonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "purge",
 		DisableFlagsInUseLine: true,
-		Short:                 "Purge all project images",
-		Long: common.GetLongCommandDescription(`Purge all project images.
+		Short:                 "Purge all project images in the container registry",
+		Long: common.GetLongCommandDescription(`Purge all project images in the container registry. 
 
-WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually. Images from repo, that are being used in Kubernetes cluster will also be deleted.`),
+WARNING: Images that are being used in the Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
 
@@ -84,7 +79,6 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
-	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
 
 	return cmd
 }
@@ -149,7 +143,13 @@ func runPurge() error {
 
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
-	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+	if err != nil {
+		logboek.Context(ctx).Default().LogLnDetails(`The "werf purge" command is only used to cleaning the container registry. In case you need to clean the runner or the localhost, use the commands of the "werf host" group. 
+It is worth noting that auto-cleaning is enabled by default, and manual use is usually not required (if not, we would appreciate feedback and creating an issue https://github.com/werf/werf/issues/new).`)
+
+		return err
+	}
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
@@ -173,23 +173,13 @@ func runPurge() error {
 	}
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
-
-	if stagesStorage.Address() != storage.LocalStorageAddress && *commonCmdData.Parallel {
+	if *commonCmdData.Parallel {
 		storageManager.StagesStorageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
-	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
-	if err != nil {
-		return err
-	}
-	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
-
 	purgeOptions := cleaning.PurgeOptions{
-		RmContainersThatUseWerfImages: cmdData.Force,
-		DryRun:                        *commonCmdData.DryRun,
+		DryRun: *commonCmdData.DryRun,
 	}
-
-	// TODO: host_cleaning: purge
 
 	logboek.LogOptionalLn()
 	if err := cleaning.Purge(ctx, projectName, storageManager, storageLockManager, purgeOptions); err != nil {
