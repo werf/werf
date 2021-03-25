@@ -1,0 +1,7 @@
+giterminismConfigVersion: "1"
+config:
+  dockerfile:
+    allowContextAddFiles:
+      - test/file
+      - test/symlink
+      - test/brokenSymlink

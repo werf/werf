@@ -1,0 +1,10 @@
+project: none
+configVersion: 1
+---
+
+image: ~
+dockerfile: Dockerfile
+contextAddFiles:
+  - test/file
+  - test/symlink
+  - test/brokenSymlink

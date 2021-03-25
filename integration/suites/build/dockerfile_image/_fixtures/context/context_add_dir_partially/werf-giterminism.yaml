@@ -1,0 +1,5 @@
+giterminismConfigVersion: "1"
+config:
+  dockerfile:
+    allowContextAddFiles:
+      - test/dir

@@ -48,37 +48,37 @@ type DockerfileStage struct {
 	*BaseStage
 }
 
-func NewDockerRunArgs(dockerfilePath, target, context string, contextAddFile []string, buildArgs map[string]interface{}, addHost []string, network, ssh string) *DockerRunArgs {
+func NewDockerRunArgs(dockerfilePath, target, context string, contextAddFiles []string, buildArgs map[string]interface{}, addHost []string, network, ssh string) *DockerRunArgs {
 	return &DockerRunArgs{
-		dockerfilePath: dockerfilePath,
-		target:         target,
-		context:        context,
-		contextAddFile: contextAddFile,
-		buildArgs:      buildArgs,
-		addHost:        addHost,
-		network:        network,
-		ssh:            ssh,
+		dockerfilePath:  dockerfilePath,
+		target:          target,
+		context:         context,
+		contextAddFiles: contextAddFiles,
+		buildArgs:       buildArgs,
+		addHost:         addHost,
+		network:         network,
+		ssh:             ssh,
 	}
 }
 
 type DockerRunArgs struct {
-	dockerfilePath string
-	target         string
-	context        string
-	contextAddFile []string
-	buildArgs      map[string]interface{}
-	addHost        []string
-	network        string
-	ssh            string
+	dockerfilePath  string
+	target          string
+	context         string
+	contextAddFiles []string
+	buildArgs       map[string]interface{}
+	addHost         []string
+	network         string
+	ssh             string
 }
 
 func (d *DockerRunArgs) contextRelativeToGitWorkTree(giterminismManager giterminism_manager.Interface) string {
 	return filepath.Join(giterminismManager.RelativeToGitProjectDir(), d.context)
 }
 
-func (d *DockerRunArgs) contextAddFileRelativeToGitWorkTree(giterminismManager giterminism_manager.Interface) []string {
+func (d *DockerRunArgs) contextAddFilesRelativeToGitWorkTree(giterminismManager giterminism_manager.Interface) []string {
 	var result []string
-	for _, addFile := range d.contextAddFile {
+	for _, addFile := range d.contextAddFiles {
 		result = append(result, filepath.Join(d.contextRelativeToGitWorkTree(giterminismManager), addFile))
 	}
 
@@ -644,10 +644,10 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	}
 
 	archivePath := archive.GetFilePath()
-	if len(s.contextAddFile) != 0 {
-		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFile to build context archive %s", archivePath).DoError(func() error {
+	if len(s.contextAddFiles) != 0 {
+		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFiles to build context archive %s", archivePath).DoError(func() error {
 			var sourceArchivePath = archivePath
-			destinationArchivePath, err := context_manager.AddContextAddFileToContextArchive(ctx, sourceArchivePath, giterminismManager.ProjectDir(), s.context, s.contextAddFile)
+			destinationArchivePath, err := context_manager.AddContextAddFilesToContextArchive(ctx, sourceArchivePath, giterminismManager.ProjectDir(), s.context, s.contextAddFiles)
 			if err != nil {
 				return err
 			}
@@ -711,17 +711,17 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminis
 		logProcess.End()
 	}
 
-	if len(s.contextAddFile) > 0 {
-		logProcess = logboek.Context(ctx).Debug().LogProcess("Calculating contextAddFile checksum")
+	if len(s.contextAddFiles) > 0 {
+		logProcess = logboek.Context(ctx).Debug().LogProcess("Calculating contextAddFiles checksum")
 		logProcess.Start()
 
 		wildcardsPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
 			BasePath:     s.contextRelativeToGitWorkTree(giterminismManager),
 			IncludeGlobs: wildcards,
 		})
-		if contextAddChecksum, err := context_manager.ContextAddFileChecksum(ctx, giterminismManager.ProjectDir(), s.context, s.contextAddFile, wildcardsPathMatcher); err != nil {
+		if contextAddChecksum, err := context_manager.ContextAddFilesChecksum(ctx, giterminismManager.ProjectDir(), s.context, s.contextAddFiles, wildcardsPathMatcher); err != nil {
 			logProcess.Fail()
-			return "", fmt.Errorf("unable to calculate checksum for contextAddFile files list: %s", err)
+			return "", fmt.Errorf("unable to calculate checksum for contextAddFiles files list: %s", err)
 		} else {
 			if contextAddChecksum != "" {
 				logboek.Context(ctx).Debug().LogLn()
@@ -761,7 +761,7 @@ func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, git
 	}
 
 	pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-		ExcludeGlobs: s.contextAddFileRelativeToGitWorkTree(giterminismManager),
+		ExcludeGlobs: s.contextAddFilesRelativeToGitWorkTree(giterminismManager),
 		Matchers: []path_matcher.PathMatcher{
 			wildcardsPathMatcher,
 			s.dockerignorePathMatcher,
