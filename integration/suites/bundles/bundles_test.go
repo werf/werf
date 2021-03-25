@@ -8,10 +8,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/werf/kubedog/pkg/kube"
+
 	"github.com/werf/werf/integration/pkg/suite_init"
-
 	"github.com/werf/werf/integration/pkg/utils"
-
 	"github.com/werf/werf/integration/pkg/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
@@ -27,12 +26,12 @@ var _ = Describe("Bundles", func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})
 
-	for i := range suite_init.ContainerRegistryImplementationListToCheck() {
-		implementationName := suite_init.ContainerRegistryImplementationListToCheck()[i]
+	for _, iName := range suite_init.ContainerRegistryImplementationListToCheck(false) {
+		implementationName := iName
 
 		Context(fmt.Sprintf("[%s] publish and apply quickstart-application bundle", implementationName), func() {
 			BeforeEach(func() {
-				SuiteData.Repo = fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
+				SuiteData.Repo = fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[iName].RegistryAddress, SuiteData.ProjectName)
 				SuiteData.SetupRepo(context.Background(), SuiteData.Repo, implementationName, SuiteData.StubsData)
 			})
 
