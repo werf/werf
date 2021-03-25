@@ -56,6 +56,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
+	common.SetupProjectName(&commonCmdData, cmd)
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
@@ -77,6 +78,11 @@ It is safe to run this command periodically by automated cleanup job in parallel
 
 func runGC() error {
 	ctx := common.BackgroundContext()
+
+	projectName := *commonCmdData.ProjectName
+	if projectName != "" {
+		return fmt.Errorf("no functionality for cleaning a certain project is implemented (--project-name=%s)", projectName)
+	}
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
