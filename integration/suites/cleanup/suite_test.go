@@ -152,6 +152,10 @@ func initStagesStorage(stagesStorageAddress string, implementationName string, d
 	SuiteData.StagesStorage = utils.NewStagesStorage(stagesStorageAddress, implementationName, dockerRegistryOptions)
 }
 
+func initLocalStagesStorage() {
+	SuiteData.StagesStorage = utils.NewStagesStorage(":local", "default", docker_registry.DockerRegistryOptions{})
+}
+
 func StagesCount() int {
 	return utils.StagesCount(context.Background(), SuiteData.StagesStorage)
 }
