@@ -98,7 +98,7 @@ func (runtime *LocalDockerServerRuntime) PullImageFromRegistry(ctx context.Conte
 	dockerImage := img.(*DockerImage)
 
 	if err := dockerImage.Image.Pull(ctx); err != nil {
-		return fmt.Errorf("unable to export image %s: %s", dockerImage.Image.Name(), err)
+		return fmt.Errorf("unable to pull image %s: %s", dockerImage.Image.Name(), err)
 	}
 
 	if inspect, err := runtime.GetImageInspect(ctx, dockerImage.Image.Name()); err != nil {

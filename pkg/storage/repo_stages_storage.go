@@ -20,6 +20,9 @@ const (
 	RepoManagedImageRecord_ImageTagPrefix  = "managed-image-"
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
 
+	RepoRejectedStageImageRecord_ImageTagSuffix  = "-rejected"
+	RepoRejectedStageImageRecord_ImageNameFormat = "%s:%s-%d-rejected"
+
 	RepoImageMetadataByCommitRecord_ImageTagPrefix = "meta-"
 	RepoImageMetadataByCommitRecord_TagFormat      = "meta-%s_%s_%s"
 
@@ -91,7 +94,7 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string) ([
 				continue
 			}
 
-			if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) || strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) {
+			if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) || strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) || strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
 				continue
 			}
 
@@ -113,7 +116,48 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string) ([
 }
 
 func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, _ DeleteImageOptions) error {
-	return storage.DockerRegistry.DeleteRepoImage(ctx, stageDescription.Info)
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, stageDescription.Info); err != nil {
+		return fmt.Errorf("unable to remove repo image %s: %s", stageDescription.Info.Name, err)
+	}
+
+	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, stageDescription.StageID.Digest, stageDescription.StageID.UniqueID)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.DeleteStage full image name: %s\n", rejectedImageName)
+
+	if rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName); err != nil {
+		return fmt.Errorf("unable to get rejected image record %q: %s", rejectedImageName, err)
+	} else if rejectedImgInfo != nil {
+		if err := storage.DockerRegistry.DeleteRepoImage(ctx, rejectedImgInfo); err != nil {
+			return fmt.Errorf("unable to remove rejected image record %q: %s", rejectedImageName, err)
+		}
+	}
+
+	return nil
+}
+
+func makeRepoRejectedStageImageRecord(repoAddress, digest string, uniqueID int64) string {
+	return fmt.Sprintf(RepoRejectedStageImageRecord_ImageNameFormat, repoAddress, digest, uniqueID)
+}
+
+func (storage *RepoStagesStorage) RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage %s %s %d\n", projectName, digest, uniqueID)
+
+	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, digest, uniqueID)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage full image name: %s\n", rejectedImageName)
+
+	if isExists, err := storage.DockerRegistry.IsRepoImageExists(ctx, rejectedImageName); err != nil {
+		return err
+	} else if isExists {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage record %q is exists => exiting\n", rejectedImageName)
+		return nil
+	}
+
+	if err := storage.DockerRegistry.PushImage(ctx, rejectedImageName, &docker_registry.PushImageOptions{}); err != nil {
+		return fmt.Errorf("unable to push rejected stage image record %s: %s", rejectedImageName, err)
+	}
+
+	logboek.Context(ctx).Info().LogF("Rejected stage by digest %s uniqueID %d\n", digest, uniqueID)
+
+	return nil
 }
 
 func (storage *RepoStagesStorage) FilterStagesAndProcessRelatedData(_ context.Context, stageDescriptions []*image.StageDescription, _ FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
@@ -135,20 +179,58 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
 		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesByDigest fetched tags for %q: %#v\n", storage.RepoAddress, tags)
+
+		var rejectedStages []image.StageID
+
+		for _, tag := range tags {
+			if !strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
+				continue
+			}
+
+			realTag := strings.TrimSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix)
+
+			if _, uniqueID, err := getDigestAndUniqueIDFromRepoStageImageTag(realTag); err != nil {
+				if isUnexpectedTagFormatError(err) {
+					logboek.Context(ctx).Info().LogF("Unexpected tag %q format: %s\n", realTag, err)
+					continue
+				}
+				return nil, fmt.Errorf("unable to get digest and uniqueID from rejected stage tag %q: %s", tag, err)
+			} else {
+				logboek.Context(ctx).Info().LogF("Found rejected stage %q\n", tag)
+				rejectedStages = append(rejectedStages, image.StageID{Digest: digest, UniqueID: uniqueID})
+			}
+		}
+
+	FindSuitableStages:
 		for _, tag := range tags {
 			if !strings.HasPrefix(tag, digest) {
 				logboek.Context(ctx).Debug().LogF("Discard tag %q: should have prefix %q\n", tag, digest)
 				continue
 			}
+
+			if strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
+				continue
+			}
+
 			if _, uniqueID, err := getDigestAndUniqueIDFromRepoStageImageTag(tag); err != nil {
 				if isUnexpectedTagFormatError(err) {
 					logboek.Context(ctx).Debug().LogLn(err.Error())
+					logboek.Context(ctx).Info().LogF("Unexpected tag %q format: %s\n", tag, err)
 					continue
 				}
-				return nil, err
+				return nil, fmt.Errorf("unable to get digest and uniqueID from tag %q: %s", tag, err)
 			} else {
-				logboek.Context(ctx).Debug().LogF("Tag %q is suitable for digest %q\n", tag, digest)
-				res = append(res, image.StageID{Digest: digest, UniqueID: uniqueID})
+				stageID := image.StageID{Digest: digest, UniqueID: uniqueID}
+
+				for _, rejectedStage := range rejectedStages {
+					if rejectedStage.Digest == stageID.Digest && rejectedStage.UniqueID == stageID.UniqueID {
+						logboek.Context(ctx).Info().LogF("Discarding rejected stage %q\n", tag)
+						continue FindSuitableStages
+					}
+				}
+
+				logboek.Context(ctx).Debug().LogF("Stage %q is suitable for digest %q\n", tag, digest)
+				res = append(res, stageID)
 			}
 		}
 	}
@@ -167,6 +249,16 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, stageImageName); err != nil {
 		return nil, err
 	} else if imgInfo != nil {
+		rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, digest, uniqueID)
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStageDescription check rejected image name: %s\n", rejectedImageName)
+
+		if rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName); err != nil {
+			return nil, fmt.Errorf("unable to get repo image %q: %s", rejectedImageName, err)
+		} else if rejectedImgInfo != nil {
+			logboek.Context(ctx).Info().LogF("Stage digest %s uniqueID %d image is rejected: ignore stage image\n", digest, uniqueID)
+			return nil, nil
+		}
+
 		return &image.StageDescription{
 			StageID: &image.StageID{Digest: digest, UniqueID: uniqueID},
 			Info:    imgInfo,
@@ -249,7 +341,14 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_runtime.Image) error {
 	switch containerRuntime := storage.ContainerRuntime.(type) {
 	case *container_runtime.LocalDockerServerRuntime:
-		return containerRuntime.PullImageFromRegistry(ctx, img)
+		if err := containerRuntime.PullImageFromRegistry(ctx, img); err != nil {
+			if strings.HasSuffix(err.Error(), "unknown blob") {
+				return ErrBrokenImage
+			}
+			return err
+		}
+
+		return nil
 	default:
 		// TODO: case *container_runtime.LocalHostRuntime:
 		panic("not implemented")
