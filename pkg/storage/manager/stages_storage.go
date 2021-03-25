@@ -247,10 +247,10 @@ func (m *StagesStorageManager) GetStagesByDigest(ctx context.Context, stageName,
 	}
 
 	logboek.Context(ctx).Info().LogF(
-		"Stage %s cache by digest %s is not exists in the storage cache: resetting storage cache\n",
-		stageName, stageDigest,
+		"Stage %s cache by digest %s is not exists in the stages storage cache: will request fresh stages from storage and set stages storage cache by digest %s\n",
+		stageName, stageDigest, stageDigest,
 	)
-	return m.atomicGetStagesByDigestWithCacheReset(ctx, stageName, stageDigest)
+	return m.atomicGetStagesByDigestWithStagesStorageCacheStore(ctx, stageName, stageDigest)
 }
 
 func (m *StagesStorageManager) GetStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error) {
@@ -360,7 +360,7 @@ func (m *StagesStorageManager) getStagesDescriptions(ctx context.Context, stageI
 	return stages, nil
 }
 
-func (m *StagesStorageManager) atomicGetStagesByDigestWithCacheReset(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error) {
+func (m *StagesStorageManager) atomicGetStagesByDigestWithStagesStorageCacheStore(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error) {
 	if lock, err := m.StorageLockManager.LockStageCache(ctx, m.ProjectName, stageDigest); err != nil {
 		return nil, fmt.Errorf("error locking project %s stage %s cache: %s", m.ProjectName, stageDigest, err)
 	} else {
@@ -372,14 +372,19 @@ func (m *StagesStorageManager) atomicGetStagesByDigestWithCacheReset(ctx context
 		return nil, fmt.Errorf("unable to get stages ids from %s by digest %s for stage %s: %s", m.StagesStorage.String(), stageDigest, stageName, err)
 	}
 
-	stages, err := m.getStagesDescriptions(ctx, stageIDs, m.StagesStorage)
+	validStages, err := m.getStagesDescriptions(ctx, stageIDs, m.StagesStorage)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage descriptions by ids from %s: %s", m.StagesStorage.String(), err)
 	}
 
-	if err := logboek.Context(ctx).Info().LogProcess("Storing %s stages by digest %s into storage cache", stageName, stageDigest).
+	var validStageIDs []image.StageID
+	for _, stage := range validStages {
+		validStageIDs = append(validStageIDs, *stage.StageID)
+	}
+
+	if err := logboek.Context(ctx).Info().LogProcess("Storing %s stages by digest %s into stages storage cache", stageName, stageDigest).
 		DoError(func() error {
-			if err := m.StagesStorageCache.StoreStagesByDigest(ctx, m.ProjectName, stageDigest, stageIDs); err != nil {
+			if err := m.StagesStorageCache.StoreStagesByDigest(ctx, m.ProjectName, stageDigest, validStageIDs); err != nil {
 				return fmt.Errorf("error storing stage %s images by digest %s into storage cache: %s", stageName, stageDigest, err)
 			}
 			return nil
@@ -387,7 +392,7 @@ func (m *StagesStorageManager) atomicGetStagesByDigestWithCacheReset(ctx context
 		return nil, err
 	}
 
-	return stages, nil
+	return validStages, nil
 }
 
 type getStageDescriptionOptions struct {
