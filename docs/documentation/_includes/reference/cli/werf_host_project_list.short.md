@@ -1,1 +1,0 @@
-list project names based on local storage

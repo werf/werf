@@ -28,8 +28,6 @@ import (
 	managed_images_rm "github.com/werf/werf/cmd/werf/managed_images/rm"
 
 	host_cleanup "github.com/werf/werf/cmd/werf/host/cleanup"
-	host_project_list "github.com/werf/werf/cmd/werf/host/project/list"
-	host_project_purge "github.com/werf/werf/cmd/werf/host/project/purge"
 	host_purge "github.com/werf/werf/cmd/werf/host/purge"
 
 	bundle_apply "github.com/werf/werf/cmd/werf/bundle/apply"
@@ -213,20 +211,9 @@ func hostCmd() *cobra.Command {
 		Short: "Work with werf cache and data of all projects on the host machine",
 	}
 
-	projectCmd := &cobra.Command{
-		Use:   "project",
-		Short: "Work with projects",
-	}
-
-	projectCmd.AddCommand(
-		host_project_list.NewCmd(),
-		host_project_purge.NewCmd(),
-	)
-
 	hostCmd.AddCommand(
 		host_cleanup.NewCmd(),
 		host_purge.NewCmd(),
-		projectCmd,
 	)
 
 	return hostCmd

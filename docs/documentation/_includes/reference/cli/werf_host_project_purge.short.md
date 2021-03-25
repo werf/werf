@@ -1,1 +1,0 @@
-purge project images from local storage
