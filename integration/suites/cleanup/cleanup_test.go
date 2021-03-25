@@ -586,39 +586,6 @@ var _ = forEachDockerRegistryImplementation("cleanup command", func() {
 				Ω(StagesCount()).Should(Equal(count))
 			})
 
-			When("there is running container based on werf stage", func() {
-				BeforeEach(func() {
-					if SuiteData.StagesStorage.Address() != ":local" {
-						Skip(fmt.Sprintf("to test :local storage (%s)", SuiteData.StagesStorage.Address()))
-					}
-
-					utils.RunSucceedCommand(
-						SuiteData.TestDirPath,
-						SuiteData.WerfBinPath,
-						"build",
-					)
-
-					utils.RunSucceedCommand(
-						SuiteData.TestDirPath,
-						SuiteData.WerfBinPath,
-						"run", "--docker-options", "-d", "--", "/bin/sleep", "30",
-					)
-				})
-
-				It("should skip stage with related running container", func() {
-					SuiteData.Stubs.SetEnv("WERF_LOG_PRETTY", "0")
-
-					out, err := utils.RunCommand(
-						SuiteData.TestDirPath,
-						SuiteData.WerfBinPath,
-						"cleanup",
-					)
-					Ω(err).Should(Succeed())
-					Ω(string(out)).Should(ContainSubstring("Skip image "))
-					Ω(string(out)).Should(ContainSubstring("used by container"))
-				})
-			})
-
 			Context("imports metadata", func() {
 				It("should keep used artifact", func() {
 					utils.RunSucceedCommand(

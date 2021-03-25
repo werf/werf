@@ -89,13 +89,9 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 				var stagesStorageImplementationName string
 				var stagesStorageDockerRegistryOptions docker_registry.DockerRegistryOptions
 
-				if implementationName == ":local" || implementationName == ":local_with_stages_storage_repo" {
-					if implementationName == ":local" {
-						stagesStorageAddress = ":local"
-					} else {
-						stagesStorageAddress = strings.Join([]string{SuiteData.LocalRegistryRepoAddress, utils.ProjectName(), "stages"}, "/")
-						stagesStorageDockerRegistryOptions = docker_registry.DockerRegistryOptions{}
-					}
+				if implementationName == ":local_with_stages_storage_repo" {
+					stagesStorageAddress = strings.Join([]string{SuiteData.LocalRegistryRepoAddress, utils.ProjectName(), "stages"}, "/")
+					stagesStorageDockerRegistryOptions = docker_registry.DockerRegistryOptions{}
 				} else {
 					stagesStorageAddress = implementationStagesStorageAddress(implementationName)
 					implementationDockerRegistryOptions := implementationDockerRegistryOptionsAndSetEnvs(implementationName)
@@ -128,7 +124,7 @@ func forEachDockerRegistryImplementation(description string, body func()) bool {
 				combinedOutput, err := utils.RunCommand(
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
-					"purge", "--force",
+					"purge",
 				)
 
 				if err != nil {
@@ -214,7 +210,6 @@ environLoop:
 		return list
 	} else {
 		return []string{
-			":local",
 			":local_with_stages_storage_repo",
 		}
 	}
