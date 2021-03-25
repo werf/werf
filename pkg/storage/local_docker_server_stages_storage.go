@@ -21,9 +21,6 @@ const (
 	LocalStage_ImageRepoFormat = "%s"
 	LocalStage_ImageFormat     = "%s:%s-%d"
 
-	LocalManagedImageRecord_ImageNameFormat = "werf-managed-images/%s"
-	LocalManagedImageRecord_ImageFormat     = "werf-managed-images/%s:%s"
-
 	LocalImageMetadataByCommitRecord_ImageNameFormat = "werf-images-metadata-by-commit/%s"
 	LocalImageMetadataByCommitRecord_TagFormat       = "%s_%s_%s"
 
@@ -96,18 +93,6 @@ func (storage *LocalDockerServerStagesStorage) DeleteRepo(_ context.Context) err
 	return nil
 }
 
-func makeLocalManagedImageRecord(projectName, imageName string) string {
-	tag := imageName
-	if imageName == "" {
-		tag = NamelessImageRecordTag
-	}
-
-	tag = strings.ReplaceAll(tag, "/", "__slash__")
-	tag = strings.ReplaceAll(tag, "+", "__plus__")
-
-	return fmt.Sprintf(LocalManagedImageRecord_ImageFormat, projectName, tag)
-}
-
 func (storage *LocalDockerServerStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, digest, uniqueID)
 
@@ -123,71 +108,16 @@ func (storage *LocalDockerServerStagesStorage) GetStageDescription(ctx context.C
 	}
 }
 
-func (storage *LocalDockerServerStagesStorage) AddManagedImage(ctx context.Context, projectName, imageName string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
-
-	if validateImageName(imageName) != nil {
-		return nil
-	}
-
-	fullImageName := makeLocalManagedImageRecord(projectName, imageName)
-
-	if exsts, err := docker.ImageExist(ctx, fullImageName); err != nil {
-		return fmt.Errorf("unable to check existence of image %s: %s", fullImageName, err)
-	} else if exsts {
-		return nil
-	}
-
-	if err := docker.CreateImage(ctx, fullImageName, nil); err != nil {
-		return fmt.Errorf("unable to create image %s: %s", fullImageName, err)
-	}
+func (storage *LocalDockerServerStagesStorage) AddManagedImage(_ context.Context, _, _ string) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) RmManagedImage(ctx context.Context, projectName, imageName string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.RmManagedImage %s %s\n", projectName, imageName)
-
-	fullImageName := makeLocalManagedImageRecord(projectName, imageName)
-
-	if exsts, err := docker.ImageExist(ctx, fullImageName); err != nil {
-		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
-	} else if !exsts {
-		return nil
-	}
-
-	if err := docker.CliRmi(ctx, "--force", fullImageName); err != nil {
-		return fmt.Errorf("unable to remove image %q: %s", fullImageName, err)
-	}
-
+func (storage *LocalDockerServerStagesStorage) RmManagedImage(_ context.Context, _, _ string) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetManagedImages(ctx context.Context, projectName string) ([]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetManagedImages %s\n", projectName)
-
-	filterSet := filters.NewArgs()
-	filterSet.Add("reference", fmt.Sprintf(LocalManagedImageRecord_ImageNameFormat, projectName))
-
-	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
-	if err != nil {
-		return nil, fmt.Errorf("unable to get docker images: %s", err)
-	}
-
-	var res []string
-	for _, img := range images {
-		for _, repoTag := range img.RepoTags {
-			_, tag := image.ParseRepositoryAndTag(repoTag)
-
-			imageName := unslugDockerImageTagAsImageName(tag)
-
-			if err := validateImageName(imageName); err != nil {
-				continue
-			}
-
-			res = append(res, imageName)
-		}
-	}
-	return res, nil
+func (storage *LocalDockerServerStagesStorage) GetManagedImages(_ context.Context, _ string) ([]string, error) {
+	return []string{}, nil
 }
 
 func (storage *LocalDockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error) {
