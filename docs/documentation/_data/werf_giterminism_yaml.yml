@@ -99,10 +99,10 @@ directives:
           - name: allowContextAddFiles
             value: "[ string, ... ]"
             description:
-              en: Allow the use of the certain files from the project directory with contextAddFile directive
-              ru: Разрешить использование определённых файлов из директории проекта при использовании директивы contextAddFile
+              en: Allow the use of the certain files or directories from the project directory with contextAddFiles directive
+              ru: Разрешить использование определённых файлов или директорий из директории проекта при использовании директивы contextAddFiles
             detailsArticle:
-              all: "/advanced/giterminism.html#contextaddfile"
+              all: "/advanced/giterminism.html#contextaddfiles"
   - name: helm
     description:
       en: The rules of loosening giterminism for the helm files (.helm)

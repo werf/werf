@@ -277,28 +277,29 @@ dockerfile: frontend/Dockerfile
 context: frontend/
 ```
 
-#### contextAddFile
+#### contextAddFiles
 
 The build context consists of the files from a directory, defined by `context` directive (the project directory by default), from the current project git repository commit.
 
-The `contextAddFile` directive allows adding an arbitrary file from the project directory to the build context.
+The `contextAddFiles` directive allows adding of arbitrary files or directories from the project directory to the build context.
 
 ```yaml
 image: app
 context: app
-contextAddFile:
+contextAddFiles:
  - file1
- - dir/file2.out
+ - dir1/
+ - dir2/file2.out
 ```
 
 The configuration describes the build context that consists of the following files:
 
 - `app/**/*`  from the current project git repository commit;
-- `app/file1` and `app/dir/file2.out` from the project directory.
+- Files `app/file1`, `app/dir2/file2.out` and directory `dir1` from the project directory.
 
-The `contextAddFile` files have a higher priority than the files from the current project git repository commit. When these files are crossing, the user will work with files from the project directory.
+The `contextAddFiles` files have a higher priority than the files from the current project git repository commit. When these files are crossing, the user will work with files from the project directory.
 
-> By default, the use of the `contextAddFile` directive is not allowed by giterminism (read more about it [here]({{ "/advanced/giterminism.html#contextaddfile" | true_relative_url }}))
+> By default, the use of the `contextAddFiles` directive is not allowed by giterminism (read more about it [here]({{ "/advanced/giterminism.html#contextaddfiles" | true_relative_url }}))
 
 ### Stapel builder
 
