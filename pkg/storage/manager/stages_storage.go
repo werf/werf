@@ -239,7 +239,15 @@ func (m *StagesStorageManager) FetchStage(ctx context.Context, stg stage.Interfa
 			}).
 			DoError(func() error {
 				logboek.Context(ctx).Info().LogF("Image name: %s\n", stg.GetImage().Name())
-				if err := m.StagesStorage.FetchImage(ctx, &container_runtime.DockerImage{Image: stg.GetImage()}); err != nil {
+				if err := m.StagesStorage.FetchImage(ctx, &container_runtime.DockerImage{Image: stg.GetImage()}); err == storage.ErrBrokenImage {
+					logboek.Context(ctx).Error().LogF("Unable to fetch image %q: %s\n", stg.GetImage().Name(), err)
+					logboek.Context(ctx).Error().LogF("Will mark image %q as rejected in the stages storage %s\n", stg.GetImage().Name(), m.StagesStorage.String())
+
+					if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stg.GetImage().GetStageDescription().StageID.Signature, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
+						return fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
+					}
+					return ErrShouldResetStagesStorageCache
+				} else if err != nil {
 					return fmt.Errorf("unable to fetch stage %s image %s from stages storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
 				}
 				return nil

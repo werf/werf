@@ -75,6 +75,10 @@ func (storage *LocalDockerServerStagesStorage) DeleteStage(ctx context.Context, 
 	return deleteRepoImageListInLocalDockerServerStagesStorage(ctx, stageDescription, options.RmiForce)
 }
 
+func (storage *LocalDockerServerStagesStorage) RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error {
+	return nil
+}
+
 func (storage *LocalDockerServerStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
 	return processRelatedContainers(ctx, stageDescriptions, processRelatedContainersOptions{
 		skipUsedImages:           options.SkipUsedImage,
