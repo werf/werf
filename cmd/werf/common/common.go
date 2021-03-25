@@ -886,6 +886,14 @@ func GetOptionalStagesStorageAddress(cmdData *CmdData) string {
 	return *cmdData.StagesStorage
 }
 
+func GetLocalStagesStorage(containerRuntime container_runtime.ContainerRuntime) (storage.StagesStorage, error) {
+	return storage.NewStagesStorage(
+		storage.LocalStorageAddress,
+		containerRuntime,
+		storage.StagesStorageOptions{},
+	)
+}
+
 func GetStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
 	if err := ValidateRepoContainerRegistry(cmdData.CommonRepoData.GetContainerRegistry()); err != nil {
 		return nil, err
