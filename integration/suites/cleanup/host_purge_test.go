@@ -4,12 +4,14 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/pkg/docker_registry"
+
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
 var _ = Describe("host purge command", func() {
 	BeforeEach(func() {
-		initLocalStagesStorage()
+		SuiteData.StagesStorage = utils.NewStagesStorage(":local", "default", docker_registry.DockerRegistryOptions{})
 
 		utils.CopyIn(utils.FixturePath("purge"), SuiteData.TestDirPath)
 
