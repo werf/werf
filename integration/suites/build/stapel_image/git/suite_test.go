@@ -26,7 +26,7 @@ var _ = ginkgo.AfterEach(func() {
 	utils.RunSucceedCommand(
 		SuiteData.TestDirPath,
 		SuiteData.WerfBinPath,
-		"purge", "--force",
+		"host", "purge", "--force",
 	)
 })
 

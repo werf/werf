@@ -8,10 +8,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/werf/kubedog/pkg/kube"
+
 	"github.com/werf/werf/integration/pkg/suite_init"
-
 	"github.com/werf/werf/integration/pkg/utils"
-
 	"github.com/werf/werf/integration/pkg/utils/liveexec"
 
 	. "github.com/onsi/ginkgo"
@@ -27,8 +26,8 @@ var _ = Describe("Bundles", func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})
 
-	for i := range suite_init.ContainerRegistryImplementationListToCheck() {
-		implementationName := suite_init.ContainerRegistryImplementationListToCheck()[i]
+	for _, iName := range suite_init.ContainerRegistryImplementationListToCheck(false) {
+		implementationName := iName
 
 		Context(fmt.Sprintf("[%s] publish and apply quickstart-application bundle", implementationName), func() {
 			BeforeEach(func() {
@@ -41,7 +40,7 @@ var _ = Describe("Bundles", func() {
 
 				kube.Client.CoreV1().Namespaces().Delete(context.Background(), SuiteData.ProjectName, metav1.DeleteOptions{})
 
-				liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "purge", "--force")
+				liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "host", "purge", "--force")
 				os.RemoveAll(SuiteData.ProjectName)
 
 				SuiteData.TeardownRepo(context.Background(), SuiteData.Repo, implementationName, SuiteData.StubsData)

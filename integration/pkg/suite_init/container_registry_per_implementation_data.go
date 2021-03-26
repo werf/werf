@@ -6,11 +6,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/werf/werf/integration/pkg/utils"
-	"github.com/werf/werf/pkg/docker_registry"
-
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/integration/pkg/utils"
+	utilsDocker "github.com/werf/werf/integration/pkg/utils/docker"
+	"github.com/werf/werf/pkg/docker_registry"
 )
+
+const LocalRegistryImplementationName = ":local_container_registry"
 
 type ContainerRegistryPerImplementationData struct {
 	ContainerRegistryPerImplementation map[string]*containerRegistryImplementationData
@@ -19,7 +22,7 @@ type ContainerRegistryPerImplementationData struct {
 func (data *ContainerRegistryPerImplementationData) SetupRepo(ctx context.Context, repo, implementationName string, stubsData *StubsData) bool {
 	implData := data.ContainerRegistryPerImplementation[implementationName]
 
-	registry, err := docker_registry.NewDockerRegistry(repo, implementationName, implData.RegistryOptions)
+	registry, err := docker_registry.NewDockerRegistry(repo, implData.ImplementationName, implData.RegistryOptions)
 	Expect(err).Should(Succeed())
 
 	switch implementationName {
@@ -45,6 +48,10 @@ func (data *ContainerRegistryPerImplementationData) SetupRepo(ctx context.Contex
 }
 
 func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Context, repo, implementationName string, stubsData *StubsData) bool {
+	if implementationName == LocalRegistryImplementationName {
+		return true
+	}
+
 	registry, err := docker_registry.NewDockerRegistry(repo, implementationName, data.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
 	Expect(err).Should(Succeed())
 
@@ -66,13 +73,11 @@ type containerRegistryImplementationData struct {
 	RegistryOptions    docker_registry.DockerRegistryOptions
 }
 
-func NewContainerRegistryPerImplementationData(synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData) *ContainerRegistryPerImplementationData {
+func NewContainerRegistryPerImplementationData(synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData, withOptionalContainerRegistry bool) *ContainerRegistryPerImplementationData {
 	data := &ContainerRegistryPerImplementationData{}
 
 	synchronizedSuiteCallbacksData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
-		implementations := ContainerRegistryImplementationListToCheck()
-		Expect(len(implementations)).NotTo(Equal(0), "expected at least one of WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_<IMPLEMENTATION>=1 to be set, supported implementations: %v", docker_registry.ImplementationList())
-
+		implementations := ContainerRegistryImplementationListToCheck(false)
 		data.ContainerRegistryPerImplementation = make(map[string]*containerRegistryImplementationData)
 
 		for _, implementationName := range implementations {
@@ -89,22 +94,45 @@ func NewContainerRegistryPerImplementationData(synchronizedSuiteCallbacksData *S
 				implementationNameForWerf = implementationName
 			}
 
-			registryAddress := ContainerRegistryImplementationAddress(implementationNameForWerf)
+			registryAddress := containerRegistryImplementationAddress(implementationNameForWerf)
 
 			implData := &containerRegistryImplementationData{
 				RegistryAddress:    registryAddress,
 				ImplementationName: implementationNameForWerf,
-				RegistryOptions:    MakeContainerRegistryImplementationDockerRegistryOptions(implementationNameForWerf),
+				RegistryOptions:    makeContainerRegistryImplementationDockerRegistryOptions(implementationNameForWerf),
 			}
 
 			data.ContainerRegistryPerImplementation[implementationName] = implData
+		}
+
+		if len(implementations) == 0 && withOptionalContainerRegistry {
+			setupOptionalLocalContainerRegistry(synchronizedSuiteCallbacksData, data)
 		}
 	})
 
 	return data
 }
 
-func MakeContainerRegistryImplementationDockerRegistryOptions(implementationName string) docker_registry.DockerRegistryOptions {
+func setupOptionalLocalContainerRegistry(synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData, data *ContainerRegistryPerImplementationData) {
+	implementationNameForWerf := "default"
+
+	localRegistryAddress, localRegistryContainerName := utilsDocker.LocalDockerRegistryRun()
+	registryAddress := localRegistryAddress
+
+	synchronizedSuiteCallbacksData.AppendSynchronizedAfterSuiteAllNodesFunc(func() {
+		utilsDocker.ContainerStopAndRemove(localRegistryContainerName)
+	})
+
+	implData := &containerRegistryImplementationData{
+		RegistryAddress:    registryAddress,
+		ImplementationName: implementationNameForWerf,
+		RegistryOptions:    makeContainerRegistryImplementationDockerRegistryOptions(implementationNameForWerf),
+	}
+
+	data.ContainerRegistryPerImplementation[LocalRegistryImplementationName] = implData
+}
+
+func makeContainerRegistryImplementationDockerRegistryOptions(implementationName string) docker_registry.DockerRegistryOptions {
 	implementationCode := strings.ToUpper(implementationName)
 
 	usernameEnvName := fmt.Sprintf(
@@ -170,7 +198,7 @@ func MakeContainerRegistryImplementationDockerRegistryOptions(implementationName
 	}
 }
 
-func ContainerRegistryImplementationAddress(implementationName string) string {
+func containerRegistryImplementationAddress(implementationName string) string {
 	implementationCode := strings.ToUpper(implementationName)
 
 	registryEnvName := fmt.Sprintf(
@@ -181,7 +209,7 @@ func ContainerRegistryImplementationAddress(implementationName string) string {
 	return utils.GetRequiredEnv(registryEnvName)
 }
 
-func ContainerRegistryImplementationListToCheck() []string {
+func ContainerRegistryImplementationListToCheck(withOptionalContainerRegistry bool) []string {
 	var list []string
 
 	for _, implementationName := range docker_registry.ImplementationList() {
@@ -213,6 +241,10 @@ environLoop:
 
 			list = append(list, implementationName)
 		}
+	}
+
+	if len(list) == 0 && withOptionalContainerRegistry {
+		list = append(list, LocalRegistryImplementationName)
 	}
 
 	return list

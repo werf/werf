@@ -1,1 +1,1 @@
-cleanup project images
+cleanup project images in the container registry

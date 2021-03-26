@@ -370,7 +370,14 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 		}
 
 		if countStageIDCommitList(stageIDCommitListToDelete) != 0 {
-			if err := logboek.Context(ctx).Info().LogProcess("Cleaning up metadata (%d/%d)", countStageIDCommitList(stageIDCommitListToDelete), countStageIDCommitList(stageIDCommitListToCleanup)).DoError(func() error {
+			header := fmt.Sprintf("Cleaning up metadata (%d/%d)", countStageIDCommitList(stageIDCommitListToDelete), countStageIDCommitList(stageIDCommitListToCleanup))
+
+			logProcessDoError := logboek.Context(ctx).Default().LogProcessInline(header).DoError
+			if logboek.Context(ctx).Info().IsAccepted() {
+				logProcessDoError = logboek.Context(ctx).Info().LogProcess(header).DoError
+			}
+
+			if err := logProcessDoError(func() error {
 				return m.deleteImageMetadata(ctx, imageName, stageIDCommitListToDelete)
 			}); err != nil {
 				return err
@@ -380,7 +387,14 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 
 	nonexistentStageIDCommitList := m.stageManager.GetNonexistentStageIDCommitList(imageName)
 	if countStageIDCommitList(nonexistentStageIDCommitList) != 0 {
-		if err := logboek.Context(ctx).Info().LogProcess("Deleting metadata for nonexistent stageIDs (%d)", countStageIDCommitList(nonexistentStageIDCommitList)).DoError(func() error {
+		header := fmt.Sprintf("Deleting metadata for nonexistent stageIDs (%d)", countStageIDCommitList(nonexistentStageIDCommitList))
+
+		logProcessDoError := logboek.Context(ctx).Default().LogProcessInline(header).DoError
+		if logboek.Context(ctx).Info().IsAccepted() {
+			logProcessDoError = logboek.Context(ctx).Info().LogProcess(header).DoError
+		}
+
+		if err := logProcessDoError(func() error {
 			return m.deleteImageMetadata(ctx, imageName, nonexistentStageIDCommitList)
 		}); err != nil {
 			return err
@@ -389,7 +403,14 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 
 	stageIDNonexistentCommitList := m.stageManager.GetStageIDNonexistentCommitList(imageName)
 	if countStageIDCommitList(stageIDNonexistentCommitList) != 0 {
-		if err := logboek.Context(ctx).Info().LogProcess("Deleting metadata for nonexistent commits (%d)", countStageIDCommitList(stageIDNonexistentCommitList)).DoError(func() error {
+		header := fmt.Sprintf("Deleting metadata for nonexistent commits (%d)", countStageIDCommitList(stageIDNonexistentCommitList))
+
+		logProcessDoError := logboek.Context(ctx).Default().LogProcessInline(header).DoError
+		if logboek.Context(ctx).Info().IsAccepted() {
+			logProcessDoError = logboek.Context(ctx).Info().LogProcess(header).DoError
+		}
+
+		if err := logProcessDoError(func() error {
 			return m.deleteImageMetadata(ctx, imageName, stageIDNonexistentCommitList)
 		}); err != nil {
 			return err
@@ -494,10 +515,10 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 			excludedSDList = append(excludedSDList, excludedSDListBySD...)
 		}
 
-		logboek.Context(ctx).Info().LogBlock("Saved stages (%d)", len(excludedSDList)).Do(func() {
+		logboek.Context(ctx).Default().LogBlock("Saved stages (%d/%d)", len(excludedSDList), len(stageDescriptionList)).Do(func() {
 			for _, excludedSD := range excludedSDList {
-				logboek.Context(ctx).Info().LogFDetails("  tag: %s\n", excludedSD.Info.Tag)
-				logboek.Context(ctx).Info().LogOptionalLn()
+				logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", excludedSD.Info.Tag)
+				logboek.Context(ctx).Default().LogOptionalLn()
 			}
 		})
 	}
@@ -515,7 +536,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 			}
 
 			if len(excludedSDList) != 0 {
-				logboek.Context(ctx).Default().LogBlock("Saved stages that were built within last %d hours (%d)", m.KeepStagesBuiltWithinLastNHours, len(excludedSDList)).Do(func() {
+				logboek.Context(ctx).Default().LogBlock("Saved stages that were built within last %d hours (%d/%d)", m.KeepStagesBuiltWithinLastNHours, len(excludedSDList), len(stageDescriptionList)).Do(func() {
 					for _, stage := range excludedSDList {
 						logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stage.Info.Tag)
 						logboek.Context(ctx).LogOptionalLn()

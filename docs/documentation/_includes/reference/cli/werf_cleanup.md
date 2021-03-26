@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Safely cleanup unused project images.
+Safely cleanup unused project images in the container registry.
 
 The command works according to special rules called cleanup policies, which the user defines in     
 werf.yaml ([https://werf.io/documentation/reference/werf_yaml.html#configuring-cleanup-policies]({{ "/reference/werf_yaml.html#configuring-cleanup-policies" | true_relative_url }})).
