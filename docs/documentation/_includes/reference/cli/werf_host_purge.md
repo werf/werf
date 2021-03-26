@@ -67,7 +67,7 @@ werf host purge [options]
             more info https://werf.io/documentation/advanced/giterminism.html, default              
             $WERF_LOOSE_GITERMINISM)
   -N, --project-name=''
-            Use custom project name (default $WERF_PROJECT_NAME)
+            Set a specific project name (default $WERF_PROJECT_NAME)
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.
             
