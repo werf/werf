@@ -151,7 +151,9 @@ func (storage *RepoStagesStorage) RejectStage(ctx context.Context, projectName, 
 		return nil
 	}
 
-	if err := storage.DockerRegistry.PushImage(ctx, rejectedImageName, &docker_registry.PushImageOptions{}); err != nil {
+	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
+
+	if err := storage.DockerRegistry.PushImage(ctx, rejectedImageName, opts); err != nil {
 		return fmt.Errorf("unable to push rejected stage image record %s: %s", rejectedImageName, err)
 	}
 
@@ -286,7 +288,9 @@ func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectNa
 
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q does not exist => creating record\n", fullImageName)
 
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, nil); err != nil {
+	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
+
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
 
@@ -397,7 +401,9 @@ func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectN
 	fullImageName := makeRepoImageMetadataName(storage.RepoAddress, imageName, commit, stageID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata full image name: %s\n", fullImageName)
 
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, nil); err != nil {
+	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
+
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
 	logboek.Context(ctx).Info().LogF("Put image %s commit %s stage ID %s\n", imageName, commit, stageID)
@@ -479,16 +485,18 @@ func (storage *RepoStagesStorage) GetImportMetadata(ctx context.Context, _, id s
 	}
 }
 
-func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, _ string, metadata *ImportMetadata) error {
+func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata %v\n", metadata)
 
 	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, metadata.ImportSourceID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
-	pushImageOptions := &docker_registry.PushImageOptions{
+	opts := &docker_registry.PushImageOptions{
 		Labels: metadata.ToLabels(),
 	}
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, pushImageOptions); err != nil {
+	opts.Labels[image.WerfLabel] = projectName
+
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
 
@@ -705,7 +713,9 @@ func (storage *RepoStagesStorage) PostClientIDRecord(ctx context.Context, projec
 		return nil
 	}
 
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, nil); err != nil {
+	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
+
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
 

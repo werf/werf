@@ -146,12 +146,53 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 		}
 	}
 
+	{
+		// **NOTICE** Remove v1.1 last-run-at timestamp check when v1.1 reaches its end of life
+
+		t, err := werf.GetWerfLastRunAtV1_1(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error getting v1.1 last run timestamp: %s", err)
+		}
+
+		// No werf v1.1 runs on this host.
+		// This is stupid check, but the only awailalble safe option at the moment.
+		if t.IsZero() {
+			filterSet := filters.NewArgs()
+
+			filterSet.Add("reference", "*client-id-*")
+			filterSet.Add("reference", "*managed-image-*")
+			filterSet.Add("reference", "*meta-*")
+			filterSet.Add("reference", "*import-metadata-*")
+			filterSet.Add("reference", "*-rejected")
+
+			filterSet.Add("reference", "werf-client-id/*")
+			filterSet.Add("reference", "werf-managed-images/*")
+			filterSet.Add("reference", "werf-images-metadata-by-commit/*")
+			filterSet.Add("reference", "werf-import-metadata/*")
+
+			imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+			if err != nil {
+				return nil, fmt.Errorf("unable to get werf service images: %s", err)
+			}
+
+			for _, img := range imgs {
+				// **NOTICE.** Cannot remove by werf label, because currently there is no such label for service-images by historical reasons.
+				// So check by size at least for now.
+				if img.Size != 0 {
+					continue
+				}
+
+				images = append(images, img)
+			}
+		}
+	}
+
 CreateImagesDescs:
 	for _, imageSummary := range images {
 		data, _ := json.Marshal(imageSummary)
 		logboek.Context(ctx).Debug().LogF("Image summary:\n%s\n---\n", data)
 
-		res.TotalImagesBytes += uint64(imageSummary.Size)
+		res.TotalImagesBytes += uint64(imageSummary.VirtualSize - imageSummary.SharedSize)
 
 		lastUsedAt := time.Unix(imageSummary.Created, 0)
 
@@ -273,7 +314,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 					}
 
 					if !imageRemovalFailed {
-						freedBytes += uint64(desc.ImageSummary.Size)
+						freedBytes += uint64(desc.ImageSummary.VirtualSize - desc.ImageSummary.SharedSize)
 						freedImagesCount++
 					}
 

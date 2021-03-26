@@ -138,9 +138,12 @@ func (storage *LocalDockerServerStagesStorage) AddManagedImage(ctx context.Conte
 		return nil
 	}
 
-	if err := docker.CreateImage(ctx, fullImageName, nil); err != nil {
+	labels := map[string]string{image.WerfLabel: projectName}
+
+	if err := docker.CreateImage(ctx, fullImageName, labels); err != nil {
 		return fmt.Errorf("unable to create image %s: %s", fullImageName, err)
 	}
+
 	return nil
 }
 
@@ -228,7 +231,9 @@ func (storage *LocalDockerServerStagesStorage) PutImageMetadata(ctx context.Cont
 		return nil
 	}
 
-	if err := docker.CreateImage(ctx, fullImageName, nil); err != nil {
+	labels := map[string]string{image.WerfLabel: projectName}
+
+	if err := docker.CreateImage(ctx, fullImageName, labels); err != nil {
 		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
 	}
 
@@ -343,7 +348,10 @@ func (storage *LocalDockerServerStagesStorage) PutImportMetadata(ctx context.Con
 		return nil
 	}
 
-	if err := docker.CreateImage(ctx, fullImageName, metadata.ToLabels()); err != nil {
+	labels := metadata.ToLabels()
+	labels[image.WerfLabel] = projectName
+
+	if err := docker.CreateImage(ctx, fullImageName, labels); err != nil {
 		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
 	}
 
@@ -459,7 +467,9 @@ func (storage *LocalDockerServerStagesStorage) PostClientIDRecord(ctx context.Co
 		return nil
 	}
 
-	if err := docker.CreateImage(ctx, fullImageName, map[string]string{}); err != nil {
+	labels := map[string]string{image.WerfLabel: projectName}
+
+	if err := docker.CreateImage(ctx, fullImageName, labels); err != nil {
 		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
 	}
 
