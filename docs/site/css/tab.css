@@ -48,21 +48,3 @@
 .tabs__content.active {
   display: block;
 }
-
-.page__btn {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  width: 240px;
-  height: 56px;
-  border-radius: 15px;
-  text-decoration: none !important;
-  font-size: 18px;
-  font-weight: 600;
-  font-style: normal;
-  font-stretch: normal;
-  line-height: normal;
-  letter-spacing: normal;
-  text-align: center;
-}

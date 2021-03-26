@@ -47,6 +47,14 @@ body,
   text-align: center;
 }
 
+.page__btn.active {
+  display: flex;
+}
+
+.page__btn.disabled {
+  display: none;
+}
+
 .page__btn_inline {
     display: inline-flex;
 }

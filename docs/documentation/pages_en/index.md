@@ -3,6 +3,7 @@ title: Overview
 without_auto_heading: true
 permalink: index.html
 description: Extensive and clear werf documentation
+editme_button: false
 ---
 
 <link rel="stylesheet" type="text/css" href="{{ assets["overview.css"].digest_path | true_relative_url }}" />

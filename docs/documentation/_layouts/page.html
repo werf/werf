@@ -34,16 +34,44 @@ layout: sidebar
     {%- include directive_summary.html directive=page.directive_summary %}
     {%- endif %}
 
+        {%- if page.editme_button %}
+        <div class="page__btn-group">
+            <div class="page__btn disabled editme_button" >
+            <a id="editme_link" target="_blank">
+                <span class="page__btn page__btn_o page__btn_small">View source</span>
+            </a>
+            </div>
+        </div>
+        <script>
+            $(document).ready ( function(){
+                let version = encodeURIComponent(getDocVersionFromPage());
+                if ( version.length > 0) {
+                    let needCheckURL = false;
+                    let pageURL = 'https://github.com{{ site.github_repo_path }}/blob/' + version + '/docs/documentation/{{ page.path }}';
+                    let checkURL = 'https://api.github.com/repos{{ site.github_repo_path }}/contents/docs/documentation/{{ page.path }}?ref=' + version;
+                    if (needCheckURL) {
+                        checkURLExist(checkURL, function (success) {
+                            if (success) {
+                                $('#editme_link').prop('href', pageURL);
+                                $('.editme_button').removeClass('disabled');
+                                $('.editme_button').addClass('active');
+                            }
+                        });
+                    } else {
+                        $('#editme_link').prop('href', pageURL);
+                        $('.editme_button').removeClass('disabled');
+                        $('.editme_button').addClass('active');
+                    }
+                }
+            });
+        </script>
+        {%- endif %}
+
         {%- unless page.toc == false %}
         {%- include toc.html %}
         {%- endunless %}
 
         {%- unless jekyll.environment == "production" %}
-
-        {%- if site.github_editme_path %}
-
-        <a target="_blank" href="https://github.com/{{site.github_editme_path}}/_pages/{{page.folder}}/{{page.url | remove: "/" | append: ".md"}}" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
-        {%- endif %}
 
         {%- endunless %}
 

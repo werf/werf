@@ -1,11 +1,13 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -13,6 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ChannelType struct {
@@ -43,6 +46,7 @@ type versionMenuType struct {
 	CurrentGroup           string
 	CurrentChannel         string
 	CurrentVersion         string
+	AbsoluteVersion        string // Contains explicit version, used for getting git link to source file
 	CurrentVersionURL      string
 	CurrentPageURLRelative string // Relative URL, without "/documentation/<version>"
 	CurrentPageURL         string // Full page URL
@@ -123,14 +127,23 @@ func (m *versionMenuType) getVersionMenuData(r *http.Request, releases *Releases
 		m.CurrentVersionURL = VersionToURL(m.CurrentVersion)
 	}
 
-	re := regexp.MustCompile(`^v([0-9]+\.[0-9]+)\..+$`)
+	re := regexp.MustCompile(`^v([0-9]+\.[0-9]+)(\..+)?$`)
 	res := re.FindStringSubmatch(m.CurrentVersion)
-	if res != nil {
-		// Version is not a group (MAJ.MIN), but the patch version
-		//m.MenuDocumentationLink = fmt.Sprintf("/documentation/%v/", VersionToURL(m.CurrentVersion))
-		m.MenuDocumentationLink = fmt.Sprintf("/documentation/v%s/", VersionToURL(res[1]))
-	} else {
+	if res == nil {
 		m.MenuDocumentationLink = fmt.Sprintf("/documentation/%s/", VersionToURL(m.CurrentVersion))
+	} else {
+		if res[2] != "" {
+			// Version is not a group (MAJ.MIN), but the patch version
+			m.MenuDocumentationLink = fmt.Sprintf("/documentation/v%s/", VersionToURL(res[1]))
+			m.AbsoluteVersion = fmt.Sprintf("%s", m.CurrentVersion)
+		} else {
+			m.MenuDocumentationLink = fmt.Sprintf("/documentation/%s/", VersionToURL(m.CurrentVersion))
+			err, m.AbsoluteVersion = getVersionFromGroup(&ReleasesStatus, res[1])
+			if err != nil {
+				log.Debugln(fmt.Sprintf("getVersionMenuData: error determine absolute version for %s (got %s)", m.CurrentVersion, m.AbsoluteVersion))
+				//w.Header().Set("X-Accel-Redirect", fmt.Sprintf("/documentation/%v%v", VersionToURL(version), getDocPageURLRelative(r, true)))
+			}
+		}
 	}
 
 	//m.MenuDocumentationLink = fmt.Sprintf("/documentation/v%s/", VersionToURL(getRootRelease()))
@@ -506,6 +519,59 @@ func VersionToURL(version string) string {
 func URLToVersion(version string) (result string) {
 	result = strings.ReplaceAll(version, "-plus-", "+")
 	result = strings.ReplaceAll(result, "-u-", "_")
+	return
+}
+
+func validateURL(URL string) (err error) {
+	if strings.ToLower(os.Getenv("URL_VALIDATION")) == "false" {
+		return nil
+	}
+
+	var resp *http.Response
+	allowedStatusCodes := []int{200, 401}
+	tries := 3
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   10 * time.Second,
+				KeepAlive: 10 * time.Second,
+			}).DialContext,
+			ForceAttemptHTTP2:     true,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       10 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+
+	for {
+		resp, err = client.Get(URL)
+		log.Tracef("Validating %v (tries-%v):\nStatus - %v\nHeader - %+v,", URL, tries, resp.Status, resp.Header)
+		if err == nil && (resp.StatusCode == 301 || resp.StatusCode == 302) {
+			if len(resp.Header.Get("Location")) > 0 {
+				URL = resp.Header.Get("Location")
+			} else {
+				tries = 0
+			}
+			tries--
+		} else {
+			tries = 0
+		}
+		if tries < 1 {
+			break
+		}
+	}
+
+	if err == nil {
+		place := sort.SearchInts(allowedStatusCodes, resp.StatusCode)
+		if place >= len(allowedStatusCodes) {
+			err = errors.New(fmt.Sprintf("%s is not valid", URL))
+		}
+	}
 	return
 }
 

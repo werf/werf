@@ -12,6 +12,8 @@ site_urls:
   en: https://werf.io
 site_description: Consistent delivery tool. Git as a single source of truth. Build, deploy to Kubernetes, stay in sync.
 
+github_repo_path: /werf/werf
+
 assets:
   precompile: ['**/*.*']
 
@@ -67,6 +69,7 @@ defaults:
       layout: "page"
       lang: en
       comments: true
+      editme_button: true
       search: true
       sidebar: documentation
       topnav: topnav
