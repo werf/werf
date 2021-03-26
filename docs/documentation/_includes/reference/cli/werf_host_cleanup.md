@@ -91,7 +91,7 @@ werf host cleanup [options]
             more info https://werf.io/documentation/advanced/giterminism.html, default              
             $WERF_LOOSE_GITERMINISM)
   -N, --project-name=''
-            Use custom project name (default $WERF_PROJECT_NAME)
+            Set a specific project name (default $WERF_PROJECT_NAME)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
