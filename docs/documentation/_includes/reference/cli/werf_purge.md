@@ -3,11 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Purge all project images.
+Purge all project images in the container registry. 
 
-WARNING: Do not run this command during any other werf command is working on the host machine. This 
-command is supposed to be run manually. Images from repo, that are being used in Kubernetes cluster 
-will also be deleted.
+WARNING: Images that are being used in the Kubernetes cluster will also be deleted.
 
 {{ header }} Syntax
 
@@ -68,8 +66,6 @@ werf purge [options]
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=''
             Use specified environment (default $WERF_ENV)
-      --force=false
-            First remove containers that use werf docker images which are going to be deleted
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)

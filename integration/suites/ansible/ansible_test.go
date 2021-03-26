@@ -16,7 +16,7 @@ import (
 var _ = Describe("Stapel builder with ansible", func() {
 	Context("when building image based on alpine, ubuntu or centos", func() {
 		AfterEach(func() {
-			werfPurge("general", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("general", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("general/.git")
 			os.RemoveAll("general_repo")
 		})
@@ -29,7 +29,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when building stapel image based on centos 7", func() {
 		AfterEach(func() {
-			werfPurge("yum1", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("yum1", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("yum1/.git")
 			os.RemoveAll("yum1_repo")
 		})
@@ -42,7 +42,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when building stapel image based on centos 8", func() {
 		AfterEach(func() {
-			werfPurge("yum2", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("yum2", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("yum2/.git")
 			os.RemoveAll("yum2_repo")
 		})
@@ -56,7 +56,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when become_user task option used", func() {
 		AfterEach(func() {
-			werfPurge("become_user", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("become_user", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("become_user/.git")
 			os.RemoveAll("become_user_repo")
 		})
@@ -70,7 +70,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when using apt_key module used (1)", func() {
 		AfterEach(func() {
-			werfPurge("apt_key1-001", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("apt_key1-001", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("apt_key1-001/.git")
 			os.RemoveAll("apt_key1_repo")
 		})
@@ -105,7 +105,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when using apt_key module used (2)", func() {
 		AfterEach(func() {
-			werfPurge("apt_key2", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("apt_key2", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("apt_key2/.git")
 			os.RemoveAll("apt_key2_repo")
 		})
@@ -120,7 +120,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("when apt-mark from apt module used (https://github.com/werf/werf/issues/1820)", func() {
 		AfterEach(func() {
-			werfPurge("apt_mark_panic_1820", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("apt_mark_panic_1820", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("apt_mark_panic_1820/.git")
 			os.RemoveAll("apt_mark_panic_1820_repo")
 		})
@@ -138,7 +138,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		AfterEach(func() {
-			werfPurge("yarn", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("yarn", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("yarn/.git")
 			os.RemoveAll("yarn_repo")
 		})
@@ -156,7 +156,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 
 		AfterEach(func() {
-			werfPurge("python_encoding", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("python_encoding", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("python_encoding/.git")
 			os.RemoveAll("python_encoding_repo")
 		})
@@ -173,7 +173,7 @@ var _ = Describe("Stapel builder with ansible", func() {
 
 	Context("Non standard PATH used in the base image (https://github.com/werf/werf/issues/1836) ", func() {
 		AfterEach(func() {
-			werfPurge("path_redefined_in_stapel_1836", liveexec.ExecCommandOptions{}, "--force")
+			werfHostPurge("path_redefined_in_stapel_1836", liveexec.ExecCommandOptions{}, "--force")
 			os.RemoveAll("path_redefined_in_stapel_1836/.git")
 			os.RemoveAll("path_redefined_in_stapel_1836_repo")
 		})

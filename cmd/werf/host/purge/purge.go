@@ -8,11 +8,14 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/cleaning"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/host_cleaning"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
@@ -55,6 +58,9 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
+	common.SetupProjectName(&commonCmdData, cmd)
+
+	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -96,10 +102,42 @@ func runReset() error {
 	}
 	ctx = ctxWithDockerCli
 
-	logboek.LogOptionalLn()
-	hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force}
-	if err := host_cleaning.HostPurge(ctx, hostPurgeOptions); err != nil {
-		return err
+	projectName := *commonCmdData.ProjectName
+	if projectName == "" {
+		logboek.LogOptionalLn()
+		hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force}
+		if err := host_cleaning.HostPurge(ctx, hostPurgeOptions); err != nil {
+			return err
+		}
+	} else {
+		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+		stagesStorage, err := common.GetLocalStagesStorage(containerRuntime)
+		if err != nil {
+			return err
+		}
+		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
+		if err != nil {
+			return err
+		}
+		stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
+		if err != nil {
+			return err
+		}
+		storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
+		if err != nil {
+			return err
+		}
+
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, nil, storageLockManager, stagesStorageCache)
+		purgeOptions := cleaning.PurgeOptions{
+			RmContainersThatUseWerfImages: cmdData.Force,
+			DryRun:                        *commonCmdData.DryRun,
+		}
+
+		logboek.LogOptionalLn()
+		if err := cleaning.Purge(ctx, projectName, storageManager, storageLockManager, purgeOptions); err != nil {
+			return err
+		}
 	}
 
 	return nil

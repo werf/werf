@@ -42,7 +42,7 @@ var _ = Describe("context", func() {
 		utils.RunSucceedCommand(
 			SuiteData.WerfRepoWorktreeDir,
 			SuiteData.WerfBinPath,
-			"purge", "--force",
+			"host", "purge", "--force",
 		)
 	})
 

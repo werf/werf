@@ -25,7 +25,7 @@ var _ = Describe("cleaning images and stages", func() {
 		utils.RunSucceedCommand(
 			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 			SuiteData.WerfBinPath,
-			"purge", "--force",
+			"purge",
 		)
 	})
 

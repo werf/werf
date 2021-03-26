@@ -104,15 +104,6 @@ cli: &cli
       - title: werf host cleanup
         url: /reference/cli/werf_host_cleanup.html
 
-      - title: werf host project
-        f:
-
-        - title: werf host project list
-          url: /reference/cli/werf_host_project_list.html
-
-        - title: werf host project purge
-          url: /reference/cli/werf_host_project_purge.html
-
       - title: werf host purge
         url: /reference/cli/werf_host_purge.html
 

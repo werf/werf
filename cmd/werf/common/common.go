@@ -142,7 +142,7 @@ func SetupGitWorkTree(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ProjectName = new(string)
-	cmd.Flags().StringVarP(cmdData.ProjectName, "project-name", "N", os.Getenv("WERF_PROJECT_NAME"), "Use custom project name (default $WERF_PROJECT_NAME)")
+	cmd.Flags().StringVarP(cmdData.ProjectName, "project-name", "N", os.Getenv("WERF_PROJECT_NAME"), "Set a specific project name (default $WERF_PROJECT_NAME)")
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -884,6 +884,14 @@ func GetOptionalStagesStorageAddress(cmdData *CmdData) string {
 	}
 
 	return *cmdData.StagesStorage
+}
+
+func GetLocalStagesStorage(containerRuntime container_runtime.ContainerRuntime) (storage.StagesStorage, error) {
+	return storage.NewStagesStorage(
+		storage.LocalStorageAddress,
+		containerRuntime,
+		storage.StagesStorageOptions{},
+	)
 }
 
 func GetStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
