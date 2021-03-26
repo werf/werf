@@ -31,7 +31,7 @@ var _ = Describe("Bundles", func() {
 
 		Context(fmt.Sprintf("[%s] publish and apply quickstart-application bundle", implementationName), func() {
 			BeforeEach(func() {
-				SuiteData.Repo = fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
+				SuiteData.Repo = fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[iName].RegistryAddress, SuiteData.ProjectName)
 				SuiteData.SetupRepo(context.Background(), SuiteData.Repo, implementationName, SuiteData.StubsData)
 			})
 

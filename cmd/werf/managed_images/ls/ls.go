@@ -5,6 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
+
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
@@ -34,7 +37,6 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupProjectName(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
@@ -67,6 +69,9 @@ func NewCmd() *cobra.Command {
 
 func run() error {
 	ctx := common.BackgroundContext()
+	if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
+		logboek.Context(ctx).SetAcceptedLevel(level.Error)
+	}
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
@@ -126,13 +131,14 @@ func run() error {
 	var projectName string
 	if werfConfig != nil {
 		projectName = werfConfig.Meta.Project
-	} else if *commonCmdData.ProjectName != "" {
-		projectName = *commonCmdData.ProjectName
 	} else {
-		return fmt.Errorf("run command in the project directory with werf.yaml or specify --project-name=PROJECT_NAME param")
+		return fmt.Errorf("run command in the project directory with werf.yaml")
 	}
 
-	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
+	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+	if err != nil {
+		return err
+	}
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {

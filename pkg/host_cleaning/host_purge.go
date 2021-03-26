@@ -12,7 +12,6 @@ import (
 
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
-	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
@@ -49,8 +48,17 @@ func HostPurge(ctx context.Context, options HostPurgeOptions) error {
 			return err
 		}
 
+		localManagedImageRecordImageNameFormat := "werf-managed-images/%s" // legacy
 		filterSet = filters.NewArgs()
-		filterSet.Add("reference", fmt.Sprintf(storage.LocalManagedImageRecord_ImageNameFormat, "*"))
+		filterSet.Add("reference", fmt.Sprintf(localManagedImageRecordImageNameFormat, "*"))
+
+		if err := werfImagesFlushByFilterSet(ctx, filterSet, commonOptions); err != nil {
+			return err
+		}
+
+		localMetadataImageRecordImageNameFormat := "werf-images-metadata-by-commit/%s" // legacy
+		filterSet = filters.NewArgs()
+		filterSet.Add("reference", fmt.Sprintf(localMetadataImageRecordImageNameFormat, "*"))
 
 		if err := werfImagesFlushByFilterSet(ctx, filterSet, commonOptions); err != nil {
 			return err
