@@ -286,7 +286,7 @@ func (phase *PublishImagesPhase) publishImageByTag(ctx context.Context, img *Ima
 
 	publishingFunc := func() error {
 		if err := phase.Conveyor.StorageManager.FetchStage(ctx, img.GetLastNonEmptyStage()); err != nil {
-			return err
+			return fmt.Errorf("unable to fetch last non empty stage %q: %s", img.GetLastNonEmptyStage().GetImage().Name(), err)
 		}
 
 		if err := logboek.Context(ctx).Info().LogProcess("Building final image with meta information").DoError(func() error {
