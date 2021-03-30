@@ -3,6 +3,7 @@ package build
 import (
 	"context"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -62,6 +63,8 @@ Retry:
 		defer newConveyor.Terminate(ctx)
 
 		if err := f(newConveyor); manager.ShouldResetStagesStorageCache(err) {
+			logboek.Context(ctx).Error().LogF("Will reset stages storage cache due to error: %s\n", err)
+
 			if err := newConveyor.StorageManager.ResetStagesStorageCache(ctx); err != nil {
 				return false, err
 			}
