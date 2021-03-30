@@ -145,8 +145,17 @@ func (m *StagesStorageManager) FetchStage(ctx context.Context, stg stage.Interfa
 	}
 
 	logboek.Context(ctx).Debug().LogF("-- StagesManager.FetchStage %s\n", stg.LogDetailedName())
-	if freshStageDescription, err := m.StagesStorage.GetStageDescription(ctx, m.ProjectName, stg.GetImage().GetStageDescription().StageID.Digest, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
-		return err
+	if freshStageDescription, err := m.StagesStorage.GetStageDescription(ctx, m.ProjectName, stg.GetImage().GetStageDescription().StageID.Digest, stg.GetImage().GetStageDescription().StageID.UniqueID); err == storage.ErrBrokenImage {
+		logboek.Context(ctx).Error().LogF("Invalid stage %s image %q! Stage image is broken and is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
+
+		logboek.Context(ctx).Error().LogF("Will mark image %q as rejected in the stages storage %s\n", stg.GetImage().Name(), m.StagesStorage.String())
+		if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stg.GetImage().GetStageDescription().StageID.Digest, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
+			return fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
+		}
+
+		return ErrShouldResetStagesStorageCache
+	} else if err != nil {
+		return fmt.Errorf("unable to get stage %s description: %s", stg.GetImage().GetStageDescription().StageID.String(), err)
 	} else if freshStageDescription == nil {
 		logboek.Context(ctx).Error().LogF("Invalid stage %s image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
 		return ErrShouldResetStagesStorageCache
@@ -161,12 +170,13 @@ func (m *StagesStorageManager) FetchStage(ctx context.Context, stg stage.Interfa
 				logboek.Context(ctx).Info().LogF("Image name: %s\n", stg.GetImage().Name())
 
 				if err := m.StagesStorage.FetchImage(ctx, &container_runtime.DockerImage{Image: stg.GetImage()}); err == storage.ErrBrokenImage {
-					logboek.Context(ctx).Error().LogF("Unable to fetch image %q: %s\n", stg.GetImage().Name(), err)
-					logboek.Context(ctx).Error().LogF("Will mark image %q as rejected in the stages storage %s\n", stg.GetImage().Name(), m.StagesStorage.String())
+					logboek.Context(ctx).Error().LogF("Unable to fetch image %q: %s. Stages storage cache for project %q should be reset!\n", stg.GetImage().Name(), err, m.ProjectName)
 
+					logboek.Context(ctx).Error().LogF("Will mark image %q as rejected in the stages storage %s\n", stg.GetImage().Name(), m.StagesStorage.String())
 					if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stg.GetImage().GetStageDescription().StageID.Digest, stg.GetImage().GetStageDescription().StageID.UniqueID); err != nil {
 						return fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
 					}
+
 					return ErrShouldResetStagesStorageCache
 				} else if err != nil {
 					return fmt.Errorf("unable to fetch stage %s image %s from storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
@@ -240,13 +250,13 @@ func (m *StagesStorageManager) AtomicStoreStagesByDigestToCache(ctx context.Cont
 func (m *StagesStorageManager) GetStagesByDigest(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error) {
 	cacheExists, cacheStages, err := m.getStagesByDigestFromCache(ctx, stageName, stageDigest)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to get %s stages by digest %q from cache: %s", stageName, stageDigest, err)
 	}
 	if cacheExists {
 		return cacheStages, nil
 	}
 
-	logboek.Context(ctx).Info().LogF(
+	logboek.Context(ctx).Default().LogF(
 		"Stage %s cache by digest %s is not exists in the stages storage cache: will request fresh stages from storage and set stages storage cache by digest %s\n",
 		stageName, stageDigest, stageDigest,
 	)
@@ -315,7 +325,7 @@ func (m *StagesStorageManager) getStagesByDigestFromCache(ctx context.Context, s
 
 	for _, stageID := range cacheStagesIDs {
 		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, m.StagesStorage, getStageDescriptionOptions{StageShouldExist: true, WithManifestCache: m.getWithManifestCacheOption()}); err != nil {
-			return false, nil, err
+			return false, nil, fmt.Errorf("unable to get stage %q description: %s", stageID.String(), err)
 		} else {
 			stages = append(stages, stageDesc)
 		}
@@ -419,7 +429,16 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 	}
 
 	logboek.Context(ctx).Debug().LogF("Getting digest %q uniqueID %d stage info from %s...\n", stageID.Digest, stageID.UniqueID, stagesStorage.String())
-	if stageDesc, err := stagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID); err != nil {
+	if stageDesc, err := stagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID); err == storage.ErrBrokenImage {
+		logboek.Context(ctx).Error().LogF("Invalid stage image %q! Stage is broken and is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, stagesStorage.String(), projectName)
+
+		logboek.Context(ctx).Error().LogF("Will mark image %q as rejected in the stages storage %s\n", stageImageName, stagesStorage.String())
+		if err := stagesStorage.RejectStage(ctx, projectName, stageID.Digest, stageID.UniqueID); err != nil {
+			return nil, fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %s", stageID.String(), stageImageName, stagesStorage.String(), err)
+		}
+
+		return nil, ErrShouldResetStagesStorageCache
+	} else if err != nil {
 		return nil, fmt.Errorf("error getting digest %q uniqueID %d stage info from %s: %s", stageID.Digest, stageID.UniqueID, stagesStorage.String(), err)
 	} else if stageDesc != nil {
 		if opts.WithManifestCache {
@@ -431,7 +450,7 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 
 		return stageDesc, nil
 	} else if opts.StageShouldExist {
-		logboek.Context(ctx).Warn().LogF("Invalid stage image %q! Stage is no longer available in the %s. Storage cache for project %q should be reset!\n", stageImageName, stagesStorage.String(), projectName)
+		logboek.Context(ctx).Error().LogF("Invalid stage image %q! Stage is no longer available in the %s. Storage cache for project %q should be reset!\n", stageImageName, stagesStorage.String(), projectName)
 		return nil, ErrShouldResetStagesStorageCache
 	} else {
 		return nil, nil
