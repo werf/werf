@@ -242,25 +242,34 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage GetStageDescription %s %s %d\n", projectName, signature, uniqueID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
 
-	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, stageImageName); err != nil {
-		return nil, err
-	} else if imgInfo != nil {
-		rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, signature, uniqueID)
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStageDescription check rejected image name: %s\n", rejectedImageName)
+	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, stageImageName)
 
-		if rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName); err != nil {
-			return nil, fmt.Errorf("unable to get repo image %q: %s", rejectedImageName, err)
-		} else if rejectedImgInfo != nil {
-			logboek.Context(ctx).Info().LogF("Stage signature %s uniqueID %d image is rejected: ignore stage image\n", signature, uniqueID)
-			return nil, nil
-		}
-
-		return &image.StageDescription{
-			StageID: &image.StageID{Signature: signature, UniqueID: uniqueID},
-			Info:    imgInfo,
-		}, nil
+	if docker_registry.IsNameUnknownError(err) || docker_registry.IsManifestUnknownError(err) {
+		return nil, nil
 	}
-	return nil, nil
+
+	if docker_registry.IsBlobUnknownError(err) {
+		return nil, ErrBrokenImage
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to inspect repo image %s: %s", stageImageName, err)
+	}
+
+	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, signature, uniqueID)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStageDescription check rejected image name: %s\n", rejectedImageName)
+
+	if rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName); err != nil {
+		return nil, fmt.Errorf("unable to get repo image %q: %s", rejectedImageName, err)
+	} else if rejectedImgInfo != nil {
+		logboek.Context(ctx).Info().LogF("Stage signature %s uniqueID %d image is rejected: ignore stage image\n", signature, uniqueID)
+		return nil, nil
+	}
+
+	return &image.StageDescription{
+		StageID: &image.StageID{Signature: signature, UniqueID: uniqueID},
+		Info:    imgInfo,
+	}, nil
 }
 
 func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectName, imageName string) error {
