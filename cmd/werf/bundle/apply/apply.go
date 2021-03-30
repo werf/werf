@@ -149,8 +149,13 @@ func runApply() error {
 
 	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
 
+	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to create helm registry client: %s", err)
+	}
+
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), *commonCmdData.Namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), *commonCmdData.Namespace, cmd_helm.Settings, registryClientHandle, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -206,7 +211,7 @@ func runApply() error {
 		lockManager = m
 	}
 
-	bundle := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, chart_extender.BundleOptions{})
+	bundle := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, registryClientHandle, chart_extender.BundleOptions{})
 
 	postRenderer, err := bundle.GetPostRenderer()
 	if err != nil {

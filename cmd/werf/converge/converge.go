@@ -18,6 +18,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm/maintenance_helper"
 
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -364,7 +365,12 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 		lockManager = m
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{
+	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to create helm registry client: %s", err)
+	}
+
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, registryClientHandle, chart_extender.WerfChartOptions{
 		SecretValueFiles: common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
@@ -405,20 +411,21 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 		return err
 	}
 
-	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData)
+	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, registryClientHandle)
 	if err != nil {
 		return err
 	}
 	maintenanceHelper := createMaintenanceHelper(ctx, actionConfig, kubeConfigOptions)
 
-	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, postRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir)); err != nil {
+	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, postRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir), registryClientHandle); err != nil {
 		return err
 	}
 
-	actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData)
+	actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, registryClientHandle)
 	if err != nil {
 		return err
 	}
+
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.OutStream(), cmd_helm.UpgradeCmdOptions{
 		PostRenderer:    postRenderer,
 		ValueOpts:       valueOpts,
@@ -463,7 +470,7 @@ func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configura
 	return maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
 }
 
-func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, postRenderer postrender.PostRenderer, valueOpts *values.Options, fullChartDir string) error {
+func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, postRenderer postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, registryClientHandle *helm_v3.RegistryClientHandle) error {
 	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
 		return fmt.Errorf("error checking availability of helm 2 and existance of helm 2 release %q: %s", releaseName, err)
 	} else if !helm2Exists {
@@ -490,7 +497,7 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 
 	logboek.Context(ctx).Default().LogOptionalLn()
 	if err := logboek.Context(ctx).LogProcess("Rendering helm 3 templates for the current project state").DoError(func() error {
-		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData)
+		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, registryClientHandle)
 		if err != nil {
 			return err
 		}

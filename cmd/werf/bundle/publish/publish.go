@@ -310,7 +310,12 @@ func runPublish(ctx context.Context) error {
 
 	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{
+	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to create helm registry client: %s", err)
+	}
+
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, registryClientHandle, chart_extender.WerfChartOptions{
 		SecretValueFiles: *commonCmdData.SecretValues,
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
@@ -357,7 +362,7 @@ func runPublish(ctx context.Context) error {
 
 		if err := logboek.Context(ctx).LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
 			actionConfig := new(action.Configuration)
-			if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
+			if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, registryClientHandle, actionConfig, helm.InitActionConfigOptions{}); err != nil {
 				return err
 			}
 
@@ -372,7 +377,7 @@ func runPublish(ctx context.Context) error {
 
 		if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", bundleRef).DoError(func() error {
 			actionConfig := new(action.Configuration)
-			if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{}); err != nil {
+			if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, registryClientHandle, actionConfig, helm.InitActionConfigOptions{}); err != nil {
 				return err
 			}
 

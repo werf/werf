@@ -299,7 +299,12 @@ func runExport(ctx context.Context) error {
 
 	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, chart_extender.WerfChartOptions{
+	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to create helm registry client: %s", err)
+	}
+
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, registryClientHandle, chart_extender.WerfChartOptions{
 		SecretValueFiles: common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,

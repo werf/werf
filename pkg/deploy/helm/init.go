@@ -30,7 +30,7 @@ type InitActionConfigOptions struct {
 	ReleasesHistoryMax        int
 }
 
-func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, namespace string, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
+func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, namespace string, envSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
 	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{
 		KubeConfigOptions: opts.KubeConfigOptions,
 		Namespace:         namespace,
@@ -63,11 +63,7 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 	kubeClient.ResourcesWaiter = NewResourcesWaiter(kubeInitializer, kubeClient, time.Now(), opts.StatusProgressPeriod, opts.HooksStatusProgressPeriod)
 	kubeClient.Extender = NewHelmKubeClientExtender()
 
-	if registryClient, err := helm_v3.NewRegistryClient(logboek.Context(ctx).Debug().IsAccepted(), logboek.Context(ctx).OutStream()); err != nil {
-		return fmt.Errorf("unable to create registry client: %s", err)
-	} else {
-		actionConfig.RegistryClient = registryClient
-	}
+	actionConfig.RegistryClient = registryClientHandle.RegistryClient
 
 	return nil
 }

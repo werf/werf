@@ -1852,6 +1852,8 @@ github.com/werf/helm/v3 v3.0.0-20210309164546-5025d62f56c2 h1:YIbBrOQpUniBU8UN77
 github.com/werf/helm/v3 v3.0.0-20210309164546-5025d62f56c2/go.mod h1:7+CqT745B1Sy/4dzhzbbY9U08pGnJfrJXBkoEEFj18c=
 github.com/werf/helm/v3 v3.0.0-20210323131626-a7d92a13c117 h1:HglioPrAXhobfrGVKCh6mhRlVDYo+mLWcmwVmapEhEs=
 github.com/werf/helm/v3 v3.0.0-20210323131626-a7d92a13c117/go.mod h1:7+CqT745B1Sy/4dzhzbbY9U08pGnJfrJXBkoEEFj18c=
+github.com/werf/helm/v3 v3.0.0-20210330195046-3366eb633f7f h1:0shyXcy0vqiIdMwV+aROeO32Sj1dbrtFbHqGiBWSfko=
+github.com/werf/helm/v3 v3.0.0-20210330195046-3366eb633f7f/go.mod h1:Tv6yZjudrwek+Jhm0DSjZgM1zzPhkhd7avb7tc3lIwU=
 github.com/werf/kubedog v0.4.1-0.20200923112210-4079add7a93c h1:aM9Gs5CF9YuCFs25mCNfZKTx+3dNe97YGQGKLIumW5U=
 github.com/werf/kubedog v0.4.1-0.20200923112210-4079add7a93c/go.mod h1:b/5MyrNDmxXtr68uucMmZCZmWS3h7cfAcgqtQbHsw5o=
 github.com/werf/kubedog v0.4.1-0.20201125180623-08ad3ea6f58c h1:caA8J/bf3AQgcjo0RCSKdY3blSSswMH47pDcnmsNxPg=
@@ -2646,6 +2648,7 @@ k8s.io/component-base v0.20.1/go.mod h1:guxkoJnNoh8LNrbtiQOlyp2Y2XFCZQmrcg2n/DeY
 k8s.io/component-base v0.20.2 h1:LMmu5I0pLtwjpp5009KLuMGFqSc2S2isGw8t1hpYKLE=
 k8s.io/component-base v0.20.2/go.mod h1:pzFtCiwe/ASD0iV7ySMu8SYVJjCapNM9bjvk7ptpKh0=
 k8s.io/component-helpers v0.20.1/go.mod h1:Q8trCj1zyLNdeur6pD2QvsF8d/nWVfK71YjN5+qVXy4=
+k8s.io/component-helpers v0.20.2/go.mod h1:qeM6iAWGqIr+WE8n2QW2OK9XkpZkPNTxAoEv9jl40/I=
 k8s.io/cri-api v0.17.3/go.mod h1:X1sbHmuXhwaHs9xxYffLqJogVsnI+f6cPRcgPel7ywM=
 k8s.io/cri-api v0.20.1/go.mod h1:2JRbKt+BFLTjtrILYVqQK5jqhI+XNdF6UiGMgczeBCI=
 k8s.io/csi-translation-lib v0.17.4/go.mod h1:CsxmjwxEI0tTNMzffIAcgR9lX4wOh6AKHdxQrT7L0oo=
@@ -2680,6 +2683,8 @@ k8s.io/kubectl v0.19.2 h1:/Dxz9u7S0GnchLA6Avqi5k1qhZH4Fusgecj8dHsSnbk=
 k8s.io/kubectl v0.19.2/go.mod h1:4ib3oj5ma6gF95QukTvC7ZBMxp60+UEAhDPjLuBIrV4=
 k8s.io/kubectl v0.20.1 h1:7h1vSrL/B3hLrhlCJhbTADElPKDbx+oVUt3+QDSXxBo=
 k8s.io/kubectl v0.20.1/go.mod h1:2bE0JLYTRDVKDiTREFsjLAx4R2GvUtL/mGYFXfFFMzY=
+k8s.io/kubectl v0.20.2 h1:mXExF6N4eQUYmlfXJmfWIheCBLF6/n4VnwQKbQki5iE=
+k8s.io/kubectl v0.20.2/go.mod h1:/bchZw5fZWaGZxaRxxfDQKej/aDEtj/Tf9YSS4Jl0es=
 k8s.io/kubernetes v0.19.2 h1:CX7uu3MeWgxIvWtr1EAMrd8WmiNVUZWgV8hqosI+Yjc=
 k8s.io/kubernetes v0.19.2/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
 k8s.io/kubernetes v1.11.10/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
@@ -2690,6 +2695,7 @@ k8s.io/legacy-cloud-providers v0.18.8/go.mod h1:tgp4xYf6lvjrWnjQwTOPvWQE9IVqSBGP
 k8s.io/metrics v0.18.6/go.mod h1:iAwGeabusQNO3duHDM7BBExTUB8L+iq8PM7N9EtQw6g=
 k8s.io/metrics v0.19.2/go.mod h1:IlLaAGXN0q7yrtB+SV0q3JIraf6VtlDr+iuTcX21fCU=
 k8s.io/metrics v0.20.1/go.mod h1:JhpBE/fad3yRGsgEpiZz5FQQM5wJ18OTLkD7Tv40c0s=
+k8s.io/metrics v0.20.2/go.mod h1:yTck5nl5wt/lIeLcU6g0b8/AKJf2girwe0PQiaM4Mwk=
 k8s.io/utils v0.0.0-20190801114015-581e00157fb1/go.mod h1:sZAwmy6armz5eXlNoLmJcl4F1QuKu7sr+mFQ0byX7Ew=
 k8s.io/utils v0.0.0-20191114184206-e782cd3c129f/go.mod h1:sZAwmy6armz5eXlNoLmJcl4F1QuKu7sr+mFQ0byX7Ew=
 k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89/go.mod h1:sZAwmy6armz5eXlNoLmJcl4F1QuKu7sr+mFQ0byX7Ew=
