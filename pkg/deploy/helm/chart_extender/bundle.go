@@ -12,6 +12,7 @@ import (
 	"github.com/werf/logboek"
 	"sigs.k8s.io/yaml"
 
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chartutil"
 
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
@@ -30,10 +31,11 @@ type BundleOptions struct {
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 }
 
-func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, opts BundleOptions) *Bundle {
+func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, opts BundleOptions) *Bundle {
 	return &Bundle{
 		Dir:                            dir,
 		HelmEnvSettings:                helmEnvSettings,
+		RegistryClientHandle:           registryClientHandle,
 		BuildChartDependenciesOpts:     opts.BuildChartDependenciesOpts,
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
@@ -48,6 +50,7 @@ type Bundle struct {
 	Dir                        string
 	HelmChart                  *chart.Chart
 	HelmEnvSettings            *cli.EnvSettings
+	RegistryClientHandle       *helm_v3.RegistryClientHandle
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 
 	*helpers.ChartExtenderServiceValuesData
@@ -124,7 +127,7 @@ func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedF
 		return true, nil, err
 	}
 
-	res, err := LoadChartDependencies(bundle.ChartExtenderContext, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.BuildChartDependenciesOpts)
+	res, err := LoadChartDependencies(bundle.ChartExtenderContext, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.RegistryClientHandle, bundle.BuildChartDependenciesOpts)
 	return true, res, err
 }
 

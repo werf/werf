@@ -85,7 +85,7 @@ require (
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.4.0
-	k8s.io/kubectl v0.20.1
+	k8s.io/kubectl v0.20.2
 	mvdan.cc/xurls v1.1.0
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0
@@ -100,4 +100,4 @@ replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 
 replace github.com/deislabs/oras => github.com/werf/oras v0.8.2-0.20210128161614-26d583f169ea
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20210323131626-a7d92a13c117
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20210330195046-3366eb633f7f

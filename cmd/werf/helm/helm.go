@@ -139,7 +139,12 @@ func NewCmd() *cobra.Command {
 
 				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64)
 
-				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, actionConfig, helm.InitActionConfigOptions{
+				registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx)
+				if err != nil {
+					return fmt.Errorf("unable to create helm registry client: %s", err)
+				}
+
+				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, registryClientHandle, actionConfig, helm.InitActionConfigOptions{
 					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 					HooksStatusProgressPeriod: time.Duration(*_commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 					KubeConfigOptions: kube.KubeConfigOptions{

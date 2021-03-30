@@ -14,6 +14,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/werf/lockgate"
 
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/cli"
 
 	"github.com/pkg/errors"
@@ -61,8 +62,7 @@ func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, er
 	return metadata, nil
 }
 
-func GetPreparedChartDependenciesDir(ctx context.Context, conf *ChartDependenciesConfiguration, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
-
+func GetPreparedChartDependenciesDir(ctx context.Context, conf *ChartDependenciesConfiguration, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
 	var lockFileData []byte
 	if conf.ChartLockFile != nil {
 		lockFileData = conf.ChartLockFile.Data
@@ -88,7 +88,7 @@ func GetPreparedChartDependenciesDir(ctx context.Context, conf *ChartDependencie
 				SubchartExtenderFactoryFunc: nil,
 			}
 
-			if err := command_helpers.BuildChartDependenciesInDir(ctx, conf.ChartFile, conf.ChartLockFile, conf.RequirementsFile, conf.RequirementsLockFile, tmpDepsDir, helmEnvSettings, buildChartDependenciesOpts); err != nil {
+			if err := command_helpers.BuildChartDependenciesInDir(ctx, conf.ChartFile, conf.ChartLockFile, conf.RequirementsFile, conf.RequirementsLockFile, tmpDepsDir, helmEnvSettings, registryClientHandle, buildChartDependenciesOpts); err != nil {
 				return fmt.Errorf("error building chart dependencies: %s", err)
 			}
 
@@ -118,7 +118,7 @@ type ChartDependenciesConfiguration struct {
 	Metadata *chart.Metadata
 }
 
-func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
+func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
 	conf := &ChartDependenciesConfiguration{}
 
 	for _, f := range loadedFiles {
@@ -171,7 +171,7 @@ func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtend
 		return loadedFiles, nil
 	}
 
-	depsDir, err := GetPreparedChartDependenciesDir(ctx, conf, helmEnvSettings, buildChartDependenciesOpts)
+	depsDir, err := GetPreparedChartDependenciesDir(ctx, conf, helmEnvSettings, registryClientHandle, buildChartDependenciesOpts)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing chart dependencies: %s", err)
 	}
