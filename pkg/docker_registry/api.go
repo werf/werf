@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -60,8 +61,13 @@ func (api *api) IsRepoImageExists(ctx context.Context, reference string) (bool, 
 func (api *api) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
 	if imgInfo, err := api.GetRepoImage(ctx, reference); err != nil {
 		if IsBlobUnknownError(err) || IsManifestUnknownError(err) {
-			// TODO: Delete such images in werf-cleanup for example, enable warnings when done
-			// logboek.Context(ctx).Warn().LogF("WARNING: Got an error when inspecting repo image %q: %s\n", reference, err)
+			// TODO: 1. auto reject images with manifest-unknown or blob-unknown errors
+			// TODO: 2. why TryGetRepoImage for rejected image records gives manifest-unknown errors?
+			// TODO: 3. make sure werf never ever creates rejected image records for name-unknown errors.
+
+			if os.Getenv("WERF_DOCKER_REGISTRY_DEBUG") == "1" {
+				logboek.Context(ctx).Error().LogF("WARNING: Got an error when inspecting repo image %q: %s\n", reference, err)
+			}
 			return nil, nil
 		}
 
