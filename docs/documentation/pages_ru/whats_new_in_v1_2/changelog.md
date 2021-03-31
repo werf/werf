@@ -84,7 +84,7 @@ werf предоставляет следующие команды compose:
  - Single `werf converge` command to build and publish needed images and deploy application into the kubernetes.
      - Вызов команды с опцией `werf converge --skip-build` эмулирует поведение ранее существующей команды `werf deploy`.
          - werf упадёт с ошибкой если требуемые образы не будут найдены в container registry, так же как падал с ошибкой `werf deploy`.
- - Удалены команды `werf stages *` и `werf images *`.
+ - Удалены команды `werf stages *`, `werf images *` и `werf host project *`.
  - Более нет команды `werf publish`, потому что команда `werf build` с параметром `--repo` загрузит образы и все стадии, из которых они состоят, в container registry автоматически.
  - Более нет флагов тегирования: `--tag-by-stages-signature`, `--tag-git-branch`, `--tag-git-commit`, `--tag-git-tag` и `--tag-custom`, werf всегда использует поведение ранее включаемое флагом `--tag-by-stages-signature`.
      - Принудительное использование произвольных тегов [пока не поддерживается](https://github.com/werf/werf/issues/2869) в v1.2.
@@ -97,6 +97,11 @@ werf предоставляет следующие команды compose:
  - По умолчанию команда `werf build` не требует никаких аргументов и будет собирать образы используя локальный docker server в качестве хранилища.
  - При запуске `werf build` с флагом `--repo registry.mydomain.org/project` werf будет искать локально собранные образы и если найдёт, то загрузит их в указанный repo (лишней пересборки не будет).
  - Команда `werf converge` требует параметр `--repo` для работы, и, так же как `werf build`, автоматически загрузит в repo локально существующие образы.
+
+### Поведение команд очистки
+
+- Команды `werf cleanup/purge` используются только для чистки сontainer registry.
+- Команда `werf host purge --project=<project-name>` может использоваться для удаления образов проекта из локального Docker (ранее для этого можно было использовать команду `werf purge`).
 
 ### Автоматическая сборка образов в командах верхнего уровня
 

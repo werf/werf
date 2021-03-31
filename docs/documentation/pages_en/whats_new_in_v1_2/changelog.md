@@ -82,7 +82,7 @@ werf provides following compose commands:
  - Single `werf converge` command to build and publish needed images into the container registry and deploy application into the kubernetes.
      - `werf converge --skip-build` emulates behaviour of an old `werf deploy` command.
          - werf will complain if needed images was not found in the container registry as `werf deploy` did.
- - Removed `werf stages *` and `werf images *` commands.
+ - Removed `werf stages *`, `werf images *` and `werf host project *` commands.
  - There is no more `werf publish` command, because `werf build` command with `--repo` param will publish images with all it's stages into the container registry automatically.
  - There is no more `--tag-by-stages-signature`, `--tag-git-branch`, `--tag-git-commit`, `--tag-git-tag`, `--tag-custom` options, `--tag-by-stages-signature` behaviour is default.
      - Forcing of custom tags is [not yet available](https://github.com/werf/werf/issues/2869) in the v1.2
@@ -95,6 +95,11 @@ werf provides following compose commands:
  - By default `werf build` command does not require any arguments and will build cache in the local docker server images storage.
  - When running `werf build` with `--repo registry.mydomain.org/project` param werf will lookup for already built images in the local docker server images storage and upload them if found any (without unnecessary rebuild).
  - `werf converge` command requires `--repo` to work, but as `werf build` command will automatically upload into the repo any locally existing images.
+
+### Cleaning commands behaviour
+
+ - The `werf cleanup/purge` commands only for cleaning the project container registry.
+ - The `werf host purge --project=<project-name>` for removing the project images in the local Docker (previously, it was possible to use the `werf purge` command).
 
 ### Automatical images building in some toplevel commands
 
