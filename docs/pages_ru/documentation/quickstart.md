@@ -43,8 +43,8 @@ werf version
     minikube start --driver=docker
     ```
     {% endraw %}
-    
-    **ВАЖНО:** Если minikube уже запущен в вашей системе, то надо удостоверится, что используется driver под названием `docker`. Если нет, то требуется перезапустить minikube с помощью команды `minikube delete` и команды для старта, показанной выше.
+
+    **ВАЖНО.** Если minikube уже запущен в вашей системе, то надо удостоверится, что используется driver под названием `docker`. Если нет, то требуется перезапустить minikube с помощью команды `minikube delete` и команды для старта, показанной выше.
 
  3. Включите дополнение minikube registry:
 
@@ -56,19 +56,25 @@ werf version
     
     Вывод команды должен содержать похожую строку:
  
+    {% raw %}
     ```
     ...
     * Registry addon on with docker uses 32769 please use that instead of default 5000
     ...
     ```
+    {% endraw %}
 
     Запоминаем порт `32769`.    
-    
- 4. Запустите следующий проброс портов в отдельном терминале, заменив порт `32769` вашим портом из шага 3:
 
+ 4. **В отдельном терминале** запустите следующий проброс портов, заменив порт `32769` вашим портом из шага 3:
+
+    {% raw %}
     ```shell
     docker run -ti --rm --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769"
     ```
+    {% endraw %}
+
+    **ЗАМЕЧАНИЕ.** Указанная команда должна оставаться активна во время работы с werf, не прерывайте выполнение команды.
 
  5. Запустите сервис с привязкой к порту 5000:
 
@@ -78,18 +84,35 @@ werf version
     ```
     {% endraw %}
 
- 6. Запустите следующий проброс портов в отдельном терминале:
+ 6. **В отдельном терминале** запустите следующий проброс портов:
 
     {% raw %}
     ```shell
     kubectl port-forward --namespace kube-system service/werf-registry 5000
     ```
     {% endraw %}
+
+    **ЗАМЕЧАНИЕ.** Указанная команда должна оставаться активна во время работы с werf, не прерывайте выполнение команды.
 </div>
 </div>
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">MacOS</a>
+<div class="details__content" markdown="1">
+ 1. Установите [Docker Desktop](https://docs.docker.com/docker-for-mac/install/) или обновите до последней версии.
+ 2. Включите кластер Kubernetes в настройках Docker Desktop. Если Kubernetes кластер не стартует, попробуйте перезапустить Docker Desktop и сбросить настройки к заводским.
+ 3. Запустите в терминале container registry:
+
+    {% raw %}
+    ```shell
+    docker run -d -p 5000:5000 --restart=always --name registry registry:2
+    ```
+    {% endraw %}
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">MacOS — альтернативный вариант</a>
 <div class="details__content" markdown="1">
  1. Установите [minikube](https://github.com/kubernetes/minikube#installation).
  2. Запустите minikube:
@@ -100,7 +123,7 @@ werf version
     ```
     {% endraw %}
     
-    **ВАЖНО:** Если minikube уже запущен в вашей системе, то надо удостоверится, что используется driver под названием `docker`. Если нет, то требуется перезапустить minikube с помощью команды `minikube delete` и команды для старта, показанной выше.
+    **ВАЖНО.** Если minikube уже запущен в вашей системе, то надо удостоверится, что используется driver под названием `docker`. Если нет, то требуется перезапустить minikube с помощью команды `minikube delete` и команды для старта, показанной выше.
 
  3. Включите дополнение minikube registry:
 
@@ -112,26 +135,36 @@ werf version
     
     Вывод команды должен содержать похожую строку:
  
+    {% raw %}
     ```
     ...
     * Registry addon on with docker uses 32769 please use that instead of default 5000
     ...
     ```
-
+    {% endraw %}
+    
     Запоминаем порт `32769`.    
     
- 4. Запустите следующий проброс портов в отдельном терминале, заменив порт `32769` вашим портом из шага 3:
+ 4. **В отдельном терминале** запустите следующий проброс портов, заменив порт `32769` вашим портом из шага 3:
 
+    {% raw %}
     ```shell
     docker run -ti --rm --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769"
     ```
+    {% endraw %}
+    
+    **ЗАМЕЧАНИЕ.** Указанная команда должна оставаться активна во время работы с werf, не прерывайте выполнение команды.
 
- 5. Запустите следующий проброс портов в отдельном терминале, заменив порт `32769` вашим портом из шага 3:
- 
+ 5. **В отдельном терминале** запустите следующий проброс портов, заменив порт `32769` вашим портом из шага 3:
+
+    {% raw %}
     ```shell
     brew install socat
-    socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769
+    socat TCP-LISTEN:5000,reuseaddr,fork TCP:localhost:32769
     ```
+    {% endraw %}
+
+    **ЗАМЕЧАНИЕ.** Указанная команда должна оставаться активна во время работы с werf, не прерывайте выполнение команды.
 </div>
 </div>
 
@@ -147,7 +180,7 @@ werf version
     ```
     {% endraw %}
     
-    **ВАЖНО:** Если minikube уже запущен в вашей системе, то надо удостоверится, что используется driver под названием `docker`. Если нет, то требуется перезапустить minikube с помощью команды `minikube delete` и команды для старта, показанной выше.
+    **ВАЖНО.** Если minikube уже запущен в вашей системе, то надо удостоверится, что используется driver под названием `docker`. Если нет, то требуется перезапустить minikube с помощью команды `minikube delete` и команды для старта, показанной выше.
 
  3. Включите дополнение minikube registry:
 
@@ -157,7 +190,7 @@ werf version
     ```
     {% endraw %}
  
- 4. Запустите следующий проброс портов в отдельном терминале:
+ 4. **В отдельном терминале** запустите следующий проброс портов:
 
     {% raw %}
     ```shell
@@ -165,6 +198,8 @@ werf version
     socat -d -d TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip):5000
     ```
     {% endraw %}
+
+    **ЗАМЕЧАНИЕ.** Указанная команда должна оставаться активна во время работы с werf, не прерывайте выполнение команды.
 </div>
 </div>
 
@@ -191,23 +226,80 @@ _Примечание: для подключения к кластеру Kuberne
 
 ## Проверьте результаты
 
-После успешного завершения команды `converge` можно считать, что наше приложение развернуто  и работает. Давайте его проверим!
+После успешного завершения команды `converge` можно считать, что наше приложение развернуто и работает.
 
-Как вы помните, наше приложение представляет собой простую голосовалку. Чтобы принять участие в голосовании, перейдите по ссылке, которую выдаст следующая команда:
+Как вы помните, наше приложение представляет собой простую голосовалку. Давайте его проверим!
 
-{% raw %}
-```
-minikube service --namespace quickstart-application --url vote
-```
-{% endraw %}
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">Windows</a>
+<div class="details__content" markdown="1">
+ 1. Чтобы принять участие в голосовании, перейдите по ссылке, которую выдаст следующая команда:
 
-Чтобы увидеть результаты голосования, перейдите по ссылке, которую выдаст следующая команда:
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url vote
+    ```
+    {% endraw %}
 
-{% raw %}
-```
-minikube service --namespace quickstart-application --url result
-```
-{% endraw %}
+ 2. Чтобы увидеть результаты голосования, перейдите по ссылке, которую выдаст следующая команда:
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url result
+    ```
+    {% endraw %}
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">MacOS</a>
+<div class="details__content" markdown="1">
+ 1. Чтобы принять участие в голосовании, перейдите по ссылке [http://localhost:31160](http://localhost:31160).
+ 2. Чтобы увидеть результаты голосования, перейдите по ссылке [http://localhost:31161](http://localhost:31161).
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">MacOS — альтернативный вариант</a>
+<div class="details__content" markdown="1">
+ 1. Чтобы принять участие в голосовании, перейдите по ссылке, которую выдаст следующая команда:
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url vote
+    ```
+    {% endraw %}
+
+ 2. Чтобы увидеть результаты голосования, перейдите по ссылке, которую выдаст следующая команда:
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url result
+    ```
+    {% endraw %}
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">Linux</a>
+<div class="details__content" markdown="1">
+ 1. Чтобы принять участие в голосовании, перейдите по ссылке, которую выдаст следующая команда:
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url vote
+    ```
+    {% endraw %}
+
+ 2. Чтобы увидеть результаты голосования, перейдите по ссылке, которую выдаст следующая команда:
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url result
+    ```
+    {% endraw %}
+</div>
+</div>
 
 ## Принципы работы
 
