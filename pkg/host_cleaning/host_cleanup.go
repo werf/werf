@@ -15,8 +15,8 @@ import (
 const (
 	DefaultAllowedDockerStorageVolumeUsagePercentage       float64 = 70.0
 	DefaultAllowedDockerStorageVolumeUsageMarginPercentage float64 = 5.0
-	DefaultAllowedLocalCacheVolumeUsagePercentage          float64 = 60.0
-	DefaultAllowedLocalCacheVolumeUsageMarginPercentage    float64 = 10.0
+	DefaultAllowedLocalCacheVolumeUsagePercentage          float64 = 70.0
+	DefaultAllowedLocalCacheVolumeUsageMarginPercentage    float64 = 5.0
 )
 
 type HostCleanupOptions struct {
