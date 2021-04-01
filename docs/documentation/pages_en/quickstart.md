@@ -42,7 +42,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     ```
     {% endraw %}
     
-    **IMPORTANT:** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
+    **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
 
  3. Enable the minikube registry addon:
 
@@ -54,19 +54,25 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     
     Output should contain a line like:
  
+    {% raw %}
     ```
     ...
     * Registry addon on with docker uses 32769 please use that instead of default 5000
     ...
     ```
-    
+    {% endraw %}
+
     Remember the port `32769`.
     
- 4. Run the following port forwarder in the separate terminal replacing `32769` port with the port from the previous step:
+ 4. **In the separate terminal** run the following port forwarder replacing `32769` port with the port from the previous step:
 
+    {% raw %}
     ```shell
     docker run -ti --rm --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769"
     ```
+    {% endraw %}
+
+    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
 
  5. Run a service with a binding to 5000 port:
 
@@ -76,18 +82,35 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     ```
     {% endraw %}
 
- 6. Run the following port forwarder in the separate terminal:
+ 6. **In the separate terminal** run the following port forwarder:
 
     {% raw %}
     ```shell
     kubectl port-forward --namespace kube-system service/werf-registry 5000
     ```
     {% endraw %}
+
+    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
 </div>
 </div>
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">MacOS</a>
+<div class="details__content" markdown="1">
+ 1. Install [Docker Desktop](https://docs.docker.com/docker-for-mac/install/) or update to the latest version.
+ 2. Enable Kubernetes cluster in the Docker Desktop settings. If something goes wrong and Kubernetes is not starting — try to restart Docker Desktop and reset to the factory settings.
+ 3. Run container registry in the terminal:
+
+    {% raw %}
+    ```shell
+    docker run -d -p 5000:5000 --restart=always --name registry registry:2
+    ```
+    {% endraw %}
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">MacOS — alternative way</a>
 <div class="details__content" markdown="1">
  1. Install [minikube](https://github.com/kubernetes/minikube#installation).
  2. Start minikube:
@@ -98,7 +121,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     ```
     {% endraw %}
     
-    **IMPORTANT:** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and then start command shown above).
+    **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and then start command shown above).
 
  3. Enable the minikube registry addon:
 
@@ -110,26 +133,36 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     
     Output should contain a line like:
  
+    {% raw %}
     ```
     ...
     * Registry addon on with docker uses 32769 please use that instead of default 5000
     ...
     ```
-    
+    {% endraw %}
+
     Remember the port `32769`.
     
- 4. Run the following port forwarder in the separate terminal replacing `32769` port with the port from the step 3:
+ 4. **In the separate terminal** run the following port forwarder replacing `32769` port with the port from the step 3:
 
+    {% raw %}
     ```shell
     docker run -ti --rm --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769"
     ```
+    {% endraw %}
 
- 5. Run the following port forwarder in the separate terminal replacing `32769` port with the port from the step 3:
- 
+    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
+
+ 5. **In the separate another terminal** run the following port forwarder replacing `32769` port with the port from the step 3:
+
+    {% raw %}
     ```shell
     brew install socat
-    socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769
+    socat TCP-LISTEN:5000,reuseaddr,fork TCP:localhost:32769
     ```
+    {% endraw %}
+
+    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
 </div>
 </div>
 
@@ -144,8 +177,8 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     minikube start --driver=docker
     ```
     {% endraw %}
-    
-    **IMPORTANT:** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and then start command shown above).
+
+    **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and then start command shown above).
 
  3. Enable the minikube registry addon:
 
@@ -155,7 +188,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     ```
     {% endraw %}
  
- 4. Run the following port forwarder in the separate terminal:
+ 4. **In the separate another terminal** run the following port forwarder:
 
     {% raw %}
     ```shell
@@ -163,6 +196,8 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     socat -d -d TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip):5000
     ```
     {% endraw %}
+
+    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
 </div>
 </div>
 
@@ -189,23 +224,80 @@ _NOTE: `werf` uses the same settings to connect to the Kubernetes cluster as the
 
 ## Check the result
 
-When the converge command is successfully completed, it is safe to assume that our application is up and running. Let’s check it!
+When the converge command is successfully completed, it is safe to assume that our application is up and running.
 
-Our application is a basic voting system. Go to the following URL to vote:
+Our application is a basic voting system. Let’s check it!
 
-{% raw %}
-```
-minikube service --namespace quickstart-application --url vote
-```
-{% endraw %}
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">Windows</a>
+<div class="details__content" markdown="1">
+ 1. Go to the following URL to vote:
 
-Go to the following URL to check the result of voting:
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url vote
+    ```
+    {% endraw %}
 
-{% raw %}
-```
-minikube service --namespace quickstart-application --url result
-```
-{% endraw %}
+ 2. Go to the following URL to check the result of voting:
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url result
+    ```
+    {% endraw %}
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">MacOS</a>
+<div class="details__content" markdown="1">
+ 1. Go to the following URL to vote: [http://localhost:31160](http://localhost:31160).
+ 2. Go to the following URL to see the result of voting: [http://localhost:31161](http://localhost:31161).
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">MacOS — alternative way</a>
+<div class="details__content" markdown="1">
+ 1. Go to the following URL to vote:
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url vote
+    ```
+    {% endraw %}
+
+ 2. Go to the following URL to check the result of voting:
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url result
+    ```
+    {% endraw %}
+</div>
+</div>
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">Linux</a>
+<div class="details__content" markdown="1">
+ 1. Go to the following URL to vote: 
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url vote
+    ```
+    {% endraw %}
+
+ 2. Go to the following URL to check the result of voting:
+
+    {% raw %}
+    ```
+    minikube service --namespace quickstart-application --url result
+    ```
+    {% endraw %}
+</div>
+</div>
 
 ## How it works
 

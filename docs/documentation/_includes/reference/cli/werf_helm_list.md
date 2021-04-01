@@ -70,7 +70,8 @@ werf helm list [flags] [options]
       --superseded=false
             show superseded releases
       --time-format=''
-            format time. Example: --time-format 2009-11-17 20:34:10 +0000 UTC
+            format time using golang time formatter. Example: --time-format "2006-01-02             
+            15:04:05Z0700"
       --uninstalled=false
             show uninstalled releases (if `helm uninstall --keep-history` was used)
       --uninstalling=false
