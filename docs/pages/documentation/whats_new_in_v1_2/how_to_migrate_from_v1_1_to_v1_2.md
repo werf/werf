@@ -21,6 +21,7 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
  - Remove `--tag-custom`, `--tag-git-tag`, `--tag-git-branch`, `--tag-by-stages-signature` params.
  - In the case when you need a certain docker tag for a built image to exist in the container registry to be used outside of the werf, then use `--report-path` and `--report-format` options like follows:
      - `werf build/converge --report-path=images-report.json --repo REPO`;
+     - `docker pull $(cat images-report.json | jq -r .Images.IMAGE_NAME_FROM_WERF_YAML.DockerImageName)`;
      - `docker tag $(cat images-report.json | jq -r .Images.IMAGE_NAME_FROM_WERF_YAML.DockerImageName) REPO:mytag`;
      - `docker push REPO:mytag`.
 
