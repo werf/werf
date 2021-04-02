@@ -73,7 +73,7 @@ jobs:
             --allow-hash-href \
             --empty-alt-ignore \
             --check_html \
-            --url_ignore "/localhost/,/example.com/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/,/\/guides/,/\/introduction\.html/,/\/installation\.html/,/werf_yaml.html#configuring-cleanup-policies/" \
+            --url_ignore "/localhost/,/example.com/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/habr.com/,/cncf.io/,/\/guides/,/\/introduction\.html/,/\/installation\.html/,/werf_yaml.html#configuring-cleanup-policies/" \
             --url_swap "documentation/v[0-9]+[^/]+/:documentation/" \
             --http-status-ignore 0 \
             ../_site/
