@@ -15,7 +15,7 @@ import (
 
 	"github.com/gookit/color"
 
-	"github.com/docker/docker/builder/dockerignore"
+	"github.com/moby/buildkit/frontend/dockerfile/dockerignore"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
@@ -1130,6 +1130,18 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		BasePath:             filepath.Join(c.GiterminismManager().RelativeToGitProjectDir(), imageFromDockerfileConfig.Context),
 		DockerignorePatterns: dockerignorePatterns,
 	})
+
+	if !dockerignorePathMatcher.IsPathMatched(relDockerfilePath) {
+		exceptionRule := "!" + imageFromDockerfileConfig.Dockerfile
+		logboek.Context(ctx).Warn().LogLn("WARNING: There is no way to ignore the Dockerfile due to docker limitation when building an image for a compressed context that reads from STDIN.")
+		logboek.Context(ctx).Warn().LogF("WARNING: To hide this message, remove the Dockerfile ignore rule from the %q or add an exception rule %q.\n", relDockerignorePath, exceptionRule)
+
+		dockerignorePatterns = append(dockerignorePatterns, exceptionRule)
+		dockerignorePathMatcher = path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+			BasePath:             filepath.Join(c.GiterminismManager().RelativeToGitProjectDir(), imageFromDockerfileConfig.Context),
+			DockerignorePatterns: dockerignorePatterns,
+		})
+	}
 
 	p, err := parser.Parse(bytes.NewReader(dockerfileData))
 	if err != nil {
