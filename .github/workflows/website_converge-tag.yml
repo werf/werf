@@ -8,6 +8,7 @@ on:
 
 env:
   WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
+  WERF_REPO: "ghcr.io/${{ github.repository_owner }}/werfio"
 
 jobs:
 
