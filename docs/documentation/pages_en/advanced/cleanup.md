@@ -66,7 +66,7 @@ Deleting tags for [digests of image stages]({{ "/internals/stages_and_storage.ht
 
 The user can specify images that will not be deleted during a cleanup using `keepPolicies` [cleanup policies]({{ "advanced/cleanup.html" | true_relative_url }}). If there is no configuration provided in the `werf.yaml`, werf will use the [default policy set]({{ "reference/werf_yaml.html#default-policies" | true_relative_url }}).
 
-It is worth noting that the algorithm scans the local state of the git repository. Therefore, it is essential to keep all git branches and git tags up-to-date. You can use the `--git-history-synchronization` flag to synchronize the git state (it is enabled by default when running in CI systems).
+It is worth noting that the algorithm scans the local state of the git repository. Therefore, it is essential to keep all git branches and git tags up-to-date. By default, werf performs synchronization automatically (this behavior is regulated in `werf.yaml` with the directive [gitWorktree.allowFetchOriginBranchesAndTags]({{ "reference/werf_yaml.html#git-worktree" | true_relative_url }})).
 
 ##### Keeping the data in the stages storage to use when performing a cleanup
 

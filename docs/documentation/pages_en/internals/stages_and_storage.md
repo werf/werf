@@ -174,14 +174,6 @@ Stages are [named differently](#stage-naming) depending on local or remote stora
 
 When container registry is used as the storage for the project there is also a cache of local docker images on each host where werf is running. This cache is cleared by the werf itself or can be freely removed by other tools (such as `docker rmi`).
 
-Note that all werf commands that require access to _stages_ must use the same storage. Therefore, when using local storage, all werf commands must be run from the same host. When using remote storage, it does not matter which host werf is run from, as long as it is shared for these calls (applies to commands such as build, converge, cleanup, etc.).
-
-> It is recommended though to use container registry as a storage, werf uses this mode with [CI/CD systems by default]({{ "internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url }})
-
-Host requirements to use remote storage:
- - Connection to container registry.
- - Connection to the Kubernetes cluster (used to synchronize multiple build/publish/deploy processes running from different machines, see more info below).
-
 ### Stage naming
 
 Stages in the _local storage_ are named using the following schema: `PROJECT_NAME:STAGE_DIGEST-TIMESTAMP_MILLISEC`. For example:

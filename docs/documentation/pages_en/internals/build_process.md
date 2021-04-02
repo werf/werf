@@ -59,8 +59,8 @@ Learn more about the `werf.yaml` build configuration file in the [corresponding 
 
 To build a stage, werf starts container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the values of the [base image]({{ "/advanced/building_images_with_stapel/base_image.html" | true_relative_url }}). If these values are not set in the base image, werf resets them as follows:
 
-- `[]` для `CMD`;
-- `[""]` для `ENTRYPOINT`.
+- `[]` for `CMD`;
+- `[""]` for `ENTRYPOINT`.
 
 Also, werf resets (uses special empty values) `ENTRYPOINT` of the base image if the `CMD` parameter is specified in the configuration (`docker.CMD`).
 
