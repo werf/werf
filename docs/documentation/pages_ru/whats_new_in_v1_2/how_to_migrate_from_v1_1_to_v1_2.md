@@ -22,6 +22,7 @@ sidebar: documentation
  - Удалены опции `--tag-custom`, `--tag-git-tag`, `--tag-git-branch`, и `--tag-by-stages-signature`.
  - В случае если требуется чтобы определённый docker tag для собранного образа существовал в container registry для использования вне werf, тогда допустимо использование параметров `--report-path` и `--report-format` следующим образом:
      - `werf build/converge --report-path=images-report.json --repo REPO`;
+     - `docker pull $(cat images-report.json | jq -r .Images.IMAGE_NAME_FROM_WERF_YAML.DockerImageName)`;
      - `docker tag $(cat images-report.json | jq -r .Images.IMAGE_NAME_FROM_WERF_YAML.DockerImageName) REPO:mytag`;
      - `docker push REPO:mytag`.
 
