@@ -1,22 +1,17 @@
 package main
 
 import (
-	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"html/template"
 	"io"
-	"net"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
-	"sort"
 	"strings"
-	"time"
 )
 
 // Deprecated
@@ -100,59 +95,6 @@ func groupChannelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func validateURL(URL string) (err error) {
-	if strings.ToLower(os.Getenv("URL_VALIDATION")) == "false" {
-		return nil
-	}
-
-	var resp *http.Response
-	allowedStatusCodes := []int{200, 401}
-	tries := 3
-	client := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   10 * time.Second,
-				KeepAlive: 10 * time.Second,
-			}).DialContext,
-			ForceAttemptHTTP2:     true,
-			MaxIdleConns:          100,
-			IdleConnTimeout:       10 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-
-	for {
-		resp, err = client.Get(URL)
-		log.Tracef("Validating %v (tries-%v):\nStatus - %v\nHeader - %+v,", URL, tries, resp.Status, resp.Header)
-		if err == nil && (resp.StatusCode == 301 || resp.StatusCode == 302) {
-			if len(resp.Header.Get("Location")) > 0 {
-				URL = resp.Header.Get("Location")
-			} else {
-				tries = 0
-			}
-			tries--
-		} else {
-			tries = 0
-		}
-		if tries < 1 {
-			break
-		}
-	}
-
-	if err == nil {
-		place := sort.SearchInts(allowedStatusCodes, resp.StatusCode)
-		if place >= len(allowedStatusCodes) {
-			err = errors.New(fmt.Sprintf("%s is not valid", URL))
-		}
-	}
-	return
-}
-
 // Healthcheck handler
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
@@ -171,11 +113,12 @@ func topnavHandler(w http.ResponseWriter, r *http.Request) {
 		CurrentVersionURL:      "",
 		CurrentPageURLRelative: "",
 		MenuDocumentationLink:  "",
+		AbsoluteVersion:        "",
 	}
 
 	_ = versionMenu.getVersionMenuData(r, &ReleasesStatus)
 
-	tplPath := getRootFilesPath(r) + r.RequestURI
+	tplPath := getRootFilesPath(r) + r.URL.Path
 	tpl := template.Must(template.ParseFiles(tplPath))
 	err := tpl.Execute(w, versionMenu)
 	if err != nil {

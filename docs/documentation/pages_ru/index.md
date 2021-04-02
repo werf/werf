@@ -3,6 +3,7 @@ title: Обзор
 without_auto_heading: true
 permalink: index.html
 description: Обширная и понятная документация по werf
+editme_button: false
 ---
 
 <link rel="stylesheet" type="text/css" href="{{ assets["overview.css"].digest_path | true_relative_url }}" />

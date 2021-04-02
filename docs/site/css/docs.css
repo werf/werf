@@ -303,6 +303,10 @@
     border-radius: 0px;
 }
 
+.docs .hidden {
+    display: none;
+}
+
 .docs b, .docs strong {
     font-weight: 600;
 }
@@ -531,7 +535,6 @@
     border-radius: 4px;
 }
 
-
 .highlight {
     border-radius: 4px;
 }
@@ -666,4 +669,62 @@
     font-weight: normal;
     line-height: 1;
     padding-left: 0.375em;
+}
+
+.docs .btn {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: 28px;
+    padding: 0 15px;
+    border-radius: 10px;
+    text-decoration: none !important;
+    font-size: 14px;
+    line-height: 24px;
+    font-weight: 600;
+    font-style: normal;
+    font-stretch: normal;
+    letter-spacing: normal;
+    box-sizing: border-box;
+}
+
+.docs .btn_o {
+  box-sizing: border-box;
+  border: 2px solid rgba(0, 102, 255, 0.1);
+  color: #0066ff;
+}
+
+.docs .btn_o:hover {
+  border: 2px solid rgba(0, 102, 255, 0.5);
+}
+
+.docs .btn-group {
+  display: flex;
+  flex-direction: row;
+}
+
+.docs .btn-group>*:not(:last-child) {
+  margin-right: 10px;
+}
+
+.docs .btn__icon {
+  display: inline-block;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 16px;
+  height: 16px;
+  position: relative;
+  top: -1px;
+  margin-right: 7px;
+}
+
+.docs .btn__icon_github {
+  background-image: url('/images/icons/github.svg');
+}
+
+.editme {
+    float: right;
 }

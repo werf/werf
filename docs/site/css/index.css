@@ -97,7 +97,7 @@ body,
   flex-direction: row;
 }
 
-.page__btn-group>* {
+.page__btn-group>*:not(:last-child) {
   margin-right: 20px;
 }
 

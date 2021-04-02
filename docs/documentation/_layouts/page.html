@@ -2,6 +2,35 @@
 layout: sidebar
 ---
 <div class="docs">
+    {%- if page.editme_button %}
+    <div class="btn-group editme">
+        <a href="#" class="btn btn_o" id="editme_link" target="_blank">
+            <span class="btn__icon btn__icon_github"></span>
+            Source
+        </a>
+    </div>
+    <script>
+        $(document).ready(function(){
+            let version = encodeURIComponent(getDocVersionFromPage());
+            if (version.length > 0) {
+                let needCheckURL = false;
+                let pageURL = 'https://github.com{{ site.github_repo_path }}/blob/' + version + '/docs/documentation/{{ page.path }}';
+                let checkURL = 'https://api.github.com/repos{{ site.github_repo_path }}/contents/docs/documentation/{{ page.path }}?ref=' + version;
+                let $link = $('#editme_link');
+                if (needCheckURL) {
+                    checkURLExist(checkURL, function (success) {
+                        if (success) {
+                            success && $link.prop('href', pageURL).removeClass('hidden');
+                        }
+                    });
+                } else {
+                    $link.prop('href', pageURL).removeClass('hidden');
+                }
+            }
+        });
+    </script>
+    {%- endif %}
+
     {% unless page.without_auto_heading %}
     <h1 class="docs__title">{{ page.title }}</h1>
     {% endunless %}
@@ -39,11 +68,6 @@ layout: sidebar
         {%- endunless %}
 
         {%- unless jekyll.environment == "production" %}
-
-        {%- if site.github_editme_path %}
-
-        <a target="_blank" href="https://github.com/{{site.github_editme_path}}/_pages/{{page.folder}}/{{page.url | remove: "/" | append: ".md"}}" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
-        {%- endif %}
 
         {%- endunless %}
 

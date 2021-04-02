@@ -447,3 +447,36 @@ $(document).ready(function () {
   }
 });
 
+function getDocVersionFromURL() {
+  let result = window.location.pathname.match(/\/documentation\/(v\d+\.\d+([^/]+)?)\/.*/);
+  if ( result ) {
+    if  ( result.length > 2 && result[2] ) {
+      return result[1].replace('-plus-','+');
+    } else {
+      return "master";
+    }
+  }
+  return null;
+}
+
+function getDocVersionFromPage() {
+  let result = $("#versionNumber").text();
+  if ( !result) {
+    result = "";
+  }
+  return result;
+}
+
+function checkURLExist(url, callback) {
+
+    if ( ! $.isFunction(callback)) {
+       throw Error('Not a valid callback');
+    }
+
+    $.ajax({
+        type: 'HEAD',
+        url: url,
+        success: $.proxy(callback, this, true),
+        error: $.proxy(callback, this, false)
+    });
+}
