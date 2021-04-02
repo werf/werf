@@ -62,14 +62,14 @@ werf converge --repo registry.mydomain.com/web --env production
             until volume usage becomes below "allowed-docker-storage-volume-usage -                 
             allowed-docker-storage-volume-usage-margin" level (default 5% or                        
             $WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN)
-      --allowed-local-cache-volume-usage=60
+      --allowed-local-cache-volume-usage=70
             Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
-            which will cause cleanup of least recently used data from the local cache (default 60%  
+            which will cause cleanup of least recently used data from the local cache (default 70%  
             or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
-      --allowed-local-cache-volume-usage-margin=10
+      --allowed-local-cache-volume-usage-margin=5
             During cleanup of least recently used local docker images werf would delete images      
             until volume usage becomes below "allowed-docker-storage-volume-usage -                 
-            allowed-docker-storage-volume-usage-margin" level (default 10% or                       
+            allowed-docker-storage-volume-usage-margin" level (default 5% or                        
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
       --atomic=false
             Enable auto rollback of the failed release to the previous deployed release version     
