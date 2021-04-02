@@ -272,7 +272,7 @@ entries:
           - title: Очистка
             url: /advanced/cleanup.html
 
-          - title: Bundles
+          - title: Бандлы
             url: /advanced/bundles.html
 
           - title: CI/CD
