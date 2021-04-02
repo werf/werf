@@ -87,7 +87,7 @@ sidebar: documentation
  - werf автоматически скачает указанные сабчарты в кеш и загрузит файлы сабчартов во время команды `werf converge` (и других высокоуровневых командах, которые используют helm чарт).
  - Больше информации доступно [в документации]({{ "advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}).
 
-## 5. Использовать очистка на основе истории git
+## 5. Использовать очистку на основе истории git
 
  - Опцию `--git-history-based-cleanup-v1.2` необходимо удалить, теперь поведение `werf cleanup` по умолчанию совпадает с поведением v1.1 с данной опцией.
  - Больше информации по изменению [в changelog]({{ "/whats_new_in_v1_2/changelog.html#очистка" | true_relative_url }}) и [в статье про cleanup]({{ "/advanced/cleanup.html" | true_relative_url }}).
@@ -109,13 +109,13 @@ sidebar: documentation
     ```
     {% endraw %}
 
-## 7. Корректируем конфигурационный файл werf.yaml
+## 7. Скоректировать конфигурационный файл werf.yaml
 
  - Относительные пути для включения дополнительных шаблонов меняются с {% raw %}{{ include ".werf/templates/1.tmpl" . }}{% endraw %} на {% raw %}{{ include "templates/1.tmpl" . }}{% endraw %}.
  - Переименовать `fromImageArtifact` в `fromArtifact`.
      - **ЗАМЕЧАНИЕ.** Не обязательно, но желательно заменить `artifact` и `fromArtifact` на `image` и `fromImage` в данном случае. [Заметка про запрет использования `fromArtifact` в changelog]({{ "/whats_new_in_v1_2/changelog.html#werfyaml" | true_relative_url }}).
 
-## 8. Определяем нестандартную директорию чарта .helm в werf.yaml
+## 8. Исправить определение нестандартной директории чарта .helm в werf.yaml
 
  - Вместо опции `--helm-chart-dir` используем директиву `deploy.helmChartDir` файла `werf.yaml` следующим образом:
 
@@ -134,7 +134,7 @@ sidebar: documentation
      - Все относительные пути указанные в `werf.yaml` будут рассчитаны относительно той директории, где лежит `werf.yaml`.
      - Абсолютные пути указанные в директиве `git.add` так и остаются абсолютными путями относительно корня git репозитория независимо от положения `werf.yaml` внутри этого репозитория.
 
-## 9. Мигрируем на helm 3
+## 9. Мигрировать на helm 3
 
  - werf v1.2 [осуществляет автоматическую миграцию существующего релиза с helm 2 на helm 3]({{ "/whats_new_in_v1_2/changelog.html#helm-3" | true_relative_url }}).
      - Релиз helm 2 должен иметь то же самое имя, как и вновь создаваемый релиз helm 3.
