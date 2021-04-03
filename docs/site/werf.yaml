@@ -71,7 +71,9 @@ git:
   group: jekyll
   excludePaths:
   - '**/*.sh'
-  - '**/werf.yaml'
+  - '**/werf*.yaml'
+  - '**/docker-compose.yml'
+  - site/.werf
   - site/.helm
   - site/backend
   - site/documentation

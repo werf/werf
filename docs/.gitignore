@@ -4,6 +4,6 @@ _site/
 .jekyll-cache/
 _pdf/
 .idea/
-backend/multiwerf/
-backend/vendor/
-backend/root/
+site/backend/multiwerf/
+site/backend/vendor/
+site/backend/root/
