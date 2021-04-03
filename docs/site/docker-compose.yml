@@ -13,7 +13,7 @@ services:
     image: jekyll/jekyll:3
     working_dir: "/srv/jekyll-data/src/documentation"
     command: bash -c "
-        mkdir -m 777 -p /srv/jekyll-data/_site/_en &&
+        mkdir -m 777 -p /srv/jekyll-data/_site/_en /srv/jekyll-data/src/documentation/.jekyll-cache &&
         jekyll serve --config _config.yml -d /srv/jekyll-data/_site/_en -P 4040 "
     volumes:
       - "../:/srv/jekyll-data/src/"
@@ -21,7 +21,7 @@ services:
     image: jekyll/jekyll:3
     working_dir: "/srv/jekyll-data/src/documentation"
     command: bash -c "
-      mkdir -m 777 -p /srv/jekyll-data/_site/_ru &&
+      mkdir -m 777 -p /srv/jekyll-data/_site/_ru /srv/jekyll-data/src/documentation/.jekyll-cache &&
       jekyll serve --config _config.yml,_config_ru.yml -d /srv/jekyll-data/_site/_ru  -P 4041 "
     volumes:
       - "../:/srv/jekyll-data/src/"
