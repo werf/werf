@@ -6,27 +6,6 @@ on:
 
 jobs:
 
-  deploy_multiwerf_to_test:
-    name: Deploy multiwerf.json to test
-    runs-on: tfprod-werf
-    steps:
-
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
-    - name: Werf converge
-      uses: werf/actions/converge@master
-      with:
-        env: test
-        group: 1.2
-        channel: alpha
-      env:
-        WERF_NAMESPACE: "werfio-test"
-        WERF_LOG_VERBOSE: "on"
-        WERF_KUBE_CONTEXT: dev
-
   deploy_multiwerf_to_prod:
     name: Deploy multiwerf.json to prod
     runs-on: tfprod-werf
@@ -38,11 +17,10 @@ jobs:
         fetch-depth: 0
 
     - name: Werf converge
-      uses: werf/actions/converge@master
+      uses: werf/actions/converge@v1.2
       with:
         env: production
-        group: 1.2
-        channel: alpha
       env:
         WERF_NAMESPACE: "werfio-production"
         WERF_KUBE_CONTEXT: prod
+        WERF_DIR: "ci"
