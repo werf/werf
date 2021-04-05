@@ -110,7 +110,7 @@ spec:
 
 {% raw %}
  * `{{ .Chart.Name }}` — возвращает имя проекта, указанное в `werf.yaml` (ключ `project`).
- * `{{ .Release.Name }}` — возвращает [имя релиза]({{ "/advanced/helm/releases/release.html" | true_relative_url }}).
+ * `{{ .Release.Name }}` — {% endraw %}возвращает [имя релиза]({{ "/advanced/helm/releases/release.html" | true_relative_url }}).{% raw %}
  * `{{ .Files.Get }}` — функция для получения содержимого файла в шаблон, требует указания пути к файлу в качестве аргумента. Путь указывается относительно папки `.helm` (файлы вне папки `.helm` недоступны).
 {% endraw %}
 
