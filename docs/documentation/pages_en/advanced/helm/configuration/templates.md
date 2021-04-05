@@ -111,7 +111,7 @@ spec:
 
 {% raw %}
 * `{{ .Chart.Name }}` — contains the [project name] specified in the `werf.yaml` config or chart name explicitly defined in the `.helm/Chart.yaml`.
-* `{{ .Release.Name }}` — contains the [release name]({{ "/advanced/helm/releases/release.html" | true_relative_url }}).
+* `{{ .Release.Name }}` — {% endraw %}contains the [release name]({{ "/advanced/helm/releases/release.html" | true_relative_url }}).{% raw %}
 * `{{ .Files.Get }}` — a function to read file contents into templates; requires the path to file as an argument. The path should be specified relative to the `.helm` directory (files outside the `.helm` folder are ignored).
 {% endraw %}
 
