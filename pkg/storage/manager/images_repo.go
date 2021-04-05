@@ -60,7 +60,7 @@ func (m *ImagesRepoManager) SelectRepoImages(ctx context.Context, imageNames []s
 
 		tags, err := m.ImagesRepo.GetAllImageRepoTags(ctx, imageName)
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting all image repo tags: %s", err)
 		}
 
 		mutex.Lock()
