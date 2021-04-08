@@ -44,7 +44,8 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 	doneTaskCh := make(chan interface{})
 	doneWorkerCh := make(chan worker)
 	quitCh := make(chan bool)
-	doneWorkersCounter := numberOfWorkers
+	activeTasksCounter := numberOfTasks
+	activeWorkersCounter := numberOfWorkers
 	isLiveOutputOnFlag := options.IsLiveOutputOn
 
 	var liveLogger types.LoggerInterface
@@ -134,6 +135,20 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 					processTaskResultData(ctx, taskResult.data)
 				}
 			}
+
+			activeTasksCounter--
+
+			// skip if all done
+			if activeTasksCounter == 0 {
+				continue
+			}
+
+			// skip if live worker disabled or still in progress
+			if !options.IsLiveOutputOn || isLiveOutputOnFlag {
+				continue
+			}
+
+			logboek.Context(ctx).Default().LogF("Waiting for background tasks (%d/%d) ... \n", activeTasksCounter, numberOfTasks)
 		case res := <-errCh:
 			close(quitCh)
 
@@ -182,8 +197,8 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 				}
 			}
 
-			doneWorkersCounter--
-			if doneWorkersCounter == 0 {
+			activeWorkersCounter--
+			if activeWorkersCounter == 0 {
 				return nil
 			}
 		}
