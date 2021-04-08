@@ -277,7 +277,7 @@ func runMain() error {
 
 		containerName := getContainerName()
 		if containerName == "" {
-			return fmt.Errorf("follow mode does not work without specific container name: pass -n/--name=CONTAINER_NAME with --docker-options option")
+			return fmt.Errorf("follow mode does not work without specific container name: pass --name=CONTAINER_NAME with --docker-options option")
 		}
 
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
