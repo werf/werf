@@ -285,7 +285,7 @@ func runMain() error {
 				return err
 			}
 
-			if err := run(ctx, giterminismManager); err != nil {
+			if err := run(ctx, headCommitGiterminismManager); err != nil {
 				return err
 			}
 
