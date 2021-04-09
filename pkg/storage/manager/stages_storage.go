@@ -443,14 +443,18 @@ func (m *StagesStorageManager) getStageDescription(ctx context.Context, stageID 
 
 	logboek.Context(ctx).Debug().LogF("Getting signature %q uniqueID %d stage info from %s...\n", stageID.Signature, stageID.UniqueID, m.StagesStorage.String())
 	if stageDesc, err := m.StagesStorage.GetStageDescription(ctx, m.ProjectName, stageID.Signature, stageID.UniqueID); err == storage.ErrBrokenImage {
-		logboek.Context(ctx).Error().LogF("Invalid stage image %q! Stage is broken and is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, m.StagesStorage.String(), m.ProjectName)
+		if opts.StageShouldExist {
+			logboek.Context(ctx).Error().LogF("Invalid stage image %q! Stage is broken and is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stageImageName, m.StagesStorage.String(), m.ProjectName)
 
-		logboek.Context(ctx).Error().LogF("Will mark image %q as rejected in the stages storage %s\n", stageImageName, m.StagesStorage.String())
-		if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stageID.Signature, stageID.UniqueID); err != nil {
-			return nil, fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %s", stageID.String(), stageImageName, m.StagesStorage.String(), err)
+			logboek.Context(ctx).Error().LogF("Will mark image %q as rejected in the stages storage %s\n", stageImageName, m.StagesStorage.String())
+			if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stageID.Signature, stageID.UniqueID); err != nil {
+				return nil, fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %s", stageID.String(), stageImageName, m.StagesStorage.String(), err)
+			}
+
+			return nil, ErrShouldResetStagesStorageCache
 		}
 
-		return nil, ErrShouldResetStagesStorageCache
+		return nil, nil
 	} else if err != nil {
 		return nil, fmt.Errorf("error getting signature %q uniqueID %d stage info from %s: %s", stageID.Signature, stageID.UniqueID, m.StagesStorage.String(), err)
 	} else if stageDesc != nil {
