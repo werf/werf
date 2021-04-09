@@ -86,7 +86,7 @@ deploy:
 
 ### Configuring cleanup policies
 
-The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ "advanced/cleanup.html#git-history-based-cleanup-algorithm" | true_relative_url }}), __images not meeting the criteria of any policy are deleted__.
+The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ "advanced/cleanup.html#cleaning-up-outdated-data" | true_relative_url }}), __images not meeting the criteria of any policy are deleted__.
 
 Each policy consists of two parts:
 
