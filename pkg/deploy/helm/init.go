@@ -60,6 +60,7 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 	}
 
 	kubeClient := actionConfig.KubeClient.(*helm_kube.Client)
+	kubeClient.Namespace = namespace
 	kubeClient.ResourcesWaiter = NewResourcesWaiter(kubeInitializer, kubeClient, time.Now(), opts.StatusProgressPeriod, opts.HooksStatusProgressPeriod)
 	kubeClient.Extender = NewHelmKubeClientExtender()
 
