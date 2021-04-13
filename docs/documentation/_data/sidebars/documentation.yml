@@ -7,7 +7,7 @@
 # DO NOT EDIT!
 
 cli: &cli
-  
+
   - title: Overview of command groups
     url: /reference/cli/overview.html
 
@@ -523,7 +523,7 @@ entries:
 
           - title: Changelog
             url: /whats_new_in_v1_2/changelog.html
-          
+
           - title: How to migrate from v1.1 to v1.2
             url: /whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html
 
@@ -613,7 +613,7 @@ entries:
           - title: Очистка
             url: /advanced/cleanup.html
 
-          - title: Bundles
+          - title: Бандлы
             url: /advanced/bundles.html
 
           - title: CI/CD
