@@ -64,7 +64,7 @@ require (
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
 	github.com/werf/kubedog v0.4.1-0.20210305081620-a7419a0e4455
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
-	github.com/werf/logboek v0.4.6
+	github.com/werf/logboek v0.4.7
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
