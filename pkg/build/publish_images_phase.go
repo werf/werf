@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/tag_strategy"
@@ -365,14 +366,19 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(ctx context.Context, ex
 		return true, "", nil
 	}
 
+	repoImage, err := phase.ImagesRepo.GetRepoImage(ctx, werfImageName, imageMetaTag)
+
+	if docker_registry.IsNameUnknownError(err) || docker_registry.IsManifestUnknownError(err) || docker_registry.IsBlobUnknownError(err) {
+		return false, "", nil
+	}
+
+	if err != nil {
+		return false, "", fmt.Errorf("error getting repo image %q manifest: %s", phase.ImagesRepo.ImageRepositoryNameWithTag(werfImageName, imageMetaTag), err)
+	}
+
 	var repoImageContentSignature string
 	var repoDockerImageID string
-	var err error
 	getImageContentSignature := func() error {
-		repoImage, err := phase.ImagesRepo.GetRepoImage(ctx, werfImageName, imageMetaTag)
-		if err != nil {
-			return err
-		}
 		repoImageContentSignature = repoImage.Labels[image.WerfContentSignatureLabel]
 		repoDockerImageID = repoImage.ID
 		return nil
