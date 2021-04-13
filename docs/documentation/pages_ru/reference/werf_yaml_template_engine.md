@@ -97,7 +97,7 @@ beforeInstall:
 __Синтаксис__:
 {% raw %}
 ```yaml
-{{ tpl <STRING> <VALUES> }}
+{{ tpl "<STRING>" <VALUES> }}
 ```
 {% endraw %}
 
@@ -180,7 +180,7 @@ shell:
 __Синтаксис__:
 {% raw %}
 ```yaml
-{{ env <ENV_NAME> }}
+{{ env "<ENV_NAME>" }}
 ```
 {% endraw %}
 
@@ -195,7 +195,7 @@ __Синтаксис__:
 __Синтаксис__:
 {% raw %}
 ```yaml
-{{ .Files.Get <FILE_PATH> }}
+{{ .Files.Get "<FILE_PATH>" }}
 ```
 {% endraw %}
 
@@ -249,7 +249,7 @@ ansible:
 __Синтаксис__:
 {% raw %}
 ```yaml
-{{ .Files.Glob <GLOB> }}
+{{ .Files.Glob "<GLOB>" }}
 ```
 {% endraw %}
 
