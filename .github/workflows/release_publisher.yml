@@ -20,7 +20,7 @@ jobs:
       uses: actions/checkout@v1
     - name: Publish
       run: |
-        echo./scripts/publish_release.sh ${GITHUB_REF#refs/tags/}
+        ./scripts/publish_release.sh ${GITHUB_REF#refs/tags/}
       shell: bash
       env:
         PUBLISH_BINTRAY_AUTH: ${{ secrets.PUBLISH_BINTRAY_AUTH }}
