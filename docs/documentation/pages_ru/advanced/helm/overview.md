@@ -1,5 +1,5 @@
 ---
-title: Overview
+title: Обзор
 permalink: advanced/helm/overview.html
 ---
 
@@ -12,7 +12,6 @@ werf включает весь существующий функционал Hel
  - werf читает все конфигурационные файлы helm из git в соответствии с режимом [гитерминизма]({{ "advanced/giterminism.html" | true_relative_url }}), что позволяет создавать по-настоящему воспроизводимые pipeline'ы в CI/CD и на локальных машинах.
  - и другие особенности, о которых пойдёт речь далее.
 
-With all of these features werf can be considered as a different or better client than helm itself to deploy standard helm-compatible charts.
 С учётом всех этих дополнений и способа реализации можно рассматривать werf как альтернативный или улучшенный helm-клиент, для деплоя стандартных helm-совместимых чартов.
 
 Для работы с приложением в Kubernetes используются следующие основные команды:
