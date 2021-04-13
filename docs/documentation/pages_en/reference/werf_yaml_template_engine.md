@@ -97,7 +97,7 @@ The `tpl` function allows evaluating string as a template inside a template.
 __Syntax__:
 {% raw %}
 ```yaml
-{{ tpl <STRING> <VALUES> }}
+{{ tpl "<STRING>" <VALUES> }}
 ```
 {% endraw %}
 
@@ -180,7 +180,7 @@ The `env` function reads an environment variable. The environment variable must 
 __Syntax__:
 {% raw %}
 ```yaml
-{{ env <ENV_NAME> }}
+{{ env "<ENV_NAME>" }}
 ```
 {% endraw %}
 
@@ -195,7 +195,7 @@ The function `.Files.Get` gets a certain project file content.
 __Syntax__:
 {% raw %}
 ```yaml
-{{ .Files.Get <FILE_PATH> }}
+{{ .Files.Get "<FILE_PATH>" }}
 ```
 {% endraw %}
 
@@ -249,7 +249,7 @@ The function supports [shell pattern matching](https://www.gnu.org/software/find
 __Syntax__:
 {% raw %}
 ```yaml
-{{ .Files.Glob <GLOB> }}
+{{ .Files.Glob "<GLOB>" }}
 ```
 {% endraw %}
 
