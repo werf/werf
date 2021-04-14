@@ -13,34 +13,18 @@ import (
 )
 
 func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3Namespace string, maintenanceHelper *MaintenanceHelper) error {
-	existingHelm3Releases, err := maintenanceHelper.GetHelm3ReleasesList(ctx)
+	foundHelm3Release, err := maintenanceHelper.IsHelm3ReleaseExist(ctx, helm3ReleaseName)
 	if err != nil {
-		return fmt.Errorf("error getting existing helm 3 releases to perform check: %s", err)
-	}
-
-	foundHelm3Release := false
-	for _, releaseName := range existingHelm3Releases {
-		if releaseName == helm3ReleaseName {
-			foundHelm3Release = true
-			break
-		}
+		return fmt.Errorf("error checking existance of helm 3 release %q: %s", helm2ReleaseName, err)
 	}
 
 	if foundHelm3Release {
 		return fmt.Errorf("found already existing helm 3 release %q", helm3ReleaseName)
 	}
 
-	existingReleases, err := maintenanceHelper.GetHelm2ReleasesList(ctx)
+	foundHelm2Release, err := maintenanceHelper.IsHelm2ReleaseExist(ctx, helm2ReleaseName)
 	if err != nil {
-		return fmt.Errorf("error getting existing helm 2 releases to perform check: %s", err)
-	}
-
-	foundHelm2Release := false
-	for _, releaseName := range existingReleases {
-		if releaseName == helm2ReleaseName {
-			foundHelm2Release = true
-			break
-		}
+		return fmt.Errorf("error checking existance of helm 2 release %q: %s", helm2ReleaseName, err)
 	}
 
 	if !foundHelm2Release {

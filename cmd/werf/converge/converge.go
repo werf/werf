@@ -530,30 +530,22 @@ func checkHelm2AvailableAndReleaseExists(ctx context.Context, releaseName, names
 	if available, err := maintenanceHelper.CheckHelm2StorageAvailable(ctx); err != nil {
 		return false, err
 	} else if available {
-		existingReleases, err := maintenanceHelper.GetHelm2ReleasesList(ctx)
+		foundHelm2Release, err := maintenanceHelper.IsHelm2ReleaseExist(ctx, releaseName)
 		if err != nil {
-			return false, fmt.Errorf("error getting existing helm 2 releases: %s", err)
+			return false, fmt.Errorf("error checking existance of helm 2 release %q: %s", releaseName, err)
 		}
-		for _, existingReleaseName := range existingReleases {
-			if releaseName == existingReleaseName {
-				return true, nil
-			}
-		}
+
+		return foundHelm2Release, nil
 	}
 
 	return false, nil
 }
 
 func checkHelm3ReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
-	existingReleases, err := maintenanceHelper.GetHelm3ReleasesList(ctx)
+	foundHelm3Release, err := maintenanceHelper.IsHelm3ReleaseExist(ctx, releaseName)
 	if err != nil {
-		return false, fmt.Errorf("error getting existing helm 3 releases: %s", err)
-	}
-	for _, existingReleaseName := range existingReleases {
-		if releaseName == existingReleaseName {
-			return true, nil
-		}
+		return false, fmt.Errorf("error checking existance of helm 3 release %q: %s", releaseName, err)
 	}
 
-	return false, nil
+	return foundHelm3Release, nil
 }
