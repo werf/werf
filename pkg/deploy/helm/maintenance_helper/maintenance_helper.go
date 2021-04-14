@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/kubectl/pkg/cmd/util"
@@ -21,6 +22,10 @@ import (
 	v2_storage "k8s.io/helm/pkg/storage"
 	v2_driver "k8s.io/helm/pkg/storage/driver"
 )
+
+func IsReleaseNotFoundErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "not found")
+}
 
 type Helm2ReleaseData struct {
 	Release *v2_rspb.Release
@@ -93,14 +98,19 @@ func (helper *MaintenanceHelper) getResourcesFactory() (util.Factory, error) {
 }
 
 func (helper *MaintenanceHelper) CheckHelm3StorageAvailable(ctx context.Context) (bool, error) {
-	_, err := helper.GetHelm3ReleasesList(ctx)
-	if err != nil {
-		logboek.Context(ctx).Info().LogFDetails("- Helm 3 storage is not available: %s\n", err)
-		return false, nil
+	var err error
+
+	logboek.Context(ctx).Debug().LogProcess("Checking helm 3 storage availability using history command").Do(func() {
+		_, err = helper.v3ActionConfig.Releases.History("no-such-release")
+	})
+
+	if IsReleaseNotFoundErr(err) || err == nil {
+		logboek.Context(ctx).Info().LogFDetails("+ Helm 3 storage available\n")
+		return true, nil
 	}
 
-	logboek.Context(ctx).Info().LogFDetails("+ Helm 3 storage available\n")
-	return true, nil
+	logboek.Context(ctx).Info().LogFDetails("- Helm 3 storage is not available: %s\n", err)
+	return false, nil
 }
 
 func (helper *MaintenanceHelper) CheckHelm2StorageAvailable(ctx context.Context) (bool, error) {
@@ -109,57 +119,56 @@ func (helper *MaintenanceHelper) CheckHelm2StorageAvailable(ctx context.Context)
 		return false, fmt.Errorf("error initializing helm 2 v2Storage: %s", err)
 	}
 
-	_, err = storage.ListReleases()
-	return err == nil, nil
+	logboek.Context(ctx).Debug().LogProcess("Checking helm 2 storage availability using history command").Do(func() {
+		_, err = storage.History("no-such-release")
+	})
+
+	if IsReleaseNotFoundErr(err) || err == nil {
+		logboek.Context(ctx).Info().LogFDetails("+ Helm 2 storage available\n")
+		return true, nil
+	}
+
+	logboek.Context(ctx).Info().LogFDetails("- Helm 2 storage is not available: %s\n", err)
+	return false, nil
 }
 
-func (helper *MaintenanceHelper) GetHelm3ReleasesList(ctx context.Context) ([]string, error) {
-	releases, err := helper.v3ActionConfig.Releases.ListReleases()
+func (helper *MaintenanceHelper) IsHelm3ReleaseExist(ctx context.Context, releaseName string) (bool, error) {
+	var err error
+
+	logboek.Context(ctx).Debug().LogProcess("Getting helm 3 release %q history", releaseName).Do(func() {
+		_, err = helper.v3ActionConfig.Releases.History(releaseName)
+	})
+
+	if IsReleaseNotFoundErr(err) {
+		return false, nil
+	}
+
 	if err != nil {
-		return nil, err
+		return false, fmt.Errorf("error getting helm 3 release %q history: %s", releaseName, err)
 	}
 
-	var res []string
-AppendUniqReleases:
-	for _, rel := range releases {
-		for _, name := range res {
-			if name == rel.Name {
-				continue AppendUniqReleases
-			}
-		}
-		res = append(res, rel.Name)
-	}
-
-	logboek.Context(ctx).Debug().LogF("-- MaintenanceHelper GetHelm3ReleasesList: %#v\n", res)
-
-	return res, nil
+	return true, nil
 }
 
-func (helper *MaintenanceHelper) GetHelm2ReleasesList(ctx context.Context) ([]string, error) {
+func (helper *MaintenanceHelper) IsHelm2ReleaseExist(ctx context.Context, releaseName string) (bool, error) {
 	storage, err := helper.initHelm2Storage()
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 
-	releases, err := storage.ListReleases()
+	logboek.Context(ctx).Debug().LogProcess("Getting helm 2 release %q history", releaseName).Do(func() {
+		_, err = storage.History(releaseName)
+	})
+
+	if IsReleaseNotFoundErr(err) {
+		return false, nil
+	}
+
 	if err != nil {
-		return nil, err
+		return false, fmt.Errorf("error getting helm 2 release %q history: %s", releaseName, err)
 	}
 
-	var res []string
-AppendUniqReleases:
-	for _, rel := range releases {
-		for _, name := range res {
-			if name == rel.Name {
-				continue AppendUniqReleases
-			}
-		}
-		res = append(res, rel.Name)
-	}
-
-	logboek.Context(ctx).Debug().LogF("-- MaintenanceHelper GetHelm2ReleasesList: %#v\n", res)
-
-	return res, nil
+	return true, nil
 }
 
 func (helper *MaintenanceHelper) CreateHelm3ReleaseMetadataFromHelm2Release(ctx context.Context, release, namespace string, releaseData *Helm2ReleaseData) error {
