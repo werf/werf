@@ -1220,44 +1220,11 @@ func ProcessLogOptions(cmdData *CmdData) error {
 
 	if *cmdData.LogQuiet {
 		logboek.SetAcceptedLevel(level.Error)
-		logboek.Streams().Mute()
 	} else if *cmdData.LogDebug {
 		logboek.SetAcceptedLevel(level.Debug)
 		logboek.Streams().EnablePrefixWithTime()
 		logboek.Streams().SetPrefixStyle(style.Details())
 	} else if *cmdData.LogVerbose {
-		logboek.SetAcceptedLevel(level.Info)
-	}
-
-	if !*cmdData.LogPretty {
-		logboek.Streams().DisablePrettyLog()
-		logging.DisablePrettyLog()
-	}
-
-	if err := ProcessLogTerminalWidth(cmdData); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func ProcessLogOptionsDefaultQuiet(cmdData *CmdData) error {
-	if !*cmdData.LogQuiet {
-		logboek.Streams().Unmute()
-		logboek.SetAcceptedLevel(level.Default)
-	}
-
-	if err := ProcessLogColorMode(cmdData); err != nil {
-		return err
-	}
-
-	if *cmdData.LogDebug {
-		logboek.Streams().Unmute()
-		logboek.SetAcceptedLevel(level.Debug)
-		logboek.Streams().EnablePrefixWithTime()
-		logboek.Streams().SetPrefixStyle(style.Details())
-	} else if *cmdData.LogVerbose {
-		logboek.Streams().Unmute()
 		logboek.SetAcceptedLevel(level.Info)
 	}
 

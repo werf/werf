@@ -30,7 +30,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/level"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
@@ -68,10 +67,7 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
-			logboek.Streams().Mute()
-			logboek.SetAcceptedLevel(level.Error)
-
-			if err := common.ProcessLogOptionsDefaultQuiet(&commonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
