@@ -34,22 +34,20 @@ func NewBase(name string) Base {
 	return Base{
 		Name: name,
 		Cache: Cache{
-			Archives:       make(map[string]Archive),
-			Patches:        make(map[string]Patch),
-			Checksums:      make(map[string]string),
-			checksumsMutex: make(map[string]sync.Mutex),
+			Archives: make(map[string]Archive),
+			Patches:  make(map[string]Patch),
 		},
 	}
 }
 
 type Cache struct {
 	Patches   map[string]Patch
-	Checksums map[string]string
 	Archives  map[string]Archive
+	Checksums sync.Map
 
 	patchesMutex   sync.Mutex
-	checksumsMutex map[string]sync.Mutex
 	archivesMutex  sync.Mutex
+	checksumsMutex sync.Map
 }
 
 func (repo *Base) HeadCommit(ctx context.Context) (string, error) {
@@ -466,23 +464,20 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 
 func (repo *Base) getOrCreateChecksum(ctx context.Context, repoHandle repo_handle.Handle, opts ChecksumOptions) (string, error) {
 	checksumID := opts.ID()
-	checksumMutex, ok := repo.Cache.checksumsMutex[checksumID]
-	if !ok {
-		checksumMutex = sync.Mutex{}
-	}
-
+	checksumMutex := util.MapLoadOrCreateMutex(&repo.Cache.checksumsMutex, checksumID)
 	checksumMutex.Lock()
 	defer checksumMutex.Unlock()
 
-	if _, hasKey := repo.Cache.Checksums[checksumID]; !hasKey {
+	if _, hasKey := repo.Cache.Checksums.Load(checksumID); !hasKey {
 		checksum, err := repo.CreateChecksum(ctx, repoHandle, opts)
 		if err != nil {
 			return "", err
 		}
-		repo.Cache.Checksums[checksumID] = checksum
+		repo.Cache.Checksums.Store(checksumID, checksum)
 	}
 
-	return repo.Cache.Checksums[checksumID], nil
+	checksum := util.MapMustLoad(&repo.Cache.Checksums, checksumID).(string)
+	return checksum, nil
 }
 
 func (repo *Base) CreateChecksum(ctx context.Context, repoHandle repo_handle.Handle, opts ChecksumOptions) (checksum string, err error) {
