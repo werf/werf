@@ -2,6 +2,8 @@ package path_matcher
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/werf/werf/pkg/util"
 )
@@ -67,7 +69,16 @@ func (m includePathMatcher) shouldGoThrough(path string) bool {
 }
 
 func (m includePathMatcher) ID() string {
-	return includeExcludePathMatchersID(m.includeGlobs)
+	if len(m.includeGlobs) == 0 {
+		return ""
+	}
+
+	sort.Strings(m.includeGlobs)
+
+	var args []string
+	args = append(args, "include")
+	args = append(args, m.includeGlobs...)
+	return util.Sha256Hash(strings.Join(args, ":::"))
 }
 
 func (m includePathMatcher) String() string {
