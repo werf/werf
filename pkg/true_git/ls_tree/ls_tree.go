@@ -8,15 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gookit/color"
-
-	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
 
+	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
@@ -69,8 +67,8 @@ func (opts LsTreeOptions) formattedPathMatcher() path_matcher.PathMatcher {
 // LsTree returns the Result with tree entries that satisfy the passed options.
 // The function works lazily and does not go through a tree directory unnecessarily.
 // If the result should contain only regular files (without directories and submodules), you should use the AllFiles option.
-func LsTree(ctx context.Context, repository *git.Repository, commit string, opts LsTreeOptions) (*Result, error) {
-	r, err := lsTree(ctx, repository, commit, opts)
+func LsTree(ctx context.Context, repoHandle repo_handle.Handle, commit string, opts LsTreeOptions) (*Result, error) {
+	r, err := lsTree(ctx, repoHandle, commit, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -79,16 +77,16 @@ func LsTree(ctx context.Context, repository *git.Repository, commit string, opts
 	return r, nil
 }
 
-func lsTree(ctx context.Context, repository *git.Repository, commit string, opts LsTreeOptions) (*Result, error) {
+func lsTree(ctx context.Context, repoHandle repo_handle.Handle, commit string, opts LsTreeOptions) (*Result, error) {
 	res := NewResult(commit, "", []*LsTreeEntry{}, []*SubmoduleResult{})
 
-	tree, err := getCommitTree(repository, commit)
+	tree, err := getCommitTree(repoHandle, commit)
 	if err != nil {
 		return nil, err
 	}
 
 	if opts.formattedPathScope() != "" {
-		lsTreeEntries, submodulesResults, err := processSpecificEntryFilepath(ctx, repository, tree, "", "", opts.formattedPathScope(), opts)
+		lsTreeEntries, submodulesResults, err := processSpecificEntryFilepath(ctx, repoHandle, tree, "", "", opts.formattedPathScope(), opts)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +126,7 @@ func lsTree(ctx context.Context, repository *git.Repository, commit string, opts
 				logboek.Context(ctx).Debug().LogLn("Root tree was checking")
 			}
 
-			lsTreeEntries, submodulesLsTreeEntries, err := lsTreeWalk(ctx, repository, tree, "", "", opts)
+			lsTreeEntries, submodulesLsTreeEntries, err := lsTreeWalk(ctx, repoHandle, tree, "", "", opts)
 			if err != nil {
 				return err
 			}
@@ -153,13 +151,13 @@ func lsTree(ctx context.Context, repository *git.Repository, commit string, opts
 	return res, nil
 }
 
-func getCommitTree(repository *git.Repository, commit string) (*object.Tree, error) {
+func getCommitTree(repoHandle repo_handle.Handle, commit string) (*object.Tree, error) {
 	commitHash, err := newHash(commit)
 	if err != nil {
 		return nil, fmt.Errorf("invalid commit %q: %s", commit, err)
 	}
 
-	commitObj, err := repository.CommitObject(commitHash)
+	commitObj, err := repoHandle.Repository().CommitObject(commitHash)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get %s commit info: %s", commit, err)
 	}
@@ -172,15 +170,9 @@ func getCommitTree(repository *git.Repository, commit string) (*object.Tree, err
 	return tree, nil
 }
 
-func processSpecificEntryFilepath(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath, treeEntryFilepath string, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
-	worktree, err := repository.Worktree()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	submodules, err := worktree.Submodules()
-	for _, submodule := range submodules {
-		submoduleEntryFilepath := filepath.FromSlash(submodule.Config().Path)
+func processSpecificEntryFilepath(ctx context.Context, repoHandle repo_handle.Handle, tree *object.Tree, repositoryFullFilepath, treeFullFilepath, treeEntryFilepath string, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+	for _, submoduleHandle := range repoHandle.Submodules() {
+		submoduleEntryFilepath := filepath.FromSlash(submoduleHandle.Config().Path)
 		submoduleFullFilepath := filepath.Join(treeFullFilepath, submoduleEntryFilepath)
 		relTreeEntryFilepath, err := filepath.Rel(submoduleEntryFilepath, treeEntryFilepath)
 		if err != nil {
@@ -191,18 +183,18 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 			continue
 		}
 
-		submoduleRepository, submoduleExpectedCommit, submoduleTree, err := submoduleRepositoryAndTree(ctx, repository, submodule.Config().Path)
-		if err != nil {
-			return nil, nil, fmt.Errorf("getting submodule %q repository and tree failed: %s", submoduleFullFilepath, err)
-		}
-
-		sLsTreeEntries, sSubmodulesResults, err := processSpecificEntryFilepath(ctx, submoduleRepository, submoduleTree, submoduleFullFilepath, submoduleFullFilepath, relTreeEntryFilepath, opts)
+		submoduleTree, err := getSubmoduleTree(submoduleHandle)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		result := NewResult(submoduleExpectedCommit, submoduleFullFilepath, sLsTreeEntries, sSubmodulesResults)
-		submoduleResult := NewSubmoduleResult(submodule.Config().Name, submodule.Config().Path, result)
+		sLsTreeEntries, sSubmodulesResults, err := processSpecificEntryFilepath(ctx, submoduleHandle, submoduleTree, submoduleFullFilepath, submoduleFullFilepath, relTreeEntryFilepath, opts)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		result := NewResult(submoduleHandle.Status().Expected.String(), submoduleFullFilepath, sLsTreeEntries, sSubmodulesResults)
+		submoduleResult := NewSubmoduleResult(submoduleHandle.Config().Name, submoduleHandle.Config().Path, result)
 
 		if !submoduleResult.IsEmpty() {
 			submodulesResults = append(submodulesResults, submoduleResult)
@@ -220,7 +212,7 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 		return nil, nil, err
 	}
 
-	lsTreeEntries, submodulesLsTreeEntries, err := lsTreeEntryMatch(ctx, repository, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, opts)
+	lsTreeEntries, submodulesLsTreeEntries, err := lsTreeEntryMatch(ctx, repoHandle, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, opts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -228,14 +220,14 @@ func processSpecificEntryFilepath(ctx context.Context, repository *git.Repositor
 	return lsTreeEntries, submodulesLsTreeEntries, nil
 }
 
-func lsTreeWalk(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func lsTreeWalk(ctx context.Context, repoHandle repo_handle.Handle, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	for _, treeEntry := range tree.Entries {
 		lsTreeEntry := &LsTreeEntry{
 			FullFilepath: filepath.Join(treeFullFilepath, treeEntry.Name),
 			TreeEntry:    treeEntry,
 		}
 
-		entryTreeEntries, entrySubmodulesTreeEntries, err := lsTreeEntryMatch(ctx, repository, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, opts)
+		entryTreeEntries, entrySubmodulesTreeEntries, err := lsTreeEntryMatch(ctx, repoHandle, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, opts)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -247,18 +239,18 @@ func lsTreeWalk(ctx context.Context, repository *git.Repository, tree *object.Tr
 	return
 }
 
-func lsTreeEntryMatch(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func lsTreeEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	switch lsTreeEntry.Mode {
 	case filemode.Dir:
-		return lsTreeDirEntryMatch(ctx, repository, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, opts)
+		return lsTreeDirEntryMatch(ctx, repoHandle, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, opts)
 	case filemode.Submodule:
-		return lsTreeSubmoduleEntryMatch(ctx, repository, repositoryFullFilepath, lsTreeEntry, opts)
+		return lsTreeSubmoduleEntryMatch(ctx, repoHandle, repositoryFullFilepath, lsTreeEntry, opts)
 	default:
 		return lsTreeFileEntryMatch(ctx, lsTreeEntry, opts)
 	}
 }
 
-func lsTreeDirEntryMatch(ctx context.Context, repository *git.Repository, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func lsTreeDirEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	if err := lsTreeDirOrSubmoduleEntryMatchBase(
 		lsTreeEntry.FullFilepath,
 		opts,
@@ -283,7 +275,7 @@ func lsTreeDirEntryMatch(ctx context.Context, repository *git.Repository, tree *
 				return err
 			}
 
-			lsTreeEntries, submodulesResults, err = lsTreeWalk(ctx, repository, entryTree, repositoryFullFilepath, lsTreeEntry.FullFilepath, opts)
+			lsTreeEntries, submodulesResults, err = lsTreeWalk(ctx, repoHandle, entryTree, repositoryFullFilepath, lsTreeEntry.FullFilepath, opts)
 			if err != nil {
 				return err
 			}
@@ -304,7 +296,7 @@ func lsTreeDirEntryMatch(ctx context.Context, repository *git.Repository, tree *
 	return
 }
 
-func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, repositoryFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func lsTreeSubmoduleEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, repositoryFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	if err := lsTreeDirOrSubmoduleEntryMatchBase(
 		lsTreeEntry.FullFilepath,
 		opts,
@@ -329,39 +321,25 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repository *git.Repository, 
 			}
 
 			submodulePath := filepath.ToSlash(submoduleFilepath)
-			submoduleRepository, submoduleCommit, submoduleTree, err := submoduleRepositoryAndTree(ctx, repository, submodulePath)
+			submoduleHandle, err := repoHandle.Submodule(submodulePath)
 			if err != nil {
-				return fmt.Errorf("getting submodule %q repository and tree failed: %s", lsTreeEntry.FullFilepath, err)
+				return err
 			}
 
-			submoduleLsTreeEntrees, submoduleSubmoduleResults, err := lsTreeWalk(ctx, submoduleRepository, submoduleTree, lsTreeEntry.FullFilepath, lsTreeEntry.FullFilepath, opts)
+			submoduleTree, err := getSubmoduleTree(submoduleHandle)
+			if err != nil {
+				return err
+			}
+
+			submoduleLsTreeEntrees, submoduleSubmoduleResults, err := lsTreeWalk(ctx, submoduleHandle, submoduleTree, lsTreeEntry.FullFilepath, lsTreeEntry.FullFilepath, opts)
 			if err != nil {
 				return err
 			}
 
 			if len(submoduleLsTreeEntrees) != 0 {
-				w, err := repository.Worktree()
-				if err != nil {
-					return err
-				}
+				submoduleName := submoduleHandle.Config().Name
 
-				ss, err := w.Submodules()
-				if err != nil {
-					return err
-				}
-
-				var submoduleName string
-				for _, s := range ss {
-					if s.Config().Path == submodulePath {
-						submoduleName = s.Config().Name
-					}
-				}
-
-				if submoduleName == "" {
-					panic("unexpected condition " + submodulePath)
-				}
-
-				result := NewResult(submoduleCommit, lsTreeEntry.FullFilepath, submoduleLsTreeEntrees, submoduleSubmoduleResults)
+				result := NewResult(submoduleHandle.Status().Expected.String(), lsTreeEntry.FullFilepath, submoduleLsTreeEntrees, submoduleSubmoduleResults)
 				submoduleResult := NewSubmoduleResult(submoduleName, submodulePath, result)
 
 				if !submoduleResult.IsEmpty() {
@@ -440,61 +418,22 @@ func treeTree(tree *object.Tree, treeFullFilepath, treeDirEntryFullFilepath stri
 	return entryTree, nil
 }
 
-func submoduleRepositoryAndTree(ctx context.Context, repository *git.Repository, submodulePath string) (*git.Repository, string, *object.Tree, error) {
-	worktree, err := repository.Worktree()
+func getSubmoduleTree(repoHandle repo_handle.SubmoduleHandle) (*object.Tree, error) {
+	submoduleName := repoHandle.Config().Name
+	expectedCommit := repoHandle.Status().Expected
+
+	submoduleRepository := repoHandle.Repository()
+	commit, err := submoduleRepository.CommitObject(expectedCommit)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("cannot inspect worktree: %s", err)
-	}
-
-	submodules, err := worktree.Submodules()
-	if err != nil {
-		return nil, "", nil, fmt.Errorf("cannot get repository submodules: %s", err)
-	}
-
-	var submodule *git.Submodule
-	for _, s := range submodules {
-		if s.Config().Path == submodulePath {
-			submodule = s
-			break
-		}
-	}
-
-	if submodule == nil {
-		return nil, "", nil, fmt.Errorf("cannot get submodule by path %s", submodulePath)
-	}
-
-	submoduleRepository, err := submodule.Repository()
-	if err != nil {
-		return nil, "", nil, fmt.Errorf("cannot inspect submodule %q repository: %s", submodulePath, err)
-	}
-
-	submoduleStatus, err := submodule.Status()
-	if err != nil {
-		return nil, "", nil, fmt.Errorf("cannot get submodule %q status: %s", submodulePath, err)
-	}
-
-	if debug() {
-		if !submoduleStatus.IsClean() {
-			logboek.Context(ctx).Debug().LogFWithCustomStyle(
-				color.GetStyle("danger"),
-				"Submodule is not clean (current commit %s), expected commit %s will be checked\n",
-				submoduleStatus.Current,
-				submoduleStatus.Expected,
-			)
-		}
-	}
-
-	commit, err := submoduleRepository.CommitObject(submoduleStatus.Expected)
-	if err != nil {
-		return nil, "", nil, fmt.Errorf("cannot inspect submodule %q commit %q: %s", submodulePath, submoduleStatus.Expected, err)
+		return nil, fmt.Errorf("cannot inspect submodule %q commit %q: %s", submoduleName, expectedCommit, err)
 	}
 
 	submoduleTree, err := commit.Tree()
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("cannot inspect submodule %q commit %q tree: %s", submodulePath, submoduleStatus.Expected, err)
+		return nil, fmt.Errorf("cannot get submodule %q commit %q tree: %s", submoduleName, expectedCommit, err)
 	}
 
-	return submoduleRepository, submoduleStatus.Expected.String(), submoduleTree, nil
+	return submoduleTree, nil
 }
 
 func debug() bool {

@@ -7,13 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/util/timestamps"
-
 	"gopkg.in/ini.v1"
-
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/werf"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -22,6 +16,12 @@ import (
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+
+	"github.com/werf/werf/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/util/timestamps"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type Remote struct {
@@ -317,8 +317,8 @@ func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions)
 }
 
 func (repo *Remote) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (checksum string, err error) {
-	err = repo.yieldRepositoryBackedByWorkTree(ctx, opts.Commit, func(repository *git.Repository) error {
-		checksum, err = repo.getOrCreateChecksum(ctx, repository, opts)
+	err = repo.withRepoHandle(ctx, opts.Commit, func(repoHandle repo_handle.Handle) error {
+		checksum, err = repo.getOrCreateChecksum(ctx, repoHandle, opts)
 		return err
 	})
 
@@ -350,39 +350,49 @@ func (repo *Remote) RemoteBranchesList(_ context.Context) ([]string, error) {
 	return repo.remoteBranchesList(repo.GetClonePath())
 }
 
-func (repo *Remote) yieldRepositoryBackedByWorkTree(ctx context.Context, commit string, doFunc func(repository *git.Repository) error) error {
+func (repo *Remote) withRepoHandle(ctx context.Context, commit string, f func(handle repo_handle.Handle) error) error {
+	return repo.Base.withRepoHandle(ctx, commit, repo.initRepoHandleBackedByWorkTree, f)
+}
+
+func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit string) (repo_handle.Handle, error) {
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
-		return err
+		return nil, err
 	} else {
 		defer werf.ReleaseHostLock(lock)
 	}
 
 	repository, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return fmt.Errorf("cannot open git repository %q: %s", repo.GetClonePath(), err)
+		return nil, fmt.Errorf("cannot open git repository %q: %s", repo.GetClonePath(), err)
 	}
 
 	commitHash, err := newHash(commit)
 	if err != nil {
-		return fmt.Errorf("bad commit hash %q: %s", commit, err)
+		return nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
 	}
 
 	commitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return fmt.Errorf("bad commit %q: %s", commit, err)
+		return nil, fmt.Errorf("bad commit %q: %s", commit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return true_git.WithWorkTree(ctx, repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
+	var repoHandle repo_handle.Handle
+	if err := true_git.WithWorkTree(ctx, repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
 		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GetClonePath(), preparedWorkTreeDir)
 		if err != nil {
 			return err
 		}
 
-		return doFunc(repositoryWithPreparedWorktree)
-	})
+		repoHandle, err = repo_handle.NewHandle(repositoryWithPreparedWorktree)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	return repoHandle, nil
 }
