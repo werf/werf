@@ -8,12 +8,13 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
+
+	"github.com/werf/werf/pkg/git_repo/repo_handle"
 )
 
 type Result struct {
@@ -63,8 +64,8 @@ func (r *SubmoduleResult) setParentRecursively() {
 	}
 }
 
-func (r *SubmoduleResult) submoduleRepositoryFromParent(mainRepository *git.Repository) (*git.Repository, error) {
-	var parentRepository *git.Repository
+func (r *SubmoduleResult) submoduleRepositoryFromParent(mainRepository repo_handle.Handle) (repo_handle.Handle, error) {
+	var parentRepository repo_handle.Handle
 	if r.parentResult != nil {
 		parentRepository = mainRepository
 	} else if r.parentSubmoduleResult != nil {
@@ -80,23 +81,8 @@ func (r *SubmoduleResult) submoduleRepositoryFromParent(mainRepository *git.Repo
 	return r.submoduleRepository(parentRepository)
 }
 
-func (r *SubmoduleResult) submoduleRepository(parentRepository *git.Repository) (*git.Repository, error) {
-	w, err := parentRepository.Worktree()
-	if err != nil {
-		return nil, err
-	}
-
-	s, err := w.Submodule(r.submoduleName)
-	if err != nil {
-		return nil, err
-	}
-
-	submoduleRepository, err := s.Repository()
-	if err != nil {
-		return nil, err
-	}
-
-	return submoduleRepository, nil
+func (r *SubmoduleResult) submoduleRepository(parentRepoHandle repo_handle.Handle) (repo_handle.Handle, error) {
+	return parentRepoHandle.Submodule(r.submodulePath)
 }
 
 type LsTreeEntry struct {
@@ -104,8 +90,8 @@ type LsTreeEntry struct {
 	object.TreeEntry
 }
 
-func (r *Result) LsTree(ctx context.Context, repository *git.Repository, opts LsTreeOptions) (*Result, error) {
-	r, err := r.lsTree(ctx, repository, opts)
+func (r *Result) LsTree(ctx context.Context, repoHandle repo_handle.Handle, opts LsTreeOptions) (*Result, error) {
+	r, err := r.lsTree(ctx, repoHandle, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -114,10 +100,10 @@ func (r *Result) LsTree(ctx context.Context, repository *git.Repository, opts Ls
 	return r, nil
 }
 
-func (r *Result) lsTree(ctx context.Context, repository *git.Repository, opts LsTreeOptions) (*Result, error) {
+func (r *Result) lsTree(ctx context.Context, repoHandle repo_handle.Handle, opts LsTreeOptions) (*Result, error) {
 	res := NewResult(r.commit, r.repositoryFullFilepath, []*LsTreeEntry{}, []*SubmoduleResult{})
 
-	tree, err := getCommitTree(repository, r.commit)
+	tree, err := getCommitTree(repoHandle, r.commit)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +133,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, opts Ls
 						logboek.Context(ctx).Debug().LogLn("Root tree was checking")
 					}
 
-					entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, opts)
+					entryLsTreeEntries, entrySubmodulesResults, err = lsTreeWalk(ctx, repoHandle, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, opts)
 					return err
 				},
 				// skip tree func
@@ -162,7 +148,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, opts Ls
 				return nil, err
 			}
 		} else {
-			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, repository, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, opts)
+			entryLsTreeEntries, entrySubmodulesResults, err = lsTreeEntryMatch(ctx, repoHandle, tree, r.repositoryFullFilepath, r.repositoryFullFilepath, lsTreeEntry, opts)
 			if err != nil {
 				return nil, err
 			}
@@ -173,7 +159,7 @@ func (r *Result) lsTree(ctx context.Context, repository *git.Repository, opts Ls
 	}
 
 	for _, submoduleResult := range r.submodulesResults {
-		submoduleRepository, err := submoduleResult.submoduleRepository(repository)
+		submoduleRepository, err := submoduleResult.submoduleRepository(repoHandle)
 		if err != nil {
 			return nil, err
 		}
@@ -314,16 +300,16 @@ func (r *Result) LsTreeEntry(relPath string) *LsTreeEntry {
 	return lsTreeEntry
 }
 
-func (r *Result) LsTreeEntryContent(mainRepository *git.Repository, relPath string) ([]byte, error) {
-	var entryRepository *git.Repository
+func (r *Result) LsTreeEntryContent(mainRepoHandle repo_handle.Handle, relPath string) ([]byte, error) {
+	var entryRepoHandle repo_handle.Handle
 	var entry *LsTreeEntry
 
 	_ = r.walkWithResult(func(r *Result, sr *SubmoduleResult, e *LsTreeEntry) (err error) {
 		if filepath.ToSlash(e.FullFilepath) == filepath.ToSlash(relPath) {
 			if r != nil {
-				entryRepository = mainRepository
+				entryRepoHandle = mainRepoHandle
 			} else if sr != nil {
-				entryRepository, err = sr.submoduleRepositoryFromParent(mainRepository)
+				entryRepoHandle, err = sr.submoduleRepositoryFromParent(mainRepoHandle)
 				if err != nil {
 					return err
 				}
@@ -340,11 +326,11 @@ func (r *Result) LsTreeEntryContent(mainRepository *git.Repository, relPath stri
 		return nil, fmt.Errorf("unable to get tree entry %s", relPath)
 	}
 
-	if entryRepository == nil {
+	if entryRepoHandle == nil {
 		panic("unexpected condition")
 	}
 
-	obj, err := entryRepository.BlobObject(entry.Hash)
+	obj, err := entryRepoHandle.Repository().BlobObject(entry.Hash)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get tree entry %q blob object: %s", entry.FullFilepath, err)
 	}

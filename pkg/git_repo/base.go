@@ -14,8 +14,10 @@ import (
 
 	"github.com/werf/logboek"
 
+	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/true_git/ls_tree"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -23,28 +25,29 @@ type Base struct {
 	Name string
 
 	Cache Cache
+
+	commitRepoHandle      sync.Map
+	commitRepoHandleMutex sync.Map
 }
 
 func NewBase(name string) Base {
 	return Base{
 		Name: name,
 		Cache: Cache{
-			Archives:       make(map[string]Archive),
-			Patches:        make(map[string]Patch),
-			Checksums:      make(map[string]string),
-			checksumsMutex: make(map[string]sync.Mutex),
+			Archives: make(map[string]Archive),
+			Patches:  make(map[string]Patch),
 		},
 	}
 }
 
 type Cache struct {
 	Patches   map[string]Patch
-	Checksums map[string]string
 	Archives  map[string]Archive
+	Checksums sync.Map
 
 	patchesMutex   sync.Mutex
-	checksumsMutex map[string]sync.Mutex
 	archivesMutex  sync.Mutex
+	checksumsMutex sync.Map
 }
 
 func (repo *Base) HeadCommit(ctx context.Context) (string, error) {
@@ -459,39 +462,36 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	return res, nil
 }
 
-func (repo *Base) getOrCreateChecksum(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (string, error) {
+func (repo *Base) getOrCreateChecksum(ctx context.Context, repoHandle repo_handle.Handle, opts ChecksumOptions) (string, error) {
 	checksumID := opts.ID()
-	checksumMutex, ok := repo.Cache.checksumsMutex[checksumID]
-	if !ok {
-		checksumMutex = sync.Mutex{}
-	}
-
+	checksumMutex := util.MapLoadOrCreateMutex(&repo.Cache.checksumsMutex, checksumID)
 	checksumMutex.Lock()
 	defer checksumMutex.Unlock()
 
-	if _, hasKey := repo.Cache.Checksums[checksumID]; !hasKey {
-		checksum, err := repo.CreateChecksum(ctx, repository, opts)
+	if _, hasKey := repo.Cache.Checksums.Load(checksumID); !hasKey {
+		checksum, err := repo.CreateChecksum(ctx, repoHandle, opts)
 		if err != nil {
 			return "", err
 		}
-		repo.Cache.Checksums[checksumID] = checksum
+		repo.Cache.Checksums.Store(checksumID, checksum)
 	}
 
-	return repo.Cache.Checksums[checksumID], nil
+	checksum := util.MapMustLoad(&repo.Cache.Checksums, checksumID).(string)
+	return checksum, nil
 }
 
-func (repo *Base) CreateChecksum(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (checksum string, err error) {
+func (repo *Base) CreateChecksum(ctx context.Context, repoHandle repo_handle.Handle, opts ChecksumOptions) (checksum string, err error) {
 	logboek.Context(ctx).Debug().LogProcess("Creating checksum").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
-		checksum, err = repo.createChecksum(ctx, repository, opts)
+		checksum, err = repo.createChecksum(ctx, repoHandle, opts)
 	})
 
 	return
 }
 
-func (repo *Base) createChecksum(ctx context.Context, repository *git.Repository, opts ChecksumOptions) (checksum string, err error) {
-	lsTreeResult, err := repo.lsTreeResult(ctx, repository, opts.Commit, opts.LsTreeOptions)
+func (repo *Base) createChecksum(ctx context.Context, repoHandle repo_handle.Handle, opts ChecksumOptions) (checksum string, err error) {
+	lsTreeResult, err := repo.lsTreeResult(ctx, repoHandle, opts.Commit, opts.LsTreeOptions)
 	if err != nil {
 		return "", err
 	}
@@ -499,6 +499,24 @@ func (repo *Base) createChecksum(ctx context.Context, repository *git.Repository
 	return lsTreeResult.Checksum(ctx), nil
 }
 
-func (repo *Base) lsTreeResult(ctx context.Context, repository *git.Repository, commit string, opts LsTreeOptions) (result *ls_tree.Result, err error) {
-	return ls_tree.LsTree(ctx, repository, commit, ls_tree.LsTreeOptions(opts))
+func (repo *Base) lsTreeResult(ctx context.Context, repoHandle repo_handle.Handle, commit string, opts LsTreeOptions) (result *ls_tree.Result, err error) {
+	return ls_tree.LsTree(ctx, repoHandle, commit, ls_tree.LsTreeOptions(opts))
+}
+
+func (repo *Base) withRepoHandle(ctx context.Context, commit string, initRepoHandleBackedByWorkTreeFunc func(ctx context.Context, commit string) (repo_handle.Handle, error), f func(handle repo_handle.Handle) error) error {
+	mutex := util.MapLoadOrCreateMutex(&repo.commitRepoHandleMutex, commit)
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	if _, hasKey := repo.commitRepoHandle.Load(commit); !hasKey {
+		repoHandler, err := initRepoHandleBackedByWorkTreeFunc(ctx, commit)
+		if err != nil {
+			return err
+		}
+
+		repo.commitRepoHandle.Store(commit, repoHandler)
+	}
+
+	repoHandler := util.MapMustLoad(&repo.commitRepoHandle, commit).(repo_handle.Handle)
+	return f(repoHandler)
 }

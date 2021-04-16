@@ -10,10 +10,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/werf/logboek"
-
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
+	"github.com/werf/logboek"
+
+	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git/ls_tree"
 	"github.com/werf/werf/pkg/util"
@@ -132,11 +133,15 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		}
 	}
 
-	tw := tar.NewWriter(out)
+	repoHandle, err := repo_handle.NewHandle(repository)
+	if err != nil {
+		return nil, err
+	}
 
+	tw := tar.NewWriter(out)
 	logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", opts.PathMatcher.String())
 	logProcess.Start()
-	result, err := ls_tree.LsTree(ctx, repository, opts.Commit, ls_tree.LsTreeOptions{
+	result, err := ls_tree.LsTree(ctx, repoHandle, opts.Commit, ls_tree.LsTreeOptions{
 		PathScope:   opts.PathScope,
 		PathMatcher: opts.PathMatcher,
 		AllFiles:    true,

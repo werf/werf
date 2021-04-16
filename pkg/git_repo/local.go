@@ -15,6 +15,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
 
+	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/true_git/ls_tree"
@@ -32,9 +33,6 @@ type Local struct {
 	GitDir      string
 
 	headCommit string
-
-	nonThreadSafeRepository      *git.Repository
-	nonThreadSafeRepositoryMutex sync.Mutex
 
 	statusResult *status.Result
 	mutex        sync.Mutex
@@ -93,21 +91,6 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 		l.headCommit = devHeadCommit
 	}
 
-	{
-		if err := l.yieldRepositoryBackedByWorkTree(ctx, l.headCommit, func(repository *git.Repository) error {
-			return nil
-		}); err != nil {
-			return nil, err
-		}
-
-		repository, err := l.PlainOpen()
-		if err != nil {
-			return nil, err
-		}
-
-		l.nonThreadSafeRepository = repository
-	}
-
 	return l, nil
 }
 
@@ -125,13 +108,6 @@ func newLocal(name, workTreeDir, gitDir string) (l *Local, err error) {
 	}
 
 	return l, nil
-}
-
-func (repo *Local) withNonThreadSafeRepository(f func(*git.Repository) error) error {
-	repo.nonThreadSafeRepositoryMutex.Lock()
-	defer repo.nonThreadSafeRepositoryMutex.Unlock()
-
-	return f(repo.nonThreadSafeRepository)
 }
 
 func (repo *Local) PlainOpen() (*git.Repository, error) {
@@ -256,8 +232,8 @@ func (repo *Local) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) 
 }
 
 func (repo *Local) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (checksum string, err error) {
-	err = repo.withNonThreadSafeRepository(func(repository *git.Repository) error {
-		checksum, err = repo.getOrCreateChecksum(ctx, repository, opts)
+	err = repo.withRepoHandle(ctx, opts.Commit, func(repoHandle repo_handle.Handle) error {
+		checksum, err = repo.getOrCreateChecksum(ctx, repoHandle, opts)
 		return err
 	})
 
@@ -265,8 +241,8 @@ func (repo *Local) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions
 }
 
 func (repo *Local) lsTreeResult(ctx context.Context, commit string, opts LsTreeOptions) (lsTreeResult *ls_tree.Result, err error) {
-	err = repo.withNonThreadSafeRepository(func(repository *git.Repository) error {
-		lsTreeResult, err = repo.Base.lsTreeResult(ctx, repository, commit, opts)
+	err = repo.withRepoHandle(ctx, commit, func(repoHandle repo_handle.Handle) error {
+		lsTreeResult, err = repo.Base.lsTreeResult(ctx, repoHandle, commit, opts)
 		return err
 	})
 
@@ -863,8 +839,8 @@ func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPa
 	}
 
 	var content []byte
-	err = repo.withNonThreadSafeRepository(func(repository *git.Repository) error {
-		content, err = lsTreeResult.LsTreeEntryContent(repository, relPath)
+	err = repo.withRepoHandle(ctx, commit, func(repoHandle repo_handle.Handle) error {
+		content, err = lsTreeResult.LsTreeEntryContent(repoHandle, relPath)
 		return err
 	})
 
@@ -941,44 +917,54 @@ func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) 
 	return entry, nil
 }
 
-func (repo *Local) yieldRepositoryBackedByWorkTree(ctx context.Context, commit string, doFunc func(repository *git.Repository) error) error {
+func (repo *Local) withRepoHandle(ctx context.Context, commit string, f func(handle repo_handle.Handle) error) error {
+	return repo.Base.withRepoHandle(ctx, commit, repo.initRepoHandleBackedByWorkTree, f)
+}
+
+func (repo *Local) initRepoHandleBackedByWorkTree(ctx context.Context, commit string) (repo_handle.Handle, error) {
 	repository, err := repo.PlainOpen()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	commitHash, err := newHash(commit)
 	if err != nil {
-		return fmt.Errorf("bad commit hash %q: %s", commit, err)
+		return nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
 	}
 
 	commitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return fmt.Errorf("bad commit %q: %s", commit, err)
+		return nil, fmt.Errorf("bad commit %q: %s", commit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(commitObj)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if hasSubmodules {
 		if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
-			return err
+			return nil, err
 		} else {
 			defer werf.ReleaseHostLock(lock)
 		}
 
-		return true_git.WithWorkTree(ctx, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
+		var repoHandle repo_handle.Handle
+		if err := true_git.WithWorkTree(ctx, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
 			repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GitDir, preparedWorkTreeDir)
 			if err != nil {
 				return err
 			}
 
-			return doFunc(repositoryWithPreparedWorktree)
-		})
+			repoHandle, err = repo_handle.NewHandle(repositoryWithPreparedWorktree)
+			return err
+		}); err != nil {
+			return nil, err
+		}
+
+		return repoHandle, nil
 	} else {
-		return doFunc(repository)
+		return repo_handle.NewHandle(repository)
 	}
 }
 
