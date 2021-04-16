@@ -1,10 +1,11 @@
 package path_matcher
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/werf/werf/pkg/util"
 )
 
 func NewMultiPathMatcher(matchers ...PathMatcher) PathMatcher {
@@ -48,17 +49,17 @@ func (m MultiPathMatcher) ShouldGoThrough(path string) bool {
 }
 
 func (m MultiPathMatcher) ID() string {
-	h := sha256.New()
-
 	var ids []string
 	for _, matcher := range m.matchers {
 		ids = append(ids, matcher.ID())
 	}
 
 	sort.Strings(ids)
-	h.Write([]byte(fmt.Sprint(ids)))
 
-	return fmt.Sprintf("%x", h.Sum(nil))
+	var args []string
+	args = append(args, "multi")
+	args = append(args, ids...)
+	return util.Sha256Hash(strings.Join(args, ":::"))
 }
 
 func (m MultiPathMatcher) String() string {

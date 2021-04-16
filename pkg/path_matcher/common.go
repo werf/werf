@@ -1,27 +1,13 @@
 package path_matcher
 
 import (
-	"crypto/sha256"
-	"fmt"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/bmatcuk/doublestar"
 
 	"github.com/werf/werf/pkg/util"
 )
-
-func includeExcludePathMatchersID(globs []string) string {
-	if len(globs) == 0 {
-		return ""
-	}
-
-	h := sha256.New()
-	sort.Strings(globs)
-	h.Write([]byte(fmt.Sprint(globs)))
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
 
 func matchGlobs(pathPart string, globs []string) (inProgressGlobs []string, matchedGlobs []string) {
 	for _, glob := range globs {

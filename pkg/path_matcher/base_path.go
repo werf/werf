@@ -1,8 +1,8 @@
 package path_matcher
 
 import (
-	"crypto/sha256"
 	"fmt"
+	"strings"
 
 	"github.com/werf/werf/pkg/util"
 )
@@ -54,14 +54,14 @@ func (m basePathMatcher) ID() string {
 		return ""
 	}
 
-	h := sha256.New()
-	h.Write([]byte(m.basePath))
-
+	var args []string
+	args = append(args, "basePath")
+	args = append(args, m.basePath)
 	if m.matcher != nil {
-		h.Write([]byte(m.matcher.ID()))
+		args = append(args, m.matcher.ID())
 	}
 
-	return fmt.Sprintf("%x", h.Sum(nil))
+	return util.Sha256Hash(strings.Join(args, ":::"))
 }
 
 func (m basePathMatcher) String() string {
