@@ -337,27 +337,8 @@ Review:
     - *base_werf
     - >
       # do optional deploy/dismiss
-      
-      if [ -z "$PRIVATE_TOKEN" ]; then
-        echo "\$PRIVATE_TOKEN is not defined" >&2
-        exit 1
-      fi
 
-      api_url=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}
-
-      if ! response_body=$(curl -sS --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" ${api_url}); then
-        echo "GET ${api_url}"
-        echo ${response_body}
-        exit 1
-      fi
-
-      if ! echo ${response_body} | jq .labels[] >/dev/null 2>&1; then
-        echo "GET ${api_url}"
-        echo ${response_body}
-        exit 1
-      fi
-
-      if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
+      if echo $CI_MERGE_REQUEST_LABELS | tr ',' '\n' | grep -q -P '^review$'; then
         werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
@@ -395,7 +376,7 @@ Stop Review:
 ```
 {% endraw %}
 
-We use the GitLab API to check whether an MR has a label. Since the `CI_JOB_TOKEN` token does not have enough rights to use private repositories, you need to generate a special `PRIVATE_TOKEN` token.
+The environment variable `CI_MERGE_REQUEST_LABELS` is used to check if MR has the label.
 
 ### Various scenarios for composing staging and production environments
 
@@ -615,27 +596,8 @@ Review:
     - *base_werf
     - >
       # do optional deploy/dismiss
-      
-      if [ -z "$PRIVATE_TOKEN" ]; then
-        echo "\$PRIVATE_TOKEN is not defined" >&2
-        exit 1
-      fi
 
-      api_url=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}
-
-      if ! response_body=$(curl -sS --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" ${api_url}); then
-        echo "GET ${api_url}"
-        echo ${response_body}
-        exit 1
-      fi
-
-      if ! echo ${response_body} | jq .labels[] >/dev/null 2>&1; then
-        echo "GET ${api_url}"
-        echo ${response_body}
-        exit 1
-      fi
-
-      if echo ${response_body} | jq .labels[] | grep -q '^"review"$'; then
+      if echo $CI_MERGE_REQUEST_LABELS | tr ',' '\n' | grep -q -P '^review$'; then
         werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
