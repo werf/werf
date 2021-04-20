@@ -19,6 +19,7 @@ import (
 
 	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/true_git/ls_tree"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/timestamps"
 	"github.com/werf/werf/pkg/werf"
@@ -395,4 +396,17 @@ func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit s
 	}
 
 	return repoHandle, nil
+}
+
+func (repo *Remote) lsTreeResult(ctx context.Context, commit string, opts LsTreeOptions) (lsTreeResult *ls_tree.Result, err error) {
+	err = repo.withRepoHandle(ctx, commit, func(repoHandle repo_handle.Handle) error {
+		lsTreeResult, err = repo.Base.lsTreeResult(ctx, repoHandle, commit, opts)
+		return err
+	})
+
+	return
+}
+
+func (repo *Remote) GetCommitTreeEntry(ctx context.Context, commit string, path string) (*ls_tree.LsTreeEntry, error) {
+	return repo.Base.getCommitTreeEntry(ctx, commit, path, repo.lsTreeResult)
 }

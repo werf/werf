@@ -41,6 +41,7 @@ type GitRepo interface {
 	TagCommit(ctx context.Context, tag string) (string, error)
 	IsCommitExists(ctx context.Context, commit string) (bool, error)
 	IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error)
+	GetCommitTreeEntry(ctx context.Context, commit string, path string) (*ls_tree.LsTreeEntry, error)
 
 	GetMergeCommitParents(ctx context.Context, commit string) ([]string, error)
 

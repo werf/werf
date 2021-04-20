@@ -520,3 +520,17 @@ func (repo *Base) withRepoHandle(ctx context.Context, commit string, initRepoHan
 	repoHandler := util.MapMustLoad(&repo.commitRepoHandle, commit).(repo_handle.Handle)
 	return f(repoHandler)
 }
+
+func (repo *Base) getCommitTreeEntry(ctx context.Context, commit, path string, f func(ctx context.Context, commit string, opts LsTreeOptions) (*ls_tree.Result, error)) (*ls_tree.LsTreeEntry, error) {
+	lsTreeResult, err := f(ctx, commit, LsTreeOptions{
+		PathScope: path,
+		AllFiles:  false,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	entry := lsTreeResult.LsTreeEntry(path)
+
+	return entry, nil
+}

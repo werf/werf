@@ -21,20 +21,19 @@ import (
 )
 
 type ArchiveOptions struct {
-	Commit string
-
-	// the PathScope option determines the directory or file that will get into the result (similar to <pathspec> in the git commands)
-	PathScope string
-
+	Commit      string
+	PathScope   string // Determines the directory or file that will get into the result (similar to <pathspec> in the git commands).
 	PathMatcher path_matcher.PathMatcher
+	FileRenames map[string]string // Files to rename during archiving. Full paths of original files as keys, new filenames (without base path) as values.
 }
 
 func (opts ArchiveOptions) ID() string {
-	return util.Sha256Hash(
-		opts.Commit,
-		opts.PathScope,
-		opts.PathMatcher.ID(),
-	)
+	var renamedFileNames []string
+	for _, newFileName := range opts.FileRenames {
+		renamedFileNames = append(renamedFileNames, newFileName)
+	}
+
+	return util.Sha256Hash(append(renamedFileNames, opts.Commit, opts.PathScope, opts.PathMatcher.ID())...)
 }
 
 type ArchiveDescriptor struct {
@@ -173,6 +172,10 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		}
 
 		tarEntryName := filepath.ToSlash(relToBasePathFilepath)
+		if renameToFileName, shouldRename := opts.FileRenames[lsTreeEntry.FullFilepath]; shouldRename {
+			tarEntryName = renameToFileName
+		}
+
 		info, err := os.Lstat(absFilepath)
 		if err != nil {
 			return fmt.Errorf("lstat %s failed: %s", absFilepath, err)

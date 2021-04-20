@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/werf/werf/pkg/git_repo"
@@ -184,6 +185,7 @@ func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID str
 }
 
 func (manager *GitDataManager) GetPatchFile(ctx context.Context, repoID string, opts git_repo.PatchOptions) (*git_repo.PatchFile, error) {
+	runtime.Breakpoint()
 	if lock, err := lockGC(ctx, true); err != nil {
 		return nil, err
 	} else {

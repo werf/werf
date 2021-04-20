@@ -192,6 +192,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		out = io.MultiWriter(out, os.Stdout)
 	}
 
+	// TODO: lesikov
 	p := makeDiffParser(out, opts.PathScope, opts.PathMatcher)
 
 WaitForData:

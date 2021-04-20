@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -106,6 +107,31 @@ func (gm *GitMapping) getPathMatcher() path_matcher.PathMatcher {
 		IncludeGlobs: gm.IncludePaths,
 		ExcludeGlobs: gm.ExcludePaths,
 	})
+}
+
+// Generate a map with files to rename.
+// Returns a map with one element if `git[].add` is a file and its base filename differs from `git[].to` base filename,
+// otherwise return an empty map. The key is full path to `git[].add` file and the value is base filename of `git[].to` file.
+func (gm *GitMapping) getFileRenames(ctx context.Context) (map[string]string, error) {
+	commit, err := gm.getLatestCommit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	renamedFileLsTreeEntry, err := gm.GitRepo().GetCommitTreeEntry(ctx, commit, gm.Add)
+	if err != nil {
+		return nil, err
+	}
+
+	renameToFileName := filepath.Base(gm.To)
+
+	result := make(map[string]string)
+	if !renamedFileLsTreeEntry.Mode.IsFile() || filepath.Base(renamedFileLsTreeEntry.FullFilepath) == renameToFileName {
+		return result, nil
+	}
+	result[renamedFileLsTreeEntry.FullFilepath] = renameToFileName
+
+	return result, nil
 }
 
 func (gm *GitMapping) IsLocal() bool {
@@ -344,6 +370,8 @@ func (gm *GitMapping) VirtualMergeIntoCommitLabel() string {
 func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toCommit string, prevBuiltImage container_runtime.ImageInterface) ([]string, error) {
 	archiveType := git_repo.ArchiveType(prevBuiltImage.GetStageDescription().Info.Labels[gm.getArchiveTypeLabelName()])
 
+	runtime.Breakpoint()
+	// TODO: lesikov
 	patchOpts := git_repo.PatchOptions{
 		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
@@ -422,6 +450,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 			}
 		}
 
+		// TODO: lesikov
 		archiveOpts := git_repo.ArchiveOptions{
 			PathScope:   gm.Add,
 			PathMatcher: gm.getPathMatcher(),
@@ -544,10 +573,16 @@ func (gm *GitMapping) applyScript(image container_runtime.ImageInterface, comman
 }
 
 func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string, image container_runtime.ImageInterface) ([]string, error) {
+	fileRenames, err := gm.getFileRenames(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	archiveOpts := git_repo.ArchiveOptions{
 		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
 		Commit:      commit,
+		FileRenames: fileRenames,
 	}
 
 	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, archiveOpts)
@@ -638,6 +673,7 @@ func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit stri
 		return 0, nil
 	}
 
+	// TODO: lesikov
 	patchOpts := git_repo.PatchOptions{
 		PathScope:             gm.Add,
 		PathMatcher:           gm.getPathMatcher(),
@@ -727,6 +763,7 @@ func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuilt
 		return "", nil
 	}
 
+	// TODO: lesikov
 	patchOpts := git_repo.PatchOptions{
 		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
@@ -764,6 +801,7 @@ func (gm *GitMapping) baseIsPatchEmpty(ctx context.Context, fromCommit, toCommit
 		return true, nil
 	}
 
+	// TODO: lesikov
 	patchOpts := git_repo.PatchOptions{
 		PathScope:   gm.Add,
 		PathMatcher: gm.getPathMatcher(),
@@ -791,6 +829,7 @@ func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
 		Commit:      commitInfo.Commit,
 	}
 
+	// TODO: lesikov
 	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, archiveOpts)
 	if err != nil {
 		return false, err

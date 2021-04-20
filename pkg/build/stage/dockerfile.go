@@ -631,6 +631,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	contextPathRelativeToGitWorkTree := s.contextRelativeToGitWorkTree(giterminismManager)
 	contextPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: contextPathRelativeToGitWorkTree})
 
+	// TODO: lesikov
 	archive, err := giterminismManager.LocalGitRepo().GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
 		PathScope: contextPathRelativeToGitWorkTree,
 		PathMatcher: path_matcher.NewMultiPathMatcher(

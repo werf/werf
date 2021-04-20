@@ -661,7 +661,7 @@ func (repo *Local) checkCommitFileMode(ctx context.Context, commit string, path 
 		return false, fmt.Errorf("unable to resolve commit file %q: %s", path, err)
 	}
 
-	lsTreeEntry, err := repo.getCommitTreeEntry(ctx, commit, resolvedPath)
+	lsTreeEntry, err := repo.GetCommitTreeEntry(ctx, commit, resolvedPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to get commit tree entry %q: %s", resolvedPath, err)
 	}
@@ -759,7 +759,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 
 	// returns path if the corresponding tree entry is Regular, Deprecated, Executable, Dir, or Submodule.
 	{
-		lsTreeEntry, err := repo.getCommitTreeEntry(ctx, commit, path)
+		lsTreeEntry, err := repo.GetCommitTreeEntry(ctx, commit, path)
 		if err != nil {
 			return "", fmt.Errorf("unable to get commit tree entry %q: %s", path, err)
 		}
@@ -780,7 +780,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 	for ind := 0; ind < pathPartsLen; ind++ {
 		pathToResolve := pathPkg.Join(resolvedPath, pathParts[ind])
 
-		lsTreeEntry, err := repo.getCommitTreeEntry(ctx, commit, pathToResolve)
+		lsTreeEntry, err := repo.GetCommitTreeEntry(ctx, commit, pathToResolve)
 		if err != nil {
 			return "", fmt.Errorf("unable to get commit tree entry %q: %s", pathToResolve, err)
 		}
@@ -867,7 +867,7 @@ func (repo *Local) IsCommitTreeEntryDirectory(ctx context.Context, commit, relPa
 }
 
 func (repo *Local) isCommitTreeEntryDirectory(ctx context.Context, commit, relPath string) (bool, error) {
-	entry, err := repo.getCommitTreeEntry(ctx, commit, relPath)
+	entry, err := repo.GetCommitTreeEntry(ctx, commit, relPath)
 	if err != nil {
 		return false, err
 	}
@@ -895,26 +895,12 @@ func (repo *Local) IsCommitTreeEntryExist(ctx context.Context, commit, relPath s
 }
 
 func (repo *Local) isTreeEntryExist(ctx context.Context, commit, relPath string) (bool, error) {
-	entry, err := repo.getCommitTreeEntry(ctx, commit, relPath)
+	entry, err := repo.GetCommitTreeEntry(ctx, commit, relPath)
 	if err != nil {
 		return false, err
 	}
 
 	return !entry.Mode.IsMalformed(), nil
-}
-
-func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) (*ls_tree.LsTreeEntry, error) {
-	lsTreeResult, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
-		PathScope: path,
-		AllFiles:  false,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	entry := lsTreeResult.LsTreeEntry(path)
-
-	return entry, nil
 }
 
 func (repo *Local) withRepoHandle(ctx context.Context, commit string, f func(handle repo_handle.Handle) error) error {
@@ -966,6 +952,10 @@ func (repo *Local) initRepoHandleBackedByWorkTree(ctx context.Context, commit st
 	} else {
 		return repo_handle.NewHandle(repository)
 	}
+}
+
+func (repo *Local) GetCommitTreeEntry(ctx context.Context, commit string, path string) (*ls_tree.LsTreeEntry, error) {
+	return repo.Base.getCommitTreeEntry(ctx, commit, path, repo.lsTreeResult)
 }
 
 func debugGiterminismManager() bool {

@@ -1,0 +1,17 @@
+project: test1233
+configVersion: 1
+
+---
+image: test
+from: alpine:3.13
+git:
+- add: /dir1/dir11/file1
+  to: /dir2/dir11/file2
+- add: /dir1/dir11/file1
+  to: /dir3/dir11/file1
+- add: /dir1
+  to: /dir4
+# - add: /dir1/dir11/file1
+#   to: /dir1/dir11/file2
+# - add: /dir1
+#   to: /dir1/dir2
