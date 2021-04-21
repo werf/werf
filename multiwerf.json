@@ -59,11 +59,11 @@
         },
         {
           "name": "beta",
-          "version": "v1.2.10+fix24"
+          "version": "v1.2.10+fix25"
         },
         {
           "name": "ea",
-          "version": "v1.2.10+fix24"
+          "version": "v1.2.10+fix25"
         }
       ]
     }
