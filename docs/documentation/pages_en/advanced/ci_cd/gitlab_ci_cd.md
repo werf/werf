@@ -113,7 +113,7 @@ Once the GitLab runner is up and ready, you can start configuring the pipeline.
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type multiwerf && . $(multiwerf use  1.2 ea --as-file)
+  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
