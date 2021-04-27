@@ -146,7 +146,7 @@ channels:
       </div><!-- /method -->
       <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="binary">
 <div markdown="1">
-Последний релиз может быть найден [на данной странице](https://bintray.com/flant/werf/werf/_latestVersion)
+Последний релиз может быть найден [на данной странице](https://github.com/werf/werf/releases/)
 </div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
   {% for version in page.versions %}

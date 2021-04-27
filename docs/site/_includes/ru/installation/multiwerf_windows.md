@@ -4,7 +4,7 @@
 $MULTIWERF_BIN_PATH = "C:\ProgramData\multiwerf\bin"
 mkdir $MULTIWERF_BIN_PATH
 
-Invoke-WebRequest -Uri https://flant.bintray.com/multiwerf/v1.3.0/multiwerf-windows-amd64-v1.3.0.exe -OutFile $MULTIWERF_BIN_PATH\multiwerf.exe
+Invoke-WebRequest -Uri https://storage.yandexcloud.net/multiwerf/targets/releases/v1.4.7/multiwerf-windows-amd64-v1.4.7.exe -OutFile $MULTIWERF_BIN_PATH\multiwerf.exe
 
 [Environment]::SetEnvironmentVariable(
     "Path",
@@ -28,7 +28,7 @@ Invoke-Expression -Command "multiwerf use {{ include.version }} {{ include.chann
 ```shell
 set MULTIWERF_BIN_PATH="C:\ProgramData\multiwerf\bin"
 mkdir %MULTIWERF_BIN_PATH%
-bitsadmin.exe /transfer "multiwerf" https://flant.bintray.com/multiwerf/v1.3.0/multiwerf-windows-amd64-v1.3.0.exe %MULTIWERF_BIN_PATH%\multiwerf.exe
+bitsadmin.exe /transfer "multiwerf" https://storage.yandexcloud.net/multiwerf/targets/releases/v1.4.7/multiwerf-windows-amd64-v1.4.7.exe %MULTIWERF_BIN_PATH%\multiwerf.exe
 setx /M PATH "%PATH%;%MULTIWERF_BIN_PATH%"
 ```
 
