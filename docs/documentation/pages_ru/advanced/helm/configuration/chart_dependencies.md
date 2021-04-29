@@ -50,11 +50,6 @@ permalink: advanced/helm/configuration/chart_dependencies.html
 
 Файл `.helm/Chart.lock` содержит точные версии прямых зависимостей, версии зависимостей прямых зависимостей и т.д.
 
-The `werf helm dependency` commands operate on that file, making it easy to synchronize between the desired dependencies, and the actual dependencies stored in the `charts` directory:
-* Use [werf helm dependency list]({{ "reference/cli/werf_helm_dependency_list.html" | true_relative_url }}) to check dependencies and their statuses.
-* Use [werf helm dependency update]({{ "reference/cli/werf_helm_dependency_update.html" | true_relative_url }}) to update `/charts` based on the contents of `requirements.yaml`.
-* Use [werf helm dependency build]({{ "reference/cli/werf_helm_dependency_build.html" | true_relative_url }}) to update `/charts` based on the `.helm/Chart.lock` file.
-
 Для работы с файлом зависимостей существуют команды `werf helm dependency`, которые упрощают синхронизацию между желаемыми зависимостями и фактическими зависимостями, указанными в папке чарта:
 * [werf helm dependency list]({{ "reference/cli/werf_helm_dependency_list.html" | true_relative_url }}) — проверка зависимостей и их статуса.
 * [werf helm dependency update]({{ "reference/cli/werf_helm_dependency_update.html" | true_relative_url }}) — обновление папки `.helm/charts` согласно содержимому файла `.helm/Chart.yaml`.
