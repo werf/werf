@@ -1109,20 +1109,28 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		return nil, err
 	}
 
+	var relDockerignorePath string
 	var dockerignorePatterns []string
-	relDockerignorePath := filepath.Join(imageFromDockerfileConfig.Context, ".dockerignore")
-	if exist, err := c.giterminismManager.FileReader().IsDockerignoreExistAnywhere(ctx, relDockerignorePath); err != nil {
-		return nil, err
-	} else if exist {
-		dockerignoreData, err := c.giterminismManager.FileReader().ReadDockerignore(ctx, relDockerignorePath)
-		if err != nil {
+	for _, relContextDockerignorePath := range []string{
+		imageFromDockerfileConfig.Dockerfile + ".dockerignore",
+		".dockerignore",
+	} {
+		relDockerignorePath = filepath.Join(imageFromDockerfileConfig.Context, relContextDockerignorePath)
+		if exist, err := c.giterminismManager.FileReader().IsDockerignoreExistAnywhere(ctx, relDockerignorePath); err != nil {
 			return nil, err
-		}
+		} else if exist {
+			dockerignoreData, err := c.giterminismManager.FileReader().ReadDockerignore(ctx, relDockerignorePath)
+			if err != nil {
+				return nil, err
+			}
 
-		r := bytes.NewReader(dockerignoreData)
-		dockerignorePatterns, err = dockerignore.ReadAll(r)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read .dockerignore file: %s", err)
+			r := bytes.NewReader(dockerignoreData)
+			dockerignorePatterns, err = dockerignore.ReadAll(r)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read %q file: %s", relContextDockerignorePath, err)
+			}
+
+			break
 		}
 	}
 
