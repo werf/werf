@@ -3,20 +3,22 @@ package parallel
 import (
 	"bytes"
 	"context"
+	"io"
 	"os"
+	"time"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
-	"github.com/werf/logboek/pkg/types"
 
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/parallel/constant"
 )
 
 type DoTasksOptions struct {
 	InitDockerCLIForEachWorker bool
 	MaxNumberOfWorkers         int
-	IsLiveOutputOn             bool
+	LiveOutput                 bool
 }
 
 func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, taskFunc func(ctx context.Context, taskId int) error) error {
@@ -24,11 +26,13 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		return nil
 	}
 
+	// determine number of tasks
 	numberOfWorkers := options.MaxNumberOfWorkers
 	if numberOfWorkers <= 0 || numberOfWorkers > numberOfTasks {
 		numberOfWorkers = numberOfTasks
 	}
 
+	// distribute tasks among workers
 	var numberOfTasksPerWorker []int
 	for i := 0; i < numberOfWorkers; i++ {
 		workerNumberOfTasks := numberOfTasks / numberOfWorkers
@@ -40,74 +44,45 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		numberOfTasksPerWorker = append(numberOfTasksPerWorker, workerNumberOfTasks)
 	}
 
-	errCh := make(chan interface{})
-	doneTaskCh := make(chan interface{})
-	doneWorkerCh := make(chan worker)
+	taskResultFailedCh := make(chan *bufWorkerTaskResult)
+	taskResultDoneCh := make(chan *bufWorkerTaskResult)
+	workerDoneCh := make(chan *bufWorker)
 	quitCh := make(chan bool)
-	activeTasksCounter := numberOfTasks
-	activeWorkersCounter := numberOfWorkers
-	isLiveOutputOnFlag := options.IsLiveOutputOn
 
-	var liveLogger types.LoggerInterface
-	var liveContext context.Context
-	if options.IsLiveOutputOn {
-		liveLogger = logboek.NewLogger(os.Stdout, os.Stderr)
-		liveLogger.GetStreamsSettingsFrom(logboek.Context(ctx))
-		liveLogger.SetAcceptedLevel(logboek.Context(ctx).AcceptedLevel())
-
-		liveContext = logboek.NewContext(ctx, liveLogger)
-
-		if docker.IsContext(liveContext) {
-			if err := docker.SyncContextCliWithLogger(liveContext); err != nil {
-				return err
-			}
-			defer docker.SyncContextCliWithLogger(ctx)
-		}
-	}
-
-	var workersBuffs []*bytes.Buffer
-	var doneTaskDataList [][]byte
+	var workers []*bufWorker
 	for i := 0; i < numberOfWorkers; i++ {
 		var workerContext context.Context
-		var worker worker
 
-		workerId := i
+		workerID := i
+		workerBuf := &util.GoroutineSafeBuffer{Buffer: bytes.NewBuffer([]byte{})}
+		worker := &bufWorker{buf: workerBuf}
+		workers = append(workers, worker)
 
-		if i == 0 && options.IsLiveOutputOn {
-			workerContext = liveContext
-			worker = &liveWorker{}
-		} else {
-			workerBuf := bytes.NewBuffer([]byte{})
-			workersBuffs = append(workersBuffs, workerBuf)
-			worker = &bufWorker{buf: workerBuf}
+		ctxWithBackgroundTaskID := context.WithValue(ctx, constant.CtxBackgroundTaskIDKey, workerID)
+		workerContext = logboek.NewContext(ctxWithBackgroundTaskID, logboek.Context(ctx).NewSubLogger(workerBuf, workerBuf))
+		logboek.Context(workerContext).Streams().SetPrefixStyle(style.Highlight())
 
-			ctxWithBackgroundTaskID := context.WithValue(ctx, constant.CtxBackgroundTaskIDKey, i)
-			workerContext = logboek.NewContext(ctxWithBackgroundTaskID, logboek.Context(ctx).NewSubLogger(workerBuf, workerBuf))
-			logboek.Context(workerContext).Streams().SetPrefixStyle(style.Highlight())
-
-			if options.InitDockerCLIForEachWorker {
-				workerContextWithDockerCli, err := docker.NewContext(workerContext)
-				if err != nil {
-					return err
-				}
-
-				workerContext = workerContextWithDockerCli
+		if options.InitDockerCLIForEachWorker {
+			workerContextWithDockerCli, err := docker.NewContext(workerContext)
+			if err != nil {
+				return err
 			}
+
+			workerContext = workerContextWithDockerCli
 		}
 
 		go func() {
-			workerNumberOfTasks := numberOfTasksPerWorker[workerId]
-
+			workerNumberOfTasks := numberOfTasksPerWorker[workerID]
 			for workerTaskId := 0; workerTaskId < workerNumberOfTasks; workerTaskId++ {
-				taskId := calculateTaskId(numberOfTasks, numberOfWorkers, workerId, workerTaskId)
+				taskId := calculateTaskId(numberOfTasks, numberOfWorkers, workerID, workerTaskId)
 				if debug() {
-					logboek.Context(workerContext).LogF("Running worker %d task %d/%d (%d)\n", workerId, workerTaskId+1, workerNumberOfTasks, numberOfTasks)
+					logboek.Context(workerContext).LogF("Running worker %d task %d/%d (%d)\n", workerID, workerTaskId+1, workerNumberOfTasks, numberOfTasks)
 				}
 				err := taskFunc(workerContext, taskId)
 
-				ch := doneTaskCh
+				ch := taskResultDoneCh
 				if err != nil {
-					ch = errCh
+					ch = taskResultFailedCh
 				}
 
 				select {
@@ -120,85 +95,99 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 				}
 			}
 
-			doneWorkerCh <- worker
+			workerDoneCh <- worker
 		}()
 	}
 
+	var err error
+	if options.LiveOutput {
+		err = workersHandlerLiveOutput(ctx, workers, taskResultDoneCh, taskResultFailedCh, quitCh, workerDoneCh)
+	} else {
+		err = workersHandlerStandard(ctx, workers, taskResultDoneCh, taskResultFailedCh, quitCh, workerDoneCh)
+	}
+
+	return err
+}
+
+func workersHandlerLiveOutput(ctx context.Context, workers []*bufWorker, taskResultDoneCh chan *bufWorkerTaskResult, taskResultFailedCh chan *bufWorkerTaskResult, quitCh chan bool, workerDoneCh chan *bufWorker) error {
+workerLoop:
+	for _, currentWorker := range workers {
+		for {
+			select {
+			case <-taskResultDoneCh:
+			case taskResult := <-taskResultFailedCh:
+				close(quitCh)
+
+				if taskResult.worker != currentWorker {
+					logboek.Context(ctx).LogLn()
+				}
+
+				if err := logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
+					_, err := io.Copy(logboek.Context(ctx).OutStream(), taskResult.worker.buf)
+					return err
+				}); err != nil {
+					return err
+				}
+
+				logboek.Context(ctx).LogOptionalLn()
+
+				return taskResult.err
+			case worker := <-workerDoneCh:
+				worker.isDone = true
+			default:
+				var n int64
+				var err error
+				if err := logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
+					n, err = io.Copy(logboek.Context(ctx).OutStream(), currentWorker.buf)
+					return err
+				}); err != nil {
+					return err
+				}
+
+				if currentWorker.isDone {
+					logboek.Context(ctx).LogOptionalLn()
+					continue workerLoop
+				}
+
+				if n == 0 {
+					time.Sleep(time.Millisecond * 100)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func workersHandlerStandard(ctx context.Context, workers []*bufWorker, taskResultDoneCh chan *bufWorkerTaskResult, taskResultFailedCh chan *bufWorkerTaskResult, quitCh chan bool, workerDoneCh chan *bufWorker) error {
+	var workerDoneCounter int
 	for {
 		select {
-		case res := <-doneTaskCh:
-			switch taskResult := res.(type) {
-			case *bufWorkerTaskResult:
-				if isLiveOutputOnFlag {
-					doneTaskDataList = append(doneTaskDataList, taskResult.data)
-				} else {
-					processTaskResultData(ctx, taskResult.data)
-				}
+		case taskResult := <-taskResultDoneCh:
+			if err := logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
+				_, err := io.Copy(logboek.Context(ctx).OutStream(), taskResult.worker.buf)
+				return err
+			}); err != nil {
+				return err
 			}
 
-			activeTasksCounter--
-
-			// skip if all done
-			if activeTasksCounter == 0 {
-				continue
-			}
-
-			// skip if live worker disabled or still in progress
-			if !options.IsLiveOutputOn || isLiveOutputOnFlag {
-				continue
-			}
-
-			logboek.Context(ctx).Default().LogF("Waiting for background tasks (%d/%d) ... \n", activeTasksCounter, numberOfTasks)
-		case res := <-errCh:
+			logboek.Context(ctx).LogOptionalLn()
+		case taskResult := <-taskResultFailedCh:
 			close(quitCh)
 
-			switch taskResult := res.(type) {
-			case *bufWorkerTaskResult:
-				if isLiveOutputOnFlag {
-					liveLogger.Streams().Mute()
-				}
-
-				for _, data := range doneTaskDataList {
-					processTaskResultData(ctx, data)
-				}
-
-				for _, buf := range workersBuffs {
-					if buf != taskResult.buf {
-						processTaskResultData(ctx, []byte(buf.String()))
-					}
-				}
-
-				processTaskResultData(ctx, taskResult.data)
-
-				return taskResult.err
-			case *lifeWorkerTaskResult:
-				if len(workersBuffs) != 0 {
-					if logboek.Context(ctx).Info().IsAccepted() {
-						logboek.Context(liveContext).LogLn()
-
-						for _, data := range doneTaskDataList {
-							processTaskResultData(ctx, data)
-						}
-
-						for _, buf := range workersBuffs {
-							processTaskResultData(ctx, buf.Bytes())
-						}
-					}
-				}
-
-				return taskResult.err
-			}
-		case res := <-doneWorkerCh:
-			if res.IsLiveWorker() {
-				isLiveOutputOnFlag = false
-
-				for _, data := range doneTaskDataList {
-					processTaskResultData(ctx, data)
-				}
+			if err := logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
+				_, err := io.Copy(logboek.Context(ctx).OutStream(), taskResult.worker.buf)
+				return err
+			}); err != nil {
+				return err
 			}
 
-			activeWorkersCounter--
-			if activeWorkersCounter == 0 {
+			logboek.Context(ctx).LogOptionalLn()
+
+			return taskResult.err
+		case <-workerDoneCh:
+			workerDoneCounter++
+			if workerDoneCounter == len(workers) {
 				return nil
 			}
 		}
@@ -218,17 +207,6 @@ func calculateTaskId(tasksNumber, workersNumber, workerInd, workerTaskId int) in
 	}
 
 	return taskId
-}
-
-func processTaskResultData(ctx context.Context, data []byte) {
-	if len(data) == 0 { // TODO: fix in logboek
-		return
-	}
-
-	logboek.Streams().DoWithoutIndent(func() {
-		_, _ = logboek.Context(ctx).OutStream().Write(data)
-		logboek.Context(ctx).LogOptionalLn()
-	})
 }
 
 func debug() bool {
