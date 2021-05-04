@@ -112,11 +112,14 @@ Once the GitLab runner is up and ready, you can start configuring the pipeline.
 
 {% raw %}
 ```yaml
+.base_werf: &base_werf
+  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -139,11 +142,14 @@ First of all, you need to define a template – the general part of the deployme
 
 {% raw %}
 ```yaml
+.base_werf: &base_werf
+  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -198,7 +204,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -255,7 +261,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -295,7 +301,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -321,11 +327,14 @@ By assigning a specific label, the user activates automatic deployment to review
 
 {% raw %}
 ```yaml
+.base_werf: &base_werf
+  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Review:
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - >
       # do optional deploy/dismiss
       
@@ -371,8 +380,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -522,11 +530,14 @@ Options for rolling back changes in production:
 
 {% raw %}
 ```yaml
+.base_werf: &base_werf
+  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -577,11 +588,14 @@ stages:
   - dismiss
   - cleanup
 
+.base_werf: &base_werf
+  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -589,8 +603,7 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -599,8 +612,7 @@ Build and Publish:
 Review:
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - >
       # do optional deploy/dismiss
       
@@ -646,8 +658,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -678,8 +689,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -712,11 +722,14 @@ stages:
   - dismiss
   - cleanup
 
+.base_werf: &base_werf
+  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -724,8 +737,7 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -748,8 +760,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -780,8 +791,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -814,11 +824,14 @@ stages:
   - dismiss
   - cleanup
 
+.base_werf: &base_werf
+  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -826,8 +839,7 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -850,8 +862,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -882,8 +893,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -915,11 +925,14 @@ stages:
   - dismiss
   - cleanup
 
+.base_werf: &base_werf
+  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -927,8 +940,7 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -951,8 +963,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -982,8 +993,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
