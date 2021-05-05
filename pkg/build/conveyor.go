@@ -514,15 +514,13 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		})
 
 	for setId := range c.imageSets {
-		logboek.Context(ctx).LogLn()
-
 		numberOfTasks := len(c.imageSets[setId])
 		numberOfWorkers := int(c.ParallelTasksLimit)
 
 		if err := parallel.DoTasks(ctx, numberOfTasks, parallel.DoTasksOptions{
 			InitDockerCLIForEachWorker: true,
 			MaxNumberOfWorkers:         numberOfWorkers,
-			IsLiveOutputOn:             true,
+			LiveOutput:                 true,
 		}, func(ctx context.Context, taskId int) error {
 			taskImage := c.imageSets[setId][taskId]
 
