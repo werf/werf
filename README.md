@@ -109,9 +109,9 @@ werf is a mature, reliable tool you can trust. [Read about stability channels an
 
 ## Documentation
 
-Detailed **[documentaion](https://werf.io/documentation/index.html)** is available in multiple languages.
+Detailed **[documentation](https://werf.io/documentation/)** is available in multiple languages.
 
-**[Many guides](https://werf.io/documentation/guides.html)** are provided to quickly deploy your app into Kubernetes.
+**[Many guides](https://werf.io/guides.html)** are provided for developers to quickly deploy apps to Kubernetes using werf.
 
 
 ## Community & support
