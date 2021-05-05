@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Run docker-compose config command with forwarded image names
+Run docker-compose run command with forwarded image names
 
 Image environment name format: $WERF_&lt;FORMATTED_WERF_IMAGE_NAME&gt;_DOCKER_IMAGE_NAME                  
 ($WERF_DOCKER_IMAGE_NAME for nameless image).
@@ -17,26 +17,16 @@ If one or more IMAGE_NAME parameters specified, werf will build and forward only
 {{ header }} Syntax
 
 ```shell
-werf compose config [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [--docker-compose-command-options="OPTIONS"]
+werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [--docker-compose-command-options="OPTIONS"] -- SERVICE [COMMAND] [ARGS...]
 ```
 
 {{ header }} Examples
 
 ```shell
-  # Render compose file
-  $ werf compose config --repo localhost:5000/test --quiet
-  version: '3.8'
-  services:
-    web:
-      image: localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
-      ports:
-      - published: 5000
-        target: 5000
-
   # Print docker-compose command without executing
-  $ werf compose config --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="--resolve-image-digests" --dry-run --quiet
-  export WERF_APP_DOCKER_IMAGE_NAME=project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
-  docker-compose -f docker-compose-test.yml config --resolve-image-digests
+  $ werf compose run --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="-e TOKEN=123" --dry-run --quiet -- test
+  export WERF_TEST_DOCKER_IMAGE_NAME=test:03dc2e0bceb09833f54fcab39e89e6e4137316ebbe544aeec8184420-1620123105753
+  docker-compose -f docker-compose-test.yml up -e TOKEN=123 -- test
 ```
 
 {{ header }} Options
