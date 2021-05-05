@@ -753,17 +753,18 @@ func getImageConfigsToProcess(ctx context.Context, c *Conveyor) []config.ImageIn
 		imageConfigsToProcess = c.werfConfig.GetAllImages()
 	} else {
 		for _, imageName := range c.imageNamesToProcess {
+			if !c.werfConfig.HasImageOrArtifact(imageName) {
+				logboek.Context(ctx).Warn().LogF("WARNING: Specified image %s isn't defined in werf.yaml!\n", imageName)
+				continue
+			}
+
 			var imageToProcess config.ImageInterface
 			imageToProcess = c.werfConfig.GetImage(imageName)
 			if imageToProcess == nil {
 				imageToProcess = c.werfConfig.GetArtifact(imageName)
 			}
 
-			if imageToProcess == nil {
-				logboek.Context(ctx).Warn().LogF("WARNING: Specified image %s isn't defined in werf.yaml!\n", imageName)
-			} else {
-				imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
-			}
+			imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
 		}
 	}
 
