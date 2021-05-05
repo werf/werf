@@ -133,7 +133,7 @@ Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NA
 			}
 
 			if options.ArgsSupport {
-				if err := processArgs(cmdData, cmd, args); err != nil {
+				if err := processArgs(&cmdData, cmd, args); err != nil {
 					common.PrintHelp(cmd)
 					return err
 				}
@@ -213,7 +213,7 @@ func checkComposeBin(cmdData composeCmdData) error {
 	return nil
 }
 
-func processArgs(cmdData composeCmdData, cmd *cobra.Command, args []string) error {
+func processArgs(cmdData *composeCmdData, cmd *cobra.Command, args []string) error {
 	doubleDashInd := cmd.ArgsLenAtDash()
 	doubleDashExist := cmd.ArgsLenAtDash() != -1
 
