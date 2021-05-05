@@ -33,7 +33,7 @@ werf compose config [options] [--docker-compose-options="OPTIONS"] [--docker-com
 
   # Print docker-compose command without executing
   $ werf compose config --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="--resolve-image-digests" --dry-run --quiet
-  export WERF_APP_DOCKER_IMAGE_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
+  export WERF_APP_DOCKER_IMAGE_NAME=project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
   docker-compose -f docker-compose-test.yml config --resolve-image-digests
 ```
 

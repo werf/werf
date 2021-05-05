@@ -143,6 +143,7 @@ func dockerComposeCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		compose.NewConfigCmd(),
+		compose.NewRunCmd(),
 		compose.NewUpCmd(),
 		compose.NewDownCmd(),
 	)

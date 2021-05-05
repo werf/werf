@@ -60,6 +60,9 @@ cli: &cli
       - title: werf compose down
         url: /reference/cli/werf_compose_down.html
 
+      - title: werf compose run
+        url: /reference/cli/werf_compose_run.html
+
       - title: werf compose up
         url: /reference/cli/werf_compose_up.html
 

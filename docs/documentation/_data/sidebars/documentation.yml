@@ -7,7 +7,7 @@
 # DO NOT EDIT!
 
 cli: &cli
-
+  
   - title: Overview of command groups
     url: /reference/cli/overview.html
 
@@ -64,6 +64,9 @@ cli: &cli
 
       - title: werf compose down
         url: /reference/cli/werf_compose_down.html
+
+      - title: werf compose run
+        url: /reference/cli/werf_compose_run.html
 
       - title: werf compose up
         url: /reference/cli/werf_compose_up.html
@@ -523,7 +526,7 @@ entries:
 
           - title: Changelog
             url: /whats_new_in_v1_2/changelog.html
-
+          
           - title: How to migrate from v1.1 to v1.2
             url: /whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html
 

@@ -43,7 +43,7 @@ type composeCmdData struct {
 	ComposeBinPath        string
 	ComposeOptions        []string
 	ComposeCommandOptions []string
-	ComposeServices       []string
+	ComposeCommandArgs    []string
 }
 
 func NewConfigCmd() *cobra.Command {
@@ -61,10 +61,22 @@ func NewConfigCmd() *cobra.Command {
 
   # Print docker-compose command without executing
   $ werf compose config --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="--resolve-image-digests" --dry-run --quiet
-  export WERF_APP_DOCKER_IMAGE_NAME=localhost:5000/project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
+  export WERF_APP_DOCKER_IMAGE_NAME=project:570c59946a7f77873d361efd25a637c4ccde86abf3d3186add19bded-1604928781528
   docker-compose -f docker-compose-test.yml config --resolve-image-digests`,
 		FollowSupport: false,
 		ArgsSupport:   false,
+	})
+}
+
+func NewRunCmd() *cobra.Command {
+	return newCmd("run", &newCmdOptions{
+		Use: "run [options] [--docker-compose-options=\"OPTIONS\"] [--docker-compose-command-options=\"OPTIONS\"] -- SERVICE [COMMAND] [ARGS...]",
+		Example: `  # Print docker-compose command without executing
+  $ werf compose run --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="-e TOKEN=123" --dry-run --quiet -- test
+  export WERF_TEST_DOCKER_IMAGE_NAME=test:03dc2e0bceb09833f54fcab39e89e6e4137316ebbe544aeec8184420-1620123105753
+  docker-compose -f docker-compose-test.yml up -e TOKEN=123 -- test`,
+		FollowSupport: false,
+		ArgsSupport:   true,
 	})
 }
 
@@ -224,7 +236,7 @@ func processArgs(cmdData *composeCmdData, cmd *cobra.Command, args []string) err
 
 		switch doubleDashInd {
 		case 0:
-			cmdData.ComposeServices = args[doubleDashInd:]
+			cmdData.ComposeCommandArgs = args[doubleDashInd:]
 		default:
 			return fmt.Errorf("unsupported position args format")
 		}
@@ -391,9 +403,9 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 	dockerComposeArgs = append(dockerComposeArgs, dockerComposeCmdName)
 	dockerComposeArgs = append(dockerComposeArgs, cmdData.ComposeCommandOptions...)
 
-	if len(cmdData.ComposeServices) != 0 {
+	if len(cmdData.ComposeCommandArgs) != 0 {
 		dockerComposeArgs = append(dockerComposeArgs, "--")
-		dockerComposeArgs = append(dockerComposeArgs, cmdData.ComposeServices...)
+		dockerComposeArgs = append(dockerComposeArgs, cmdData.ComposeCommandArgs...)
 	}
 
 	if *commonCmdData.DryRun {
