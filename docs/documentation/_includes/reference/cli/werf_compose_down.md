@@ -12,10 +12,12 @@ rules:
 - all characters are uppercase (app -&gt; APP);
 - charset /- is replaced with _ (DEV/APP-FRONTEND -&gt; DEV_APP_FRONTEND).
 
+If one or more IMAGE_NAME parameters specified, werf will build and forward only these images
+
 {{ header }} Syntax
 
 ```shell
-werf compose down [options] [--docker-compose-options="OPTIONS"] [--docker-compose-command-options="OPTIONS"]
+werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [--docker-compose-command-options="OPTIONS"]
 ```
 
 {{ header }} Examples
