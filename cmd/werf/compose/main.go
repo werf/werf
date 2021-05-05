@@ -36,7 +36,7 @@ type newCmdOptions struct {
 	ArgsSupport   bool
 }
 
-type cmdDataType struct {
+type composeCmdData struct {
 	RawComposeOptions        string
 	RawComposeCommandOptions string
 
@@ -102,7 +102,7 @@ func NewDownCmd() *cobra.Command {
 }
 
 func newCmd(composeCmdName string, options *newCmdOptions) *cobra.Command {
-	var cmdData cmdDataType
+	var cmdData composeCmdData
 	var commonCmdData common.CmdData
 
 	short := fmt.Sprintf("Run docker-compose %s command with forwarded image names", composeCmdName)
@@ -201,7 +201,7 @@ Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NA
 	return cmd
 }
 
-func checkComposeBin(cmdData cmdDataType) error {
+func checkComposeBin(cmdData composeCmdData) error {
 	dockerComposeBinPath := "docker-compose"
 	if cmdData.ComposeBinPath != "" {
 		dockerComposeBinPath = cmdData.ComposeBinPath
@@ -213,7 +213,7 @@ func checkComposeBin(cmdData cmdDataType) error {
 	return nil
 }
 
-func processArgs(cmdData cmdDataType, cmd *cobra.Command, args []string) error {
+func processArgs(cmdData composeCmdData, cmd *cobra.Command, args []string) error {
 	doubleDashInd := cmd.ArgsLenAtDash()
 	doubleDashExist := cmd.ArgsLenAtDash() != -1
 
@@ -235,7 +235,7 @@ func processArgs(cmdData cmdDataType, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func checkDetachDockerComposeOption(cmdData cmdDataType) error {
+func checkDetachDockerComposeOption(cmdData composeCmdData) error {
 	for _, value := range cmdData.ComposeCommandOptions {
 		if value == "-d" || value == "--detach" {
 			return nil
@@ -245,7 +245,7 @@ func checkDetachDockerComposeOption(cmdData cmdDataType) error {
 	return fmt.Errorf("the containers must be launched in the background (in follow mode): pass -d/--detach with --docker-compose-command-options option")
 }
 
-func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData common.CmdData, followSupport bool) error {
+func runMain(dockerComposeCmdName string, cmdData composeCmdData, commonCmdData common.CmdData, followSupport bool) error {
 	ctx := common.BackgroundContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
@@ -317,7 +317,7 @@ func runMain(dockerComposeCmdName string, cmdData cmdDataType, commonCmdData com
 	}
 }
 
-func run(ctx context.Context, giterminismManager giterminism_manager.Interface, commonCmdData common.CmdData, cmdData cmdDataType, dockerComposeCmdName string) error {
+func run(ctx context.Context, giterminismManager giterminism_manager.Interface, commonCmdData common.CmdData, cmdData composeCmdData, dockerComposeCmdName string) error {
 	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
