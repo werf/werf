@@ -122,9 +122,22 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 		}
 	}
 
-	parsedReference, err := name.NewTag(reference, api.parseReferenceOptions()...)
-	if err != nil {
-		return nil, err
+	digestDelimiter := "@"
+	var parsedReference name.Tag
+	if strings.Contains(reference, digestDelimiter) {
+		// skip any validation due to the valid reference at this point
+		parts := strings.Split(reference, digestDelimiter)
+		base, _ := parts[0], parts[1]
+
+		parsedReference, err = name.NewTag(base, api.parseReferenceOptions()...)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		parsedReference, err = name.NewTag(reference, api.parseReferenceOptions()...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	repoImage := &image.Info{
