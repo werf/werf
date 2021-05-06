@@ -14,7 +14,7 @@ var _ = Describe("purge command", func() {
 	for _, iName := range suite_init.ContainerRegistryImplementationListToCheck(true) {
 		implementationName := iName
 
-		Context(implementationName, func() {
+		Context("["+implementationName+"]", func() {
 			BeforeEach(perImplementationBeforeEach(implementationName))
 
 			BeforeEach(func() {

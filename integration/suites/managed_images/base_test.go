@@ -20,9 +20,9 @@ var _ = Describe("managed images", func() {
 	for _, iName := range suite_init.ContainerRegistryImplementationListToCheck(true) {
 		implementationName := iName
 
-		Context(implementationName, func() {
+		Context("["+implementationName+"]", func() {
 			BeforeEach(func() {
-				repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[iName].RegistryAddress, SuiteData.ProjectName)
+				repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
 				SuiteData.SetupRepo(context.Background(), repo, implementationName, SuiteData.StubsData)
 			})
 
