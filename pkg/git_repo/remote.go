@@ -25,7 +25,7 @@ import (
 )
 
 type Remote struct {
-	Base
+	*Base
 	Url      string
 	IsDryRun bool
 
@@ -33,10 +33,8 @@ type Remote struct {
 }
 
 func OpenRemoteRepo(name, url string) (*Remote, error) {
-	repo := &Remote{
-		Base: NewBase(name),
-		Url:  url,
-	}
+	repo := &Remote{Url: url}
+	repo.Base = NewBase(name, repo.initRepoHandleBackedByWorkTree)
 	return repo, repo.ValidateEndpoint()
 }
 
@@ -348,10 +346,6 @@ func (repo *Remote) TagsList(_ context.Context) ([]string, error) {
 
 func (repo *Remote) RemoteBranchesList(_ context.Context) ([]string, error) {
 	return repo.remoteBranchesList(repo.GetClonePath())
-}
-
-func (repo *Remote) withRepoHandle(ctx context.Context, commit string, f func(handle repo_handle.Handle) error) error {
-	return repo.Base.withRepoHandle(ctx, commit, repo.initRepoHandleBackedByWorkTree, f)
 }
 
 func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit string) (repo_handle.Handle, error) {
