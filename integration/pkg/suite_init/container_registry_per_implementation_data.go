@@ -22,7 +22,7 @@ type ContainerRegistryPerImplementationData struct {
 func (data *ContainerRegistryPerImplementationData) SetupRepo(ctx context.Context, repo, implementationName string, stubsData *StubsData) bool {
 	implData := data.ContainerRegistryPerImplementation[implementationName]
 
-	registry, err := docker_registry.NewDockerRegistry(repo, implData.ImplementationName, implData.RegistryOptions)
+	registry, err := docker_registry.NewDockerRegistry(repo, implData.WerfImplementationName, implData.RegistryOptions)
 	Expect(err).Should(Succeed())
 
 	switch implementationName {
@@ -32,7 +32,7 @@ func (data *ContainerRegistryPerImplementationData) SetupRepo(ctx context.Contex
 	}
 
 	stubsData.Stubs.SetEnv("WERF_REPO", repo)
-	stubsData.Stubs.SetEnv("WERF_REPO_IMPLEMENTATION", implData.ImplementationName)
+	stubsData.Stubs.SetEnv("WERF_REPO_IMPLEMENTATION", implData.WerfImplementationName)
 
 	switch implementationName {
 	case docker_registry.DockerHubImplementationName:
@@ -47,7 +47,7 @@ func (data *ContainerRegistryPerImplementationData) SetupRepo(ctx context.Contex
 	return false
 }
 
-func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Context, repo, implementationName string, stubsData *StubsData) bool {
+func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Context, repo, implementationName string, _ *StubsData) bool {
 	if implementationName == LocalRegistryImplementationName {
 		return true
 	}
@@ -68,9 +68,9 @@ func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Con
 }
 
 type containerRegistryImplementationData struct {
-	RegistryAddress    string
-	ImplementationName string
-	RegistryOptions    docker_registry.DockerRegistryOptions
+	RegistryAddress        string
+	WerfImplementationName string
+	RegistryOptions        docker_registry.DockerRegistryOptions
 }
 
 func NewContainerRegistryPerImplementationData(synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData, withOptionalContainerRegistry bool) *ContainerRegistryPerImplementationData {
@@ -97,9 +97,9 @@ func NewContainerRegistryPerImplementationData(synchronizedSuiteCallbacksData *S
 			registryAddress := containerRegistryImplementationAddress(implementationNameForWerf)
 
 			implData := &containerRegistryImplementationData{
-				RegistryAddress:    registryAddress,
-				ImplementationName: implementationNameForWerf,
-				RegistryOptions:    makeContainerRegistryImplementationDockerRegistryOptions(implementationNameForWerf),
+				RegistryAddress:        registryAddress,
+				WerfImplementationName: implementationNameForWerf,
+				RegistryOptions:        makeContainerRegistryImplementationDockerRegistryOptions(implementationNameForWerf),
 			}
 
 			data.ContainerRegistryPerImplementation[implementationName] = implData
@@ -124,9 +124,9 @@ func setupOptionalLocalContainerRegistry(synchronizedSuiteCallbacksData *Synchro
 	})
 
 	implData := &containerRegistryImplementationData{
-		RegistryAddress:    registryAddress,
-		ImplementationName: implementationNameForWerf,
-		RegistryOptions:    makeContainerRegistryImplementationDockerRegistryOptions(implementationNameForWerf),
+		RegistryAddress:        registryAddress,
+		WerfImplementationName: implementationNameForWerf,
+		RegistryOptions:        makeContainerRegistryImplementationDockerRegistryOptions(implementationNameForWerf),
 	}
 
 	data.ContainerRegistryPerImplementation[LocalRegistryImplementationName] = implData
