@@ -544,7 +544,7 @@ jobs:
         path: tests_coverage
 
   integration_default_tests_on_self_hosted_runners:
-    name: Integration default tests
+    name: Integration default tests (self-hosted)
     needs: precompiled_tests_binaries
     if: "false"
 #    if: ${{ success() || failure() }}
@@ -629,7 +629,7 @@ jobs:
         path: tests_coverage
 
   integration_k8s_per_version_tests_on_self_hosted_runners:
-    name: Integration k8s_per_version tests
+    name: Integration k8s_per_version tests (self-hosted)
     needs: precompiled_tests_binaries
     if: "false"
 #    if: ${{ success() || failure() }}
