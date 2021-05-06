@@ -19,7 +19,14 @@ jobs:
       - name: Take off label
         uses: actions/github-script@v1
         with:
-          script: "github.issues.removeLabel({...context.issue, name: '${{ github.event.label.name }}' })"
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: >
+            github.issues.removeLabel({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: '${{ github.event.label.name }}'
+            })
 
   converge:
     name: Converge
