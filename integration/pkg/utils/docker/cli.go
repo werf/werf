@@ -130,7 +130,7 @@ func ContainerHostPort(ref, containerPortNumberAndProtocol string) string {
 	portMap := inspect.NetworkSettings.Ports
 	Ω(portMap).ShouldNot(BeEmpty())
 	portBindings := portMap[nat.Port(containerPortNumberAndProtocol)]
-	Ω(portBindings).ShouldNot(HaveCap(1))
+	Ω(portBindings).ShouldNot(HaveLen(0))
 	return portBindings[0].HostPort
 }
 

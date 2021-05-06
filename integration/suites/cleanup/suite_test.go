@@ -37,8 +37,10 @@ var _ = SuiteData.SetupContainerRegistryPerImplementation(suite_init.NewContaine
 
 func perImplementationBeforeEach(implementationName string) func() {
 	return func() {
+		werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
+
 		repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
-		InitStagesStorage(repo, implementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
+		InitStagesStorage(repo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
 		SuiteData.SetupRepo(context.Background(), repo, implementationName, SuiteData.StubsData)
 		SuiteData.TestImplementation = implementationName
 	}
