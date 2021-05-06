@@ -22,7 +22,7 @@ var _ = Describe("managed images", func() {
 
 		Context("["+implementationName+"]", func() {
 			BeforeEach(func() {
-				repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[iName].RegistryAddress, SuiteData.ProjectName)
+				repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
 				SuiteData.SetupRepo(context.Background(), repo, implementationName, SuiteData.StubsData)
 			})
 
