@@ -65,9 +65,10 @@ func BuildChartDependenciesInDir(ctx context.Context, chartFile *chart.ChartExte
 	}()
 
 	err := man.Build()
+
 	if e, ok := err.(downloader.ErrRepoNotFound); ok {
 		return fmt.Errorf("%s. Please add the missing repos via 'helm repo add'", e.Error())
 	}
 
-	return nil
+	return err
 }
