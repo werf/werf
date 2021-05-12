@@ -53,7 +53,6 @@ type GitRepo interface {
 	IsEmpty(ctx context.Context) (bool, error)
 	LatestBranchCommit(ctx context.Context, branch string) (string, error)
 	ListCommitFilesWithGlob(ctx context.Context, commit string, dir string, glob string) ([]string, error)
-	LsTreeResult(ctx context.Context, commit string, opts LsTreeOptions) (*ls_tree.Result, error)
 	ReadCommitFile(ctx context.Context, commit, path string) ([]byte, error)
 	ReadCommitTreeEntryContent(ctx context.Context, commit string, relPath string) ([]byte, error)
 	ResolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkSymlinkTargetFunc func(resolvedPath string) error) (string, error)
