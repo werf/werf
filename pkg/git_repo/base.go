@@ -372,11 +372,10 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 	defer fileHandler.Close()
 
-	var desc *true_git.ArchiveDescriptor
 	if hasSubmodules {
-		desc, err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
+		err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
 	} else {
-		desc, err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
+		err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
 	}
 
 	if err != nil {
@@ -385,6 +384,15 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 
 	if err := fileHandler.Close(); err != nil {
 		return nil, fmt.Errorf("unable to close file %s: %s", tmpPath, err)
+	}
+
+	isArchiveEmpty, err := repo.IsNoCommitTreeEntriesMatched(ctx, opts.Commit, opts.PathScope, opts.PathMatcher)
+	if err != nil {
+		return nil, err
+	}
+
+	desc := &true_git.ArchiveDescriptor{
+		IsEmpty: isArchiveEmpty,
 	}
 
 	if archive, err := CommonGitDataManager.CreateArchiveFile(ctx, repoID, opts, tmpPath, desc); err != nil {
@@ -876,6 +884,18 @@ func (repo *Base) readCommitFile(ctx context.Context, commit, path string) ([]by
 	}
 
 	return repo.ReadCommitTreeEntryContent(ctx, commit, resolvedPath)
+}
+
+func (repo *Base) IsNoCommitTreeEntriesMatched(ctx context.Context, commit string, pathScope string, pathMatcher path_matcher.PathMatcher) (bool, error) {
+	result, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
+		PathScope: pathScope,
+		PathMatcher: pathMatcher,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return result.IsEmpty(), nil
 }
 
 func (repo *Base) WalkCommitFiles(ctx context.Context, commit string, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error {

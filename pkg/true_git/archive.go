@@ -21,121 +21,76 @@ import (
 )
 
 type ArchiveOptions struct {
-	Commit string
-
-	// the PathScope option determines the directory or file that will get into the result (similar to <pathspec> in the git commands)
-	PathScope string
-
+	Commit      string
+	PathScope   string // Determines the directory that will get into the result (similar to <pathspec> in the git commands).
 	PathMatcher path_matcher.PathMatcher
+	FileRenames map[string]string // Files to rename during archiving. Git repo relative paths of original files as keys, new filenames (without base path) as values.
 }
 
+// TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
 func (opts ArchiveOptions) ID() string {
+	var renamedOldFilePaths, renamedNewFileNames []string
+	for renamedOldFilePath, renamedNewFileName := range opts.FileRenames {
+		renamedOldFilePaths = append(renamedOldFilePaths, renamedOldFilePath)
+		renamedNewFileNames = append(renamedNewFileNames, renamedNewFileName)
+	}
+
 	return util.Sha256Hash(
-		opts.Commit,
-		opts.PathScope,
-		opts.PathMatcher.ID(),
+		append(
+			append(renamedOldFilePaths, renamedNewFileNames...),
+			opts.Commit,
+			opts.PathScope,
+			opts.PathMatcher.ID(),
+		)...
 	)
 }
 
 type ArchiveDescriptor struct {
-	Type    ArchiveType
 	IsEmpty bool
 }
 
-type ArchiveType string
-
-const (
-	FileArchive      ArchiveType = "file"
-	DirectoryArchive ArchiveType = "directory"
-)
-
-func ArchiveWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
-	var res *ArchiveDescriptor
-
-	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
-		writeArchiveRes, err := writeArchive(ctx, out, gitDir, workTreeCacheDir, true, opts)
-		res = writeArchiveRes
-		return err
+func ArchiveWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
+	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
+		return writeArchive(ctx, out, gitDir, workTreeCacheDir, true, opts)
 	})
-
-	return res, err
 }
 
-func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) (*ArchiveDescriptor, error) {
-	var res *ArchiveDescriptor
-
-	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
-		writeArchiveRes, err := writeArchive(ctx, out, gitDir, workTreeCacheDir, false, opts)
-		res = writeArchiveRes
-		return err
+func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
+	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
+		return writeArchive(ctx, out, gitDir, workTreeCacheDir, false, opts)
 	})
-
-	return res, err
 }
 
 func debugArchive() bool {
 	return os.Getenv("WERF_TRUE_GIT_DEBUG_ARCHIVE") == "1"
 }
 
-func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts ArchiveOptions) (*ArchiveDescriptor, error) {
+func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts ArchiveOptions) error {
 	var err error
 
 	gitDir, err = filepath.Abs(gitDir)
 	if err != nil {
-		return nil, fmt.Errorf("bad git dir %s: %s", gitDir, err)
+		return fmt.Errorf("bad git dir %s: %s", gitDir, err)
 	}
 
 	workTreeCacheDir, err = filepath.Abs(workTreeCacheDir)
 	if err != nil {
-		return nil, fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
+		return fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
 	}
 
 	workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, withSubmodules)
 	if err != nil {
-		return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.Commit, err)
+		return fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.Commit, err)
 	}
 
 	repository, err := GitOpenWithCustomWorktreeDir(gitDir, workTreeDir)
 	if err != nil {
-		return nil, fmt.Errorf("git open failed: %s", err)
-	}
-
-	desc := &ArchiveDescriptor{
-		IsEmpty: true,
-	}
-
-	absBasePath := filepath.Join(workTreeDir, opts.PathScope)
-	exist, err := util.FileExists(absBasePath)
-	if err != nil {
-		return nil, fmt.Errorf("file exists %s failed: %s", absBasePath, err)
-	}
-
-	if !exist {
-		return nil, fmt.Errorf("base path %s entry not found repo", opts.PathScope)
-	}
-
-	info, err := os.Lstat(absBasePath)
-	if err != nil {
-		return nil, fmt.Errorf("lstat %s failed: %s", absBasePath, err)
-	}
-
-	if info.IsDir() {
-		desc.Type = DirectoryArchive
-
-		if debugArchive() {
-			logboek.Context(ctx).Debug().LogF("Found BasePath %s directory: directory archive type\n", absBasePath)
-		}
-	} else {
-		desc.Type = FileArchive
-
-		if debugArchive() {
-			logboek.Context(ctx).Debug().LogF("Found BasePath %s file: file archive\n", absBasePath)
-		}
+		return fmt.Errorf("git open failed: %s", err)
 	}
 
 	repoHandle, err := repo_handle.NewHandle(repository)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	tw := tar.NewWriter(out)
@@ -148,7 +103,11 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 	})
 	if err != nil {
 		logProcess.Fail()
-		return nil, err
+		return err
+	}
+	if result.IsEmpty() {
+		logProcess.Fail()
+		return fmt.Errorf("lstree result is empty when writing tar archive")
 	}
 	logProcess.End()
 
@@ -157,22 +116,18 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 	if err := result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
 		logboek.Context(ctx).Debug().LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
 
-		desc.IsEmpty = false
-
 		gitFileMode := lsTreeEntry.Mode
 		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.FullFilepath)
 
-		var relToBasePathFilepath string
-		if filepath.FromSlash(opts.PathScope) == lsTreeEntry.FullFilepath {
-			// lsTreeEntry.FullFilepath is always a path to a file, not a directory.
-			// Thus if opts.PathScope is equal lsTreeEntry.FullFilepath, then opts.PathScope is a path to a file.
-			// Use file name in this case by convention.
-			relToBasePathFilepath = filepath.Base(lsTreeEntry.FullFilepath)
+		relToBasePathFilepath := util.GetRelativeToBaseFilepath(opts.PathScope, lsTreeEntry.FullFilepath)
+
+		var tarEntryName string
+		if renameToFileName, willRename := opts.FileRenames[lsTreeEntry.FullFilepath]; willRename {
+			tarEntryName = renameToFileName
 		} else {
-			relToBasePathFilepath = util.GetRelativeToBaseFilepath(opts.PathScope, lsTreeEntry.FullFilepath)
+			tarEntryName = filepath.ToSlash(relToBasePathFilepath)
 		}
 
-		tarEntryName := filepath.ToSlash(relToBasePathFilepath)
 		info, err := os.Lstat(absFilepath)
 		if err != nil {
 			return fmt.Errorf("lstat %s failed: %s", absFilepath, err)
@@ -256,14 +211,14 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		return nil
 	}); err != nil {
 		logProcess.Fail()
-		return nil, err
+		return err
 	}
 	logProcess.End()
 
 	err = tw.Close()
 	if err != nil {
-		return nil, fmt.Errorf("cannot write tar archive: %s", err)
+		return fmt.Errorf("cannot write tar archive: %s", err)
 	}
 
-	return desc, nil
+	return nil
 }

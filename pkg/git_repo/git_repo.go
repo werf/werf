@@ -48,6 +48,7 @@ type GitRepo interface {
 	IsCommitDirectoryExist(ctx context.Context, commit, path string) (bool, error)
 	IsCommitExists(ctx context.Context, commit string) (bool, error)
 	IsCommitFileExist(ctx context.Context, commit, path string) (bool, error)
+	IsNoCommitTreeEntriesMatched(ctx context.Context, commit string, pathScope string, pathMatcher path_matcher.PathMatcher) (bool, error)
 	IsCommitTreeEntryDirectory(ctx context.Context, commit string, relPath string) (bool, error)
 	IsCommitTreeEntryExist(ctx context.Context, commit string, relPath string) (bool, error)
 	IsEmpty(ctx context.Context) (bool, error)
@@ -73,7 +74,6 @@ type Patch interface {
 
 type Archive interface {
 	GetFilePath() string
-	GetType() ArchiveType
 	IsEmpty() bool
 }
 

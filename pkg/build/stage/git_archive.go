@@ -46,6 +46,7 @@ func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, s
 	return s.selectStageByOldestCreationTimestamp(ancestorsStages)
 }
 
+// TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
 func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
