@@ -570,7 +570,7 @@ Default $WERF_LOG_COLOR_MODE or auto mode.`)
 func setupLogQuiet(cmdData *CmdData, cmd *cobra.Command, isDefaultQuiet bool) {
 	cmdData.LogQuiet = new(bool)
 
-	var defaultValue = isDefaultQuiet
+	defaultValue := isDefaultQuiet
 
 	for _, envName := range []string{
 		"WERF_LOG_QUIET",
@@ -1218,14 +1218,14 @@ func ProcessLogOptions(cmdData *CmdData) error {
 		return err
 	}
 
-	if *cmdData.LogQuiet {
-		logboek.SetAcceptedLevel(level.Error)
-	} else if *cmdData.LogDebug {
+	if *cmdData.LogDebug {
 		logboek.SetAcceptedLevel(level.Debug)
 		logboek.Streams().EnablePrefixWithTime()
 		logboek.Streams().SetPrefixStyle(style.Details())
 	} else if *cmdData.LogVerbose {
 		logboek.SetAcceptedLevel(level.Info)
+	} else if *cmdData.LogQuiet {
+		logboek.SetAcceptedLevel(level.Error)
 	}
 
 	if !*cmdData.LogPretty {
