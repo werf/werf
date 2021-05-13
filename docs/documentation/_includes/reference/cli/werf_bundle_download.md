@@ -13,18 +13,6 @@ current working directory).
 werf bundle download [options]
 ```
 
-{{ header }} Environments
-
-```shell
-  $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
-                            way to set secret key in CI-system. 
-                            
-                            Secret key also can be defined in files:
-                            * ~/.werf/global_secret_key (globally),
-                            * .werf_secret_key (per project)
-```
-
 {{ header }} Options
 
 ```shell

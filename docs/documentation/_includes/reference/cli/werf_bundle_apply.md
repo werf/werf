@@ -12,18 +12,6 @@ mask and apply it as a helm chart into Kubernetes cluster.
 werf bundle apply [options]
 ```
 
-{{ header }} Environments
-
-```shell
-  $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
-                            way to set secret key in CI-system. 
-                            
-                            Secret key also can be defined in files:
-                            * ~/.werf/global_secret_key (globally),
-                            * .werf_secret_key (per project)
-```
-
 {{ header }} Options
 
 ```shell
@@ -50,8 +38,6 @@ werf bundle apply [options]
       --hooks-status-progress-period=5
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
-      --ignore-secret-key=false
-            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config=''
@@ -114,11 +100,6 @@ werf bundle apply [options]
             Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
-      --secret-values=[]
-            Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
-            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
-            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
