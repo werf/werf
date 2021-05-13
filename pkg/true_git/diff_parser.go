@@ -13,10 +13,11 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func makeDiffParser(out io.Writer, pathScope string, pathMatcher path_matcher.PathMatcher) *diffParser {
+func makeDiffParser(out io.Writer, pathScope string, pathMatcher path_matcher.PathMatcher, fileRenames map[string]string) *diffParser {
 	return &diffParser{
 		PathScope:   pathScope,
 		PathMatcher: pathMatcher,
+		FileRenames: fileRenames,
 		Out:         out,
 		OutLines:    0,
 		Paths:       make([]string, 0),
@@ -39,9 +40,9 @@ const (
 )
 
 type diffParser struct {
-	// the PathScope option determines the directory or file that will get into the result (similar to <pathspec> in the git commands)
-	PathScope   string
+	PathScope   string // Determines the directory that will get into the result (similar to <pathspec> in the git commands).
 	PathMatcher path_matcher.PathMatcher
+	FileRenames map[string]string // Files to rename during patching. Git repo relative paths of original files as keys, new filenames (without base path) as values.
 
 	Out                 io.Writer
 	OutLines            uint
@@ -231,7 +232,7 @@ func (p *diffParser) handleDiffLine(line string) error {
 	return nil
 }
 
-func (p *diffParser) handleDiffBegin(line string) error {
+func (p *diffParser) handleDiffBegin(line string) (err error) {
 	var lineParts []string
 	var aAndBParts []string
 	var a, b string
@@ -255,35 +256,32 @@ func (p *diffParser) handleDiffBegin(line string) error {
 	p.LastSeenPaths = nil
 
 	for _, data := range []struct{ PathWithPrefix, Prefix string }{{a, "a/"}, {b, "b/"}} {
-		if strings.HasPrefix(data.PathWithPrefix, "\"") && strings.HasSuffix(data.PathWithPrefix, "\"") {
-			pathWithPrefix, err := strconv.Unquote(data.PathWithPrefix)
+		isPathQuoted := strings.HasPrefix(data.PathWithPrefix, "\"") && strings.HasSuffix(data.PathWithPrefix, "\"")
+
+		var pathWithPrefix string
+		if isPathQuoted {
+			pathWithPrefix, err = strconv.Unquote(data.PathWithPrefix)
 			if err != nil {
-				return fmt.Errorf("unable to unqoute diff path %#v: %s", data.PathWithPrefix, err)
+				return fmt.Errorf("unable to unquote diff path %#v: %s", data.PathWithPrefix, err)
 			}
-
-			path := strings.TrimPrefix(pathWithPrefix, data.Prefix)
-			if !p.PathMatcher.IsPathMatched(path) {
-				p.state = ignoreDiff
-				return nil
-			}
-
-			newPath := p.trimFileBaseFilepath(path)
-			p.Paths = appendUnique(p.Paths, newPath)
-			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
-
-			newPathWithPrefix := data.Prefix + newPath
-			trimmedPaths[data.PathWithPrefix] = strconv.Quote(newPathWithPrefix)
 		} else {
-			path := strings.TrimPrefix(data.PathWithPrefix, data.Prefix)
-			if !p.PathMatcher.IsPathMatched(path) {
-				p.state = ignoreDiff
-				return nil
-			}
+			pathWithPrefix = data.PathWithPrefix
+		}
 
-			newPath := p.trimFileBaseFilepath(path)
-			p.Paths = appendUnique(p.Paths, newPath)
-			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
+		path := strings.TrimPrefix(pathWithPrefix, data.Prefix)
+		if !p.PathMatcher.IsPathMatched(path) {
+			p.state = ignoreDiff
+			return nil
+		}
 
+		path = p.applyFileRenames(path)
+		newPath := p.trimFileBaseFilepath(path)
+		p.Paths = appendUnique(p.Paths, newPath)
+		p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
+
+		if isPathQuoted {
+			trimmedPaths[data.PathWithPrefix] = strconv.Quote(data.Prefix + newPath)
+		} else {
 			trimmedPaths[data.PathWithPrefix] = data.Prefix + newPath
 		}
 	}
@@ -360,7 +358,7 @@ func (p *diffParser) handleIndexDiffLine(line string) error {
 }
 
 func (p *diffParser) handleModifyFilePathA(line string) error {
-	path := strings.TrimPrefix(line, "--- a/")
+	path := p.applyFileRenames(strings.TrimPrefix(line, "--- a/"))
 	newPath := p.trimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("--- a/%s", newPath)
 
@@ -368,7 +366,7 @@ func (p *diffParser) handleModifyFilePathA(line string) error {
 }
 
 func (p *diffParser) handleModifyFilePathB(line string) error {
-	path := strings.TrimPrefix(line, "+++ b/")
+	path := p.applyFileRenames(strings.TrimPrefix(line, "+++ b/"))
 	newPath := p.trimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("+++ b/%s", newPath)
 
@@ -386,7 +384,7 @@ func (p *diffParser) handleSubmoduleLine(line string) error {
 }
 
 func (p *diffParser) handleNewFilePath(line string) error {
-	path := strings.TrimPrefix(line, "+++ b/")
+	path := p.applyFileRenames(strings.TrimPrefix(line, "+++ b/"))
 	newPath := p.trimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("+++ b/%s", newPath)
 
@@ -396,24 +394,11 @@ func (p *diffParser) handleNewFilePath(line string) error {
 }
 
 func (p *diffParser) trimFileBaseFilepath(path string) string {
-	path = filepath.FromSlash(path)
-	pathScope := filepath.FromSlash(p.PathScope)
-
-	var result string
-	if pathScope == path {
-		// The path is always a path to a file, not a directory.
-		// Thus if opts.PathScope is equal the path, then opts.PathScope is a path to a file.
-		// Use file name in this case by convention.
-		result = filepath.Base(path)
-	} else {
-		result = util.GetRelativeToBaseFilepath(pathScope, path)
-	}
-
-	return filepath.ToSlash(result)
+	return filepath.ToSlash(util.GetRelativeToBaseFilepath(filepath.FromSlash(p.PathScope), filepath.FromSlash(path)))
 }
 
 func (p *diffParser) handleDeleteFilePath(line string) error {
-	path := strings.TrimPrefix(line, "--- a/")
+	path := p.applyFileRenames(strings.TrimPrefix(line, "--- a/"))
 	newPath := p.trimFileBaseFilepath(path)
 	newLine := fmt.Sprintf("--- a/%s", newPath)
 
@@ -440,4 +425,11 @@ func (p *diffParser) handleShortBinaryHeader(line string) error {
 	p.state = unrecognized
 
 	return p.writeOutLine(line)
+}
+
+func (p *diffParser) applyFileRenames(path string) string {
+	if renamedFileName, willRename := p.FileRenames[path]; willRename {
+		return filepath.ToSlash(filepath.Join(p.PathScope, renamedFileName))
+	}
+	return path
 }

@@ -180,7 +180,7 @@ func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID str
 		return nil, fmt.Errorf("unable to rename %s to %s: %s", tmpPath, path, err)
 	}
 
-	return &git_repo.ArchiveFile{FilePath: path, Descriptor: desc}, nil
+	return &git_repo.ArchiveFile{FilePath: path, Descriptor: metadata.Descriptor}, nil
 }
 
 func (manager *GitDataManager) GetPatchFile(ctx context.Context, repoID string, opts git_repo.PatchOptions) (*git_repo.PatchFile, error) {

@@ -372,11 +372,10 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 	defer fileHandler.Close()
 
-	var desc *true_git.ArchiveDescriptor
 	if hasSubmodules {
-		desc, err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
+		err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
 	} else {
-		desc, err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
+		err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
 	}
 
 	if err != nil {
@@ -385,6 +384,15 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 
 	if err := fileHandler.Close(); err != nil {
 		return nil, fmt.Errorf("unable to close file %s: %s", tmpPath, err)
+	}
+
+	isArchiveEmpty, err := repo.IsNoCommitTreeEntriesMatched(ctx, opts.Commit, opts.PathScope, opts.PathMatcher)
+	if err != nil {
+		return nil, err
+	}
+
+	desc := &true_git.ArchiveDescriptor{
+		IsEmpty: isArchiveEmpty,
 	}
 
 	if archive, err := CommonGitDataManager.CreateArchiveFile(ctx, repoID, opts, tmpPath, desc); err != nil {
@@ -508,7 +516,7 @@ func (repo *Base) CreateChecksum(ctx context.Context, repoHandle repo_handle.Han
 }
 
 func (repo *Base) createChecksum(ctx context.Context, repoHandle repo_handle.Handle, opts ChecksumOptions) (checksum string, err error) {
-	lsTreeResult, err := repo.lsTreeResult(ctx, repoHandle, opts.Commit, opts.LsTreeOptions)
+	lsTreeResult, err := repo.lsTreeResultWithExistingHandle(ctx, repoHandle, opts.Commit, opts.LsTreeOptions)
 	if err != nil {
 		return "", err
 	}
@@ -516,16 +524,16 @@ func (repo *Base) createChecksum(ctx context.Context, repoHandle repo_handle.Han
 	return lsTreeResult.Checksum(ctx), nil
 }
 
-func (repo *Base) LsTreeResult(ctx context.Context, commit string, opts LsTreeOptions) (result *ls_tree.Result, err error) {
+func (repo *Base) lsTreeResult(ctx context.Context, commit string, opts LsTreeOptions) (result *ls_tree.Result, err error) {
 	err = repo.withRepoHandle(ctx, commit, func(repoHandle repo_handle.Handle) error {
-		result, err = repo.lsTreeResult(ctx, repoHandle, commit, opts)
+		result, err = repo.lsTreeResultWithExistingHandle(ctx, repoHandle, commit, opts)
 		return err
 	})
 
 	return
 }
 
-func (repo *Base) lsTreeResult(ctx context.Context, repoHandle repo_handle.Handle, commit string, opts LsTreeOptions) (result *ls_tree.Result, err error) {
+func (repo *Base) lsTreeResultWithExistingHandle(ctx context.Context, repoHandle repo_handle.Handle, commit string, opts LsTreeOptions) (result *ls_tree.Result, err error) {
 	return ls_tree.LsTree(ctx, repoHandle, commit, ls_tree.LsTreeOptions(opts))
 }
 
@@ -548,7 +556,7 @@ func (repo *Base) withRepoHandle(ctx context.Context, commit string, f func(hand
 }
 
 func (repo *Base) GetCommitTreeEntry(ctx context.Context, commit string, path string) (*ls_tree.LsTreeEntry, error) {
-	lsTreeResult, err := repo.LsTreeResult(ctx, commit, LsTreeOptions{
+	lsTreeResult, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
 		PathScope: path,
 		AllFiles:  false,
 	})
@@ -618,7 +626,7 @@ func (repo *Base) isCommitTreeEntryDirectory(ctx context.Context, commit string,
 }
 
 func (repo *Base) ReadCommitTreeEntryContent(ctx context.Context, commit string, relPath string) ([]byte, error) {
-	lsTreeResult, err := repo.LsTreeResult(ctx, commit, LsTreeOptions{
+	lsTreeResult, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
 		PathScope: relPath,
 		AllFiles:  false,
 	})
@@ -878,6 +886,18 @@ func (repo *Base) readCommitFile(ctx context.Context, commit, path string) ([]by
 	return repo.ReadCommitTreeEntryContent(ctx, commit, resolvedPath)
 }
 
+func (repo *Base) IsNoCommitTreeEntriesMatched(ctx context.Context, commit string, pathScope string, pathMatcher path_matcher.PathMatcher) (bool, error) {
+	result, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
+		PathScope: pathScope,
+		PathMatcher: pathMatcher,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return result.IsEmpty(), nil
+}
+
 func (repo *Base) WalkCommitFiles(ctx context.Context, commit string, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error {
 	if !pathMatcher.IsDirOrSubmodulePathMatched(dir) {
 		return nil
@@ -897,7 +917,7 @@ func (repo *Base) WalkCommitFiles(ctx context.Context, commit string, dir string
 		return fmt.Errorf("unable to resolve commit file %q: %s", dir, err)
 	}
 
-	result, err := repo.LsTreeResult(ctx, commit, LsTreeOptions{
+	result, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
 		PathScope: resolvedDir,
 		AllFiles:  true,
 	})

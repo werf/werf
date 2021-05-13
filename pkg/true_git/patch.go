@@ -15,23 +15,32 @@ import (
 )
 
 type PatchOptions struct {
-	// the PathScope option determines the directory or file that will get into the result (similar to <pathspec> in the git commands)
-	PathScope            string
+	PathScope            string // Determines the directory that will get into the result (similar to <pathspec> in the git commands).
 	PathMatcher          path_matcher.PathMatcher
 	FromCommit, ToCommit string
+	FileRenames          map[string]string // Files to rename during patching. Git repo relative paths of original files as keys, new filenames (without base path) as values.
 
 	WithEntireFileContext bool
 	WithBinary            bool
 }
 
 func (opts PatchOptions) ID() string {
+	var renamedOldFilePaths, renamedNewFileNames []string
+	for renamedOldFilePath, renamedNewFileName := range opts.FileRenames {
+		renamedOldFilePaths = append(renamedOldFilePaths, renamedOldFilePath)
+		renamedNewFileNames = append(renamedNewFileNames, renamedNewFileName)
+	}
+
 	return util.Sha256Hash(
-		opts.FromCommit,
-		opts.ToCommit,
-		opts.PathScope,
-		opts.PathMatcher.ID(),
-		fmt.Sprint(opts.WithBinary),
-		fmt.Sprint(opts.WithEntireFileContext),
+		append(
+			append(renamedOldFilePaths, renamedNewFileNames...),
+			opts.FromCommit,
+			opts.ToCommit,
+			opts.PathScope,
+			opts.PathMatcher.ID(),
+			fmt.Sprint(opts.WithBinary),
+			fmt.Sprint(opts.WithEntireFileContext),
+		)...
 	)
 }
 
@@ -192,7 +201,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		out = io.MultiWriter(out, os.Stdout)
 	}
 
-	p := makeDiffParser(out, opts.PathScope, opts.PathMatcher)
+	p := makeDiffParser(out, opts.PathScope, opts.PathMatcher, opts.FileRenames)
 
 WaitForData:
 	for {
