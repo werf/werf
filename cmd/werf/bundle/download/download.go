@@ -34,7 +34,7 @@ func NewCmd() *cobra.Command {
 		Long:                  common.GetLongCommandDescription(`Take latest bundle from the specified container registry using specified version tag or version mask and unpack it into provided directory (or into directory named as a resulting chart in the current working directory).`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
+			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())

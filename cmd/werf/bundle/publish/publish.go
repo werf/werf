@@ -17,8 +17,6 @@ import (
 
 	"github.com/werf/werf/pkg/deploy/helm"
 
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
@@ -60,7 +58,7 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 `),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
+			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := common.BackgroundContext()
@@ -112,8 +110,6 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd)
-	common.SetupSecretValues(&commonCmdData, cmd)
-	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
 	common.SetupReportPath(&commonCmdData, cmd)
 	common.SetupReportFormat(&commonCmdData, cmd)
@@ -304,15 +300,12 @@ func runPublish(ctx context.Context) error {
 		logboek.LogOptionalLn()
 	}
 
-	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
-
 	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, registryClientHandle, chart_extender.WerfChartOptions{
-		SecretValueFiles: *commonCmdData.SecretValues,
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, cmd_helm.Settings, registryClientHandle, chart_extender.WerfChartOptions{
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 	})

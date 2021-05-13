@@ -98,8 +98,10 @@ func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
 
 // ChartLoaded method for the chart.Extender interface
 func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
-	if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.SecretValueFiles, wc.ChartDir, wc.GiterminismManager.ProjectDir(), wc.SecretsManager); err != nil {
-		return fmt.Errorf("error decoding secrets: %s", err)
+	if wc.SecretsManager != nil {
+		if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.SecretValueFiles, wc.ChartDir, wc.GiterminismManager.ProjectDir(), wc.SecretsManager); err != nil {
+			return fmt.Errorf("error decoding secrets: %s", err)
+		}
 	}
 
 	var opts helpers.GetHelmChartMetadataOptions
