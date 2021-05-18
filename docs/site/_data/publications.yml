@@ -151,6 +151,18 @@ ru:
   #  created: ISO format date, yyyy-mm-dd
   #  comment: COMMENT
 
+  - title: "werf vs. Helm: корректно ли их вообще сравнивать?"
+    habr_url: "https://habr.com/ru/company/flant/blog/554892/"
+    img: "/images/publications/ru_290421.png"
+    created: 2020-04-29
+    comment: |
+      <p>Эта статья — развернутый ответ на вопрос, который нам периодически задают: чем werf отличается от Helm? На первый взгляд можно предположить, что задача у них примерно одинаковая: автоматизировать деплой приложений в Kubernetes. Но всё, конечно, немного сложнее ...</p>
+  - title: "Настраиваем Continuous Integration для Jenkins и Bitbucket с werf"
+    habr_url: "https://habr.com/ru/company/flant/blog/529750/"
+    img: "/images/publications/ru_181220.png"
+    created: 2020-12-18
+    comment: |
+      <p>Практический пример по организации CI в Jenkins и Bitbucket.</p>
   - title: "Запускаем тесты на GitLab Runner с werf — на примере SonarQube"
     habr_url: "https://habr.com/ru/company/flant/blog/526702/"
     img: "/images/publications/ru_091120.png"
