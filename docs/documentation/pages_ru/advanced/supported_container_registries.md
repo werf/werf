@@ -24,6 +24,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 | _JFrog Artifactory_                       | **ок** |         **ок**        |                   **ок**                       |
 | _Nexus_                                   | **ок** |   **не проверялся**   |                   **ок**                       |
 | _Quay_                                    | **ок** | **не поддерживается** |                   **ок**                       |
+| _Yandex Container Registry_               | **ок** |   **не проверялся**   |                   **ок**                       |
 
 ## Авторизация
 
