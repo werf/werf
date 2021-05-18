@@ -1,0 +1,67 @@
+project: none
+configVersion: 1
+
+---
+image: image
+from: ubuntu
+git:
+
+# Dirs:
+- add: /dir
+  to: /new_dir1
+- add: /dir
+  to: /new_dir2/new_dir
+- add: /dir/dir
+  to: /new_dir3/new_dir
+- add: /dir/dir
+  to: /new_dir4
+
+# Dirs, which will be removed:
+- add: /dir_removed_in_next_commit
+  to: /new_dir_removed_in_next_commit
+- add: /dir/dir_removed_in_next_commit
+  to: /new_dir_removed_in_next_commit2
+- add: /dir_removed_in_next_commit
+  to: /new_dir5/new_dir_removed_in_next_commit
+- add: /dir/dir_removed_in_next_commit
+  to: /new_dir6/new_dir_removed_in_next_commit
+
+# Files:
+- add: /file
+  to: /new_file
+- add: /dir/file
+  to: /new_file2
+- add: /file
+  to: /new_dir7/new_file
+- add: /dir/file
+  to: /new_dir8/new_file
+
+# Files, which will be removed:
+- add: /file_removed_in_next_commit
+  to: /new_file_removed_in_next_commit
+- add: /dir/file_removed_in_next_commit
+  to: /new_file_removed_in_next_commit2
+- add: /file_removed_in_next_commit
+  to: /new_dir9/new_file_removed_in_next_commit
+- add: /dir/file_removed_in_next_commit
+  to: /new_dir10/new_file_removed_in_next_commit
+
+# Symlinks:
+- add: /symlink
+  to: /new_symlink
+- add: /dir/symlink
+  to: /new_symlink2
+- add: /symlink
+  to: /new_dir11/new_symlink
+- add: /dir/symlink
+  to: /new_dir12/new_symlink
+
+# Symlinks, which will be removed:
+- add: /symlink_removed_in_next_commit
+  to: /new_symlink_removed_in_next_commit
+- add: /dir/symlink_removed_in_next_commit
+  to: /new_symlink_removed_in_next_commit2
+- add: /symlink_removed_in_next_commit
+  to: /new_dir13/new_symlink_removed_in_next_commit
+- add: /dir/symlink_removed_in_next_commit
+  to: /new_dir14/new_symlink_removed_in_next_commit
