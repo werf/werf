@@ -154,7 +154,7 @@ ru:
   - title: "werf vs. Helm: корректно ли их вообще сравнивать?"
     habr_url: "https://habr.com/ru/company/flant/blog/554892/"
     img: "/images/publications/ru_290421.png"
-    created: 2020-04-29
+    created: 2021-04-29
     comment: |
       <p>Эта статья — развернутый ответ на вопрос, который нам периодически задают: чем werf отличается от Helm? На первый взгляд можно предположить, что задача у них примерно одинаковая: автоматизировать деплой приложений в Kubernetes. Но всё, конечно, немного сложнее ...</p>
   - title: "Настраиваем Continuous Integration для Jenkins и Bitbucket с werf"
