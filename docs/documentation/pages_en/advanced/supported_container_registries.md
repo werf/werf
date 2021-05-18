@@ -24,6 +24,7 @@ werf tries to automatically detect the type of container registry using the repo
 | _JFrog Artifactory_                       | **ok** |         **ok**    |         **ok**                                      |
 | _Nexus_                                   | **ok** |   **not tested**  |         **ok**                                      |
 | _Quay_                                    | **ok** | **not supported** |         **ok**                                      |
+| _Yandex Container Registry_               | **ok** |   **not tested**  |         **ok**                                      |
 
 ## Authorization
 
