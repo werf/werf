@@ -1,7 +1,7 @@
 package config
 
 import (
-	"path"
+	"path/filepath"
 )
 
 type rawExportBase struct {
@@ -21,14 +21,14 @@ func (c *rawExportBase) inlinedIntoRaw(rawOrigin rawOrigin) {
 
 func (c *rawExportBase) toDirective() (exportBase *ExportBase, err error) {
 	exportBase = &ExportBase{}
-	exportBase.Add = path.Clean(c.Add)
-	exportBase.To = path.Clean(c.To)
+	exportBase.Add = filepath.ToSlash(filepath.Clean(c.Add))
+	exportBase.To = filepath.ToSlash(filepath.Clean(c.To))
 
 	if includePaths, err := InterfaceToStringArray(c.IncludePaths, c.rawOrigin.configSection(), c.rawOrigin.doc()); err != nil {
 		return nil, err
 	} else {
 		for _, p := range includePaths {
-			exportBase.IncludePaths = append(exportBase.IncludePaths, path.Clean(p))
+			exportBase.IncludePaths = append(exportBase.IncludePaths, filepath.ToSlash(filepath.Clean(p)))
 		}
 	}
 
@@ -36,7 +36,7 @@ func (c *rawExportBase) toDirective() (exportBase *ExportBase, err error) {
 		return nil, err
 	} else {
 		for _, p := range excludePaths {
-			exportBase.ExcludePaths = append(exportBase.ExcludePaths, path.Clean(p))
+			exportBase.ExcludePaths = append(exportBase.ExcludePaths, filepath.ToSlash(filepath.Clean(p)))
 		}
 	}
 

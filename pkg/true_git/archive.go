@@ -118,14 +118,12 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 		gitFileMode := lsTreeEntry.Mode
 		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.FullFilepath)
-
-		relToBasePathFilepath := util.GetRelativeToBaseFilepath(opts.PathScope, lsTreeEntry.FullFilepath)
-
+	
 		var tarEntryName string
-		if renameToFileName, willRename := opts.FileRenames[lsTreeEntry.FullFilepath]; willRename {
+		if renameToFileName, willRename := opts.FileRenames[filepath.ToSlash(filepath.Clean(lsTreeEntry.FullFilepath))]; willRename {
 			tarEntryName = renameToFileName
 		} else {
-			tarEntryName = filepath.ToSlash(relToBasePathFilepath)
+			tarEntryName = filepath.ToSlash(util.GetRelativeToBaseFilepath(opts.PathScope, lsTreeEntry.FullFilepath))
 		}
 
 		info, err := os.Lstat(absFilepath)
@@ -164,7 +162,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 			}
 
 			if debugArchive() {
-				logboek.Context(ctx).Debug().LogF("Added archive file %q\n", relToBasePathFilepath)
+				logboek.Context(ctx).Debug().LogF("Added archive file %q\n", tarEntryName)
 			}
 		case filemode.Symlink:
 			isSymlink := info.Mode()&os.ModeSymlink != 0
@@ -200,7 +198,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 			}
 
 			if debugArchive() {
-				logboek.Context(ctx).Debug().LogF("Added archive symlink %s -> %s\n", relToBasePathFilepath, linkname)
+				logboek.Context(ctx).Debug().LogF("Added archive symlink %s -> %s\n", tarEntryName, linkname)
 			}
 
 			return nil

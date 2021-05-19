@@ -1028,7 +1028,7 @@ func gitLocalPathInit(localGitMappingConfig *config.GitLocal, imageName string, 
 func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conveyor) *stage.GitMapping {
 	var stageDependencies map[stage.StageName][]string
 	if local.StageDependencies != nil {
-		stageDependencies = stageDependenciesToMap(local.GitMappingStageDependencies())
+		stageDependencies = stageDependenciesToMap(local.StageDependencies)
 	}
 
 	gitMapping := stage.NewGitMapping()
@@ -1040,8 +1040,8 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 
 	gitMapping.Add = local.GitMappingAdd()
 	gitMapping.To = local.GitMappingTo()
-	gitMapping.ExcludePaths = local.GitMappingExcludePath()
-	gitMapping.IncludePaths = local.GitMappingIncludePaths()
+	gitMapping.ExcludePaths = local.ExcludePaths
+	gitMapping.IncludePaths = local.IncludePaths
 	gitMapping.Owner = local.Owner
 	gitMapping.Group = local.Group
 	gitMapping.StagesDependencies = stageDependencies
