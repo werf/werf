@@ -20,27 +20,14 @@ const (
 	SecretDirName               = "secret"
 )
 
-type SecretValuesFilesOptions struct {
-	CustomFiles []string
-}
-
-func GetSecretValuesFiles(chartDir string, loadedChartFiles []*chart.ChartExtenderBufferedFile, opts SecretValuesFilesOptions) []*chart.ChartExtenderBufferedFile {
-	valuesFilePaths := []string{DefaultSecretValuesFileName}
-	for _, path := range opts.CustomFiles {
-		relPath := util.GetRelativeToBaseFilepath(chartDir, path)
-		valuesFilePaths = append(valuesFilePaths, relPath)
-	}
-
-	var res []*chart.ChartExtenderBufferedFile
-	for _, valuesFilePath := range valuesFilePaths {
-		for _, file := range loadedChartFiles {
-			if file.Name == valuesFilePath {
-				res = append(res, file)
-			}
+func GetDefaultSecretValuesFile(chartDir string, loadedChartFiles []*chart.ChartExtenderBufferedFile) *chart.ChartExtenderBufferedFile {
+	for _, file := range loadedChartFiles {
+		if file.Name == DefaultSecretValuesFileName {
+			return file
 		}
 	}
 
-	return res
+	return nil
 }
 
 func GetSecretDirFiles(loadedChartFiles []*chart.ChartExtenderBufferedFile) []*chart.ChartExtenderBufferedFile {

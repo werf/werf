@@ -71,7 +71,10 @@ func (wc *WerfChartStub) ChartLoaded(files []*chart.ChartExtenderBufferedFile) e
 	}
 
 	if wc.SecretsManager != nil {
-		if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.SecretValueFiles, wc.ChartDir, cwd, wc.SecretsManager); err != nil {
+		if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.ChartDir, cwd, wc.SecretsManager, secrets.DecodeAndLoadSecretsOptions{
+			CustomSecretValueFiles:  wc.SecretValueFiles,
+			LoadFromLocalFilesystem: true,
+		}); err != nil {
 			return fmt.Errorf("error decoding secrets: %s", err)
 		}
 	}
