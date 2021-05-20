@@ -1,0 +1,4 @@
+docker_image: golang:1.16.4@sha256:f7a5c5872d4bb68e152be72e4a4bf9a142a47ec2dcbb4074798d4feb6197abd7
+commands: 
+ - scripts/build_release_v2.sh {{ .Tag }}
+ - cp -a release-build/{{ .Tag }}/* /result

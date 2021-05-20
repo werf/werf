@@ -55,3 +55,32 @@ go_build() {
       sha256sum werf-* > SHA256SUMS && \
       cd -
 }
+
+go_build_v2() {
+    VERSION=$1
+
+    rm -rf $RELEASE_BUILD_DIR/$VERSION
+    mkdir -p $RELEASE_BUILD_DIR/$VERSION
+    chmod -R 0777 $RELEASE_BUILD_DIR/$VERSION
+
+    for os in linux darwin windows ; do
+        for arch in amd64 arm64 ; do
+            if [ "$os" == "windows" ] && [ "$arch" == "arm64" ] ; then
+                continue
+            fi
+
+            outputFile=$RELEASE_BUILD_DIR/$VERSION/$os-$arch/bin/werf
+            if [ "$os" == "windows" ] ; then
+                outputFile=$outputFile.exe
+            fi
+
+            echo "# Building werf $VERSION for $os $arch ..."
+
+            GOOS=$os GOARCH=$arch \
+              go build -tags "dfrunmount dfssh" -ldflags="-s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION" \
+                       -o $outputFile github.com/werf/werf/cmd/werf
+
+            echo "# Built $outputFile"
+        done
+    done
+}
