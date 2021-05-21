@@ -14,5 +14,5 @@ jobs:
       run: |
         curl -X POST \
              -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
-             -F "ref=master" \
+             -F "ref=main" \
              ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
