@@ -1,0 +1,33 @@
+groups:
+ - name: "1.0"
+   channels:
+    - name: alpha
+      version: v1.0.13+fix5
+    - name: beta
+      version: v1.0.13+fix5
+    - name: ea
+      version: v1.0.13+fix5
+    - name: stable
+      version: v1.0.13+fix5
+    - name: rock-solid
+      version: v1.0.13+fix5
+ - name: "1.1"
+   channels:
+    - name: alpha
+      version: v1.1.23+fix41
+    - name: beta
+      version: v1.1.23+fix41
+    - name: ea
+      version: v1.1.23+fix41
+    - name: stable
+      version: v1.1.23+fix41
+    - name: rock-solid
+      version: v1.1.23+fix41
+ - name: "1.2"
+   channels:
+    - name: alpha
+      version: v1.2.11+fix1
+    - name: beta
+      version: v1.2.10+fix29
+    - name: ea
+      version: v1.2.10+fix27
