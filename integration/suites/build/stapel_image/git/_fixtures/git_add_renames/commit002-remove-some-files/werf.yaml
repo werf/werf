@@ -1,0 +1,37 @@
+project: none
+configVersion: 1
+
+---
+image: image
+from: ubuntu
+git:
+
+# Dirs:
+- add: /dir
+  to: /new_dir1
+- add: /dir
+  to: /new_dir2/new_dir
+- add: /dir/dir
+  to: /new_dir3/new_dir
+- add: /dir/dir
+  to: /new_dir4
+
+# Files:
+- add: /file
+  to: /new_file
+- add: /dir/file
+  to: /new_file2
+- add: /file
+  to: /new_dir7/new_file
+- add: /dir/file
+  to: /new_dir8/new_file
+
+# Symlinks:
+- add: /symlink
+  to: /new_symlink
+- add: /dir/symlink
+  to: /new_symlink2
+- add: /symlink
+  to: /new_dir11/new_symlink
+- add: /dir/symlink
+  to: /new_dir12/new_symlink
