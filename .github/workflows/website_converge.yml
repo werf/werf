@@ -1,7 +1,7 @@
 name: Converge website
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 env:
   WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
