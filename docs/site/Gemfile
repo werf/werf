@@ -6,5 +6,5 @@ gem "html-proofer"
 gem "kramdown-parser-gfm"
 
 gem "sprockets", "~> 3.7"
-gem "nokogiri", ">= 1.10.8"
+gem "nokogiri", ">= 1.11.5"
 gem "kramdown", ">= 2.3.0"

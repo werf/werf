@@ -564,7 +564,7 @@
 }
 
 .docs .details .details__summary {
-    margin-left: -15px;
+    margin-left: 0px;
 }
 
 .docs .details .details__summary::before {
