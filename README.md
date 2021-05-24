@@ -1,12 +1,11 @@
 <p align="center">
-  <img src="https://github.com/werf/werf/raw/master/docs/site/images/werf-logo.svg?sanitize=true" style="max-height:100%;" height="175">
+  <img src="https://github.com/werf/werf/raw/main/docs/site/images/werf-logo.svg?sanitize=true" style="max-height:100%;" height="175">
 </p>
 
 <p align="center">
   <a href="https://github.com/werf/werf/discussions"><img src="https://img.shields.io/badge/GitHub-discussions-brightgreen" alt="GH Discussions"/></a>
   <a href="https://twitter.com/werf_io"><img src="https://img.shields.io/twitter/follow/werf_io?label=%40werf_io&style=flat-square" alt="Twitter"></a>
   <a href="https://t.me/werf_io"><img src="https://img.shields.io/badge/telegram-chat-179cde.svg?logo=telegram" alt="Telegram chat"></a><br>
-  <a href='https://bintray.com/flant/werf/werf/_latestVersion'><img src='https://api.bintray.com/packages/flant/werf/werf/images/download.svg'></a>
   <a href="https://godoc.org/github.com/werf/werf"><img src="https://godoc.org/github.com/werf/werf?status.svg" alt="GoDoc"></a>
   <a href="https://codeclimate.com/github/werf/werf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/bac6f23d5c366c6324b5/test_coverage" /></a>
 </p>
@@ -21,7 +20,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 <p align="center">
   <a href="https://werf.io/introduction.html">
-    <img src="https://github.com/werf/werf/raw/master/docs/site/images/werf-schema.png" width=80%>
+    <img src="https://github.com/werf/werf/raw/main/docs/site/images/werf-schema.png" width=80%>
   </a>
 </p>
 
