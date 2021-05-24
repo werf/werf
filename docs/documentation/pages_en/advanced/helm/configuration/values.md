@@ -108,7 +108,6 @@ werf:
     rails: registry.domain.com/apps/myapp/rails:e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
 
 global:
-  env: production
   werf:
     name: myapp
     version: v1.2.7

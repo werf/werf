@@ -76,7 +76,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
     env: ANY_ENV_NAME
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
   env:
-    WERF_SET_ENV_URL: "global.env_url=ANY_ENV_URL"
+    WERF_SET_ENV_URL: "env_url=ANY_ENV_URL"
 ```
 {% endraw %}
 
@@ -109,7 +109,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
   with:
     env: ANY_ENV_NAME
   env:
-    WERF_SET_ENV_URL: "global.env_url=ANY_ENV_URL"
+    WERF_SET_ENV_URL: "env_url=ANY_ENV_URL"
 ```
 {% endraw %}
 
@@ -117,11 +117,11 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 * именем (`ANY_ENV_NAME`) и; 
 * URL (`ANY_ENV_URL`).             
 
-Для того, чтобы по-разному конфигурировать приложение для используемых контуров кластера в helm-шаблонах можно использовать Go-шаблоны и переменную `.Values.global.env`, что соответствует значению, которое задаётся в качестве параметра у action (`env`).
+Для того, чтобы по-разному конфигурировать приложение для используемых контуров кластера в helm-шаблонах можно использовать Go-шаблоны и переменную `.Values.werf.env`, что соответствует значению, которое задаётся в качестве параметра у action (`env`).
 
 > Адрес окружения является необязательным. В данной статье используется исключительно в качестве примера организации окружений и для демонстрации работы с опциями werf при использовании actions (все опции werf можно задавать через переменные окружения) 
 
-Адрес окружения, URL для доступа к разворачиваемому в контуре приложению, который передаётся параметром `global.env_url`, может использоваться в helm-шаблонах, например, для конфигурации Ingress-ресурсов. Для того, чтобы определить URL, используется переменная окружения `WERF_SET_ENV_URL`, которая соответствует вызову werf с опцией `--set` (`WERF_SET_<ANY_NAME>`).
+Адрес окружения, URL для доступа к разворачиваемому в контуре приложению, который передаётся параметром `env_url`, может использоваться в helm-шаблонах, например, для конфигурации Ingress-ресурсов. Для того, чтобы определить URL, используется переменная окружения `WERF_SET_ENV_URL`, которая соответствует вызову werf с опцией `--set` (`WERF_SET_<ANY_NAME>`).
 
 > Если для шифрования значений переменных вы используете werf, то вам также необходимо добавить `encryption key` в переменную `WERF_SECRET_KEY` в Settings/Secrets проекта и добавить секрет в секцию env
 
@@ -148,7 +148,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
   run: |
     pr_id=${{ github.event.number }}
     github_repository_id=$(echo ${GITHUB_REPOSITORY} | sed -r s/[^a-zA-Z0-9]+/-/g | sed -r s/^-+\|-+$//g | tr A-Z a-z)
-    echo WERF_SET_ENV_URL=global.env_url=http://${github_repository_id}-${pr_id}.kube.DOMAIN >> $GITHUB_ENV
+    echo WERF_SET_ENV_URL=env_url=http://${github_repository_id}-${pr_id}.kube.DOMAIN >> $GITHUB_ENV
 ```
 {% endraw %}
 

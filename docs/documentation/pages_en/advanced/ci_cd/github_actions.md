@@ -119,7 +119,7 @@ You must define an environment for each tier. In our case, it is defined by:
 * the name (`ANY_ENV_NAME`), and
 * the URL (`ANY_ENV_URL`).
 
-In order to configure the application for using in different tiers, you can use Go templates and the `.Values.global.env` variable. This is analogous to setting the `env` parameter of the action.
+In order to configure the application for using in different tiers, you can use Go templates and the `.Values.werf.env` variable. This is analogous to setting the `env` parameter of the action.
 
 > The address of an environment is optional. In this article, it is used solely for illustrative purposes and to demonstrate the usage of werf when working with actions (all werf options can be set via environment variables)
 
