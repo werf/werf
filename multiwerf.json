@@ -30,7 +30,7 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.1.23+fix41"
+          "version": "v1.1.23+fix42"
         },
         {
           "name": "beta",
@@ -55,7 +55,7 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.2.11+fix2"
+          "version": "v1.2.11+fix3"
         },
         {
           "name": "beta",
