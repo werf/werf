@@ -150,7 +150,7 @@ First of all, you need to define a template – the general part of the deployme
   stage: deploy
   script:
     - *base_werf
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -174,9 +174,9 @@ Example:
 
 When running a job, `werf ci-env` sets the `WERF_ENV` variable according to the gitlab environment name (`CI_ENVIRONMENT_SLUG`)
 
-In order to configure the application for using in different tiers, you can take advantage of Go templates and the `.Values.global.env` variable in helm templates. This is analogous to setting the `–-env` option or the `WERF_ENV` environment variable.
+In order to configure the application for using in different tiers, you can take advantage of Go templates and the `.Values.werf.env` variable in helm templates. This is analogous to setting the `–-env` option or the `WERF_ENV` environment variable.
 
-The template also makes use of the environment address – the URL for accessing the application deployed to the tier. It is passed via the `global.env_url` parameter. 
+The template also makes use of the environment address – the URL for accessing the application deployed to the tier. It is passed via the `env_url` parameter. 
 This value can be used in helm templates, for example, for configuring Ingress resources.
 
 Below, we will discuss some popular strategies and practices that may serve as a basis for building your processes in GitLab.
@@ -339,7 +339,7 @@ Review:
       # do optional deploy/dismiss
 
       if echo $CI_MERGE_REQUEST_LABELS | tr ',' '\n' | grep -q -P '^review$'; then
-        werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -585,7 +585,7 @@ Build and Publish:
   stage: deploy
   script:
     - *base_werf
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   tags: [werf]
@@ -598,7 +598,7 @@ Review:
       # do optional deploy/dismiss
 
       if echo $CI_MERGE_REQUEST_LABELS | tr ',' '\n' | grep -q -P '^review$'; then
-        werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -700,7 +700,7 @@ Build and Publish:
   stage: deploy
   script:
     - *base_werf
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -802,7 +802,7 @@ Build and Publish:
   stage: deploy
   script:
     - *base_werf
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -903,7 +903,7 @@ Build and Publish:
   stage: deploy
   script:
     - *base_werf
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
