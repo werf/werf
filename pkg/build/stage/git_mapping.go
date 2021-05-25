@@ -506,11 +506,6 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 			return nil, err
 		}
 
-		if archive.IsEmpty() {
-			commands = append(commands, rmEmptyChangedDirsCommands...)
-			return commands, nil
-		}
-
 		archiveFile, err := gm.prepareArchiveFile(archive)
 		if err != nil {
 			return nil, fmt.Errorf("cannot prepare archive file: %s", err)
@@ -628,10 +623,6 @@ func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string
 	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, *archiveOpts)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create git archive for commit %s with path scope %s: %s", archiveOpts.Commit, archiveOpts.PathScope, err)
-	}
-
-	if archive.IsEmpty() {
-		return nil, nil
 	}
 
 	archiveFile, err := gm.prepareArchiveFile(archive)
@@ -842,21 +833,6 @@ func (gm *GitMapping) baseIsPatchEmpty(ctx context.Context, fromCommit, toCommit
 	return patch.IsEmpty(), nil
 }
 
-func (gm *GitMapping) IsEmpty(ctx context.Context, c Conveyor) (bool, error) {
-	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
-	if err != nil {
-		return false, fmt.Errorf("unable to get latest commit info: %s", err)
-	}
-
-	archiveOpts, err := gm.makeArchiveOptions(ctx, commitInfo.Commit)
-	if err != nil {
-		return false, err
-	}
-
-	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, *archiveOpts)
-	return archive.IsEmpty(), nil
-}
-
 func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFileDescriptor, error) {
 	return &ContainerFileDescriptor{
 		FilePath:          archive.GetFilePath(),
@@ -945,4 +921,23 @@ func (gm *GitMapping) getArchiveType(ctx context.Context, commit string) (git_re
 	}
 
 	return git_repo.FileArchive, nil
+}
+
+func (gm *GitMapping) isEmpty(ctx context.Context, c Conveyor) (bool, error) {
+	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
+	if err != nil {
+		return true, err
+	}
+
+	pathScope, err := gm.getPathScope(ctx, commitInfo.Commit)
+	if err != nil {
+		return true, err
+	}
+
+	isAnyMatchesByGitAdd, err := gm.GitRepo().IsAnyCommitTreeEntriesMatched(ctx, commitInfo.Commit, pathScope, gm.getPathMatcher(), true)
+	if err != nil {
+		return true, err
+	}
+
+	return !isAnyMatchesByGitAdd, nil
 }

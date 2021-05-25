@@ -107,7 +107,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 	}
 	if result.IsEmpty() {
 		logProcess.Fail()
-		return fmt.Errorf("lstree result is empty when writing tar archive")
+		return fmt.Errorf("lstree result is empty when writing tar archive. PathScope: %q. PathMatcher configuration: %q", opts.PathScope, opts.PathMatcher)
 	}
 	logProcess.End()
 
