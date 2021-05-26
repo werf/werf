@@ -184,17 +184,26 @@ func (s *ImportsStage) generateImportChecksum(ctx context.Context, c Conveyor, i
 func generateChecksumCommand(from string, includePaths, excludePaths []string, resultChecksumPath string) string {
 	findCommandParts := append([]string{}, stapel.FindBinPath(), from, "-type", "f")
 
-	var nameArgs []string
+	var nameIncludeArgs []string
 	for _, includePath := range includePaths {
-		nameArgs = append(nameArgs, fmt.Sprintf("-wholename \"%s\"", path.Join(from, includePath)))
+		nameIncludeArgs = append(nameIncludeArgs, fmt.Sprintf("-wholename \"%s\"", path.Join(from, includePath)))
 	}
 
+	if len(nameIncludeArgs) != 0 {
+		findCommandParts = append(findCommandParts, fmt.Sprintf("\\( %s \\)", strings.Join(nameIncludeArgs, " -or ")))
+	}
+
+	var nameExcludeArgs []string
 	for _, excludePath := range excludePaths {
-		nameArgs = append(nameArgs, fmt.Sprintf("! -wholename \"%s\"", path.Join(from, excludePath)))
+		nameExcludeArgs = append(nameExcludeArgs, fmt.Sprintf("! -wholename \"%s\"", path.Join(from, excludePath)))
 	}
 
-	if len(nameArgs) != 0 {
-		findCommandParts = append(findCommandParts, fmt.Sprintf("\\( %s \\)", strings.Join(nameArgs, " -and ")))
+	if len(nameExcludeArgs) != 0 {
+		if len(nameIncludeArgs) != 0 {
+			findCommandParts = append(findCommandParts, fmt.Sprintf("-and"))
+		}
+
+		findCommandParts = append(findCommandParts, fmt.Sprintf("\\( %s \\)", strings.Join(nameExcludeArgs, " -and ")))
 	}
 
 	findCommand := strings.Join(findCommandParts, " ")

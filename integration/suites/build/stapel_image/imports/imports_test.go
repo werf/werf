@@ -1,6 +1,8 @@
 package imports_test
 
 import (
+	"fmt"
+	"path"
 	"strings"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -39,7 +41,7 @@ var _ = Describe("Stapel imports", func() {
 		})
 
 		It("should allow importing files and directories, optionally rename files and directories and merge directories", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "imports_app1-001", "initial commit")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("imports_app_1", "001"), "initial commit")
 
 			gotNoSuchFileError := false
 			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
@@ -51,7 +53,7 @@ var _ = Describe("Stapel imports", func() {
 			})).NotTo(Succeed())
 			Expect(gotNoSuchFileError).To(BeTrue())
 
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "imports_app1-002", "add missing no-such-dir")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("imports_app_1", "002"), "add missing no-such-dir")
 
 			gotNoSuchFileError = false
 			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
@@ -63,7 +65,7 @@ var _ = Describe("Stapel imports", func() {
 			})).NotTo(Succeed())
 			Expect(gotNoSuchFileError).To(BeTrue())
 
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "imports_app1-003", "add missing file-no-such-file")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("imports_app_1", "003"), "add missing file-no-such-file")
 
 			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
 			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/usr/local/FILE")).To(ContainSubstring("FILE\n"))
@@ -76,6 +78,34 @@ var _ = Describe("Stapel imports", func() {
 			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/file2")).To(ContainSubstring("GOGOGO\n"))
 			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/file")).To(ContainSubstring("GOGOGO\n"))
 		})
+
+		// There are three imports to different destination directories "/dest{1,3}".
+		// All directories are expected to contain the same files "/dest{1,3}/added_file{1,2}".
+		// The test consists of two steps, each step expects imported files with different content "VERSION_{1,2}\n".
+		It("should import artifacts and reimport them at the next build (tests include and exclude paths)", func() {
+			for stepInd := 1; stepInd <= 2; stepInd++ {
+				stepID := fmt.Sprintf("00%d", stepInd)
+				stepDir := utils.FixturePath("imports_app_2", stepID)
+				SuiteData.CommitProjectWorktree(SuiteData.ProjectName, stepDir, stepID)
+
+				Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+
+				expectedStepFileContent := fmt.Sprintf("VERSION_%d\n", stepInd)
+				for destInd := 1; destInd <= 3; destInd++ {
+					destDir := fmt.Sprintf("/dest%d", destInd)
+					for fileInd := 1; fileInd <= 2; fileInd++ {
+						destFilePath := path.Join(destDir, fmt.Sprintf("added_file%d", fileInd))
+						Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", destFilePath)).To(ContainSubstring(expectedStepFileContent))
+					}
+
+					for fileInd := 3; fileInd <= 4; fileInd++ {
+						destFilePath := path.Join(destDir, fmt.Sprintf("not_added_file%d", fileInd))
+						checkFileNotExistCommand := fmt.Sprintf("test -f %s || echo 'not exist'", destFilePath)
+						Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "sh", "-c", checkFileNotExistCommand)).To(ContainSubstring("not exist"))
+					}
+				}
+			}
+		})
 	})
 
 	Context("caching by import source checksum", func() {
@@ -84,7 +114,7 @@ var _ = Describe("Stapel imports", func() {
 		})
 
 		It("should cache image when import source checksum was not changed", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-001", "initial commit")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_metadata", "001"), "initial commit")
 
 			utils.RunSucceedCommand(
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
@@ -94,7 +124,7 @@ var _ = Describe("Stapel imports", func() {
 
 			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
 
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-002", "change artifact fromCacheVersion")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_metadata", "002"), "change artifact fromCacheVersion")
 
 			utils.RunSucceedCommand(
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
@@ -108,7 +138,7 @@ var _ = Describe("Stapel imports", func() {
 		})
 
 		It("should rebuild image when import source checksum was changed", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-001", "initial commit")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_metadata", "001"), "initial commit")
 
 			utils.RunSucceedCommand(
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
@@ -118,7 +148,7 @@ var _ = Describe("Stapel imports", func() {
 
 			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
 
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-003", "change artifact install stage")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_metadata", "003"), "change artifact install stage")
 
 			utils.RunSucceedCommand(
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
