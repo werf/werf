@@ -1,6 +1,8 @@
 package imports_test
 
 import (
+	"fmt"
+	"path"
 	"strings"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -75,6 +77,34 @@ var _ = Describe("Stapel imports", func() {
 			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "ls", "/usr/share/apk")).To(ContainSubstring("keys\n"))
 			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/file2")).To(ContainSubstring("GOGOGO\n"))
 			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/file")).To(ContainSubstring("GOGOGO\n"))
+		})
+
+		// There are three imports to different destination directories "/dest{1,3}".
+		// All directories are expected to contain the same files "/dest{1,3}/added_file{1,2}".
+		// The test consists of two steps, each step expects imported files with different content "VERSION_{1,2}\n".
+		It("should import artifacts and reimport them at the next build (tests include and exclude paths)", func() {
+			for stepInd := 1; stepInd <= 2; stepInd++ {
+				stepID := fmt.Sprintf("00%d", stepInd)
+				stepDir := utils.FixturePath("imports_app_2", stepID)
+				SuiteData.CommitProjectWorktree(SuiteData.ProjectName, stepDir, stepID)
+
+				Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+
+				expectedStepFileContent := fmt.Sprintf("VERSION_%d\n", stepInd)
+				for destInd := 1; destInd <= 3; destInd++ {
+					destDir := fmt.Sprintf("/dest%d", destInd)
+					for fileInd := 1; fileInd <= 2; fileInd++ {
+						destFilePath := path.Join(destDir, fmt.Sprintf("added_file%d", fileInd))
+						Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", destFilePath)).To(ContainSubstring(expectedStepFileContent))
+					}
+
+					for fileInd := 3; fileInd <= 4; fileInd++ {
+						destFilePath := path.Join(destDir, fmt.Sprintf("not_added_file%d", fileInd))
+						checkFileNotExistCommand := fmt.Sprintf("test -f %s || echo 'not exist'", destFilePath)
+						Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "sh", "-c", checkFileNotExistCommand)).To(ContainSubstring("not exist"))
+					}
+				}
+			}
 		})
 	})
 
