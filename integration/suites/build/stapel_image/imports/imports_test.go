@@ -39,7 +39,7 @@ var _ = Describe("Stapel imports", func() {
 		})
 
 		It("should allow importing files and directories, optionally rename files and directories and merge directories", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "imports_app1-001", "initial commit")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("imports_app_1", "001"), "initial commit")
 
 			gotNoSuchFileError := false
 			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
@@ -51,7 +51,7 @@ var _ = Describe("Stapel imports", func() {
 			})).NotTo(Succeed())
 			Expect(gotNoSuchFileError).To(BeTrue())
 
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "imports_app1-002", "add missing no-such-dir")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("imports_app_1", "002"), "add missing no-such-dir")
 
 			gotNoSuchFileError = false
 			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
@@ -63,7 +63,7 @@ var _ = Describe("Stapel imports", func() {
 			})).NotTo(Succeed())
 			Expect(gotNoSuchFileError).To(BeTrue())
 
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "imports_app1-003", "add missing file-no-such-file")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("imports_app_1", "003"), "add missing file-no-such-file")
 
 			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
 			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/usr/local/FILE")).To(ContainSubstring("FILE\n"))
@@ -84,7 +84,7 @@ var _ = Describe("Stapel imports", func() {
 		})
 
 		It("should cache image when import source checksum was not changed", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-001", "initial commit")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_metadata", "001"), "initial commit")
 
 			utils.RunSucceedCommand(
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
@@ -94,7 +94,7 @@ var _ = Describe("Stapel imports", func() {
 
 			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
 
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-002", "change artifact fromCacheVersion")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_metadata", "002"), "change artifact fromCacheVersion")
 
 			utils.RunSucceedCommand(
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
@@ -108,7 +108,7 @@ var _ = Describe("Stapel imports", func() {
 		})
 
 		It("should rebuild image when import source checksum was changed", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-001", "initial commit")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_metadata", "001"), "initial commit")
 
 			utils.RunSucceedCommand(
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
@@ -118,7 +118,7 @@ var _ = Describe("Stapel imports", func() {
 
 			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
 
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "import_metadata-003", "change artifact install stage")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_metadata", "003"), "change artifact install stage")
 
 			utils.RunSucceedCommand(
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),

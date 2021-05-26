@@ -1,4 +1,4 @@
-project: imports-app1
+project: none
 configVersion: 1
 ---
 artifact: myartifact
@@ -24,7 +24,7 @@ import:
   to: /usr/locallll
   after: install
 - artifact: myartifact
-  add: /myartifact/
+  add: /myartifact/no-such-dir
   to: /usr/newlocal
   after: install
 - artifact: myartifact
