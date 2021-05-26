@@ -173,7 +173,7 @@ sections:
               en: Allow werf to automatically convert project shallow git clone to full one during build process when needed
               ru: Разрешить процессу werf автоматически преобразовать shallow clone проекта в полный clone в процессе сборки по необходимости
             default: true
-          - name: namespace
+          - name: allowFetchOriginBranchesAndTags
             value: "bool"
             description:
               en: Allow werf to synchronize git branches and tags with remote origin during cleanup process when needed
