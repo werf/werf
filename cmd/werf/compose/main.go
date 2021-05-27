@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -323,7 +324,18 @@ func runMain(dockerComposeCmdName string, cmdData composeCmdData, commonCmdData 
 			return run(ctx, headCommitGiterminismManager, commonCmdData, cmdData, dockerComposeCmdName)
 		})
 	} else {
-		return run(ctx, giterminismManager, commonCmdData, cmdData, dockerComposeCmdName)
+		if err := run(ctx, giterminismManager, commonCmdData, cmdData, dockerComposeCmdName); err != nil {
+			// TODO: use docker cli StatusError after switching on docker compose command
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+					common.TerminateWithError(err.Error(), status.ExitStatus())
+				}
+			}
+
+			return err
+		}
+
+		return nil
 	}
 }
 
@@ -412,6 +424,7 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 		dockerComposeArgs = append(dockerComposeArgs, cmdData.ComposeCommandArgs...)
 	}
 
+	// TODO: use docker CLI compose command instead of host docker-compose binary
 	if *commonCmdData.DryRun {
 		for _, env := range envArray {
 			fmt.Println("export", env)
