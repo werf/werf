@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/cli/cli"
+
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/giterminism_manager"
 
@@ -311,7 +313,15 @@ func runMain() error {
 			return nil
 		})
 	} else {
-		return run(ctx, giterminismManager)
+		if err := run(ctx, giterminismManager); err != nil {
+			if statusErr, ok := err.(cli.StatusError); ok {
+				common.TerminateWithError(err.Error(), statusErr.StatusCode)
+			}
+
+			return err
+		}
+
+		return nil
 	}
 }
 
