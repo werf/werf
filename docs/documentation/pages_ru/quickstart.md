@@ -40,11 +40,9 @@ werf version
 
    {% raw %}
    ```shell
-   minikube start --driver=docker --insecure-registry registry.example.com:80
+   minikube start --insecure-registry registry.example.com:80
    ```
    {% endraw %}
-
-   **ВАЖНО.** Если minikube уже запущен в вашей системе, то надо удостоверится, что используется driver под названием `docker`. Если нет, то требуется перезапустить minikube с помощью команды `minikube delete` и команды для старта, показанной выше.
 
    **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
@@ -73,29 +71,29 @@ werf version
    apiVersion: networking.k8s.io/v1
    kind: Ingress
    metadata:
-   name: registry
-   namespace: kube-system
-   annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+     name: registry
+     namespace: kube-system
+     annotations:
+       nginx.ingress.kubernetes.io/proxy-body-size: "0"
    spec:
-   rules:
-   - host: registry.example.com
-      http:
+     rules:
+     - host: registry.example.com
+       http:
          paths:
          - path: /
-         pathType: Prefix
-         backend:
-            service:
+           pathType: Prefix
+           backend:
+             service:
                name: registry
                port:
-               number: 80
+                 number: 80
    EOF
    ```
    {% endraw %}
 
 5. Разрешаем доступ в Container Registry без TLS для docker:
 
-   В файл, находящийся по умолчанию в `%programdata%\docker\config\daemon.json`, добавим новый ключ:
+   Через меню Docker Desktop -> Settings -> Docker Engine добавим новый ключ в конфигурацию:
 
    ```json
    {
@@ -163,11 +161,9 @@ werf version
 
    {% raw %}
    ```shell
-   minikube start --driver=docker --insecure-registry registry.example.com:80
+   minikube start --vm=true --insecure-registry registry.example.com:80
    ```
    {% endraw %}
-
-   **ВАЖНО.** Если minikube уже запущен в вашей системе, то надо удостоверится, что используется driver под названием `docker`. Если нет, то требуется перезапустить minikube с помощью команды `minikube delete` и команды для старта, показанной выше.
 
    **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
@@ -196,29 +192,29 @@ werf version
    apiVersion: networking.k8s.io/v1
    kind: Ingress
    metadata:
-   name: registry
-   namespace: kube-system
-   annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+     name: registry
+     namespace: kube-system
+     annotations:
+       nginx.ingress.kubernetes.io/proxy-body-size: "0"
    spec:
-   rules:
-   - host: registry.example.com
-      http:
+     rules:
+     - host: registry.example.com
+       http:
          paths:
          - path: /
-         pathType: Prefix
-         backend:
-            service:
+           pathType: Prefix
+           backend:
+             service:
                name: registry
                port:
-               number: 80
+                 number: 80
    EOF
    ```
    {% endraw %}
 
 5. Разрешаем доступ в Container Registry без TLS для docker:
 
-   В файл, по умолчанию находящийся в `/etc/docker/daemon.json`, добавим новый ключ:
+   Через меню Docker Desktop -> Settings -> Docker Engine добавим новый ключ в конфигурацию:
    
    ```json
    {
@@ -267,11 +263,9 @@ werf version
 
    {% raw %}
    ```shell
-   minikube start --driver=docker --insecure-registry registry.example.com:80
+   minikube start --insecure-registry registry.example.com:80
    ```
    {% endraw %}
-
-   **ВАЖНО.** Если minikube уже запущен в вашей системе, то надо удостоверится, что используется driver под названием `docker`. Если нет, то требуется перезапустить minikube с помощью команды `minikube delete` и команды для старта, показанной выше.
 
    **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
@@ -300,30 +294,30 @@ werf version
    apiVersion: networking.k8s.io/v1
    kind: Ingress
    metadata:
-   name: registry
-   namespace: kube-system
-   annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+     name: registry
+     namespace: kube-system
+     annotations:
+       nginx.ingress.kubernetes.io/proxy-body-size: "0"
    spec:
-   rules:
-   - host: registry.example.com
-      http:
+     rules:
+     - host: registry.example.com
+       http:
          paths:
          - path: /
-         pathType: Prefix
-         backend:
-            service:
+           pathType: Prefix
+           backend:
+             service:
                name: registry
                port:
-               number: 80
+                 number: 80
    EOF
    ```
    {% endraw %}
-
+   
 5. Разрешаем доступ в Container Registry без TLS для docker:
 
    В файл, по умолчанию находящийся в `/etc/docker/daemon.json`, добавим новый ключ:
-   
+
    ```json
    {
    "insecure-registries": ["registry.example.com:80"]
