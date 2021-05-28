@@ -38,12 +38,10 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 
    {% raw %}
    ```shell
-   minikube start --driver=docker --insecure-registry registry.example.com:80
+   minikube start --insecure-registry registry.example.com:80
    ```
    {% endraw %}
     
-   **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
-
    **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
 
 3. Install NGINX Ingress Controller:
@@ -61,39 +59,39 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    minikube addons enable registry
    ```
    {% endraw %}
-    
+
    Create Ingress to access Container Registry:
- 
-    {% raw %}
+   
+   {% raw %}
    ```shell
    kubectl apply -f - << EOF
    ---
    apiVersion: networking.k8s.io/v1
    kind: Ingress
    metadata:
-   name: registry
-   namespace: kube-system
-   annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+     name: registry
+     namespace: kube-system
+     annotations:
+       nginx.ingress.kubernetes.io/proxy-body-size: "0"
    spec:
-   rules:
-   - host: registry.example.com
-      http:
+     rules:
+     - host: registry.example.com
+       http:
          paths:
          - path: /
-         pathType: Prefix
-         backend:
-            service:
+           pathType: Prefix
+           backend:
+             service:
                name: registry
                port:
-               number: 80
+                 number: 80
    EOF
    ```
    {% endraw %}
 
 5. Allow usage of Container Registry without TLS for docker:
 
-   Add new key to the file `%programdata%\docker\config\daemon.json` (default location):
+   Using menu Docker Desktop -> Settings -> Docker Engine add following configuration key:
 
    ```json
    {
@@ -160,12 +158,10 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 
    {% raw %}
    ```shell
-   minikube start --driver=docker --insecure-registry registry.example.com:80
+   minikube start --vm=true --insecure-registry registry.example.com:80
    ```
    {% endraw %}
     
-   **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
-
    **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
 
 3. Install NGINX Ingress Controller:
@@ -186,36 +182,36 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     
    Create Ingress to access Container Registry:
  
-    {% raw %}
+   {% raw %}
    ```shell
    kubectl apply -f - << EOF
    ---
    apiVersion: networking.k8s.io/v1
    kind: Ingress
    metadata:
-   name: registry
-   namespace: kube-system
-   annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+     name: registry
+     namespace: kube-system
+     annotations:
+       nginx.ingress.kubernetes.io/proxy-body-size: "0"
    spec:
-   rules:
-   - host: registry.example.com
-      http:
+     rules:
+     - host: registry.example.com
+       http:
          paths:
          - path: /
-         pathType: Prefix
-         backend:
-            service:
+           pathType: Prefix
+           backend:
+             service:
                name: registry
                port:
-               number: 80
+                 number: 80
    EOF
    ```
    {% endraw %}
 
 5. Allow usage of Container Registry without TLS for docker:
 
-   Add new key to the file `/etc/docker/daemon.json` (default location):
+   Using menu Docker Desktop -> Settings -> Docker Engine add following configuration key:
 
    ```json
    {
@@ -263,12 +259,10 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 
    {% raw %}
    ```shell
-   minikube start --driver=docker --insecure-registry registry.example.com:80
+   minikube start --insecure-registry registry.example.com:80
    ```
    {% endraw %}
     
-   **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
-
    **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
 
 3. Install NGINX Ingress Controller:
@@ -289,29 +283,29 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     
    Create Ingress to access Container Registry:
  
-    {% raw %}
+   {% raw %}
    ```shell
    kubectl apply -f - << EOF
    ---
    apiVersion: networking.k8s.io/v1
    kind: Ingress
    metadata:
-   name: registry
-   namespace: kube-system
-   annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+     name: registry
+     namespace: kube-system
+     annotations:
+       nginx.ingress.kubernetes.io/proxy-body-size: "0"
    spec:
-   rules:
-   - host: registry.example.com
-      http:
+     rules:
+     - host: registry.example.com
+       http:
          paths:
          - path: /
-         pathType: Prefix
-         backend:
-            service:
+           pathType: Prefix
+           backend:
+             service:
                name: registry
                port:
-               number: 80
+                 number: 80
    EOF
    ```
    {% endraw %}
