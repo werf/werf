@@ -31,195 +31,356 @@ If your Kubernetes and container registry are running already:
 Or use one of the following instructions to set up the local Kubernetes cluster and container registry in your OS:
 
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">Windows</a>
+<a href="javascript:void(0)" class="details__summary">Windows — minikube</a>
 <div class="details__content" markdown="1">
- 1. Install [minikube](https://github.com/kubernetes/minikube#installation).
- 2. Start minikube:
+1. Install [minikube](https://github.com/kubernetes/minikube#installation).
+2. Start minikube:
 
-    {% raw %}
-    ```shell
-    minikube start --driver=docker
-    ```
-    {% endraw %}
+   {% raw %}
+   ```shell
+   minikube start --driver=docker --insecure-registry registry.example.com:80
+   ```
+   {% endraw %}
     
-    **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
+   **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
 
- 3. Enable the minikube registry addon:
+   **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
 
-    {% raw %}
-    ```shell
-    minikube addons enable registry
-    ```
-    {% endraw %}
+3. Install NGINX Ingress Controller:
+
+   {% raw %}
+   ```shell
+   minikube addons enable ingress
+   ```
+   {% endraw %}
+
+4. Install Container Registry to store images:
+
+   {% raw %}
+   ```shell
+   minikube addons enable registry
+   ```
+   {% endraw %}
     
-    Output should contain a line like:
+   Create Ingress to access Container Registry:
  
     {% raw %}
-    ```
-    ...
-    * Registry addon on with docker uses 32769 please use that instead of default 5000
-    ...
-    ```
-    {% endraw %}
+   ```shell
+   kubectl apply -f - << EOF
+   ---
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+   name: registry
+   namespace: kube-system
+   annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+   spec:
+   rules:
+   - host: registry.example.com
+      http:
+         paths:
+         - path: /
+         pathType: Prefix
+         backend:
+            service:
+               name: registry
+               port:
+               number: 80
+   EOF
+   ```
+   {% endraw %}
 
-    Remember the port `32769`.
-    
- 4. **In the separate terminal** run the following port forwarder replacing `32769` port with the port from the previous step:
+5. Allow usage of Container Registry without TLS for docker:
 
-    {% raw %}
-    ```shell
-    docker run -ti --rm --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769"
-    ```
-    {% endraw %}
+   Add new key to the file `%programdata%\docker\config\daemon.json` (default location):
 
-    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
+   ```json
+   {
+      "insecure-registries": ["registry.example.com:80"]
+   }
+   ```
 
- 5. Run a service with a binding to 5000 port:
+   Restart Docker Desktop using right button menu of the tray Docker Desktop icon.
 
-    {% raw %}
-    ```shell
-    kubectl -n kube-system expose rc/registry --type=ClusterIP --port=5000 --target-port=5000 --name=werf-registry --selector=actual-registry=true
-    ```
-    {% endraw %}
+6. Allow usage of Container Registry without TLS for werf:
 
- 6. **In the separate terminal** run the following port forwarder:
+   Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run.
 
-    {% raw %}
-    ```shell
-    kubectl port-forward --namespace kube-system service/werf-registry 5000
-    ```
-    {% endraw %}
+   For cmd.exe:
 
-    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
+   ```
+   set WERF_INSECURE_REGISTRY=1
+   ```
+
+   For bash:
+
+   ```
+   export WERF_INSECURE_REGISTRY=1
+   ```
+
+   For PowerShell:
+
+   ```
+   $Env:WERF_INSECURE_REGISTRY = "1"
+   ```
+
+7. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access Container Registry.
+
+   Let's update hosts file. Get minikube IP-address:
+
+   ```shell
+   minikube ip
+   ```
+
+   Using IP-address above append line to the end of the file `C:\Windows\System32\drivers\etc\hosts`:
+   
+   ```
+   <IP-address minikube>    vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com
+   ```
+
+   Should look like:
+   ```
+   192.168.99.99          vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com
+   ```
+
+8. Let's also add `registry.example.com` domain to the minikube node:
+
+   ```shell
+   minikube ssh -- "echo $(minikube ip) registry.example.com | sudo tee -a /etc/hosts"
+   ```
 </div>
 </div>
 
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">MacOS</a>
+<a href="javascript:void(0)" class="details__summary">MacOS — minikube</a>
 <div class="details__content" markdown="1">
- 1. Install [Docker Desktop](https://docs.docker.com/docker-for-mac/install/) or update to the latest version.
- 2. Enable Kubernetes cluster in the Docker Desktop settings. If something goes wrong and Kubernetes is not starting — try to restart Docker Desktop and reset to the factory settings.
- 3. Run container registry in the terminal:
+1. Install [minikube](https://github.com/kubernetes/minikube#installation).
+2. Start minikube:
 
+   {% raw %}
+   ```shell
+   minikube start --driver=docker --insecure-registry registry.example.com:80
+   ```
+   {% endraw %}
+    
+   **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
+
+   **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
+
+3. Install NGINX Ingress Controller:
+
+   {% raw %}
+   ```shell
+   minikube addons enable ingress
+   ```
+   {% endraw %}
+
+4. Install Container Registry to store images:
+
+   {% raw %}
+   ```shell
+   minikube addons enable registry
+   ```
+   {% endraw %}
+    
+   Create Ingress to access Container Registry:
+ 
     {% raw %}
-    ```shell
-    docker run -d -p 5000:5000 --restart=always --name registry registry:2
-    ```
-    {% endraw %}
+   ```shell
+   kubectl apply -f - << EOF
+   ---
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+   name: registry
+   namespace: kube-system
+   annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+   spec:
+   rules:
+   - host: registry.example.com
+      http:
+         paths:
+         - path: /
+         pathType: Prefix
+         backend:
+            service:
+               name: registry
+               port:
+               number: 80
+   EOF
+   ```
+   {% endraw %}
+
+5. Allow usage of Container Registry without TLS for docker:
+
+   Add new key to the file `/etc/docker/daemon.json` (default location):
+
+   ```json
+   {
+      "insecure-registries": ["registry.example.com:80"]
+   }
+   ```
+
+   Restart Docker Desktop using right button menu of the tray Docker Desktop icon.
+
+6. Allow usage of Container Registry without TLS for werf:
+
+   Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run. For bash:
+
+   ```
+   export WERF_INSECURE_REGISTRY=1
+   ```
+
+   To set this option automatically in new bash-sessions, add it to the `.bashrc`:
+
+   ```shell
+   echo export WERF_INSECURE_REGISTRY=1 | tee -a ~/.bashrc
+   ```
+
+7. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access Container Registry.
+
+   Let's update hosts file. Run the following command in the terminal:
+   
+   ```shell
+   echo "$(minikube ip) vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com" | sudo tee -a /etc/hosts
+   ```
+
+8. Let's also add `registry.example.com` domain to the minikube node:
+
+   ```shell
+   minikube ssh -- "echo $(minikube ip) registry.example.com | sudo tee -a /etc/hosts"
+   ```
 </div>
 </div>
 
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">MacOS — alternative way</a>
+<a href="javascript:void(0)" class="details__summary">Linux — minikube</a>
 <div class="details__content" markdown="1">
- 1. Install [minikube](https://github.com/kubernetes/minikube#installation).
- 2. Start minikube:
+1. Install [minikube](https://github.com/kubernetes/minikube#installation).
+2. Start minikube:
 
-    {% raw %}
-    ```shell
-    minikube start --driver=docker
-    ```
-    {% endraw %}
+   {% raw %}
+   ```shell
+   minikube start --driver=docker --insecure-registry registry.example.com:80
+   ```
+   {% endraw %}
     
-    **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and then start command shown above).
+   **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and start command shown above).
 
- 3. Enable the minikube registry addon:
+   **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
 
-    {% raw %}
-    ```shell
-    minikube addons enable registry
-    ```
-    {% endraw %}
+3. Install NGINX Ingress Controller:
+
+   {% raw %}
+   ```shell
+   minikube addons enable ingress
+   ```
+   {% endraw %}
+
+4. Install Container Registry to store images:
+
+   {% raw %}
+   ```shell
+   minikube addons enable registry
+   ```
+   {% endraw %}
     
-    Output should contain a line like:
+   Create Ingress to access Container Registry:
  
     {% raw %}
-    ```
-    ...
-    * Registry addon on with docker uses 32769 please use that instead of default 5000
-    ...
-    ```
-    {% endraw %}
+   ```shell
+   kubectl apply -f - << EOF
+   ---
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+   name: registry
+   namespace: kube-system
+   annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+   spec:
+   rules:
+   - host: registry.example.com
+      http:
+         paths:
+         - path: /
+         pathType: Prefix
+         backend:
+            service:
+               name: registry
+               port:
+               number: 80
+   EOF
+   ```
+   {% endraw %}
 
-    Remember the port `32769`.
-    
- 4. **In the separate terminal** run the following port forwarder replacing `32769` port with the port from the step 3:
+5. Allow usage of Container Registry without TLS for docker:
 
-    {% raw %}
-    ```shell
-    docker run -ti --rm --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:host.docker.internal:32769"
-    ```
-    {% endraw %}
+   Add new key to the file `/etc/docker/daemon.json` (default location):
 
-    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
+   ```json
+   {
+      "insecure-registries": ["registry.example.com:80"]
+   }
+   ```
 
- 5. **In the separate another terminal** run the following port forwarder replacing `32769` port with the port from the step 3:
+   Restart Docker:
+   
+   ```shell
+   sudo systemctl restart docker
+   ```
 
-    {% raw %}
-    ```shell
-    brew install socat
-    socat TCP-LISTEN:5000,reuseaddr,fork TCP:localhost:32769
-    ```
-    {% endraw %}
+6. Allow usage of Container Registry without TLS for werf:
 
-    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
-</div>
-</div>
+   Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run. For bash:
 
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">Linux</a>
-<div class="details__content" markdown="1">
- 1. Install [minikube](https://github.com/kubernetes/minikube#installation).
- 2. Start minikube:
+   ```
+   export WERF_INSECURE_REGISTRY=1
+   ```
 
-    {% raw %}
-    ```shell
-    minikube start --driver=docker
-    ```
-    {% endraw %}
+   To set this option automatically in new bash-sessions, add it to the `.bashrc`:
 
-    **IMPORTANT** If you have already started minikube make sure it uses `docker` driver, restart minikube otherwise (by using `minikube delete` and then start command shown above).
+   ```shell
+   echo export WERF_INSECURE_REGISTRY=1 | tee -a ~/.bashrc
+   ```
 
- 3. Enable the minikube registry addon:
+7. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access Container Registry.
 
-    {% raw %}
-    ```shell
-    minikube addons enable registry
-    ```
-    {% endraw %}
- 
- 4. **In the separate another terminal** run the following port forwarder:
+   Let's update hosts file. Run the following command in the terminal:
+   
+   ```shell
+   echo "$(minikube ip) vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com" | sudo tee -a /etc/hosts
+   ```
 
-    {% raw %}
-    ```shell
-    sudo apt-get install -y socat
-    socat -d -d TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip):5000
-    ```
-    {% endraw %}
+8. Let's also add `registry.example.com` domain to the minikube node:
 
-    **NOTE** This command should stay in foreground in this terminal, do not interrupt it.
+   ```shell
+   minikube ssh -- "echo $(minikube ip) registry.example.com | sudo tee -a /etc/hosts"
+   ```
 </div>
 </div>
 
 ## Deploy an example application
 
- 1. Clone the example application's repository:
+1. Clone the example application's repository:
 
-    {% raw %}
-    ```shell
-    git clone https://github.com/werf/quickstart-application
-    cd quickstart-application
-    ```
-    {% endraw %}
+   {% raw %}
+   ```shell
+   git clone https://github.com/werf/quickstart-application
+   cd quickstart-application
+   ```
+   {% endraw %}
 
- 2. Run the converge command using your container registry for storing images (`localhost:5000/quickstart-application` repository in the case of a local container registry).
+2. Run the converge command using your container registry for storing images (`localhost:5000/quickstart-application` repository in the case of a local container registry).
 
-    {% raw %}
-    ```shell
-    werf converge --repo localhost:5000/quickstart-application
-    ```
-    {% endraw %}
-    
+   {% raw %}
+   ```shell
+   werf converge --repo registry.example.com:80/quickstart-application
+   ```
+   {% endraw %}
+
 _NOTE: `werf` uses the same settings to connect to the Kubernetes cluster as the `kubectl` tool does: the `~/.kube/config` file and the `KUBECONFIG` environment variable. werf also supports `--kube-config` and `--kube-config-base64` parameters for specifying custom kubeconfig files._
 
 ## Check the result
@@ -228,113 +389,46 @@ When the converge command is successfully completed, it is safe to assume that o
 
 Our application is a basic voting system. Let’s check it!
 
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">Windows</a>
-<div class="details__content" markdown="1">
- 1. Go to the following URL to vote:
+1. Go to the following URL to vote: [vote.quickstart-application.example.com](http://vote.quickstart-application.example.com)
 
-    {% raw %}
-    ```
-    minikube service --namespace quickstart-application --url vote
-    ```
-    {% endraw %}
-
- 2. Go to the following URL to check the result of voting:
-
-    {% raw %}
-    ```
-    minikube service --namespace quickstart-application --url result
-    ```
-    {% endraw %}
-</div>
-</div>
-
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">MacOS</a>
-<div class="details__content" markdown="1">
- 1. Go to the following URL to vote: [http://localhost:31160](http://localhost:31160).
- 2. Go to the following URL to see the result of voting: [http://localhost:31161](http://localhost:31161).
-</div>
-</div>
-
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">MacOS — alternative way</a>
-<div class="details__content" markdown="1">
- 1. Go to the following URL to vote:
-
-    {% raw %}
-    ```
-    minikube service --namespace quickstart-application --url vote
-    ```
-    {% endraw %}
-
- 2. Go to the following URL to check the result of voting:
-
-    {% raw %}
-    ```
-    minikube service --namespace quickstart-application --url result
-    ```
-    {% endraw %}
-</div>
-</div>
-
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">Linux</a>
-<div class="details__content" markdown="1">
- 1. Go to the following URL to vote: 
-
-    {% raw %}
-    ```
-    minikube service --namespace quickstart-application --url vote
-    ```
-    {% endraw %}
-
- 2. Go to the following URL to check the result of voting:
-
-    {% raw %}
-    ```
-    minikube service --namespace quickstart-application --url result
-    ```
-    {% endraw %}
-</div>
-</div>
+2. Go to the following URL to check the result of voting: [result.quickstart-application.example.com](http://result.quickstart-application.example.com)
 
 ## How it works
 
 To deploy an application using werf, we should define the desired state in the Git (as set out in the [introduction](/introduction.html)).
 
- 1. We have the following Dockerfiles in our repository:
+1. We have the following Dockerfiles in our repository:
 
-    {% raw %}
-    ```
-    vote/Dockerfile
-    result/Dockerfile
-    worker/Dockerfile
-    ```
-    {% endraw %}
+   {% raw %}
+   ```
+   vote/Dockerfile
+   result/Dockerfile
+   worker/Dockerfile
+   ```
+   {% endraw %}
 
- 2. The `werf.yaml` file references those Dockerfiles:
+2. The `werf.yaml` file references those Dockerfiles:
 
-    {% raw %}
-    ```
-    configVersion: 1
-    project: quickstart-application
-    ---
-    image: vote
-    dockerfile: vote/Dockerfile
-    context: vote
-    ---
-    image: result
-    dockerfile: result/Dockerfile
-    context: result
-    ---
-    image: worker
-    dockerfile: worker/Dockerfile
-    context: worker
-    ```
-    {% endraw %}
+   {% raw %}
+   ```
+   configVersion: 1
+   project: quickstart-application
+   ---
+   image: vote
+   dockerfile: vote/Dockerfile
+   context: vote
+   ---
+   image: result
+   dockerfile: result/Dockerfile
+   context: result
+   ---
+   image: worker
+   dockerfile: worker/Dockerfile
+   context: worker
+   ```
+   {% endraw %}
 
- 3. Kubernetes templates for `vote`, `db`, `redis`, `result` and `worker` components of the application are described in the files of a `.helm/templates/` directory. Components interact with each other as shown in the diagram:
+3. Kubernetes templates for `vote`, `db`, `redis`, `result` and `worker` components of the application are described in the files of a `.helm/templates/` directory. Components interact with each other as shown in the diagram:
 
   ![Component interaction diagram]({{ "images/quickstart-architecture.svg" | true_relative_url }})
 
