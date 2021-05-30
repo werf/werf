@@ -1,5 +1,5 @@
 ---
-title: GitOps CLI tool
+title: Giterministic CLI tool
 permalink: /
 layout: default
 sidebar: none
@@ -35,7 +35,7 @@ sidebar: none
                 <h1 class="intro__title">Consistent<br/>delivery tool</h1>
                 <ul class="intro__features">
                     <li>The CLI tool glueing Git, Docker, Helm & Kubernetes<br/>
-                    with any CI system to implement CI/CD and GitOps.</li>
+                    with any CI system to implement CI/CD and Giterminism.</li>
                 </ul>
                 <div class="intro__btns page__btn-group">
                     <a href="{{ "introduction.html" | true_relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
@@ -142,12 +142,45 @@ sidebar: none
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                It’s GitOps,<br/>
-                but done <a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>another way</b></a>!
+                It’s like GitOps,<br/>
+                but <a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>even better!</b></a>
             </h1>
-            <div class="welcome__subtitle">
-                Git as a single source of&nbsp;truth allows you to&nbsp;make the&nbsp;entire delivery pipeline deterministic and&nbsp;idempotent.
-                You can use it manually, from within your CI/CD system or&nbsp;as&nbsp;an&nbsp;operator (coming&nbsp;soon).
+            <div class="welcome__subtitle_mini">
+                Werf introduces <b>Giterminism</b>:
+                <ul>
+                    <li>
+                        use git as a single source of truth;
+                    </li>
+                    <li>
+                        make the entire delivery pipeline deterministic and idempotent.
+                    </li>
+                </ul>
+
+                Werf supports <b>2 ways to deploy</b> an application:
+                <ol>
+                    <li>
+                        deploy application from git commit into the Kubernetes;
+                    </li>
+                    <li>
+                        publish application from git commit into the Container Registry as a <b>bundle</b>, then deploy bundle into the Kubernetes.
+                    </li>
+                </ol>
+
+                Werf tool allows usage in a different ways:
+                <ul>
+                    <li>
+                        manually;
+                    </li>
+                    <li>
+                        by CI/CD system;
+                    </li>
+                    <li>
+                        by Kubernetes operator (feature available partially);
+                    </li>
+                    <li>
+                        by heroku-like git push approach (feature unavailable yet).
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
