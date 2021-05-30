@@ -38,7 +38,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 
    {% raw %}
    ```shell
-   minikube start --insecure-registry registry.example.com:80
+   minikube start --driver=hyperv --insecure-registry registry.example.com:80
    ```
    {% endraw %}
     
@@ -259,7 +259,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 
    {% raw %}
    ```shell
-   minikube start --insecure-registry registry.example.com:80
+   minikube start --driver=docker --insecure-registry registry.example.com:80
    ```
    {% endraw %}
     

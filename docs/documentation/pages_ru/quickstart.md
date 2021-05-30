@@ -40,7 +40,7 @@ werf version
 
    {% raw %}
    ```shell
-   minikube start --insecure-registry registry.example.com:80
+   minikube start --driver=hyperv --insecure-registry registry.example.com:80
    ```
    {% endraw %}
 
@@ -263,7 +263,7 @@ werf version
 
    {% raw %}
    ```shell
-   minikube start --insecure-registry registry.example.com:80
+   minikube start --driver=docker --insecure-registry registry.example.com:80
    ```
    {% endraw %}
 
