@@ -1,5 +1,5 @@
 ---
-title: GitOps CLI-утилита
+title: Гитерминированная CLI утилита
 permalink: /
 layout: default
 sidebar: none
@@ -35,7 +35,7 @@ sidebar: none
                 <h1 class="intro__title">Инструмент<br/>консистентной<br/>доставки</h1>
                 <ul class="intro__features">
                     <li>CLI-утилита, «склеивающая» Git, Docker, Helm и Kubernetes<br>
-                    с любой CI-системой для реализации CI/CD и подхода GitOps.</li>
+                    с любой CI-системой для реализации CI/CD и подхода гитерминизм.</li>
                 </ul>
                 <div class="intro__btns page__btn-group">
                     <a href="{{ "introduction.html" | true_relative_url }}" target="_blank" class="page__btn page__btn_b page__btn_small">
@@ -143,11 +143,44 @@ sidebar: none
     <div class="page__container">
         <div class="welcome__content">
             <h1 class="welcome__title">
-                Это GitOps,<br/>но реализованный<br/><a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>по-другому</b></a>!
+                Это как GitOps,<br/><a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>но лучше!</b></a>
             </h1>
-            <div class="welcome__subtitle">
-                werf использует Git как единый источник истины и позволяет добиться детерминированного и идемпотентного процесса доставки по всему пайплайну.
-                Возможно использование вручную, из CI/CD-системы или в качестве оператора (фича в разработке и скоро будет доступна).
+            <div class="welcome__subtitle_mini">
+                Werf вводит понятие <b>гитерминизм</b>:
+                <ul>
+                    <li>
+                        использование Git как единого источника истины;
+                    </li>
+                    <li>
+                        позволяет добиться детерминированного и идемпотентного процесса доставки по всему пайплайну.
+                    </li>
+                </ul>
+
+                <b>2 способа деплоя</b> приложений через werf:
+                <ol>
+                    <li>
+                        деплой приложения из git-коммита в кластер Kubernetes
+                    </li>
+                    <li>
+                        публикация приложения из git-коммита в Container Registry в виде <b>бандла</b>, затем деплой этого бандла в Kubernetes.
+                    </li>
+                </ol>
+
+                Разные способы взаимодействия c werf:
+                <ul>
+                    <li>
+                        вручную;
+                    </li>
+                    <li>
+                        из CI/CD системы;
+                    </li>
+                    <li>
+                        в качестве оператора Kubernetes (фича доступна частично);
+                    </li>
+                    <li>
+                        через git push как в heroku (фича пока недоступна).
+                    </li>
+                </ul>
             </div>
         </div>
     </div>

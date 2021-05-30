@@ -574,6 +574,17 @@ body,
   max-width: 500px;
 }
 
+.welcome__subtitle_mini {
+  font-size: 20px;
+  font-weight: normal;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 30px;
+  letter-spacing: normal;
+  color: rgba(0, 18, 44, 0.75);
+  max-width: 500px;
+}
+
 .stats {
   position: relative;
 }
