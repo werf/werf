@@ -39,8 +39,9 @@ werf helm show all [CHART] [flags] [options]
       --verify=false
             verify the package before using it
       --version=''
-            specify the exact chart version to use. If this is not specified, the latest version is 
-            used
+            specify a version constraint for the chart version to use. This constraint can be a     
+            specific tag (e.g. 1.1.1) or it may reference a valid range (e.g. ^2.0.0). If this is   
+            not specified, the latest version is used
 ```
 
 {{ header }} Options inherited from parent commands

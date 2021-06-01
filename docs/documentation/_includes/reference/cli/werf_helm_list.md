@@ -55,7 +55,7 @@ werf helm list [flags] [options]
   -m, --max=256
             maximum number of releases to fetch
       --offset=0
-            next release name in the list, used to offset from start value
+            next release index in the list, used to offset from start value
   -o, --output=table
             prints the output in the specified format. Allowed values: table, json, yaml
       --pending=false

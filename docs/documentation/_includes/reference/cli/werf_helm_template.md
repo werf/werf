@@ -68,6 +68,8 @@ werf helm template [NAME] [CHART] [flags] [options]
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg'
             location of public keys used for verification
+      --kube-version=''
+            Kubernetes version used for Capabilities.KubeVersion
       --name-template=''
             specify template used to name the release
       --no-hooks=false
@@ -120,8 +122,9 @@ werf helm template [NAME] [CHART] [flags] [options]
       --verify=false
             verify the package before using it
       --version=''
-            specify the exact chart version to use. If this is not specified, the latest version is 
-            used
+            specify a version constraint for the chart version to use. This constraint can be a     
+            specific tag (e.g. 1.1.1) or it may reference a valid range (e.g. ^2.0.0). If this is   
+            not specified, the latest version is used
       --wait=false
             if set, will wait until all Pods, PVCs, Services, and minimum number of Pods of a       
             Deployment, StatefulSet, or ReplicaSet are in a ready state before marking the release  

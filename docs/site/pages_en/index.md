@@ -205,7 +205,7 @@ sidebar: none
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Easy to use</div>
                 <div class="features__list-item-text">
-                    werf just works out of the box with a minimal configuration. You don't even need to be a DevOps/SRE engineer to use werf. <a href="{{ "documentation/guides.html" | true_relative_url }}"><b>Many guides</b></a> are provided to quickly deploy your app into Kubernetes.
+                    werf just works out of the box with a minimal configuration. You don't even need to be a DevOps/SRE engineer to use werf. <a href="/guides.html"><b>Many guides</b></a> are provided to quickly deploy your app into Kubernetes.
                 </div>
             </li>
             <li class="features__list-item">
@@ -332,8 +332,8 @@ sidebar: none
             <a href="{{ "documentation/quickstart.html" | true_relative_url }}" class="page__btn page__btn_o documentation__btn">
                 Quickstart
             </a>
-            <a href="{{ "documentation/index.html" | true_relative_url }}" class="page__btn page__btn_o documentation__btn">
-                Documentation
+            <a href="/guides.html" class="page__btn page__btn_o documentation__btn">
+                Guides
             </a>
         </div>
     </div>
