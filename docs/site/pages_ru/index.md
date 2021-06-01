@@ -211,7 +211,7 @@ sidebar: none
                 <div class="features__list-item-icon features__list-item-icon_easy"></div>
                 <div class="features__list-item-title">Простая в использовании</div>
                 <div class="features__list-item-text">
-                    werf работает «из коробки» с минимальной конфигурацией. Вам не нужно быть DevOps/SRE-инженером, чтобы использовать werf. Доступно <a href="{{ "documentation/guides.html" | true_relative_url }}"><b>множество гайдов</b></a>, которые помогут быстро организовать деплой приложений в Kubernetes.
+                    werf работает «из коробки» с минимальной конфигурацией. Вам не нужно быть DevOps/SRE-инженером, чтобы использовать werf. Доступно <a href="/guides.html"><b>множество гайдов</b></a>, которые помогут быстро организовать деплой приложений в Kubernetes.
                 </div>
             </li>
             <li class="features__list-item">
@@ -338,7 +338,7 @@ sidebar: none
             <a href="{{ "documentation/quickstart.html" | true_relative_url }}" class="page__btn page__btn_o documentation__btn">
                 Быстрый старт
             </a>
-            <a href="{{ "documentation/guides.html" | true_relative_url }}" class="page__btn page__btn_o documentation__btn">
+            <a href="/guides.html" class="page__btn page__btn_o documentation__btn">
                 Руководства
             </a>
         </div>
