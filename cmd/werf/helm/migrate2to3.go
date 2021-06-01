@@ -130,7 +130,7 @@ func runMigrate2To3(ctx context.Context) error {
 		ConfigDataBase64: *migrate2To3CommonCmdData.KubeConfigBase64,
 	}
 
-	registryClientHandler, err := common.NewHelmRegistryClientHandle(ctx)
+	registryClientHandler, err := common.NewHelmRegistryClientHandle(ctx, &migrate2To3CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}

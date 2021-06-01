@@ -13,8 +13,8 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 )
 
-func NewHelmRegistryClientHandle(ctx context.Context) (*helm_v3.RegistryClientHandle, error) {
-	if registryClient, err := helm_v3.NewRegistryClient(logboek.Context(ctx).Debug().IsAccepted(), logboek.Context(ctx).OutStream()); err != nil {
+func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*helm_v3.RegistryClientHandle, error) {
+	if registryClient, err := helm_v3.NewRegistryClient(logboek.Context(ctx).Debug().IsAccepted(), *commonCmdData.InsecureRegistry, logboek.Context(ctx).OutStream()); err != nil {
 		return nil, err
 	} else {
 		return helm_v3.NewRegistryClientHandle(registryClient), nil

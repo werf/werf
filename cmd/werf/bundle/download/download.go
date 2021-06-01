@@ -91,7 +91,7 @@ func runApply() error {
 
 	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
 
-	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx)
+	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}
