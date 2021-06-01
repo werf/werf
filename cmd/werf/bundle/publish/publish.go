@@ -300,7 +300,7 @@ func runPublish(ctx context.Context) error {
 		logboek.LogOptionalLn()
 	}
 
-	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx)
+	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}

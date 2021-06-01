@@ -195,7 +195,7 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
 
-	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx)
+	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}

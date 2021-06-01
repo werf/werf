@@ -301,7 +301,7 @@ func runRender() error {
 
 	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
-	registryClientHandler, err := common.NewHelmRegistryClientHandle(ctx)
+	registryClientHandler, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}
