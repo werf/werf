@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -256,8 +256,8 @@ func (m *StagesStorageManager) GetStagesByDigest(ctx context.Context, stageName,
 		return cacheStages, nil
 	}
 
-	logboek.Context(ctx).Default().LogF(
-		"Stage %s cache by digest %s is not exists in the stages storage cache: will request fresh stages from storage and set stages storage cache by digest %s\n",
+	logboek.Context(ctx).Debug().LogF(
+		"Stage %s cache by digest %s is not exist in the stages storage cache: will request fresh stages from storage and set stages storage cache by digest %s\n",
 		stageName, stageDigest, stageDigest,
 	)
 	return m.atomicGetStagesByDigestWithStagesStorageCacheStore(ctx, stageName, stageDigest)
