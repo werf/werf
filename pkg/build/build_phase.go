@@ -323,7 +323,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 	// Stage is cached in the stages storage
 	if foundSuitableStage {
 		logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
-		logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
+		logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize())
 
 		logboek.Context(ctx).LogOptionalLn()
 
@@ -396,7 +396,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				stg.SetImage(i)
 
 				logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
-				logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
+				logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize())
 
 				return nil
 			}
@@ -422,7 +422,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 					}
 
 					logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
-					logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), true)
+					logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize())
 
 					return nil
 				}
@@ -580,12 +580,9 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.I
 
 	infoSectionFunc := func(err error) {
 		if err != nil {
-			logboek.Context(ctx).Streams().DoWithIndent(func() {
-				logImageCommands(ctx, stg.GetImage())
-			})
 			return
 		}
-		logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize(), false)
+		logImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize())
 	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Building stage %s", stg.LogDetailedName()).
@@ -705,40 +702,20 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 }
 
 var (
-	logImageInfoLeftPartWidth = 8
-	logImageInfoFormat        = fmt.Sprintf("  %%%ds: %%s\n", logImageInfoLeftPartWidth)
+	logImageInfoLeftPartWidth = 9
+	logImageInfoFormat        = fmt.Sprintf("%%%ds: %%s\n", logImageInfoLeftPartWidth)
 )
 
-func logImageInfo(ctx context.Context, img container_runtime.ImageInterface, prevStageImageSize int64, isUsingCache bool) {
+func logImageInfo(ctx context.Context, img container_runtime.ImageInterface, prevStageImageSize int64) {
 	repository, tag := image.ParseRepositoryAndTag(img.Name())
-	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "name", fmt.Sprintf("%s:%s", repository, tag))
-	logboek.Context(ctx).Info().LogFDetails(logImageInfoFormat, "image_id", stringid.TruncateID(img.GetStageDescription().Info.ID))
-	logboek.Context(ctx).Info().LogFDetails(logImageInfoFormat, "created", img.GetStageDescription().Info.GetCreatedAt())
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "name", repository+":"+tag)
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "id", stringid.TruncateID(img.GetStageDescription().Info.ID))
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "created", img.GetStageDescription().Info.GetCreatedAt())
 
 	if prevStageImageSize == 0 {
 		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStageDescription().Info.Size))
 	} else {
 		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", fmt.Sprintf("%s (+%s)", byteCountBinary(img.GetStageDescription().Info.Size), byteCountBinary(img.GetStageDescription().Info.Size-prevStageImageSize)))
-	}
-
-	if !isUsingCache {
-		changes := img.Container().UserCommitChanges()
-		if len(changes) != 0 {
-			fitTextOptions := types.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
-			formattedCommands := strings.TrimLeft(logboek.Context(ctx).FitText(strings.Join(changes, "\n"), fitTextOptions), " ")
-			logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "instructions", formattedCommands)
-		}
-
-		logImageCommands(ctx, img)
-	}
-}
-
-func logImageCommands(ctx context.Context, img container_runtime.ImageInterface) {
-	commands := img.Container().UserRunCommands()
-	if len(commands) != 0 {
-		fitTextOptions := types.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
-		formattedCommands := strings.TrimLeft(logboek.Context(ctx).FitText(strings.Join(commands, "\n"), fitTextOptions), " ")
-		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "commands", formattedCommands)
 	}
 }
 

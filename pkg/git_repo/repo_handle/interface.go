@@ -1,6 +1,8 @@
 package repo_handle
 
 import (
+	"fmt"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -56,12 +58,12 @@ func getSubmoduleHandleList(parentRepository *git.Repository) ([]SubmoduleHandle
 	for _, s := range ss {
 		submoduleRepository, err := s.Repository()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to get submodule %q repository: %s", s.Config().Path, err)
 		}
 
 		submoduleStatus, err := s.Status()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to get submodule %q status: %s", s.Config().Path, err)
 		}
 
 		handle, err := NewHandle(submoduleRepository)
