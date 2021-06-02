@@ -271,7 +271,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	writeEnv(w, "WERF_LOG_COLOR_MODE", werfLogColorMode, false)
 	writeEnv(w, "WERF_LOG_PROJECT_DIR", "1", false)
 	writeEnv(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
-	writeEnv(w, "WERF_LOG_TERMINAL_WIDTH", "95", false)
+	writeEnv(w, "WERF_LOG_TERMINAL_WIDTH", "130", false)
 
 	return nil
 }
@@ -364,7 +364,7 @@ func generateOther(w io.Writer) error {
 	writeEnv(w, "WERF_LOG_COLOR_MODE", "on", false)
 	writeEnv(w, "WERF_LOG_PROJECT_DIR", "1", false)
 	writeEnv(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
-	writeEnv(w, "WERF_LOG_TERMINAL_WIDTH", "95", false)
+	writeEnv(w, "WERF_LOG_TERMINAL_WIDTH", "130", false)
 
 	return nil
 }
