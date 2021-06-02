@@ -145,42 +145,8 @@ sidebar: none
                 It’s like GitOps,<br/>
                 but <a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>even better!</b></a>
             </h1>
-            <div class="welcome__subtitle_mini">
-                Werf introduces <b>Giterminism</b>:
-                <ul>
-                    <li>
-                        use git as a single source of truth;
-                    </li>
-                    <li>
-                        make the entire delivery pipeline deterministic and idempotent.
-                    </li>
-                </ul>
-
-                Werf supports <b>2 ways to deploy</b> an application:
-                <ol>
-                    <li>
-                        deploy application from git commit into the Kubernetes;
-                    </li>
-                    <li>
-                        publish application from git commit into the Container Registry as a <b>bundle</b>, then deploy bundle into the Kubernetes.
-                    </li>
-                </ol>
-
-                Werf tool allows usage in a different ways:
-                <ul>
-                    <li>
-                        manually;
-                    </li>
-                    <li>
-                        by CI/CD system;
-                    </li>
-                    <li>
-                        by Kubernetes operator (feature available partially);
-                    </li>
-                    <li>
-                        by heroku-like git push approach (feature unavailable yet).
-                    </li>
-                </ul>
+            <div class="welcome__subtitle">
+                Werf introduces <b>Giterminism</b>: use git as a single source of truth, and make the entire delivery pipeline deterministic and idempotent.
             </div>
         </div>
     </div>
@@ -189,6 +155,30 @@ sidebar: none
 <div class="features">
     <div class="page__container">
         <ul class="features__list">
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_deploy"></div>
+                <div class="features__list-item-title">Two ways to deploy</div>
+                <div class="features__list-item-text">
+                    werf supports 2 ways to deploy an application:
+                    <ol>
+                        <li>deploy application from git commit into the Kubernetes;</li>
+                        <li>publish application from git commit into the Container Registry as a bundle, then deploy bundle into the Kubernetes.</li>
+                    </ol>
+                </div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_usage"></div>
+                <div class="features__list-item-title">Flexible integration</div>
+                <div class="features__list-item-text">
+                    werf tool allows usage in different ways:
+                    <ol>
+                        <li>manually;</li>
+                        <li>by CI/CD system;</li>
+                        <li>by Kubernetes operator <small>(available partially)</small>;</li>
+                        <li>by heroku-like git push approach <small>(coming soon)</small>.</li>
+                    </ol>
+                </div>
+            </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">It’s a CLI tool</div>
@@ -202,7 +192,7 @@ sidebar: none
                 </div>
             </li>
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_easy"></div>
+                <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
                 <div class="features__list-item-title">Easy to use</div>
                 <div class="features__list-item-text">
                     werf just works out of the box with a minimal configuration. You don't even need to be a DevOps/SRE engineer to use werf. <a href="/guides.html"><b>Many guides</b></a> are provided to quickly deploy your app into Kubernetes.
@@ -216,7 +206,7 @@ sidebar: none
                 </div>
             </li>
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
+                <div class="features__list-item-icon features__list-item-icon_fast"></div>
                 <div class="features__list-item-title">Distributed building</div>
                 <div class="features__list-item-text">
                     werf implements an advanced builder boasting a distributed algorithm that <b>makes your pipelines really fast</b> thanks to distributed caching.

@@ -574,17 +574,6 @@ body,
   max-width: 500px;
 }
 
-.welcome__subtitle_mini {
-  font-size: 20px;
-  font-weight: normal;
-  font-style: normal;
-  font-stretch: normal;
-  line-height: 30px;
-  letter-spacing: normal;
-  color: rgba(0, 18, 44, 0.75);
-  max-width: 500px;
-}
-
 .stats {
   position: relative;
 }
@@ -760,6 +749,18 @@ body,
   background-image: url('/images/icons/feature-kubernetes.svg');
 }
 
+.features__list-item-icon_fast {
+  background-image: url('/images/icons/feature-fast.svg');
+}
+
+.features__list-item-icon_deploy {
+  background-image: url('/images/icons/feature-deploy.svg');
+}
+
+.features__list-item-icon_usage {
+  background-image: url('/images/icons/feature-usage.svg');
+}
+
 .features__list-item-title {
   font-size: 45px;
   font-weight: 600;
@@ -785,9 +786,9 @@ body,
   color: rgba(0, 18, 44, 0.75);
 }
 
-.features__list-item-text ul {
+.features__list-item-text ul, .features__list-item-text ol {
     margin-top: 10px;
-  }
+}
 
 .features__list-item-description {
   font-size: 25px;

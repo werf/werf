@@ -145,56 +145,52 @@ sidebar: none
             <h1 class="welcome__title">
                 Это как GitOps,<br/><a href="https://www.youtube.com/watch?v=FPMuVdW2hYs"><b>но лучше!</b></a>
             </h1>
-            <div class="welcome__subtitle_mini">
-                Werf вводит понятие <b>гитерминизм</b>:
-                <ul>
-                    <li>
-                        использование Git как единого источника истины;
-                    </li>
-                    <li>
-                        позволяет добиться детерминированного и идемпотентного процесса доставки по всему пайплайну.
-                    </li>
-                </ul>
-
-                <b>2 способа деплоя</b> приложений через werf:
-                <ol>
-                    <li>
-                        деплой приложения из git-коммита в кластер Kubernetes
-                    </li>
-                    <li>
-                        публикация приложения из git-коммита в Container Registry в виде <b>бандла</b>, затем деплой этого бандла в Kubernetes.
-                    </li>
-                </ol>
-
-                Разные способы взаимодействия c werf:
-                <ul>
-                    <li>
-                        вручную;
-                    </li>
-                    <li>
-                        из CI/CD системы;
-                    </li>
-                    <li>
-                        в качестве оператора Kubernetes (фича доступна частично);
-                    </li>
-                    <li>
-                        через git push как в heroku (фича пока недоступна).
-                    </li>
-                </ul>
+            <div class="welcome__subtitle">
+                Werf вводит понятие <b>гитерминизм</b>: используя Git как единый источник истины позволяет добиться детерминированного и идемпотентного процесса доставки по всему пайплайну.
             </div>
         </div>
-    </div>
-</div>
-
-<div class="page__container">
-    <div class="intro">
-        <div class="intro__image"></div>        
     </div>
 </div>
 
 <div class="features">
     <div class="page__container">
         <ul class="features__list">
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_deploy"></div>
+                <div class="features__list-item-title">Два варианта деплоя</div>
+                <div class="features__list-item-text">
+                    werf даёт 2 варианта деплоя приложений:
+                    <ol>
+                        <li>
+                            деплой приложения из git-коммита в кластер Kubernetes
+                        </li>
+                        <li>
+                            публикация приложения из git-коммита в Container Registry в виде <b>бандла</b>, затем деплой этого бандла в Kubernetes.
+                        </li>
+                    </ol>
+                </div>
+            </li>
+            <li class="features__list-item">
+                <div class="features__list-item-icon features__list-item-icon_usage"></div>
+                <div class="features__list-item-title">Гибкое взаимодействие</div>
+                <div class="features__list-item-text">
+                    Разные способы взаимодействия c werf:
+                    <ol>
+                        <li>
+                            вручную;
+                        </li>
+                        <li>
+                            из CI/CD системы;
+                        </li>
+                        <li>
+                            как оператор Kubernetes <small>(доступно частично)</small>;
+                        </li>
+                        <li>
+                            через git push как в heroku <small>(скоро...)</small>.
+                        </li>
+                    </ol>
+                </div>
+            </li>
             <li class="features__list-item">
                 <div class="features__list-item-icon features__list-item-icon_lifecycle"></div>
                 <div class="features__list-item-title">Консольная утилита</div>
@@ -208,7 +204,7 @@ sidebar: none
                 </div>
             </li>
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_easy"></div>
+                <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
                 <div class="features__list-item-title">Простая в использовании</div>
                 <div class="features__list-item-text">
                     werf работает «из коробки» с минимальной конфигурацией. Вам не нужно быть DevOps/SRE-инженером, чтобы использовать werf. Доступно <a href="/guides.html"><b>множество гайдов</b></a>, которые помогут быстро организовать деплой приложений в Kubernetes.
@@ -222,7 +218,7 @@ sidebar: none
                 </div>
             </li>
             <li class="features__list-item">
-                <div class="features__list-item-icon features__list-item-icon_kubernetes"></div>
+                <div class="features__list-item-icon features__list-item-icon_fast"></div>
                 <div class="features__list-item-title">Распределенная сборка</div>
                 <div class="features__list-item-text">
                     В werf реализован продвинутый сборщик, среди возможностей которого — алгоритм распределенной сборки. Благодаря нему и его распределенному кэшированию <b>ваши пайплайны становятся по-настоящему быстрыми</b>.
