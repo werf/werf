@@ -35,6 +35,7 @@ type Local struct {
 }
 
 type OpenLocalRepoOptions struct {
+	ServiceBranchPrefix      string
 	WithServiceHeadCommit    bool
 	ServiceHeadCommitOptions ServiceHeadCommit
 }
@@ -77,7 +78,8 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 			l.getRepoWorkTreeCacheDir(l.getRepoID()),
 			l.headCommit,
 			true_git.SyncSourceWorktreeWithServiceWorktreeBranchOptions{
-				OnlyStagedChanges: opts.ServiceHeadCommitOptions.WithStagedChangesOnly,
+				ServiceBranchPrefix: opts.ServiceBranchPrefix,
+				OnlyStagedChanges:   opts.ServiceHeadCommitOptions.WithStagedChangesOnly,
 			},
 		)
 		if err != nil {

@@ -15,7 +15,8 @@ import (
 )
 
 type SyncSourceWorktreeWithServiceWorktreeBranchOptions struct {
-	OnlyStagedChanges bool
+	ServiceBranchPrefix string
+	OnlyStagedChanges   bool
 }
 
 func SyncSourceWorktreeWithServiceWorktreeBranch(ctx context.Context, gitDir, sourceWorkTreeDir, workTreeCacheDir, commit string, opts SyncSourceWorktreeWithServiceWorktreeBranchOptions) (string, error) {
@@ -40,7 +41,7 @@ func SyncSourceWorktreeWithServiceWorktreeBranch(ctx context.Context, gitDir, so
 			return fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
 		}
 
-		devBranchName := fmt.Sprintf("werf-dev-%s", commit)
+		devBranchName := fmt.Sprintf("%s%s", opts.ServiceBranchPrefix, commit)
 		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorkTreeDir, destinationWorkTreeDir, commit, devBranchName, opts.OnlyStagedChanges)
 		if err != nil {
 			return fmt.Errorf("unable to sync staged changes: %s", err)

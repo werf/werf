@@ -83,6 +83,7 @@ type CmdData struct {
 	LooseGiterminism *bool
 	Dev              *bool
 	DevMode          *string
+	DevBranchPrefix  *string
 
 	IntrospectBeforeError *bool
 	IntrospectAfterError  *bool
@@ -169,6 +170,7 @@ func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupLooseGiterminism(cmdData, cmd)
 	setupDev(cmdData, cmd)
 	setupDevMode(cmdData, cmd)
+	setupDevBranchPrefix(cmdData, cmd)
 }
 
 func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
@@ -195,6 +197,18 @@ func setupDevMode(cmdData *CmdData, cmd *cobra.Command) {
 Two development modes are supported:
 - simple: for working with the worktree state of the git repository
 - strict: for working with the index state of the git repository`)
+}
+
+func setupDevBranchPrefix(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DevBranchPrefix = new(string)
+
+	defaultValue := "werf-dev-"
+	envValue := os.Getenv("WERF_DEV_BRANCH_PREFIX")
+	if envValue != "" {
+		defaultValue = envValue
+	}
+
+	cmd.Flags().StringVarP(cmdData.DevBranchPrefix, "dev-branch-prefix", "", defaultValue, `Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)`)
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -1040,6 +1054,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 
 	var openLocalRepoOptions git_repo.OpenLocalRepoOptions
 	if *cmdData.Dev {
+		openLocalRepoOptions.ServiceBranchPrefix = *cmdData.DevBranchPrefix
 		openLocalRepoOptions.WithServiceHeadCommit = true
 		openLocalRepoOptions.ServiceHeadCommitOptions.WithStagedChangesOnly = devMode == "strict"
 	}
