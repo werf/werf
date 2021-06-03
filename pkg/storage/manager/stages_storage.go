@@ -500,6 +500,12 @@ func (m *StagesStorageManager) ForEachGetImageMetadataByCommit(ctx context.Conte
 	}, func(ctx context.Context, taskId int) error {
 		commit := commits[taskId]
 
+		// Get image metadata without cache when stages storage local or special flag set
+		if m.StagesStorage.Address() == storage.LocalStorageAddress || os.Getenv("WERF_STAGES_STORAGE_DISABLE_IMAGE_METADATA_CACHE") == "1" {
+			imageMetadata, err := m.StagesStorage.GetImageMetadataByCommit(ctx, projectName, imageName, commit)
+			return f(commit, imageMetadata, err)
+		}
+
 		imageMetadata, err := storage.GetImageMetadataCache().GetImageMetadata(ctx, m.StagesStorage.Address(), imageName, commit)
 		if err != nil {
 			return fmt.Errorf("get image metadata failed: %s", err)
