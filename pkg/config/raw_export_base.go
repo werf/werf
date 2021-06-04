@@ -1,7 +1,11 @@
 package config
 
 import (
+	"context"
 	"path/filepath"
+	"strings"
+
+	"github.com/werf/logboek"
 )
 
 type rawExportBase struct {
@@ -22,6 +26,14 @@ func (c *rawExportBase) inlinedIntoRaw(rawOrigin rawOrigin) {
 func (c *rawExportBase) toDirective() (exportBase *ExportBase, err error) {
 	exportBase = &ExportBase{}
 	exportBase.Add = filepath.ToSlash(filepath.Clean(c.Add))
+
+	if strings.HasSuffix(c.To, "/") && c.To != "/" {
+		toWithoutTrailingSlash := strings.TrimSuffix(c.To, "/")
+		logboek.Context(context.Background()).Warn().LogF(
+			"WARNING: `to: %s` will be treated like `to: %s`, i.e. file/directory from `add: %s` will NOT be copied inside of the %q, instead it will be copied as %q! To hide this warning, change `to: %s` to `to: %s`.\n",
+			c.To, toWithoutTrailingSlash, c.Add, c.To, toWithoutTrailingSlash, c.To, toWithoutTrailingSlash,
+		)
+	}
 	exportBase.To = filepath.ToSlash(filepath.Clean(c.To))
 
 	if includePaths, err := InterfaceToStringArray(c.IncludePaths, c.rawOrigin.configSection(), c.rawOrigin.doc()); err != nil {

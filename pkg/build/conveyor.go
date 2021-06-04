@@ -871,7 +871,11 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 		}
 
 		for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
-			gitMappings = append(gitMappings, gitLocalPathInit(localGitMappingConfig, imageBaseConfig.Name, c))
+			gitMapping, err := gitLocalPathInit(ctx, localGitMappingConfig, imageBaseConfig.Name, c)
+			if err != nil {
+				return nil, err
+			}
+			gitMappings = append(gitMappings, gitMapping)
 		}
 	}
 
@@ -894,7 +898,11 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 			c.SetRemoteGitRepo(remoteGitMappingConfig.Name, remoteGitRepo)
 		}
 
-		gitMappings = append(gitMappings, gitRemoteArtifactInit(remoteGitMappingConfig, remoteGitRepo, imageBaseConfig.Name, c))
+		gitMapping, err := gitRemoteArtifactInit(ctx, remoteGitMappingConfig, remoteGitRepo, imageBaseConfig.Name, c)
+		if err != nil {
+			return nil, err
+		}
+		gitMappings = append(gitMappings, gitMapping)
 	}
 
 	var res []*stage.GitMapping
@@ -1003,7 +1011,7 @@ func filterAndLogGitMappings(ctx context.Context, c *Conveyor, gitMappings []*st
 	return res, nil
 }
 
-func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, imageName string, c *Conveyor) *stage.GitMapping {
+func gitRemoteArtifactInit(ctx context.Context, remoteGitMappingConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, imageName string, c *Conveyor) (*stage.GitMapping, error) {
 	gitMapping := baseGitMappingInit(remoteGitMappingConfig.GitLocalExport, imageName, c)
 
 	gitMapping.Tag = remoteGitMappingConfig.Tag
@@ -1013,16 +1021,28 @@ func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRe
 	gitMapping.Name = remoteGitMappingConfig.Name
 	gitMapping.RemoteGitRepo = remoteGitRepo
 
-	return gitMapping
+	gitMappingTo, err := makeGitMappingTo(ctx, gitMapping, remoteGitMappingConfig.GitLocalExport.GitMappingTo(), c)
+	if err != nil {
+		return nil, fmt.Errorf("unable to make remote git.to mapping for image %q: %s", imageName, err)
+	}
+	gitMapping.To = gitMappingTo
+
+	return gitMapping, nil
 }
 
-func gitLocalPathInit(localGitMappingConfig *config.GitLocal, imageName string, c *Conveyor) *stage.GitMapping {
+func gitLocalPathInit(ctx context.Context, localGitMappingConfig *config.GitLocal, imageName string, c *Conveyor) (*stage.GitMapping, error) {
 	gitMapping := baseGitMappingInit(localGitMappingConfig.GitLocalExport, imageName, c)
 
 	gitMapping.Name = "own"
 	gitMapping.LocalGitRepo = c.giterminismManager.LocalGitRepo()
 
-	return gitMapping
+	gitMappingTo, err := makeGitMappingTo(ctx, gitMapping, localGitMappingConfig.GitLocalExport.GitMappingTo(), c)
+	if err != nil {
+		return nil, fmt.Errorf("unable to make local git.to mapping for image %q: %s", imageName, err)
+	}
+	gitMapping.To = gitMappingTo
+
+	return gitMapping, nil
 }
 
 func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conveyor) *stage.GitMapping {
@@ -1039,7 +1059,6 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 	gitMapping.ContainerScriptsDir = getImageScriptsContainerDir(c)
 
 	gitMapping.Add = local.GitMappingAdd()
-	gitMapping.To = local.GitMappingTo()
 	gitMapping.ExcludePaths = local.ExcludePaths
 	gitMapping.IncludePaths = local.IncludePaths
 	gitMapping.Owner = local.Owner
@@ -1047,6 +1066,26 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conve
 	gitMapping.StagesDependencies = stageDependencies
 
 	return gitMapping
+}
+
+func makeGitMappingTo(ctx context.Context, gitMapping *stage.GitMapping, gitMappingTo string, c *Conveyor) (string, error) {
+	if gitMappingTo != "/" {
+		return gitMappingTo, nil
+	}
+
+	gitRepoName := gitMapping.GitRepo().GetName()
+	commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
+	if err != nil {
+		return "", fmt.Errorf("unable to get latest commit info for repo %q: %s", gitRepoName, err)
+	}
+
+	if gitMappingAddIsDir, err := gitMapping.GitRepo().IsCommitTreeEntryDirectory(ctx, commitInfo.Commit, gitMapping.Add); err != nil {
+		return "", fmt.Errorf("unable to determine whether git `add: %s` is dir or file for repo %q: %s", gitMapping.Add, gitRepoName, err)
+	} else if !gitMappingAddIsDir {
+		return "", fmt.Errorf("for git repo %q specifying `to: /` when adding a single file from git with `add: %s` is not allowed. Fix this by changing `to: /` to `to: /%s`.", gitRepoName, gitMapping.Add, filepath.Base(gitMapping.Add))
+	}
+
+	return gitMappingTo, nil
 }
 
 func getImagePatchesContainerDir(c *Conveyor) string {
