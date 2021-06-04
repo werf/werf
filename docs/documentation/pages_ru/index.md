@@ -91,7 +91,7 @@ editme_button: false
         </div>
     </div>
     <div class="overview__step">
-        <div class="overview__step-title">Узнай как werf работает внутри</div>
+        <div class="overview__step-title">Узнай, как werf работает внутри</div>
         <div class="overview__step-actions">
             <a class="overview__step-action" href="{{ "internals/build_process.html" | true_relative_url }}">Внутренние механизмы werf</a>
         </div>
