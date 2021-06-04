@@ -36,7 +36,7 @@ By default, werf prohibits using a particular set of directives and Go-template 
 
 ##### env 
 
-The use of the function [env]({{ "reference/werf_yaml_template_engine.html#env" | true_relative_url }}) complicates the sharing and reproducibility of the configuration in CI jobs and among developers because the value of the environment variable affects the final digest of built images and must be identical at all steps of the pipeline and during local development.
+The use of the function [env]({{ "reference/werf_yaml_template_engine.html#env-1" | true_relative_url }}) complicates the sharing and reproducibility of the configuration in CI jobs and among developers because the value of the environment variable affects the final digest of built images and must be identical at all steps of the pipeline and during local development.
 
 To activate the `env` function it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
 

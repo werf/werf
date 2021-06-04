@@ -62,8 +62,6 @@ git:
 
 > По умолчанию, использование директивы `branch` запрещено гитерминизмом (подробнее об этом в [статье]({{ "advanced/giterminism.html" | true_relative_url }}))
 
- **We do not recommend using the remote git mapping such way**. Use a particular unchangeable reference, tag, or commit to provide controllable and predictable lifecycle of software
-
 ## Использование git mapping
 
 ### Копирование директорий
