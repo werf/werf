@@ -47,6 +47,8 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
             debugging and development
+      --dev-branch-prefix='werf-dev-'
+            Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)
       --dev-mode='simple'
             Set development mode (default $WERF_DEV_MODE or simple).
             Two development modes are supported:
