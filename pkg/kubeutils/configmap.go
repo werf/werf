@@ -14,7 +14,16 @@ import (
 func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) error {
 	if _, err := client.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{}); errors.IsNotFound(err) {
 		ns := &v1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{Name: namespace},
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Namespace",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespace,
+				Labels: map[string]string{
+					"name": namespace,
+				},
+			},
 		}
 
 		if _, err := client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{}); errors.IsAlreadyExists(err) {
