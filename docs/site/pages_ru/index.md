@@ -162,10 +162,10 @@ sidebar: none
                     werf даёт 2 варианта деплоя приложений:
                     <ol>
                         <li>
-                            деплой приложения из git-коммита в кластер Kubernetes
+                            <b>converge</b> приложения из git-коммита в кластер Kubernetes;
                         </li>
                         <li>
-                            публикация приложения из git-коммита в Container Registry в виде <b>бандла</b>, затем деплой этого бандла в Kubernetes.
+                            <b>публикация</b> приложения из git-коммита в Container Registry в виде <b>бандла</b>, затем <b>деплой</b> этого <b>бандла</b> в Kubernetes.
                         </li>
                     </ol>
                 </div>
@@ -183,10 +183,10 @@ sidebar: none
                             из CI/CD системы;
                         </li>
                         <li>
-                            как оператор Kubernetes <small>(доступно частично)</small>;
+                            как оператор Kubernetes <small>(пока недоступно...)</small>;
                         </li>
                         <li>
-                            через git push как в heroku <small>(скоро...)</small>.
+                            через git push как в heroku <small>(пока недоступно...)</small>.
                         </li>
                     </ol>
                 </div>
@@ -199,7 +199,9 @@ sidebar: none
                     <ul>
                         <li><code>werf converge</code>;</li>
                         <li><code>werf dismiss</code>;</li>
-                        <li><code>werf cleanup</code>.</li>
+                        <li><code>werf cleanup</code>;</li>
+                        <li><code>werf bundle publish</code>;</li>
+                        <li><code>werf bundle apply</code>.</li>
                     </ul>
                 </div>
             </li>
