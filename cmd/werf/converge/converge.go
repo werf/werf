@@ -437,7 +437,10 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	})
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-		return helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)})
+		if err := helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
+			return fmt.Errorf("helm upgrade have failed: %s", err)
+		}
+		return nil
 	})
 }
 

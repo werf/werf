@@ -100,4 +100,4 @@ replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 
 replace github.com/deislabs/oras => github.com/werf/oras v0.8.2-0.20210128161614-26d583f169ea
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20210601124235-a8f8c178d9b8
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20210607121437-0a9ee16fc739
