@@ -30,7 +30,7 @@ channels:
     stability: 3
     title: Stable
     description:
-      en: <b>Stable</b> channel releases are mostly safe to use and we encourage to use this channel everywhere. We guarantee backward compatibility between <b>Early-Access</b> releases within minor branch (1.1.x). We guarantee that <b>Early-Access</b> release should become <b>Stable</b> not earlier than 1 week after internal tests
+      en: <b>Stable</b> channel releases are mostly safe to use and we encourage to use this channel everywhere. We guarantee backward compatibility between <b>Stable</b> releases within minor branch (1.1.x). We guarantee that <b>Early-Access</b> release should become <b>Stable</b> not earlier than 1 week after internal tests
       ru: Канал обновлений <b>Stable</b> можно безопасно использовать и мы рекомендуем этот канал обновлений везде. Мы гарантируем обратную совместимость между версиями канала обновлений <b>Stable</b> в пределах минорной версии (1.1.x). Мы гарантируем, что версия канала обновлений <b>Early-Access</b> перейдет в канал обновлений <b>Stable</b> не ранее чем через неделю после внутреннего тестирования.
     tooltip:
       en: <b>Recommended</b> channel
