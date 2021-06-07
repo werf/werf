@@ -161,8 +161,8 @@ sidebar: none
                 <div class="features__list-item-text">
                     werf supports 2 ways to deploy an application:
                     <ol>
-                        <li>deploy application from git commit into the Kubernetes;</li>
-                        <li>publish application from git commit into the Container Registry as a bundle, then deploy bundle into the Kubernetes.</li>
+                        <li><b>converge</b> application from git commit into the Kubernetes;</li>
+                        <li><b>publish</b> application from git commit into the Container Registry as a <b>bundle</b>, then <b>deploy bundle</b> into the Kubernetes.</li>
                     </ol>
                 </div>
             </li>
@@ -170,11 +170,11 @@ sidebar: none
                 <div class="features__list-item-icon features__list-item-icon_usage"></div>
                 <div class="features__list-item-title">Flexible integration</div>
                 <div class="features__list-item-text">
-                    werf tool allows usage in different ways:
+                    werf allows usage in a different ways:
                     <ol>
                         <li>manually;</li>
                         <li>by CI/CD system;</li>
-                        <li>by Kubernetes operator <small>(available partially)</small>;</li>
+                        <li>by Kubernetes operator <small>(coming soon)</small>;</li>
                         <li>by heroku-like git push approach <small>(coming soon)</small>.</li>
                     </ol>
                 </div>
@@ -187,7 +187,9 @@ sidebar: none
                     <ul>
                         <li><code>werf converge</code>;</li>
                         <li><code>werf dismiss</code>;</li>
-                        <li><code>werf cleanup</code>.</li>
+                        <li><code>werf cleanup</code>;</li>
+                        <li><code>werf bundle publish</code>;</li>
+                        <li><code>werf bundle apply</code>.</li>
                     </ul>
                 </div>
             </li>
