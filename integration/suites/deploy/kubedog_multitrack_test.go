@@ -7,6 +7,8 @@ import (
 	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/integration/pkg/utils/liveexec"
 
+	"github.com/acarl005/stripansi"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -84,6 +86,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
+					line = stripansi.Strip(line)
 					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
 						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
 							unknownDeploymentStateForbidden(mydeploy1)
@@ -120,7 +123,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 					if strings.Contains(line, `Allowed failures count for deploy/mydeploy1 exceeded 1 errors: stop tracking immediately!`) {
 						gotAllowedErrorsExceeded = true
 					}
-					if strings.Contains(line, "deploy/mydeploy1 ERROR:") && strings.HasSuffix(line, `ImagePullBackOff: Back-off pulling image "ubuntu:18.03"`) {
+					if strings.Contains(line, "deploy/mydeploy1 ERROR:") && strings.Contains(line, `ImagePullBackOff: Back-off pulling image "ubuntu:18.03"`) {
 						gotImagePullBackoffLine = true
 					}
 
