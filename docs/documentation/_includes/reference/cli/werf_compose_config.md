@@ -12,7 +12,29 @@ rules:
 - all characters are uppercase (app -&gt; APP);
 - charset /- is replaced with _ (DEV/APP-FRONTEND -&gt; DEV_APP_FRONTEND).
 
-If one or more IMAGE_NAME parameters specified, werf will build and forward only these images
+If one or more IMAGE_NAME parameters specified, werf will build and forward only these images.
+
+Given the following werf configuration:
+
+# werf.yaml
+project: x
+configVersion: 1
+---
+image: frontend
+dockerfile: frontend.Dockerfile
+---
+image: geodata-backend
+dockerfile: backend.Dockerfile
+
+Use described images as follows in your docker compose configuration:
+
+# docker-compose.yaml
+services:
+  frontend:
+    image: $WERF_FRONTEND_DOCKER_IMAGE_NAME
+  backend:
+    image: $WERF_GEODATA_BACKEND_DOCKER_IMAGE_NAME
+
 
 {{ header }} Syntax
 
