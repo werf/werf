@@ -7,6 +7,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig/v3 v3.2.2
+	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/alessio/shellescape v0.0.0-20190409004728-b115ca0f9053
 	github.com/aws/aws-sdk-go v1.35.20
@@ -64,7 +65,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
-	github.com/werf/kubedog v0.5.1-0.20210512165540-cb7b6159dc43
+	github.com/werf/kubedog v0.5.1-0.20210609160536-255fd6e7fe3e
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.5.4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
