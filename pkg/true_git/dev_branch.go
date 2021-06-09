@@ -88,6 +88,7 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorkTreeDi
 		"diff",
 		"--full-index",
 		"--binary",
+		"--ignore-submodules=untracked",
 	}
 	if onlyStagedChanges {
 		gitDiffArgs = append(gitDiffArgs, "--cached")
