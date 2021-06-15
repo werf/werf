@@ -693,9 +693,10 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 		}
 
 		if checksum == "" {
+			absDepPath := path.Join(gm.Add, p)
 			logboek.Context(ctx).Warn().LogF(
-				"WARNING: stage %s dependency path %s has not been found in %s git\n",
-				stageName, p, gm.GitRepo().GetName(),
+				"WARNING: stage %s dependency path %q has not been found in %s git\n",
+				stageName, absDepPath, gm.GitRepo().GetName(),
 			)
 		} else {
 			hash.Write([]byte(checksum))
