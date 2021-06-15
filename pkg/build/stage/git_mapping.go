@@ -627,7 +627,7 @@ func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string
 
 	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, *archiveOpts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to create git archive for commit %s with path scope %s: %s", archiveOpts.Commit, archiveOpts.PathScope, err)
 	}
 
 	if archive.IsEmpty() {
@@ -864,7 +864,7 @@ func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFi
 }
 
 func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
-	//FIXME: create this file using GitDataManager
+	// FIXME: create this file using GitDataManager
 
 	pathsListFilePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fmt.Sprintf("%s.paths_list", filepath.Base(patch.GetFilePath())))
 	containerFilePath := path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetPatchesCacheDir(), pathsListFilePath)))
