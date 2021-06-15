@@ -74,3 +74,6 @@
 .highlight .ss {
   color: #a6e22e;
 }
+.highlight .hll {
+  background: rgba(255,255,255,0.25);
+}

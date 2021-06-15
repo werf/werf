@@ -1,5 +1,6 @@
 .tabs {
   display: flex;
+  flex-wrap: wrap;
 }
 
 .tabs__btn {
@@ -15,8 +16,7 @@
   font-stretch: normal;
   letter-spacing: normal;
   box-sizing: border-box;
-  margin: 10px;
-  margin-left: 0;
+  margin: 0 10px 10px 0;
 
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -43,8 +43,31 @@
 
 .tabs__content {
   display: none;
+  border: 2px solid #eef2ff;
+  padding: 20px 15px;
+}
+
+.tabs__content > *:first-child {
+  margin-top: 0px;
+}
+
+.tabs__content > *:last-child {
+  margin-bottom: 0px;
 }
 
 .tabs__content.active {
   display: block;
+}
+
+.tabs_simple .tabs__btn {
+  margin: 10px;
+}
+
+.tabs_simple .tabs__btn:first-child {
+  margin-left: 0px;
+}
+
+.tabs__content_simple  {
+  border: none;
+  padding: 0;
 }

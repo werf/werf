@@ -28,7 +28,7 @@ channels:
   <div class="installation-selector-row">
     <div class="installation-selector">
       <div class="installation-selector__title">Version</div>
-      <div class="tabs">
+      <div class="tabs tabs_simple">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="version" data-install-tab="1.2">1.2</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -37,7 +37,7 @@ channels:
     </div><!-- /selector -->
     <div class="installation-selector">
       <div class="installation-selector__title">Stability channel</div>
-      <div class="tabs">
+      <div class="tabs tabs_simple">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="channel" data-install-tab="rock-solid">Rock-Solid</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -52,7 +52,7 @@ channels:
     </div><!-- /selector -->
     <div class="installation-selector">
       <div class="installation-selector__title">OS</div>
-      <div class="tabs">
+      <div class="tabs tabs_simple">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="os" data-install-tab="linux">Linux</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -65,7 +65,7 @@ channels:
   <div class="installation-selector-row">
     <div class="installation-selector">
       <div class="installation-selector__title">Installation method</div>
-      <div class="tabs">
+      <div class="tabs tabs_simple">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="method" data-install-tab="multiwerf">using multiwerf (recommended)</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -291,18 +291,18 @@ The latest release can be found [at this page](https://github.com/werf/werf/rele
       Release
   </div>
 
-  <div class="tabs">
+  <div class="tabs tabs_simple">
     {%- for group in groups %}
     <a href="javascript:void(0)" class="tabs__btn tabs__group__btn{% if group == groups[0] %} active{% endif %}" onclick="openTab(event, 'tabs__group__btn', 'tabs__group__content', 'group-{{group}}')">{{group}}</a>
     {%- endfor %}
   </div>
 
   {%- for group in groups %}
-  <div id="group-{{group}}" class="tabs__content tabs__group__content{% if group == groups[0] %} active{% endif %}">
+  <div id="group-{{group}}" class="tabs__content tabs__content_simple tabs__group__content{% if group == groups[0] %} active{% endif %}">
       <div class="installation-releases__block-subtitle">
           Channel
       </div>
-      <div class="tabs">
+      <div class="tabs tabs_simple">
         {%- assign not_activated = true %}
         {%- assign active_channels = 0 %}
         {%- for channel in channels_sorted_reverse %}
@@ -328,7 +328,7 @@ The latest release can be found [at this page](https://github.com/werf/werf/rele
       {%- if channel_activity < 1 %}
         {% continue %} 
       {% endif %}
-      <div id="id-{{group}}-{{ channel.name }}" class="tabs__content tabs__{{group}}__channel__content{% if channel_activity > 0 and not_activated and channel != channels_sorted_reverse[0]  %} active{% endif %}">
+      <div id="id-{{group}}-{{ channel.name }}" class="tabs__content tabs__content_simple tabs__{{group}}__channel__content{% if channel_activity > 0 and not_activated and channel != channels_sorted_reverse[0]  %} active{% endif %}">
         <div class="installation-releases__info">
           <p>
             {{ channel.tooltip[page.lang] }}
@@ -367,7 +367,7 @@ The latest release can be found [at this page](https://github.com/werf/werf/rele
 
       {%- comment %}
       {%- if active_channels > 10 %}
-      <div id="id-{{group}}-all" class="tabs__content tabs__{{group}}__channel__content">
+      <div id="id-{{group}}-all" class="tabs__content tabs__content_simple tabs__{{group}}__channel__content">
         <div class="installation-releases__info">
             <p>This is a list of all of the releases (Alpha, Beta, Early-Access, Stable and Rock-Solid) combined in chronological order.</p>
         </div>
