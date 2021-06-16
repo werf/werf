@@ -16,7 +16,7 @@ import (
 )
 
 func Init() error {
-	if os.Getenv("WERF_ENABLE_PROCESS_EXTERMINATOR") == "" {
+	if os.Getenv("WERF_ENABLE_PROCESS_EXTERMINATOR") == "" || os.Getenv("WERF_ENABLE_PROCESS_EXTERMINATOR") == "0" || os.Getenv("WERF_ENABLE_PROCESS_EXTERMINATOR") == "false" {
 		return nil
 	}
 
