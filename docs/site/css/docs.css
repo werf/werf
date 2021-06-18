@@ -454,7 +454,7 @@
     font-stretch: normal;
     line-height: normal;
     letter-spacing: -0.4px;
-    color: #0066FF;
+    color: rgba(0,18,44,0.75);
 }
 
 .docs h4 {
@@ -539,6 +539,10 @@
     border-radius: 4px;
 }
 
+figure.highlight {
+    margin: 0;
+}
+
 .docs pre {
     border-radius: 4px;
     padding: 10px;
@@ -560,11 +564,27 @@
 }
 
 .docs .details {
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+    background: #F3F7FF;
+    border: 2px solid #eef2ff;
+    padding: 10px 0;
+}
+
+.docs .details > *:first-child {
+    margin-top: 0px !important;
+}
+
+.docs .details > *:last-child {
+    margin-bottom: 0px !important;
+}
+
+.docs .details > h2 {
+    margin: 0px !important;
 }
 
 .docs .details .details__summary {
     margin-left: 0px;
+    padding: 0 15px;
 }
 
 .docs .details .details__summary::before {
@@ -583,18 +603,41 @@
     transform: rotate(0deg);
 }
 
+.docs .details.active {
+    padding-bottom: 0;
+}
+
 .docs .details .details__content {
     display: none;
+    margin-top: 10px;
+    padding: 10px 15px;
+    background: #fff;
 }
 
 .docs .details.active .details__content {
     display: block;
 }
 
+.docs .details .details__content > *:first-child {
+    margin-top: 0px;
+}
+
+.docs .details .details__content > *:last-child {
+    margin-bottom: 0px;
+}
+
 .docs blockquote {
     margin: 20px 0;
-    padding: 5px 20px;
-    border-left: 4px solid #0066FF;
+    padding: 10px 20px;
+    background: #eef2ff;
+}
+
+.docs blockquote > *:first-child {
+    margin-top: 0px;
+}
+
+.docs blockquote > *:last-child {
+    margin-bottom: 0px;
 }
 
 .docs .anchorjs-link:hover {

@@ -538,7 +538,7 @@ The cleanup stage runs on a schedule only. You can define the schedule by openin
 
 ## The complete .gitlab-ci.yml for ready-made workflows
 
-<div class="tabs" style="display: grid">
+<div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_gitlab_ci_1')">No. 1 Fast and Furious (recommended)</a>
   <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_gitlab_ci_2')">No. 2 Push the Button</a>
   <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'complete_gitlab_ci_3')">No. 3 Tag everything (recommended)</a>
