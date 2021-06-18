@@ -7,12 +7,12 @@ The script can be divided into two logic parts: updating and creating werf alias
 If the script is launched for the first time or there is no suitable werf binary found locally, this script will wait until multiwerf downloads new werf binary. Otherwise, the update runs in the background, and werf alias or a function binds to the existing werf binary based on local channel mapping.
 
 <div class="tabs tabs_simple">
-  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'unix_tab')">Unix shell</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'powershell_tab')">PowerShell</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'cmdexe_tab')">cmd.exe</a>
+  <a href="javascript:void(0)" class="tabs__btn tabs__howitworks__btn active" onclick="openTab(event, 'tabs__howitworks__btn', 'tabs__howitworks__content', 'howitworks__unix_tab')">Unix shell</a>
+  <a href="javascript:void(0)" class="tabs__btn tabs__howitworks__btn" onclick="openTab(event, 'tabs__howitworks__btn', 'tabs__howitworks__content', 'howitworks__powershell_tab')">PowerShell</a>
+  <a href="javascript:void(0)" class="tabs__btn tabs__howitworks__btn" onclick="openTab(event, 'tabs__howitworks__btn', 'tabs__howitworks__content', 'howitworks__cmdexe_tab')">cmd.exe</a>
 </div>
 
-<div id="unix_tab" class="tabs__content tabs__content_simple active" markdown="1">
+<div id="howitworks__unix_tab" class="tabs__content tabs__howitworks__content tabs__content_simple active" markdown="1">
 
 ```shell
 if multiwerf werf-path MAJOR.MINOR CHANNEL >~/.multiwerf/multiwerf_use_first_werf_path.log 2>&1; then
@@ -35,7 +35,7 @@ eval "$WERF_FUNC"
 
 </div>
 
-<div id="powershell_tab" class="tabs__content tabs__content_simple" markdown="1">
+<div id="howitworks__powershell_tab" class="tabs__content tabs__howitworks__content tabs__content_simple" markdown="1">
 
 ```shell
 if ((Invoke-Expression -Command "multiwerf werf-path MAJOR.MINOR CHANNEL" | Out-String -OutVariable WERF_PATH) -and ($LastExitCode -eq 0)) {
@@ -50,7 +50,7 @@ function werf { & $WERF_PATH.Trim() $args }
 
 </div>
 
-<div id="cmdexe_tab" class="tabs__content tabs__content_simple" markdown="1">
+<div id="howitworks__cmdexe_tab" class="tabs__content tabs__howitworks__content tabs__content_simple" markdown="1">
 
 ```shell
 FOR /F "tokens=*" %%g IN ('multiwerf werf-path MAJOR.MINOR CHANNEL') do (SET WERF_PATH=%%g)
