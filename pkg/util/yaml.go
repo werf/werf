@@ -3,7 +3,7 @@ package util
 import (
 	"fmt"
 
-	"github.com/ghodss/yaml"
+	"sigs.k8s.io/yaml"
 )
 
 func DumpYaml(v interface{}) string {

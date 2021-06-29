@@ -89,7 +89,7 @@ require (
 	k8s.io/kubectl v0.21.0
 	mvdan.cc/xurls v1.1.0
 	rsc.io/letsencrypt v0.0.3 // indirect
-	sigs.k8s.io/yaml v1.2.0
+	sigs.k8s.io/yaml v1.2.1-0.20210128145534-11e43d4a8b92
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
 

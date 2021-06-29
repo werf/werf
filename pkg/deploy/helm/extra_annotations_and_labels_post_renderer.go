@@ -12,7 +12,7 @@ import (
 
 	"github.com/werf/logboek"
 
-	"github.com/ghodss/yaml"
+	"sigs.k8s.io/yaml"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -86,6 +86,10 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 		if obj.GetKind() == "" {
 			logboek.Debug().LogF("Skipping empty object\n")
 			continue
+		}
+
+		if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
+			fmt.Printf("Unpacket obj annotations: %#v\n", obj.GetAnnotations())
 		}
 
 		if len(extraAnnotations) > 0 {
