@@ -96,7 +96,7 @@ channels:
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include ru/installation/multiwerf_unix.md version=version channel=channel %}</div>
+<div markdown="1">{% include ru/installation/multiwerf_linux.md version=version channel=channel %}</div>
 <div class="details">
 <h2 id="как-использовать-в-cicd-системе"><a href="javascript:void(0)" class="details__summary">Как использовать в CI/CD системе?</a></h2>
 <div class="details__content" markdown="1">
@@ -113,7 +113,7 @@ channels:
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include ru/installation/multiwerf_unix.md version=version channel=channel %}</div>
+<div markdown="1">{% include ru/installation/multiwerf_macos.md version=version channel=channel %}</div>
 <div class="details">
 <h2 id="как-использовать-в-cicd-системе"><a href="javascript:void(0)" class="details__summary">Как использовать в CI/CD системе?</a></h2>
 <div class="details__content" markdown="1">
