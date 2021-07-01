@@ -1,9 +1,14 @@
 ```shell
-# add ~/bin into PATH
+# добавим директорию ~/bin в PATH
 export PATH=$PATH:$HOME/bin
 echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
 
-# install multiwerf into ~/bin directory
+# включим стартовый скрипт bash ~/.bashrc в логин скрипте bash ~/.bash_profile
+echo 'if [ -f "$HOME/.bashrc" ]; then' >> ~/.bash_profile
+echo '  . "$HOME/.bashrc"' >> ~/.bash_profile
+echo 'fi' >> ~/.bash_profile
+
+# установим multiwerf в директорию ~/bin
 mkdir -p ~/bin
 cd ~/bin
 curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
