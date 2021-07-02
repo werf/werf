@@ -956,46 +956,51 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 	return res, nil
 }
 
-func GetOptionalWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+func GetOptionalWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (string, *config.WerfConfig, error) {
 	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(giterminismManager, cmdData)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	exist, err := giterminismManager.FileReader().IsConfigExistAnywhere(ctx, customWerfConfigRelPath)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	if exist {
 		customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(giterminismManager, cmdData)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 
-		c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+		configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 
-		return c, nil
+		return configPath, c, nil
 	}
 
-	return nil, nil
+	return "", nil, nil
 }
 
-func GetRequiredWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (*config.WerfConfig, error) {
+func GetRequiredWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (string, *config.WerfConfig, error) {
 	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(giterminismManager, cmdData)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(giterminismManager, cmdData)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	return config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+	configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return configPath, c, nil
 }
 
 func GetCustomWerfConfigRelPath(giterminismManager giterminism_manager.Interface, cmdData *CmdData) (string, error) {
@@ -1108,12 +1113,12 @@ func GetWorkingDir(cmdData *CmdData) string {
 	return util.GetAbsoluteFilepath(workingDir)
 }
 
-func GetHelmChartDir(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface) (string, error) {
+func GetHelmChartDir(werfConfigPath string, werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface) (string, error) {
 	var helmChartDir string
 	if werfConfig.Meta.Deploy.HelmChartDir != nil && *werfConfig.Meta.Deploy.HelmChartDir != "" {
 		helmChartDir = *werfConfig.Meta.Deploy.HelmChartDir
 	} else {
-		helmChartDir = ".helm"
+		helmChartDir = filepath.Join(filepath.Dir(werfConfigPath), ".helm")
 	}
 
 	absHelmChartDir := filepath.Join(giterminismManager.ProjectDir(), helmChartDir)
@@ -1121,6 +1126,7 @@ func GetHelmChartDir(werfConfig *config.WerfConfig, giterminismManager gitermini
 		return "", fmt.Errorf("the chart directory %s must be in the project git work tree %s", absHelmChartDir, giterminismManager.LocalGitRepo().WorkTreeDir)
 	}
 
+	fmt.Printf("-- GetHelmChartDir werfConfigPath=%q -> %q\n", werfConfigPath, helmChartDir)
 	return helmChartDir, nil
 }
 

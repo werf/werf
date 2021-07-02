@@ -31,13 +31,13 @@ type WerfConfigOptions struct {
 }
 
 func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, imagesToProcess []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
-	werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+	_, werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
 	if err != nil {
 		return err
 	}
 
 	if len(imagesToProcess) == 0 {
-		werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
+		_, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
 		if err != nil {
 			return err
 		}
@@ -66,15 +66,15 @@ func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfCo
 	return nil
 }
 
-func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (*WerfConfig, error) {
-	werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
+func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
+	werfConfigPath, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(ctx)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	if opts.LogRenderedFilePath {
@@ -83,23 +83,23 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 
 	err = writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to write rendered config to %s: %s", werfConfigRenderPath, err)
+		return "", nil, fmt.Errorf("unable to write rendered config to %s: %s", werfConfigRenderPath, err)
 	}
 
 	docs, err := splitByDocs(werfConfigRenderContent, werfConfigRenderPath)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	meta, rawStapelImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	if meta == nil {
 		defaultProjectName, err := GetDefaultProjectName(ctx, giterminismManager)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get default project name: %s", err)
+			return "", nil, fmt.Errorf("failed to get default project name: %s", err)
 		}
 
 		format := "meta config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132) is not defined: add following example config section with required fields, e.g:\n\n" +
@@ -115,15 +115,15 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 			"###              Read more about meta config section: https://werf.io/documentation/reference/werf_yaml.html               ###\n" +
 			"##############################################################################################################################"
 
-		return nil, fmt.Errorf(format, defaultProjectName)
+		return "", nil, fmt.Errorf(format, defaultProjectName)
 	}
 
 	werfConfig, err := prepareWerfConfig(giterminismManager, rawStapelImages, rawImagesFromDockerfile, meta)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	return werfConfig, nil
+	return werfConfigPath, werfConfig, nil
 }
 
 func GetDefaultProjectName(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
@@ -185,16 +185,17 @@ func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([
 	return docs, nil
 }
 
-func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, env string) (string, error) {
+func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, env string) (string, string, error) {
 	tmpl := template.New("werfConfig")
 	tmpl.Funcs(funcMap(tmpl, giterminismManager))
 
 	if err := parseWerfConfigTemplatesDir(ctx, tmpl, giterminismManager, customWerfConfigTemplatesDirRelPath); err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	if err := parseWerfConfig(ctx, tmpl, giterminismManager, customWerfConfigRelPath); err != nil {
-		return "", err
+	configPath, err := parseWerfConfig(ctx, tmpl, giterminismManager, customWerfConfigRelPath)
+	if err != nil {
+		return "", "", err
 	}
 
 	templateData := make(map[string]interface{})
@@ -206,20 +207,20 @@ func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWe
 
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)
 
-	return config, err
+	return configPath, config, err
 }
 
-func parseWerfConfig(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, relWerfConfigPath string) error {
-	configData, err := giterminismManager.FileReader().ReadConfig(ctx, relWerfConfigPath)
+func parseWerfConfig(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, relWerfConfigPath string) (string, error) {
+	configPath, configData, err := giterminismManager.FileReader().ReadConfig(ctx, relWerfConfigPath)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if _, err := tmpl.Parse(string(configData)); err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return configPath, nil
 }
 
 func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, customWerfConfigTemplatesDirRelPath string) error {

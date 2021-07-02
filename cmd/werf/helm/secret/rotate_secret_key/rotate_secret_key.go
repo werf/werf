@@ -91,12 +91,12 @@ func runRotateSecretKey(ctx context.Context, cmd *cobra.Command, secretValuesPat
 		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(context.Background(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(context.Background(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	helmChartDir, err := common.GetHelmChartDir(werfConfig, giterminismManager)
+	helmChartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
