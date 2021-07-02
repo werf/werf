@@ -297,7 +297,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 			return err
 		}
 
-		werfConfig, err := common.GetOptionalWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+		_, werfConfig, err := common.GetOptionalWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 		if err != nil {
 			return fmt.Errorf("unable to load werf config: %s", err)
 		}

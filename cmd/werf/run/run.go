@@ -326,7 +326,7 @@ func runMain() error {
 }
 
 func run(ctx context.Context, giterminismManager giterminism_manager.Interface) error {
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
+	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

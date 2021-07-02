@@ -244,12 +244,12 @@ func runMain(ctx context.Context) error {
 }
 
 func run(ctx context.Context, giterminismManager giterminism_manager.Interface) error {
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	chartDir, err := common.GetHelmChartDir(werfConfig, giterminismManager)
+	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}

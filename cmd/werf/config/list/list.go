@@ -75,7 +75,7 @@ func run() error {
 		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
+	_, werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return err
 	}

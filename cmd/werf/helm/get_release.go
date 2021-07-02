@@ -71,7 +71,7 @@ func runGetRelease() error {
 		return err
 	}
 
-	werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
+	_, werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

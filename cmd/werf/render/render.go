@@ -177,14 +177,14 @@ func runRender() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
 	projectName := werfConfig.Meta.Project
 
-	chartDir, err := common.GetHelmChartDir(werfConfig, giterminismManager)
+	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}

@@ -42,7 +42,7 @@ func (r FileReader) isConfigExistAnywhere(ctx context.Context, customRelPath str
 	return false, nil
 }
 
-func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) (data []byte, err error) {
+func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) (path string, data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadConfig %q", customRelPath).
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -51,7 +51,7 @@ func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) (data 
 			}
 		}).
 		Do(func() {
-			data, err = r.readConfig(ctx, customRelPath)
+			path, data, err = r.readConfig(ctx, customRelPath)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
@@ -59,33 +59,32 @@ func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) (data 
 		})
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to read werf config: %s", err)
+		return "", nil, fmt.Errorf("unable to read werf config: %s", err)
 	}
 
-	return data, nil
+	return path, data, nil
 }
 
-func (r FileReader) readConfig(ctx context.Context, customRelPath string) ([]byte, error) {
+func (r FileReader) readConfig(ctx context.Context, customRelPath string) (string, []byte, error) {
 	configRelPathList := r.configPathList(customRelPath)
 
 	for _, configPath := range configRelPathList {
 		data, err := r.ReadAndCheckConfigurationFile(ctx, configPath, func(_ string) bool {
 			return r.giterminismConfig.IsUncommittedConfigAccepted()
 		})
-
 		if err != nil {
 			switch err.(type) {
 			case FileNotFoundInProjectDirectoryError, FileNotFoundInProjectRepositoryError:
 				continue
 			}
 
-			return nil, err
+			return "", nil, err
 		}
 
-		return data, nil
+		return configPath, data, nil
 	}
 
-	return nil, r.PrepareConfigNotFoundError(ctx, configRelPathList)
+	return "", nil, r.PrepareConfigNotFoundError(ctx, configRelPathList)
 }
 
 func (r FileReader) PrepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) (err error) {

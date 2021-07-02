@@ -162,7 +162,7 @@ func runDismiss(ctx context.Context) error {
 
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
-	werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
@@ -190,7 +190,7 @@ func runDismiss(ctx context.Context) error {
 		lockManager = m
 	}
 
-	chartDir, err := common.GetHelmChartDir(werfConfig, giterminismManager)
+	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %s", err)
 	}
