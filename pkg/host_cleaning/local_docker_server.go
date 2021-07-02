@@ -261,7 +261,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.YellowF("%0.2f%%", allowedVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
 		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsage))
 		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
-		logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d (~ %s)", len(checkResult.ImagesDescs), humanize.Bytes(checkResult.TotalImagesBytes)))
+		logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
 	})
 
 	for {
@@ -327,7 +327,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 					}
 				}
 
-				logboek.Context(ctx).Default().LogF("Freed images: %s\n", utils.GreenF("%d (~ %s)", freedImagesCount, humanize.Bytes(freedBytes)))
+				logboek.Context(ctx).Default().LogF("Freed images: %s\n", utils.GreenF("%d", freedImagesCount))
 
 				return nil
 			}); err != nil {
@@ -404,7 +404,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
 			logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
 			logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
-			logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d (~ %s)", len(checkResult.ImagesDescs), humanize.Bytes(checkResult.TotalImagesBytes)))
+			logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
 		})
 	}
 
