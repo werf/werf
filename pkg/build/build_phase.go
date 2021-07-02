@@ -660,7 +660,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			stageImageObj.SetName(newStageImageName)
 			phase.Conveyor.SetStageImage(stageImageObj)
 
-			if err := logboek.Context(ctx).Info().LogProcess("Store stage").DoError(func() error {
+			if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.StagesStorage.String()).DoError(func() error {
 				if err := phase.Conveyor.StorageManager.StagesStorage.StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
 					return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.StagesStorage.String(), err)
 				}
