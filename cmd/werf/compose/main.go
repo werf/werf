@@ -321,6 +321,12 @@ func runMain(dockerComposeCmdName string, cmdData composeCmdData, commonCmdData 
 	}
 	ctx = ctxWithDockerCli
 
+	defer func() {
+		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
+			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
+		}
+	}()
+
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
 		return err
