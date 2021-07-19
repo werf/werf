@@ -74,7 +74,6 @@ type Patch interface {
 
 type Archive interface {
 	GetFilePath() string
-	IsEmpty() bool
 }
 
 func GetGitRepoCacheDir() string {

@@ -386,16 +386,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 		return nil, fmt.Errorf("unable to close file %s: %s", tmpPath, err)
 	}
 
-	isAnyFilesInArchive, err := repo.IsAnyCommitTreeEntriesMatched(ctx, opts.Commit, opts.PathScope, opts.PathMatcher, true)
-	if err != nil {
-		return nil, err
-	}
-
-	desc := &true_git.ArchiveDescriptor{
-		IsEmpty: !isAnyFilesInArchive,
-	}
-
-	if archive, err := CommonGitDataManager.CreateArchiveFile(ctx, repoID, opts, tmpPath, desc); err != nil {
+	if archive, err := CommonGitDataManager.CreateArchiveFile(ctx, repoID, opts, tmpPath); err != nil {
 		return nil, err
 	} else {
 		return archive, nil

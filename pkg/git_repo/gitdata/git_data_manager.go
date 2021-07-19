@@ -81,7 +81,6 @@ type PatchMetadata struct {
 }
 
 type ArchiveMetadata struct {
-	Descriptor          *true_git.ArchiveDescriptor
 	LastAccessTimestamp int64
 }
 
@@ -131,11 +130,11 @@ func (manager *GitDataManager) GetArchiveFile(ctx context.Context, repoID string
 			}
 		}
 
-		return &git_repo.ArchiveFile{FilePath: path, Descriptor: metadata.Descriptor}, nil
+		return &git_repo.ArchiveFile{FilePath: path}, nil
 	}
 }
 
-func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID string, opts git_repo.ArchiveOptions, tmpPath string, desc *true_git.ArchiveDescriptor) (*git_repo.ArchiveFile, error) {
+func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID string, opts git_repo.ArchiveOptions, tmpPath string) (*git_repo.ArchiveFile, error) {
 	if archiveFile, err := manager.GetArchiveFile(ctx, repoID, opts); err != nil {
 		return nil, err
 	} else if archiveFile != nil {
@@ -155,7 +154,6 @@ func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID str
 	}
 
 	metadata := &ArchiveMetadata{
-		Descriptor:          desc,
 		LastAccessTimestamp: time.Now().Unix(),
 	}
 
@@ -180,7 +178,7 @@ func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID str
 		return nil, fmt.Errorf("unable to rename %s to %s: %s", tmpPath, path, err)
 	}
 
-	return &git_repo.ArchiveFile{FilePath: path, Descriptor: metadata.Descriptor}, nil
+	return &git_repo.ArchiveFile{FilePath: path}, nil
 }
 
 func (manager *GitDataManager) GetPatchFile(ctx context.Context, repoID string, opts git_repo.PatchOptions) (*git_repo.PatchFile, error) {

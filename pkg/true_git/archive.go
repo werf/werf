@@ -45,10 +45,6 @@ func (opts ArchiveOptions) ID() string {
 	)
 }
 
-type ArchiveDescriptor struct {
-	IsEmpty bool
-}
-
 func ArchiveWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		return writeArchive(ctx, out, gitDir, workTreeCacheDir, true, opts)
@@ -118,7 +114,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 		gitFileMode := lsTreeEntry.Mode
 		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.FullFilepath)
-	
+
 		var tarEntryName string
 		if renameToFileName, willRename := opts.FileRenames[filepath.ToSlash(filepath.Clean(lsTreeEntry.FullFilepath))]; willRename {
 			tarEntryName = renameToFileName
