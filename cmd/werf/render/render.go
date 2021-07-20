@@ -235,6 +235,7 @@ func runRender() error {
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepository string
 	var isStub bool
+	var stubImagesNames []string
 
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
@@ -296,6 +297,13 @@ func runRender() error {
 		} else {
 			imagesRepository = "REPO"
 			isStub = true
+
+			for _, img := range werfConfig.StapelImages {
+				stubImagesNames = append(stubImagesNames, img.Name)
+			}
+			for _, img := range werfConfig.ImagesFromDockerfile {
+				stubImagesNames = append(stubImagesNames, img.Name)
+			}
 		}
 	}
 
@@ -323,6 +331,7 @@ func runRender() error {
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
 		IsStub:                   isStub,
+		StubImagesNames:          stubImagesNames,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
 	}); err != nil {
