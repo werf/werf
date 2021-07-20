@@ -8,7 +8,7 @@ import (
 )
 
 type GitDataManager interface {
-	CreateArchiveFile(ctx context.Context, repoID string, opts ArchiveOptions, tmpPath string, desc *true_git.ArchiveDescriptor) (*ArchiveFile, error)
+	CreateArchiveFile(ctx context.Context, repoID string, opts ArchiveOptions, tmpPath string) (*ArchiveFile, error)
 	GetArchiveFile(ctx context.Context, repoID string, opts ArchiveOptions) (*ArchiveFile, error)
 	CreatePatchFile(ctx context.Context, repoID string, opts PatchOptions, tmpPath string, desc *true_git.PatchDescriptor) (*PatchFile, error)
 	GetPatchFile(ctx context.Context, repoID string, opts PatchOptions) (*PatchFile, error)

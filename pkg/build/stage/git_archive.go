@@ -84,3 +84,17 @@ func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, prevBuil
 
 	return nil
 }
+
+func (s *GitArchiveStage) IsEmpty(ctx context.Context, c Conveyor, img container_runtime.ImageInterface) (bool, error) {
+	for _, gitMapping := range s.gitMappings {
+		isGitMappingEmpty, err := gitMapping.isEmpty(ctx, c)
+		if err != nil {
+			return false, fmt.Errorf("error checking git mapping emptiness: %s", err)
+		}
+		if isGitMappingEmpty {
+			return false, fmt.Errorf(`"git.add: /%s" in werf.yaml matches no files. git.add requires at least one file matched by it. Fix and retry`, gitMapping.Add)
+		}
+	}
+
+	return s.GitStage.IsEmpty(ctx, c, img)
+}
