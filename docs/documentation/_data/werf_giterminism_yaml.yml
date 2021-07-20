@@ -1,6 +1,6 @@
 directives:
   - name: giterminismConfigVersion
-    value: "string"
+    value: "int"
     description:
       en: Config syntax version. It should always be 1 for now
       ru: Версия конфигурации. На данный момент поддерживается единственная версия 1
