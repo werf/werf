@@ -1126,7 +1126,6 @@ func GetHelmChartDir(werfConfigPath string, werfConfig *config.WerfConfig, giter
 		return "", fmt.Errorf("the chart directory %s must be in the project git work tree %s", absHelmChartDir, giterminismManager.LocalGitRepo().WorkTreeDir)
 	}
 
-	fmt.Printf("-- GetHelmChartDir werfConfigPath=%q -> %q\n", werfConfigPath, helmChartDir)
 	return helmChartDir, nil
 }
 

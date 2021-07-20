@@ -32,9 +32,10 @@ func (d *ChartExtenderServiceValuesData) SetServiceValues(vals map[string]interf
 }
 
 type ServiceValuesOptions struct {
-	Namespace string
-	Env       string
-	IsStub    bool
+	Namespace       string
+	Env             string
+	IsStub          bool
+	StubImagesNames []string
 
 	SetDockerConfigJsonValue bool
 	DockerConfigPath         string
@@ -68,8 +69,13 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 	}
 
 	if opts.IsStub {
+		stubImage := fmt.Sprintf("%s:TAG", repo)
+
 		werfInfo["is_stub"] = true
-		werfInfo["stub_image"] = fmt.Sprintf("%s:TAG", repo)
+		werfInfo["stub_image"] = stubImage
+		for _, name := range opts.StubImagesNames {
+			werfInfo["image"].(map[string]interface{})[name] = stubImage
+		}
 	}
 
 	for _, imageInfoGetter := range imageInfoGetters {
