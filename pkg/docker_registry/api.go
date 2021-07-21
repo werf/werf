@@ -80,15 +80,6 @@ func (api *api) TryGetRepoImage(ctx context.Context, reference string) (*image.I
 	}
 }
 
-func (api *api) GetRepoImageConfigFile(_ context.Context, reference string) (*v1.ConfigFile, error) {
-	imageInfo, _, err := api.image(reference)
-	if err != nil {
-		return nil, err
-	}
-
-	return imageInfo.ConfigFile()
-}
-
 func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, error) {
 	imageInfo, _, err := api.image(reference)
 	if err != nil {
