@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	dockerReference "github.com/docker/distribution/reference"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -122,29 +123,16 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 		}
 	}
 
-	digestDelimiter := "@"
-	var parsedReference name.Tag
-	if strings.Contains(reference, digestDelimiter) {
-		// skip any validation due to the valid reference at this point
-		parts := strings.Split(reference, digestDelimiter)
-		base, _ := parts[0], parts[1]
-
-		parsedReference, err = name.NewTag(base, api.parseReferenceOptions()...)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		parsedReference, err = name.NewTag(reference, api.parseReferenceOptions()...)
-		if err != nil {
-			return nil, err
-		}
+	referenceParts, err := api.ParseReferenceParts(reference)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse reference %q: %s", reference, err)
 	}
 
 	repoImage := &image.Info{
 		Name:       reference,
-		Repository: strings.Join([]string{parsedReference.RegistryStr(), parsedReference.RepositoryStr()}, "/"),
+		Repository: strings.Join([]string{referenceParts.registry, referenceParts.repository}, "/"),
 		ID:         manifest.Config.Digest.String(),
-		Tag:        parsedReference.TagStr(),
+		Tag:        referenceParts.tag,
 		RepoDigest: digest.String(),
 		ParentID:   configFile.Config.Image,
 		Labels:     configFile.Config.Labels,
@@ -296,4 +284,40 @@ func (api *api) getHttpTransport() (transport http.RoundTripper) {
 	}
 
 	return
+}
+
+type referenceParts struct {
+	registry   string
+	repository string
+	tag        string
+	digest     string
+}
+
+func (api *api) ParseReferenceParts(reference string) (referenceParts, error) {
+	// validate reference
+	parsedReference, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	if err != nil {
+		return referenceParts{}, fmt.Errorf("unable to parse reference: %s", err)
+	}
+
+	res := dockerReference.ReferenceRegexp.FindStringSubmatch(reference)
+
+	// res[0] full match
+	// res[1] repository
+	// res[2] tag
+	// res[3] digest
+	if len(res) != 4 {
+		panic(fmt.Sprintf("unexpected regexp find submatch result %v (%d)", res, len(res)))
+	}
+
+	referenceParts := referenceParts{}
+	referenceParts.registry = parsedReference.Context().RegistryStr()
+	referenceParts.repository = parsedReference.Context().RepositoryStr()
+	referenceParts.tag = res[2]
+	if referenceParts.tag == "" {
+		referenceParts.tag = name.DefaultTag
+	}
+	referenceParts.digest = res[3]
+
+	return referenceParts, nil
 }
