@@ -425,13 +425,12 @@ func (a ImagesLruSort) Less(i, j int) bool {
 func (a ImagesLruSort) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 func safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error {
-	images, err := werfImagesByFilterSet(ctx, danglingFilterSet())
+	images, err := trueDanglingImages(ctx)
 	if err != nil {
 		return err
 	}
 
 	var imagesToRemove []types.ImageSummary
-
 	for _, img := range images {
 		imagesToRemove = append(imagesToRemove, img)
 	}

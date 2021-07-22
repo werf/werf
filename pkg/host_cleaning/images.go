@@ -16,7 +16,7 @@ import (
 )
 
 func werfImagesFlushByFilterSet(ctx context.Context, filterSet filters.Args, options CommonOptions) error {
-	images, err := werfImagesByFilterSet(ctx, filterSet)
+	images, err := imagesByFilterSet(ctx, filterSet)
 	if err != nil {
 		return err
 	}
@@ -33,15 +33,27 @@ func werfImagesFlushByFilterSet(ctx context.Context, filterSet filters.Args, opt
 	return nil
 }
 
-func werfImagesByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.ImageSummary, error) {
-	options := types.ImageListOptions{Filters: filterSet}
-	return docker.Images(ctx, options)
-}
-
-func danglingFilterSet() filters.Args {
+func trueDanglingImages(ctx context.Context) ([]types.ImageSummary, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("dangling", "true")
-	return filterSet
+	danglingImageList, err := imagesByFilterSet(ctx, filterSet)
+	if err != nil {
+		return nil, err
+	}
+
+	var trueDanglingImageList []types.ImageSummary
+	for _, image := range danglingImageList {
+		if len(image.RepoTags) == 0 && len(image.RepoDigests) == 0 {
+			trueDanglingImageList = append(trueDanglingImageList)
+		}
+	}
+
+	return trueDanglingImageList, nil
+}
+
+func imagesByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.ImageSummary, error) {
+	options := types.ImageListOptions{Filters: filterSet}
+	return docker.Images(ctx, options)
 }
 
 func processUsedImages(ctx context.Context, images []types.ImageSummary, options CommonOptions) ([]types.ImageSummary, error) {
