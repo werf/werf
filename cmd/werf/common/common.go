@@ -117,6 +117,8 @@ type CmdData struct {
 	AllowedDockerStorageVolumeUsageMargin *uint
 	AllowedLocalCacheVolumeUsage          *uint
 	AllowedLocalCacheVolumeUsageMargin    *uint
+
+	Platform *string
 }
 
 const (
@@ -1380,6 +1382,24 @@ func SetupVirtualMergeFromCommit(cmdData *CmdData, cmd *cobra.Command) {
 func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.VirtualMergeIntoCommit = new(string)
 	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
+}
+
+func SetupPlatform(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Platform = new(string)
+
+	var defaultValue string
+
+	for _, envName := range []string{
+		"WERF_PLATFORM",
+		"DOCKER_DEFAULT_PLATFORM",
+	} {
+		if v := os.Getenv(envName); v != "" {
+			defaultValue = v
+			break
+		}
+	}
+
+	cmd.Flags().StringVarP(cmdData.Platform, "platform", "", defaultValue, "Enable platform emulation when building images with werf. The only supported option for now is linux/amd64.")
 }
 
 func BackgroundContext() context.Context {

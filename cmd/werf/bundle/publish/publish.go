@@ -128,6 +128,7 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -164,7 +165,7 @@ func runPublish(ctx context.Context) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return err
 	}
 

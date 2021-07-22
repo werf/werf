@@ -80,6 +80,8 @@ WARNING: Images that are being used in the Kubernetes cluster will also be delet
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
+	common.SetupPlatform(&commonCmdData, cmd)
+
 	return cmd
 }
 
@@ -118,7 +120,7 @@ func runPurge() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return err
 	}
 

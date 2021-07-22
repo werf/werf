@@ -113,6 +113,9 @@ werf purge [options]
       --parallel-tasks-limit=10
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
+      --platform=''
+            Enable platform emulation when building images with werf. The only supported option for 
+            now is linux/amd64.
       --repo=''
             Docker Repo to store stages (default $WERF_REPO)
       --repo-container-registry=''

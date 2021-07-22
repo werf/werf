@@ -35,7 +35,11 @@ go_build() {
     chmod -R 0777 $RELEASE_BUILD_DIR/$VERSION
 
     for os in linux darwin windows ; do
-        for arch in amd64 ; do
+        for arch in amd64 arm64 ; do
+            if [ "$os" == "windows" ] && [ "$arch" == "arm64" ] ; then
+                continue
+            fi
+
             outputFile=$RELEASE_BUILD_DIR/$VERSION/werf-$os-$arch-$VERSION
             if [ "$os" == "windows" ] ; then
                 outputFile=$outputFile.exe
@@ -43,7 +47,7 @@ go_build() {
 
             echo "# Building werf $VERSION for $os $arch ..."
 
-            GOOS=$os GOARCH=$arch \
+            CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
               go build -tags "dfrunmount dfssh" -ldflags="-s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION" \
                        -o $outputFile github.com/werf/werf/cmd/werf
 
