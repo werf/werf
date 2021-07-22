@@ -127,6 +127,8 @@ werf helm install [NAME] [CHART] [flags] [options]
             prevent hooks from running during install
   -o, --output=table
             prints the output in the specified format. Allowed values: table, json, yaml
+      --pass-credentials=false
+            pass credentials to all domains
       --password=''
             chart repository password where to locate the requested chart
       --post-renderer=exec

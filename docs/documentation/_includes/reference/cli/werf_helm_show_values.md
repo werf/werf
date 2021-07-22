@@ -32,6 +32,8 @@ werf helm show values [CHART] [flags] [options]
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg'
             location of public keys used for verification
+      --pass-credentials=false
+            pass credentials to all domains
       --password=''
             chart repository password where to locate the requested chart
       --repo=''

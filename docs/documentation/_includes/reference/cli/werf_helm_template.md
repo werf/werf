@@ -76,6 +76,8 @@ werf helm template [NAME] [CHART] [flags] [options]
             prevent hooks from running during install
       --output-dir=''
             writes the executed templates to files in output-dir instead of stdout
+      --pass-credentials=false
+            pass credentials to all domains
       --password=''
             chart repository password where to locate the requested chart
       --post-renderer=exec

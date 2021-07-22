@@ -111,6 +111,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
+	common.SetupPlatform(&commonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", common.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
 	cmd.Flags().BoolVarP(&cmdData.WithHooks, "with-hooks", "", common.GetBoolEnvironmentDefaultTrue("WERF_WITH_HOOKS"), "Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or true)")
 

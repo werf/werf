@@ -29,6 +29,8 @@ werf helm repo add [NAME] [URL] [flags] [options]
             identify HTTPS client using this SSL key file
       --no-update=false
             Ignored. Formerly, it would disabled forced updates. It is deprecated by force-update.
+      --pass-credentials=false
+            pass credentials to all domains
       --password=''
             chart repository password
       --username=''
