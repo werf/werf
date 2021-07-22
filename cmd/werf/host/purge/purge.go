@@ -66,6 +66,8 @@ WARNING: Do not run this command during any other werf command is working on the
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
+	common.SetupPlatform(&commonCmdData, cmd)
+
 	common.SetupDryRun(&commonCmdData, cmd)
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
 
@@ -92,7 +94,7 @@ func runReset() error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return err
 	}
 

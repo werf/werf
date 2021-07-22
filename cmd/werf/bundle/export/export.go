@@ -114,6 +114,7 @@ func NewCmd() *cobra.Command {
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedDockerStorageVolumeUsage(&commonCmdData, cmd)
@@ -153,7 +154,7 @@ func runExport(ctx context.Context) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return err
 	}
 

@@ -102,7 +102,7 @@ func run(imageNames []string) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return err
 	}
 

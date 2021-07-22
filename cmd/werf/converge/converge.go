@@ -146,9 +146,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
-
 	common.SetupSkipBuild(&commonCmdData, cmd)
-
+	common.SetupPlatform(&commonCmdData, cmd)
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
@@ -191,7 +190,7 @@ func runMain(ctx context.Context) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return err
 	}
 

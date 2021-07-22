@@ -70,6 +70,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", common.GetBoolEnvironmentDefaultFalse("WERF_FORCE"), "Force deletion of images which are being used by some containers (default $WERF_FORCE)")
 
@@ -109,7 +110,7 @@ func runGC() error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return err
 	}
 

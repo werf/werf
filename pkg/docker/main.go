@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/docker/go-connections/tlsconfig"
 
@@ -30,7 +31,18 @@ const (
 	ctxDockerCliKey = "docker_cli"
 )
 
-func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool) error {
+func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool, platform string) error {
+	if (platform == "" && runtime.GOARCH != "amd64") || (platform != "" && platform != "linux/amd64") {
+		logboek.Context(ctx).Error().LogF("werf currently does not support building of images for any other platform besides linux/amd64.\n")
+		logboek.Context(ctx).Error().LogF("Please set --platform option (or WERF_PLATFORM, or DOCKER_DEFAULT_PLATFORM environment variable) to linux/amd64 to enable platform emulation when building images with werf.\n")
+		logboek.Context(ctx).Error().LogLn()
+		return fmt.Errorf("unsupported platform")
+	}
+	if platform != "" {
+		os.Setenv("DOCKER_DEFAULT_PLATFORM", platform)
+		os.Setenv("DOCKER_BUILDKIT", "1")
+	}
+
 	if dockerConfigDir != "" {
 		cliconfig.SetDir(dockerConfigDir)
 	}
@@ -140,7 +152,6 @@ func cliWithCustomOptions(ctx context.Context, options []command.DockerCliOption
 
 func NewContext(ctx context.Context) (context.Context, error) {
 	c, err := newDockerCli(defaultCliOptions(ctx))
-
 	if err != nil {
 		return nil, fmt.Errorf("unable to create docker cli: %s", err)
 	}

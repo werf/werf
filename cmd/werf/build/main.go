@@ -119,6 +119,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
+	common.SetupPlatform(&commonCmdData, cmd)
+
 	return cmd
 }
 
@@ -148,7 +150,7 @@ func runMain(ctx context.Context, args []string) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return err
 	}
 

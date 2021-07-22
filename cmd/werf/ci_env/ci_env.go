@@ -114,7 +114,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return fmt.Errorf("docker init failed in dir %q: %s", dockerConfig, err)
 	}
 
@@ -458,7 +458,7 @@ func skipLine(message string) string {
 }
 
 func commentLine(message string) string {
-	var commentSign = "#"
+	commentSign := "#"
 	if !cmdData.AsEnvFile && cmdData.Shell == "cmdexe" {
 		commentSign = "::"
 	}

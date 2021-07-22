@@ -91,6 +91,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -121,7 +122,7 @@ func runCleanup(ctx context.Context) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug); err != nil {
+	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return err
 	}
 
