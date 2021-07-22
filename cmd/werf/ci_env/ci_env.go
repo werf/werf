@@ -71,6 +71,8 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	common.SetupHomeDir(&commonCmdData, cmd)
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config.")
 
+	common.SetupPlatform(&commonCmdData, cmd)
+
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", common.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
