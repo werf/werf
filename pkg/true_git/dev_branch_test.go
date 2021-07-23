@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
@@ -11,12 +12,12 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-var _ = Describe("SyncSourceWorktreeWithServiceWorktreeBranch", func() {
+var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 	var sourceWorkTreeDir string
 	var gitDir string
 	var workTreeCacheDir string
-	var initialCommit string
-	defaultOptions := SyncSourceWorktreeWithServiceWorktreeBranchOptions{ServiceBranchPrefix: "dev-"}
+	var headCommit string
+	defaultOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranchPrefix: "dev-"}
 
 	BeforeEach(func() {
 		sourceWorkTreeDir = filepath.Join(SuiteData.TestDirPath, "source")
@@ -37,23 +38,23 @@ var _ = Describe("SyncSourceWorktreeWithServiceWorktreeBranch", func() {
 			"commit", "--allow-empty", "-m", "Initial commit",
 		)
 
-		initialCommit = utils.GetHeadCommit(sourceWorkTreeDir)
+		headCommit = utils.GetHeadCommit(sourceWorkTreeDir)
 
 		Ω(werf.Init("", "")).Should(Succeed())
 	})
 
 	It("no changes", func() {
-		commit, err := SyncSourceWorktreeWithServiceWorktreeBranch(
+		commit, err := SyncSourceWorktreeWithServiceBranch(
 			context.Background(),
 			gitDir,
 			sourceWorkTreeDir,
 			workTreeCacheDir,
-			initialCommit,
+			headCommit,
 			defaultOptions,
 		)
 
 		Ω(err).Should(Succeed())
-		Ω(commit).Should(Equal(initialCommit))
+		Ω(commit).Should(Equal(headCommit))
 	})
 
 	When("tracked changes", func() {
@@ -62,7 +63,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceWorktreeBranch", func() {
 
 		BeforeEach(func() {
 			trackedFilePath = filepath.Join(sourceWorkTreeDir, trackedFileRelPath)
-			utils.CreateFile(trackedFilePath, []byte("state"))
+			utils.WriteFile(trackedFilePath, []byte("state"))
 
 			utils.RunSucceedCommand(
 				sourceWorkTreeDir,
@@ -71,26 +72,180 @@ var _ = Describe("SyncSourceWorktreeWithServiceWorktreeBranch", func() {
 			)
 		})
 
-		It("add", func() {
-			serviceCommit, err := SyncSourceWorktreeWithServiceWorktreeBranch(
+		It("add and reproducibility", func() {
+			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(
 				context.Background(),
 				gitDir,
 				sourceWorkTreeDir,
 				workTreeCacheDir,
-				initialCommit,
+				headCommit,
 				defaultOptions,
 			)
 
 			Ω(err).Should(Succeed())
-			Ω(serviceCommit).ShouldNot(Equal(initialCommit))
+			Ω(serviceCommit1).ShouldNot(Equal(headCommit))
 
 			diff := utils.SucceedCommandOutputString(
 				sourceWorkTreeDir,
 				"git",
-				"diff", serviceCommit, trackedFileRelPath,
+				"diff", serviceCommit1, trackedFileRelPath,
 			)
 
 			Ω(diff).Should(BeEmpty())
+
+			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(
+				context.Background(),
+				gitDir,
+				sourceWorkTreeDir,
+				workTreeCacheDir,
+				headCommit,
+				defaultOptions,
+			)
+
+			Ω(err).Should(Succeed())
+			Ω(serviceCommit1).Should(Equal(serviceCommit2))
+		})
+	})
+
+	When("untracked changes", func() {
+		const trackedFileRelPath = "untracked_file"
+		var trackedFilePath string
+		trackedFileContent1 := []byte("state1")
+
+		BeforeEach(func() {
+			trackedFilePath = filepath.Join(sourceWorkTreeDir, trackedFileRelPath)
+			utils.WriteFile(trackedFilePath, trackedFileContent1)
+		})
+
+		It("add and reproducibility", func() {
+			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(
+				context.Background(),
+				gitDir,
+				sourceWorkTreeDir,
+				workTreeCacheDir,
+				headCommit,
+				defaultOptions,
+			)
+
+			Ω(err).Should(Succeed())
+			Ω(serviceCommit1).ShouldNot(Equal(headCommit))
+
+			content := utils.SucceedCommandOutputString(
+				sourceWorkTreeDir,
+				"git",
+				"show", serviceCommit1+":"+trackedFileRelPath,
+			)
+
+			Ω(content).Should(Equal(string(trackedFileContent1)))
+
+			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(
+				context.Background(),
+				gitDir,
+				sourceWorkTreeDir,
+				workTreeCacheDir,
+				headCommit,
+				defaultOptions,
+			)
+
+			Ω(err).Should(Succeed())
+			Ω(serviceCommit1).Should(Equal(serviceCommit2))
+		})
+
+		When("untracked file already added", func() {
+			var serviceCommitUntrackedFileAdded string
+			trackedFileContent2 := []byte("state2")
+
+			BeforeEach(func() {
+				serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					headCommit,
+					defaultOptions,
+				)
+
+				Ω(err).Should(Succeed())
+
+				serviceCommitUntrackedFileAdded = serviceCommit
+			})
+
+			It("change", func() {
+				utils.WriteFile(trackedFilePath, trackedFileContent2)
+
+				serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					headCommit,
+					defaultOptions,
+				)
+
+				Ω(err).Should(Succeed())
+				Ω(serviceCommit).ShouldNot(Equal(serviceCommitUntrackedFileAdded))
+
+				content := utils.SucceedCommandOutputString(
+					sourceWorkTreeDir,
+					"git",
+					"show", serviceCommit+":"+trackedFileRelPath,
+				)
+
+				Ω(content).Should(Equal(string(trackedFileContent2)))
+			})
+
+			It("stage", func() {
+				utils.RunSucceedCommand(
+					sourceWorkTreeDir,
+					"git",
+					"add", trackedFilePath,
+				)
+
+				serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					headCommit,
+					defaultOptions,
+				)
+
+				Ω(err).Should(Succeed())
+				Ω(serviceCommit).Should(Equal(serviceCommitUntrackedFileAdded))
+
+				content := utils.SucceedCommandOutputString(
+					sourceWorkTreeDir,
+					"git",
+					"show", serviceCommit+":"+trackedFileRelPath,
+				)
+
+				Ω(content).Should(Equal(string(trackedFileContent1)))
+			})
+
+			It("delete", func() {
+				utils.DeleteFile(trackedFilePath)
+
+				serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					headCommit,
+					defaultOptions,
+				)
+
+				Ω(err).Should(Succeed())
+				Ω(serviceCommit).ShouldNot(Equal(serviceCommitUntrackedFileAdded))
+
+				bytes, err := utils.RunCommand(
+					sourceWorkTreeDir,
+					"git",
+					"show", serviceCommit+":"+trackedFileRelPath,
+				)
+
+				Ω(err).Should(HaveOccurred())
+				Ω(string(bytes)).Should(Equal(fmt.Sprintf("fatal: Path '%s' does not exist in '%s'\n", trackedFileRelPath, serviceCommit)))
+			})
 		})
 	})
 })

@@ -59,12 +59,11 @@ func (r FileReader) ValidateStatusResult(ctx context.Context, pathMatcher path_m
 }
 
 func (r FileReader) validateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error {
-	opts := git_repo.ValidateStatusResultOptions{}
 	if r.sharedOptions.Dev() {
-		opts.OnlyUntrackedChanges = true
+		return nil
 	}
 
-	if err := r.sharedOptions.LocalGitRepo().ValidateStatusResult(ctx, pathMatcher, opts); err != nil {
+	if err := r.sharedOptions.LocalGitRepo().ValidateStatusResult(ctx, pathMatcher); err != nil {
 		return r.HandleValidateStatusResultError(err)
 	}
 
@@ -112,12 +111,11 @@ func (r FileReader) StatusPathList(ctx context.Context, pathMatcher path_matcher
 }
 
 func (r FileReader) statusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) ([]string, error) {
-	options := git_repo.StatusPathListOptions{}
 	if r.sharedOptions.Dev() {
-		options.OnlyUntrackedChanges = true
+		return nil, nil
 	}
 
-	list, err := r.sharedOptions.LocalGitRepo().StatusPathList(ctx, pathMatcher, options)
+	list, err := r.sharedOptions.LocalGitRepo().StatusPathList(ctx, pathMatcher)
 	if err != nil {
 		return nil, err
 	}
