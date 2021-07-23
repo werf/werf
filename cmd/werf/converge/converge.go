@@ -106,6 +106,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupIntrospectStage(&commonCmdData, cmd)
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
@@ -295,8 +296,12 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 		if err != nil {
 			return err
 		}
+		cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerRuntime, &commonCmdData)
+		if err != nil {
+			return err
+		}
 
-		storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
 
 		imagesRepository = storageManager.StagesStorage.String()
 

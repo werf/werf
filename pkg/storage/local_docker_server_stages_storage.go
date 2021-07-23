@@ -74,6 +74,12 @@ func (storage *LocalDockerServerStagesStorage) RejectStage(ctx context.Context, 
 	return nil
 }
 
+type FilterStagesAndProcessRelatedDataOptions struct {
+	SkipUsedImage            bool
+	RmForce                  bool
+	RmContainersThatUseImage bool
+}
+
 func (storage *LocalDockerServerStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
 	return processRelatedContainers(ctx, stageDescriptions, processRelatedContainersOptions{
 		skipUsedImages:           options.SkipUsedImage,

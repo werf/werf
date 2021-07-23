@@ -162,10 +162,6 @@ func (storage *RepoStagesStorage) RejectStage(ctx context.Context, projectName, 
 	return nil
 }
 
-func (storage *RepoStagesStorage) FilterStagesAndProcessRelatedData(_ context.Context, stageDescriptions []*image.StageDescription, _ FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
-	return stageDescriptions, nil
-}
-
 func (storage *RepoStagesStorage) CreateRepo(ctx context.Context) error {
 	return storage.DockerRegistry.CreateRepo(ctx, storage.RepoAddress)
 }

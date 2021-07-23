@@ -65,6 +65,7 @@ type CmdData struct {
 	CommonRepoData         *RepoData
 	StagesStorage          *string
 	SecondaryStagesStorage *[]string
+	CacheStagesStorage     *[]string
 
 	SkipBuild *bool
 	StubTags  *bool
@@ -381,6 +382,12 @@ func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SecondaryStagesStorage = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", []string{}, `Specify one or multiple secondary read-only repos with images that will be used as a cache.
 Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)`)
+}
+
+func SetupCacheStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CacheStagesStorage = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.CacheStagesStorage, "cache-repo", "", []string{}, `Specify one or multiple cache repos with images that will be used as a cache. Cache will be populated when pushing newly built images into the primary repo and when pulling existing images from the primary repo. Cache repo will be used to pull images and to get manifests before making requests to the primary repo.
+Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)`)
 }
 
 func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
@@ -937,6 +944,20 @@ func GetStagesStorage(stagesStorageAddress string, containerRuntime container_ru
 	)
 }
 
+func GetCacheStagesStorageList(containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) ([]storage.StagesStorage, error) {
+	var res []storage.StagesStorage
+
+	for _, address := range GetCacheStagesStorage(cmdData) {
+		repoStagesStorage, err := storage.NewStagesStorage(address, containerRuntime, storage.StagesStorageOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("unable to create cache stages storage at %s: %s", address, err)
+		}
+		res = append(res, repoStagesStorage)
+	}
+
+	return res, nil
+}
+
 func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 	if stagesStorage.Address() != storage.LocalStorageAddress {
@@ -1148,6 +1169,10 @@ func GetAddLabels(cmdData *CmdData) []string {
 
 func GetAddAnnotations(cmdData *CmdData) []string {
 	return append(predefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
+}
+
+func GetCacheStagesStorage(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
