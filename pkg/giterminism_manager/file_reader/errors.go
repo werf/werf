@@ -8,14 +8,16 @@ import (
 	"github.com/werf/werf/pkg/giterminism_manager/errors"
 )
 
-type UntrackedFilesError FileReaderError
-type UncommittedFilesError FileReaderError
-type FileNotAcceptedError FileReaderError
-type FileNotFoundInProjectDirectoryError FileReaderError
-type FileNotFoundInProjectRepositoryError FileReaderError
-type FileReaderError struct {
-	error
-}
+type (
+	UntrackedFilesError                  FileReaderError
+	UncommittedFilesError                FileReaderError
+	FileNotAcceptedError                 FileReaderError
+	FileNotFoundInProjectDirectoryError  FileReaderError
+	FileNotFoundInProjectRepositoryError FileReaderError
+	FileReaderError                      struct {
+		error
+	}
+)
 
 func IsFileNotFoundInProjectDirectoryError(err error) bool {
 	switch err.(type) {
@@ -93,10 +95,7 @@ To stage the changes use the following command: "git add %s".`, errorMsg, gitAdd
 	} else {
 		errorMsg = fmt.Sprintf(`%s
 
-You may be interested in the development mode (activated by the --dev option), which allows working with project files without doing redundant commits during debugging and development.
-Two development modes are supported (controlled with the --dev-mode option):
-- simple (default): for working with the worktree state of the git repository;
-- strict: for working with the index state of the git repository.`, errorMsg)
+You may be interested in the development mode (activated by the --dev option), which allows working with project files without doing redundant commits during debugging and development.`, errorMsg)
 	}
 
 	return UncommittedFilesError{errors.NewError(errorMsg)}

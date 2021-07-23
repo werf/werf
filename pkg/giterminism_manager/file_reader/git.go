@@ -61,14 +61,7 @@ func (r FileReader) ValidateStatusResult(ctx context.Context, pathMatcher path_m
 func (r FileReader) validateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error {
 	opts := git_repo.ValidateStatusResultOptions{}
 	if r.sharedOptions.Dev() {
-		switch r.sharedOptions.DevMode() {
-		case "simple":
-			opts.OnlyUntrackedChanges = true
-		case "strict":
-			opts.OnlyWorktreeChanges = true
-		default:
-			panic("unexpected dev mode " + r.sharedOptions.DevMode())
-		}
+		opts.OnlyUntrackedChanges = true
 	}
 
 	if err := r.sharedOptions.LocalGitRepo().ValidateStatusResult(ctx, pathMatcher, opts); err != nil {
@@ -121,14 +114,7 @@ func (r FileReader) StatusPathList(ctx context.Context, pathMatcher path_matcher
 func (r FileReader) statusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) ([]string, error) {
 	options := git_repo.StatusPathListOptions{}
 	if r.sharedOptions.Dev() {
-		switch r.sharedOptions.DevMode() {
-		case "simple":
-			options.OnlyUntrackedChanges = true
-		case "strict":
-			options.OnlyWorktreeChanges = true
-		default:
-			panic("unexpected dev mode " + r.sharedOptions.DevMode())
-		}
+		options.OnlyUntrackedChanges = true
 	}
 
 	list, err := r.sharedOptions.LocalGitRepo().StatusPathList(ctx, pathMatcher, options)

@@ -16,7 +16,6 @@ import (
 
 type SyncSourceWorktreeWithServiceWorktreeBranchOptions struct {
 	ServiceBranchPrefix string
-	OnlyStagedChanges   bool
 }
 
 func SyncSourceWorktreeWithServiceWorktreeBranch(ctx context.Context, gitDir, sourceWorkTreeDir, workTreeCacheDir, commit string, opts SyncSourceWorktreeWithServiceWorktreeBranchOptions) (string, error) {
@@ -42,7 +41,7 @@ func SyncSourceWorktreeWithServiceWorktreeBranch(ctx context.Context, gitDir, so
 		}
 
 		devBranchName := fmt.Sprintf("%s%s", opts.ServiceBranchPrefix, commit)
-		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorkTreeDir, destinationWorkTreeDir, commit, devBranchName, opts.OnlyStagedChanges)
+		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorkTreeDir, destinationWorkTreeDir, commit, devBranchName)
 		if err != nil {
 			return fmt.Errorf("unable to sync staged changes: %s", err)
 		}
@@ -55,7 +54,7 @@ func SyncSourceWorktreeWithServiceWorktreeBranch(ctx context.Context, gitDir, so
 	return resultCommit, nil
 }
 
-func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorkTreeDir, destinationWorkTreeDir, commit string, devBranchName string, onlyStagedChanges bool) (string, error) {
+func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorkTreeDir, destinationWorkTreeDir, commit string, devBranchName string) (string, error) {
 	var isDevBranchExist bool
 	if output, err := runGitCmd(ctx, []string{"branch", "--list", devBranchName}, destinationWorkTreeDir, runGitCmdOptions{}); err != nil {
 		return "", err
@@ -90,9 +89,6 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorkTreeDi
 		"--binary",
 		"--ignore-submodules=untracked",
 	}
-	if onlyStagedChanges {
-		gitDiffArgs = append(gitDiffArgs, "--cached")
-	}
 	gitDiffArgs = append(gitDiffArgs, devHeadCommit)
 
 	var resCommit string
@@ -105,11 +101,7 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorkTreeDi
 		resCommit = devHeadCommit
 	} else {
 		if debug() {
-			filesType := "tracked"
-			if onlyStagedChanges {
-				filesType = "staged"
-			}
-			logboek.Context(ctx).Debug().LogF("[DEBUG] Syncing %s files ...\n", filesType)
+			logboek.Context(ctx).Debug().LogF("[DEBUG] Syncing tracked files ...\n")
 		}
 
 		if _, err := runGitCmd(ctx, []string{"apply", "--binary", "--index"}, destinationWorkTreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {

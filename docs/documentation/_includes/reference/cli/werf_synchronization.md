@@ -20,11 +20,6 @@ werf synchronization [options]
             debugging and development
       --dev-branch-prefix='werf-dev-'
             Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)
-      --dev-mode='simple'
-            Set development mode (default $WERF_DEV_MODE or simple).
-            Two development modes are supported:
-            - simple: for working with the worktree state of the git repository
-            - strict: for working with the index state of the git repository
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --host=''
