@@ -127,6 +127,8 @@ jobs:
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
+        ./scripts/ci/git.sh
+
         find . -type f \( -name '*.test' -or -name '*.test.exe' \) -exec chmod +x {} \;
       shell: bash
 
