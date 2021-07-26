@@ -121,8 +121,8 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
       --follow=false
             Enable follow mode (default $WERF_FOLLOW).
             The mode allows restarting the command on a new commit.
-            In development mode (--dev), it additionally tracks changes in the index state of the   
-            git repository
+            In development mode (--dev), werf restarts the command on any changes (including        
+            untracked files) in the git repository worktree
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
