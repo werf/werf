@@ -13,7 +13,7 @@ werf does not allow working with uncommitted and untracked files. If the files a
 > We strongly recommend following this approach, but if necessary, you can loosen giterminism restrictions explicitly and enable the features that require careful use with [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }})
 
 During development or debugging, changing the project files might be annoying due to the necessity of creating redundant commits. We are working on the development mode to simplify this process, while keeping the whole logic unchanged. 
-Currently, the development mode (activated by the `--dev` option) allows working with the worktree state of the git repository.
+Currently, the development mode (activated by the `--dev` option) allows working with the worktree state of the git repository, with tracked and untracked changes. werf ignores changes in compliance with the rules described in `.gitignore` as well as rules that the user sets with the `--dev-ignore=<glob>` option (can be used multiple times).
 
 ## Configuration
 

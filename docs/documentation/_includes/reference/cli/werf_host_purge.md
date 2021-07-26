@@ -31,6 +31,11 @@ werf host purge [options]
             debugging and development
       --dev-branch-prefix='werf-dev-'
             Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)
+      --dev-ignore=[]
+            Add rules to ignore tracked and untracked changes in development mode (can specify      
+            multiple).
+            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
+            $WERF_DEV_IGNORE_DOCS=path/to/docs)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

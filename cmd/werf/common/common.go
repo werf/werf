@@ -82,6 +82,7 @@ type CmdData struct {
 
 	LooseGiterminism *bool
 	Dev              *bool
+	DevIgnore        *[]string
 	DevBranchPrefix  *string
 
 	IntrospectBeforeError *bool
@@ -170,6 +171,7 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupLooseGiterminism(cmdData, cmd)
 	setupDev(cmdData, cmd)
+	setupDevIgnore(cmdData, cmd)
 	setupDevBranchPrefix(cmdData, cmd)
 }
 
@@ -182,6 +184,12 @@ func setupDev(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dev = new(bool)
 	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), `Enable development mode (default $WERF_DEV).
 The mode allows working with project files without doing redundant commits during debugging and development`)
+}
+
+func setupDevIgnore(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DevIgnore = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.DevIgnore, "dev-ignore", "", []string{}, `Add rules to ignore tracked and untracked changes in development mode (can specify multiple).
+Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)`)
 }
 
 func setupDevBranchPrefix(cmdData *CmdData, cmd *cobra.Command) {
@@ -1027,8 +1035,9 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 
 	var openLocalRepoOptions git_repo.OpenLocalRepoOptions
 	if *cmdData.Dev {
-		openLocalRepoOptions.ServiceBranchOptions.Prefix = *cmdData.DevBranchPrefix
 		openLocalRepoOptions.WithServiceHeadCommit = true
+		openLocalRepoOptions.ServiceBranchOptions.Prefix = *cmdData.DevBranchPrefix
+		openLocalRepoOptions.ServiceBranchOptions.GlobExcludeList = GetDevIgnore(cmdData)
 	}
 
 	localGitRepo, err := git_repo.OpenLocalRepo(BackgroundContext(), "own", gitWorkTree, openLocalRepoOptions)
@@ -1100,6 +1109,10 @@ func GetNamespace(cmdData *CmdData) string {
 		return "default"
 	}
 	return *cmdData.Namespace
+}
+
+func GetDevIgnore(cmdData *CmdData) []string {
+	return append(predefinedValuesByEnvNamePrefix("WERF_DEV_IGNORE_"), *cmdData.DevIgnore...)
 }
 
 func GetSSHKey(cmdData *CmdData) []string {
