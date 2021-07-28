@@ -80,7 +80,7 @@ require (
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
-	helm.sh/helm/v3 v3.5.1
+	helm.sh/helm/v3 v3.6.3
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
 	k8s.io/cli-runtime v0.21.0
