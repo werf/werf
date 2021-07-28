@@ -51,7 +51,7 @@ require (
 	github.com/moby/buildkit v0.8.2
 	github.com/moby/sys/symlink v0.1.0 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
-	github.com/oleiade/reflections v1.0.0 // indirect
+	github.com/oleiade/reflections v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
 	github.com/otiai10/copy v1.0.1
@@ -100,7 +100,5 @@ replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402
 replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
 
 replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
-
-replace github.com/deislabs/oras => github.com/werf/oras v0.8.2-0.20210128161614-26d583f169ea
 
 replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20210722125525-31cea4c4a97d
