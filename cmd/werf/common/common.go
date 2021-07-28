@@ -1027,7 +1027,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 
 	var openLocalRepoOptions git_repo.OpenLocalRepoOptions
 	if *cmdData.Dev {
-		openLocalRepoOptions.ServiceBranchPrefix = *cmdData.DevBranchPrefix
+		openLocalRepoOptions.ServiceBranchOptions.Prefix = *cmdData.DevBranchPrefix
 		openLocalRepoOptions.WithServiceHeadCommit = true
 	}
 

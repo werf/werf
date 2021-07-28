@@ -71,7 +71,7 @@ func (r FileReader) NewUntrackedFilesError(relPaths ...string) error {
 		panic("unexpected condition")
 	}
 
-	return UntrackedFilesError{errors.NewError(errorMsg)}
+	return UntrackedFilesError{r.uncommittedErrorBase(errorMsg, strings.Join(formatFilePathList(relPaths), " "))}
 }
 
 func (r FileReader) NewUncommittedFilesError(relPaths ...string) error {

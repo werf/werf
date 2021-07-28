@@ -35,8 +35,12 @@ type Local struct {
 }
 
 type OpenLocalRepoOptions struct {
-	ServiceBranchPrefix   string
 	WithServiceHeadCommit bool
+	ServiceBranchOptions  ServiceBranchOptions
+}
+
+type ServiceBranchOptions struct {
+	Prefix string
 }
 
 func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocalRepoOptions) (l *Local, err error) {
@@ -66,14 +70,14 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 			defer werf.ReleaseHostLock(lock)
 		}
 
-		devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceWorktreeBranch(
+		devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceBranch(
 			context.Background(),
 			l.GitDir,
 			l.WorkTreeDir,
 			l.getRepoWorkTreeCacheDir(l.getRepoID()),
 			l.headCommit,
-			true_git.SyncSourceWorktreeWithServiceWorktreeBranchOptions{
-				ServiceBranchPrefix: opts.ServiceBranchPrefix,
+			true_git.SyncSourceWorktreeWithServiceBranchOptions{
+				ServiceBranchPrefix: opts.ServiceBranchOptions.Prefix,
 			},
 		)
 		if err != nil {
@@ -279,9 +283,7 @@ type (
 	}
 )
 
-type ValidateStatusResultOptions StatusPathListOptions
-
-func (repo *Local) ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts ValidateStatusResultOptions) error {
+func (repo *Local) ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error {
 	statusResult, err := repo.status(ctx)
 	if err != nil {
 		return err
@@ -301,17 +303,7 @@ func (repo *Local) ValidateStatusResult(ctx context.Context, pathMatcher path_ma
 		}
 	}
 
-	if opts.OnlyUntrackedChanges {
-		return nil
-	}
-
-	var scope status.Scope
-	if opts.OnlyWorktreeChanges {
-		scope = statusResult.Worktree
-	} else {
-		scope = statusResult.IndexWithWorktree()
-	}
-
+	scope := statusResult.IndexWithWorktree()
 	var uncommittedPathList []string
 	for _, path := range scope.PathList() {
 		if pathMatcher.IsPathMatched(path) {
@@ -377,21 +369,16 @@ func (repo *Local) validateStatusResultSubmodules(_ context.Context, pathMatcher
 	return nil
 }
 
-type StatusPathListOptions struct {
-	OnlyWorktreeChanges  bool
-	OnlyUntrackedChanges bool
-}
-
-func (repo *Local) StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts StatusPathListOptions) (list []string, err error) {
+func (repo *Local) StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (list []string, err error) {
 	logboek.Context(ctx).Debug().
-		LogBlock("StatusPathList %q %v", pathMatcher.String(), opts).
+		LogBlock("StatusPathList %q %v", pathMatcher.String()).
 		Options(func(options types.LogBlockOptionsInterface) {
 			if !debugGiterminismManager() {
 				options.Mute()
 			}
 		}).
 		Do(func() {
-			list, err = repo.statusPathList(ctx, pathMatcher, opts)
+			list, err = repo.statusPathList(ctx, pathMatcher)
 
 			if !debugGiterminismManager() {
 				logboek.Context(ctx).Debug().LogLn("list:", list)
@@ -402,7 +389,7 @@ func (repo *Local) StatusPathList(ctx context.Context, pathMatcher path_matcher.
 	return
 }
 
-func (repo *Local) statusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher, opts StatusPathListOptions) ([]string, error) {
+func (repo *Local) statusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) ([]string, error) {
 	statusResult, err := repo.status(ctx)
 	if err != nil {
 		return nil, err
@@ -418,16 +405,8 @@ func (repo *Local) statusPathList(ctx context.Context, pathMatcher path_matcher.
 	}
 
 	handlePathListFunc(statusResult.UntrackedPathList)
-	if opts.OnlyUntrackedChanges {
-		return result, nil
-	}
 
-	var scope status.Scope
-	if opts.OnlyWorktreeChanges {
-		scope = statusResult.Worktree
-	} else {
-		scope = statusResult.IndexWithWorktree()
-	}
+	scope := statusResult.IndexWithWorktree()
 	handlePathListFunc(scope.PathList())
 
 	for _, submodule := range scope.Submodules() {

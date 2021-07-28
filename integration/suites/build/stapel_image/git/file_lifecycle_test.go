@@ -39,7 +39,7 @@ var _ = Describe("file lifecycle", func() {
 
 	createFileFunc := func(fileName string, fileData []byte, filePerm os.FileMode) {
 		filePath := filepath.Join(SuiteData.TestDirPath, fileName)
-		utils.CreateFile(filePath, fileData)
+		utils.WriteFile(filePath, fileData)
 
 		if runtime.GOOS == "windows" {
 			gitArgs := []string{"add"}

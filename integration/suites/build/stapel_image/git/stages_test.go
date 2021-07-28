@@ -550,7 +550,7 @@ func checkResultedFilesChecksum() {
 func createAndCommitFile(dirPath string, filename string, contentSize int) {
 	newFilePath := filepath.Join(dirPath, filename)
 	newFileData := []byte(utils.GetRandomString(contentSize))
-	utils.CreateFile(newFilePath, newFileData)
+	utils.WriteFile(newFilePath, newFileData)
 
 	addAndCommitFile(dirPath, filename, "Add file "+filename)
 }
