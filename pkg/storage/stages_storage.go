@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
@@ -16,16 +17,20 @@ const (
 	NamelessImageRecordTag           = "__nameless__"
 )
 
-var (
-	ErrBrokenImage = errors.New("broken image")
-)
+var ErrBrokenImage = errors.New("broken image")
+
+func BrokenImageErr(err error) bool {
+	if err != nil {
+		return strings.HasSuffix(err.Error(), ErrBrokenImage.Error())
+	}
+	return false
+}
 
 type StagesStorage interface {
 	GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error)
 	GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error)
 	GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error)
 	DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error
-	FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error)
 
 	RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error
 

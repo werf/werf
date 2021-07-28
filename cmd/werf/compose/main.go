@@ -212,6 +212,7 @@ services:
 	common.SetupSSHKey(&commonCmdData, cmd)
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
@@ -419,8 +420,12 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 	if err != nil {
 		return err
 	}
+	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
 
-	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, storageLockManager, stagesStorageCache)
+	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 

@@ -210,7 +210,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, imageName, stageName str
 		stg = c.GetImage(imageName).GetLastNonEmptyStage()
 	}
 
-	if err := c.StorageManager.FetchStage(ctx, stg); err != nil {
+	if err := c.StorageManager.FetchStage(ctx, c.ContainerRuntime, stg); err != nil {
 		return nil, fmt.Errorf("unable to fetch stage %s: %s", stg.GetImage().Name(), err)
 	}
 
@@ -322,7 +322,7 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context) error {
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, imageName string) error {
 	lastImageStage := c.GetImage(imageName).GetLastNonEmptyStage()
-	return c.StorageManager.FetchStage(ctx, lastImageStage)
+	return c.StorageManager.FetchStage(ctx, c.ContainerRuntime, lastImageStage)
 }
 
 func (c *Conveyor) GetImageInfoGetters() (images []*imagePkg.InfoGetter) {
