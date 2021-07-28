@@ -248,4 +248,69 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			})
 		})
 	})
+
+	When("glob exclude specified", func() {
+		const untrackedFileRelPath = "untracked_file.ext"
+		var untrackedFilePath string
+		var serviceCommitUntrackedFileAdded string
+
+		BeforeEach(func() {
+			untrackedFilePath = filepath.Join(sourceWorkTreeDir, untrackedFileRelPath)
+			utils.WriteFile(untrackedFilePath, []byte("any"))
+
+			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
+				context.Background(),
+				gitDir,
+				sourceWorkTreeDir,
+				workTreeCacheDir,
+				headCommit,
+				defaultOptions,
+			)
+
+			Ω(err).Should(Succeed())
+
+			serviceCommitUntrackedFileAdded = serviceCommit
+		})
+
+		It("not ignore", func() {
+			defaultOptions.GlobExcludeList = []string{"file"}
+
+			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
+				context.Background(),
+				gitDir,
+				sourceWorkTreeDir,
+				workTreeCacheDir,
+				headCommit,
+				defaultOptions,
+			)
+
+			Ω(err).Should(Succeed())
+			Ω(serviceCommit).Should(Equal(serviceCommitUntrackedFileAdded))
+		})
+
+		It("ignore", func() {
+			defaultOptions.GlobExcludeList = []string{"*.ext"}
+
+			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
+				context.Background(),
+				gitDir,
+				sourceWorkTreeDir,
+				workTreeCacheDir,
+				headCommit,
+				defaultOptions,
+			)
+
+			Ω(err).Should(Succeed())
+			Ω(serviceCommit).ShouldNot(Equal(serviceCommitUntrackedFileAdded))
+
+			bytes, err := utils.RunCommand(
+				sourceWorkTreeDir,
+				"git",
+				"show", serviceCommit+":"+untrackedFileRelPath,
+			)
+
+			Ω(err).Should(HaveOccurred())
+			Ω(string(bytes)).Should(Equal(fmt.Sprintf("fatal: Path '%s' exists on disk, but not in '%s'.\n", untrackedFileRelPath, serviceCommit)))
+		})
+	})
 })

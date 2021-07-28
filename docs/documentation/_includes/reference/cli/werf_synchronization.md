@@ -20,6 +20,11 @@ werf synchronization [options]
             debugging and development
       --dev-branch-prefix='werf-dev-'
             Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)
+      --dev-ignore=[]
+            Add rules to ignore tracked and untracked changes in development mode (can specify      
+            multiple).
+            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
+            $WERF_DEV_IGNORE_DOCS=path/to/docs)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --host=''

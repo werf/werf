@@ -40,7 +40,8 @@ type OpenLocalRepoOptions struct {
 }
 
 type ServiceBranchOptions struct {
-	Prefix string
+	Prefix          string
+	GlobExcludeList []string
 }
 
 func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocalRepoOptions) (l *Local, err error) {
@@ -78,6 +79,7 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 			l.headCommit,
 			true_git.SyncSourceWorktreeWithServiceBranchOptions{
 				ServiceBranchPrefix: opts.ServiceBranchOptions.Prefix,
+				GlobExcludeList:     opts.ServiceBranchOptions.GlobExcludeList,
 			},
 		)
 		if err != nil {

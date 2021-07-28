@@ -88,6 +88,11 @@ werf converge --repo registry.mydomain.com/web --env production
             debugging and development
       --dev-branch-prefix='werf-dev-'
             Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)
+      --dev-ignore=[]
+            Add rules to ignore tracked and untracked changes in development mode (can specify      
+            multiple).
+            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
+            $WERF_DEV_IGNORE_DOCS=path/to/docs)
       --dir=''
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
@@ -108,8 +113,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --follow=false
             Enable follow mode (default $WERF_FOLLOW).
             The mode allows restarting the command on a new commit.
-            In development mode (--dev), it additionally tracks changes in the index state of the   
-            git repository
+            In development mode (--dev), werf restarts the command on any changes (including        
+            untracked files) in the git repository worktree
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)

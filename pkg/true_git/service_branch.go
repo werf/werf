@@ -14,6 +14,7 @@ import (
 
 type SyncSourceWorktreeWithServiceBranchOptions struct {
 	ServiceBranchPrefix string
+	GlobExcludeList     []string
 }
 
 func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWorktreeDir, worktreeCacheDir, commit string, opts SyncSourceWorktreeWithServiceBranchOptions) (string, error) {
@@ -39,7 +40,7 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 		}
 
 		branchName := fmt.Sprintf("%s%s", opts.ServiceBranchPrefix, commit)
-		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorktreeDir, serviceWorktreeDir, commit, branchName)
+		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorktreeDir, serviceWorktreeDir, commit, branchName, opts.GlobExcludeList)
 		if err != nil {
 			return fmt.Errorf("unable to sync worktree with service branch %q: %s", branchName, err)
 		}
@@ -52,7 +53,7 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 	return resultCommit, nil
 }
 
-func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, branchName string) (string, error) {
+func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, branchName string, globExcludeList []string) (string, error) {
 	serviceBranchHeadCommit, err := getOrPrepareServiceBranchHeadCommit(ctx, serviceWorktreeDir, sourceCommit, branchName)
 	if err != nil {
 		return "", fmt.Errorf("unable to get or prepare service branch head commit: %s", err)
@@ -62,7 +63,11 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 		return "", fmt.Errorf("unable to checkout service branch: %s", err)
 	}
 
-	if err := addChangesToServiceWorktreeIndex(ctx, sourceWorktreeDir, serviceWorktreeDir); err != nil {
+	if err := revertExcludedChangesInServiceWorktreeIndex(ctx, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, serviceBranchHeadCommit, globExcludeList); err != nil {
+		return "", fmt.Errorf("unable to revert excluded changes in service worktree index: %q", err)
+	}
+
+	if err := addChangesToServiceWorktreeIndex(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList); err != nil {
 		return "", fmt.Errorf("unable to add changes to service worktree index: %s", err)
 	}
 
@@ -108,7 +113,43 @@ func getOrPrepareServiceBranchHeadCommit(ctx context.Context, serviceWorktreeDir
 	return serviceBranchHeadCommit, nil
 }
 
-func addChangesToServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string) error {
+func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, sourceCommit string, serviceBranchHeadCommit string, globExcludeList []string) error {
+	if len(globExcludeList) == 0 || serviceBranchHeadCommit == sourceCommit {
+		return nil
+	}
+
+	gitDiffArgs := []string{
+		"-c", "diff.renames=false",
+		"-c", "core.quotePath=false",
+		"diff",
+		"--binary",
+		serviceBranchHeadCommit, sourceCommit,
+		"--",
+	}
+	gitDiffArgs = append(gitDiffArgs, globExcludeList...)
+
+	diffOutput, err := runGitCmd(ctx, gitDiffArgs, sourceWorktreeDir, runGitCmdOptions{})
+	if err != nil {
+		return err
+	}
+
+	if len(diffOutput.Bytes()) == 0 {
+		return nil
+	}
+
+	if _, err := runGitCmd(ctx, []string{"apply", "--binary", "--index"}, serviceWorktreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func addChangesToServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, globExcludeList []string) error {
+	var pathSpecExcludeList []string
+	for _, glob := range globExcludeList {
+		pathSpecExcludeList = append(pathSpecExcludeList, ":!"+glob)
+	}
+
 	gitAddArgs := []string{
 		"--work-tree",
 		sourceWorktreeDir,
@@ -118,6 +159,7 @@ func addChangesToServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir str
 		".",
 	}
 
+	gitAddArgs = append(gitAddArgs, pathSpecExcludeList...)
 	if _, err := runGitCmd(ctx, gitAddArgs, serviceWorktreeDir, runGitCmdOptions{}); err != nil {
 		return err
 	}

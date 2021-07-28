@@ -22,11 +22,11 @@ Introduced new giterminism configuration file [`werf-giterminism.yaml`]({{ "/ref
 
 All toplevel commands: `werf converge`, `werf run`, `werf bundle publish`, `werf render` and `werf build` — has two main flags `--follow` and `--dev` aimed for local development.
 
-By default, each of these commands reads all needed files from the current commit of the git repo. With the `--dev` flag command will read files from the project git worktree including untracked files.
+By default, each of these commands reads all needed files from the current commit of the git repo. With the `--dev` flag command will read files from the project git worktree including untracked files. werf ignores changes in compliance with the rules described in `.gitignore` as well as rules that the user sets with the `--dev-ignore=<glob>` option (can be used multiple times).
 
 Command with the `--follow` flag will work in a loop, where either:
  - a new commit to the project git work tree will cause command rerun — by default;
- - changes to the git index of the project git work tree will cause command rerun —  when `--follow` flag is combined with the `--dev` flag.
+ - any changes in the git repository worktree including untracked files will cause command rerun —  when `--follow` flag is combined with the `--dev` flag.
 
 Internally werf will commit changes to dev branch `werf-dev-<commit>`. Dev-cache is linked only to those temporal commits and will not interfere with the main cache (when no `--dev` has been specified).
 
