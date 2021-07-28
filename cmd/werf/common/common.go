@@ -82,7 +82,6 @@ type CmdData struct {
 
 	LooseGiterminism *bool
 	Dev              *bool
-	DevMode          *string
 	DevBranchPrefix  *string
 
 	IntrospectBeforeError *bool
@@ -171,7 +170,6 @@ func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupLooseGiterminism(cmdData, cmd)
 	setupDev(cmdData, cmd)
-	setupDevMode(cmdData, cmd)
 	setupDevBranchPrefix(cmdData, cmd)
 }
 
@@ -184,21 +182,6 @@ func setupDev(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dev = new(bool)
 	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), `Enable development mode (default $WERF_DEV).
 The mode allows working with project files without doing redundant commits during debugging and development`)
-}
-
-func setupDevMode(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DevMode = new(string)
-
-	defaultValue := "simple"
-	envValue := os.Getenv("WERF_DEV_MODE")
-	if envValue != "" {
-		defaultValue = envValue
-	}
-
-	cmd.Flags().StringVarP(cmdData.DevMode, "dev-mode", "", defaultValue, `Set development mode (default $WERF_DEV_MODE or simple).
-Two development modes are supported:
-- simple: for working with the worktree state of the git repository
-- strict: for working with the index state of the git repository`)
 }
 
 func setupDevBranchPrefix(cmdData *CmdData, cmd *cobra.Command) {
@@ -765,7 +748,7 @@ func SetupFollow(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Follow = new(bool)
 	cmd.Flags().BoolVarP(cmdData.Follow, "follow", "", GetBoolEnvironmentDefaultFalse("WERF_FOLLOW"), `Enable follow mode (default $WERF_FOLLOW).
 The mode allows restarting the command on a new commit.
-In development mode (--dev), it additionally tracks changes in the index state of the git repository, regardless of whether simple or strict development mode (--dev-mode) is used`)
+In development mode (--dev), it additionally tracks changes in the index state of the git repository`)
 }
 
 func allStagesNames() []string {
@@ -857,18 +840,6 @@ func GetUint64EnvVar(varName string) (*uint64, error) {
 	}
 
 	return nil, nil
-}
-
-func getDevMode(cmdData *CmdData) (string, error) {
-	value := *cmdData.DevMode
-	switch value {
-	case "simple", "strict":
-		return value, nil
-	case "":
-		return "", fmt.Errorf("--dev-mode param required")
-	default:
-		return "", fmt.Errorf("bad --dev-mode %q: simple and strict modes are supported", value)
-	}
 }
 
 func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
@@ -1054,16 +1025,10 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 		return nil, fmt.Errorf("werf requires project dir — the current working directory or directory specified with --dir option (or WERF_DIR env var) — to be located inside the git work tree: %q is located outside of the git work tree %q", gitWorkTree, workingDir)
 	}
 
-	devMode, err := getDevMode(cmdData)
-	if err != nil {
-		return nil, err
-	}
-
 	var openLocalRepoOptions git_repo.OpenLocalRepoOptions
 	if *cmdData.Dev {
 		openLocalRepoOptions.ServiceBranchPrefix = *cmdData.DevBranchPrefix
 		openLocalRepoOptions.WithServiceHeadCommit = true
-		openLocalRepoOptions.ServiceHeadCommitOptions.WithStagedChangesOnly = devMode == "strict"
 	}
 
 	localGitRepo, err := git_repo.OpenLocalRepo(BackgroundContext(), "own", gitWorkTree, openLocalRepoOptions)
@@ -1079,7 +1044,6 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 	return giterminism_manager.NewManager(BackgroundContext(), workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		Dev:              *cmdData.Dev,
-		DevMode:          devMode,
 	})
 }
 

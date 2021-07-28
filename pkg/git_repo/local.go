@@ -35,13 +35,8 @@ type Local struct {
 }
 
 type OpenLocalRepoOptions struct {
-	ServiceBranchPrefix      string
-	WithServiceHeadCommit    bool
-	ServiceHeadCommitOptions ServiceHeadCommit
-}
-
-type ServiceHeadCommit struct {
-	WithStagedChangesOnly bool // all tracked files if false
+	ServiceBranchPrefix   string
+	WithServiceHeadCommit bool
 }
 
 func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocalRepoOptions) (l *Local, err error) {
@@ -79,7 +74,6 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 			l.headCommit,
 			true_git.SyncSourceWorktreeWithServiceWorktreeBranchOptions{
 				ServiceBranchPrefix: opts.ServiceBranchPrefix,
-				OnlyStagedChanges:   opts.ServiceHeadCommitOptions.WithStagedChangesOnly,
 			},
 		)
 		if err != nil {
@@ -264,22 +258,26 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoID)
 }
 
-type UntrackedFilesFoundError StatusFilesFoundError
-type UncommittedFilesFoundError StatusFilesFoundError
-type StatusFilesFoundError struct {
-	PathList []string
-	error
-}
+type (
+	UntrackedFilesFoundError   StatusFilesFoundError
+	UncommittedFilesFoundError StatusFilesFoundError
+	StatusFilesFoundError      struct {
+		PathList []string
+		error
+	}
+)
 
-type SubmoduleAddedAndNotCommittedError SubmoduleErrorBase
-type SubmoduleDeletedError SubmoduleErrorBase
-type SubmoduleHasUntrackedChangesError SubmoduleErrorBase
-type SubmoduleHasUncommittedChangesError SubmoduleErrorBase
-type SubmoduleCommitChangedError SubmoduleErrorBase
-type SubmoduleErrorBase struct {
-	SubmodulePath string
-	error
-}
+type (
+	SubmoduleAddedAndNotCommittedError  SubmoduleErrorBase
+	SubmoduleDeletedError               SubmoduleErrorBase
+	SubmoduleHasUntrackedChangesError   SubmoduleErrorBase
+	SubmoduleHasUncommittedChangesError SubmoduleErrorBase
+	SubmoduleCommitChangedError         SubmoduleErrorBase
+	SubmoduleErrorBase                  struct {
+		SubmodulePath string
+		error
+	}
+)
 
 type ValidateStatusResultOptions StatusPathListOptions
 

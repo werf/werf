@@ -48,11 +48,6 @@ werf host cleanup [options]
             debugging and development
       --dev-branch-prefix='werf-dev-'
             Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)
-      --dev-mode='simple'
-            Set development mode (default $WERF_DEV_MODE or simple).
-            Two development modes are supported:
-            - simple: for working with the worktree state of the git repository
-            - strict: for working with the index state of the git repository
       --disable-auto-host-cleanup=false
             Disable auto host cleanup procedure in main werf commands like werf-build,              
             werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)

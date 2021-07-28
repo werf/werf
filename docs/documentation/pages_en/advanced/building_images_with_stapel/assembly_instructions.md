@@ -21,7 +21,7 @@ The _user stages pattern_ defines the structure of a building process, and thus,
 
 ### Run an assembly instruction on git changes
 
-The execution of a _user stage_ can depend on changes of files in a git repository. werf supports local and remote git repositories. The user stage can be dependent on changes in several repositories. Various changes in the repository can lead to a rebuild of different _user stages_.
+The execution of a _user stage_ can depend on changes of files in a git repository werf supports local and remote git repositories. The user stage can be dependent on changes in several repositories. Various changes in the repository can lead to a rebuild of different _user stages_.
 
 ### More build tools: shell, ansible, ...
 

@@ -466,7 +466,7 @@ var _ = Describe("cleanup command", func() {
 							)
 
 							metaImagesCheckFunc(3, 1, func(commits []string) {
-								Ω(commits).Should(ContainElement(getHeadCommit()))
+								Ω(commits).Should(ContainElement(utils.GetHeadCommit(SuiteData.TestDirPath)))
 							})
 						})
 
@@ -798,16 +798,6 @@ func cleanupBeforeEachBase() {
 		"git",
 		"commit", "-m", "Initial commit",
 	)
-}
-
-func getHeadCommit() string {
-	out := utils.SucceedCommandOutputString(
-		SuiteData.TestDirPath,
-		"git",
-		"rev-parse", "HEAD",
-	)
-
-	return strings.TrimSpace(out)
 }
 
 func gitHistoryBasedCleanupCheck(imageName string, expectedNumberOfMetadataTagsBefore, expectedNumberOfMetadataTagsAfter int, afterCleanupChecks ...func(map[string][]string)) {

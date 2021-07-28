@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/werf/werf/integration/pkg/utils/liveexec"
 )
@@ -17,4 +18,14 @@ func SetGitRepoState(workTreeDir, repoDir string, commitMessage string) error {
 		return fmt.Errorf("unable to commit work tree %s files to git repo %s: %s", workTreeDir, repoDir, err)
 	}
 	return nil
+}
+
+func GetHeadCommit(workTreeDir string) string {
+	out := SucceedCommandOutputString(
+		workTreeDir,
+		"git",
+		"rev-parse", "HEAD",
+	)
+
+	return strings.TrimSpace(out)
 }

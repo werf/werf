@@ -22,18 +22,13 @@ Introduced new giterminism configuration file [`werf-giterminism.yaml`]({{ "/ref
 
 All toplevel commands: `werf converge`, `werf run`, `werf bundle publish`, `werf render` and `werf build` — has two main flags `--follow` and `--dev` aimed for local development.
 
-By default, each of these commands reads all needed files from the current commit of the git repo. With the `--dev` flag command will read all tracked/modified files of the project git work tree (note that untracked files are restricted to use).
-
-There is also a third flag `--dev-mode simple|strict` — the mode of `--dev` operation:
- - in the `simple` mode werf reads all tracked/modified files of the project git work tree (existence of untracked files may cause an error when this file is needed by the werf);
- - in the `strict` mode werf reads only those files which has been staged for the commit (files from the git index of the project git work tree, added by the user with the `git add` command);
- - by default `simple` mode is used when `--dev` flag was specified.
+By default, each of these commands reads all needed files from the current commit of the git repo. With the `--dev` flag command will read files from the project git worktree (note that untracked files are restricted to use).
 
 Command with the `--follow` flag will work in a loop, where either:
  - a new commit to the project git work tree will cause command rerun — by default;
- - changes to the git index of the project git work tree will cause command rerun —  when `--follow` flag is combined with the `--dev` flag (regardless of whether `simple` or `strict` development mode `--dev-mode` is used).
+ - changes to the git index of the project git work tree will cause command rerun —  when `--follow` flag is combined with the `--dev` flag.
 
-Internally werf will commit modified/tracked and staged files to dev branch `werf-dev-<commit>`. Dev-mode cache is linked only to those temporal commits and will not interfere with the main cache (when no `--dev` has been specified).
+Internally werf will commit changes to dev branch `werf-dev-<commit>`. Dev-cache is linked only to those temporal commits and will not interfere with the main cache (when no `--dev` has been specified).
 
 ### Composer support
 

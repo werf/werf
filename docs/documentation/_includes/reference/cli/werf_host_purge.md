@@ -31,11 +31,6 @@ werf host purge [options]
             debugging and development
       --dev-branch-prefix='werf-dev-'
             Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)
-      --dev-mode='simple'
-            Set development mode (default $WERF_DEV_MODE or simple).
-            Two development modes are supported:
-            - simple: for working with the worktree state of the git repository
-            - strict: for working with the index state of the git repository
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
