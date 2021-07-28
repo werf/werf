@@ -38,6 +38,13 @@ werf render [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --cache-repo=[]
+            Specify one or multiple cache repos with images that will be used as a cache. Cache     
+            will be populated when pushing newly built images into the primary repo and when        
+            pulling existing images from the primary repo. Cache repo will be used to pull images   
+            and to get manifests before making requests to the primary repo.
+            Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
+            $WERF_CACHE_REPO_2=...)
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''

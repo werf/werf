@@ -77,6 +77,13 @@ werf converge --repo registry.mydomain.com/web --env production
   -R, --auto-rollback=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
+      --cache-repo=[]
+            Specify one or multiple cache repos with images that will be used as a cache. Cache     
+            will be populated when pushing newly built images into the primary repo and when        
+            pulling existing images from the primary repo. Cache repo will be used to pull images   
+            and to get manifests before making requests to the primary repo.
+            Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
+            $WERF_CACHE_REPO_2=...)
       --config=''
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
       --config-templates-dir=''
