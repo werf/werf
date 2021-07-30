@@ -1,0 +1,20 @@
+name: Trdl releaser
+on:
+  push:
+    branches:
+    - test_trdl_releaser
+
+jobs:
+  release:
+    name: Perform werf release using trdl server
+    runs-on: ubuntu-latest
+    steps:
+    - name: Release
+      uses: werf/trdl-actions/release@main
+      with:
+        vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
+        project-name: werf
+        git-tag: test_tag
+        vault-auth-method: approle
+        vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
+        vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
