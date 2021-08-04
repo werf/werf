@@ -482,7 +482,7 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 				return err
 			}
 
-			logboek.Context(ctx).Warn().LogF("WARNING: Image metadata %s commit %s stage ID %s deletion failed: %s\n", imageNameOrID, commit, stageID, err)
+			logboek.Context(ctx).Warn().LogF("WARNING: Image metadata %q commit %s stage ID %s deletion failed: %s\n", imageNameOrID, commit, stageID, err)
 
 			return nil
 		}

@@ -12,13 +12,13 @@ import (
 
 const gitHubGraphqlAPIUrl = "https://api.github.com/graphql"
 
-type gitHubApi struct{}
+type gitHubGraphqlApi struct{}
 
-func newGitHubApi() gitHubApi {
-	return gitHubApi{}
+func newGitHubGraphqlApi() gitHubGraphqlApi {
+	return gitHubGraphqlApi{}
 }
 
-func (api *gitHubApi) deletePackageVersion(ctx context.Context, packageVersionId, token string) (*http.Response, error) {
+func (api *gitHubGraphqlApi) deletePackageVersion(ctx context.Context, packageVersionId, token string) (*http.Response, error) {
 	body := []byte(fmt.Sprintf(`{"query":"mutation { deletePackageVersion(input:{packageVersionId:\"%s\"}) { success }}"}"}`, packageVersionId))
 
 	resp, _, err := api.doRequest(ctx, http.MethodPost, gitHubGraphqlAPIUrl, bytes.NewBuffer(body), doRequestOptions{
@@ -32,7 +32,7 @@ func (api *gitHubApi) deletePackageVersion(ctx context.Context, packageVersionId
 	return resp, err
 }
 
-func (api *gitHubApi) getPackageVersionId(ctx context.Context, owner, repo, packageName, versionName, token string) (string, *http.Response, error) {
+func (api *gitHubGraphqlApi) getPackageVersionId(ctx context.Context, owner, repo, packageName, versionName, token string) (string, *http.Response, error) {
 	body := []byte(fmt.Sprintf(`{"query":"query{repository(owner:\"%s\",name:\"%s\"){packages(names: \"%s\", first: 1){nodes{id, version(version: \"%s\") { id, version }}}}}"}`, owner, repo, packageName, versionName))
 
 	resp, respBody, err := api.doRequest(ctx, http.MethodPost, gitHubGraphqlAPIUrl, bytes.NewBuffer(body), doRequestOptions{
@@ -74,7 +74,7 @@ func (api *gitHubApi) getPackageVersionId(ctx context.Context, owner, repo, pack
 	return nodes[0].Version.Id, resp, nil
 }
 
-func (api *gitHubApi) doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
+func (api *gitHubGraphqlApi) doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
 	resp, respBody, err := doRequest(ctx, method, url, body, options)
 	if err != nil {
 		return resp, respBody, err

@@ -17,8 +17,8 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 | _Default_                                 | **ок** |         **ок**        |                   **ок**                       |
 | _Docker Hub_                              | **ок** | **не поддерживается** |           [***ок**](#docker-hub)               |
 | _GCR_                                     | **ок** |         **ок**        |                   **ок**                       |
-| _GitHub Packages_ (docker.pkg.github.com) | **ок** | **не поддерживается** | [***ок**](#github-packages-dockerpkggithubcom) |
-| _GitHub Packages_ (ghcr.io)               | **ок** |         **ок**        |            **не поддерживается**               |
+| _GitHub Packages_ (ghcr.io)               | **ок** |         **ок**        |              [***ок**](#ghcrio)                |
+| _GitHub Packages_ (docker.pkg.github.com) | **ок** | **не поддерживается** |        [***ок**](#dockerpkggithubcom)          |
 | _GitLab Registry_                         | **ок** |         **ок**        |         [***ок**](#gitlab-registry)            |
 | _Harbor_                                  | **ок** |         **ок**        |                   **ок**                       |
 | _JFrog Artifactory_                       | **ок** |         **ок**        |                   **ок**                       |
@@ -82,16 +82,26 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 - `--repo-docker-hub-token` или
 - `--repo-docker-hub-username` и `--repo-docker-hub-password`.
 
-### GitHub Packages (docker.pkg.github.com)
+### GitHub Packages
+
+При организации CI/CD в Github Actions мы рекомендуем использовать [наш набор actions](https://github.com/werf/actions), который решит за вас большинство задач.
+
+#### ghcr.io
+
+При удалении тегов werf использует _GitHub API_, поэтому при очистке container registry необходимо определить _token_ с `read:packages`, `write:packages`, `delete:packages` и `repo` scopes.
+
+Для того, чтобы задать токен, следует использовать опцию `--repo-github-token` или соответствующую переменную окружения.
+
+#### docker.pkg.github.com
 
 При удалении тегов werf использует _GitHub GraphQL API_, поэтому при очистке container registry необходимо определить _token_ с `read:packages`, `write:packages`, `delete:packages` и `repo` scopes.
 
 > GitHub [не поддерживает](https://help.github.com/en/packages/publishing-and-managing-packages/deleting-a-package) удаление версий package в публичных репозиториях
 
-Для того, чтобы задать параметры, следует использовать опцию `--repo-github-token` или соответствующую переменную окружения.
+Для того, чтобы задать токен, следует использовать опцию `--repo-github-token` или соответствующую переменную окружения.
 
 ### GitLab Registry
 
 При удалении тегов werf использует _GitLab Container Registry API_ или _Docker Registry API_ в зависимости от версии GitLab.
 
-> Для удаления тега прав временного токена CI-задания (`$CI_JOB_TOKEN`) недостаточно, поэтому пользователю необходимо создать специальный токен в разделе Access Token (в секции Scope необходимо выбрать `api`) и выполнить авторизацию с ним 
+> Для удаления тега прав временного токена CI-задания (`$CI_JOB_TOKEN`) недостаточно, поэтому пользователю необходимо создать специальный токен в разделе Access Token (в секции Scope необходимо выбрать `api`) и [выполнить авторизацию](#авторизация) с ним 

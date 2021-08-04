@@ -230,7 +230,7 @@ jobs:
         - dockerhub
         - ecr
         - gcr
-#        - github
+        - github
         - harbor
         - quay
     runs-on: ${{ matrix.os }}-latest

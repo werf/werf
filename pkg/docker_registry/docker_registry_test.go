@@ -36,8 +36,12 @@ var _ = DescribeTable("ResolveImplementation", func(entry ResolveImplementationE
 		imagesRepoAddress: "container.cloud.google.com/registry/repo",
 		expectation:       "gcr",
 	}),
-	Entry("github", ResolveImplementationEntry{
+	Entry("github (docker.pkg.github.com)", ResolveImplementationEntry{
 		imagesRepoAddress: "docker.pkg.github.com/account/project/package",
+		expectation:       "github",
+	}),
+	Entry("github (ghcr.io)", ResolveImplementationEntry{
+		imagesRepoAddress: "ghcr.io/package",
 		expectation:       "github",
 	}),
 	Entry("harbor", ResolveImplementationEntry{

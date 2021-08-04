@@ -5,150 +5,155 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/google/go-containerregistry/pkg/name"
 
 	"github.com/werf/werf/pkg/image"
 )
 
-const GitHubPackagesImplementationName = "github"
-const gitHubPackagesMetaTag = "docker-base-layer"
+const (
+	GitHubPackagesImplementationName = "github"
+
+	GitHubPackagesOldRegistryAddress = "docker.pkg.github.com"
+	GitHubPackagesRegistryAddress    = "ghcr.io"
+)
+
+var gitHubPackagesPatterns = []string{"^ghcr\\.io", "^docker\\.pkg\\.github\\.com"}
 
 type GitHubPackagesUnauthorizedError apiError
 
-var gitHubPackagesPatterns = []string{"^docker\\.pkg\\.github\\.com"}
-
 type gitHubPackages struct {
-	*defaultImplementation
+	*gitHubPackagesBase
 	gitHubApi
-	gitHubCredentials
+	isUserCache sync.Map
 }
 
-type gitHubPackagesOptions struct {
-	defaultImplementationOptions
-	gitHubCredentials
-}
+// TODO: legacy, delete when upgrading to v1.3
+func newGitHubPackagesImplementation(repositoryAddress string, options gitHubPackagesOptions) (DockerRegistry, error) {
+	if strings.HasPrefix(repositoryAddress, GitHubPackagesOldRegistryAddress) {
+		return newGitHubPackagesOld(options)
+	}
 
-type gitHubCredentials struct {
-	token string
+	return newGitHubPackages(options)
 }
 
 func newGitHubPackages(options gitHubPackagesOptions) (*gitHubPackages, error) {
-	d, err := newDefaultImplementation(options.defaultImplementationOptions)
+	base, err := newGitHubPackagesBase(options)
 	if err != nil {
 		return nil, err
 	}
 
 	gitHub := &gitHubPackages{
-		defaultImplementation: d,
-		gitHubApi:             newGitHubApi(),
-		gitHubCredentials:     options.gitHubCredentials,
+		gitHubPackagesBase: base,
+		gitHubApi:          newGitHubApi(),
+		isUserCache:        sync.Map{},
 	}
 
 	return gitHub, nil
 }
 
-func (r *gitHubPackages) Tags(ctx context.Context, reference string) ([]string, error) {
-	tags, err := r.api.Tags(ctx, reference)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.exceptMetaTag(tags), nil
-}
-
-func (r *gitHubPackages) exceptMetaTag(tags []string) []string {
-	var result []string
-
-	for _, tag := range tags {
-		if tag == gitHubPackagesMetaTag {
-			continue
-		}
-
-		result = append(result, tag)
-	}
-
-	return result
-}
-
 func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
-	owner, project, packageName, err := r.parseReference(repoImage.Repository)
+	orgOrUserName, packageName, err := r.parseReference(repoImage.Repository)
 	if err != nil {
 		return err
 	}
 
-	err = r.deletePackageVersion(ctx, owner, project, packageName, repoImage.Tag)
+	isUser, err := r.isUser(ctx, orgOrUserName)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (r *gitHubPackages) deletePackageVersion(ctx context.Context, owner, project, packageName, packageVersion string) error {
-	processError := func(resp *http.Response, err error) error {
-		if resp != nil && resp.StatusCode == http.StatusUnauthorized {
-			return GitHubPackagesUnauthorizedError{error: err}
+	if isUser {
+		packageVersionId, resp, err := r.gitHubApi.getUserContainerPackageVersionId(ctx, packageName, repoImage.Tag, r.token)
+		if err != nil {
+			return r.handleApiErr(resp, err)
 		}
 
-		return err
+		if resp, err = r.gitHubApi.deleteUserContainerPackageVersion(ctx, packageName, packageVersionId, r.token); err != nil {
+			return r.handleApiErr(resp, err)
+		}
+
+		return nil
 	}
 
-	packageVersionId, resp, err := r.gitHubApi.getPackageVersionId(ctx, owner, project, packageName, packageVersion, r.token)
+	packageVersionId, resp, err := r.gitHubApi.getOrgContainerPackageVersionId(ctx, orgOrUserName, packageName, repoImage.Tag, r.token)
 	if err != nil {
-		return processError(resp, err)
+		return r.handleApiErr(resp, err)
 	}
 
-	if resp, err := r.gitHubApi.deletePackageVersion(ctx, packageVersionId, r.token); err != nil {
-		return processError(resp, err)
+	if resp, err = r.gitHubApi.deleteOrgContainerPackageVersion(ctx, orgOrUserName, packageName, packageVersionId, r.token); err != nil {
+		return r.handleApiErr(resp, err)
 	}
 
 	return nil
 }
 
 func (r *gitHubPackages) DeleteRepo(ctx context.Context, reference string) error {
-	return r.deleteRepo(ctx, reference)
-}
-
-func (r *gitHubPackages) deleteRepo(ctx context.Context, reference string) error {
-	owner, project, packageName, err := r.parseReference(reference)
+	orgOrUserName, packageName, err := r.parseReference(reference)
 	if err != nil {
 		return err
 	}
 
-	tags, err := r.Tags(ctx, reference)
-	for _, tag := range tags {
-		if err := r.deletePackageVersion(ctx, owner, project, packageName, tag); err != nil {
-			return err
+	isUser, err := r.isUser(ctx, orgOrUserName)
+	if err != nil {
+		return err
+	}
+
+	if isUser {
+		if resp, err := r.gitHubApi.deleteUserContainerPackage(ctx, packageName, r.token); err != nil {
+			return r.handleApiErr(resp, err)
 		}
+
+		return nil
+	}
+
+	if resp, err := r.gitHubApi.deleteOrgContainerPackage(ctx, orgOrUserName, packageName, r.token); err != nil {
+		return r.handleApiErr(resp, err)
 	}
 
 	return nil
 }
 
-func (r *gitHubPackages) String() string {
-	return GitHubPackagesImplementationName
+func (r *gitHubPackages) isUser(ctx context.Context, orgOrUserName string) (bool, error) {
+	isUser, ok := r.isUserCache.Load(orgOrUserName)
+	if ok {
+		return isUser.(bool), nil
+	}
+
+	user, resp, err := r.gitHubApi.getUser(ctx, orgOrUserName, r.token)
+	if err != nil {
+		return false, r.handleApiErr(resp, err)
+	}
+
+	isUser = user.Type == "User"
+	r.isUserCache.Store(orgOrUserName, isUser)
+
+	return isUser.(bool), nil
 }
 
-func (r *gitHubPackages) parseReference(reference string) (string, string, string, error) {
-	var owner, project, packageName string
+func (r *gitHubPackages) handleApiErr(resp *http.Response, err error) error {
+	if resp != nil && resp.StatusCode == http.StatusUnauthorized {
+		return GitHubPackagesUnauthorizedError{error: err}
+	}
 
-	parsedReference, err := name.NewRepository(reference)
+	return err
+}
+
+func (r *gitHubPackages) parseReference(reference string) (string, string, error) {
+	parsedReference, err := name.NewTag(reference)
 	if err != nil {
-		return "", "", "", err
+		return "", "", fmt.Errorf("unable to parse reference %q: %s", reference, err)
 	}
 
-	repositoryParts := strings.Split(parsedReference.RepositoryStr(), "/")
-	if len(repositoryParts) == 2 {
-		owner = repositoryParts[0]
-		project = repositoryParts[1]
-	} else if len(repositoryParts) == 3 {
-		owner = repositoryParts[0]
-		project = repositoryParts[1]
-		packageName = repositoryParts[2]
-	} else {
-		return "", "", "", fmt.Errorf("unexpeced reference %s", reference)
+	repositoryWithoutRegistry := strings.TrimPrefix(parsedReference.RepositoryStr(), parsedReference.RegistryStr()+"/")
+	orgOrUserNameAndPackageName := strings.SplitN(repositoryWithoutRegistry, "/", 2)
+	orgOrUserName := orgOrUserNameAndPackageName[0]
+	packageName := strings.ReplaceAll(orgOrUserNameAndPackageName[1], "/", "%2F")
+
+	if orgOrUserName == "" || packageName == "" {
+		return "", "", fmt.Errorf("unexpected reference %s: cannot parse organization and package name", reference)
 	}
 
-	return owner, project, packageName, nil
+	return orgOrUserName, packageName, nil
 }

@@ -17,8 +17,8 @@ werf tries to automatically detect the type of container registry using the repo
 | _Default_                                 | **ok** |         **ok**    |         **ok**                                      |
 | _Docker Hub_                              | **ok** | **not supported** |       [***ok**](#docker-hub)                        |
 | _GCR_                                     | **ok** |         **ok**    |         **ok**                                      |
-| _GitHub Packages_ (docker.pkg.github.com) | **ok** | **not supported** |      [***ok**](#github-packages-dockerpkggithubcom) |
-| _GitHub Packages_ (ghcr.io)               | **ok** |         **ok**    |   **not supported**                                 |
+| _GitHub Packages_ (ghcr.io)               | **ok** |         **ok**    |      [***ok**](#ghcrio)                             |
+| _GitHub Packages_ (docker.pkg.github.com) | **ok** | **not supported** |      [***ok**](#dockerpkggithubcom)                 |
 | _GitLab Registry_                         | **ok** |         **ok**    |       [***ok**](#gitlab-registry)                   |
 | _Harbor_                                  | **ok** |         **ok**    |         **ok**                                      |
 | _JFrog Artifactory_                       | **ok** |         **ok**    |         **ok**                                      |
@@ -83,16 +83,26 @@ You can use the following options (or their respective environment variables) to
 - `-- repo-docker-hub-token` or
 - `--repo-docker-hub-username` and `--repo-docker-hub-password`.
 
-### GitHub Packages (docker.pkg.github.com)
+### GitHub Packages
+
+When organizing CI/CD pipelines in Github Actions, we recommend using [our set of actions](https://github.com/werf/actions) to solve most of the challenges for you.
+
+#### ghcr.io
+
+werf uses the _GitHub API_ to delete tags, so you need to set the _token_ with the appropriate scope (`read:packages`, `write:packages`, `delete:packages`) along with the `repo` scope to clean up the container registry.
+
+You can use the `--repo-github-token` option or the corresponding environment variable to define the token.
+
+#### docker.pkg.github.com
 
 werf uses the _GitHub GraphQL API_ to delete tags, so you need to set the _token_ with the appropriate scope (`read:packages`, `write:packages`, `delete:packages`) along with the `repo` scope to clean up the container registry.
 
 > GitHub [does not support](https://help.github.com/en/packages/publishing-and-managing-packages/deleting-a-package) deleting versions of a package in public repositories
 
-You can use the `--repo-github-tack` option or the corresponding environment variable to define the credentials.
+You can use the `--repo-github-token` option or the corresponding environment variable to define the token.
 
 ### GitLab Registry
 
 werf uses the _GitLab Container Registry API_ or _Docker Registry API_ (depending on the GitLab version) to delete tags.
 
-> Privileges of the temporary CI job token (`$CI_JOB_TOKEN`) are not enough to delete tags. That is why the user have to create a dedicated token in the Access Token section (select the `api` in the Scope section) and perform authorization using it
+> Privileges of the temporary CI job token (`$CI_JOB_TOKEN`) are not enough to delete tags. That is why the user have to create a dedicated token in the Access Token section (select the `api` in the Scope section) and [perform authorization](#authorization) using it

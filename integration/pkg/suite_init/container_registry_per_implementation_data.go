@@ -99,7 +99,7 @@ func NewContainerRegistryPerImplementationData(synchronizedSuiteCallbacksData *S
 			implData := &containerRegistryImplementationData{
 				RegistryAddress:        registryAddress,
 				WerfImplementationName: implementationNameForWerf,
-				RegistryOptions:        makeContainerRegistryImplementationDockerRegistryOptions(implementationNameForWerf),
+				RegistryOptions:        makeContainerRegistryImplementationDockerRegistryOptions(implementationName),
 			}
 
 			data.ContainerRegistryPerImplementation[implementationName] = implData
