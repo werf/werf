@@ -279,34 +279,35 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 }
 
 func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) error {
-	githubRegistry := "docker.pkg.github.com"
-	ciGithubToken := os.Getenv("GITHUB_TOKEN")
-	ciGithubActor := os.Getenv("GITHUB_ACTOR")
-	if ciGithubActor != "" && ciGithubToken != "" {
-		err := docker.Login(ctx, ciGithubActor, ciGithubToken, githubRegistry)
-		if err != nil {
-			return fmt.Errorf("unable to login into docker repo %s: %s", githubRegistry, err)
-		}
-	}
-
+	defaultRegistry := docker_registry.GitHubPackagesOldRegistryAddress // TODO: legacy, delete when upgrading to v1.3
 	ciGithubOwnerWithProject := os.Getenv("GITHUB_REPOSITORY")
 	ciGithubDockerPackage := strings.ToLower(ciGithubOwnerWithProject)
+	defaultRepo, err := generateGithubDefaultRepo(ctx, defaultRegistry, ciGithubDockerPackage)
+	if err != nil {
+		return fmt.Errorf("unable to generate default repo: %s", err)
+	}
 
-	var repo string
-	if ciGithubDockerPackage != "" {
-		giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
-		if err != nil {
-			return err
+	var dockerLoginRegistryAddress string
+	customRepo := os.Getenv("WERF_REPO")
+	if customRepo != "" {
+		for _, registry := range []string{
+			docker_registry.GitHubPackagesOldRegistryAddress,
+			docker_registry.GitHubPackagesRegistryAddress,
+		} {
+			if strings.HasPrefix(customRepo, registry) {
+				dockerLoginRegistryAddress = registry
+			}
 		}
+	} else {
+		dockerLoginRegistryAddress = defaultRegistry
+	}
 
-		_, werfConfig, err := common.GetOptionalWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	ciGithubActor := os.Getenv("GITHUB_ACTOR")
+	ciGithubToken := os.Getenv("GITHUB_TOKEN")
+	if dockerLoginRegistryAddress != "" && ciGithubActor != "" && ciGithubToken != "" {
+		err := docker.Login(ctx, ciGithubActor, ciGithubToken, dockerLoginRegistryAddress)
 		if err != nil {
-			return fmt.Errorf("unable to load werf config: %s", err)
-		}
-
-		if werfConfig != nil {
-			projectRepo := fmt.Sprintf("%s/%s", githubRegistry, ciGithubDockerPackage)
-			repo = fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
+			return fmt.Errorf("unable to login into docker repo %s: %s", dockerLoginRegistryAddress, err)
 		}
 	}
 
@@ -314,7 +315,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	writeEnv(w, "DOCKER_CONFIG", dockerConfig, true)
 
 	writeHeader(w, "REPO", true)
-	writeEnv(w, "WERF_REPO", repo, false)
+	writeEnv(w, "WERF_REPO", defaultRepo, false)
 
 	writeHeader(w, "DEPLOY", true)
 	var projectGit string
@@ -345,6 +346,28 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	}
 
 	return nil
+}
+
+func generateGithubDefaultRepo(ctx context.Context, defaultRegistry, ciGithubDockerPackage string) (string, error) {
+	var defaultRepo string
+	if ciGithubDockerPackage != "" {
+		giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
+		if err != nil {
+			return "", err
+		}
+
+		_, werfConfig, err := common.GetOptionalWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+		if err != nil {
+			return "", fmt.Errorf("unable to load werf config: %s", err)
+		}
+
+		if werfConfig != nil {
+			projectRepo := fmt.Sprintf("%s/%s", defaultRegistry, ciGithubDockerPackage)
+			defaultRepo = fmt.Sprintf("%s/%s", projectRepo, werfConfig.Meta.Project)
+		}
+	}
+
+	return defaultRepo, nil
 }
 
 func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
@@ -497,7 +520,7 @@ func createSourceFile(data []byte) (string, error) {
 
 	var f *os.File
 	if cmdData.OutputFilePath != "" {
-		f, err = os.OpenFile(cmdData.OutputFilePath, os.O_RDWR|os.O_CREATE, 0755)
+		f, err = os.OpenFile(cmdData.OutputFilePath, os.O_RDWR|os.O_CREATE, 0o755)
 		if err != nil {
 			return "", err
 		}
