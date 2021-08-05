@@ -78,14 +78,15 @@ func getReferencesToScan(ctx context.Context, gitRepository *git.Repository, kee
 		} else {
 			scanDepthLimit = 1
 
-			revHash, err := gitRepository.ResolveRevision(plumbing.Revision(reference.Hash().String()))
+			//
+			refHash, err := getCommitHashForReference(gitRepository, reference.Name().String())
 			if err != nil {
-				return fmt.Errorf("resolve revision %s failed: %s", n.Short(), err)
+				return fmt.Errorf("unable to get commit hash for reference %q: %s", reference.Name(), err)
 			}
 
-			refCommit, err = gitRepository.CommitObject(*revHash)
+			refCommit, err = gitRepository.CommitObject(refHash)
 			if err != nil {
-				return fmt.Errorf("reference %s: commit object %s failed: %s", n.Short(), revHash.String(), err)
+				return fmt.Errorf("reference %s: commit object %s failed: %s", n.Short(), refHash.String(), err)
 			}
 
 			tagObject, err := gitRepository.TagObject(reference.Hash())
@@ -202,6 +203,38 @@ func getReferencesToScan(ctx context.Context, gitRepository *git.Repository, kee
 	result := append(resultBranchesRefs, resultTagsRefs...)
 
 	return result, nil
+}
+
+func getCommitHashForReference(gitRepository *git.Repository, reference string) (plumbing.Hash, error) {
+	ref, err := gitRepository.Reference(plumbing.ReferenceName(reference), true)
+	if err != nil {
+		return plumbing.ZeroHash, err
+	}
+
+	obj, err := gitRepository.Object(plumbing.AnyObject, ref.Hash())
+	if err != nil {
+		return plumbing.ZeroHash, err
+	}
+
+	for {
+		switch objType := obj.(type) {
+		case *object.Tag:
+			if objType.TargetType != plumbing.CommitObject {
+				obj, err = objType.Object()
+				if err != nil {
+					return plumbing.ZeroHash, err
+				}
+
+				continue
+			}
+
+			return objType.Target, nil
+		case *object.Commit:
+			return objType.Hash, nil
+		default:
+			return plumbing.ZeroHash, fmt.Errorf("unsupported tag target %q", objType.Type())
+		}
+	}
 }
 
 func selectBranchReferencesByRegexp(branchesRefs []*referenceToScan, regexp *regexp.Regexp) []*referenceToScan {
