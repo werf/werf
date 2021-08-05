@@ -26,3 +26,7 @@
 
 /docs/\.jekyll-cache/
 /docs/backend/root/
+
+/.github/trdl/node_modules
+/.github/trdl/src/**/*.js
+/.github/trdl/lib
