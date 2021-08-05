@@ -78,7 +78,10 @@ func getPodsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace st
 	}
 
 	for _, pod := range list.Items {
-		for _, container := range pod.Spec.Containers {
+		for _, container := range append(
+			pod.Spec.Containers,
+			pod.Spec.InitContainers...,
+		) {
 			images = append(images, container.Image)
 		}
 	}
@@ -94,7 +97,10 @@ func getReplicationControllersImages(kubernetesClient kubernetes.Interface, kube
 	}
 
 	for _, replicationController := range list.Items {
-		for _, container := range replicationController.Spec.Template.Spec.Containers {
+		for _, container := range append(
+			replicationController.Spec.Template.Spec.Containers,
+			replicationController.Spec.Template.Spec.InitContainers...,
+		) {
 			images = append(images, container.Image)
 		}
 	}
@@ -110,7 +116,10 @@ func getDeploymentsImages(kubernetesClient kubernetes.Interface, kubernetesNames
 	}
 
 	for _, deployment := range list.Items {
-		for _, container := range deployment.Spec.Template.Spec.Containers {
+		for _, container := range append(
+			deployment.Spec.Template.Spec.Containers,
+			deployment.Spec.Template.Spec.InitContainers...,
+		) {
 			images = append(images, container.Image)
 		}
 	}
@@ -126,7 +135,10 @@ func getStatefulSetsImages(kubernetesClient kubernetes.Interface, kubernetesName
 	}
 
 	for _, statefulSet := range list.Items {
-		for _, container := range statefulSet.Spec.Template.Spec.Containers {
+		for _, container := range append(
+			statefulSet.Spec.Template.Spec.Containers,
+			statefulSet.Spec.Template.Spec.InitContainers...,
+		) {
 			images = append(images, container.Image)
 		}
 	}
@@ -142,7 +154,10 @@ func getDaemonSetsImages(kubernetesClient kubernetes.Interface, kubernetesNamesp
 	}
 
 	for _, daemonSets := range list.Items {
-		for _, container := range daemonSets.Spec.Template.Spec.Containers {
+		for _, container := range append(
+			daemonSets.Spec.Template.Spec.Containers,
+			daemonSets.Spec.Template.Spec.InitContainers...,
+		) {
 			images = append(images, container.Image)
 		}
 	}
@@ -158,7 +173,10 @@ func getReplicaSetsImages(kubernetesClient kubernetes.Interface, kubernetesNames
 	}
 
 	for _, replicaSet := range list.Items {
-		for _, container := range replicaSet.Spec.Template.Spec.Containers {
+		for _, container := range append(
+			replicaSet.Spec.Template.Spec.Containers,
+			replicaSet.Spec.Template.Spec.InitContainers...,
+		) {
 			images = append(images, container.Image)
 		}
 	}
@@ -174,7 +192,10 @@ func getCronJobsImages(kubernetesClient kubernetes.Interface, kubernetesNamespac
 	}
 
 	for _, cronJob := range list.Items {
-		for _, container := range cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers {
+		for _, container := range append(
+			cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers,
+			cronJob.Spec.JobTemplate.Spec.Template.Spec.InitContainers...,
+		) {
 			images = append(images, container.Image)
 		}
 	}
@@ -190,7 +211,10 @@ func getJobsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace st
 	}
 
 	for _, job := range list.Items {
-		for _, container := range job.Spec.Template.Spec.Containers {
+		for _, container := range append(
+			job.Spec.Template.Spec.Containers,
+			job.Spec.Template.Spec.InitContainers...,
+		) {
 			images = append(images, container.Image)
 		}
 	}
