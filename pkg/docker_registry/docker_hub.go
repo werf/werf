@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -25,7 +26,7 @@ type (
 
 func NewDockerHubUnauthorizedErr(err error) DockerHubUnauthorizedErr {
 	return DockerHubUnauthorizedErr{
-		error: fmt.Errorf(dockerHubUnauthorizedErrPrefix + err.Error()),
+		error: errors.New(dockerHubUnauthorizedErrPrefix + err.Error()),
 	}
 }
 
@@ -35,7 +36,7 @@ func IsDockerHubUnauthorizedErr(err error) bool {
 
 func NewDockerHubRepositoryNotFoundErr(err error) DockerHubRepositoryNotFoundErr {
 	return DockerHubRepositoryNotFoundErr{
-		error: fmt.Errorf(dockerHubRepositoryNotFoundErrPrefix + err.Error()),
+		error: errors.New(dockerHubRepositoryNotFoundErrPrefix + err.Error()),
 	}
 }
 
