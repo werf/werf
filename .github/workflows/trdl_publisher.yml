@@ -13,7 +13,7 @@ jobs:
       uses: werf/trdl-vault-actions/publish@main
       with:
         vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
-        project-name: trdl
+        project-name: werf
         vault-auth-method: approle
         vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
         vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
