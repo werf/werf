@@ -58,12 +58,17 @@ func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Con
 	switch implementationName {
 	case docker_registry.AzureCrImplementationName, docker_registry.AwsEcrImplementationName, docker_registry.DockerHubImplementationName, docker_registry.GitHubPackagesImplementationName, docker_registry.HarborImplementationName, docker_registry.QuayImplementationName:
 		err := registry.DeleteRepo(ctx, repo)
-		switch err := err.(type) {
-		case nil, docker_registry.AzureCrNotFoundError, docker_registry.DockerHubNotFoundError, docker_registry.HarborNotFoundError, docker_registry.QuayNotFoundError:
+
+		switch {
+		case docker_registry.IsAzureCrRepositoryNotFoundErr(err),
+			docker_registry.IsDockerHubRepositoryNotFoundErr(err),
+			docker_registry.IsHarborRepositoryNotFoundErr(err),
+			docker_registry.IsQuayRepositoryNotFoundErr(err):
 		default:
 			Ω(err).Should(Succeed())
 		}
 	}
+
 	return true
 }
 

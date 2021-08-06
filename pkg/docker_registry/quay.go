@@ -10,9 +10,22 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 )
 
-const QuayImplementationName = "quay"
+const (
+	QuayImplementationName          = "quay"
+	quayRepositoryNotFoundErrPrefix = "quay repository not found: "
+)
 
-type QuayNotFoundError apiError
+type QuayRepositoryNotFoundErr apiError
+
+func NewQuayRepositoryNotFoundErr(err error) QuayRepositoryNotFoundErr {
+	return QuayRepositoryNotFoundErr{
+		error: fmt.Errorf(quayRepositoryNotFoundErrPrefix + err.Error()),
+	}
+}
+
+func IsQuayRepositoryNotFoundErr(err error) bool {
+	return strings.Contains(err.Error(), quayRepositoryNotFoundErrPrefix)
+}
 
 var quayPatterns = []string{"^quay\\.io", "^quay\\..*\\.com"}
 
@@ -58,12 +71,11 @@ func (r *quay) deleteRepo(ctx context.Context, reference string) error {
 
 	resp, err := r.quayApi.DeleteRepository(ctx, hostname, namespace, repository, r.quayCredentials.token)
 	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return NewQuayRepositoryNotFoundErr(err)
+		}
 
-	if resp.StatusCode == http.StatusNotFound {
-		return QuayNotFoundError{error: err}
+		return err
 	}
 
 	return nil
