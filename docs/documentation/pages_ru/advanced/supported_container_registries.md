@@ -17,8 +17,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 | _Default_                                 | **ок** |         **ок**        |                   **ок**                       |
 | _Docker Hub_                              | **ок** | **не поддерживается** |           [***ок**](#docker-hub)               |
 | _GCR_                                     | **ок** |         **ок**        |                   **ок**                       |
-| _GitHub Packages_ (ghcr.io)               | **ок** |         **ок**        |              [***ок**](#ghcrio)                |
-| _GitHub Packages_ (docker.pkg.github.com) | **ок** | **не поддерживается** |        [***ок**](#dockerpkggithubcom)          |
+| _GitHub Packages_                         | **ок** |         **ок**        |         [***ок**](#github-packages)            |
 | _GitLab Registry_                         | **ок** |         **ок**        |         [***ок**](#gitlab-registry)            |
 | _Harbor_                                  | **ок** |         **ок**        |                   **ок**                       |
 | _JFrog Artifactory_                       | **ок** |         **ок**        |                   **ок**                       |
@@ -86,17 +85,7 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 При организации CI/CD в Github Actions мы рекомендуем использовать [наш набор actions](https://github.com/werf/actions), который решит за вас большинство задач.
 
-#### ghcr.io
-
 При удалении тегов werf использует _GitHub API_, поэтому при очистке container registry необходимо определить _token_ с `read:packages`, `write:packages`, `delete:packages` и `repo` scopes.
-
-Для того, чтобы задать токен, следует использовать опцию `--repo-github-token` или соответствующую переменную окружения.
-
-#### docker.pkg.github.com
-
-При удалении тегов werf использует _GitHub GraphQL API_, поэтому при очистке container registry необходимо определить _token_ с `read:packages`, `write:packages`, `delete:packages` и `repo` scopes.
-
-> GitHub [не поддерживает](https://help.github.com/en/packages/publishing-and-managing-packages/deleting-a-package) удаление версий package в публичных репозиториях
 
 Для того, чтобы задать токен, следует использовать опцию `--repo-github-token` или соответствующую переменную окружения.
 

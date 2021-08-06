@@ -122,7 +122,7 @@ func NewDockerRegistry(repositoryAddress string, implementation string, options 
 	case GcrImplementationName:
 		return newGcr(options.gcrOptions())
 	case GitHubPackagesImplementationName:
-		return newGitHubPackagesImplementation(repositoryAddress, options.gitHubPackagesOptions())
+		return newGitHubPackages(options.gitHubPackagesOptions())
 	case GitLabRegistryImplementationName:
 		return newGitLabRegistry(options.gitLabRegistryOptions())
 	case HarborImplementationName:

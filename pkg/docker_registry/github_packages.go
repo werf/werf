@@ -14,40 +14,40 @@ import (
 
 const (
 	GitHubPackagesImplementationName = "github"
-
-	GitHubPackagesOldRegistryAddress = "docker.pkg.github.com"
 	GitHubPackagesRegistryAddress    = "ghcr.io"
 )
 
-var gitHubPackagesPatterns = []string{"^ghcr\\.io", "^docker\\.pkg\\.github\\.com"}
+var gitHubPackagesPatterns = []string{"^ghcr\\.io"}
 
 type GitHubPackagesUnauthorizedError apiError
 
 type gitHubPackages struct {
-	*gitHubPackagesBase
+	*defaultImplementation
+	gitHubCredentials
 	gitHubApi
 	isUserCache sync.Map
 }
 
-// TODO: legacy, delete when upgrading to v1.3
-func newGitHubPackagesImplementation(repositoryAddress string, options gitHubPackagesOptions) (DockerRegistry, error) {
-	if strings.HasPrefix(repositoryAddress, GitHubPackagesOldRegistryAddress) {
-		return newGitHubPackagesOld(options)
-	}
+type gitHubCredentials struct {
+	token string
+}
 
-	return newGitHubPackages(options)
+type gitHubPackagesOptions struct {
+	defaultImplementationOptions
+	gitHubCredentials
 }
 
 func newGitHubPackages(options gitHubPackagesOptions) (*gitHubPackages, error) {
-	base, err := newGitHubPackagesBase(options)
+	d, err := newDefaultImplementation(options.defaultImplementationOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	gitHub := &gitHubPackages{
-		gitHubPackagesBase: base,
-		gitHubApi:          newGitHubApi(),
-		isUserCache:        sync.Map{},
+		defaultImplementation: d,
+		gitHubCredentials:     options.gitHubCredentials,
+		gitHubApi:             newGitHubApi(),
+		isUserCache:           sync.Map{},
 	}
 
 	return gitHub, nil
@@ -138,6 +138,10 @@ func (r *gitHubPackages) handleApiErr(resp *http.Response, err error) error {
 	}
 
 	return err
+}
+
+func (r *gitHubPackages) String() string {
+	return GitHubPackagesImplementationName
 }
 
 func (r *gitHubPackages) parseReference(reference string) (string, string, error) {
