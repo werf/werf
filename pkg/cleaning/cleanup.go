@@ -372,7 +372,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 		if countStageIDCommitList(stageIDCommitListToDelete) != 0 {
 			header := fmt.Sprintf("Cleaning up metadata (%d/%d)", countStageIDCommitList(stageIDCommitListToDelete), countStageIDCommitList(stageIDCommitListToCleanup))
 
-			logProcessDoError := logboek.Context(ctx).Default().LogProcessInline(header).DoError
+			logProcessDoError := logboek.Context(ctx).Default().LogProcess(header).DoError
 			if logboek.Context(ctx).Info().IsAccepted() {
 				logProcessDoError = logboek.Context(ctx).Info().LogProcess(header).DoError
 			}
