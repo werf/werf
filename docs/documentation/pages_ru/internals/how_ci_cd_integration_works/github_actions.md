@@ -9,7 +9,7 @@ permalink: internals/how_ci_cd_integration_works/github_actions.html
 
 ## WERF_REPO
 
-Значение для установки переменной окружения [`WERF_REPO`]({{ "internals/how_ci_cd_integration_works/general_overview.html#werf_repo" | true_relative_url }}) формируется на основе строки **в нижнем регистре** из переменной окружения GitHub Actions [`GITHUB_REPOSITORY`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) и имени проекта из `werf.yaml`: `docker.pkg.github.com/$GITHUB_REPOSITORY/<project-name>-werf`.
+Значение для установки переменной окружения [`WERF_REPO`]({{ "internals/how_ci_cd_integration_works/general_overview.html#werf_repo" | true_relative_url }}) формируется на основе строки **в нижнем регистре** из переменной окружения GitHub Actions [`GITHUB_REPOSITORY`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) и имени проекта из `werf.yaml`: `ghcr.io/$GITHUB_REPOSITORY/<project-name>`.
 
 ## WERF_ADD_ANNOTATION_PROJECT_GIT
 

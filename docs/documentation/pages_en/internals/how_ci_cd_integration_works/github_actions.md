@@ -9,7 +9,7 @@ werf uses the following values for werf environment variables:
 
 ## WERF_REPO
 
-The value of [`WERF_REPO`]({{ "internals/how_ci_cd_integration_works/general_overview.html#werf_repo" | true_relative_url }}) is derived from the [`GITHUB_REPOSITORY`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) GitHub Actions variable (**converted to lowercase**) and project name from `werf.yaml`: `docker.pkg.github.com/$GITHUB_REPOSITORY/<project-name>-werf`.
+The value of [`WERF_REPO`]({{ "internals/how_ci_cd_integration_works/general_overview.html#werf_repo" | true_relative_url }}) is derived from the [`GITHUB_REPOSITORY`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) GitHub Actions variable (**converted to lowercase**) and project name from `werf.yaml`: `ghcr.io/$GITHUB_REPOSITORY/<project-name>`.
 
 ## WERF_ADD_ANNOTATION_PROJECT_GIT
 

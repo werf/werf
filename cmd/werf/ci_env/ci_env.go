@@ -279,35 +279,20 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 }
 
 func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) error {
-	defaultRegistry := docker_registry.GitHubPackagesOldRegistryAddress // TODO: legacy, delete when upgrading to v1.3
 	ciGithubOwnerWithProject := os.Getenv("GITHUB_REPOSITORY")
 	ciGithubDockerPackage := strings.ToLower(ciGithubOwnerWithProject)
+	defaultRegistry := docker_registry.GitHubPackagesRegistryAddress
 	defaultRepo, err := generateGithubDefaultRepo(ctx, defaultRegistry, ciGithubDockerPackage)
 	if err != nil {
 		return fmt.Errorf("unable to generate default repo: %s", err)
 	}
 
-	var dockerLoginRegistryAddress string
-	customRepo := os.Getenv("WERF_REPO")
-	if customRepo != "" {
-		for _, registry := range []string{
-			docker_registry.GitHubPackagesOldRegistryAddress,
-			docker_registry.GitHubPackagesRegistryAddress,
-		} {
-			if strings.HasPrefix(customRepo, registry) {
-				dockerLoginRegistryAddress = registry
-			}
-		}
-	} else {
-		dockerLoginRegistryAddress = defaultRegistry
-	}
-
 	ciGithubActor := os.Getenv("GITHUB_ACTOR")
 	ciGithubToken := os.Getenv("GITHUB_TOKEN")
-	if dockerLoginRegistryAddress != "" && ciGithubActor != "" && ciGithubToken != "" {
-		err := docker.Login(ctx, ciGithubActor, ciGithubToken, dockerLoginRegistryAddress)
+	if ciGithubActor != "" && ciGithubToken != "" {
+		err := docker.Login(ctx, ciGithubActor, ciGithubToken, defaultRegistry)
 		if err != nil {
-			return fmt.Errorf("unable to login into docker repo %s: %s", dockerLoginRegistryAddress, err)
+			return fmt.Errorf("unable to login into docker registry %s: %s", defaultRegistry, err)
 		}
 	}
 
