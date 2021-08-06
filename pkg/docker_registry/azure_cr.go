@@ -13,9 +13,22 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-const AzureCrImplementationName = "acr"
+const (
+	AzureCrImplementationName          = "acr"
+	azureCrRepositoryNotFoundErrPrefix = "azure cr repository not found: "
+)
 
-type AzureCrNotFoundError apiError
+type AzureCrRepositoryNotFoundErr apiError
+
+func NewAzureCrRepositoryNotFoundErr(err error) AzureCrRepositoryNotFoundErr {
+	return AzureCrRepositoryNotFoundErr{
+		error: fmt.Errorf(azureCrRepositoryNotFoundErrPrefix + err.Error()),
+	}
+}
+
+func IsAzureCrRepositoryNotFoundErr(err error) bool {
+	return strings.Contains(err.Error(), azureCrRepositoryNotFoundErrPrefix)
+}
 
 var azureCrPatterns = []string{`^.*\.azurecr\.io`}
 
@@ -69,7 +82,7 @@ func (r *azureCr) DeleteRepo(ctx context.Context, reference string) error {
 
 	if err != nil {
 		if strings.Contains(err.Error(), "repository name not known to registry") {
-			return AzureCrNotFoundError{error: err}
+			return NewAzureCrRepositoryNotFoundErr(err)
 		}
 
 		return err

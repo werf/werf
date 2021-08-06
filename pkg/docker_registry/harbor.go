@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -10,11 +11,24 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-const HarborImplementationName = "harbor"
-
-type HarborNotFoundError apiError
+const (
+	HarborImplementationName          = "harbor"
+	harborRepositoryNotFoundErrPrefix = "harbor repository not found: "
+)
 
 var harborPatterns = []string{"^harbor\\..*"}
+
+type HarborRepositoryNotFoundErr apiError
+
+func NewHarborRepositoryNotFoundErr(err error) HarborRepositoryNotFoundErr {
+	return HarborRepositoryNotFoundErr{
+		error: fmt.Errorf(harborRepositoryNotFoundErrPrefix + err.Error()),
+	}
+}
+
+func IsHarborRepositoryNotFoundErr(err error) bool {
+	return strings.Contains(err.Error(), harborRepositoryNotFoundErrPrefix)
+}
 
 type harbor struct {
 	*defaultImplementation
@@ -91,13 +105,11 @@ func (r *harbor) deleteRepo(ctx context.Context, reference string) error {
 	}
 
 	resp, err := r.harborApi.DeleteRepository(ctx, hostname, repository, r.harborCredentials.username, r.harborCredentials.password)
-	if resp != nil {
-		if resp.StatusCode == http.StatusNotFound {
-			return HarborNotFoundError{error: err}
-		}
-	}
-
 	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return NewHarborRepositoryNotFoundErr(err)
+		}
+
 		return err
 	}
 

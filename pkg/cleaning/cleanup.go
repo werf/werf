@@ -709,14 +709,14 @@ loop:
 }
 
 func handleDeletionError(err error) error {
-	switch err.(type) {
-	case docker_registry.DockerHubUnauthorizedErr:
+	switch {
+	case docker_registry.IsDockerHubUnauthorizedErr(err):
 		return fmt.Errorf(`%s
 You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
 Check --repo-docker-hub-token, --repo-docker-hub-username and --repo-docker-hub-password options.
 Be aware that access to the resource is forbidden with personal access token.
 Read more details here https://werf.io/documentation/v1.2/advanced/supported_container_registries.html#docker-hub`, err)
-	case docker_registry.GitHubPackagesUnauthorizedErr, docker_registry.GitHubPackagesForbiddenErr:
+	case docker_registry.IsGitHubPackagesUnauthorizedErr(err), docker_registry.IsGitHubPackagesForbiddenErr(err):
 		return fmt.Errorf(`%s
 You should specify a token with delete:packages and read:packages scopes to remove package versions.
 Check --repo-github-token option.

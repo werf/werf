@@ -15,6 +15,9 @@ import (
 const (
 	GitHubPackagesImplementationName = "github"
 	GitHubPackagesRegistryAddress    = "ghcr.io"
+
+	gitHubPackagesUnauthorizedErrPrefix = "gitHub packages unauthorized: "
+	gitHubPackagesForbiddenErrPrefix    = "gitHub packages forbidden: "
 )
 
 var gitHubPackagesPatterns = []string{"^ghcr\\.io"}
@@ -23,6 +26,26 @@ type (
 	GitHubPackagesUnauthorizedErr apiError
 	GitHubPackagesForbiddenErr    apiError
 )
+
+func NewGitHubPackagesUnauthorizedErr(err error) GitHubPackagesUnauthorizedErr {
+	return GitHubPackagesUnauthorizedErr{
+		error: fmt.Errorf(gitHubPackagesUnauthorizedErrPrefix + err.Error()),
+	}
+}
+
+func IsGitHubPackagesUnauthorizedErr(err error) bool {
+	return strings.Contains(err.Error(), gitHubPackagesUnauthorizedErrPrefix)
+}
+
+func NewGitHubPackagesForbiddenErr(err error) GitHubPackagesForbiddenErr {
+	return GitHubPackagesForbiddenErr{
+		error: fmt.Errorf(gitHubPackagesForbiddenErrPrefix + err.Error()),
+	}
+}
+
+func IsGitHubPackagesForbiddenErr(err error) bool {
+	return strings.Contains(err.Error(), gitHubPackagesForbiddenErrPrefix)
+}
 
 type gitHubPackages struct {
 	*defaultImplementation
@@ -70,11 +93,11 @@ func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.I
 	if isUser {
 		packageVersionId, resp, err := r.gitHubApi.getUserContainerPackageVersionId(ctx, packageName, repoImage.Tag, r.token)
 		if err != nil {
-			return r.handleApiErr(resp, err)
+			return r.handleFailedApiResponse(resp, err)
 		}
 
 		if resp, err = r.gitHubApi.deleteUserContainerPackageVersion(ctx, packageName, packageVersionId, r.token); err != nil {
-			return r.handleApiErr(resp, err)
+			return r.handleFailedApiResponse(resp, err)
 		}
 
 		return nil
@@ -82,11 +105,11 @@ func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.I
 
 	packageVersionId, resp, err := r.gitHubApi.getOrgContainerPackageVersionId(ctx, orgOrUserName, packageName, repoImage.Tag, r.token)
 	if err != nil {
-		return r.handleApiErr(resp, err)
+		return r.handleFailedApiResponse(resp, err)
 	}
 
 	if resp, err = r.gitHubApi.deleteOrgContainerPackageVersion(ctx, orgOrUserName, packageName, packageVersionId, r.token); err != nil {
-		return r.handleApiErr(resp, err)
+		return r.handleFailedApiResponse(resp, err)
 	}
 
 	return nil
@@ -105,14 +128,14 @@ func (r *gitHubPackages) DeleteRepo(ctx context.Context, reference string) error
 
 	if isUser {
 		if resp, err := r.gitHubApi.deleteUserContainerPackage(ctx, packageName, r.token); err != nil {
-			return r.handleApiErr(resp, err)
+			return r.handleFailedApiResponse(resp, err)
 		}
 
 		return nil
 	}
 
 	if resp, err := r.gitHubApi.deleteOrgContainerPackage(ctx, orgOrUserName, packageName, r.token); err != nil {
-		return r.handleApiErr(resp, err)
+		return r.handleFailedApiResponse(resp, err)
 	}
 
 	return nil
@@ -126,7 +149,7 @@ func (r *gitHubPackages) isUser(ctx context.Context, orgOrUserName string) (bool
 
 	user, resp, err := r.gitHubApi.getUser(ctx, orgOrUserName, r.token)
 	if err != nil {
-		return false, r.handleApiErr(resp, err)
+		return false, r.handleFailedApiResponse(resp, err)
 	}
 
 	isUser = user.Type == "User"
@@ -135,13 +158,13 @@ func (r *gitHubPackages) isUser(ctx context.Context, orgOrUserName string) (bool
 	return isUser.(bool), nil
 }
 
-func (r *gitHubPackages) handleApiErr(resp *http.Response, err error) error {
+func (r *gitHubPackages) handleFailedApiResponse(resp *http.Response, err error) error {
 	if resp != nil {
 		switch resp.StatusCode {
 		case http.StatusUnauthorized:
-			return GitHubPackagesUnauthorizedErr{error: err}
+			return NewGitHubPackagesUnauthorizedErr(err)
 		case http.StatusForbidden:
-			return GitHubPackagesForbiddenErr{error: err}
+			return NewGitHubPackagesForbiddenErr(err)
 		}
 	}
 
