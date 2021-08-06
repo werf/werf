@@ -718,9 +718,10 @@ Be aware that access to the resource is forbidden with personal access token.
 Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#docker-hub`, err)
 	case docker_registry.GitHubPackagesUnauthorizedError:
 		return fmt.Errorf(`%s
-You should specify a token with the read:packages, write:packages, delete:packages and repo scopes to remove package versions.
-Check --repo-github-token and --repo-github-token options.
-Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#github-packages`, err)
+You should specify a token with delete:packages and read:packages scopes to remove package versions.
+Check --repo-github-token option.
+Be aware that the token provided to GitHub Actions workflow is not enough to remove package versions.
+Read more details here https://werf.io/documentation/v1.2/advanced/supported_container_registries.html#github-packages`, err)
 	default:
 		if storage.IsImageDeletionFailedDueToUsingByContainerError(err) {
 			return err

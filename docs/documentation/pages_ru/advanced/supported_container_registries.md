@@ -85,7 +85,7 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 При организации CI/CD в Github Actions мы рекомендуем использовать [наш набор actions](https://github.com/werf/actions), который решит за вас большинство задач.
 
-При удалении тегов werf использует _GitHub API_, поэтому при очистке container registry необходимо определить _token_ с `read:packages`, `write:packages`, `delete:packages` и `repo` scopes.
+При удалении тегов werf использует _GitHub API_, поэтому при очистке container registry необходимо определить _token_ с `read:packages` и `delete:packages` scopes.
 
 Для того, чтобы задать токен, следует использовать опцию `--repo-github-token` или соответствующую переменную окружения.
 

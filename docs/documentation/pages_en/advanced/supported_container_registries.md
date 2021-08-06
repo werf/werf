@@ -86,7 +86,7 @@ You can use the following options (or their respective environment variables) to
 
 When organizing CI/CD pipelines in GitHub Actions, we recommend using [our set of actions](https://github.com/werf/actions) to solve most of the challenges for you.
 
-werf uses the _GitHub API_ to delete tags, so you need to set the _token_ with the appropriate scope (`read:packages`, `write:packages`, `delete:packages`) along with the `repo` scope to clean up the container registry.
+werf uses the _GitHub API_ to delete tags, so you need to set the _token_ with the appropriate scopes (`read:packages`, `delete:packages`) to clean up the container registry.
 
 You can use the `--repo-github-token` option or the corresponding environment variable to define the token.
 
