@@ -30,7 +30,7 @@ const (
 
 const ImageDeletionFailedDueToUsedByContainerErrorTip = "Use --force option to remove all containers that are based on deleting werf docker images"
 
-func IsImageDeletionFailedDueToUsingByContainerError(err error) bool {
+func IsImageDeletionFailedDueToUsingByContainerErr(err error) bool {
 	return strings.HasSuffix(err.Error(), ImageDeletionFailedDueToUsedByContainerErrorTip)
 }
 

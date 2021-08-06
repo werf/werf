@@ -710,20 +710,20 @@ loop:
 
 func handleDeletionError(err error) error {
 	switch err.(type) {
-	case docker_registry.DockerHubUnauthorizedError:
+	case docker_registry.DockerHubUnauthorizedErr:
 		return fmt.Errorf(`%s
 You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
-Check --repo-docker-hub-token/username/password --repo-docker-hub-token/username/password options.
+Check --repo-docker-hub-token, --repo-docker-hub-username and --repo-docker-hub-password options.
 Be aware that access to the resource is forbidden with personal access token.
-Read more details here https://werf.io/documentation/reference/working_with_docker_registries.html#docker-hub`, err)
-	case docker_registry.GitHubPackagesUnauthorizedError:
+Read more details here https://werf.io/documentation/v1.2/advanced/supported_container_registries.html#docker-hub`, err)
+	case docker_registry.GitHubPackagesUnauthorizedErr, docker_registry.GitHubPackagesForbiddenErr:
 		return fmt.Errorf(`%s
 You should specify a token with delete:packages and read:packages scopes to remove package versions.
 Check --repo-github-token option.
 Be aware that the token provided to GitHub Actions workflow is not enough to remove package versions.
 Read more details here https://werf.io/documentation/v1.2/advanced/supported_container_registries.html#github-packages`, err)
 	default:
-		if storage.IsImageDeletionFailedDueToUsingByContainerError(err) {
+		if storage.IsImageDeletionFailedDueToUsingByContainerErr(err) {
 			return err
 		} else if strings.Contains(err.Error(), "UNAUTHORIZED") || strings.Contains(err.Error(), "UNSUPPORTED") {
 			return err

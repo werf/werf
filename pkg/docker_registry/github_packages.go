@@ -19,7 +19,10 @@ const (
 
 var gitHubPackagesPatterns = []string{"^ghcr\\.io"}
 
-type GitHubPackagesUnauthorizedError apiError
+type (
+	GitHubPackagesUnauthorizedErr apiError
+	GitHubPackagesForbiddenErr    apiError
+)
 
 type gitHubPackages struct {
 	*defaultImplementation
@@ -133,8 +136,13 @@ func (r *gitHubPackages) isUser(ctx context.Context, orgOrUserName string) (bool
 }
 
 func (r *gitHubPackages) handleApiErr(resp *http.Response, err error) error {
-	if resp != nil && resp.StatusCode == http.StatusUnauthorized {
-		return GitHubPackagesUnauthorizedError{error: err}
+	if resp != nil {
+		switch resp.StatusCode {
+		case http.StatusUnauthorized:
+			return GitHubPackagesUnauthorizedErr{error: err}
+		case http.StatusForbidden:
+			return GitHubPackagesForbiddenErr{error: err}
+		}
 	}
 
 	return err

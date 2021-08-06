@@ -13,7 +13,7 @@ import (
 
 const DockerHubImplementationName = "dockerhub"
 
-type DockerHubUnauthorizedError apiError
+type DockerHubUnauthorizedErr apiError
 
 type DockerHubNotFoundError apiError
 
@@ -73,7 +73,7 @@ func (r *dockerHub) DeleteRepoImage(ctx context.Context, repoImage *image.Info) 
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return DockerHubUnauthorizedError{error: err}
+		return DockerHubUnauthorizedErr{error: err}
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		return DockerHubNotFoundError{error: err}
@@ -99,7 +99,7 @@ func (r *dockerHub) deleteRepo(ctx context.Context, reference string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return DockerHubUnauthorizedError{error: err}
+		return DockerHubUnauthorizedErr{error: err}
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		return DockerHubNotFoundError{error: err}
@@ -119,7 +119,7 @@ func (r *dockerHub) getToken(ctx context.Context) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return "", DockerHubUnauthorizedError{error: err}
+		return "", DockerHubUnauthorizedErr{error: err}
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		return "", DockerHubNotFoundError{error: err}
