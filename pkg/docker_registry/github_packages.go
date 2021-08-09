@@ -21,7 +21,7 @@ const (
 	gitHubPackagesForbiddenErrPrefix    = "gitHub packages forbidden: "
 )
 
-var gitHubPackagesPatterns = []string{"^ghcr\\.io"}
+var gitHubPackagesPatterns = []string{"^ghcr\\.io", "^docker\\.pkg\\.github\\.com"}
 
 type (
 	GitHubPackagesUnauthorizedErr apiError
