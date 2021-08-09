@@ -3,6 +3,7 @@ package docker_registry
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -92,6 +93,15 @@ func (api *gitHubApi) deleteOrgContainerPackageVersion(ctx context.Context, orgN
 	return api.deleteContainerPackage(ctx, url, token)
 }
 
+func (api *gitHubApi) getOrgContainerPackageTagList(ctx context.Context, orgName, packageName, token string) ([]string, *http.Response, error) {
+	url := fmt.Sprintf(
+		"https://api.github.com/orgs/%s/packages/container/%s/versions",
+		orgName,
+		packageName,
+	)
+	return api.getContainerPackageTagList(ctx, url, token)
+}
+
 func (api *gitHubApi) getOrgContainerPackageVersionId(ctx context.Context, orgName, packageName, tag, token string) (string, *http.Response, error) {
 	url := fmt.Sprintf(
 		"https://api.github.com/orgs/%s/packages/container/%s/versions",
@@ -111,9 +121,55 @@ func (api *gitHubApi) deleteUserContainerPackageVersion(ctx context.Context, pac
 	return api.deleteContainerPackage(ctx, url, token)
 }
 
+func (api *gitHubApi) getUserContainerPackageTagList(ctx context.Context, packageName, token string) ([]string, *http.Response, error) {
+	url := fmt.Sprintf("https://api.github.com/user/packages/container/%s/versions", packageName)
+	return api.getContainerPackageTagList(ctx, url, token)
+}
+
 func (api *gitHubApi) getUserContainerPackageVersionId(ctx context.Context, packageName, tag, token string) (string, *http.Response, error) {
 	url := fmt.Sprintf("https://api.github.com/user/packages/container/%s/versions", packageName)
 	return api.getContainerPackageVersionId(ctx, url, tag, token)
+}
+
+func (api *gitHubApi) getContainerPackageVersionId(ctx context.Context, url, tag, token string) (string, *http.Response, error) {
+	var versionId string
+	resp, err := api.handleContainerPackageVersionList(ctx, url, token, func(versionList []githubApiVersion) error {
+		for _, version := range versionList {
+			for _, versionTag := range version.Metadata.Container.Tags {
+				if versionTag == tag {
+					versionId = fmt.Sprint(version.Id)
+					return handleContainerPackageVersionListByPageStopErr
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", resp, err
+	}
+
+	if versionId == "" {
+		return "", nil, fmt.Errorf("container package version id for tag %q not found", tag)
+	}
+
+	return versionId, nil, nil
+}
+
+func (api *gitHubApi) getContainerPackageTagList(ctx context.Context, url, token string) ([]string, *http.Response, error) {
+	var tagList []string
+	resp, err := api.handleContainerPackageVersionList(ctx, url, token, func(versionList []githubApiVersion) error {
+		for _, version := range versionList {
+			tagList = append(tagList, version.Metadata.Container.Tags...)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return tagList, nil, nil
 }
 
 type githubApiVersion struct {
@@ -132,10 +188,12 @@ type githubApiVersion struct {
 	} `json:"metadata"`
 }
 
-func (api *gitHubApi) getContainerPackageVersionId(ctx context.Context, url, tag, token string) (string, *http.Response, error) {
-	for page := 0; true; page++ {
-		url += fmt.Sprintf("?page=%d&per_page=100", page)
-		resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
+var handleContainerPackageVersionListByPageStopErr = errors.New("stop listing package versions")
+
+func (api *gitHubApi) handleContainerPackageVersionList(ctx context.Context, url, token string, f func([]githubApiVersion) error) (*http.Response, error) {
+	for page := 1; true; page++ {
+		pageUrl := url + fmt.Sprintf("?page=%d&per_page=100", page)
+		resp, respBody, err := doRequest(ctx, http.MethodGet, pageUrl, nil, doRequestOptions{
 			Headers: map[string]string{
 				"Accept":        "application/vnd.github.v3+json",
 				"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -143,28 +201,28 @@ func (api *gitHubApi) getContainerPackageVersionId(ctx context.Context, url, tag
 			AcceptedCodes: []int{http.StatusOK, http.StatusAccepted, http.StatusNoContent},
 		})
 		if err != nil {
-			return "", resp, err
+			return resp, err
 		}
 
-		var versionList []githubApiVersion
-		if err := json.Unmarshal(respBody, &versionList); err != nil {
-			return "", resp, fmt.Errorf("unexpected body %s", string(respBody))
+		var pageVersionList []githubApiVersion
+		if err := json.Unmarshal(respBody, &pageVersionList); err != nil {
+			return nil, fmt.Errorf("unexpected body %s", string(respBody))
 		}
 
-		if len(versionList) == 0 {
+		if len(pageVersionList) == 0 {
 			break
 		}
 
-		for _, version := range versionList {
-			for _, t := range version.Metadata.Container.Tags {
-				if t == tag {
-					return fmt.Sprint(version.Id), nil, nil
-				}
+		if err := f(pageVersionList); err != nil {
+			if err == handleContainerPackageVersionListByPageStopErr {
+				return nil, nil
 			}
+
+			return nil, err
 		}
 	}
 
-	return "", nil, fmt.Errorf("container package version id for tag %q not found", tag)
+	return nil, nil
 }
 
 func (api *gitHubApi) deleteContainerPackage(ctx context.Context, url, token string) (*http.Response, error) {
