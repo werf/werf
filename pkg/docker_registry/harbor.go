@@ -2,7 +2,7 @@ package docker_registry
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -22,7 +22,7 @@ type HarborRepositoryNotFoundErr apiError
 
 func NewHarborRepositoryNotFoundErr(err error) HarborRepositoryNotFoundErr {
 	return HarborRepositoryNotFoundErr{
-		error: fmt.Errorf(harborRepositoryNotFoundErrPrefix + err.Error()),
+		error: errors.New(harborRepositoryNotFoundErrPrefix + err.Error()),
 	}
 }
 

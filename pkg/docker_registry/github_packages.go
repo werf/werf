@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -29,7 +30,7 @@ type (
 
 func NewGitHubPackagesUnauthorizedErr(err error) GitHubPackagesUnauthorizedErr {
 	return GitHubPackagesUnauthorizedErr{
-		error: fmt.Errorf(gitHubPackagesUnauthorizedErrPrefix + err.Error()),
+		error: errors.New(gitHubPackagesUnauthorizedErrPrefix + err.Error()),
 	}
 }
 
@@ -39,7 +40,7 @@ func IsGitHubPackagesUnauthorizedErr(err error) bool {
 
 func NewGitHubPackagesForbiddenErr(err error) GitHubPackagesForbiddenErr {
 	return GitHubPackagesForbiddenErr{
-		error: fmt.Errorf(gitHubPackagesForbiddenErrPrefix + err.Error()),
+		error: errors.New(gitHubPackagesForbiddenErrPrefix + err.Error()),
 	}
 }
 

@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -19,7 +20,7 @@ type QuayRepositoryNotFoundErr apiError
 
 func NewQuayRepositoryNotFoundErr(err error) QuayRepositoryNotFoundErr {
 	return QuayRepositoryNotFoundErr{
-		error: fmt.Errorf(quayRepositoryNotFoundErrPrefix + err.Error()),
+		error: errors.New(quayRepositoryNotFoundErrPrefix + err.Error()),
 	}
 }
 
