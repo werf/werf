@@ -328,15 +328,10 @@ func runExport(ctx context.Context) error {
 		FileValues:   common.GetSetFile(&commonCmdData),
 	}
 
-	destinationDir := cmdData.Destination
-	if destinationDir == "" {
-		destinationDir = wc.HelmChart.Metadata.Name
-	}
-
 	p := getter.All(cmd_helm.Settings)
 	if vals, err := valueOpts.MergeValues(p, wc); err != nil {
 		return err
-	} else if _, err := wc.CreateNewBundle(ctx, destinationDir, vals); err != nil {
+	} else if _, err := wc.CreateNewBundle(ctx, cmdData.Destination, vals); err != nil {
 		return fmt.Errorf("unable to create bundle: %s", err)
 	}
 
