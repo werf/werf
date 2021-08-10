@@ -49,7 +49,7 @@ jobs:
       if: matrix.implementation == 'ecr'
 
     - name: Setup (gcr)
-      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      uses: google-github-actions/setup-gcloud@master
       with:
         project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
         service_account_email: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
