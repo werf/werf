@@ -252,27 +252,34 @@ func (wc *WerfChart) SetEnv(env string) error {
  * inputVals could contain any custom values, which should be stored in the bundle.
  */
 func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputVals map[string]interface{}) (*Bundle, error) {
-	if err := os.RemoveAll(destDir); err != nil {
-		return nil, fmt.Errorf("unable to remove %q: %s", destDir, err)
-	}
-	if err := os.MkdirAll(destDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %q: %s", destDir, err)
-	}
-
 	chartPath := filepath.Join(wc.GiterminismManager.ProjectDir(), wc.ChartDir)
 	chrt, err := loader.LoadDir(chartPath)
 	if err != nil {
 		return nil, fmt.Errorf("error loading chart %q: %s", chartPath, err)
 	}
 
-	vals, err := wc.MakeBundleValues(chrt, inputVals)
-	if err != nil {
-		return nil, fmt.Errorf("unable to construct bundle input values: %s", err)
+	var valsData []byte
+	{
+		vals, err := wc.MakeBundleValues(chrt, inputVals)
+		if err != nil {
+			return nil, fmt.Errorf("unable to construct bundle input values: %s", err)
+		}
+
+		valsData, err = json.MarshalIndent(vals, "", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("unable to prepare values: %s", err)
+		}
 	}
 
-	valsData, err := json.MarshalIndent(vals, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("unable to prepare values: %s", err)
+	if destDir == "" {
+		destDir = wc.HelmChart.Metadata.Name
+	}
+
+	if err := os.RemoveAll(destDir); err != nil {
+		return nil, fmt.Errorf("unable to remove %q: %s", destDir, err)
+	}
+	if err := os.MkdirAll(destDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %q: %s", destDir, err)
 	}
 
 	logboek.Context(ctx).Debug().LogF("Saving bundle values:\n%s\n---\n", valsData)
