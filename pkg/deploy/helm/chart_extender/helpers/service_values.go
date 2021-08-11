@@ -46,6 +46,7 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 		"werf": map[string]interface{}{
 			"name":    projectName,
 			"version": werf.Version,
+			"image":   map[string]interface{}{},
 		},
 	}
 
@@ -82,7 +83,10 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 		if imageInfoGetter.IsNameless() {
 			werfInfo["is_nameless_image"] = true
 			werfInfo["nameless_image"] = imageInfoGetter.GetName()
+			globalInfo["is_nameless_image"] = true
+			globalInfo["nameless_image"] = imageInfoGetter.GetName()
 		} else {
+			globalInfo["werf"].(map[string]interface{})["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetName()
 			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetName()
 		}
 	}
