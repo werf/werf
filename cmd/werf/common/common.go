@@ -224,7 +224,13 @@ func SetupReportPath(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ReportFormat = new(string)
-	cmd.Flags().StringVarP(cmdData.ReportFormat, "report-format", "", string(build.ReportJSON), fmt.Sprintf(`Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default)
+
+	defaultValue := os.Getenv("WERF_REPORT_FORMAT")
+	if defaultValue == "" {
+		defaultValue = string(build.ReportJSON)
+	}
+
+	cmd.Flags().StringVarP(cmdData.ReportFormat, "report-format", "", defaultValue, fmt.Sprintf(`Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default)
 %[1]s:
 	{
 	  "Images": {
@@ -243,7 +249,7 @@ func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 	...
 <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
 - all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
+- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, defaultValue, string(build.ReportEnvFile)))
 }
 
 func GetReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
