@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/werf/logboek"
 )
 
 type gitHubApi struct{}
@@ -176,6 +179,19 @@ func (api *gitHubApi) deleteContainerPackage(ctx context.Context, url, token str
 		AcceptedCodes: []int{http.StatusOK, http.StatusAccepted, http.StatusNoContent},
 	})
 	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusForbidden {
+			secondsString := resp.Header.Get("Retry-After")
+			seconds, err := strconv.Atoi(secondsString)
+			if err == nil {
+				logboek.Context(ctx).Warn().LogF(
+					"WARNING: Secondary rate limit error occurred. Waiting for %d before retrying package delete request...\n",
+					seconds,
+				)
+				time.Sleep(time.Second * time.Duration(seconds))
+				return api.deleteContainerPackage(ctx, url, token)
+			}
+		}
+
 		return resp, err
 	}
 
