@@ -134,8 +134,8 @@ type githubApiVersion struct {
 
 func (api *gitHubApi) getContainerPackageVersionId(ctx context.Context, url, tag, token string) (string, *http.Response, error) {
 	for page := 0; true; page++ {
-		url += fmt.Sprintf("?page=%d&per_page=100", page)
-		resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
+		pageUrl := url + fmt.Sprintf("?page=%d&per_page=100", page)
+		resp, respBody, err := doRequest(ctx, http.MethodGet, pageUrl, nil, doRequestOptions{
 			Headers: map[string]string{
 				"Accept":        "application/vnd.github.v3+json",
 				"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -146,16 +146,16 @@ func (api *gitHubApi) getContainerPackageVersionId(ctx context.Context, url, tag
 			return "", resp, err
 		}
 
-		var versionList []githubApiVersion
-		if err := json.Unmarshal(respBody, &versionList); err != nil {
+		var pageVersionList []githubApiVersion
+		if err := json.Unmarshal(respBody, &pageVersionList); err != nil {
 			return "", resp, fmt.Errorf("unexpected body %s", string(respBody))
 		}
 
-		if len(versionList) == 0 {
+		if len(pageVersionList) == 0 {
 			break
 		}
 
-		for _, version := range versionList {
+		for _, version := range pageVersionList {
 			for _, t := range version.Metadata.Container.Tags {
 				if t == tag {
 					return fmt.Sprint(version.Id), nil, nil

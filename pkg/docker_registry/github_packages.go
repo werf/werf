@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	"github.com/werf/werf/pkg/image"
 )
@@ -78,6 +79,10 @@ func newGitHubPackages(options gitHubPackagesOptions) (*gitHubPackages, error) {
 	}
 
 	return gitHub, nil
+}
+
+func (r *gitHubPackages) Tags(ctx context.Context, reference string) ([]string, error) {
+	return r.api.tags(ctx, reference, remote.WithPageSize(0))
 }
 
 func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {

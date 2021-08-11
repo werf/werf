@@ -39,8 +39,12 @@ func newAPI(options apiOptions) *api {
 	}
 }
 
-func (api *api) Tags(_ context.Context, reference string) ([]string, error) {
-	tags, err := api.list(reference)
+func (api *api) Tags(ctx context.Context, reference string) ([]string, error) {
+	return api.tags(ctx, reference)
+}
+
+func (api *api) tags(_ context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
+	tags, err := api.list(reference, extraListOptions...)
 	if err != nil {
 		if IsNameUnknownError(err) {
 			return []string{}, nil
@@ -135,13 +139,20 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 	return repoImage, nil
 }
 
-func (api *api) list(reference string) ([]string, error) {
+func (api *api) list(reference string, extraListOptions ...remote.Option) ([]string, error) {
 	repo, err := name.NewRepository(reference, api.newRepositoryOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("parsing repo %q: %v", reference, err)
 	}
 
-	tags, err := remote.List(repo, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(api.getHttpTransport()))
+	listOptions := append(
+		[]remote.Option{
+			remote.WithAuthFromKeychain(authn.DefaultKeychain),
+			remote.WithTransport(api.getHttpTransport()),
+		},
+		extraListOptions...,
+	)
+	tags, err := remote.List(repo, listOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("reading tags for %q: %v", repo, err)
 	}
