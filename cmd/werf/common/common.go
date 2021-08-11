@@ -249,7 +249,7 @@ func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 	...
 <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
 - all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, defaultValue, string(build.ReportEnvFile)))
+- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
 }
 
 func GetReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
