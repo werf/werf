@@ -34,7 +34,7 @@ require (
 	github.com/go-openapi/validate v0.19.8
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
-	github.com/google/go-containerregistry v0.2.0
+	github.com/google/go-containerregistry v0.5.1
 	github.com/google/uuid v1.1.2
 	github.com/gookit/color v1.3.7
 	github.com/gosuri/uitable v0.0.4 // indirect
@@ -94,6 +94,8 @@ require (
 	sigs.k8s.io/yaml v1.2.1-0.20210128145534-11e43d4a8b92
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
+
+replace github.com/google/go-containerregistry => github.com/werf/third-party-go-containerregistry v0.0.0-20210811175251-11ebb5d63763
 
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 

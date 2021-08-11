@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	"github.com/werf/werf/pkg/image"
 )
@@ -81,32 +82,7 @@ func newGitHubPackages(options gitHubPackagesOptions) (*gitHubPackages, error) {
 }
 
 func (r *gitHubPackages) Tags(ctx context.Context, reference string) ([]string, error) {
-	orgOrUserName, packageName, err := r.parseReference(reference)
-	if err != nil {
-		return nil, err
-	}
-
-	isUser, err := r.isUser(ctx, orgOrUserName)
-	if err != nil {
-		return nil, err
-	}
-
-	var tagList []string
-	var resp *http.Response
-	if isUser {
-		tagList, resp, err = r.gitHubApi.getUserContainerPackageTagList(ctx, packageName, r.token)
-	} else {
-		tagList, resp, err = r.gitHubApi.getOrgContainerPackageTagList(ctx, orgOrUserName, packageName, r.token)
-	}
-	if err != nil {
-		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return nil, nil
-		}
-
-		return nil, r.handleFailedApiResponse(resp, err)
-	}
-
-	return tagList, nil
+	return r.api.tags(ctx, reference, remote.WithPageSize(0))
 }
 
 func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
