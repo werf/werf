@@ -80,35 +80,6 @@ func newGitHubPackages(options gitHubPackagesOptions) (*gitHubPackages, error) {
 	return gitHub, nil
 }
 
-func (r *gitHubPackages) Tags(ctx context.Context, reference string) ([]string, error) {
-	orgOrUserName, packageName, err := r.parseReference(reference)
-	if err != nil {
-		return nil, err
-	}
-
-	isUser, err := r.isUser(ctx, orgOrUserName)
-	if err != nil {
-		return nil, err
-	}
-
-	var tagList []string
-	var resp *http.Response
-	if isUser {
-		tagList, resp, err = r.gitHubApi.getUserContainerPackageTagList(ctx, packageName, r.token)
-	} else {
-		tagList, resp, err = r.gitHubApi.getOrgContainerPackageTagList(ctx, orgOrUserName, packageName, r.token)
-	}
-	if err != nil {
-		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return nil, nil
-		}
-
-		return nil, r.handleFailedApiResponse(resp, err)
-	}
-
-	return tagList, nil
-}
-
 func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	orgOrUserName, packageName, err := r.parseReference(repoImage.Repository)
 	if err != nil {
