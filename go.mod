@@ -34,7 +34,7 @@ require (
 	github.com/go-openapi/validate v0.19.8
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
-	github.com/google/go-containerregistry v0.2.0
+	github.com/google/go-containerregistry v0.5.1
 	github.com/google/uuid v1.1.2
 	github.com/gookit/color v1.3.7
 	github.com/gosuri/uitable v0.0.4 // indirect
