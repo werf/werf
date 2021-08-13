@@ -53,7 +53,10 @@ type gitHubPackages struct {
 	*defaultImplementation
 	gitHubCredentials
 	gitHubApi
-	isUserCache sync.Map
+
+	isUserCache                sync.Map
+	tagIDPackageVersionIDCache map[string]string
+	getTagPackageVersionIDLock sync.Mutex
 }
 
 type gitHubCredentials struct {
@@ -72,10 +75,12 @@ func newGitHubPackages(options gitHubPackagesOptions) (*gitHubPackages, error) {
 	}
 
 	gitHub := &gitHubPackages{
-		defaultImplementation: d,
-		gitHubCredentials:     options.gitHubCredentials,
-		gitHubApi:             newGitHubApi(),
-		isUserCache:           sync.Map{},
+		defaultImplementation:      d,
+		gitHubCredentials:          options.gitHubCredentials,
+		gitHubApi:                  newGitHubApi(),
+		isUserCache:                sync.Map{},
+		tagIDPackageVersionIDCache: map[string]string{},
+		getTagPackageVersionIDLock: sync.Mutex{},
 	}
 
 	return gitHub, nil
@@ -96,25 +101,20 @@ func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.I
 		return err
 	}
 
-	if isUser {
-		packageVersionId, resp, err := r.gitHubApi.getUserContainerPackageVersionId(ctx, packageName, repoImage.Tag, r.token)
-		if err != nil {
-			return r.handleFailedApiResponse(resp, err)
-		}
+	packageVersionId, err := r.getTagPackageVersionID(ctx, orgOrUserName, packageName, repoImage.Tag)
+	if err != nil {
+		return err
+	}
 
-		if resp, err = r.gitHubApi.deleteUserContainerPackageVersion(ctx, packageName, packageVersionId, r.token); err != nil {
+	if isUser {
+		if resp, err := r.gitHubApi.deleteUserContainerPackageVersion(ctx, packageName, packageVersionId, r.token); err != nil {
 			return r.handleFailedApiResponse(resp, err)
 		}
 
 		return nil
 	}
 
-	packageVersionId, resp, err := r.gitHubApi.getOrgContainerPackageVersionId(ctx, orgOrUserName, packageName, repoImage.Tag, r.token)
-	if err != nil {
-		return r.handleFailedApiResponse(resp, err)
-	}
-
-	if resp, err = r.gitHubApi.deleteOrgContainerPackageVersion(ctx, orgOrUserName, packageName, packageVersionId, r.token); err != nil {
+	if resp, err := r.gitHubApi.deleteOrgContainerPackageVersion(ctx, orgOrUserName, packageName, packageVersionId, r.token); err != nil {
 		return r.handleFailedApiResponse(resp, err)
 	}
 
@@ -145,6 +145,60 @@ func (r *gitHubPackages) DeleteRepo(ctx context.Context, reference string) error
 	}
 
 	return nil
+}
+
+func (r *gitHubPackages) getTagPackageVersionID(ctx context.Context, orgOrUserName, packageName, tag string) (string, error) {
+	r.getTagPackageVersionIDLock.Lock()
+	defer r.getTagPackageVersionIDLock.Unlock()
+
+	if versionID, ok := r.tagIDPackageVersionIDCache[r.tagID(orgOrUserName, packageName, tag)]; ok {
+		return versionID, nil
+	}
+
+	if err := r.populateTagIDPackageVersionIDCache(ctx, orgOrUserName, packageName); err != nil {
+		return "", err
+	}
+
+	if versionID, ok := r.tagIDPackageVersionIDCache[r.tagID(orgOrUserName, packageName, tag)]; ok {
+		return versionID, nil
+	}
+
+	return "", fmt.Errorf("container package version id for tag %q not found", tag)
+}
+
+func (r *gitHubPackages) populateTagIDPackageVersionIDCache(ctx context.Context, orgOrUserName, packageName string) error {
+	isUser, err := r.isUser(ctx, orgOrUserName)
+	if err != nil {
+		return err
+	}
+
+	handleFunc := func(versionList []githubApiVersion) error {
+		for _, version := range versionList {
+			for _, versionTag := range version.Metadata.Container.Tags {
+				r.tagIDPackageVersionIDCache[r.tagID(orgOrUserName, packageName, versionTag)] = fmt.Sprintf("%d", version.Id)
+			}
+		}
+
+		return nil
+	}
+
+	if isUser {
+		if resp, err := r.gitHubApi.getUserContainerPackageVersionsInBatches(ctx, packageName, r.token, handleFunc); err != nil {
+			return r.handleFailedApiResponse(resp, err)
+		}
+
+		return nil
+	}
+
+	if resp, err := r.gitHubApi.getOrgContainerPackageVersionsInBatches(ctx, orgOrUserName, packageName, r.token, handleFunc); err != nil {
+		return r.handleFailedApiResponse(resp, err)
+	}
+
+	return nil
+}
+
+func (r *gitHubPackages) tagID(orgOrUserName, packageName, tag string) string {
+	return strings.Join([]string{orgOrUserName, packageName, tag}, "-")
 }
 
 func (r *gitHubPackages) isUser(ctx context.Context, orgOrUserName string) (bool, error) {
