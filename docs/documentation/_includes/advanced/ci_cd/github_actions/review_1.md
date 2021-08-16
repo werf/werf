@@ -1,5 +1,5 @@
 <div class="details active">
-<a href="javascript:void(0)" class="details__summary">.github\workflows\review_deployment.yml</a>
+<a href="javascript:void(0)" class="details__summary">.github/workflows/review_deployment.yml</a>
 <div class="details__content" markdown="1">
 
 {% raw %}
@@ -57,7 +57,7 @@ jobs:
 </div>
 
 <div class="details active">
-<a href="javascript:void(0)" class="details__summary">.github\workflows\review_deployment_dismiss.yml</a>
+<a href="javascript:void(0)" class="details__summary">.github/workflows/review_deployment_dismiss.yml</a>
 <div class="details__content" markdown="1">
 
 {% raw %}

@@ -79,7 +79,7 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 You can use the following options (or their respective environment variables) to set the said parameters:
 
-- `-- repo-docker-hub-token` or
+- `--repo-docker-hub-token` or
 - `--repo-docker-hub-username` and `--repo-docker-hub-password`.
 
 ### GitHub Packages

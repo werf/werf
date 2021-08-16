@@ -48,7 +48,7 @@ werf connects to **all Kubernetes clusters** described in **all configuration co
 The user can configure werf's behavior using the following parameters (and related environment variables):
 - `--kube-config`, `--kube-config-base64` set out the kubectl configuration (by default, the user-defined configuration at `~/.kube/config` is used);
 - `--kube-context` scans a specific context;
-- `-- scan-context-namespace-only` scans the namespace linked to a specific context (by default, all namespaces are scanned).
+- `--scan-context-namespace-only` scans the namespace linked to a specific context (by default, all namespaces are scanned).
 - `--without-kube` disables Kubernetes scanning.
 
 As long as some object in the Kubernetes cluster uses an image, werf will never delete this image from the container registry. In other words, if you run some object in a Kubernetes cluster, werf will not delete its related images under any circumstances during the cleanup.
