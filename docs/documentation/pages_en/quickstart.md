@@ -409,15 +409,15 @@ To deploy an application using werf, we should define the desired state in the G
    project: quickstart-application
    ---
    image: vote
-   dockerfile: vote/Dockerfile
+   dockerfile: Dockerfile
    context: vote
    ---
    image: result
-   dockerfile: result/Dockerfile
+   dockerfile: Dockerfile
    context: result
    ---
    image: worker
-   dockerfile: worker/Dockerfile
+   dockerfile: Dockerfile
    context: worker
    ```
    {% endraw %}
