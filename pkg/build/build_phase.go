@@ -143,11 +143,12 @@ func generateImageEnv(werfImageName, imageName string) string {
 }
 
 type ReportImageRecord struct {
-	WerfImageName   string
-	DockerRepo      string
-	DockerTag       string
-	DockerImageID   string
-	DockerImageName string
+	WerfImageName     string
+	DockerRepo        string
+	DockerTag         string
+	DockerImageID     string
+	DockerImageDigest string
+	DockerImageName   string
 }
 
 func (phase *BuildPhase) Name() string {
@@ -170,11 +171,12 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 
 		desc := img.GetLastNonEmptyStage().GetImage().GetStageDescription()
 		phase.ImagesReport.SetImageRecord(img.GetName(), ReportImageRecord{
-			WerfImageName:   img.GetName(),
-			DockerRepo:      desc.Info.Repository,
-			DockerTag:       desc.Info.Tag,
-			DockerImageID:   desc.Info.ID,
-			DockerImageName: desc.Info.Name,
+			WerfImageName:     img.GetName(),
+			DockerRepo:        desc.Info.Repository,
+			DockerTag:         desc.Info.Tag,
+			DockerImageID:     desc.Info.ID,
+			DockerImageDigest: desc.Info.RepoDigest,
+			DockerImageName:   desc.Info.Name,
 		})
 	}
 

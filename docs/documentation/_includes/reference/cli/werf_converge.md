@@ -237,6 +237,7 @@ werf converge --repo registry.mydomain.com/web --env production
             			"DockerTag": "<TAG>"
             			"DockerImageName": "<REPO>:<TAG>",
             			"DockerImageID": "<SHA256>",
+            			"DockerImageDigest": "<SHA256>",
             		},
             		...
             	  }

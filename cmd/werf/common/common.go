@@ -240,6 +240,7 @@ func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 			"DockerTag": "<TAG>"
 			"DockerImageName": "<REPO>:<TAG>",
 			"DockerImageID": "<SHA256>",
+			"DockerImageDigest": "<SHA256>",
 		},
 		...
 	  }
