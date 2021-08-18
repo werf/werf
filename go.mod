@@ -25,7 +25,6 @@ require (
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
-	github.com/emicklei/go-restful v2.13.0+incompatible // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-git/go-billy/v5 v5.0.0 // indirect
 	github.com/go-git/go-git/v5 v5.1.1-0.20200721083337-cded5b685b8a
@@ -92,10 +91,7 @@ require (
 	mvdan.cc/xurls v1.1.0
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.1-0.20210128145534-11e43d4a8b92
-	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
-
-replace github.com/google/go-containerregistry => github.com/werf/third-party-go-containerregistry v0.0.0-20210811175251-11ebb5d63763
 
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 
