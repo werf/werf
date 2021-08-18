@@ -181,6 +181,7 @@ werf bundle publish [options]
             			"DockerTag": "<TAG>"
             			"DockerImageName": "<REPO>:<TAG>",
             			"DockerImageID": "<SHA256>",
+            			"DockerImageDigest": "<SHA256>",
             		},
             		...
             	  }
