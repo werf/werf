@@ -46,7 +46,7 @@
         },
         {
           "name": "rock-solid",
-          "version": "v1.1.23+fix41"
+          "version": "v1.1.23+fix47"
         }
       ]
     },
@@ -59,11 +59,11 @@
         },
         {
           "name": "beta",
-          "version": "v1.2.13+fix6"
+          "version": "v1.2.13+fix7"
         },
         {
           "name": "ea",
-          "version": "v1.2.13+fix6"
+          "version": "v1.2.13+fix7"
         }
       ]
     }
