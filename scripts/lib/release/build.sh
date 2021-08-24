@@ -5,7 +5,11 @@ go_mod_download() {
     VERSION=$1
 
     for os in linux darwin windows ; do
-        for arch in amd64 ; do
+        for arch in amd64 arm64 ; do
+            if [ "$os" == "windows" ] && [ "$arch" == "arm64" ] ; then
+                continue
+            fi
+
             echo "# Downloading go modules for GOOS=$os GOARCH=$arch"
 
             n=0
