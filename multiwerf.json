@@ -38,11 +38,11 @@
         },
         {
           "name": "ea",
-          "version": "v1.1.23+fix48"
+          "version": "v1.1.23+fix49"
         },
         {
           "name": "stable",
-          "version": "v1.1.23+fix47"
+          "version": "v1.1.23+fix48"
         },
         {
           "name": "rock-solid",
@@ -55,15 +55,15 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.2.13+fix7"
+          "version": "v1.2.13+fix12"
         },
         {
           "name": "beta",
-          "version": "v1.2.13+fix7"
+          "version": "v1.2.13+fix12"
         },
         {
           "name": "ea",
-          "version": "v1.2.13+fix7"
+          "version": "v1.2.13+fix12"
         }
       ]
     }
