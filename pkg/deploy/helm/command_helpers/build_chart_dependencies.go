@@ -24,14 +24,14 @@ type BuildChartDependenciesOptions struct {
 	LoadOptions *loader.LoadOptions
 }
 
-func BuildChartDependenciesInDir(ctx context.Context, chartFile *chart.ChartExtenderBufferedFile, chartLockFile *chart.ChartExtenderBufferedFile, requirementsFile *chart.ChartExtenderBufferedFile, requirementsLockFile *chart.ChartExtenderBufferedFile, targetDir string, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, opts BuildChartDependenciesOptions) error {
+func BuildChartDependenciesInDir(ctx context.Context, chartFile, chartLockFile *chart.ChartExtenderBufferedFile, targetDir string, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, opts BuildChartDependenciesOptions) error {
 	logboek.Context(ctx).Debug().LogF("-- BuildChartDependenciesInDir\n")
 
 	if err := os.MkdirAll(targetDir, os.ModePerm); err != nil {
 		return fmt.Errorf("error creating dir %q: %s", targetDir, err)
 	}
 
-	files := []*chart.ChartExtenderBufferedFile{chartFile, chartLockFile, requirementsFile, requirementsLockFile}
+	files := []*chart.ChartExtenderBufferedFile{chartFile, chartLockFile}
 
 	for _, file := range files {
 		if file == nil {

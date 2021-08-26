@@ -1,7 +1,9 @@
 package chart_extender
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,6 +18,7 @@ import (
 
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/provenance"
 
 	"github.com/pkg/errors"
 	"github.com/werf/werf/pkg/werf"
@@ -62,15 +65,8 @@ func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, er
 	return metadata, nil
 }
 
-func GetPreparedChartDependenciesDir(ctx context.Context, conf *ChartDependenciesConfiguration, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
-	var lockFileData []byte
-	if conf.ChartLockFile != nil {
-		lockFileData = conf.ChartLockFile.Data
-	} else if conf.RequirementsLockFile != nil {
-		lockFileData = conf.RequirementsLockFile.Data
-	}
-
-	depsDir := GetChartDependenciesCacheDir(util.Sha256Hash(string(lockFileData)))
+func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadataLockFile *chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
+	depsDir := GetChartDependenciesCacheDir(util.Sha256Hash(string(metadataLockFile.Data)))
 
 	if _, err := os.Stat(depsDir); os.IsNotExist(err) {
 		if err := logboek.Context(ctx).Default().LogProcess("Building chart dependencies").DoError(func() error {
@@ -88,7 +84,7 @@ func GetPreparedChartDependenciesDir(ctx context.Context, conf *ChartDependencie
 				SubchartExtenderFactoryFunc: nil,
 			}
 
-			if err := command_helpers.BuildChartDependenciesInDir(ctx, conf.ChartFile, conf.ChartLockFile, conf.RequirementsFile, conf.RequirementsLockFile, tmpDepsDir, helmEnvSettings, registryClientHandle, buildChartDependenciesOpts); err != nil {
+			if err := command_helpers.BuildChartDependenciesInDir(ctx, metadataFile, metadataLockFile, tmpDepsDir, helmEnvSettings, registryClientHandle, buildChartDependenciesOpts); err != nil {
 				return fmt.Errorf("error building chart dependencies: %s", err)
 			}
 
@@ -110,57 +106,148 @@ func GetPreparedChartDependenciesDir(ctx context.Context, conf *ChartDependencie
 }
 
 type ChartDependenciesConfiguration struct {
-	ChartFile            *chart.ChartExtenderBufferedFile
-	ChartLockFile        *chart.ChartExtenderBufferedFile
-	RequirementsFile     *chart.ChartExtenderBufferedFile
-	RequirementsLockFile *chart.ChartExtenderBufferedFile
-
-	Metadata *chart.Metadata
+	ChartMetadata     *chart.Metadata
+	ChartMetadataLock *chart.Lock
 }
 
-func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
-	conf := &ChartDependenciesConfiguration{}
+func NewChartDependenciesConfiguration(chartMetadata *chart.Metadata, chartMetadataLock *chart.Lock) *ChartDependenciesConfiguration {
+	return &ChartDependenciesConfiguration{ChartMetadata: chartMetadata, ChartMetadataLock: chartMetadataLock}
+}
 
-	for _, f := range loadedFiles {
+func (conf *ChartDependenciesConfiguration) GetExternalDependenciesFiles() (bool, *chart.ChartExtenderBufferedFile, *chart.ChartExtenderBufferedFile, error) {
+	metadataBytes, err := yaml.Marshal(conf.ChartMetadata)
+	if err != nil {
+		return false, nil, nil, fmt.Errorf("unable to marshal original chart metadata into yaml: %s", err)
+	}
+	metadata := new(chart.Metadata)
+	if err := yaml.Unmarshal(metadataBytes, metadata); err != nil {
+		return false, nil, nil, fmt.Errorf("unable to unmarshal original chart metadata yaml: %s", err)
+	}
+
+	metadataLockBytes, err := yaml.Marshal(conf.ChartMetadataLock)
+	if err != nil {
+		return false, nil, nil, fmt.Errorf("unable to marshal original chart metadata lock into yaml: %s", err)
+	}
+	metadataLock := new(chart.Lock)
+	if err := yaml.Unmarshal(metadataLockBytes, metadataLock); err != nil {
+		return false, nil, nil, fmt.Errorf("unable to unmarshal original chart metadata lock yaml: %s", err)
+	}
+
+	metadata.APIVersion = "v2"
+
+	var localDependenciesNames []string
+
+	var filteredLockDependencies []*chart.Dependency
+	for _, depLock := range metadataLock.Dependencies {
+		if depLock.Repository == "" || strings.HasPrefix(depLock.Repository, "file://") {
+			localDependenciesNames = append(localDependenciesNames, depLock.Name)
+			continue
+		}
+		filteredLockDependencies = append(filteredLockDependencies, depLock)
+	}
+	metadataLock.Dependencies = filteredLockDependencies
+
+	var filteredDependencies []*chart.Dependency
+FilterOutLocalDependencies:
+	for _, dep := range metadata.Dependencies {
+		for _, localDepName := range localDependenciesNames {
+			if localDepName == dep.Name {
+				continue FilterOutLocalDependencies
+			}
+		}
+
+		filteredDependencies = append(filteredDependencies, dep)
+	}
+	metadata.Dependencies = filteredDependencies
+
+	if len(metadata.Dependencies) == 0 {
+		return false, nil, nil, nil
+	}
+
+	// Set resolved repository from the lock file
+	for _, dep := range metadata.Dependencies {
+		for _, depLock := range metadataLock.Dependencies {
+			if dep.Name == depLock.Name {
+				dep.Repository = depLock.Repository
+				break
+			}
+		}
+	}
+
+	if newDigest, err := HashReq(metadata.Dependencies, metadataLock.Dependencies); err != nil {
+		return false, nil, nil, fmt.Errorf("unable to calculate external dependencies Chart.yaml digest: %s", err)
+	} else {
+		metadataLock.Digest = newDigest
+	}
+
+	metadataFile := &chart.ChartExtenderBufferedFile{Name: "Chart.yaml"}
+	if data, err := yaml.Marshal(metadata); err != nil {
+		return false, nil, nil, fmt.Errorf("unable to marshal chart metadata file with external dependencies: %s", err)
+	} else {
+		metadataFile.Data = data
+	}
+
+	metadataLockFile := &chart.ChartExtenderBufferedFile{Name: "Chart.lock"}
+	if data, err := yaml.Marshal(metadataLock); err != nil {
+		return false, nil, nil, fmt.Errorf("unable to marshal chart metadata lock file with external dependencies: %s", err)
+	} else {
+		metadataLockFile.Data = data
+	}
+
+	return true, metadataFile, metadataLockFile, nil
+}
+
+func LoadChartDependencies(ctx context.Context, loadChartDirFunc func(ctx context.Context, dir string) ([]*chart.ChartExtenderBufferedFile, error), chartDir string, loadedChartFiles []*chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
+	res := loadedChartFiles
+
+	var chartMetadata *chart.Metadata
+	var chartMetadataLock *chart.Lock
+
+	for _, f := range loadedChartFiles {
 		switch f.Name {
 		case "Chart.yaml":
-			conf.ChartFile = f
-
-			conf.Metadata = new(chart.Metadata)
-			if err := yaml.Unmarshal(f.Data, conf.Metadata); err != nil {
+			chartMetadata = new(chart.Metadata)
+			if err := yaml.Unmarshal(f.Data, chartMetadata); err != nil {
 				return nil, errors.Wrap(err, "cannot load Chart.yaml")
 			}
-			if conf.Metadata.APIVersion == "" {
-				conf.Metadata.APIVersion = chart.APIVersionV1
+			if chartMetadata.APIVersion == "" {
+				chartMetadata.APIVersion = chart.APIVersionV1
 			}
 
 		case "Chart.lock":
-			conf.ChartLockFile = f
-		case "requirements.lock":
-			conf.RequirementsLockFile = f
+			chartMetadataLock = new(chart.Lock)
+			if err := yaml.Unmarshal(f.Data, chartMetadataLock); err != nil {
+				return nil, errors.Wrap(err, "cannot load Chart.lock")
+			}
 		}
 	}
 
-	for _, f := range loadedFiles {
+	for _, f := range loadedChartFiles {
 		switch f.Name {
 		case "requirements.yaml":
-			conf.RequirementsFile = f
-
-			if conf.Metadata == nil {
-				conf.Metadata = new(chart.Metadata)
+			if chartMetadata == nil {
+				chartMetadata = new(chart.Metadata)
 			}
-			if err := yaml.Unmarshal(f.Data, conf.Metadata); err != nil {
+			if err := yaml.Unmarshal(f.Data, chartMetadata); err != nil {
 				return nil, errors.Wrap(err, "cannot load requirements.yaml")
+			}
+
+		case "requirements.lock":
+			if chartMetadataLock == nil {
+				chartMetadataLock = new(chart.Lock)
+			}
+			if err := yaml.Unmarshal(f.Data, chartMetadataLock); err != nil {
+				return nil, errors.Wrap(err, "cannot load requirements.lock")
 			}
 		}
 	}
 
-	if conf.ChartFile == nil {
-		return loadedFiles, nil
+	if chartMetadata == nil {
+		return res, nil
 	}
 
-	if conf.ChartLockFile == nil && conf.RequirementsLockFile == nil {
-		if len(conf.Metadata.Dependencies) > 0 {
+	if chartMetadataLock == nil {
+		if len(chartMetadata.Dependencies) > 0 {
 			logboek.Context(ctx).Error().LogLn("Cannot build chart dependencies and preload charts without lock file (.helm/Chart.lock or .helm/requirements.lock)")
 			logboek.Context(ctx).Error().LogLn("It is recommended to add Chart.lock file to your project repository or remove chart dependencies.")
 			logboek.Context(ctx).Error().LogLn()
@@ -168,10 +255,43 @@ func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtend
 			logboek.Context(ctx).Error().LogLn()
 		}
 
-		return loadedFiles, nil
+		return res, nil
 	}
 
-	depsDir, err := GetPreparedChartDependenciesDir(ctx, conf, helmEnvSettings, registryClientHandle, buildChartDependenciesOpts)
+	conf := NewChartDependenciesConfiguration(chartMetadata, chartMetadataLock)
+
+	// Append virtually loaded files from custom dependency repositories in the local filesystem,
+	// pretending these files are located in the charts/ dir as designed in the Helm.
+	for _, chartDep := range chartMetadataLock.Dependencies {
+		if !strings.HasPrefix(chartDep.Repository, "file://") {
+			continue
+		}
+
+		relativeLocalChartPath := strings.TrimPrefix(chartDep.Repository, "file://")
+		localChartPath := filepath.Join(chartDir, relativeLocalChartPath)
+
+		chartFiles, err := loadChartDirFunc(ctx, localChartPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to load custom subchart dir %q: %s", localChartPath, err)
+		}
+
+		for _, f := range chartFiles {
+			f.Name = filepath.Join("charts", chartDep.Name, f.Name)
+		}
+
+		res = append(res, chartFiles...)
+	}
+
+	haveExternalDependencies, metadataFile, metadataLockFile, err := conf.GetExternalDependenciesFiles()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get external dependencies chart configuration files: %s", err)
+	}
+
+	if !haveExternalDependencies {
+		return res, nil
+	}
+
+	depsDir, err := GetPreparedChartDependenciesDir(ctx, metadataFile, metadataLockFile, helmEnvSettings, registryClientHandle, buildChartDependenciesOpts)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing chart dependencies: %s", err)
 	}
@@ -179,8 +299,6 @@ func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtend
 	if err != nil {
 		return nil, err
 	}
-
-	res := loadedFiles
 
 	for _, f := range localFiles {
 		if strings.HasPrefix(f.Name, "charts/") {
@@ -192,4 +310,13 @@ func LoadChartDependencies(ctx context.Context, loadedFiles []*chart.ChartExtend
 	}
 
 	return res, nil
+}
+
+func HashReq(req, lock []*chart.Dependency) (string, error) {
+	data, err := json.Marshal([2][]*chart.Dependency{req, lock})
+	if err != nil {
+		return "", err
+	}
+	s, err := provenance.Digest(bytes.NewBuffer(data))
+	return "sha256:" + s, err
 }
