@@ -168,10 +168,6 @@ func runRender() error {
 	}
 	ctx = ctxWithDockerCli
 
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
-		return err
-	}
-
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
 		return err
@@ -243,6 +239,10 @@ func runRender() error {
 		stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
 
 		if stagesStorageAddress != storage.LocalStorageAddress {
+			if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+				return err
+			}
+
 			containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 			stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 			if err != nil {
