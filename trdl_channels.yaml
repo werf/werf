@@ -14,7 +14,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.14
+      version: 1.2.15
     - name: beta
       version: 1.2.13+fix12
     - name: ea
