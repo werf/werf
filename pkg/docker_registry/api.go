@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	"github.com/werf/logboek"
@@ -168,6 +169,39 @@ func (api *api) deleteImageByReference(reference string) error {
 
 	if err := remote.Delete(r, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(api.getHttpTransport())); err != nil {
 		return fmt.Errorf("deleting image %q: %v", r, err)
+	}
+
+	return nil
+}
+
+func (api *api) MutateAndPushImage(_ context.Context, sourceReference, destinationReference string, mutateConfigFunc func(cfg v1.Config) (v1.Config, error)) error {
+	img, _, err := api.image(sourceReference)
+	if err != nil {
+		return err
+	}
+
+	cfgFile, err := img.ConfigFile()
+	if err != nil {
+		return err
+	}
+
+	newConf, err := mutateConfigFunc(cfgFile.Config)
+	if err != nil {
+		return err
+	}
+
+	newImg, err := mutate.Config(img, newConf)
+	if err != nil {
+		return err
+	}
+
+	ref, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
+	if err != nil {
+		return fmt.Errorf("parsing reference %q: %v", destinationReference, err)
+	}
+
+	if err = remote.Write(ref, newImg, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+		return err
 	}
 
 	return nil

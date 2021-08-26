@@ -374,9 +374,22 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 		}),
 	}
 
-	if opts.DryRun {
-		fmt.Printf("Build DryRun\n")
-		return nil
+	return c.runPhases(ctx, phases, true)
+}
+
+type ExportOptions struct {
+	BuildPhaseOptions  BuildPhaseOptions
+	ExportPhaseOptions ExportPhaseOptions
+}
+
+func (c *Conveyor) Export(ctx context.Context, opts ExportOptions) error {
+	if err := c.determineStages(ctx); err != nil {
+		return err
+	}
+
+	phases := []Phase{
+		NewBuildPhase(c, opts.BuildPhaseOptions),
+		NewExportPhase(c, opts.ExportPhaseOptions),
 	}
 
 	return c.runPhases(ctx, phases, true)

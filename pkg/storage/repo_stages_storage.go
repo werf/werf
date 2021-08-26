@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/container_runtime"
@@ -113,6 +115,24 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string) ([
 
 		return res, nil
 	}
+}
+
+func (storage *RepoStagesStorage) ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string) error {
+	return storage.DockerRegistry.MutateAndPushImage(ctx, stageDescription.Info.Name, destinationReference, mutateExportStageConfig)
+}
+
+func mutateExportStageConfig(config v1.Config) (v1.Config, error) {
+	if config.Labels == nil {
+		panic("unexpected condition: stage image without labels")
+	}
+
+	for name := range config.Labels {
+		if strings.HasPrefix(name, image.WerfLabelPrefix) {
+			delete(config.Labels, name)
+		}
+	}
+
+	return config, nil
 }
 
 func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, _ DeleteImageOptions) error {

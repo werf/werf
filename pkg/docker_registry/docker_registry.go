@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/werf/pkg/image"
 )
@@ -21,6 +22,7 @@ type DockerRegistry interface {
 	IsRepoImageExists(ctx context.Context, reference string) (bool, error)
 	DeleteRepoImage(ctx context.Context, repoImage *image.Info) error
 	PushImage(ctx context.Context, reference string, opts *PushImageOptions) error
+	MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) error
 
 	String() string
 }

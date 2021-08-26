@@ -17,6 +17,7 @@ import (
 	"github.com/werf/werf/cmd/werf/compose"
 	"github.com/werf/werf/cmd/werf/converge"
 	"github.com/werf/werf/cmd/werf/dismiss"
+	"github.com/werf/werf/cmd/werf/export"
 	"github.com/werf/werf/cmd/werf/helm"
 	"github.com/werf/werf/cmd/werf/purge"
 	"github.com/werf/werf/cmd/werf/run"
@@ -103,6 +104,7 @@ Find more information at https://werf.io`),
 			Commands: []*cobra.Command{
 				ci_env.NewCmd(),
 				build.NewCmd(),
+				export.NewExportCmd(),
 				run.NewCmd(),
 				dockerComposeCmd(),
 				slugify.NewCmd(),
@@ -149,7 +151,6 @@ func dockerComposeCmd() *cobra.Command {
 	)
 
 	return cmd
-
 }
 
 func bundleCmd() *cobra.Command {
