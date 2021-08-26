@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
 )
@@ -64,6 +65,19 @@ func (storage *LocalDockerServerStagesStorage) GetStagesIDs(ctx context.Context,
 	}
 
 	return convertToStagesList(images)
+}
+
+func (storage *LocalDockerServerStagesStorage) ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string) error {
+	if err := docker.CliTag(ctx, stageDescription.Info.Name, destinationReference); err != nil {
+		return err
+	}
+	defer func() { _ = docker.CliRmi(ctx, destinationReference) }()
+
+	if err := docker.CliPushWithRetries(ctx, destinationReference); err != nil {
+		return err
+	}
+
+	return docker_registry.API().MutateAndPushImage(ctx, destinationReference, destinationReference, mutateExportStageConfig)
 }
 
 func (storage *LocalDockerServerStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error {

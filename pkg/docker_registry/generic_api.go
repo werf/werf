@@ -36,6 +36,10 @@ func newGenericApi(ctx context.Context, options apiOptions) (*genericApi, error)
 	return d, nil
 }
 
+func (api *genericApi) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(cfg v1.Config) (v1.Config, error)) error {
+	return api.commonApi.MutateAndPushImage(ctx, sourceReference, destinationReference, mutateConfigFunc)
+}
+
 func (api *genericApi) GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
 	mirrorReferenceList, err := api.mirrorReferenceList(reference)
 	if err != nil {

@@ -53,6 +53,9 @@ cli: &cli
     - title: werf build
       url: /reference/cli/werf_build.html
 
+    - title: werf export
+      url: /reference/cli/werf_export.html
+
     - title: werf run
       url: /reference/cli/werf_run.html
 

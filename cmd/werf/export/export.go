@@ -1,11 +1,11 @@
-package build
+package export
 
 import (
-	"context"
+	"bytes"
+	"errors"
 	"fmt"
-
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/giterminism_manager"
+	"strings"
+	"text/template"
 
 	"github.com/spf13/cobra"
 
@@ -16,8 +16,10 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
+	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -29,33 +31,22 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
+func NewExportCmd() *cobra.Command {
+	var tagTemplateList []string
+
 	cmd := &cobra.Command{
-		Use:   "build [IMAGE_NAME...]",
-		Short: "Build images",
-		Example: `  # Build images, built stages will be placed locally
-  $ werf build
-
-  # Build image 'backend'
-  $ werf build backend
-
-  # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
-  $ werf build --introspect-error
-
-  # Build images and store/use stages from repo
-  $ werf build --repo harbor.company.io/werf`,
-		Long: common.GetLongCommandDescription(`Build images that are described in werf.yaml.
-
-The result of build command is built images pushed into the specified repo (or locally if repo is not specified).
-
-If one or more IMAGE_NAME parameters specified, werf will build only these images`),
+		Use:   "export [IMAGE_NAME...] [options]",
+		Short: "Export images",
+		Long: common.GetLongCommandDescription(`Export images to an arbitrary repository according to a template specified by the --tag option (build if needed).
+All meta-information related to werf is removed from the exported images, and then images are completely under the user's responsibility`),
 		DisableFlagsInUseLine: true,
+		Example: `  # Export images to Docker Hub and GitHub Container Registry
+  $ werf export --tag=company/project:%image%-latest --tag=ghcr.io/company/project/%image%:latest`,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
+			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := common.BackgroundContext()
-
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
@@ -63,11 +54,12 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 				return err
 			}
 
-			common.LogVersion()
+			if len(tagTemplateList) == 0 {
+				common.PrintHelp(cmd)
+				return fmt.Errorf("required at least one tag template: use the --tag option to specify templates")
+			}
 
-			return common.LogRunningTime(func() error {
-				return runMain(ctx, args)
-			})
+			return run(args, tagTemplateList)
 		},
 	}
 
@@ -87,13 +79,11 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
 
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
+	common.SetupSkipBuild(&commonCmdData, cmd)
+
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-
-	common.SetupIntrospectAfterError(&commonCmdData, cmd)
-	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
-	common.SetupIntrospectStage(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
@@ -103,29 +93,23 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
-	common.SetupReportPath(&commonCmdData, cmd)
-	common.SetupReportFormat(&commonCmdData, cmd)
+	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
-	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
-	common.SetupFollow(&commonCmdData, cmd)
-
-	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsage(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsageMargin(&commonCmdData, cmd)
-	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
-	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
-	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
-
 	common.SetupPlatform(&commonCmdData, cmd)
+
+	cmd.Flags().StringArrayVarP(&tagTemplateList, "tag", "", []string{}, `Set a tag template (can specify multiple).
+It is necessary to use image name shortcut %image% or %image_slug% if multiple images are exported (e.g. REPO:TAG-%image% or REPO-%image%:TAG)`)
 
 	return cmd
 }
 
-func runMain(ctx context.Context, args []string) error {
+func run(imagesToProcess, tagTemplateList []string) error {
+	ctx := common.BackgroundContext()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -165,12 +149,6 @@ func runMain(ctx context.Context, args []string) error {
 		return err
 	}
 
-	defer func() {
-		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
-			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
-		}
-	}()
-
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
 		return err
@@ -188,23 +166,10 @@ func runMain(ctx context.Context, args []string) error {
 		}
 	}()
 
-	if *commonCmdData.Follow {
-		logboek.LogOptionalLn()
-		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
-			return run(ctx, headCommitGiterminismManager, args)
-		})
-	} else {
-		return run(ctx, giterminismManager, args)
-	}
-}
-
-func run(ctx context.Context, giterminismManager giterminism_manager.Interface, imagesToProcess []string) error {
-	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
-
-	projectName := werfConfig.Meta.Project
 
 	for _, imageToProcess := range imagesToProcess {
 		if !werfConfig.HasImageOrArtifact(imageToProcess) {
@@ -212,20 +177,20 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 		}
 	}
 
+	projectName := werfConfig.Meta.Project
+
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
-
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
+	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}
-
 	synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 	if err != nil {
 		return err
@@ -249,26 +214,88 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
 
-	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
-	if err != nil {
-		return err
-	}
+	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
-	if err != nil {
-		return err
-	}
-
-	logboek.LogOptionalLn()
-
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, imagesToProcess, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, imagesToProcess, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
-	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		return c.Build(ctx, buildOptions)
-	}); err != nil {
-		return err
+	return conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+		if len(imagesToProcess) == 0 {
+			for _, img := range werfConfig.GetAllImages() {
+				imagesToProcess = append(imagesToProcess, img.GetName())
+			}
+		}
+
+		tagFuncList, err := getTagFuncList(imagesToProcess, tagTemplateList)
+		if err != nil {
+			return err
+		}
+
+		return c.Export(ctx, build.ExportOptions{
+			BuildPhaseOptions: build.BuildPhaseOptions{
+				BuildOptions:      build.BuildOptions{},
+				ShouldBeBuiltMode: *commonCmdData.SkipBuild,
+			},
+			ExportPhaseOptions: build.ExportPhaseOptions{
+				ExportTagFuncList: tagFuncList,
+			},
+		})
+	})
+}
+
+func getTagFuncList(imageNameList, tagTemplateList []string) ([]func(string) string, error) {
+	templateName := "--tag"
+	tmpl := template.New(templateName).Delims("%", "%")
+	tmpl = tmpl.Funcs(map[string]interface{}{
+		"image":           func() string { return "%[1]s" },
+		"image_slug":      func() string { return "%[2]s" },
+		"image_safe_slug": func() string { return "%[3]s" },
+	})
+
+	var tagFuncList []func(string) string
+	for _, tagTemplate := range tagTemplateList {
+		tagFunc, err := getExportTagFunc(tmpl, templateName, imageNameList, tagTemplate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid tag template %q: %s", tagTemplate, err)
+		}
+
+		tagFuncList = append(tagFuncList, tagFunc)
 	}
 
-	return nil
+	return tagFuncList, nil
+}
+
+func getExportTagFunc(tmpl *template.Template, templateName string, imageNameList []string, tagTemplate string) (func(imageName string) string, error) {
+	tmpl, err := tmpl.Parse(tagTemplate)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := bytes.NewBuffer(nil)
+	if err = tmpl.ExecuteTemplate(buf, templateName, nil); err != nil {
+		return nil, err
+	}
+
+	tagOrFormat := buf.String()
+	tagFunc := func(imageName string) string {
+		if strings.ContainsRune(tagOrFormat, '%') {
+			return fmt.Sprintf(tagOrFormat, imageName, slug.Slug(imageName), slug.DockerTag(imageName))
+		} else {
+			return tagOrFormat
+		}
+	}
+
+	var prevImageTag string
+	for _, imageName := range imageNameList {
+		imageTag := tagFunc(imageName)
+
+		if prevImageTag == "" {
+			prevImageTag = imageTag
+			continue
+		} else if imageTag == prevImageTag {
+			return nil, errors.New(`tag template must contain image name shortcut %image% or %image_slug% if multiple images are exported (e.g. REPO:TAG-%image% or REPO-%image%:TAG)`)
+		}
+	}
+
+	return tagFunc, nil
 }

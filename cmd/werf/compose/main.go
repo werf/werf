@@ -386,7 +386,7 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 
 	for _, imageToProcess := range cmdData.WerfImagesToProcess {
 		if !werfConfig.HasImageOrArtifact(imageToProcess) {
-			return fmt.Errorf("specified image %s is not defined in werf.yaml", logging.ImageLogName(imageToProcess, false))
+			return fmt.Errorf("specified image %s is not found in werf.yaml", logging.ImageLogName(imageToProcess, false))
 		}
 	}
 

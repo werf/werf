@@ -109,8 +109,6 @@ type CmdData struct {
 
 	ScanContextNamespaceOnly *bool
 
-	Tag *string
-
 	// Host storage cleanup options
 	DisableAutoHostCleanup                *bool
 	DockerServerStoragePath               *string
@@ -285,7 +283,7 @@ func SetupKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) 
 	cmd.Flags().Uint64VarP(cmdData.KeepStagesBuiltWithinLastNHours, "keep-stages-built-within-last-n-hours", "", defaultValue, "Keep stages that were built within last hours (default $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or 2)")
 }
 
-func predefinedValuesByEnvNamePrefix(envNamePrefix string, envNamePrefixesToExcept ...string) []string {
+func PredefinedValuesByEnvNamePrefix(envNamePrefix string, envNamePrefixesToExcept ...string) []string {
 	var result []string
 
 	env := os.Environ()
@@ -1140,47 +1138,47 @@ func GetNamespace(cmdData *CmdData) string {
 }
 
 func GetDevIgnore(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_DEV_IGNORE_"), *cmdData.DevIgnore...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_DEV_IGNORE_"), *cmdData.DevIgnore...)
 }
 
 func GetSSHKey(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_SSH_KEY_"), *cmdData.SSHKeys...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_SSH_KEY_"), *cmdData.SSHKeys...)
 }
 
 func GetAddLabels(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), *cmdData.AddLabels...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), *cmdData.AddLabels...)
 }
 
 func GetAddAnnotations(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
 }
 
 func GetSet(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_"), *cmdData.Set...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_"), *cmdData.Set...)
 }
 
 func GetSetString(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), *cmdData.SetString...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), *cmdData.SetString...)
 }
 
 func GetSetFile(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), *cmdData.SetFile...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), *cmdData.SetFile...)
 }
 
 func GetValues(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_VALUES_"), *cmdData.Values...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), *cmdData.Values...)
 }
 
 func GetSecretValues(cmdData *CmdData) []string {
-	return append(predefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), *cmdData.SecretValues...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), *cmdData.SecretValues...)
 }
 
 func GetRequiredRelease(cmdData *CmdData) (string, error) {

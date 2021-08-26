@@ -16,7 +16,3 @@ type Phase interface {
 	ImageProcessingShouldBeStopped(ctx context.Context, img *Image) bool
 	Clone() Phase
 }
-
-type BasePhase struct {
-	Conveyor *Conveyor
-}

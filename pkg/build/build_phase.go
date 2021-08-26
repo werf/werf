@@ -12,9 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/docker/docker/pkg/stringid"
+	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -41,8 +40,6 @@ type BuildOptions struct {
 
 	ReportPath   string
 	ReportFormat ReportFormat
-
-	DryRun bool
 }
 
 type IntrospectOptions struct {

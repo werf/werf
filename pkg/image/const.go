@@ -1,6 +1,7 @@
 package image
 
 const (
+	WerfLabelPrefix               = "werf"
 	WerfLabel                     = "werf"
 	WerfVersionLabel              = "werf-version"
 	WerfCacheVersionLabel         = "werf-cache-version"

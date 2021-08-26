@@ -16,6 +16,7 @@ Cleaning commands:
 Helper commands:
  - [werf ci-env]({{ "/reference/cli/werf_ci_env.html" | true_relative_url }}) — {% include /reference/cli/werf_ci_env.short.md %}.
  - [werf build]({{ "/reference/cli/werf_build.html" | true_relative_url }}) — {% include /reference/cli/werf_build.short.md %}.
+ - [werf export]({{ "/reference/cli/werf_export.html" | true_relative_url }}) — {% include /reference/cli/werf_export.short.md %}.
  - [werf run]({{ "/reference/cli/werf_run.html" | true_relative_url }}) — {% include /reference/cli/werf_run.short.md %}.
  - [werf compose]({{ "/reference/cli/werf_compose_config.html" | true_relative_url }}) — {% include /reference/cli/werf_compose_config.short.md %}.
  - [werf slugify]({{ "/reference/cli/werf_slugify.html" | true_relative_url }}) — {% include /reference/cli/werf_slugify.short.md %}.
