@@ -7,6 +7,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/google/go-containerregistry/pkg/name"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -41,7 +43,7 @@ func NewExportCmd() *cobra.Command {
 All meta-information related to werf is removed from the exported images, and then images are completely under the user's responsibility`),
 		DisableFlagsInUseLine: true,
 		Example: `  # Export images to Docker Hub and GitHub Container Registry
-  $ werf export --tag=company/project:%image%-latest --tag=ghcr.io/company/project/%image%:latest`,
+  $ werf export --tag=index.docker.io/company/project:%image%-latest --tag=ghcr.io/company/project/%image%:latest`,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
 		},
@@ -288,6 +290,17 @@ func getExportTagFunc(tmpl *template.Template, templateName string, imageNameLis
 	var prevImageTag string
 	for _, imageName := range imageNameList {
 		imageTag := tagFunc(imageName)
+
+		ref, err := name.ParseReference(imageTag, name.WeakValidation)
+		if err != nil {
+			return nil, err
+		}
+
+		if ref.Context().RegistryStr() == name.DefaultRegistry && !strings.HasPrefix(imageTag, name.DefaultRegistry) {
+			return nil, errors.New(`
+- the command exports images to the registry (cannot export them locally)
+- the user must explicitly provide the address "index.docker.io" when using Docker Hub as a registry`)
+		}
 
 		if prevImageTag == "" {
 			prevImageTag = imageTag
