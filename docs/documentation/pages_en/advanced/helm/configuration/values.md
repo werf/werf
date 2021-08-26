@@ -120,6 +120,62 @@ There are following service values:
  - Container registry repo used during the current deploy process: `.Values.werf.repo`.
  - Full images names used during the current deploy process: `.Values.werf.image.NAME`. More info about using this available in [the templates article]({{ "/advanced/helm/configuration/templates.html#integration-with-built-images" | true_relative_url }}).
 
+### Service values in the subcharts
+
+If you are using [subcharts]({{ "/advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}) and you want to use regular werf service values (those that defined outside of `global` scope) in subchart, you need to explicitly export these parent-scoped service values from the parent to the subchart:
+
+```yaml
+# .helm/Chart.yaml
+apiVersion: v2
+dependencies:
+  - name: rails
+    version: 1.0.0
+    export-values:
+    - parent: werf
+      child: werf
+```
+
+Now the service values initially available only at `.Values.werf` of the parent chart will be also available on the same path `.Values.werf` in the subchart named "rails". Refer to these service values in the subchart like this:
+
+{% raw %}
+```yaml
+# .helm/charts/rails/app.yaml
+...
+spec:
+  template:
+    spec:
+      containers:
+      - name: rails
+        image: {{ .Values.werf.image.rails }}  # Will result in: `image: registry.domain.com/apps/myapp/rails:e760e931...`
+```
+{% endraw %}
+
+Path to where you want to export service values can be changed:
+
+```yaml
+    export-values:
+    - parent: werf
+      child: definitely.not.werf  # Service values will become available on `.Values.definitely.not.werf` in the subchart.
+```
+
+Or pass service values one by one to the subchart:
+
+```yaml
+# .helm/Chart.yaml
+apiVersion: v2
+dependencies:
+  - name: postgresql
+    version: "10.9.4"
+    repository: "https://charts.bitnami.com/bitnami"
+    export-values:
+    - parent: werf.repo
+      child: image.repository
+    - parent: werf.tag.my-postgresql
+      child: image.tag
+```
+
+More info about `export-values` can be found [here]({{ "advanced/helm/configuration/chart_dependencies.html#mapping-values-from-parent-chart-to-subcharts" | true_relative_url }}).
+
 ## Merging the resulting values
 
 <!-- This section could be in internals -->

@@ -64,7 +64,7 @@ permalink: advanced/helm/configuration/chart_dependencies.html
 
 werf совместим с настройками Helm, поэтому по умолчанию команды `werf helm dependency` и `werf helm repo` используют настройки из папки конфигурации Helm в домашней папке пользователя, — `~/.helm`. Вы можете указать другую папку с помощью параметра `--helm-home`. Если у вас нет папки `~/.helm` в домашней папке, либо вы хотите создать другую, то вы можете использовать команду `werf helm repo init` для инициализации необходимых настроек и конфигурации репозитория чартов по умолчанию.
 
-## Сабчарты и их конфигурация
+## Передача values в сабчарты
 
 Чтобы передать данные из родительского чарта в сабчарт `mysubchart` необходимо определить следующие [values]({{ "/advanced/helm/configuration/values.html" | true_relative_url }}) в родительском чарте:
 
@@ -104,6 +104,55 @@ global:
 В сабчарте `mysubchart` будут доступны только данные ключей `mysubchart` и `global`.
 
 **ЗАМЕЧАНИЕ** Файлы `secret-values.yaml` сабчартов не будут использоваться во время процесса деплоя, несмотря на то, что данные секретов из главного чарта и данные переданные через параметр `--secret-values` будут доступны через массив `.Values` как обычно.
+
+## Передача динамических values из родительского чарта в сабчарты
+
+Если вы хотите передать values, доступные только в родительском чарте, в сабчарты, то вам поможет директива `export-values`, которая имитирует (с небольшими отличиями) поведение [import-values](https://helm.sh/docs/topics/charts/#importing-child-values-via-dependencies), только вместо передачи values из сабчарта в родительский чарт она делает обратное: передает values в сабчарт из родительского чарта. Пример использования:
+
+```yaml
+# .helm/Chart.yaml
+apiVersion: v2
+dependencies:
+  - name: backend
+    version: 1.0.0
+    export-values:
+    - parent: werf.image.backend
+      child: backend.image
+```
+
+Таким образом мы передадим в сабчарт всё, что доступно в `.Values.werf.image.backend` родительского чарта. В нашем случае это будет строка с репозиторием, именем и тегом образа `backend`, описанного в `werf.yaml`, который может выглядеть так: `example.org/backend/<имя_тега>`. В сабчарте эта строка станет доступна через `.Values.backend.image`:
+
+{% raw %}
+```yaml
+# .helm/charts/backend/app.yaml
+...
+spec:
+  template:
+    spec:
+      containers:
+      - name: backend
+        image: {{ .Values.backend.image }}  # Ожидаемый результат: `image: example.org/backend:<имя_тега>`
+```
+{% endraw %}
+
+В отличие от YAML-якорей `export-values` будет работать с динамически выставляемыми values (сервисные данные werf), с переданными через командную строку values (`--set` и пр.) и с секретными values.
+
+Также доступна альтернативная укороченная форма `export-values`, которая работает только для словарей (maps):
+
+```yaml
+    export-values:
+    - "someMap"
+```
+
+Это будет эквивалентно следующей полной форме `export-values`:
+
+```yaml
+    export-values:
+    - parent: exports.somemap
+      child: .
+```
+
+Так в корень values сабчарта будут экспортированы все ключи, найденные в словаре `.Values.exports.somemap`.
 
 ## Устаревшие файлы requirements.yaml и requirements.lock
 
