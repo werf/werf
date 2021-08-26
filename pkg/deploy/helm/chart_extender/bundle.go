@@ -127,7 +127,13 @@ func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedF
 		return true, nil, err
 	}
 
-	res, err := LoadChartDependencies(bundle.ChartExtenderContext, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.RegistryClientHandle, bundle.BuildChartDependenciesOpts)
+	res, err := LoadChartDependencies(bundle.ChartExtenderContext, func(ctx context.Context, dir string) ([]*chart.ChartExtenderBufferedFile, error) {
+		files, err := loader.GetFilesFromLocalFilesystem(dir)
+		if err != nil {
+			return nil, err
+		}
+		return convertBufferedFilesForChartExtender(files), nil
+	}, dir, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.RegistryClientHandle, bundle.BuildChartDependenciesOpts)
 	return true, res, err
 }
 
