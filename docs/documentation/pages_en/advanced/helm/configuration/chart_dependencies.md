@@ -64,7 +64,7 @@ All Chart Repositories that are used in `.helm/Chart.yaml` should be configured 
 
 werf is compatible with Helm settings, so by default `werf helm dependency` and `werf helm repo` commands use settings from **helm home folder**, `~/.helm`. But you can change it with `--helm-home` option. If you do not have **helm home folder** or want to create another one use `werf helm repo init` command to initialize necessary settings and configure default Chart Repositories.
 
-## Subchart and values
+## Passing values to subcharts
 
 To pass values from parent chart to subchart called `mysubchart` user must define following values in the parent chart:
 
@@ -104,6 +104,55 @@ In the subcharts these values should be specified as always:
 Only values by keys `mysubchart` and `global` will be available in the subchart `mysubchart`.
 
 **NOTE** `secret-values.yaml` files from subcharts will not be used during deploy process. Although secret values from main chart and additional secret values from cli params `--secret-values` will be available in the `.Values` as usually.
+
+## Mapping values from parent chart to subcharts
+
+If you want to pass the values available only in the parent chart to subcharts, then there is an `export-values` directive which mimics (with a few differences) functionality of [import-values](https://helm.sh/docs/topics/charts/#importing-child-values-via-dependencies), but instead of passing values from the subchart to the parent chart it does the opposite: it passes values down from the parent chart to the subchart. Usage is as follows:
+
+```yaml
+# .helm/Chart.yaml
+apiVersion: v2
+dependencies:
+  - name: backend
+    version: 1.0.0
+    export-values:
+    - parent: werf.image.backend
+      child: backend.image
+```
+
+This will pass to the subchart whatever will be in the parent chart at `.Values.werf.image.backend` path. In our particular case this will be the string with the repo, image and tag of the image `backend`, defined in `werf.yaml`, e.g. `example.org/backend:<image_tag>`. In the subchart you can access the result with `.Values.backend.image`:
+
+{% raw %}
+```yaml
+# .helm/charts/backend/app.yaml
+...
+spec:
+  template:
+    spec:
+      containers:
+      - name: backend
+        image: {{ .Values.backend.image }}  # Will result in: `image: example.org/backend:<image_tag>`
+```
+{% endraw %}
+
+Unlike YAML-anchors, `export-values` will also work with dynamically set values (werf service values), passed via command-line values (`--set` and similar) and secret values.
+
+There is an alternative short form of `export-values`, which will only work for maps:
+
+```yaml
+    export-values:
+    - "someMap"
+```
+
+Which is an equivalent to:
+
+```yaml
+    export-values:
+    - parent: exports.somemap
+      child: .
+```
+
+This will export all the keys found in `.Values.exports.somemap` to the root of subchart values.
 
 ## Obsolete requirements.yaml and requirements.lock
 

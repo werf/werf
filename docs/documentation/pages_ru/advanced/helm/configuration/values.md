@@ -121,6 +121,62 @@ global:
  - Адрес container registry репозитория, используемый во время деплоя: `.Values.werf.repo`.
  - Полное имя и тег Docker-образа для каждого описанного в файле конфигурации `werf.yaml` образа: `.Values.werf.image.NAME`. Больше информации про использование этих значений доступно [в статье про шаблоны]({{ "/advanced/helm/configuration/templates.html#интеграция-с-собранными-образами" | true_relative_url }}).
 
+### Сервисные данные в сабчартах
+
+Если вы используете [сабчарты]({{ "/advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}) и хотите использовать неглобальные сервисные данные (`.Values.werf`) в сабчарте, то эти сервисные данные потребуется явно экспортировать в сабчарт из родительского чарта:
+
+```yaml
+# .helm/Chart.yaml
+apiVersion: v2
+dependencies:
+  - name: rails
+    version: 1.0.0
+    export-values:
+    - parent: werf
+      child: werf
+```
+
+Теперь сервисные данные, изначально доступные только на `.Values.werf` в родительском чарте, стали доступными по тому же пути (`.Values.werf`) и в сабчарте "rails". Обращайтесь к сервисным данным из сабчарта таким образом:
+
+{% raw %}
+```yaml
+# .helm/charts/rails/app.yaml
+...
+spec:
+  template:
+    spec:
+      containers:
+      - name: rails
+        image: {{ .Values.werf.image.rails }}  # Ожидаемый результат: `image: registry.domain.com/apps/myapp/rails:e760e931...`
+```
+{% endraw %}
+
+Путь, по которому сервисные данные будут доступны после экспорта, можно изменить:
+
+```yaml
+    export-values:
+    - parent: werf
+      child: definitely.not.werf  # Сервисные данные станут доступными на `.Values.definitely.not.werf` в сабчарте.
+```
+
+Также можно экспортировать сервисные значения в сабчарт по отдельности:
+
+```yaml
+# .helm/Chart.yaml
+apiVersion: v2
+dependencies:
+  - name: postgresql
+    version: "10.9.4"
+    repository: "https://charts.bitnami.com/bitnami"
+    export-values:
+    - parent: werf.repo
+      child: image.repository
+    - parent: werf.tag.my-postgresql
+      child: image.tag
+```
+
+Больше информации про `export-values` можно найти [здесь]({{ "advanced/helm/configuration/chart_dependencies.html#передача-динамических-values-из-родительского-чарта-в-сабчарты" | true_relative_url }}).
+
 ## Итоговое объединение данных
 
 <!-- This section could be in internals -->
