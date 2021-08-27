@@ -26,10 +26,6 @@ func (phase *BasePhase) OnImageStage(_ context.Context, _ *Image, _ stage.Interf
 	return nil
 }
 
-func (phase *BasePhase) AfterImageStages(ctx context.Context, img *Image) error {
-	return nil
-}
-
 func (phase *BasePhase) ImageProcessingShouldBeStopped(_ context.Context, _ *Image) bool {
 	return false
 }

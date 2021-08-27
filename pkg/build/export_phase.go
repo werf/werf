@@ -55,7 +55,7 @@ func (phase *ExportPhase) exportLastStageImage(ctx context.Context, img *Image) 
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
 						stageDesc := img.GetLastNonEmptyStage().GetImage().GetStageDescription()
-						if err := phase.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag); err != nil {
+						if err := phase.Conveyor.StorageManager.StagesStorage.ExportStage(ctx, stageDesc, tag); err != nil {
 							return err
 						}
 

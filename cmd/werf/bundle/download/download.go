@@ -59,7 +59,6 @@ func NewCmd() *cobra.Command {
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd) // FIXME
-	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
