@@ -49,7 +49,7 @@ func (m *purgeManager) run(ctx context.Context) error {
 	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting imports metadata").DoError(func() error {
-		importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName)
+		importMetadataIDs, err := m.StorageManager.StagesStorage.GetImportMetadataIDs(ctx, m.ProjectName)
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ func (m *purgeManager) run(ctx context.Context) error {
 	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
-		managedImages, err := m.StorageManager.GetStagesStorage().GetManagedImages(ctx, m.ProjectName)
+		managedImages, err := m.StorageManager.StagesStorage.GetManagedImages(ctx, m.ProjectName)
 		if err != nil {
 			return err
 		}
@@ -75,7 +75,7 @@ func (m *purgeManager) run(ctx context.Context) error {
 	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting images metadata").DoError(func() error {
-		_, imageMetadataByImageName, err := m.StorageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, m.ProjectName, []string{})
+		_, imageMetadataByImageName, err := m.StorageManager.StagesStorage.GetAllAndGroupImageMetadataByImageName(ctx, m.ProjectName, []string{})
 		if err != nil {
 			return err
 		}

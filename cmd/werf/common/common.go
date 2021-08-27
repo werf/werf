@@ -62,12 +62,8 @@ type CmdData struct {
 	SecretValues             *[]string
 	IgnoreSecretKey          *bool
 
-	CommonRepoData *RepoData
-	StagesStorage  *string
-
-	CommonFinalRepoData *RepoData
-	FinalStagesStorage  *string
-
+	CommonRepoData         *RepoData
+	StagesStorage          *string
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
 
@@ -378,19 +374,6 @@ func SetupCommonRepoData(cmdData *CmdData, cmd *cobra.Command) {
 	SetupQuayTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-quay-token", []string{"WERF_REPO_QUAY_TOKEN"})
 }
 
-func SetupCommonFinalRepoData(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.CommonFinalRepoData = &RepoData{IsCommon: true}
-
-	SetupContainerRegistryForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-container-registry", []string{"WERF_REPO_CONTAINER_REGISTRY"})
-	SetupDockerHubUsernameForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-docker-hub-username", []string{"WERF_REPO_DOCKER_HUB_USERNAME"})
-	SetupDockerHubPasswordForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-docker-hub-password", []string{"WERF_REPO_DOCKER_HUB_PASSWORD"})
-	SetupDockerHubTokenForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-docker-hub-token", []string{"WERF_REPO_DOCKER_HUB_TOKEN"})
-	SetupGithubTokenForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-github-token", []string{"WERF_REPO_GITHUB_TOKEN"})
-	SetupHarborUsernameForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-harbor-username", []string{"WERF_REPO_HARBOR_USERNAME"})
-	SetupHarborPasswordForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-harbor-password", []string{"WERF_REPO_HARBOR_PASSWORD"})
-	SetupQuayTokenForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-quay-token", []string{"WERF_REPO_QUAY_TOKEN"})
-}
-
 func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SecondaryStagesStorage = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", []string{}, `Specify one or multiple secondary read-only repos with images that will be used as a cache.
@@ -410,19 +393,9 @@ func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupStagesStorage(cmdData, cmd)
 }
 
-func SetupFinalStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
-	SetupCommonFinalRepoData(cmdData, cmd)
-	setupFinalStagesStorage(cmdData, cmd)
-}
-
 func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "repo", "", os.Getenv("WERF_REPO"), fmt.Sprintf("Docker Repo to store stages (default $WERF_REPO)"))
-}
-
-func setupFinalStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.FinalStagesStorage = new(string)
-	cmd.Flags().StringVarP(cmdData.FinalStagesStorage, "final-repo", "", os.Getenv("WERF_FINAL_REPO"), fmt.Sprintf("Docker Repo to store only those stages which are going to be used by the Kubernetes cluster, in other word final images (default $WERF_FINAL_REPO)"))
 }
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
@@ -953,9 +926,6 @@ func GetStagesStorage(stagesStorageAddress string, containerRuntime container_ru
 			},
 		},
 	)
-}
-
-func GetOptionalFinalStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
 }
 
 func GetCacheStagesStorageList(containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) ([]storage.StagesStorage, error) {
