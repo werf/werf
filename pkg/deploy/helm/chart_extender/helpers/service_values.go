@@ -54,6 +54,7 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 		"version": werf.Version,
 		"repo":    repo,
 		"image":   map[string]interface{}{},
+		"tag":     map[string]interface{}{},
 	}
 
 	if opts.Env != "" {
@@ -69,12 +70,14 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 	}
 
 	if opts.IsStub {
-		stubImage := fmt.Sprintf("%s:TAG", repo)
+		stubTag := "TAG"
+		stubImage := fmt.Sprintf("%s:%s", repo, stubTag)
 
 		werfInfo["is_stub"] = true
 		werfInfo["stub_image"] = stubImage
 		for _, name := range opts.StubImagesNames {
 			werfInfo["image"].(map[string]interface{})[name] = stubImage
+			werfInfo["tag"].(map[string]interface{})[name] = stubTag
 		}
 	}
 
@@ -84,6 +87,7 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 			werfInfo["nameless_image"] = imageInfoGetter.GetName()
 		} else {
 			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetName()
+			werfInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetTag()
 		}
 	}
 
