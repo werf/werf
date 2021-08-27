@@ -127,6 +127,7 @@ func NewCmd() *cobra.Command {
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
@@ -356,6 +357,10 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
 	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}
