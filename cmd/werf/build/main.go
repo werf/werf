@@ -86,6 +86,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -222,6 +223,10 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
 	}

@@ -140,7 +140,7 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 	handledDeployedStages := map[string]bool{}
 Loop:
 	for _, stageID := range m.stageManager.GetStageIDList() {
-		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.StagesStorage.String(), stageID)
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().String(), stageID)
 		for _, deployedDockerImageName := range deployedDockerImagesNames {
 			if deployedDockerImageName == dockerImageName {
 				if !handledDeployedStages[stageID] {
@@ -568,7 +568,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 func (m *cleanupManager) initImportsMetadata(ctx context.Context, stageDescriptionList []*image.StageDescription) error {
 	m.checksumSourceImageIDs = map[string][]string{}
 
-	importMetadataIDs, err := m.StorageManager.StagesStorage.GetImportMetadataIDs(ctx, m.ProjectName)
+	importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName)
 	if err != nil {
 		return err
 	}
