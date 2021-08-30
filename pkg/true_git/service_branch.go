@@ -189,7 +189,7 @@ func checkNewChangesInServiceWorktreeIndex(ctx context.Context, serviceWorktreeD
 }
 
 func commitNewChangesInServiceBranch(ctx context.Context, serviceWorktreeDir string, branchName string) (string, error) {
-	gitArgs := []string{"-c", "user.email=werf@werf.io", "-c", "user.name=werf", "commit", "-m", time.Now().String()}
+	gitArgs := []string{"-c", "user.email=werf@werf.io", "-c", "user.name=werf", "commit", "--no-verify", "-m", time.Now().String()}
 	if _, err := runGitCmd(ctx, gitArgs, serviceWorktreeDir, runGitCmdOptions{}); err != nil {
 		return "", err
 	}
