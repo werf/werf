@@ -87,6 +87,7 @@ func NewCmd() *cobra.Command {
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -248,6 +249,10 @@ func runRender() error {
 			if err != nil {
 				return err
 			}
+			finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
+			if err != nil {
+				return err
+			}
 			synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 			if err != nil {
 				return err
@@ -269,7 +274,7 @@ func runRender() error {
 				return err
 			}
 
-			storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
+			storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
 
 			imagesRepository = storageManager.StagesStorage.String()
 

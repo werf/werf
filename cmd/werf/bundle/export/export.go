@@ -42,7 +42,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "export",
 		Short:                 "Export bundle",
-		Long:                  common.GetLongCommandDescription(`Export bundle into the provided directory (or into directory named as a resulting chart in the current working directory). werf bundle contains built images defined in the werf.yaml, helm chart, service values which contain built images tags, any custom values and set values params provided during publish invocation, werf addon templates (like werf_image).`),
+		Long:                  common.GetLongCommandDescription(`Export bundle into the provided directory (or into directory named as a resulting chart in the current working directory). werf bundle contains built images defined in the werf.yaml, helm chart, service values which contain built images tags, any custom values and set values params provided during publish invocation, werf service templates and values.`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(),
@@ -83,6 +83,7 @@ func NewCmd() *cobra.Command {
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -237,6 +238,10 @@ func runExport(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
+		if err != nil {
+			return err
+		}
 		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err
@@ -258,9 +263,9 @@ func runExport(ctx context.Context) error {
 			return err
 		}
 
-		storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
 
-		imagesRepository = storageManager.StagesStorage.String()
+		imagesRepository = storageManager.GetStagesStorage().String()
 
 		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
 		if err != nil {

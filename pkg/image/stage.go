@@ -19,6 +19,10 @@ func (id StageID) UniqueIDAsTime() time.Time {
 	return time.Unix(id.UniqueID/1000, id.UniqueID%1000)
 }
 
+func (id StageID) IsEqual(another StageID) bool {
+	return (id.Digest == another.Digest) && (id.UniqueID == another.UniqueID)
+}
+
 type StageDescription struct {
 	StageID *StageID `json:"stageID"`
 	Info    *Info    `json:"info"`

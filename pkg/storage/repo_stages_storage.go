@@ -89,7 +89,7 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string) ([
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesByDigest fetched tags for %q: %#v\n", storage.RepoAddress, tags)
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStagesIDs fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 
 		for _, tag := range tags {
 			if len(tag) != 70 || len(strings.Split(tag, "-")) != 2 { // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7-1611836746968

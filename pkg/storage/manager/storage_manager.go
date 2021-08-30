@@ -22,7 +22,53 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-var ErrShouldResetStagesStorageCache = errors.New("should reset storage cache")
+var (
+	ErrShouldResetStagesStorageCache = errors.New("should reset storage cache")
+	ErrStageNotFound                 = errors.New("stage not found")
+)
+
+func IsStageNotFound(err error) bool {
+	if err != nil {
+		return strings.HasSuffix(err.Error(), ErrStageNotFound.Error())
+	}
+	return false
+}
+
+type ForEachDeleteStageOptions struct {
+	storage.DeleteImageOptions
+	storage.FilterStagesAndProcessRelatedDataOptions
+}
+
+type StorageManagerInterface interface {
+	InitCache(ctx context.Context) error
+
+	GetStagesStorage() storage.StagesStorage
+	GetSecondaryStagesStorageList() []storage.StagesStorage
+	GetImageInfoGetter(imageName string, stg stage.Interface) *image.InfoGetter
+
+	EnableParallel(parallelTasksLimit int)
+	MaxNumberOfWorkers() int
+	GenerateStageUniqueID(digest string, stages []*image.StageDescription) (string, int64)
+
+	LockStageImage(ctx context.Context, imageName string) error
+	AtomicStoreStagesByDigestToCache(ctx context.Context, stageName, stageDigest string, stageIDs []image.StageID) error
+	GetStagesByDigest(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error)
+	GetStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error)
+	GetStageDescriptionList(ctx context.Context) ([]*image.StageDescription, error)
+	ResetStagesStorageCache(ctx context.Context) error
+
+	FetchStage(ctx context.Context, containerRuntime container_runtime.ContainerRuntime, stg stage.Interface) error
+	SelectSuitableStage(ctx context.Context, c stage.Conveyor, stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error)
+	CopySuitableByDigestStage(ctx context.Context, stageDesc *image.StageDescription, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime) (*image.StageDescription, error)
+	CopyStageIntoCache(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error
+	CopyStageIntoFinalRepo(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error
+
+	ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error
+	ForEachRmImageMetadata(ctx context.Context, projectName, imageNameOrID string, stageIDCommitList map[string][]string, f func(ctx context.Context, commit, stageID string, err error) error) error
+	ForEachRmManagedImage(ctx context.Context, projectName string, managedImages []string, f func(ctx context.Context, managedImage string, err error) error) error
+	ForEachGetImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error) error
+	ForEachRmImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, id string, err error) error) error
+}
 
 func ShouldResetStagesStorageCache(err error) bool {
 	if err != nil {
@@ -31,16 +77,54 @@ func ShouldResetStagesStorageCache(err error) bool {
 	return false
 }
 
-func NewStorageManager(projectName string, stagesStorage storage.StagesStorage, secondaryStagesStorageList []storage.StagesStorage, cacheStagesStorageList []storage.StagesStorage, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *StorageManager {
+func NewStorageManager(projectName string, stagesStorage storage.StagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList []storage.StagesStorage, cacheStagesStorageList []storage.StagesStorage, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *StorageManager {
 	return &StorageManager{
 		ProjectName:        projectName,
 		StorageLockManager: storageLockManager,
 		StagesStorageCache: stagesStorageCache,
 
 		StagesStorage:              stagesStorage,
+		FinalStagesStorage:         finalStagesStorage,
 		CacheStagesStorageList:     cacheStagesStorageList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,
 	}
+}
+
+type StagesList struct {
+	Mux      sync.Mutex
+	StageIDs []image.StageID
+}
+
+func NewStagesList(stageIDs []image.StageID) *StagesList {
+	return &StagesList{
+		StageIDs: stageIDs,
+	}
+}
+
+func (stages *StagesList) GetStageIDs() []image.StageID {
+	stages.Mux.Lock()
+	defer stages.Mux.Unlock()
+
+	var res []image.StageID
+
+	for _, stg := range stages.StageIDs {
+		res = append(res, stg)
+	}
+
+	return res
+}
+
+func (stages *StagesList) AddStageID(stageID image.StageID) {
+	stages.Mux.Lock()
+	defer stages.Mux.Unlock()
+
+	for _, stg := range stages.StageIDs {
+		if stg.IsEqual(stageID) {
+			return
+		}
+	}
+
+	stages.StageIDs = append(stages.StageIDs, stageID)
 }
 
 type StorageManager struct {
@@ -53,11 +137,52 @@ type StorageManager struct {
 	StagesStorageCache storage.StagesStorageCache
 
 	StagesStorage              storage.StagesStorage
+	FinalStagesStorage         storage.StagesStorage
 	CacheStagesStorageList     []storage.StagesStorage
 	SecondaryStagesStorageList []storage.StagesStorage
 
 	// These will be released automatically when current process exits
 	SharedHostImagesLocks []lockgate.LockHandle
+
+	FinalStagesListCacheMux sync.Mutex
+	FinalStagesListCache    *StagesList
+}
+
+func (m *StorageManager) GetStagesStorage() storage.StagesStorage {
+	return m.StagesStorage
+}
+
+func (m *StorageManager) GetSecondaryStagesStorageList() []storage.StagesStorage {
+	return m.SecondaryStagesStorageList
+}
+
+func (m *StorageManager) GetImageInfoGetter(imageName string, stg stage.Interface) *image.InfoGetter {
+	stageID := stg.GetImage().GetStageDescription().StageID
+	info := stg.GetImage().GetStageDescription().Info
+
+	if m.FinalStagesStorage != nil {
+		finalImageName := m.FinalStagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
+		_, tag := image.ParseRepositoryAndTag(finalImageName)
+		return image.NewInfoGetter(imageName, finalImageName, tag)
+	}
+
+	return image.NewInfoGetter(
+		imageName,
+		info.Name,
+		info.Tag,
+	)
+}
+
+func (m *StorageManager) InitCache(ctx context.Context) error {
+	logboek.Context(ctx).Info().LogF("Initializing storage manager cache\n")
+
+	if m.FinalStagesStorage != nil {
+		if _, err := m.getOrCreateFinalStagesListCache(ctx); err != nil {
+			return fmt.Errorf("unable to get or create final stages list cache: %s", err)
+		}
+	}
+
+	return nil
 }
 
 func (m *StorageManager) EnableParallel(parallelTasksLimit int) {
@@ -121,11 +246,6 @@ func (m *StorageManager) GetStageDescriptionList(ctx context.Context) ([]*image.
 	return stages, nil
 }
 
-type ForEachDeleteStageOptions struct {
-	storage.DeleteImageOptions
-	storage.FilterStagesAndProcessRelatedDataOptions
-}
-
 func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error {
 	if localStagesStorage, isLocal := m.StagesStorage.(*storage.LocalDockerServerStagesStorage); isLocal {
 		filteredStagesDescriptions, err := localStagesStorage.FilterStagesAndProcessRelatedData(ctx, stagesDescriptions, options.FilterStagesAndProcessRelatedDataOptions)
@@ -172,15 +292,6 @@ func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) e
 	return nil
 }
 
-var ErrStageNotFound = errors.New("stage not found")
-
-func IsStageNotFound(err error) bool {
-	if err != nil {
-		return strings.HasSuffix(err.Error(), ErrStageNotFound.Error())
-	}
-	return false
-}
-
 func doFetchStage(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, stageID image.StageID, dockerImage *container_runtime.DockerImage) error {
 	err := logboek.Context(ctx).Info().LogProcess("Check manifest availability").DoError(func() error {
 		freshStageDescription, err := stagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
@@ -211,10 +322,10 @@ func doFetchStage(ctx context.Context, projectName string, stagesStorage storage
 }
 
 func copyStageIntoStagesStorage(ctx context.Context, projectName string, stageID image.StageID, dockerImage *container_runtime.DockerImage, stagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime) error {
-	cacheStagesStorageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
+	targetStagesStorageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
 
-	if err := containerRuntime.RenameImage(ctx, dockerImage, cacheStagesStorageImageName, false); err != nil {
-		return fmt.Errorf("unable to rename image %s to %s: %s", dockerImage.Image.Name(), cacheStagesStorageImageName, err)
+	if err := containerRuntime.RenameImage(ctx, dockerImage, targetStagesStorageImageName, false); err != nil {
+		return fmt.Errorf("unable to rename image %s to %s: %s", dockerImage.Image.Name(), targetStagesStorageImageName, err)
 	}
 
 	if err := stagesStorage.StoreImage(ctx, dockerImage); err != nil {
@@ -222,11 +333,11 @@ func copyStageIntoStagesStorage(ctx context.Context, projectName string, stageID
 	}
 
 	if err := storeStageDescriptionIntoLocalManifestCache(ctx, projectName, stageID, stagesStorage, convertStageDescriptionForStagesStorage(dockerImage.Image.GetStageDescription(), stagesStorage)); err != nil {
-		return fmt.Errorf("error storing stage %s description into local manifest cache: %s", cacheStagesStorageImageName, err)
+		return fmt.Errorf("error storing stage %s description into local manifest cache: %s", targetStagesStorageImageName, err)
 	}
 
-	if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, cacheStagesStorageImageName); err != nil {
-		return fmt.Errorf("error accessing last recently used images cache for %s: %s", cacheStagesStorageImageName, err)
+	if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, targetStagesStorageImageName); err != nil {
+		return fmt.Errorf("error accessing last recently used images cache for %s: %s", targetStagesStorageImageName, err)
 	}
 
 	return nil
@@ -418,6 +529,79 @@ func (m *StorageManager) CopyStageIntoCache(ctx context.Context, stg stage.Inter
 			logboek.Context(ctx).Warn().LogF("Warning: %s\n", err)
 		}
 	}
+
+	return nil
+}
+
+func (m *StorageManager) getOrCreateFinalStagesListCache(ctx context.Context) (*StagesList, error) {
+	m.FinalStagesListCacheMux.Lock()
+	defer m.FinalStagesListCacheMux.Unlock()
+
+	if m.FinalStagesListCache != nil {
+		return m.FinalStagesListCache, nil
+	}
+
+	stageIDs, err := m.FinalStagesStorage.GetStagesIDs(ctx, m.ProjectName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get final repo stages list: %s", err)
+	}
+	m.FinalStagesListCache = NewStagesList(stageIDs)
+
+	return m.FinalStagesListCache, nil
+}
+
+func (m *StorageManager) CopyStageIntoFinalRepo(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error {
+	if m.FinalStagesStorage == nil {
+		return nil
+	}
+
+	existingStagesListCache, err := m.getOrCreateFinalStagesListCache(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting existing stages list of final repo %s: %s", m.FinalStagesStorage.String(), err)
+	}
+
+	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache: %#v\n", m, existingStagesListCache.StageIDs)
+
+	stageID := stg.GetImage().GetStageDescription().StageID
+	finalImageName := m.FinalStagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
+
+	for _, existingStg := range existingStagesListCache.GetStageIDs() {
+		if existingStg.IsEqual(*stageID) {
+			logboek.Context(ctx).Info().LogF("Stage %s already exists in the final repo, skipping\n", stageID.String())
+
+			logboek.Context(ctx).Default().LogFHighlight("Use cache final image for %s\n", stg.LogDetailedName())
+			container_runtime.LogImageName(ctx, finalImageName)
+
+			return nil
+		}
+	}
+
+	if err := m.FetchStage(ctx, containerRuntime, stg); err != nil {
+		return fmt.Errorf("unable to fetch stage %s: %s", stg.LogDetailedName(), err)
+	}
+
+	dockerImage := &container_runtime.DockerImage{Image: stg.GetImage()}
+
+	err = logboek.Context(ctx).Default().LogProcess("Copy stage %s into the final repo", stg.LogDetailedName()).
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			if err := copyStageIntoStagesStorage(ctx, m.ProjectName, *stageID, dockerImage, m.FinalStagesStorage, containerRuntime); err != nil {
+				return fmt.Errorf("unable to copy stage %s into the final repo %s: %s", stageID.String(), m.FinalStagesStorage.String(), err)
+			}
+
+			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", finalImageName)
+			return nil
+		})
+
+	if err != nil {
+		return err
+	}
+
+	existingStagesListCache.AddStageID(*stageID)
+
+	logboek.Context(ctx).Debug().LogF("Updated existing final stages list: %#v\n", m.FinalStagesListCache.StageIDs)
 
 	return nil
 }

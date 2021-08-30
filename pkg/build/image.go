@@ -111,15 +111,6 @@ func (i *Image) GetStage(name stage.StageName) stage.Interface {
 	return nil
 }
 
-func (i *Image) GetImageInfoGetter() *image.InfoGetter {
-	info := i.GetLastNonEmptyStage().GetImage().GetStageDescription().Info
-	return image.NewInfoGetter(
-		i.name,
-		info.Name,
-		info.Tag,
-	)
-}
-
 func (i *Image) GetStageID() string {
 	return i.GetLastNonEmptyStage().GetImage().GetStageDescription().Info.Tag
 }
