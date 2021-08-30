@@ -34,13 +34,7 @@ sidebar: documentation
      - Добавлена команда `werf build`, использование которой опционально.
          - `werf converge` самостоятельно собирает и публикует в container registry недостающие образы.
          - `werf build` же может быть использована на стадии `prebuild` в CI/CD pipeline вместо `werf build-and-publish`.
-
- - Use `werf converge` command instead of `werf deploy` to build and publish images, and deploy into kubernetes.
-     - All params are the same as for `werf deploy`.
- - `werf build-and-publish` command has been removed, there is only `werf build` command, usage of which is optional:
-     - `werf converge` will build and publish needed images by itself, if not built already.
-     - You may use `werf build` command in "prebuild" CI/CD pipeline stage instead of `werf build-and-publish` command.
-
+         
 ## 3. Изменить helm шаблоны
 
  - Вместо `werf_container_image` используется `.Values.werf.image.IMAGE_NAME`:
@@ -59,7 +53,6 @@ sidebar: documentation
  - Полностью удалена шаблонная функция  `werf_container_env`.
  - Необходимо использовать `.Values.werf.env` вместо `.Values.global.env`.
  - Необходимо использовать `"werf.io/replicas-on-creation": "NUM"` вместо `"werf.io/set-replicas-only-on-creation": "true"`.
- - Use `"werf.io/replicas-on-creation": "NUM"` annotation instead of `"werf.io/set-replicas-only-on-creation": "true"`.
      - **ВАЖНО.** `"NUM"` должно быть указано **строкой**, а не как число `NUM`, иначе аннотация [будет проигнорирована]({{ "/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
      - **ВАЖНО.** При использовании данной аннотации необходимо удалить явное определение поля `spec.replicas`, [больше информации в changelog]({{ "/whats_new_in_v1_2/changelog.html#конфигурация" | true_relative_url }}).
 
