@@ -10,12 +10,14 @@ import (
 
 type Manager struct {
 	stages            map[string]*stage
+	finalStages       map[string]*stage
 	imageMetadataList []*imageMetadata
 }
 
 func NewManager() Manager {
 	return Manager{
-		stages: map[string]*stage{},
+		stages:      map[string]*stage{},
+		finalStages: map[string]*stage{},
 	}
 }
 
@@ -56,7 +58,7 @@ func (m *Manager) newImageMetadata(imageName string, stageID string) *imageMetad
 	return &imageMetadata{imageName: imageName, stageID: stageID, isNonexistentStage: !m.isStageExist(stageID)}
 }
 
-func (m *Manager) InitStages(ctx context.Context, storageManager *manager.StorageManager) error {
+func (m *Manager) InitStages(ctx context.Context, storageManager manager.StorageManagerInterface) error {
 	stageDescriptionList, err := storageManager.GetStageDescriptionList(ctx)
 	if err != nil {
 		return err
@@ -70,12 +72,26 @@ func (m *Manager) InitStages(ctx context.Context, storageManager *manager.Storag
 	return nil
 }
 
+func (m *Manager) InitFinalStages(ctx context.Context, storageManager manager.StorageManagerInterface) error {
+	finalStageDescriptionList, err := storageManager.GetFinalStageDescriptionList(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, description := range finalStageDescriptionList {
+		stageID := description.Info.Tag
+		m.finalStages[stageID] = newStage(stageID, description)
+	}
+
+	return nil
+}
+
 type GitRepo interface {
 	IsCommitExists(ctx context.Context, commit string) (bool, error)
 }
 
-func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager *manager.StorageManager, localGit GitRepo, projectName string, imageNameList []string) error {
-	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.StagesStorage.GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList)
+func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager.StorageManagerInterface, localGit GitRepo, projectName string, imageNameList []string) error {
+	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList)
 	if err != nil {
 		return err
 	}
@@ -118,8 +134,21 @@ func (m *Manager) GetStageIDList() []string {
 	return result
 }
 
+func (m *Manager) GetFinalStageIDList() []string {
+	var result []string
+	for stageID := range m.finalStages {
+		result = append(result, stageID)
+	}
+
+	return result
+}
+
 func (m *Manager) MarkStageAsProtected(stageID string) {
 	m.stages[stageID].isProtected = true
+}
+
+func (m *Manager) MarkFinalStageAsProtected(stageID string) {
+	m.finalStages[stageID].isProtected = true
 }
 
 // GetImageStageIDCommitListToCleanup method returns existing stage IDs and related existing commits (for each managed image)
@@ -233,13 +262,47 @@ func (m *Manager) GetStageIDNonexistentCommitList(imageName string) map[string][
 	return result
 }
 
-func (m *Manager) GetStageDescriptionList() []*image.StageDescription {
-	var result []*image.StageDescription
-	for _, stage := range m.stages {
+func (m *Manager) ForgetDeletedStages(stages []*image.StageDescription) {
+	for _, stg := range stages {
+		if _, hasKey := m.stages[stg.StageID.String()]; hasKey {
+			delete(m.stages, stg.StageID.String())
+		}
+	}
+}
+
+func (m *Manager) ForgetDeletedFinalStages(stages []*image.StageDescription) {
+	for _, stg := range stages {
+		if _, hasKey := m.finalStages[stg.StageID.String()]; hasKey {
+			delete(m.finalStages, stg.StageID.String())
+		}
+	}
+}
+
+type StageDescriptionListOptions struct {
+	ExcludeProtected bool
+	OnlyProtected    bool
+}
+
+func getStageDescriptionList(stages map[string]*stage, opts StageDescriptionListOptions) (result []*image.StageDescription) {
+	for _, stage := range stages {
+		if stage.isProtected && opts.ExcludeProtected {
+			continue
+		}
+		if !stage.isProtected && opts.OnlyProtected {
+			continue
+		}
 		result = append(result, stage.description)
 	}
 
-	return result
+	return
+}
+
+func (m *Manager) GetStageDescriptionList(opts StageDescriptionListOptions) []*image.StageDescription {
+	return getStageDescriptionList(m.stages, opts)
+}
+
+func (m *Manager) GetFinalStageDescriptionList(opts StageDescriptionListOptions) []*image.StageDescription {
+	return getStageDescriptionList(m.finalStages, opts)
 }
 
 func (m *Manager) GetProtectedStageDescriptionList() []*image.StageDescription {
