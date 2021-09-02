@@ -67,6 +67,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
@@ -202,6 +203,10 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 	if err != nil {
 		return err
 	}
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
+	if err != nil {
+		return err
+	}
 
 	synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 	if err != nil {
@@ -224,7 +229,7 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 		return err
 	}
 
-	storageManager := manager.NewStorageManager(projectName, stagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
+	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
 
 	if *commonCmdData.Parallel {
 		storageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))

@@ -130,7 +130,7 @@ func runReset() error {
 			return err
 		}
 
-		storageManager := manager.NewStorageManager(projectName, stagesStorage, nil, nil, storageLockManager, stagesStorageCache)
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, nil, nil, nil, storageLockManager, stagesStorageCache)
 		purgeOptions := cleaning.PurgeOptions{
 			RmContainersThatUseWerfImages: cmdData.Force,
 			DryRun:                        *commonCmdData.DryRun,

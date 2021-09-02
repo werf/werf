@@ -33,6 +33,29 @@ werf bundle apply [options]
             repo, to pull base images
       --env=''
             Use specified environment (default $WERF_ENV)
+      --final-repo=''
+            Docker Repo to store only those stages which are going to be used by the Kubernetes     
+            cluster, in other word final images (default $WERF_FINAL_REPO)
+      --final-repo-container-registry=''
+            Choose repo container registry for .
+            The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
+            github, gitlab, harbor, quay.
+            Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
+            repo address).
+      --final-repo-docker-hub-password=''
+            Docker Hub password for  (default $WERF_FINAL_REPO_DOCKER_HUB_PASSWORD)
+      --final-repo-docker-hub-token=''
+            Docker Hub token for  (default $WERF_FINAL_REPO_DOCKER_HUB_TOKEN)
+      --final-repo-docker-hub-username=''
+            Docker Hub username for  (default $WERF_FINAL_REPO_DOCKER_HUB_USERNAME)
+      --final-repo-github-token=''
+            GitHub token for  (default $WERF_FINAL_REPO_GITHUB_TOKEN)
+      --final-repo-harbor-password=''
+            Harbor password for  (default $WERF_FINAL_REPO_HARBOR_PASSWORD)
+      --final-repo-harbor-username=''
+            Harbor username for  (default $WERF_FINAL_REPO_HARBOR_USERNAME)
+      --final-repo-quay-token=''
+            quay.io token for  (default $WERF_FINAL_REPO_QUAY_TOKEN)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --hooks-status-progress-period=5

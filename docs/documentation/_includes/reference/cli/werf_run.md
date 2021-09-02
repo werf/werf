@@ -69,6 +69,29 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=''
             Use specified environment (default $WERF_ENV)
+      --final-repo=''
+            Docker Repo to store only those stages which are going to be used by the Kubernetes     
+            cluster, in other word final images (default $WERF_FINAL_REPO)
+      --final-repo-container-registry=''
+            Choose repo container registry for .
+            The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
+            github, gitlab, harbor, quay.
+            Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
+            repo address).
+      --final-repo-docker-hub-password=''
+            Docker Hub password for  (default $WERF_FINAL_REPO_DOCKER_HUB_PASSWORD)
+      --final-repo-docker-hub-token=''
+            Docker Hub token for  (default $WERF_FINAL_REPO_DOCKER_HUB_TOKEN)
+      --final-repo-docker-hub-username=''
+            Docker Hub username for  (default $WERF_FINAL_REPO_DOCKER_HUB_USERNAME)
+      --final-repo-github-token=''
+            GitHub token for  (default $WERF_FINAL_REPO_GITHUB_TOKEN)
+      --final-repo-harbor-password=''
+            Harbor password for  (default $WERF_FINAL_REPO_HARBOR_PASSWORD)
+      --final-repo-harbor-username=''
+            Harbor username for  (default $WERF_FINAL_REPO_HARBOR_USERNAME)
+      --final-repo-quay-token=''
+            quay.io token for  (default $WERF_FINAL_REPO_QUAY_TOKEN)
       --follow=false
             Enable follow mode (default $WERF_FOLLOW).
             The mode allows restarting the command on a new commit.

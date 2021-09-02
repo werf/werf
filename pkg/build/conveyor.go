@@ -63,7 +63,7 @@ type Conveyor struct {
 	ContainerRuntime container_runtime.ContainerRuntime
 
 	StorageLockManager storage.LockManager
-	StorageManager     *manager.StorageManager
+	StorageManager     manager.StorageManagerInterface
 
 	onTerminateFuncs []func() error
 	importServers    map[string]import_server.ImportServer
@@ -81,7 +81,7 @@ type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager manager.StorageManagerInterface, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
 	return &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -330,10 +330,12 @@ func (c *Conveyor) GetImageInfoGetters() (images []*imagePkg.InfoGetter) {
 		if img.isArtifact {
 			continue
 		}
-		images = append(images, img.GetImageInfoGetter())
+
+		getter := c.StorageManager.GetImageInfoGetter(img.name, img.GetLastNonEmptyStage())
+		images = append(images, getter)
 	}
 
-	return images
+	return
 }
 
 func (c *Conveyor) GetExportedImagesNames() []string {
@@ -692,15 +694,15 @@ func (c *Conveyor) GetImageTmpDir(imageName string) string {
 }
 
 func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
-	return c.StorageManager.StagesStorage.GetImportMetadata(ctx, projectName, id)
+	return c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
 }
 
 func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata) error {
-	return c.StorageManager.StagesStorage.PutImportMetadata(ctx, projectName, metadata)
+	return c.StorageManager.GetStagesStorage().PutImportMetadata(ctx, projectName, metadata)
 }
 
 func (c *Conveyor) RmImportMetadata(ctx context.Context, projectName, id string) error {
-	return c.StorageManager.StagesStorage.RmImportMetadata(ctx, projectName, id)
+	return c.StorageManager.GetStagesStorage().RmImportMetadata(ctx, projectName, id)
 }
 
 func prepareImageBasedOnStapelImageConfig(ctx context.Context, imageInterfaceConfig config.StapelImageInterface, c *Conveyor) (*Image, error) {
