@@ -64,7 +64,7 @@ type cleanupManager struct {
 	nonexistentImportMetadataIDs []string
 
 	ProjectName                             string
-	StorageManager                          *manager.StorageManager
+	StorageManager                          manager.StorageManagerInterface
 	ImageNameList                           []string
 	LocalGit                                GitRepo
 	KubernetesContextClients                []*kube.ContextClient
@@ -87,6 +87,14 @@ func (m *cleanupManager) init(ctx context.Context) error {
 		return err
 	}
 
+	if m.StorageManager.GetFinalStagesStorage() != nil {
+		if err := logboek.Context(ctx).Info().LogProcess("Fetching final repo manifests").DoError(func() error {
+			return m.stageManager.InitFinalStages(ctx, m.StorageManager)
+		}); err != nil {
+			return err
+		}
+	}
+
 	if err := logboek.Context(ctx).Info().LogProcess("Fetching metadata").DoError(func() error {
 		return m.stageManager.InitImagesMetadata(ctx, m.StorageManager, m.LocalGit, m.ProjectName, m.ImageNameList)
 	}); err != nil {
@@ -105,8 +113,19 @@ func (m *cleanupManager) run(ctx context.Context) error {
 
 	if m.LocalGit != nil {
 		if !m.WithoutKube {
-			if err := logboek.Context(ctx).LogProcess("Skipping tags that are being used in Kubernetes").DoError(func() error {
-				return m.skipStageIDsThatAreUsedInKubernetes(ctx)
+			deployedDockerImagesNames, err := m.deployedDockerImagesNames(ctx)
+			if err != nil {
+				return fmt.Errorf("error getting deployed docker images names from Kubernetes: %s", err)
+			}
+
+			if err := logboek.Context(ctx).LogProcess("Skipping repo tags that are being used in Kubernetes").DoError(func() error {
+				return m.skipStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImagesNames)
+			}); err != nil {
+				return err
+			}
+
+			if err := logboek.Context(ctx).LogProcess("Skipping final repo tags that are being used in Kubernetes").DoError(func() error {
+				return m.skipFinalStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImagesNames)
 			}); err != nil {
 				return err
 			}
@@ -128,19 +147,22 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		return err
 	}
 
+	if m.StorageManager.GetFinalStagesStorage() != nil {
+		if err := logboek.Context(ctx).LogProcess("Cleanup final stages").DoError(func() error {
+			return m.cleanupFinalStages(ctx)
+		}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context) error {
-	deployedDockerImagesNames, err := m.deployedDockerImagesNames(ctx)
-	if err != nil {
-		return err
-	}
-
+func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImagesNames []string) error {
 	handledDeployedStages := map[string]bool{}
 Loop:
 	for _, stageID := range m.stageManager.GetStageIDList() {
-		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().String(), stageID)
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().Address(), stageID)
 		for _, deployedDockerImageName := range deployedDockerImagesNames {
 			if deployedDockerImageName == dockerImageName {
 				if !handledDeployedStages[stageID] {
@@ -149,6 +171,30 @@ Loop:
 					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
 					logboek.Context(ctx).LogOptionalLn()
 					handledDeployedStages[stageID] = true
+				}
+
+				continue Loop
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *cleanupManager) skipFinalStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImagesNames []string) error {
+	handledDeployedFinalStages := map[string]bool{}
+Loop:
+	for _, stageID := range m.stageManager.GetFinalStageIDList() {
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetFinalStagesStorage().Address(), stageID)
+
+		for _, deployedDockerImageName := range deployedDockerImagesNames {
+			if deployedDockerImageName == dockerImageName {
+				if !handledDeployedFinalStages[stageID] {
+					m.stageManager.MarkFinalStageAsProtected(stageID)
+
+					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
+					logboek.Context(ctx).LogOptionalLn()
+					handledDeployedFinalStages[stageID] = true
 				}
 
 				continue Loop
@@ -306,7 +352,7 @@ func (m *cleanupManager) handleSavedStageIDs(ctx context.Context, savedStageIDs 
 	})
 }
 
-func (m *cleanupManager) deleteStages(ctx context.Context, stages []*image.StageDescription) error {
+func (m *cleanupManager) deleteStages(ctx context.Context, stages []*image.StageDescription, isFinal bool) error {
 	deleteStageOptions := manager.ForEachDeleteStageOptions{
 		DeleteImageOptions: storage.DeleteImageOptions{
 			RmiForce: false,
@@ -318,10 +364,10 @@ func (m *cleanupManager) deleteStages(ctx context.Context, stages []*image.Stage
 		},
 	}
 
-	return deleteStages(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stages)
+	return deleteStages(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stages, isFinal)
 }
 
-func deleteStages(ctx context.Context, storageManager *manager.StorageManager, dryRun bool, deleteStageOptions manager.ForEachDeleteStageOptions, stages []*image.StageDescription) error {
+func deleteStages(ctx context.Context, storageManager manager.StorageManagerInterface, dryRun bool, deleteStageOptions manager.ForEachDeleteStageOptions, stages []*image.StageDescription, isFinal bool) error {
 	if dryRun {
 		for _, stageDesc := range stages {
 			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
@@ -330,7 +376,7 @@ func deleteStages(ctx context.Context, storageManager *manager.StorageManager, d
 		return nil
 	}
 
-	return storageManager.ForEachDeleteStage(ctx, deleteStageOptions, stages, func(ctx context.Context, stageDesc *image.StageDescription, err error) error {
+	onDeleteFunc := func(ctx context.Context, stageDesc *image.StageDescription, err error) error {
 		if err != nil {
 			if err := handleDeletionError(err); err != nil {
 				return err
@@ -344,7 +390,13 @@ func deleteStages(ctx context.Context, storageManager *manager.StorageManager, d
 		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
 
 		return nil
-	})
+	}
+
+	if isFinal {
+		return storageManager.ForEachDeleteFinalStage(ctx, deleteStageOptions, stages, onDeleteFunc)
+	}
+
+	return storageManager.ForEachDeleteStage(ctx, deleteStageOptions, stages, onDeleteFunc)
 }
 
 func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName string, hitStageIDCommitList map[string][]string, stageIDsToUnlink []string) error {
@@ -461,7 +513,7 @@ func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName stri
 	return nil
 }
 
-func deleteImageMetadata(ctx context.Context, projectName string, storageManager *manager.StorageManager, imageNameOrID string, stageIDCommitList map[string][]string, dryRun bool) error {
+func deleteImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, imageNameOrID string, stageIDCommitList map[string][]string, dryRun bool) error {
 	if dryRun {
 		for stageID, commitList := range stageIDCommitList {
 			if len(commitList) == 0 {
@@ -496,7 +548,7 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 }
 
 func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
-	stageDescriptionList := m.stageManager.GetStageDescriptionList()
+	stageDescriptionList := m.stageManager.GetStageDescriptionList(stage_manager.StageDescriptionListOptions{})
 	stageDescriptionListCount := len(stageDescriptionList)
 
 	if err := logboek.Context(ctx).Info().LogProcess("Fetching imports metadata").DoError(func() error {
@@ -548,10 +600,12 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 
 	if len(stageDescriptionListToDelete) != 0 {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting stages tags (%d/%d)", len(stageDescriptionListToDelete), stageDescriptionListCount).DoError(func() error {
-			return m.deleteStages(ctx, stageDescriptionListToDelete)
+			return m.deleteStages(ctx, stageDescriptionListToDelete, false)
 		}); err != nil {
 			return err
 		}
+
+		m.stageManager.ForgetDeletedStages(stageDescriptionListToDelete)
 	}
 
 	if len(m.nonexistentImportMetadataIDs) != 0 {
@@ -560,6 +614,39 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		}); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *cleanupManager) cleanupFinalStages(ctx context.Context) error {
+	finalStagesDescriptionListFull := m.stageManager.GetFinalStageDescriptionList(stage_manager.StageDescriptionListOptions{})
+	finalStageDescriptionListFullCount := len(finalStagesDescriptionListFull)
+
+	finalStagesDescriptionList := m.stageManager.GetFinalStageDescriptionList(stage_manager.StageDescriptionListOptions{ExcludeProtected: true})
+	stagesDescriptionList := m.stageManager.GetStageDescriptionList(stage_manager.StageDescriptionListOptions{})
+
+	var finalStagesDescriptionListToDelete []*image.StageDescription
+
+FilterOutFinalStages:
+	for _, finalStg := range finalStagesDescriptionList {
+		for _, stg := range stagesDescriptionList {
+			if stg.StageID.IsEqual(*finalStg.StageID) {
+				continue FilterOutFinalStages
+			}
+		}
+
+		finalStagesDescriptionListToDelete = append(finalStagesDescriptionListToDelete, finalStg)
+	}
+
+	if len(finalStagesDescriptionListToDelete) != 0 {
+		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages tags (%d/%d)", len(finalStagesDescriptionListToDelete), finalStageDescriptionListFullCount).DoError(func() error {
+			return m.deleteStages(ctx, finalStagesDescriptionListToDelete, true)
+		}); err != nil {
+			return err
+		}
+
+		m.stageManager.ForgetDeletedFinalStages(finalStagesDescriptionListToDelete)
 	}
 
 	return nil
@@ -617,7 +704,7 @@ func (m *cleanupManager) deleteImportsMetadata(ctx context.Context, importMetada
 	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importMetadataIDs, m.DryRun)
 }
 
-func deleteImportsMetadata(ctx context.Context, projectName string, storageManager *manager.StorageManager, importMetadataIDs []string, dryRun bool) error {
+func deleteImportsMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, importMetadataIDs []string, dryRun bool) error {
 	if dryRun {
 		for _, importMetadataID := range importMetadataIDs {
 			logboek.Context(ctx).Info().LogFDetails("  importMetadataID: %s\n", importMetadataID)

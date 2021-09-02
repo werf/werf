@@ -234,8 +234,10 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 		return err
 	}
 
-	if err := phase.Conveyor.StorageManager.CopyStageIntoFinalRepo(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerRuntime); err != nil {
-		return err
+	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
+		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalRepo(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerRuntime); err != nil {
+			return err
+		}
 	}
 
 	return nil
