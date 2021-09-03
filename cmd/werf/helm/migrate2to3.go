@@ -104,7 +104,7 @@ func runMigrate2To3(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	common.SetupOndemandKubeInitializer(*migrate2To3CommonCmdData.KubeContext, *migrate2To3CommonCmdData.KubeConfig, *migrate2To3CommonCmdData.KubeConfigBase64)
+	common.SetupOndemandKubeInitializer(*migrate2To3CommonCmdData.KubeContext, *migrate2To3CommonCmdData.KubeConfig, *migrate2To3CommonCmdData.KubeConfigBase64, *migrate2To3CommonCmdData.KubeConfigPathMergeList)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}

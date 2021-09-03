@@ -15,7 +15,7 @@ func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 
 func GetKubernetesContextClients(cmdData *CmdData) ([]*kube.ContextClient, error) {
 	var res []*kube.ContextClient
-	if contextClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{KubeConfig: *cmdData.KubeConfig}); err != nil {
+	if contextClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{ConfigPath: *cmdData.KubeConfig, ConfigDataBase64: *cmdData.KubeConfigBase64, ConfigPathMergeList: *cmdData.KubeConfigPathMergeList}); err != nil {
 		return nil, err
 	} else {
 		if *cmdData.KubeContext != "" {
