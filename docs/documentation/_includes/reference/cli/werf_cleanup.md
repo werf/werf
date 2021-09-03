@@ -120,7 +120,7 @@ werf cleanup [options]
             Keep stages that were built within last hours (default                                  
             $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or 2)
       --kube-config=''
-            Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
+            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
       --kube-config-base64=''
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
