@@ -84,6 +84,9 @@ entries:
                   - title: Manage releases
                     url: /advanced/helm/releases/manage_releases.html
 
+          - title: Storage layouts
+            url: /advanced/storage_layouts.html
+
           - title: Cleanup
             url: /advanced/cleanup.html
 
@@ -268,6 +271,9 @@ entries:
 
                   - title: Управление релизами
                     url: /advanced/helm/releases/manage_releases.html
+
+          - title: Организация хранилища стадий
+            url: /advanced/storage_layouts.html
 
           - title: Очистка
             url: /advanced/cleanup.html
