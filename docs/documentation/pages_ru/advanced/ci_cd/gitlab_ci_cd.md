@@ -80,21 +80,24 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 
 1. Установим [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) и настроим `kubectl`, если они не были установлены ранее.
 1. Установим [зависимости werf](/installation.html#установка-зависимостей).
-1. Установим [multiwerf](https://github.com/werf/multiwerf) пользователем `gitlab-runner`:
+1. Установим [trdl](https://github.com/werf/trdl) пользователем `gitlab-runner`:
 
-   ```shell
-   # переключение пользователя 
-   sudo su gitlab-runner
+    ```shell
+    sudo su gitlab-runner
 
-   # добавление ~/bin в PATH
-   export PATH=$PATH:$HOME/bin
-   echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
-   
-   # установка multiwerf в директорию ~/bin
-   mkdir -p ~/bin
-   cd ~/bin
-   curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
-   ```
+    export PATH=$PATH:$HOME/bin
+    echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+
+    mkdir -p $HOME/bin
+    curl -LO https://tuf.trdl.dev/targets/releases/0.1.3/linux-amd64/bin/trdl
+    install ./trdl $HOME/bin/trdl
+    ```
+
+1. Добавим официальный TUF-репозиторий werf в trdl:
+
+    ```shell
+    trdl add werf https://tuf.werf.io 1 b7ff6bcbe598e072a86d595a3621924c8612c7e6dc6a82e919abe89707d7e3f468e616b5635630680dd1e98fc362ae5051728406700e6274c5ed1ad92bea52a2
+    ```
 
 1. Скопируем файл конфигурации `kubectl` в домашнюю папку пользователя `gitlab-runner`.
    ```shell
@@ -112,7 +115,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf build
   except: [schedules]
@@ -140,7 +143,7 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
@@ -196,7 +199,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -253,7 +256,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -293,7 +296,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -323,7 +326,7 @@ Stop Review:
 Review:
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - >
       # do optional deploy/dismiss
@@ -351,7 +354,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -500,7 +503,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
@@ -555,7 +558,7 @@ stages:
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf build
   except: [schedules]
@@ -564,7 +567,7 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
@@ -574,7 +577,7 @@ Build and Publish:
 Review:
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - >
       # do optional deploy/dismiss
@@ -602,7 +605,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -634,7 +637,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
@@ -670,7 +673,7 @@ stages:
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf build
   except: [schedules]
@@ -679,7 +682,7 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
@@ -703,7 +706,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -735,7 +738,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
@@ -771,7 +774,7 @@ stages:
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf build
   except: [schedules]
@@ -780,7 +783,7 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
@@ -804,7 +807,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -836,7 +839,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
@@ -872,7 +875,7 @@ stages:
 Build and Publish:
   stage: build
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf build
   except: [schedules]
@@ -881,7 +884,7 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
@@ -905,7 +908,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -936,7 +939,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type multiwerf && . $(multiwerf use 1.1 stable --as-file)
+    - type trdl && . $(trdl use werf 1.1 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup

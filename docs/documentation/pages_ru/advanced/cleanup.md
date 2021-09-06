@@ -111,7 +111,7 @@ werf подключается **ко всем кластерам** Kubernetes, �
 ```shell
 # /etc/cron.d/werf-host-cleanup
 SHELL=/bin/bash
-*/30 * * * * gitlab-runner source ~/.profile ; source $(multiwerf use 1.2 ea --as-file) ; echo "# $(date)" ; werf host cleanup
+*/30 * * * * gitlab-runner source ~/.profile ; source $(trdl use werf 1.2 ea) ; werf host cleanup
 ```
 
 По умолчанию без дополнительных параметров `werf host cleanup` будет чистить данные всех проектов на хосте. С параметром `--project-name PROJECT` команда может удалять только образы из локального docker-сервера. В данном режиме команда поддерживается частично.

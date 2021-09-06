@@ -13,6 +13,9 @@ channels:
   - ea
   - stable
   - rock-solid
+arch:
+  - amd64
+  - arm64
 ---
 {%- asset installation.css %}
 {%- asset installation.js %}
@@ -61,13 +64,22 @@ channels:
           data-install-tab-group="os" data-install-tab="windows">Windows</a>
       </div>
     </div><!-- /selector -->
+    <div class="installation-selector">
+      <div class="installation-selector__title">Arch</div>
+      <div class="tabs tabs_simple">
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="arch" data-install-tab="amd64">Amd64</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="arch" data-install-tab="arm64">Arm64</a>
+      </div>
+    </div><!-- /selector -->
   </div><!-- /selector-row -->
   <div class="installation-selector-row">
     <div class="installation-selector">
       <div class="installation-selector__title">Installation method</div>
       <div class="tabs tabs_simple">
         <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="method" data-install-tab="multiwerf">using multiwerf (recommended)</a>
+          data-install-tab-group="method" data-install-tab="trdl">using trdl (recommended)</a>
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="method" data-install-tab="binary">downloading binary package</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -83,26 +95,29 @@ channels:
       </h1>
       <div class="docs">
 <div class="details">
-<h2 id="install-dependencies"><a href="javascript:void(0)" class="details__summary">Install dependencies</a></h2>
+<h2 id="install-dependencies"><a href="javascript:void(0)" class="details__summary">Install werf dependencies</a></h2>
 <div class="details__content" markdown="1">
-{% include en/installation/multiwerf_dependencies.md %}
+{% include en/installation/werf_dependencies.md %}
 </div>
 </div>
 <h2 id="install-werf">Install werf</h2>
-<div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="multiwerf">
-<h3 id="install-multiwerf">Installing multiwerf</h3>
+<div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="trdl">
 <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
   {% for version in page.versions %}
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include en/installation/multiwerf_linux.md version=version channel=channel %}</div>
+          {% for arch in page.arch %}
+            <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
+<div markdown="1">{% include en/installation/trdl_linux.md version=version channel=channel arch=arch %}</div>
 <div class="details">
 <h2><a href="javascript:void(0)" class="details__summary">How to use in the CI/CD system?</a></h2>
 <div class="details__content" markdown="1">
-{% include en/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
+{% include en/installation/trdl_unix/how_to_use_in_the_ci_cd.md version=version channel=channel arch=arch %}
 </div>
 </div>
+            </div>
+          {% endfor %}
         </div>
       {% endfor %}
     </div>
@@ -113,13 +128,17 @@ channels:
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include en/installation/multiwerf_macos.md version=version channel=channel %}</div>
+          {% for arch in page.arch %}
+            <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
+<div markdown="1">{% include en/installation/trdl_macos.md version=version channel=channel arch=arch %}</div>
 <div class="details">
 <h2><a href="javascript:void(0)" class="details__summary">How to use in the CI/CD system?</a></h2>
 <div class="details__content" markdown="1">
-{% include en/installation/multiwerf_unix/how_to_use_in_the_ci_cd.md version=version channel=channel %}
+{% include en/installation/trdl_unix/how_to_use_in_the_ci_cd.md version=version channel=channel arch=arch %}
 </div>
 </div>
+            </div>
+          {% endfor %}
         </div>
       {% endfor %}
     </div>
@@ -130,7 +149,11 @@ channels:
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
-<div markdown="1">{% include en/installation/multiwerf_windows.md version=version channel=channel %}</div>
+          {% for arch in page.arch %}
+            <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
+<div markdown="1">{% include en/installation/trdl_windows.md version=version channel=channel arch=arch %}</div>
+            </div>
+          {% endfor %}
         </div>
       {% endfor %}
     </div>
@@ -153,11 +176,15 @@ The latest release can be found [at this page](https://github.com/werf/werf/rele
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+          {% for arch in page.arch %}
+            <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
   {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
   {% assign download_version = site.data.channels_versions.versions[version_key] %}
 <div markdown="1">
-{% include installation/binary_linux.md version=download_version %}
+{% include installation/binary_linux.md version=download_version arch=arch %}
 </div>
+            </div>
+          {% endfor %}
         </div>
       {% endfor %}
     </div>
@@ -169,11 +196,15 @@ The latest release can be found [at this page](https://github.com/werf/werf/rele
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+          {% for arch in page.arch %}
+            <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
   {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
   {% assign download_version = site.data.channels_versions.versions[version_key] %}
 <div markdown="1">
-{% include installation/binary_macos.md version=download_version %}
+{% include installation/binary_macos.md version=download_version arch=arch %}
 </div>
+            </div>
+          {% endfor %}
         </div>
       {% endfor %}
     </div>
@@ -185,11 +216,15 @@ The latest release can be found [at this page](https://github.com/werf/werf/rele
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
       {% for channel in page.channels %}
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
+          {% for arch in page.arch %}
+            <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
   {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
   {% assign download_version = site.data.channels_versions.versions[version_key] %}
 <div markdown="1">
-{% include installation/binary_windows.md version=download_version %}
+{% include installation/binary_windows.md version=download_version arch=arch %}
 </div>
+            </div>
+          {% endfor %}
         </div>
       {% endfor %}
     </div>
@@ -264,7 +299,7 @@ The latest release can be found [at this page](https://github.com/werf/werf/rele
     <div class="installation-channels__info">
       <div class="installation-channels__info-versions">
         <p>When using release channels, you do not specify a&nbsp;version, because the version is&nbsp;managed automatically within the&nbsp;channel Stability channels and&nbsp;frequent releases allow receiving continuous feedback on&nbsp;new changes, quickly rolling problem changes back, ensuring the&nbsp;high stability of&nbsp;the&nbsp;software, and&nbsp;preserving an&nbsp;acceptable development speed at&nbsp;the&nbsp;same time.</p>
-        <p>The relations between channels&nbsp;and werf releases are&nbsp;described in&nbsp;<a href="https://github.com/werf/werf/blob/multiwerf/multiwerf.json">multiwerf.json</a>.</p>
+        <p>The relations between channels&nbsp;and werf releases are&nbsp;described in&nbsp;<a href="https://raw.githubusercontent.com/werf/werf/multiwerf/trdl_channels.yaml">trdl_channels.yaml</a>.</p>
       </div>
       <div class="installation-channels__info-guarantees">
         <div class="installation-channels__info-guarantee">

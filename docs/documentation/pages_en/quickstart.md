@@ -9,7 +9,7 @@ In this article we will show you how to set up the deployment of an [example app
 ## Prepare your host
 
  1. Install [dependencies](/installation.html#install-dependencies) (Docker and Git).
- 2. Install [multiwerf and werf](/installation.html#install-werf).
+ 2. Install [trdl and werf](/installation.html#install-werf).
 
 Make sure you have `werf` command available in your shell before proceeding to the next step:
    
