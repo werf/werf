@@ -24,7 +24,7 @@ en:
 
   - title: "werf vs. Docker: What is the difference when it comes to building images?"
     custom_urls:
-      - service_name: "our Blog"
+      - service_name: "Flant's blog"
         url: "https://blog.flant.com/werf-vs-docker-comparison/"
     img: "/images/publications/en_030921.png"
     created: 2021-09-03
@@ -32,7 +32,7 @@ en:
       <p>This article is the next installment in the “werf vs. …” series. In the <a href="https://blog.flant.com/werf-vs-helm-comparison/">previous article</a>, we discussed the ways that werf differs from Helm. This article compares werf with an even more basic tool: Docker.</p>
   - title: "werf vs. Helm: Should you even compare them?"
     custom_urls:
-      - service_name: "our Blog"
+      - service_name: "Flant's blog"
         url: "https://blog.flant.com/werf-vs-helm-comparison/"
     img: "/images/publications/en_260821.png"
     created: 2021-08-26
@@ -40,7 +40,7 @@ en:
       <p>This article attempts to provide a detailed answer to a question we stumble upon every now and then: What is the difference between werf and Helm? At first glance, both of these tools seem to be designed with the same purpose: automating application deployment in Kubernetes. However, the reality is a little more complicated than that.</p>
   - title: "Configuring Continuous Integration for Jenkins & Bitbucket using werf"
     custom_urls:
-      - service_name: "our Blog"
+      - service_name: "Flant's blog"
         url: "https://blog.flant.com/configuring-continuous-integration-for-jenkins-bitbucket-using-werf/"
     img: "/images/publications/en_040221.png"
     created: 2021-02-04
