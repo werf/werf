@@ -40,7 +40,7 @@ func (r *Result) setParentRecursively() {
 	}
 }
 
-func NewSubmoduleResult(submodulePath, submoduleName string, result *Result) *SubmoduleResult {
+func NewSubmoduleResult(submoduleName, submodulePath string, result *Result) *SubmoduleResult {
 	return &SubmoduleResult{
 		submoduleName: submoduleName,
 		submodulePath: submodulePath,
