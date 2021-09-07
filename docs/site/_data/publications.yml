@@ -22,6 +22,33 @@ en:
   #  created: ISO format date, yyyy-mm-dd
   #  comment: COMMENT
 
+  - title: "werf vs. Docker: What is the difference when it comes to building images?"
+    custom_urls:
+      - service_name: "our Blog"
+        url: "https://blog.flant.com/werf-vs-docker-comparison/"
+    img: "/images/publications/en_030921.png"
+    created: 2021-09-03
+    comment: |
+      <p>This article is the next installment in the “werf vs. …” series. In the <a href="https://blog.flant.com/werf-vs-helm-comparison/">previous article</a>, we discussed the ways that werf differs from Helm. This article compares werf with an even more basic tool: Docker.</p>
+  - title: "werf vs. Helm: Should you even compare them?"
+    custom_urls:
+      - service_name: "our Blog"
+        url: "https://blog.flant.com/werf-vs-helm-comparison/"
+    img: "/images/publications/en_260821.png"
+    created: 2021-08-26
+    comment: |
+      <p>This article attempts to provide a detailed answer to a question we stumble upon every now and then: What is the difference between werf and Helm? At first glance, both of these tools seem to be designed with the same purpose: automating application deployment in Kubernetes. However, the reality is a little more complicated than that.</p>
+  - title: "Configuring Continuous Integration for Jenkins & Bitbucket using werf"
+    custom_urls:
+      - service_name: "our Blog"
+        url: "https://blog.flant.com/configuring-continuous-integration-for-jenkins-bitbucket-using-werf/"
+    img: "/images/publications/en_040221.png"
+    created: 2021-02-04
+    comment: |
+      <p>The werf tool is designed to easily integrate with any CI/CD system. The general approach to this process is provided in the epilogue, while the main part of this article discusses the practical example of organizing a CI process in Jenkins and Bitbucket.</p>
+      <p>After reading this article, you will learn how to:</>
+      <ul><li>create a Jenkins Shared Library to store all CI scripts in one place and edit them via a single commit;</li>
+      <li>integrate Jenkins with Bitbucket to trigger CI processes by committing to specific branches or by creating a tag.</li></ul>
   - title: "What GitOps actually is and what it is not"
     medium_url: "https://medium.com/flant-com/gitops-2a67a5b82884"
     youtube_url: "https://www.youtube.com/watch?v=FPMuVdW2hYs"
@@ -151,6 +178,18 @@ ru:
   #  created: ISO format date, yyyy-mm-dd
   #  comment: COMMENT
 
+  - title: "werf vs Docker. Чем лучше собирать образы"
+    habr_url: "https://habr.com/ru/company/flant/blog/565598/"
+    img: "/images/publications/ru_020721.png"
+    created: 2021-07-02
+    comment: |
+      <p>Продолжаем серию публикаций «werf vs...», которая вдохновлена часто задаваемыми вопросами. В первой статье мы объяснили, <a href="https://habr.com/ru/company/flant/blog/554892/">чем werf отличается от Helm</a>. Теперь черед сравнения с еще более базовой утилитой — Docker.</p>
+  - title: "Review- или динамические окружения. Теория и практика в Kubernetes"
+    habr_url: "https://habr.com/ru/company/flant/blog/571482/"
+    img: "/images/publications/ru_090821.png"
+    created: 2021-08-09
+    comment: |
+      <p>Статья посвящена так называемым review-окружениям, реализуемым в рамках кластеров Kubernetes. В статье рассказывается для чего нужны и/или обычно используют review-окружения, как сделать pipeline c review-окружением в GitLab CI/CD, какие могут быть потенциальные проблемы и способы их решения, а также, как тут может помочь werf.</p>
   - title: "werf vs. Helm: корректно ли их вообще сравнивать?"
     habr_url: "https://habr.com/ru/company/flant/blog/554892/"
     img: "/images/publications/ru_290421.png"
