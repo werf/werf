@@ -40,6 +40,11 @@
                                             {{ i18n.medium_btn_title }}
                                         </a>
                                     {%- endif %}
+                                    {%- if publication.blog_url %}
+                                        <a href="{{ publication.blog_url }}" class="publications__btn" target="_blank">
+                                            {{ i18n.blog_btn_title }}
+                                        </a>
+                                    {%- endif %}
                                     {%- if publication.habr_url %}
                                         <a href="{{ publication.habr_url }}" class="publications__btn" target="_blank">
                                             {{ i18n.habr_btn_title }}
