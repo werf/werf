@@ -46,7 +46,7 @@ en:
     created: 2021-02-04
     comment: |
       <p>The werf tool is designed to easily integrate with any CI/CD system. The general approach to this process is provided in the epilogue, while the main part of this article discusses the practical example of organizing a CI process in Jenkins and Bitbucket.</p>
-      <p>After reading this article, you will learn how to:</>
+      <p>After reading this article, you will learn how to:</p>
       <ul><li>create a Jenkins Shared Library to store all CI scripts in one place and edit them via a single commit;</li>
       <li>integrate Jenkins with Bitbucket to trigger CI processes by committing to specific branches or by creating a tag.</li></ul>
   - title: "What GitOps actually is and what it is not"
