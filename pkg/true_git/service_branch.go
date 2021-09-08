@@ -10,10 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/Masterminds/semver"
 )
 
 type SyncSourceWorktreeWithServiceBranchOptions struct {
 	ServiceBranchPrefix string
+	GlobIncludeList     []string
 	GlobExcludeList     []string
 }
 
@@ -40,7 +43,7 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 		}
 
 		branchName := fmt.Sprintf("%s%s", opts.ServiceBranchPrefix, commit)
-		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorktreeDir, serviceWorktreeDir, commit, branchName, opts.GlobExcludeList)
+		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorktreeDir, serviceWorktreeDir, commit, branchName, opts.GlobIncludeList, opts.GlobExcludeList)
 		if err != nil {
 			return fmt.Errorf("unable to sync worktree with service branch %q: %s", branchName, err)
 		}
@@ -53,7 +56,7 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 	return resultCommit, nil
 }
 
-func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, branchName string, globExcludeList []string) (string, error) {
+func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, branchName string, globIncludeList, globExcludeList []string) (string, error) {
 	serviceBranchHeadCommit, err := getOrPrepareServiceBranchHeadCommit(ctx, serviceWorktreeDir, sourceCommit, branchName)
 	if err != nil {
 		return "", fmt.Errorf("unable to get or prepare service branch head commit: %s", err)
@@ -63,21 +66,22 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 		return "", fmt.Errorf("unable to checkout service branch: %s", err)
 	}
 
-	if err := revertExcludedChangesInServiceWorktreeIndex(ctx, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, serviceBranchHeadCommit, globExcludeList); err != nil {
+	revertedChangesExist, err := revertExcludedChangesInServiceWorktreeIndex(ctx, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, serviceBranchHeadCommit, globExcludeList)
+	if err != nil {
 		return "", fmt.Errorf("unable to revert excluded changes in service worktree index: %q", err)
 	}
 
-	if err := addChangesToServiceWorktreeIndex(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList); err != nil {
-		return "", fmt.Errorf("unable to add changes to service worktree index: %s", err)
-	}
-
-	exist, err := checkNewChangesInServiceWorktreeIndex(ctx, serviceWorktreeDir)
+	newChangesExist, err := checkNewChangesInSourceWorktreeDir(ctx, sourceWorktreeDir, serviceWorktreeDir, globIncludeList, globExcludeList)
 	if err != nil {
-		return "", fmt.Errorf("unable to check new changes in service worktree index: %s", err)
+		return "", fmt.Errorf("unable to check new changes in source worktree: %s", err)
 	}
 
-	if !exist {
+	if !revertedChangesExist && !newChangesExist {
 		return serviceBranchHeadCommit, nil
+	}
+
+	if err = addNewChangesInServiceWorktreeDir(ctx, sourceWorktreeDir, serviceWorktreeDir, globIncludeList, globExcludeList); err != nil {
+		return "", fmt.Errorf("unable to add new changes in service worktree: %s", err)
 	}
 
 	newCommit, err := commitNewChangesInServiceBranch(ctx, serviceWorktreeDir, branchName)
@@ -113,9 +117,9 @@ func getOrPrepareServiceBranchHeadCommit(ctx context.Context, serviceWorktreeDir
 	return serviceBranchHeadCommit, nil
 }
 
-func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, sourceCommit string, serviceBranchHeadCommit string, globExcludeList []string) error {
+func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, sourceCommit string, serviceBranchHeadCommit string, globExcludeList []string) (bool, error) {
 	if len(globExcludeList) == 0 || serviceBranchHeadCommit == sourceCommit {
-		return nil
+		return false, nil
 	}
 
 	gitDiffArgs := []string{
@@ -130,62 +134,76 @@ func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWork
 
 	diffOutput, err := runGitCmd(ctx, gitDiffArgs, sourceWorktreeDir, runGitCmdOptions{})
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if len(diffOutput.Bytes()) == 0 {
-		return nil
+		return false, nil
 	}
 
 	if _, err := runGitCmd(ctx, []string{"apply", "--binary", "--index"}, serviceWorktreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {
-		return err
+		return false, err
 	}
 
-	return nil
+	return true, nil
 }
 
-func addChangesToServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, globExcludeList []string) error {
-	var pathSpecExcludeList []string
-	for _, glob := range globExcludeList {
-		pathSpecExcludeList = append(pathSpecExcludeList, ":!"+glob)
+func checkNewChangesInSourceWorktreeDir(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, globIncludeList, globExcludeList []string) (bool, error) {
+	output, err := runGitAddCmd(ctx, sourceWorktreeDir, serviceWorktreeDir, globIncludeList, globExcludeList, true)
+	if err != nil {
+		return false, err
 	}
 
+	return len(output.Bytes()) != 0, nil
+}
+
+func addNewChangesInServiceWorktreeDir(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, globIncludeList, globExcludeList []string) error {
+	_, err := runGitAddCmd(ctx, sourceWorktreeDir, serviceWorktreeDir, globIncludeList, globExcludeList, false)
+	return err
+}
+
+func runGitAddCmd(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, globIncludeList []string, globExcludeList []string, dryRun bool) (*bytes.Buffer, error) {
 	gitAddArgs := []string{
 		"--work-tree",
 		sourceWorktreeDir,
 		"add",
-		"--all",
-		"--",
-		".",
 	}
 
-	gitAddArgs = append(gitAddArgs, pathSpecExcludeList...)
-	if _, err := runGitCmd(ctx, gitAddArgs, serviceWorktreeDir, runGitCmdOptions{}); err != nil {
-		return err
+	if dryRun {
+		gitAddArgs = append(gitAddArgs, "--dry-run")
 	}
 
-	return nil
-}
+	var pathSpecList []string
+	{
+		if len(globIncludeList) == 0 {
+			pathSpecList = append(pathSpecList, ":.")
+		} else {
+			for _, glob := range globIncludeList {
+				pathSpecList = append(pathSpecList, ":"+glob)
+			}
+		}
 
-func checkNewChangesInServiceWorktreeIndex(ctx context.Context, serviceWorktreeDir string) (bool, error) {
-	gitDiffArgs := []string{
-		"diff",
-		"--cached",
-		"--exit-code",
-	}
-
-	_, err := runGitCmd(ctx, gitDiffArgs, serviceWorktreeDir, runGitCmdOptions{})
-	if err == nil {
-		return false, nil
-	}
-
-	if exitErr, ok := err.(*exec.ExitError); ok {
-		if exitErr.ExitCode() == 1 {
-			return true, nil
+		for _, glob := range globExcludeList {
+			pathSpecList = append(pathSpecList, ":!"+glob)
 		}
 	}
 
-	return false, err
+	var runOptions runGitCmdOptions
+	if gitVersion.LessThan(semver.MustParse("2.25.0")) {
+		gitAddArgs = append(gitAddArgs, "--")
+		gitAddArgs = append(gitAddArgs, pathSpecList...)
+	} else {
+		gitAddArgs = append(gitAddArgs, "--pathspec-from-file=-", "--pathspec-file-nul")
+		pathspecFileBuf := bytes.NewBufferString(strings.Join(pathSpecList, "\000"))
+		runOptions = runGitCmdOptions{stdin: pathspecFileBuf}
+	}
+
+	output, err := runGitCmd(ctx, gitAddArgs, serviceWorktreeDir, runOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
 }
 
 func commitNewChangesInServiceBranch(ctx context.Context, serviceWorktreeDir string, branchName string) (string, error) {
