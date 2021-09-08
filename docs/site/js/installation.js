@@ -11,7 +11,8 @@ $(document).ready(function () {
     version: '1.2',
     channel: 'ea',
     os: default_os,
-    method: 'multiwerf'
+    method: 'trdl',
+    arch: 'amd64'
   }
 
   function doInstallSelect(group, param) {
@@ -33,17 +34,27 @@ $(document).ready(function () {
     window.history.replaceState(null, null, url.toString());
 
     // Update buttons status
-    if (group == "version" ) {
+    if (group == "version") {
       if (param == "1.2") {
         $(`[data-install-tab="rock-solid"]`).hide();
         $(`[data-install-tab="stable"]`).hide();
         doInstallSelect("channel", "ea")
-      } else if (group == "version") {
+      } else {
         $(`[data-install-tab="rock-solid"]`).show();
         $(`[data-install-tab="stable"]`).show();
         $(`[data-install-tab="ea"]`).show();
         $(`[data-install-tab="beta"]`).show();
         doInstallSelect("channel", "stable")
+      }
+    }
+
+    if (group == "os") {
+      if (param == "windows") {
+        $(`[data-install-tab="arm64"]`).hide();
+        doInstallSelect("arch", "amd64")
+      } else {
+        $(`[data-install-tab="arm64"]`).show();
+        $(`[data-install-tab="amd64"]`).show();
       }
     }
 

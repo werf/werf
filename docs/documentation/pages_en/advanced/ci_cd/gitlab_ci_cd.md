@@ -82,22 +82,25 @@ Let us install and configure the GitLab runner on the node where werf will be ru
    
 1. Install [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) and configure `kubectl` (if they were not installed before).
 1. Install [werf dependencies](/installation.html#install-dependencies).
-1. Install [multiwerf](https://github.com/werf/multiwerf) under the `gitlab-runner` user:
+1. Install [trdl](https://github.com/werf/trdl) under the `gitlab-runner` user:
 
-   ```shell
-   # switch to gitlab-runner user
-   sudo su gitlab-runner
-   
-   # add ~/bin into PATH
-   export PATH=$PATH:$HOME/bin
-   echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
-   
-   # install multiwerf into ~/bin directory
-   mkdir -p ~/bin
-   cd ~/bin
-   curl -L https://raw.githubusercontent.com/werf/multiwerf/master/get.sh | bash
-   ```
-   
+    ```shell
+    sudo su gitlab-runner
+
+    export PATH=$PATH:$HOME/bin
+    echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+
+    mkdir -p $HOME/bin
+    curl -LO https://tuf.trdl.dev/targets/releases/0.1.3/linux-amd64/bin/trdl
+    install ./trdl $HOME/bin/trdl
+    ```
+
+1. Add official werf TUF-repository into trdl:
+
+    ```shell
+    trdl add werf https://tuf.werf.io 1 b7ff6bcbe598e072a86d595a3621924c8612c7e6dc6a82e919abe89707d7e3f468e616b5635630680dd1e98fc362ae5051728406700e6274c5ed1ad92bea52a2
+    ```
+
 1. Copy the kubectl config to the home directory of the gitlab-runner user.
 
    ```shell
@@ -113,7 +116,7 @@ Once the GitLab runner is up and ready, you can start configuring the pipeline.
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type trdl && . $(trdl use werf 1.2 ea)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -143,7 +146,7 @@ First of all, you need to define a template – the general part of the deployme
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type trdl && . $(trdl use werf 1.2 ea)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 .base_deploy: &base_deploy
@@ -204,7 +207,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+    - type trdl && . $(trdl use werf 1.2 ea)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -261,7 +264,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+    - type trdl && . $(trdl use werf 1.2 ea)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -301,7 +304,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+    - type trdl && . $(trdl use werf 1.2 ea)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -328,7 +331,7 @@ By assigning a specific label, the user activates automatic deployment to review
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type trdl && . $(trdl use werf 1.2 ea)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Review:
@@ -512,7 +515,7 @@ Options for rolling back changes in production:
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type trdl && . $(trdl use werf 1.2 ea)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Cleanup:
@@ -570,7 +573,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type trdl && . $(trdl use werf 1.2 ea)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -685,7 +688,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type trdl && . $(trdl use werf 1.2 ea)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -787,7 +790,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type trdl && . $(trdl use werf 1.2 ea)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -888,7 +891,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type multiwerf && . $(multiwerf use 1.2 ea --as-file)
+  - type trdl && . $(trdl use werf 1.2 ea)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
