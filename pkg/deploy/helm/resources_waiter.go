@@ -27,7 +27,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/kubectl/pkg/scheme"
+
+	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	flaggerscheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 )
+
+func init() {
+	flaggerscheme.AddToScheme(scheme.Scheme)
+}
 
 type ResourcesWaiter struct {
 	KubeInitializer           KubeInitializer
@@ -169,6 +176,14 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *appsv1.ReplicaSet:
 		case *v1.PersistentVolumeClaim:
 		case *v1.Service:
+		case *flaggerv1beta1.Canary:
+			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "canary")
+			if err != nil {
+				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+			}
+			if spec != nil {
+				specs.Canaries = append(specs.Canaries, *spec)
+			}
 		}
 	}
 
