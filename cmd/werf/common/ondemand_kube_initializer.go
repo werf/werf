@@ -10,18 +10,20 @@ import (
 var ondemandKubeInitializer *OndemandKubeInitializer
 
 type OndemandKubeInitializer struct {
-	KubeContext      string
-	KubeConfig       string
-	KubeConfigBase64 string
+	KubeContext             string
+	KubeConfig              string
+	KubeConfigBase64        string
+	KubeConfigPathMergeList []string
 
 	initialized bool
 }
 
-func SetupOndemandKubeInitializer(kubeContext, kubeConfig, kubeConfigBase64 string) {
+func SetupOndemandKubeInitializer(kubeContext, kubeConfig, kubeConfigBase64 string, kubeConfigPathMergeList []string) {
 	ondemandKubeInitializer = &OndemandKubeInitializer{
-		KubeContext:      kubeContext,
-		KubeConfig:       kubeConfig,
-		KubeConfigBase64: kubeConfigBase64,
+		KubeContext:             kubeContext,
+		KubeConfig:              kubeConfig,
+		KubeConfigBase64:        kubeConfigBase64,
+		KubeConfigPathMergeList: kubeConfigPathMergeList,
 	}
 }
 
@@ -35,9 +37,10 @@ func (initializer *OndemandKubeInitializer) Init(ctx context.Context) error {
 	}
 
 	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kube.KubeConfigOptions{
-		Context:          initializer.KubeContext,
-		ConfigPath:       initializer.KubeConfig,
-		ConfigDataBase64: initializer.KubeConfigBase64,
+		Context:             initializer.KubeContext,
+		ConfigPath:          initializer.KubeConfig,
+		ConfigDataBase64:    initializer.KubeConfigBase64,
+		ConfigPathMergeList: initializer.KubeConfigPathMergeList,
 	}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}

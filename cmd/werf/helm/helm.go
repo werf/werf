@@ -138,7 +138,7 @@ func NewCmd() *cobra.Command {
 					wc.SetStubServiceValues(vals)
 				}
 
-				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64)
+				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64, *_commonCmdData.KubeConfigPathMergeList)
 
 				registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &_commonCmdData)
 				if err != nil {

@@ -155,7 +155,7 @@ werf build [IMAGE_NAME...] [options]
             gitArchive, install, importsAfterInstall, beforeSetup, importsBeforeSetup, setup,       
             importsAfterSetup, gitCache, gitLatestPatch, dockerInstructions, dockerfile
       --kube-config=''
-            Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or           
+            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
       --kube-config-base64=''
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
