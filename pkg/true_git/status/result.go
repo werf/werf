@@ -12,6 +12,20 @@ func (r *Result) IndexWithWorktree() Scope {
 	return ComplexScope{scopes: []Scope{r.Index, r.Worktree}}
 }
 
+// PathList returns a list of changed files
+func (r *Result) PathList() (result []string) {
+	keys := map[string]bool{}
+	for _, path := range append(r.IndexWithWorktree().PathList(), r.UntrackedPathList...) {
+		_, exist := keys[path]
+		if !exist {
+			result = append(result, path)
+			keys[path] = true
+		}
+	}
+
+	return
+}
+
 type Scope interface {
 	PathList() []string
 	Submodules() []submodule
@@ -28,6 +42,7 @@ func (s ComplexScope) PathList() []string {
 	}
 	return result
 }
+
 func (s ComplexScope) Submodules() []submodule {
 	var result []submodule
 	for _, scope := range s.scopes {
@@ -44,6 +59,7 @@ type Index struct {
 func (s Index) Checksum() string {
 	return s.checksum
 }
+
 func (s *Index) addToChecksum(a ...string) {
 	s.checksum = util.MurmurHash(append([]string{s.checksum}, a...)...)
 }
@@ -60,6 +76,7 @@ type baseScope struct {
 func (s baseScope) PathList() []string {
 	return s.pathList
 }
+
 func (s baseScope) Submodules() []submodule {
 	return s.submodules
 }

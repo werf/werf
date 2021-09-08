@@ -71,22 +71,30 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 			defer werf.ReleaseHostLock(lock)
 		}
 
-		devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceBranch(
-			context.Background(),
-			l.GitDir,
-			l.WorkTreeDir,
-			l.getRepoWorkTreeCacheDir(l.getRepoID()),
-			l.headCommit,
-			true_git.SyncSourceWorktreeWithServiceBranchOptions{
-				ServiceBranchPrefix: opts.ServiceBranchOptions.Prefix,
-				GlobExcludeList:     opts.ServiceBranchOptions.GlobExcludeList,
-			},
-		)
+		gitStatusResult, err := l.status(ctx)
 		if err != nil {
-			return l, err
+			return nil, fmt.Errorf("unable to get git status: %s", err)
 		}
 
-		l.headCommit = devHeadCommit
+		if len(gitStatusResult.PathList()) != 0 {
+			devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceBranch(
+				context.Background(),
+				l.GitDir,
+				l.WorkTreeDir,
+				l.getRepoWorkTreeCacheDir(l.getRepoID()),
+				l.headCommit,
+				true_git.SyncSourceWorktreeWithServiceBranchOptions{
+					ServiceBranchPrefix: opts.ServiceBranchOptions.Prefix,
+					GlobIncludeList:     gitStatusResult.PathList(),
+					GlobExcludeList:     opts.ServiceBranchOptions.GlobExcludeList,
+				},
+			)
+			if err != nil {
+				return l, err
+			}
+
+			l.headCommit = devHeadCommit
+		}
 	}
 
 	return l, nil
