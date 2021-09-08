@@ -264,6 +264,9 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 		logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
 	})
 
+	var processedDockerImagesIDs []string
+	var processedDockerContainersIDs []string
+
 	for {
 		var freedBytes uint64
 		var freedImagesCount uint64
@@ -273,47 +276,68 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 			if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for least recently used docker images created by werf").DoError(func() error {
 			DeleteImages:
 				for _, desc := range checkResult.ImagesDescs {
-					imageRemovalFailed := false
+					for _, id := range processedDockerImagesIDs {
+						if desc.ImageSummary.ID == id {
+							logboek.Context(ctx).Default().LogFDetails("Skip already processed image %q\n", desc.ImageSummary.ID)
+							continue DeleteImages
+						}
+					}
+					processedDockerImagesIDs = append(processedDockerImagesIDs, desc.ImageSummary.ID)
 
-					for _, ref := range desc.ImageSummary.RepoTags {
-						var args []string
+					fmt.Printf("IMAGE: %#v\n", desc.ImageSummary)
 
-						if ref == "<none>:<none>" {
-							args = append(args, desc.ImageSummary.ID)
-						} else {
-							lockName := container_runtime.ImageLockName(ref)
+					imageRemoved := false
 
-							isLocked, lock, err := werf.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{NonBlocking: true})
-							if err != nil {
-								return fmt.Errorf("error locking image %q: %s", lockName, err)
+					if len(desc.ImageSummary.RepoTags) > 0 {
+						allTagsRemoved := true
+
+						for _, ref := range desc.ImageSummary.RepoTags {
+							if ref == "<none>:<none>" {
+								if err := removeImage(ctx, desc.ImageSummary.ID, force, dryRun); err != nil {
+									logboek.Context(ctx).Warn().LogF("failed to remove local docker image by ID %q: %s\n", desc.ImageSummary.ID, err)
+									allTagsRemoved = false
+								}
+							} else {
+								lockName := container_runtime.ImageLockName(ref)
+
+								isLocked, lock, err := werf.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{NonBlocking: true})
+								if err != nil {
+									return fmt.Errorf("error locking image %q: %s", lockName, err)
+								}
+
+								if !isLocked {
+									logboek.Context(ctx).Default().LogFDetails("Image %q is locked at the moment: skip removal\n", ref)
+									continue DeleteImages
+								}
+
+								acquiredHostLocks = append(acquiredHostLocks, lock)
+
+								if err := removeImage(ctx, ref, force, dryRun); err != nil {
+									logboek.Context(ctx).Warn().LogF("failed to remove local docker image by repo tag %q: %s\n", ref, err)
+									allTagsRemoved = false
+								}
 							}
+						}
 
-							if !isLocked {
-								logboek.Context(ctx).Default().LogFDetails("Image %q is locked at the moment: skip removal\n", ref)
-								continue DeleteImages
+						if allTagsRemoved {
+							imageRemoved = true
+						}
+					} else if len(desc.ImageSummary.RepoDigests) > 0 {
+						allDigestsRemoved := true
+
+						for _, repoDigest := range desc.ImageSummary.RepoDigests {
+							if err := removeImage(ctx, repoDigest, force, dryRun); err != nil {
+								logboek.Context(ctx).Warn().LogF("failed to remove local docker image by repo digest %q: %s\n", repoDigest, err)
+								allDigestsRemoved = false
 							}
-
-							acquiredHostLocks = append(acquiredHostLocks, lock)
-
-							args = append(args, ref)
 						}
 
-						if force {
-							args = append(args, "--force")
-						}
-
-						logboek.Context(ctx).Default().LogF("Removing %s\n", ref)
-						if dryRun {
-							continue
-						}
-
-						if err := docker.CliRmi(ctx, args...); err != nil {
-							logboek.Context(ctx).Warn().LogF("failed to remove local docker image %q: %s\n", ref, err)
-							imageRemovalFailed = true
+						if allDigestsRemoved {
+							imageRemoved = true
 						}
 					}
 
-					if !imageRemovalFailed {
+					if imageRemoved {
 						freedBytes += uint64(desc.ImageSummary.VirtualSize - desc.ImageSummary.SharedSize)
 						freedImagesCount++
 					}
@@ -362,7 +386,14 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 		}
 
 		if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for docker containers created by werf").DoError(func() error {
-			return safeContainersCleanup(ctx, commonOptions)
+			newProcessedContainersIDs, err := safeContainersCleanup(ctx, processedDockerContainersIDs, commonOptions)
+			if err != nil {
+				return fmt.Errorf("safe containers cleanup failed: %s", err)
+			}
+
+			processedDockerContainersIDs = newProcessedContainersIDs
+
+			return nil
 		}); err != nil {
 			return err
 		}
@@ -411,6 +442,20 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 	return nil
 }
 
+func removeImage(ctx context.Context, ref string, force, dryRun bool) error {
+	logboek.Context(ctx).Default().LogF("Removing %s\n", ref)
+	if dryRun {
+		return nil
+	}
+
+	args := []string{ref}
+	if force {
+		args = append(args, "--force")
+	}
+
+	return docker.CliRmi(ctx, args...)
+}
+
 type LocalImageDesc struct {
 	ImageSummary types.ImageSummary
 	LastUsedAt   time.Time
@@ -447,13 +492,21 @@ func safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error
 	return nil
 }
 
-func safeContainersCleanup(ctx context.Context, options CommonOptions) error {
+func safeContainersCleanup(ctx context.Context, processedDockerContainersIDs []string, options CommonOptions) ([]string, error) {
 	containers, err := werfContainersByFilterSet(ctx, filters.NewArgs())
 	if err != nil {
-		return fmt.Errorf("cannot get stages build containers: %s", err)
+		return nil, fmt.Errorf("cannot get stages build containers: %s", err)
 	}
 
+ProcessContainers:
 	for _, container := range containers {
+		for _, id := range processedDockerContainersIDs {
+			if id == container.ID {
+				continue ProcessContainers
+			}
+		}
+		processedDockerContainersIDs = append(processedDockerContainersIDs, container.ID)
+
 		var containerName string
 		for _, name := range container.Names {
 			if strings.HasPrefix(name, fmt.Sprintf("/%s", image.StageContainerNamePrefix)) {
@@ -486,9 +539,9 @@ func safeContainersCleanup(ctx context.Context, options CommonOptions) error {
 
 			return nil
 		}(); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return processedDockerContainersIDs, nil
 }
