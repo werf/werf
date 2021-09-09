@@ -2,6 +2,8 @@ package deploy_test
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/werf/werf/integration/pkg/utils"
@@ -33,10 +35,10 @@ type DeploymentState struct {
 	StatusProgressLine string
 }
 
-func mydeploy1State(statusProgressLine string) *DeploymentState {
+func deployState(statusProgressLine, deployName string) *DeploymentState {
 	fields := strings.Fields(statusProgressLine)
 
-	if len(fields) == 4 && fields[0] == "mydeploy1" {
+	if len(fields) == 4 && fields[0] == deployName {
 		ds := &DeploymentState{
 			Deployment:         fields[0],
 			Replicas:           fields[1],
@@ -73,6 +75,21 @@ func unknownDeploymentStateForbidden(ds *DeploymentState) {
 	Expect(ds.UpToDate).ShouldNot(Equal("-"), fmt.Sprintf("Unknown deploy/%s UP-TO-DATE should not be reported", ds.Deployment))
 }
 
+func isTooManyProbesTriggered(line, probeName string, maxAllowed int) bool {
+	var isTooManyProbesTriggered bool
+
+	numberRegex := regexp.MustCompile("[0-9]+")
+
+	if strings.Contains(line, fmt.Sprintf(`Count of triggered %s probes:`, probeName)) {
+		if triggeredProbes, err := strconv.Atoi(numberRegex.FindAllString(line, 1)[0]); err != nil {
+			Fail(err.Error())
+		} else if triggeredProbes > maxAllowed {
+			isTooManyProbesTriggered = true
+		}
+	}
+	return isTooManyProbesTriggered
+}
+
 var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
 	Context("when chart contains valid resource", func() {
 		AfterEach(func() {
@@ -88,7 +105,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 				OutputLineHandler: func(line string) {
 					line = stripansi.Strip(line)
 					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
-						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
+						if mydeploy1 := deployState(statusProgressLine, "mydeploy1"); mydeploy1 != nil {
 							unknownDeploymentStateForbidden(mydeploy1)
 
 							if mydeploy1.UpToDateCurrent == "2" && mydeploy1.AvailableCurrent == "2" && mydeploy1.ReplicasCurrent == "2/2" {
@@ -128,7 +145,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 					}
 
 					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
-						if mydeploy1 := mydeploy1State(statusProgressLine); mydeploy1 != nil {
+						if mydeploy1 := deployState(statusProgressLine, "mydeploy1"); mydeploy1 != nil {
 							unknownDeploymentStateForbidden(mydeploy1)
 						}
 					}
@@ -137,6 +154,141 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 
 			Expect(gotImagePullBackoffLine).Should(BeTrue())
 			Expect(gotAllowedErrorsWarning).Should(BeTrue())
+			Expect(gotAllowedErrorsExceeded).Should(BeTrue())
+		})
+	})
+
+	Context("when chart contains resource with succeeding probes", func() {
+		AfterEach(func() {
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		})
+
+		It("should report Deployment is ready before werf exit", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app3", "initial commit")
+
+			var gotDeploymentReadyLine bool
+
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+				OutputLineHandler: func(line string) {
+					line = stripansi.Strip(line)
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy3 := deployState(statusProgressLine, "mydeploy3"); mydeploy3 != nil {
+							unknownDeploymentStateForbidden(mydeploy3)
+
+							if mydeploy3.UpToDateCurrent == "2" && mydeploy3.AvailableCurrent == "2" && mydeploy3.ReplicasCurrent == "2/2" {
+								gotDeploymentReadyLine = true
+							}
+						}
+					}
+				},
+			})).Should(Succeed())
+
+			Expect(gotDeploymentReadyLine).Should(BeTrue())
+		})
+	})
+
+	Context("when chart contains resource with failing startup probe", func() {
+		AfterEach(func() {
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		})
+
+		It("should report container killed by startup probe and werf should fail", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app4", "initial commit")
+
+			var gotKilledByStartupProbe, gotAllowedErrorsExceeded bool
+
+			startupFailRegex := regexp.MustCompile("deploy/mydeploy4 ERROR: po/mydeploy4-[a-z0-9]+-[a-z0-9]+ container/main: Killing: Container main failed startup probe, will be restarted")
+
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+				OutputLineHandler: func(line string) {
+					if startupFailRegex.MatchString(line) {
+						gotKilledByStartupProbe = true
+					}
+					if strings.Contains(line, `Allowed failures count for deploy/mydeploy4 exceeded 0 errors: stop tracking immediately!`) {
+						gotAllowedErrorsExceeded = true
+					}
+
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy4 := deployState(statusProgressLine, "mydeploy4"); mydeploy4 != nil {
+							unknownDeploymentStateForbidden(mydeploy4)
+						}
+					}
+				},
+			})).Should(MatchError("exit code 1"))
+
+			Expect(gotKilledByStartupProbe).Should(BeTrue())
+			Expect(gotAllowedErrorsExceeded).Should(BeTrue())
+		})
+	})
+
+	Context("when chart contains resource with failing readiness probe", func() {
+		AfterEach(func() {
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		})
+
+		It("should report that the container readiness probe failed multiple times and werf should fail", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app5", "initial commit")
+
+			var gotStoppedByReadinessProbe, gotAllowedErrorsExceeded, gotTooManyProbesTriggered bool
+
+			readinessFailRegex := regexp.MustCompile("deploy/mydeploy5 ERROR: po/mydeploy5-[a-z0-9]+-[a-z0-9]+ container/main: Unhealthy: Readiness probe failed")
+
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+				OutputLineHandler: func(line string) {
+					if readinessFailRegex.MatchString(line) {
+						gotStoppedByReadinessProbe = true
+					}
+					if strings.Contains(line, `Allowed failures count for deploy/mydeploy5 exceeded 2 errors: stop tracking immediately!`) {
+						gotAllowedErrorsExceeded = true
+					}
+					if isTooManyProbesTriggered(line, "readiness", 7) {
+						gotTooManyProbesTriggered = true
+					}
+
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy5 := deployState(statusProgressLine, "mydeploy5"); mydeploy5 != nil {
+							unknownDeploymentStateForbidden(mydeploy5)
+						}
+					}
+				},
+			})).Should(MatchError("exit code 1"))
+
+			Expect(gotStoppedByReadinessProbe).Should(BeTrue())
+			Expect(gotAllowedErrorsExceeded).Should(BeTrue())
+			Expect(gotTooManyProbesTriggered).Should(BeFalse())
+		})
+	})
+
+	Context("when chart contains resource with failing liveness probe", func() {
+		AfterEach(func() {
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		})
+
+		It("should report that the container liveness probe failed and werf should fail", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app6", "initial commit")
+
+			var gotKilledByLivenessProbe, gotAllowedErrorsExceeded bool
+
+			livenessFailRegex := regexp.MustCompile("deploy/mydeploy6 ERROR: po/mydeploy6-[a-z0-9]+-[a-z0-9]+ container/main: Killing: Container main failed liveness probe, will be restarted")
+
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+				OutputLineHandler: func(line string) {
+					if livenessFailRegex.MatchString(line) {
+						gotKilledByLivenessProbe = true
+					}
+					if strings.Contains(line, `Allowed failures count for deploy/mydeploy6 exceeded 0 errors: stop tracking immediately!`) {
+						gotAllowedErrorsExceeded = true
+					}
+
+					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
+						if mydeploy6 := deployState(statusProgressLine, "mydeploy6"); mydeploy6 != nil {
+							unknownDeploymentStateForbidden(mydeploy6)
+						}
+					}
+				},
+			})).Should(MatchError("exit code 1"))
+
+			Expect(gotKilledByLivenessProbe).Should(BeTrue())
 			Expect(gotAllowedErrorsExceeded).Should(BeTrue())
 		})
 	})

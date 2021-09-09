@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy3
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: mydeploy3
+  template:
+    metadata:
+      labels:
+        service: mydeploy3
+    spec:
+      initContainers:
+      - name: init
+        command: [ "true" ]
+        image: ubuntu:18.04
+      containers:
+      - name: main
+        command:
+        - sh
+        - -euc
+        - |
+          # Let the startup probe fail once
+          until [ -e /startup_triggered ]; do sleep 1; done
+          sleep 1
+          touch /startup
+          until [ -e /startup_succeeded ]; do sleep 1; done
+
+          # Let the readiness and liveness probes fail once
+          until [ -e /readiness_triggered ] && [ -e /liveness_triggered ]; do sleep 1; done
+          sleep 1
+          touch /readiness /liveness
+          until [ -e /readiness_succeeded ] && [ -e /liveness_succeeded ]; do sleep 1; done
+
+          tail -f /dev/null
+        image: ubuntu:18.04
+        startupProbe:
+          exec:
+            command: [ "sh", "-euc", "touch /startup_triggered && test -e /startup && touch /startup_succeeded" ]
+        readinessProbe:
+          exec:
+            command: [ "sh", "-euc", "touch /readiness_triggered && test -e /readiness && touch /readiness_succeeded" ]
+        livenessProbe:
+          exec:
+            command: [ "sh", "-euc", "touch /liveness_triggered && test -e /liveness && touch /liveness_succeeded" ]
+      - name: never-fails
+        command: [ "tail", "-f", "/dev/null" ]
+        image: ubuntu:18.04
+        startupProbe:
+          exec:
+            command: [ "true" ]
+        readinessProbe:
+          exec:
+            command: [ "true" ]
+        livenessProbe:
+          exec:
+            command: [ "true" ]
