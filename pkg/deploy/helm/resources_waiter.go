@@ -3,6 +3,7 @@ package helm
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"regexp"
 	"strconv"
@@ -230,10 +231,11 @@ func prepareMultitrackSpec(metadataName, resourceNameOrKind, namespace string, a
 	*defaultAllowFailuresCount = applyAllowedFailuresCountMultiplier(failuresCountOptions.defaultPerReplica, failuresCountOptions.multiplier)
 
 	multitrackSpec := &multitrack.MultitrackSpec{
-		ResourceName:            metadataName,
-		Namespace:               namespace,
-		LogRegexByContainerName: map[string]*regexp.Regexp{},
-		AllowFailuresCount:      defaultAllowFailuresCount,
+		ResourceName:                             metadataName,
+		Namespace:                                namespace,
+		LogRegexByContainerName:                  map[string]*regexp.Regexp{},
+		AllowFailuresCount:                       defaultAllowFailuresCount,
+		IgnoreReadinessProbeFailsByContainerName: map[string]time.Duration{},
 	}
 
 mainLoop:
@@ -339,6 +341,19 @@ mainLoop:
 					}
 
 					multitrackSpec.LogRegexByContainerName[containerName] = regexpValue
+				}
+			}
+			if strings.HasPrefix(annoName, IgnoreReadinessProbeFailsForPrefix) {
+				if containerName := strings.TrimPrefix(annoName, IgnoreReadinessProbeFailsForPrefix); containerName != "" {
+					ignoreDuration, err := time.ParseDuration(annoValue)
+					if err != nil {
+						return nil, fmt.Errorf("%s: %s", invalidAnnoValueError, err)
+					}
+					if math.Signbit(ignoreDuration.Seconds()) {
+						return nil, fmt.Errorf("%s: can't be less than 0", invalidAnnoValueError)
+					}
+
+					multitrackSpec.IgnoreReadinessProbeFailsByContainerName[containerName] = ignoreDuration
 				}
 			}
 		}

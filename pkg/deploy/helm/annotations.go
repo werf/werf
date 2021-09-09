@@ -9,6 +9,8 @@ const (
 	LogRegexAnnoName      = "werf.io/log-regex"
 	LogRegexForAnnoPrefix = "werf.io/log-regex-for-"
 
+	IgnoreReadinessProbeFailsForPrefix = "werf.io/ignore-readiness-probe-fails-for-"
+
 	SkipLogsAnnoName              = "werf.io/skip-logs"
 	SkipLogsForContainersAnnoName = "werf.io/skip-logs-for-containers"
 	ShowLogsOnlyForContainers     = "werf.io/show-logs-only-for-containers"
