@@ -11,6 +11,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/track-termination-mode`](#track-termination-mode) — defines a condition when werf should stop tracking of the resource.
  - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occurred after failures threshold has been reached for the resource during deploy process.
  - [`werf.io/failures-allowed-per-replica`](#failures-allowed-per-replica) — defines a threshold of failures after which resource will be considered as failed and werf will handle this situation using [fail mode](#fail-mode).
+ - [`werf.io/ignore-readiness-probe-fails-for-CONTAINER_NAME`](#ignore-readiness-probe-failures-for-container) — override automatically calculated ignore period during which readiness probe failures will not mark resource as failed.
  - [`werf.io/log-regex`](#log-regex) — specifies a template for werf to show only those log lines of the resource that fit the specified regex template.
  - [`werf.io/log-regex-for-CONTAINER_NAME`](#log-regex-for-container) — specifies a template for werf to show only those log lines of the resource container that fit the specified regex template.
  - [`werf.io/skip-logs`](#skip-logs) — completely disable logs printing for the resource.
@@ -60,6 +61,21 @@ Defines how werf will handle a resource failure condition which occurred after f
 `"werf.io/failures-allowed-per-replica": "NUMBER"`
 
 By default, one error per replica is allowed before considering the whole deployment process unsuccessful. This setting defines a threshold of failures after which resource will be considered as failed and werf will handle this situation using [fail mode](#fail-mode).
+
+## Ignore readiness probe failures for container
+
+`"werf.io/ignore-readiness-probe-fails-for-CONTAINER_NAME": "TIME"`
+
+This annotation allows to override the result of automatically calculated period during which readiness probe failures
+will be ignored and won't fail the rollout. After this period the first failed readiness probe fails the rollout. By
+default, the ignore period is automatically calculated based on readiness probe configuration. Note that
+if `failureThreshold: 1` specified in the probe configuration then the first received failed probe will fail the
+rollout, regardless of ignore period.
+
+The value format is as specified here: https://pkg.go.dev/time#ParseDuration
+
+Example:
+`"werf.io/ignore-readiness-probe-fails-for-backend": "20s"`
 
 ## Log regex
 

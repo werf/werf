@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy5
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: mydeploy5
+  template:
+    metadata:
+      labels:
+        service: mydeploy5
+    spec:
+      initContainers:
+      - name: init
+        command: [ "true" ]
+        image: ubuntu:18.04
+      containers:
+      - name: main
+        command:
+        - sh
+        - -euc
+        - |
+          until [ -e /startup_succeeded ]; do sleep 1; done
+
+          while sleep 1; do
+            echo Count of triggered readiness probes: $(ls -1 /readiness_triggered_* 2>/dev/null | wc -l)
+          done
+        image: ubuntu:18.04
+        startupProbe:
+          exec:
+            command: [ "touch", "/startup_succeeded" ]
+          failureThreshold: 2
+          periodSeconds: 5
+          timeoutSeconds: 5
+          initialDelaySeconds: 10
+        readinessProbe:
+          exec:
+            command: [ "sh", "-euc", "touch /readiness_triggered_$(date +%s); sleep 2; false" ]
+          failureThreshold: 2
+          periodSeconds: 5
+          timeoutSeconds: 5
+          initialDelaySeconds: 5
+        livenessProbe:
+          exec:
+            command: [ "true" ]
+      - name: never-fails
+        command: [ "tail", "-f", "/dev/null" ]
+        image: ubuntu:18.04
+        startupProbe:
+          exec:
+            command: [ "true" ]
+        readinessProbe:
+          exec:
+            command: [ "true" ]
+        livenessProbe:
+          exec:
+            command: [ "true" ]
