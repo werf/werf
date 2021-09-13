@@ -391,7 +391,7 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 	var dockerImageName string
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 		if *commonCmdData.SkipBuild {
-			if err := c.ShouldBeBuilt(ctx); err != nil {
+			if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
 				return err
 			}
 		} else {

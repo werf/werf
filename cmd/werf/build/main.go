@@ -108,6 +108,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupReportPath(&commonCmdData, cmd)
 	common.SetupReportFormat(&commonCmdData, cmd)
 
+	common.SetupAddCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
@@ -252,7 +253,7 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
 
-	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
+	buildOptions, err := common.GetBuildOptions(&commonCmdData, giterminismManager, werfConfig)
 	if err != nil {
 		return err
 	}

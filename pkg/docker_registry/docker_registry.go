@@ -17,6 +17,8 @@ type DockerRegistry interface {
 	CreateRepo(ctx context.Context, reference string) error
 	DeleteRepo(ctx context.Context, reference string) error
 	Tags(ctx context.Context, reference string) ([]string, error)
+	CheckRepoImageCustomTag(ctx context.Context, repoImage *image.Info, tag string) error
+	TagRepoImage(ctx context.Context, repoImage *image.Info, tag string) error
 	GetRepoImage(ctx context.Context, reference string) (*image.Info, error)
 	TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error)
 	IsRepoImageExists(ctx context.Context, reference string) (bool, error)

@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	// TODO: use embedded file openapi_spec.yaml instead
 	schemaYaml = `type: object
 required:
   - giterminismConfigVersion
@@ -25,11 +24,19 @@ properties:
         enum: [1]
       - type: string
         enum: ["1"]
+  cli:
+    $ref: '#/definitions/CLI'
   config:
     $ref: '#/definitions/Config'
   helm:
     $ref: '#/definitions/Helm'
 definitions:
+  CLI:
+    type: object
+    additionalProperties: {}
+    properties:
+      allowCustomTags:
+        type: boolean
   Config:
     type: object
     additionalProperties: {}
