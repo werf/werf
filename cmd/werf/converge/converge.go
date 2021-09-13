@@ -394,11 +394,17 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 		return err
 	}
 
+	useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
+	if err != nil {
+		return err
+	}
+
 	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
+		CustomTagFunc:            useCustomTagFunc,
 	}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else {

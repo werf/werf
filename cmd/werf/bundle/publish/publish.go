@@ -331,7 +331,13 @@ func runPublish(ctx context.Context) error {
 	if err := wc.SetWerfConfig(werfConfig); err != nil {
 		return err
 	}
-	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{Env: *commonCmdData.Environment}); err != nil {
+
+	useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
+	if err != nil {
+		return err
+	}
+
+	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{Env: *commonCmdData.Environment, CustomTagFunc: useCustomTagFunc}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else {
 		wc.SetServiceValues(vals)
