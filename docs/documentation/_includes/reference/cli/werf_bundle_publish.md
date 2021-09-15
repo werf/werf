@@ -138,6 +138,14 @@ werf bundle publish [options]
             STAGE_NAME should be one of the following: from, beforeInstall, importsBeforeInstall,   
             gitArchive, install, importsAfterInstall, beforeSetup, importsBeforeSetup, setup,       
             importsAfterSetup, gitCache, gitLatestPatch, dockerInstructions, dockerfile
+      --kube-config=''
+            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
+            $KUBECONFIG)
+      --kube-config-base64=''
+            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
+            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
+      --kube-context=''
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
