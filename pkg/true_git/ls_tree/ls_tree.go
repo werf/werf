@@ -157,13 +157,20 @@ func getCommitTree(repoHandle repo_handle.Handle, commit string) (*object.Tree, 
 		return nil, fmt.Errorf("invalid commit %q: %s", commit, err)
 	}
 
-	commitObj, err := repoHandle.Repository().CommitObject(commitHash)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get %s commit info: %s", commit, err)
-	}
+	var tree *object.Tree
+	if err := repoHandle.WithRepository(func(repository repo_handle.Repository) error {
+		commitObj, err := repository.CommitObject(commitHash)
+		if err != nil {
+			return fmt.Errorf("unable to get %s commit info: %s", commit, err)
+		}
 
-	tree, err := commitObj.Tree()
-	if err != nil {
+		tree, err = commitObj.Tree()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
@@ -422,15 +429,21 @@ func getSubmoduleTree(repoHandle repo_handle.SubmoduleHandle) (*object.Tree, err
 	submoduleName := repoHandle.Config().Name
 	expectedCommit := repoHandle.Status().Expected
 
-	submoduleRepository := repoHandle.Repository()
-	commit, err := submoduleRepository.CommitObject(expectedCommit)
-	if err != nil {
-		return nil, fmt.Errorf("cannot inspect submodule %q commit %q: %s", submoduleName, expectedCommit, err)
-	}
+	var submoduleTree *object.Tree
+	if err := repoHandle.WithRepository(func(submoduleRepository repo_handle.Repository) error {
+		commit, err := submoduleRepository.CommitObject(expectedCommit)
+		if err != nil {
+			return fmt.Errorf("cannot inspect submodule %q commit %q: %s", submoduleName, expectedCommit, err)
+		}
 
-	submoduleTree, err := commit.Tree()
-	if err != nil {
-		return nil, fmt.Errorf("cannot get submodule %q commit %q tree: %s", submoduleName, expectedCommit, err)
+		submoduleTree, err = commit.Tree()
+		if err != nil {
+			return fmt.Errorf("cannot get submodule %q commit %q tree: %s", submoduleName, expectedCommit, err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return submoduleTree, nil

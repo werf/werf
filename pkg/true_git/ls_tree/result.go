@@ -330,21 +330,28 @@ func (r *Result) LsTreeEntryContent(mainRepoHandle repo_handle.Handle, relPath s
 		panic("unexpected condition")
 	}
 
-	obj, err := entryRepoHandle.Repository().BlobObject(entry.Hash)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get tree entry %q blob object: %s", entry.FullFilepath, err)
-	}
+	var data []byte
+	if err := entryRepoHandle.WithRepository(func(entryRepository repo_handle.Repository) error {
+		obj, err := entryRepository.BlobObject(entry.Hash)
+		if err != nil {
+			return fmt.Errorf("unable to get tree entry %q blob object: %s", entry.FullFilepath, err)
+		}
 
-	f, err := obj.Reader()
-	if err != nil {
+		f, err := obj.Reader()
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		data, err = ioutil.ReadAll(f)
+		if err != nil {
+			return fmt.Errorf("unable to read tree entry %q content: %s", relPath, err)
+		}
+
+		return nil
+	}); err != nil {
 		return nil, err
 	}
-	defer f.Close()
 
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read tree entry %q content: %s", relPath, err)
-	}
-
-	return data, err
+	return data, nil
 }
