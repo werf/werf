@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -202,7 +203,14 @@ func editor() (string, []string, error) {
 		return editorFields[0], editorFields[1:], nil
 	}
 
-	for _, bin := range []string{"vim", "vi", "nano"} {
+	var defaultEditors []string
+	if runtime.GOOS == "windows" {
+		defaultEditors = []string{"notepad"}
+	} else {
+		defaultEditors = []string{"vim", "vi", "nano"}
+	}
+
+	for _, bin := range defaultEditors {
 		if _, err := exec.LookPath(bin); err != nil {
 			continue
 		}
