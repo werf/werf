@@ -48,7 +48,7 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
   # Print docker-compose command without executing
   $ werf compose run --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="-e TOKEN=123" --dry-run --quiet -- test
   export WERF_TEST_DOCKER_IMAGE_NAME=test:03dc2e0bceb09833f54fcab39e89e6e4137316ebbe544aeec8184420-1620123105753
-  docker-compose -f docker-compose-test.yml up -e TOKEN=123 -- test
+  docker-compose -f docker-compose-test.yml run -e TOKEN=123 -- test
 ```
 
 {{ header }} Options
