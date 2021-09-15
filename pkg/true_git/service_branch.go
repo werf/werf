@@ -170,7 +170,7 @@ func runGitAddCmd(ctx context.Context, sourceWorktreeDir string, serviceWorktree
 	}
 
 	if dryRun {
-		gitAddArgs = append(gitAddArgs, "--dry-run")
+		gitAddArgs = append(gitAddArgs, "--dry-run", "--ignore-missing")
 	}
 
 	var pathSpecList []string
