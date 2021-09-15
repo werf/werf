@@ -105,6 +105,10 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
+
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
 

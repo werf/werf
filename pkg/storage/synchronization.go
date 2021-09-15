@@ -10,10 +10,11 @@ var (
 )
 
 type KubernetesSynchronizationParams struct {
-	ConfigDataBase64 string
-	ConfigPath       string
-	ConfigContext    string
-	Namespace        string
+	ConfigContext       string
+	ConfigPath          string
+	ConfigDataBase64    string
+	ConfigPathMergeList *[]string
+	Namespace           string
 }
 
 func ParseKubernetesSynchronization(address string) (*KubernetesSynchronizationParams, error) {
