@@ -2,6 +2,7 @@ package repo_handle
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -10,6 +11,8 @@ import (
 type handle struct {
 	repository          *git.Repository
 	submoduleHandleList []SubmoduleHandle
+
+	mutex sync.Mutex
 }
 
 func newHandle(repository *git.Repository) *handle {
@@ -18,8 +21,11 @@ func newHandle(repository *git.Repository) *handle {
 	}
 }
 
-func (h *handle) Repository() Repository {
-	return h.repository
+func (h *handle) WithRepository(f func(r Repository) error) error {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	return f(h.repository)
 }
 
 func (h *handle) Submodule(submodulePath string) (SubmoduleHandle, error) {

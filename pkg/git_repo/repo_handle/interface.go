@@ -13,7 +13,7 @@ import (
 // caching the necessary data from the worktree during initialization,
 // and then working exclusively with git objects.
 type Handle interface {
-	Repository() Repository
+	WithRepository(func(r Repository) error) error
 	Submodule(submodulePath string) (SubmoduleHandle, error)
 	Submodules() []SubmoduleHandle
 }
