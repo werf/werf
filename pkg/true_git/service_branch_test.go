@@ -243,9 +243,10 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 					"git",
 					"show", serviceCommit+":"+trackedFileRelPath,
 				)
-
 				Ω(err).Should(HaveOccurred())
-				Ω(string(bytes)).Should(Equal(fmt.Sprintf("fatal: Path '%s' does not exist in '%s'\n", trackedFileRelPath, serviceCommit)))
+
+				output := string(bytes)
+				Ω(output).Should(ContainSubstring(fmt.Sprintf("'%s' does not exist in '%s'", trackedFileRelPath, serviceCommit)))
 			})
 		})
 	})
@@ -309,9 +310,10 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				"git",
 				"show", serviceCommit+":"+untrackedFileRelPath,
 			)
-
 			Ω(err).Should(HaveOccurred())
-			Ω(string(bytes)).Should(Equal(fmt.Sprintf("fatal: Path '%s' exists on disk, but not in '%s'.\n", untrackedFileRelPath, serviceCommit)))
+
+			output := string(bytes)
+			Ω(output).Should(ContainSubstring(fmt.Sprintf("'%s' exists on disk, but not in '%s'", untrackedFileRelPath, serviceCommit)))
 		})
 	})
 })
