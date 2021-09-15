@@ -40,7 +40,7 @@ func Status(ctx context.Context, workTreeDir string) (r Result, err error) {
 func status(ctx context.Context, workTreeDir string) (Result, error) {
 	result := Result{}
 
-	args := append([]string{}, "status", "--porcelain=v2", "--untracked-files=all", "--no-renames")
+	args := append([]string{}, "-c", "core.quotePath=false", "status", "--porcelain=v2", "--untracked-files=all", "--no-renames")
 	cmd := exec.Command("git", args...)
 	cmd.Dir = workTreeDir
 
