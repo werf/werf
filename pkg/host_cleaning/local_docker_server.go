@@ -284,8 +284,6 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 					}
 					processedDockerImagesIDs = append(processedDockerImagesIDs, desc.ImageSummary.ID)
 
-					fmt.Printf("IMAGE: %#v\n", desc.ImageSummary)
-
 					imageRemoved := false
 
 					if len(desc.ImageSummary.RepoTags) > 0 {
