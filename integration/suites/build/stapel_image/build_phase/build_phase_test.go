@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gookit/color"
 	"github.com/otiai10/copy"
 	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/integration/pkg/utils/liveexec"
@@ -30,16 +31,13 @@ func ExtractStageInfoFromOutputLine(stageInfo *StageInfo, line string) *StageInf
 	}
 
 	fields := strings.Fields(line)
-	if strings.Contains(line, "image_id: ") {
+	if strings.Contains(line, "id: ") {
 		stageInfo.ImageID = fields[len(fields)-1]
-	}
-	if strings.Contains(line, "repository: ") {
-		stageInfo.Repository = fields[len(fields)-1]
 	}
 	if strings.Contains(line, "name: ") {
 		nameParts := strings.Split(fields[len(fields)-1], ":")
-		stageInfo.Repository = nameParts[0]
-		stageInfo.Tag = nameParts[1]
+		stageInfo.Repository = color.ClearCode(nameParts[0])
+		stageInfo.Tag = color.ClearCode(nameParts[1])
 
 		sigAndID := strings.SplitN(stageInfo.Tag, "-", 2)
 		stageInfo.Digest = sigAndID[0]
