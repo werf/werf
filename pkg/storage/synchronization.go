@@ -13,7 +13,7 @@ type KubernetesSynchronizationParams struct {
 	ConfigContext       string
 	ConfigPath          string
 	ConfigDataBase64    string
-	ConfigPathMergeList *[]string
+	ConfigPathMergeList []string
 	Namespace           string
 }
 

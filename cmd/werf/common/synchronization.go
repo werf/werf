@@ -108,7 +108,7 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 }
 
 func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
-	getKubeParamsFunc := func(address string, configPathMergeList *[]string) (*SynchronizationParams, error) {
+	getKubeParamsFunc := func(address string, commonKubeInitializer *OndemandKubeInitializer) (*SynchronizationParams, error) {
 		res := &SynchronizationParams{}
 		res.SynchronizationType = KubernetesSynchronization
 		res.Address = address
@@ -117,9 +117,23 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 			return nil, fmt.Errorf("unable to parse synchronization address %s: %s", res.Address, err)
 		} else {
 			res.KubeParams = params
-			res.KubeParams.ConfigPathMergeList = configPathMergeList
-			return res, nil
 		}
+
+		if res.KubeParams.ConfigPath == "" {
+			res.KubeParams.ConfigPath = commonKubeInitializer.KubeConfig
+		}
+		if res.KubeParams.ConfigContext == "" {
+			res.KubeParams.ConfigContext = commonKubeInitializer.KubeContext
+		}
+		if res.KubeParams.ConfigDataBase64 == "" {
+			res.KubeParams.ConfigDataBase64 = commonKubeInitializer.KubeConfigBase64
+		}
+		if res.KubeParams.ConfigPathMergeList == nil {
+			res.KubeParams.ConfigPathMergeList = commonKubeInitializer.KubeConfigPathMergeList
+		}
+
+		return res, nil
+
 	}
 
 	getHttpParamsFunc := func(synchronization string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
@@ -150,7 +164,7 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		return &SynchronizationParams{Address: *cmdData.Synchronization, SynchronizationType: LocalSynchronization}, nil
 	} else if strings.HasPrefix(*cmdData.Synchronization, "kubernetes://") {
 		checkSynchronizationKubernetesParamsForWarnings(cmdData)
-		return getKubeParamsFunc(*cmdData.Synchronization, cmdData.KubeConfigPathMergeList)
+		return getKubeParamsFunc(*cmdData.Synchronization, GetOndemandKubeInitializer())
 	} else if strings.HasPrefix(*cmdData.Synchronization, "http://") || strings.HasPrefix(*cmdData.Synchronization, "https://") {
 		return getHttpParamsFunc(*cmdData.Synchronization, stagesStorage)
 	} else {
@@ -166,10 +180,10 @@ func GetStagesStorageCache(synchronization *SynchronizationParams) (storage.Stag
 		if config, err := kube.GetKubeConfig(kube.KubeConfigOptions{
 			ConfigPath:          synchronization.KubeParams.ConfigPath,
 			ConfigDataBase64:    synchronization.KubeParams.ConfigDataBase64,
-			ConfigPathMergeList: *synchronization.KubeParams.ConfigPathMergeList,
+			ConfigPathMergeList: synchronization.KubeParams.ConfigPathMergeList,
 			Context:             synchronization.KubeParams.ConfigContext,
 		}); err != nil {
-			return nil, fmt.Errorf("unable to load synchronization kube config %q (context %q)", synchronization.KubeParams.ConfigPath, synchronization.KubeParams.ConfigContext)
+			return nil, fmt.Errorf("unable to load synchronization kube config (context %q): %s", synchronization.KubeParams.ConfigContext, err)
 		} else if client, err := kubernetes.NewForConfig(config.Config); err != nil {
 			return nil, fmt.Errorf("unable to create synchronization kubernetes client: %s", err)
 		} else {
@@ -190,11 +204,12 @@ func GetStorageLockManager(ctx context.Context, synchronization *Synchronization
 		return storage.NewGenericLockManager(werf.GetHostLocker()), nil
 	case KubernetesSynchronization:
 		if config, err := kube.GetKubeConfig(kube.KubeConfigOptions{
-			ConfigPath:       synchronization.KubeParams.ConfigPath,
-			ConfigDataBase64: synchronization.KubeParams.ConfigDataBase64,
-			Context:          synchronization.KubeParams.ConfigContext,
+			ConfigPath:          synchronization.KubeParams.ConfigPath,
+			ConfigDataBase64:    synchronization.KubeParams.ConfigDataBase64,
+			ConfigPathMergeList: synchronization.KubeParams.ConfigPathMergeList,
+			Context:             synchronization.KubeParams.ConfigContext,
 		}); err != nil {
-			return nil, fmt.Errorf("unable to load synchronization kube config %q (context %q)", synchronization.KubeParams.ConfigPath, synchronization.KubeParams.ConfigContext)
+			return nil, fmt.Errorf("unable to load synchronization kube config %q (context %q): %s", synchronization.KubeParams.ConfigPath, synchronization.KubeParams.ConfigContext, err)
 		} else if dynamicClient, err := dynamic.NewForConfig(config.Config); err != nil {
 			return nil, fmt.Errorf("unable to create synchronization kubernetes dynamic client: %s", err)
 		} else if client, err := kubernetes.NewForConfig(config.Config); err != nil {
