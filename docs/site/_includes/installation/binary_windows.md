@@ -2,7 +2,7 @@
 $WERF_BIN_PATH = "C:\ProgramData\werf\bin"
 mkdir $WERF_BIN_PATH
 
-Invoke-WebRequest -Uri https://tuf.werf.dev/targets/releases/{{ include.version }}/windows-{{ include.arch }}/bin/werf.exe -OutFile $WERF_BIN_PATH\werf.exe
+Invoke-WebRequest -Uri https://tuf.werf.io/targets/releases/{{ include.version }}/windows-{{ include.arch }}/bin/werf.exe -OutFile $WERF_BIN_PATH\werf.exe
 
 [Environment]::SetEnvironmentVariable(
     "Path",
