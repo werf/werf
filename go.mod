@@ -16,10 +16,13 @@ require (
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
-	github.com/containerd/containerd v1.5.0-beta.4 // indirect
+	github.com/containerd/stargz-snapshotter/estargz v0.8.0 // indirect
+	github.com/containers/buildah v1.23.0 // indirect
+	github.com/containers/image/v5 v5.16.0 // indirect
+	github.com/containers/storage v1.36.0 // indirect
 	github.com/docker/cli v20.10.5+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v20.10.5+incompatible
+	github.com/docker/docker v20.10.8+incompatible
 	github.com/docker/go v1.5.1-1 // indirect
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -35,16 +38,17 @@ require (
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/google/go-containerregistry v0.5.1
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.2.0
 	github.com/gookit/color v1.3.7
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
-	github.com/hashicorp/go-multierror v1.0.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.2.0
 	github.com/helm/helm-2to3 v0.8.1
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
+	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.1.1
@@ -52,8 +56,8 @@ require (
 	github.com/moby/sys/symlink v0.1.0 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
 	github.com/oleiade/reflections v1.0.1 // indirect
-	github.com/onsi/ginkgo v1.12.0
-	github.com/onsi/gomega v1.9.0
+	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/gomega v1.16.0
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1
@@ -62,7 +66,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
@@ -71,15 +75,15 @@ require (
 	github.com/werf/logboek v0.5.4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
-	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
-	gopkg.in/ini.v1 v1.57.0
+	gopkg.in/ini.v1 v1.62.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	helm.sh/helm/v3 v3.6.3
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
@@ -91,6 +95,7 @@ require (
 	k8s.io/kubectl v0.21.0
 	mvdan.cc/xurls v1.1.0
 	rsc.io/letsencrypt v0.0.3 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.10.15 // indirect
 	sigs.k8s.io/yaml v1.2.1-0.20210128145534-11e43d4a8b92
 )
 
