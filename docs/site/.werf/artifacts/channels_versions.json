@@ -1,12 +1,12 @@
 {
   "versions": {
-    "alpha-1.1": "v1.1.23+fix21",
-    "beta-1.1": "v1.1.23+fix21",
-    "ea-1.1": "v1.1.23+fix21",
-    "stable-1.1": "v1.1.23+fix6",
-    "rock-solid-1.1": "v1.1.22+fix37",
-    "alpha-1.2": "v1.2.9+fix9",
-    "beta-1.2": "v1.2.9+fix9",
-    "ea-1.2": "v1.2.8+fix13"
+    "alpha-1.1": "v1.1.23+fix50",
+    "beta-1.1": "v1.1.23+fix50",
+    "ea-1.1": "v1.1.23+fix50",
+    "stable-1.1": "v1.1.23+fix50",
+    "rock-solid-1.1": "v1.1.23+fix50",
+    "alpha-1.2": "v1.2.18",
+    "beta-1.2": "v1.2.17+fix1",
+    "ea-1.2": "v1.2.17+fix1"
   }
 }
