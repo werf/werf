@@ -14,7 +14,7 @@ import (
 )
 
 func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*helm_v3.RegistryClientHandle, error) {
-	if registryClient, err := helm_v3.NewRegistryClient(logboek.Context(ctx).Debug().IsAccepted(), *commonCmdData.InsecureRegistry, logboek.Context(ctx).OutStream()); err != nil {
+	if registryClient, err := helm_v3.NewRegistryClient(logboek.Context(ctx).Debug().IsAccepted(), *commonCmdData.InsecureHelmDependencies, logboek.Context(ctx).OutStream()); err != nil {
 		return nil, err
 	} else {
 		return helm_v3.NewRegistryClientHandle(registryClient), nil

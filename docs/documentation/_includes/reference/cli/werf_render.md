@@ -103,6 +103,9 @@ werf render [options]
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --include-crds=true
             Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)
+      --insecure-helm-dependencies=false
+            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
+            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --introspect-before-error=false
