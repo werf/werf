@@ -90,6 +90,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupIntrospectAfterError(&commonCmdData, cmd)

@@ -82,6 +82,7 @@ type CmdData struct {
 	DockerConfig                    *string
 	InsecureRegistry                *bool
 	SkipTlsVerifyRegistry           *bool
+	InsecureHelmDependencies        *bool
 	DryRun                          *bool
 	KeepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
@@ -513,6 +514,11 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 	} else {
 		return v
 	}
+}
+
+func SetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.InsecureHelmDependencies = new(bool)
+	cmd.Flags().BoolVarP(cmdData.InsecureHelmDependencies, "insecure-helm-dependencies", "", GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), "Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)")
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {

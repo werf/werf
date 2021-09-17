@@ -43,6 +43,9 @@ werf bundle download [options]
             quay.io token for  (default $WERF_FINAL_REPO_QUAY_TOKEN)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --insecure-helm-dependencies=false
+            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
+            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --log-color-mode='auto'

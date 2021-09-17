@@ -70,14 +70,12 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd)
 	common.SetupHomeDir(&commonCmdData, cmd)
 
-	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-
 	common.SetupStagesStorageOptions(&commonCmdData, cmd) // FIXME
 	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)

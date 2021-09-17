@@ -69,7 +69,7 @@ func NewCmd() *cobra.Command {
 	cmd_werf_common.SetupHooksStatusProgressPeriod(&_commonCmdData, cmd)
 	cmd_werf_common.SetupReleasesHistoryMax(&_commonCmdData, cmd)
 	cmd_werf_common.SetupLogOptions(&_commonCmdData, cmd)
-	cmd_werf_common.SetupInsecureRegistry(&_commonCmdData, cmd)
+	cmd_werf_common.SetupInsecureHelmDependencies(&_commonCmdData, cmd)
 
 	cmd.AddCommand(
 		cmd_helm.NewUninstallCmd(actionConfig, os.Stdout, cmd_helm.UninstallCmdOptions{}),

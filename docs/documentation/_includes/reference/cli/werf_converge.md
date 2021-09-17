@@ -155,6 +155,9 @@ werf converge --repo registry.mydomain.com/web --env production
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
+      --insecure-helm-dependencies=false
+            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
+            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --introspect-before-error=false

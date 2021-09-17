@@ -56,6 +56,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd)
 
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupStagesStorageOptions(&commonCmdData, cmd) // FIXME

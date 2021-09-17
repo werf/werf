@@ -63,6 +63,7 @@ WARNING: Images that are being used in the Kubernetes cluster will also be delet
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
