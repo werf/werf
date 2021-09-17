@@ -1,13 +1,13 @@
-name: Release Publisher
+name: Multiwerf Release Publisher
 on:
-  push:
-    tags:
-    - 'v*'
+  create:
+
 env:
   GO111MODULE: on
 
 jobs:
   publish_release:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     name: Publish werf release
     runs-on: [self-hosted, linux]
     steps:
@@ -24,4 +24,3 @@ jobs:
       shell: bash
       env:
         PUBLISH_BINTRAY_AUTH: ${{ secrets.PUBLISH_BINTRAY_AUTH }}
-        PUBLISH_GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
