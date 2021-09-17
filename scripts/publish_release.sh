@@ -16,4 +16,3 @@ fi
 
 ( go_build $VERSION ) || ( echo "Failed to build!" 1>&2 && exit 1 )
 ( publish_binaries $VERSION ) || ( echo "Failed to publish release binaries!" 1>&2 && exit 1 )
-( create_github_release $VERSION ) || ( echo "Failed to create github release!" 1>&2 && exit 1 )
