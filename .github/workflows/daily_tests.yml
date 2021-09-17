@@ -348,7 +348,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu]
-        k8s_version: [1.16, 1.17, 1.18, 1.19]
+        k8s_version: [1.19]
 
     runs-on: ${{ matrix.os }}-latest
     steps:
@@ -390,9 +390,6 @@ jobs:
         echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
       shell: bash
       env:
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
 
     - name: Test
@@ -420,7 +417,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu]
-        k8s_version: [1.16, 1.17, 1.18, 1.19]
+        k8s_version: [1.19]
 
     runs-on: ${{ matrix.os }}-latest
     env:
@@ -523,9 +520,6 @@ jobs:
         echo WERF_TEST_K8S_BASE64_KUBECONFIG=$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(echo ${{ matrix.k8s_version }} | tr . _)) >> $GITHUB_ENV
       shell: bash
       env:
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
 
     - name: Test
@@ -639,7 +633,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS, windows]
-        k8s_version: [1.16, 1.17, 1.18, 1.19]
+        k8s_version: [1.19]
     runs-on: [self-hosted, "${{ matrix.os }}-latest"]
     steps:
 
@@ -687,9 +681,6 @@ jobs:
         echo DOCKER_CONFIG=$DOCKER_CONFIG >> $GITHUB_ENV
       shell: bash
       env:
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_16: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_16 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_17: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_17 }}
-        WERF_TEST_K8S_BASE64_KUBECONFIG_1_18: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_18 }}
         WERF_TEST_K8S_BASE64_KUBECONFIG_1_19: ${{ secrets.WERF_TEST_K8S_BASE64_KUBECONFIG_1_19 }}
 
     - name: Test (macOS)
