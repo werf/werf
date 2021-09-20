@@ -14,5 +14,6 @@ jobs:
         release-type: go
         bump-minor-pre-major: true
         bump-patch-for-minor-pre-major: true
+        token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 #        release-notes-header: ''
 #        release-notes-footer: ''
