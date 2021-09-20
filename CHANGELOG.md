@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.1.27](https://www.github.com/werf/werf/compare/v1.1.26...v1.1.27) (2021-09-20)
+
+
+### Bug Fixes
+
+* trigger release ([1c9b2f2](https://www.github.com/werf/werf/commit/1c9b2f23ba17fe9bee916f29935501c06f74a7a7))
+
 ### [1.1.26](https://www.github.com/werf/werf/compare/v1.1.25...v1.1.26) (2021-09-20)
 
 
