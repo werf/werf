@@ -79,28 +79,16 @@ arch:
       <div class="installation-selector__title">Installation method</div>
       <div class="tabs tabs_simple">
         <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="method" data-install-tab="trdl">using trdl (recommended)</a>
+          data-install-tab-group="method" data-install-tab="trdl">with trdl (recommended)</a>
         <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="method" data-install-tab="binary">downloading binary package</a>
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="method" data-install-tab="source">compiling from source</a>
+          data-install-tab-group="method" data-install-tab="binary">download binary file</a>
       </div>
     </div><!-- /selector -->
   </div><!-- /selector-row -->
 
   <div class="installation-instruction">
-      <h1 class="installation-instruction__title">
-        Install <span data-install-info="channel"></span> werf <span data-install-info="version"></span><br>
-        for <span data-install-info="os"></span> by <span data-install-info="method"></span>
-      </h1>
       <div class="docs">
-<div class="details">
-<h2 id="install-dependencies"><a href="javascript:void(0)" class="details__summary">Install werf dependencies</a></h2>
-<div class="details__content" markdown="1">
-{% include en/installation/werf_dependencies.md %}
-</div>
-</div>
-<h2 id="install-werf">Install werf</h2>
+<h2 id="install-werf">Installation</h2>
 <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="trdl">
 <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
   {% for version in page.versions %}
@@ -110,12 +98,6 @@ arch:
           {% for arch in page.arch %}
             <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
 <div markdown="1">{% include en/installation/trdl_linux.md version=version channel=channel arch=arch %}</div>
-<div class="details">
-<h2><a href="javascript:void(0)" class="details__summary">How to use in the CI/CD system?</a></h2>
-<div class="details__content" markdown="1">
-{% include en/installation/trdl_unix/how_to_use_in_the_ci_cd.md version=version channel=channel arch=arch %}
-</div>
-</div>
             </div>
           {% endfor %}
         </div>
@@ -131,12 +113,6 @@ arch:
           {% for arch in page.arch %}
             <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
 <div markdown="1">{% include en/installation/trdl_macos.md version=version channel=channel arch=arch %}</div>
-<div class="details">
-<h2><a href="javascript:void(0)" class="details__summary">How to use in the CI/CD system?</a></h2>
-<div class="details__content" markdown="1">
-{% include en/installation/trdl_unix/how_to_use_in_the_ci_cd.md version=version channel=channel arch=arch %}
-</div>
-</div>
             </div>
           {% endfor %}
         </div>
@@ -160,17 +136,8 @@ arch:
   {% endfor %}
 </div><!-- /os -->
 
-<div class="details">
-<h2><a href="javascript:void(0)" class="details__summary">How it works?</a></h2>
-<div class="details__content" markdown="1">
-{% include en/installation/how_it_works.md %}
-</div>
-</div>
       </div><!-- /method -->
       <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="binary">
-<div markdown="1">
-The latest release can be found [at this page](https://github.com/werf/werf/releases/)
-</div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
   {% for version in page.versions %}
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
@@ -231,11 +198,6 @@ The latest release can be found [at this page](https://github.com/werf/werf/rele
   {% endfor %}
 
         </div>
-      </div><!-- /method -->
-      <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="source">
-<div markdown="1">
-{% include installation/source.md %}
-</div>
       </div><!-- /method -->
     </div>
   </div>
