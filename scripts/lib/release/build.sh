@@ -5,7 +5,11 @@ go_mod_download() {
     VERSION=$1
 
     for os in linux darwin windows ; do
-        for arch in amd64 ; do
+        for arch in amd64 arm64 ; do
+            if [ "$os" == "windows" ] && [ "$arch" == "arm64" ] ; then
+                continue
+            fi
+
             echo "# Downloading go modules for GOOS=$os GOARCH=$arch"
 
             n=0
@@ -35,7 +39,11 @@ go_build() {
     chmod -R 0777 $RELEASE_BUILD_DIR/$VERSION
 
     for os in linux darwin windows ; do
-        for arch in amd64 ; do
+        for arch in amd64 arm64 ; do
+            if [ "$os" == "windows" ] && [ "$arch" == "arm64" ] ; then
+                continue
+            fi
+
             outputFile=$RELEASE_BUILD_DIR/$VERSION/werf-$os-$arch-$VERSION
             if [ "$os" == "windows" ] ; then
                 outputFile=$outputFile.exe
@@ -64,7 +72,11 @@ go_build_v2() {
     chmod -R 0777 $RELEASE_BUILD_DIR/$VERSION
 
     for os in linux darwin windows ; do
-        for arch in amd64 ; do
+        for arch in amd64 arm64 ; do
+            if [ "$os" == "windows" ] && [ "$arch" == "arm64" ] ; then
+                continue
+            fi
+
             outputFile=$RELEASE_BUILD_DIR/$VERSION/$os-$arch/bin/werf
             if [ "$os" == "windows" ] ; then
                 outputFile=$outputFile.exe
