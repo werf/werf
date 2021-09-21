@@ -88,7 +88,7 @@ Let us install and configure the GitLab runner on the node where werf will be ru
     sudo su gitlab-runner
 
     export PATH=$PATH:$HOME/bin
-    echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+    echo 'export PATH=$PATH:$HOME/bin' >> ~/.profile
 
     mkdir -p $HOME/bin
     curl -LO https://tuf.trdl.dev/targets/releases/0.1.3/linux-amd64/bin/trdl

@@ -59,7 +59,7 @@ sidebar: documentation
 ## 4. Использовать .helm/Chart.lock для сабчартов     
 
  - В соответствии с [режимом гитерминизма]({{ "/whats_new_in_v1_2/changelog.html#гитерминизм" | true_relative_url  }}) werf не позволяет держать некоммитнутую директорию `.helm/charts/`.
- - Для использования сабчартов необходимо определить dependencies в `.helm/Charts.yaml` следующим способом:
+ - Для использования сабчартов необходимо определить dependencies в `.helm/Chart.yaml` следующим способом:
 
     {% raw %}
     ```yaml

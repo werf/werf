@@ -86,7 +86,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
     sudo su gitlab-runner
 
     export PATH=$PATH:$HOME/bin
-    echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+    echo 'export PATH=$PATH:$HOME/bin' >> ~/.profile
 
     mkdir -p $HOME/bin
     curl -LO https://tuf.trdl.dev/targets/releases/0.1.3/linux-amd64/bin/trdl
@@ -112,11 +112,14 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 
 {% raw %}
 ```yaml
+.base_werf: &base_werf
+  - type trdl && . $(trdl use werf 1.2 ea)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -140,12 +143,15 @@ Build and Publish:
 
 {% raw %}
 ```yaml
+.base_werf: &base_werf
+  - type trdl && . $(trdl use werf 1.2 ea)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - *base_werf
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -199,7 +205,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
+    - type trdl && . $(trdl use werf 1.2 ea)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -256,7 +262,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
+    - type trdl && . $(trdl use werf 1.2 ea)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -296,7 +302,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
+    - type trdl && . $(trdl use werf 1.2 ea)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -323,16 +329,19 @@ Stop Review:
 
 {% raw %}
 ```yaml
+.base_werf: &base_werf
+  - type trdl && . $(trdl use werf 1.2 ea)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Review:
   stage: deploy
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - >
       # do optional deploy/dismiss
 
       if echo $CI_MERGE_REQUEST_LABELS | tr ',' '\n' | grep -q -P '^review$'; then
-        werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -354,8 +363,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -500,11 +508,14 @@ Deploy to Production:
 
 {% raw %}
 ```yaml
+.base_werf: &base_werf
+  - type trdl && . $(trdl use werf 1.2 ea)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Cleanup:
   stage: cleanup
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -555,11 +566,14 @@ stages:
   - dismiss
   - cleanup
 
+.base_werf: &base_werf
+  - type trdl && . $(trdl use werf 1.2 ea)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -567,9 +581,8 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - *base_werf
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   tags: [werf]
@@ -577,13 +590,12 @@ Build and Publish:
 Review:
   stage: deploy
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - >
       # do optional deploy/dismiss
 
       if echo $CI_MERGE_REQUEST_LABELS | tr ',' '\n' | grep -q -P '^review$'; then
-        werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+        werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
       else
         if werf helm get $(werf helm get-release) 2>/dev/null; then
           werf dismiss --with-namespace
@@ -605,8 +617,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -637,8 +648,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -660,6 +670,7 @@ Cleanup:
 * [Очистка стадий](#очистка-образов) выполняется по расписанию раз в сутки.
 
 ### .gitlab-ci.yml
+
 {:.no_toc}
 
 {% raw %}
@@ -670,11 +681,14 @@ stages:
   - dismiss
   - cleanup
 
+.base_werf: &base_werf
+  - type trdl && . $(trdl use werf 1.2 ea)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -682,9 +696,8 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - *base_werf
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -706,8 +719,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -738,14 +750,14 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
   tags: [werf]
 ```
 {% endraw %}
+
 </div>
 
 <div id="complete_gitlab_ci_3" class="tabs__content no_toc_section" markdown="1">
@@ -771,11 +783,14 @@ stages:
   - dismiss
   - cleanup
 
+.base_werf: &base_werf
+  - type trdl && . $(trdl use werf 1.2 ea)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -783,9 +798,8 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - *base_werf
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -807,8 +821,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -839,8 +852,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -872,11 +884,14 @@ stages:
   - dismiss
   - cleanup
 
+.base_werf: &base_werf
+  - type trdl && . $(trdl use werf 1.2 ea)
+  - type werf && source $(werf ci-env gitlab --as-file)
+
 Build and Publish:
   stage: build
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -884,9 +899,8 @@ Build and Publish:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
-    - werf converge --skip-build --set "global.env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
+    - *base_werf
+    - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
   except: [schedules]
@@ -908,8 +922,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -939,8 +952,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - type trdl && . $(trdl use werf 1.1 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
+    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
