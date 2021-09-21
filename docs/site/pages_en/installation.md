@@ -148,7 +148,7 @@ arch:
   {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
   {% assign download_version = site.data.channels_versions.versions[version_key] | replace_first: "v", "" %}
 <div markdown="1">
-{% include installation/binary_linux.md version=download_version arch=arch %}
+{% include en/installation/binary_linux.md version=download_version arch=arch %}
 </div>
             </div>
           {% endfor %}
@@ -168,7 +168,7 @@ arch:
   {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
   {% assign download_version = site.data.channels_versions.versions[version_key] | replace_first: "v", "" %}
 <div markdown="1">
-{% include installation/binary_macos.md version=download_version arch=arch %}
+{% include en/installation/binary_macos.md version=download_version arch=arch %}
 </div>
             </div>
           {% endfor %}
@@ -188,7 +188,7 @@ arch:
   {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
   {% assign download_version = site.data.channels_versions.versions[version_key] | replace_first: "v", "" %}
 <div markdown="1">
-{% include installation/binary_windows.md version=download_version arch=arch %}
+{% include en/installation/binary_windows.md version=download_version arch=arch %}
 </div>
             </div>
           {% endfor %}
