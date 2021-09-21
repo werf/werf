@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.20](https://www.github.com/werf/werf/compare/v1.2.19...v1.2.20) (2021-09-21)
+
+
+### Bug Fixes
+
+* **stapel:** changes in directories of import.include/excludePaths not triggered import ([f9043c3](https://www.github.com/werf/werf/commit/f9043c3316d41119e4f51ace7319a2ef2b92c5c3))
+
 ### [1.2.19](https://www.github.com/werf/werf/compare/v1.2.18+fix1...v1.2.19) (2021-09-17)
 
 
