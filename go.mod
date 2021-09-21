@@ -17,9 +17,9 @@ require (
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.8.0 // indirect
-	github.com/containers/buildah v1.23.0 // indirect
-	github.com/containers/image/v5 v5.16.0 // indirect
-	github.com/containers/storage v1.36.0 // indirect
+	github.com/containers/buildah v1.23.0
+	github.com/containers/image/v5 v5.16.0
+	github.com/containers/storage v1.36.0
 	github.com/docker/cli v20.10.5+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.8+incompatible
@@ -78,6 +78,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
+	gopkg.in/errgo.v2 v2.1.0
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/ini.v1 v1.62.0

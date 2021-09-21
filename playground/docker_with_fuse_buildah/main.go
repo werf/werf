@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/docker"
@@ -19,16 +20,13 @@ func do(ctx context.Context) error {
 		return err
 	}
 
-	if err := buildah.InitProcess(buildah.DockerWithFuse); err != nil {
-		return err
-	}
-
-	b, err := buildah.NewBuildah(buildah.DockerWithFuse)
+	b, err := buildah.NewBuildah(buildah.ModeDockerWithFuse)
 	if err != nil {
 		return err
 	}
 
-	f, err := os.OpenFile("./app.tar", os.O_RDONLY, 0)
+	contextFile := filepath.Join(os.Getenv("HOME"), ".go", "src", "github.com", "werf", "werf", "playground", "docker_with_fuse_buildah", "app.tar")
+	f, err := os.OpenFile(contextFile, os.O_RDONLY, 0)
 	if err != nil {
 		return err
 	}
