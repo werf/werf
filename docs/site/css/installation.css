@@ -20,18 +20,6 @@
   color: rgba(0, 18, 44, 0.25);
 }
 
-.installation-instruction__title {
-  font-style: normal;
-  font-weight: bold;
-  font-size: 45px;
-  line-height: 60px;
-  margin: 45px 0;
-}
-
-.installation-instruction__title span {
-  color: #0066FF;
-}
-
 .installation-instruction__tab-content {
   display: none;
 }
