@@ -2,6 +2,7 @@ package repo_handle
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -13,9 +14,17 @@ import (
 // caching the necessary data from the worktree during initialization,
 // and then working exclusively with git objects.
 type Handle interface {
-	WithRepository(func(r Repository) error) error
 	Submodule(submodulePath string) (SubmoduleHandle, error)
 	Submodules() []SubmoduleHandle
+	ReadBlobObjectContent(hash plumbing.Hash) ([]byte, error)
+	GetCommitTree(hash plumbing.Hash) (TreeHandle, error)
+}
+
+type TreeHandle interface {
+	Hash() plumbing.Hash
+	Entries() []object.TreeEntry
+	Tree(path string) (TreeHandle, error)
+	FindEntry(path string) (*object.TreeEntry, error)
 }
 
 type SubmoduleHandle interface {
@@ -24,15 +33,14 @@ type SubmoduleHandle interface {
 	Status() *git.SubmoduleStatus
 }
 
-type Repository interface {
-	CommitObject(h plumbing.Hash) (*object.Commit, error)
-	BlobObject(h plumbing.Hash) (*object.Blob, error)
+func NewHandle(repository *git.Repository) (Handle, error) {
+	return newHandleWithSubmodules(repository, &sync.Mutex{})
 }
 
-func NewHandle(repository *git.Repository) (Handle, error) {
-	h := newHandle(repository)
+func newHandleWithSubmodules(repository *git.Repository, mutex *sync.Mutex) (Handle, error) {
+	h := newHandle(repository, mutex)
 
-	submoduleHandleList, err := getSubmoduleHandleList(repository)
+	submoduleHandleList, err := getSubmoduleHandleList(repository, mutex)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +50,7 @@ func NewHandle(repository *git.Repository) (Handle, error) {
 	return h, nil
 }
 
-func getSubmoduleHandleList(parentRepository *git.Repository) ([]SubmoduleHandle, error) {
+func getSubmoduleHandleList(parentRepository *git.Repository, mutex *sync.Mutex) ([]SubmoduleHandle, error) {
 	var list []SubmoduleHandle
 
 	w, err := parentRepository.Worktree()
@@ -66,12 +74,12 @@ func getSubmoduleHandleList(parentRepository *git.Repository) ([]SubmoduleHandle
 			return nil, fmt.Errorf("unable to get submodule %q status: %s", s.Config().Path, err)
 		}
 
-		handle, err := NewHandle(submoduleRepository)
+		handle, err := newHandleWithSubmodules(submoduleRepository, mutex)
 		if err != nil {
 			return nil, err
 		}
 
-		submoduleHandle := newRepositorySubmoduleHandle(handle, s.Config(), submoduleStatus)
+		submoduleHandle := newSubmoduleHandle(handle, s.Config(), submoduleStatus)
 		list = append(list, submoduleHandle)
 	}
 
