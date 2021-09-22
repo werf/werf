@@ -3,6 +3,7 @@ package docker
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -166,6 +167,23 @@ func IsContext(ctx context.Context) bool {
 
 func SyncContextCliWithLogger(ctx context.Context) error {
 	return cli(ctx).Apply(defaultCliOptions(ctx)...)
+}
+
+func callCliWithProvidedOutput(ctx context.Context, stdoutWriter, stderrWriter io.Writer, commandCaller func(c command.Cli) error) error {
+	var errOutput bytes.Buffer
+
+	if err := cliWithCustomOptions(
+		ctx,
+		[]command.DockerCliOption{
+			command.WithOutputStream(stdoutWriter),
+			command.WithErrorStream(io.MultiWriter(stderrWriter, &errOutput)),
+		},
+		commandCaller,
+	); err != nil {
+		return fmt.Errorf("docker failed:\n%s\n---\n%s", errOutput.String(), err)
+	}
+
+	return nil
 }
 
 func callCliWithRecordedOutput(ctx context.Context, commandCaller func(c command.Cli) error) (string, error) {
