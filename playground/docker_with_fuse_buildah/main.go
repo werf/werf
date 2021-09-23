@@ -25,7 +25,7 @@ func do(ctx context.Context) error {
 		return err
 	}
 
-	contextFile := filepath.Join(os.Getenv("HOME"), ".go", "src", "github.com", "werf", "werf", "playground", "docker_with_fuse_buildah", "app.tar")
+	contextFile := filepath.Join("app.tar")
 	f, err := os.OpenFile(contextFile, os.O_RDONLY, 0)
 	if err != nil {
 		return err

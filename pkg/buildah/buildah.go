@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	DefaultShmSize = "65536k"
-	BuildahImage   = "quay.io/buildah/stable:v1.22.3"
+	DefaultShmSize              = "65536k"
+	BuildahImage                = "ghcr.io/werf/buildah:v1.22.3"
+	BuildahStorageContainerName = "werf-buildah-storage"
 )
 
 type CommonOpts struct {

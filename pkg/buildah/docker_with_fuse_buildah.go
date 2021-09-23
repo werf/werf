@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/werf/lockgate"
+	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/werf"
 )
 
 type DockerWithFuseBuildah struct {
 	BaseBuildah
-
-	HostStorageDir string
 }
 
 func NewDockerWithFuseBuildah() (*DockerWithFuseBuildah, error) {
@@ -29,11 +29,6 @@ func NewDockerWithFuseBuildah() (*DockerWithFuseBuildah, error) {
 		return nil, fmt.Errorf("unable to create BaseBuildah: %s", err)
 	}
 	b.BaseBuildah = *baseBuildah
-
-	b.HostStorageDir = filepath.Join(werf.GetHomeDir(), "buildah", "storage")
-	if err := os.MkdirAll(b.HostStorageDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %q: %s", b.HostStorageDir, err)
-	}
 
 	return b, nil
 }
@@ -92,9 +87,13 @@ func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []str
 		stderrWriter = stderr
 	}
 
+	if err := runStorageContainer(ctx, BuildahStorageContainerName, BuildahImage); err != nil {
+		return "", "", fmt.Errorf("unable to run werf buildah storage container: %s", err)
+	}
+
 	args := []string{"--rm"}
 	args = append(args, dockerArgs...)
-	args = append(args, buildahWithFuseDockerArgs(b.HostStorageDir)...)
+	args = append(args, buildahWithFuseDockerArgs(BuildahStorageContainerName)...)
 	args = append(args, buildahArgs...)
 
 	fmt.Printf("ARGS: %v\n", args)
@@ -103,12 +102,47 @@ func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []str
 	return stdout.String(), stderr.String(), err
 }
 
-func buildahWithFuseDockerArgs(hostStorageDir string) []string {
+func runStorageContainer(ctx context.Context, name, image string) error {
+	exist, err := docker.ContainerExist(ctx, name)
+	if err != nil {
+		return fmt.Errorf("unable to check existance of docker container %q: %s", name, err)
+	}
+	if exist {
+		return nil
+	}
+
+	return werf.WithHostLock(ctx, fmt.Sprintf("buildah.container.%s", name), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		return logboek.Context(ctx).LogProcess("Creating container %s using image %s", name, image).DoError(func() error {
+			exist, err := docker.ContainerExist(ctx, name)
+			if err != nil {
+				return fmt.Errorf("unable to check existance of docker container %q: %s", name, err)
+			}
+			if exist {
+				return nil
+			}
+
+			imageExist, err := docker.ImageExist(ctx, image)
+			if err != nil {
+				return fmt.Errorf("unable to check existance of docker image %q: %s", image, err)
+			}
+			if !imageExist {
+				if err := docker.CliPullWithRetries(ctx, image); err != nil {
+					return err
+				}
+			}
+
+			return docker.CliCreate(ctx, "--name", name, image)
+		})
+	})
+}
+
+func buildahWithFuseDockerArgs(storageContainerName string) []string {
 	return []string{
+		"--user", "1000",
 		"--device", "/dev/fuse",
 		"--security-opt", "seccomp=unconfined",
 		"--security-opt", "apparmor=unconfined",
-		"--volume", fmt.Sprintf("%s:/var/lib/containers/storage", hostStorageDir),
+		"--volumes-from", storageContainerName,
 		BuildahImage, "buildah",
 	}
 }
