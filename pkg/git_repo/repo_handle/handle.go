@@ -2,30 +2,67 @@ package repo_handle
 
 import (
 	"fmt"
+	"io/ioutil"
 	"sync"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
 type handle struct {
 	repository          *git.Repository
 	submoduleHandleList []SubmoduleHandle
 
-	mutex sync.Mutex
+	mutex *sync.Mutex
 }
 
-func newHandle(repository *git.Repository) *handle {
+func newHandle(repository *git.Repository, mutex *sync.Mutex) *handle {
 	return &handle{
 		repository: repository,
+		mutex:      mutex,
 	}
 }
 
-func (h *handle) WithRepository(f func(r Repository) error) error {
+func (h *handle) ReadBlobObjectContent(hash plumbing.Hash) ([]byte, error) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	return f(h.repository)
+	obj, err := h.repository.BlobObject(hash)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get blob %q object: %s", hash, err)
+	}
+
+	f, err := obj.Reader()
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read blob %q content: %s", hash, err)
+	}
+
+	return data, nil
+}
+
+func (h *handle) GetCommitTree(hash plumbing.Hash) (TreeHandle, error) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	commit, err := h.repository.CommitObject(hash)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get commit %q object: %s", hash, err)
+	}
+
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get commit %q tree: %s", hash, err)
+	}
+
+	treeHandle := newTreeHandle(tree, h.mutex)
+	return treeHandle, nil
 }
 
 func (h *handle) Submodule(submodulePath string) (SubmoduleHandle, error) {
@@ -48,7 +85,7 @@ type submoduleHandle struct {
 	status *git.SubmoduleStatus
 }
 
-func newRepositorySubmoduleHandle(handle Handle, config *config.Submodule, status *git.SubmoduleStatus) *submoduleHandle {
+func newSubmoduleHandle(handle Handle, config *config.Submodule, status *git.SubmoduleStatus) *submoduleHandle {
 	return &submoduleHandle{
 		Handle: handle,
 		config: config,
