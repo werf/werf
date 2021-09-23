@@ -65,7 +65,7 @@
       mode: preserve
       remote_src: yes
 
-  - name: Register autocompletioon
+  - name: Register autocompletion
     shell: kubectl completion bash
     register: kubectl_bash_autocompletion
     changed_when: False
