@@ -68,7 +68,7 @@ func SetWerfFirstRunAt(ctx context.Context) error {
 	}
 
 	if exists, err := timestamps.CheckTimestampFileExists(path); err != nil {
-		return fmt.Errorf("error checking existance of %q: %s", path, err)
+		return fmt.Errorf("error checking existence of %q: %s", path, err)
 	} else if !exists {
 		return timestamps.WriteTimestampFile(path, time.Now())
 	}
