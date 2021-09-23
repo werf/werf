@@ -87,6 +87,8 @@ func NewMigrate2To3Cmd() *cobra.Command {
 	common.SetupKubeConfigBase64(&migrate2To3CommonCmdData, cmd)
 	common.SetupKubeContext(&migrate2To3CommonCmdData, cmd)
 
+	common.SetupInsecureHelmDependencies(&migrate2To3CommonCmdData, cmd)
+
 	common.SetupLogOptions(&migrate2To3CommonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&migrate2ToCmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), "Existing helm 2 release name which should be migrated to helm 3 (default $WERF_RELEASE). Option also sets target name for a new helm 3 release, use --target-release option (or $WERF_TARGET_RELEASE) to specify a different helm 3 release name.")

@@ -122,6 +122,9 @@ werf dismiss [options]
       --hooks-status-progress-period=5
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --insecure-helm-dependencies=false
+            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
+            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config=''
