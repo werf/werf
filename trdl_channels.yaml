@@ -16,6 +16,6 @@ groups:
     - name: alpha
       version: 1.2.22
     - name: beta
-      version: 1.2.18+fix5
+      version: 1.2.21
     - name: ea
-      version: 1.2.18+fix5
+      version: 1.2.21
