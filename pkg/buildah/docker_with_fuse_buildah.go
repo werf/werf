@@ -1,13 +1,11 @@
 package buildah
 
 import (
-	"archive/tar"
 	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,58 +15,39 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-const (
-	BuildahImage = "quay.io/buildah/stable:v1.22.3@sha256:b551986d37a2c097749220976da630305eaba0f03de705dddc28007d6cc47ab1"
-)
-
 type DockerWithFuseBuildah struct {
+	BaseBuildah
+
 	HostStorageDir string
-	HostTmpDir     string
 }
 
 func NewDockerWithFuseBuildah() (*DockerWithFuseBuildah, error) {
-	b := &DockerWithFuseBuildah{
-		HostStorageDir: filepath.Join(werf.GetHomeDir(), "buildah", "storage"),
-		HostTmpDir:     filepath.Join(werf.GetHomeDir(), "buildah", "tmp"),
-	}
+	b := &DockerWithFuseBuildah{}
 
+	baseBuildah, err := NewBaseBuildah()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create BaseBuildah: %s", err)
+	}
+	b.BaseBuildah = *baseBuildah
+
+	b.HostStorageDir = filepath.Join(werf.GetHomeDir(), "buildah", "storage")
 	if err := os.MkdirAll(b.HostStorageDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("unable to create dir %q: %s", b.HostStorageDir, err)
-	}
-
-	if err := os.MkdirAll(b.HostTmpDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %q: %s", b.HostTmpDir, err)
 	}
 
 	return b, nil
 }
 
 func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
-	sessionTmpDir, err := ioutil.TempDir(b.HostTmpDir, "werf-buildah")
+	sessionTmpDir, _, _, err := b.prepareBuildFromDockerfile(dockerfile, opts.ContextTar)
 	if err != nil {
-		return "", fmt.Errorf("unable to prepare temp dir: %s", err)
+		return "", fmt.Errorf("error preparing for build from dockerfile: %s", err)
 	}
 	defer func() {
 		if err = os.RemoveAll(sessionTmpDir); err != nil {
-			logboek.Warn().LogF("unable to remove temp dir %s: %s\n", sessionTmpDir, err)
+			logboek.Warn().LogF("unable to remove session tmp dir %q: %s\n", sessionTmpDir, err)
 		}
 	}()
-
-	dockerfileTmpPath := filepath.Join(sessionTmpDir, "Dockerfile")
-	if err := ioutil.WriteFile(dockerfileTmpPath, dockerfile, os.ModePerm); err != nil {
-		return "", fmt.Errorf("error writing %q: %s", dockerfileTmpPath, err)
-	}
-
-	contextTmpDir := filepath.Join(sessionTmpDir, "context")
-	if err := os.MkdirAll(contextTmpDir, os.ModePerm); err != nil {
-		return "", fmt.Errorf("unable to create dir %q: %s", contextTmpDir, err)
-	}
-
-	if opts.ContextTar != nil {
-		if err := myExtractTar(opts.ContextTar, contextTmpDir); err != nil {
-			return "", fmt.Errorf("unable to extract context tar: %s", err)
-		}
-	}
 
 	output, _, err := b.runBuildah(
 		ctx,
@@ -78,12 +57,9 @@ func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 		},
 		[]string{"bud", "-f", "/.werf/buildah/tmp/Dockerfile"}, opts.LogWriter,
 	)
-
 	if err != nil {
 		return "", err
 	}
-
-	fmt.Printf("OUTPUT:\n%s\n---\n", output)
 
 	outputLines := scanLines(output)
 
@@ -91,7 +67,7 @@ func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 }
 
 func (b *DockerWithFuseBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
-	_, _, err := b.runBuildah(ctx, []string{}, append([]string{container, "run"}, command...), opts.LogWriter)
+	_, _, err := b.runBuildah(ctx, []string{}, append([]string{"run", container}, command...), opts.LogWriter)
 	return err
 }
 
@@ -140,44 +116,4 @@ func scanLines(data string) []string {
 	}
 
 	return lines
-}
-
-func myExtractTar(reader io.Reader, dstDir string) error {
-	tarReader := tar.NewReader(reader)
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return fmt.Errorf("error getting tar header: %s", err)
-		}
-
-		path := filepath.Join(dstDir, header.Name)
-		info := header.FileInfo()
-
-		if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				return err
-			}
-			continue
-		}
-
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			return fmt.Errorf("ALO: %s", err)
-		}
-		defer file.Close()
-
-		_, err = io.Copy(file, tarReader)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

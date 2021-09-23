@@ -2,11 +2,14 @@ package buildah
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"runtime"
+)
 
-	"github.com/docker/docker/pkg/reexec"
-
-	"github.com/containers/storage/pkg/unshare"
+const (
+	DefaultShmSize = "65536k"
+	BuildahImage   = "quay.io/buildah/stable:v1.22.3"
 )
 
 type CommonOpts struct {
@@ -28,50 +31,41 @@ type Buildah interface {
 	RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error
 }
 
-type BuildahMode string
+type Mode int
 
-var (
-	NativeRootless BuildahMode = "NativeRootless"
-	DockerWithFuse BuildahMode = "DockerWithFuse"
+const (
+	ModeAuto Mode = iota
+	ModeNativeRootless
+	ModeDockerWithFuse
 )
 
-type NewBuildahOpts struct {
-	Mode BuildahMode
-}
-
-func NewBuildah(mode BuildahMode) (Buildah, error) {
+func NewBuildah(mode Mode) (b Buildah, err error) {
 	switch mode {
-	case "":
-		// TODO: auto select based on OS
-	case NativeRootless:
-		// TODO: validate selected mode with OS
-	case DockerWithFuse:
-		// TODO: validate selected mode with OS
-	}
-
-	switch mode {
-	case NativeRootless:
-		return NewNativeRootlessBuildah()
-	case DockerWithFuse:
-		return NewDockerWithFuseBuildah()
-	default:
-		panic("unexpected")
-	}
-}
-
-func InitProcess(mode BuildahMode) error {
-	switch mode {
-	case NativeRootless:
-		if reexec.Init() {
-			return nil
+	case ModeAuto:
+		switch runtime.GOOS {
+		case "linux":
+			return NewBuildah(ModeNativeRootless)
+		default:
+			return NewBuildah(ModeDockerWithFuse)
 		}
-
-		unshare.MaybeReexecUsingUserNamespace(false)
-
-		return nil
-	case DockerWithFuse:
-		return nil
+	case ModeNativeRootless:
+		switch runtime.GOOS {
+		case "linux":
+			b, err = NewNativeRootlessBuildah()
+			if err != nil {
+				return nil, fmt.Errorf("unable to create new Buildah instance with mode %d: %s", mode, err)
+			}
+		default:
+			panic("ModeNativeRootless can't be used on this OS")
+		}
+	case ModeDockerWithFuse:
+		b, err = NewDockerWithFuseBuildah()
+		if err != nil {
+			return nil, fmt.Errorf("unable to create new Buildah instance with mode %d: %s", mode, err)
+		}
 	default:
-		panic("unexpected")
+		panic(fmt.Sprintf("unexpected Mode: %d", mode))
 	}
+
+	return b, nil
 }
