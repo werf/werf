@@ -210,8 +210,8 @@ func descentPath(filePath string) []string {
 	return parts
 }
 
-func generateSecureRandomString(lenght int) string {
-	randomBytes := make([]byte, lenght)
+func generateSecureRandomString(length int) string {
+	randomBytes := make([]byte, length)
 	if _, err := rand.Read(randomBytes); err != nil {
 		panic(fmt.Sprintf("cannot generate secure random string: %s", err))
 	}
