@@ -23,6 +23,9 @@ werf helm migrate2to3 [options]
             $WERF_HELM2_RELEASE_STORAGE_TYPE, or $WERF_HELM_RELEASE_STORAGE_TYPE, or "configmap")
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --insecure-helm-dependencies=false
+            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
+            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --release=''
             Existing helm 2 release name which should be migrated to helm 3 (default                
             $WERF_RELEASE). Option also sets target name for a new helm 3 release, use              

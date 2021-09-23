@@ -5,7 +5,7 @@
 {% endif %}
 
 This command inspects a chart (directory, file, or URL) and displays all its content
-(values.yaml, Chart.yaml, README)
+(values.yaml, Charts.yaml, README)
 
 
 {{ header }} Syntax
