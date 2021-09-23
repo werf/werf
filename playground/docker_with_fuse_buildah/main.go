@@ -45,6 +45,10 @@ ADD . /app
 
 	fmt.Printf("BUILT NEW IMAGE %q\n", imageID)
 
+	if err := b.FromCommand(ctx, "build-container", imageID, buildah.FromCommandOpts{CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout}}); err != nil {
+		return err
+	}
+
 	if err := b.RunCommand(ctx, "build-container", []string{"ls"}, buildah.RunCommandOpts{CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout}}); err != nil {
 		return err
 	}

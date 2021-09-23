@@ -112,3 +112,7 @@ func (b *NativeRootlessBuildah) RunCommand(ctx context.Context, container string
 
 	return nil
 }
+
+func (b *NativeRootlessBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error {
+	panic("not implemented yet")
+}

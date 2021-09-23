@@ -71,6 +71,12 @@ func (b *DockerWithFuseBuildah) RunCommand(ctx context.Context, container string
 	return err
 }
 
+// FIXME(ilya-lesikov): add to interface
+func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error {
+	_, _, err := b.runBuildah(ctx, []string{}, []string{"from", "--name", container, image}, opts.LogWriter)
+	return err
+}
+
 func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []string, buildahArgs []string, logWriter io.Writer) (string, string, error) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}

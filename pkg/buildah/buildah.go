@@ -26,9 +26,14 @@ type RunCommandOpts struct {
 	BuildArgs []string
 }
 
+type FromCommandOpts struct {
+	CommonOpts
+}
+
 type Buildah interface {
 	BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error)
 	RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error
+	FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error
 }
 
 type Mode int
