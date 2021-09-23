@@ -10,7 +10,7 @@ source url: "https://github.com/Debian/apt/archive/#{version}.tar.gz"
 
 relative_path "apt-#{version}"
 
-dependency "berkley-db"
+dependency "berkeley-db"
 dependency "curl"
 dependency "gnutls"
 dependency "bzip2"

@@ -1,4 +1,4 @@
-name "berkley-db"
+name "berkeley-db"
 
 default_version "6.2.32"
 
