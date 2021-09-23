@@ -252,7 +252,7 @@ Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
 ## Primary and secondary images storage support
 
  - Automatically upload locally built images into the specified `--repo`.
- - Use stages from read-only secondary images storage specified by `--secodary-repo` options (can be specified multiple times).
+ - Use stages from read-only secondary images storage specified by `--secondary-repo` options (can be specified multiple times).
      - Suitable stages from the `--secondary-repo` will be copied into the primary `--repo`.
 
 ## Built images report format changes
