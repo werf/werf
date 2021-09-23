@@ -323,9 +323,9 @@ func (storage *LocalDockerServerStagesStorage) PostClientIDRecord(ctx context.Co
 
 	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.PostClientID full image name: %s\n", fullImageName)
 
-	if exsts, err := docker.ImageExist(ctx, fullImageName); err != nil {
+	if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
 		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
-	} else if exsts {
+	} else if exists {
 		return nil
 	}
 
