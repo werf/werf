@@ -131,12 +131,12 @@ func hexToBinary(data []byte) ([]byte, error) {
 }
 
 func IsExtractDataError(err error) bool {
-	dataErrorPrefixs := []string{
+	dataErrorPrefixes := []string{
 		"minimum required data length",
 		"encoding/hex: odd length hex string",
 	}
 
-	for _, prefix := range dataErrorPrefixs {
+	for _, prefix := range dataErrorPrefixes {
 		if strings.HasPrefix(err.Error(), prefix) {
 			return true
 		}
