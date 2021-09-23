@@ -33,7 +33,7 @@ func DirSizeBytes(path string) (uint64, error) {
 	var size uint64
 	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("error accecssing %q: %s", path, err)
+			return fmt.Errorf("error accessing %q: %s", path, err)
 		}
 		if !info.IsDir() {
 			size += uint64(info.Size())
