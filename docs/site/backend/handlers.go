@@ -64,7 +64,7 @@ func groupHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handles request to /v<group>-<channel>/. E.g. /v1.2-beta/
-// Temprarily redirect to specific version
+// Temporarily redirect to specific version
 func groupChannelHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugln("Use handler - groupChannelHandler")
 	pageURLRelative := "/"
