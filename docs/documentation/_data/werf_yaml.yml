@@ -27,7 +27,7 @@ sections:
           en: "#deploy"
           ru: "#выкат"
         collapsible: true
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directives:
           - name: helmChartDir
             value: "string"
@@ -79,7 +79,7 @@ sections:
           en: "#cleanup"
           ru: "#очистка"
         collapsible: true
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directives:
           - name: keepPolicies
             description:
@@ -156,7 +156,7 @@ sections:
           en: "#git-worktree"
           ru: "#git-worktree"
         collapsible: true
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directives:
           - name: forceShallowClone
             value: "bool"
@@ -243,7 +243,7 @@ sections:
     description:
       en: "Stapel image/artifact section: optional, define as many image sections as you need"
       ru: "Секция Stapel image/artifact: может использоваться произвольное количество секций"
-    isCollapsedByDefault: true
+    isCollapsedByDefault: false
     directives:
       - << : *dockerfile-image-section-image
       - name: artifact
@@ -297,7 +297,7 @@ sections:
         detailsArticle:
           all: "/advanced/building_images_with_stapel/git_directive.html"
         collapsible: true
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directiveList:
           - name: url
             value: "string"
@@ -403,7 +403,7 @@ sections:
         detailsArticle:
           all: "/advanced/building_images_with_stapel/assembly_instructions.html#shell"
         collapsible: true
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directives:
           - name: beforeInstall
             value: "[ string, ... ]"
@@ -480,7 +480,7 @@ sections:
         detailsArticle:
           all: "/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
         collapsible: true
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directives:
           - name: beforeInstall
             value: "[ task, ... ]"
@@ -557,7 +557,7 @@ sections:
         detailsArticle:
           all: "/advanced/building_images_with_stapel/docker_directive.html"
         collapsible: true
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directives:
           - name: USER
             value: "string"
@@ -634,7 +634,7 @@ sections:
         detailsArticle:
           all: "/advanced/building_images_with_stapel/mount_directive.html"
         collapsible: true
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directiveList:
           - name: from
             value: "tmp_dir || build_dir"
@@ -658,7 +658,7 @@ sections:
         detailsArticle:
           all: "/advanced/building_images_with_stapel/import_directive.html"
         collapsible: true
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directiveList:
           - name: artifact
             value: "string"
