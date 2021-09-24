@@ -149,7 +149,7 @@ $(document).ready(function() {
 });
 
 $(document).ready(function(){
-  // waint untill fonts are loaded
+  // waint until fonts are loaded
   setTimeout(function() {
     $('.publications__list').masonry({
       itemSelector: '.publications__post',
