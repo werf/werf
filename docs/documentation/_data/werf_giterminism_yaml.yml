@@ -41,7 +41,7 @@ directives:
         description:
           en: The rules for the stapel image
           ru: Правила для stapel-образа
-        isCollapsedByDefault: true
+        isCollapsedByDefault: false
         directives:
           - name: allowFromLatest
             value: "bool"
