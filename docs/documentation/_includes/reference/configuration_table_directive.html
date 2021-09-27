@@ -28,9 +28,10 @@
 {% else %}
 {% assign shouldAddBtn = false %}
 {% endif %}
+{% assign tableLineCounter = "tableLineCounter" | increment_shared_counter %}
 
 <tr id="{{ directiveID }}" class="directive {{ directiveClasses | join: ' ' }} {{ directiveCollapsedClasses | join: ' ' }}">
-    <td>{{ "tableLineCounter" | increment_shared_counter }}</td>
+    <td><a class="line-number-anchor" href="#L{{ tableLineCounter }}" id="L{{ tableLineCounter }}">{{ tableLineCounter }}</a></td>
     <td>
         {% for i in (2..include.indent) %}&nbsp;&nbsp;{% endfor %}
         {%- if include.isElm and include.elmIndex == 1 %}-&nbsp;{% elsif include.isAttr or include.isElm %}&nbsp;&nbsp;{% endif -%}

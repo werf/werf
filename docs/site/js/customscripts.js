@@ -8,6 +8,14 @@ document.addEventListener("DOMContentLoaded", function() {
    */
   anchors.add('h2,h3,h4,h5');
 
+  var referenceAnchors;
+  if ($('.line-number-anchor')) {
+      referenceAnchors = new AnchorJS();
+      referenceAnchors.options = {
+          placement: 'left'
+      };
+      referenceAnchors.add('.line-number-anchor');
+  }
 });
 
 $( document ).ready(function() {
