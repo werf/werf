@@ -29,7 +29,7 @@ func (s *GitCacheStage) SelectSuitableStage(ctx context.Context, c Conveyor, sta
 	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
 }
 
-func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error) {
 	if isEmptyBase, err := s.GitPatchStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return isEmptyBase, err
 	} else if isEmptyBase {
@@ -46,7 +46,7 @@ func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage 
 	return isEmpty, nil
 }
 
-func (s *GitCacheStage) GetDependencies(ctx context.Context, c Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+func (s *GitCacheStage) GetDependencies(ctx context.Context, c Conveyor, _, prevBuiltImage container_runtime.LegacyImageInterface) (string, error) {
 	patchSize, err := s.gitMappingsPatchSize(ctx, c, prevBuiltImage)
 	if err != nil {
 		return "", err
@@ -55,7 +55,7 @@ func (s *GitCacheStage) GetDependencies(ctx context.Context, c Conveyor, _, prev
 	return util.Sha256Hash(fmt.Sprintf("%d", patchSize/patchSizeStep)), nil
 }
 
-func (s *GitCacheStage) gitMappingsPatchSize(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (int64, error) {
+func (s *GitCacheStage) gitMappingsPatchSize(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (int64, error) {
 	var size int64
 	for _, gitMapping := range s.gitMappings {
 		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)

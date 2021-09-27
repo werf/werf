@@ -112,7 +112,7 @@ func runReset() error {
 			return err
 		}
 	} else {
-		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+		containerRuntime := &container_runtime.DockerServerRuntime{} // TODO
 		stagesStorage, err := common.GetLocalStagesStorage(containerRuntime)
 		if err != nil {
 			return err

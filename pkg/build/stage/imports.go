@@ -51,7 +51,7 @@ type ImportsStage struct {
 	imports []*config.Import
 }
 
-func (s *ImportsStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *ImportsStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	var args []string
 
 	for ind, elm := range s.imports {
@@ -72,7 +72,7 @@ func (s *ImportsStage) GetDependencies(ctx context.Context, c Conveyor, _, _ con
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ImportsStage) PrepareImage(ctx context.Context, c Conveyor, _, image container_runtime.ImageInterface) error {
+func (s *ImportsStage) PrepareImage(ctx context.Context, c Conveyor, _, image container_runtime.LegacyImageInterface) error {
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
 		srv, err := c.GetImportServer(ctx, sourceImageName, elm.Stage)

@@ -44,20 +44,20 @@ func getDigestAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (strin
 	}
 }
 
-type LocalDockerServerStagesStorage struct {
+type DockerServerStagesStorage struct {
 	// Local stages storage is compatible only with docker-server backed runtime
-	LocalDockerServerRuntime *container_runtime.LocalDockerServerRuntime
+	DockerServerRuntime *container_runtime.DockerServerRuntime
 }
 
-func NewLocalDockerServerStagesStorage(localDockerServerRuntime *container_runtime.LocalDockerServerRuntime) *LocalDockerServerStagesStorage {
-	return &LocalDockerServerStagesStorage{LocalDockerServerRuntime: localDockerServerRuntime}
+func NewDockerServerStagesStorage(dockerServerRuntime *container_runtime.DockerServerRuntime) *DockerServerStagesStorage {
+	return &DockerServerStagesStorage{DockerServerRuntime: dockerServerRuntime}
 }
 
-func (storage *LocalDockerServerStagesStorage) ConstructStageImageName(projectName, digest string, uniqueID int64) string {
+func (storage *DockerServerStagesStorage) ConstructStageImageName(projectName, digest string, uniqueID int64) string {
 	return fmt.Sprintf(LocalStage_ImageFormat, projectName, digest, uniqueID)
 }
 
-func (storage *LocalDockerServerStagesStorage) GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error) {
+func (storage *DockerServerStagesStorage) GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error) {
 	filterSet := localStagesStorageFilterSetBase(projectName)
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
@@ -67,7 +67,7 @@ func (storage *LocalDockerServerStagesStorage) GetStagesIDs(ctx context.Context,
 	return convertToStagesList(images)
 }
 
-func (storage *LocalDockerServerStagesStorage) ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string) error {
+func (storage *DockerServerStagesStorage) ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string) error {
 	if err := docker.CliTag(ctx, stageDescription.Info.Name, destinationReference); err != nil {
 		return err
 	}
@@ -80,11 +80,11 @@ func (storage *LocalDockerServerStagesStorage) ExportStage(ctx context.Context, 
 	return docker_registry.API().MutateAndPushImage(ctx, destinationReference, destinationReference, mutateExportStageConfig)
 }
 
-func (storage *LocalDockerServerStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error {
-	return deleteRepoImageListInLocalDockerServerStagesStorage(ctx, stageDescription, options.RmiForce)
+func (storage *DockerServerStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error {
+	return deleteRepoImageListInDockerServerStagesStorage(ctx, stageDescription, options.RmiForce)
 }
 
-func (storage *LocalDockerServerStagesStorage) RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error {
+func (storage *DockerServerStagesStorage) RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error {
 	return nil
 }
 
@@ -94,7 +94,7 @@ type FilterStagesAndProcessRelatedDataOptions struct {
 	RmContainersThatUseImage bool
 }
 
-func (storage *LocalDockerServerStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
+func (storage *DockerServerStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
 	return processRelatedContainers(ctx, stageDescriptions, processRelatedContainersOptions{
 		skipUsedImages:           options.SkipUsedImage,
 		rmContainersThatUseImage: options.RmContainersThatUseImage,
@@ -102,18 +102,18 @@ func (storage *LocalDockerServerStagesStorage) FilterStagesAndProcessRelatedData
 	})
 }
 
-func (storage *LocalDockerServerStagesStorage) CreateRepo(_ context.Context) error {
+func (storage *DockerServerStagesStorage) CreateRepo(_ context.Context) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) DeleteRepo(_ context.Context) error {
+func (storage *DockerServerStagesStorage) DeleteRepo(_ context.Context) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
+func (storage *DockerServerStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, digest, uniqueID)
 
-	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(ctx, stageImageName); err != nil {
+	if inspect, err := storage.DockerServerRuntime.GetImageInspect(ctx, stageImageName); err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", stageImageName, err)
 	} else if inspect != nil {
 		return &image.StageDescription{
@@ -125,19 +125,19 @@ func (storage *LocalDockerServerStagesStorage) GetStageDescription(ctx context.C
 	}
 }
 
-func (storage *LocalDockerServerStagesStorage) AddManagedImage(_ context.Context, _, _ string) error {
+func (storage *DockerServerStagesStorage) AddManagedImage(_ context.Context, _, _ string) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) RmManagedImage(_ context.Context, _, _ string) error {
+func (storage *DockerServerStagesStorage) RmManagedImage(_ context.Context, _, _ string) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetManagedImages(_ context.Context, _ string) ([]string, error) {
+func (storage *DockerServerStagesStorage) GetManagedImages(_ context.Context, _ string) ([]string, error) {
 	return []string{}, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error) {
+func (storage *DockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
 	// NOTE digest already depends on build-cache-version
@@ -151,45 +151,45 @@ func (storage *LocalDockerServerStagesStorage) GetStagesIDsByDigest(ctx context.
 	return convertToStagesList(images)
 }
 
-func (storage *LocalDockerServerStagesStorage) ShouldFetchImage(_ context.Context, _ container_runtime.Image) (bool, error) {
+func (storage *DockerServerStagesStorage) ShouldFetchImage(_ context.Context, _ container_runtime.Image) (bool, error) {
 	return false, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) FetchImage(_ context.Context, _ container_runtime.Image) error {
+func (storage *DockerServerStagesStorage) FetchImage(_ context.Context, _ container_runtime.Image) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) StoreImage(ctx context.Context, img container_runtime.Image) error {
-	return storage.LocalDockerServerRuntime.TagImageByName(ctx, img)
+func (storage *DockerServerStagesStorage) StoreImage(ctx context.Context, img container_runtime.Image) error {
+	return storage.DockerServerRuntime.TagImageByName(ctx, img)
 }
 
-func (storage *LocalDockerServerStagesStorage) PutImageMetadata(_ context.Context, _, _, _, _ string) error {
+func (storage *DockerServerStagesStorage) PutImageMetadata(_ context.Context, _, _, _, _ string) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) RmImageMetadata(_ context.Context, _, _, _, _ string) error {
+func (storage *DockerServerStagesStorage) RmImageMetadata(_ context.Context, _, _, _, _ string) error {
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) selectFullImageMetadataName(_ context.Context, _, _, _, _ string) (string, error) {
+func (storage *DockerServerStagesStorage) selectFullImageMetadataName(_ context.Context, _, _, _, _ string) (string, error) {
 	return "", nil
 }
 
-func (storage *LocalDockerServerStagesStorage) IsImageMetadataExist(_ context.Context, _, _, _, _ string) (bool, error) {
+func (storage *DockerServerStagesStorage) IsImageMetadataExist(_ context.Context, _, _, _, _ string) (bool, error) {
 	return false, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetAllAndGroupImageMetadataByImageName(_ context.Context, _ string, _ []string) (map[string]map[string][]string, map[string]map[string][]string, error) {
+func (storage *DockerServerStagesStorage) GetAllAndGroupImageMetadataByImageName(_ context.Context, _ string, _ []string) (map[string]map[string][]string, map[string]map[string][]string, error) {
 	return map[string]map[string][]string{}, map[string]map[string][]string{}, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetImportMetadata %s %s\n", projectName, id)
+func (storage *DockerServerStagesStorage) GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error) {
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.GetImportMetadata %s %s\n", projectName, id)
 
 	fullImageName := makeLocalImportMetadataName(projectName, id)
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
 
-	if inspect, err := storage.LocalDockerServerRuntime.GetImageInspect(ctx, fullImageName); err != nil {
+	if inspect, err := storage.DockerServerRuntime.GetImageInspect(ctx, fullImageName); err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", fullImageName, err)
 	} else if inspect != nil {
 		return newImportMetadataFromLabels(inspect.Config.Labels), nil
@@ -198,11 +198,11 @@ func (storage *LocalDockerServerStagesStorage) GetImportMetadata(ctx context.Con
 	}
 }
 
-func (storage *LocalDockerServerStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
+func (storage *DockerServerStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
 
 	fullImageName := makeLocalImportMetadataName(projectName, metadata.ImportSourceID)
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
 	if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
 		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
@@ -220,11 +220,11 @@ func (storage *LocalDockerServerStagesStorage) PutImportMetadata(ctx context.Con
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) RmImportMetadata(ctx context.Context, projectName, id string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.RmImportMetadata %s %s\n", projectName, id)
+func (storage *DockerServerStagesStorage) RmImportMetadata(ctx context.Context, projectName, id string) error {
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.RmImportMetadata %s %s\n", projectName, id)
 
 	fullImageName := makeLocalImportMetadataName(projectName, id)
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.RmImportMetadata full image name: %s\n", fullImageName)
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.RmImportMetadata full image name: %s\n", fullImageName)
 
 	if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
 		return fmt.Errorf("unable to check existence of image %s: %s", fullImageName, err)
@@ -239,8 +239,8 @@ func (storage *LocalDockerServerStagesStorage) RmImportMetadata(ctx context.Cont
 	return nil
 }
 
-func (storage *LocalDockerServerStagesStorage) GetImportMetadataIDs(ctx context.Context, projectName string) ([]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetImportMetadataIDs %s\n", projectName)
+func (storage *DockerServerStagesStorage) GetImportMetadataIDs(ctx context.Context, projectName string) ([]string, error) {
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.GetImportMetadataIDs %s\n", projectName)
 
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalImportMetadata_ImageNameFormat, projectName))
@@ -270,16 +270,16 @@ func makeLocalImportMetadataName(projectName, importSourceID string) string {
 	)
 }
 
-func (storage *LocalDockerServerStagesStorage) String() string {
+func (storage *DockerServerStagesStorage) String() string {
 	return LocalStorageAddress
 }
 
-func (storage *LocalDockerServerStagesStorage) Address() string {
+func (storage *DockerServerStagesStorage) Address() string {
 	return LocalStorageAddress
 }
 
-func (storage *LocalDockerServerStagesStorage) GetClientIDRecords(ctx context.Context, projectName string) ([]*ClientIDRecord, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetClientID for project %s\n", projectName)
+func (storage *DockerServerStagesStorage) GetClientIDRecords(ctx context.Context, projectName string) ([]*ClientIDRecord, error) {
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.GetClientID for project %s\n", projectName)
 
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalClientIDRecord_ImageNameFormat, projectName))
@@ -309,19 +309,19 @@ func (storage *LocalDockerServerStagesStorage) GetClientIDRecords(ctx context.Co
 			rec := &ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
 			res = append(res, rec)
 
-			logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.GetClientID got clientID record: %s\n", rec)
+			logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.GetClientID got clientID record: %s\n", rec)
 		}
 	}
 
 	return res, nil
 }
 
-func (storage *LocalDockerServerStagesStorage) PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
+func (storage *DockerServerStagesStorage) PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error {
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
 
 	fullImageName := fmt.Sprintf(LocalClientIDRecord_ImageFormat, projectName, rec.ClientID, rec.TimestampMillisec)
 
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage.PostClientID full image name: %s\n", fullImageName)
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.PostClientID full image name: %s\n", fullImageName)
 
 	if exsts, err := docker.ImageExist(ctx, fullImageName); err != nil {
 		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
@@ -471,7 +471,7 @@ func convertToStagesList(imageSummaryList []types.ImageSummary) ([]image.StageID
 	return stagesList, nil
 }
 
-func deleteRepoImageListInLocalDockerServerStagesStorage(ctx context.Context, stageDescription *image.StageDescription, rmiForce bool) error {
+func deleteRepoImageListInDockerServerStagesStorage(ctx context.Context, stageDescription *image.StageDescription, rmiForce bool) error {
 	var imageReferences []string
 	imageInfo := stageDescription.Info
 

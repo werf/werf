@@ -13,7 +13,7 @@ import (
 func NewStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.StagesStorage {
 	s, err := storage.NewStagesStorage(
 		stagesStorageAddress,
-		&container_runtime.LocalDockerServerRuntime{},
+		&container_runtime.DockerServerRuntime{},
 		storage.StagesStorageOptions{
 			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
 				DockerRegistryOptions: dockerRegistryOptions,

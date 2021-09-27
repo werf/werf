@@ -35,7 +35,7 @@ type GitPatchStage struct {
 	ContainerScriptsDir  string
 }
 
-func (s *GitPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+func (s *GitPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error) {
 	if empty, err := s.GitStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return false, err
 	} else if empty {
@@ -45,7 +45,7 @@ func (s *GitPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage 
 	return s.hasPrevBuiltStageHadActualGitMappings(ctx, c, prevBuiltImage)
 }
 
-func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
 		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 		if err != nil {
@@ -65,7 +65,7 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Contex
 	return true, nil
 }
 
-func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	if err := s.GitStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltI
 	return nil
 }
 
-func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	for _, gitMapping := range s.gitMappings {
 		if err := gitMapping.ApplyPatchCommand(ctx, c, prevBuiltImage, image); err != nil {
 			return err

@@ -264,7 +264,7 @@ type dockerfileInstructionInterface interface {
 }
 
 func (s *DockerfileStage) FetchDependencies(ctx context.Context, _ Conveyor, cr container_runtime.ContainerRuntime) error {
-	containerRuntime := cr.(*container_runtime.LocalDockerServerRuntime)
+	containerRuntime := cr.(*container_runtime.DockerServerRuntime)
 
 outerLoop:
 	for ind, stage := range s.dockerStages {
@@ -346,7 +346,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 
 var imageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
-func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	var stagesDependencies [][]string
 	var stagesOnBuildDependencies [][]string
 
@@ -610,7 +610,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img container_runtime.ImageInterface) error {
+func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img container_runtime.LegacyImageInterface) error {
 	archivePath, err := s.prepareContextArchive(ctx, c.GiterminismManager())
 	if err != nil {
 		return err

@@ -1897,6 +1897,10 @@ github.com/werf/third-party-go-containerregistry v0.0.0-20210811174340-64481764d
 github.com/werf/third-party-go-containerregistry v0.0.0-20210811174340-64481764d301/go.mod h1:Ct15B4yir3PLOP5jsy0GNeYVaIZs/MK/Jz5any1wFW0=
 github.com/werf/third-party-go-containerregistry v0.0.0-20210811175251-11ebb5d63763 h1:l2/kuO9jSilunxdxkAyIe7iIPVschJ32dUXvIrsxBJw=
 github.com/werf/third-party-go-containerregistry v0.0.0-20210811175251-11ebb5d63763/go.mod h1:Ct15B4yir3PLOP5jsy0GNeYVaIZs/MK/Jz5any1wFW0=
+github.com/werf/third-party-oras v0.9.1-0.20210927171115-82aa17bbc0f3 h1:a122ZAdlW0gPwLYZbGczwO4wkuoczo0cax4goCuWdA8=
+github.com/werf/third-party-oras v0.9.1-0.20210927171115-82aa17bbc0f3/go.mod h1:/AidOcr36nqm78ft5XE0l5Dgid3veF99BGQtwLr58pc=
+github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8 h1:MG0ez6kjfPXPHpDt4Ga76hfnEtT3Fal2fRnBLfJmhp4=
+github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8/go.mod h1:/AidOcr36nqm78ft5XE0l5Dgid3veF99BGQtwLr58pc=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=

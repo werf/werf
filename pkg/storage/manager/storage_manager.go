@@ -303,7 +303,7 @@ func (m *StorageManager) ForEachDeleteFinalStage(ctx context.Context, options Fo
 }
 
 func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error {
-	if localStagesStorage, isLocal := m.StagesStorage.(*storage.LocalDockerServerStagesStorage); isLocal {
+	if localStagesStorage, isLocal := m.StagesStorage.(*storage.DockerServerStagesStorage); isLocal {
 		filteredStagesDescriptions, err := localStagesStorage.FilterStagesAndProcessRelatedData(ctx, stagesDescriptions, options.FilterStagesAndProcessRelatedDataOptions)
 		if err != nil {
 			return fmt.Errorf("error filtering local docker server stages: %s", err)
@@ -428,7 +428,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 	fetchStageFromCache := func(stagesStorage storage.StagesStorage) (*container_runtime.DockerImage, error) {
 		stageID := stg.GetImage().GetStageDescription().StageID
 		imageName := stagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
-		stageImage := container_runtime.NewStageImage(nil, imageName, containerRuntime.(*container_runtime.LocalDockerServerRuntime))
+		stageImage := container_runtime.NewLegacyStageImage(nil, imageName, containerRuntime.(*container_runtime.DockerServerRuntime))
 		dockerImage := &container_runtime.DockerImage{Image: stageImage}
 
 		shouldFetch, err := stagesStorage.ShouldFetchImage(ctx, dockerImage)
@@ -476,15 +476,18 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 		stageID := primaryStage.GetImage().GetStageDescription().StageID
 		primaryImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
 
-		if err := containerRuntime.RenameImage(ctx, cacheDockerImage, primaryImageName, false); err != nil {
-			return fmt.Errorf("unable to rename image %s to %s: %s", fetchedDockerImage.Image.Name(), primaryImageName, err)
-		}
+		// TODO: check no bugs introduced by removing of following calls
+		//if err := containerRuntime.RenameImage(ctx, cacheDockerImage, primaryImageName, false); err != nil {
+		//	return fmt.Errorf("unable to rename image %s to %s: %s", fetchedDockerImage.Image.Name(), primaryImageName, err)
+		//}
 
-		if err := containerRuntime.RefreshImageObject(ctx, &container_runtime.DockerImage{Image: primaryStage.GetImage()}); err != nil {
-			return fmt.Errorf("unable to refresh stage image %s: %s", primaryStage.GetImage().Name(), err)
-		}
+		//if err := containerRuntime.RefreshImageObject(ctx, &container_runtime.DockerImage{Image: primaryStage.GetImage()}); err != nil {
+		//	return fmt.Errorf("unable to refresh stage image %s: %s", primaryStage.GetImage().Name(), err)
+		//}
 
-		if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, convertStageDescriptionForStagesStorage(cacheDockerImage.Image.GetStageDescription(), m.StagesStorage)); err != nil {
+		// TODO: check no bugs introduced by removing of following calls
+		//if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, convertStageDescriptionForStagesStorage(cacheDockerImage.Image.GetStageDescription(), m.StagesStorage)); err != nil {
+		if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, cacheDockerImage.Image.GetStageDescription()); err != nil {
 			return fmt.Errorf("error storing stage %s description into local manifest cache: %s", primaryImageName, err)
 		}
 
@@ -739,7 +742,7 @@ func (m *StorageManager) GetStagesByDigestFromStagesStorage(ctx context.Context,
 }
 
 func (m *StorageManager) CopySuitableByDigestStage(ctx context.Context, stageDesc *image.StageDescription, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime) (*image.StageDescription, error) {
-	img := container_runtime.NewStageImage(nil, stageDesc.Info.Name, containerRuntime.(*container_runtime.LocalDockerServerRuntime))
+	img := container_runtime.NewLegacyStageImage(nil, stageDesc.Info.Name, containerRuntime.(*container_runtime.DockerServerRuntime))
 
 	logboek.Context(ctx).Info().LogF("Fetching %s\n", img.Name())
 	if err := sourceStagesStorage.FetchImage(ctx, &container_runtime.DockerImage{Image: img}); err != nil {

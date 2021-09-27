@@ -34,7 +34,7 @@ type BuildPhaseOptions struct {
 }
 
 type BuildOptions struct {
-	ImageBuildOptions container_runtime.BuildOptions
+	ImageBuildOptions container_runtime.LegacyBuildOptions
 	IntrospectOptions
 
 	ReportPath   string
@@ -491,11 +491,11 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *Image,
 	return nil
 }
 
-func castToStageImage(img container_runtime.ImageInterface) *container_runtime.StageImage {
+func castToStageImage(img container_runtime.LegacyImageInterface) *container_runtime.LegacyStageImage {
 	if img == nil {
 		return nil
 	}
-	return img.(*container_runtime.StageImage)
+	return img.(*container_runtime.LegacyStageImage)
 }
 
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg stage.Interface) (bool, func(), error) {

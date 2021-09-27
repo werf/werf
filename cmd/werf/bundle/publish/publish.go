@@ -253,7 +253,7 @@ func runPublish(ctx context.Context) error {
 	var imagesRepository string
 
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
-		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+		containerRuntime := &container_runtime.DockerServerRuntime{} // TODO
 		stagesStorage, err := common.GetStagesStorage(repoAddress, containerRuntime, &commonCmdData)
 		if err != nil {
 			return err

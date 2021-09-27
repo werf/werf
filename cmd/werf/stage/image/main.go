@@ -171,7 +171,7 @@ func run(imageName string) error {
 		return fmt.Errorf("image %q is not defined in werf.yaml", logging.ImageLogName(imageName, false))
 	}
 
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+	containerRuntime := &container_runtime.DockerServerRuntime{} // TODO
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)

@@ -247,7 +247,7 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyPatchCommand(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (gm *GitMapping) ApplyPatchCommand(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 	if err != nil {
 		return fmt.Errorf("unable to get base commit from built image: %s", err)
@@ -312,7 +312,7 @@ func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (Imag
 	return res, nil
 }
 
-func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.ImageInterface, commitInfo ImageCommitInfo) {
+func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.LegacyImageInterface, commitInfo ImageCommitInfo) {
 	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 		gm.ImageGitCommitLabel(): commitInfo.Commit,
 	})
@@ -330,7 +330,7 @@ func (gm *GitMapping) AddGitCommitToImageLabels(image container_runtime.ImageInt
 	}
 }
 
-func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (string, error) {
 	gm.getMutex(prevBuiltImage.Name()).Lock()
 	defer gm.getMutex(prevBuiltImage.Name()).Unlock()
 
@@ -417,7 +417,7 @@ func (gm *GitMapping) VirtualMergeIntoCommitLabel() string {
 	return fmt.Sprintf("werf-git-%s-virtual-merge-into-commit", gm.GetParamshash())
 }
 
-func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toCommit string, prevBuiltImage container_runtime.ImageInterface) ([]string, error) {
+func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toCommit string, prevBuiltImage container_runtime.LegacyImageInterface) ([]string, error) {
 	archiveType := git_repo.ArchiveType(prevBuiltImage.GetStageDescription().Info.Labels[gm.getArchiveTypeLabelName()])
 
 	patchOpts, err := gm.makePatchOptions(ctx, fromCommit, toCommit, false, false)
@@ -581,7 +581,7 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyArchiveCommand(ctx context.Context, c Conveyor, image container_runtime.ImageInterface) error {
+func (gm *GitMapping) ApplyArchiveCommand(ctx context.Context, c Conveyor, image container_runtime.LegacyImageInterface) error {
 	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return fmt.Errorf("unable to get latest commit info: %s", err)
@@ -601,7 +601,7 @@ func (gm *GitMapping) ApplyArchiveCommand(ctx context.Context, c Conveyor, image
 	return nil
 }
 
-func (gm *GitMapping) applyScript(image container_runtime.ImageInterface, commands []string) error {
+func (gm *GitMapping) applyScript(image container_runtime.LegacyImageInterface, commands []string) error {
 	stageHostTmpScriptFilePath := filepath.Join(gm.ScriptsDir, gm.GetParamshash())
 	containerTmpScriptFilePath := path.Join(gm.ContainerScriptsDir, gm.GetParamshash())
 
@@ -614,7 +614,7 @@ func (gm *GitMapping) applyScript(image container_runtime.ImageInterface, comman
 	return nil
 }
 
-func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string, image container_runtime.ImageInterface) ([]string, error) {
+func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string, image container_runtime.LegacyImageInterface) ([]string, error) {
 	archiveOpts, err := gm.makeArchiveOptions(ctx, commit)
 	if err != nil {
 		return nil, err
@@ -769,7 +769,7 @@ func (gm *GitMapping) GetParamshash() string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (string, error) {
 	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 	if err != nil {
 		return "", fmt.Errorf("unable to get base commit from built image for git mapping %s: %s", gm.GetFullName(), err)
@@ -801,7 +801,7 @@ func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuilt
 	return string(data), nil
 }
 
-func (gm *GitMapping) IsPatchEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+func (gm *GitMapping) IsPatchEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error) {
 	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 	if err != nil {
 		return false, fmt.Errorf("unable to get base commit from built image for git mapping %s: %s", gm.GetFullName(), err)

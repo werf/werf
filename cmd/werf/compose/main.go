@@ -401,7 +401,7 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+	containerRuntime := &container_runtime.DockerServerRuntime{} // TODO
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err

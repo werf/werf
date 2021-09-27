@@ -27,11 +27,11 @@ type BeforeInstallStage struct {
 	*UserStage
 }
 
-func (s *BeforeInstallStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *BeforeInstallStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	return s.builder.BeforeInstallChecksum(ctx), nil
 }
 
-func (s *BeforeInstallStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *BeforeInstallStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}

@@ -369,7 +369,7 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 
 func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_runtime.Image) error {
 	switch containerRuntime := storage.ContainerRuntime.(type) {
-	case *container_runtime.LocalDockerServerRuntime:
+	case *container_runtime.DockerServerRuntime:
 		if err := containerRuntime.PullImageFromRegistry(ctx, img); err != nil {
 			if strings.HasSuffix(err.Error(), "unknown blob") {
 				return ErrBrokenImage
@@ -386,7 +386,7 @@ func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_
 
 func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_runtime.Image) error {
 	switch containerRuntime := storage.ContainerRuntime.(type) {
-	case *container_runtime.LocalDockerServerRuntime:
+	case *container_runtime.DockerServerRuntime:
 		dockerImage := img.(*container_runtime.DockerImage)
 
 		if dockerImage.Image.GetBuiltId() != "" {
@@ -403,7 +403,7 @@ func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_
 
 func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_runtime.Image) (bool, error) {
 	switch containerRuntime := storage.ContainerRuntime.(type) {
-	case *container_runtime.LocalDockerServerRuntime:
+	case *container_runtime.DockerServerRuntime:
 
 		dockerImage := img.(*container_runtime.DockerImage)
 
