@@ -39,6 +39,10 @@ func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 		return "", fmt.Errorf("error preparing for build from dockerfile: %s", err)
 	}
 	defer func() {
+		if debug() {
+			return
+		}
+
 		if err = os.RemoveAll(sessionTmpDir); err != nil {
 			logboek.Warn().LogF("unable to remove session tmp dir %q: %s\n", sessionTmpDir, err)
 		}
@@ -96,7 +100,9 @@ func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []str
 	args = append(args, buildahWithFuseDockerArgs(BuildahStorageContainerName)...)
 	args = append(args, buildahArgs...)
 
-	fmt.Printf("ARGS: %v\n", args)
+	if debug() {
+		fmt.Printf("DEBUG CMD: docker run -ti %s\n", strings.Join(args, " "))
+	}
 
 	err := docker.CliRun_ProvidedOutput(ctx, stdoutWriter, stderrWriter, args...)
 	return stdout.String(), stderr.String(), err

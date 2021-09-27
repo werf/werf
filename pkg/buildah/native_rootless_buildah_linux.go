@@ -15,9 +15,23 @@ import (
 	is "github.com/containers/image/v5/storage"
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/unshare"
+	"github.com/docker/docker/pkg/reexec"
+	"github.com/sirupsen/logrus"
 	"github.com/werf/logboek"
 	"gopkg.in/errgo.v2/fmt/errors"
 )
+
+func InitNativeRootlessProcess() (bool, error) {
+	if reexec.Init() {
+		return true, nil
+	}
+
+	logrus.SetLevel(logrus.TraceLevel)
+
+	unshare.MaybeReexecUsingUserNamespace(false)
+
+	return false, nil
+}
 
 type NativeRootlessBuildah struct {
 	BaseBuildah

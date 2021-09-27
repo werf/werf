@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -206,6 +207,82 @@ func ExtractTar(tarFileReader io.Reader, dstDir string) error {
 	}
 
 	return nil
+}
+
+func ReadDirAsTar(dir string) io.Reader {
+	r, w := io.Pipe()
+
+	go func() {
+		tarWriter := tar.NewWriter(w)
+
+		err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+			if err != nil {
+				return fmt.Errorf("error accessing %q: %s", path, err)
+			}
+
+			relPath, err := filepath.Rel(dir, path)
+			if err != nil {
+				return err
+			}
+
+			if info.Mode().IsDir() {
+				header := &tar.Header{
+					Name:     relPath,
+					Size:     info.Size(),
+					Mode:     int64(info.Mode()),
+					ModTime:  info.ModTime(),
+					Typeflag: tar.TypeDir,
+				}
+
+				err = tarWriter.WriteHeader(header)
+				if err != nil {
+					return fmt.Errorf("could not tar write header for %q: %s", path, err)
+				}
+
+				return nil
+			}
+
+			header := &tar.Header{
+				Name:     relPath,
+				Size:     info.Size(),
+				Mode:     int64(info.Mode()),
+				ModTime:  info.ModTime(),
+				Typeflag: tar.TypeReg,
+			}
+
+			err = tarWriter.WriteHeader(header)
+			if err != nil {
+				return fmt.Errorf("could not tar write header for %q: %s", path, err)
+			}
+
+			file, err := os.Open(path)
+			if err != nil {
+				return fmt.Errorf("unable to open %q: %s", path, err)
+			}
+			defer file.Close()
+
+			_, err = io.Copy(tarWriter, file)
+			if err != nil {
+				return fmt.Errorf("unable to write %q into tar: %s", path, err)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+		if err := tarWriter.Close(); err != nil {
+			panic(err.Error())
+		}
+
+		if err := w.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	return r
 }
 
 func debugArchiveUtil() bool {

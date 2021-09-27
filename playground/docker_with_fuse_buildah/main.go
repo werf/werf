@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
+
+	"github.com/google/uuid"
+
+	"github.com/werf/werf/pkg/util"
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/docker"
@@ -25,19 +28,28 @@ func do(ctx context.Context) error {
 		return err
 	}
 
-	contextFile := filepath.Join("app.tar")
-	f, err := os.OpenFile(contextFile, os.O_RDONLY, 0)
-	if err != nil {
-		return err
+	if len(os.Args) != 3 {
+		return fmt.Errorf("usage: %s DOCKERFILE_PATH CONTEXT_DIR", os.Args[0])
+	}
+	dockerfilePath := os.Args[1]
+	if dockerfilePath == "" {
+		return fmt.Errorf("usage: %s DOCKERFILE_PATH CONTEXT_DIR", os.Args[0])
+	}
+	contextDir := os.Args[2]
+	if contextDir == "" {
+		return fmt.Errorf("usage: %s DOCKERFILE_PATH CONTEXT_DIR", os.Args[0])
 	}
 
-	imageID, err := b.BuildFromDockerfile(ctx, []byte(`FROM alpine
+	dockerfileData, err := os.ReadFile(dockerfilePath)
+	if err != nil {
+		return fmt.Errorf("error reading %q: %s", dockerfilePath, err)
+	}
 
-RUN echo HELLO > /FILE
-ADD . /app
-`), buildah.BuildFromDockerfileOpts{
+	contextTar := util.ReadDirAsTar(contextDir)
+
+	imageID, err := b.BuildFromDockerfile(ctx, dockerfileData, buildah.BuildFromDockerfileOpts{
 		CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout},
-		ContextTar: f,
+		ContextTar: contextTar,
 	})
 	if err != nil {
 		return err
@@ -45,11 +57,13 @@ ADD . /app
 
 	fmt.Printf("BUILT NEW IMAGE %q\n", imageID)
 
-	if err := b.FromCommand(ctx, "build-container", imageID, buildah.FromCommandOpts{CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout}}); err != nil {
+	containerName := uuid.New().String()
+
+	if err := b.FromCommand(ctx, containerName, imageID, buildah.FromCommandOpts{CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout}}); err != nil {
 		return err
 	}
 
-	if err := b.RunCommand(ctx, "build-container", []string{"ls"}, buildah.RunCommandOpts{CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout}}); err != nil {
+	if err := b.RunCommand(ctx, containerName, []string{"ls"}, buildah.RunCommandOpts{CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout}}); err != nil {
 		return err
 	}
 
@@ -58,7 +72,7 @@ ADD . /app
 
 func main() {
 	if err := do(context.Background()); err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %s", err)
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		os.Exit(1)
 	}
 }
