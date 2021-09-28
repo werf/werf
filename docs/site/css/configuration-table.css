@@ -144,6 +144,14 @@
     background: #000;
 }
 
+.werf-configuration-table .line-number-anchor {
+  color: #f8f8f2 !important;
+}
+
+.werf-configuration-table .anchorjs-link {
+  margin-left: -1.4em !important;
+}
+
 .tooltip {
     font-family: 'Open Sans', sans-serif;
     background: #000;

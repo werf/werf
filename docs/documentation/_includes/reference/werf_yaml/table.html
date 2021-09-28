@@ -5,7 +5,8 @@
         {{ "tableLineCounter" | reset_shared_counter }}
         {% for section in site.data.werf_yaml.sections %}
             <tr id="{{ section.id }}" class="section {{ section.id }}">
-                <td>{{ "tableLineCounter" | increment_shared_counter }}</td>
+                {%- assign tableLineCounter = "tableLineCounter" | increment_shared_counter %}
+                <td><a class="line-number-anchor" href="#L{{ tableLineCounter }}" id="L{{ tableLineCounter }}">{{ tableLineCounter }}</a></td>
                 <td>
                     ---
                 </td>
