@@ -17,43 +17,43 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-type StageImage struct {
-	*baseImage
-	fromImage              *StageImage
-	container              *StageImageContainer
-	buildImage             *buildImage
+type LegacyStageImage struct {
+	*legacyBaseImage
+	fromImage              *LegacyStageImage
+	container              *LegacyStageImageContainer
+	buildImage             *legacyBaseImage
 	dockerfileImageBuilder *DockerfileImageBuilder
 }
 
-func NewStageImage(fromImage *StageImage, name string, localDockerServerRuntime *LocalDockerServerRuntime) *StageImage {
-	stage := &StageImage{}
-	stage.baseImage = newBaseImage(name, localDockerServerRuntime)
+func NewLegacyStageImage(fromImage *LegacyStageImage, name string, localDockerServerRuntime *DockerServerRuntime) *LegacyStageImage {
+	stage := &LegacyStageImage{}
+	stage.legacyBaseImage = newLegacyBaseImage(name, localDockerServerRuntime)
 	stage.fromImage = fromImage
-	stage.container = newStageImageContainer(stage)
+	stage.container = newLegacyStageImageContainer(stage)
 	return stage
 }
 
-func (i *StageImage) Inspect() *types.ImageInspect {
+func (i *LegacyStageImage) Inspect() *types.ImageInspect {
 	return i.inspect
 }
 
-func (i *StageImage) BuilderContainer() BuilderContainer {
-	return &StageImageBuilderContainer{i}
+func (i *LegacyStageImage) BuilderContainer() LegacyBuilderContainer {
+	return &LegacyStageImageBuilderContainer{i}
 }
 
-func (i *StageImage) Container() Container {
+func (i *LegacyStageImage) Container() LegacyContainer {
 	return i.container
 }
 
-func (i *StageImage) GetID() string {
+func (i *LegacyStageImage) GetID() string {
 	if i.buildImage != nil {
 		return i.buildImage.Name()
 	} else {
-		return i.baseImage.GetStageDescription().Info.ID
+		return i.legacyBaseImage.GetStageDescription().Info.ID
 	}
 }
 
-func (i *StageImage) Build(ctx context.Context, options BuildOptions) error {
+func (i *LegacyStageImage) Build(ctx context.Context, options LegacyBuildOptions) error {
 	if i.dockerfileImageBuilder != nil {
 		if err := i.dockerfileImageBuilder.Build(ctx); err != nil {
 			return err
@@ -120,7 +120,7 @@ func (i *StageImage) Build(ctx context.Context, options BuildOptions) error {
 		}
 	}
 
-	if inspect, err := i.LocalDockerServerRuntime.GetImageInspect(ctx, i.MustGetBuiltId()); err != nil {
+	if inspect, err := i.DockerServerRuntime.GetImageInspect(ctx, i.MustGetBuiltId()); err != nil {
 		return err
 	} else {
 		i.SetInspect(inspect)
@@ -133,18 +133,18 @@ func (i *StageImage) Build(ctx context.Context, options BuildOptions) error {
 	return nil
 }
 
-func (i *StageImage) Commit(ctx context.Context) error {
+func (i *LegacyStageImage) Commit(ctx context.Context) error {
 	builtId, err := i.container.commit(ctx)
 	if err != nil {
 		return err
 	}
 
-	i.buildImage = newBuildImage(builtId, i.LocalDockerServerRuntime)
+	i.buildImage = newLegacyBaseImage(builtId, i.DockerServerRuntime)
 
 	return nil
 }
 
-func (i *StageImage) Introspect(ctx context.Context) error {
+func (i *LegacyStageImage) Introspect(ctx context.Context) error {
 	if err := i.container.introspect(ctx); err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func (i *StageImage) Introspect(ctx context.Context) error {
 	return nil
 }
 
-func (i *StageImage) introspectBefore(ctx context.Context) error {
+func (i *LegacyStageImage) introspectBefore(ctx context.Context) error {
 	if err := i.container.introspectBefore(ctx); err != nil {
 		return err
 	}
@@ -160,23 +160,23 @@ func (i *StageImage) introspectBefore(ctx context.Context) error {
 	return nil
 }
 
-func (i *StageImage) MustResetInspect(ctx context.Context) error {
+func (i *LegacyStageImage) MustResetInspect(ctx context.Context) error {
 	if i.buildImage != nil {
 		return i.buildImage.MustResetInspect(ctx)
 	} else {
-		return i.baseImage.MustResetInspect(ctx)
+		return i.legacyBaseImage.MustResetInspect(ctx)
 	}
 }
 
-func (i *StageImage) GetInspect() *types.ImageInspect {
+func (i *LegacyStageImage) GetInspect() *types.ImageInspect {
 	if i.buildImage != nil {
 		return i.buildImage.GetInspect()
 	} else {
-		return i.baseImage.GetInspect()
+		return i.legacyBaseImage.GetInspect()
 	}
 }
 
-func (i *StageImage) MustGetBuiltId() string {
+func (i *LegacyStageImage) MustGetBuiltId() string {
 	builtId := i.GetBuiltId()
 	if builtId == "" {
 		panic(fmt.Sprintf("image %s built id is not available", i.Name()))
@@ -184,7 +184,7 @@ func (i *StageImage) MustGetBuiltId() string {
 	return builtId
 }
 
-func (i *StageImage) GetBuiltId() string {
+func (i *LegacyStageImage) GetBuiltId() string {
 	if i.dockerfileImageBuilder != nil {
 		return i.dockerfileImageBuilder.GetBuiltId()
 	} else if i.buildImage != nil {
@@ -194,29 +194,29 @@ func (i *StageImage) GetBuiltId() string {
 	}
 }
 
-func (i *StageImage) TagBuiltImage(ctx context.Context) error {
+func (i *LegacyStageImage) TagBuiltImage(ctx context.Context) error {
 	return docker.CliTag(ctx, i.MustGetBuiltId(), i.name)
 }
 
-func (i *StageImage) Tag(ctx context.Context, name string) error {
+func (i *LegacyStageImage) Tag(ctx context.Context, name string) error {
 	return docker.CliTag(ctx, i.GetID(), name)
 }
 
-func (i *StageImage) Pull(ctx context.Context) error {
+func (i *LegacyStageImage) Pull(ctx context.Context) error {
 	if err := docker.CliPullWithRetries(ctx, i.name); err != nil {
 		return err
 	}
 
-	i.baseImage.UnsetInspect()
+	i.legacyBaseImage.UnsetInspect()
 
 	return nil
 }
 
-func (i *StageImage) Push(ctx context.Context) error {
+func (i *LegacyStageImage) Push(ctx context.Context) error {
 	return docker.CliPushWithRetries(ctx, i.name)
 }
 
-func (i *StageImage) DockerfileImageBuilder() *DockerfileImageBuilder {
+func (i *LegacyStageImage) DockerfileImageBuilder() *DockerfileImageBuilder {
 	if i.dockerfileImageBuilder == nil {
 		i.dockerfileImageBuilder = NewDockerfileImageBuilder()
 	}

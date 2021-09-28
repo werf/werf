@@ -191,7 +191,7 @@ func runCleanup(ctx context.Context) error {
 
 	projectName := werfConfig.Meta.Project
 
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+	containerRuntime := &container_runtime.DockerServerRuntime{} // TODO
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {

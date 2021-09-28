@@ -28,7 +28,7 @@ type SetupStage struct {
 	*UserWithGitPatchStage
 }
 
-func (s *SetupStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *SetupStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(ctx, c, Setup)
 	if err != nil {
 		return "", err
@@ -37,7 +37,7 @@ func (s *SetupStage) GetDependencies(ctx context.Context, c Conveyor, _, _ conta
 	return util.Sha256Hash(s.builder.SetupChecksum(ctx), stageDependenciesChecksum), nil
 }
 
-func (s *SetupStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *SetupStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	if err := s.UserWithGitPatchStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}

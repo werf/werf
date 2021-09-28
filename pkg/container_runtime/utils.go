@@ -17,7 +17,7 @@ func LogImageName(ctx context.Context, name string) {
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "name", name)
 }
 
-func LogImageInfo(ctx context.Context, img ImageInterface, prevStageImageSize int64) {
+func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageSize int64) {
 	LogImageName(ctx, img.Name())
 
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "id", stringid.TruncateID(img.GetStageDescription().Info.ID))

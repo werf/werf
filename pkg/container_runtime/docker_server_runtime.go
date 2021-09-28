@@ -4,26 +4,22 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/werf/pkg/image"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/docker"
 )
 
-type ContainerRuntime interface {
-	RefreshImageObject(ctx context.Context, img Image) error
-	PullImageFromRegistry(ctx context.Context, img Image) error
-	RenameImage(ctx context.Context, img Image, newImageName string, removeOldName bool) error
-	RemoveImage(ctx context.Context, img Image) error
-	String() string
+type DockerServerRuntime struct{}
+
+type DockerImage struct {
+	Image LegacyImageInterface
 }
 
-type LocalDockerServerRuntime struct{}
-
-// GetImageInspect only available for LocalDockerServerRuntime
-func (runtime *LocalDockerServerRuntime) GetImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
+// GetImageInspect only available for DockerServerRuntime
+func (runtime *DockerServerRuntime) GetImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
 		return nil, nil
@@ -31,8 +27,8 @@ func (runtime *LocalDockerServerRuntime) GetImageInspect(ctx context.Context, re
 	return inspect, err
 }
 
-// PullImage only available for LocalDockerServerRuntime
-func (runtime *LocalDockerServerRuntime) PullImage(ctx context.Context, ref string) error {
+// PullImage only available for DockerServerRuntime
+func (runtime *DockerServerRuntime) PullImage(ctx context.Context, ref string) error {
 	if err := docker.CliPull(ctx, ref); err != nil {
 		return fmt.Errorf("unable to pull image %s: %s", ref, err)
 	}
@@ -40,7 +36,7 @@ func (runtime *LocalDockerServerRuntime) PullImage(ctx context.Context, ref stri
 	return nil
 }
 
-func (runtime *LocalDockerServerRuntime) RefreshImageObject(ctx context.Context, img Image) error {
+func (runtime *DockerServerRuntime) RefreshImageObject(ctx context.Context, img Image) error {
 	dockerImage := img.(*DockerImage)
 
 	if inspect, err := runtime.GetImageInspect(ctx, dockerImage.Image.Name()); err != nil {
@@ -51,7 +47,7 @@ func (runtime *LocalDockerServerRuntime) RefreshImageObject(ctx context.Context,
 	return nil
 }
 
-func (runtime *LocalDockerServerRuntime) RenameImage(ctx context.Context, img Image, newImageName string, removeOldName bool) error {
+func (runtime *DockerServerRuntime) RenameImage(ctx context.Context, img Image, newImageName string, removeOldName bool) error {
 	dockerImage := img.(*DockerImage)
 
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging image %s by name %s", dockerImage.Image.Name(), newImageName)).DoError(func() error {
@@ -76,10 +72,22 @@ func (runtime *LocalDockerServerRuntime) RenameImage(ctx context.Context, img Im
 
 	dockerImage.Image.SetName(newImageName)
 
+	if inspect, err := runtime.GetImageInspect(ctx, dockerImage.Image.Name()); err != nil {
+		return err
+	} else {
+		dockerImage.Image.SetInspect(inspect)
+	}
+
+	desc := dockerImage.Image.GetStageDescription()
+
+	repository, tag := image.ParseRepositoryAndTag(newImageName)
+	desc.Info.Repository = repository
+	desc.Info.Tag = tag
+
 	return nil
 }
 
-func (runtime *LocalDockerServerRuntime) RemoveImage(ctx context.Context, img Image) error {
+func (runtime *DockerServerRuntime) RemoveImage(ctx context.Context, img Image) error {
 	dockerImage := img.(*DockerImage)
 
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", dockerImage.Image.Name())).DoError(func() error {
@@ -94,7 +102,7 @@ func (runtime *LocalDockerServerRuntime) RemoveImage(ctx context.Context, img Im
 	return nil
 }
 
-func (runtime *LocalDockerServerRuntime) PullImageFromRegistry(ctx context.Context, img Image) error {
+func (runtime *DockerServerRuntime) PullImageFromRegistry(ctx context.Context, img Image) error {
 	dockerImage := img.(*DockerImage)
 
 	if err := dockerImage.Image.Pull(ctx); err != nil {
@@ -110,7 +118,7 @@ func (runtime *LocalDockerServerRuntime) PullImageFromRegistry(ctx context.Conte
 	return nil
 }
 
-func (runtime *LocalDockerServerRuntime) PushImage(ctx context.Context, img Image) error {
+func (runtime *DockerServerRuntime) PushImage(ctx context.Context, img Image) error {
 	dockerImage := img.(*DockerImage)
 
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", dockerImage.Image.Name())).DoError(func() error {
@@ -122,8 +130,8 @@ func (runtime *LocalDockerServerRuntime) PushImage(ctx context.Context, img Imag
 	return nil
 }
 
-// PushBuiltImage is only available for LocalDockerServerRuntime
-func (runtime *LocalDockerServerRuntime) PushBuiltImage(ctx context.Context, img Image) error {
+// PushBuiltImage is only available for DockerServerRuntime
+func (runtime *DockerServerRuntime) PushBuiltImage(ctx context.Context, img Image) error {
 	dockerImage := img.(*DockerImage)
 
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging built image by name %s", dockerImage.Image.Name())).DoError(func() error {
@@ -144,8 +152,8 @@ func (runtime *LocalDockerServerRuntime) PushBuiltImage(ctx context.Context, img
 	return nil
 }
 
-// TagBuiltImageByName is only available for LocalDockerServerRuntime
-func (runtime *LocalDockerServerRuntime) TagImageByName(ctx context.Context, img Image) error {
+// TagBuiltImageByName is only available for DockerServerRuntime
+func (runtime *DockerServerRuntime) TagImageByName(ctx context.Context, img Image) error {
 	dockerImage := img.(*DockerImage)
 
 	if dockerImage.Image.GetBuiltId() != "" {
@@ -161,14 +169,6 @@ func (runtime *LocalDockerServerRuntime) TagImageByName(ctx context.Context, img
 	return nil
 }
 
-func (runtime *LocalDockerServerRuntime) String() string {
+func (runtime *DockerServerRuntime) String() string {
 	return "local-docker-server"
-}
-
-type LocalHostRuntime struct {
-	ContainerRuntime // TODO: kaniko-like builds
-}
-
-func (runtime *LocalHostRuntime) String() string {
-	return "localhost"
 }

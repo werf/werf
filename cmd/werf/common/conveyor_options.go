@@ -45,7 +45,7 @@ func GetBuildOptions(commonCmdData *CmdData, werfConfig *config.WerfConfig) (bui
 	}
 
 	buildOptions = build.BuildOptions{
-		ImageBuildOptions: container_runtime.BuildOptions{
+		ImageBuildOptions: container_runtime.LegacyBuildOptions{
 			IntrospectAfterError:  *commonCmdData.IntrospectAfterError,
 			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
 		},

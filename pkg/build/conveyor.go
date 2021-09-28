@@ -54,7 +54,7 @@ type Conveyor struct {
 	images    []*Image
 	imageSets [][]*Image
 
-	stageImages        map[string]*container_runtime.StageImage
+	stageImages        map[string]*container_runtime.LegacyStageImage
 	giterminismManager giterminism_manager.Interface
 	remoteGitRepos     map[string]*git_repo.Remote
 
@@ -94,7 +94,7 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 
 		giterminismManager: giterminismManager,
 
-		stageImages:            make(map[string]*container_runtime.StageImage),
+		stageImages:            make(map[string]*container_runtime.LegacyStageImage),
 		baseImagesRepoIdsCache: make(map[string]string),
 		baseImagesRepoErrCache: make(map[string]error),
 		images:                 []*Image{},
@@ -611,7 +611,7 @@ func (c *Conveyor) projectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) GetStageImage(name string) *container_runtime.StageImage {
+func (c *Conveyor) GetStageImage(name string) *container_runtime.LegacyStageImage {
 	c.getServiceRWMutex("StageImages").RLock()
 	defer c.getServiceRWMutex("StageImages").RUnlock()
 
@@ -625,19 +625,19 @@ func (c *Conveyor) UnsetStageImage(name string) {
 	delete(c.stageImages, name)
 }
 
-func (c *Conveyor) SetStageImage(stageImage *container_runtime.StageImage) {
+func (c *Conveyor) SetStageImage(stageImage *container_runtime.LegacyStageImage) {
 	c.getServiceRWMutex("StageImages").Lock()
 	defer c.getServiceRWMutex("StageImages").Unlock()
 
 	c.stageImages[stageImage.Name()] = stageImage
 }
 
-func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.StageImage, name string) *container_runtime.StageImage {
+func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.LegacyStageImage, name string) *container_runtime.LegacyStageImage {
 	if img := c.GetStageImage(name); img != nil {
 		return img
 	}
 
-	img := container_runtime.NewStageImage(fromImage, name, c.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime))
+	img := container_runtime.NewLegacyStageImage(fromImage, name, c.ContainerRuntime.(*container_runtime.DockerServerRuntime))
 	c.SetStageImage(img)
 	return img
 }

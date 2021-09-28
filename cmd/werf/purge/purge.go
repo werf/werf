@@ -28,7 +28,7 @@ func NewCmd() *cobra.Command {
 		Use:                   "purge",
 		DisableFlagsInUseLine: true,
 		Short:                 "Purge all project images in the container registry",
-		Long: common.GetLongCommandDescription(`Purge all project images in the container registry. 
+		Long: common.GetLongCommandDescription(`Purge all project images in the container registry.
 
 WARNING: Images that are being used in the Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -146,11 +146,11 @@ func runPurge() error {
 
 	logboek.LogOptionalLn()
 
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
+	containerRuntime := &container_runtime.DockerServerRuntime{} // TODO
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
-		logboek.Context(ctx).Default().LogLnDetails(`The "werf purge" command is only used to cleaning the container registry. In case you need to clean the runner or the localhost, use the commands of the "werf host" group. 
+		logboek.Context(ctx).Default().LogLnDetails(`The "werf purge" command is only used to cleaning the container registry. In case you need to clean the runner or the localhost, use the commands of the "werf host" group.
 It is worth noting that auto-cleaning is enabled by default, and manual use is usually not required (if not, we would appreciate feedback and creating an issue https://github.com/werf/werf/issues/new).`)
 
 		return err
