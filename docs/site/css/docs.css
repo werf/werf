@@ -599,7 +599,7 @@ figure.highlight {
     margin-right: 5px;
 }
 
-.docs .details.active .details__summary::before {
+.docs .details.active > .details__summary::before {
     transform: rotate(0deg);
 }
 
@@ -614,7 +614,7 @@ figure.highlight {
     background: #fff;
 }
 
-.docs .details.active .details__content {
+.docs .details.active > .details__content {
     display: block;
 }
 
