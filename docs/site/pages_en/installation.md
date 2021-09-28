@@ -30,8 +30,28 @@ arch:
 
   <div class="installation-selector-row">
     <div class="installation-selector">
+      <div class="installation-selector__title">OS</div>
+      <div class="tabs tabs_simple_condensed">
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="os" data-install-tab="linux">Linux</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="os" data-install-tab="macos">Mac OS</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="os" data-install-tab="windows">Windows</a>
+      </div>
+    </div><!-- /selector -->
+    <div class="installation-selector">
+      <div class="installation-selector__title">Arch</div>
+      <div class="tabs tabs_simple_condensed">
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="arch" data-install-tab="amd64">Amd64</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="arch" data-install-tab="arm64">Arm64</a>
+      </div>
+    </div><!-- /selector -->
+    <div class="installation-selector">
       <div class="installation-selector__title">Version</div>
-      <div class="tabs tabs_simple">
+      <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="version" data-install-tab="1.2">1.2</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -40,7 +60,7 @@ arch:
     </div><!-- /selector -->
     <div class="installation-selector">
       <div class="installation-selector__title">Stability channel</div>
-      <div class="tabs tabs_simple">
+      <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="channel" data-install-tab="rock-solid">Rock-Solid</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -53,31 +73,11 @@ arch:
           data-install-tab-group="channel" data-install-tab="alpha">Alpha</a>
       </div>
     </div><!-- /selector -->
-    <div class="installation-selector">
-      <div class="installation-selector__title">OS</div>
-      <div class="tabs tabs_simple">
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="os" data-install-tab="linux">Linux</a>
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="os" data-install-tab="macos">Mac OS</a>
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="os" data-install-tab="windows">Windows</a>
-      </div>
-    </div><!-- /selector -->
-    <div class="installation-selector">
-      <div class="installation-selector__title">Arch</div>
-      <div class="tabs tabs_simple">
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="arch" data-install-tab="amd64">Amd64</a>
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="arch" data-install-tab="arm64">Arm64</a>
-      </div>
-    </div><!-- /selector -->
   </div><!-- /selector-row -->
   <div class="installation-selector-row">
     <div class="installation-selector">
       <div class="installation-selector__title">Installation method</div>
-      <div class="tabs tabs_simple">
+      <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="method" data-install-tab="trdl">with trdl (recommended)</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -288,7 +288,7 @@ arch:
       Release
   </div>
 
-  <div class="tabs tabs_simple">
+  <div class="tabs tabs_simple_condensed">
     {%- for group in groups %}
     <a href="javascript:void(0)" class="tabs__btn tabs__group__btn{% if group == groups[0] %} active{% endif %}" onclick="openTab(event, 'tabs__group__btn', 'tabs__group__content', 'group-{{group}}')">{{group}}</a>
     {%- endfor %}
@@ -299,7 +299,7 @@ arch:
       <div class="installation-releases__block-subtitle">
           Channel
       </div>
-      <div class="tabs tabs_simple">
+      <div class="tabs tabs_simple_condensed">
         {%- assign not_activated = true %}
         {%- assign active_channels = 0 %}
         {%- for channel in channels_sorted_reverse %}
