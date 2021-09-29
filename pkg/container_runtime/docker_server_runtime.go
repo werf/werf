@@ -18,6 +18,10 @@ type DockerImage struct {
 	Image LegacyImageInterface
 }
 
+func (runtime *DockerServerRuntime) BuildDockerfile(dockerfile []byte, opts BuildDockerfileOptions) string {
+	panic("not implemeneted")
+}
+
 // GetImageInspect only available for DockerServerRuntime
 func (runtime *DockerServerRuntime) GetImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)

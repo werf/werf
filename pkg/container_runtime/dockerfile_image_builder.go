@@ -11,6 +11,14 @@ import (
 	"github.com/werf/werf/pkg/docker"
 )
 
+//type DockerfileImageBuilder struct {
+//	ContainerRuntime       ContainerRuntime
+//	Dockerfile             []byte
+//	BuildDockerfileOptions BuildDockerfileOptions
+//
+//	builtID string
+//}
+
 type DockerfileImageBuilder struct {
 	temporalId      string
 	isBuilt         bool

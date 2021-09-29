@@ -2,7 +2,26 @@ package container_runtime
 
 import (
 	"context"
+	"io"
 )
+
+type BuildDockerfileOptions struct {
+	ContextTar io.Reader
+	Target     string
+	BuildArgs  []string // {"key1=value1", "key2=value2", ... }
+	AddHost    []string
+	Network    string
+}
+
+//type StapelBuildOptions struct {
+//	ServiceRunCommands []string
+//	RunCommands []string
+//	Volumes []string
+//	VolumesFrom []string
+//	Exposes []string
+//	Envs map[string]string
+//	Labels map[string]string
+//}
 
 type ContainerRuntime interface {
 	//GetImageInspect(ctx context.Context, ref string) (image.Info, error)
@@ -10,6 +29,9 @@ type ContainerRuntime interface {
 	//Tag(ctx, ref, newRef string)
 	//Rmi(ctx, ref string)
 	//Push(ctx, ref string)
+
+	BuildDockerfile(dockerfile []byte, opts BuildDockerfileOptions) string
+	//StapelBuild(opts StapelBuildOptions) string
 
 	String() string
 
@@ -20,8 +42,8 @@ type ContainerRuntime interface {
 	RemoveImage(ctx context.Context, img Image) error
 }
 
-type Image interface {
-}
+// Legacy image handle
+type Image interface{}
 
 /*
  * Stapel + docker server
@@ -32,28 +54,6 @@ type Image interface {
       * метод DockerfileImageBuilder.Build
  * DockerServerRuntime
  * Stapel|Dockerfile + docker-server|buildah
-
-type BuildDockerfileOptions struct {
-	ContextTar io.Reader
- 	Target string
-    BuildArgs []string // {"key1=value1", "key2=value2", ... }
-	AddHost []string
-	Network string
-}
-
-ContainerRuntime.BuildDockerfile(dockerfile []byte, opts BuildDockerfileOptions) -> imageID
-
-type StapelBuildOptions struct {
-	ServiceRunCommands []string
-	RunCommands []string
-	Volumes []string
-	VolumesFrom []string
-	Exposes []string
-	Envs map[string]string
-	Labels map[string]string
-}
-
-ContainerRuntime.StapelBuild(opts StapelBuildOptions)
 
 type DockerfileImageBuilder struct {
 	ContainerRuntime ContainerRuntime
