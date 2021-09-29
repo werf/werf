@@ -221,6 +221,7 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 	})
 }
 
+// FIXME(ilya-lesikov): remove?
 func CliBuild_LiveOutput(ctx context.Context, args ...string) error {
 	return doCliBuild(cli(ctx), args...)
 }

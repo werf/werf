@@ -3,7 +3,9 @@ package container_runtime
 import (
 	"context"
 	"fmt"
+	"io"
 
+	"github.com/google/uuid"
 	"github.com/werf/werf/pkg/image"
 
 	"github.com/docker/docker/api/types"
@@ -14,8 +16,47 @@ import (
 
 type DockerServerRuntime struct{}
 
-func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error) {
-	panic("not implemeneted")
+func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOptions) (string, error) {
+	switch {
+	case opts.ContextTar == nil:
+		panic(fmt.Sprintf("ContextTar can't be nil: %+v", opts))
+	case opts.DockerfileCtxRelPath == "":
+		panic(fmt.Sprintf("DockerfileCtxRelPath can't be empty: %+v", opts))
+	}
+
+	var cliArgs []string
+
+	cliArgs = append(cliArgs, fmt.Sprintf("--file=%q", opts.DockerfileCtxRelPath))
+	if opts.Target != "" {
+		cliArgs = append(cliArgs, fmt.Sprintf("--target=%q", opts.Target))
+	}
+	if opts.Network != "" {
+		cliArgs = append(cliArgs, fmt.Sprintf("--network=%q", opts.Network))
+	}
+	if opts.SSH != "" {
+		cliArgs = append(cliArgs, fmt.Sprintf("--ssh=%q", opts.SSH))
+	}
+
+	for _, addHost := range opts.AddHost {
+		cliArgs = append(cliArgs, fmt.Sprintf("--add-host=%q", addHost))
+	}
+	for _, buildArg := range opts.BuildArgs {
+		cliArgs = append(cliArgs, fmt.Sprintf("--build-arg=%q", buildArg))
+	}
+	for _, label := range opts.Labels {
+		cliArgs = append(cliArgs, fmt.Sprintf("--label=%q", label))
+	}
+
+	tempID := uuid.New().String()
+	opts.Tags = append(opts.Tags, tempID)
+	for _, tag := range opts.Tags {
+		cliArgs = append(cliArgs, fmt.Sprintf("--tag=%q", tag))
+	}
+
+	cliArgs = append(cliArgs, "-")
+
+	// REVIEW(ilya-lesikov): io.NopCloser is ok?
+	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, io.NopCloser(opts.ContextTar), cliArgs...)
 }
 
 func (runtime *DockerServerRuntime) GetImageInfo(ctx context.Context, ref string) (*image.Info, error) {
