@@ -3,6 +3,8 @@ package container_runtime
 import (
 	"context"
 	"io"
+
+	"github.com/werf/werf/pkg/image"
 )
 
 type BuildDockerfileOptions struct {
@@ -28,24 +30,23 @@ type BuildDockerfileOptions struct {
 type ContainerRuntime interface {
 	//GetImageInspect(ctx context.Context, ref string) (image.Info, error)
 	//Pull(ctx context.Context, ref string) error
-	//Tag(ctx, ref, newRef string)
 	//Rmi(ctx, ref string)
-	//Push(ctx, ref string)
 
+	Tag(ctx context.Context, ref, newRef string) error
+	Push(ctx context.Context, ref string) error
+
+	GetImageInfo(ctx context.Context, ref string) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error)
 	//StapelBuild(opts StapelBuildOptions) string
 
 	String() string
 
 	// Legacy
-	RefreshImageObject(ctx context.Context, img Image) error
-	PullImageFromRegistry(ctx context.Context, img Image) error
-	RenameImage(ctx context.Context, img Image, newImageName string, removeOldName bool) error
-	RemoveImage(ctx context.Context, img Image) error
+	RefreshImageObject(ctx context.Context, img LegacyImageInterface) error
+	PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error
+	RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error
+	RemoveImage(ctx context.Context, img LegacyImageInterface) error
 }
-
-// Legacy image handle
-type Image interface{}
 
 /*
  * Stapel + docker server

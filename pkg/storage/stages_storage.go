@@ -38,10 +38,10 @@ type StagesStorage interface {
 	ConstructStageImageName(projectName, digest string, uniqueID int64) string
 
 	// FetchImage will create a local image in the container-runtime
-	FetchImage(ctx context.Context, img container_runtime.Image) error
+	FetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) error
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
-	StoreImage(ctx context.Context, img container_runtime.Image) error
-	ShouldFetchImage(ctx context.Context, img container_runtime.Image) (bool, error)
+	StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error
+	ShouldFetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) (bool, error)
 
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error

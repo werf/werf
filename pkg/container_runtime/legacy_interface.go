@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/werf/werf/pkg/image"
-
-	"github.com/docker/docker/api/types"
 )
 
 type LegacyBuildOptions struct {
@@ -32,7 +30,8 @@ type LegacyImageInterface interface {
 
 	Introspect(ctx context.Context) error
 
-	SetInspect(inspect *types.ImageInspect)
+	SetInfo(info *image.Info)
+
 	IsExistsLocally() bool
 
 	SetStageDescription(stage *image.StageDescription)

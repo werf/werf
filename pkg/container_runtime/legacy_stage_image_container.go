@@ -232,10 +232,16 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 		panic(fmt.Sprintf("runtime error: FromImage should be (%s)", c.image.name))
 	}
 
-	if err := c.image.fromImage.MustResetInspect(ctx); err != nil {
-		return nil, fmt.Errorf("unable to reset inspect for image %s: %s", c.image.fromImage.Name(), err)
+	if err := c.image.fromImage.MustResetInfo(ctx); err != nil {
+		return nil, fmt.Errorf("unable to reset info for image %s: %s", c.image.fromImage.Name(), err)
 	}
-	fromImageInspect := c.image.fromImage.GetInspect()
+
+	dockerServerRuntime := c.image.ContainerRuntime.(*DockerServerRuntime)
+
+	fromImageInspect, err := dockerServerRuntime.GetImageInspect(ctx, c.image.fromImage.Name())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get image inspect: %s")
+	}
 
 	if len(fromImageInspect.Config.Cmd) != 0 {
 		inheritedOptions.Cmd = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Cmd, "\", \""))

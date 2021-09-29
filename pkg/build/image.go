@@ -169,7 +169,7 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
-				return c.ContainerRuntime.PullImageFromRegistry(ctx, &container_runtime.DockerImage{Image: i.baseImage})
+				return c.ContainerRuntime.PullImageFromRegistry(ctx, i.baseImage)
 			}); err != nil {
 			return err
 		}
@@ -186,7 +186,7 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 		}
 	case StageAsBaseImage:
 		// TODO: check no bug introduced
-		//if err := c.ContainerRuntime.RefreshImageObject(ctx, &container_runtime.DockerImage{Image: i.baseImage}); err != nil {
+		//if err := c.ContainerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: i.baseImage}); err != nil {
 		//	return err
 		//}
 		if err := c.StorageManager.FetchStage(ctx, c.ContainerRuntime, i.stageAsBaseImage); err != nil {

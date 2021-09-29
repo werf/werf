@@ -9,8 +9,6 @@ import (
 	"github.com/werf/lockgate"
 	"github.com/werf/werf/pkg/werf"
 
-	"github.com/docker/docker/api/types"
-
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/pkg/docker"
@@ -31,10 +29,6 @@ func NewLegacyStageImage(fromImage *LegacyStageImage, name string, localDockerSe
 	stage.fromImage = fromImage
 	stage.container = newLegacyStageImageContainer(stage)
 	return stage
-}
-
-func (i *LegacyStageImage) Inspect() *types.ImageInspect {
-	return i.inspect
 }
 
 func (i *LegacyStageImage) BuilderContainer() LegacyBuilderContainer {
@@ -120,13 +114,13 @@ func (i *LegacyStageImage) Build(ctx context.Context, options LegacyBuildOptions
 		}
 	}
 
-	if inspect, err := i.DockerServerRuntime.GetImageInspect(ctx, i.MustGetBuiltId()); err != nil {
+	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.MustGetBuiltId()); err != nil {
 		return err
 	} else {
-		i.SetInspect(inspect)
+		i.SetInfo(info)
 		i.SetStageDescription(&image.StageDescription{
 			StageID: nil, // stage id does not available at the moment
-			Info:    image.NewInfoFromInspect(i.Name(), inspect),
+			Info:    info,
 		})
 	}
 
@@ -139,7 +133,7 @@ func (i *LegacyStageImage) Commit(ctx context.Context) error {
 		return err
 	}
 
-	i.buildImage = newLegacyBaseImage(builtId, i.DockerServerRuntime)
+	i.buildImage = newLegacyBaseImage(builtId, i.ContainerRuntime)
 
 	return nil
 }
@@ -160,19 +154,19 @@ func (i *LegacyStageImage) introspectBefore(ctx context.Context) error {
 	return nil
 }
 
-func (i *LegacyStageImage) MustResetInspect(ctx context.Context) error {
+func (i *LegacyStageImage) MustResetInfo(ctx context.Context) error {
 	if i.buildImage != nil {
-		return i.buildImage.MustResetInspect(ctx)
+		return i.buildImage.MustResetInfo(ctx)
 	} else {
-		return i.legacyBaseImage.MustResetInspect(ctx)
+		return i.legacyBaseImage.MustResetInfo(ctx)
 	}
 }
 
-func (i *LegacyStageImage) GetInspect() *types.ImageInspect {
+func (i *LegacyStageImage) GetInfo() *image.Info {
 	if i.buildImage != nil {
-		return i.buildImage.GetInspect()
+		return i.buildImage.GetInfo()
 	} else {
-		return i.legacyBaseImage.GetInspect()
+		return i.legacyBaseImage.GetInfo()
 	}
 }
 
@@ -207,7 +201,7 @@ func (i *LegacyStageImage) Pull(ctx context.Context) error {
 		return err
 	}
 
-	i.legacyBaseImage.UnsetInspect()
+	i.legacyBaseImage.UnsetInfo()
 
 	return nil
 }
@@ -218,7 +212,7 @@ func (i *LegacyStageImage) Push(ctx context.Context) error {
 
 func (i *LegacyStageImage) DockerfileImageBuilder() *DockerfileImageBuilder {
 	if i.dockerfileImageBuilder == nil {
-		i.dockerfileImageBuilder = NewDockerfileImageBuilder(i.DockerServerRuntime) // TODO: Possibly need to change DockerServerRuntime to abstract ContainerRuntime
+		i.dockerfileImageBuilder = NewDockerfileImageBuilder(i.ContainerRuntime) // TODO: Possibly need to change DockerServerRuntime to abstract ContainerRuntime
 	}
 	return i.dockerfileImageBuilder
 }

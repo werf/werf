@@ -151,15 +151,15 @@ func (storage *DockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Conte
 	return convertToStagesList(images)
 }
 
-func (storage *DockerServerStagesStorage) ShouldFetchImage(_ context.Context, _ container_runtime.Image) (bool, error) {
+func (storage *DockerServerStagesStorage) ShouldFetchImage(_ context.Context, _ container_runtime.LegacyImageInterface) (bool, error) {
 	return false, nil
 }
 
-func (storage *DockerServerStagesStorage) FetchImage(_ context.Context, _ container_runtime.Image) error {
+func (storage *DockerServerStagesStorage) FetchImage(_ context.Context, _ container_runtime.LegacyImageInterface) error {
 	return nil
 }
 
-func (storage *DockerServerStagesStorage) StoreImage(ctx context.Context, img container_runtime.Image) error {
+func (storage *DockerServerStagesStorage) StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
 	return storage.DockerServerRuntime.TagImageByName(ctx, img)
 }
 
