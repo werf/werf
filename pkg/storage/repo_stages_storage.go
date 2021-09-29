@@ -367,57 +367,39 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_runtime.Image) error {
-	switch containerRuntime := storage.ContainerRuntime.(type) {
-	case *container_runtime.DockerServerRuntime:
-		if err := containerRuntime.PullImageFromRegistry(ctx, img); err != nil {
-			if strings.HasSuffix(err.Error(), "unknown blob") {
-				return ErrBrokenImage
-			}
-			return err
+func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
+	if err := storage.ContainerRuntime.PullImageFromRegistry(ctx, img); err != nil {
+		if strings.HasSuffix(err.Error(), "unknown blob") {
+			return ErrBrokenImage
 		}
-
-		return nil
-	default:
-		// TODO: case *container_runtime.LocalHostRuntime:
-		panic("not implemented")
+		return err
 	}
+
+	return nil
 }
 
-func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_runtime.Image) error {
-	switch containerRuntime := storage.ContainerRuntime.(type) {
-	case *container_runtime.DockerServerRuntime:
-		dockerImage := img.(*container_runtime.DockerImage)
-
-		if dockerImage.Image.GetBuiltId() != "" {
-			return containerRuntime.PushBuiltImage(ctx, img)
-		} else {
-			return containerRuntime.PushImage(ctx, img)
+func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
+	if img.GetBuiltId() != "" {
+		if err := storage.ContainerRuntime.Tag(ctx, img.GetBuiltId(), img.Name()); err != nil {
+			return fmt.Errorf("unable to tag built image %q by %q: %s", img.GetBuiltId(), img.Name(), err)
 		}
-
-	default:
-		// TODO: case *container_runtime.LocalHostRuntime:
-		panic("not implemented")
 	}
+
+	if err := storage.ContainerRuntime.Push(ctx, img.Name()); err != nil {
+		return fmt.Errorf("unable to push image %q: %s", img.Name(), err)
+	}
+
+	return nil
 }
 
-func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_runtime.Image) (bool, error) {
-	switch containerRuntime := storage.ContainerRuntime.(type) {
-	case *container_runtime.DockerServerRuntime:
-
-		dockerImage := img.(*container_runtime.DockerImage)
-
-		if inspect, err := containerRuntime.GetImageInspect(ctx, dockerImage.Image.Name()); err != nil {
-			return false, fmt.Errorf("unable to get inspect for image %s: %s", dockerImage.Image.Name(), err)
-		} else if inspect != nil {
-			dockerImage.Image.SetInspect(inspect)
-			return false, nil
-		}
-
-		return true, nil
-	default:
-		panic("not implemented")
+func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) (bool, error) {
+	if info, err := storage.ContainerRuntime.GetImageInfo(ctx, img.Name()); err != nil {
+		return false, fmt.Errorf("unable to get inspect for image %s: %s", img.Name(), err)
+	} else if info != nil {
+		img.SetInfo(info)
+		return false, nil
 	}
+	return true, nil
 }
 
 func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageName, commit, stageID string) error {

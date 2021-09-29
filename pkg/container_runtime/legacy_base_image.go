@@ -4,23 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/docker/docker/api/types"
-
 	"github.com/werf/werf/pkg/image"
 )
 
 type legacyBaseImage struct {
 	name      string
-	inspect   *types.ImageInspect
+	info      *image.Info
 	stageDesc *image.StageDescription
 
-	DockerServerRuntime *DockerServerRuntime
+	ContainerRuntime ContainerRuntime
 }
 
-func newLegacyBaseImage(name string, dockerServerRuntime *DockerServerRuntime) *legacyBaseImage {
+func newLegacyBaseImage(name string, containerRuntime ContainerRuntime) *legacyBaseImage {
 	img := &legacyBaseImage{}
 	img.name = name
-	img.DockerServerRuntime = dockerServerRuntime
+	img.ContainerRuntime = containerRuntime
 	return img
 }
 
@@ -32,29 +30,29 @@ func (i *legacyBaseImage) SetName(name string) {
 	i.name = name
 }
 
-func (i *legacyBaseImage) MustResetInspect(ctx context.Context) error {
-	if inspect, err := i.DockerServerRuntime.GetImageInspect(ctx, i.Name()); err != nil {
-		return fmt.Errorf("unable to get inspect for image %s: %s", i.Name(), err)
+func (i *legacyBaseImage) MustResetInfo(ctx context.Context) error {
+	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.Name()); err != nil {
+		return fmt.Errorf("unable to get info for image %s: %s", i.Name(), err)
 	} else {
-		i.SetInspect(inspect)
+		i.SetInfo(info)
 	}
 
-	if i.inspect == nil {
-		panic(fmt.Sprintf("runtime error: inspect must be (%s)", i.name))
+	if i.info == nil {
+		panic(fmt.Sprintf("runtime error: info must be set for image %q", i.name))
 	}
 	return nil
 }
 
-func (i *legacyBaseImage) GetInspect() *types.ImageInspect {
-	return i.inspect
+func (i *legacyBaseImage) GetInfo() *image.Info {
+	return i.info
 }
 
-func (i *legacyBaseImage) SetInspect(inspect *types.ImageInspect) {
-	i.inspect = inspect
+func (i *legacyBaseImage) SetInfo(info *image.Info) {
+	i.info = info
 }
 
-func (i *legacyBaseImage) UnsetInspect() {
-	i.inspect = nil
+func (i *legacyBaseImage) UnsetInfo() {
+	i.info = nil
 }
 
 func (i *legacyBaseImage) SetStageDescription(stageDesc *image.StageDescription) {
@@ -66,5 +64,5 @@ func (i *legacyBaseImage) GetStageDescription() *image.StageDescription {
 }
 
 func (i *legacyBaseImage) IsExistsLocally() bool {
-	return i.inspect != nil
+	return i.info != nil
 }
