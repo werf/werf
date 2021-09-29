@@ -4,84 +4,83 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
-
-	"github.com/google/uuid"
 
 	"github.com/werf/werf/pkg/docker"
 )
 
-//type DockerfileImageBuilder struct {
-//	ContainerRuntime       ContainerRuntime
-//	Dockerfile             []byte
-//	BuildDockerfileOptions BuildDockerfileOptions
-//
-//	builtID string
-//}
-
 type DockerfileImageBuilder struct {
-	temporalId      string
-	isBuilt         bool
-	buildArgs       []string
-	filePathToStdin string
+	ContainerRuntime       ContainerRuntime
+	Dockerfile             []byte
+	BuildDockerfileOptions BuildDockerfileOptions
+	ContextArchivePath     string
+
+	builtID string
 }
 
-func NewDockerfileImageBuilder() *DockerfileImageBuilder {
-	return &DockerfileImageBuilder{temporalId: uuid.New().String()}
+func NewDockerfileImageBuilder(containerRuntime ContainerRuntime) *DockerfileImageBuilder {
+	return &DockerfileImageBuilder{ContainerRuntime: containerRuntime}
 }
 
-func (b *DockerfileImageBuilder) GetBuiltId() string {
-	if !b.isBuilt {
-		return ""
-	}
-	return b.temporalId
-}
-
-func (b *DockerfileImageBuilder) AppendBuildArgs(buildArgs ...string) {
-	b.buildArgs = append(b.buildArgs, buildArgs...)
-}
-
-func (b *DockerfileImageBuilder) SetFilePathToStdin(path string) {
-	b.filePathToStdin = path
-}
-
+// filePathToStdin != "" ??
 func (b *DockerfileImageBuilder) Build(ctx context.Context) error {
-	buildArgs := append(b.buildArgs, fmt.Sprintf("--tag=%s", b.temporalId))
+	contextReader, err := os.Open(b.ContextArchivePath)
+	if err != nil {
+		return fmt.Errorf("unable to open context archive %q: %s", b.ContextArchivePath, err)
+	}
+	defer contextReader.Close()
 
-	if b.filePathToStdin != "" {
-		buildArgs = append(buildArgs, "-")
+	opts := b.BuildDockerfileOptions
+	opts.ContextTar = contextReader
 
-		f, err := os.Open(b.filePathToStdin)
-		if err != nil {
-			return fmt.Errorf("unable to open file: %s", err)
-		}
-		defer f.Close()
-
-		if debugDockerRunCommand() {
-			fmt.Printf("Docker run command:\ndocker build %s < %s\n", strings.Join(buildArgs, " "), b.filePathToStdin)
-		}
-
-		if err := docker.CliBuild_LiveOutputWithCustomIn(ctx, f, buildArgs...); err != nil {
-			return err
-		}
-	} else {
-		if debugDockerRunCommand() {
-			fmt.Printf("Docker run command:\ndocker build %s\n", strings.Join(buildArgs, " "))
-		}
-
-		if err := docker.CliBuild_LiveOutput(ctx, buildArgs...); err != nil {
-			return err
-		}
+	builtID, err := b.ContainerRuntime.BuildDockerfile(ctx, b.Dockerfile, b.BuildDockerfileOptions)
+	if err != nil {
+		return fmt.Errorf("error building dockerfile with %s: %s", b.ContainerRuntime.String(), err)
 	}
 
-	b.isBuilt = true
+	b.builtID = builtID
 
 	return nil
 }
 
 func (b *DockerfileImageBuilder) Cleanup(ctx context.Context) error {
-	if err := docker.CliRmi(ctx, b.temporalId, "--force"); err != nil {
-		return fmt.Errorf("unable to remove temporal dockerfile image %q: %s", b.temporalId, err)
+	if err := docker.CliRmi(ctx, b.builtID, "--force"); err != nil {
+		return fmt.Errorf("unable to remove built dockerfile image %q: %s", b.builtID, err)
 	}
 	return nil
+}
+
+func (b *DockerfileImageBuilder) GetBuiltId() string {
+	return b.builtID
+}
+
+func (b *DockerfileImageBuilder) SetDockerfile(dockerfile []byte) {
+	b.Dockerfile = dockerfile
+}
+
+func (b *DockerfileImageBuilder) SetTarget(target string) {
+	b.BuildDockerfileOptions.Target = target
+}
+
+func (b *DockerfileImageBuilder) AppendBuildArgs(args ...string) {
+	b.BuildDockerfileOptions.BuildArgs = append(b.BuildDockerfileOptions.BuildArgs, args...)
+}
+
+func (b *DockerfileImageBuilder) AppendAddHost(addHost ...string) {
+	b.BuildDockerfileOptions.AddHost = append(b.BuildDockerfileOptions.AddHost, addHost...)
+}
+
+func (b *DockerfileImageBuilder) SetNetwork(network string) {
+	b.BuildDockerfileOptions.Network = network
+}
+
+func (b *DockerfileImageBuilder) SetSSH(ssh string) {
+	b.BuildDockerfileOptions.SSH = ssh
+}
+
+func (b *DockerfileImageBuilder) AppendLabels(labels ...string) {
+	b.BuildDockerfileOptions.Labels = append(b.BuildDockerfileOptions.Labels, labels...)
+}
+
+func (b *DockerfileImageBuilder) SetContextArchivePath(contextArchivePath string) {
+	b.ContextArchivePath = contextArchivePath
 }

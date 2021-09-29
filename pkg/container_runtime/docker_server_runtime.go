@@ -18,7 +18,7 @@ type DockerImage struct {
 	Image LegacyImageInterface
 }
 
-func (runtime *DockerServerRuntime) BuildDockerfile(dockerfile []byte, opts BuildDockerfileOptions) string {
+func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error) {
 	panic("not implemeneted")
 }
 
