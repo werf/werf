@@ -11,6 +11,8 @@ type BuildDockerfileOptions struct {
 	BuildArgs  []string // {"key1=value1", "key2=value2", ... }
 	AddHost    []string
 	Network    string
+	SSH        string
+	Labels     []string
 }
 
 //type StapelBuildOptions struct {
@@ -30,7 +32,7 @@ type ContainerRuntime interface {
 	//Rmi(ctx, ref string)
 	//Push(ctx, ref string)
 
-	BuildDockerfile(dockerfile []byte, opts BuildDockerfileOptions) string
+	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error)
 	//StapelBuild(opts StapelBuildOptions) string
 
 	String() string

@@ -218,7 +218,7 @@ func (i *LegacyStageImage) Push(ctx context.Context) error {
 
 func (i *LegacyStageImage) DockerfileImageBuilder() *DockerfileImageBuilder {
 	if i.dockerfileImageBuilder == nil {
-		i.dockerfileImageBuilder = NewDockerfileImageBuilder()
+		i.dockerfileImageBuilder = NewDockerfileImageBuilder(i.DockerServerRuntime) // TODO: Possibly need to change DockerServerRuntime to abstract ContainerRuntime
 	}
 	return i.dockerfileImageBuilder
 }

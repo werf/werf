@@ -1249,6 +1249,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 
 	dockerfileStage := stage.GenerateDockerfileStage(
 		stage.NewDockerRunArgs(
+			dockerfileData,
 			imageFromDockerfileConfig.Dockerfile,
 			imageFromDockerfileConfig.Target,
 			imageFromDockerfileConfig.Context,
