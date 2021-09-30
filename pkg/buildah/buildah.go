@@ -50,6 +50,7 @@ type Buildah interface {
 	FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error
 	Pull(ctx context.Context, ref string, opts PullOpts) error
 	Inspect(ctx context.Context, ref string) (types.BuilderInfo, error)
+	Rmi(ctx context.Context, ref string) error
 }
 
 type Mode string

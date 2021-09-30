@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package buildah
@@ -8,16 +9,21 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/containers/buildah"
 	"github.com/containers/buildah/define"
 	"github.com/containers/buildah/imagebuildah"
+	"github.com/containers/common/libimage"
+	"github.com/containers/image/v5/manifest"
 	is "github.com/containers/image/v5/storage"
+	"github.com/containers/image/v5/transports/alltransports"
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/sirupsen/logrus"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/buildah/types"
 	"gopkg.in/errgo.v2/fmt/errors"
 )
 
