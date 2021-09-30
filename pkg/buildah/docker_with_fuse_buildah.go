@@ -104,6 +104,10 @@ func (b *DockerWithFuseBuildah) Pull(ctx context.Context, ref string, opts PullO
 	return err
 }
 
+func (b *DockerWithFuseBuildah) Rmi(ctx context.Context, ref string) error {
+	panic("not implemented yet")
+}
+
 func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []string, buildahArgs []string, logWriter io.Writer) (string, string, error) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}

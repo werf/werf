@@ -171,6 +171,14 @@ func (runtime *DockerServerRuntime) Push(ctx context.Context, ref string) error 
 	panic("not implemented")
 }
 
+func (runtime *DockerServerRuntime) Pull(ctx context.Context, ref string) error {
+	panic("not implemented")
+}
+
+func (runtime *DockerServerRuntime) Rmi(ctx context.Context, ref string) error {
+	panic("not implemented")
+}
+
 func (runtime *DockerServerRuntime) PushImage(ctx context.Context, img LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", img.Name())).DoError(func() error {
 		return docker.CliPushWithRetries(ctx, img.Name())

@@ -18,6 +18,7 @@ require (
 	github.com/cloudflare/cfssl v1.4.1 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.8.0 // indirect
 	github.com/containers/buildah v1.23.0
+	github.com/containers/common v0.44.0 // indirect
 	github.com/containers/image/v5 v5.16.0
 	github.com/containers/storage v1.36.0
 	github.com/docker/cli v20.10.5+incompatible
