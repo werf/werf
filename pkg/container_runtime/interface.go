@@ -8,16 +8,18 @@ import (
 )
 
 type BuildDockerfileOptions struct {
-	ContextTar io.Reader
-	Target     string
-	BuildArgs  []string // {"key1=value1", "key2=value2", ... }
-	AddHost    []string
-	Network    string
-	SSH        string
-	Labels     []string
+	ContextTar           io.Reader
+	DockerfileCtxRelPath string // TODO: remove this and instead write the []byte dockerfile to /Dockerfile in the ContextTar inDockerServerRuntime.BuildDockerfile().
+	Target               string
+	BuildArgs            []string // {"key1=value1", "key2=value2", ... }
+	AddHost              []string
+	Network              string
+	SSH                  string
+	Labels               []string
+	Tags                 []string
 }
 
-//type StapelBuildOptions struct {
+// type StapelBuildOptions struct {
 //	ServiceRunCommands []string
 //	RunCommands []string
 //	Volumes []string
@@ -25,19 +27,19 @@ type BuildDockerfileOptions struct {
 //	Exposes []string
 //	Envs map[string]string
 //	Labels map[string]string
-//}
+// }
 
 type ContainerRuntime interface {
-	//GetImageInspect(ctx context.Context, ref string) (image.Info, error)
-	//Pull(ctx context.Context, ref string) error
-	//Rmi(ctx, ref string)
+	// GetImageInspect(ctx context.Context, ref string) (image.Info, error)
+	// Pull(ctx context.Context, ref string) error
+	// Rmi(ctx, ref string)
 
 	Tag(ctx context.Context, ref, newRef string) error
 	Push(ctx context.Context, ref string) error
 
 	GetImageInfo(ctx context.Context, ref string) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error)
-	//StapelBuild(opts StapelBuildOptions) string
+	// StapelBuild(opts StapelBuildOptions) string
 
 	String() string
 
