@@ -30,11 +30,10 @@ type BuildDockerfileOptions struct {
 // }
 
 type ContainerRuntime interface {
-	// Pull(ctx context.Context, ref string) error
-	// Rmi(ctx, ref string)
-
 	Tag(ctx context.Context, ref, newRef string) error
 	Push(ctx context.Context, ref string) error
+	Pull(ctx context.Context, ref string) error
+	Rmi(ctx context.Context, ref string) error
 
 	GetImageInfo(ctx context.Context, ref string) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error)

@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/sirupsen/logrus"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/buildah/types"
 	"gopkg.in/errgo.v2/fmt/errors"
 )
 
@@ -59,6 +60,10 @@ func NewNativeRootlessBuildah() (*NativeRootlessBuildah, error) {
 	is.Transport.SetStore(b.Store)
 
 	return b, nil
+}
+
+func (b *NativeRootlessBuildah) Inspect(ctx context.Context, ref string) (types.BuilderInfo, error) {
+	panic("not implemented yet")
 }
 
 func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
@@ -130,5 +135,9 @@ func (b *NativeRootlessBuildah) RunCommand(ctx context.Context, container string
 }
 
 func (b *NativeRootlessBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error {
+	panic("not implemented yet")
+}
+
+func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	panic("not implemented yet")
 }
