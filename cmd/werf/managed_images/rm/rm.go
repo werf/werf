@@ -10,8 +10,6 @@ import (
 	"github.com/werf/logboek/pkg/level"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -78,6 +76,16 @@ func NewCmd() *cobra.Command {
 
 func run(imageNames []string) error {
 	ctx := common.BackgroundContext()
+
+	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
+	if shouldTerminate {
+		return nil
+	}
+
 	if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
 		logboek.Context(ctx).SetAcceptedLevel(level.Error)
 	}
@@ -107,17 +115,7 @@ func run(imageNames []string) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 		return err
 	}
 
@@ -148,7 +146,6 @@ func run(imageNames []string) error {
 	if err != nil {
 		return err
 	}
-	containerRuntime := &container_runtime.DockerServerRuntime{} // TODO
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err

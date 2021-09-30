@@ -16,6 +16,10 @@ import (
 
 type DockerServerRuntime struct{}
 
+func NewDockerServerRuntime() *DockerServerRuntime {
+	return &DockerServerRuntime{}
+}
+
 func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOptions) (string, error) {
 	switch {
 	case opts.ContextTar == nil:
@@ -164,11 +168,11 @@ func (runtime *DockerServerRuntime) PullImageFromRegistry(ctx context.Context, i
 }
 
 func (runtime *DockerServerRuntime) Tag(ctx context.Context, ref, newRef string) error {
-	panic("not implemented")
+	return docker.CliTag(ctx, ref, newRef)
 }
 
 func (runtime *DockerServerRuntime) Push(ctx context.Context, ref string) error {
-	panic("not implemented")
+	return docker.CliPushWithRetries(ctx, ref)
 }
 
 func (runtime *DockerServerRuntime) Pull(ctx context.Context, ref string) error {

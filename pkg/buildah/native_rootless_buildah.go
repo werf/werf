@@ -6,6 +6,6 @@ func InitNativeRootlessProcess() (bool, error) {
 	panic("not supported")
 }
 
-func NewNativeRootlessBuildah() (Buildah, error) {
+func NewNativeRootlessBuildah(commonOpts CommonBuildahOpts, opts NativeRootlessModeOpts) (Buildah, error) {
 	panic("not supported")
 }

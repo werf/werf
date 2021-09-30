@@ -89,12 +89,28 @@ func doInitProcess(mode Mode) (bool, error) {
 	}
 }
 
-func NewBuildah(mode Mode) (b Buildah, err error) {
+type CommonBuildahOpts struct {
+	TmpDir string
+}
+
+type NativeRootlessModeOpts struct {
+}
+
+type DockerWithFuseModeOpts struct {
+}
+
+type BuildahOpts struct {
+	CommonBuildahOpts
+	DockerWithFuseModeOpts
+	NativeRootlessModeOpts
+}
+
+func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 	switch resolveMode(mode) {
 	case ModeNativeRootless:
 		switch runtime.GOOS {
 		case "linux":
-			b, err = NewNativeRootlessBuildah()
+			b, err = NewNativeRootlessBuildah(opts.CommonBuildahOpts, opts.NativeRootlessModeOpts)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create new Buildah instance with mode %d: %s", mode, err)
 			}
@@ -102,7 +118,7 @@ func NewBuildah(mode Mode) (b Buildah, err error) {
 			panic("ModeNativeRootless can't be used on this OS")
 		}
 	case ModeDockerWithFuse:
-		b, err = NewDockerWithFuseBuildah()
+		b, err = NewDockerWithFuseBuildah(opts.CommonBuildahOpts, opts.DockerWithFuseModeOpts)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create new Buildah instance with mode %d: %s", mode, err)
 		}

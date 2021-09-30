@@ -9,8 +9,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/host_cleaning"
@@ -77,6 +75,15 @@ WARNING: Do not run this command during any other werf command is working on the
 func runReset() error {
 	ctx := common.BackgroundContext()
 
+	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
+	if shouldTerminate {
+		return nil
+	}
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -94,16 +101,6 @@ func runReset() error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
 	projectName := *commonCmdData.ProjectName
 	if projectName == "" {
 		logboek.LogOptionalLn()
@@ -112,7 +109,6 @@ func runReset() error {
 			return err
 		}
 	} else {
-		containerRuntime := &container_runtime.DockerServerRuntime{} // TODO
 		stagesStorage, err := common.GetLocalStagesStorage(containerRuntime)
 		if err != nil {
 			return err

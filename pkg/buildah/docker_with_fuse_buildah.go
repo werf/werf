@@ -23,10 +23,10 @@ type DockerWithFuseBuildah struct {
 	BaseBuildah
 }
 
-func NewDockerWithFuseBuildah() (*DockerWithFuseBuildah, error) {
+func NewDockerWithFuseBuildah(commonOpts CommonBuildahOpts, opts DockerWithFuseModeOpts) (*DockerWithFuseBuildah, error) {
 	b := &DockerWithFuseBuildah{}
 
-	baseBuildah, err := NewBaseBuildah()
+	baseBuildah, err := NewBaseBuildah(commonOpts.TmpDir)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create BaseBuildah: %s", err)
 	}

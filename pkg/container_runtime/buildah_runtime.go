@@ -17,16 +17,8 @@ type BuildahImage struct {
 	Image LegacyImageInterface
 }
 
-func NewBuildahRuntime() (*BuildahRuntime, error) {
-	var err error
-	buildahRuntime := &BuildahRuntime{}
-
-	buildahRuntime.buildah, err = buildah.NewBuildah(buildah.ModeAuto)
-	if err != nil {
-		return nil, err
-	}
-
-	return buildahRuntime, nil
+func NewBuildahRuntime(buildah buildah.Buildah) *BuildahRuntime {
+	return &BuildahRuntime{buildah: buildah}
 }
 
 func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*image.Info, error) {
