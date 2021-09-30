@@ -193,6 +193,10 @@ func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullO
 	panic("not implemented yet")
 }
 
+func (b *NativeRootlessBuildah) Rmi(ctx context.Context, ref string) error {
+	panic("not implemented yet")
+}
+
 func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
 	image, _, err := b.Runtime.LookupImage(ref, &libimage.LookupImageOptions{
 		ManifestList: true,

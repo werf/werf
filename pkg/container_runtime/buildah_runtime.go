@@ -66,7 +66,7 @@ func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string) erro
 }
 
 func (runtime *BuildahRuntime) Push(ctx context.Context, ref string) error {
-	return runtime.buildah.Push(ctx, ref)
+	return runtime.buildah.Push(ctx, ref, buildah.PushOpts{})
 }
 
 func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error) {

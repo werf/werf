@@ -9,6 +9,6 @@ cd $SOURCE
 
 export GO111MODULE=on
 export CGO_ENABLED=0
-go install -tags "dfrunmount dfssh" github.com/werf/werf/cmd/werf
+go install -tags "dfrunmount dfssh containers_image_openpgp" github.com/werf/werf/cmd/werf
 
 cd $CWD
