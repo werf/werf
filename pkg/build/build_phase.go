@@ -560,13 +560,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 
 	switch stg.(type) {
 	case *stage.DockerfileStage:
-		var buildArgs []string
-
+		var labels []string
 		for key, value := range serviceLabels {
-			buildArgs = append(buildArgs, fmt.Sprintf("--label=%s=%s", key, value))
+			labels = append(labels, fmt.Sprintf("%s=%v", key, value))
 		}
-
-		stageImage.DockerfileImageBuilder().AppendBuildArgs(buildArgs...)
+		stageImage.DockerfileImageBuilder().AppendLabels(labels...)
 
 		phase.Conveyor.AppendOnTerminateFunc(func() error {
 			return stageImage.DockerfileImageBuilder().Cleanup(ctx)

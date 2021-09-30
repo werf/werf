@@ -3,6 +3,7 @@ package container_runtime
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/werf/logboek"
@@ -12,6 +13,10 @@ var (
 	logImageInfoLeftPartWidth = 9
 	logImageInfoFormat        = fmt.Sprintf("%%%ds: %%s\n", logImageInfoLeftPartWidth)
 )
+
+func debug() bool {
+	return os.Getenv("WERF_CONTAINER_RUNTIME_DEBUG") == "1"
+}
 
 func LogImageName(ctx context.Context, name string) {
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "name", name)
