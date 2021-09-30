@@ -84,16 +84,15 @@ func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container strin
 	return err
 }
 
-func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (types.BuilderInfo, error) {
+func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (*types.BuilderInfo, error) {
 	stdout, _, err := b.runBuildah(ctx, []string{}, []string{"inspect", ref}, nil)
 	if err != nil {
-		return types.BuilderInfo{}, nil
+		return nil, err
 	}
 
-	var res types.BuilderInfo
-
-	if err := json.Unmarshal([]byte(stdout), &res); err != nil {
-		return types.BuilderInfo{}, fmt.Errorf("unable to unmarshal buildah inspect json output: %s", err)
+	var res *types.BuilderInfo
+	if err := json.Unmarshal([]byte(stdout), res); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal buildah inspect json output: %s", err)
 	}
 
 	return res, nil

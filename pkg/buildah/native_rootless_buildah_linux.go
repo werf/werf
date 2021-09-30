@@ -21,10 +21,16 @@ import (
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/docker/docker/pkg/reexec"
+	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah/types"
 	"gopkg.in/errgo.v2/fmt/errors"
+)
+
+const (
+	MaxPullPushRetries = 3
+	PullPushRetryDelay = 2 * time.Second
 )
 
 func InitNativeRootlessProcess() (bool, error) {
@@ -74,11 +80,18 @@ func NewNativeRootlessBuildah(commonOpts CommonBuildahOpts, opts NativeRootlessM
 	return b, nil
 }
 
-func (b *NativeRootlessBuildah) Inspect(ctx context.Context, ref string) (types.BuilderInfo, error) {
-	panic("not implemented yet")
+func (b *NativeRootlessBuildah) Inspect(ctx context.Context, ref string) (*types.BuilderInfo, error) {
+	builder, err := b.getImageBuilder(ctx, ref)
+	if err != nil {
+		return nil, fmt.Errorf("error doing inspect: %s", err)
+	}
+
+	buildInfo := types.BuilderInfo(buildah.GetBuildInfo(builder))
+
+	return &buildInfo, nil
 }
 
-func (b *NativeRootlessBuildah) Tag(ctx context.Context, ref, newRef string) error {
+func (b *NativeRootlessBuildah) Tag(_ context.Context, ref, newRef string) error {
 	image, err := b.getImage(ref)
 	if err != nil {
 		return err
@@ -93,11 +106,11 @@ func (b *NativeRootlessBuildah) Tag(ctx context.Context, ref, newRef string) err
 
 func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
 	pushOpts := buildah.PushOptions{
-		Compression:  define.Gzip, // REVIEW(ilya-lesikov): compress?
+		Compression:  define.Gzip,
 		Store:        b.Store,
-		ManifestType: manifest.DockerV2Schema2MediaType, // REVIEW(ilya-lesikov): which one? There was a choice initially:  oci, v2s1, v2s2(Docker).
-		MaxRetries:   3,                                 // REVIEW(ilya-lesikov): defaults from buildah
-		RetryDelay:   2 * time.Second,                   // REVIEW(ilya-lesikov): defaults from buildah
+		ManifestType: manifest.DockerV2Schema2MediaType,
+		MaxRetries:   MaxPullPushRetries,
+		RetryDelay:   PullPushRetryDelay,
 	}
 
 	if opts.LogWriter != nil {
@@ -109,8 +122,7 @@ func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushO
 		return fmt.Errorf("error parsing image ref from %q: %s", ref, err)
 	}
 
-	_, _, err = buildah.Push(ctx, ref, imageRef, pushOpts)
-	if err != nil {
+	if _, _, err = buildah.Push(ctx, ref, imageRef, pushOpts); err != nil {
 		return fmt.Errorf("error pushing image %q: %s", ref, err)
 	}
 
@@ -190,11 +202,32 @@ func (b *NativeRootlessBuildah) FromCommand(ctx context.Context, container strin
 }
 
 func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
-	panic("not implemented yet")
+	pullOpts := buildah.PullOptions{
+		Store:      b.Store,
+		MaxRetries: MaxPullPushRetries,
+		RetryDelay: PullPushRetryDelay,
+		PullPolicy: define.PullIfNewer,
+	}
+
+	if opts.LogWriter != nil {
+		pullOpts.ReportWriter = opts.LogWriter
+	}
+
+	if _, err := buildah.Pull(ctx, ref, pullOpts); err != nil {
+		return fmt.Errorf("error pulling image %q: %s", ref, err)
+	}
+
+	return nil
 }
 
 func (b *NativeRootlessBuildah) Rmi(ctx context.Context, ref string) error {
-	panic("not implemented yet")
+	_, rmiErrors := b.Runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
+		// REVIEW(ilya-lesikov): readonly=false is default, is it ok?
+		Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
+	})
+
+	var multiErr *multierror.Error
+	return multierror.Append(multiErr, rmiErrors...).ErrorOrNil()
 }
 
 func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
@@ -203,4 +236,18 @@ func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
 	})
 
 	return image, fmt.Errorf("error looking up image: %s", err)
+}
+
+func (b *NativeRootlessBuildah) getImageBuilder(ctx context.Context, imgName string) (builder *buildah.Builder, err error) {
+	builder, err = buildah.ImportBuilderFromImage(ctx, b.Store, buildah.ImportFromImageOptions{
+		Image: imgName,
+	})
+	switch {
+	case err != nil:
+		return nil, fmt.Errorf("error getting builder from image %q: %s", imgName, err)
+	case builder == nil:
+		panic("error mocking up build configuration")
+	}
+
+	return builder, nil
 }
