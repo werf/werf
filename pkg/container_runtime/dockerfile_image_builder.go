@@ -32,7 +32,12 @@ func (b *DockerfileImageBuilder) Build(ctx context.Context) error {
 	opts := b.BuildDockerfileOptions
 	opts.ContextTar = contextReader
 
-	builtID, err := b.ContainerRuntime.BuildDockerfile(ctx, b.Dockerfile, b.BuildDockerfileOptions)
+	if debug() {
+		fmt.Printf("ContextArchivePath=%q\n", b.ContextArchivePath)
+		fmt.Printf("BiuldDockerfileOptions: %#v\n", opts)
+	}
+
+	builtID, err := b.ContainerRuntime.BuildDockerfile(ctx, b.Dockerfile, opts)
 	if err != nil {
 		return fmt.Errorf("error building dockerfile with %s: %s", b.ContainerRuntime.String(), err)
 	}
@@ -55,6 +60,10 @@ func (b *DockerfileImageBuilder) GetBuiltId() string {
 
 func (b *DockerfileImageBuilder) SetDockerfile(dockerfile []byte) {
 	b.Dockerfile = dockerfile
+}
+
+func (b *DockerfileImageBuilder) SetDockerfileCtxRelPath(dockerfileCtxRelPath string) {
+	b.BuildDockerfileOptions.DockerfileCtxRelPath = dockerfileCtxRelPath
 }
 
 func (b *DockerfileImageBuilder) SetTarget(target string) {

@@ -624,7 +624,7 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img c
 
 	img.DockerfileImageBuilder().SetContextArchivePath(archivePath)
 
-	img.DockerfileImageBuilder().AppendLabels(fmt.Sprintf("--label=%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
+	img.DockerfileImageBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
 
 	if c.GiterminismManager().Dev() {
 		img.DockerfileImageBuilder().AppendLabels(fmt.Sprintf("%s=true", image.WerfDevLabel))
@@ -670,6 +670,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 
 func (s *DockerfileStage) SetupDockerImageBuilder(b *container_runtime.DockerfileImageBuilder) error {
 	b.SetDockerfile(s.dockerfile)
+	b.SetDockerfileCtxRelPath(s.dockerfilePath)
 
 	if s.target != "" {
 		b.SetTarget(s.target)

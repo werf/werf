@@ -8,7 +8,7 @@ import (
 )
 
 type BuildDockerfileOptions struct {
-	ContextTar           io.Reader
+	ContextTar           io.ReadCloser
 	DockerfileCtxRelPath string // TODO: remove this and instead write the []byte dockerfile to /Dockerfile in the ContextTar inDockerServerRuntime.BuildDockerfile().
 	Target               string
 	BuildArgs            []string // {"key1=value1", "key2=value2", ... }
@@ -30,7 +30,6 @@ type BuildDockerfileOptions struct {
 // }
 
 type ContainerRuntime interface {
-	// GetImageInspect(ctx context.Context, ref string) (image.Info, error)
 	// Pull(ctx context.Context, ref string) error
 	// Rmi(ctx, ref string)
 
