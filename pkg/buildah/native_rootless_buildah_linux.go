@@ -18,7 +18,6 @@ import (
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/sirupsen/logrus"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/buildah/types"
 	"gopkg.in/errgo.v2/fmt/errors"
 )
 
@@ -37,7 +36,8 @@ func InitNativeRootlessProcess() (bool, error) {
 type NativeRootlessBuildah struct {
 	BaseBuildah
 
-	Store storage.Store
+	Store   storage.Store
+	Runtime libimage.Runtime
 }
 
 func NewNativeRootlessBuildah() (*NativeRootlessBuildah, error) {
@@ -59,11 +59,56 @@ func NewNativeRootlessBuildah() (*NativeRootlessBuildah, error) {
 	}
 	is.Transport.SetStore(b.Store)
 
+	runtime, err := libimage.RuntimeFromStore(b.Store, &libimage.RuntimeOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("error getting runtime from store: %s", err)
+	}
+	b.Runtime = *runtime
+
 	return b, nil
 }
 
 func (b *NativeRootlessBuildah) Inspect(ctx context.Context, ref string) (types.BuilderInfo, error) {
 	panic("not implemented yet")
+}
+
+func (b *NativeRootlessBuildah) Tag(ctx context.Context, ref, newRef string) error {
+	image, err := b.getImage(ref)
+	if err != nil {
+		return err
+	}
+
+	if err := image.Tag(newRef); err != nil {
+		return fmt.Errorf("error tagging image: %s", err)
+	}
+
+	return nil
+}
+
+func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
+	pushOpts := buildah.PushOptions{
+		Compression:  define.Gzip, // REVIEW(ilya-lesikov): compress?
+		Store:        b.Store,
+		ManifestType: manifest.DockerV2Schema2MediaType, // REVIEW(ilya-lesikov): which one? There was a choice initially:  oci, v2s1, v2s2(Docker).
+		MaxRetries:   3,                                 // REVIEW(ilya-lesikov): defaults from buildah
+		RetryDelay:   2 * time.Second,                   // REVIEW(ilya-lesikov): defaults from buildah
+	}
+
+	if opts.LogWriter != nil {
+		pushOpts.ReportWriter = opts.LogWriter
+	}
+
+	imageRef, err := alltransports.ParseImageName(ref)
+	if err != nil {
+		return fmt.Errorf("error parsing image ref from %q: %s", ref, err)
+	}
+
+	_, _, err = buildah.Push(ctx, ref, imageRef, pushOpts)
+	if err != nil {
+		return fmt.Errorf("error pushing image %q: %s", ref, err)
+	}
+
+	return nil
 }
 
 func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
@@ -140,4 +185,12 @@ func (b *NativeRootlessBuildah) FromCommand(ctx context.Context, container strin
 
 func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	panic("not implemented yet")
+}
+
+func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
+	image, _, err := b.Runtime.LookupImage(ref, &libimage.LookupImageOptions{
+		ManifestList: true,
+	})
+
+	return image, fmt.Errorf("error looking up image: %s", err)
 }

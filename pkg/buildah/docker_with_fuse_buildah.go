@@ -35,6 +35,13 @@ func NewDockerWithFuseBuildah() (*DockerWithFuseBuildah, error) {
 	return b, nil
 }
 
+func (b *DockerWithFuseBuildah) Tag(ctx context.Context, ref, newRef string) error {
+	panic("not implemented")
+}
+func (b *DockerWithFuseBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
+	panic("not implemented")
+}
+
 func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	sessionTmpDir, _, _, err := b.prepareBuildFromDockerfile(dockerfile, opts.ContextTar)
 	if err != nil {
