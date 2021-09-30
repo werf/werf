@@ -22,11 +22,9 @@ func NewBuildahRuntime(buildah buildah.Buildah) *BuildahRuntime {
 }
 
 func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*image.Info, error) {
-	var b buildah.Buildah // FIXME: store buildah client in the BuildahRuntime object
-
-	inspect, err := b.Inspect(ctx, ref)
+	inspect, err := runtime.buildah.Inspect(ctx, ref)
 	if err != nil {
-		return nil, fmt.Errorf("error getting buildah inspect of %s: %s", ref, err)
+		return nil, fmt.Errorf("error getting buildah inspect of %q: %s", ref, err)
 	}
 
 	repository, tag := image.ParseRepositoryAndTag(ref)
@@ -45,12 +43,15 @@ func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*i
 }
 
 func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string) error {
-	panic("not implemented yet")
+	return runtime.buildah.Rmi(ctx, ref)
 }
 
 func (runtime *BuildahRuntime) Pull(ctx context.Context, ref string) error {
-	var b buildah.Buildah // FIXME: store buildah client in the BuildahRuntime object
-	return b.Pull(ctx, ref, buildah.PullOpts{})
+	return runtime.buildah.Pull(ctx, ref, buildah.PullOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: logboek.Context(ctx).OutStream(),
+		},
+	})
 }
 
 func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string) error {
@@ -58,7 +59,11 @@ func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string) erro
 }
 
 func (runtime *BuildahRuntime) Push(ctx context.Context, ref string) error {
-	return runtime.buildah.Push(ctx, ref, buildah.PushOpts{})
+	return runtime.buildah.Push(ctx, ref, buildah.PushOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: logboek.Context(ctx).OutStream(),
+		},
+	})
 }
 
 func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error) {
