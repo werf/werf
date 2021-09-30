@@ -6,15 +6,27 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
-
 	"github.com/werf/werf/pkg/image"
 )
 
 type BuildahRuntime struct {
+	buildah buildah.Buildah
 }
 
 type BuildahImage struct {
 	Image LegacyImageInterface
+}
+
+func NewBuildahRuntime() (*BuildahRuntime, error) {
+	var err error
+	buildahRuntime := &BuildahRuntime{}
+
+	buildahRuntime.buildah, err = buildah.NewBuildah(buildah.ModeAuto)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildahRuntime, nil
 }
 
 func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*image.Info, error) {
@@ -33,15 +45,11 @@ func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*i
 		Tag:               tag,
 		Labels:            inspect.Docker.Config.Labels,
 		CreatedAtUnixNano: inspect.Docker.Created.UnixNano(),
-		//RepoDigest:        repoDigest, // FIXME
+		// RepoDigest:        repoDigest, // FIXME
 		ID:       inspect.Docker.ID,
 		ParentID: inspect.Docker.Config.Image,
 		Size:     inspect.Docker.Size,
 	}, nil
-}
-
-func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string) error {
-	panic("not implemented yet")
 }
 
 func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string) error {
@@ -51,6 +59,23 @@ func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string) error {
 func (runtime *BuildahRuntime) Pull(ctx context.Context, ref string) error {
 	var b buildah.Buildah // FIXME: store buildah client in the BuildahRuntime object
 	return b.Pull(ctx, ref, buildah.PullOpts{})
+}
+
+func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string) error {
+	return runtime.buildah.Tag(ctx, ref, newRef)
+}
+
+func (runtime *BuildahRuntime) Push(ctx context.Context, ref string) error {
+	return runtime.buildah.Push(ctx, ref)
+}
+
+func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error) {
+	return runtime.buildah.BuildFromDockerfile(ctx, dockerfile, buildah.BuildFromDockerfileOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: logboek.Context(ctx).OutStream(),
+		},
+		ContextTar: opts.ContextTar,
+	})
 }
 
 func (runtime *BuildahRuntime) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {

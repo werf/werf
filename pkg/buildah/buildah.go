@@ -38,7 +38,13 @@ type PullOpts struct {
 	CommonOpts
 }
 
+type PushOpts struct {
+	CommonOpts
+}
+
 type Buildah interface {
+	Tag(ctx context.Context, ref, newRef string) error
+	Push(ctx context.Context, ref string, opts PushOpts) error
 	BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error)
 	RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error
 	FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error
