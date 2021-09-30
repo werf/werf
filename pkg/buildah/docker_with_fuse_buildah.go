@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
+	"github.com/werf/werf/pkg/buildah/types"
 	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/logboek"
@@ -70,9 +72,28 @@ func (b *DockerWithFuseBuildah) RunCommand(ctx context.Context, container string
 	return err
 }
 
-// FIXME(ilya-lesikov): add to interface
 func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error {
 	_, _, err := b.runBuildah(ctx, []string{}, []string{"from", "--name", container, image}, opts.LogWriter)
+	return err
+}
+
+func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (types.BuilderInfo, error) {
+	stdout, _, err := b.runBuildah(ctx, []string{}, []string{"inspect", ref}, nil)
+	if err != nil {
+		return types.BuilderInfo{}, nil
+	}
+
+	var res types.BuilderInfo
+
+	if err := json.Unmarshal([]byte(stdout), &res); err != nil {
+		return types.BuilderInfo{}, fmt.Errorf("unable to unmarshal buildah inspect json output: %s", err)
+	}
+
+	return res, nil
+}
+
+func (b *DockerWithFuseBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
+	_, _, err := b.runBuildah(ctx, []string{}, []string{"pull", ref}, opts.LogWriter)
 	return err
 }
 

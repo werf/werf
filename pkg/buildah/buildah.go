@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"runtime"
+
+	"github.com/werf/werf/pkg/buildah/types"
 )
 
 const (
@@ -32,10 +34,16 @@ type FromCommandOpts struct {
 	CommonOpts
 }
 
+type PullOpts struct {
+	CommonOpts
+}
+
 type Buildah interface {
 	BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error)
 	RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error
 	FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error
+	Pull(ctx context.Context, ref string, opts PullOpts) error
+	Inspect(ctx context.Context, ref string) (types.BuilderInfo, error)
 }
 
 type Mode string
