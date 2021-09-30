@@ -8,7 +8,6 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/host_cleaning"
@@ -80,6 +79,15 @@ It is safe to run this command periodically by automated cleanup job in parallel
 func runGC() error {
 	ctx := common.BackgroundContext()
 
+	shouldTerminate, _, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
+	if shouldTerminate {
+		return nil
+	}
+
 	projectName := *commonCmdData.ProjectName
 	if projectName != "" {
 		return fmt.Errorf("no functionality for cleaning a certain project is implemented (--project-name=%s)", projectName)
@@ -109,16 +117,6 @@ func runGC() error {
 	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
-
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
 
 	logboek.LogOptionalLn()
 

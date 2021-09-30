@@ -46,10 +46,10 @@ type NativeRootlessBuildah struct {
 	Runtime libimage.Runtime
 }
 
-func NewNativeRootlessBuildah() (*NativeRootlessBuildah, error) {
+func NewNativeRootlessBuildah(commonOpts CommonBuildahOpts, opts NativeRootlessModeOpts) (*NativeRootlessBuildah, error) {
 	b := &NativeRootlessBuildah{}
 
-	baseBuildah, err := NewBaseBuildah()
+	baseBuildah, err := NewBaseBuildah(commonOpts.TmpDir)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create BaseBuildah: %s", err)
 	}

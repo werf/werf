@@ -21,7 +21,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/true_git"
@@ -122,6 +121,17 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 }
 
 func runDismiss(ctx context.Context) error {
+	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
+	if shouldTerminate {
+		return nil
+	}
+
+	_ = containerRuntime
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -148,16 +158,6 @@ func runDismiss(ctx context.Context) error {
 	}
 
 	common.LogKubeContext(kube.Context)
-
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
 
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {

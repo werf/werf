@@ -8,16 +8,15 @@ import (
 	"path/filepath"
 
 	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
 )
 
 type BaseBuildah struct {
 	TmpDir string
 }
 
-func NewBaseBuildah() (*BaseBuildah, error) {
+func NewBaseBuildah(tmpDir string) (*BaseBuildah, error) {
 	b := &BaseBuildah{
-		TmpDir: filepath.Join(werf.GetHomeDir(), "buildah", "tmp"),
+		TmpDir: tmpDir,
 	}
 
 	if err := os.MkdirAll(b.TmpDir, os.ModePerm); err != nil {
