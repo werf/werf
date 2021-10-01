@@ -195,7 +195,7 @@ services:
 				return err
 			}
 
-			return runMain(composeCmdName, cmdData, commonCmdData, options.FollowSupport)
+			return runMain(ctx, composeCmdName, cmdData, commonCmdData, options.FollowSupport)
 		},
 	}
 
@@ -291,8 +291,10 @@ func checkDetachDockerComposeOption(cmdData composeCmdData) error {
 	return fmt.Errorf("the containers must be launched in the background (in follow mode): pass -d/--detach with --docker-compose-command-options option")
 }
 
-func runMain(dockerComposeCmdName string, cmdData composeCmdData, commonCmdData common.CmdData, followSupport bool) error {
-	ctx := common.BackgroundContext()
+func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCmdData, commonCmdData common.CmdData, followSupport bool) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
 
 	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
@@ -301,10 +303,6 @@ func runMain(dockerComposeCmdName string, cmdData composeCmdData, commonCmdData 
 	ctx = processCtx
 	if shouldTerminate {
 		return nil
-	}
-
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)

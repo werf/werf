@@ -1,6 +1,7 @@
 package reset
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -41,7 +42,9 @@ The data include:
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -49,7 +52,7 @@ WARNING: Do not run this command during any other werf command is working on the
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(runReset)
+			return common.LogRunningTime(func() error { return runReset(ctx) })
 		},
 	}
 
@@ -72,8 +75,10 @@ WARNING: Do not run this command during any other werf command is working on the
 	return cmd
 }
 
-func runReset() error {
-	ctx := common.BackgroundContext()
+func runReset(ctx context.Context) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
 
 	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
@@ -82,10 +87,6 @@ func runReset() error {
 	ctx = processCtx
 	if shouldTerminate {
 		return nil
-	}
-
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)

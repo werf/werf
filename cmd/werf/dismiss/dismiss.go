@@ -121,6 +121,10 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 }
 
 func runDismiss(ctx context.Context) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
+
 	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
 		return err
@@ -131,10 +135,6 @@ func runDismiss(ctx context.Context) error {
 	}
 
 	_ = containerRuntime
-
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
-	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
