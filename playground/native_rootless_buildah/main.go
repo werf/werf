@@ -43,6 +43,42 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Fprintf(os.Stdout, "INFO: imageId is %s\n", imageId)
+
+	if err := b.Pull(context.Background(), "alpine:3.14.2", buildah.PullOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: os.Stdout,
+		},
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := b.Tag(context.Background(), "alpine:3.14.2", "ilyalesikov/test:test", buildah.TagOpts{
+		CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout},
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	builderInfo, err := b.Inspect(context.Background(), "ilyalesikov/test:test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print(builderInfo)
+
+	if err := b.Push(context.Background(), "ilyalesikov/test:test", buildah.PushOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: os.Stdout,
+		},
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := b.Rmi(context.Background(), "alpine:3.14.2", buildah.RmiOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: os.Stdout,
+		},
+	}); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func runCommand(b buildah.Buildah) error {

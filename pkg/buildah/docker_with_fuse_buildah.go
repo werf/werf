@@ -40,7 +40,7 @@ func (b *DockerWithFuseBuildah) Tag(ctx context.Context, ref, newRef string, opt
 	return err
 }
 func (b *DockerWithFuseBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
-	_, _, err := b.runBuildah(ctx, []string{}, []string{"push", ref, ref}, opts.LogWriter)
+	_, _, err := b.runBuildah(ctx, []string{}, []string{"push", ref, fmt.Sprintf("docker://%s", ref)}, opts.LogWriter)
 	return err
 }
 
