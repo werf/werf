@@ -637,7 +637,7 @@ func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.LegacyStag
 		return img
 	}
 
-	img := container_runtime.NewLegacyStageImage(fromImage, name, c.ContainerRuntime.(*container_runtime.DockerServerRuntime))
+	img := container_runtime.NewLegacyStageImage(fromImage, name, c.ContainerRuntime)
 	c.SetStageImage(img)
 	return img
 }
