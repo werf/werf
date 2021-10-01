@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -34,6 +35,8 @@ func NewCmd() *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := common.BackgroundContext()
+
 			logboek.SetAcceptedLevel(level.Error)
 
 			var imageName string
@@ -44,7 +47,7 @@ func NewCmd() *cobra.Command {
 				imageName = args[0]
 			}
 
-			return run(imageName)
+			return run(ctx, imageName)
 		},
 	}
 
@@ -89,8 +92,10 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func run(imageName string) error {
-	ctx := common.BackgroundContext()
+func run(ctx context.Context, imageName string) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
 
 	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
@@ -99,10 +104,6 @@ func run(imageName string) error {
 	ctx = processCtx
 	if shouldTerminate {
 		return nil
-	}
-
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)

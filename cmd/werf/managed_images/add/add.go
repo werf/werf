@@ -1,6 +1,7 @@
 package add
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -26,6 +27,8 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Add image record to the list of managed images which will be preserved during cleanup procedure",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := common.BackgroundContext()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -34,7 +37,8 @@ func NewCmd() *cobra.Command {
 			if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
 				return err
 			}
-			return run(args[0])
+
+			return run(ctx, args[0])
 		},
 	}
 
@@ -73,8 +77,10 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func run(imageName string) error {
-	ctx := common.BackgroundContext()
+func run(ctx context.Context, imageName string) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
 
 	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
@@ -87,10 +93,6 @@ func run(imageName string) error {
 
 	if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
 		logboek.Context(ctx).SetAcceptedLevel(level.Error)
-	}
-
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)

@@ -2,6 +2,7 @@ package export
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -59,7 +60,7 @@ All meta-information related to werf is removed from the exported images, and th
 				return fmt.Errorf("required at least one tag template: use the --tag option to specify templates")
 			}
 
-			return run(args, tagTemplateList)
+			return run(ctx, args, tagTemplateList)
 		},
 	}
 
@@ -109,8 +110,10 @@ It is necessary to use image name shortcut %image% or %image_slug% if multiple i
 	return cmd
 }
 
-func run(imagesToProcess, tagTemplateList []string) error {
-	ctx := common.BackgroundContext()
+func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
 
 	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
@@ -119,10 +122,6 @@ func run(imagesToProcess, tagTemplateList []string) error {
 	ctx = processCtx
 	if shouldTerminate {
 		return nil
-	}
-
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)

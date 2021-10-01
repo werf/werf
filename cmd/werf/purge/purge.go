@@ -1,6 +1,7 @@
 package purge
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -30,7 +31,9 @@ func NewCmd() *cobra.Command {
 
 WARNING: Images that are being used in the Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -38,7 +41,7 @@ WARNING: Images that are being used in the Kubernetes cluster will also be delet
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(runPurge)
+			return common.LogRunningTime(func() error { return runPurge(ctx) })
 		},
 	}
 
@@ -86,8 +89,10 @@ WARNING: Images that are being used in the Kubernetes cluster will also be delet
 	return cmd
 }
 
-func runPurge() error {
-	ctx := common.BackgroundContext()
+func runPurge(ctx context.Context) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
 
 	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
@@ -96,10 +101,6 @@ func runPurge() error {
 	ctx = processCtx
 	if shouldTerminate {
 		return nil
-	}
-
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)

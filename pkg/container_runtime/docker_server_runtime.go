@@ -133,9 +133,11 @@ func (runtime *DockerServerRuntime) RenameImage(ctx context.Context, img LegacyI
 
 	desc := img.GetStageDescription()
 
-	repository, tag := image.ParseRepositoryAndTag(newImageName)
-	desc.Info.Repository = repository
-	desc.Info.Tag = tag
+	if desc != nil {
+		repository, tag := image.ParseRepositoryAndTag(newImageName)
+		desc.Info.Repository = repository
+		desc.Info.Tag = tag
+	}
 
 	return nil
 }
