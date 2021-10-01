@@ -29,7 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	b, err := buildah.NewBuildah(buildah.ModeNativeRootless)
+	b, err := buildah.NewBuildah(buildah.ModeNativeRootless, buildah.BuildahOpts{})
 	if err != nil {
 		log.Fatal(err)
 	}

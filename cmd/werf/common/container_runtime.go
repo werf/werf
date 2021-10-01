@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
-
-	"github.com/werf/werf/pkg/werf"
 
 	"github.com/werf/werf/pkg/docker"
 
@@ -34,14 +31,12 @@ func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (bool, c
 			ctx = newCtx
 		}
 
-		buildah, err := buildah.NewBuildah(mode, buildah.BuildahOpts{CommonBuildahOpts: buildah.CommonBuildahOpts{
-			TmpDir: filepath.Join(werf.GetHomeDir(), "buildah", "tmp"),
-		}})
+		b, err := buildah.NewBuildah(mode, buildah.BuildahOpts{})
 		if err != nil {
 			return false, nil, ctx, fmt.Errorf("unable to get buildah client: %s", err)
 		}
 
-		return false, container_runtime.NewBuildahRuntime(buildah), ctx, nil
+		return false, container_runtime.NewBuildahRuntime(b), ctx, nil
 	}
 
 	newCtx, err := InitProcessDocker(ctx, cmdData)

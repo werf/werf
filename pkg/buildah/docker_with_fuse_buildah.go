@@ -35,11 +35,13 @@ func NewDockerWithFuseBuildah(commonOpts CommonBuildahOpts, opts DockerWithFuseM
 	return b, nil
 }
 
-func (b *DockerWithFuseBuildah) Tag(ctx context.Context, ref, newRef string) error {
-	panic("not implemented")
+func (b *DockerWithFuseBuildah) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
+	_, _, err := b.runBuildah(ctx, []string{}, []string{"tag", ref, newRef}, opts.LogWriter)
+	return err
 }
 func (b *DockerWithFuseBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
-	panic("not implemented")
+	_, _, err := b.runBuildah(ctx, []string{}, []string{"push", ref, ref}, opts.LogWriter)
+	return err
 }
 
 func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
@@ -103,8 +105,9 @@ func (b *DockerWithFuseBuildah) Pull(ctx context.Context, ref string, opts PullO
 	return err
 }
 
-func (b *DockerWithFuseBuildah) Rmi(ctx context.Context, ref string) error {
-	panic("not implemented yet")
+func (b *DockerWithFuseBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
+	_, _, err := b.runBuildah(ctx, []string{}, []string{"rmi", "-p", ref}, opts.LogWriter)
+	return err
 }
 
 func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []string, buildahArgs []string, logWriter io.Writer) (string, string, error) {

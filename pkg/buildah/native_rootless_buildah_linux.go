@@ -95,7 +95,7 @@ func (b *NativeRootlessBuildah) Inspect(ctx context.Context, ref string) (*types
 	return &buildInfo, nil
 }
 
-func (b *NativeRootlessBuildah) Tag(_ context.Context, ref, newRef string) error {
+func (b *NativeRootlessBuildah) Tag(_ context.Context, ref, newRef string, opts TagOpts) error {
 	image, err := b.getImage(ref)
 	if err != nil {
 		return err
@@ -224,7 +224,7 @@ func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullO
 	return nil
 }
 
-func (b *NativeRootlessBuildah) Rmi(ctx context.Context, ref string) error {
+func (b *NativeRootlessBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	_, rmiErrors := b.Runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
 		// REVIEW(ilya-lesikov): readonly=false is default, is it ok?
 		Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
