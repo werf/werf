@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	GitArchivesCacheVersion = "6"
+	GitArchivesCacheVersion = "7"
 	GitPatchesCacheVersion  = "6"
 )
 

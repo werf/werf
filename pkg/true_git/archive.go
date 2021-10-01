@@ -41,7 +41,7 @@ func (opts ArchiveOptions) ID() string {
 			opts.Commit,
 			opts.PathScope,
 			opts.PathMatcher.ID(),
-		)...
+		)...,
 	)
 }
 
@@ -109,6 +109,9 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 	logProcess = logboek.Context(ctx).Debug().LogProcess("ls-tree result walk (%s)", opts.PathMatcher.String())
 	logProcess.Start()
+
+	creadedDirEntries := make(map[string]bool)
+
 	if err := result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
 		logboek.Context(ctx).Debug().LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
 
@@ -124,7 +127,42 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 		info, err := os.Lstat(absFilepath)
 		if err != nil {
-			return fmt.Errorf("lstat %s failed: %s", absFilepath, err)
+			return fmt.Errorf("lstat %q failed: %s", absFilepath, err)
+		}
+
+		dirEntry := filepath.Dir(tarEntryName)
+		if dirEntry != "." {
+			var p string
+			for _, pathPart := range util.SplitFilepath(dirEntry) {
+				if p == "" {
+					p = pathPart
+				} else {
+					p = filepath.Join(p, pathPart)
+				}
+
+				if creadedDirEntries[p] {
+					continue
+				}
+
+				if debugArchive() {
+					fmt.Printf("[writeArchive] creating tar archive dir entry %q ...\n", p)
+				}
+
+				header := &tar.Header{
+					Name:       p,
+					Typeflag:   tar.TypeDir,
+					Mode:       0o775,
+					ModTime:    info.ModTime(),
+					AccessTime: info.ModTime(),
+					ChangeTime: info.ModTime(),
+				}
+
+				if err := tw.WriteHeader(header); err != nil {
+					return fmt.Errorf("unable to write tar header for dir %q: %s", p, err)
+				}
+
+				creadedDirEntries[p] = true
+			}
 		}
 
 		switch gitFileMode {
@@ -139,7 +177,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				ChangeTime: info.ModTime(),
 			})
 			if err != nil {
-				return fmt.Errorf("unable to write tar header for file %s: %s", tarEntryName, err)
+				return fmt.Errorf("unable to write tar header for file %q: %s", tarEntryName, err)
 			}
 
 			f, err := os.Open(absFilepath)
