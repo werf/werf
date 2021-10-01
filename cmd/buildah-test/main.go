@@ -51,7 +51,7 @@ func do(ctx context.Context) error {
 		contextDir = os.Args[3]
 	}
 
-	b, err := buildah.NewBuildah(mode)
+	b, err := buildah.NewBuildah(mode, buildah.BuildahOpts{})
 	if err != nil {
 		return fmt.Errorf("unable to create buildah client: %s", err)
 	}

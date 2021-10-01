@@ -36,7 +36,7 @@ var _ = Describe("Buildah client", func() {
 
 	BeforeEach(func() {
 		var err error
-		b, err = buildah.NewBuildah(buildah.ModeDockerWithFuse)
+		b, err = buildah.NewBuildah(buildah.ModeDockerWithFuse, buildah.BuildahOpts{})
 		Expect(err).To(Succeed())
 	})
 

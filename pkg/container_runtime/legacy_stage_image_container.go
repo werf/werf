@@ -240,7 +240,7 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 
 	fromImageInspect, err := dockerServerRuntime.GetImageInspect(ctx, c.image.fromImage.Name())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get image inspect: %s")
+		return nil, fmt.Errorf("unable to get image inspect: %s", err)
 	}
 
 	if len(fromImageInspect.Config.Cmd) != 0 {

@@ -48,7 +48,11 @@ func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*i
 }
 
 func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string) error {
-	return runtime.buildah.Rmi(ctx, ref)
+	return runtime.buildah.Rmi(ctx, ref, buildah.RmiOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: logboek.Context(ctx).OutStream(),
+		},
+	})
 }
 
 func (runtime *BuildahRuntime) Pull(ctx context.Context, ref string) error {
@@ -60,7 +64,11 @@ func (runtime *BuildahRuntime) Pull(ctx context.Context, ref string) error {
 }
 
 func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string) error {
-	return runtime.buildah.Tag(ctx, ref, newRef)
+	return runtime.buildah.Tag(ctx, ref, newRef, buildah.TagOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: logboek.Context(ctx).OutStream(),
+		},
+	})
 }
 
 func (runtime *BuildahRuntime) Push(ctx context.Context, ref string) error {

@@ -23,7 +23,7 @@ func do(ctx context.Context) error {
 		return err
 	}
 
-	b, err := buildah.NewBuildah(buildah.ModeDockerWithFuse)
+	b, err := buildah.NewBuildah(buildah.ModeDockerWithFuse, buildah.BuildahOpts{})
 	if err != nil {
 		return err
 	}
