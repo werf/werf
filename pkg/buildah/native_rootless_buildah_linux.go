@@ -121,7 +121,7 @@ func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushO
 		pushOpts.ReportWriter = opts.LogWriter
 	}
 
-	imageRef, err := alltransports.ParseImageName(ref)
+	imageRef, err := alltransports.ParseImageName(fmt.Sprintf("docker://%s", ref))
 	if err != nil {
 		return fmt.Errorf("error parsing image ref from %q: %s", ref, err)
 	}
@@ -238,8 +238,11 @@ func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
 	image, _, err := b.Runtime.LookupImage(ref, &libimage.LookupImageOptions{
 		ManifestList: true,
 	})
+	if err != nil {
+		fmt.Errorf("error looking up image %q: %s", ref, err)
+	}
 
-	return image, fmt.Errorf("error looking up image: %s", err)
+	return image, nil
 }
 
 // getImageBuilder returns nil, nil if image not found.
