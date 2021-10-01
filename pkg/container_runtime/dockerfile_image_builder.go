@@ -23,6 +23,10 @@ func NewDockerfileImageBuilder(containerRuntime ContainerRuntime) *DockerfileIma
 
 // filePathToStdin != "" ??
 func (b *DockerfileImageBuilder) Build(ctx context.Context) error {
+	if debug() {
+		fmt.Printf("[DOCKER BUILD] context archive path: %s\n", b.ContextArchivePath)
+	}
+
 	contextReader, err := os.Open(b.ContextArchivePath)
 	if err != nil {
 		return fmt.Errorf("unable to open context archive %q: %s", b.ContextArchivePath, err)
