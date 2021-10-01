@@ -16,9 +16,8 @@ require (
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
-	github.com/containerd/stargz-snapshotter/estargz v0.8.0 // indirect
 	github.com/containers/buildah v1.23.0
-	github.com/containers/common v0.44.0 // indirect
+	github.com/containers/common v0.44.0
 	github.com/containers/image/v5 v5.16.0
 	github.com/containers/storage v1.36.0
 	github.com/docker/cli v20.10.5+incompatible
@@ -26,22 +25,17 @@ require (
 	github.com/docker/docker v20.10.8+incompatible
 	github.com/docker/go v1.5.1-1 // indirect
 	github.com/docker/go-connections v0.4.0
-	github.com/docker/go-metrics v0.0.1 // indirect
-	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fluxcd/flagger v1.8.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/go-git/go-billy/v5 v5.0.0 // indirect
 	github.com/go-git/go-git/v5 v5.1.1-0.20200721083337-cded5b685b8a
 	github.com/go-openapi/spec v0.19.5
 	github.com/go-openapi/strfmt v0.19.5
 	github.com/go-openapi/validate v0.19.8
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
-	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/google/go-containerregistry v0.5.1
 	github.com/google/uuid v1.2.0
 	github.com/gookit/color v1.3.7
-	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.2.0
@@ -49,16 +43,15 @@ require (
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/moby/buildkit v0.8.2
-	github.com/moby/sys/symlink v0.1.0 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
 	github.com/oleiade/reflections v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.16.0
+	github.com/opencontainers/go-digest v1.0.0
+	github.com/opencontainers/image-spec v1.0.2-0.20210819154149-5ad6f50d6283
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1
@@ -75,7 +68,6 @@ require (
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.5.4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
-	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
@@ -97,13 +89,10 @@ require (
 	k8s.io/kubectl v0.21.0
 	mvdan.cc/xurls v1.1.0
 	rsc.io/letsencrypt v0.0.3 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.10.15 // indirect
 	sigs.k8s.io/yaml v1.2.1-0.20210128145534-11e43d4a8b92
 )
 
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
-
-replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
 
 replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 
