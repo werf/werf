@@ -365,7 +365,44 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 	return envArray
 }
 
+func (c *Conveyor) checkContainerRuntimeSupported(ctx context.Context) error {
+	if _, isBuildah := c.ContainerRuntime.(*container_runtime.BuildahRuntime); !isBuildah {
+		return nil
+	}
+
+	var nonDockerfileImages []string
+	for _, processImage := range getImageConfigsToProcess(ctx, c) {
+		for _, stapelImage := range c.werfConfig.StapelImages {
+			if processImage.GetName() == stapelImage.Name {
+				nonDockerfileImages = append(nonDockerfileImages, processImage.GetName())
+				break
+			}
+		}
+
+		for _, artifactImage := range c.werfConfig.Artifacts {
+			if processImage.GetName() == artifactImage.Name {
+				nonDockerfileImages = append(nonDockerfileImages, processImage.GetName())
+				break
+			}
+		}
+	}
+
+	if len(nonDockerfileImages) > 0 {
+		return fmt.Errorf(`Unable to build stapel type images and artifacts with buildah container runtime: %s
+
+Please select only dockerfile images or delete all non-dockerfile images from your werf.yaml.
+
+Or disable buildah runtime by unsetting WERF_BUILDAH_CONTAINER_RUNTIME environment variable.`, strings.Join(nonDockerfileImages, ", "))
+	}
+
+	return nil
+}
+
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
+	if err := c.checkContainerRuntimeSupported(ctx); err != nil {
+		return err
+	}
+
 	if err := c.determineStages(ctx); err != nil {
 		return err
 	}
