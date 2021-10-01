@@ -80,10 +80,14 @@ func NewNativeRootlessBuildah(commonOpts CommonBuildahOpts, opts NativeRootlessM
 	return b, nil
 }
 
+// Inspect returns nil, nil if image not found.
 func (b *NativeRootlessBuildah) Inspect(ctx context.Context, ref string) (*types.BuilderInfo, error) {
 	builder, err := b.getImageBuilder(ctx, ref)
 	if err != nil {
 		return nil, fmt.Errorf("error doing inspect: %s", err)
+	}
+	if builder == nil {
+		return nil, nil
 	}
 
 	buildInfo := types.BuilderInfo(buildah.GetBuildInfo(builder))
@@ -238,11 +242,14 @@ func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
 	return image, fmt.Errorf("error looking up image: %s", err)
 }
 
+// getImageBuilder returns nil, nil if image not found.
 func (b *NativeRootlessBuildah) getImageBuilder(ctx context.Context, imgName string) (builder *buildah.Builder, err error) {
 	builder, err = buildah.ImportBuilderFromImage(ctx, b.Store, buildah.ImportFromImageOptions{
 		Image: imgName,
 	})
 	switch {
+	case err != nil && errors.Cause(err) == storage.ErrImageUnknown:
+		return nil, nil
 	case err != nil:
 		return nil, fmt.Errorf("error getting builder from image %q: %s", imgName, err)
 	case builder == nil:
