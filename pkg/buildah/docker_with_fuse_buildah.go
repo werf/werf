@@ -185,6 +185,7 @@ func buildahWithFuseDockerArgs(storageContainerName string) []string {
 		"--device", "/dev/fuse",
 		"--security-opt", "seccomp=unconfined",
 		"--security-opt", "apparmor=unconfined",
+		"--volume", fmt.Sprintf("%s:%s", docker.DockerConfigDir, "/home/build/.docker"),
 		"--volumes-from", storageContainerName,
 		BuildahImage, "buildah",
 	}

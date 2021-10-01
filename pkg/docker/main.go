@@ -26,6 +26,8 @@ var (
 	liveCliOutputEnabled bool
 	isDebug              bool
 	defaultCLi           command.Cli
+
+	DockerConfigDir string
 )
 
 const (
@@ -44,7 +46,11 @@ func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool, plat
 		os.Setenv("DOCKER_BUILDKIT", "1")
 	}
 
-	if dockerConfigDir != "" {
+	DockerConfigDir = dockerConfigDir
+
+	if dockerConfigDir == "" {
+		DockerConfigDir = filepath.Join(os.Getenv("HOME"), ".docker")
+	} else {
 		cliconfig.SetDir(dockerConfigDir)
 	}
 
