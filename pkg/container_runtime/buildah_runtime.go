@@ -90,7 +90,7 @@ func (runtime *BuildahRuntime) RefreshImageObject(ctx context.Context, img Legac
 }
 
 func (runtime *BuildahRuntime) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
-	if err := img.Pull(ctx); err != nil {
+	if err := runtime.Pull(ctx, img.Name()); err != nil {
 		return fmt.Errorf("unable to pull image %s: %s", img.Name(), err)
 	}
 

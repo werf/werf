@@ -141,19 +141,19 @@ func (i *Image) GetBaseImage() *container_runtime.LegacyStageImage {
 func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
-		containerRuntime := c.ContainerRuntime.(*container_runtime.DockerServerRuntime)
+		containerRuntime := c.ContainerRuntime
 
-		if inspect, err := containerRuntime.GetImageInspect(ctx, i.baseImage.Name()); err != nil {
+		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name()); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
-		} else if inspect != nil {
+		} else if info != nil {
 			// TODO: do not use container_runtime.LegacyStageImage for base image
 			i.baseImage.SetStageDescription(&image.StageDescription{
 				StageID: nil, // this is not a stage actually, TODO
-				Info:    image.NewInfoFromInspect(i.baseImage.Name(), inspect),
+				Info:    info,
 			})
 
 			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, c, i.baseImage.Name())
-			if baseImageRepoId == inspect.ID || err != nil {
+			if baseImageRepoId == info.ID || err != nil {
 				if err != nil {
 					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
 					logboek.Context(ctx).Warn().LogF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
@@ -174,14 +174,14 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 			return err
 		}
 
-		if inspect, err := containerRuntime.GetImageInspect(ctx, i.baseImage.Name()); err != nil {
+		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name()); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
-		} else if inspect == nil {
+		} else if info == nil {
 			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name())
 		} else {
 			i.baseImage.SetStageDescription(&image.StageDescription{
 				StageID: nil, // this is not a stage actually, TODO
-				Info:    image.NewInfoFromInspect(i.baseImage.Name(), inspect),
+				Info:    info,
 			})
 		}
 	case StageAsBaseImage:

@@ -85,13 +85,16 @@ func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container strin
 }
 
 func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (*types.BuilderInfo, error) {
-	stdout, _, err := b.runBuildah(ctx, []string{}, []string{"inspect", ref}, nil)
+	stdout, stderr, err := b.runBuildah(ctx, []string{}, []string{"inspect", ref}, nil)
 	if err != nil {
+		if strings.Contains(stderr, "image not known") {
+			return nil, nil
+		}
 		return nil, err
 	}
 
 	var res *types.BuilderInfo
-	if err := json.Unmarshal([]byte(stdout), res); err != nil {
+	if err := json.Unmarshal([]byte(stdout), &res); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal buildah inspect json output: %s", err)
 	}
 
