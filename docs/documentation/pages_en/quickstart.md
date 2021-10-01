@@ -329,7 +329,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    }
    ```
 
-   If there is no such file in the directory, you need to create it and insert the above lines into it. Note that you need superuser (root) privileges to access and modify files in the `/ etc` directory.
+   If there is no such file in the directory, you need to create it and insert the above lines into it. Note that you need superuser (root) privileges to access and modify files in the `/etc` directory.
 
    Restart Docker:
    
