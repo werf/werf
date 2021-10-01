@@ -23,9 +23,9 @@ type LegacyStageImage struct {
 	dockerfileImageBuilder *DockerfileImageBuilder
 }
 
-func NewLegacyStageImage(fromImage *LegacyStageImage, name string, localDockerServerRuntime *DockerServerRuntime) *LegacyStageImage {
+func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerRuntime ContainerRuntime) *LegacyStageImage {
 	stage := &LegacyStageImage{}
-	stage.legacyBaseImage = newLegacyBaseImage(name, localDockerServerRuntime)
+	stage.legacyBaseImage = newLegacyBaseImage(name, containerRuntime)
 	stage.fromImage = fromImage
 	stage.container = newLegacyStageImageContainer(stage)
 	return stage
@@ -189,14 +189,20 @@ func (i *LegacyStageImage) GetBuiltId() string {
 }
 
 func (i *LegacyStageImage) TagBuiltImage(ctx context.Context) error {
+	_ = i.ContainerRuntime.(*DockerServerRuntime)
+
 	return docker.CliTag(ctx, i.MustGetBuiltId(), i.name)
 }
 
 func (i *LegacyStageImage) Tag(ctx context.Context, name string) error {
+	_ = i.ContainerRuntime.(*DockerServerRuntime)
+
 	return docker.CliTag(ctx, i.GetID(), name)
 }
 
 func (i *LegacyStageImage) Pull(ctx context.Context) error {
+	_ = i.ContainerRuntime.(*DockerServerRuntime)
+
 	if err := docker.CliPullWithRetries(ctx, i.name); err != nil {
 		return err
 	}
@@ -207,6 +213,8 @@ func (i *LegacyStageImage) Pull(ctx context.Context) error {
 }
 
 func (i *LegacyStageImage) Push(ctx context.Context) error {
+	_ = i.ContainerRuntime.(*DockerServerRuntime)
+
 	return docker.CliPushWithRetries(ctx, i.name)
 }
 

@@ -265,9 +265,7 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *DockerfileStage) FetchDependencies(ctx context.Context, _ Conveyor, cr container_runtime.ContainerRuntime) error {
-	containerRuntime := cr.(*container_runtime.DockerServerRuntime)
-
+func (s *DockerfileStage) FetchDependencies(ctx context.Context, _ Conveyor, containerRuntime container_runtime.ContainerRuntime) error {
 outerLoop:
 	for ind, stage := range s.dockerStages {
 		for relatedStageIndex, relatedStage := range s.dockerStages {
@@ -291,16 +289,16 @@ outerLoop:
 		}
 
 		getBaseImageOnBuildLocally := func() ([]string, error) {
-			inspect, err := containerRuntime.GetImageInspect(ctx, resolvedBaseName)
+			info, err := containerRuntime.GetImageInfo(ctx, resolvedBaseName)
 			if err != nil {
 				return nil, err
 			}
 
-			if inspect == nil {
+			if info == nil {
 				return nil, imageNotExistLocally
 			}
 
-			return inspect.Config.OnBuild, nil
+			return info.OnBuild, nil
 		}
 
 		getBaseImageOnBuildRemotely := func() ([]string, error) {
@@ -322,7 +320,7 @@ outerLoop:
 					logboek.Context(ctx).Warn().LogF("WARNING: Could not get base image manifest from local docker and from docker registry: %s\n", getRemotelyErr)
 					logboek.Context(ctx).Warn().LogLn("WARNING: The base image pulling is necessary for calculating digest of image correctly\n")
 					if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", resolvedBaseName).DoError(func() error {
-						return containerRuntime.PullImage(ctx, resolvedBaseName)
+						return containerRuntime.Pull(ctx, resolvedBaseName)
 					}); err != nil {
 						return err
 					}

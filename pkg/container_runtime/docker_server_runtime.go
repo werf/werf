@@ -84,15 +84,6 @@ func (runtime *DockerServerRuntime) GetImageInspect(ctx context.Context, ref str
 	return inspect, err
 }
 
-// PullImage only available for DockerServerRuntime
-func (runtime *DockerServerRuntime) PullImage(ctx context.Context, ref string) error {
-	if err := docker.CliPull(ctx, ref); err != nil {
-		return fmt.Errorf("unable to pull image %s: %s", ref, err)
-	}
-
-	return nil
-}
-
 func (runtime *DockerServerRuntime) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
 	if info, err := runtime.GetImageInfo(ctx, img.Name()); err != nil {
 		return err
@@ -143,16 +134,9 @@ func (runtime *DockerServerRuntime) RenameImage(ctx context.Context, img LegacyI
 }
 
 func (runtime *DockerServerRuntime) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
-		if err := docker.CliRmi(ctx, img.Name()); err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	return nil
+	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
+		return runtime.Rmi(ctx, img.Name())
+	})
 }
 
 func (runtime *DockerServerRuntime) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
@@ -178,11 +162,14 @@ func (runtime *DockerServerRuntime) Push(ctx context.Context, ref string) error 
 }
 
 func (runtime *DockerServerRuntime) Pull(ctx context.Context, ref string) error {
-	panic("not implemented")
+	if err := docker.CliPull(ctx, ref); err != nil {
+		return fmt.Errorf("unable to pull image %s: %s", ref, err)
+	}
+	return nil
 }
 
 func (runtime *DockerServerRuntime) Rmi(ctx context.Context, ref string) error {
-	panic("not implemented")
+	return docker.CliRmi(ctx, ref)
 }
 
 func (runtime *DockerServerRuntime) PushImage(ctx context.Context, img LegacyImageInterface) error {

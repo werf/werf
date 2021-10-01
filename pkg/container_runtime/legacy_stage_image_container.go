@@ -261,6 +261,8 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 }
 
 func (c *LegacyStageImageContainer) run(ctx context.Context) error {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	runArgs, err := c.prepareRunArgs(ctx)
 	if err != nil {
 		return err
@@ -274,6 +276,8 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 }
 
 func (c *LegacyStageImageContainer) introspect(ctx context.Context) error {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	runArgs, err := c.prepareIntrospectArgs(ctx)
 	if err != nil {
 		return err
@@ -289,6 +293,8 @@ func (c *LegacyStageImageContainer) introspect(ctx context.Context) error {
 }
 
 func (c *LegacyStageImageContainer) introspectBefore(ctx context.Context) error {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	runArgs, err := c.prepareIntrospectBeforeArgs(ctx)
 	if err != nil {
 		return err
@@ -315,6 +321,8 @@ func IsStartContainerErr(err error) bool {
 }
 
 func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	commitChanges, err := c.prepareCommitChanges(ctx)
 	if err != nil {
 		return "", err
@@ -330,5 +338,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 }
 
 func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	return docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{})
 }

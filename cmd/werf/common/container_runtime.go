@@ -22,6 +22,9 @@ func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (bool, c
 		shouldTerminate, mode, err := buildah.InitProcess(func() (buildah.Mode, error) {
 			return mode, nil
 		})
+		if shouldTerminate {
+			return true, nil, ctx, nil
+		}
 
 		if mode == buildah.ModeDockerWithFuse {
 			newCtx, err := InitProcessDocker(ctx, cmdData)
@@ -38,7 +41,7 @@ func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (bool, c
 			return false, nil, ctx, fmt.Errorf("unable to get buildah client: %s", err)
 		}
 
-		return shouldTerminate, container_runtime.NewBuildahRuntime(buildah), ctx, nil
+		return false, container_runtime.NewBuildahRuntime(buildah), ctx, nil
 	}
 
 	newCtx, err := InitProcessDocker(ctx, cmdData)

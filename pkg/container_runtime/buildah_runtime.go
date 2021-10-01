@@ -36,6 +36,7 @@ func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*i
 		Labels:            inspect.Docker.Config.Labels,
 		CreatedAtUnixNano: inspect.Docker.Created.UnixNano(),
 		// RepoDigest:        repoDigest, // FIXME
+		OnBuild:  inspect.Docker.Config.OnBuild,
 		ID:       inspect.Docker.ID,
 		ParentID: inspect.Docker.Config.Image,
 		Size:     inspect.Docker.Size,
