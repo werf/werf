@@ -21,10 +21,14 @@ func NewBuildahRuntime(buildah buildah.Buildah) *BuildahRuntime {
 	return &BuildahRuntime{buildah: buildah}
 }
 
+// GetImageInfo returns nil, nil if image not found.
 func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*image.Info, error) {
 	inspect, err := runtime.buildah.Inspect(ctx, ref)
 	if err != nil {
 		return nil, fmt.Errorf("error getting buildah inspect of %q: %s", ref, err)
+	}
+	if inspect == nil {
+		return nil, nil
 	}
 
 	repository, tag := image.ParseRepositoryAndTag(ref)
