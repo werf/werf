@@ -76,7 +76,7 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 			return nil, fmt.Errorf("unable to get git status: %s", err)
 		}
 
-		if len(gitStatusResult.PathList()) != 0 {
+		if len(gitStatusResult.PathListWithSubmodules()) != 0 {
 			devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceBranch(
 				context.Background(),
 				l.GitDir,
