@@ -30,26 +30,6 @@ arch:
 
   <div class="installation-selector-row">
     <div class="installation-selector">
-      <div class="installation-selector__title">Операционная система</div>
-      <div class="tabs tabs_simple_condensed">
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="os" data-install-tab="linux">Linux</a>
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="os" data-install-tab="macos">Mac OS</a>
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="os" data-install-tab="windows">Windows</a>
-      </div>
-    </div><!-- /selector -->
-    <div class="installation-selector">
-      <div class="installation-selector__title">Arch</div>
-      <div class="tabs tabs_simple_condensed">
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="arch" data-install-tab="amd64">Amd64</a>
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="arch" data-install-tab="arm64">Arm64</a>
-      </div>
-    </div><!-- /selector -->
-    <div class="installation-selector">
       <div class="installation-selector__title">Версия</div>
       <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
@@ -75,6 +55,26 @@ arch:
     </div><!-- /selector -->
   </div><!-- /selector-row -->
   <div class="installation-selector-row">
+    <div class="installation-selector">
+      <div class="installation-selector__title">Операционная система</div>
+      <div class="tabs tabs_simple_condensed">
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="os" data-install-tab="linux">Linux</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="os" data-install-tab="macos">Mac OS</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="os" data-install-tab="windows">Windows</a>
+      </div>
+    </div><!-- /selector -->
+    <div class="installation-selector">
+      <div class="installation-selector__title">Arch</div>
+      <div class="tabs tabs_simple_condensed">
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="arch" data-install-tab="amd64">Amd64</a>
+        <a href="javascript:void(0)" class="tabs__btn"
+          data-install-tab-group="arch" data-install-tab="arm64">Arm64</a>
+      </div>
+    </div><!-- /selector -->
     <div class="installation-selector">
       <div class="installation-selector__title">Метод установки</div>
       <div class="tabs tabs_simple_condensed">
