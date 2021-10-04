@@ -73,9 +73,7 @@ const (
 
 func InitProcess(initModeFunc func() (Mode, error)) (bool, Mode, error) {
 	if v := os.Getenv("_BUILDAH_PROCESS_INIT_MODE"); v != "" {
-		mode := Mode(v)
-		shouldTerminate, err := doInitProcess(mode)
-		return shouldTerminate, mode, err
+		return doInitProcess(Mode(v))
 	}
 
 	mode, err := initModeFunc()
@@ -84,18 +82,19 @@ func InitProcess(initModeFunc func() (Mode, error)) (bool, Mode, error) {
 	}
 	os.Setenv("_BUILDAH_PROCESS_INIT_MODE", string(mode))
 
-	shouldTerminate, err := doInitProcess(mode)
-	return shouldTerminate, mode, err
+	return doInitProcess(mode)
 }
 
-func doInitProcess(mode Mode) (bool, error) {
-	switch resolveMode(mode) {
+func doInitProcess(mode Mode) (bool, Mode, error) {
+	resolvedMode := resolveMode(mode)
+	switch resolvedMode {
 	case ModeNativeRootless:
-		return InitNativeRootlessProcess()
+		shouldTerminate, err := InitNativeRootlessProcess()
+		return shouldTerminate, resolvedMode, err
 	case ModeDockerWithFuse:
-		return false, nil
+		return false, resolvedMode, nil
 	default:
-		return false, fmt.Errorf("unsupported mode %q", mode)
+		return false, "", fmt.Errorf("unsupported mode %q", mode)
 	}
 }
 

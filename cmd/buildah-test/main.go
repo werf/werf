@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/werf/werf/pkg/docker"
+
 	"github.com/werf/werf/pkg/util"
 
 	"github.com/werf/werf/pkg/buildah"
@@ -33,6 +34,8 @@ func do(ctx context.Context) error {
 	if err := werf.Init("", ""); err != nil {
 		return fmt.Errorf("unable to init werf subsystem: %s", err)
 	}
+
+	fmt.Printf("Using buildah mode: %s\n", mode)
 
 	if mode == buildah.ModeDockerWithFuse {
 		if err := docker.Init(ctx, "", false, false, ""); err != nil {
