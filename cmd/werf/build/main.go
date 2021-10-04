@@ -132,14 +132,11 @@ func runMain(ctx context.Context, args []string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
 	ctx = processCtx
-	if shouldTerminate {
-		return nil
-	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
@@ -167,6 +164,9 @@ func runMain(ctx context.Context, args []string) error {
 	}
 
 	defer func() {
+		if _, match := containerRuntime.(*container_runtime.DockerServerRuntime); !match {
+			return
+		}
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}

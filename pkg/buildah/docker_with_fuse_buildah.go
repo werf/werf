@@ -109,7 +109,13 @@ func (b *DockerWithFuseBuildah) Pull(ctx context.Context, ref string, opts PullO
 }
 
 func (b *DockerWithFuseBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
-	_, _, err := b.runBuildah(ctx, []string{}, []string{"rmi", "-p", ref}, opts.LogWriter)
+	args := []string{"rmi"}
+	if opts.Force {
+		args = append(args, "-f")
+	}
+	args = append(args, ref)
+
+	_, _, err := b.runBuildah(ctx, []string{}, args, opts.LogWriter)
 	return err
 }
 

@@ -12,40 +12,45 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 )
 
-func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (bool, container_runtime.ContainerRuntime, context.Context, error) {
-	if v := os.Getenv("WERF_CONTAINER_RUNTIME_BUILDAH"); v != "" {
-		mode := buildah.Mode(v)
+func ContainerRuntimeProcessStartupHook() (bool, error) {
+	buildahMode := GetContainerRuntimeBuildahMode()
+	if buildahMode != "" {
+		return buildah.ProcessStartupHook(buildahMode)
+	}
+	return false, nil
+}
 
-		shouldTerminate, mode, err := buildah.InitProcess(func() (buildah.Mode, error) {
-			return mode, nil
-		})
-		if shouldTerminate {
-			return true, nil, ctx, nil
-		}
+func GetContainerRuntimeBuildahMode() buildah.Mode {
+	return buildah.Mode(os.Getenv("WERF_CONTAINER_RUNTIME_BUILDAH"))
+}
 
-		if mode == buildah.ModeDockerWithFuse {
+func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (container_runtime.ContainerRuntime, context.Context, error) {
+	buildahMode := GetContainerRuntimeBuildahMode()
+	if buildahMode != "" {
+		resolvedMode := buildah.ResolveMode(buildahMode)
+		if resolvedMode == buildah.ModeDockerWithFuse {
 			newCtx, err := InitProcessDocker(ctx, cmdData)
 			if err != nil {
-				return false, nil, ctx, fmt.Errorf("unable to init process docker for buildah container runtime: %s", err)
+				return nil, ctx, fmt.Errorf("unable to init process docker for buildah container runtime: %s", err)
 			}
 			ctx = newCtx
 		}
 
-		b, err := buildah.NewBuildah(mode, buildah.BuildahOpts{})
+		b, err := buildah.NewBuildah(resolvedMode, buildah.BuildahOpts{})
 		if err != nil {
-			return false, nil, ctx, fmt.Errorf("unable to get buildah client: %s", err)
+			return nil, ctx, fmt.Errorf("unable to get buildah client: %s", err)
 		}
 
-		return false, container_runtime.NewBuildahRuntime(b), ctx, nil
+		return container_runtime.NewBuildahRuntime(b), ctx, nil
 	}
 
 	newCtx, err := InitProcessDocker(ctx, cmdData)
 	if err != nil {
-		return false, nil, ctx, fmt.Errorf("unable to init process docker for docker-server container runtime: %s", err)
+		return nil, ctx, fmt.Errorf("unable to init process docker for docker-server container runtime: %s", err)
 	}
 	ctx = newCtx
 
-	return false, container_runtime.NewDockerServerRuntime(), ctx, nil
+	return container_runtime.NewDockerServerRuntime(), ctx, nil
 }
 
 func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {

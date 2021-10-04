@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-
-	"github.com/werf/werf/pkg/docker"
 )
 
 type DockerfileImageBuilder struct {
@@ -52,7 +50,7 @@ func (b *DockerfileImageBuilder) Build(ctx context.Context) error {
 }
 
 func (b *DockerfileImageBuilder) Cleanup(ctx context.Context) error {
-	if err := docker.CliRmi(ctx, b.builtID, "--force"); err != nil {
+	if err := b.ContainerRuntime.Rmi(ctx, b.builtID); err != nil {
 		return fmt.Errorf("unable to remove built dockerfile image %q: %s", b.builtID, err)
 	}
 	return nil

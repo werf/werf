@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/containers/buildah"
@@ -33,9 +34,9 @@ const (
 	PullPushRetryDelay = 2 * time.Second
 )
 
-func InitNativeRootlessProcess() (bool, error) {
+func NativeRootlessProcessStartupHook() bool {
 	if reexec.Init() {
-		return true, nil
+		return true
 	}
 
 	if debug() {
@@ -43,7 +44,7 @@ func InitNativeRootlessProcess() (bool, error) {
 	}
 	unshare.MaybeReexecUsingUserNamespace(false)
 
-	return false, nil
+	return false
 }
 
 type NativeRootlessBuildah struct {
@@ -252,7 +253,7 @@ func (b *NativeRootlessBuildah) getImageBuilder(ctx context.Context, imgName str
 		Image: imgName,
 	})
 	switch {
-	case err != nil && errors.Cause(err) == storage.ErrImageUnknown:
+	case err != nil && strings.HasSuffix(err.Error(), storage.ErrImageUnknown.Error()):
 		return nil, nil
 	case err != nil:
 		return nil, fmt.Errorf("error getting builder from image %q: %s", imgName, err)

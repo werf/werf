@@ -169,7 +169,7 @@ func (runtime *DockerServerRuntime) Pull(ctx context.Context, ref string) error 
 }
 
 func (runtime *DockerServerRuntime) Rmi(ctx context.Context, ref string) error {
-	return docker.CliRmi(ctx, ref)
+	return docker.CliRmi(ctx, ref, "--force")
 }
 
 func (runtime *DockerServerRuntime) PushImage(ctx context.Context, img LegacyImageInterface) error {
