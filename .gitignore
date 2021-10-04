@@ -31,3 +31,4 @@
 /.github/trdl/src/**/*.js
 /.github/trdl/lib
 main
+buildah-test

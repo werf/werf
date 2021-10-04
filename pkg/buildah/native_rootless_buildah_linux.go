@@ -19,8 +19,8 @@ import (
 	is "github.com/containers/image/v5/storage"
 	"github.com/containers/image/v5/transports/alltransports"
 	"github.com/containers/storage"
+	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
-	"github.com/docker/docker/pkg/reexec"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	"github.com/werf/logboek"
@@ -38,8 +38,9 @@ func InitNativeRootlessProcess() (bool, error) {
 		return true, nil
 	}
 
-	logrus.SetLevel(logrus.TraceLevel)
-
+	if debug() {
+		logrus.SetLevel(logrus.TraceLevel)
+	}
 	unshare.MaybeReexecUsingUserNamespace(false)
 
 	return false, nil
