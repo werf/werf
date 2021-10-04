@@ -85,7 +85,6 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 				l.headCommit,
 				true_git.SyncSourceWorktreeWithServiceBranchOptions{
 					ServiceBranchPrefix: opts.ServiceBranchOptions.Prefix,
-					GlobIncludeList:     gitStatusResult.PathList(),
 					GlobExcludeList:     opts.ServiceBranchOptions.GlobExcludeList,
 				},
 			)
