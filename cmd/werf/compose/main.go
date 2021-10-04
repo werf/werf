@@ -296,14 +296,11 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	shouldTerminate, containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
 	ctx = processCtx
-	if shouldTerminate {
-		return nil
-	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {

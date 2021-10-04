@@ -50,6 +50,7 @@ type TagOpts struct {
 
 type RmiOpts struct {
 	CommonOpts
+	Force bool
 }
 
 type Buildah interface {
@@ -71,30 +72,14 @@ const (
 	ModeDockerWithFuse Mode = "docker-with-fuse"
 )
 
-func InitProcess(initModeFunc func() (Mode, error)) (bool, Mode, error) {
-	if v := os.Getenv("_BUILDAH_PROCESS_INIT_MODE"); v != "" {
-		return doInitProcess(Mode(v))
-	}
-
-	mode, err := initModeFunc()
-	if err != nil {
-		return false, "", fmt.Errorf("unable to init buildah mode: %s", err)
-	}
-	os.Setenv("_BUILDAH_PROCESS_INIT_MODE", string(mode))
-
-	return doInitProcess(mode)
-}
-
-func doInitProcess(mode Mode) (bool, Mode, error) {
-	resolvedMode := resolveMode(mode)
-	switch resolvedMode {
+func ProcessStartupHook(mode Mode) (bool, error) {
+	switch ResolveMode(mode) {
 	case ModeNativeRootless:
-		shouldTerminate, err := InitNativeRootlessProcess()
-		return shouldTerminate, resolvedMode, err
+		return NativeRootlessProcessStartupHook(), nil
 	case ModeDockerWithFuse:
-		return false, resolvedMode, nil
+		return false, nil
 	default:
-		return false, "", fmt.Errorf("unsupported mode %q", mode)
+		return false, fmt.Errorf("unsupported mode %q", mode)
 	}
 }
 
@@ -117,7 +102,7 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 		opts.CommonBuildahOpts.TmpDir = filepath.Join(werf.GetHomeDir(), "buildah", "tmp")
 	}
 
-	switch resolveMode(mode) {
+	switch ResolveMode(mode) {
 	case ModeNativeRootless:
 		switch runtime.GOOS {
 		case "linux":
@@ -140,7 +125,7 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 	return b, nil
 }
 
-func resolveMode(mode Mode) Mode {
+func ResolveMode(mode Mode) Mode {
 	switch mode {
 	case ModeAuto:
 		switch runtime.GOOS {

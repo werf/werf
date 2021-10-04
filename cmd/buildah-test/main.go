@@ -18,14 +18,21 @@ import (
 var errUsage = errors.New("./buildah-test {auto|native-rootless|docker-with-fuse} DOCKERFILE_PATH [CONTEXT_PATH]")
 
 func do(ctx context.Context) error {
-	shouldTerminate, mode, err := buildah.InitProcess(func() (buildah.Mode, error) {
+	var mode buildah.Mode
+	if v := os.Getenv("BUILDAH_TEST_MODE"); v != "" {
+		mode = buildah.Mode(v)
+	} else {
 		if len(os.Args) < 2 {
-			return "", errUsage
+			return errUsage
 		}
-		return buildah.Mode(os.Args[1]), nil
-	})
+		mode = buildah.ResolveMode(buildah.Mode(os.Args[1]))
+
+		os.Setenv("BUILDAH_TEST_MODE", string(mode))
+	}
+
+	shouldTerminate, err := buildah.ProcessStartupHook(mode)
 	if err != nil {
-		return fmt.Errorf("buildah init process: %s", err)
+		return fmt.Errorf("buildah process startup hook failed: %s", err)
 	}
 	if shouldTerminate {
 		return nil
@@ -34,6 +41,8 @@ func do(ctx context.Context) error {
 	if err := werf.Init("", ""); err != nil {
 		return fmt.Errorf("unable to init werf subsystem: %s", err)
 	}
+
+	mode = buildah.ResolveMode(mode)
 
 	fmt.Printf("Using buildah mode: %s\n", mode)
 

@@ -49,6 +49,7 @@ func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*i
 
 func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string) error {
 	return runtime.buildah.Rmi(ctx, ref, buildah.RmiOpts{
+		Force: true,
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: logboek.Context(ctx).OutStream(),
 		},

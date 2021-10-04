@@ -84,14 +84,11 @@ func runGC(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	shouldTerminate, _, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	_, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
 	ctx = processCtx
-	if shouldTerminate {
-		return nil
-	}
 
 	projectName := *commonCmdData.ProjectName
 	if projectName != "" {

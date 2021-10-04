@@ -2,7 +2,7 @@
 
 package buildah
 
-func InitNativeRootlessProcess() (bool, error) {
+func NativeRootlessProcessStartupHook() bool {
 	panic("not supported")
 }
 
