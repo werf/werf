@@ -80,6 +80,23 @@ func ShouldResetStagesStorageCache(err error) bool {
 	return false
 }
 
+func RetryOnStagesStorageCacheResetError(ctx context.Context, manager StorageManagerInterface, f func() error) error {
+Retry:
+	err := f()
+
+	if ShouldResetStagesStorageCache(err) {
+		logboek.Context(ctx).Error().LogF("Will reset stages storage cache due to error: %s\n", err)
+
+		if err := manager.ResetStagesStorageCache(ctx); err != nil {
+			return fmt.Errorf("unable to reset stages storage cache: %s", err)
+		}
+
+		goto Retry
+	}
+
+	return err
+}
+
 func NewStorageManager(projectName string, stagesStorage storage.StagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList []storage.StagesStorage, cacheStagesStorageList []storage.StagesStorage, storageLockManager storage.LockManager, stagesStorageCache storage.StagesStorageCache) *StorageManager {
 	return &StorageManager{
 		ProjectName:        projectName,
