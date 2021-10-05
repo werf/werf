@@ -943,6 +943,12 @@ func GetLocalStagesStorage(containerRuntime container_runtime.ContainerRuntime) 
 }
 
 func GetStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
+	if _, match := containerRuntime.(*container_runtime.BuildahRuntime); match {
+		if stagesStorageAddress == "" || stagesStorageAddress == storage.LocalStorageAddress {
+			return nil, fmt.Errorf(`"--repo" should be specified and not equal ":local" for Buildah container runtime`)
+		}
+	}
+
 	if err := ValidateRepoContainerRegistry(cmdData.CommonRepoData.GetContainerRegistry()); err != nil {
 		return nil, err
 	}
