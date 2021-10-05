@@ -1,6 +1,6 @@
 Make sure you have Git 2.18.0 or newer and [Docker](https://docs.docker.com/get-docker) installed.
 
-To run `werf` as a regular user you should have access to the Docker daemon. Create a user group `docker`. Please note that Docker itself creates this group during installation, and the command below is needed for safety reasons.
+To run `werf` as a regular user, you should have access to the Docker daemon. First, make sure the `docker` group exists:
 
 ```shell
 sudo groupadd docker
