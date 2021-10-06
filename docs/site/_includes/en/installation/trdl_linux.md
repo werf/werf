@@ -6,8 +6,6 @@ To run `werf` as a regular user, you should have access to the Docker daemon. Fi
 sudo groupadd docker
 ```
 
-If after execution the message `groupadd: group 'docker' already exists` appears, then such a group has already been created earlier.
-
 Add your current user to the `docker` group:
 
 ```
