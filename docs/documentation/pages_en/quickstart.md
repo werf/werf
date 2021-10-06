@@ -267,11 +267,11 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     
    **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
 
-3. If you haven't installed `kubectl` yet, install it by running:
+3. If you haven't installed `kubectl` yet, create an alias on the supplied with munikube kubectl:
 
    ```
-   minikube kubectl -- get po -A
    alias kubectl="minikube kubectl --"
+   echo 'alias kubectl="minikube kubectl --"' >> ~/.bashrc
    ```
 
 4. Install NGINX Ingress Controller:

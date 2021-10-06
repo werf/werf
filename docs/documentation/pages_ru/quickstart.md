@@ -272,11 +272,11 @@ werf version
 
    **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
-3. Если вы еще не устанавливали `kubectl`, установите его, выполнив:
+3. Если вы еще не устанавливали `kubectl`, создайте alias на поставляемый с munikube kubectl:
 
    ```
-   minikube kubectl -- get po -A
    alias kubectl="minikube kubectl --"
+   echo 'alias kubectl="minikube kubectl --"' >> ~/.bashrc
    ```
 
 4. Установка NGINX Ingress Controller:
