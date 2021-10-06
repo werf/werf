@@ -255,7 +255,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 <a href="javascript:void(0)" class="details__summary">Linux — minikube</a>
 <div class="details__content" markdown="1">
 
-1. Install [minikube](https://github.com/kubernetes/minikube#installation) according to the [instructions](https://minikube.sigs.k8s.io/docs/start/) (it is enough to complete only the first point (Installation)).
+1. Install [minikube](https://github.com/kubernetes/minikube#installation) according to the [instructions](https://minikube.sigs.k8s.io/docs/start/) (completing its first section called "Installation" is sufficient).
 
 2. Start minikube:
 
@@ -267,11 +267,11 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
     
    **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
 
-3. If you haven't installed `kubectl` yet, create an alias on the supplied with munikube kubectl:
+3. If you haven't installed `kubectl` yet, you can create an alias to use `kubectl` supplied with minikube:
 
    ```
    alias kubectl="minikube kubectl --"
-   echo 'alias kubectl="minikube kubectl --"' >> ~/.bashrc
+   echo 'alias kubectl="minikube kubectl --"' >> ~/.bash_aliases
    ```
 
 4. Install NGINX Ingress Controller:
@@ -319,7 +319,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-6. Allow usage of Container Registry without TLS for docker:
+6. Allow usage of Container Registry without TLS for Docker:
 
    Add new key to the file `/etc/docker/daemon.json` (default location):
 
@@ -329,7 +329,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    }
    ```
 
-   If there is no such file in the directory, you need to create it and insert the above lines into it. Note that you need superuser (root) privileges to access and modify files in the `/etc` directory.
+   If there is no such file in the directory, you need to create it and insert the above lines into it. Note that you need the superuser (root) privileges to access and modify files in the `/etc` directory.
 
    Restart Docker:
    
@@ -367,7 +367,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    echo "$(minikube ip)
    ```
 
-   If the result shows the IP address of the cluster, then the cluster is up.
+   If the result shows the IP address of the cluster, your cluster is up.
    
    Run the following command in the terminal:
    

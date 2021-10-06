@@ -259,7 +259,7 @@ werf version
 <a href="javascript:void(0)" class="details__summary">Linux — minikube</a>
 <div class="details__content" markdown="1">
 
-1. Установите [minikube](https://github.com/kubernetes/minikube#installation) по [инструкции](https://minikube.sigs.k8s.io/docs/start/) (достаточно выполнить только первый пункт (Installation)).
+1. Установите [minikube](https://github.com/kubernetes/minikube#installation) по [инструкции](https://minikube.sigs.k8s.io/docs/start/) (достаточно выполнить только первый пункт этих инструкций под названием _Installation_).
 
 
 2. Запустите minikube:
@@ -272,7 +272,7 @@ werf version
 
    **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
-3. Если вы еще не устанавливали `kubectl`, создайте alias на поставляемый с munikube kubectl:
+3. Если вы не устанавливали отдельно утилиту `kubectl`, можно создать alias на `kubectl`, поставляемую с munikube:
 
    ```
    alias kubectl="minikube kubectl --"
@@ -324,7 +324,7 @@ werf version
    ```
    {% endraw %}
    
-6. Разрешаем доступ в Container Registry без TLS для docker:
+6. Разрешаем доступ в Container Registry без TLS для Docker:
 
    В файл, по умолчанию находящийся в `/etc/docker/daemon.json`, добавим новый ключ:
 
@@ -402,7 +402,7 @@ werf version
    ```
    {% endraw %}
 
-2. Запустите команду converge, которяа использует Container Registry для хранения образов:
+2. Запустите команду converge, которая использует Container Registry для хранения образов:
 
    {% raw %}
    ```shell
