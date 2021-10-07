@@ -14,6 +14,8 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
+const newImage = "ilyalesikov/test:test"
+
 func init() {
 	logrus.SetLevel(logrus.TraceLevel)
 
@@ -44,7 +46,7 @@ func main() {
 	}
 	fmt.Fprintf(os.Stdout, "INFO: imageId is %s\n", imageId)
 
-	if err := b.Pull(context.Background(), "alpine:3.14.2", buildah.PullOpts{
+	if err := b.Pull(context.Background(), "ubuntu:20.04", buildah.PullOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: os.Stdout,
 		},
@@ -52,19 +54,25 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := b.Tag(context.Background(), "alpine:3.14.2", "ilyalesikov/test:test", buildah.TagOpts{
+	if err := b.Tag(context.Background(), "ubuntu:20.04", newImage, buildah.TagOpts{
 		CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout},
 	}); err != nil {
 		log.Fatal(err)
 	}
 
-	builderInfo, err := b.Inspect(context.Background(), "ilyalesikov/test:test")
+	builderInfo, err := b.Inspect(context.Background(), "ubuntu:20.04")
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Print(builderInfo)
 
-	if err := b.Push(context.Background(), "ilyalesikov/test:test", buildah.PushOpts{
+	builderInfo, err = b.Inspect(context.Background(), newImage)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print(builderInfo)
+
+	if err := b.Push(context.Background(), newImage, buildah.PushOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: os.Stdout,
 		},
@@ -72,7 +80,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := b.Rmi(context.Background(), "alpine:3.14.2", buildah.RmiOpts{
+	if err := b.Rmi(context.Background(), "ubuntu:20.04", buildah.RmiOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: os.Stdout,
 		},
@@ -86,7 +94,7 @@ func runCommand(b buildah.Buildah) error {
 }
 
 func buildFromDockerfile(b buildah.Buildah) (string, error) {
-	contextFile := filepath.Join(os.Getenv("HOME"), ".go", "src", "github.com", "werf", "werf", "playground", "buildah", "context.tar")
+	contextFile := filepath.Join(os.Getenv("HOME"), "go", "src", "github.com", "werf", "werf", "playground", "native_rootless_buildah", "context.tar")
 	tarFileReader, err := os.OpenFile(contextFile, os.O_RDONLY, 0)
 	if err != nil {
 		return "", err
@@ -94,8 +102,8 @@ func buildFromDockerfile(b buildah.Buildah) (string, error) {
 	defer tarFileReader.Close()
 
 	imageId, err := b.BuildFromDockerfile(context.Background(),
-		[]byte(`FROM alpine
-RUN wget ya.ru
+		[]byte(`FROM ubuntu:20.04
+RUN apt update
 COPY . /app
 `), buildah.BuildFromDockerfileOpts{
 			ContextTar: tarFileReader,

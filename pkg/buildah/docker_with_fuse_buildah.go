@@ -86,8 +86,9 @@ func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container strin
 	return err
 }
 
+// TODO(ilya-lesikov): make it more generic to handle not only images
 func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (*types.BuilderInfo, error) {
-	stdout, stderr, err := b.runBuildah(ctx, []string{}, []string{"inspect", ref}, nil)
+	stdout, stderr, err := b.runBuildah(ctx, []string{}, []string{"inspect", "--type", "image", ref}, nil)
 	if err != nil {
 		if strings.Contains(stderr, "image not known") {
 			return nil, nil
@@ -95,12 +96,12 @@ func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (*types
 		return nil, err
 	}
 
-	var res *types.BuilderInfo
+	var res types.BuilderInfo
 	if err := json.Unmarshal([]byte(stdout), &res); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal buildah inspect json output: %s", err)
 	}
 
-	return res, nil
+	return &res, nil
 }
 
 func (b *DockerWithFuseBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
