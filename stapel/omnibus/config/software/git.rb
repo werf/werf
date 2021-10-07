@@ -9,7 +9,7 @@ dependency "curl"
 dependency "zlib"
 dependency "openssl"
 dependency "pcre"
-dependency "libiconv" # FIXME: can we figure out how to remove this?
+#dependency "libiconv" # FIXME: can we figure out how to remove this?
 dependency "expat"
 
 relative_path "git-#{version}"
@@ -36,6 +36,9 @@ build do
   env = with_standard_compiler_flags(with_embedded_path)
   env["LDFLAGS"] += " -Wl,-rpath-link,/.werf/stapel/embedded/lib"
 
+  env["EXTLIBS"] ||= ""
+  env["EXTLIBS"] += "-ldl -lz"
+
   make "distclean"
 
   config_hash = {
@@ -46,6 +49,9 @@ build do
     NO_PERL: "YesPlease",
     NO_PYTHON: "YesPlease",
     NO_TCLTK: "YesPlease",
+    NO_OPENSSL: "YesPlease",
+    NO_ICONV: "YesPlease",
+    EXTLIBS: "-ldl -lz"
   }
 
   # Linux things!

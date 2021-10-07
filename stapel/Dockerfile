@@ -7,10 +7,12 @@ echo "umask 022" >> /root/.profile
 
 SHELL ["/bin/bash", "-lc"]
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt update && apt install -y \
 build-essential wget curl gawk flex bison bzip2 liblzma5 texinfo file \
 gettext python python3 curl git fakeroot gettext gpg ruby ruby-bundler \
-ruby-dev make file m4 xz-utils texlive vim
+ruby-dev make file m4 xz-utils texlive vim rsync
 
 RUN git config --global user.name flant && git config --global user.email 256@flant.com
 
@@ -20,8 +22,8 @@ ENV LFS_TGT=x86_64-lfs-linux-gnu
 
 RUN mkdir -pv $LFS$TOOLS && mkdir -pv $LFS/sources && chmod -v a+wt $LFS/sources
 ADD stapel/wget-list-before-omnibus $LFS/sources/wget-list-before-omnibus
+RUN wget --input-file=$LFS/sources/wget-list-before-omnibus --continue --directory-prefix=$LFS/sources || true
 ADD stapel/wget-list-before-omnibus.md5sums $LFS/sources/wget-list-before-omnibus.md5sums
-RUN wget --input-file=$LFS/sources/wget-list-before-omnibus --continue --directory-prefix=$LFS/sources
 RUN bash -c "pushd $LFS/sources && md5sum -c $LFS/sources/wget-list-before-omnibus.md5sums && popd"
 ADD stapel/version-check.sh $LFS/sources/version-check.sh
 RUN $LFS/sources/version-check.sh
@@ -69,6 +71,7 @@ cd build && \
 --with-sysroot=$LFS \
 --with-newlib \
 --without-headers \
+--enable-initfini-array \
 --with-local-prefix=$TOOLS \
 --with-native-system-header-dir=$TOOLS/include \
 --disable-nls \
@@ -105,18 +108,18 @@ cd build && \
 ../configure \
 --prefix=$TOOLS \
 --host=$LFS_TGT \
---build=$(../scripts/config.guess) \
 --enable-kernel=3.2 \
 --with-headers=$TOOLS/include \
 libc_cv_forced_unwind=yes \
-libc_cv_c_cleanup=yes
+libc_cv_c_cleanup=yes \
+libc_cv_slibdir=$TOOLS/lib
 WORKDIR $LFS/sources/glibc/build
 RUN make
 RUN make install
 RUN mkdir /.werf/stapel/lib/locale
 RUN /.werf/stapel/bin/localedef -i POSIX -f UTF-8 C.UTF-8 || true
 
-RUN echo "Libstdc++" && cd $LFS/sources/ && \
+RUN echo "Libstdc++ pass 1" && cd $LFS/sources/ && \
 rm -rf gcc && \
 mkdir gcc && \
 tar xf gcc-*.tar.* -C gcc --strip-components 1 && \
@@ -135,9 +138,9 @@ cd build && \
 --prefix=$TOOLS \
 --disable-multilib \
 --disable-nls \
---disable-libstdcxx-threads \
 --disable-libstdcxx-pch \
---with-gxx-include-dir=$TOOLS/$LFS_TGT/include/c++/8.2.0
+--disable-libstdcxx-threads \
+--with-gxx-include-dir=$TOOLS/$LFS_TGT/include/c++/11.2.0
 WORKDIR $LFS/sources/gcc/build
 RUN make
 RUN make install
@@ -154,10 +157,12 @@ AR=$LFS_TGT-ar \
 RANLIB=$LFS_TGT-ranlib \
 ../configure \
 --prefix=$TOOLS \
+--host=$LFS_TGT \
 --disable-nls \
+--enable-shared \
 --disable-werror \
---with-lib-path=$TOOLS/lib \
---with-sysroot
+--enable-64-bit-bfd \
+--with-lib-path=$TOOLS/lib
 
 RUN echo "GCC pass 2" && cd $LFS/sources/ && \
 rm -rf gcc && \
@@ -180,25 +185,42 @@ CXX=$LFS_TGT-g++ \
 AR=$LFS_TGT-ar \
 RANLIB=$LFS_TGT-ranlib \
 ../configure \
+--target=$LFS_TGT \
 --prefix=$TOOLS \
---with-local-prefix=$TOOLS \
---with-native-system-header-dir=$TOOLS/include \
---enable-languages=c,c++ \
---disable-libstdcxx-pch \
+CC_FOR_TARGET=$LFS_TGT-gcc \
+--with-build-sysroot=$LFS \
+--enable-initfini-array \
+--disable-nls \
 --disable-multilib \
---disable-bootstrap \
---disable-libgomp
+--disable-decimal-float \
+--disable-libatomic \
+--disable-libgomp \
+--disable-libquadmath \
+--disable-libssp \
+--disable-libvtv \
+--disable-libstdcxx \
+--disable-lto \
+--with-local-prefix=$TOOLS \
+--with-sysroot=$LFS \
+--with-native-system-header-dir=$TOOLS/include \
+--oldincludedir=$TOOLS/include \
+--enable-languages=c,c++
 WORKDIR $LFS/sources/gcc/build
 RUN make
-RUN make install
+RUN make DESTDIR=$LFS install
 RUN ln -sv gcc $TOOLS/bin/cc
+
+ENV PATH=/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin
+RUN apt install -y libssl-dev autoconf automake libffi-dev libgdbm-dev libncurses5-dev libsqlite3-dev libtool libyaml-dev pkg-config sqlite3 zlib1g-dev libreadline-dev libssl-dev
+RUN curl -sSL https://rvm.io/mpapis.asc | gpg --import -
+RUN curl -sSL https://rvm.io/pkuczynski.asc | gpg --import -
+RUN curl -sSL https://get.rvm.io -o /tmp/rvm.sh && cat /tmp/rvm.sh | bash -s stable
+RUN source /etc/profile.d/rvm.sh && rvm install 2.7
 
 ADD stapel/omnibus /omnibus
 WORKDIR /omnibus
 ENV BUNDLE_GEMFILE=/omnibus/Gemfile
-
-ENV PATH=/bin:/usr/bin:/usr/local/bin
-RUN bundle install --without development
+RUN source /etc/profile.d/rvm.sh && bundle install --without development
 
 ENV PATH=$TOOLS/x86_64-lfs-linux-gnu/bin:$TOOLS/bin:$PATH
 
@@ -208,13 +230,18 @@ ENV PATH=$TOOLS/x86_64-lfs-linux-gnu/bin:$TOOLS/bin:$PATH
 # It is needed to remove that binary before omnibus-building.
 RUN mv $(which dpkg-architecture) /tmp/dpkg-architecture
 
-RUN bundle exec omnibus build -o append_timestamp:false werf-stapel
-ENV PKG_CONFIG=/.werf/stapel/embedded/bin/pkg-config
+RUN source /etc/profile.d/rvm.sh && bundle exec omnibus build -o append_timestamp:false werf-stapel
+
+ENV CC=$LFS_TGT-gcc
+ENV CXX=$LFS_TGT-g++
+ENV AR=$LFS_TGT-ar
+ENV RANLIB=$LFS_TGT-ranlib
+ENV CC_FOR_TARGET=$LFS_TGT-gcc
 ENV PKG_CONFIG_PATH="/.werf/stapel/lib/pkgconfig:/.werf/stapel/embedded/lib/pkgconfig"
 
 ADD stapel/wget-list-after-omnibus $LFS/sources/wget-list-after-omnibus
 ADD stapel/wget-list-after-omnibus.md5sums $LFS/sources/wget-list-after-omnibus.md5sums
-RUN wget --input-file=$LFS/sources/wget-list-after-omnibus --continue --directory-prefix=$LFS/sources
+RUN wget --input-file=$LFS/sources/wget-list-after-omnibus --continue --directory-prefix=$LFS/sources || true
 RUN bash -c "pushd $LFS/sources && md5sum -c $LFS/sources/wget-list-after-omnibus.md5sums && popd"
 
 # libgpg-error
@@ -302,7 +329,7 @@ RUN echo "gnupg" && cd $LFS/sources && \
 mkdir gnupg && \
 tar xf gnupg*.tar.* -C gnupg --strip-components 1
 WORKDIR $LFS/sources/gnupg
-RUN ./configure --prefix=$TOOLS --enable-symcryptrun --localstatedir=/.werf/stapel/var
+RUN ./configure --prefix=$TOOLS --enable-symcryptrun --localstatedir=/.werf/stapel/var --sysconfdir=/etc --disable-sqlite
 RUN make
 RUN make install
 
@@ -315,6 +342,15 @@ RUN ./configure --prefix=$TOOLS --without-python --disable-makeinstall-chown --w
 RUN make
 RUN make install
 
+# libffi
+RUN echo "libffi" && cd $LFS/sources && \
+mkdir libffi && \
+tar xf libffi-*.tar.* -C libffi --strip-components 1
+WORKDIR $LFS/sources/libffi
+RUN ./configure --prefix=$TOOLS --disable-static --with-gcc-arch=native
+RUN make
+RUN make install
+
 # glib
 RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin apt update
 RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin apt install -y python3-pip xsltproc
@@ -323,7 +359,7 @@ RUN echo "glib" && cd $LFS/sources && \
 mkdir glib && \
 tar xf glib-*.tar* -C glib --strip-components 1
 WORKDIR $LFS/sources/glib
-RUN LDFLAGS="-Wl,-rpath-link,$TOOLS/embedded/lib,--library-path,$TOOLS/embedded/lib" meson _build -Diconv=external -Dman=false --prefix=$TOOLS -Dselinux=disabled
+RUN LDFLAGS="-static-libgcc -Wl,-rpath-link,$TOOLS/lib,-rpath-link,$TOOLS/x86_64-lfs-linux-gnu/lib,-rpath-link,$TOOLS/embedded/lib,--library-path,$TOOLS/lib,--library-path,$TOOLS/x86_64-lfs-linux-gnu/lib,--library-path,$TOOLS/embedded/lib" meson _build -Diconv=external -Dman=false --prefix=$TOOLS -Dselinux=disabled
 RUN ninja -C _build
 RUN ninja -C _build install
 
@@ -340,20 +376,24 @@ RUN make install
 ENV PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 # Install golang
-RUN wget https://dl.google.com/go/go1.12.linux-amd64.tar.gz -O /tmp/go.tar.gz
+RUN wget https://dl.google.com/go/go1.17.linux-amd64.tar.gz -O /tmp/go.tar.gz
 RUN tar -C /usr/local -xzf /tmp/go.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
 ENV GO111MODULE=on
 
-WORKDIR /werf
-ADD go.mod /werf/go.mod
-ADD go.sum /werf/go.sum
-RUN bash -ec "echo '142.93.108.123 gonum.org www.gonum.org' >> /etc/hosts && go mod download -json"
+ENV CC=
+ENV CXX=
+ENV AR=
+ENV RANLIB=
+ENV CC_FOR_TARGET=
+ENV PKG_CONFIG_PATH=
 
-ADD cmd /werf/cmd
+RUN go get github.com/werf/logboek@v0.5.4
+RUN cd /root/go/pkg/mod/github.com/werf/logboek@v0.5.4 && \
+go build -o $TOOLS/embedded/lib/python2.7/_logboek.so -buildmode=c-shared github.com/werf/logboek/c_lib && \
+cp logboek.py $TOOLS/embedded/lib/python2.7
+
 ADD pkg /werf/pkg
-RUN go build -o $TOOLS/embedded/lib/python2.7/_logboek.so -buildmode=c-shared github.com/werf/logboek/c_lib
-RUN cp /root/go/pkg/mod/github.com/werf/logboek@*/logboek.py $TOOLS/embedded/lib/python2.7
 RUN cp /werf/pkg/build/builder/ansible/crypt.py $TOOLS/embedded/lib/python2.7
 
 # Ansible tools overlay takes precedence over PATH and library linker path (using LD_LIBRARY_PATH)
@@ -414,6 +454,15 @@ ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0.0 $TOOLS/ansible_tools_overlay
 
 # TODO: FIXME: https://github.com/werf/werf/issues/1798
 # TODO: FIXME: try set nsswitch.conf file: http://www.linuxfromscratch.org/lfs/view/9.0-systemd-rc1/chapter06/glibc.html
+
+ENV CC=$LFS_TGT-gcc
+ENV CXX=$LFS_TGT-g++
+ENV AR=$LFS_TGT-ar
+ENV RANLIB=$LFS_TGT-ranlib
+ENV CC_FOR_TARGET=$LFS_TGT-gcc
+ENV PKG_CONFIG_PATH="/.werf/stapel/lib/pkgconfig:/.werf/stapel/embedded/lib/pkgconfig"
+
+ENV PATH=$TOOLS/x86_64-lfs-linux-gnu/bin:$TOOLS/bin:$PATH
 
 # yum-utils package needed for ansible yum module to work
 RUN apt update && \
