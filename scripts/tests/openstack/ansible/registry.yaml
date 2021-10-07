@@ -54,7 +54,7 @@
     file:
       path: /mnt/docker-registry
       state: directory
-  - name: Generate htpaswd
+  - name: Generate htpasswd
     shell: docker run --entrypoint htpasswd registry:latest -Bbn {{ docker_registry_user }} {{ docker_registry_pass }} > /mnt/docker-registry/passfile
 
   - name: Create docker-compose file

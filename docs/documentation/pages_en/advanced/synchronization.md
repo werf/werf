@@ -10,7 +10,7 @@ Synchronization is a group of service components of the werf to coordinate multi
 
 All commands that requires storage (`--repo`) param also use _synchronization service components_ address, which defined by the `--synchronization` option or `WERF_SYNCHRONIZATION=...` environment variable.
 
-There are 3 types of sycnhronization components:
+There are 3 types of synchronization components:
  1. Local. Selected by `--synchronization=:local` param.
    - Local _storage cache_ is stored in the `~/.werf/shared_context/storage/stages_storage_cache/1/PROJECT_NAME/DIGEST` files by default, each file contains a mapping of images existing in storage by some digest.
    - Local _lock manager_ uses OS file-locks in the `~/.werf/service/locks` as implementation of locks.

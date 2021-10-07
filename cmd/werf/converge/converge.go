@@ -485,13 +485,13 @@ func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configura
 
 func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, postRenderer postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, registryClientHandle *helm_v3.RegistryClientHandle) error {
 	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("error checking availability of helm 2 and existance of helm 2 release %q: %s", releaseName, err)
+		return fmt.Errorf("error checking availability of helm 2 and existence of helm 2 release %q: %s", releaseName, err)
 	} else if !helm2Exists {
 		return nil
 	}
 
 	if helm3Exists, err := checkHelm3ReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("error checking existance of helm 3 release %q: %s", releaseName, err)
+		return fmt.Errorf("error checking existence of helm 3 release %q: %s", releaseName, err)
 	} else if helm3Exists {
 		// helm 2 exists and helm 3 exists
 		// migration not needed, but we should warn user that some helm 2 release with the same name exists
@@ -545,7 +545,7 @@ func checkHelm2AvailableAndReleaseExists(ctx context.Context, releaseName, names
 	} else if available {
 		foundHelm2Release, err := maintenanceHelper.IsHelm2ReleaseExist(ctx, releaseName)
 		if err != nil {
-			return false, fmt.Errorf("error checking existance of helm 2 release %q: %s", releaseName, err)
+			return false, fmt.Errorf("error checking existence of helm 2 release %q: %s", releaseName, err)
 		}
 
 		return foundHelm2Release, nil
@@ -557,7 +557,7 @@ func checkHelm2AvailableAndReleaseExists(ctx context.Context, releaseName, names
 func checkHelm3ReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
 	foundHelm3Release, err := maintenanceHelper.IsHelm3ReleaseExist(ctx, releaseName)
 	if err != nil {
-		return false, fmt.Errorf("error checking existance of helm 3 release %q: %s", releaseName, err)
+		return false, fmt.Errorf("error checking existence of helm 3 release %q: %s", releaseName, err)
 	}
 
 	return foundHelm3Release, nil

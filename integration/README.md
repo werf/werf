@@ -134,7 +134,7 @@ var _ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.Stubs
 
 ### `Describe`, `Context` and `It`
 
-When your test uses werf project it is convinient to create a special `Context` block within `Describe` for each project.
+When your test uses werf project it is convenient to create a special `Context` block within `Describe` for each project.
 
 In this `Context` single `It` block should be defined for the actual test code and `AfterEach` block to perform cleanup for the project (typically `werf purge --force` and `werf dismiss ...`).
 

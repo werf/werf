@@ -15,7 +15,7 @@ import (
 func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3Namespace string, maintenanceHelper *MaintenanceHelper) error {
 	foundHelm3Release, err := maintenanceHelper.IsHelm3ReleaseExist(ctx, helm3ReleaseName)
 	if err != nil {
-		return fmt.Errorf("error checking existance of helm 3 release %q: %s", helm2ReleaseName, err)
+		return fmt.Errorf("error checking existence of helm 3 release %q: %s", helm2ReleaseName, err)
 	}
 
 	if foundHelm3Release {
@@ -24,7 +24,7 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 
 	foundHelm2Release, err := maintenanceHelper.IsHelm2ReleaseExist(ctx, helm2ReleaseName)
 	if err != nil {
-		return fmt.Errorf("error checking existance of helm 2 release %q: %s", helm2ReleaseName, err)
+		return fmt.Errorf("error checking existence of helm 2 release %q: %s", helm2ReleaseName, err)
 	}
 
 	if !foundHelm2Release {

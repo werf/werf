@@ -18,7 +18,7 @@ directives:
       - name: allowUncommittedTemplates
         value: "[ glob, ... ]"
         description:
-          en: Read the certain configutation file templates (.werf/**/*.tmpl) from the project directory despite the state in git repository and .gitignore rules
+          en: Read the certain configuration file templates (.werf/**/*.tmpl) from the project directory despite the state in git repository and .gitignore rules
           ru: Читать определённые шаблоны конфигурационного файла (.werf/**/*.tmpl) из директории проекта, не сверяя контент с файлами текущего коммита и игнорируя исключения в .gitignore
       - name: goTemplateRendering
         description:
@@ -35,7 +35,7 @@ directives:
           - name: allowUncommittedFiles
             value: "[ glob, ... ]"
             description:
-              en: Read the certain configutation files from the project directory despite the state in git repository and .gitignore rules (using .Files.Get and .Files.Glob functions)
+              en: Read the certain configuration files from the project directory despite the state in git repository and .gitignore rules (using .Files.Get and .Files.Glob functions)
               ru: Читать определённые конфигурационные файлы из директории проекта, не сверяя контент с файлами текущего коммита и игнорируя исключения в .gitignore (используя функции .Files.Get и .Files.Glob)
       - name: stapel
         description:

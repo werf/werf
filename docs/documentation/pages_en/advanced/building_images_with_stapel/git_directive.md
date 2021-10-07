@@ -8,7 +8,7 @@ directive_summary: git
 
 ***Git mapping*** describes a file or a directory in the git repository that should be added to the image at the particular path. The repository may be a local one, hosted in the directory that contains the config, or a remote one. In the latter case, the configuration of the _git mapping_ includes a repository address and version (branch, tag, or commit hash).
 
-werf adds files from the repository to the image either by fully transferring them via git archive or by applying patches between commits. The full transfer is used to add files initially. Subsequent builds apply patches to reflect changes in a git repository. You can learn more about the algorithm behind fully transfering and applying patches in the [More details: git_archive...](#more-details-gitarchive-gitcache-gitlatestpatch) section.
+werf adds files from the repository to the image either by fully transferring them via git archive or by applying patches between commits. The full transfer is used to add files initially. Subsequent builds apply patches to reflect changes in a git repository. You can learn more about the algorithm behind fully transferring and applying patches in the [More details: git_archive...](#more-details-gitarchive-gitcache-gitlatestpatch) section.
 
 The configuration of _git mappings_ supports filtering of files, and you can use a set of _git mappings_ to create virtually any file structure in the image. Also, you can specify the owner and the group of files in the _git mapping_ configuration, without the need to run `chown`.
 

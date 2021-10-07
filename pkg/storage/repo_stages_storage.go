@@ -31,8 +31,8 @@ const (
 	RepoImportMetadata_ImageTagPrefix  = "import-metadata-"
 	RepoImportMetadata_ImageNameFormat = "%s:import-metadata-%s"
 
-	RepoClientIDRecrod_ImageTagPrefix  = "client-id-"
-	RepoClientIDRecrod_ImageNameFormat = "%s:client-id-%s-%d"
+	RepoClientIDRecord_ImageTagPrefix  = "client-id-"
+	RepoClientIDRecord_ImageNameFormat = "%s:client-id-%s-%d"
 
 	UnexpectedTagFormatErrorPrefix = "unexpected tag format"
 )
@@ -697,11 +697,11 @@ func (storage *RepoStagesStorage) GetClientIDRecords(ctx context.Context, projec
 		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
 	} else {
 		for _, tag := range tags {
-			if !strings.HasPrefix(tag, RepoClientIDRecrod_ImageTagPrefix) {
+			if !strings.HasPrefix(tag, RepoClientIDRecord_ImageTagPrefix) {
 				continue
 			}
 
-			tagWithoutPrefix := strings.TrimPrefix(tag, RepoClientIDRecrod_ImageTagPrefix)
+			tagWithoutPrefix := strings.TrimPrefix(tag, RepoClientIDRecord_ImageTagPrefix)
 			dataParts := strings.SplitN(util.Reverse(tagWithoutPrefix), "-", 2)
 			if len(dataParts) != 2 {
 				continue
@@ -727,7 +727,7 @@ func (storage *RepoStagesStorage) GetClientIDRecords(ctx context.Context, projec
 func (storage *RepoStagesStorage) PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
 
-	fullImageName := fmt.Sprintf(RepoClientIDRecrod_ImageNameFormat, storage.RepoAddress, rec.ClientID, rec.TimestampMillisec)
+	fullImageName := fmt.Sprintf(RepoClientIDRecord_ImageNameFormat, storage.RepoAddress, rec.ClientID, rec.TimestampMillisec)
 
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostClientID full image name: %s\n", fullImageName)
 

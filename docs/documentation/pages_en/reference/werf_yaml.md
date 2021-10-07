@@ -102,7 +102,7 @@ branch: master
 branch: /^(master|production)$/
 ```
 
-> When scanning, werf searchs for the provided set of git branches in the origin remote references, but in the configuration, the  `origin/` prefix is omitted in branch names.
+> When scanning, werf searches for the provided set of git branches in the origin remote references, but in the configuration, the  `origin/` prefix is omitted in branch names.
 
 You can limit the set of references on the basis of the date when the git tag was created or the activity in the git branch. The `limit` group of parameters allows the user to define flexible and efficient policies for various workflows.
 

@@ -47,7 +47,7 @@ func GetContextAddFilesPaths(projectDir string, contextDir string, contextAddFil
 				addFilePaths = append(addFilePaths, path)
 				return nil
 			}); err != nil {
-				return nil, fmt.Errorf("error occured when recursively walking the contextAddFile dir %q: %s", addFilePath, err)
+				return nil, fmt.Errorf("error occurred when recursively walking the contextAddFile dir %q: %s", addFilePath, err)
 			}
 		} else {
 			addFilePaths = append(addFilePaths, addFilePath)
