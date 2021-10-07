@@ -80,7 +80,7 @@ func (wc *WerfChartStub) ChartLoaded(files []*chart.ChartExtenderBufferedFile) e
 	}
 
 	var opts helpers.GetHelmChartMetadataOptions
-	opts.DefaultName = "stub_name"
+	opts.DefaultName = "stubchartname"
 	opts.DefaultVersion = "1.0.0"
 	wc.HelmChart.Metadata = helpers.AutosetChartMetadata(wc.HelmChart.Metadata, opts)
 
