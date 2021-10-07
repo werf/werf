@@ -72,6 +72,7 @@ buildah pull ubuntu:20.04 || true
 export WERF_REPO="$repo"
 export WERF_LOG_DEBUG=1
 export WERF_DISABLE_AUTO_HOST_CLEANUP=1
+export WERF_PERF_TEST_CONTAINER_RUNTIME=1
 
 if [[ $vanilla_build_enabled == 1 ]]; then
   echo "Running vanilla werf build"
