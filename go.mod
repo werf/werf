@@ -19,6 +19,7 @@ require (
 	github.com/containers/buildah v1.23.0
 	github.com/containers/common v0.44.0
 	github.com/containers/image/v5 v5.16.0
+	github.com/containers/ocicrypt v1.1.2 // indirect
 	github.com/containers/storage v1.36.0
 	github.com/docker/cli v20.10.5+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
@@ -100,3 +101,5 @@ replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20210831144243-7dcadcc35336
 
 replace github.com/deislabs/oras => github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8
+
+replace github.com/containers/ocicrypt => ../ocicrypt
