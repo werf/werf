@@ -10,10 +10,10 @@ if [ -z "$VERSION" ] ; then
     exit 1
 fi
 
-export CGO_ENABLED=0
+export CGO_ENABLED=1
 
-gox -osarch="linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64" \
+gox -cgo -osarch="linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64" \
     -output="release-build/$VERSION/{{.OS}}-{{.Arch}}/bin/werf" \
-    -tags="dfrunmount dfssh containers_image_openpgp" \
-    -ldflags="-s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION" \
+    -tags="dfrunmount dfssh osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" \
+    -ldflags="-linkmode external -extldflags=-static -s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION" \
         github.com/werf/werf/cmd/werf
