@@ -63,7 +63,7 @@ git init
 git add .
 git commit -m init
 
-"${script_dir}/../go-build.sh"
+"${script_dir}/../../../../go-build.sh"
 
 docker pull ubuntu:20.04
 podman pull ubuntu:20.04 || true
