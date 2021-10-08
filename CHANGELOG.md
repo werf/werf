@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.26](https://www.github.com/werf/werf/compare/v1.2.25...v1.2.26) (2021-10-08)
+
+
+### Features
+
+* Completed first step of buildah adoption: allow building of dockerfiles with buildah on any supported by the werf platform (linux, windows and macos).
+   * Enable buildah mode with `WERF_BUILDAH_CONTAINER_RUNTIME=auto|native-rootless|docker-with-fuse` environment variable:
+        * `native-rootless` mode uses local storage and runs only under Linux.
+        * `docker-with-fuse` mode runs buildah inside docker enabling crossplatform buildah support. This mode could be changed later to use podman instead of docker server.
+
+### Bug Fixes
+
+* spelling ([994af88](https://www.github.com/werf/werf/commit/994af880a8e00d52437227a82e52d0b184a17ae0))
+
 ### [1.2.25](https://www.github.com/werf/werf/compare/v1.2.24...v1.2.25) (2021-10-07)
 
 
