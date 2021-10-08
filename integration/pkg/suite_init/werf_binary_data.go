@@ -2,6 +2,7 @@ package suite_init
 
 import (
 	"os"
+	"runtime"
 
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -25,7 +26,12 @@ func ComputeWerfBinPath() []byte {
 	werfBinPath := os.Getenv("WERF_TEST_BINARY_PATH")
 	if werfBinPath == "" {
 		var err error
-		werfBinPath, err = gexec.Build("github.com/werf/werf/cmd/werf")
+
+		if runtime.GOOS == "linux" {
+			werfBinPath, err = gexec.BuildWithEnvironment("github.com/werf/werf/cmd/werf", []string{"CGO_ENABLED=1"}, "-compiler", "gc", "-ldflags", "-linkmode external -extldflags=-static", "-tags", "dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build")
+		} else {
+			werfBinPath, err = gexec.BuildWithEnvironment("github.com/werf/werf/cmd/werf", nil, "-compiler", "gc", "-tags", "dfrunmount dfssh containers_image_openpgp")
+		}
 		Ω(err).ShouldNot(HaveOccurred())
 	}
 
