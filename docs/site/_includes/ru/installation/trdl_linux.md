@@ -6,7 +6,7 @@
 sudo groupadd docker
 ```
 
-Добавьте своего текущего пользователя в группу `docker`^
+Добавьте своего текущего пользователя в группу `docker`:
 
 ```shell
 sudo usermod -aG docker $USER
