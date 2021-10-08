@@ -84,7 +84,7 @@ func (storage *DockerServerStagesStorage) DeleteStage(ctx context.Context, stage
 	return deleteRepoImageListInDockerServerStagesStorage(ctx, stageDescription, options.RmiForce)
 }
 
-func (storage *DockerServerStagesStorage) RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error {
+func (storage *DockerServerStagesStorage) RejectStage(_ context.Context, _, _ string, _ int64) error {
 	return nil
 }
 
@@ -125,35 +125,24 @@ func (storage *DockerServerStagesStorage) GetStageDescription(ctx context.Contex
 	}
 }
 
-func (storage *DockerServerStagesStorage) CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage CheckStageCustomTag %s %s\n", stageDescription.Info.Name, tag)
-
-	fullImageName := storage.makeStageCustomTagImageName(stageDescription, tag)
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage CheckStageCustomTag full image name: %s\n", fullImageName)
-
-	inspect, err := storage.DockerServerRuntime.GetImageInspect(ctx, fullImageName)
-	if err != nil {
-		return fmt.Errorf("unable to get image %q inspect: %s", fullImageName, err)
-	}
-
-	if inspect != nil {
-		return fmt.Errorf("the custom tag %q not found", tag)
-	}
-
-	if stageDescription.Info.ID != inspect.ID {
-		return fmt.Errorf("the custom tag %q image must be the same as related content-based tag %q image", tag, stageDescription.Info.Tag)
-	}
-
-	return nil
+func (storage *DockerServerStagesStorage) AddStageCustomTag(_ context.Context, _ *image.StageDescription, _ string) error {
+	return fmt.Errorf("not implemented")
 }
 
-func (storage *DockerServerStagesStorage) AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalDockerServerStagesStorage AddStageCustomTag %s %s\n", stageDescription.StageID.String(), tag)
-	return docker.CliTag(ctx, stageDescription.Info.ID, storage.makeStageCustomTagImageName(stageDescription, tag))
+func (storage *DockerServerStagesStorage) CheckStageCustomTag(_ context.Context, _ *image.StageDescription, _ string) error {
+	return fmt.Errorf("not implemented")
 }
 
-func (storage *DockerServerStagesStorage) makeStageCustomTagImageName(stageDescription *image.StageDescription, aliasTag string) string {
-	return strings.Join([]string{stageDescription.Info.Repository, aliasTag}, ":")
+func (storage *DockerServerStagesStorage) DeleteStageCustomTag(_ context.Context, _ string) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (storage *DockerServerStagesStorage) GetStageCustomTagMetadata(_ context.Context, _ string) (*CustomTagMetadata, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (storage *DockerServerStagesStorage) GetStageCustomTagMetadataIDs(_ context.Context) ([]string, error) {
+	return nil, nil
 }
 
 func (storage *DockerServerStagesStorage) AddManagedImage(_ context.Context, _, _ string) error {
