@@ -268,6 +268,14 @@ werf render [options]
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --use-custom-tag=''
+            Use a tag alias in helm templates instead of an image content-based tag (NOT            
+            RECOMMENDED).
+            It is necessary to use the image name shortcut %image% or %image_slug% in the tag       
+            format if there is more than one image in the werf config. 
+            Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g.                                    
+            $WERF_USE_CUSTOM_TAG="%image%-tag").
+            For cleaning custom tags and associated content-based tag are treated as one
       --validate=false
             Validate your manifests against the Kubernetes cluster you are currently pointing at    
             (default $WERF_VALIDATE)
