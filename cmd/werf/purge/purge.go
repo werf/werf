@@ -187,10 +187,8 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 		DryRun: *commonCmdData.DryRun,
 	}
 
-	logboek.LogOptionalLn()
-	if err := cleaning.Purge(ctx, projectName, storageManager, storageLockManager, purgeOptions); err != nil {
-		return err
-	}
-
-	return nil
+	return manager.RetryOnStagesStorageCacheResetError(ctx, storageManager, func() error {
+		logboek.LogOptionalLn()
+		return cleaning.Purge(ctx, projectName, storageManager, storageLockManager, purgeOptions)
+	})
 }

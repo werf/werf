@@ -11,7 +11,7 @@ Get status info (JSON).
 - 'msg' — Empty if `status` is `ok`, otherwise contains text representation of the error.
 - `rootVersion` — Version to show as main. E.g. - `v1.2.4+fix18`.
 - `rootVersionURL` — URL location for RootVersion. E.g. - `v1.2.4-plus-fix18`.
-- `multiwerf` — content of the used multiwerf.json (info about which versions belog to update channels)
+- `multiwerf` — content of the used multiwerf.json (info about which versions belong to update channels)
 
 Example:
 ```json

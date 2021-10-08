@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Purge all project images in the container registry. 
+Purge all project images in the container registry.
 
 WARNING: Images that are being used in the Kubernetes cluster will also be deleted.
 

@@ -19,8 +19,8 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-func NewKubernetesLockManager(namespace string, kubeClient kubernetes.Interface, kubeDynamicClient dynamic.Interface, getConfigMapNameFunc func(projectName string) string) *KuberntesLockManager {
-	return &KuberntesLockManager{
+func NewKubernetesLockManager(namespace string, kubeClient kubernetes.Interface, kubeDynamicClient dynamic.Interface, getConfigMapNameFunc func(projectName string) string) *KubernetesLockManager {
+	return &KubernetesLockManager{
 		KubeClient:           kubeClient,
 		KubeDynamicClient:    kubeDynamicClient,
 		Namespace:            namespace,
@@ -29,7 +29,7 @@ func NewKubernetesLockManager(namespace string, kubeClient kubernetes.Interface,
 	}
 }
 
-type KuberntesLockManager struct {
+type KubernetesLockManager struct {
 	KubeClient           kubernetes.Interface
 	KubeDynamicClient    dynamic.Interface
 	Namespace            string
@@ -39,7 +39,7 @@ type KuberntesLockManager struct {
 	mux sync.Mutex
 }
 
-func (manager *KuberntesLockManager) getLockerForProject(ctx context.Context, projectName string) (lockgate.Locker, error) {
+func (manager *KubernetesLockManager) getLockerForProject(ctx context.Context, projectName string) (lockgate.Locker, error) {
 	manager.mux.Lock()
 	defer manager.mux.Unlock()
 
@@ -66,7 +66,7 @@ func (manager *KuberntesLockManager) getLockerForProject(ctx context.Context, pr
 	return locker, nil
 }
 
-func (manager *KuberntesLockManager) LockStage(ctx context.Context, projectName, digest string) (LockHandle, error) {
+func (manager *KubernetesLockManager) LockStage(ctx context.Context, projectName, digest string) (LockHandle, error) {
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
@@ -75,7 +75,7 @@ func (manager *KuberntesLockManager) LockStage(ctx context.Context, projectName,
 	}
 }
 
-func (manager *KuberntesLockManager) LockStageCache(ctx context.Context, projectName, digest string) (LockHandle, error) {
+func (manager *KubernetesLockManager) LockStageCache(ctx context.Context, projectName, digest string) (LockHandle, error) {
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
@@ -84,7 +84,7 @@ func (manager *KuberntesLockManager) LockStageCache(ctx context.Context, project
 	}
 }
 
-func (manager *KuberntesLockManager) Unlock(ctx context.Context, lock LockHandle) error {
+func (manager *KubernetesLockManager) Unlock(ctx context.Context, lock LockHandle) error {
 	if locker, err := manager.getLockerForProject(ctx, lock.ProjectName); err != nil {
 		return err
 	} else {

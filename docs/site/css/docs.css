@@ -177,6 +177,21 @@
     color: #0066FF;
 }
 
+li.sidebar__submenu-item.wip {
+  position: relative;
+}
+
+li.sidebar__submenu-item.wip::before {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  top: 10px;
+  left: -20px;
+  background: url(/images/icons/maintanance-mini.svg) center center no-repeat;
+}
+
 .sidebar__submenu-item.active > a {
     color: #0066FF;
 }
@@ -599,7 +614,7 @@ figure.highlight {
     margin-right: 5px;
 }
 
-.docs .details.active .details__summary::before {
+.docs .details.active > .details__summary::before {
     transform: rotate(0deg);
 }
 
@@ -614,7 +629,7 @@ figure.highlight {
     background: #fff;
 }
 
-.docs .details.active .details__content {
+.docs .details.active > .details__content {
     display: block;
 }
 

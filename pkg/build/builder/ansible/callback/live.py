@@ -273,7 +273,7 @@ class CallbackModule(LiveCallbackHelpers):
                 self.LogArgs(stringc(result['results'][0], color), "\n")
                 return
 
-        # prevent dublication of stdout in case of live_stdout
+        # prevent duplication of stdout in case of live_stdout
         if not self._live_stdout_listener.is_live_stdout():
             stdout = result.get('stdout', result.get('module_stdout', ''))
             if stdout:

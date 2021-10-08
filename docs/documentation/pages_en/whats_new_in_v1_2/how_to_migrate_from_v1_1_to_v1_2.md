@@ -59,7 +59,7 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
 ## 4. Use .helm/Chart.lock for subcharts
 
  - Due to [giterminism]({{ "/whats_new_in_v1_2/changelog.html#giterminism" | true_relative_url  }}) werf does not allow uncommitted `.helm/charts` dir.
- - To use subcharts specify dependencies in the `.helm/Charts.yaml` like that:
+ - To use subcharts specify dependencies in the `.helm/Chart.yaml` like that:
 
      {% raw %}
      ```yaml

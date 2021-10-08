@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"sort"
 
@@ -103,7 +102,7 @@ func (r *Result) LsTree(ctx context.Context, repoHandle repo_handle.Handle, opts
 func (r *Result) lsTree(ctx context.Context, repoHandle repo_handle.Handle, opts LsTreeOptions) (*Result, error) {
 	res := NewResult(r.commit, r.repositoryFullFilepath, []*LsTreeEntry{}, []*SubmoduleResult{})
 
-	tree, err := getCommitTree(repoHandle, r.commit)
+	tree, err := repoHandle.GetCommitTree(plumbing.NewHash(r.commit))
 	if err != nil {
 		return nil, err
 	}
@@ -330,28 +329,5 @@ func (r *Result) LsTreeEntryContent(mainRepoHandle repo_handle.Handle, relPath s
 		panic("unexpected condition")
 	}
 
-	var data []byte
-	if err := entryRepoHandle.WithRepository(func(entryRepository repo_handle.Repository) error {
-		obj, err := entryRepository.BlobObject(entry.Hash)
-		if err != nil {
-			return fmt.Errorf("unable to get tree entry %q blob object: %s", entry.FullFilepath, err)
-		}
-
-		f, err := obj.Reader()
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		data, err = ioutil.ReadAll(f)
-		if err != nil {
-			return fmt.Errorf("unable to read tree entry %q content: %s", relPath, err)
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return entryRepoHandle.ReadBlobObjectContent(entry.Hash)
 }

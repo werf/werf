@@ -63,6 +63,11 @@
   margin: 10px;
 }
 
+.tabs_simple_condensed .tabs__btn {
+  margin: 10px 5px;
+  padding: 0 10px;
+}
+
 .tabs_simple .tabs__btn:first-child {
   margin-left: 0px;
 }

@@ -29,7 +29,7 @@ go generate ./...
 
 ### Ease development
 
-`werf.py` and `live.py` are copied into tmp directory that mounted into stage contatainer. To ease
+`werf.py` and `live.py` are copied into tmp directory that mounted into stage container. To ease
 development of ansible callbacks, werf can create hardlinks for werf.py and live.py if
 `WERF_DEBUG_ANSIBLE_WERF_PY_PATH` or `WERF_DEBUG_ANSIBLE_LIVE_PY_PATH` environment variables are set.
 

@@ -60,6 +60,7 @@ func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Con
 		err := registry.DeleteRepo(ctx, repo)
 
 		switch {
+		case err == nil:
 		case docker_registry.IsAzureCrRepositoryNotFoundErr(err),
 			docker_registry.IsDockerHubRepositoryNotFoundErr(err),
 			docker_registry.IsHarborRepositoryNotFoundErr(err),

@@ -12,10 +12,21 @@ func (r *Result) IndexWithWorktree() Scope {
 	return ComplexScope{scopes: []Scope{r.Index, r.Worktree}}
 }
 
-// PathList returns a list of changed files
-func (r *Result) PathList() (result []string) {
+// PathListWithSubmodules returns a list of changed files
+func (r *Result) PathListWithSubmodules() (result []string) {
 	keys := map[string]bool{}
-	for _, path := range append(r.IndexWithWorktree().PathList(), r.UntrackedPathList...) {
+
+	var allPaths []string
+	{
+		allPaths = append(allPaths, r.IndexWithWorktree().PathList()...)
+		for _, s := range r.IndexWithWorktree().Submodules() {
+			allPaths = append(allPaths, s.Path)
+		}
+
+		allPaths = append(allPaths, r.UntrackedPathList...)
+	}
+
+	for _, path := range allPaths {
 		_, exist := keys[path]
 		if !exist {
 			result = append(result, path)

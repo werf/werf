@@ -1,32 +1,40 @@
-##### 1. trdl [installation](https://github.com/werf/trdl)
+Make sure you have Git 2.18.0 or newer and [Docker](https://docs.docker.com/get-docker) installed.
 
+To run `werf` as a regular user you should have access to the Docker daemon:
 ```shell
-export PATH=$PATH:$HOME/bin
-echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
-
-mkdir -p $HOME/bin
-curl -LO https://tuf.trdl.dev/targets/releases/0.1.3/linux-{{ include.arch }}/bin/trdl
-install ./trdl $HOME/bin/trdl
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
 ```
 
-##### 2. Adding official werf TUF-repository into trdl
+Setup [trdl](https://github.com/werf/trdl) which will manage `werf` installation and updates:
+```shell
+# Add ~/bin to the PATH.
+echo 'export PATH=$HOME/bin:$PATH' >> ~/.bash_profile
+export PATH="$HOME/bin:$PATH"
 
+# Install trdl.
+curl -L "https://tuf.trdl.dev/targets/releases/0.1.3/linux-{{ include.arch }}/bin/trdl" -o /tmp/trdl
+mkdir -p ~/bin
+install /tmp/trdl ~/bin/trdl
+```
+
+Add `werf` repo:
 ```shell
 trdl add werf https://tuf.werf.io 1 b7ff6bcbe598e072a86d595a3621924c8612c7e6dc6a82e919abe89707d7e3f468e616b5635630680dd1e98fc362ae5051728406700e6274c5ed1ad92bea52a2
 ```
 
-##### 3. Using werf in the current shell
-
-This will create `werf` shell function which calls to the werf binary which trdl has been prepared for your session:
-
+For local usage we recommend automatically activating `werf` for new shell sessions:
 ```shell
-source $(trdl use werf {{ include.version }} {{ include.channel }})
-werf version
-...
+echo 'source $(trdl use werf {{ include.version }} {{ include.channel }})' >> ~/.bashrc
 ```
 
-##### 4. Optional: activate werf on terminal startup
-
+But in CI you should prefer activating `werf` explicitly in the beginning of each job/pipeline:
 ```shell
-echo '. $(trdl use werf {{ include.version }} {{ include.channel }})' >> ~/.bashrc
+source $(trdl use werf {{ include.version }} {{ include.channel }})
+```
+
+Make sure that `werf` is available now (open new shell if you chose automatic activation):
+```shell
+werf version
 ```

@@ -155,7 +155,7 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 		}
 
 		// No werf v1.1 runs on this host.
-		// This is stupid check, but the only awailalble safe option at the moment.
+		// This is stupid check, but the only available safe option at the moment.
 		if t.IsZero() {
 			filterSet := filters.NewArgs()
 

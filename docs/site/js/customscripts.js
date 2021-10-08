@@ -8,6 +8,14 @@ document.addEventListener("DOMContentLoaded", function() {
    */
   anchors.add('h2,h3,h4,h5');
 
+  var referenceAnchors;
+  if ($('.line-number-anchor')) {
+      referenceAnchors = new AnchorJS();
+      referenceAnchors.options = {
+          placement: 'left'
+      };
+      referenceAnchors.add('.line-number-anchor');
+  }
 });
 
 $( document ).ready(function() {
@@ -64,7 +72,7 @@ $(document).ready(function () {
   var github_requests = [],
   github_stats = JSON.parse(localStorage.getItem('werf_github_stats')) || null;
 
-  function getGithubReuests() {
+  function getGithubRequests() {
     $('[data-roadmap-step]').each(function () {
       var $step = $(this);
       github_requests.push($.get('https://api.github.com/repos/werf/werf/issues/' + $step.data('roadmap-step'), function (data) {
@@ -89,7 +97,7 @@ $(document).ready(function () {
 
   if (github_stats == null || Date.now() > (github_stats['updated_on'] + 1000 * 60 * 60)) {
     github_stats = {'updated_on': Date.now(), 'issues': {}, 'stargazers': 0};
-    $.when.apply($, getGithubReuests()).done(function() {
+    $.when.apply($, getGithubRequests()).done(function() {
       updateGithubStats();
       localStorage.setItem('werf_github_stats', JSON.stringify(github_stats));
     });
@@ -149,7 +157,7 @@ $(document).ready(function() {
 });
 
 $(document).ready(function(){
-  // waint untill fonts are loaded
+  // wait until fonts are loaded
   setTimeout(function() {
     $('.publications__list').masonry({
       itemSelector: '.publications__post',

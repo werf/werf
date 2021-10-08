@@ -125,7 +125,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should report ImagePullBackoff occured in Deployment and werf should fail", func() {
+		It("should report ImagePullBackoff occurred in Deployment and werf should fail", func() {
 			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app2", "initial commit")
 
 			gotImagePullBackoffLine := false

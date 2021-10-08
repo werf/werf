@@ -80,7 +80,7 @@ func LsTree(ctx context.Context, repoHandle repo_handle.Handle, commit string, o
 func lsTree(ctx context.Context, repoHandle repo_handle.Handle, commit string, opts LsTreeOptions) (*Result, error) {
 	res := NewResult(commit, "", []*LsTreeEntry{}, []*SubmoduleResult{})
 
-	tree, err := getCommitTree(repoHandle, commit)
+	tree, err := repoHandle.GetCommitTree(plumbing.NewHash(commit))
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func lsTree(ctx context.Context, repoHandle repo_handle.Handle, commit string, o
 				TreeEntry: object.TreeEntry{
 					Name: "",
 					Mode: filemode.Dir,
-					Hash: tree.Hash,
+					Hash: tree.Hash(),
 				},
 			}
 
@@ -151,33 +151,7 @@ func lsTree(ctx context.Context, repoHandle repo_handle.Handle, commit string, o
 	return res, nil
 }
 
-func getCommitTree(repoHandle repo_handle.Handle, commit string) (*object.Tree, error) {
-	commitHash, err := newHash(commit)
-	if err != nil {
-		return nil, fmt.Errorf("invalid commit %q: %s", commit, err)
-	}
-
-	var tree *object.Tree
-	if err := repoHandle.WithRepository(func(repository repo_handle.Repository) error {
-		commitObj, err := repository.CommitObject(commitHash)
-		if err != nil {
-			return fmt.Errorf("unable to get %s commit info: %s", commit, err)
-		}
-
-		tree, err = commitObj.Tree()
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return tree, nil
-}
-
-func processSpecificEntryFilepath(ctx context.Context, repoHandle repo_handle.Handle, tree *object.Tree, repositoryFullFilepath, treeFullFilepath, treeEntryFilepath string, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func processSpecificEntryFilepath(ctx context.Context, repoHandle repo_handle.Handle, tree repo_handle.TreeHandle, repositoryFullFilepath, treeFullFilepath, treeEntryFilepath string, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	for _, submoduleHandle := range repoHandle.Submodules() {
 		submoduleEntryFilepath := filepath.FromSlash(submoduleHandle.Config().Path)
 		submoduleFullFilepath := filepath.Join(treeFullFilepath, submoduleEntryFilepath)
@@ -227,8 +201,8 @@ func processSpecificEntryFilepath(ctx context.Context, repoHandle repo_handle.Ha
 	return lsTreeEntries, submodulesLsTreeEntries, nil
 }
 
-func lsTreeWalk(ctx context.Context, repoHandle repo_handle.Handle, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
-	for _, treeEntry := range tree.Entries {
+func lsTreeWalk(ctx context.Context, repoHandle repo_handle.Handle, tree repo_handle.TreeHandle, repositoryFullFilepath, treeFullFilepath string, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+	for _, treeEntry := range tree.Entries() {
 		lsTreeEntry := &LsTreeEntry{
 			FullFilepath: filepath.Join(treeFullFilepath, treeEntry.Name),
 			TreeEntry:    treeEntry,
@@ -246,7 +220,7 @@ func lsTreeWalk(ctx context.Context, repoHandle repo_handle.Handle, tree *object
 	return
 }
 
-func lsTreeEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func lsTreeEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, tree repo_handle.TreeHandle, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	switch lsTreeEntry.Mode {
 	case filemode.Dir:
 		return lsTreeDirEntryMatch(ctx, repoHandle, tree, repositoryFullFilepath, treeFullFilepath, lsTreeEntry, opts)
@@ -257,7 +231,7 @@ func lsTreeEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, tree *
 	}
 }
 
-func lsTreeDirEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, tree *object.Tree, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
+func lsTreeDirEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, tree repo_handle.TreeHandle, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
 	if err := lsTreeDirOrSubmoduleEntryMatchBase(
 		lsTreeEntry.FullFilepath,
 		opts,
@@ -397,7 +371,7 @@ func lsTreeFileEntryMatch(ctx context.Context, lsTreeEntry *LsTreeEntry, opts Ls
 	return
 }
 
-func treeFindEntry(_ context.Context, tree *object.Tree, treeFullFilepath, treeEntryFilepath string) (*LsTreeEntry, error) {
+func treeFindEntry(_ context.Context, tree repo_handle.TreeHandle, treeFullFilepath, treeEntryFilepath string) (*LsTreeEntry, error) {
 	formattedTreeEntryPath := filepath.ToSlash(treeEntryFilepath)
 	treeEntry, err := tree.FindEntry(formattedTreeEntryPath)
 	if err != nil {
@@ -410,7 +384,7 @@ func treeFindEntry(_ context.Context, tree *object.Tree, treeFullFilepath, treeE
 	}, nil
 }
 
-func treeTree(tree *object.Tree, treeFullFilepath, treeDirEntryFullFilepath string) (*object.Tree, error) {
+func treeTree(tree repo_handle.TreeHandle, treeFullFilepath, treeDirEntryFullFilepath string) (repo_handle.TreeHandle, error) {
 	treeDirEntryFilepath, err := filepath.Rel(treeFullFilepath, treeDirEntryFullFilepath)
 	if err != nil || treeDirEntryFilepath == "." || treeDirEntryFilepath == ".." || strings.HasPrefix(treeDirEntryFilepath, ".."+string(os.PathSeparator)) {
 		panic(fmt.Sprintf("unexpected paths: %s, %s", treeFullFilepath, treeDirEntryFullFilepath))
@@ -425,28 +399,15 @@ func treeTree(tree *object.Tree, treeFullFilepath, treeDirEntryFullFilepath stri
 	return entryTree, nil
 }
 
-func getSubmoduleTree(repoHandle repo_handle.SubmoduleHandle) (*object.Tree, error) {
+func getSubmoduleTree(repoHandle repo_handle.SubmoduleHandle) (repo_handle.TreeHandle, error) {
 	submoduleName := repoHandle.Config().Name
 	expectedCommit := repoHandle.Status().Expected
-
-	var submoduleTree *object.Tree
-	if err := repoHandle.WithRepository(func(submoduleRepository repo_handle.Repository) error {
-		commit, err := submoduleRepository.CommitObject(expectedCommit)
-		if err != nil {
-			return fmt.Errorf("cannot inspect submodule %q commit %q: %s", submoduleName, expectedCommit, err)
-		}
-
-		submoduleTree, err = commit.Tree()
-		if err != nil {
-			return fmt.Errorf("cannot get submodule %q commit %q tree: %s", submoduleName, expectedCommit, err)
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
+	tree, err := repoHandle.GetCommitTree(expectedCommit)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get submodule %q commit %q tree: %s", submoduleName, expectedCommit, err)
 	}
 
-	return submoduleTree, nil
+	return tree, nil
 }
 
 func debug() bool {

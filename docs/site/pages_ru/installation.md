@@ -31,7 +31,7 @@ arch:
   <div class="installation-selector-row">
     <div class="installation-selector">
       <div class="installation-selector__title">Версия</div>
-      <div class="tabs tabs_simple">
+      <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="version" data-install-tab="1.2">1.2</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -39,8 +39,8 @@ arch:
       </div>
     </div><!-- /selector -->
     <div class="installation-selector">
-      <div class="installation-selector__title">Уровень стабильности</div>
-      <div class="tabs tabs_simple">
+      <div class="installation-selector__title">Канал стабильности</div>
+      <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="channel" data-install-tab="rock-solid">Rock-Solid</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -53,9 +53,11 @@ arch:
           data-install-tab-group="channel" data-install-tab="alpha">Alpha</a>
       </div>
     </div><!-- /selector -->
+  </div><!-- /selector-row -->
+  <div class="installation-selector-row">
     <div class="installation-selector">
       <div class="installation-selector__title">Операционная система</div>
-      <div class="tabs tabs_simple">
+      <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="os" data-install-tab="linux">Linux</a>
         <a href="javascript:void(0)" class="tabs__btn"
@@ -66,41 +68,27 @@ arch:
     </div><!-- /selector -->
     <div class="installation-selector">
       <div class="installation-selector__title">Arch</div>
-      <div class="tabs tabs_simple">
+      <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="arch" data-install-tab="amd64">Amd64</a>
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="arch" data-install-tab="arm64">Arm64</a>
       </div>
     </div><!-- /selector -->
-  </div><!-- /selector-row -->
-  <div class="installation-selector-row">
     <div class="installation-selector">
       <div class="installation-selector__title">Метод установки</div>
-      <div class="tabs tabs_simple">
+      <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="method" data-install-tab="trdl">через trdl (рекомендовано)</a>
+          data-install-tab-group="method" data-install-tab="trdl">с trdl (рекомендуется)</a>
         <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="method" data-install-tab="binary">бинарным файлом</a>
-        <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="method" data-install-tab="source">из исходников</a>
+          data-install-tab-group="method" data-install-tab="binary">скачать бинарный файл</a>
       </div>
     </div><!-- /selector -->
   </div><!-- /selector-row -->
 
   <div class="installation-instruction">
-      <h1 class="installation-instruction__title">
-        Установить <span data-install-info="channel"></span> werf <span data-install-info="version"></span><br>
-        для <span data-install-info="os"></span> <span data-install-info="method"></span>
-      </h1>
       <div class="docs">
-<div class="details">
-<h2 id="установка-зависимостей"><a href="javascript:void(0)" class="details__summary">Установка зависимостей werf</a></h2>
-<div class="details__content" markdown="1">
-{% include ru/installation/werf_dependencies.md %}
-</div>
-</div>
-<h2 id="установка-werf">Установка werf</h2>
+<h2 id="установка-werf">Установка</h2>
 <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="trdl">
 <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
   {% for version in page.versions %}
@@ -110,12 +98,6 @@ arch:
           {% for arch in page.arch %}
             <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
 <div markdown="1">{% include ru/installation/trdl_linux.md version=version channel=channel arch=arch %}</div>
-<div class="details">
-<h2 id="как-использовать-в-cicd-системе"><a href="javascript:void(0)" class="details__summary">Как использовать в CI/CD системе?</a></h2>
-<div class="details__content" markdown="1">
-{% include ru/installation/trdl_unix/how_to_use_in_the_ci_cd.md version=version channel=channel arch=arch %}
-</div>
-</div>
             </div>
           {% endfor %}
         </div>
@@ -131,12 +113,6 @@ arch:
           {% for arch in page.arch %}
             <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
 <div markdown="1">{% include ru/installation/trdl_macos.md version=version channel=channel arch=arch %}</div>
-<div class="details">
-<h2 id="как-использовать-в-cicd-системе"><a href="javascript:void(0)" class="details__summary">Как использовать в CI/CD системе?</a></h2>
-<div class="details__content" markdown="1">
-{% include ru/installation/trdl_unix/how_to_use_in_the_ci_cd.md version=version channel=channel arch=arch %}
-</div>
-</div>
             </div>
           {% endfor %}
         </div>
@@ -160,17 +136,8 @@ arch:
   {% endfor %}
 </div><!-- /os -->
 
-<div class="details">
-<h2><a href="javascript:void(0)" class="details__summary">Как это работает?</a></h2>
-<div class="details__content" markdown="1">
-{% include ru/installation/how_it_works.md %}
-</div>
-</div>
       </div><!-- /method -->
       <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="binary">
-<div markdown="1">
-Последний релиз может быть найден [на данной странице](https://github.com/werf/werf/releases/)
-</div>
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
   {% for version in page.versions %}
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
@@ -181,7 +148,7 @@ arch:
   {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
   {% assign download_version = site.data.channels_versions.versions[version_key] | replace_first: "v", "" %}
 <div markdown="1">
-{% include installation/binary_linux.md version=download_version arch=arch %}
+{% include ru/installation/binary_linux.md version=download_version arch=arch %}
 </div>
             </div>
           {% endfor %}
@@ -201,7 +168,7 @@ arch:
   {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
   {% assign download_version = site.data.channels_versions.versions[version_key] | replace_first: "v", "" %}
 <div markdown="1">
-{% include installation/binary_macos.md version=download_version arch=arch %}
+{% include ru/installation/binary_macos.md version=download_version arch=arch %}
 </div>
             </div>
           {% endfor %}
@@ -221,7 +188,7 @@ arch:
   {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
   {% assign download_version = site.data.channels_versions.versions[version_key] | replace_first: "v", "" %}
 <div markdown="1">
-{% include installation/binary_windows.md version=download_version arch=arch %}
+{% include ru/installation/binary_windows.md version=download_version arch=arch %}
 </div>
             </div>
           {% endfor %}
@@ -231,11 +198,6 @@ arch:
   {% endfor %}
 
         </div>
-      </div><!-- /method -->
-      <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="source">
-<div markdown="1">
-{% include installation/source.md %}
-</div>
       </div><!-- /method -->
     </div>
   </div>
@@ -327,7 +289,7 @@ arch:
       Релиз
   </div>
 
-  <div class="tabs tabs_simple">
+  <div class="tabs tabs_simple_condensed">
     {%- for group in groups %}
     <a href="javascript:void(0)" class="tabs__btn tabs__group__btn{% if group == groups[0] %} active{% endif %}" onclick="openTab(event, 'tabs__group__btn', 'tabs__group__content', 'group-{{group}}')">{{group}}</a>
     {%- endfor %}
@@ -338,7 +300,7 @@ arch:
       <div class="installation-releases__block-subtitle">
           Уровень стабильности
       </div>
-      <div class="tabs tabs_simple">
+      <div class="tabs tabs_simple_condensed">
         {%- assign not_activated = true %}
         {%- assign active_channels = 0 %}
         {%- for channel in channels_sorted_reverse %}

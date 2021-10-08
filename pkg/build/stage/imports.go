@@ -186,7 +186,12 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 
 	var nameIncludeArgs []string
 	for _, includePath := range includePaths {
-		nameIncludeArgs = append(nameIncludeArgs, fmt.Sprintf("-wholename \"%s\"", path.Join(from, includePath)))
+		formattedPath := formatIncludeAndExcludePath(includePath)
+		nameIncludeArgs = append(
+			nameIncludeArgs,
+			fmt.Sprintf("-wholename \"%s\"", path.Join(from, formattedPath)),
+			fmt.Sprintf("-wholename \"%s\"", path.Join(from, formattedPath, "**")),
+		)
 	}
 
 	if len(nameIncludeArgs) != 0 {
@@ -195,7 +200,12 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 
 	var nameExcludeArgs []string
 	for _, excludePath := range excludePaths {
-		nameExcludeArgs = append(nameExcludeArgs, fmt.Sprintf("! -wholename \"%s\"", path.Join(from, excludePath)))
+		formattedPath := formatIncludeAndExcludePath(excludePath)
+		nameExcludeArgs = append(
+			nameExcludeArgs,
+			fmt.Sprintf("! -wholename \"%s\"", path.Join(from, formattedPath)),
+			fmt.Sprintf("! -wholename \"%s\"", path.Join(from, formattedPath, "**")),
+		)
 	}
 
 	if len(nameExcludeArgs) != 0 {
@@ -223,6 +233,10 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 	command := fmt.Sprintf("%s > %s", strings.Join(commands, " | "), resultChecksumPath)
 
 	return command
+}
+
+func formatIncludeAndExcludePath(path string) string {
+	return strings.TrimRight(path, "*/")
 }
 
 func getImportID(importElm *config.Import) string {

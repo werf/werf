@@ -926,12 +926,12 @@ func (gm *GitMapping) getArchiveType(ctx context.Context, commit string) (git_re
 func (gm *GitMapping) isEmpty(ctx context.Context, c Conveyor) (bool, error) {
 	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
-		return true, err
+		return true, fmt.Errorf("unable to get latest commit info: %s", err)
 	}
 
 	pathScope, err := gm.getPathScope(ctx, commitInfo.Commit)
 	if err != nil {
-		return true, err
+		return true, fmt.Errorf("unable to get path scope: %s", err)
 	}
 
 	isAnyMatchesByGitAdd, err := gm.GitRepo().IsAnyCommitTreeEntriesMatched(ctx, commitInfo.Commit, pathScope, gm.getPathMatcher(), true)

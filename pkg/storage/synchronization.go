@@ -25,12 +25,12 @@ func ParseKubernetesSynchronization(address string) (*KubernetesSynchronizationP
 
 	res := &KubernetesSynchronizationParams{}
 
-	namespaceWithConextAndConfigParts := strings.SplitN(addressWithoutScheme, "@", 2)
+	namespaceWithContextAndConfigParts := strings.SplitN(addressWithoutScheme, "@", 2)
 	var namespaceWithContext, config string
-	if len(namespaceWithConextAndConfigParts) == 2 {
-		namespaceWithContext, config = namespaceWithConextAndConfigParts[0], namespaceWithConextAndConfigParts[1]
+	if len(namespaceWithContextAndConfigParts) == 2 {
+		namespaceWithContext, config = namespaceWithContextAndConfigParts[0], namespaceWithContextAndConfigParts[1]
 	} else {
-		namespaceWithContext = namespaceWithConextAndConfigParts[0]
+		namespaceWithContext = namespaceWithContextAndConfigParts[0]
 	}
 
 	namespaceAndContextParts := strings.SplitN(namespaceWithContext, ":", 2)
