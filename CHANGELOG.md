@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.26](https://www.github.com/werf/werf/compare/v1.2.25...v1.2.26) (2021-10-08)
+
+
+### Features
+
+* **build:** enable static CGO builds for linux ([fbf4877](https://www.github.com/werf/werf/commit/fbf48777b80dc5899851e6bf950f2bf951bfe06d))
+* **build:** static CGO build ([463a148](https://www.github.com/werf/werf/commit/463a14880991525ec84cdacf9aff98cb4f7ba360))
+
+
+### Bug Fixes
+
+* spelling ([994af88](https://www.github.com/werf/werf/commit/994af880a8e00d52437227a82e52d0b184a17ae0))
+
 ### [1.2.25](https://www.github.com/werf/werf/compare/v1.2.24...v1.2.25) (2021-10-07)
 
 
