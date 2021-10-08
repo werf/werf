@@ -1,4 +1,4 @@
-Make sure you have Git 2.18.0 or newer and [Docker](https://docs.docker.com/get-docker) installed.
+Make sure you have [Git](https://git-scm.com/download/win) 2.18.0 or newer and [Docker](https://docs.docker.com/get-docker) installed.
 
 Following instructions should be executed in the PowerShell.
 
