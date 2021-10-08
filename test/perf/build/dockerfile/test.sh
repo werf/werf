@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -xeuo pipefail
 
+vanilla_build_enabled=0
+docker_with_fuse_build_enabled=0
+native_rootless_build_enabled=0
+werf_path="$HOME/go/bin/werf"
 usage="Usage: $(basename "$0") [options] docker_repository
 
 Options:
-  -v  do vanilla build
-  -f  do docker-with-fuse build
-  -n  do native-rootless-build
+  -e  path to werf executable (default: $werf_path)
+  -v  do vanilla build (default: $vanilla_build_enabled)
+  -f  do docker-with-fuse build (default: $docker_with_fuse_build_enabled)
+  -n  do native-rootless-build (default: $native_rootless_build_enabled)
 
 Example:
   $(basename "$0") -vfn docker.io/user/repo:20.04"
@@ -14,10 +19,11 @@ Example:
 temp_dir="/tmp/werf-perf-test"
 script_dir="$(cd "$(dirname "$0")"; pwd)"
 
-vanilla_build_enabled=0
-docker_with_fuse_build_enabled=0
-native_rootless_build_enabled=0
-while getopts ":vfn" opt; do
+function get_abs_path {
+  echo "$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
+}
+
+while getopts ":vfne:" opt; do
   case ${opt} in
     v )
       vanilla_build_enabled=1
@@ -27,6 +33,9 @@ while getopts ":vfn" opt; do
       ;;
     n )
       native_rootless_build_enabled=1
+      ;;
+    e )
+      werf_path="$(get_abs_path "$OPTARG")"
       ;;
     * )
       echo "$usage"
@@ -63,9 +72,7 @@ git init
 git add .
 git commit -m init
 
-"${script_dir}/../../../../go-build.sh"
-
-docker pull ubuntu:20.04
+docker pull ubuntu:20.04 || true
 podman pull ubuntu:20.04 || true
 buildah pull ubuntu:20.04 || true
 
@@ -76,19 +83,19 @@ export WERF_PERF_TEST_CONTAINER_RUNTIME=1
 
 if [[ $vanilla_build_enabled == 1 ]]; then
   echo "Running vanilla werf build"
-  ~/go/bin/werf build | tee ../vanilla-build.log
+  "$werf_path" build | tee ../vanilla-build.log
   echo "Finished vanilla werf build"
 fi
 
 if [[ $docker_with_fuse_build_enabled == 1 ]]; then
   echo "Running docker-with-fuse werf build"
-  WERF_CONTAINER_RUNTIME_BUILDAH="docker-with-fuse" ~/go/bin/werf build | tee ../docker-with-fuse-build.log
+  WERF_CONTAINER_RUNTIME_BUILDAH="docker-with-fuse" "$werf_path" build | tee ../docker-with-fuse-build.log
   echo "Finished docker-with-fuse werf build"
 fi
 
 if [[ $native_rootless_build_enabled == 1 ]]; then
   echo "Running native-rootless werf build"
-  WERF_CONTAINER_RUNTIME_BUILDAH="native-rootless" ~/go/bin/werf build | tee ../native-rootless-build.log
+  WERF_CONTAINER_RUNTIME_BUILDAH="native-rootless" "$werf_path" build | tee ../native-rootless-build.log
   echo "Finished native-rootless werf build"
 fi
 
