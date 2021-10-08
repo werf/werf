@@ -131,7 +131,7 @@ func runReset(ctx context.Context) error {
 		}
 
 		logboek.LogOptionalLn()
-		if err := cleaning.Purge(ctx, projectName, storageManager, storageLockManager, purgeOptions); err != nil {
+		if err := cleaning.Purge(ctx, projectName, storageManager, purgeOptions); err != nil {
 			return err
 		}
 	}

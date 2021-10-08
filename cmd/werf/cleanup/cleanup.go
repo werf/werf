@@ -252,6 +252,6 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 
 	return manager.RetryOnStagesStorageCacheResetError(ctx, storageManager, func() error {
 		logboek.LogOptionalLn()
-		return cleaning.Cleanup(ctx, projectName, storageManager, storageLockManager, cleanupOptions)
+		return cleaning.Cleanup(ctx, projectName, storageManager, cleanupOptions)
 	})
 }

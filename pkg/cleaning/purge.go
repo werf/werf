@@ -5,6 +5,7 @@ import (
 
 	"github.com/werf/logboek"
 
+	"github.com/werf/werf/pkg/cleaning/stage_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/storage"
@@ -16,7 +17,7 @@ type PurgeOptions struct {
 	DryRun                        bool
 }
 
-func Purge(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options PurgeOptions) error {
+func Purge(ctx context.Context, projectName string, storageManager *manager.StorageManager, options PurgeOptions) error {
 	return newPurgeManager(projectName, storageManager, options).run(ctx)
 }
 
@@ -91,6 +92,10 @@ func (m *purgeManager) run(ctx context.Context) error {
 		return err
 	}
 
+	if err := m.deleteCustomTags(ctx); err != nil {
+		return err
+	}
+
 	if m.StorageManager.GetFinalStagesStorage() != nil {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages").DoError(func() error {
 			stages, err := m.StorageManager.GetStageDescriptionList(ctx)
@@ -154,4 +159,43 @@ func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []
 
 func (m *purgeManager) deleteImageMetadata(ctx context.Context, imageNameOrID string, stageIDCommitList map[string][]string) error {
 	return deleteImageMetadata(ctx, m.ProjectName, m.StorageManager, imageNameOrID, stageIDCommitList, m.DryRun)
+}
+
+func (m *purgeManager) deleteCustomTags(ctx context.Context) error {
+	stageIDCustomTagList, err := stage_manager.GetCustomTagsMetadata(ctx, m.StorageManager)
+	if err != nil {
+		return err
+	}
+
+	if err := logboek.Context(ctx).LogProcess("Deleting custom tags").DoError(func() error {
+		for _, customTagList := range stageIDCustomTagList {
+			for _, customTag := range customTagList {
+				if err := deleteCustomTag(ctx, m.StorageManager.GetStagesStorage(), customTag); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteCustomTag(ctx context.Context, stagesStorage storage.StagesStorage, customTag string) error {
+	err := stagesStorage.DeleteStageCustomTag(ctx, customTag)
+	if err != nil {
+		if err := handleDeletionError(err); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", customTag)
+	logboek.Context(ctx).Default().LogOptionalLn()
+
+	return nil
 }

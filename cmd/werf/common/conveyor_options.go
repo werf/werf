@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/pkg/storage"
 )
 
 func GetConveyorOptions(commonCmdData *CmdData) build.ConveyorOptions {
@@ -121,7 +122,7 @@ func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism
 			}
 		}
 
-		var check string
+		var prevImageTag string
 		for _, img := range werfConfig.GetAllImages() {
 			imageTag := tagFunc(img.GetName())
 
@@ -129,10 +130,10 @@ func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism
 				return nil, fmt.Errorf("invalid custom tag %q: %s", optionValue, err)
 			}
 
-			if check == "" {
-				check = imageTag
+			if prevImageTag == "" {
+				prevImageTag = imageTag
 				continue
-			} else if imageTag == check {
+			} else if imageTag == prevImageTag {
 				return nil, fmt.Errorf("invalid custom tag %q: it is necessary to use the image name in the tag format if there is more than one image in the werf config (e.g., %q)", tagOrFormat, fmt.Sprintf("%s-%s", "%image%", tagOrFormat))
 			}
 		}
