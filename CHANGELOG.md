@@ -5,9 +5,10 @@
 
 ### Features
 
-* **build:** enable static CGO builds for linux ([fbf4877](https://www.github.com/werf/werf/commit/fbf48777b80dc5899851e6bf950f2bf951bfe06d))
-* **build:** static CGO build ([463a148](https://www.github.com/werf/werf/commit/463a14880991525ec84cdacf9aff98cb4f7ba360))
-
+* Completed first step of buildah adoption: allow building of dockerfiles with buildah on any supported by the werf platform (linux, windows and macos).
+   * Enable buildah mode with `WERF_BUILDAH_CONTAINER_RUNTIME=auto|native-rootless|docker-with-fuse` environment variable:
+        * `native-rootless` mode uses local storage and runs only under Linux.
+        * `docker-with-fuse` mode runs buildah inside docker enabling crossplatform buildah support. This mode could be changed later to use podman instead of docker server.
 
 ### Bug Fixes
 
