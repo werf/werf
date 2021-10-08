@@ -30,6 +30,14 @@ By default, werf prohibits using a particular set of directives and Go-template 
 
 ### werf configuration
 
+#### CLI
+
+##### --add-custom-tag and --use-custom-tag options
+
+The use of tag aliases with immutable values (e.g., `%image%-master`) makes previous deployments unreproducible and requires specifying the policy `imagePullPolicy: Always` for each image when configuring application containers in the helm chart.
+
+To activate `--add-custom-tag` and `--use-custom-tag` options it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
+
 #### Go-template functions
 
 ##### env 
