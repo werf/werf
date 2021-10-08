@@ -112,6 +112,12 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 
    Restart Docker Desktop using right button menu of the tray Docker Desktop icon.
 
+   Then start minikube again:
+
+   ```shell
+   minikube start --driver=docker --insecure-registry registry.example.com:80
+   ```
+
 7. Allow usage of Container Registry without TLS for werf:
 
    Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run.

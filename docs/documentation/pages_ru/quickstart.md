@@ -114,6 +114,12 @@ werf version
 
    Перезапустим Docker Desktop через меню, открывающееся правым кликом по иконке Docker Desktop в трее.
 
+   Затем снова запустим minikube:
+
+   ```shell
+   minikube start --driver=docker --insecure-registry registry.example.com:80
+   ```
+
 7. Разрешаем доступ в Container Registry без TLS для werf:
 
    В терминале где будет запускаться werf установим переменную окружения `WERF_INSECURE_REGISTRY=1`.
