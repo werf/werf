@@ -2,8 +2,8 @@ FROM golang:1.17-bullseye
 
 RUN dpkg --add-architecture arm64 && \
     apt-get update && \
-    apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgpgme-dev libbtrfs-dev && \
-    apt-get install -y libgpgme-dev:arm64 libbtrfs-dev:arm64 && \
+    apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross libbtrfs-dev && \
+    apt-get install -y libbtrfs-dev:arm64 && \
     rm -rf /var/lib/apt/lists/*
 
 ADD cmd /.werf-deps/cmd
