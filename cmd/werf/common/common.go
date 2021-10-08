@@ -943,6 +943,12 @@ func GetLocalStagesStorage(containerRuntime container_runtime.ContainerRuntime) 
 }
 
 func GetStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
+	if _, match := containerRuntime.(*container_runtime.BuildahRuntime); match {
+		if stagesStorageAddress == "" || stagesStorageAddress == storage.LocalStorageAddress {
+			return nil, fmt.Errorf(`"--repo" should be specified and not equal ":local" for Buildah container runtime`)
+		}
+	}
+
 	if err := ValidateRepoContainerRegistry(cmdData.CommonRepoData.GetContainerRegistry()); err != nil {
 		return nil, err
 	}
@@ -1017,12 +1023,15 @@ func GetCacheStagesStorageList(containerRuntime container_runtime.ContainerRunti
 
 func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
-	if stagesStorage.Address() != storage.LocalStorageAddress {
-		localStagesStorage, err := storage.NewStagesStorage(storage.LocalStorageAddress, containerRuntime, storage.StagesStorageOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("unable to create local secondary stages storage: %s", err)
+
+	if _, matched := containerRuntime.(*container_runtime.DockerServerRuntime); matched {
+		if stagesStorage.Address() != storage.LocalStorageAddress {
+			localStagesStorage, err := storage.NewStagesStorage(storage.LocalStorageAddress, containerRuntime, storage.StagesStorageOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("unable to create local secondary stages storage: %s", err)
+			}
+			res = append(res, localStagesStorage)
 		}
-		res = append(res, localStagesStorage)
 	}
 
 	for _, address := range GetSecondaryStagesStorage(cmdData) {

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/werf/werf/pkg/container_runtime"
+
 	"github.com/docker/cli/cli"
 
 	"github.com/werf/werf/pkg/git_repo/gitdata"
@@ -20,7 +22,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
@@ -72,6 +73,7 @@ func NewCmd() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := common.BackgroundContext()
+
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
@@ -108,7 +110,7 @@ func NewCmd() *cobra.Command {
 				}
 			}
 
-			return runMain()
+			return runMain(ctx)
 		},
 	}
 
@@ -216,12 +218,16 @@ func getContainerName() string {
 	return ""
 }
 
-func runMain() error {
-	ctx := common.BackgroundContext()
-
+func runMain(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
+
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
@@ -244,17 +250,7 @@ func runMain() error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 		return err
 	}
 
@@ -294,7 +290,7 @@ func runMain() error {
 				return err
 			}
 
-			if err := run(ctx, headCommitGiterminismManager); err != nil {
+			if err := run(ctx, containerRuntime, headCommitGiterminismManager); err != nil {
 				return err
 			}
 
@@ -320,7 +316,7 @@ func runMain() error {
 			return nil
 		})
 	} else {
-		if err := run(ctx, giterminismManager); err != nil {
+		if err := run(ctx, containerRuntime, giterminismManager); err != nil {
 			if statusErr, ok := err.(cli.StatusError); ok {
 				common.TerminateWithError(err.Error(), statusErr.StatusCode)
 			}
@@ -332,7 +328,7 @@ func runMain() error {
 	}
 }
 
-func run(ctx context.Context, giterminismManager giterminism_manager.Interface) error {
+func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntime, giterminismManager giterminism_manager.Interface) error {
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
@@ -356,7 +352,6 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 	}
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err

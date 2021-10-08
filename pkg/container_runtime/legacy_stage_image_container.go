@@ -16,59 +16,59 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-type StageImageContainer struct {
-	image                      *StageImage
+type LegacyStageImageContainer struct {
+	image                      *LegacyStageImage
 	name                       string
 	runCommands                []string
 	serviceRunCommands         []string
-	runOptions                 *StageImageContainerOptions
-	commitChangeOptions        *StageImageContainerOptions
-	serviceCommitChangeOptions *StageImageContainerOptions
+	runOptions                 *LegacyStageImageContainerOptions
+	commitChangeOptions        *LegacyStageImageContainerOptions
+	serviceCommitChangeOptions *LegacyStageImageContainerOptions
 }
 
-func newStageImageContainer(img *StageImage) *StageImageContainer {
-	c := &StageImageContainer{}
+func newLegacyStageImageContainer(img *LegacyStageImage) *LegacyStageImageContainer {
+	c := &LegacyStageImageContainer{}
 	c.image = img
 	c.name = fmt.Sprintf("%s%v", image.StageContainerNamePrefix, util.GenerateConsistentRandomString(10))
-	c.runOptions = newStageContainerOptions()
-	c.commitChangeOptions = newStageContainerOptions()
-	c.serviceCommitChangeOptions = newStageContainerOptions()
+	c.runOptions = newLegacyStageContainerOptions()
+	c.commitChangeOptions = newLegacyStageContainerOptions()
+	c.serviceCommitChangeOptions = newLegacyStageContainerOptions()
 	return c
 }
 
-func (c *StageImageContainer) Name() string {
+func (c *LegacyStageImageContainer) Name() string {
 	return c.name
 }
 
-func (c *StageImageContainer) UserCommitChanges() []string {
+func (c *LegacyStageImageContainer) UserCommitChanges() []string {
 	return c.commitChangeOptions.toCommitChanges()
 }
 
-func (c *StageImageContainer) UserRunCommands() []string {
+func (c *LegacyStageImageContainer) UserRunCommands() []string {
 	return c.runCommands
 }
 
-func (c *StageImageContainer) AddRunCommands(commands ...string) {
+func (c *LegacyStageImageContainer) AddRunCommands(commands ...string) {
 	c.runCommands = append(c.runCommands, commands...)
 }
 
-func (c *StageImageContainer) AddServiceRunCommands(commands ...string) {
+func (c *LegacyStageImageContainer) AddServiceRunCommands(commands ...string) {
 	c.serviceRunCommands = append(c.serviceRunCommands, commands...)
 }
 
-func (c *StageImageContainer) RunOptions() ContainerOptions {
+func (c *LegacyStageImageContainer) RunOptions() LegacyContainerOptions {
 	return c.runOptions
 }
 
-func (c *StageImageContainer) CommitChangeOptions() ContainerOptions {
+func (c *LegacyStageImageContainer) CommitChangeOptions() LegacyContainerOptions {
 	return c.commitChangeOptions
 }
 
-func (c *StageImageContainer) ServiceCommitChangeOptions() ContainerOptions {
+func (c *LegacyStageImageContainer) ServiceCommitChangeOptions() LegacyContainerOptions {
 	return c.serviceCommitChangeOptions
 }
 
-func (c *StageImageContainer) prepareRunArgs(ctx context.Context) ([]string, error) {
+func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]string, error) {
 	var args []string
 	args = append(args, fmt.Sprintf("--name=%s", c.name))
 
@@ -95,11 +95,11 @@ func (c *StageImageContainer) prepareRunArgs(ctx context.Context) ([]string, err
 	return args, nil
 }
 
-func (c *StageImageContainer) prepareRunCommand() string {
+func (c *LegacyStageImageContainer) prepareRunCommand() string {
 	return ShelloutPack(strings.Join(c.prepareRunCommands(), " && "))
 }
 
-func (c *StageImageContainer) prepareRunCommands() []string {
+func (c *LegacyStageImageContainer) prepareRunCommands() []string {
 	runCommands := c.prepareAllRunCommands()
 	if len(runCommands) != 0 {
 		return runCommands
@@ -108,7 +108,7 @@ func (c *StageImageContainer) prepareRunCommands() []string {
 	}
 }
 
-func (c *StageImageContainer) prepareAllRunCommands() []string {
+func (c *LegacyStageImageContainer) prepareAllRunCommands() []string {
 	var commands []string
 
 	if debugDockerRunCommand() {
@@ -125,7 +125,7 @@ func ShelloutPack(command string) string {
 	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), stapel.Base64BinPath())
 }
 
-func (c *StageImageContainer) prepareIntrospectBeforeArgs(ctx context.Context) ([]string, error) {
+func (c *LegacyStageImageContainer) prepareIntrospectBeforeArgs(ctx context.Context) ([]string, error) {
 	args, err := c.prepareIntrospectArgsBase(ctx)
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (c *StageImageContainer) prepareIntrospectBeforeArgs(ctx context.Context) (
 	return args, nil
 }
 
-func (c *StageImageContainer) prepareIntrospectArgs(ctx context.Context) ([]string, error) {
+func (c *LegacyStageImageContainer) prepareIntrospectArgs(ctx context.Context) ([]string, error) {
 	args, err := c.prepareIntrospectArgsBase(ctx)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (c *StageImageContainer) prepareIntrospectArgs(ctx context.Context) ([]stri
 	return args, nil
 }
 
-func (c *StageImageContainer) prepareIntrospectArgsBase(ctx context.Context) ([]string, error) {
+func (c *LegacyStageImageContainer) prepareIntrospectArgsBase(ctx context.Context) ([]string, error) {
 	var args []string
 
 	runOptions, err := c.prepareIntrospectOptions(ctx)
@@ -174,7 +174,7 @@ func (c *StageImageContainer) prepareIntrospectArgsBase(ctx context.Context) ([]
 	return args, nil
 }
 
-func (c *StageImageContainer) prepareRunOptions(ctx context.Context) (*StageImageContainerOptions, error) {
+func (c *LegacyStageImageContainer) prepareRunOptions(ctx context.Context) (*LegacyStageImageContainerOptions, error) {
 	serviceRunOptions, err := c.prepareServiceRunOptions(ctx)
 	if err != nil {
 		return nil, err
@@ -182,8 +182,8 @@ func (c *StageImageContainer) prepareRunOptions(ctx context.Context) (*StageImag
 	return serviceRunOptions.merge(c.runOptions), nil
 }
 
-func (c *StageImageContainer) prepareServiceRunOptions(ctx context.Context) (*StageImageContainerOptions, error) {
-	serviceRunOptions := newStageContainerOptions()
+func (c *LegacyStageImageContainer) prepareServiceRunOptions(ctx context.Context) (*LegacyStageImageContainerOptions, error) {
+	serviceRunOptions := newLegacyStageContainerOptions()
 	serviceRunOptions.Workdir = "/"
 	serviceRunOptions.Entrypoint = stapel.BashBinPath()
 	serviceRunOptions.User = "0:0"
@@ -198,11 +198,11 @@ func (c *StageImageContainer) prepareServiceRunOptions(ctx context.Context) (*St
 	return serviceRunOptions, nil
 }
 
-func (c *StageImageContainer) prepareIntrospectOptions(ctx context.Context) (*StageImageContainerOptions, error) {
+func (c *LegacyStageImageContainer) prepareIntrospectOptions(ctx context.Context) (*LegacyStageImageContainerOptions, error) {
 	return c.prepareRunOptions(ctx)
 }
 
-func (c *StageImageContainer) prepareCommitChanges(ctx context.Context) ([]string, error) {
+func (c *LegacyStageImageContainer) prepareCommitChanges(ctx context.Context) ([]string, error) {
 	commitOptions, err := c.prepareCommitOptions(ctx)
 	if err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (c *StageImageContainer) prepareCommitChanges(ctx context.Context) ([]strin
 	return commitChanges, nil
 }
 
-func (c *StageImageContainer) prepareCommitOptions(ctx context.Context) (*StageImageContainerOptions, error) {
+func (c *LegacyStageImageContainer) prepareCommitOptions(ctx context.Context) (*LegacyStageImageContainerOptions, error) {
 	inheritedCommitOptions, err := c.prepareInheritedCommitOptions(ctx)
 	if err != nil {
 		return nil, err
@@ -225,17 +225,23 @@ func (c *StageImageContainer) prepareCommitOptions(ctx context.Context) (*StageI
 	return commitOptions, nil
 }
 
-func (c *StageImageContainer) prepareInheritedCommitOptions(ctx context.Context) (*StageImageContainerOptions, error) {
-	inheritedOptions := newStageContainerOptions()
+func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Context) (*LegacyStageImageContainerOptions, error) {
+	inheritedOptions := newLegacyStageContainerOptions()
 
 	if c.image.fromImage == nil {
 		panic(fmt.Sprintf("runtime error: FromImage should be (%s)", c.image.name))
 	}
 
-	if err := c.image.fromImage.MustResetInspect(ctx); err != nil {
-		return nil, fmt.Errorf("unable to reset inspect for image %s: %s", c.image.fromImage.Name(), err)
+	if err := c.image.fromImage.MustResetInfo(ctx); err != nil {
+		return nil, fmt.Errorf("unable to reset info for image %s: %s", c.image.fromImage.Name(), err)
 	}
-	fromImageInspect := c.image.fromImage.GetInspect()
+
+	dockerServerRuntime := c.image.ContainerRuntime.(*DockerServerRuntime)
+
+	fromImageInspect, err := dockerServerRuntime.GetImageInspect(ctx, c.image.fromImage.Name())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get image inspect: %s", err)
+	}
 
 	if len(fromImageInspect.Config.Cmd) != 0 {
 		inheritedOptions.Cmd = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Cmd, "\", \""))
@@ -254,7 +260,9 @@ func (c *StageImageContainer) prepareInheritedCommitOptions(ctx context.Context)
 	return inheritedOptions, nil
 }
 
-func (c *StageImageContainer) run(ctx context.Context) error {
+func (c *LegacyStageImageContainer) run(ctx context.Context) error {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	runArgs, err := c.prepareRunArgs(ctx)
 	if err != nil {
 		return err
@@ -267,7 +275,9 @@ func (c *StageImageContainer) run(ctx context.Context) error {
 	return nil
 }
 
-func (c *StageImageContainer) introspect(ctx context.Context) error {
+func (c *LegacyStageImageContainer) introspect(ctx context.Context) error {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	runArgs, err := c.prepareIntrospectArgs(ctx)
 	if err != nil {
 		return err
@@ -282,7 +292,9 @@ func (c *StageImageContainer) introspect(ctx context.Context) error {
 	return nil
 }
 
-func (c *StageImageContainer) introspectBefore(ctx context.Context) error {
+func (c *LegacyStageImageContainer) introspectBefore(ctx context.Context) error {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	runArgs, err := c.prepareIntrospectBeforeArgs(ctx)
 	if err != nil {
 		return err
@@ -308,7 +320,9 @@ func IsStartContainerErr(err error) bool {
 	return false
 }
 
-func (c *StageImageContainer) commit(ctx context.Context) (string, error) {
+func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	commitChanges, err := c.prepareCommitChanges(ctx)
 	if err != nil {
 		return "", err
@@ -323,6 +337,8 @@ func (c *StageImageContainer) commit(ctx context.Context) (string, error) {
 	return id, nil
 }
 
-func (c *StageImageContainer) rm(ctx context.Context) error {
+func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
+	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+
 	return docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{})
 }

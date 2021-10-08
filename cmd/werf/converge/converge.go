@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/werf/werf/pkg/container_runtime"
+
 	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/werf/werf/pkg/git_repo/gitdata"
@@ -31,11 +33,9 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
@@ -172,6 +172,12 @@ func runMain(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
+
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting host git data manager: %s", err)
@@ -193,17 +199,7 @@ func runMain(ctx context.Context) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 		return err
 	}
 
@@ -238,14 +234,14 @@ func runMain(ctx context.Context) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
-			return run(ctx, headCommitGiterminismManager)
+			return run(ctx, containerRuntime, headCommitGiterminismManager)
 		})
 	} else {
-		return run(ctx, giterminismManager)
+		return run(ctx, containerRuntime, giterminismManager)
 	}
 }
 
-func run(ctx context.Context, giterminismManager giterminism_manager.Interface) error {
+func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntime, giterminismManager giterminism_manager.Interface) error {
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
@@ -276,7 +272,6 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface) 
 		if err != nil {
 			return err
 		}
-		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 		stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 		if err != nil {
 			return err

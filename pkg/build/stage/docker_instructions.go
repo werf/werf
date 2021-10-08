@@ -30,7 +30,7 @@ type DockerInstructionsStage struct {
 	instructions *config.Docker
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ context.Context, _ Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *DockerInstructionsStage) GetDependencies(_ context.Context, _ Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)
@@ -60,7 +60,7 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 	return
 }
 
-func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}

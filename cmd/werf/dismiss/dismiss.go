@@ -21,7 +21,6 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/true_git"
@@ -130,6 +129,14 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
+
+	_ = containerRuntime
+
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting host git data manager: %s", err)
@@ -152,16 +159,6 @@ func runDismiss(ctx context.Context) error {
 	}
 
 	common.LogKubeContext(kube.Context)
-
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
 
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {

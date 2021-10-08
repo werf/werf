@@ -1,0 +1,8 @@
+project: werf-perf-test
+configVersion: 1
+
+---
+image: neovim
+dockerfile: Dockerfile
+args:
+  INVALIDATE_CACHES: "{{ uuidv4 }}"

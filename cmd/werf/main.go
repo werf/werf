@@ -52,6 +52,14 @@ import (
 )
 
 func main() {
+	shouldTerminate, err := common.ContainerRuntimeProcessStartupHook()
+	if err != nil {
+		common.TerminateWithError(err.Error(), 1)
+	}
+	if shouldTerminate {
+		return
+	}
+
 	common.EnableTerminationSignalsTrap()
 	log.SetOutput(logboek.OutStream())
 	logrus.StandardLogger().SetOutput(logboek.OutStream())

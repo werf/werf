@@ -13,7 +13,7 @@ case "${unameOut}" in
     *)                    binary_name=werf_with_coverage
 esac
 
-go test -ldflags="-s -w" -tags "dfrunmount dfssh integration_coverage" -coverpkg=./... -c cmd/werf/main.go cmd/werf/main_test.go -o "$project_bin_tests_dir"/$binary_name
+./scripts/ci/go-test.sh -coverpkg=./... -c cmd/werf/main.go cmd/werf/main_test.go -o "$project_bin_tests_dir"/$binary_name
 
 if [[ -x "$(command -v upx)" ]]; then
   upx "$project_bin_tests_dir"/$binary_name

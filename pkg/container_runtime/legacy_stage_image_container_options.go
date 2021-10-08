@@ -9,7 +9,7 @@ import (
 	"github.com/werf/werf/pkg/docker"
 )
 
-type StageImageContainerOptions struct {
+type LegacyStageImageContainerOptions struct {
 	Volume      []string
 	VolumesFrom []string
 	Expose      []string
@@ -22,59 +22,59 @@ type StageImageContainerOptions struct {
 	HealthCheck string
 }
 
-func newStageContainerOptions() *StageImageContainerOptions {
-	c := &StageImageContainerOptions{}
+func newLegacyStageContainerOptions() *LegacyStageImageContainerOptions {
+	c := &LegacyStageImageContainerOptions{}
 	c.Env = make(map[string]string)
 	c.Label = make(map[string]string)
 	return c
 }
 
-func (co *StageImageContainerOptions) AddVolume(volumes ...string) {
+func (co *LegacyStageImageContainerOptions) AddVolume(volumes ...string) {
 	co.Volume = append(co.Volume, volumes...)
 }
 
-func (co *StageImageContainerOptions) AddVolumeFrom(volumesFrom ...string) {
+func (co *LegacyStageImageContainerOptions) AddVolumeFrom(volumesFrom ...string) {
 	co.VolumesFrom = append(co.VolumesFrom, volumesFrom...)
 }
 
-func (co *StageImageContainerOptions) AddExpose(exposes ...string) {
+func (co *LegacyStageImageContainerOptions) AddExpose(exposes ...string) {
 	co.Expose = append(co.Expose, exposes...)
 }
 
-func (co *StageImageContainerOptions) AddEnv(envs map[string]string) {
+func (co *LegacyStageImageContainerOptions) AddEnv(envs map[string]string) {
 	for env, value := range envs {
 		co.Env[env] = value
 	}
 }
 
-func (co *StageImageContainerOptions) AddLabel(labels map[string]string) {
+func (co *LegacyStageImageContainerOptions) AddLabel(labels map[string]string) {
 	for label, value := range labels {
 		co.Label[label] = value
 	}
 }
 
-func (co *StageImageContainerOptions) AddCmd(cmd string) {
+func (co *LegacyStageImageContainerOptions) AddCmd(cmd string) {
 	co.Cmd = cmd
 }
 
-func (co *StageImageContainerOptions) AddWorkdir(workdir string) {
+func (co *LegacyStageImageContainerOptions) AddWorkdir(workdir string) {
 	co.Workdir = workdir
 }
 
-func (co *StageImageContainerOptions) AddUser(user string) {
+func (co *LegacyStageImageContainerOptions) AddUser(user string) {
 	co.User = user
 }
 
-func (co *StageImageContainerOptions) AddHealthCheck(check string) {
+func (co *LegacyStageImageContainerOptions) AddHealthCheck(check string) {
 	co.HealthCheck = check
 }
 
-func (co *StageImageContainerOptions) AddEntrypoint(entrypoint string) {
+func (co *LegacyStageImageContainerOptions) AddEntrypoint(entrypoint string) {
 	co.Entrypoint = entrypoint
 }
 
-func (co *StageImageContainerOptions) merge(co2 *StageImageContainerOptions) *StageImageContainerOptions {
-	mergedCo := newStageContainerOptions()
+func (co *LegacyStageImageContainerOptions) merge(co2 *LegacyStageImageContainerOptions) *LegacyStageImageContainerOptions {
+	mergedCo := newLegacyStageContainerOptions()
 	mergedCo.Volume = append(co.Volume, co2.Volume...)
 	mergedCo.VolumesFrom = append(co.VolumesFrom, co2.VolumesFrom...)
 	mergedCo.Expose = append(co.Expose, co2.Expose...)
@@ -126,7 +126,7 @@ func (co *StageImageContainerOptions) merge(co2 *StageImageContainerOptions) *St
 	return mergedCo
 }
 
-func (co *StageImageContainerOptions) toRunArgs() ([]string, error) {
+func (co *LegacyStageImageContainerOptions) toRunArgs() ([]string, error) {
 	var args []string
 
 	for _, volume := range co.Volume {
@@ -160,7 +160,7 @@ func (co *StageImageContainerOptions) toRunArgs() ([]string, error) {
 	return args, nil
 }
 
-func (co *StageImageContainerOptions) toCommitChanges() []string {
+func (co *LegacyStageImageContainerOptions) toCommitChanges() []string {
 	var args []string
 
 	for _, volume := range co.Volume {
@@ -202,7 +202,7 @@ func (co *StageImageContainerOptions) toCommitChanges() []string {
 	return args
 }
 
-func (co *StageImageContainerOptions) prepareCommitChanges(ctx context.Context) ([]string, error) {
+func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Context) ([]string, error) {
 	var args []string
 
 	for _, volume := range co.Volume {

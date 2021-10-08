@@ -1,6 +1,7 @@
 package purge
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -9,8 +10,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -32,7 +31,9 @@ func NewCmd() *cobra.Command {
 
 WARNING: Images that are being used in the Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -40,7 +41,7 @@ WARNING: Images that are being used in the Kubernetes cluster will also be delet
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(runPurge)
+			return common.LogRunningTime(func() error { return runPurge(ctx) })
 		},
 	}
 
@@ -88,12 +89,16 @@ WARNING: Images that are being used in the Kubernetes cluster will also be delet
 	return cmd
 }
 
-func runPurge() error {
-	ctx := common.BackgroundContext()
-
+func runPurge(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
+
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
@@ -123,17 +128,7 @@ func runPurge() error {
 
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 		return err
 	}
 
@@ -145,8 +140,6 @@ func runPurge() error {
 	projectName := werfConfig.Meta.Project
 
 	logboek.LogOptionalLn()
-
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {

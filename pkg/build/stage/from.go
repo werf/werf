@@ -47,7 +47,7 @@ type FromStage struct {
 	cacheVersion                 string
 }
 
-func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ container_runtime.ImageInterface) (string, error) {
+func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ container_runtime.LegacyImageInterface) (string, error) {
 	var args []string
 
 	if s.cacheVersion != "" {
@@ -71,7 +71,7 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)

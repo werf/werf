@@ -23,7 +23,7 @@ func NewStagesIterator(conveyor *Conveyor) *StagesIterator {
 	return &StagesIterator{Conveyor: conveyor}
 }
 
-func (iterator *StagesIterator) GetPrevImage(img *Image, stg stage.Interface) container_runtime.ImageInterface {
+func (iterator *StagesIterator) GetPrevImage(img *Image, stg stage.Interface) container_runtime.LegacyImageInterface {
 	if stg.Name() == "from" {
 		return img.GetBaseImage()
 	} else if iterator.PrevNonEmptyStage != nil {
@@ -32,7 +32,7 @@ func (iterator *StagesIterator) GetPrevImage(img *Image, stg stage.Interface) co
 	return nil
 }
 
-func (iterator *StagesIterator) GetPrevBuiltImage(img *Image, stg stage.Interface) container_runtime.ImageInterface {
+func (iterator *StagesIterator) GetPrevBuiltImage(img *Image, stg stage.Interface) container_runtime.LegacyImageInterface {
 	if stg.Name() == "from" {
 		return img.GetBaseImage()
 	} else if iterator.PrevBuiltStage != nil {

@@ -2,6 +2,7 @@ package export
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,8 +16,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -61,7 +60,7 @@ All meta-information related to werf is removed from the exported images, and th
 				return fmt.Errorf("required at least one tag template: use the --tag option to specify templates")
 			}
 
-			return run(args, tagTemplateList)
+			return run(ctx, args, tagTemplateList)
 		},
 	}
 
@@ -111,12 +110,16 @@ It is necessary to use image name shortcut %image% or %image_slug% if multiple i
 	return cmd
 }
 
-func run(imagesToProcess, tagTemplateList []string) error {
-	ctx := common.BackgroundContext()
-
+func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
+
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
@@ -139,17 +142,7 @@ func run(imagesToProcess, tagTemplateList []string) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 		return err
 	}
 
@@ -190,7 +183,6 @@ func run(imagesToProcess, tagTemplateList []string) error {
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err

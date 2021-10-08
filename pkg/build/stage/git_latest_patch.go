@@ -19,7 +19,7 @@ type GitLatestPatchStage struct {
 	*GitPatchStage
 }
 
-func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error) {
+func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error) {
 	if empty, err := s.GitPatchStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return false, err
 	} else if empty {
@@ -50,7 +50,7 @@ func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuilt
 	return isEmpty, nil
 }
 
-func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, _, prevBuiltImage container_runtime.ImageInterface) (string, error) {
+func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, _, prevBuiltImage container_runtime.LegacyImageInterface) (string, error) {
 	var args []string
 
 	for _, gitMapping := range s.gitMappings {

@@ -34,7 +34,7 @@ type BuildPhaseOptions struct {
 }
 
 type BuildOptions struct {
-	ImageBuildOptions container_runtime.BuildOptions
+	ImageBuildOptions container_runtime.LegacyBuildOptions
 	IntrospectOptions
 
 	ReportPath   string
@@ -491,11 +491,11 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *Image,
 	return nil
 }
 
-func castToStageImage(img container_runtime.ImageInterface) *container_runtime.StageImage {
+func castToStageImage(img container_runtime.LegacyImageInterface) *container_runtime.LegacyStageImage {
 	if img == nil {
 		return nil
 	}
-	return img.(*container_runtime.StageImage)
+	return img.(*container_runtime.LegacyStageImage)
 }
 
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg stage.Interface) (bool, func(), error) {
@@ -560,13 +560,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 
 	switch stg.(type) {
 	case *stage.DockerfileStage:
-		var buildArgs []string
-
+		var labels []string
 		for key, value := range serviceLabels {
-			buildArgs = append(buildArgs, fmt.Sprintf("--label=%s=%s", key, value))
+			labels = append(labels, fmt.Sprintf("%s=%v", key, value))
 		}
-
-		stageImage.DockerfileImageBuilder().AppendBuildArgs(buildArgs...)
+		stageImage.DockerfileImageBuilder().AppendLabels(labels...)
 
 		phase.Conveyor.AppendOnTerminateFunc(func() error {
 			return stageImage.DockerfileImageBuilder().Cleanup(ctx)
@@ -697,7 +695,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			phase.Conveyor.SetStageImage(stageImageObj)
 
 			if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
-				if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
+				if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, stageImage); err != nil {
 					return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 				}
 				if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.projectName(), stg.GetDigest(), uniqueID); err != nil {
