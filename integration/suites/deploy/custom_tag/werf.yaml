@@ -5,6 +5,7 @@ gitWorktree:
 ---
 image: backend
 from: python:alpine
+fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 ansible:
   install:
   - file:

@@ -3,7 +3,10 @@ package cleanup_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
+
+	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/storage"
@@ -12,7 +15,12 @@ import (
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
-const imageName = "image"
+const (
+	imageName = "image"
+
+	customTagValuePrefix = "user-custom-tag-"
+	customTagValueFormat = "user-custom-tag-%v"
+)
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Cleanup suite", suite_init.TestSuiteEntrypointFuncOptions{
 	RequiredSuiteTools: []string{"git", "docker"},
@@ -26,14 +34,17 @@ var SuiteData struct {
 	suite_init.SuiteData
 	TestImplementation string
 	StagesStorage      storage.StagesStorage
+	ContainerRegistry  docker_registry.DockerRegistry
 }
 
-var _ = SuiteData.SetupStubs(suite_init.NewStubsData())
-var _ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
-var _ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
-var _ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
-var _ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
-var _ = SuiteData.SetupContainerRegistryPerImplementation(suite_init.NewContainerRegistryPerImplementationData(SuiteData.SynchronizedSuiteCallbacksData, true))
+var (
+	_ = SuiteData.SetupStubs(suite_init.NewStubsData())
+	_ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
+	_ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
+	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
+	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
+	_ = SuiteData.SetupContainerRegistryPerImplementation(suite_init.NewContainerRegistryPerImplementationData(SuiteData.SynchronizedSuiteCallbacksData, true))
+)
 
 func perImplementationBeforeEach(implementationName string) func() {
 	return func() {
@@ -43,6 +54,11 @@ func perImplementationBeforeEach(implementationName string) func() {
 		InitStagesStorage(repo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
 		SuiteData.SetupRepo(context.Background(), repo, implementationName, SuiteData.StubsData)
 		SuiteData.TestImplementation = implementationName
+
+		containerRegistry, err := docker_registry.NewDockerRegistry(repo, werfImplementationName, docker_registry.DockerRegistryOptions{})
+		Ω(err).ShouldNot(HaveOccurred())
+
+		SuiteData.ContainerRegistry = containerRegistry
 	}
 }
 
@@ -68,4 +84,22 @@ func RmImportMetadata(importSourceID string) {
 
 func ImportMetadataIDs() []string {
 	return utils.ImportMetadataIDs(context.Background(), SuiteData.StagesStorage)
+}
+
+func CustomTags() []string {
+	tags, err := SuiteData.ContainerRegistry.Tags(context.Background(), SuiteData.StagesStorage.String())
+	Ω(err).ShouldNot(HaveOccurred())
+
+	var result []string
+	for _, tag := range tags {
+		if strings.HasPrefix(tag, customTagValuePrefix) {
+			result = append(result, tag)
+		}
+	}
+
+	return result
+}
+
+func CustomTagsMetadataList() []*storage.CustomTagMetadata {
+	return utils.CustomTagsMetadataList(context.Background(), SuiteData.StagesStorage)
 }

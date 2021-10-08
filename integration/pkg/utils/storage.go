@@ -38,6 +38,20 @@ func ManagedImagesCount(ctx context.Context, stagesStorage storage.StagesStorage
 	return len(managedImages)
 }
 
+func CustomTagsMetadataList(ctx context.Context, stagesStorage storage.StagesStorage) []*storage.CustomTagMetadata {
+	customTagMetadataIDs, err := stagesStorage.GetStageCustomTagMetadataIDs(ctx)
+	Ω(err).ShouldNot(HaveOccurred())
+
+	var result []*storage.CustomTagMetadata
+	for _, metadataID := range customTagMetadataIDs {
+		customTagMetadata, err := stagesStorage.GetStageCustomTagMetadata(ctx, metadataID)
+		Ω(err).ShouldNot(HaveOccurred())
+		result = append(result, customTagMetadata)
+	}
+
+	return result
+}
+
 func ImageMetadata(ctx context.Context, stagesStorage storage.StagesStorage, imageName string) map[string][]string {
 	imageMetadataByImageName, _, err := stagesStorage.GetAllAndGroupImageMetadataByImageName(ctx, ProjectName(), []string{imageName})
 	Ω(err).ShouldNot(HaveOccurred())
