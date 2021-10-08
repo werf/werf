@@ -61,11 +61,16 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-   Create Ingress to access Container Registry:
+   Create Ingress to access Container Registry. Create a new text file:
+
+   ```powershell
+   notepad config.txt
+   ```
+
+   Затем добавьте в него следующие строки конфигурации:
    
    {% raw %}
    ```shell
-   kubectl apply -f - << EOF
    ---
    apiVersion: networking.k8s.io/v1
    kind: Ingress
@@ -86,9 +91,14 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
                name: registry
                port:
                  number: 80
-   EOF
    ```
    {% endraw %}
+
+   Загрузите созданный конфигурационный файл в kubectl:
+
+   ```shell
+   kubectl apply -f .\config.txt
+   ```
 
 6. Allow usage of Container Registry without TLS for docker:
 
