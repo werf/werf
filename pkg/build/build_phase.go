@@ -237,8 +237,8 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 	}
 
 	if !phase.ShouldBeBuiltMode {
-		if err := phase.addCustomImageTags(ctx, img); err != nil {
-			return err
+		if err := phase.addCustomImageTagsToStagesStorage(ctx, img); err != nil {
+			return fmt.Errorf("unable to add custom image tags to stages storage: %s", err)
 		}
 	} else {
 		if err := phase.checkCustomImageTagsExistence(ctx, img); err != nil {
@@ -295,8 +295,12 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 		})
 }
 
-func (phase *BuildPhase) addCustomImageTags(ctx context.Context, img *Image) error {
-	if len(phase.CustomTagFuncList) == 0 {
+func (phase *BuildPhase) addCustomImageTagsToStagesStorage(ctx context.Context, img *Image) error {
+	return addCustomImageTags(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), img, phase.CustomTagFuncList)
+}
+
+func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage, img *Image, customTagFuncList []func(string) string) error {
+	if len(customTagFuncList) == 0 {
 		return nil
 	}
 
@@ -305,9 +309,9 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, img *Image) err
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
-			for _, tagFunc := range phase.CustomTagFuncList {
+			for _, tagFunc := range customTagFuncList {
 				tag := tagFunc(img.GetName())
-				if err := phase.addCustomImageTag(ctx, img, tag); err != nil {
+				if err := addCustomImageTag(ctx, stagesStorage, img, tag); err != nil {
 					return err
 				}
 			}
@@ -316,11 +320,11 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, img *Image) err
 		})
 }
 
-func (phase *BuildPhase) addCustomImageTag(ctx context.Context, img *Image, tag string) error {
+func addCustomImageTag(ctx context.Context, stagesStorage storage.StagesStorage, img *Image, tag string) error {
 	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 		DoError(func() error {
 			stageDesc := img.GetLastNonEmptyStage().GetImage().GetStageDescription()
-			if err := phase.Conveyor.StorageManager.GetStagesStorage().AddStageCustomTag(ctx, stageDesc, tag); err != nil {
+			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {
 				return err
 			}
 

@@ -299,8 +299,21 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 }
 
 func (storage *RepoStagesStorage) CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage CheckStageCustomTag %s %s\n", stageDescription.Info.Name, tag)
-	return storage.DockerRegistry.CheckRepoImageCustomTag(ctx, stageDescription.Info, tag)
+	fullImageName := strings.Join([]string{storage.RepoAddress, tag}, ":")
+	customTagImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	if err != nil {
+		return err
+	}
+
+	if customTagImgInfo == nil {
+		return fmt.Errorf("custom tag %q not found", tag)
+	}
+
+	if customTagImgInfo.ID != stageDescription.Info.ID {
+		return fmt.Errorf("custom tag %q image must be the same as associated content-based tag %q image", tag, stageDescription.StageID.String())
+	}
+
+	return nil
 }
 
 func (storage *RepoStagesStorage) AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
