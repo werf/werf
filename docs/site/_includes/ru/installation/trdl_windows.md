@@ -23,6 +23,10 @@ trdl add werf https://tuf.werf.io 1 b7ff6bcbe598e072a86d595a3621924c8612c7e6dc6a
 # Разрешите выполнение локально созданных скриптов.
 Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 
+# Активируйте werf
+
+. $(trdl use werf {{ include.version }} {{ include.channel }})
+
 # Включите автоматическую активацию werf при инициализации PowerShell.
 if (!(Test-Path "$profile")) {
   New-Item -Path "$profile" -Force

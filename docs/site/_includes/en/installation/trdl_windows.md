@@ -23,6 +23,10 @@ For local usage we recommend automatically activating `werf` for new PowerShell 
 # Allow execution of locally created scripts.
 Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 
+# Activate werf binary
+
+. $(trdl use werf {{ include.version }} {{ include.channel }})
+
 # Activate werf binary automatically during PowerShell initializations.
 if (!(Test-Path "$profile")) {
   New-Item -Path "$profile" -Force
