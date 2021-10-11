@@ -163,7 +163,7 @@ jobs:
       run: |
         ./scripts/ci/git.sh
 
-        go build github.com/onsi/ginkgo/ginkgo
+        go install github.com/onsi/ginkgo/ginkgo@latest
 
         chmod +x werf
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -214,7 +214,7 @@ jobs:
       run: |
         ./scripts/ci/git.sh
 
-        go build github.com/onsi/ginkgo/ginkgo
+        go install github.com/onsi/ginkgo/ginkgo@latest
 
         find integration -type f -name '*.test' -exec chmod +x {} \;
 
@@ -336,7 +336,7 @@ jobs:
         ./scripts/ci/integration_tests_registries_login.sh quay
         ./scripts/ci/integration_tests_registries_login.sh github
 
-        go build github.com/onsi/ginkgo/ginkgo
+        go install github.com/onsi/ginkgo/ginkgo@latest
 
         find integration -type f -name '*.test' -exec chmod +x {} \;
 
