@@ -27,7 +27,7 @@ werf version
 
  1. Выполнить стандартный вход в container registry со своего хоста.
  2. Убедиться, что кластер Kubernetes доступен с хоста (дополнительная настройка `werf`, скорее всего, не потребуется, если у вас уже установлен и работает `kubectl`).
- 
+
 <br>
 
 В ином случае выполните одну из следующих инструкций, чтобы настроить локальный кластер Kubernetes и container registry в вашей системе:
@@ -36,7 +36,7 @@ werf version
 <a href="javascript:void(0)" class="details__summary">Windows — minikube</a>
 <div class="details__content" markdown="1">
 1. Установите [minikube](https://github.com/kubernetes/minikube#installation).
-2. Установите [kubectl](https://kubernetes.io/ru/docs/tasks/tools/install-kubectl/).
+2. Установите [kubectl](https://kubernetes.io/ru/docs/tasks/tools/install-kubectl/#%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-kubectl-%D0%B2-windows).
 3. Запустите minikube:
 
    {% raw %}
@@ -151,7 +151,7 @@ werf version
    ```
 
    Используя полученный выше IP-адрес minikube, добавьте в конец файла `C:\Windows\System32\drivers\etc\hosts` следующую строку:
-   
+
    ```
    <IP-адрес minikube>    vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com
    ```
@@ -232,13 +232,13 @@ werf version
 5. Разрешаем доступ в Container Registry без TLS для docker:
 
    Через меню Docker Desktop -> Settings -> Docker Engine добавим новый ключ в конфигурацию:
-   
+
    ```json
    {
    "insecure-registries": ["registry.example.com:80"]
    }
    ```
-   
+
    Перезапустим Docker Desktop через меню, открывающееся правым кликом по иконке Docker Desktop в трее.
 
 6. Разрешаем доступ в Container Registry без TLS для werf:
@@ -330,7 +330,7 @@ werf version
    EOF
    ```
    {% endraw %}
-   
+
 5. Разрешаем доступ в Container Registry без TLS для docker:
 
    В файл, по умолчанию находящийся в `/etc/docker/daemon.json`, добавим новый ключ:
@@ -340,9 +340,9 @@ werf version
    "insecure-registries": ["registry.example.com:80"]
    }
    ```
-   
+
    Перезапустим Docker:
-   
+
    ```shell
    sudo systemctl restart docker
    ```
@@ -380,10 +380,10 @@ werf version
 </div>
 </div>
 
-## Разверните приложение-пример 
+## Разверните приложение-пример
 
 1. Склонируйте репозиторий нашего приложения-примера:
- 
+
    {% raw %}
    ```shell
    git clone https://github.com/werf/quickstart-application
