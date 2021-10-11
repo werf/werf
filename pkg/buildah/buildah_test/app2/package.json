@@ -16,6 +16,7 @@
     "method-override": "^3.0.0",
     "pg": "^7.12.1",
     "socket.io": "^2.2.0",
-    "stoppable": "^1.1.0"
+    "stoppable": "^1.1.0",
+    "xmlhttprequest-ssl": ">=1.6.2"
   }
 }
