@@ -1,94 +1,34 @@
-export GO111MODULE=on
-export CGO_ENABLED=0
-
-go_mod_download() {
-    VERSION=$1
-
-    for os in linux darwin windows ; do
-        for arch in amd64 arm64 ; do
-            if [ "$os" == "windows" ] && [ "$arch" == "arm64" ] ; then
-                continue
-            fi
-
-            echo "# Downloading go modules for GOOS=$os GOARCH=$arch"
-
-            n=0
-            until [ $n -gt 5 ]
-            do
-                ( GOOS=$os GOARCH=$arch go mod download ) && break || true
-                n=$[$n+1]
-
-                if [ ! $n -gt 5 ] ; then
-                    echo "[$n] Retrying modules downloading"
-                fi
-            done
-
-            if [ $n -gt 5 ] ; then
-                echo "Exiting due to 'go mod download' failures"
-                exit 1
-            fi
-        done
-    done
-}
-
 go_build() {
-    VERSION=$1
+	export GO111MODULE="on"
 
-    rm -rf $RELEASE_BUILD_DIR/$VERSION
-    mkdir -p $RELEASE_BUILD_DIR/$VERSION
-    chmod -R 0777 $RELEASE_BUILD_DIR/$VERSION
+	COMMON_LDFLAGS="-s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION"
+	COMMON_TAGS="dfrunmount dfssh containers_image_openpgp"
+	PKG="github.com/werf/werf/cmd/werf"
 
-    for os in linux darwin windows ; do
-        for arch in amd64 arm64 ; do
-            if [ "$os" == "windows" ] && [ "$arch" == "arm64" ] ; then
-                continue
-            fi
+	parallel -j0 --halt now,fail=1 --line-buffer -k --tag --tagstring '{= @cmd = split(" ", $_); $_ = "[".$cmd[0]." ".$cmd[1]."]" =}' <<-EOF
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=1 \
+    go build -compiler gc -o "release-build/$VERSION/werf-linux-amd64-$VERSION" \
+    -ldflags="$COMMON_LDFLAGS -linkmode external -extldflags=-static" \
+    -tags="$COMMON_TAGS osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" \
+    "$PKG"
 
-            outputFile=$RELEASE_BUILD_DIR/$VERSION/werf-$os-$arch-$VERSION
-            if [ "$os" == "windows" ] ; then
-                outputFile=$outputFile.exe
-            fi
+  GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc \
+    go build -compiler gc -o "release-build/$VERSION/werf-linux-arm64-$VERSION" \
+    -ldflags="$COMMON_LDFLAGS -linkmode external -extldflags=-static" \
+    -tags="$COMMON_TAGS osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" \
+    "$PKG"
 
-            echo "# Building werf $VERSION for $os $arch ..."
+  GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 \
+    go build -o "release-build/$VERSION/werf-darwin-amd64-$VERSION" -ldflags="$COMMON_LDFLAGS" -tags="$COMMON_TAGS" "$PKG"
 
-            CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
-              go build -tags "dfrunmount dfssh" -ldflags="-s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION" \
-                       -o $outputFile github.com/werf/werf/cmd/werf
+  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 \
+    go build -o "release-build/$VERSION/werf-darwin-arm64-$VERSION" -ldflags="$COMMON_LDFLAGS" -tags="$COMMON_TAGS" "$PKG"
 
-            echo "# Built $outputFile"
-        done
-    done
+  GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
+    go build -o "release-build/$VERSION/werf-windows-amd64-$VERSION" -ldflags="$COMMON_LDFLAGS" -tags="$COMMON_TAGS" "$PKG"
+EOF
 
-    cd $RELEASE_BUILD_DIR/$VERSION/ && \
-      sha256sum werf-* > SHA256SUMS && \
-      cd -
-}
-
-go_build_v2() {
-    VERSION=$1
-
-    rm -rf $RELEASE_BUILD_DIR/$VERSION
-    mkdir -p $RELEASE_BUILD_DIR/$VERSION
-    chmod -R 0777 $RELEASE_BUILD_DIR/$VERSION
-
-    for os in linux darwin windows ; do
-        for arch in amd64 arm64 ; do
-            if [ "$os" == "windows" ] && [ "$arch" == "arm64" ] ; then
-                continue
-            fi
-
-            outputFile=$RELEASE_BUILD_DIR/$VERSION/$os-$arch/bin/werf
-            if [ "$os" == "windows" ] ; then
-                outputFile=$outputFile.exe
-            fi
-
-            echo "# Building werf $VERSION for $os $arch ..."
-
-            GOOS=$os GOARCH=$arch \
-              go build -tags "dfrunmount dfssh" -ldflags="-s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION" \
-                       -o $outputFile github.com/werf/werf/cmd/werf
-
-            echo "# Built $outputFile"
-        done
-    done
+	cd release-build/$VERSION/ && \
+		sha256sum werf-* > SHA256SUMS && \
+		cd -
 }
