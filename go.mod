@@ -16,8 +16,9 @@ require (
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
-	github.com/containers/buildah v1.23.0
-	github.com/containers/common v0.44.0
+	github.com/containerd/containerd v1.5.7 // indirect
+	github.com/containers/buildah v1.23.1
+	github.com/containers/common v0.44.2
 	github.com/containers/image/v5 v5.16.0
 	github.com/containers/storage v1.36.0
 	github.com/docker/cli v20.10.5+incompatible
