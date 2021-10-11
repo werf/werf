@@ -100,7 +100,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    kubectl apply -f .\config.yaml
    ```
 
-6. Allow usage of Container Registry without TLS for docker:
+6. Allow usage of Container Registry without TLS for Docker:
 
    Using menu Docker Desktop -> Settings -> Docker Engine add following configuration key:
 
