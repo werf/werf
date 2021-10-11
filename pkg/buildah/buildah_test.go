@@ -30,11 +30,11 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = Describe("Buildah client", func() {
-	Skip("not working inside go test yet")
-
 	var b buildah.Buildah
 
 	BeforeEach(func() {
+		Skip("not working inside go test yet")
+
 		var err error
 		b, err = buildah.NewBuildah(buildah.ModeDockerWithFuse, buildah.BuildahOpts{})
 		Expect(err).To(Succeed())
