@@ -63,16 +63,11 @@ werf version
    ```
    {% endraw %}
 
-   Создадим Ingress для доступа к Container Registry. Создайте новый текстовый файл:
+   Создадим Ingress для доступа к Container Registry. 
 
-   ```powershell
-   notepad config.yaml
-   ```
-
-   Затем добавьте в него следующие строки конфигурации:
-
-   {% raw %}
+      {% raw %}
    ```shell
+   @"
    ---
    apiVersion: networking.k8s.io/v1
    kind: Ingress
@@ -93,14 +88,9 @@ werf version
                name: registry
                port:
                  number: 80
+   "@ | kubectl apply -f -  
    ```
    {% endraw %}
-
-   Загрузите созданный файл в kubectl:
-
-    ```shell
-   kubectl apply -f .\config.yaml
-   ```
 
 6. Разрешаем доступ в Container Registry без TLS для docker:
 
