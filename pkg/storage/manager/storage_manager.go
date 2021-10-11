@@ -19,7 +19,7 @@ import (
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/util/parallel"
 	"github.com/werf/werf/pkg/werf"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -71,6 +71,7 @@ type StorageManagerInterface interface {
 	ForEachRmManagedImage(ctx context.Context, projectName string, managedImages []string, f func(ctx context.Context, managedImage string, err error) error) error
 	ForEachGetImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error) error
 	ForEachRmImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, id string, err error) error) error
+	ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error) error
 }
 
 func ShouldResetStagesStorageCache(err error) bool {
@@ -1093,5 +1094,15 @@ func (m *StorageManager) ForEachRmImportMetadata(ctx context.Context, projectNam
 		id := ids[taskId]
 		err := m.StagesStorage.RmImportMetadata(ctx, projectName, id)
 		return f(ctx, id, err)
+	})
+}
+
+func (m *StorageManager) ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error) error {
+	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		id := ids[taskId]
+		metadata, err := m.StagesStorage.GetStageCustomTagMetadata(ctx, id)
+		return f(ctx, id, metadata, err)
 	})
 }

@@ -32,9 +32,12 @@ func (r *defaultImplementation) DeleteRepo(_ context.Context, _ string) error {
 	return fmt.Errorf("method is not implemented")
 }
 
+func (r *defaultImplementation) TagRepoImage(_ context.Context, repoImage *image.Info, tag string) error {
+	return r.api.tagImage(strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":"), tag)
+}
+
 func (r *defaultImplementation) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
-	reference := strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@")
-	return r.api.deleteImageByReference(reference)
+	return r.api.deleteImageByReference(strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@"))
 }
 
 func (r *defaultImplementation) String() string {

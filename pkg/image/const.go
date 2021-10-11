@@ -17,6 +17,9 @@ const (
 	WerfImportMetadataSourceImageIDLabel  = "source-image-id"
 	WerfImportMetadataImportSourceIDLabel = "import-source-id"
 
+	WerfCustomTagMetadataStageIDLabel = "stage-id"
+	WerfCustomTagMetadataTag          = "tag"
+
 	WerfMountTmpDirLabel          = "werf-mount-type-tmp-dir"
 	WerfMountBuildDirLabel        = "werf-mount-type-build-dir"
 	WerfMountCustomDirLabelPrefix = "werf-mount-type-custom-dir-"

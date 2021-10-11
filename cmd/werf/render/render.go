@@ -116,6 +116,7 @@ func NewCmd() *cobra.Command {
 	common.SetupReportPath(&commonCmdData, cmd)
 	common.SetupReportFormat(&commonCmdData, cmd)
 
+	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
@@ -220,7 +221,7 @@ func runRender(ctx context.Context) error {
 		return err
 	}
 
-	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
+	buildOptions, err := common.GetBuildOptions(&commonCmdData, giterminismManager, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -283,7 +284,12 @@ func runRender(ctx context.Context) error {
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 				if *commonCmdData.SkipBuild {
-					if err := c.ShouldBeBuilt(ctx); err != nil {
+					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
+					if err != nil {
+						return err
+					}
+
+					if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
 						return err
 					}
 				} else {
@@ -333,6 +339,11 @@ func runRender(ctx context.Context) error {
 		return err
 	}
 
+	useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
+	if err != nil {
+		return err
+	}
+
 	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
@@ -340,6 +351,7 @@ func runRender(ctx context.Context) error {
 		StubImagesNames:          stubImagesNames,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
+		CustomTagFunc:            useCustomTagFunc,
 	}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else {

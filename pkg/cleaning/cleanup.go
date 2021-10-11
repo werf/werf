@@ -37,7 +37,7 @@ type CleanupOptions struct {
 	DryRun                                  bool
 }
 
-func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, storageLockManager storage.LockManager, options CleanupOptions) error {
+func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, options CleanupOptions) error {
 	return newCleanupManager(projectName, storageManager, options).run(ctx)
 }
 
@@ -96,7 +96,15 @@ func (m *cleanupManager) init(ctx context.Context) error {
 	}
 
 	if err := logboek.Context(ctx).Info().LogProcess("Fetching metadata").DoError(func() error {
-		return m.stageManager.InitImagesMetadata(ctx, m.StorageManager, m.LocalGit, m.ProjectName, m.ImageNameList)
+		if err := m.stageManager.InitImagesMetadata(ctx, m.StorageManager, m.LocalGit, m.ProjectName, m.ImageNameList); err != nil {
+			return fmt.Errorf("unable to init images metadata: %s", err)
+		}
+
+		if err := m.stageManager.InitCustomTagsMetadata(ctx, m.StorageManager); err != nil {
+			return fmt.Errorf("unable to init custom tags metadata: %s", err)
+		}
+
+		return nil
 	}); err != nil {
 		return err
 	}
@@ -160,21 +168,30 @@ func (m *cleanupManager) run(ctx context.Context) error {
 
 func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImagesNames []string) error {
 	handledDeployedStages := map[string]bool{}
-Loop:
-	for _, stageID := range m.stageManager.GetStageIDList() {
-		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().Address(), stageID)
+	handleTagFunc := func(tag, stageID string) {
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().Address(), tag)
 		for _, deployedDockerImageName := range deployedDockerImagesNames {
 			if deployedDockerImageName == dockerImageName {
 				if !handledDeployedStages[stageID] {
 					m.stageManager.MarkStageAsProtected(stageID)
 
-					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
+					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", tag)
 					logboek.Context(ctx).LogOptionalLn()
 					handledDeployedStages[stageID] = true
 				}
 
-				continue Loop
+				break
 			}
+		}
+	}
+
+	for _, stageID := range m.stageManager.GetStageIDList() {
+		handleTagFunc(stageID, stageID)
+	}
+
+	for stageID, customTagList := range m.stageManager.GetCustomTagsMetadata() {
+		for _, customTag := range customTagList {
+			handleTagFunc(customTag, stageID)
 		}
 	}
 
@@ -289,7 +306,7 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 	}
 
 	if err := m.cleanupNonexistentImageMetadata(ctx); err != nil {
-		return err
+		return fmt.Errorf("ubable to cleanup nonexistent image metadata: %s", err)
 	}
 
 	return nil
@@ -608,6 +625,10 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		m.stageManager.ForgetDeletedStages(stageDescriptionListToDelete)
 	}
 
+	if err := m.deleteUnusedCustomTags(ctx); err != nil {
+		return fmt.Errorf("unable to cleanup custom tags metadata: %s", err)
+	}
+
 	if len(m.nonexistentImportMetadataIDs) != 0 {
 		if err := logboek.Context(ctx).Default().LogProcess("Cleaning imports metadata (%d)", len(m.nonexistentImportMetadataIDs)).DoError(func() error {
 			return m.deleteImportsMetadata(ctx, m.nonexistentImportMetadataIDs)
@@ -776,6 +797,52 @@ func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDe
 	}
 
 	return stages, excludedStages
+}
+
+func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
+	stageIDCustomTagList := m.stageManager.GetCustomTagsMetadata()
+	if len(stageIDCustomTagList) == 0 {
+		return nil
+	}
+
+	var customTagListToDelete []string
+	var customTagListToKeep []string
+	var numberOfCustomTags int
+	for stageID, customTagList := range stageIDCustomTagList {
+		numberOfCustomTags += len(customTagList)
+		if !m.stageManager.IsStageExist(stageID) {
+			customTagListToDelete = append(customTagListToDelete, customTagList...)
+		} else {
+			customTagListToKeep = append(customTagListToKeep, customTagList...)
+		}
+	}
+
+	if len(customTagListToKeep) != 0 {
+		header := fmt.Sprintf("Saved custom tags (%d/%d)", len(customTagListToKeep), numberOfCustomTags)
+		logboek.Context(ctx).Default().LogBlock(header).Do(func() {
+			for _, customTag := range customTagListToKeep {
+				logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", customTag)
+				logboek.Context(ctx).LogOptionalLn()
+			}
+		})
+	}
+
+	if len(customTagListToDelete) != 0 {
+		header := fmt.Sprintf("Deleting unused custom tags (%d/%d)", len(customTagListToDelete), numberOfCustomTags)
+		if err := logboek.Context(ctx).LogProcess(header).DoError(func() error {
+			for _, customTag := range customTagListToDelete {
+				if err := deleteCustomTag(ctx, m.StorageManager.GetStagesStorage(), customTag); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func excludeStages(stages []*image.StageDescription, stagesToExclude ...*image.StageDescription) []*image.StageDescription {

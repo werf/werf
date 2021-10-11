@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -36,6 +37,7 @@ type ServiceValuesOptions struct {
 	Env             string
 	IsStub          bool
 	StubImagesNames []string
+	CustomTagFunc   func(string) string
 
 	SetDockerConfigJsonValue bool
 	DockerConfigPath         string
@@ -82,12 +84,23 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 	}
 
 	for _, imageInfoGetter := range imageInfoGetters {
+		var tag string
+		var image string
+
+		if opts.CustomTagFunc != nil {
+			tag = opts.CustomTagFunc(imageInfoGetter.GetName())
+			image = strings.Join([]string{repo, tag}, ":")
+		} else {
+			tag = imageInfoGetter.GetTag()
+			image = imageInfoGetter.GetName()
+		}
+
 		if imageInfoGetter.IsNameless() {
 			werfInfo["is_nameless_image"] = true
-			werfInfo["nameless_image"] = imageInfoGetter.GetName()
+			werfInfo["nameless_image"] = image
 		} else {
-			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetName()
-			werfInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageInfoGetter.GetTag()
+			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = image
+			werfInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
 		}
 	}
 

@@ -33,6 +33,12 @@ type StagesStorage interface {
 	ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string) error
 	DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error
 
+	AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error
+	CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error
+	DeleteStageCustomTag(ctx context.Context, tag string) error
+	GetStageCustomTagMetadataIDs(ctx context.Context) ([]string, error)
+	GetStageCustomTagMetadata(ctx context.Context, tagOrID string) (*CustomTagMetadata, error)
+
 	RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error
 
 	ConstructStageImageName(projectName, digest string, uniqueID int64) string

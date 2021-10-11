@@ -5,6 +5,16 @@ directives:
       en: Config syntax version. It should always be 1 for now
       ru: Версия конфигурации. На данный момент поддерживается единственная версия 1
     required: true
+  - name: cli
+    description:
+      en: The rules of loosening giterminism for the CLI
+      ru: Правила ослабления гитерминизма для CLI
+    directives:
+      - name: allowCustomTags
+        value: "bool"
+        description:
+          en: Allow the use of --add-custom-tag and --use-custom-tag options
+          ru: Разрешить опции --add-custom-tag и --use-custom-tag
   - name: config
     description:
       en: The rules of loosening giterminism for the werf configuration file (werf.yaml)

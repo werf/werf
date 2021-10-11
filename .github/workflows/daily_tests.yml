@@ -198,7 +198,7 @@ jobs:
 
         ./scripts/ci/git.sh
 
-        go build github.com/onsi/ginkgo/ginkgo
+        go install github.com/onsi/ginkgo/ginkgo@latest
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -322,7 +322,7 @@ jobs:
         ./scripts/ci/git.sh
         ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.implementation }}
 
-        go build github.com/onsi/ginkgo/ginkgo
+        go install github.com/onsi/ginkgo/ginkgo@latest
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -382,7 +382,7 @@ jobs:
 
         ./scripts/ci/git.sh
 
-        go build github.com/onsi/ginkgo/ginkgo
+        go install github.com/onsi/ginkgo/ginkgo@latest
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -512,7 +512,7 @@ jobs:
         ./scripts/ci/integration_tests_registries_login.sh quay
         ./scripts/ci/integration_tests_registries_login.sh github
 
-        go build github.com/onsi/ginkgo/ginkgo
+        go install github.com/onsi/ginkgo/ginkgo@latest
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -752,8 +752,7 @@ jobs:
         curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
         chmod +x ./cc-test-reporter
 
-        go build github.com/wadey/gocovmerge
-        chmod +x ./gocovmerge
+        go install github.com/wadey/gocovmerge@latest
 
         echo WERF_TEST_COVERAGE_DIR=tests_coverage >> $GITHUB_ENV
 

@@ -1,6 +1,8 @@
 package cleanup_test
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -33,7 +35,7 @@ var _ = Describe("purge command", func() {
 				utils.RunSucceedCommand(
 					SuiteData.TestDirPath,
 					"git",
-					"add", "werf.yaml",
+					"add", "werf.yaml", "werf-giterminism.yaml",
 				)
 
 				utils.RunSucceedCommand(
@@ -47,13 +49,15 @@ var _ = Describe("purge command", func() {
 				utils.RunSucceedCommand(
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
-					"build",
+					"build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, "1"),
 				)
 
 				Ω(StagesCount()).Should(BeNumerically(">", 0))
 				Ω(ManagedImagesCount()).Should(BeNumerically(">", 0))
 				Ω(len(ImageMetadata(imageName))).Should(BeNumerically(">", 0))
 				Ω(len(ImportMetadataIDs())).Should(BeNumerically(">", 0))
+				Ω(len(CustomTags())).Should(BeNumerically(">", 0))
+				Ω(len(CustomTagsMetadataList())).Should(BeNumerically(">", 0))
 
 				utils.RunSucceedCommand(
 					SuiteData.TestDirPath,
@@ -66,6 +70,8 @@ var _ = Describe("purge command", func() {
 					Ω(ManagedImagesCount()).Should(Equal(0))
 					Ω(len(ImageMetadata(imageName))).Should(Equal(0))
 					Ω(len(ImportMetadataIDs())).Should(Equal(0))
+					Ω(len(CustomTags())).Should(Equal(0))
+					Ω(len(CustomTagsMetadataList())).Should(Equal(0))
 				}
 			})
 		})

@@ -84,7 +84,7 @@ func (storage *DockerServerStagesStorage) DeleteStage(ctx context.Context, stage
 	return deleteRepoImageListInDockerServerStagesStorage(ctx, stageDescription, options.RmiForce)
 }
 
-func (storage *DockerServerStagesStorage) RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error {
+func (storage *DockerServerStagesStorage) RejectStage(_ context.Context, _, _ string, _ int64) error {
 	return nil
 }
 
@@ -123,6 +123,26 @@ func (storage *DockerServerStagesStorage) GetStageDescription(ctx context.Contex
 	} else {
 		return nil, nil
 	}
+}
+
+func (storage *DockerServerStagesStorage) AddStageCustomTag(_ context.Context, _ *image.StageDescription, _ string) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (storage *DockerServerStagesStorage) CheckStageCustomTag(_ context.Context, _ *image.StageDescription, _ string) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (storage *DockerServerStagesStorage) DeleteStageCustomTag(_ context.Context, _ string) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (storage *DockerServerStagesStorage) GetStageCustomTagMetadata(_ context.Context, _ string) (*CustomTagMetadata, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (storage *DockerServerStagesStorage) GetStageCustomTagMetadataIDs(_ context.Context) ([]string, error) {
+	return nil, nil
 }
 
 func (storage *DockerServerStagesStorage) AddManagedImage(_ context.Context, _, _ string) error {

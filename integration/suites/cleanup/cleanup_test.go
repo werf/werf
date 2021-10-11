@@ -13,6 +13,8 @@ import (
 	"github.com/werf/werf/pkg/docker_registry"
 )
 
+const branchName = "test_branch"
+
 var _ = Describe("cleanup command", func() {
 	for _, iName := range suite_init.ContainerRegistryImplementationListToCheck(true) {
 		implementationName := iName
@@ -462,7 +464,7 @@ var _ = Describe("cleanup command", func() {
 							utils.RunSucceedCommand(
 								SuiteData.TestDirPath,
 								"git",
-								"push", "--set-upstream", "origin", "master",
+								"push", "--set-upstream", "origin", branchName,
 							)
 
 							metaImagesCheckFunc(3, 1, func(commits []string) {
@@ -534,7 +536,7 @@ var _ = Describe("cleanup command", func() {
 						utils.RunSucceedCommand(
 							SuiteData.TestDirPath,
 							"git",
-							"push", "--set-upstream", "origin", "master",
+							"push", "--set-upstream", "origin", branchName,
 						)
 
 						countAfterFirstBuild := StagesCount()
@@ -577,7 +579,7 @@ var _ = Describe("cleanup command", func() {
 						utils.RunSucceedCommand(
 							SuiteData.TestDirPath,
 							"git",
-							"push", "--set-upstream", "origin", "master",
+							"push", "--set-upstream", "origin", branchName,
 						)
 
 						count := StagesCount()
@@ -603,7 +605,7 @@ var _ = Describe("cleanup command", func() {
 							utils.RunSucceedCommand(
 								SuiteData.TestDirPath,
 								"git",
-								"push", "--set-upstream", "origin", "master",
+								"push", "--set-upstream", "origin", branchName,
 							)
 
 							countAfterFirstBuild := StagesCount()
@@ -646,7 +648,7 @@ var _ = Describe("cleanup command", func() {
 							utils.RunSucceedCommand(
 								SuiteData.TestDirPath,
 								"git",
-								"push", "--set-upstream", "origin", "master",
+								"push", "--set-upstream", "origin", branchName,
 							)
 
 							countAfterSecondBuild := StagesCount()
@@ -677,7 +679,7 @@ var _ = Describe("cleanup command", func() {
 							utils.RunSucceedCommand(
 								SuiteData.TestDirPath,
 								"git",
-								"push", "--set-upstream", "origin", "master",
+								"push", "--set-upstream", "origin", branchName,
 							)
 
 							countAfterFirstBuild := StagesCount()
@@ -699,6 +701,57 @@ var _ = Describe("cleanup command", func() {
 							}
 						})
 					})
+
+					Context("custom tags", func() {
+						It("should remove custom tag associated with the deleted stage", func() {
+							customTag1 := "tag1"
+							customTag2 := "tag2"
+
+							utils.RunSucceedCommand(
+								SuiteData.TestDirPath,
+								SuiteData.WerfBinPath,
+								"build",
+								"--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag1),
+							)
+
+							utils.RunSucceedCommand(
+								SuiteData.TestDirPath,
+								"git",
+								"push", "--set-upstream", "origin", branchName,
+							)
+
+							utils.RunSucceedCommand(
+								SuiteData.TestDirPath,
+								"git",
+								"commit", "--allow-empty", "-m", "test",
+							)
+
+							SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_2a.yaml") // full rebuild
+
+							utils.RunSucceedCommand(
+								SuiteData.TestDirPath,
+								SuiteData.WerfBinPath,
+								"build",
+								"--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag2),
+							)
+
+							customTags := CustomTags()
+							Ω(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
+							Ω(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
+							Ω(len(CustomTagsMetadataList())).Should(Equal(2))
+
+							utils.RunSucceedCommand(
+								SuiteData.TestDirPath,
+								SuiteData.WerfBinPath,
+								"cleanup",
+							)
+
+							customTags = CustomTags()
+							Ω(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
+							Ω(customTags).ShouldNot(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
+							Ω(len(CustomTagsMetadataList())).Should(Equal(1))
+						})
+					})
 				})
 
 				When("KeepStageSetsBuiltWithinLastNHours policy is 2 hours (default)", func() {
@@ -716,7 +769,7 @@ var _ = Describe("cleanup command", func() {
 						utils.RunSucceedCommand(
 							SuiteData.TestDirPath,
 							"git",
-							"push", "--set-upstream", "origin", "master",
+							"push", "--set-upstream", "origin", branchName,
 						)
 
 						countAfterFirstBuild := StagesCount()
@@ -797,6 +850,12 @@ func cleanupBeforeEachBase() {
 		SuiteData.TestDirPath,
 		"git",
 		"commit", "-m", "Initial commit",
+	)
+
+	utils.RunSucceedCommand(
+		SuiteData.TestDirPath,
+		"git",
+		"checkout", "-b", branchName,
 	)
 }
 
