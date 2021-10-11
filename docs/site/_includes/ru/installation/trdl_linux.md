@@ -45,7 +45,7 @@ werf version
 
 Чтобы получить werf только в текущем терминале (до того, как перезашли в систему), достаточно выполнить команду `source $(trdl use werf {{ include.version }} {{ include.channel }}`.
 
-Для CI рекомендуется другой подход с явной активацией `werf` в начале каждого job/pipeline. Она вполняется командой:
+Для CI рекомендуется другой подход с явной активацией `werf` в начале каждого job/pipeline. Она выполняется командой:
 
 ```shell
 source $(trdl use werf {{ include.version }} {{ include.channel }})
