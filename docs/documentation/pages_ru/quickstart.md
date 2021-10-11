@@ -92,7 +92,7 @@ werf version
    ```
    {% endraw %}
 
-6. Разрешаем доступ в Container Registry без TLS для docker:
+6. Разрешаем доступ в Container Registry без TLS для Docker:
 
    Через меню Docker Desktop -> Settings -> Docker Engine добавим новый ключ в конфигурацию:
 
