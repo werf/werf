@@ -276,7 +276,7 @@ werf version
 
    ```
    alias kubectl="minikube kubectl --"
-   echo 'alias kubectl="minikube kubectl --"' >> ~/.bashrc
+   echo 'alias kubectl="minikube kubectl --"' >> ~/.bash_aliases
    ```
 
 4. Установка NGINX Ingress Controller:
