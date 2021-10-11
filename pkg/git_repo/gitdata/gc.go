@@ -110,7 +110,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 
 	{
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_patches")
-		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitArchivesCacheVersion}); err != nil {
+		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitPatchesCacheVersion}); err != nil {
 			return fmt.Errorf("unable to wipe old git patches cache dirs in %q: %s", cacheRoot, err)
 		}
 	}
@@ -200,6 +200,8 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	}
 
 	sort.Sort(GitDataLruSort(gitDataEntries))
+
+	gitDataEntries = PreserveGitDataByLru(gitDataEntries)
 
 	var freedBytes uint64
 	for _, entry := range gitDataEntries {
