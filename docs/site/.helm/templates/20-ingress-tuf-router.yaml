@@ -1,0 +1,40 @@
+{{- $host := pluck .Values.werf.env .Values.host | first | default .Values.host._default  }}
+{{- if  hasPrefix "review" .Values.werf.env }}
+{{- $host = ( printf "%s.%s" .Values.werf.env (pluck "dev" .Values.host | first | default .Values.host._default ) | lower ) }}
+{{- end }}
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: tuf-router
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  tls:
+  - hosts:
+      - {{ $host }}
+      - ru.{{ $host }}
+    secretName: tls-{{ $host }}
+  rules:
+  - host: {{ $host }}
+    http:
+      paths:
+      - path: /targets
+        backend:
+          serviceName: tuf-router
+          servicePort: http
+      - path: /download
+        backend:
+          serviceName: tuf-router
+          servicePort: http
+  - host: ru.{{ $host }}
+    http:
+      paths:
+      - path: /targets
+        backend:
+          serviceName: tuf-router
+          servicePort: http
+      - path: /download
+        backend:
+          serviceName: tuf-router
+          servicePort: http

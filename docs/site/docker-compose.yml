@@ -31,3 +31,7 @@ services:
       - ".werf/nginx-dev.conf:/etc/nginx/nginx.conf:ro"
     ports:
       - "80:80"
+
+  tuf:
+    image: $WERF_TUF_ROUTER_DOCKER_IMAGE_NAME
+    command: ["nginx", "-g", "daemon off;"]
