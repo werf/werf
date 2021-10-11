@@ -157,7 +157,8 @@ werf version
 <a href="javascript:void(0)" class="details__summary">MacOS — minikube</a>
 <div class="details__content" markdown="1">
 1. Установите [minikube](https://github.com/kubernetes/minikube#installation).
-2. Запустите minikube:
+2. Установите [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/).
+3. Запустите minikube:
 
    {% raw %}
    ```shell
@@ -167,7 +168,7 @@ werf version
 
    **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
-3. Установка NGINX Ingress Controller:
+4. Установка NGINX Ingress Controller:
 
    {% raw %}
    ```shell
@@ -175,7 +176,7 @@ werf version
    ```
    {% endraw %}
 
-4. Установка Container Registry для хранения образов:
+5. Установка Container Registry для хранения образов:
 
    {% raw %}
    ```shell
@@ -212,7 +213,7 @@ werf version
    ```
    {% endraw %}
 
-5. Разрешаем доступ в Container Registry без TLS для docker:
+6. Разрешаем доступ в Container Registry без TLS для docker:
 
    Через меню Docker Desktop -> Settings -> Docker Engine добавим новый ключ в конфигурацию:
    
@@ -224,7 +225,15 @@ werf version
    
    Перезапустим Docker Desktop через меню, открывающееся правым кликом по иконке Docker Desktop в трее.
 
-6. Разрешаем доступ в Container Registry без TLS для werf:
+   Затем снова запустим minikube:
+   
+   {% raw %}
+   ```shell
+   minikube start --driver=docker --insecure-registry registry.example.com:80
+   ```
+   {% endraw %}
+
+7. Разрешаем доступ в Container Registry без TLS для werf:
 
    В терминале где будет запускаться werf установим переменную окружения `WERF_INSECURE_REGISTRY=1`. Для bash:
 
@@ -238,7 +247,7 @@ werf version
    echo export WERF_INSECURE_REGISTRY=1 | tee -a ~/.bashrc
    ```
 
-7. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к Container Registry.
+8. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к Container Registry.
 
    Обновим файл hosts. Выполните команду в терминале:
 
@@ -246,7 +255,7 @@ werf version
    echo "$(minikube ip) vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com" | sudo tee -a /etc/hosts
    ```
 
-8. Также делаем доступ к домену `registry.example.com` из minikube node:
+9. Также делаем доступ к домену `registry.example.com` из minikube node:
 
    ```shell
    minikube ssh -- "echo $(minikube ip) registry.example.com | sudo tee -a /etc/hosts"
