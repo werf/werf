@@ -2,7 +2,7 @@ FROM golang:1.17-bullseye
 
 RUN dpkg --add-architecture arm64 && \
     apt-get update && \
-    apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross libbtrfs-dev && \
+    apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross libbtrfs-dev parallel && \
     apt-get install -y libbtrfs-dev:arm64 && \
     rm -rf /var/lib/apt/lists/*
 
