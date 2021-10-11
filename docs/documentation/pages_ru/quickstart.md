@@ -36,7 +36,7 @@ werf version
 <a href="javascript:void(0)" class="details__summary">Windows — minikube</a>
 <div class="details__content" markdown="1">
 1. Установите [minikube](https://github.com/kubernetes/minikube#installation).
-2. Установите [kubectl](https://kubernetes.io/ru/docs/tasks/tools/install-kubectl/)
+2. Установите [kubectl](https://kubernetes.io/ru/docs/tasks/tools/install-kubectl/).
 3. Запустите minikube:
 
    {% raw %}
@@ -66,10 +66,10 @@ werf version
    Создадим Ingress для доступа к Container Registry. Создайте новый текстовый файл:
 
    ```powershell
-   notepad config.txt
+   notepad config.yaml
    ```
 
-   Then add the configuration there:
+   Затем добавьте в него следующие строки конфигурации:
 
    {% raw %}
    ```shell
@@ -96,10 +96,10 @@ werf version
    ```
    {% endraw %}
 
-   Upload the created configuration file to kubectl:
+   Загрузите созданный файл в kubectl:
 
     ```shell
-   kubectl apply -f .\config.txt
+   kubectl apply -f .\config.yaml
    ```
 
 6. Разрешаем доступ в Container Registry без TLS для docker:

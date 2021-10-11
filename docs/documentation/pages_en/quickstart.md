@@ -34,7 +34,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 <a href="javascript:void(0)" class="details__summary">Windows — minikube</a>
 <div class="details__content" markdown="1">
 1. Install [minikube](https://github.com/kubernetes/minikube#installation).
-2. Install [kubectl](https://kubernetes.io/ru/docs/tasks/tools/install-kubectl/)
+2. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/).
 3. Start minikube:
 
    {% raw %}
@@ -64,10 +64,10 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    Create Ingress to access Container Registry. Create a new text file:
 
    ```powershell
-   notepad config.txt
+   notepad config.yaml
    ```
 
-   Затем добавьте в него следующие строки конфигурации:
+   Then add the configuration text to it:
    
    {% raw %}
    ```shell
@@ -94,10 +94,10 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-   Загрузите созданный конфигурационный файл в kubectl:
+   Upload the created configuration file to kubectl:
 
    ```shell
-   kubectl apply -f .\config.txt
+   kubectl apply -f .\config.yaml
    ```
 
 6. Allow usage of Container Registry without TLS for docker:
