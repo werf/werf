@@ -158,6 +158,7 @@ Use project's container registry repository as `--repo` param for werf commands.
      - This is only true for top-level commands like `werf converge` or `werf render`.
      - Low-level helm commands `werf helm *` still load chart files from the local filesystem.
  - Environment passed with `--env` param is available at the `.Values.werf.env`.
+ - Target namespace is available at the `.Values.werf.namespace`.
  - Fix usage of the `.helm/Chart.yaml`. This makes `.helm/Chart.yaml` optional, but werf will use it when it exists.
      - Take `.helm/Chart.yaml` from the repository if exists.
      - Override `metadata.name` field with werf project name from the `werf.yaml`.

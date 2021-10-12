@@ -52,6 +52,7 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
 
  - Remove `werf_container_env` template usage completely.
  - Use `.Values.werf.env` instead of `.Values.global.env`.
+ - Use `.Values.werf.namespace` instead of `.Values.global.namespace`.
  - Use `"werf.io/replicas-on-creation": "NUM"` annotation instead of `"werf.io/set-replicas-only-on-creation": "true"`.
      - **IMPORTANT** Specify `"NUM"` as **string** instead of number `NUM`, annotation [will be ignored otherwise]({{ "/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
      - **IMPORTANT** Remove `spec.replicas` field, more info [in the changelog]({{ "/whats_new_in_v1_2/changelog.html#configuration" | true_relative_url }}).
