@@ -2,6 +2,11 @@ name: Converge website
 on:
   push:
     branches: [main]
+    paths:
+      - 'docs/site/**'
+      - 'docs/_config.yml'
+      - 'docs/_config_ru.yml'
+      - '.github/workflows/website_converge.yml'
 
 env:
   WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
