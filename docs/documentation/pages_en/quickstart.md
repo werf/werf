@@ -34,17 +34,18 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 <a href="javascript:void(0)" class="details__summary">Windows — minikube</a>
 <div class="details__content" markdown="1">
 1. Install [minikube](https://github.com/kubernetes/minikube#installation).
-2. Start minikube:
+2. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/).
+3. Start minikube:
 
    {% raw %}
    ```shell
-   minikube start --driver=hyperv --insecure-registry registry.example.com:80
+   minikube start --driver=docker --insecure-registry registry.example.com:80
    ```
    {% endraw %}
     
    **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
 
-3. Install NGINX Ingress Controller:
+4. Install NGINX Ingress Controller:
 
    {% raw %}
    ```shell
@@ -52,7 +53,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-4. Install Container Registry to store images:
+5. Install Container Registry to store images:
 
    {% raw %}
    ```shell
@@ -60,11 +61,11 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-   Create Ingress to access Container Registry:
+   Create Ingress to access Container Registry. 
    
-   {% raw %}
+       {% raw %}
    ```shell
-   kubectl apply -f - << EOF
+   @"
    ---
    apiVersion: networking.k8s.io/v1
    kind: Ingress
@@ -85,11 +86,11 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
                name: registry
                port:
                  number: 80
-   EOF
+   "@ | kubectl apply -f -  
    ```
    {% endraw %}
 
-5. Allow usage of Container Registry without TLS for docker:
+6. Allow usage of Container Registry without TLS for Docker:
 
    Using menu Docker Desktop -> Settings -> Docker Engine add following configuration key:
 
@@ -101,7 +102,13 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
 
    Restart Docker Desktop using right button menu of the tray Docker Desktop icon.
 
-6. Allow usage of Container Registry without TLS for werf:
+   Then start minikube again:
+
+   ```shell
+   minikube start --driver=docker --insecure-registry registry.example.com:80
+   ```
+
+7. Allow usage of Container Registry without TLS for werf:
 
    Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run.
 
@@ -123,7 +130,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    $Env:WERF_INSECURE_REGISTRY = "1"
    ```
 
-7. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access Container Registry.
+8. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access Container Registry.
 
    Let's update hosts file. Get minikube IP-address:
 
@@ -142,7 +149,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    192.168.99.99          vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com
    ```
 
-8. Let's also add `registry.example.com` domain to the minikube node:
+9. Let's also add `registry.example.com` domain to the minikube node:
 
    ```shell
    minikube ssh -- "echo $(minikube ip) registry.example.com | sudo tee -a /etc/hosts"

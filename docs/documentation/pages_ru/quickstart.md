@@ -27,7 +27,7 @@ werf version
 
  1. Выполнить стандартный вход в container registry со своего хоста.
  2. Убедиться, что кластер Kubernetes доступен с хоста (дополнительная настройка `werf`, скорее всего, не потребуется, если у вас уже установлен и работает `kubectl`).
- 
+
 <br>
 
 В ином случае выполните одну из следующих инструкций, чтобы настроить локальный кластер Kubernetes и container registry в вашей системе:
@@ -36,17 +36,18 @@ werf version
 <a href="javascript:void(0)" class="details__summary">Windows — minikube</a>
 <div class="details__content" markdown="1">
 1. Установите [minikube](https://github.com/kubernetes/minikube#installation).
-2. Запустите minikube:
+2. Установите [kubectl](https://kubernetes.io/ru/docs/tasks/tools/install-kubectl/#%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-kubectl-%D0%B2-windows).
+3. Запустите minikube:
 
    {% raw %}
    ```shell
-   minikube start --driver=hyperv --insecure-registry registry.example.com:80
+   minikube start --driver=docker --insecure-registry registry.example.com:80
    ```
    {% endraw %}
 
    **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
-3. Установка NGINX Ingress Controller:
+4. Установка NGINX Ingress Controller:
 
    {% raw %}
    ```shell
@@ -54,7 +55,7 @@ werf version
    ```
    {% endraw %}
 
-4. Установка Container Registry для хранения образов:
+5. Установка Container Registry для хранения образов:
 
    {% raw %}
    ```shell
@@ -62,11 +63,11 @@ werf version
    ```
    {% endraw %}
 
-   Создадим Ingress для доступа к Container Registry:
+   Создадим Ingress для доступа к Container Registry. 
 
-   {% raw %}
+      {% raw %}
    ```shell
-   kubectl apply -f - << EOF
+   @"
    ---
    apiVersion: networking.k8s.io/v1
    kind: Ingress
@@ -87,11 +88,11 @@ werf version
                name: registry
                port:
                  number: 80
-   EOF
+   "@ | kubectl apply -f -  
    ```
    {% endraw %}
 
-5. Разрешаем доступ в Container Registry без TLS для docker:
+6. Разрешаем доступ в Container Registry без TLS для Docker:
 
    Через меню Docker Desktop -> Settings -> Docker Engine добавим новый ключ в конфигурацию:
 
@@ -103,7 +104,13 @@ werf version
 
    Перезапустим Docker Desktop через меню, открывающееся правым кликом по иконке Docker Desktop в трее.
 
-6. Разрешаем доступ в Container Registry без TLS для werf:
+   Затем снова запустим minikube:
+
+   ```shell
+   minikube start --driver=docker --insecure-registry registry.example.com:80
+   ```
+
+7. Разрешаем доступ в Container Registry без TLS для werf:
 
    В терминале где будет запускаться werf установим переменную окружения `WERF_INSECURE_REGISTRY=1`.
 
@@ -125,7 +132,7 @@ werf version
    $Env:WERF_INSECURE_REGISTRY = "1"
    ```
 
-7. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к Container Registry.
+8. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к Container Registry.
 
    Обновим файл hosts. Сначала получите IP-адрес minikube:
 
@@ -134,7 +141,7 @@ werf version
    ```
 
    Используя полученный выше IP-адрес minikube, добавьте в конец файла `C:\Windows\System32\drivers\etc\hosts` следующую строку:
-   
+
    ```
    <IP-адрес minikube>    vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com
    ```
@@ -144,7 +151,7 @@ werf version
    192.168.99.99          vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com
    ```
 
-8. Также делаем доступ к домену `registry.example.com` из minikube node:
+9. Также делаем доступ к домену `registry.example.com` из minikube node:
 
    ```shell
    minikube ssh -- "echo $(minikube ip) registry.example.com | sudo tee -a /etc/hosts"
@@ -215,13 +222,13 @@ werf version
 5. Разрешаем доступ в Container Registry без TLS для docker:
 
    Через меню Docker Desktop -> Settings -> Docker Engine добавим новый ключ в конфигурацию:
-   
+
    ```json
    {
    "insecure-registries": ["registry.example.com:80"]
    }
    ```
-   
+
    Перезапустим Docker Desktop через меню, открывающееся правым кликом по иконке Docker Desktop в трее.
 
 6. Разрешаем доступ в Container Registry без TLS для werf:
@@ -326,6 +333,7 @@ werf version
    
 6. Разрешаем доступ в Container Registry без TLS для Docker:
 
+
    В файл, по умолчанию находящийся в `/etc/docker/daemon.json`, добавим новый ключ:
 
    ```json
@@ -333,11 +341,11 @@ werf version
    "insecure-registries": ["registry.example.com:80"]
    }
    ```
-
+  
    Если такого файла в каталоге нет, его нужно создать и вставить в него указанные выше строки. Обратите внимание, что для доступа к изменению файлов в каталоге `/etc` нужны права суперпользователя (root).
-   
+
    Перезапустим Docker:
-   
+
    ```shell
    sudo systemctl restart docker
    ```
@@ -391,10 +399,10 @@ werf version
 </div>
 </div>
 
-## Разверните приложение-пример 
+## Разверните приложение-пример
 
 1. Склонируйте репозиторий нашего приложения-примера:
- 
+
    {% raw %}
    ```shell
    git clone https://github.com/werf/quickstart-application
