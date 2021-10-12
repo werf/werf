@@ -1267,7 +1267,7 @@ func getAddCustomTag(cmdData *CmdData) []string {
 }
 
 func GetSet(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_"), *cmdData.Set...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_VALUE"), *cmdData.Set...)
 }
 
 func GetSetString(cmdData *CmdData) []string {
