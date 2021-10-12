@@ -52,6 +52,7 @@ sidebar: documentation
 
  - Полностью удалена шаблонная функция  `werf_container_env`.
  - Необходимо использовать `.Values.werf.env` вместо `.Values.global.env`.
+ - Необходимо использовать `.Values.werf.namespace` вместо `.Values.global.namespace`.
  - Необходимо использовать `"werf.io/replicas-on-creation": "NUM"` вместо `"werf.io/set-replicas-only-on-creation": "true"`.
      - **ВАЖНО.** `"NUM"` должно быть указано **строкой**, а не как число `NUM`, иначе аннотация [будет проигнорирована]({{ "/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
      - **ВАЖНО.** При использовании данной аннотации необходимо удалить явное определение поля `spec.replicas`, [больше информации в changelog]({{ "/whats_new_in_v1_2/changelog.html#конфигурация" | true_relative_url }}).
