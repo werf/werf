@@ -13,6 +13,7 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -27,6 +28,9 @@ const (
 
 	RepoImageMetadataByCommitRecord_ImageTagPrefix = "meta-"
 	RepoImageMetadataByCommitRecord_TagFormat      = "meta-%s_%s_%s"
+
+	RepoCustomTagMetadata_ImageTagPrefix  = "custom-tag-meta-"
+	RepoCustomTagMetadata_ImageNameFormat = "%s:custom-tag-meta-%s"
 
 	RepoImportMetadata_ImageTagPrefix  = "import-metadata-"
 	RepoImportMetadata_ImageNameFormat = "%s:import-metadata-%s"
@@ -294,6 +298,120 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 	}, nil
 }
 
+func (storage *RepoStagesStorage) CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+	fullImageName := strings.Join([]string{storage.RepoAddress, tag}, ":")
+	customTagImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	if err != nil {
+		return err
+	}
+
+	if customTagImgInfo == nil {
+		return fmt.Errorf("custom tag %q not found", tag)
+	}
+
+	if customTagImgInfo.ID != stageDescription.Info.ID {
+		return fmt.Errorf("custom tag %q image must be the same as associated content-based tag %q image", tag, stageDescription.StageID.String())
+	}
+
+	return nil
+}
+
+func (storage *RepoStagesStorage) AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+	if err := storage.addStageCustomTagMetadata(ctx, stageDescription, tag); err != nil {
+		return fmt.Errorf("unable to add stage custom tag metadata: %s", err)
+	}
+
+	return storage.DockerRegistry.TagRepoImage(ctx, stageDescription.Info, tag)
+}
+
+func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag string) error {
+	if err := storage.deleteStageCustomTagMetadata(ctx, tag); err != nil {
+		return fmt.Errorf("unable to delete stage custom tag metadata: %s", err)
+	}
+
+	fullImageName := strings.Join([]string{storage.RepoAddress, tag}, ":")
+	imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	if err != nil {
+		return fmt.Errorf("unable to get repo image %q info: %s", fullImageName, err)
+	}
+
+	if imgInfo == nil {
+		return nil
+	}
+
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
+		return fmt.Errorf("unable to delete image %q from repo: %s", fullImageName, err)
+	}
+
+	return nil
+}
+
+func (storage *RepoStagesStorage) addStageCustomTagMetadata(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tag)
+	metadata := newCustomTagMetadata(stageDescription.StageID.String(), tag)
+	opts := &docker_registry.PushImageOptions{
+		Labels: metadata.ToLabels(),
+	}
+	opts.Labels[image.WerfLabel] = stageDescription.Info.Labels[image.WerfLabel]
+
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
+		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
+	}
+
+	return nil
+}
+
+func (storage *RepoStagesStorage) deleteStageCustomTagMetadata(ctx context.Context, tagOrID string) error {
+	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tagOrID)
+	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
+	if err != nil {
+		return fmt.Errorf("unable to get repo image %q info: %s", fullImageName, err)
+	}
+
+	if imgInfo == nil {
+		panic("unexpected condition")
+	}
+
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
+		return fmt.Errorf("unable to delete image %q from repo: %s", fullImageName, err)
+	}
+
+	return nil
+}
+
+func (storage *RepoStagesStorage) GetStageCustomTagMetadata(ctx context.Context, tagOrID string) (*CustomTagMetadata, error) {
+	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tagOrID)
+	img, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
+	}
+
+	if img == nil {
+		panic("unexpected condition")
+	}
+
+	return newCustomTagMetadataFromLabels(img.Labels), nil
+}
+
+func (storage *RepoStagesStorage) GetStageCustomTagMetadataIDs(ctx context.Context) ([]string, error) {
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
+	}
+
+	var res []string
+	for _, tag := range tags {
+		if !strings.HasPrefix(tag, RepoCustomTagMetadata_ImageTagPrefix) {
+			continue
+		}
+
+		id := strings.TrimPrefix(tag, RepoCustomTagMetadata_ImageTagPrefix)
+		res = append(res, id)
+	}
+
+	return res, nil
+}
+
 func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectName, imageName string) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage %s %s\n", projectName, imageName)
 
@@ -367,57 +485,39 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_runtime.Image) error {
-	switch containerRuntime := storage.ContainerRuntime.(type) {
-	case *container_runtime.LocalDockerServerRuntime:
-		if err := containerRuntime.PullImageFromRegistry(ctx, img); err != nil {
-			if strings.HasSuffix(err.Error(), "unknown blob") {
-				return ErrBrokenImage
-			}
-			return err
+func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
+	if err := storage.ContainerRuntime.PullImageFromRegistry(ctx, img); err != nil {
+		if strings.HasSuffix(err.Error(), "unknown blob") {
+			return ErrBrokenImage
 		}
-
-		return nil
-	default:
-		// TODO: case *container_runtime.LocalHostRuntime:
-		panic("not implemented")
+		return err
 	}
+
+	return nil
 }
 
-func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_runtime.Image) error {
-	switch containerRuntime := storage.ContainerRuntime.(type) {
-	case *container_runtime.LocalDockerServerRuntime:
-		dockerImage := img.(*container_runtime.DockerImage)
-
-		if dockerImage.Image.GetBuiltId() != "" {
-			return containerRuntime.PushBuiltImage(ctx, img)
-		} else {
-			return containerRuntime.PushImage(ctx, img)
+func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
+	if img.GetBuiltId() != "" {
+		if err := storage.ContainerRuntime.Tag(ctx, img.GetBuiltId(), img.Name()); err != nil {
+			return fmt.Errorf("unable to tag built image %q by %q: %s", img.GetBuiltId(), img.Name(), err)
 		}
-
-	default:
-		// TODO: case *container_runtime.LocalHostRuntime:
-		panic("not implemented")
 	}
+
+	if err := storage.ContainerRuntime.Push(ctx, img.Name()); err != nil {
+		return fmt.Errorf("unable to push image %q: %s", img.Name(), err)
+	}
+
+	return nil
 }
 
-func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_runtime.Image) (bool, error) {
-	switch containerRuntime := storage.ContainerRuntime.(type) {
-	case *container_runtime.LocalDockerServerRuntime:
-
-		dockerImage := img.(*container_runtime.DockerImage)
-
-		if inspect, err := containerRuntime.GetImageInspect(ctx, dockerImage.Image.Name()); err != nil {
-			return false, fmt.Errorf("unable to get inspect for image %s: %s", dockerImage.Image.Name(), err)
-		} else if inspect != nil {
-			dockerImage.Image.SetInspect(inspect)
-			return false, nil
-		}
-
-		return true, nil
-	default:
-		panic("not implemented")
+func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) (bool, error) {
+	if info, err := storage.ContainerRuntime.GetImageInfo(ctx, img.Name()); err != nil {
+		return false, fmt.Errorf("unable to get inspect for image %s: %s", img.Name(), err)
+	} else if info != nil {
+		img.SetInfo(info)
+		return false, nil
 	}
+	return true, nil
 }
 
 func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageName, commit, stageID string) error {
@@ -647,6 +747,10 @@ func (storage *RepoStagesStorage) String() string {
 
 func (storage *RepoStagesStorage) Address() string {
 	return storage.RepoAddress
+}
+
+func makeRepoCustomTagMetadataRecord(repoAddress, tag string) string {
+	return fmt.Sprintf(RepoCustomTagMetadata_ImageNameFormat, repoAddress, slug.LimitedSlug(tag, 48))
 }
 
 func makeRepoManagedImageRecord(repoAddress, imageName string) string {

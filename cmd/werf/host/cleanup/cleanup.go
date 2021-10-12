@@ -1,6 +1,7 @@
 package cleanup
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -8,7 +9,6 @@ import (
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/host_cleaning"
@@ -41,7 +41,9 @@ The data include:
 It is safe to run this command periodically by automated cleanup job in parallel with other werf commands such as build, converge and cleanup.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -49,7 +51,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(runGC)
+			return common.LogRunningTime(func() error { return runGC(ctx) })
 		},
 	}
 
@@ -77,16 +79,20 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	return cmd
 }
 
-func runGC() error {
-	ctx := common.BackgroundContext()
+func runGC(ctx context.Context) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	_, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
 
 	projectName := *commonCmdData.ProjectName
 	if projectName != "" {
 		return fmt.Errorf("no functionality for cleaning a certain project is implemented (--project-name=%s)", projectName)
-	}
-
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
@@ -109,16 +115,6 @@ func runGC() error {
 	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
-
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
 
 	logboek.LogOptionalLn()
 

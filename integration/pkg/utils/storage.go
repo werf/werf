@@ -13,7 +13,7 @@ import (
 func NewStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.StagesStorage {
 	s, err := storage.NewStagesStorage(
 		stagesStorageAddress,
-		&container_runtime.LocalDockerServerRuntime{},
+		&container_runtime.DockerServerRuntime{},
 		storage.StagesStorageOptions{
 			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
 				DockerRegistryOptions: dockerRegistryOptions,
@@ -36,6 +36,20 @@ func ManagedImagesCount(ctx context.Context, stagesStorage storage.StagesStorage
 	managedImages, err := stagesStorage.GetManagedImages(ctx, ProjectName())
 	Ω(err).ShouldNot(HaveOccurred())
 	return len(managedImages)
+}
+
+func CustomTagsMetadataList(ctx context.Context, stagesStorage storage.StagesStorage) []*storage.CustomTagMetadata {
+	customTagMetadataIDs, err := stagesStorage.GetStageCustomTagMetadataIDs(ctx)
+	Ω(err).ShouldNot(HaveOccurred())
+
+	var result []*storage.CustomTagMetadata
+	for _, metadataID := range customTagMetadataIDs {
+		customTagMetadata, err := stagesStorage.GetStageCustomTagMetadata(ctx, metadataID)
+		Ω(err).ShouldNot(HaveOccurred())
+		result = append(result, customTagMetadata)
+	}
+
+	return result
 }
 
 func ImageMetadata(ctx context.Context, stagesStorage storage.StagesStorage, imageName string) map[string][]string {

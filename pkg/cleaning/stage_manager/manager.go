@@ -3,21 +3,25 @@ package stage_manager
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 )
 
 type Manager struct {
-	stages            map[string]*stage
-	finalStages       map[string]*stage
-	imageMetadataList []*imageMetadata
+	stages               map[string]*stage
+	stageIDCustomTagList map[string][]string
+	finalStages          map[string]*stage
+	imageMetadataList    []*imageMetadata
 }
 
 func NewManager() Manager {
 	return Manager{
-		stages:      map[string]*stage{},
-		finalStages: map[string]*stage{},
+		stages:               map[string]*stage{},
+		stageIDCustomTagList: map[string][]string{},
+		finalStages:          map[string]*stage{},
 	}
 }
 
@@ -55,7 +59,7 @@ func (m *Manager) getOrCreateImageMetadata(imageName string, stageID string) *im
 }
 
 func (m *Manager) newImageMetadata(imageName string, stageID string) *imageMetadata {
-	return &imageMetadata{imageName: imageName, stageID: stageID, isNonexistentStage: !m.isStageExist(stageID)}
+	return &imageMetadata{imageName: imageName, stageID: stageID, isNonexistentStage: !m.IsStageExist(stageID)}
 }
 
 func (m *Manager) InitStages(ctx context.Context, storageManager manager.StorageManagerInterface) error {
@@ -123,6 +127,44 @@ func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager
 	}
 
 	return nil
+}
+
+func (m *Manager) InitCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) error {
+	stageIDCustomTagList, err := GetCustomTagsMetadata(ctx, storageManager)
+	if err != nil {
+		return err
+	}
+
+	m.stageIDCustomTagList = stageIDCustomTagList
+	return nil
+}
+
+func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (stageIDCustomTagList map[string][]string, err error) {
+	stageCustomTagMetadataIDs, err := storageManager.GetStagesStorage().GetStageCustomTagMetadataIDs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %s", err)
+	}
+
+	var mutex sync.Mutex
+	stageIDCustomTagList = make(map[string][]string)
+	err = storageManager.ForEachGetStageCustomTagMetadata(ctx, stageCustomTagMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error {
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		_, ok := stageIDCustomTagList[metadata.StageID]
+		if !ok {
+			stageIDCustomTagList[metadata.StageID] = []string{}
+		}
+
+		stageIDCustomTagList[metadata.StageID] = append(stageIDCustomTagList[metadata.StageID], metadata.Tag)
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return stageIDCustomTagList, nil
 }
 
 func (m *Manager) GetStageIDList() []string {
@@ -316,7 +358,11 @@ func (m *Manager) GetProtectedStageDescriptionList() []*image.StageDescription {
 	return result
 }
 
-func (m *Manager) isStageExist(stageID string) bool {
+func (m *Manager) IsStageExist(stageID string) bool {
 	_, exist := m.stages[stageID]
 	return exist
+}
+
+func (m *Manager) GetCustomTagsMetadata() map[string][]string {
+	return m.stageIDCustomTagList
 }

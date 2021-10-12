@@ -35,7 +35,7 @@ func (s *UserWithGitPatchStage) GetNextStageDependencies(ctx context.Context, c 
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}

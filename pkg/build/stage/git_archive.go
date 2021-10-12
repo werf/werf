@@ -47,7 +47,7 @@ func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, s
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
-func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		if gitMapping.LocalGitRepo != nil {
@@ -68,7 +68,7 @@ func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Convey
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	if err := s.GitStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, prevBuil
 	return nil
 }
 
-func (s *GitArchiveStage) IsEmpty(ctx context.Context, c Conveyor, img container_runtime.ImageInterface) (bool, error) {
+func (s *GitArchiveStage) IsEmpty(ctx context.Context, c Conveyor, img container_runtime.LegacyImageInterface) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
 		isGitMappingEmpty, err := gitMapping.isEmpty(ctx, c)
 		if err != nil {

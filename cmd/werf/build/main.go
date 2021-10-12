@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/werf/pkg/container_runtime"
+
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/giterminism_manager"
 
@@ -13,8 +15,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
@@ -108,6 +108,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupReportPath(&commonCmdData, cmd)
 	common.SetupReportFormat(&commonCmdData, cmd)
 
+	common.SetupAddCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
@@ -132,6 +133,12 @@ func runMain(ctx context.Context, args []string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
+
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting host git data manager: %s", err)
@@ -153,21 +160,14 @@ func runMain(ctx context.Context, args []string) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 		return err
 	}
 
 	defer func() {
+		if _, match := containerRuntime.(*container_runtime.DockerServerRuntime); !match {
+			return
+		}
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}
@@ -193,14 +193,14 @@ func runMain(ctx context.Context, args []string) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
-			return run(ctx, headCommitGiterminismManager, args)
+			return run(ctx, containerRuntime, headCommitGiterminismManager, args)
 		})
 	} else {
-		return run(ctx, giterminismManager, args)
+		return run(ctx, containerRuntime, giterminismManager, args)
 	}
 }
 
-func run(ctx context.Context, giterminismManager giterminism_manager.Interface, imagesToProcess []string) error {
+func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntime, giterminismManager giterminism_manager.Interface, imagesToProcess []string) error {
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
@@ -219,8 +219,6 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
-
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
@@ -255,7 +253,7 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
 
-	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
+	buildOptions, err := common.GetBuildOptions(&commonCmdData, giterminismManager, werfConfig)
 	if err != nil {
 		return err
 	}

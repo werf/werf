@@ -3,7 +3,7 @@ configVersion: 1
 gitWorktree:
   allowFetchOriginBranchesAndTags: false
 ---
-image: ~
+image: backend
 from: python:alpine
 ansible:
   install:

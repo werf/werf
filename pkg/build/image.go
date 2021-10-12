@@ -39,7 +39,7 @@ type Image struct {
 
 	baseImageType    BaseImageType
 	stageAsBaseImage stage.Interface
-	baseImage        *container_runtime.StageImage
+	baseImage        *container_runtime.LegacyStageImage
 }
 
 func (i *Image) LogName() string {
@@ -134,26 +134,26 @@ func (i *Image) SetupBaseImage(c *Conveyor) {
 	}
 }
 
-func (i *Image) GetBaseImage() *container_runtime.StageImage {
+func (i *Image) GetBaseImage() *container_runtime.LegacyStageImage {
 	return i.baseImage
 }
 
 func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
-		containerRuntime := c.ContainerRuntime.(*container_runtime.LocalDockerServerRuntime)
+		containerRuntime := c.ContainerRuntime
 
-		if inspect, err := containerRuntime.GetImageInspect(ctx, i.baseImage.Name()); err != nil {
+		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name()); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
-		} else if inspect != nil {
-			// TODO: do not use container_runtime.StageImage for base image
+		} else if info != nil {
+			// TODO: do not use container_runtime.LegacyStageImage for base image
 			i.baseImage.SetStageDescription(&image.StageDescription{
 				StageID: nil, // this is not a stage actually, TODO
-				Info:    image.NewInfoFromInspect(i.baseImage.Name(), inspect),
+				Info:    info,
 			})
 
 			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, c, i.baseImage.Name())
-			if baseImageRepoId == inspect.ID || err != nil {
+			if baseImageRepoId == info.ID || err != nil {
 				if err != nil {
 					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
 					logboek.Context(ctx).Warn().LogF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
@@ -169,25 +169,26 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
-				return c.ContainerRuntime.PullImageFromRegistry(ctx, &container_runtime.DockerImage{Image: i.baseImage})
+				return c.ContainerRuntime.PullImageFromRegistry(ctx, i.baseImage)
 			}); err != nil {
 			return err
 		}
 
-		if inspect, err := containerRuntime.GetImageInspect(ctx, i.baseImage.Name()); err != nil {
+		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name()); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
-		} else if inspect == nil {
+		} else if info == nil {
 			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name())
 		} else {
 			i.baseImage.SetStageDescription(&image.StageDescription{
 				StageID: nil, // this is not a stage actually, TODO
-				Info:    image.NewInfoFromInspect(i.baseImage.Name(), inspect),
+				Info:    info,
 			})
 		}
 	case StageAsBaseImage:
-		if err := c.ContainerRuntime.RefreshImageObject(ctx, &container_runtime.DockerImage{Image: i.baseImage}); err != nil {
-			return err
-		}
+		// TODO: check no bug introduced
+		//if err := c.ContainerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: i.baseImage}); err != nil {
+		//	return err
+		//}
 		if err := c.StorageManager.FetchStage(ctx, c.ContainerRuntime, i.stageAsBaseImage); err != nil {
 			return err
 		}

@@ -10,8 +10,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -104,6 +102,12 @@ func runCleanup(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
+
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting host git data manager: %s", err)
@@ -125,17 +129,7 @@ func runCleanup(ctx context.Context) error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 		return err
 	}
 
@@ -190,8 +184,6 @@ func runCleanup(ctx context.Context) error {
 	}
 
 	projectName := werfConfig.Meta.Project
-
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 
 	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
 	if err != nil {
@@ -260,6 +252,6 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 
 	return manager.RetryOnStagesStorageCacheResetError(ctx, storageManager, func() error {
 		logboek.LogOptionalLn()
-		return cleaning.Cleanup(ctx, projectName, storageManager, storageLockManager, cleanupOptions)
+		return cleaning.Cleanup(ctx, projectName, storageManager, cleanupOptions)
 	})
 }

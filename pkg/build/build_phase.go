@@ -34,11 +34,13 @@ type BuildPhaseOptions struct {
 }
 
 type BuildOptions struct {
-	ImageBuildOptions container_runtime.BuildOptions
+	ImageBuildOptions container_runtime.LegacyBuildOptions
 	IntrospectOptions
 
 	ReportPath   string
 	ReportFormat ReportFormat
+
+	CustomTagFuncList []func(string) string
 }
 
 type IntrospectOptions struct {
@@ -234,6 +236,16 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 		return err
 	}
 
+	if !phase.ShouldBeBuiltMode {
+		if err := phase.addCustomImageTagsToStagesStorage(ctx, img); err != nil {
+			return fmt.Errorf("unable to add custom image tags to stages storage: %s", err)
+		}
+	} else {
+		if err := phase.checkCustomImageTagsExistence(ctx, img); err != nil {
+			return err
+		}
+	}
+
 	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
 		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalRepo(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerRuntime); err != nil {
 			return err
@@ -281,6 +293,61 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 
 			return nil
 		})
+}
+
+func (phase *BuildPhase) addCustomImageTagsToStagesStorage(ctx context.Context, img *Image) error {
+	return addCustomImageTags(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), img, phase.CustomTagFuncList)
+}
+
+func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage, img *Image, customTagFuncList []func(string) string) error {
+	if len(customTagFuncList) == 0 {
+		return nil
+	}
+
+	return logboek.Context(ctx).Default().LogProcess("Adding custom tags").
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			for _, tagFunc := range customTagFuncList {
+				tag := tagFunc(img.GetName())
+				if err := addCustomImageTag(ctx, stagesStorage, img, tag); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+}
+
+func addCustomImageTag(ctx context.Context, stagesStorage storage.StagesStorage, img *Image, tag string) error {
+	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
+		DoError(func() error {
+			stageDesc := img.GetLastNonEmptyStage().GetImage().GetStageDescription()
+			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {
+				return err
+			}
+
+			logboek.Context(ctx).LogFDetails("  name: %s:%s\n", stageDesc.Info.Repository, tag)
+
+			return nil
+		})
+}
+
+func (phase *BuildPhase) checkCustomImageTagsExistence(ctx context.Context, img *Image) error {
+	if len(phase.CustomTagFuncList) == 0 {
+		return nil
+	}
+
+	stageDesc := img.GetLastNonEmptyStage().GetImage().GetStageDescription()
+	for _, tagFunc := range phase.CustomTagFuncList {
+		tag := tagFunc(img.GetName())
+		if err := phase.Conveyor.StorageManager.GetStagesStorage().CheckStageCustomTag(ctx, stageDesc, tag); err != nil {
+			return fmt.Errorf("check custom tag %q existence failed: %s", tag, err)
+		}
+	}
+
+	return nil
 }
 
 func (phase *BuildPhase) getPrevNonEmptyStageImageSize() int64 {
@@ -491,11 +558,11 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *Image,
 	return nil
 }
 
-func castToStageImage(img container_runtime.ImageInterface) *container_runtime.StageImage {
+func castToStageImage(img container_runtime.LegacyImageInterface) *container_runtime.LegacyStageImage {
 	if img == nil {
 		return nil
 	}
-	return img.(*container_runtime.StageImage)
+	return img.(*container_runtime.LegacyStageImage)
 }
 
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg stage.Interface) (bool, func(), error) {
@@ -560,13 +627,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 
 	switch stg.(type) {
 	case *stage.DockerfileStage:
-		var buildArgs []string
-
+		var labels []string
 		for key, value := range serviceLabels {
-			buildArgs = append(buildArgs, fmt.Sprintf("--label=%s=%s", key, value))
+			labels = append(labels, fmt.Sprintf("%s=%v", key, value))
 		}
-
-		stageImage.DockerfileImageBuilder().AppendBuildArgs(buildArgs...)
+		stageImage.DockerfileImageBuilder().AppendLabels(labels...)
 
 		phase.Conveyor.AppendOnTerminateFunc(func() error {
 			return stageImage.DockerfileImageBuilder().Cleanup(ctx)
@@ -697,7 +762,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			phase.Conveyor.SetStageImage(stageImageObj)
 
 			if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
-				if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, &container_runtime.DockerImage{Image: stageImage}); err != nil {
+				if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, stageImage); err != nil {
 					return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 				}
 				if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.projectName(), stg.GetDigest(), uniqueID); err != nil {

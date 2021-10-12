@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"io"
+
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
@@ -59,6 +61,12 @@ func doCliRun(c command.Cli, args ...string) error {
 
 func CliRun(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
+		return doCliRun(c, args...)
+	})
+}
+
+func CliRun_ProvidedOutput(ctx context.Context, stdoutWriter, stderrWriter io.Writer, args ...string) error {
+	return callCliWithProvidedOutput(ctx, stdoutWriter, stderrWriter, func(c command.Cli) error {
 		return doCliRun(c, args...)
 	})
 }

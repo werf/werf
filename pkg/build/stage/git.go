@@ -17,7 +17,7 @@ type GitStage struct {
 	*BaseStage
 }
 
-func (s *GitStage) IsEmpty(ctx context.Context, _ Conveyor, _ container_runtime.ImageInterface) (bool, error) {
+func (s *GitStage) IsEmpty(ctx context.Context, _ Conveyor, _ container_runtime.LegacyImageInterface) (bool, error) {
 	return s.isEmpty(ctx), nil
 }
 
@@ -25,7 +25,7 @@ func (s *GitStage) isEmpty(_ context.Context) bool {
 	return len(s.gitMappings) == 0
 }
 
-func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error {
+func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
 	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
 		return err
 	}

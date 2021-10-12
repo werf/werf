@@ -11,13 +11,13 @@ type Interface interface {
 	Name() StageName
 	LogDetailedName() string
 
-	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.ImageInterface) (bool, error)
+	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error)
 
 	FetchDependencies(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime) error
-	GetDependencies(ctx context.Context, c Conveyor, prevImage container_runtime.ImageInterface, prevBuiltImage container_runtime.ImageInterface) (string, error)
+	GetDependencies(ctx context.Context, c Conveyor, prevImage container_runtime.LegacyImageInterface, prevBuiltImage container_runtime.LegacyImageInterface) (string, error)
 	GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error)
 
-	PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.ImageInterface) error
+	PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error
 
 	PreRunHook(context.Context, Conveyor) error
 
@@ -27,8 +27,8 @@ type Interface interface {
 	SetContentDigest(contentDigest string)
 	GetContentDigest() string
 
-	SetImage(container_runtime.ImageInterface)
-	GetImage() container_runtime.ImageInterface
+	SetImage(container_runtime.LegacyImageInterface)
+	GetImage() container_runtime.LegacyImageInterface
 
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping

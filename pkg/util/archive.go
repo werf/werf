@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/format/index"
-
 	"github.com/werf/logboek"
 )
 
@@ -169,6 +169,120 @@ func CopyGitIndexEntryIntoTar(tw *tar.Writer, tarEntryName string, entry *index.
 	}
 
 	return nil
+}
+
+func ExtractTar(tarFileReader io.Reader, dstDir string) error {
+	tarReader := tar.NewReader(tarFileReader)
+	for {
+		tarEntryHeader, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("unable to Next() while extracting tar: %s", err)
+		}
+
+		tarEntryPath := filepath.Join(dstDir, tarEntryHeader.Name)
+		tarEntryFileInfo := tarEntryHeader.FileInfo()
+
+		switch tarEntryHeader.Typeflag {
+		case tar.TypeDir:
+			if err = os.MkdirAll(tarEntryPath, tarEntryFileInfo.Mode()); err != nil {
+				return fmt.Errorf("unable to create new dir %q while extracting tar: %s", tarEntryPath, err)
+			}
+		case tar.TypeReg, tar.TypeSymlink, tar.TypeLink, tar.TypeGNULongName, tar.TypeGNULongLink:
+			file, err := os.OpenFile(tarEntryPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, tarEntryFileInfo.Mode())
+			if err != nil {
+				return fmt.Errorf("unable to create new file %q while extracting tar: %s", tarEntryPath, err)
+			}
+			defer file.Close()
+
+			_, err = io.Copy(file, tarReader)
+			if err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("tar entry %q of unexpected type: %b", tarEntryHeader.Name, tarEntryHeader.Typeflag)
+		}
+	}
+
+	return nil
+}
+
+func ReadDirAsTar(dir string) io.Reader {
+	r, w := io.Pipe()
+
+	go func() {
+		tarWriter := tar.NewWriter(w)
+
+		err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+			if err != nil {
+				return fmt.Errorf("error accessing %q: %s", path, err)
+			}
+
+			relPath, err := filepath.Rel(dir, path)
+			if err != nil {
+				return err
+			}
+
+			if info.Mode().IsDir() {
+				header := &tar.Header{
+					Name:     relPath,
+					Size:     info.Size(),
+					Mode:     int64(info.Mode()),
+					ModTime:  info.ModTime(),
+					Typeflag: tar.TypeDir,
+				}
+
+				err = tarWriter.WriteHeader(header)
+				if err != nil {
+					return fmt.Errorf("could not tar write header for %q: %s", path, err)
+				}
+
+				return nil
+			}
+
+			header := &tar.Header{
+				Name:     relPath,
+				Size:     info.Size(),
+				Mode:     int64(info.Mode()),
+				ModTime:  info.ModTime(),
+				Typeflag: tar.TypeReg,
+			}
+
+			err = tarWriter.WriteHeader(header)
+			if err != nil {
+				return fmt.Errorf("could not tar write header for %q: %s", path, err)
+			}
+
+			file, err := os.Open(path)
+			if err != nil {
+				return fmt.Errorf("unable to open %q: %s", path, err)
+			}
+			defer file.Close()
+
+			_, err = io.Copy(tarWriter, file)
+			if err != nil {
+				return fmt.Errorf("unable to write %q into tar: %s", path, err)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+		if err := tarWriter.Close(); err != nil {
+			panic(err.Error())
+		}
+
+		if err := w.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	return r
 }
 
 func debugArchiveUtil() bool {

@@ -1,6 +1,7 @@
 package ls
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -9,8 +10,6 @@ import (
 	"github.com/werf/logboek/pkg/level"
 
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -28,12 +27,14 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "List managed images which will be preserved during cleanup procedure",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := common.BackgroundContext()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
 
-			return run()
+			return run(ctx)
 		},
 	}
 
@@ -72,14 +73,19 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func run() error {
-	ctx := common.BackgroundContext()
-	if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
-		logboek.Context(ctx).SetAcceptedLevel(level.Error)
-	}
-
+func run(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
+
+	if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
+		logboek.Context(ctx).SetAcceptedLevel(level.Error)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
@@ -103,17 +109,7 @@ func run() error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 		return err
 	}
 
@@ -144,7 +140,6 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err

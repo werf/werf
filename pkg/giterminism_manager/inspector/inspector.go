@@ -19,6 +19,7 @@ func NewInspector(giterminismConfig giterminismConfig, fileReader fileReader, sh
 }
 
 type giterminismConfig interface {
+	IsCustomTagsAccepted() bool
 	IsConfigGoTemplateRenderingEnvNameAccepted(envName string) (bool, error)
 	IsConfigStapelFromLatestAccepted() bool
 	IsConfigStapelGitBranchAccepted() bool

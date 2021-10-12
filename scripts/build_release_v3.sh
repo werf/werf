@@ -1,19 +1,33 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -xeuo pipefail
 
-set -e
+VERSION="${1:?ERROR: Version should be specified as the first argument.}"
 
-VERSION=$1
-if [ -z "$VERSION" ] ; then
-    echo "Required version argument!" 1>&2
-    echo 1>&2
-    echo "Usage: $0 VERSION" 1>&2
-    exit 1
-fi
+export GO111MODULE="on"
 
-export CGO_ENABLED=0
+COMMON_LDFLAGS="-s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION"
+COMMON_TAGS="dfrunmount dfssh containers_image_openpgp"
+PKG="github.com/werf/werf/cmd/werf"
 
-gox -osarch="linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64" \
-    -output="release-build/$VERSION/{{.OS}}-{{.Arch}}/bin/werf" \
-    -tags="dfrunmount dfssh" \
-    -ldflags="-s -w -X github.com/werf/werf/pkg/werf.Version=$VERSION" \
-        github.com/werf/werf/cmd/werf
+parallel -j0 --halt now,fail=1 --line-buffer -k --tag --tagstring '{= @cmd = split(" ", $_); $_ = "[".$cmd[0]." ".$cmd[1]."]" =}' <<-EOF
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=1 \
+    go build -compiler gc -o "release-build/$VERSION/linux-amd64/bin/werf" \
+    -ldflags="$COMMON_LDFLAGS -linkmode external -extldflags=-static" \
+    -tags="$COMMON_TAGS osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" \
+    "$PKG"
+
+  GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc \
+    go build -compiler gc -o "release-build/$VERSION/linux-arm64/bin/werf" \
+    -ldflags="$COMMON_LDFLAGS -linkmode external -extldflags=-static" \
+    -tags="$COMMON_TAGS osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" \
+    "$PKG"
+
+  GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 \
+    go build -o "release-build/$VERSION/darwin-amd64/bin/werf" -ldflags="$COMMON_LDFLAGS" -tags="$COMMON_TAGS" "$PKG"
+
+  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 \
+    go build -o "release-build/$VERSION/darwin-arm64/bin/werf" -ldflags="$COMMON_LDFLAGS" -tags="$COMMON_TAGS" "$PKG"
+
+  GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
+    go build -o "release-build/$VERSION/windows-amd64/bin/werf.exe" -ldflags="$COMMON_LDFLAGS" -tags="$COMMON_TAGS" "$PKG"
+EOF

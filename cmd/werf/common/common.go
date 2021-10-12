@@ -75,6 +75,9 @@ type CmdData struct {
 	SkipBuild *bool
 	StubTags  *bool
 
+	AddCustomTag *[]string
+	UseCustomTag *string
+
 	Synchronization    *string
 	Parallel           *bool
 	ParallelTasksLimit *int64
@@ -404,6 +407,22 @@ func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SecondaryStagesStorage = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", []string{}, `Specify one or multiple secondary read-only repos with images that will be used as a cache.
 Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)`)
+}
+
+func SetupAddCustomTag(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.AddCustomTag = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.AddCustomTag, "add-custom-tag", "", []string{}, `Set tag aliases for the content-based tag of each image.
+It is necessary to use the image name shortcut %image% or %image_slug% in the tag format if there is more than one image in the werf config. 
+Also, can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g. $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2").
+For cleaning custom tags and associated content-based tag are treated as one`)
+}
+
+func SetupUseCustomTag(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.UseCustomTag = new(string)
+	cmd.Flags().StringVarP(cmdData.UseCustomTag, "use-custom-tag", "", os.Getenv("WERF_USE_CUSTOM_TAG"), `Use a tag alias in helm templates instead of an image content-based tag (NOT RECOMMENDED).
+It is necessary to use the image name shortcut %image% or %image_slug% in the tag format if there is more than one image in the werf config. 
+Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag").
+For cleaning custom tags and associated content-based tag are treated as one`)
 }
 
 func SetupCacheStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
@@ -943,6 +962,12 @@ func GetLocalStagesStorage(containerRuntime container_runtime.ContainerRuntime) 
 }
 
 func GetStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
+	if _, match := containerRuntime.(*container_runtime.BuildahRuntime); match {
+		if stagesStorageAddress == "" || stagesStorageAddress == storage.LocalStorageAddress {
+			return nil, fmt.Errorf(`"--repo" should be specified and not equal ":local" for Buildah container runtime`)
+		}
+	}
+
 	if err := ValidateRepoContainerRegistry(cmdData.CommonRepoData.GetContainerRegistry()); err != nil {
 		return nil, err
 	}
@@ -1017,12 +1042,15 @@ func GetCacheStagesStorageList(containerRuntime container_runtime.ContainerRunti
 
 func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
-	if stagesStorage.Address() != storage.LocalStorageAddress {
-		localStagesStorage, err := storage.NewStagesStorage(storage.LocalStorageAddress, containerRuntime, storage.StagesStorageOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("unable to create local secondary stages storage: %s", err)
+
+	if _, matched := containerRuntime.(*container_runtime.DockerServerRuntime); matched {
+		if stagesStorage.Address() != storage.LocalStorageAddress {
+			localStagesStorage, err := storage.NewStagesStorage(storage.LocalStorageAddress, containerRuntime, storage.StagesStorageOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("unable to create local secondary stages storage: %s", err)
+			}
+			res = append(res, localStagesStorage)
 		}
-		res = append(res, localStagesStorage)
 	}
 
 	for _, address := range GetSecondaryStagesStorage(cmdData) {
@@ -1232,6 +1260,10 @@ func GetCacheStagesStorage(cmdData *CmdData) []string {
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 	return append(PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+}
+
+func getAddCustomTag(cmdData *CmdData) []string {
+	return append(PredefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
 }
 
 func GetSet(cmdData *CmdData) []string {

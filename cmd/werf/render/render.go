@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -18,12 +19,10 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -55,7 +54,9 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -64,7 +65,7 @@ func NewCmd() *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(runRender)
+			return common.LogRunningTime(func() error { return runRender(ctx) })
 		},
 	}
 
@@ -115,6 +116,7 @@ func NewCmd() *cobra.Command {
 	common.SetupReportPath(&commonCmdData, cmd)
 	common.SetupReportFormat(&commonCmdData, cmd)
 
+	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
 	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
@@ -132,12 +134,16 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runRender() error {
-	ctx := common.BackgroundContext()
-
+func runRender(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
+
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
@@ -159,16 +165,6 @@ func runRender() error {
 	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
-
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
 
 	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
 	if err != nil {
@@ -225,7 +221,7 @@ func runRender() error {
 		return err
 	}
 
-	buildOptions, err := common.GetBuildOptions(&commonCmdData, werfConfig)
+	buildOptions, err := common.GetBuildOptions(&commonCmdData, giterminismManager, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -241,11 +237,10 @@ func runRender() error {
 		stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
 
 		if stagesStorageAddress != storage.LocalStorageAddress {
-			if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+			if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 				return err
 			}
 
-			containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 			stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 			if err != nil {
 				return err
@@ -289,7 +284,12 @@ func runRender() error {
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 				if *commonCmdData.SkipBuild {
-					if err := c.ShouldBeBuilt(ctx); err != nil {
+					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
+					if err != nil {
+						return err
+					}
+
+					if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
 						return err
 					}
 				} else {
@@ -339,6 +339,11 @@ func runRender() error {
 		return err
 	}
 
+	useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
+	if err != nil {
+		return err
+	}
+
 	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
@@ -346,6 +351,7 @@ func runRender() error {
 		StubImagesNames:          stubImagesNames,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
+		CustomTagFunc:            useCustomTagFunc,
 	}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else {

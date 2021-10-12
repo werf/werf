@@ -16,6 +16,7 @@ type Info struct {
 	Tag        string `json:"tag"`
 	RepoDigest string `json:"repoDigest"`
 
+	OnBuild           []string          `json:"onBuild"`
 	ID                string            `json:"ID"`
 	ParentID          string            `json:"parentID"`
 	Labels            map[string]string `json:"labels"`
@@ -49,6 +50,7 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
 		Repository:        repository,
 		Tag:               tag,
 		Labels:            inspect.Config.Labels,
+		OnBuild:           inspect.Config.OnBuild,
 		CreatedAtUnixNano: MustParseTimestampString(inspect.Created).UnixNano(),
 		RepoDigest:        repoDigest,
 		ID:                inspect.ID,

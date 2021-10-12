@@ -33,15 +33,21 @@ type StagesStorage interface {
 	ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string) error
 	DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error
 
+	AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error
+	CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error
+	DeleteStageCustomTag(ctx context.Context, tag string) error
+	GetStageCustomTagMetadataIDs(ctx context.Context) ([]string, error)
+	GetStageCustomTagMetadata(ctx context.Context, tagOrID string) (*CustomTagMetadata, error)
+
 	RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error
 
 	ConstructStageImageName(projectName, digest string, uniqueID int64) string
 
 	// FetchImage will create a local image in the container-runtime
-	FetchImage(ctx context.Context, img container_runtime.Image) error
+	FetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) error
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
-	StoreImage(ctx context.Context, img container_runtime.Image) error
-	ShouldFetchImage(ctx context.Context, img container_runtime.Image) (bool, error)
+	StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error
+	ShouldFetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) (bool, error)
 
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error
@@ -86,7 +92,7 @@ type StagesStorageOptions struct {
 
 func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, options StagesStorageOptions) (StagesStorage, error) {
 	if stagesStorageAddress == LocalStorageAddress {
-		return NewLocalDockerServerStagesStorage(containerRuntime.(*container_runtime.LocalDockerServerRuntime)), nil
+		return NewDockerServerStagesStorage(containerRuntime.(*container_runtime.DockerServerRuntime)), nil
 	} else { // Docker registry based stages storage
 		return NewRepoStagesStorage(stagesStorageAddress, containerRuntime, options.RepoStagesStorageOptions)
 	}

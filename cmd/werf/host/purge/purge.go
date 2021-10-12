@@ -1,6 +1,7 @@
 package reset
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -9,8 +10,6 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/host_cleaning"
@@ -43,7 +42,9 @@ The data include:
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			ctx := common.BackgroundContext()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -51,7 +52,7 @@ WARNING: Do not run this command during any other werf command is working on the
 			}
 			common.LogVersion()
 
-			return common.LogRunningTime(runReset)
+			return common.LogRunningTime(func() error { return runReset(ctx) })
 		},
 	}
 
@@ -74,12 +75,16 @@ WARNING: Do not run this command during any other werf command is working on the
 	return cmd
 }
 
-func runReset() error {
-	ctx := common.BackgroundContext()
-
+func runReset(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
+
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
@@ -94,16 +99,6 @@ func runReset() error {
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
 	projectName := *commonCmdData.ProjectName
 	if projectName == "" {
 		logboek.LogOptionalLn()
@@ -112,7 +107,6 @@ func runReset() error {
 			return err
 		}
 	} else {
-		containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 		stagesStorage, err := common.GetLocalStagesStorage(containerRuntime)
 		if err != nil {
 			return err
@@ -137,7 +131,7 @@ func runReset() error {
 		}
 
 		logboek.LogOptionalLn()
-		if err := cleaning.Purge(ctx, projectName, storageManager, storageLockManager, purgeOptions); err != nil {
+		if err := cleaning.Purge(ctx, projectName, storageManager, purgeOptions); err != nil {
 			return err
 		}
 	}

@@ -3,6 +3,7 @@ package docker
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -25,6 +26,8 @@ var (
 	liveCliOutputEnabled bool
 	isDebug              bool
 	defaultCLi           command.Cli
+
+	DockerConfigDir string
 )
 
 const (
@@ -43,7 +46,11 @@ func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool, plat
 		os.Setenv("DOCKER_BUILDKIT", "1")
 	}
 
-	if dockerConfigDir != "" {
+	DockerConfigDir = dockerConfigDir
+
+	if dockerConfigDir == "" {
+		DockerConfigDir = filepath.Join(os.Getenv("HOME"), ".docker")
+	} else {
 		cliconfig.SetDir(dockerConfigDir)
 	}
 
@@ -166,6 +173,23 @@ func IsContext(ctx context.Context) bool {
 
 func SyncContextCliWithLogger(ctx context.Context) error {
 	return cli(ctx).Apply(defaultCliOptions(ctx)...)
+}
+
+func callCliWithProvidedOutput(ctx context.Context, stdoutWriter, stderrWriter io.Writer, commandCaller func(c command.Cli) error) error {
+	var errOutput bytes.Buffer
+
+	if err := cliWithCustomOptions(
+		ctx,
+		[]command.DockerCliOption{
+			command.WithOutputStream(stdoutWriter),
+			command.WithErrorStream(io.MultiWriter(stderrWriter, &errOutput)),
+		},
+		commandCaller,
+	); err != nil {
+		return fmt.Errorf("docker failed:\n%s\n---\n%s", errOutput.String(), err)
+	}
+
+	return nil
 }
 
 func callCliWithRecordedOutput(ctx context.Context, commandCaller func(c command.Cli) error) (string, error) {

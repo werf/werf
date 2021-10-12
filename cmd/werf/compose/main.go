@@ -8,14 +8,14 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/werf/werf/pkg/container_runtime"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -195,7 +195,7 @@ services:
 				return err
 			}
 
-			return runMain(composeCmdName, cmdData, commonCmdData, options.FollowSupport)
+			return runMain(ctx, composeCmdName, cmdData, commonCmdData, options.FollowSupport)
 		},
 	}
 
@@ -291,12 +291,16 @@ func checkDetachDockerComposeOption(cmdData composeCmdData) error {
 	return fmt.Errorf("the containers must be launched in the background (in follow mode): pass -d/--detach with --docker-compose-command-options option")
 }
 
-func runMain(dockerComposeCmdName string, cmdData composeCmdData, commonCmdData common.CmdData, followSupport bool) error {
-	ctx := common.BackgroundContext()
-
+func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCmdData, commonCmdData common.CmdData, followSupport bool) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
+
+	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	ctx = processCtx
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
@@ -319,17 +323,7 @@ func runMain(dockerComposeCmdName string, cmdData composeCmdData, commonCmdData 
 		return err
 	}
 
-	if err := docker.Init(ctx, *commonCmdData.DockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return err
-	}
-
-	ctxWithDockerCli, err := docker.NewContext(ctx)
-	if err != nil {
-		return err
-	}
-	ctx = ctxWithDockerCli
-
-	if err := common.DockerRegistryInit(ctxWithDockerCli, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
 		return err
 	}
 
@@ -362,10 +356,10 @@ func runMain(dockerComposeCmdName string, cmdData composeCmdData, commonCmdData 
 		}
 
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
-			return run(ctx, headCommitGiterminismManager, commonCmdData, cmdData, dockerComposeCmdName)
+			return run(ctx, containerRuntime, headCommitGiterminismManager, commonCmdData, cmdData, dockerComposeCmdName)
 		})
 	} else {
-		if err := run(ctx, giterminismManager, commonCmdData, cmdData, dockerComposeCmdName); err != nil {
+		if err := run(ctx, containerRuntime, giterminismManager, commonCmdData, cmdData, dockerComposeCmdName); err != nil {
 			// TODO: use docker cli StatusError after switching on docker compose command
 			if exitErr, ok := err.(*exec.ExitError); ok {
 				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
@@ -380,7 +374,7 @@ func runMain(dockerComposeCmdName string, cmdData composeCmdData, commonCmdData 
 	}
 }
 
-func run(ctx context.Context, giterminismManager giterminism_manager.Interface, commonCmdData common.CmdData, cmdData composeCmdData, dockerComposeCmdName string) error {
+func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntime, giterminismManager giterminism_manager.Interface, commonCmdData common.CmdData, cmdData composeCmdData, dockerComposeCmdName string) error {
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
@@ -401,7 +395,6 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
-	containerRuntime := &container_runtime.LocalDockerServerRuntime{} // TODO
 	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
 	if err != nil {
 		return err
@@ -441,7 +434,7 @@ func run(ctx context.Context, giterminismManager giterminism_manager.Interface, 
 	var envArray []string
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 		if *commonCmdData.SkipBuild {
-			if err := c.ShouldBeBuilt(ctx); err != nil {
+			if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
 				return err
 			}
 		} else {

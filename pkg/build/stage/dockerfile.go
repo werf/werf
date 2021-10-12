@@ -48,8 +48,9 @@ type DockerfileStage struct {
 	*BaseStage
 }
 
-func NewDockerRunArgs(dockerfilePath, target, context string, contextAddFiles []string, buildArgs map[string]interface{}, addHost []string, network, ssh string) *DockerRunArgs {
+func NewDockerRunArgs(dockerfile []byte, dockerfilePath, target, context string, contextAddFiles []string, buildArgs map[string]interface{}, addHost []string, network, ssh string) *DockerRunArgs {
 	return &DockerRunArgs{
+		dockerfile:      dockerfile,
 		dockerfilePath:  dockerfilePath,
 		target:          target,
 		context:         context,
@@ -62,6 +63,7 @@ func NewDockerRunArgs(dockerfilePath, target, context string, contextAddFiles []
 }
 
 type DockerRunArgs struct {
+	dockerfile      []byte
 	dockerfilePath  string
 	target          string
 	context         string
@@ -263,9 +265,7 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *DockerfileStage) FetchDependencies(ctx context.Context, _ Conveyor, cr container_runtime.ContainerRuntime) error {
-	containerRuntime := cr.(*container_runtime.LocalDockerServerRuntime)
-
+func (s *DockerfileStage) FetchDependencies(ctx context.Context, _ Conveyor, containerRuntime container_runtime.ContainerRuntime) error {
 outerLoop:
 	for ind, stage := range s.dockerStages {
 		for relatedStageIndex, relatedStage := range s.dockerStages {
@@ -289,16 +289,16 @@ outerLoop:
 		}
 
 		getBaseImageOnBuildLocally := func() ([]string, error) {
-			inspect, err := containerRuntime.GetImageInspect(ctx, resolvedBaseName)
+			info, err := containerRuntime.GetImageInfo(ctx, resolvedBaseName)
 			if err != nil {
 				return nil, err
 			}
 
-			if inspect == nil {
+			if info == nil {
 				return nil, imageNotExistLocally
 			}
 
-			return inspect.Config.OnBuild, nil
+			return info.OnBuild, nil
 		}
 
 		getBaseImageOnBuildRemotely := func() ([]string, error) {
@@ -320,7 +320,7 @@ outerLoop:
 					logboek.Context(ctx).Warn().LogF("WARNING: Could not get base image manifest from local docker and from docker registry: %s\n", getRemotelyErr)
 					logboek.Context(ctx).Warn().LogLn("WARNING: The base image pulling is necessary for calculating digest of image correctly\n")
 					if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", resolvedBaseName).DoError(func() error {
-						return containerRuntime.PullImage(ctx, resolvedBaseName)
+						return containerRuntime.Pull(ctx, resolvedBaseName)
 					}); err != nil {
 						return err
 					}
@@ -346,7 +346,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 
 var imageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
-func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.ImageInterface) (string, error) {
+func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	var stagesDependencies [][]string
 	var stagesOnBuildDependencies [][]string
 
@@ -610,18 +610,22 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img container_runtime.ImageInterface) error {
+func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img container_runtime.LegacyImageInterface) error {
 	archivePath, err := s.prepareContextArchive(ctx, c.GiterminismManager())
 	if err != nil {
 		return err
 	}
 
-	img.DockerfileImageBuilder().AppendBuildArgs(s.DockerBuildArgs()...)
-	img.DockerfileImageBuilder().AppendBuildArgs(fmt.Sprintf("--label=%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
-	img.DockerfileImageBuilder().SetFilePathToStdin(archivePath)
+	if err := s.SetupDockerImageBuilder(img.DockerfileImageBuilder()); err != nil {
+		return err
+	}
+
+	img.DockerfileImageBuilder().SetContextArchivePath(archivePath)
+
+	img.DockerfileImageBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
 
 	if c.GiterminismManager().Dev() {
-		img.DockerfileImageBuilder().AppendBuildArgs(fmt.Sprintf("--label=%s=true", image.WerfDevLabel))
+		img.DockerfileImageBuilder().AppendLabels(fmt.Sprintf("%s=true", image.WerfDevLabel))
 	}
 
 	return nil
@@ -662,36 +666,33 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	return archivePath, nil
 }
 
-func (s *DockerfileStage) DockerBuildArgs() []string {
-	var result []string
-
-	if s.dockerfilePath != "" {
-		result = append(result, fmt.Sprintf("--file=%s", s.dockerfilePath))
-	}
+func (s *DockerfileStage) SetupDockerImageBuilder(b *container_runtime.DockerfileImageBuilder) error {
+	b.SetDockerfile(s.dockerfile)
+	b.SetDockerfileCtxRelPath(s.dockerfilePath)
 
 	if s.target != "" {
-		result = append(result, fmt.Sprintf("--target=%s", s.target))
+		b.SetTarget(s.target)
 	}
 
-	if len(s.buildArgs) != 0 {
+	if len(s.buildArgs) > 0 {
 		for key, value := range s.buildArgs {
-			result = append(result, fmt.Sprintf("--build-arg=%s=%v", key, value))
+			b.AppendBuildArgs(fmt.Sprintf("%s=%v", key, value))
 		}
 	}
 
-	for _, addHost := range s.addHost {
-		result = append(result, fmt.Sprintf("--add-host=%s", addHost))
+	if len(s.addHost) > 0 {
+		b.AppendAddHost(s.addHost...)
 	}
 
 	if s.network != "" {
-		result = append(result, fmt.Sprintf("--network=%s", s.network))
+		b.SetNetwork(s.network)
 	}
 
 	if s.ssh != "" {
-		result = append(result, fmt.Sprintf("--ssh=%s", s.ssh))
+		b.SetSSH(s.ssh)
 	}
 
-	return result
+	return nil
 }
 
 func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminismManager giterminism_manager.Interface, wildcards []string, dockerfileLine string) (string, error) {
