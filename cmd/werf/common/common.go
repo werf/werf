@@ -143,7 +143,7 @@ func GetLongCommandDescription(text string) string {
 
 func SetupSetDockerConfigJsonValue(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SetDockerConfigJsonValue = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SetDockerConfigJsonValue, "set-docker-config-json-value", "", GetBoolEnvironmentDefaultFalse(os.Getenv("WERF_SET_DOCKER_CONFIG_VALUE")), "Shortcut to set current docker config into the .Values.dockerconfigjson")
+	cmd.Flags().BoolVarP(cmdData.SetDockerConfigJsonValue, "set-docker-config-json-value", "", GetBoolEnvironmentDefaultFalse("WERF_SET_DOCKER_CONFIG_JSON_VALUE"), "Shortcut to set current docker config into the .Values.dockerconfigjson")
 }
 
 func SetupGitWorkTree(cmdData *CmdData, cmd *cobra.Command) {
@@ -1267,7 +1267,7 @@ func getAddCustomTag(cmdData *CmdData) []string {
 }
 
 func GetSet(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_VALUE"), *cmdData.Set...)
+	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"), *cmdData.Set...)
 }
 
 func GetSetString(cmdData *CmdData) []string {
