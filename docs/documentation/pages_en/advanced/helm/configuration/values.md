@@ -92,6 +92,8 @@ data:
 ```
 {% endraw %}
 
+**IMPORTANT** Current docker config may contain temporal login credentials created using temporal short-lived token (`CI_JOB_TOKEN` in GitLab for example) and in such case should not be used as `imagePullSecrets`, because registry will stop being available from inside Kubernetes as soon as the token is terminated.
+
 ## Service values
 
 Service values are set by the werf to pass additional data when rendering chart templates.
