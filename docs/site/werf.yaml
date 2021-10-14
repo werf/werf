@@ -119,3 +119,17 @@ import:
     add: /app/_site
     to: /app/root
     before: setup
+---
+image: tuf-router
+from: fabiocicerchia/nginx-lua:1.21-alpine@sha256:525aa8fd0ac9bf5c7e82cd83b3f8ebf620bedb0d0b1e52955745fd53917eb24c
+ansible:
+  install:
+  - copy:
+      content: |
+{{ .Files.Get ".werf/nginx-tuf-router.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
+  - copy:
+      content: |
+{{ .Files.Get ".werf/tuf-router.lua" | indent 8 }}
+      dest: /etc/nginx/tuf-router.lua
+
