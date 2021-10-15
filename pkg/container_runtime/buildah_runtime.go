@@ -22,7 +22,7 @@ func NewBuildahRuntime(buildah buildah.Buildah) *BuildahRuntime {
 }
 
 // GetImageInfo returns nil, nil if image not found.
-func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*image.Info, error) {
+func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	inspect, err := runtime.buildah.Inspect(ctx, ref)
 	if err != nil {
 		return nil, fmt.Errorf("error getting buildah inspect of %q: %s", ref, err)
@@ -47,7 +47,7 @@ func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string) (*i
 	}, nil
 }
 
-func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string) error {
+func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	return runtime.buildah.Rmi(ctx, ref, buildah.RmiOpts{
 		Force: true,
 		CommonOpts: buildah.CommonOpts{
@@ -56,7 +56,7 @@ func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string) error {
 	})
 }
 
-func (runtime *BuildahRuntime) Pull(ctx context.Context, ref string) error {
+func (runtime *BuildahRuntime) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	return runtime.buildah.Pull(ctx, ref, buildah.PullOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: logboek.Context(ctx).OutStream(),
@@ -64,7 +64,7 @@ func (runtime *BuildahRuntime) Pull(ctx context.Context, ref string) error {
 	})
 }
 
-func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string) error {
+func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
 	return runtime.buildah.Tag(ctx, ref, newRef, buildah.TagOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: logboek.Context(ctx).OutStream(),
@@ -72,7 +72,7 @@ func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string) erro
 	})
 }
 
-func (runtime *BuildahRuntime) Push(ctx context.Context, ref string) error {
+func (runtime *BuildahRuntime) Push(ctx context.Context, ref string, opts PushOpts) error {
 	return runtime.buildah.Push(ctx, ref, buildah.PushOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: logboek.Context(ctx).OutStream(),
@@ -80,7 +80,7 @@ func (runtime *BuildahRuntime) Push(ctx context.Context, ref string) error {
 	})
 }
 
-func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (string, error) {
+func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error) {
 	return runtime.buildah.BuildFromDockerfile(ctx, dockerfile, buildah.BuildFromDockerfileOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: logboek.Context(ctx).OutStream(),
@@ -90,7 +90,7 @@ func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile [
 }
 
 func (runtime *BuildahRuntime) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
-	if info, err := runtime.GetImageInfo(ctx, img.Name()); err != nil {
+	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
 		return err
 	} else {
 		img.SetInfo(info)
@@ -99,11 +99,11 @@ func (runtime *BuildahRuntime) RefreshImageObject(ctx context.Context, img Legac
 }
 
 func (runtime *BuildahRuntime) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
-	if err := runtime.Pull(ctx, img.Name()); err != nil {
+	if err := runtime.Pull(ctx, img.Name(), PullOpts{}); err != nil {
 		return fmt.Errorf("unable to pull image %s: %s", img.Name(), err)
 	}
 
-	if info, err := runtime.GetImageInfo(ctx, img.Name()); err != nil {
+	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
 		return fmt.Errorf("unable to get inspect of image %s: %s", img.Name(), err)
 	} else {
 		img.SetInfo(info)
@@ -114,7 +114,7 @@ func (runtime *BuildahRuntime) PullImageFromRegistry(ctx context.Context, img Le
 
 func (runtime *BuildahRuntime) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging image %s by name %s", img.Name(), newImageName)).DoError(func() error {
-		if err := runtime.Tag(ctx, img.Name(), newImageName); err != nil {
+		if err := runtime.Tag(ctx, img.Name(), newImageName, TagOpts{}); err != nil {
 			return fmt.Errorf("unable to tag image %s by name %s: %s", img.Name(), newImageName, err)
 		}
 		return nil
@@ -124,7 +124,7 @@ func (runtime *BuildahRuntime) RenameImage(ctx context.Context, img LegacyImageI
 
 	if removeOldName {
 		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing old image tag %s", img.Name())).DoError(func() error {
-			if err := runtime.Rmi(ctx, img.Name()); err != nil {
+			if err := runtime.Rmi(ctx, img.Name(), RmiOpts{}); err != nil {
 				return fmt.Errorf("unable to remove image %q: %s", img.Name(), err)
 			}
 			return nil
@@ -135,7 +135,7 @@ func (runtime *BuildahRuntime) RenameImage(ctx context.Context, img LegacyImageI
 
 	img.SetName(newImageName)
 
-	if info, err := runtime.GetImageInfo(ctx, img.Name()); err != nil {
+	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
 		return err
 	} else {
 		img.SetInfo(info)
@@ -152,7 +152,7 @@ func (runtime *BuildahRuntime) RenameImage(ctx context.Context, img LegacyImageI
 
 func (runtime *BuildahRuntime) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
-		if err := runtime.Rmi(ctx, img.Name()); err != nil {
+		if err := runtime.Rmi(ctx, img.Name(), RmiOpts{}); err != nil {
 			return fmt.Errorf("unable to remove image %q: %s", img.Name(), err)
 		}
 		return nil

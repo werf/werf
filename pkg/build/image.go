@@ -143,7 +143,7 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 	case ImageFromRegistryAsBaseImage:
 		containerRuntime := c.ContainerRuntime
 
-		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name()); err != nil {
+		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name(), container_runtime.GetImageInfoOpts{}); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
 		} else if info != nil {
 			// TODO: do not use container_runtime.LegacyStageImage for base image
@@ -174,7 +174,7 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 			return err
 		}
 
-		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name()); err != nil {
+		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name(), container_runtime.GetImageInfoOpts{}); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
 		} else if info == nil {
 			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name())

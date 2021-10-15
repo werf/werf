@@ -289,7 +289,7 @@ outerLoop:
 		}
 
 		getBaseImageOnBuildLocally := func() ([]string, error) {
-			info, err := containerRuntime.GetImageInfo(ctx, resolvedBaseName)
+			info, err := containerRuntime.GetImageInfo(ctx, resolvedBaseName, container_runtime.GetImageInfoOpts{})
 			if err != nil {
 				return nil, err
 			}
@@ -320,7 +320,7 @@ outerLoop:
 					logboek.Context(ctx).Warn().LogF("WARNING: Could not get base image manifest from local docker and from docker registry: %s\n", getRemotelyErr)
 					logboek.Context(ctx).Warn().LogLn("WARNING: The base image pulling is necessary for calculating digest of image correctly\n")
 					if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", resolvedBaseName).DoError(func() error {
-						return containerRuntime.Pull(ctx, resolvedBaseName)
+						return containerRuntime.Pull(ctx, resolvedBaseName, container_runtime.PullOpts{})
 					}); err != nil {
 						return err
 					}

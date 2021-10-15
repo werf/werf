@@ -9,7 +9,7 @@ import (
 type DockerfileImageBuilder struct {
 	ContainerRuntime       ContainerRuntime
 	Dockerfile             []byte
-	BuildDockerfileOptions BuildDockerfileOptions
+	BuildDockerfileOptions BuildDockerfileOpts
 	ContextArchivePath     string
 
 	builtID string
@@ -50,7 +50,7 @@ func (b *DockerfileImageBuilder) Build(ctx context.Context) error {
 }
 
 func (b *DockerfileImageBuilder) Cleanup(ctx context.Context) error {
-	if err := b.ContainerRuntime.Rmi(ctx, b.builtID); err != nil {
+	if err := b.ContainerRuntime.Rmi(ctx, b.builtID, RmiOpts{}); err != nil {
 		return fmt.Errorf("unable to remove built dockerfile image %q: %s", b.builtID, err)
 	}
 	return nil

@@ -16,47 +16,47 @@ func NewPerfCheckContainerRuntime(containerRuntime ContainerRuntime) *PerfCheckC
 	return &PerfCheckContainerRuntime{ContainerRuntime: containerRuntime}
 }
 
-func (runtime *PerfCheckContainerRuntime) GetImageInfo(ctx context.Context, ref string) (resImg *image.Info, resErr error) {
+func (runtime *PerfCheckContainerRuntime) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (resImg *image.Info, resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerRuntime.GetImageInfo %q", ref).
 		Do(func() {
-			resImg, resErr = runtime.ContainerRuntime.GetImageInfo(ctx, ref)
+			resImg, resErr = runtime.ContainerRuntime.GetImageInfo(ctx, ref, opts)
 		})
 	return
 }
 
-func (runtime *PerfCheckContainerRuntime) Rmi(ctx context.Context, ref string) (resErr error) {
+func (runtime *PerfCheckContainerRuntime) Rmi(ctx context.Context, ref string, opts RmiOpts) (resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerRuntime.Rmi %q", ref).
 		Do(func() {
-			resErr = runtime.ContainerRuntime.Rmi(ctx, ref)
+			resErr = runtime.ContainerRuntime.Rmi(ctx, ref, opts)
 		})
 	return
 }
 
-func (runtime *PerfCheckContainerRuntime) Pull(ctx context.Context, ref string) (resErr error) {
+func (runtime *PerfCheckContainerRuntime) Pull(ctx context.Context, ref string, opts PullOpts) (resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerRuntime.Pull %q", ref).
 		Do(func() {
-			resErr = runtime.ContainerRuntime.Pull(ctx, ref)
+			resErr = runtime.ContainerRuntime.Pull(ctx, ref, opts)
 		})
 	return
 }
 
-func (runtime *PerfCheckContainerRuntime) Tag(ctx context.Context, ref, newRef string) (resErr error) {
+func (runtime *PerfCheckContainerRuntime) Tag(ctx context.Context, ref, newRef string, opts TagOpts) (resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerRuntime.Tag %q as %q", ref, newRef).
 		Do(func() {
-			resErr = runtime.ContainerRuntime.Tag(ctx, ref, newRef)
+			resErr = runtime.ContainerRuntime.Tag(ctx, ref, newRef, opts)
 		})
 	return
 }
 
-func (runtime *PerfCheckContainerRuntime) Push(ctx context.Context, ref string) (resErr error) {
+func (runtime *PerfCheckContainerRuntime) Push(ctx context.Context, ref string, opts PushOpts) (resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerRuntime.Push %q", ref).
 		Do(func() {
-			resErr = runtime.ContainerRuntime.Push(ctx, ref)
+			resErr = runtime.ContainerRuntime.Push(ctx, ref, opts)
 		})
 	return
 }
 
-func (runtime *PerfCheckContainerRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOptions) (resID string, resErr error) {
+func (runtime *PerfCheckContainerRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (resID string, resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerRuntime.BuildDockerfile").
 		Do(func() {
 			resID, resErr = runtime.ContainerRuntime.BuildDockerfile(ctx, dockerfile, opts)

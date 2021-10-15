@@ -114,7 +114,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options LegacyBuildOptions
 		}
 	}
 
-	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.MustGetBuiltId()); err != nil {
+	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.MustGetBuiltId(), GetImageInfoOpts{}); err != nil {
 		return err
 	} else {
 		i.SetInfo(info)
