@@ -18,4 +18,4 @@ groups:
     - name: beta
       version: 1.2.24
     - name: ea
-      version: 1.2.24
+      version: 1.2.27 # buildah
