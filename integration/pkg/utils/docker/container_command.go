@@ -44,6 +44,7 @@ func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string
 		"--volumes-from",
 		container,
 		"--rm",
+		"--entrypoint=",
 	}
 
 	dockerOptions = append(dockerOptions, extraDockerOptions...)
