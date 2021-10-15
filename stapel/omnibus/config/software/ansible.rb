@@ -2,6 +2,7 @@ name "ansible"
 
 ANSIBLE_GIT_TAG = "v2.7.15"
 
+dependency "libyaml"
 dependency "python"
 dependency "pip"
 

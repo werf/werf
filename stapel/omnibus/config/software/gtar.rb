@@ -45,19 +45,14 @@ build do
     configure_command << " --without-selinux"
   end
 
-  if nexus? || ios_xr?
-    # ios_xr and nexus don't support posix acls
+  if s390x?
+    # s390x doesn't support posix acls
     configure_command << " --without-posix-acls"
-  elsif osx?
-    # lovingly borrowed from the awesome Homebrew project, thank you!
-    # https://github.com/Homebrew/homebrew-core/blob/de3b1aeec9cc8d36f849b0ae959ee4b7f6610c1f/Formula/gnu-tar.rb
-    patch source: "gnutar-configure-xattrs.patch", env: env
-    env["gl_cv_func_getcwd_abort_bug"] = "no"
-  elsif aix?
-    # AIX has a gross patch that is required since xlc gets confused by too many #ifndefs
+  elsif aix? && version.satisfies?("< 1.32")
+    # xlc doesn't allow duplicate entries in case statements
     patch_env = env.dup
-    patch_env["PATH"] = "/opt/freeware/bin:#{env['PATH']}"
-    patch source: "aix_ifndef.patch", plevel: 0, env: patch_env
+    patch_env["PATH"] = "/opt/freeware/bin:#{env["PATH"]}"
+    patch source: "aix_extra_case.patch", plevel: 0, env: patch_env
   end
 
   command configure_command.join(" "), env: env

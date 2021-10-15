@@ -9,5 +9,8 @@ fi
 
 VERSION=$1
 
-docker tag flant/werf-stapel:dev flant/werf-stapel:$VERSION
-docker push flant/werf-stapel:$VERSION
+#docker tag ghcr.io/werf/stapel-base:dev ghcr.io/werf/stapel-base:$VERSION
+#docker push ghcr.io/werf/stapel-base:$VERSION
+
+docker tag ghcr.io/werf/stapel:dev ghcr.io/werf/stapel:$VERSION
+docker push ghcr.io/werf/stapel:$VERSION
