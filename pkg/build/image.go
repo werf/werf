@@ -186,9 +186,9 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 		}
 	case StageAsBaseImage:
 		// TODO: check no bug introduced
-		//if err := c.ContainerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: i.baseImage}); err != nil {
+		// if err := c.ContainerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: i.baseImage}); err != nil {
 		//	return err
-		//}
+		// }
 		if err := c.StorageManager.FetchStage(ctx, c.ContainerRuntime, i.stageAsBaseImage); err != nil {
 			return err
 		}
