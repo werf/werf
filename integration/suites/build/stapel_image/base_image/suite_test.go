@@ -56,7 +56,7 @@ var _ = SuiteData.AppendSynchronizedBeforeSuiteNode1Func(func() {
 })
 
 var _ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
-	SuiteData.Registry, SuiteData.RegistryContainerName = utilsDocker.LocalDockerRegistryRun()
+	SuiteData.Registry, _, SuiteData.RegistryContainerName = utilsDocker.LocalDockerRegistryRun()
 })
 
 var _ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func() {

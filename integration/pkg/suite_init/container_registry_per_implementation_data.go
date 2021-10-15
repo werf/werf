@@ -122,7 +122,7 @@ func NewContainerRegistryPerImplementationData(synchronizedSuiteCallbacksData *S
 func setupOptionalLocalContainerRegistry(synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData, data *ContainerRegistryPerImplementationData) {
 	implementationNameForWerf := "default"
 
-	localRegistryAddress, localRegistryContainerName := utilsDocker.LocalDockerRegistryRun()
+	localRegistryAddress, _, localRegistryContainerName := utilsDocker.LocalDockerRegistryRun()
 	registryAddress := localRegistryAddress
 
 	synchronizedSuiteCallbacksData.AppendSynchronizedAfterSuiteAllNodesFunc(func() {
