@@ -1,4 +1,4 @@
-docker_image: ghcr.io/werf/builder:a3f22ce24e321b1cc4a545a5e75a5979f273407a@sha256:b7b929d2304c71e07fa908df81b98a3ec9f1d7c195cba944710bf98df19fba83
-commands: 
+docker_image: ghcr.io/werf/builder:afd00fa1348645658b718df6b2b7447c6cead90b@sha256:829a6fd3d5850fc24366b5a3fb10402fe2d5615dcfd045b7225819c7a8ec5011
+commands:
  - scripts/build_release_v3.sh {{ .Tag }}
  - cp -a release-build/{{ .Tag }}/* /result
