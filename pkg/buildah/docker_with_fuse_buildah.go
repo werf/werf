@@ -141,7 +141,7 @@ func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []str
 
 	args := []string{"--rm"}
 	args = append(args, dockerArgs...)
-	args = append(args, buildahWithFuseDockerArgs(BuildahStorageContainerName)...)
+	args = append(args, BuildahWithFuseDockerArgs(BuildahStorageContainerName, docker.DockerConfigDir)...)
 	args = append(args, buildahArgs...)
 
 	if debug() {
@@ -186,13 +186,13 @@ func runStorageContainer(ctx context.Context, name, image string) error {
 	})
 }
 
-func buildahWithFuseDockerArgs(storageContainerName string) []string {
+func BuildahWithFuseDockerArgs(storageContainerName, dockerConfigDir string) []string {
 	return []string{
 		"--user", "1000",
 		"--device", "/dev/fuse",
 		"--security-opt", "seccomp=unconfined",
 		"--security-opt", "apparmor=unconfined",
-		"--volume", fmt.Sprintf("%s:%s", docker.DockerConfigDir, "/home/build/.docker"),
+		"--volume", fmt.Sprintf("%s:%s", dockerConfigDir, "/home/build/.docker"),
 		"--volumes-from", storageContainerName,
 		BuildahImage, "buildah",
 	}
