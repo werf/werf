@@ -88,7 +88,7 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 		var image string
 
 		if opts.CustomTagFunc != nil {
-			tag = opts.CustomTagFunc(imageInfoGetter.GetName())
+			tag = opts.CustomTagFunc(imageInfoGetter.GetWerfImageName())
 			image = strings.Join([]string{repo, tag}, ":")
 		} else {
 			tag = imageInfoGetter.GetTag()
