@@ -596,6 +596,8 @@ mv /tmp/UNICODE.so $TOOLS/lib/gconv
 
 RUN find $TOOLS/embedded/lib/python2.7 -name *.py[oc] | xargs rm
 
+RUN sed -i -e 's|if sys.version_info\[0\] == 2:|if False:|g' $TOOLS/embedded/lib/python2.7/site-packages/cryptography/__init__.py
+
 RUN mkdir /tmp/bin && \
 cp $TOOLS/bin/gpg* /tmp/bin && \
 cp $TOOLS/bin/gnutls* /tmp/bin && \
