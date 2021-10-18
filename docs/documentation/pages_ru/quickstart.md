@@ -112,7 +112,7 @@ werf version
 
 7. Разрешаем доступ в Container Registry без TLS для werf:
 
-   В терминале где будет запускаться werf установим переменную окружения `WERF_INSECURE_REGISTRY=1`.
+   В терминале, где будет запускаться werf, установим переменную окружения `WERF_INSECURE_REGISTRY=1`.
 
    Для cmd.exe:
 
@@ -242,7 +242,7 @@ werf version
 
 7. Разрешаем доступ в Container Registry без TLS для werf:
 
-   В терминале где будет запускаться werf установим переменную окружения `WERF_INSECURE_REGISTRY=1`. Для bash:
+   В терминале, где будет запускаться werf, установим переменную окружения `WERF_INSECURE_REGISTRY=1`. Для bash:
 
    ```shell
    export WERF_INSECURE_REGISTRY=1
@@ -369,7 +369,7 @@ werf version
 
 7. Разрешаем доступ в Container Registry без TLS для werf:
 
-   В терминале где будет запускаться werf установим переменную окружения `WERF_INSECURE_REGISTRY=1`.
+   В терминале, где будет запускаться werf, установим переменную окружения `WERF_INSECURE_REGISTRY=1`.
 
    Для bash:
 
