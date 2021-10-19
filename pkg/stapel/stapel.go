@@ -12,7 +12,7 @@ import (
 	"github.com/werf/werf/pkg/docker"
 )
 
-const VERSION = "0.7.1"
+const VERSION = "0.6.2"
 const IMAGE = "ghcr.io/werf/stapel"
 
 func getVersion() string {
