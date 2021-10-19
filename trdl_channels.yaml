@@ -14,8 +14,8 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.30+fix1 # custom tags
+      version: 1.2.30+fix2 # custom tags
     - name: beta
-      version: 1.2.30+fix1 # custom tags
+      version: 1.2.30+fix2 # custom tags
     - name: ea
       version: 1.2.27+fix2 # buildah
