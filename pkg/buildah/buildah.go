@@ -84,7 +84,8 @@ func ProcessStartupHook(mode Mode) (bool, error) {
 }
 
 type CommonBuildahOpts struct {
-	TmpDir string
+	TmpDir   string
+	Insecure bool
 }
 
 type NativeRootlessModeOpts struct{}

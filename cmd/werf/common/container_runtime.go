@@ -43,7 +43,12 @@ func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (contain
 			ctx = newCtx
 		}
 
-		b, err := buildah.NewBuildah(resolvedMode, buildah.BuildahOpts{})
+		insecure := *cmdData.InsecureRegistry || *cmdData.SkipTlsVerifyRegistry
+		b, err := buildah.NewBuildah(resolvedMode, buildah.BuildahOpts{
+			CommonBuildahOpts: buildah.CommonBuildahOpts{
+				Insecure: insecure,
+			},
+		})
 		if err != nil {
 			return nil, ctx, fmt.Errorf("unable to get buildah client: %s", err)
 		}

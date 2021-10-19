@@ -11,12 +11,18 @@ import (
 )
 
 type BaseBuildah struct {
-	TmpDir string
+	TmpDir   string
+	Insecure bool
 }
 
-func NewBaseBuildah(tmpDir string) (*BaseBuildah, error) {
+type BaseBuildahOpts struct {
+	Insecure bool
+}
+
+func NewBaseBuildah(tmpDir string, opts BaseBuildahOpts) (*BaseBuildah, error) {
 	b := &BaseBuildah{
-		TmpDir: tmpDir,
+		TmpDir:   tmpDir,
+		Insecure: opts.Insecure,
 	}
 
 	if err := os.MkdirAll(b.TmpDir, os.ModePerm); err != nil {
