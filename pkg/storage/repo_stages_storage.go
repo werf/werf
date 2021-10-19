@@ -498,12 +498,12 @@ func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_
 
 func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
 	if img.GetBuiltId() != "" {
-		if err := storage.ContainerRuntime.Tag(ctx, img.GetBuiltId(), img.Name()); err != nil {
+		if err := storage.ContainerRuntime.Tag(ctx, img.GetBuiltId(), img.Name(), container_runtime.TagOpts{}); err != nil {
 			return fmt.Errorf("unable to tag built image %q by %q: %s", img.GetBuiltId(), img.Name(), err)
 		}
 	}
 
-	if err := storage.ContainerRuntime.Push(ctx, img.Name()); err != nil {
+	if err := storage.ContainerRuntime.Push(ctx, img.Name(), container_runtime.PushOpts{}); err != nil {
 		return fmt.Errorf("unable to push image %q: %s", img.Name(), err)
 	}
 
@@ -511,7 +511,7 @@ func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_
 }
 
 func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) (bool, error) {
-	if info, err := storage.ContainerRuntime.GetImageInfo(ctx, img.Name()); err != nil {
+	if info, err := storage.ContainerRuntime.GetImageInfo(ctx, img.Name(), container_runtime.GetImageInfoOpts{}); err != nil {
 		return false, fmt.Errorf("unable to get inspect for image %s: %s", img.Name(), err)
 	} else if info != nil {
 		img.SetInfo(info)

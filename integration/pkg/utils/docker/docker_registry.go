@@ -9,7 +9,7 @@ import (
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
-func LocalDockerRegistryRun() (string, string) {
+func LocalDockerRegistryRun() (string, string, string) {
 	containerName := fmt.Sprintf("werf_test_docker_registry-%s", utils.GetRandomString(10))
 	imageName := "flant/werf-test:registry"
 
@@ -28,10 +28,15 @@ func LocalDockerRegistryRun() (string, string) {
 	err := CliRun(dockerCliRunArgs...)
 	Ω(err).ShouldNot(HaveOccurred(), "docker run "+strings.Join(dockerCliRunArgs, " "))
 
-	registry := fmt.Sprintf("localhost:%s", ContainerHostPort(containerName, "5000/tcp"))
-	registryWithScheme := fmt.Sprintf("http://%s", registry)
+	inspect := ContainerInspect(containerName)
+	Ω(inspect.NetworkSettings).ShouldNot(BeNil())
+	Ω(inspect.NetworkSettings.IPAddress).ShouldNot(BeEmpty())
+	registryInternalAddress := fmt.Sprintf("%s:%d", inspect.NetworkSettings.IPAddress, 5000)
+
+	registryLocalAddress := fmt.Sprintf("localhost:%s", ContainerHostPort(containerName, "5000/tcp"))
+	registryWithScheme := fmt.Sprintf("http://%s", registryLocalAddress)
 
 	utils.WaitTillHostReadyToRespond(registryWithScheme, utils.DefaultWaitTillHostReadyToRespondMaxAttempts)
 
-	return registry, containerName
+	return registryLocalAddress, registryInternalAddress, containerName
 }

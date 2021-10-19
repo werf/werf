@@ -31,7 +31,7 @@ func (i *legacyBaseImage) SetName(name string) {
 }
 
 func (i *legacyBaseImage) MustResetInfo(ctx context.Context) error {
-	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.Name()); err != nil {
+	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.Name(), GetImageInfoOpts{}); err != nil {
 		return fmt.Errorf("unable to get info for image %s: %s", i.Name(), err)
 	} else {
 		i.SetInfo(info)

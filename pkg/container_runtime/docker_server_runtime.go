@@ -20,7 +20,7 @@ func NewDockerServerRuntime() *DockerServerRuntime {
 	return &DockerServerRuntime{}
 }
 
-func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOptions) (string, error) {
+func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
 	switch {
 	case opts.ContextTar == nil:
 		panic(fmt.Sprintf("ContextTar can't be nil: %+v", opts))
@@ -66,7 +66,7 @@ func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byt
 	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, opts.ContextTar, cliArgs...)
 }
 
-func (runtime *DockerServerRuntime) GetImageInfo(ctx context.Context, ref string) (*image.Info, error) {
+func (runtime *DockerServerRuntime) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
 		return nil, nil
@@ -85,7 +85,7 @@ func (runtime *DockerServerRuntime) GetImageInspect(ctx context.Context, ref str
 }
 
 func (runtime *DockerServerRuntime) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
-	if info, err := runtime.GetImageInfo(ctx, img.Name()); err != nil {
+	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
 		return err
 	} else {
 		img.SetInfo(info)
@@ -116,7 +116,7 @@ func (runtime *DockerServerRuntime) RenameImage(ctx context.Context, img LegacyI
 
 	img.SetName(newImageName)
 
-	if info, err := runtime.GetImageInfo(ctx, img.Name()); err != nil {
+	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
 		return err
 	} else {
 		img.SetInfo(info)
@@ -135,7 +135,7 @@ func (runtime *DockerServerRuntime) RenameImage(ctx context.Context, img LegacyI
 
 func (runtime *DockerServerRuntime) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
 	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
-		return runtime.Rmi(ctx, img.Name())
+		return runtime.Rmi(ctx, img.Name(), RmiOpts{})
 	})
 }
 
@@ -144,7 +144,7 @@ func (runtime *DockerServerRuntime) PullImageFromRegistry(ctx context.Context, i
 		return fmt.Errorf("unable to pull image %s: %s", img.Name(), err)
 	}
 
-	if info, err := runtime.GetImageInfo(ctx, img.Name()); err != nil {
+	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
 		return fmt.Errorf("unable to get inspect of image %s: %s", img.Name(), err)
 	} else {
 		img.SetInfo(info)
@@ -153,22 +153,22 @@ func (runtime *DockerServerRuntime) PullImageFromRegistry(ctx context.Context, i
 	return nil
 }
 
-func (runtime *DockerServerRuntime) Tag(ctx context.Context, ref, newRef string) error {
+func (runtime *DockerServerRuntime) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
 	return docker.CliTag(ctx, ref, newRef)
 }
 
-func (runtime *DockerServerRuntime) Push(ctx context.Context, ref string) error {
+func (runtime *DockerServerRuntime) Push(ctx context.Context, ref string, opts PushOpts) error {
 	return docker.CliPushWithRetries(ctx, ref)
 }
 
-func (runtime *DockerServerRuntime) Pull(ctx context.Context, ref string) error {
+func (runtime *DockerServerRuntime) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	if err := docker.CliPull(ctx, ref); err != nil {
 		return fmt.Errorf("unable to pull image %s: %s", ref, err)
 	}
 	return nil
 }
 
-func (runtime *DockerServerRuntime) Rmi(ctx context.Context, ref string) error {
+func (runtime *DockerServerRuntime) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	return docker.CliRmi(ctx, ref, "--force")
 }
 

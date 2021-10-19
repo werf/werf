@@ -1,0 +1,11 @@
+project: werf-e2e-build-test
+configVersion: 1
+
+---
+image: dockerfile
+context: .
+dockerfile: Dockerfile
+target: result
+network: default
+args:
+  CHANGED_ARG: "was_changed"
