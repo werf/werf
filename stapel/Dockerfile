@@ -209,6 +209,16 @@ WORKDIR $LFS/sources/gcc/build
 RUN make
 RUN make DESTDIR=$LFS install
 RUN ln -sv gcc $TOOLS/bin/cc
+RUN for tool in $(ls /.werf/stapel/bin/ | grep $LFS_TGT) ; do ln -fs /.werf/stapel/bin/$tool /.werf/stapel/bin/$(echo $tool | sed -e "s|$LFS_TGT-||") ; done
+
+# libffi
+RUN echo "libffi" && cd $LFS/sources && \
+mkdir libffi && \
+tar xf libffi-*.tar.* -C libffi --strip-components 1
+WORKDIR $LFS/sources/libffi
+RUN ./configure --prefix=$TOOLS --disable-static --with-gcc-arch=native
+RUN make
+RUN make install
 
 ENV PATH=/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin
 RUN apt install -y libssl-dev autoconf automake libffi-dev libgdbm-dev libncurses5-dev libsqlite3-dev libtool libyaml-dev pkg-config sqlite3 zlib1g-dev libreadline-dev libssl-dev
@@ -222,7 +232,7 @@ WORKDIR /omnibus
 ENV BUNDLE_GEMFILE=/omnibus/Gemfile
 RUN source /etc/profile.d/rvm.sh && bundle install --without development
 
-ENV PATH=$TOOLS/x86_64-lfs-linux-gnu/bin:$TOOLS/bin:$PATH
+ENV PATH=$TOOLS/$LFS_TGT/bin:$TOOLS/bin:$PATH
 
 # Dpkg-architecture binary will make python-omnibus-package fail to build,
 # because of python setup.py, which hardcodes /usr/include/... into preceeding include paths,
@@ -230,14 +240,14 @@ ENV PATH=$TOOLS/x86_64-lfs-linux-gnu/bin:$TOOLS/bin:$PATH
 # It is needed to remove that binary before omnibus-building.
 RUN mv $(which dpkg-architecture) /tmp/dpkg-architecture
 
-RUN source /etc/profile.d/rvm.sh && bundle exec omnibus build -o append_timestamp:false werf-stapel
-
-ENV CC=$LFS_TGT-gcc
-ENV CXX=$LFS_TGT-g++
-ENV AR=$LFS_TGT-ar
-ENV RANLIB=$LFS_TGT-ranlib
+#ENV CC=$LFS_TGT-gcc
+#ENV CXX=$LFS_TGT-g++
+#ENV AR=$LFS_TGT-ar
+#ENV RANLIB=$LFS_TGT-ranlib
 ENV CC_FOR_TARGET=$LFS_TGT-gcc
 ENV PKG_CONFIG_PATH="/.werf/stapel/lib/pkgconfig:/.werf/stapel/embedded/lib/pkgconfig"
+
+RUN source /etc/profile.d/rvm.sh && bundle exec omnibus build -o append_timestamp:false werf-stapel
 
 ADD stapel/wget-list-after-omnibus $LFS/sources/wget-list-after-omnibus
 ADD stapel/wget-list-after-omnibus.md5sums $LFS/sources/wget-list-after-omnibus.md5sums
@@ -339,15 +349,6 @@ mkdir util-linux && \
 tar xf util-linux-*.tar.* -C util-linux --strip-components 1
 WORKDIR $LFS/sources/util-linux
 RUN ./configure --prefix=$TOOLS --without-python --disable-makeinstall-chown --without-systemdsystemunitdir PKG_CONFIG=""
-RUN make
-RUN make install
-
-# libffi
-RUN echo "libffi" && cd $LFS/sources && \
-mkdir libffi && \
-tar xf libffi-*.tar.* -C libffi --strip-components 1
-WORKDIR $LFS/sources/libffi
-RUN ./configure --prefix=$TOOLS --disable-static --with-gcc-arch=native
 RUN make
 RUN make install
 
