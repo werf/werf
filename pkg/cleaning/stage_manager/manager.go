@@ -148,6 +148,10 @@ func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageMa
 	var mutex sync.Mutex
 	stageIDCustomTagList = make(map[string][]string)
 	err = storageManager.ForEachGetStageCustomTagMetadata(ctx, stageCustomTagMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error {
+		if err != nil {
+			return err
+		}
+
 		mutex.Lock()
 		defer mutex.Unlock()
 
