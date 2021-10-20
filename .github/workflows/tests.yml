@@ -32,18 +32,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+#        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
 
       - name: Set up Go 1.17
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: 1.17
         id: go
 
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev
+        if: matrix.os == 'ubuntu-latest'
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -63,7 +65,7 @@ jobs:
     steps:
 
     - name: Set up Go 1.17
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v2
       with:
         go-version: 1.17
       id: go
@@ -129,7 +131,7 @@ jobs:
     steps:
 
     - name: Set up Go 1.17
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v2
       with:
         go-version: 1.17
       id: go
@@ -172,7 +174,7 @@ jobs:
     - name: Test
       run: |
         test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ./ginkgo -p -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ginkgo -p -keepGoing $test_binaries
       shell: bash
 
   integration_k8s_per_version_tests:
@@ -187,7 +189,7 @@ jobs:
     steps:
 
     - name: Set up Go 1.17
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v2
       with:
         go-version: 1.17
       id: go
@@ -229,7 +231,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration -type f -name '*.test')
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ./ginkgo -p -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ginkgo -p -keepGoing $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
@@ -289,7 +291,7 @@ jobs:
     steps:
 
     - name: Set up Go 1.17
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v2
       with:
         go-version: 1.17
       id: go
@@ -351,7 +353,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration -type f -name '*.test')
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ./ginkgo -p --flakeAttempts=3 -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ginkgo -p --flakeAttempts=3 -keepGoing $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
