@@ -6,9 +6,9 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/deploy/bundles/registry"
 
 	"github.com/werf/werf/pkg/deploy/helm"
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 )
@@ -21,10 +21,22 @@ func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*
 	}
 }
 
-func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, namespace string, commonCmdData *CmdData, registryClientHandle *helm_v3.RegistryClientHandle) (*action.Configuration, error) {
+func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*registry.Client, error) {
+	debug := logboek.Context(ctx).Debug().IsAccepted()
+	insecure := *commonCmdData.InsecureHelmDependencies
+	out := logboek.Context(ctx).OutStream()
+
+	return registry.NewClient(
+		registry.ClientOptDebug(debug),
+		registry.ClientOptInsecure(insecure),
+		registry.ClientOptWriter(out),
+	)
+}
+
+func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, namespace string, commonCmdData *CmdData, registryClient *helm_v3.RegistryClientHandle) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 
-	if err := helm.InitActionConfig(ctx, kubeInitializer, namespace, cmd_helm.Settings, registryClientHandle, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, kubeInitializer, namespace, helm_v3.Settings, registryClient, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{

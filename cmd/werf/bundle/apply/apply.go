@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/werf/werf/pkg/deploy/bundles"
+
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 
@@ -142,13 +144,18 @@ func runApply() error {
 
 	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
 
-	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
+	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}
 
+	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), *commonCmdData.Namespace, cmd_helm.Settings, registryClientHandle, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), *commonCmdData.Namespace, cmd_helm.Settings, helmRegistryClientHandle, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -161,34 +168,11 @@ func runApply() error {
 		return err
 	}
 
-	loader.GlobalLoadOptions = &loader.LoadOptions{}
-
-	// FIXME: support semver-pattern
-	bundleRef := fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag)
-
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
 	defer os.RemoveAll(bundleTmpDir)
 
-	if err := logboek.Context(ctx).LogProcess("Pulling bundle %q", bundleRef).DoError(func() error {
-		if cmd := cmd_helm.NewChartPullCmd(actionConfig, logboek.Context(ctx).OutStream()); cmd != nil {
-			if err := cmd.RunE(cmd, []string{bundleRef}); err != nil {
-				return fmt.Errorf("error saving bundle to the local chart helm cache: %s", err)
-			}
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	if err := logboek.Context(ctx).LogProcess("Exporting bundle %q", bundleRef).DoError(func() error {
-		if cmd := cmd_helm.NewChartExportCmd(actionConfig, logboek.Context(ctx).OutStream(), cmd_helm.ChartExportCmdOptions{Destination: bundleTmpDir}); cmd != nil {
-			if err := cmd.RunE(cmd, []string{bundleRef}); err != nil {
-				return fmt.Errorf("error pushing bundle %q: %s", bundleRef, err)
-			}
-		}
-		return nil
-	}); err != nil {
-		return err
+	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundleTmpDir, bundlesRegistryClient); err != nil {
+		return fmt.Errorf("unable to pull bundle: %s", err)
 	}
 
 	namespace := common.GetNamespace(&commonCmdData)
@@ -208,7 +192,7 @@ func runApply() error {
 		userExtraAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 	}
 
-	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, registryClientHandle, chart_extender.BundleOptions{
+	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, helmRegistryClientHandle, chart_extender.BundleOptions{
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 	})

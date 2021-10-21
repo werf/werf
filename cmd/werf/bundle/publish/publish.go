@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
+
+	"github.com/Masterminds/semver"
 
 	"helm.sh/helm/v3/pkg/getter"
 
@@ -15,12 +18,10 @@ import (
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 
-	"github.com/werf/werf/pkg/deploy/helm"
-
+	"github.com/werf/werf/pkg/deploy/bundles"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	cmd_helm "helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -320,12 +321,17 @@ func runPublish(ctx context.Context) error {
 		logboek.LogOptionalLn()
 	}
 
-	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
+	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to create helm registry client: %s", err)
+		return err
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, cmd_helm.Settings, registryClientHandle, chart_extender.WerfChartOptions{
+	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, cmd_helm.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 	})
@@ -362,49 +368,24 @@ func runPublish(ctx context.Context) error {
 		FileValues:   *commonCmdData.SetFile,
 	}
 
+	chartVersion := cmdData.Tag
+	if _, err := semver.NewVersion(chartVersion); err != nil {
+		chartVersion = fmt.Sprintf("0.0.0-%d-%s", time.Now().Unix(), chartVersion)
+	}
+
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
 	defer os.RemoveAll(bundleTmpDir)
 
 	p := getter.All(cmd_helm.Settings)
-	if vals, err := valueOpts.MergeValues(p, wc); err != nil {
+	vals, err := valueOpts.MergeValues(p, wc)
+	if err != nil {
 		return err
-	} else if bundle, err := wc.CreateNewBundle(ctx, bundleTmpDir, vals); err != nil {
-		return fmt.Errorf("unable to create bundle: %s", err)
-	} else {
-		loader.GlobalLoadOptions = &loader.LoadOptions{}
-
-		bundleRef := fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag)
-
-		if err := logboek.Context(ctx).LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
-			actionConfig := new(action.Configuration)
-			if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, registryClientHandle, actionConfig, helm.InitActionConfigOptions{}); err != nil {
-				return err
-			}
-
-			helmChartSaveCmd := cmd_helm.NewChartSaveCmd(actionConfig, logboek.Context(ctx).OutStream())
-			if err := helmChartSaveCmd.RunE(helmChartSaveCmd, []string{bundle.Dir, bundleRef}); err != nil {
-				return fmt.Errorf("error saving bundle to the local chart helm cache: %s", err)
-			}
-			return nil
-		}); err != nil {
-			return err
-		}
-
-		if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", bundleRef).DoError(func() error {
-			actionConfig := new(action.Configuration)
-			if err := helm.InitActionConfig(ctx, nil, "", cmd_helm.Settings, registryClientHandle, actionConfig, helm.InitActionConfigOptions{}); err != nil {
-				return err
-			}
-
-			helmChartPushCmd := cmd_helm.NewChartPushCmd(actionConfig, logboek.Context(ctx).OutStream())
-			if err := helmChartPushCmd.RunE(helmChartPushCmd, []string{bundleRef}); err != nil {
-				return fmt.Errorf("error pushing bundle %q: %s", bundleRef, err)
-			}
-			return nil
-		}); err != nil {
-			return err
-		}
 	}
 
-	return nil
+	bundle, err := wc.CreateNewBundle(ctx, bundleTmpDir, chartVersion, vals)
+	if err != nil {
+		return fmt.Errorf("unable to create bundle: %s", err)
+	}
+
+	return bundles.Publish(ctx, bundle, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlesRegistryClient)
 }

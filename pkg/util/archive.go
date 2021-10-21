@@ -209,45 +209,30 @@ func ExtractTar(tarFileReader io.Reader, dstDir string) error {
 	return nil
 }
 
-func ReadDirAsTar(dir string) io.Reader {
-	r, w := io.Pipe()
+func WriteDirAsTar(dir string, w io.Writer) error {
+	tarWriter := tar.NewWriter(w)
 
-	go func() {
-		tarWriter := tar.NewWriter(w)
+	err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("error accessing %q: %s", path, err)
+		}
 
-		err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
-			if err != nil {
-				return fmt.Errorf("error accessing %q: %s", path, err)
-			}
+		relPath, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
 
-			relPath, err := filepath.Rel(dir, path)
-			if err != nil {
-				return err
-			}
+		if debugArchiveUtil() {
+			fmt.Printf("filepath.Walk %q\n", relPath)
+		}
 
-			if info.Mode().IsDir() {
-				header := &tar.Header{
-					Name:     relPath,
-					Size:     info.Size(),
-					Mode:     int64(info.Mode()),
-					ModTime:  info.ModTime(),
-					Typeflag: tar.TypeDir,
-				}
-
-				err = tarWriter.WriteHeader(header)
-				if err != nil {
-					return fmt.Errorf("could not tar write header for %q: %s", path, err)
-				}
-
-				return nil
-			}
-
+		if info.Mode().IsDir() {
 			header := &tar.Header{
 				Name:     relPath,
 				Size:     info.Size(),
 				Mode:     int64(info.Mode()),
 				ModTime:  info.ModTime(),
-				Typeflag: tar.TypeReg,
+				Typeflag: tar.TypeDir,
 			}
 
 			err = tarWriter.WriteHeader(header)
@@ -255,34 +240,56 @@ func ReadDirAsTar(dir string) io.Reader {
 				return fmt.Errorf("could not tar write header for %q: %s", path, err)
 			}
 
-			file, err := os.Open(path)
-			if err != nil {
-				return fmt.Errorf("unable to open %q: %s", path, err)
-			}
-			defer file.Close()
-
-			_, err = io.Copy(tarWriter, file)
-			if err != nil {
-				return fmt.Errorf("unable to write %q into tar: %s", path, err)
+			if debugArchiveUtil() {
+				fmt.Printf("Written dir %q\n", relPath)
 			}
 
 			return nil
-		})
+		}
 
+		header := &tar.Header{
+			Name:     relPath,
+			Size:     info.Size(),
+			Mode:     int64(info.Mode()),
+			ModTime:  info.ModTime(),
+			Typeflag: tar.TypeReg,
+		}
+
+		err = tarWriter.WriteHeader(header)
 		if err != nil {
-			panic(err.Error())
+			return fmt.Errorf("could not tar write header for %q: %s", path, err)
 		}
 
-		if err := tarWriter.Close(); err != nil {
-			panic(err.Error())
+		file, err := os.Open(path)
+		if err != nil {
+			return fmt.Errorf("unable to open %q: %s", path, err)
 		}
 
-		if err := w.Close(); err != nil {
-			panic(err.Error())
+		n, err := io.Copy(tarWriter, file)
+		if err != nil {
+			return fmt.Errorf("unable to write %q into tar: %s", path, err)
 		}
-	}()
 
-	return r
+		if err := file.Close(); err != nil {
+			return fmt.Errorf("unable to close %q: %s", path, err)
+		}
+
+		if debugArchiveUtil() {
+			fmt.Printf("Written file %q (%d bytes)\n", relPath, n)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if err := tarWriter.Close(); err != nil {
+		return fmt.Errorf("unable to close tar writer: %s", err)
+	}
+
+	return nil
 }
 
 func debugArchiveUtil() bool {
