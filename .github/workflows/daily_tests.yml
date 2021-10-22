@@ -772,7 +772,7 @@ jobs:
           sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/werf/werf/cmd/werf/main.go|g' {} +
 
         coverage_files=$(find $WERF_TEST_COVERAGE_DIR -name '*.out')
-        ./gocovmerge ${coverage_files[@]} > coverage.out
+        gocovmerge ${coverage_files[@]} > coverage.out
 
     - name: Format and upload
       run: |
