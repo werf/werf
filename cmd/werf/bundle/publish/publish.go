@@ -244,6 +244,11 @@ func runPublish(ctx context.Context) error {
 		return err
 	}
 
+	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+		return err
+	}
+
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepository string
 
