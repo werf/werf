@@ -14,8 +14,8 @@ sitemap_include: false
 	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
 >
 	<channel>
-		<title>Events on {{ group }} {{ channel }} werf update channel</title>
-		<description>werf version changes events on the update channel {{ group }} {{ channel }}.</description>
+		<title>Events on {{ group }} {{ channel }} werf release channel</title>
+		<description>werf version changes events on the release channel {{ group }} {{ channel }}.</description>
 		<sy:updatePeriod>daily</sy:updatePeriod>
 		<sy:updateFrequency>1</sy:updateFrequency>
 		<link>{{ site.url }}/releases.html</link>
@@ -24,7 +24,7 @@ sitemap_include: false
 		{%- for event in group_events limit:feed_items %}
       {%- assign event_info = site.data.releases.releases | where: "tag_name", event.version | first %}
 			<item>
-				<title>{{ event.version }} on update channel {{ event.group }}/{{ event.name }}</title>
+				<title>{{ event.version }} on release channel {{ event.group }}/{{ event.name }}</title>
 				<description></description>
 				<pubDate>{{ event.ts | date_to_rfc822 }}</pubDate>
 				<link>{{ event_info.html_url }}</link>

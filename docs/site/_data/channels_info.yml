@@ -6,7 +6,7 @@ channels:
       en: These releases can bring new features, but are unstable. We do not guarantee backward compatibility between <b>Alpha</b> releases.
       ru: Версии этого канала обновлений могут содержать новые возможности, а также быть нестабильными, иметь ошибки. Мы не гарантируем обратную совместимость между версиями канала обновлений <b>Alpha</b>.
     tooltip:
-      en: Least stable update channel
+      en: Least stable release channel
       ru: Наименее стабильный канал обновлений
   - name: beta
     stability: 1
