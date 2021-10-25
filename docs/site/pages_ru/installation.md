@@ -39,7 +39,7 @@ arch:
       </div>
     </div><!-- /selector -->
     <div class="installation-selector">
-      <div class="installation-selector__title">Канал стабильности</div>
+      <div class="installation-selector__title">Канал обновлений</div>
       <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
           data-install-tab-group="channel" data-install-tab="rock-solid">Rock-Solid</a>
@@ -203,9 +203,9 @@ arch:
   </div>
 
   <div class="installation-channels">
-    <h2 class="installation-channels__title" id="все-изменения-в-werf-проходят-через-цепочку-каналов-стабильности">
+    <h2 class="installation-channels__title" id="все-изменения-в-werf-проходят-через-цепочку-каналов-обновлений">
       Все изменения в werf<br>
-      проходят через цепочку каналов стабильности
+      проходят через цепочку каналов обновлений
     </h2>
     <ul class="installation-channels__channels">
       <li class="installation-channels__channel">
@@ -261,12 +261,12 @@ arch:
     </ul>
     <div class="installation-channels__info">
       <div class="installation-channels__info-versions">
-        <p>При использовании каналов стабильности не требуется указывать конкретную версию, т.к. конкретную версию активирует trdl, выступая в роли менеджера версий. Это позволяет автоматически и непрерывно получать как исправления проблем, так и новые возможности, оперативно откатывать проблемные изменения. В целом такая схема даёт баланс между достаточно высоким уровнем стабильности софта и быстрой разработкой новых возможностей.</p>
-        <p>Связи между каналом стабильности и конкретной версией werf описываются в специально файле <a href="https://raw.githubusercontent.com/werf/werf/multiwerf/trdl_channels.yaml">trdl_channels.yaml</a>.</p>
+        <p>При использовании каналов обновлений не требуется указывать конкретную версию, т.к. конкретную версию активирует trdl, выступая в роли менеджера версий. Это позволяет автоматически и непрерывно получать как исправления проблем, так и новые возможности, оперативно откатывать проблемные изменения. В целом такая схема даёт баланс между достаточно высоким уровнем стабильности софта и быстрой разработкой новых возможностей.</p>
+        <p>Связи между каналом обновлений и конкретной версией werf описываются в специальном файле <a href="https://raw.githubusercontent.com/werf/werf/multiwerf/trdl_channels.yaml">trdl_channels.yaml</a>.</p>
       </div>
       <div class="installation-channels__info-guarantees">
         <div class="installation-channels__info-guarantee">
-          <strong>Мы гарантируем</strong>, что релиз из канал <i>Early-Access</i> попадёт в канал <i>Stable</i> не раньше, чем через 1 неделю после внутреннего тестирования.
+          <strong>Мы гарантируем</strong>, что релиз из канала <i>Early-Access</i> попадёт в канал <i>Stable</i> не раньше, чем через 1 неделю после внутреннего тестирования.
         </div>
         <div class="installation-channels__info-guarantee">
           <strong>Мы гарантируем</strong>, что релиз из канала <i>Stable</i> должен попасть в канал <i>Rock-Solid</i> не раньше, чем через 2 недели активного тестирования.
@@ -298,7 +298,7 @@ arch:
   {%- for group in groups %}
   <div id="group-{{group}}" class="tabs__content tabs__content_simple tabs__group__content{% if group == groups[0] %} active{% endif %}">
       <div class="installation-releases__block-subtitle">
-          Уровень стабильности
+          Канал обновлений
       </div>
       <div class="tabs tabs_simple_condensed">
         {%- assign not_activated = true %}

@@ -203,9 +203,9 @@ arch:
   </div>
 
   <div class="installation-channels">
-    <h2 class="installation-channels__title" id="all-changes-in-werf-go-through-all-stability-channels">
+    <h2 class="installation-channels__title" id="all-changes-in-werf-go-through-all-release-channels">
       All changes in werf<br>
-      go through all stability channels
+      go through all release channels
     </h2>
     <ul class="installation-channels__channels">
       <li class="installation-channels__channel">

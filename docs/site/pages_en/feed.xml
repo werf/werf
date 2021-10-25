@@ -11,7 +11,7 @@ permalink: /feed.xml
 >
   <channel>
     <title>Werf update events</title>
-    <description>Werf version changes events on any of the update channels.</description>
+    <description>Werf version changes events on any of the release channels.</description>
     <sy:updatePeriod>daily</sy:updatePeriod>
     <sy:updateFrequency>1</sy:updateFrequency>
     <link>{{ site.url }}/releases.html</link>
