@@ -48,12 +48,12 @@ spec:
               path: /health
               port: 8080
           volumeMounts:
-            - name: multiwerf
-              mountPath: /app/multiwerf
+            - name: trdl-data
+              mountPath: /app/trdl
       volumes:
-        - name: multiwerf
+        - name: trdl-data
           configMap:
-            name: multiwerf-data
+            name: trdl-data
 ---
 apiVersion: v1
 kind: Service
@@ -95,9 +95,9 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: multiwerf-data
+  name: trdl-data
 data:
-  # It is needed if deploying to empty environment
-  multiwerf.json: |
-    {{ $.Files.Get "multiwerf-dev.json" | fromJson| toJson }}
+  # New source
+  trdl_channels.yaml: |
+{{ $.Files.Get "trdl_channels-dev.yaml" | indent 4 }}
 {{- end }}

@@ -3,10 +3,16 @@ version: "3.9"
 services:
   site:
     image: $WERF_WEB_BACKEND_DOCKER_IMAGE_NAME
-    command: "/app/server"
+    command: "dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient --log exec ./server"
     environment:
       WERF_LOG_VERBOSE: "on"
       LOG_LEVEL: "trace"
+    cap_add:
+      - ALL
+    security_opt:
+      - apparmor:unconfined
+    ports:
+      - "2345:2345"
     volumes:
       - ".helm/multiwerf-dev.json:/app/multiwerf/multiwerf.json:ro"
       - ".helm/trdl_channels-dev.yaml:/app/trdl/trdl_channels.yaml:ro"

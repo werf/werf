@@ -82,15 +82,25 @@ git:
     install: ['site/Gemfile','site/Gemfile.lock']
     beforeSetup: '**/*'
 ---
-artifact: web-backend-artifact
-from: golang:1.16
+image: web-backend
+from: golang:1.15
 fromCacheVersion: 20210318
+docker:
+  WORKDIR: /app
 ansible:
   install:
+    - apt:
+        name: ['git','curl', 'jq', 'vim']
+        state: present
+        update_cache: yes
     - name: Build apis
       shell: |
+        apt update && apt install -yq git curl jq
         go get -d -v ./
-        go build -ldflags "-w -s" -v -o /go/src/app/server /go/src/app/
+        go get github.com/go-delve/delve/cmd/dlv
+  setup:
+    - shell: |
+        go build -gcflags "all=-N -l" -v -o /app/server /go/src/app
       args:
         executable: /bin/bash
         chdir: /go/src/app
@@ -99,22 +109,7 @@ git:
     to: /go/src/app
     stageDependencies:
       install: '**/*'
----
-image: web-backend
-docker:
-  WORKDIR: /app
-from: ubuntu:20.04
-ansible:
-  install:
-    - apt:
-        name: ['git','curl', 'jq', 'vim']
-        state: present
-        update_cache: yes
 import:
-  - artifact: web-backend-artifact
-    add: /go/src/app/server
-    to: /app/server
-    before: setup
   - artifact: asset
     add: /app/_site
     to: /app/root

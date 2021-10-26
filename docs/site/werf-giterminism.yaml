@@ -7,3 +7,4 @@ config:
       - .werf/artifacts/releases_history.json
       - .werf/artifacts/channels_versions.json
       - .werf/artifacts/feeds.tgz.base64
+      - backend/trdl/trdl_channels.yaml
