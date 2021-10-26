@@ -52,8 +52,16 @@ func (wc *WerfChartStub) SetupSecretValueFiles(secretValueFiles []string) {
 	wc.SecretValueFiles = secretValueFiles
 }
 
-func (wc *WerfChartStub) GetPostRenderer() (postrender.PostRenderer, error) {
-	return wc.extraAnnotationsAndLabelsPostRenderer, nil
+func (wc *WerfChartStub) ChainPostRenderer(postRenderer postrender.PostRenderer) postrender.PostRenderer {
+	var chain []postrender.PostRenderer
+
+	if postRenderer != nil {
+		chain = append(chain, postRenderer)
+	}
+
+	chain = append(chain, wc.extraAnnotationsAndLabelsPostRenderer)
+
+	return helm.NewPostRendererChain(chain...)
 }
 
 // ChartCreated method for the chart.Extender interface

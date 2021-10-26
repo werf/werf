@@ -11,6 +11,8 @@ import (
 	"strings"
 	"text/template"
 
+	"helm.sh/helm/v3/pkg/postrender"
+
 	"github.com/mitchellh/copystructure"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 
@@ -226,8 +228,16 @@ func (wc *WerfChart) ReadFile(filePath string) (bool, []byte, error) {
 	return true, res, err
 }
 
-func (wc *WerfChart) GetPostRenderer() (*helm.ExtraAnnotationsAndLabelsPostRenderer, error) {
-	return wc.extraAnnotationsAndLabelsPostRenderer, nil
+func (wc *WerfChart) ChainPostRenderer(postRenderer postrender.PostRenderer) postrender.PostRenderer {
+	var chain []postrender.PostRenderer
+
+	if postRenderer != nil {
+		chain = append(chain, postRenderer)
+	}
+
+	chain = append(chain, wc.extraAnnotationsAndLabelsPostRenderer)
+
+	return helm.NewPostRendererChain(chain...)
 }
 
 func (wc *WerfChart) SetWerfConfig(werfConfig *config.WerfConfig) error {
@@ -366,5 +376,5 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputV
 		}
 	}
 
-	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClientHandle, BundleOptions{BuildChartDependenciesOpts: wc.BuildChartDependenciesOpts}), nil
+	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClientHandle, BundleOptions{BuildChartDependenciesOpts: wc.BuildChartDependenciesOpts})
 }

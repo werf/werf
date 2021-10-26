@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"helm.sh/helm/v3/pkg/postrender"
+
 	"github.com/werf/logboek"
 	"sigs.k8s.io/yaml"
 
@@ -29,10 +31,12 @@ import (
 
 type BundleOptions struct {
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
+	ExtraAnnotations           map[string]string
+	ExtraLabels                map[string]string
 }
 
-func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, opts BundleOptions) *Bundle {
-	return &Bundle{
+func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, opts BundleOptions) (*Bundle, error) {
+	bundle := &Bundle{
 		Dir:                            dir,
 		HelmEnvSettings:                helmEnvSettings,
 		RegistryClientHandle:           registryClientHandle,
@@ -40,6 +44,26 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
 	}
+
+	extraAnnotationsAndLabelsPostRenderer := helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil)
+
+	if dataMap, err := readBundleJsonMap(filepath.Join(bundle.Dir, "extra_annotations.json")); err != nil {
+		return nil, err
+	} else {
+		extraAnnotationsAndLabelsPostRenderer.Add(dataMap, nil)
+	}
+
+	if dataMap, err := readBundleJsonMap(filepath.Join(bundle.Dir, "extra_labels.json")); err != nil {
+		return nil, err
+	} else {
+		extraAnnotationsAndLabelsPostRenderer.Add(nil, dataMap)
+	}
+
+	extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
+
+	bundle.extraAnnotationsAndLabelsPostRenderer = extraAnnotationsAndLabelsPostRenderer
+
+	return bundle, nil
 }
 
 /*
@@ -53,26 +77,22 @@ type Bundle struct {
 	RegistryClientHandle       *helm_v3.RegistryClientHandle
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 
+	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
+
 	*helpers.ChartExtenderServiceValuesData
 	*helpers.ChartExtenderContextData
 }
 
-func (bundle *Bundle) GetPostRenderer() (*helm.ExtraAnnotationsAndLabelsPostRenderer, error) {
-	postRenderer := helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil)
+func (bundle *Bundle) ChainPostRenderer(postRenderer postrender.PostRenderer) postrender.PostRenderer {
+	var chain []postrender.PostRenderer
 
-	if dataMap, err := readBundleJsonMap(filepath.Join(bundle.Dir, "extra_annotations.json")); err != nil {
-		return nil, err
-	} else {
-		postRenderer.Add(dataMap, nil)
+	if postRenderer != nil {
+		chain = append(chain, postRenderer)
 	}
 
-	if dataMap, err := readBundleJsonMap(filepath.Join(bundle.Dir, "extra_labels.json")); err != nil {
-		return nil, err
-	} else {
-		postRenderer.Add(nil, dataMap)
-	}
+	chain = append(chain, bundle.extraAnnotationsAndLabelsPostRenderer)
 
-	return postRenderer, nil
+	return helm.NewPostRendererChain(chain...)
 }
 
 // ChartCreated method for the chart.Extender interface
