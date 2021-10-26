@@ -5,3 +5,11 @@ metadata:
 data:
   multiwerf.json: |
     {{ $.Files.Get "multiwerf.json" | fromJson| toJson }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trdl-data
+data:
+  trdl_channels.yaml: |
+{{ $.Files.Get "trdl_channels.yaml" | indent 4 }}

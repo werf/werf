@@ -17,3 +17,26 @@ jobs:
         vault-auth-method: approle
         vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
         vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
+
+  deploy_channels_cm_prod:
+    name: Deploy multiwerf.json and trdl_channels.yaml to production
+    needs: release
+    if: always()
+    runs-on: tfprod-werf
+    steps:
+    - uses: technote-space/workflow-conclusion-action@v2
+    - name: Checkout code
+      if: env.WORKFLOW_CONCLUSION == 'success'
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Werf converge
+      if: env.WORKFLOW_CONCLUSION == 'success'
+      uses: werf/actions/converge@v1.2
+      with:
+        env: production
+      env:
+        WERF_NAMESPACE: "werfio-production"
+        WERF_KUBE_CONTEXT: prod
+        WERF_DIR: "ci"
