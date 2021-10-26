@@ -21,18 +21,14 @@ jobs:
   deploy_channels_cm_prod:
     name: Deploy multiwerf.json and trdl_channels.yaml to production
     needs: release
-    if: always()
     runs-on: tfprod-werf
     steps:
-    - uses: technote-space/workflow-conclusion-action@v2
     - name: Checkout code
-      if: env.WORKFLOW_CONCLUSION == 'success'
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
     - name: Werf converge
-      if: env.WORKFLOW_CONCLUSION == 'success'
       uses: werf/actions/converge@v1.2
       with:
         env: production
