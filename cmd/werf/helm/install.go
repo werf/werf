@@ -22,13 +22,8 @@ import (
 var installCmdData cmd_werf_common.CmdData
 
 func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
-	postRenderer, err := wc.GetPostRenderer()
-	if err != nil {
-		panic(err.Error())
-	}
-
 	cmd, helmAction := cmd_helm.NewInstallCmd(actionConfig, os.Stdout, cmd_helm.InstallCmdOptions{
-		PostRenderer: postRenderer,
+		ChainPostRenderer: wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &installCmdData)
 

@@ -382,13 +382,8 @@ func runRender(ctx context.Context) error {
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
 	}
 
-	postRenderer, err := wc.GetPostRenderer()
-	if err != nil {
-		return err
-	}
-
 	helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, output, cmd_helm.TemplateCmdOptions{
-		PostRenderer: postRenderer,
+		ChainPostRenderer: wc.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),
 			StringValues: common.GetSetString(&commonCmdData),

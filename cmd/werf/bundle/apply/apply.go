@@ -204,16 +204,16 @@ func runApply() error {
 		lockManager = m
 	}
 
-	bundle := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, registryClientHandle, chart_extender.BundleOptions{})
-
-	postRenderer, err := bundle.GetPostRenderer()
-	if err != nil {
-		return err
+	if *commonCmdData.Environment != "" {
+		userExtraAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 	}
 
-	postRenderer.Add(userExtraAnnotations, userExtraLabels)
-	if *commonCmdData.Environment != "" {
-		postRenderer.Add(map[string]string{"project.werf.io/env": *commonCmdData.Environment}, nil)
+	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, registryClientHandle, chart_extender.BundleOptions{
+		ExtraAnnotations: userExtraAnnotations,
+		ExtraLabels:      userExtraLabels,
+	})
+	if err != nil {
+		return err
 	}
 
 	if vals, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
@@ -232,7 +232,7 @@ func runApply() error {
 	}
 
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.Context(ctx).OutStream(), cmd_helm.UpgradeCmdOptions{
-		PostRenderer: postRenderer,
+		ChainPostRenderer: bundle.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),
 			StringValues: common.GetSetString(&commonCmdData),

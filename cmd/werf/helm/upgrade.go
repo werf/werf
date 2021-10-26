@@ -19,13 +19,8 @@ import (
 var upgradeCmdData cmd_werf_common.CmdData
 
 func NewUpgradeCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
-	postRenderer, err := wc.GetPostRenderer()
-	if err != nil {
-		panic(err.Error())
-	}
-
 	cmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, os.Stdout, cmd_helm.UpgradeCmdOptions{
-		PostRenderer: postRenderer,
+		ChainPostRenderer: wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &upgradeCmdData)
 

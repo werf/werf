@@ -423,18 +423,13 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 		FileValues:   common.GetSetFile(&commonCmdData),
 	}
 
-	postRenderer, err := wc.GetPostRenderer()
-	if err != nil {
-		return err
-	}
-
 	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, registryClientHandle)
 	if err != nil {
 		return err
 	}
 	maintenanceHelper := createMaintenanceHelper(ctx, actionConfig, kubeConfigOptions)
 
-	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, postRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir), registryClientHandle); err != nil {
+	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, wc.ChainPostRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir), registryClientHandle); err != nil {
 		return err
 	}
 
@@ -444,13 +439,13 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 	}
 
 	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.OutStream(), cmd_helm.UpgradeCmdOptions{
-		PostRenderer:    postRenderer,
-		ValueOpts:       valueOpts,
-		CreateNamespace: common.NewBool(true),
-		Install:         common.NewBool(true),
-		Wait:            common.NewBool(true),
-		Atomic:          common.NewBool(cmdData.AutoRollback),
-		Timeout:         common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
+		ChainPostRenderer: wc.ChainPostRenderer,
+		ValueOpts:         valueOpts,
+		CreateNamespace:   common.NewBool(true),
+		Install:           common.NewBool(true),
+		Wait:              common.NewBool(true),
+		Atomic:            common.NewBool(cmdData.AutoRollback),
+		Timeout:           common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
 	})
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
@@ -490,7 +485,7 @@ func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configura
 	return maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
 }
 
-func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, postRenderer postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, registryClientHandle *helm_v3.RegistryClientHandle) error {
+func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, registryClientHandle *helm_v3.RegistryClientHandle) error {
 	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
 		return fmt.Errorf("error checking availability of helm 2 and existence of helm 2 release %q: %s", releaseName, err)
 	} else if !helm2Exists {
@@ -523,11 +518,11 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 		}
 
 		helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, ioutil.Discard, cmd_helm.TemplateCmdOptions{
-			PostRenderer: postRenderer,
-			ValueOpts:    valueOpts,
-			Validate:     common.NewBool(true),
-			IncludeCrds:  common.NewBool(true),
-			IsUpgrade:    common.NewBool(true),
+			ChainPostRenderer: chainPostRenderer,
+			ValueOpts:         valueOpts,
+			Validate:          common.NewBool(true),
+			IncludeCrds:       common.NewBool(true),
+			IsUpgrade:         common.NewBool(true),
 		})
 		return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, fullChartDir})
 	}); err != nil {
