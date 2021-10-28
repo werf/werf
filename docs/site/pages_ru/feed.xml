@@ -18,14 +18,17 @@ permalink: /feed.xml
     <atom:link href="{{ site.url }}/feed.xml" rel="self" type="application/rss+xml" />
     {%- assign feed_items = site.feed_items | default: 50 %}
     {%- for event in events limit:feed_items %}
-    {%- assign event_info = site.data.releases.releases | where: "tag_name", event.version | first %}
-    <item>
-      <title>Канал обновлений {{ event.group }}/{{ event.name }} на {{ event.version }}</title>
-      <description></description>
-      <pubDate>{{ event.ts | date_to_rfc822 }}</pubDate>
-      <link>{{ event_info.html_url }}</link>
-      <guid isPermaLink="false">{{ event.group }}-{{ event.name }}-{{ event.ts }}</guid>
-    </item>
+    {%- assign version = event.version | normalize_version %}
+    {%- assign event_info = site.data.releases.releases | where: "tag_name", version | first %}
+      {%- if event_info %}
+      <item>
+        <title>Канал обновлений {{ event.group }}/{{ event.name }} на {{ event.version }}</title>
+        <description></description>
+        <pubDate>{{ event.ts | date_to_rfc822 }}</pubDate>
+        <link>{{ event_info.html_url }}</link>
+        <guid isPermaLink="false">{{ event.group }}-{{ event.name }}-{{ event.ts }}</guid>
+      </item>
+      {%- endif %}
     {%- endfor %}
   </channel>
 </rss>
