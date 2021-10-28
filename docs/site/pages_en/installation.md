@@ -339,7 +339,9 @@ arch:
     
         {%- if channel_history.size > 0 %}
           {%- for channel_action in channel_history %}
-            {%- assign release = site.data.releases.releases | where: "tag_name", channel_action.version | first %}            
+            {%- assign version = channel_action.version | normalize_version %}
+            {%- assign release = site.data.releases.releases | where: "tag_name", version | first %}
+            {% if release %}            
               <div class="installation-releases__header">
                   <a href="{{ release.html_url }}" class="installation-releases__title">{{ release.tag_name }}</a>
                   <div class="installation-releases__date">{{ channel_action.ts | date: "%b %-d, %Y at %H:%M %z" }}</div>
@@ -347,6 +349,7 @@ arch:
               <div class="installation-releases__body">
                   {{ release.body | markdownify }}
               </div>
+            {% endif %}
           {%- endfor %}
         {%- else %}
           <div class="installation-releases__info releases__info_notification">
@@ -361,27 +364,6 @@ arch:
       {%- assign active_channels = active_channels | plus: 1 %}
 
       {%- endfor %}
-
-      {%- comment %}
-      {%- if active_channels > 10 %}
-      <div id="id-{{group}}-all" class="tabs__content tabs__content_simple tabs__{{group}}__channel__content">
-        <div class="installation-releases__info">
-            <p>This is a list of all of the releases (Alpha, Beta, Early-Access, Stable and Rock-Solid) combined in chronological order.</p>
-        </div>
-        {%- assign group_history = site.data.releases_history.history | reverse | where: "group", group | map: "version" | reverse | uniq %}
-        {%- for release_data in group_history %}
-            {%- assign release = site.data.releases.releases | where: "tag_name", release_data | first %}
-            <div class="installation-releases__header">
-                <div class="installation-releases__date">{{ channel_action.ts | date: "%b %-d, %Y at %H:%M %z" }}</div>
-                <a href="{{ release.html_url }}" class="installation-releases__title">{{ release.tag_name }}</a>              
-            </div>
-            <div class="installation-releases__body">
-                {{ release.body | markdownify }}
-            </div>
-        {%- endfor %}
-      </div>
-      {%- endif %}
-      {%- endcomment %}
   </div>
   {%- endfor %}
 </div>

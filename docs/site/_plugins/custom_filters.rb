@@ -13,6 +13,20 @@ module Jekyll
         prefix + path.sub(%r!^/!, "")
     end
 
+   def normalize_version(version)
+     return nil if !version
+     return version if version.start_with? "v"
+     return "v" + version
+   end
+
+   def endswith(text, query)
+      return text.end_with? query
+    end
+
+    def startswith(text, query)
+      return text.start_with? query if text
+    end
+
     # get_lang_field_or_raise_error filter returns a field from argument hash
     # returns nil if hash is empty
     # returns hash[page.lang] if hash has the field
