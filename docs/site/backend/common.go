@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -19,17 +20,17 @@ import (
 )
 
 type ChannelType struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
 }
 
 type ReleaseType struct {
-	Group    string        `json:"group"`
-	Channels []ChannelType `json:"channels"`
+	Group    string        `yaml:"name"`
+	Channels []ChannelType `yaml:"channels"`
 }
 
 type ReleasesStatusType struct {
-	Releases []ReleaseType `json:"multiwerf"`
+	Releases []ReleaseType `yaml:"groups"`
 }
 
 type ApiStatusResponseType struct {
@@ -134,14 +135,13 @@ func (m *versionMenuType) getVersionMenuData(r *http.Request, releases *Releases
 	} else {
 		if res[2] != "" {
 			// Version is not a group (MAJ.MIN), but the patch version
-			m.MenuDocumentationLink = fmt.Sprintf("/documentation/v%s/", VersionToURL(res[1]))
+			m.MenuDocumentationLink = fmt.Sprintf("/documentation/%s/", VersionToURL(res[1]))
 			m.AbsoluteVersion = fmt.Sprintf("%s", m.CurrentVersion)
 		} else {
 			m.MenuDocumentationLink = fmt.Sprintf("/documentation/%s/", VersionToURL(m.CurrentVersion))
 			err, m.AbsoluteVersion = getVersionFromGroup(&ReleasesStatus, res[1])
 			if err != nil {
 				log.Debugln(fmt.Sprintf("getVersionMenuData: error determine absolute version for %s (got %s)", m.CurrentVersion, m.AbsoluteVersion))
-				//w.Header().Set("X-Accel-Redirect", fmt.Sprintf("/documentation/%v%v", VersionToURL(version), getDocPageURLRelative(r, true)))
 			}
 		}
 	}
@@ -300,7 +300,7 @@ func getVersionFromChannelAndGroup(releases *ReleasesStatusType, channel, group 
 		if releaseItem.Group == group {
 			for _, channelItem := range releaseItem.Channels {
 				if channelItem.Name == channel {
-					return nil, channelItem.Version
+					return nil, normalizeVersion(channelItem.Version)
 				}
 			}
 		}
@@ -320,13 +320,13 @@ func getVersionFromGroup(releases *ReleasesStatusType, group string) (err error,
 				}
 
 				if _, ok := releaseVersions["stable"]; ok {
-					return nil, releaseVersions["stable"]
+					return nil, normalizeVersion(releaseVersions["stable"])
 				} else if _, ok := releaseVersions["ea"]; ok {
-					return nil, releaseVersions["ea"]
+					return nil, normalizeVersion(releaseVersions["ea"])
 				} else if _, ok := releaseVersions["beta"]; ok {
-					return nil, releaseVersions["beta"]
+					return nil, normalizeVersion(releaseVersions["beta"])
 				} else if _, ok := releaseVersions["alpha"]; ok {
-					return nil, releaseVersions["alpha"]
+					return nil, (releaseVersions["alpha"])
 				}
 			}
 		}
@@ -334,6 +334,15 @@ func getVersionFromGroup(releases *ReleasesStatusType, group string) (err error,
 
 	return errors.New(fmt.Sprintf("Can't get version for %s", group)), ""
 
+}
+
+// Add prefix 'v' to a version if it doesn't have yet
+func normalizeVersion(version string) string {
+	if strings.HasPrefix(version, "v") {
+		return version
+	} else {
+		return fmt.Sprintf("v%s", version)
+	}
 }
 
 func getRootReleaseVersion() string {
@@ -513,7 +522,7 @@ func inspectRequestHTML(r *http.Request) string {
 func VersionToURL(version string) string {
 	result := strings.ReplaceAll(version, "+", "-plus-")
 	result = strings.ReplaceAll(result, "_", "-u-")
-	return result
+	return normalizeVersion(result)
 }
 
 func URLToVersion(version string) (result string) {
@@ -605,6 +614,11 @@ func getRootFilesPath(r *http.Request) (result string) {
 }
 
 func updateReleasesStatus() error {
+	err := updateReleasesStatusTRDL()
+	return err
+}
+
+func updateReleasesStatusMultiwerf() error {
 	data, err := ioutil.ReadFile("multiwerf/multiwerf.json")
 	if err != nil {
 		log.Errorf("Can't open multiwerf.json (%e)", err)
@@ -613,6 +627,20 @@ func updateReleasesStatus() error {
 	err = json.Unmarshal(data, &ReleasesStatus)
 	if err != nil {
 		log.Errorf("Can't unmarshall multiwerf.json (%e)", err)
+		return err
+	}
+	return err
+}
+
+func updateReleasesStatusTRDL() error {
+	data, err := ioutil.ReadFile("trdl/trdl_channels.yaml")
+	if err != nil {
+		log.Errorf("Can't open trdl_channels.yaml (%e)", err)
+		return err
+	}
+	err = yaml.Unmarshal(data, &ReleasesStatus)
+	if err != nil {
+		log.Errorf("Can't unmarshall trdl_channels.yaml (%e)", err)
 		return err
 	}
 	return err

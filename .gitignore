@@ -25,7 +25,8 @@
 /precompiled_tests_binaries
 
 /docs/\.jekyll-cache/
-/docs/backend/root/
+/docs/site/backend/root/
+/docs/site/backend/trdl/
 
 /.github/trdl/node_modules
 /.github/trdl/src/**/*.js

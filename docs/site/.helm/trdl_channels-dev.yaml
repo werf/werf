@@ -1,0 +1,21 @@
+groups:
+ - name: "1.1"
+   channels:
+    - name: alpha
+      version: 1.1.23+fix50
+    - name: beta
+      version: 1.1.23+fix50
+    - name: ea
+      version: 1.1.23+fix50
+    - name: stable
+      version: 1.1.23+fix50
+    - name: rock-solid
+      version: 1.1.23+fix50
+ - name: "1.2"
+   channels:
+    - name: alpha
+      version: 1.2.36 # dismiss-panic-fix
+    - name: beta
+      version: 1.2.36 # dismiss-panic-fix
+    - name: ea
+      version: 1.2.36 # dismiss-panic-fix

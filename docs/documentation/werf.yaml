@@ -56,5 +56,5 @@ ansible:
 import:
 - artifact: asset
   add: /app/_site
-  to: /app/
+  to: /app
   before: setup
