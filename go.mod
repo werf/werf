@@ -9,6 +9,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
+	github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7 // indirect
 	github.com/alessio/shellescape v0.0.0-20190409004728-b115ca0f9053
 	github.com/aws/aws-sdk-go v1.37.32
 	github.com/bitly/go-hostpool v0.1.0 // indirect
@@ -29,7 +30,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fluxcd/flagger v1.8.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/go-git/go-git/v5 v5.1.1-0.20200721083337-cded5b685b8a
+	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-openapi/spec v0.19.5
 	github.com/go-openapi/strfmt v0.19.5
 	github.com/go-openapi/validate v0.19.8
