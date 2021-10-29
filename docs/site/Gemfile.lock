@@ -16,11 +16,13 @@ GEM
     ethon (0.14.0)
       ffi (>= 1.15.0)
     eventmachine (1.2.7)
+    eventmachine (1.2.7-x64-mingw32)
     execjs (2.8.1)
     extras (0.3.0)
       forwardable-extended (~> 2.5)
     fastimage (2.2.3)
     ffi (1.15.0)
+    ffi (1.15.0-x64-mingw32)
     forwardable-extended (2.6.0)
     html-proofer (3.19.1)
       addressable (~> 2.3)
@@ -81,6 +83,8 @@ GEM
     nokogiri (1.12.5)
       mini_portile2 (~> 2.6.1)
       racc (~> 1.4)
+    nokogiri (1.12.5-x64-mingw32)
+      racc (~> 1.4)
     nokogiri (1.12.5-x86_64-darwin)
       racc (~> 1.4)
     nokogumbo (2.0.5)
@@ -89,7 +93,7 @@ GEM
     pathutil (0.16.2)
       forwardable-extended (~> 2.6)
     public_suffix (4.0.6)
-    racc (1.5.2)
+    racc (1.6.0)
     rack (2.2.3)
     rainbow (3.0.0)
     rb-fsevent (0.11.0)
@@ -115,6 +119,7 @@ GEM
 
 PLATFORMS
   ruby
+  x64-mingw32
   x86_64-darwin-18
 
 DEPENDENCIES
