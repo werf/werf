@@ -61,6 +61,8 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             allow deletion of new resources created in this upgrade when upgrade fails
       --create-namespace=false
             if --install is set, create the release namespace if not present
+      --dependency-update=false
+            update dependencies if they are missing before installing the chart
       --description=''
             add a custom description
       --devel=false

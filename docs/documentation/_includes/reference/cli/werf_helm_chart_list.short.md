@@ -1,1 +1,0 @@
-list all saved charts

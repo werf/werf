@@ -4,18 +4,46 @@
 {% assign header = "###" %}
 {% endif %}
 
-Remove a chart from the local registry cache.
-
-Note: the chart content will still exist in the cache,
-but it will no longer appear in &#34;helm chart list&#34;.
-
-To remove all unlinked content, please run &#34;helm chart prune&#34;. (TODO)
+This command inspects a chart (directory, file, or URL) and displays the contents
+of the CustomResourceDefintion files
 
 
 {{ header }} Syntax
 
 ```shell
-werf helm chart remove [ref]
+werf helm show crds [CHART] [flags] [options]
+```
+
+{{ header }} Options
+
+```shell
+      --ca-file=''
+            verify certificates of HTTPS-enabled servers using this CA bundle
+      --cert-file=''
+            identify HTTPS client using this SSL certificate file
+      --devel=false
+            use development versions, too. Equivalent to version `>0.0.0-0`. If --version is set,   
+            this is ignored
+      --insecure-skip-tls-verify=false
+            skip tls certificate checks for the chart download
+      --key-file=''
+            identify HTTPS client using this SSL key file
+      --keyring='~/.gnupg/pubring.gpg'
+            location of public keys used for verification
+      --pass-credentials=false
+            pass credentials to all domains
+      --password=''
+            chart repository password where to locate the requested chart
+      --repo=''
+            chart repository url where to locate the requested chart
+      --username=''
+            chart repository username where to locate the requested chart
+      --verify=false
+            verify the package before using it
+      --version=''
+            specify a version constraint for the chart version to use. This constraint can be a     
+            specific tag (e.g. 1.1.1) or it may reference a valid range (e.g. ^2.0.0). If this is   
+            not specified, the latest version is used
 ```
 
 {{ header }} Options inherited from parent commands

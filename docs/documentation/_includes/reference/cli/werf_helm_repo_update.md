@@ -7,11 +7,22 @@
 Update gets the latest information about charts from the respective chart repositories.
 Information is cached locally, where it is used by commands like &#39;helm search&#39;.
 
+You can optionally specify a list of repositories you want to update.
+	$ helm repo update &lt;repo_name&gt; ...
+To update all the repositories, use &#39;helm repo update&#39;.
+
 
 {{ header }} Syntax
 
 ```shell
-werf helm repo update
+werf helm repo update [REPO1 [REPO2 ...]] [flags] [options]
+```
+
+{{ header }} Options
+
+```shell
+      --fail-on-repo-update-fail=false
+            update fails if any of the repository updates fail
 ```
 
 {{ header }} Options inherited from parent commands

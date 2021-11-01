@@ -15,7 +15,14 @@ This will produce an error if the chart cannot be loaded.
 {{ header }} Syntax
 
 ```shell
-werf helm dependency list CHART
+werf helm dependency list CHART [flags] [options]
+```
+
+{{ header }} Options
+
+```shell
+      --max-col-width=80
+            maximum column width for output table
 ```
 
 {{ header }} Options inherited from parent commands

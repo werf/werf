@@ -25,6 +25,8 @@ the template:
 - .GitTreeState is the state of the git tree when Helm was built
 - .GoVersion contains the version of Go that Helm was compiled with
 
+For example, --template=&#39;Version: {{.Version}}&#39; outputs &#39;Version: v3.2.1&#39;.
+
 
 {{ header }} Syntax
 
