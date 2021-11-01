@@ -2,9 +2,9 @@ groups:
  - name: "1.1"
    channels:
     - name: alpha
-      version: 1.1.23+fix50
+      version: 1.1.23+fix51
     - name: beta
-      version: 1.1.23+fix50
+      version: 1.1.23+fix51
     - name: ea
       version: 1.1.23+fix50
     - name: stable
