@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/werf/logboek"
@@ -296,12 +297,12 @@ func runExport(ctx context.Context) error {
 		logboek.LogOptionalLn()
 	}
 
-	registryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
+	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, cmd_helm.Settings, registryClientHandle, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, cmd_helm.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 	})
@@ -338,10 +339,15 @@ func runExport(ctx context.Context) error {
 		FileValues:   common.GetSetFile(&commonCmdData),
 	}
 
+	chartVersion := fmt.Sprintf("0.0.0-%d", time.Now().Unix())
+
 	p := getter.All(cmd_helm.Settings)
-	if vals, err := valueOpts.MergeValues(p, wc); err != nil {
+	vals, err := valueOpts.MergeValues(p, wc)
+	if err != nil {
 		return err
-	} else if _, err := wc.CreateNewBundle(ctx, cmdData.Destination, vals); err != nil {
+	}
+
+	if _, err := wc.CreateNewBundle(ctx, cmdData.Destination, chartVersion, vals); err != nil {
 		return fmt.Errorf("unable to create bundle: %s", err)
 	}
 

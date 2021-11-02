@@ -43,7 +43,7 @@ werf helm template [NAME] [CHART] [flags] [options]
       --create-namespace=false
             create the release namespace if not present
       --dependency-update=false
-            run helm dependency update before installing the chart
+            update dependencies if they are missing before installing the chart
       --description=''
             add a custom description
       --devel=false

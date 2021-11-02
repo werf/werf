@@ -262,7 +262,7 @@ func (wc *WerfChart) SetEnv(env string) error {
  * CreateNewBundle creates new Bundle object with werf chart extensions taken into account.
  * inputVals could contain any custom values, which should be stored in the bundle.
  */
-func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputVals map[string]interface{}) (*Bundle, error) {
+func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion string, inputVals map[string]interface{}) (*Bundle, error) {
 	chartPath := filepath.Join(wc.GiterminismManager.ProjectDir(), wc.ChartDir)
 	chrt, err := loader.LoadDir(chartPath)
 	if err != nil {
@@ -307,6 +307,7 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir string, inputV
 	bundleMetadata := *wc.HelmChart.Metadata
 	// Force api v2
 	bundleMetadata.APIVersion = chart.APIVersionV2
+	bundleMetadata.Version = chartVersion
 
 	chartYamlFile := filepath.Join(destDir, "Chart.yaml")
 	if data, err := json.Marshal(bundleMetadata); err != nil {

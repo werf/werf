@@ -22,11 +22,15 @@ require (
 	github.com/containers/common v0.44.2
 	github.com/containers/image/v5 v5.16.0
 	github.com/containers/storage v1.36.0
-	github.com/docker/cli v20.10.5+incompatible
+	github.com/deislabs/oras v0.12.0 // indirect
+	github.com/djherbis/buffer v1.1.0
+	github.com/djherbis/nio/v3 v3.0.1
+	github.com/docker/cli v20.10.7+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.8+incompatible
 	github.com/docker/go v1.5.1-1 // indirect
 	github.com/docker/go-connections v0.4.0
+	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fluxcd/flagger v1.8.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -38,6 +42,7 @@ require (
 	github.com/google/go-containerregistry v0.5.1
 	github.com/google/uuid v1.2.0
 	github.com/gookit/color v1.3.7
+	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.2.0
@@ -46,6 +51,7 @@ require (
 	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
+	github.com/markbates/pkger v0.17.1 // indirect
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/moby/buildkit v0.8.2
@@ -73,7 +79,7 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	go.mongodb.org/mongo-driver v1.5.1 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
-	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
+	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/errgo.v2 v2.1.0
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
@@ -83,14 +89,14 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	helm.sh/helm/v3 v3.6.3
-	k8s.io/api v0.21.0
-	k8s.io/apimachinery v0.21.0
-	k8s.io/cli-runtime v0.21.0
-	k8s.io/client-go v0.21.0
+	k8s.io/api v0.22.1
+	k8s.io/apimachinery v0.22.1
+	k8s.io/cli-runtime v0.22.1
+	k8s.io/client-go v0.22.1
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog v1.0.0
-	k8s.io/klog/v2 v2.8.0
-	k8s.io/kubectl v0.21.0
+	k8s.io/klog/v2 v2.9.0
+	k8s.io/kubectl v0.22.1
 	mvdan.cc/xurls v1.1.0
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.1-0.20210128145534-11e43d4a8b92
@@ -100,6 +106,6 @@ replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402
 
 replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 
-replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20211026074935-16d6048b0f73
-
 replace github.com/deislabs/oras => github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8
+
+replace helm.sh/helm/v3 => github.com/werf/helm/v3 v3.0.0-20211029164334-9da46b8bb260

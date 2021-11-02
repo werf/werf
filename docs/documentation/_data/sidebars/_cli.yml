@@ -111,27 +111,6 @@ cli: &cli
     - title: werf helm
       f:
 
-      - title: werf helm chart
-        f:
-
-        - title: werf helm chart export
-          url: /reference/cli/werf_helm_chart_export.html
-
-        - title: werf helm chart list
-          url: /reference/cli/werf_helm_chart_list.html
-
-        - title: werf helm chart pull
-          url: /reference/cli/werf_helm_chart_pull.html
-
-        - title: werf helm chart push
-          url: /reference/cli/werf_helm_chart_push.html
-
-        - title: werf helm chart remove
-          url: /reference/cli/werf_helm_chart_remove.html
-
-        - title: werf helm chart save
-          url: /reference/cli/werf_helm_chart_save.html
-
       - title: werf helm create
         url: /reference/cli/werf_helm_create.html
 
@@ -299,6 +278,9 @@ cli: &cli
 
         - title: werf helm show chart
           url: /reference/cli/werf_helm_show_chart.html
+
+        - title: werf helm show crds
+          url: /reference/cli/werf_helm_show_crds.html
 
         - title: werf helm show readme
           url: /reference/cli/werf_helm_show_readme.html

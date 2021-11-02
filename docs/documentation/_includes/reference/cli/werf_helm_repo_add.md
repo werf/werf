@@ -33,6 +33,8 @@ werf helm repo add [NAME] [URL] [flags] [options]
             pass credentials to all domains
       --password=''
             chart repository password
+      --password-stdin=false
+            read chart repository password from stdin
       --username=''
             chart repository username
 ```

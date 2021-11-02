@@ -50,8 +50,6 @@ var _ = Describe("Bundles", func() {
 				switch implementationName {
 				case "dockerhub":
 					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3184")
-				case "github":
-					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3188")
 				case "quay":
 					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3182")
 				}

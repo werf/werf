@@ -33,6 +33,9 @@ werf helm uninstall RELEASE_NAME [...] [flags] [options]
             prevent hooks from running during uninstallation
       --timeout=5m0s
             time to wait for any individual Kubernetes operation (like Jobs for hooks)
+      --wait=false
+            if set, will wait until all the resources are deleted before returning. It will wait    
+            for as long as --timeout
 ```
 
 {{ header }} Options inherited from parent commands

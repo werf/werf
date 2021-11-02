@@ -26,7 +26,7 @@ Low-level management commands:
  - [werf config]({{ "/reference/cli/werf_config_list.html" | true_relative_url }}) — {% include /reference/cli/werf_config_list.short.md %}.
  - [werf managed-images]({{ "/reference/cli/werf_managed_images_add.html" | true_relative_url }}) — {% include /reference/cli/werf_managed_images_add.short.md %}.
  - [werf host]({{ "/reference/cli/werf_host_cleanup.html" | true_relative_url }}) — {% include /reference/cli/werf_host_cleanup.short.md %}.
- - [werf helm]({{ "/reference/cli/werf_helm_chart.html" | true_relative_url }}) — {% include /reference/cli/werf_helm_chart.short.md %}.
+ - [werf helm]({{ "/reference/cli/werf_helm_create.html" | true_relative_url }}) — {% include /reference/cli/werf_helm_create.short.md %}.
 
 Other commands:
  - [werf synchronization]({{ "/reference/cli/werf_synchronization.html" | true_relative_url }}) — {% include /reference/cli/werf_synchronization.short.md %}.
