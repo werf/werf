@@ -14,7 +14,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.37 # post-renderer
+      version: 1.2.38 # bundles and helm 3.7.1+
     - name: beta
       version: 1.2.37 # post-renderer
     - name: ea
