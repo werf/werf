@@ -153,6 +153,7 @@ func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
 			DockerDaemonInsecureSkipTLSVerify: b.Insecure,
 		},
+		Args: opts.BuildArgs,
 	}
 
 	errLog := &bytes.Buffer{}
@@ -184,7 +185,7 @@ func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 
 func (b *NativeRootlessBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
 	runOpts := buildah.RunOptions{
-		Args: opts.BuildArgs,
+		Args: opts.Args,
 	}
 
 	stderr := &bytes.Buffer{}

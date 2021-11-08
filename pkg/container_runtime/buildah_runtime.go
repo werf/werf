@@ -3,6 +3,7 @@ package container_runtime
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
@@ -81,11 +82,21 @@ func (runtime *BuildahRuntime) Push(ctx context.Context, ref string, opts PushOp
 }
 
 func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error) {
+	buildArgs := make(map[string]string)
+	for _, argStr := range opts.BuildArgs {
+		argParts := strings.SplitN(argStr, "=", 2)
+		if len(argParts) < 2 {
+			return "", fmt.Errorf("invalid build argument %q given, expected string in the key=value format", argStr)
+		}
+		buildArgs[argParts[0]] = argParts[1]
+	}
+
 	return runtime.buildah.BuildFromDockerfile(ctx, dockerfile, buildah.BuildFromDockerfileOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: logboek.Context(ctx).OutStream(),
 		},
 		ContextTar: opts.ContextTar,
+		BuildArgs:  buildArgs,
 	})
 }
 

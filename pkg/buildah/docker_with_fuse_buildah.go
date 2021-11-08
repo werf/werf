@@ -62,13 +62,23 @@ func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 		}
 	}()
 
+	var buildArgs []string
+	for k, v := range opts.BuildArgs {
+		buildArgs = append(buildArgs, "--build-arg", fmt.Sprintf("%s=%s", k, v))
+	}
+
+	// NOTE: it is principal to use cli option --tls-verify=true|false form with equality sign, instead of separate arguments (--tls-verify true|false), because --tls-verify is by itself a boolean argument
+	budArgs := []string{"bud", "--format", "docker", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure))}
+	budArgs = append(budArgs, buildArgs...)
+	budArgs = append(budArgs, "-f", "/.werf/buildah/tmp/Dockerfile")
+
 	output, _, err := b.runBuildah(
 		ctx,
 		[]string{
 			"--volume", fmt.Sprintf("%s:/.werf/buildah/tmp", sessionTmpDir),
 			"--workdir", "/.werf/buildah/tmp/context",
 		},
-		[]string{"bud", "--format=docker", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), "-f", "/.werf/buildah/tmp/Dockerfile"}, opts.LogWriter,
+		budArgs, opts.LogWriter,
 	)
 	if err != nil {
 		return "", err
