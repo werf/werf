@@ -25,11 +25,12 @@ type CommonOpts struct {
 type BuildFromDockerfileOpts struct {
 	CommonOpts
 	ContextTar io.Reader
+	BuildArgs  map[string]string
 }
 
 type RunCommandOpts struct {
 	CommonOpts
-	BuildArgs []string
+	Args []string
 }
 
 type FromCommandOpts struct {
