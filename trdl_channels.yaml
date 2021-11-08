@@ -6,7 +6,7 @@ groups:
     - name: beta
       version: 1.1.23+fix51
     - name: ea
-      version: 1.1.23+fix50
+      version: 1.1.23+fix51
     - name: stable
       version: 1.1.23+fix50
     - name: rock-solid
