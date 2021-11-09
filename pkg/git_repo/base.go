@@ -533,6 +533,10 @@ func (repo *Base) withRepoHandle(ctx context.Context, commit string, f func(hand
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	attempt := 0
+	retriesLimit := 1
+
+initCommitRepoHandle:
 	if _, hasKey := repo.commitRepoHandle.Load(commit); !hasKey {
 		repoHandler, err := repo.initRepoHandleBackedByWorkTree(ctx, commit)
 		if err != nil {
@@ -543,7 +547,23 @@ func (repo *Base) withRepoHandle(ctx context.Context, commit string, f func(hand
 	}
 
 	repoHandler := util.MapMustLoad(&repo.commitRepoHandle, commit).(repo_handle.Handle)
-	return f(repoHandler)
+	if err := f(repoHandler); err != nil {
+		isHandledError := strings.HasSuffix(err.Error(), "object not found") || strings.HasSuffix(err.Error(), "packfile not found")
+		if isHandledError && attempt < retriesLimit {
+			attempt++
+
+			logboek.Context(ctx).Warn().LogF("WARNING: Something went wrong: %s\n", err)
+			logboek.Context(ctx).Warn().LogF("WARNING: Retrying go-git operation ...\n", attempt, retriesLimit)
+
+			// reinit the commit repo handle
+			repo.commitRepoHandle.Delete(commit)
+			goto initCommitRepoHandle
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func (repo *Base) GetCommitTreeEntry(ctx context.Context, commit string, path string) (*ls_tree.LsTreeEntry, error) {
