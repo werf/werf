@@ -553,7 +553,7 @@ initCommitRepoHandle:
 			attempt++
 
 			logboek.Context(ctx).Warn().LogF("WARNING: Something went wrong: %s\n", err)
-			logboek.Context(ctx).Warn().LogF("WARNING: Retrying go-git operation ...\n", attempt, retriesLimit)
+			logboek.Context(ctx).Warn().LogLn("WARNING: Retrying go-git operation ...")
 
 			// reinit the commit repo handle
 			repo.commitRepoHandle.Delete(commit)
