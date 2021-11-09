@@ -14,8 +14,8 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.38 # bundles and helm 3.7.1+
+      version: 1.2.39 # buildah and build args + debug object not found
     - name: beta
-      version: 1.2.37 # post-renderer
+      version: 1.2.39 # buildah and build args + debug object not found
     - name: ea
-      version: 1.2.37 # post-renderer
+      version: 1.2.39 # buildah and build args + debug object not found
