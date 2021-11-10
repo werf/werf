@@ -33,6 +33,19 @@
     text-decoration: none;
 }
 
+.breadcrumbs__item > a.breadcrumbs__highlight {
+    text-decoration: none;
+    height: 30px;
+    padding: 0 15px;
+    border-radius: 10px;
+    font-weight: 600;
+    background: #0066ff;
+    color: #fff !important;
+}
+.breadcrumbs__item > a.breadcrumbs__highlight:after {
+    filter: brightness(255);
+}
+
 .breadcrumbs__item:hover > a {
     color: #0066FF;
 }
