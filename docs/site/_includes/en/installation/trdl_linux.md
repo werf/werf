@@ -41,7 +41,7 @@ Now, if you log out and log in to the system again, werf will be always availabl
 werf version
 ```
 
-To get werf running in your current terminal only (before any logout/login is done), you can simply execute the `source $(trdl use werf {{ include.version }} {{ include.channel }}` command.
+To get werf running in your current terminal only (before any logout/login is done), you can simply execute the `source $(trdl use werf {{ include.version }} {{ include.channel }})` command.
 
 In CI, you need a different approaching with activating `werf` explicitly in the beginning of each job/pipeline by executing:
 ```shell
