@@ -380,7 +380,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    Let's update hosts file. Make sure minikube is up and running:
 
    ```shell
-   echo "$(minikube ip)
+   echo "$(minikube ip)"
    ```
 
    If the result shows the IP address of the cluster, your cluster is up.
