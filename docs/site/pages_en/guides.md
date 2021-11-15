@@ -10,12 +10,10 @@ breadcrumbs: none
 <link rel="stylesheet" type="text/css" href="{{ assets["guides.css"].digest_path | relative_url }}" />
 
 <h1 class="docs__title">Guides</h1>
-<p>These guides provide reasonably detailed information that combines the theory and practice of development (Dev) and operation (Ops).</p>
+<p>Our guides are aimed at developers seeking to learn how to work with Kubernetes and deliver their apps to K8s. DevOps engineers who want to solve their CI/CD-related tasks more efficiently and become confident werf users will also benefit.</p>
 
-<p>Its contents are aimed at developers seeking to acquire basic DevOps skills in organizing the continuous delivery of applications to Kubernetes. The DevOps engineers who want to solve their tasks more efficiently will also benefit from this tutorial.</p>
+<p>In this tutorial, you will find both, practical step-by-step instructions and the necessary theory. Comprised of different sections, it will guide you from basics to more advanced features. The guides also take into account the specifics of different programming languages/frameworks and include examples of the application source code and related infrastructure (IaC).</p>
 
-<p>We will gradually consider all the tasks related to developing services and implementing the CI/CD process: building, deploying, working with dependencies and assets, working with databases and in-memory storage, using e-mail and file storage, implementing autotests, and more.</p>
-
-<p>Each version of the tutorial takes into account the specifics of the programming language/framework and includes examples of the application source code and infrastructure (IaC).</p>
+<p>Please, choose the framework that fits you best:</p>
 
 <!--#include virtual="/guides/includes/landing-tiles.html" -->
