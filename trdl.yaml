@@ -4,7 +4,8 @@ commands:
 - go install github.com/mitchellh/gox@8c3b2b9e647dc52457d6ee7b5adcf97e2bafe131
 - |
   gox -osarch="linux/amd64 darwin/amd64 windows/amd64" \
-    -output="release-build/$VERSION/{{.OS}}-{{.Arch}}/bin/werf" \
+    -output="release-build/{{ .Tag }}/{{ `{{.OS}}-{{.Arch}}` }}/bin/werf" \
     -tags="dfrunmount dfssh" \
-    -ldflags="-s -w -X github.com/flant/werf/pkg/werf.Version=$VERSION" \
+    -ldflags="-s -w -X github.com/flant/werf/pkg/werf.Version={{ .Tag }}" \
         github.com/flant/werf/cmd/werf
+- cp -a release-build/{{ .Tag }}/* /result
