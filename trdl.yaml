@@ -1,0 +1,10 @@
+docker_image: ghcr.io/werf/builder:afd00fa1348645658b718df6b2b7447c6cead90b@sha256:829a6fd3d5850fc24366b5a3fb10402fe2d5615dcfd045b7225819c7a8ec5011
+
+commands:
+- go install github.com/mitchellh/gox@8c3b2b9e647dc52457d6ee7b5adcf97e2bafe131
+- |
+  gox -osarch="linux/amd64 darwin/amd64 windows/amd64" \
+    -output="release-build/$VERSION/{{.OS}}-{{.Arch}}/bin/werf" \
+    -tags="dfrunmount dfssh" \
+    -ldflags="-s -w -X github.com/flant/werf/pkg/werf.Version=$VERSION" \
+        github.com/flant/werf/cmd/werf
