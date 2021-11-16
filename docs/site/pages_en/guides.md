@@ -2,7 +2,6 @@
 title: Guides
 permalink: /guides.html
 layout: plain
-banner: guides
 breadcrumbs: none
 ---
 

@@ -140,6 +140,16 @@ $(document).ready(function () {
       $('.topsearch').removeClass('topsearch_active');
     }
   });
+
+  let CurrentGroup = getDocGroupFromURL();
+  $('input[name="sitesearch"]').attr("value",function(index,currentvalue){
+    if (CurrentGroup) {
+        return currentvalue + "/documentation/" + CurrentGroup + "/"
+    } else {
+        return currentvalue
+    }
+  })
+
 });
 
 $(document).ready(function() {
@@ -454,6 +464,14 @@ $(document).ready(function () {
     updateNauVisibility();
   }
 });
+
+function getDocGroupFromURL() {
+  let result = window.location.pathname.match(/^\/documentation\/(v\d+\.\d+)/);
+  if ( result && result[1] ) {
+    return result[1];
+  }
+  return null;
+}
 
 function getDocVersionFromURL() {
   let result = window.location.pathname.match(/\/documentation\/(v\d+\.\d+([^/]+)?)\/.*/);
