@@ -71,7 +71,7 @@ func ValidateDockerTag(name string) error {
 		return nil
 	}
 
-	return fmt.Errorf(`%q is not a valid docker tag 
+	return fmt.Errorf(`%q is not a valid docker tag
 
  - a tag name must be valid ASCII and may contain lowercase and uppercase letters, digits, underscores, periods and dashes;
  - a tag name may not start with a period or a dash and may contain a maximum of 128 characters.`, name)
