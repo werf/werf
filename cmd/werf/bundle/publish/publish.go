@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/werf/werf/pkg/slug"
+
 	"github.com/Masterminds/semver"
 
 	"helm.sh/helm/v3/pkg/getter"
@@ -370,7 +372,12 @@ func runPublish(ctx context.Context) error {
 
 	chartVersion := cmdData.Tag
 	if _, err := semver.NewVersion(chartVersion); err != nil {
-		chartVersion = fmt.Sprintf("0.0.0-%d-%s", time.Now().Unix(), chartVersion)
+		chartVersion = fmt.Sprintf("0.0.0-%d-%s", time.Now().Unix(), slug.Slug(chartVersion))
+		if _, err := semver.NewVersion(chartVersion); err != nil {
+			fallbackChartVersion := fmt.Sprintf("0.0.0-%d", time.Now().Unix())
+			logboek.Context(ctx).Warn().LogF("Unable to use %q as chart version, will fallback on chart version %q\n", chartVersion, fallbackChartVersion)
+			chartVersion = fallbackChartVersion
+		}
 	}
 
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
