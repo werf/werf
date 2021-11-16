@@ -1,4 +1,8 @@
 groups:
+ - name: "1.0"
+   channels:
+    - name: alpha
+      version: 1.0.13+fix9
  - name: "1.1"
    channels:
     - name: alpha
