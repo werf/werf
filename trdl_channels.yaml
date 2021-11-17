@@ -18,7 +18,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.40 # bundles bugfix
+      version: 1.2.39 # buildah and build args + debug object not found
     - name: beta
       version: 1.2.39 # buildah and build args + debug object not found
     - name: ea
