@@ -5,7 +5,7 @@
 
 ### Bug Fixes
 
-* **buildah:** buildah-test, playground and test refactor, remove usage of ReadDirAsTar ([e49bf45](https://www.github.com/werf/werf/commit/e49bf45f2a1ad8c3d17cc1694a7ac548886b8ff1))
+* fix(deploy): fix broken 3 way merge cases: https://github.com/werf/werf/issues/3461 and https://github.com/werf/werf/issues/3462. Upstream helm issue: https://github.com/helm/helm/issues/10363.
 
 ### [1.2.40](https://www.github.com/werf/werf/compare/v1.2.39...v1.2.40) (2021-11-16)
 
