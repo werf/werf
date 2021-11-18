@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/google/uuid"
@@ -45,14 +46,45 @@ func do(ctx context.Context) error {
 		return fmt.Errorf("error reading %q: %s", dockerfilePath, err)
 	}
 
-	contextTar := util.ReadDirAsTar(contextDir)
+	errCh := make(chan error, 0)
+	buildDoneCh := make(chan string, 0)
 
-	imageID, err := b.BuildFromDockerfile(ctx, dockerfileData, buildah.BuildFromDockerfileOpts{
-		CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout},
-		ContextTar: contextTar,
+	contextTar := util.BufferedPipedWriterProcess(func(w io.WriteCloser) {
+		if err := util.WriteDirAsTar((contextDir), w); err != nil {
+			errCh <- fmt.Errorf("unable to write dir %q as tar: %s", contextDir, err)
+			return
+		}
+
+		if err := w.Close(); err != nil {
+			errCh <- fmt.Errorf("unable to close buffered piped writer for context dir %q: %s", contextDir, err)
+			return
+		}
 	})
-	if err != nil {
+
+	go func() {
+		imageID, err := b.BuildFromDockerfile(ctx, dockerfileData, buildah.BuildFromDockerfileOpts{
+			ContextTar: contextTar,
+			CommonOpts: buildah.CommonOpts{
+				LogWriter: os.Stdout,
+			},
+		})
+
+		if err != nil {
+			errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
+			return
+		}
+
+		buildDoneCh <- imageID
+		close(buildDoneCh)
+	}()
+
+	var imageID string
+	select {
+	case err := <-errCh:
+		close(errCh)
 		return err
+
+	case imageID = <-buildDoneCh:
 	}
 
 	fmt.Printf("BUILT NEW IMAGE %q\n", imageID)

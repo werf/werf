@@ -73,22 +73,49 @@ func do(ctx context.Context) error {
 		return fmt.Errorf("error reading %q: %s", dockerfilePath, err)
 	}
 
+	errCh := make(chan error, 0)
+	buildDoneCh := make(chan string, 0)
+
 	var contextTar io.Reader
 	if contextDir != "" {
-		contextTar = util.ReadDirAsTar(contextDir)
+		contextTar = util.BufferedPipedWriterProcess(func(w io.WriteCloser) {
+			if err := util.WriteDirAsTar((contextDir), w); err != nil {
+				errCh <- fmt.Errorf("unable to write dir %q as tar: %s", contextDir, err)
+				return
+			}
+
+			if err := w.Close(); err != nil {
+				errCh <- fmt.Errorf("unable to close buffered piped writer for context dir %q: %s", contextDir, err)
+				return
+			}
+		})
 	}
 
-	imageId, err := b.BuildFromDockerfile(ctx, dockerfileData, buildah.BuildFromDockerfileOpts{
-		ContextTar: contextTar,
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: os.Stdout,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("BuildFromDockerfile failed: %s", err)
-	}
+	go func() {
+		imageID, err := b.BuildFromDockerfile(ctx, dockerfileData, buildah.BuildFromDockerfileOpts{
+			ContextTar: contextTar,
+			CommonOpts: buildah.CommonOpts{
+				LogWriter: os.Stdout,
+			},
+		})
 
-	fmt.Fprintf(os.Stdout, "INFO: built imageId is %s\n", imageId)
+		if err != nil {
+			errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
+			return
+		}
+
+		buildDoneCh <- imageID
+		close(buildDoneCh)
+	}()
+
+	select {
+	case err := <-errCh:
+		close(errCh)
+		return err
+
+	case imageID := <-buildDoneCh:
+		fmt.Fprintf(os.Stdout, "INFO: built imageId is %s\n", imageID)
+	}
 
 	return nil
 }
