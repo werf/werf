@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.41](https://www.github.com/werf/werf/compare/v1.2.40...v1.2.41) (2021-11-18)
+
+
+### Bug Fixes
+
+* **buildah:** buildah-test, playground and test refactor, remove usage of ReadDirAsTar ([e49bf45](https://www.github.com/werf/werf/commit/e49bf45f2a1ad8c3d17cc1694a7ac548886b8ff1))
+
 ### [1.2.40](https://www.github.com/werf/werf/compare/v1.2.39...v1.2.40) (2021-11-16)
 
 
