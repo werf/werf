@@ -2,6 +2,7 @@ package buildah_test
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -51,27 +52,50 @@ var _ = Describe("Buildah client", func() {
 			{"./buildah_test/app2/Dockerfile", "./buildah_test/app2"},
 			{"./buildah_test/app3/Dockerfile", "./buildah_test/app3"},
 		} {
-			d, c := loadDockerfileAndContext(desc.DockerfilePath, desc.ContextPath)
+			errCh := make(chan error, 0)
+			buildDoneCh := make(chan string, 0)
 
-			_, err := b.BuildFromDockerfile(context.Background(), d, buildah.BuildFromDockerfileOpts{
-				CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout},
-				ContextTar: c,
-			})
-
+			d, err := ioutil.ReadFile(desc.DockerfilePath)
 			Expect(err).To(Succeed())
+
+			var c io.Reader
+			if desc.ContextPath != "" {
+				c = util.BufferedPipedWriterProcess(func(w io.WriteCloser) {
+					if err := util.WriteDirAsTar((desc.ContextPath), w); err != nil {
+						errCh <- fmt.Errorf("unable to write dir %q as tar: %s", desc.ContextPath, err)
+						return
+					}
+
+					if err := w.Close(); err != nil {
+						errCh <- fmt.Errorf("unable to close buffered piped writer for context dir %q: %s", desc.ContextPath, err)
+						return
+					}
+				})
+			}
+
+			go func() {
+				imageID, err := b.BuildFromDockerfile(context.Background(), d, buildah.BuildFromDockerfileOpts{
+					CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout},
+					ContextTar: c,
+				})
+
+				if err != nil {
+					errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
+					return
+				}
+
+				buildDoneCh <- imageID
+				close(buildDoneCh)
+			}()
+
+			select {
+			case err := <-errCh:
+				close(errCh)
+				Expect(err).NotTo(HaveOccurred())
+
+			case imageID := <-buildDoneCh:
+				fmt.Fprintf(os.Stdout, "INFO: built imageId is %s\n", imageID)
+			}
 		}
 	})
 })
-
-func loadDockerfileAndContext(dockerfilePath string, contextPath string) ([]byte, io.Reader) {
-	data, err := ioutil.ReadFile(dockerfilePath)
-	Expect(err).To(Succeed())
-
-	if contextPath == "" {
-		return data, nil
-	}
-
-	reader := util.ReadDirAsTar(contextPath)
-
-	return data, reader
-}
