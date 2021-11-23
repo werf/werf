@@ -11,4 +11,5 @@ linters:
   enable:
     - deadcode
     - structcheck
+    - typecheck
     - gocritic
