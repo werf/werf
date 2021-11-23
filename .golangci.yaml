@@ -13,4 +13,7 @@ linters:
     - structcheck
     - typecheck
     - varcheck
+
+    - asciicheck
+    - bidichk
     - gocritic
