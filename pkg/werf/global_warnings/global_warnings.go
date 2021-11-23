@@ -6,9 +6,7 @@ import (
 	"github.com/werf/logboek"
 )
 
-var (
-	GlobalWarningLines []string
-)
+var GlobalWarningLines []string
 
 func PrintGlobalWarnings(ctx context.Context) {
 	for _, line := range GlobalWarningLines {

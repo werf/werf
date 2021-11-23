@@ -56,7 +56,7 @@ func do(ctx context.Context) error {
 		return errUsage
 	}
 
-	var dockerfilePath = os.Args[2]
+	dockerfilePath := os.Args[2]
 
 	var contextDir string
 	if len(os.Args) > 3 {
@@ -98,7 +98,6 @@ func do(ctx context.Context) error {
 				LogWriter: os.Stdout,
 			},
 		})
-
 		if err != nil {
 			errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
 			return

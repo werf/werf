@@ -1,8 +1,6 @@
 package git_repo
 
-var (
-	CommonGitDataManager GitDataManager
-)
+var CommonGitDataManager GitDataManager
 
 func Init(gitDataManager GitDataManager) error {
 	CommonGitDataManager = gitDataManager

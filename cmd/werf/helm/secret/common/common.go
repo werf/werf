@@ -74,11 +74,11 @@ func InputFromStdin() ([]byte, error) {
 }
 
 func SaveGeneratedData(filePath string, data []byte) error {
-	if err := os.MkdirAll(filepath.Dir(filePath), 0777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0o777); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(filePath, data, 0644); err != nil {
+	if err := ioutil.WriteFile(filePath, data, 0o644); err != nil {
 		return err
 	}
 

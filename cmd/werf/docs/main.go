@@ -68,7 +68,7 @@ func createEmptyFolder(path string) error {
 		return fmt.Errorf("unable to remove %s: %s", path, err)
 	}
 
-	if err := os.MkdirAll(path, 0777); err != nil {
+	if err := os.MkdirAll(path, 0o777); err != nil {
 		return fmt.Errorf("unable to make dir %s: %s", path, err)
 	}
 

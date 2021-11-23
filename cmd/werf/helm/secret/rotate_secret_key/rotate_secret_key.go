@@ -196,9 +196,8 @@ func secretsRegenerate(newEncoder, oldEncoder *secret.YamlEncoder, helmChartDir 
 	for filePath, fileData := range regeneratedFilesData {
 		err := logboek.LogProcess(fmt.Sprintf("Saving file %q", filePath)).DoError(func() error {
 			fileData = append(bytes.TrimSpace(fileData), []byte("\n")...)
-			return ioutil.WriteFile(filePath, fileData, 0644)
+			return ioutil.WriteFile(filePath, fileData, 0o644)
 		})
-
 		if err != nil {
 			return err
 		}
@@ -225,7 +224,6 @@ func regenerateSecrets(filesData, regeneratedFilesData map[string][]byte, decode
 
 				return nil
 			})
-
 		if err != nil {
 			return err
 		}

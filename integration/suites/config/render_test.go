@@ -95,4 +95,5 @@ ansible:
         - rvm use --default 2.3.4
         - gem install bundler --no-ri --no-rdoc
         - rvm cleanup all
-`}))
+`,
+	}))

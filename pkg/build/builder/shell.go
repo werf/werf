@@ -39,12 +39,15 @@ func (b *Shell) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage(c
 func (b *Shell) BeforeInstall(_ context.Context, container Container) error {
 	return b.stage("BeforeInstall", container)
 }
+
 func (b *Shell) Install(_ context.Context, container Container) error {
 	return b.stage("Install", container)
 }
+
 func (b *Shell) BeforeSetup(_ context.Context, container Container) error {
 	return b.stage("BeforeSetup", container)
 }
+
 func (b *Shell) Setup(_ context.Context, container Container) error {
 	return b.stage("Setup", container)
 }

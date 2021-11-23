@@ -69,7 +69,7 @@ func (manager *GitDataManager) GetPatchesCacheDir() string {
 
 func (manager *GitDataManager) NewTmpFile() (string, error) {
 	path := filepath.Join(manager.TmpDir, uuid.NewV4().String())
-	if err := os.MkdirAll(filepath.Dir(path), 0777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o777); err != nil {
 		return "", fmt.Errorf("unable to create dir %q: %s", filepath.Dir(path), err)
 	}
 	return path, nil
@@ -125,7 +125,7 @@ func (manager *GitDataManager) GetArchiveFile(ctx context.Context, repoID string
 		if metadataJson, err := json.Marshal(metadata); err != nil {
 			return nil, fmt.Errorf("error marshalling archive %s %s metadata json: %s", repoID, opts.Commit, err)
 		} else {
-			if err := ioutil.WriteFile(metadataPath, append(metadataJson, '\n'), 0644); err != nil {
+			if err := ioutil.WriteFile(metadataPath, append(metadataJson, '\n'), 0o644); err != nil {
 				return nil, fmt.Errorf("error writing %q: %s", metadataPath, err)
 			}
 		}
@@ -163,11 +163,11 @@ func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID str
 		metadataPath := filepath.Join(manager.ArchivesCacheDir, archiveMetadataFilePath(repoID, opts))
 		dir := filepath.Dir(metadataPath)
 
-		if err := os.MkdirAll(dir, 0777); err != nil {
+		if err := os.MkdirAll(dir, 0o777); err != nil {
 			return nil, fmt.Errorf("unable to create dir %q: %s", dir, err)
 		}
 
-		if err := ioutil.WriteFile(metadataPath, metadataJson, 0644); err != nil {
+		if err := ioutil.WriteFile(metadataPath, metadataJson, 0o644); err != nil {
 			return nil, fmt.Errorf("error writing %s: %s", metadataPath, err)
 		}
 	}
@@ -222,7 +222,7 @@ func (manager *GitDataManager) GetPatchFile(ctx context.Context, repoID string, 
 		if metadataJson, err := json.Marshal(metadata); err != nil {
 			return nil, fmt.Errorf("error marshalling patch %s %s %s metadata json: %s", repoID, opts.FromCommit, opts.ToCommit, err)
 		} else {
-			if err := ioutil.WriteFile(metadataPath, append(metadataJson, '\n'), 0644); err != nil {
+			if err := ioutil.WriteFile(metadataPath, append(metadataJson, '\n'), 0o644); err != nil {
 				return nil, fmt.Errorf("error writing %s: %s", metadataPath, err)
 			}
 		}
@@ -265,11 +265,11 @@ func (manager *GitDataManager) CreatePatchFile(ctx context.Context, repoID strin
 		metadataPath := filepath.Join(manager.PatchesCacheDir, patchMetadataFilePath(repoID, opts))
 		dir := filepath.Dir(metadataPath)
 
-		if err := os.MkdirAll(dir, 0777); err != nil {
+		if err := os.MkdirAll(dir, 0o777); err != nil {
 			return nil, fmt.Errorf("unable to create dir %q: %s", dir, err)
 		}
 
-		if err := ioutil.WriteFile(metadataPath, append(metadataJson, '\n'), 0644); err != nil {
+		if err := ioutil.WriteFile(metadataPath, append(metadataJson, '\n'), 0o644); err != nil {
 			return nil, fmt.Errorf("error writing %s: %s", metadataPath, err)
 		}
 	}

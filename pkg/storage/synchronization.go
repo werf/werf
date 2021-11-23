@@ -5,9 +5,7 @@ import (
 	"strings"
 )
 
-var (
-	ErrBadKubernetesSynchronizationAddress = errors.New("bad kubernetes synchronization address")
-)
+var ErrBadKubernetesSynchronizationAddress = errors.New("bad kubernetes synchronization address")
 
 type KubernetesSynchronizationParams struct {
 	ConfigContext       string

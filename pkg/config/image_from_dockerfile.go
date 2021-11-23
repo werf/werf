@@ -17,7 +17,7 @@ type ImageFromDockerfile struct {
 	Network         string
 	SSH             string
 
-	raw             *rawImageFromDockerfile
+	raw *rawImageFromDockerfile
 }
 
 func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.Interface) error {

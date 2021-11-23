@@ -74,7 +74,7 @@ os.environ['PATH'] = os.pathsep.join(path_components)
 
 execfile("%s")
 `, stapel.PythonBinPath(), path.Join(b.containerWorkDir(), "lib"), stapel.AnsiblePlaybookBinPath())),
-		os.FileMode(0777),
+		os.FileMode(0o777),
 	)
 
 	stageWorkDirLib := filepath.Join(stageWorkDir, "lib")
@@ -211,9 +211,9 @@ func (b *Ansible) containerTmpDir() string {
 }
 
 func mkdirP(path string) error {
-	return os.MkdirAll(path, os.FileMode(0775))
+	return os.MkdirAll(path, os.FileMode(0o775))
 }
 
 func writeFile(path string, content string) error {
-	return ioutil.WriteFile(path, []byte(content), os.FileMode(0664))
+	return ioutil.WriteFile(path, []byte(content), os.FileMode(0o664))
 }

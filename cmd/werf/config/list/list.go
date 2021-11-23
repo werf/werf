@@ -12,10 +12,12 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-var commonCmdData common.CmdData
-var cmdData struct {
-	imagesOnly bool
-}
+var (
+	commonCmdData common.CmdData
+	cmdData       struct {
+		imagesOnly bool
+	}
+)
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{

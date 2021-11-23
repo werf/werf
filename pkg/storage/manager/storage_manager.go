@@ -481,7 +481,6 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 			if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, stagesStorage, stageImage.GetStageDescription()); err != nil {
 				return nil, fmt.Errorf("error storing stage %s description into local manifest cache: %s", imageName, err)
 			}
-
 		} else {
 			logboek.Context(ctx).Info().LogF("Cache repo image %s exists locally, will not perform fetch\n", stageImage.Name())
 		}

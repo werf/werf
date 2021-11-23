@@ -63,7 +63,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 
 	gitDirPath := filepath.Join(workTreeCacheDir, "git_dir")
 	if _, err := os.Stat(gitDirPath); os.IsNotExist(err) {
-		if err := ioutil.WriteFile(gitDirPath, []byte(repoDir+"\n"), 0644); err != nil {
+		if err := ioutil.WriteFile(gitDirPath, []byte(repoDir+"\n"), 0o644); err != nil {
 			return "", fmt.Errorf("error writing %s: %s", gitDirPath, err)
 		}
 	} else if err != nil {
@@ -141,7 +141,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %s", workTreeDir, commit, err)
 	}
 
-	if err := ioutil.WriteFile(currentCommitPath, []byte(commit+"\n"), 0644); err != nil {
+	if err := ioutil.WriteFile(currentCommitPath, []byte(commit+"\n"), 0o644); err != nil {
 		return "", fmt.Errorf("error writing %s: %s", currentCommitPath, err)
 	}
 

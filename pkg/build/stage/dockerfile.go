@@ -649,7 +649,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	archivePath := archive.GetFilePath()
 	if len(s.contextAddFiles) != 0 {
 		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFiles to build context archive %s", archivePath).DoError(func() error {
-			var sourceArchivePath = archivePath
+			sourceArchivePath := archivePath
 			destinationArchivePath, err := context_manager.AddContextAddFilesToContextArchive(ctx, sourceArchivePath, giterminismManager.ProjectDir(), s.context, s.contextAddFiles)
 			if err != nil {
 				return err

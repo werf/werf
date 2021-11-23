@@ -14,8 +14,10 @@ import (
 	utilsDocker "github.com/werf/werf/integration/pkg/utils/docker"
 )
 
-var suiteImage1 = "flant/werf-test:base-image-suite-image1"
-var suiteImage2 = "flant/werf-test:base-image-suite-image2"
+var (
+	suiteImage1 = "flant/werf-test:base-image-suite-image1"
+	suiteImage2 = "flant/werf-test:base-image-suite-image2"
+)
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Ansible suite", suite_init.TestSuiteEntrypointFuncOptions{
 	RequiredSuiteTools: []string{"docker"},
@@ -41,11 +43,13 @@ var _ = AfterEach(func() {
 	)
 })
 
-var _ = SuiteData.SetupStubs(suite_init.NewStubsData())
-var _ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
-var _ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
-var _ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
-var _ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
+var (
+	_ = SuiteData.SetupStubs(suite_init.NewStubsData())
+	_ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
+	_ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
+	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
+	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
+)
 
 var _ = SuiteData.AppendSynchronizedBeforeSuiteNode1Func(func() {
 	for _, suiteImage := range []string{suiteImage1, suiteImage2} {

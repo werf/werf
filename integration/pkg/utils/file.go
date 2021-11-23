@@ -24,12 +24,12 @@ func CopyIn(sourcePath, destinationPath string) {
 }
 
 func MkdirAll(dir string) {
-	Ω(os.MkdirAll(dir, 0777)).Should(Succeed())
+	Ω(os.MkdirAll(dir, 0o777)).Should(Succeed())
 }
 
 func WriteFile(path string, data []byte) {
-	Ω(os.MkdirAll(filepath.Dir(path), 0777)).Should(Succeed())
-	Ω(ioutil.WriteFile(path, data, 0644)).Should(Succeed())
+	Ω(os.MkdirAll(filepath.Dir(path), 0o777)).Should(Succeed())
+	Ω(ioutil.WriteFile(path, data, 0o644)).Should(Succeed())
 }
 
 func DeleteFile(path string) {

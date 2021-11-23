@@ -8,11 +8,11 @@ import (
 )
 
 type rawMeta struct {
-	ConfigVersion      *int                `yaml:"configVersion,omitempty"`
-	Project            *string             `yaml:"project,omitempty"`
-	Deploy             *rawMetaDeploy      `yaml:"deploy,omitempty"`
-	Cleanup            *rawMetaCleanup     `yaml:"cleanup,omitempty"`
-	GitWorktree        *rawMetaGitWorktree `yaml:"gitWorktree,omitempty"`
+	ConfigVersion *int                `yaml:"configVersion,omitempty"`
+	Project       *string             `yaml:"project,omitempty"`
+	Deploy        *rawMetaDeploy      `yaml:"deploy,omitempty"`
+	Cleanup       *rawMetaCleanup     `yaml:"cleanup,omitempty"`
+	GitWorktree   *rawMetaGitWorktree `yaml:"gitWorktree,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 

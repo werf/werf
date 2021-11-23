@@ -18,8 +18,8 @@ func NewSynchronizationClient(url string) *SynchronizationClient {
 }
 
 func (client *SynchronizationClient) NewClientID() (string, error) {
-	var request = NewClientIDRequest{}
-	var response = NewClientIDResponse{}
+	request := NewClientIDRequest{}
+	response := NewClientIDResponse{}
 	if err := PerformPost(client.HttpClient, fmt.Sprintf("%s/%s", client.URL, "new-client-id"), request, &response); err != nil {
 		return "", err
 	}

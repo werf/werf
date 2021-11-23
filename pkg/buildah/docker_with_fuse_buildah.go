@@ -40,6 +40,7 @@ func (b *DockerWithFuseBuildah) Tag(ctx context.Context, ref, newRef string, opt
 	_, _, err := b.runBuildah(ctx, []string{}, []string{"tag", ref, newRef}, opts.LogWriter)
 	return err
 }
+
 func (b *DockerWithFuseBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
 	_, _, err := b.runBuildah(ctx, []string{}, []string{
 		"push", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), ref, fmt.Sprintf("docker://%s", ref),

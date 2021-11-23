@@ -145,7 +145,7 @@ func GetDefaultProjectName(ctx context.Context, giterminismManager giterminism_m
 }
 
 func writeWerfConfigRender(werfConfigRenderContent string, werfConfigRenderPath string) error {
-	werfConfigRenderFile, err := os.OpenFile(werfConfigRenderPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	werfConfigRenderFile, err := os.OpenFile(werfConfigRenderPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		return err
 	}

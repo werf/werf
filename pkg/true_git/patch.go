@@ -40,7 +40,7 @@ func (opts PatchOptions) ID() string {
 			opts.PathMatcher.ID(),
 			fmt.Sprint(opts.WithBinary),
 			fmt.Sprint(opts.WithEntireFileContext),
-		)...
+		)...,
 	)
 }
 

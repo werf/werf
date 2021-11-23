@@ -862,7 +862,7 @@ func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*Containe
 		return fileDesc, nil
 	}
 
-	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open file `%s`: %s", fileDesc.FilePath, err)
 	}

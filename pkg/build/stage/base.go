@@ -40,25 +40,23 @@ const (
 	Dockerfile StageName = "dockerfile"
 )
 
-var (
-	AllStages = []StageName{
-		From,
-		BeforeInstall,
-		ImportsBeforeInstall,
-		GitArchive,
-		Install,
-		ImportsAfterInstall,
-		BeforeSetup,
-		ImportsBeforeSetup,
-		Setup,
-		ImportsAfterSetup,
-		GitCache,
-		GitLatestPatch,
-		DockerInstructions,
+var AllStages = []StageName{
+	From,
+	BeforeInstall,
+	ImportsBeforeInstall,
+	GitArchive,
+	Install,
+	ImportsAfterInstall,
+	BeforeSetup,
+	ImportsBeforeSetup,
+	Setup,
+	ImportsAfterSetup,
+	GitCache,
+	GitLatestPatch,
+	DockerInstructions,
 
-		Dockerfile,
-	}
-)
+	Dockerfile,
+}
 
 type NewBaseStageOptions struct {
 	ImageName        string

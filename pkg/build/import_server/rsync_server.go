@@ -45,7 +45,7 @@ func RunRsyncServer(ctx context.Context, dockerImageName string, tmpDir string) 
 	}
 
 	secretsFilePath := path.Join(tmpDir, "rsyncd.secrets")
-	if err := ioutil.WriteFile(secretsFilePath, []byte(fmt.Sprintf("%s:%s\n", srv.AuthUser, srv.AuthPassword)), 0644); err != nil {
+	if err := ioutil.WriteFile(secretsFilePath, []byte(fmt.Sprintf("%s:%s\n", srv.AuthUser, srv.AuthPassword)), 0o644); err != nil {
 		return nil, fmt.Errorf("unable to write %s: %s", secretsFilePath, err)
 	}
 
@@ -65,7 +65,7 @@ timeout = 300
 auth users = %s
 secrets file = /.werf/rsyncd.secrets
 strict modes = false
-`, rsyncServerPort, srv.AuthUser)), 0644); err != nil {
+`, rsyncServerPort, srv.AuthUser)), 0o644); err != nil {
 		return nil, fmt.Errorf("unable to write %s: %s", rsyncConfPath, err)
 	}
 

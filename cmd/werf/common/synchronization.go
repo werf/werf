@@ -135,7 +135,6 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		}
 
 		return res, nil
-
 	}
 
 	getHttpParamsFunc := func(synchronization string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {

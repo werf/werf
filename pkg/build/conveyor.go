@@ -570,7 +570,6 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 					logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
 				}
 				logboek.Context(ctx).LogOptionalLn()
-
 			}
 		})
 
@@ -1045,7 +1044,6 @@ func filterAndLogGitMappings(ctx context.Context, c *Conveyor, gitMappings []*st
 							logboek.Context(ctx).Info().LogFDetails("  %s: %v\n", s, values)
 						}
 					}
-
 				}
 			})
 

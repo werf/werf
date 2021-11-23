@@ -57,7 +57,6 @@ func (c *container) CreateIfNotExist(ctx context.Context) error {
 				return nil
 			})
 		})
-
 		if err != nil {
 			return err
 		}

@@ -14,9 +14,7 @@ import (
 	"github.com/werf/lockgate"
 )
 
-var (
-	Version = "dev"
-)
+var Version = "dev"
 
 var (
 	tmpDir, homeDir  string

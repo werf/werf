@@ -12,8 +12,10 @@ import (
 	"github.com/werf/werf/pkg/docker"
 )
 
-const VERSION = "0.6.2"
-const IMAGE = "ghcr.io/werf/stapel"
+const (
+	VERSION = "0.6.2"
+	IMAGE   = "ghcr.io/werf/stapel"
+)
 
 func getVersion() string {
 	version := VERSION
@@ -223,5 +225,5 @@ func CreateScript(path string, commands []string) error {
 	scriptLines = append(scriptLines, commands...)
 	scriptData := []byte(strings.Join(scriptLines, "\n") + "\n")
 
-	return ioutil.WriteFile(path, scriptData, os.FileMode(0667))
+	return ioutil.WriteFile(path, scriptData, os.FileMode(0o667))
 }

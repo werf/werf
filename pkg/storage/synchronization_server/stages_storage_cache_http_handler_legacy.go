@@ -38,6 +38,7 @@ type StagesStorageCacheHttpHandlerLegacy struct {
 type GetAllStagesRequestLegacy struct {
 	ProjectName string `json:"projectName"`
 }
+
 type GetAllStagesResponseLegacy struct {
 	Err    util.SerializableError `json:"err"`
 	Found  bool                   `json:"found"`
@@ -66,6 +67,7 @@ func (handler *StagesStorageCacheHttpHandlerLegacy) handleGetAllStages() func(w 
 type DeleteAllStagesRequestLegacy struct {
 	ProjectName string `json:"projectName"`
 }
+
 type DeleteAllStagesResponseLegacy struct {
 	Err util.SerializableError `json:"err"`
 }
@@ -86,6 +88,7 @@ type GetStagesBySignatureRequestLegacy struct {
 	ProjectName string `json:"projectName"`
 	Signature   string `json:"signature"`
 }
+
 type GetStagesBySignatureResponseLegacy struct {
 	Err    util.SerializableError `json:"err"`
 	Found  bool                   `json:"found"`
@@ -114,6 +117,7 @@ type StoreStagesBySignatureRequestLegacy struct {
 	Signature   string          `json:"signature"`
 	Stages      []StageIDLegacy `json:"stages"`
 }
+
 type StoreStagesBySignatureResponseLegacy struct {
 	Err util.SerializableError `json:"err"`
 }
@@ -138,6 +142,7 @@ type DeleteStagesBySignatureRequestLegacy struct {
 	ProjectName string `json:"projectName"`
 	Signature   string `json:"signature"`
 }
+
 type DeleteStagesBySignatureResponseLegacy struct {
 	Err util.SerializableError `json:"err"`
 }

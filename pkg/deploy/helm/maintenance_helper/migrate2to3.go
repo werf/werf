@@ -41,7 +41,7 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 		return fmt.Errorf("error building resources infos for release %q: %s", helm2ReleaseName, err)
 	}
 
-	var metadataAccessor = meta.NewAccessor()
+	metadataAccessor := meta.NewAccessor()
 
 	logboek.Context(ctx).LogOptionalLn()
 	if err := logboek.Context(ctx).Default().LogProcess("Migrating %d resources of the release %q", len(infos), helm2ReleaseName).DoError(func() error {

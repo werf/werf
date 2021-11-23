@@ -39,7 +39,7 @@ func BuildChartDependenciesInDir(ctx context.Context, chartFile, chartLockFile *
 		}
 
 		path := filepath.Join(targetDir, file.Name)
-		if err := ioutil.WriteFile(path, file.Data, 0644); err != nil {
+		if err := ioutil.WriteFile(path, file.Data, 0o644); err != nil {
 			return fmt.Errorf("error writing %q: %s", path, err)
 		}
 	}

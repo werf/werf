@@ -15,9 +15,7 @@ const (
 	MinGitVersionConstraintValue = "2.18"
 )
 
-var (
-	ForbiddenGitVersionsConstraintValues = []string{"2.22.0"}
-)
+var ForbiddenGitVersionsConstraintValues = []string{"2.22.0"}
 
 var (
 	gitVersion *semver.Version

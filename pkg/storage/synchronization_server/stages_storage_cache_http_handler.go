@@ -32,6 +32,7 @@ type StagesStorageCacheHttpHandler struct {
 type GetAllStagesRequest struct {
 	ProjectName string `json:"projectName"`
 }
+
 type GetAllStagesResponse struct {
 	Err    util.SerializableError `json:"err"`
 	Found  bool                   `json:"found"`
@@ -53,6 +54,7 @@ func (handler *StagesStorageCacheHttpHandler) handleGetAllStages() func(w http.R
 type DeleteAllStagesRequest struct {
 	ProjectName string `json:"projectName"`
 }
+
 type DeleteAllStagesResponse struct {
 	Err util.SerializableError `json:"err"`
 }
@@ -73,6 +75,7 @@ type GetStagesByDigestRequest struct {
 	ProjectName string `json:"projectName"`
 	Digest      string `json:"digest"`
 }
+
 type GetStagesByDigestResponse struct {
 	Err    util.SerializableError `json:"err"`
 	Found  bool                   `json:"found"`
@@ -96,6 +99,7 @@ type StoreStagesByDigestRequest struct {
 	Digest      string          `json:"digest"`
 	Stages      []image.StageID `json:"stages"`
 }
+
 type StoreStagesByDigestResponse struct {
 	Err util.SerializableError `json:"err"`
 }
@@ -116,6 +120,7 @@ type DeleteStagesByDigestRequest struct {
 	ProjectName string `json:"projectName"`
 	Digest      string `json:"digest"`
 }
+
 type DeleteStagesByDigestResponse struct {
 	Err util.SerializableError `json:"err"`
 }

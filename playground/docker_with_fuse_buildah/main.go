@@ -68,7 +68,6 @@ func do(ctx context.Context) error {
 				LogWriter: os.Stdout,
 			},
 		})
-
 		if err != nil {
 			errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
 			return

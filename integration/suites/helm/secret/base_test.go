@@ -58,8 +58,8 @@ var _ = It("should rotate secret key", func() {
 })
 
 var _ = Describe("helm secret encrypt/decrypt", func() {
-	var secret = "test"
-	var encryptedSecret = "1000ceeb30457f57eb67a2dfecd65c563417f4ae06167fb21be60549d247bf388165"
+	secret := "test"
+	encryptedSecret := "1000ceeb30457f57eb67a2dfecd65c563417f4ae06167fb21be60549d247bf388165"
 
 	BeforeEach(func() {
 		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("default"), "initial commit")

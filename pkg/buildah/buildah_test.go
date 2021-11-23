@@ -78,7 +78,6 @@ var _ = Describe("Buildah client", func() {
 					CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout},
 					ContextTar: c,
 				})
-
 				if err != nil {
 					errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
 					return

@@ -113,7 +113,7 @@ func (cache *ManifestCache) writeRecord(storageName string, record *ManifestCach
 	if dataBytes, err := json.Marshal(record); err != nil {
 		return fmt.Errorf("error marshalling json: %s", err)
 	} else {
-		if err := ioutil.WriteFile(filePath, append(dataBytes, []byte("\n")...), 0644); err != nil {
+		if err := ioutil.WriteFile(filePath, append(dataBytes, []byte("\n")...), 0o644); err != nil {
 			return fmt.Errorf("error writing %s: %s", filePath, err)
 		}
 		return nil
