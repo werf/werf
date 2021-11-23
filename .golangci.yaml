@@ -12,6 +12,7 @@ linters:
   disable-all: true
   enable:
     - deadcode
+    - ineffassign
     - structcheck
     - typecheck
     - varcheck

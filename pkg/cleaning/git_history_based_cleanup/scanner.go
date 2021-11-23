@@ -118,7 +118,7 @@ func (s *commitHistoryScanner) reachedStageIDList() []string {
 func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, ref *ReferenceToScan, expectedStageIDCommitList map[string][]string, stopCommitList []string) ([]string, []string, map[string][]string, error) {
 	filteredExpectedStageIDCommitList := applyImagesCleanupInPolicy(gitRepository, expectedStageIDCommitList, ref.imagesCleanupKeepPolicy.In)
 
-	refExpectedStageIDCommitList := map[string][]string{}
+	var refExpectedStageIDCommitList map[string][]string
 	isImagesCleanupKeepPolicyOnlyInOrAndBoth := ref.imagesCleanupKeepPolicy.Last == nil || (ref.imagesCleanupKeepPolicy.Operator != nil && *ref.imagesCleanupKeepPolicy.Operator == config.AndOperator)
 	if isImagesCleanupKeepPolicyOnlyInOrAndBoth {
 		refExpectedStageIDCommitList = filteredExpectedStageIDCommitList

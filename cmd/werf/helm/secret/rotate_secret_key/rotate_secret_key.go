@@ -118,9 +118,9 @@ func runRotateSecretKey(ctx context.Context, cmd *cobra.Command, secretValuesPat
 
 func secretsRegenerate(newEncoder, oldEncoder *secret.YamlEncoder, helmChartDir string, secretValuesPaths ...string) error {
 	var secretFilesPaths []string
+	var secretFilesData map[string][]byte
+	var secretValuesFilesData map[string][]byte
 	regeneratedFilesData := map[string][]byte{}
-	secretFilesData := map[string][]byte{}
-	secretValuesFilesData := map[string][]byte{}
 
 	isHelmChartDirExist, err := util.FileExists(helmChartDir)
 	if err != nil {
