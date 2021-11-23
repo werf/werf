@@ -598,11 +598,7 @@ func newYamlUnmarshalError(err error, doc *doc) error {
 		return err
 	default:
 		message := err.Error()
-		reg, err := regexp.Compile("line ([0-9]+)")
-		if err != nil {
-			return err
-		}
-
+		reg := regexp.MustCompile("line ([0-9]+)")
 		res := reg.FindStringSubmatch(message)
 
 		if len(res) == 2 {
