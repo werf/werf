@@ -175,11 +175,11 @@ func (c *WerfConfig) associateImportsArtifacts() error {
 	}
 
 	for _, relatedImageInterface := range relatedImageImages {
-		switch relatedImageInterface.(type) {
+		switch relatedImage := relatedImageInterface.(type) {
 		case *StapelImage:
-			artifactImports = append(artifactImports, relatedImageInterface.(*StapelImage).Import...)
+			artifactImports = append(artifactImports, relatedImage.Import...)
 		case *StapelImageArtifact:
-			artifactImports = append(artifactImports, relatedImageInterface.(*StapelImageArtifact).Import...)
+			artifactImports = append(artifactImports, relatedImage.Import...)
 		}
 	}
 

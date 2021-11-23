@@ -273,9 +273,9 @@ func mergeYamlEncodedData(d, eD, newD, newED interface{}) (interface{}, error) {
 		return newED, nil
 	}
 
-	switch newD.(type) {
+	switch newD := newD.(type) {
 	case yaml.MapSlice:
-		newDMapSlice := newD.(yaml.MapSlice)
+		newDMapSlice := newD
 		dMapSlice := d.(yaml.MapSlice)
 		resultMapSlice := make(yaml.MapSlice, len(newDMapSlice))
 
@@ -310,7 +310,7 @@ func mergeYamlEncodedData(d, eD, newD, newED interface{}) (interface{}, error) {
 		return resultMapSlice, nil
 	case yaml.MapItem:
 		var resultMapItem yaml.MapItem
-		newDMapItem := newD.(yaml.MapItem)
+		newDMapItem := newD
 		newEDMapItem := newED.(yaml.MapItem)
 		dMapItem := d.(yaml.MapItem)
 		eDMapItem := eD.(yaml.MapItem)
