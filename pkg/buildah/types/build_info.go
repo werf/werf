@@ -30,12 +30,12 @@ type BuilderInfo struct {
 	Docker                V2Image
 	DefaultMountsFilePath string
 	Isolation             string
-	//NamespaceOptions      define.NamespaceOptions
+	// NamespaceOptions      define.NamespaceOptions
 	Capabilities     []string
 	ConfigureNetwork string
 	CNIPluginPath    string
 	CNIConfigDir     string
-	//IDMappingOptions      define.IDMappingOptions
+	// IDMappingOptions      define.IDMappingOptions
 	History []v1.History
-	//Devices               define.ContainerDevices
+	// Devices               define.ContainerDevices
 }

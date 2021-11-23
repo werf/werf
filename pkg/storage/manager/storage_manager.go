@@ -494,16 +494,16 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 		primaryImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
 
 		// TODO(buildah): check no bugs introduced by removing of following calls
-		//if err := containerRuntime.RenameImage(ctx, cacheDockerImage, primaryImageName, false); err != nil {
-		//	return fmt.Errorf("unable to rename image %s to %s: %s", fetchedDockerImage.Image.Name(), primaryImageName, err)
-		//}
+		// if err := containerRuntime.RenameImage(ctx, cacheDockerImage, primaryImageName, false); err != nil {
+		//	 return fmt.Errorf("unable to rename image %s to %s: %s", fetchedDockerImage.Image.Name(), primaryImageName, err)
+		// }
 
-		//if err := containerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: primaryStage.GetImage()}); err != nil {
-		//	return fmt.Errorf("unable to refresh stage image %s: %s", primaryStage.GetImage().Name(), err)
-		//}
+		// if err := containerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: primaryStage.GetImage()}); err != nil {
+		//	 return fmt.Errorf("unable to refresh stage image %s: %s", primaryStage.GetImage().Name(), err)
+		// }
 
 		// TODO(buildah): check no bugs introduced by removing of following calls
-		//if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, convertStageDescriptionForStagesStorage(cacheDockerImage.Image.GetStageDescription(), m.StagesStorage)); err != nil {
+		// if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, convertStageDescriptionForStagesStorage(cacheDockerImage.Image.GetStageDescription(), m.StagesStorage)); err != nil {
 		if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, cacheImg.GetStageDescription()); err != nil {
 			return fmt.Errorf("error storing stage %s description into local manifest cache: %s", primaryImageName, err)
 		}

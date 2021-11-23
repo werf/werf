@@ -142,13 +142,13 @@ func (b *Ansible) stagePlaybook(userStageName string) ([]map[string]interface{},
 	return playbooks, nil
 }
 
-//query tasks from ansible config
-//create dump_config structure
-//returns structure:
-//{ 'tasks' => [array of tasks for stage],
-//'dump_config' => {
-//'dump_config_doc' => 'dump of doc',
-//'dump_config_sections' => {'task_0'=>'dump for task 0', 'task_1'=>'dump for task 1', ... }}
+// query tasks from ansible config
+// create dump_config structure
+// returns structure:
+// { 'tasks' => [array of tasks for stage],
+// 'dump_config' => {
+// 'dump_config_doc' => 'dump of doc',
+// 'dump_config_sections' => {'task_0'=>'dump for task 0', 'task_1'=>'dump for task 1', ... }}
 func (b *Ansible) stageConfig(userStageName string) (map[string]interface{}, error) {
 	dumpConfigSections := map[string]interface{}{}
 	var tasks []interface{}

@@ -37,8 +37,8 @@ func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) e
 	return nil
 }
 
-//func createConfigMapIfNotExists(namespace, configMapName string) error {
-//	if _, err := client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{}); errors.IsNotFound(err) {
+//  func createConfigMapIfNotExists(namespace, configMapName string) error {
+//	  if _, err := client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{}); errors.IsNotFound(err) {
 //		cm := &v1.ConfigMap{
 //			ObjectMeta: metav1.ObjectMeta{Name: configMapName},
 //		}
@@ -48,11 +48,11 @@ func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) e
 //		} else if err != nil {
 //			return fmt.Errorf("create ConfigMap %s error: %s", configMapName, err)
 //		}
-//	} else if err != nil {
-//		return fmt.Errorf("get ConfigMap %s error: %s", configMapName, err)
-//	}
-//	return nil
-//}
+//	  } else if err != nil {
+//	  	  return fmt.Errorf("get ConfigMap %s error: %s", configMapName, err)
+//	  }
+//	  return nil
+//  }
 
 func GetOrCreateConfigMapWithNamespaceIfNotExists(client kubernetes.Interface, namespace, configMapName string) (*v1.ConfigMap, error) {
 	if obj, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), configMapName, metav1.GetOptions{}); errors.IsNotFound(err) {
