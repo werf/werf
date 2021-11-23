@@ -12,4 +12,5 @@ linters:
     - deadcode
     - structcheck
     - typecheck
+    - varcheck
     - gocritic
