@@ -17,4 +17,5 @@ linters:
     - asciicheck
     - bidichk
     - bodyclose
+    - errname
     - gocritic

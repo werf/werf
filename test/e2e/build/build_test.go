@@ -18,7 +18,7 @@ var _ = Describe("Build", func() {
 			By("initializing")
 			setupEnv(withLocalRepo, containerRuntime)
 			contRuntime, err := contruntime.NewContainerRuntime(containerRuntime)
-			if err == contruntime.RuntimeUnavailError {
+			if err == contruntime.ErrRuntimeUnavailable {
 				Skip(err.Error())
 			} else if err != nil {
 				Fail(err.Error())

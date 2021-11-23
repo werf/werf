@@ -296,7 +296,7 @@ outerLoop:
 			}
 
 			if info == nil {
-				return nil, imageNotExistLocally
+				return nil, errImageNotExistLocally
 			}
 
 			return info.OnBuild, nil
@@ -312,9 +312,9 @@ outerLoop:
 		}
 
 		var onBuild []string
-		if onBuild, err = getBaseImageOnBuildLocally(); err != nil && err != imageNotExistLocally {
+		if onBuild, err = getBaseImageOnBuildLocally(); err != nil && err != errImageNotExistLocally {
 			return err
-		} else if err == imageNotExistLocally {
+		} else if err == errImageNotExistLocally {
 			var getRemotelyErr error
 			if onBuild, getRemotelyErr = getBaseImageOnBuildRemotely(); getRemotelyErr != nil {
 				if isUnsupportedMediaTypeError(getRemotelyErr) {
@@ -345,7 +345,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 	return strings.Contains(err.Error(), "unsupported MediaType")
 }
 
-var imageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
+var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
 func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	var stagesDependencies [][]string
