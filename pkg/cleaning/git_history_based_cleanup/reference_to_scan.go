@@ -354,7 +354,7 @@ func filterReferencesByLast(refs []*ReferenceToScan, last int) []*ReferenceToSca
 }
 
 func mergeReferences(refs1 []*ReferenceToScan, refs2 []*ReferenceToScan) []*ReferenceToScan {
-	result := refs2[:]
+	result := refs2
 
 outerLoop:
 	for _, ref1 := range refs1 {

@@ -205,7 +205,7 @@ func descentPath(filePath string) []string {
 		}
 	}
 
-	sort.Sort(sort.Reverse(sort.StringSlice(parts[:])))
+	sort.Sort(sort.Reverse(sort.StringSlice(parts)))
 
 	return parts
 }

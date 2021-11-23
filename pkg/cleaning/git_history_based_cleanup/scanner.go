@@ -222,7 +222,7 @@ func (s *commitHistoryScanner) handleExtraStageIDsByLastWithIn(ctx context.Conte
 			}
 		}
 	} else {
-		resultLatestCommitList = latestCommitListByIn[:]
+		resultLatestCommitList = latestCommitListByIn
 	latestCommitListByLastLoop:
 		for _, commitByLast := range latestCommitListByLast {
 			for _, commitByIn := range latestCommitListByIn {
