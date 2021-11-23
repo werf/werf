@@ -230,7 +230,6 @@ func parseUnmergedEntry(result *Result, entryLine string) error {
 }
 
 type untrackedEntry struct {
-	xy   string
 	path string
 
 	raw string

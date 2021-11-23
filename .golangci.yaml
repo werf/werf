@@ -10,4 +10,5 @@ linters:
   disable-all: true
   enable:
     - deadcode
+    - structcheck
     - gocritic
