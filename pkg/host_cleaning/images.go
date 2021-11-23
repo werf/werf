@@ -44,7 +44,7 @@ func trueDanglingImages(ctx context.Context) ([]types.ImageSummary, error) {
 	var trueDanglingImageList []types.ImageSummary
 	for _, image := range danglingImageList {
 		if len(image.RepoTags) == 0 && len(image.RepoDigests) == 0 {
-			trueDanglingImageList = append(trueDanglingImageList)
+			trueDanglingImageList = append(trueDanglingImageList, image)
 		}
 	}
 
