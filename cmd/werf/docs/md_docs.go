@@ -115,7 +115,7 @@ func replaceLinks(s string) string {
 		}
 
 		if !isSkipLink {
-			s = strings.Replace(s, linkText, fmt.Sprintf("[%s](%s)", linkText, link), -1)
+			s = strings.ReplaceAll(s, linkText, fmt.Sprintf("[%s](%s)", linkText, link))
 		}
 	}
 
@@ -124,8 +124,8 @@ func replaceLinks(s string) string {
 
 func fullCommandFilesystemPath(cmd string) string {
 	res := cmd
-	res = strings.Replace(res, " ", "_", -1)
-	res = strings.Replace(res, "-", "_", -1)
+	res = strings.ReplaceAll(res, " ", "_")
+	res = strings.ReplaceAll(res, "-", "_")
 	return res
 }
 

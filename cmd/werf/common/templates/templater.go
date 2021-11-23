@@ -214,7 +214,7 @@ func FlagsUsages(f *flag.FlagSet) string {
 
 		leftPart := flagLeftPart(flag)
 
-		usage := strings.Replace(flag.Usage, "'", "`", -1)
+		usage := strings.ReplaceAll(flag.Usage, "'", "`")
 		rightPart := logboek.FitText(usage, types.FitTextOptions{ExtraIndentWidth: 12})
 
 		fmt.Fprintf(x, "%s\n%s\n", leftPart, rightPart)

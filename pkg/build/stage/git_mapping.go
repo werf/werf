@@ -542,7 +542,7 @@ func quoteShellArg(arg string) string {
 
 	pattern := regexp.MustCompile(`[^\w@%+=:,./-]`)
 	if pattern.MatchString(arg) {
-		return "'" + strings.Replace(arg, "'", "'\"'\"'", -1) + "'"
+		return "'" + strings.ReplaceAll(arg, "'", "'\"'\"'") + "'"
 	}
 
 	return arg
