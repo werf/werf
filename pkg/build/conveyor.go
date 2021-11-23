@@ -1328,13 +1328,11 @@ func resolveDockerStagesFromValue(stages []instructions.Stage) {
 		}
 
 		for _, cmd := range s.Commands {
-			switch c := cmd.(type) {
-			case *instructions.CopyCommand:
-				if c.From != "" {
-					from := strings.ToLower(c.From)
-					if val, ok := nameToIndex[from]; ok {
-						c.From = val
-					}
+			copyCmd, ok := cmd.(*instructions.CopyCommand)
+			if ok && copyCmd.From != "" {
+				from := strings.ToLower(copyCmd.From)
+				if val, ok := nameToIndex[from]; ok {
+					copyCmd.From = val
 				}
 			}
 		}

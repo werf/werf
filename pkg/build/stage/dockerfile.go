@@ -403,13 +403,11 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 		}
 
 		for _, cmd := range stage.Commands {
-			switch c := cmd.(type) {
-			case *instructions.CopyCommand:
-				if c.From != "" {
-					relatedStageIndex, err := strconv.Atoi(c.From)
-					if err == nil && relatedStageIndex < len(stagesDependencies) {
-						stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
-					}
+			copyCmd, ok := cmd.(*instructions.CopyCommand)
+			if ok && copyCmd.From != "" {
+				relatedStageIndex, err := strconv.Atoi(copyCmd.From)
+				if err == nil && relatedStageIndex < len(stagesDependencies) {
+					stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
 				}
 			}
 		}
