@@ -52,7 +52,8 @@ func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, workingD
 		return err
 	}
 
-	args := append(binArgs, tmpFilePath)
+	args := binArgs
+	args = append(args, tmpFilePath)
 	editIteration := func() error {
 		cmd := exec.Command(bin, args...)
 		cmd.Stdout = os.Stdout

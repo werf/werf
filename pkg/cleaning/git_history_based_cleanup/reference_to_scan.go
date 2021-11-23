@@ -200,7 +200,8 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 	})
 
 	// Unite tags and branches references
-	result := append(resultBranchesRefs, resultTagsRefs...)
+	result := resultBranchesRefs
+	result = append(result, resultTagsRefs...)
 
 	return result, nil
 }

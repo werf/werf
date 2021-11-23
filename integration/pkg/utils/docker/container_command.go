@@ -52,8 +52,10 @@ func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string
 	baseWerfArgs := []string{
 		"run", "--docker-options", strings.Join(dockerOptions, " "), "--", stapel.BashBinPath(), "-ec",
 	}
+
 	containerCommand := strings.Join(cmds, " && ")
-	werfArgs := append(baseWerfArgs, utils.ShelloutPack(containerCommand))
+	werfArgs := baseWerfArgs
+	werfArgs = append(werfArgs, utils.ShelloutPack(containerCommand))
 
 	_, err = utils.RunCommandWithOptions(
 		projectPath,
