@@ -9,7 +9,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
-	github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7 // indirect
 	github.com/alessio/shellescape v0.0.0-20190409004728-b115ca0f9053
 	github.com/aws/aws-sdk-go v1.37.32
 	github.com/bitly/go-hostpool v0.1.0 // indirect
@@ -17,12 +16,12 @@ require (
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
-	github.com/containerd/containerd v1.5.7 // indirect
+	github.com/containerd/containerd v1.5.7
 	github.com/containers/buildah v1.23.1
 	github.com/containers/common v0.44.2
 	github.com/containers/image/v5 v5.16.0
 	github.com/containers/storage v1.36.0
-	github.com/deislabs/oras v0.12.0 // indirect
+	github.com/deislabs/oras v0.12.0
 	github.com/djherbis/buffer v1.1.0
 	github.com/djherbis/nio/v3 v3.0.1
 	github.com/docker/cli v20.10.7+incompatible
@@ -30,7 +29,7 @@ require (
 	github.com/docker/docker v20.10.8+incompatible
 	github.com/docker/go v1.5.1-1 // indirect
 	github.com/docker/go-connections v0.4.0
-	github.com/docker/go-units v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fluxcd/flagger v1.8.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -42,16 +41,13 @@ require (
 	github.com/google/go-containerregistry v0.5.1
 	github.com/google/uuid v1.2.0
 	github.com/gookit/color v1.3.7
-	github.com/gosuri/uitable v0.0.4 // indirect
+	github.com/gosuri/uitable v0.0.4
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.2.0
 	github.com/helm/helm-2to3 v0.8.1
-	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/markbates/pkger v0.17.1 // indirect
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/moby/buildkit v0.8.2
@@ -63,6 +59,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.2-0.20210819154149-5ad6f50d6283
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
+	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
 	github.com/prashantv/gostub v1.0.0
 	github.com/rodaine/table v1.0.0
@@ -71,6 +68,7 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.7.0
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
 	github.com/werf/kubedog v0.6.3-0.20211020172441-2ae4bcd3d36f
@@ -98,7 +96,6 @@ require (
 	k8s.io/klog/v2 v2.9.0
 	k8s.io/kubectl v0.22.1
 	mvdan.cc/xurls v1.1.0
-	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.1-0.20210128145534-11e43d4a8b92
 )
 
