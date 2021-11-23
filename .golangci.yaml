@@ -1,6 +1,11 @@
 run:
   timeout: 10m
 
+linters-settings:
+  gocritic:
+    disabled-checks:
+      - dupBranchBody
+
 linters:
   disable-all: true
   enable:

@@ -157,32 +157,17 @@ RETRY_CHANGE:
 		return err
 	}
 
-	if cacheData != nil {
-		if err := changeFunc(obj, cacheData); err != nil {
-			return err
+	if err := changeFunc(obj, cacheData); err != nil {
+		return err
+	}
+
+	_, err = cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{})
+	if err != nil {
+		if errors.IsConflict(err) {
+			goto RETRY_CHANGE
 		}
 
-		_, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{})
-		if err != nil {
-			if errors.IsConflict(err) {
-				goto RETRY_CHANGE
-			}
-
-			return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
-		}
-	} else {
-		if err := changeFunc(obj, cacheData); err != nil {
-			return err
-		}
-
-		_, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{})
-		if err != nil {
-			if errors.IsConflict(err) {
-				goto RETRY_CHANGE
-			}
-
-			return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
-		}
+		return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
 	}
 
 	return nil
