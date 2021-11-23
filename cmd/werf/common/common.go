@@ -1139,9 +1139,9 @@ func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manag
 	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigTemplatesDirPath), nil
 }
 
-func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.WerfConfigOptions {
+func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.WerfConfigOptions {
 	return config.WerfConfigOptions{
-		LogRenderedFilePath: LogRenderedFilePath,
+		LogRenderedFilePath: logRenderedFilePath,
 		Env:                 *cmdData.Environment,
 	}
 }
