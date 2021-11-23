@@ -144,7 +144,7 @@
 ### Features
 
 * Completed first step of buildah adoption: allow building of dockerfiles with buildah on any supported by the werf platform (linux, windows and macos).
-   * Enable buildah mode with `WERF_BUILDAH_CONTAINER_RUNTIME=auto|native-rootless|docker-with-fuse` environment variable:
+   * Enable buildah mode with `WERF_CONTAINER_RUNTIME_BUILDAH=auto|native-rootless|docker-with-fuse` environment variable:
         * `native-rootless` mode uses local storage and runs only under Linux.
         * `docker-with-fuse` mode runs buildah inside docker enabling crossplatform buildah support. This mode could be changed later to use podman instead of docker server.
 
@@ -158,7 +158,7 @@
 ### Features
 
 * Completed first step of buildah adoption: allow building of dockerfiles with buildah on any supported by the werf platform (linux, windows and macos).
-   * Enable buildah mode with `WERF_BUILDAH_CONTAINER_RUNTIME=auto|native-rootless|docker-with-fuse` environment variable:
+   * Enable buildah mode with `WERF_CONTAINER_RUNTIME_BUILDAH=auto|native-rootless|docker-with-fuse` environment variable:
         * `native-rootless` mode uses local storage and runs only under Linux.
         * `docker-with-fuse` mode runs buildah inside docker enabling crossplatform buildah support. This mode could be changed later to use podman instead of docker server.
 

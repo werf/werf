@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_runtime"
@@ -12,9 +13,14 @@ import (
 
 func ContainerRuntimeProcessStartupHook() (bool, error) {
 	buildahMode := GetContainerRuntimeBuildahMode()
-	if buildahMode != "" {
+
+	switch {
+	case buildahMode != "":
 		return buildah.ProcessStartupHook(buildahMode)
+	case strings.HasPrefix(os.Args[0], "buildah-") || strings.HasPrefix(os.Args[0], "chrootuser-") || strings.HasPrefix(os.Args[0], "storage-"):
+		return buildah.ProcessStartupHook("native-rootless")
 	}
+
 	return false, nil
 }
 
