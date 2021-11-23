@@ -54,7 +54,7 @@ var _ = Describe("Bundles", func() {
 					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3182")
 				}
 
-				Expect(liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, append([]string{"clone", "https://github.com/werf/quickstart-application", SuiteData.ProjectName})...)).To(Succeed())
+				Expect(liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, []string{"clone", "https://github.com/werf/quickstart-application", SuiteData.ProjectName}...)).To(Succeed())
 				Expect(liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "bundle", "publish")).Should(Succeed())
 				Expect(liveExecWerf(".", liveexec.ExecCommandOptions{}, "bundle", "apply", "--release", SuiteData.ProjectName, "--namespace", SuiteData.ProjectName, "--set-docker-config-json-value")).Should(Succeed())
 			})
