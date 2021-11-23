@@ -2,7 +2,6 @@ package ls_tree
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,18 +17,6 @@ import (
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
-
-func newHash(s string) (plumbing.Hash, error) {
-	var h plumbing.Hash
-
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		return h, err
-	}
-
-	copy(h[:], b)
-	return h, nil
-}
 
 type LsTreeOptions struct {
 	// the PathScope option determines the directory or file that will get into the result (similar to <pathspec> in the git commands)
