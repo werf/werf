@@ -78,6 +78,7 @@ func (r *quay) deleteRepo(ctx context.Context, reference string) error {
 
 		return err
 	}
+	defer resp.Body.Close()
 
 	return nil
 }
