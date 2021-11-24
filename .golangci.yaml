@@ -2,11 +2,11 @@ run:
   timeout: 10m
 
 linters-settings:
-  gocritic:
-    disabled-checks:
-      - dupBranchBody
   gci:
     local-prefixes: github.com/werf/
+  gocritic:
+    disabled-checks:
+      - ifElseChain
 
 linters:
   disable-all: true
