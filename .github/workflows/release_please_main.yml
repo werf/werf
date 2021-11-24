@@ -14,5 +14,15 @@ jobs:
         bump-minor-pre-major: true
         bump-patch-for-minor-pre-major: true
         token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-#        release-notes-header: ''
-#        release-notes-footer: ''
+        # release-notes-header: ''
+        release-notes-footer: |
+          ## Installation
+          Recommended way to install `werf`: [https://werf.io/installation.html](https://werf.io/installation.html)
+
+          Alternatively, download `werf` binaries:
+          * [Linux amd64](https://tuf.werf.io/targets/releases/{{> version }}/linux-amd64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/{{> version }}/linux-amd64/bin/werf.sig))
+          * [Linux arm64](https://tuf.werf.io/targets/releases/{{> version }}/linux-arm64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/{{> version }}/linux-arm64/bin/werf.sig))
+          * [macOS amd64](https://tuf.werf.io/targets/releases/{{> version }}/darwin-amd64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/{{> version }}/darwin-amd64/bin/werf.sig))
+          * [macOS arm64](https://tuf.werf.io/targets/releases/{{> version }}/darwin-arm64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/{{> version }}/darwin-arm64/bin/werf.sig))
+          * [Windows amd64](https://tuf.werf.io/targets/releases/{{> version }}/windows-amd64/bin/werf.exe) ([PGP signature](https://tuf.werf.io/targets/signatures/{{> version }}/windows-amd64/bin/werf.exe.sig))
+          Verifying binaries: import [public PGP key](https://werf.io/werf.asc) for this release and verify binaries with the provided PGP signatures.
