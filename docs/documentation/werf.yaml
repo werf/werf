@@ -46,6 +46,11 @@ git:
 ---
 image: web
 from: nginx:stable-alpine
+git:
+- add: /scripts/install.sh
+  to: /app/main_site/install.sh
+- add: /scripts/install.sh
+  to: /app/ru_site/install.sh
 ansible:
   setup:
   - name: "Setup /etc/nginx/nginx.conf"
