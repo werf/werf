@@ -90,40 +90,46 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 
 	currentCommit := ""
 	currentCommitPath := filepath.Join(workTreeCacheDir, "current_commit")
-	currentCommitPathExists := true
-	if _, err := os.Stat(currentCommitPath); os.IsNotExist(err) {
-		currentCommitPathExists = false
-	} else if err != nil {
-		return "", fmt.Errorf("unable to access %s: %s", currentCommitPath, err)
-	}
 
-	if isWorkTreeDirExist && !isWorkTreeRegistered {
-		logboek.Context(ctx).Info().LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
+	if isWorkTreeDirExist {
+		if !isWorkTreeRegistered {
+			logboek.Context(ctx).Info().LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
 
-		if err := os.RemoveAll(currentCommitPath); err != nil {
-			return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
-		}
-		currentCommitPathExists = false
-
-		if err := os.RemoveAll(workTreeDir); err != nil {
-			return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %s", workTreeDir, err)
-		}
-		isWorkTreeDirExist = false
-	} else if isWorkTreeDirExist && currentCommitPathExists {
-		if data, err := ioutil.ReadFile(currentCommitPath); err == nil {
-			currentCommit = strings.TrimSpace(string(data))
-
-			if currentCommit == commit {
-				return workTreeDir, nil
+			if err := os.RemoveAll(currentCommitPath); err != nil {
+				return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
 			}
-		} else {
-			return "", fmt.Errorf("error reading %s: %s", currentCommitPath, err)
-		}
 
-		if err := os.RemoveAll(currentCommitPath); err != nil {
-			return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+			if err := os.RemoveAll(workTreeDir); err != nil {
+				return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %s", workTreeDir, err)
+			}
+			isWorkTreeDirExist = false
+		} else {
+			currentCommitPathExists := true
+			if _, err := os.Stat(currentCommitPath); os.IsNotExist(err) {
+				currentCommitPathExists = false
+			} else if err != nil {
+				return "", fmt.Errorf("unable to access %s: %s", currentCommitPath, err)
+			}
+
+			if currentCommitPathExists {
+				if data, err := ioutil.ReadFile(currentCommitPath); err == nil {
+					currentCommit = strings.TrimSpace(string(data))
+
+					if currentCommit == commit {
+						return workTreeDir, nil
+					}
+				} else {
+					return "", fmt.Errorf("error reading %s: %s", currentCommitPath, err)
+				}
+
+				if err := os.RemoveAll(currentCommitPath); err != nil {
+					return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+				}
+			}
 		}
 	}
+
+	_ = isWorkTreeDirExist
 
 	// Switch worktree state to the desired commit.
 	// If worktree already exists — it will be used as a cache.

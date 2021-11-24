@@ -116,7 +116,7 @@ spec:
 					}
 
 					if strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy4" in namespace "%s" exists and cannot be imported into the current release`, namespace)) {
-						gotMydeploy2AlreadyExists = true
+						gotMydeploy4AlreadyExists = true
 					}
 				},
 			})).NotTo(Succeed())
