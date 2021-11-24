@@ -47,14 +47,10 @@ git:
 image: web
 from: nginx:stable-alpine
 git:
-{{- range $site_dir := list "main_site" "ru_site" }}
 - add: /scripts/install.sh
-  to: /app/{{ $site_dir }}/install.sh
-- add: /werf.asc
-  to: /app/{{ $site_dir }}/werf.asc
-- add: /kubedog.asc
-  to: /app/{{ $site_dir }}/kubedog.asc
-{{- end }}
+  to: /app/main_site/install.sh
+- add: /scripts/install.sh
+  to: /app/ru_site/install.sh
 ansible:
   setup:
   - name: "Setup /etc/nginx/nginx.conf"
