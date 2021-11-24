@@ -96,8 +96,8 @@ deploy:
 ```yaml
 tag: v1.1.1
 tag: /^v.*$/
-branch: master
-branch: /^(master|production)$/
+branch: main
+branch: /^(main|production)$/
 ```
 
 > При сканировании описанный набор git-веток будет искаться среди origin remote references, но при написании конфигурации префикс `origin/` в названии веток опускается  
@@ -171,7 +171,7 @@ cleanup:
       in: 168h
       operator: And
   - references:  
-      branch: /^(master|staging|production)$/
+      branch: /^(main|master|staging|production)$/
     imagesPerReference:
       last: 10
 ``` 

@@ -98,8 +98,8 @@ Each policy should be linked to some set of git tags (`tag: string || /REGEXP/`)
 ```yaml
 tag: v1.1.1
 tag: /^v.*$/
-branch: master
-branch: /^(master|production)$/
+branch: main
+branch: /^(main|production)$/
 ```
 
 > When scanning, werf searches for the provided set of git branches in the origin remote references, but in the configuration, the  `origin/` prefix is omitted in branch names.
@@ -173,7 +173,7 @@ cleanup:
       in: 168h
       operator: And
   - references:  
-      branch: /^(master|staging|production)$/
+      branch: /^(main|master|staging|production)$/
     imagesPerReference:
       last: 10
 ``` 
