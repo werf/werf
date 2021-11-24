@@ -11,7 +11,6 @@ import (
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/docker"
 )
 
@@ -44,7 +43,7 @@ func trueDanglingImages(ctx context.Context) ([]types.ImageSummary, error) {
 	var trueDanglingImageList []types.ImageSummary
 	for _, image := range danglingImageList {
 		if len(image.RepoTags) == 0 && len(image.RepoDigests) == 0 {
-			trueDanglingImageList = append(trueDanglingImageList)
+			trueDanglingImageList = append(trueDanglingImageList, image)
 		}
 	}
 
@@ -72,12 +71,13 @@ func processUsedImages(ctx context.Context, images []types.ImageSummary, options
 	for _, container := range containers {
 		for _, img := range images {
 			if img.ID == container.ImageID {
-				if options.SkipUsedImages {
+				switch {
+				case options.SkipUsedImages:
 					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", logImageName(img), logContainerName(container))
 					imagesToExclude = append(imagesToExclude, img)
-				} else if options.RmContainersThatUseWerfImages {
+				case options.RmContainersThatUseWerfImages:
 					containersToRemove = append(containersToRemove, container)
-				} else {
+				default:
 					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(img), logContainerName(container), "Use --force option to remove all containers that are based on deleting werf docker images")
 				}
 			}

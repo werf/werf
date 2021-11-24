@@ -13,7 +13,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/config"
 )
 
@@ -89,12 +88,13 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 			}
 
 			tagObject, err := gitRepository.TagObject(reference.Hash())
-			if err == nil {
-				modifiedAt = tagObject.Tagger.When
-			} else if err == plumbing.ErrObjectNotFound { // lightweight tag
+			switch {
+			case err == plumbing.ErrObjectNotFound: // lightweight tag
 				modifiedAt = refCommit.Committer.When
-			} else {
+			case err != nil:
 				return fmt.Errorf("tag object %s failed: %s", reference.Hash(), err)
+			default:
+				modifiedAt = tagObject.Tagger.When
 			}
 		}
 
@@ -199,7 +199,8 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 	})
 
 	// Unite tags and branches references
-	result := append(resultBranchesRefs, resultTagsRefs...)
+	result := resultBranchesRefs
+	result = append(result, resultTagsRefs...)
 
 	return result, nil
 }
@@ -352,7 +353,7 @@ func filterReferencesByLast(refs []*ReferenceToScan, last int) []*ReferenceToSca
 }
 
 func mergeReferences(refs1 []*ReferenceToScan, refs2 []*ReferenceToScan) []*ReferenceToScan {
-	result := refs2[:]
+	result := refs2
 
 outerLoop:
 	for _, ref1 := range refs1 {

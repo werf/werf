@@ -16,7 +16,7 @@ func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string
 		return "", err
 	}
 
-	if err := os.Chmod(newDir, 0700); err != nil {
+	if err := os.Chmod(newDir, 0o700); err != nil {
 		return "", err
 	}
 

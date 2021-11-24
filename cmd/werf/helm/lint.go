@@ -4,21 +4,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-
 	"github.com/spf13/cobra"
-	"github.com/werf/werf/cmd/werf/common"
-	cmd_werf_common "github.com/werf/werf/cmd/werf/common"
-
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 )
 
-var lintCmdData cmd_werf_common.CmdData
+var lintCmdData common.CmdData
 
 func NewLintCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
-	cmd := cmd_helm.NewLintCmd(os.Stdout)
+	cmd := helm_v3.NewLintCmd(os.Stdout)
 	SetupRenderRelatedWerfChartParams(cmd, &lintCmdData)
 
 	oldRunE := cmd.RunE

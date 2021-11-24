@@ -14,7 +14,6 @@ import (
 	"sync"
 
 	"github.com/gookit/color"
-
 	"github.com/moby/buildkit/frontend/dockerfile/dockerignore"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -22,7 +21,6 @@ import (
 	"github.com/werf/logboek"
 	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-
 	"github.com/werf/werf/pkg/build/import_server"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -570,7 +568,6 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 					logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
 				}
 				logboek.Context(ctx).LogOptionalLn()
-
 			}
 		})
 
@@ -796,11 +793,12 @@ func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, boo
 	var from string
 	var fromImageName string
 
-	if imageBaseConfig.From != "" {
+	switch {
+	case imageBaseConfig.From != "":
 		from = imageBaseConfig.From
-	} else if imageBaseConfig.FromImageName != "" {
+	case imageBaseConfig.FromImageName != "":
 		fromImageName = imageBaseConfig.FromImageName
-	} else if imageBaseConfig.FromArtifactName != "" {
+	case imageBaseConfig.FromArtifactName != "":
 		fromImageName = imageBaseConfig.FromArtifactName
 	}
 
@@ -1044,7 +1042,6 @@ func filterAndLogGitMappings(ctx context.Context, c *Conveyor, gitMappings []*st
 							logboek.Context(ctx).Info().LogFDetails("  %s: %v\n", s, values)
 						}
 					}
-
 				}
 			})
 
@@ -1327,13 +1324,11 @@ func resolveDockerStagesFromValue(stages []instructions.Stage) {
 		}
 
 		for _, cmd := range s.Commands {
-			switch c := cmd.(type) {
-			case *instructions.CopyCommand:
-				if c.From != "" {
-					from := strings.ToLower(c.From)
-					if val, ok := nameToIndex[from]; ok {
-						c.From = val
-					}
+			copyCmd, ok := cmd.(*instructions.CopyCommand)
+			if ok && copyCmd.From != "" {
+				from := strings.ToLower(copyCmd.From)
+				if val, ok := nameToIndex[from]; ok {
+					copyCmd.From = val
 				}
 			}
 		}

@@ -86,7 +86,6 @@ func (ref *Reference) FullName() string {
 
 // validate makes sure the ref meets our criteria
 func (ref *Reference) validate() error {
-
 	err := ref.validateRepo()
 	if err != nil {
 		return err

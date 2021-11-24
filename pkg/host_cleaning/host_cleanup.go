@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/werf"

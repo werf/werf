@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
+	"helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/pkg/action"
+
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/deploy/bundles/registry"
-
 	"github.com/werf/werf/pkg/deploy/helm"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/action"
 )
 
 func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*helm_v3.RegistryClientHandle, error) {

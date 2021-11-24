@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/goutils"
-
 	. "github.com/onsi/gomega"
 )
 

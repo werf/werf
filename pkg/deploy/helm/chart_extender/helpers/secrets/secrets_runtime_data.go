@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"helm.sh/helm/v3/pkg/chart"
+
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/secret"
 	"github.com/werf/werf/pkg/util/secretvalues"
-	"helm.sh/helm/v3/pkg/chart"
 )
 
 type SecretsRuntimeData struct {

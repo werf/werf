@@ -7,9 +7,7 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-var (
-	servicePartSize = len(util.MurmurHash("stub")) + len(slugSeparator)
-)
+var servicePartSize = len(util.MurmurHash("stub")) + len(slugSeparator)
 
 func TestSlug(t *testing.T) {
 	tests := []struct {

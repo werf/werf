@@ -28,16 +28,14 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/docker/cli/cli/config"
-	"github.com/docker/docker/pkg/homedir"
-
 	auth "github.com/deislabs/oras/pkg/auth/docker"
 	"github.com/deislabs/oras/pkg/content"
 	"github.com/deislabs/oras/pkg/oras"
+	"github.com/docker/cli/cli/config"
+	"github.com/docker/docker/pkg/homedir"
 	"github.com/gosuri/uitable"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
-
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/helmpath"
 )
@@ -199,8 +197,7 @@ func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
 	var contentLayer *ocispec.Descriptor
 	for _, layer := range layerDescriptors {
 		layer := layer
-		switch layer.MediaType {
-		case HelmChartContentLayerMediaType:
+		if layer.MediaType == HelmChartContentLayerMediaType {
 			contentLayer = &layer
 		}
 	}

@@ -8,15 +8,13 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -326,7 +324,7 @@ func runRender(ctx context.Context) error {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, helmRegistryClientHandler, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, helm_v3.Settings, helmRegistryClientHandler, chart_extender.WerfChartOptions{
 		SecretValueFiles: common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
@@ -359,7 +357,7 @@ func runRender(ctx context.Context) error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, nil, namespace, cmd_helm.Settings, helmRegistryClientHandler, actionConfig, helm.InitActionConfigOptions{}); err != nil {
+	if err := helm.InitActionConfig(ctx, nil, namespace, helm_v3.Settings, helmRegistryClientHandler, actionConfig, helm.InitActionConfigOptions{}); err != nil {
 		return err
 	}
 
@@ -375,14 +373,14 @@ func runRender(ctx context.Context) error {
 		output = os.Stdout
 	}
 
-	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
+	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender:               wc,
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
 	}
 
-	helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, output, cmd_helm.TemplateCmdOptions{
+	helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, output, helm_v3.TemplateCmdOptions{
 		ChainPostRenderer: wc.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),

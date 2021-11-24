@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/werf/logboek"
 	"helm.sh/helm/v3/pkg/chart/loader"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 )

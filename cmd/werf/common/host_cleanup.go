@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
 	"github.com/werf/werf/pkg/host_cleaning"
 )
 

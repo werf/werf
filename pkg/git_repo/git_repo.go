@@ -14,13 +14,15 @@ import (
 
 const GitReposCacheVersion = "5"
 
-type PatchOptions true_git.PatchOptions
-type ArchiveOptions true_git.ArchiveOptions
-type LsTreeOptions ls_tree.LsTreeOptions
-type ChecksumOptions struct {
-	LsTreeOptions
-	Commit string
-}
+type (
+	PatchOptions    true_git.PatchOptions
+	ArchiveOptions  true_git.ArchiveOptions
+	LsTreeOptions   ls_tree.LsTreeOptions
+	ChecksumOptions struct {
+		LsTreeOptions
+		Commit string
+	}
+)
 
 func (opts ChecksumOptions) ID() string {
 	return util.Sha256Hash(opts.Commit, ls_tree.LsTreeOptions(opts.LsTreeOptions).ID())

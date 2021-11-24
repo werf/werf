@@ -6,13 +6,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/werf/werf/integration/pkg/utils"
-	"github.com/werf/werf/integration/pkg/utils/liveexec"
-
 	"github.com/acarl005/stripansi"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/integration/pkg/utils"
+	"github.com/werf/werf/integration/pkg/utils/liveexec"
 )
 
 func releaseResourcesStatusProgressLine(outputLine string) string {

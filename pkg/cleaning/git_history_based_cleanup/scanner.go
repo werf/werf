@@ -12,7 +12,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/util"
 )
@@ -119,7 +118,7 @@ func (s *commitHistoryScanner) reachedStageIDList() []string {
 func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, ref *ReferenceToScan, expectedStageIDCommitList map[string][]string, stopCommitList []string) ([]string, []string, map[string][]string, error) {
 	filteredExpectedStageIDCommitList := applyImagesCleanupInPolicy(gitRepository, expectedStageIDCommitList, ref.imagesCleanupKeepPolicy.In)
 
-	refExpectedStageIDCommitList := map[string][]string{}
+	var refExpectedStageIDCommitList map[string][]string
 	isImagesCleanupKeepPolicyOnlyInOrAndBoth := ref.imagesCleanupKeepPolicy.Last == nil || (ref.imagesCleanupKeepPolicy.Operator != nil && *ref.imagesCleanupKeepPolicy.Operator == config.AndOperator)
 	if isImagesCleanupKeepPolicyOnlyInOrAndBoth {
 		refExpectedStageIDCommitList = filteredExpectedStageIDCommitList
@@ -179,15 +178,16 @@ func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, re
 }
 
 func (s *commitHistoryScanner) handleStopCommitList(ctx context.Context, ref *ReferenceToScan) ([]string, []string, map[string][]string, error) {
-	if s.referenceScanOptions.scanDepthLimit != 0 {
+	switch {
+	case s.referenceScanOptions.scanDepthLimit != 0:
 		if len(s.reachedStageIDList()) == len(s.expectedStageIDCommitList) {
 			s.stopCommitList = append(s.stopCommitList, s.reachedCommitList[len(s.reachedCommitList)-1])
 		} else {
 			return s.reachedStageIDList(), s.stopCommitList, s.stageIDHitCommitList(), nil
 		}
-	} else if len(s.reachedStageIDList()) != 0 {
+	case len(s.reachedStageIDList()) != 0:
 		s.stopCommitList = append(s.stopCommitList, s.reachedCommitList[len(s.reachedCommitList)-1])
-	} else {
+	default:
 		s.stopCommitList = append(s.stopCommitList, ref.HeadCommit.Hash.String())
 	}
 	logboek.Context(ctx).Debug().LogF("Stop commit %s added\n", s.stopCommitList[len(s.stopCommitList)-1])
@@ -221,7 +221,7 @@ func (s *commitHistoryScanner) handleExtraStageIDsByLastWithIn(ctx context.Conte
 			}
 		}
 	} else {
-		resultLatestCommitList = latestCommitListByIn[:]
+		resultLatestCommitList = latestCommitListByIn
 	latestCommitListByLastLoop:
 		for _, commitByLast := range latestCommitListByLast {
 			for _, commitByIn := range latestCommitListByIn {

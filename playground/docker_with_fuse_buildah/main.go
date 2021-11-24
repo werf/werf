@@ -8,10 +8,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/werf/werf/pkg/util"
-
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -68,7 +67,6 @@ func do(ctx context.Context) error {
 				LogWriter: os.Stdout,
 			},
 		})
-
 		if err != nil {
 			errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
 			return

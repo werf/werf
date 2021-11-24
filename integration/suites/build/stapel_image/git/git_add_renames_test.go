@@ -18,9 +18,9 @@ import (
 )
 
 var _ = Describe("Git add file renames", func() {
-	rootOfHostFixtures              := "git_add_renames"
+	rootOfHostFixtures := "git_add_renames"
 	rootOfMountedInContainerGitRepo := "/host"
-	rootOfBuiltIntoImageGitToFiles  := "/"
+	rootOfBuiltIntoImageGitToFiles := "/"
 
 	createCommandsFunc := func() []string {
 		simpleGitMappings := getSimpleGitMappingsFromFirstImageInWerfConfig(filepath.FromSlash(filepath.Join(SuiteData.TestDirPath, "werf.yaml")))
@@ -36,11 +36,11 @@ var _ = Describe("Git add file renames", func() {
 			var expectedPerms uint64
 			switch mode := gitAddHostFileInfo.Mode(); {
 			case mode.IsDir():
-				expectedPerms = uint64(os.FileMode(0755))
+				expectedPerms = uint64(os.FileMode(0o755))
 			case mode.IsRegular():
-				expectedPerms = uint64(os.FileMode(0644))
+				expectedPerms = uint64(os.FileMode(0o644))
 			case mode&os.ModeSymlink == os.ModeSymlink:
-				expectedPerms = uint64(os.FileMode(0777))
+				expectedPerms = uint64(os.FileMode(0o777))
 			default:
 				Fail(fmt.Sprintf("unexpected file mode for gitAddHostFilePath %q: %s", gitAddHostFilePath, mode))
 			}
@@ -79,8 +79,8 @@ var _ = Describe("Git add file renames", func() {
 			"git",
 			append(
 				[]string{"add"},
-				filePatternsToCommit...
-			)...
+				filePatternsToCommit...,
+			)...,
 		)
 
 		utils.RunSucceedCommand(

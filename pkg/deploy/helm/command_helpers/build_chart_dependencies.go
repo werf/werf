@@ -7,14 +7,14 @@ import (
 	"os"
 	"path/filepath"
 
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
-
-	"github.com/werf/logboek"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+
+	"github.com/werf/logboek"
 )
 
 type BuildChartDependenciesOptions struct {
@@ -39,7 +39,7 @@ func BuildChartDependenciesInDir(ctx context.Context, chartFile, chartLockFile *
 		}
 
 		path := filepath.Join(targetDir, file.Name)
-		if err := ioutil.WriteFile(path, file.Data, 0644); err != nil {
+		if err := ioutil.WriteFile(path, file.Data, 0o644); err != nil {
 			return fmt.Errorf("error writing %q: %s", path, err)
 		}
 	}

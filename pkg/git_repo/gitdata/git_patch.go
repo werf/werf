@@ -97,14 +97,17 @@ func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {
 
 				patchPath := filepath.Join(hashDir, fmt.Sprintf("%s.patch", strings.TrimSuffix(finfo.Name(), ".meta.json")))
 
-				if patchInfo, err := os.Stat(patchPath); os.IsNotExist(err) {
-					continue
-				} else if err != nil {
+				patchInfo, err := os.Stat(patchPath)
+				if err != nil {
+					if os.IsNotExist(err) {
+						continue
+					}
+
 					return nil, fmt.Errorf("error accessing %q: %s", patchPath, err)
-				} else {
-					desc.PatchPath = patchPath
-					desc.Size = uint64(patchInfo.Size())
 				}
+
+				desc.PatchPath = patchPath
+				desc.Size = uint64(patchInfo.Size())
 			}
 		}
 	}

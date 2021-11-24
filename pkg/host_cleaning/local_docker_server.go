@@ -13,9 +13,9 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-
 	"github.com/dustin/go-humanize"
 
+	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/container_runtime"
@@ -24,8 +24,6 @@ import (
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/volumeutils"
 	"github.com/werf/werf/pkg/werf"
-
-	"github.com/werf/kubedog/pkg/utils"
 )
 
 const (

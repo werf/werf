@@ -7,15 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/werf/logboek"
-
-	"github.com/werf/lockgate"
-
-	"github.com/werf/werf/pkg/werf"
-
 	"k8s.io/apimachinery/pkg/util/json"
 
+	"github.com/werf/lockgate"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type FileStagesStorageCache struct {

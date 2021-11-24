@@ -13,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/format/index"
+
 	"github.com/werf/logboek"
 )
 
@@ -63,7 +64,7 @@ func CreateArchiveBasedOnAnotherOne(ctx context.Context, sourceArchivePath, dest
 }
 
 func CreateArchive(archivePath string, f func(tw *tar.Writer) error) error {
-	if err := os.MkdirAll(filepath.Dir(archivePath), 0777); err != nil {
+	if err := os.MkdirAll(filepath.Dir(archivePath), 0o777); err != nil {
 		return fmt.Errorf("unable to create dir %q: %s", filepath.Dir(archivePath), err)
 	}
 
@@ -280,7 +281,6 @@ func WriteDirAsTar(dir string, w io.Writer) error {
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}

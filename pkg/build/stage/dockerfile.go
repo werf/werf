@@ -16,7 +16,6 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/context_manager"
 	"github.com/werf/werf/pkg/docker_registry"
@@ -158,16 +157,17 @@ func (ds *DockerStages) AddDockerStageArg(dockerStageID int, key, value string) 
 	}
 
 	var resolvedValue string
-	if buildArgValue, ok := ds.dockerBuildArgsHash[resolvedKey]; ok {
+	buildArgValue, ok := ds.dockerBuildArgsHash[resolvedKey]
+	switch {
+	case ok:
 		resolvedValue = buildArgValue
-	} else if value == "" {
+	case value == "":
 		resolvedValue = ds.dockerMetaArgsHash[resolvedKey]
-	} else {
+	default:
 		rValue, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, value)
 		if err != nil {
 			return "", "", err
 		}
-
 		resolvedValue = rValue
 	}
 
@@ -295,7 +295,7 @@ outerLoop:
 			}
 
 			if info == nil {
-				return nil, imageNotExistLocally
+				return nil, errImageNotExistLocally
 			}
 
 			return info.OnBuild, nil
@@ -311,9 +311,9 @@ outerLoop:
 		}
 
 		var onBuild []string
-		if onBuild, err = getBaseImageOnBuildLocally(); err != nil && err != imageNotExistLocally {
+		if onBuild, err = getBaseImageOnBuildLocally(); err != nil && err != errImageNotExistLocally {
 			return err
-		} else if err == imageNotExistLocally {
+		} else if err == errImageNotExistLocally {
 			var getRemotelyErr error
 			if onBuild, getRemotelyErr = getBaseImageOnBuildRemotely(); getRemotelyErr != nil {
 				if isUnsupportedMediaTypeError(getRemotelyErr) {
@@ -344,7 +344,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 	return strings.Contains(err.Error(), "unsupported MediaType")
 }
 
-var imageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
+var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
 func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	var stagesDependencies [][]string
@@ -402,13 +402,11 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 		}
 
 		for _, cmd := range stage.Commands {
-			switch c := cmd.(type) {
-			case *instructions.CopyCommand:
-				if c.From != "" {
-					relatedStageIndex, err := strconv.Atoi(c.From)
-					if err == nil && relatedStageIndex < len(stagesDependencies) {
-						stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
-					}
+			copyCmd, ok := cmd.(*instructions.CopyCommand)
+			if ok && copyCmd.From != "" {
+				relatedStageIndex, err := strconv.Atoi(copyCmd.From)
+				if err == nil && relatedStageIndex < len(stagesDependencies) {
+					stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
 				}
 			}
 		}
@@ -650,7 +648,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	archivePath := archive.GetFilePath()
 	if len(s.contextAddFiles) != 0 {
 		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFiles to build context archive %s", archivePath).DoError(func() error {
-			var sourceArchivePath = archivePath
+			sourceArchivePath := archivePath
 			destinationArchivePath, err := context_manager.AddContextAddFilesToContextArchive(ctx, sourceArchivePath, giterminismManager.ProjectDir(), s.context, s.contextAddFiles)
 			if err != nil {
 				return err

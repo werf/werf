@@ -9,25 +9,20 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/werf/werf/pkg/util"
-
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	"github.com/werf/lockgate"
-
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/provenance"
-
-	"github.com/pkg/errors"
-	"github.com/werf/werf/pkg/werf"
-	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-
-	"helm.sh/helm/v3/pkg/chart/loader"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func GetChartDependenciesCacheDir(lockChecksum string) string {
@@ -68,14 +63,16 @@ func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, er
 func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadataLockFile *chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
 	depsDir := GetChartDependenciesCacheDir(util.Sha256Hash(string(metadataLockFile.Data)))
 
-	if _, err := os.Stat(depsDir); os.IsNotExist(err) {
+	_, err := os.Stat(depsDir)
+	switch {
+	case os.IsNotExist(err):
 		if err := logboek.Context(ctx).Default().LogProcess("Building chart dependencies").DoError(func() error {
 			logboek.Context(ctx).Default().LogF("Using chart dependencies directory: %s\n", depsDir)
-			if _, lock, err := werf.AcquireHostLock(ctx, depsDir, lockgate.AcquireOptions{}); err != nil {
+			_, lock, err := werf.AcquireHostLock(ctx, depsDir, lockgate.AcquireOptions{})
+			if err != nil {
 				return fmt.Errorf("error acquiring lock for %q: %s", depsDir, err)
-			} else {
-				defer werf.ReleaseHostLock(lock)
 			}
+			defer werf.ReleaseHostLock(lock)
 
 			tmpDepsDir := fmt.Sprintf("%s.tmp.%s", depsDir, uuid.NewV4().String())
 
@@ -96,9 +93,9 @@ func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadata
 		}); err != nil {
 			return "", err
 		}
-	} else if err != nil {
+	case err != nil:
 		return "", fmt.Errorf("error accessing %q: %s", depsDir, err)
-	} else {
+	default:
 		logboek.Context(ctx).Default().LogF("Using cached chart dependencies directory: %s\n", depsDir)
 	}
 

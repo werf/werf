@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/alessio/shellescape"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -26,8 +25,8 @@ var _ = Describe("file lifecycle", func() {
 	fileDataToAdd := []byte("test")
 	fileDataToModify := []byte("test2")
 
-	gitExecutableFilePerm := os.FileMode(0755)
-	gitOrdinaryFilePerm := os.FileMode(0644)
+	gitExecutableFilePerm := os.FileMode(0o755)
+	gitOrdinaryFilePerm := os.FileMode(0o644)
 
 	type fileLifecycleEntry struct {
 		relPath string

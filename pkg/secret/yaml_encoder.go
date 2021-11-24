@@ -93,10 +93,10 @@ func doYamlData(doFunc func([]byte) ([]byte, error), data []byte) ([]byte, error
 }
 
 func doYamlValueSecret(doFunc func([]byte) ([]byte, error), data interface{}) (interface{}, error) {
-	switch data.(type) {
+	switch data := data.(type) {
 	case yaml.MapSlice:
-		result := make(yaml.MapSlice, len(data.(yaml.MapSlice)))
-		for ind, elm := range data.(yaml.MapSlice) {
+		result := make(yaml.MapSlice, len(data))
+		for ind, elm := range data {
 			result[ind].Key = elm.Key
 			resultValue, err := doYamlValueSecret(doFunc, elm.Value)
 			if err != nil {
@@ -110,9 +110,9 @@ func doYamlValueSecret(doFunc func([]byte) ([]byte, error), data interface{}) (i
 	case yaml.MapItem:
 		var result yaml.MapItem
 
-		result.Key = data.(yaml.MapItem).Key
+		result.Key = data.Key
 
-		resultValue, err := doYamlValueSecret(doFunc, data.(yaml.MapItem).Value)
+		resultValue, err := doYamlValueSecret(doFunc, data.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +122,7 @@ func doYamlValueSecret(doFunc func([]byte) ([]byte, error), data interface{}) (i
 		return result, nil
 	case []interface{}:
 		var result []interface{}
-		for _, elm := range data.([]interface{}) {
+		for _, elm := range data {
 			resultElm, err := doYamlValueSecret(doFunc, elm)
 			if err != nil {
 				return nil, err

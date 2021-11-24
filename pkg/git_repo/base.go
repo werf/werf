@@ -17,7 +17,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-
 	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git"
@@ -214,7 +213,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		return nil, err
 	}
 
-	fileHandler, err := os.OpenFile(tmpFile, os.O_RDWR|os.O_CREATE, 0755)
+	fileHandler, err := os.OpenFile(tmpFile, os.O_RDWR|os.O_CREATE, 0o755)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open file %s: %s", tmpFile, err)
 	}
@@ -366,7 +365,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 		return nil, err
 	}
 
-	fileHandler, err := os.OpenFile(tmpPath, os.O_RDWR|os.O_CREATE, 0755)
+	fileHandler, err := os.OpenFile(tmpPath, os.O_RDWR|os.O_CREATE, 0o755)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open archive file: %s", err)
 	}
@@ -861,7 +860,6 @@ func (repo *Base) IsCommitFileExist(ctx context.Context, commit, path string) (e
 		})
 
 	return
-
 }
 
 func (repo *Base) isCommitFileExist(ctx context.Context, commit, path string) (bool, error) {
@@ -899,9 +897,9 @@ func (repo *Base) readCommitFile(ctx context.Context, commit, path string) ([]by
 
 func (repo *Base) IsAnyCommitTreeEntriesMatched(ctx context.Context, commit string, pathScope string, pathMatcher path_matcher.PathMatcher, allFiles bool) (bool, error) {
 	result, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
-		PathScope: pathScope,
+		PathScope:   pathScope,
 		PathMatcher: pathMatcher,
-		AllFiles: allFiles,
+		AllFiles:    allFiles,
 	})
 	if err != nil {
 		return false, err

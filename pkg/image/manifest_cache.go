@@ -11,7 +11,6 @@ import (
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
@@ -47,15 +46,18 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 
 	now := time.Now()
 
-	if record, err := cache.readRecord(ctx, storageName, imageName); err != nil {
+	record, err := cache.readRecord(ctx, storageName, imageName)
+	switch {
+	case err != nil:
 		return nil, err
-	} else if record != nil {
+	case record != nil:
 		record.AccessTimestamp = now.Unix()
 		if err := cache.writeRecord(storageName, record); err != nil {
 			return nil, err
 		}
+
 		return record.Info, nil
-	} else {
+	default:
 		return nil, nil
 	}
 }
@@ -110,7 +112,7 @@ func (cache *ManifestCache) writeRecord(storageName string, record *ManifestCach
 	if dataBytes, err := json.Marshal(record); err != nil {
 		return fmt.Errorf("error marshalling json: %s", err)
 	} else {
-		if err := ioutil.WriteFile(filePath, append(dataBytes, []byte("\n")...), 0644); err != nil {
+		if err := ioutil.WriteFile(filePath, append(dataBytes, []byte("\n")...), 0o644); err != nil {
 			return fmt.Errorf("error writing %s: %s", filePath, err)
 		}
 		return nil

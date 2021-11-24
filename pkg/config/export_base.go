@@ -115,14 +115,16 @@ func (c *ExportBase) GetRaw() interface{} {
 }
 
 func (c *ExportBase) validate() error {
-	if c.Add == "" || !isAbsolutePath(c.Add) {
+	switch {
+	case c.Add == "" || !isAbsolutePath(c.Add):
 		return newDetailedConfigError("`add: PATH` absolute path required for import!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
-	} else if c.To == "" || !isAbsolutePath(c.To) {
+	case c.To == "" || !isAbsolutePath(c.To):
 		return newDetailedConfigError("`to: PATH` absolute path required for import!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
-	} else if !allRelativePaths(c.IncludePaths) {
+	case !allRelativePaths(c.IncludePaths):
 		return newDetailedConfigError("`includePaths: [PATH, ...]|PATH` should be relative paths!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
-	} else if !allRelativePaths(c.ExcludePaths) {
+	case !allRelativePaths(c.ExcludePaths):
 		return newDetailedConfigError("`excludePaths: [PATH, ...]|PATH` should be relative paths!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
+	default:
+		return nil
 	}
-	return nil
 }

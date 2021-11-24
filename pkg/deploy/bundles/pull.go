@@ -6,9 +6,8 @@ import (
 
 	"helm.sh/helm/v3/pkg/chartutil"
 
-	"github.com/werf/werf/pkg/deploy/bundles/registry"
-
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/deploy/bundles/registry"
 )
 
 func Pull(ctx context.Context, bundleRef string, destDir string, bundlesRegistryClient *registry.Client) error {

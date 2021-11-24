@@ -48,18 +48,18 @@ func ShowRef(repoDir string) (*ShowRefResult, error) {
 			FullName: parts[1],
 		}
 
-		if ref.FullName == "HEAD" {
+		switch {
+		case ref.FullName == "HEAD":
 			ref.IsHEAD = true
-		} else if strings.HasPrefix(ref.FullName, "refs/tags/") {
+		case strings.HasPrefix(ref.FullName, "refs/tags/"):
 			ref.IsTag = true
 			ref.TagName = strings.TrimPrefix(ref.FullName, "refs/tags/")
-		} else if strings.HasPrefix(ref.FullName, "refs/heads/") {
+		case strings.HasPrefix(ref.FullName, "refs/heads/"):
 			ref.IsBranch = true
 			ref.BranchName = strings.TrimPrefix(ref.FullName, "refs/heads/")
-		} else if strings.HasPrefix(ref.FullName, "refs/remotes/") {
+		case strings.HasPrefix(ref.FullName, "refs/remotes/"):
 			ref.IsBranch = true
 			ref.IsRemote = true
-
 			parts := strings.SplitN(strings.TrimPrefix(ref.FullName, "refs/remotes/"), "/", 2)
 			if len(parts) != 2 {
 				continue

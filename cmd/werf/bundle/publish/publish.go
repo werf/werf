@@ -7,40 +7,33 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/werf/pkg/slug"
-
 	"github.com/Masterminds/semver"
-
-	"helm.sh/helm/v3/pkg/getter"
-
 	uuid "github.com/satori/go.uuid"
-
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/werf/global_warnings"
-
-	"github.com/werf/werf/pkg/deploy/bundles"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"github.com/spf13/cobra"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
-
-	"github.com/spf13/cobra"
+	"helm.sh/helm/v3/pkg/getter"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/deploy/bundles"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -333,7 +326,7 @@ func runPublish(ctx context.Context) error {
 		return err
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, cmd_helm.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 	})
@@ -356,7 +349,7 @@ func runPublish(ctx context.Context) error {
 		wc.SetServiceValues(vals)
 	}
 
-	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
+	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender:               wc,
@@ -383,7 +376,7 @@ func runPublish(ctx context.Context) error {
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
 	defer os.RemoveAll(bundleTmpDir)
 
-	p := getter.All(cmd_helm.Settings)
+	p := getter.All(helm_v3.Settings)
 	vals, err := valueOpts.MergeValues(p, wc)
 	if err != nil {
 		return err

@@ -29,12 +29,12 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 		fileContentsShouldBeEqual("result", "secret")
 	}
 
-	var decryptItBody = func(secretType string, withPipe bool) {
+	decryptItBody := func(secretType string, withPipe bool) {
 		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath(secretType), "initial commit")
 		decryptAndCheckFileOrValues(secretType, "encrypted_secret", withPipe)
 	}
 
-	var encryptItBody = func(secretType string, withPipe bool) {
+	encryptItBody := func(secretType string, withPipe bool) {
 		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath(secretType), "initial commit")
 
 		if withPipe {
@@ -50,7 +50,7 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 		decryptAndCheckFileOrValues(secretType, "result", withPipe)
 	}
 
-	var editItBody = func(secretType string) {
+	editItBody := func(secretType string) {
 		if runtime.GOOS == "windows" {
 			Skip("skip on windows")
 		}
@@ -70,17 +70,17 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 		decryptAndCheckFileOrValues(secretType, "result", false)
 	}
 
-	var _ = DescribeTable("edit", editItBody,
+	_ = DescribeTable("edit", editItBody,
 		Entry("secret file", "file"),
 		Entry("secret file", "values"))
 
-	var _ = DescribeTable("encryption", encryptItBody,
+	_ = DescribeTable("encryption", encryptItBody,
 		Entry("secret file", "file", false),
 		Entry("secret file (pipe)", "file", true),
 		Entry("secret values", "values", false),
 		Entry("secret values (pipe)", "values", true))
 
-	var _ = DescribeTable("decryption", decryptItBody,
+	_ = DescribeTable("decryption", decryptItBody,
 		Entry("secret file", "file", false),
 		Entry("secret file (pipe)", "file", true),
 		Entry("secret values", "values", false),

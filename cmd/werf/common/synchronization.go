@@ -6,25 +6,18 @@ import (
 	"os"
 	"strings"
 
-	"github.com/werf/werf/pkg/werf/global_warnings"
-
-	"github.com/werf/werf/pkg/werf/locker_with_retry"
-
-	"github.com/werf/lockgate/pkg/distributed_locker"
-	"github.com/werf/logboek"
-
 	"github.com/spf13/cobra"
-
 	"k8s.io/client-go/dynamic"
-
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/kubedog/pkg/kube"
-
-	"github.com/werf/werf/pkg/storage/synchronization_server"
-
+	"github.com/werf/lockgate/pkg/distributed_locker"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/storage/synchronization_server"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/werf/pkg/werf/locker_with_retry"
 )
 
 func SetupSynchronization(cmdData *CmdData, cmd *cobra.Command) {
@@ -63,26 +56,28 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 
 	ctx := BackgroundContext()
 	doPrintWarning := false
-	if *cmdData.KubeConfigBase64 != "" {
+	kubeConfigEnv := os.Getenv("KUBECONFIG")
+	switch {
+	case *cmdData.KubeConfigBase64 != "":
 		doPrintWarning = true
 		global_warnings.GlobalWarningLn(ctx, `###`)
 		global_warnings.GlobalWarningLn(ctx, `##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
 		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`##  because --kube-config-base64=%s (or WERF_KUBE_CONFIG_BASE64, or WERF_KUBECONFIG_BASE64, or $KUBECONFIG_BASE64 env var) has been specified explicitly.`, *cmdData.KubeConfigBase64))
-	} else if kubeConfigEnv := os.Getenv("KUBECONFIG"); kubeConfigEnv != "" {
+	case kubeConfigEnv != "":
 		doPrintWarning = true
 		global_warnings.GlobalWarningLn(ctx, `###`)
 		global_warnings.GlobalWarningLn(ctx, `##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
 		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`##  because KUBECONFIG=%s env var has been specified explicitly.`, kubeConfigEnv))
-	} else if *cmdData.KubeConfig != "" {
+	case *cmdData.KubeConfig != "":
 		doPrintWarning = true
 		global_warnings.GlobalWarningLn(ctx, `###`)
 		global_warnings.GlobalWarningLn(ctx, `##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
-		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`##  because --kube-config=%s (or WERF_KUBE_CONFIG, or WERF_KUBECONFIG, or KUBECONFIG env var) has been specified explicitly.`, kubeConfigEnv))
-	} else if *cmdData.KubeContext != "" {
+		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`##  because --kube-config=%s (or WERF_KUBE_CONFIG, or WERF_KUBECONFIG, or KUBECONFIG env var) has been specified explicitly.`, *cmdData.KubeConfig))
+	case *cmdData.KubeContext != "":
 		doPrintWarning = true
 		global_warnings.GlobalWarningLn(ctx, `###`)
 		global_warnings.GlobalWarningLn(ctx, `##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,`)
-		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`##  because --kube-context=%s (or WERF_KUBE_CONTEXT env var) has been specified explicitly.`, kubeConfigEnv))
+		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`##  because --kube-context=%s (or WERF_KUBE_CONTEXT env var) has been specified explicitly.`, *cmdData.KubeContext))
 	}
 
 	if doPrintWarning {
@@ -133,7 +128,6 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		}
 
 		return res, nil
-
 	}
 
 	getHttpParamsFunc := func(synchronization string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
@@ -154,20 +148,21 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		return &SynchronizationParams{Address: address, SynchronizationType: HttpSynchronization}, nil
 	}
 
-	if *cmdData.Synchronization == "" {
+	switch {
+	case *cmdData.Synchronization == "":
 		if stagesStorage.Address() == storage.LocalStorageAddress {
 			return &SynchronizationParams{SynchronizationType: LocalSynchronization, Address: storage.LocalStorageAddress}, nil
-		} else {
-			return getHttpParamsFunc(storage.DefaultHttpSynchronizationServer, stagesStorage)
 		}
-	} else if *cmdData.Synchronization == storage.LocalStorageAddress {
+
+		return getHttpParamsFunc(storage.DefaultHttpSynchronizationServer, stagesStorage)
+	case *cmdData.Synchronization == storage.LocalStorageAddress:
 		return &SynchronizationParams{Address: *cmdData.Synchronization, SynchronizationType: LocalSynchronization}, nil
-	} else if strings.HasPrefix(*cmdData.Synchronization, "kubernetes://") {
+	case strings.HasPrefix(*cmdData.Synchronization, "kubernetes://"):
 		checkSynchronizationKubernetesParamsForWarnings(cmdData)
 		return getKubeParamsFunc(*cmdData.Synchronization, GetOndemandKubeInitializer())
-	} else if strings.HasPrefix(*cmdData.Synchronization, "http://") || strings.HasPrefix(*cmdData.Synchronization, "https://") {
+	case strings.HasPrefix(*cmdData.Synchronization, "http://") || strings.HasPrefix(*cmdData.Synchronization, "https://"):
 		return getHttpParamsFunc(*cmdData.Synchronization, stagesStorage)
-	} else {
+	default:
 		return nil, fmt.Errorf("only --synchronization=%s or --synchronization=kubernetes://NAMESPACE or --synchronization=http[s]://HOST:PORT/CLIENT_ID is supported, got %q", storage.LocalStorageAddress, *cmdData.Synchronization)
 	}
 }

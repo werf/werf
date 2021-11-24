@@ -6,11 +6,9 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
-
-	"github.com/werf/werf/pkg/werf"
-
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type container struct {
@@ -57,7 +55,6 @@ func (c *container) CreateIfNotExist(ctx context.Context) error {
 				return nil
 			})
 		})
-
 		if err != nil {
 			return err
 		}

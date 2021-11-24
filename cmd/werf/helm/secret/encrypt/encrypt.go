@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/secret"
-
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 
@@ -16,6 +13,8 @@ import (
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/gitdata"
+	"github.com/werf/werf/pkg/secret"
 	"github.com/werf/werf/pkg/werf"
 )
 

@@ -9,12 +9,12 @@ import (
 )
 
 func PerformPost(client *http.Client, url string, request, response interface{}) error {
-	body, err := json.Marshal(request)
+	reqBodyData, err := json.Marshal(request)
 	if err != nil {
 		return fmt.Errorf("unable to marshal request data: %s", err)
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyData))
 	if err != nil {
 		return fmt.Errorf("unable to create POST request for %q: %s", url, err)
 	}
@@ -25,14 +25,17 @@ func PerformPost(client *http.Client, url string, request, response interface{})
 	}
 
 	defer resp.Body.Close()
-	if body, err := ioutil.ReadAll(resp.Body); err != nil {
+	respBodyData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
 		return fmt.Errorf("error reading response of %q request: %s", url, err)
-	} else if resp.StatusCode != 200 {
-		return fmt.Errorf("got bad response %s by url %q request:\n%s", resp.Status, url, body)
-	} else {
-		if err := json.Unmarshal(body, response); err != nil {
-			return fmt.Errorf("unable to unmarshal json body by url %q request: %s", url, err)
-		}
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("got bad response %s by url %q request:\n%s", resp.Status, url, string(respBodyData))
+	}
+
+	if err := json.Unmarshal(respBodyData, response); err != nil {
+		return fmt.Errorf("unable to unmarshal json body by url %q request: %s", url, err)
 	}
 
 	return nil

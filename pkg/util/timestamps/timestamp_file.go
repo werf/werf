@@ -39,7 +39,7 @@ func WriteTimestampFile(path string, t time.Time) error {
 		return fmt.Errorf("error creating dir %q: %s", dir, err)
 	}
 
-	if err := ioutil.WriteFile(path, []byte(timeStr), 0644); err != nil {
+	if err := ioutil.WriteFile(path, []byte(timeStr), 0o644); err != nil {
 		return fmt.Errorf("error writing %q: %s", path, err)
 	}
 

@@ -8,16 +8,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/secret"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/gitdata"
+	"github.com/werf/werf/pkg/secret"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
@@ -120,9 +118,9 @@ func runRotateSecretKey(ctx context.Context, cmd *cobra.Command, secretValuesPat
 
 func secretsRegenerate(newEncoder, oldEncoder *secret.YamlEncoder, helmChartDir string, secretValuesPaths ...string) error {
 	var secretFilesPaths []string
+	var secretFilesData map[string][]byte
+	var secretValuesFilesData map[string][]byte
 	regeneratedFilesData := map[string][]byte{}
-	secretFilesData := map[string][]byte{}
-	secretValuesFilesData := map[string][]byte{}
 
 	isHelmChartDirExist, err := util.FileExists(helmChartDir)
 	if err != nil {
@@ -196,9 +194,8 @@ func secretsRegenerate(newEncoder, oldEncoder *secret.YamlEncoder, helmChartDir 
 	for filePath, fileData := range regeneratedFilesData {
 		err := logboek.LogProcess(fmt.Sprintf("Saving file %q", filePath)).DoError(func() error {
 			fileData = append(bytes.TrimSpace(fileData), []byte("\n")...)
-			return ioutil.WriteFile(filePath, fileData, 0644)
+			return ioutil.WriteFile(filePath, fileData, 0o644)
 		})
-
 		if err != nil {
 			return err
 		}
@@ -225,7 +222,6 @@ func regenerateSecrets(filesData, regeneratedFilesData map[string][]byte, decode
 
 				return nil
 			})
-
 		if err != nil {
 			return err
 		}

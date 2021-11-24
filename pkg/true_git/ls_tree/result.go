@@ -12,7 +12,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/git_repo/repo_handle"
 )
 
@@ -65,15 +64,16 @@ func (r *SubmoduleResult) setParentRecursively() {
 
 func (r *SubmoduleResult) submoduleRepositoryFromParent(mainRepository repo_handle.Handle) (repo_handle.Handle, error) {
 	var parentRepository repo_handle.Handle
-	if r.parentResult != nil {
+	switch {
+	case r.parentResult != nil:
 		parentRepository = mainRepository
-	} else if r.parentSubmoduleResult != nil {
+	case r.parentSubmoduleResult != nil:
 		var err error
 		parentRepository, err = r.parentSubmoduleResult.submoduleRepositoryFromParent(mainRepository)
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	default:
 		panic("unexpected condition")
 	}
 
@@ -305,16 +305,18 @@ func (r *Result) LsTreeEntryContent(mainRepoHandle repo_handle.Handle, relPath s
 
 	_ = r.walkWithResult(func(r *Result, sr *SubmoduleResult, e *LsTreeEntry) (err error) {
 		if filepath.ToSlash(e.FullFilepath) == filepath.ToSlash(relPath) {
-			if r != nil {
+			switch {
+			case r != nil:
 				entryRepoHandle = mainRepoHandle
-			} else if sr != nil {
+			case sr != nil:
 				entryRepoHandle, err = sr.submoduleRepositoryFromParent(mainRepoHandle)
 				if err != nil {
 					return err
 				}
-			} else {
+			default:
 				panic(fmt.Sprintf("unexpected condition: %v", e))
 			}
+
 			entry = e
 		}
 

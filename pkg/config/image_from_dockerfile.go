@@ -17,19 +17,18 @@ type ImageFromDockerfile struct {
 	Network         string
 	SSH             string
 
-	raw             *rawImageFromDockerfile
+	raw *rawImageFromDockerfile
 }
 
 func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.Interface) error {
-	if !isRelativePath(c.Context) {
+	switch {
+	case !isRelativePath(c.Context):
 		return newDetailedConfigError("`context: PATH` should be relative to project directory!", nil, c.raw.doc)
-	} else if c.Dockerfile != "" && !isRelativePath(c.Dockerfile) {
+	case c.Dockerfile != "" && !isRelativePath(c.Dockerfile):
 		return newDetailedConfigError("`dockerfile: PATH` required and should be relative to context!", nil, c.raw.doc)
-	} else if !allRelativePaths(c.ContextAddFiles) {
+	case !allRelativePaths(c.ContextAddFiles):
 		return newDetailedConfigError("`contextAddFiles: [PATH, ...]|PATH` each path should be relative to context!", nil, c.raw.doc)
-	}
-
-	if len(c.ContextAddFiles) != 0 {
+	case len(c.ContextAddFiles) != 0:
 		for _, contextAddFile := range c.ContextAddFiles {
 			if err := giterminismManager.Inspector().InspectConfigDockerfileContextAddFile(filepath.Join(c.Context, contextAddFile)); err != nil {
 				return newDetailedConfigError(err.Error(), nil, c.raw.doc)

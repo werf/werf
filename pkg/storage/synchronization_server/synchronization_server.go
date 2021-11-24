@@ -9,12 +9,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/werf/werf/pkg/util"
-
 	"github.com/werf/lockgate/pkg/distributed_locker"
-
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/util"
 )
 
 func RunSynchronizationServer(_ context.Context, ip, port string, distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(clientID string) (storage.StagesStorageCache, error)) error {
@@ -48,6 +46,7 @@ func NewSynchronizationServerHandler(distributedLockerBackendFactoryFunc func(cl
 type HealthRequest struct {
 	Echo string `json:"echo"`
 }
+
 type HealthResponse struct {
 	Err    util.SerializableError `json:"err"`
 	Echo   string                 `json:"echo"`
@@ -66,11 +65,13 @@ func (server *SynchronizationServerHandler) handleHealth(w http.ResponseWriter, 
 	})
 }
 
-type NewClientIDRequest struct{}
-type NewClientIDResponse struct {
-	Err      util.SerializableError `json:"err"`
-	ClientID string                 `json:"clientID"`
-}
+type (
+	NewClientIDRequest  struct{}
+	NewClientIDResponse struct {
+		Err      util.SerializableError `json:"err"`
+		ClientID string                 `json:"clientID"`
+	}
+)
 
 func (server *SynchronizationServerHandler) handleNewClientID(w http.ResponseWriter, r *http.Request) {
 	var request NewClientIDRequest

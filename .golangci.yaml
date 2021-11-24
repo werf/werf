@@ -1,0 +1,32 @@
+run:
+  timeout: 10m
+  skip-dirs:
+    - playground
+
+linters-settings:
+  gci:
+    local-prefixes: github.com/werf/
+  gocritic:
+    disabled-checks:
+      - ifElseChain
+
+linters:
+  disable-all: true
+  enable:
+    # Default linters.
+    - deadcode
+    - ineffassign
+    - structcheck
+    - typecheck
+    - varcheck
+
+    # Extra linters.
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - errname
+    - exportloopref
+    - gci
+    - gocritic
+    - gofumpt
+    - misspell

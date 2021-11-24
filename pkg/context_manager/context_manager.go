@@ -12,7 +12,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"

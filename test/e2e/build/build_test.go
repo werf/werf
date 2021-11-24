@@ -3,13 +3,13 @@ package e2e_build_test
 import (
 	"strings"
 
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
+
 	"github.com/werf/werf/test/pkg/contruntime"
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 	"github.com/werf/werf/test/pkg/werf"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Build", func() {
@@ -18,7 +18,7 @@ var _ = Describe("Build", func() {
 			By("initializing")
 			setupEnv(withLocalRepo, containerRuntime)
 			contRuntime, err := contruntime.NewContainerRuntime(containerRuntime)
-			if err == contruntime.RuntimeUnavailError {
+			if err == contruntime.ErrRuntimeUnavailable {
 				Skip(err.Error())
 			} else if err != nil {
 				Fail(err.Error())

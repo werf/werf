@@ -8,16 +8,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/werf/werf/pkg/util"
-
-	"github.com/werf/werf/pkg/docker"
-
-	"github.com/werf/werf/pkg/werf"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/buildah"
+	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func TestBuildah(t *testing.T) {
@@ -78,7 +75,6 @@ var _ = Describe("Buildah client", func() {
 					CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout},
 					ContextTar: c,
 				})
-
 				if err != nil {
 					errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
 					return

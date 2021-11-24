@@ -9,7 +9,6 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
@@ -445,15 +444,18 @@ func (storage *RepoStagesStorage) RmManagedImage(ctx context.Context, projectNam
 
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageName)
 
-	if imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName); err != nil {
+	imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	if err != nil {
 		return fmt.Errorf("unable to get repo image %q info: %s", fullImageName, err)
-	} else if imgInfo == nil {
+	}
+
+	if imgInfo == nil {
 		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmManagedImage record %q does not exist => exiting\n", fullImageName)
 		return nil
-	} else {
-		if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
-			return fmt.Errorf("unable to delete image %q from repo: %s", fullImageName, err)
-		}
+	}
+
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
+		return fmt.Errorf("unable to delete image %q from repo: %s", fullImageName, err)
 	}
 
 	return nil
@@ -603,11 +605,13 @@ func (storage *RepoStagesStorage) GetImportMetadata(ctx context.Context, _, id s
 	img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
-	} else if img != nil {
-		return newImportMetadataFromLabels(img.Labels), nil
-	} else {
-		return nil, nil
 	}
+
+	if img != nil {
+		return newImportMetadataFromLabels(img.Labels), nil
+	}
+
+	return nil, nil
 }
 
 func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {

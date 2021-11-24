@@ -10,10 +10,8 @@ import (
 	"strings"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/util"
@@ -40,25 +38,23 @@ const (
 	Dockerfile StageName = "dockerfile"
 )
 
-var (
-	AllStages = []StageName{
-		From,
-		BeforeInstall,
-		ImportsBeforeInstall,
-		GitArchive,
-		Install,
-		ImportsAfterInstall,
-		BeforeSetup,
-		ImportsBeforeSetup,
-		Setup,
-		ImportsAfterSetup,
-		GitCache,
-		GitLatestPatch,
-		DockerInstructions,
+var AllStages = []StageName{
+	From,
+	BeforeInstall,
+	ImportsBeforeInstall,
+	GitArchive,
+	Install,
+	ImportsAfterInstall,
+	BeforeSetup,
+	ImportsBeforeSetup,
+	Setup,
+	ImportsAfterSetup,
+	GitCache,
+	GitLatestPatch,
+	DockerInstructions,
 
-		Dockerfile,
-	}
-)
+	Dockerfile,
+}
 
 type NewBaseStageOptions struct {
 	ImageName        string
@@ -149,8 +145,8 @@ func (s *BaseStage) IsEmpty(_ context.Context, _ Conveyor, _ container_runtime.L
 	return false, nil
 }
 
-func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDescription) (*image.StageDescription, error) {
-	var oldestStage *image.StageDescription
+func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*imagePkg.StageDescription) (*imagePkg.StageDescription, error) {
+	var oldestStage *imagePkg.StageDescription
 	for _, stageDesc := range stages {
 		if oldestStage == nil {
 			oldestStage = stageDesc
@@ -161,8 +157,8 @@ func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDe
 	return oldestStage, nil
 }
 
-func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Conveyor, stages []*image.StageDescription) ([]*image.StageDescription, error) {
-	var suitableStages []*image.StageDescription
+func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Conveyor, stages []*imagePkg.StageDescription) ([]*imagePkg.StageDescription, error) {
+	var suitableStages []*imagePkg.StageDescription
 	var currentCommitsByIndex []string
 
 	for _, gitMapping := range s.gitMappings {
@@ -221,7 +217,7 @@ ScanImages:
 	return suitableStages, nil
 }
 
-func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
+func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []*imagePkg.StageDescription) (*imagePkg.StageDescription, error) {
 	return s.selectStageByOldestCreationTimestamp(stages)
 }
 
@@ -357,7 +353,7 @@ func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage container_runtime.L
 		}
 
 		parts := strings.SplitN(k, imagePkg.WerfMountCustomDirLabelPrefix, 2)
-		fromPath := strings.Replace(parts[1], "--", "/", -1)
+		fromPath := strings.ReplaceAll(parts[1], "--", "/")
 		fromFilepath := filepath.FromSlash(fromPath)
 
 		mountpoints := util.RejectEmptyStrings(util.UniqStrings(strings.Split(v, ";")))
@@ -410,7 +406,7 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 
 func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image container_runtime.LegacyImageInterface) {
 	for from, mountpoints := range mountpointsByFrom {
-		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.Replace(filepath.ToSlash(from), "/", "--", -1))
+		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.ReplaceAll(filepath.ToSlash(from), "/", "--"))
 		labelValue := strings.Join(mountpoints, ";")
 		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}

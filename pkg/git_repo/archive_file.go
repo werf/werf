@@ -1,7 +1,7 @@
 package git_repo
 
 type ArchiveFile struct {
-	FilePath   string
+	FilePath string
 }
 
 func (a *ArchiveFile) GetFilePath() string {

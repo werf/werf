@@ -7,20 +7,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/go-connections/nat"
-
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/container"
 	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-
+	"github.com/docker/go-connections/nat"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var (

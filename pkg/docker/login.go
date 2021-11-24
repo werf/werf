@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/registry"
 
 	"github.com/werf/logboek"
-
-	"github.com/docker/cli/cli/command"
 )
 
 func Login(ctx context.Context, username, password, repo string) error {

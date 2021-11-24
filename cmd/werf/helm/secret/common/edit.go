@@ -13,14 +13,12 @@ import (
 	"runtime"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/ssh/terminal"
+	"gopkg.in/yaml.v2"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
-
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/secret"
 	"github.com/werf/werf/pkg/util"
@@ -52,7 +50,8 @@ func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, workingD
 		return err
 	}
 
-	args := append(binArgs, tmpFilePath)
+	args := binArgs
+	args = append(args, tmpFilePath)
 	editIteration := func() error {
 		cmd := exec.Command(bin, args...)
 		cmd.Stdout = os.Stdout
@@ -273,9 +272,9 @@ func mergeYamlEncodedData(d, eD, newD, newED interface{}) (interface{}, error) {
 		return newED, nil
 	}
 
-	switch newD.(type) {
+	switch newD := newD.(type) {
 	case yaml.MapSlice:
-		newDMapSlice := newD.(yaml.MapSlice)
+		newDMapSlice := newD
 		dMapSlice := d.(yaml.MapSlice)
 		resultMapSlice := make(yaml.MapSlice, len(newDMapSlice))
 
@@ -310,7 +309,7 @@ func mergeYamlEncodedData(d, eD, newD, newED interface{}) (interface{}, error) {
 		return resultMapSlice, nil
 	case yaml.MapItem:
 		var resultMapItem yaml.MapItem
-		newDMapItem := newD.(yaml.MapItem)
+		newDMapItem := newD
 		newEDMapItem := newED.(yaml.MapItem)
 		dMapItem := d.(yaml.MapItem)
 		eDMapItem := eD.(yaml.MapItem)

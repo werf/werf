@@ -136,7 +136,6 @@ func (r goTemplateRendering) IsEnvNameAccepted(name string) (bool, error) {
 				return pattern == name, nil
 			}
 		}()
-
 		if err != nil {
 			return false, err
 		}

@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -19,7 +21,6 @@ import (
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/util/parallel"
 	"github.com/werf/werf/pkg/werf"
-	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -252,16 +253,18 @@ func (m *StorageManager) GetStageDescriptionList(ctx context.Context) ([]*image.
 	}, func(ctx context.Context, taskId int) error {
 		stageID := stageIDs[taskId]
 
-		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, m.StagesStorage, m.CacheStagesStorageList, getStageDescriptionOptions{AllowStagesStorageCacheReset: true, WithLocalManifestCache: m.getWithLocalManifestCacheOption()}); err != nil {
+		stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, m.StagesStorage, m.CacheStagesStorageList, getStageDescriptionOptions{AllowStagesStorageCacheReset: true, WithLocalManifestCache: m.getWithLocalManifestCacheOption()})
+		if err != nil {
 			return fmt.Errorf("error getting stage %s description: %s", stageID.String(), err)
-		} else if stageDesc == nil {
-			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
-		} else {
-			mutex.Lock()
-			defer mutex.Unlock()
-
-			stages = append(stages, stageDesc)
 		}
+
+		if stageDesc == nil {
+			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
+		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
+		stages = append(stages, stageDesc)
 
 		return nil
 	}); err != nil {
@@ -289,16 +292,18 @@ func (m *StorageManager) GetFinalStageDescriptionList(ctx context.Context) ([]*i
 	}, func(ctx context.Context, taskId int) error {
 		stageID := stageIDs[taskId]
 
-		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, m.FinalStagesStorage, nil, getStageDescriptionOptions{AllowStagesStorageCacheReset: true, WithLocalManifestCache: true}); err != nil {
+		stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, m.FinalStagesStorage, nil, getStageDescriptionOptions{AllowStagesStorageCacheReset: true, WithLocalManifestCache: true})
+		if err != nil {
 			return fmt.Errorf("error getting stage %s description from %s: %s", stageID.String(), m.FinalStagesStorage.String(), err)
-		} else if stageDesc == nil {
-			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.FinalStagesStorage.String())
-		} else {
-			mutex.Lock()
-			defer mutex.Unlock()
-
-			stages = append(stages, stageDesc)
 		}
+
+		if stageDesc == nil {
+			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.FinalStagesStorage.String())
+		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
+		stages = append(stages, stageDesc)
 
 		return nil
 	}); err != nil {
@@ -477,7 +482,6 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 			if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, stagesStorage, stageImage.GetStageDescription()); err != nil {
 				return nil, fmt.Errorf("error storing stage %s description into local manifest cache: %s", imageName, err)
 			}
-
 		} else {
 			logboek.Context(ctx).Info().LogF("Cache repo image %s exists locally, will not perform fetch\n", stageImage.Name())
 		}
@@ -494,16 +498,16 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 		primaryImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
 
 		// TODO(buildah): check no bugs introduced by removing of following calls
-		//if err := containerRuntime.RenameImage(ctx, cacheDockerImage, primaryImageName, false); err != nil {
-		//	return fmt.Errorf("unable to rename image %s to %s: %s", fetchedDockerImage.Image.Name(), primaryImageName, err)
-		//}
+		// if err := containerRuntime.RenameImage(ctx, cacheDockerImage, primaryImageName, false); err != nil {
+		//	 return fmt.Errorf("unable to rename image %s to %s: %s", fetchedDockerImage.Image.Name(), primaryImageName, err)
+		// }
 
-		//if err := containerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: primaryStage.GetImage()}); err != nil {
-		//	return fmt.Errorf("unable to refresh stage image %s: %s", primaryStage.GetImage().Name(), err)
-		//}
+		// if err := containerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: primaryStage.GetImage()}); err != nil {
+		//	 return fmt.Errorf("unable to refresh stage image %s: %s", primaryStage.GetImage().Name(), err)
+		// }
 
 		// TODO(buildah): check no bugs introduced by removing of following calls
-		//if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, convertStageDescriptionForStagesStorage(cacheDockerImage.Image.GetStageDescription(), m.StagesStorage)); err != nil {
+		// if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, convertStageDescriptionForStagesStorage(cacheDockerImage.Image.GetStageDescription(), m.StagesStorage)); err != nil {
 		if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, cacheImg.GetStageDescription()); err != nil {
 			return fmt.Errorf("error storing stage %s description into local manifest cache: %s", primaryImageName, err)
 		}
@@ -838,14 +842,17 @@ func (m *StorageManager) getStagesIDsByDigestFromStagesStorage(ctx context.Conte
 func (m *StorageManager) getStagesDescriptions(ctx context.Context, stageIDs []image.StageID, stagesStorage storage.StagesStorage, cacheStagesStorageList []storage.StagesStorage) ([]*image.StageDescription, error) {
 	var stages []*image.StageDescription
 	for _, stageID := range stageIDs {
-		if stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, stagesStorage, cacheStagesStorageList, getStageDescriptionOptions{AllowStagesStorageCacheReset: false, WithLocalManifestCache: m.getWithLocalManifestCacheOption()}); err != nil {
+		stageDesc, err := getStageDescription(ctx, m.ProjectName, stageID, stagesStorage, cacheStagesStorageList, getStageDescriptionOptions{AllowStagesStorageCacheReset: false, WithLocalManifestCache: m.getWithLocalManifestCacheOption()})
+		if err != nil {
 			return nil, err
-		} else if stageDesc == nil {
+		}
+
+		if stageDesc == nil {
 			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
 			continue
-		} else {
-			stages = append(stages, stageDesc)
 		}
+
+		stages = append(stages, stageDesc)
 	}
 
 	return stages, nil
@@ -895,10 +902,14 @@ func getStageDescriptionFromLocalManifestCache(ctx context.Context, projectName 
 	stageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
 
 	logboek.Context(ctx).Debug().LogF("Getting image %s info from the manifest cache...\n", stageImageName)
-	if imgInfo, err := image.CommonManifestCache.GetImageInfo(ctx, stagesStorage.String(), stageImageName); err != nil {
+	imgInfo, err := image.CommonManifestCache.GetImageInfo(ctx, stagesStorage.String(), stageImageName)
+	if err != nil {
 		return nil, fmt.Errorf("error getting image %s info: %s", stageImageName, err)
-	} else if imgInfo != nil {
+	}
+
+	if imgInfo != nil {
 		logboek.Context(ctx).Info().LogF("Got image %s info from the manifest cache (CACHE HIT)\n", stageImageName)
+
 		return &image.StageDescription{
 			StageID: &image.StageID{Digest: stageID.Digest, UniqueID: stageID.UniqueID},
 			Info:    imgInfo,
@@ -989,7 +1000,9 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 	}
 
 	logboek.Context(ctx).Debug().LogF("Getting digest %q uniqueID %d stage info from %s...\n", stageID.Digest, stageID.UniqueID, stagesStorage.String())
-	if stageDesc, err := stagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID); err == storage.ErrBrokenImage {
+	stageDesc, err := stagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
+	switch {
+	case err == storage.ErrBrokenImage:
 		if opts.AllowStagesStorageCacheReset {
 			stageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
 
@@ -1002,25 +1015,21 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 
 			return nil, ErrShouldResetStagesStorageCache
 		}
-
 		return nil, nil
-	} else if err != nil {
+	case err != nil:
 		return nil, fmt.Errorf("error getting digest %q uniqueID %d stage info from %s: %s", stageID.Digest, stageID.UniqueID, stagesStorage.String(), err)
-	} else if stageDesc != nil {
+	case stageDesc != nil:
 		if opts.WithLocalManifestCache {
 			if err := storeStageDescriptionIntoLocalManifestCache(ctx, projectName, stageID, stagesStorage, stageDesc); err != nil {
 				return nil, fmt.Errorf("error storing stage %s description into local manifest cache: %s", stageID.String(), err)
 			}
 		}
-
 		return stageDesc, nil
-	} else if opts.AllowStagesStorageCacheReset {
+	case opts.AllowStagesStorageCacheReset:
 		stageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
-
 		logboek.Context(ctx).Error().LogF("Invalid stage image %q! Stage is no longer available in the %s. Storage cache for project %q should be reset!\n", stageImageName, stagesStorage.String(), projectName)
-
 		return nil, ErrShouldResetStagesStorageCache
-	} else {
+	default:
 		return nil, nil
 	}
 }

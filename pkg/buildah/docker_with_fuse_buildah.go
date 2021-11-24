@@ -13,11 +13,10 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
-	"github.com/werf/werf/pkg/buildah/types"
-	"github.com/werf/werf/pkg/werf"
-
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/buildah/types"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type DockerWithFuseBuildah struct {
@@ -40,6 +39,7 @@ func (b *DockerWithFuseBuildah) Tag(ctx context.Context, ref, newRef string, opt
 	_, _, err := b.runBuildah(ctx, []string{}, []string{"tag", ref, newRef}, opts.LogWriter)
 	return err
 }
+
 func (b *DockerWithFuseBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
 	_, _, err := b.runBuildah(ctx, []string{}, []string{
 		"push", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), ref, fmt.Sprintf("docker://%s", ref),
@@ -170,7 +170,7 @@ func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []str
 func runStorageContainer(ctx context.Context, name, image string) error {
 	exist, err := docker.ContainerExist(ctx, name)
 	if err != nil {
-		return fmt.Errorf("unable to check existance of docker container %q: %s", name, err)
+		return fmt.Errorf("unable to check existence of docker container %q: %s", name, err)
 	}
 	if exist {
 		return nil
@@ -180,7 +180,7 @@ func runStorageContainer(ctx context.Context, name, image string) error {
 		return logboek.Context(ctx).LogProcess("Creating container %s using image %s", name, image).DoError(func() error {
 			exist, err := docker.ContainerExist(ctx, name)
 			if err != nil {
-				return fmt.Errorf("unable to check existance of docker container %q: %s", name, err)
+				return fmt.Errorf("unable to check existence of docker container %q: %s", name, err)
 			}
 			if exist {
 				return nil
@@ -188,7 +188,7 @@ func runStorageContainer(ctx context.Context, name, image string) error {
 
 			imageExist, err := docker.ImageExist(ctx, image)
 			if err != nil {
-				return fmt.Errorf("unable to check existance of docker image %q: %s", image, err)
+				return fmt.Errorf("unable to check existence of docker image %q: %s", image, err)
 			}
 			if !imageExist {
 				if err := docker.CliPullWithRetries(ctx, image); err != nil {

@@ -115,7 +115,7 @@ func replaceLinks(s string) string {
 		}
 
 		if !isSkipLink {
-			s = strings.Replace(s, linkText, fmt.Sprintf("[%s](%s)", linkText, link), -1)
+			s = strings.ReplaceAll(s, linkText, fmt.Sprintf("[%s](%s)", linkText, link))
 		}
 	}
 
@@ -124,8 +124,8 @@ func replaceLinks(s string) string {
 
 func fullCommandFilesystemPath(cmd string) string {
 	res := cmd
-	res = strings.Replace(res, " ", "_", -1)
-	res = strings.Replace(res, "-", "_", -1)
+	res = strings.ReplaceAll(res, " ", "_")
+	res = strings.ReplaceAll(res, "-", "_")
 	return res
 }
 
@@ -156,7 +156,7 @@ permalink: reference/cli/%s.html
 `, cmd.CommandPath(), fullCommandName, fullCommandName)
 
 	path := filepath.Join(pagesDir, fmt.Sprintf("%s.md", fullCommandName))
-	if err := ioutil.WriteFile(path, []byte(cmdPage), 0644); err != nil {
+	if err := ioutil.WriteFile(path, []byte(cmdPage), 0o644); err != nil {
 		return fmt.Errorf("unable to write %s: %s", path, err)
 	}
 
@@ -208,7 +208,7 @@ cli: &cli
 		}
 	}
 
-	if err := ioutil.WriteFile(sidebarPath, buf.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile(sidebarPath, buf.Bytes(), 0o644); err != nil {
 		return fmt.Errorf("unable to write %s: %s", sidebarPath, err)
 	}
 
@@ -290,7 +290,7 @@ toc: false
 	}
 
 	path := filepath.Join(pagesDir, "overview.md")
-	if err := ioutil.WriteFile(path, []byte(indexPage), 0644); err != nil {
+	if err := ioutil.WriteFile(path, []byte(indexPage), 0o644); err != nil {
 		return fmt.Errorf("unable to write %s: %s", path, err)
 	}
 
@@ -347,7 +347,7 @@ func writeShortCommandMarkdownPartial(cmd *cobra.Command, dir string) error {
 		desc += cmd.Short[1:]
 	}
 
-	if err := ioutil.WriteFile(path, []byte(desc), 0644); err != nil {
+	if err := ioutil.WriteFile(path, []byte(desc), 0o644); err != nil {
 		return fmt.Errorf("unable to write %s: %s", path, err)
 	}
 

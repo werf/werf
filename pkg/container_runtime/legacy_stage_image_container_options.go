@@ -75,9 +75,15 @@ func (co *LegacyStageImageContainerOptions) AddEntrypoint(entrypoint string) {
 
 func (co *LegacyStageImageContainerOptions) merge(co2 *LegacyStageImageContainerOptions) *LegacyStageImageContainerOptions {
 	mergedCo := newLegacyStageContainerOptions()
-	mergedCo.Volume = append(co.Volume, co2.Volume...)
-	mergedCo.VolumesFrom = append(co.VolumesFrom, co2.VolumesFrom...)
-	mergedCo.Expose = append(co.Expose, co2.Expose...)
+
+	mergedCo.Volume = co.Volume
+	mergedCo.Volume = append(mergedCo.Volume, co2.Volume...)
+
+	mergedCo.VolumesFrom = co.VolumesFrom
+	mergedCo.VolumesFrom = append(mergedCo.VolumesFrom, co2.VolumesFrom...)
+
+	mergedCo.Expose = co.Expose
+	mergedCo.Expose = append(mergedCo.Expose, co2.Expose...)
 
 	for env, value := range co.Env {
 		mergedCo.Env[env] = value

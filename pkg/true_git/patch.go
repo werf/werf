@@ -40,7 +40,7 @@ func (opts PatchOptions) ID() string {
 			opts.PathMatcher.ID(),
 			fmt.Sprint(opts.WithBinary),
 			fmt.Sprint(opts.WithEntireFileContext),
-		)...
+		)...,
 	)
 }
 
@@ -112,7 +112,8 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 			return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.ToCommit, err)
 		}
 
-		gitArgs := append(commonGitOpts, "-C", workTreeDir)
+		gitArgs := commonGitOpts
+		gitArgs = append(gitArgs, "-C", workTreeDir)
 		gitArgs = append(gitArgs, "diff")
 		gitArgs = append(gitArgs, diffOpts...)
 		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)
@@ -125,7 +126,8 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 
 		cmd.Dir = workTreeDir // required for `git diff` with submodules
 	} else {
-		gitArgs := append(commonGitOpts, "-C", gitDir)
+		gitArgs := commonGitOpts
+		gitArgs = append(gitArgs, "-C", gitDir)
 		gitArgs = append(gitArgs, "diff")
 		gitArgs = append(gitArgs, diffOpts...)
 		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)

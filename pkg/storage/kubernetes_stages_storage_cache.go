@@ -5,18 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/werf/werf/pkg/kubeutils"
-
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/logboek"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/werf/werf/pkg/image"
-	v1 "k8s.io/api/core/v1"
+	"github.com/werf/werf/pkg/kubeutils"
 )
 
 const (
@@ -147,30 +143,27 @@ func (cache *KubernetesStagesStorageCache) DeleteStagesByDigest(ctx context.Cont
 func (cache *KubernetesStagesStorageCache) changeCacheData(ctx context.Context, projectName string, changeFunc func(obj *v1.ConfigMap, cacheData *KubernetesStagesStorageCacheData) error) error {
 RETRY_CHANGE:
 
-	if obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
+	obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName))
+	if err != nil {
 		return err
-	} else if cacheData, err := cache.extractCacheData(ctx, obj); err != nil {
+	}
+
+	cacheData, err := cache.extractCacheData(ctx, obj)
+	if err != nil {
 		return err
-	} else if cacheData != nil {
-		if err := changeFunc(obj, cacheData); err != nil {
-			return err
+	}
+
+	if err := changeFunc(obj, cacheData); err != nil {
+		return err
+	}
+
+	_, err = cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{})
+	if err != nil {
+		if errors.IsConflict(err) {
+			goto RETRY_CHANGE
 		}
 
-		if _, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{}); errors.IsConflict(err) {
-			goto RETRY_CHANGE
-		} else if err != nil {
-			return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
-		}
-	} else {
-		if err := changeFunc(obj, cacheData); err != nil {
-			return err
-		}
-
-		if _, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{}); errors.IsConflict(err) {
-			goto RETRY_CHANGE
-		} else if err != nil {
-			return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
-		}
+		return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
 	}
 
 	return nil

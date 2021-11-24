@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/docker/docker/api/types"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/util"
 )

@@ -8,7 +8,7 @@ import (
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 )
 
-var RuntimeUnavailError = errors.New("requested runtime unavailable")
+var ErrRuntimeUnavailable = errors.New("requested runtime unavailable")
 
 func NewContainerRuntime(name string) (ContainerRuntime, error) {
 	switch name {
@@ -16,7 +16,7 @@ func NewContainerRuntime(name string) (ContainerRuntime, error) {
 		return NewDockerRuntime(), nil
 	case "native-rootless-buildah":
 		if runtime.GOOS != "linux" {
-			return nil, RuntimeUnavailError
+			return nil, ErrRuntimeUnavailable
 		}
 		return NewNativeRootlessBuildahRuntime(), nil
 	case "docker-with-fuse-buildah":

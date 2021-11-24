@@ -67,7 +67,7 @@ func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, co
 
 			resCommit = strings.TrimSpace(output.String())
 
-			if err := ioutil.WriteFile(currentCommitPath, []byte(resCommit+"\n"), 0644); err != nil {
+			if err := ioutil.WriteFile(currentCommitPath, []byte(resCommit+"\n"), 0o644); err != nil {
 				return fmt.Errorf("unable to write %s: %s", currentCommitPath, err)
 			}
 		}

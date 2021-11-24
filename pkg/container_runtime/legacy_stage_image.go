@@ -7,12 +7,10 @@ import (
 	"strings"
 
 	"github.com/werf/lockgate"
-	"github.com/werf/werf/pkg/werf"
-
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type LegacyStageImage struct {
@@ -179,11 +177,12 @@ func (i *LegacyStageImage) MustGetBuiltId() string {
 }
 
 func (i *LegacyStageImage) GetBuiltId() string {
-	if i.dockerfileImageBuilder != nil {
+	switch {
+	case i.dockerfileImageBuilder != nil:
 		return i.dockerfileImageBuilder.GetBuiltId()
-	} else if i.buildImage != nil {
+	case i.buildImage != nil:
 		return i.buildImage.Name()
-	} else {
+	default:
 		return ""
 	}
 }

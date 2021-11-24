@@ -11,7 +11,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-
 	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git"
@@ -341,31 +340,30 @@ func (repo *Local) validateStatusResultSubmodules(_ context.Context, pathMatcher
 			continue
 		}
 
-		if submodule.IsAdded {
+		switch {
+		case submodule.IsAdded:
 			return SubmoduleAddedAndNotCommittedError{
 				SubmodulePath: submodule.Path,
 				error:         fmt.Errorf("submodule is added but not committed"),
 			}
-		} else if submodule.IsDeleted {
+		case submodule.IsDeleted:
 			return SubmoduleDeletedError{
 				SubmodulePath: submodule.Path,
 				error:         fmt.Errorf("submodule is deleted"),
 			}
-		} else if submodule.IsModified {
+		case submodule.IsModified:
 			if submodule.HasUntrackedChanges {
 				return SubmoduleHasUntrackedChangesError{
 					SubmodulePath: submodule.Path,
 					error:         fmt.Errorf("submodule has untracked changes"),
 				}
 			}
-
 			if submodule.HasTrackedChanges {
 				return SubmoduleHasUncommittedChangesError{
 					SubmodulePath: submodule.Path,
 					error:         fmt.Errorf("submodule has uncommitted changes"),
 				}
 			}
-
 			if submodule.IsCommitChanged {
 				return SubmoduleCommitChangedError{
 					SubmodulePath: submodule.Path,

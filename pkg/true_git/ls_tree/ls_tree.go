@@ -2,7 +2,6 @@ package ls_tree
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,23 +12,10 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
-
-func newHash(s string) (plumbing.Hash, error) {
-	var h plumbing.Hash
-
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		return h, err
-	}
-
-	copy(h[:], b)
-	return h, nil
-}
 
 type LsTreeOptions struct {
 	// the PathScope option determines the directory or file that will get into the result (similar to <pathspec> in the git commands)
@@ -347,15 +333,16 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repoHandle repo_handle.Handl
 
 func lsTreeDirOrSubmoduleEntryMatchBase(path string, opts LsTreeOptions, addTreeFunc, checkTreeFunc, skipTreeFunc func() error) error {
 	pathMatcher := opts.formattedPathMatcher()
-	if pathMatcher.ShouldGoThrough(path) {
+	switch {
+	case pathMatcher.ShouldGoThrough(path):
 		return checkTreeFunc()
-	} else if pathMatcher.IsPathMatched(path) {
+	case pathMatcher.IsPathMatched(path):
 		if opts.AllFiles {
 			return checkTreeFunc()
-		} else {
-			return addTreeFunc()
 		}
-	} else {
+
+		return addTreeFunc()
+	default:
 		return skipTreeFunc()
 	}
 }

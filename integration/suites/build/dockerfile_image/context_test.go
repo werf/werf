@@ -53,7 +53,7 @@ var _ = Describe("context", func() {
 		expectedDigest        string
 	}
 
-	var itBody = func(entry entry) {
+	itBody := func(entry entry) {
 		entry.prepareFixturesFunc()
 
 		output, err := utils.RunCommand(
@@ -72,7 +72,7 @@ var _ = Describe("context", func() {
 		}
 	}
 
-	var _ = DescribeTable("checksum", itBody,
+	_ = DescribeTable("checksum", itBody,
 		Entry("base", entry{
 			prepareFixturesFunc: func() {
 				utils.CopyIn(utils.FixturePath("context", "base"), SuiteData.WerfRepoWorktreeDir)

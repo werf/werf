@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
@@ -22,11 +23,12 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 	}
 
 	var releaseTemplate string
-	if werfConfig.Meta.Deploy.HelmRelease != nil {
+	switch {
+	case werfConfig.Meta.Deploy.HelmRelease != nil:
 		releaseTemplate = *werfConfig.Meta.Deploy.HelmRelease
-	} else if environmentOption == "" {
+	case environmentOption == "":
 		releaseTemplate = "[[ project ]]"
-	} else {
+	default:
 		releaseTemplate = "[[ project ]]-[[ env ]]"
 	}
 
@@ -68,11 +70,12 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	}
 
 	var namespaceTemplate string
-	if werfConfig.Meta.Deploy.Namespace != nil {
+	switch {
+	case werfConfig.Meta.Deploy.Namespace != nil:
 		namespaceTemplate = *werfConfig.Meta.Deploy.Namespace
-	} else if environmentOption == "" {
+	case environmentOption == "":
 		namespaceTemplate = "[[ project ]]"
-	} else {
+	default:
 		namespaceTemplate = "[[ project ]]-[[ env ]]"
 	}
 

@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/werf"
 )
 

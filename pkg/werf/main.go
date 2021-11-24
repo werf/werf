@@ -7,16 +7,13 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/file_lock"
 	"github.com/werf/lockgate/pkg/file_locker"
 	"github.com/werf/logboek"
-
-	"github.com/werf/lockgate"
 )
 
-var (
-	Version = "dev"
-)
+var Version = "dev"
 
 var (
 	tmpDir, homeDir  string
@@ -111,11 +108,13 @@ func DefaultLockerOnLostLease(lock lockgate.LockHandle) error {
 }
 
 func Init(tmpDirOption, homeDirOption string) error {
-	if val, ok := os.LookupEnv("WERF_TMP_DIR"); ok {
+	val, ok := os.LookupEnv("WERF_TMP_DIR")
+	switch {
+	case ok:
 		tmpDir = val
-	} else if tmpDirOption != "" {
+	case tmpDirOption != "":
 		tmpDir = tmpDirOption
-	} else {
+	default:
 		tmpDir = os.TempDir()
 	}
 
@@ -128,11 +127,13 @@ func Init(tmpDirOption, homeDirOption string) error {
 		tmpDir = dir
 	}
 
-	if val, ok := os.LookupEnv("WERF_HOME"); ok {
+	val, ok = os.LookupEnv("WERF_HOME")
+	switch {
+	case ok:
 		homeDir = val
-	} else if homeDirOption != "" {
+	case homeDirOption != "":
 		homeDir = homeDirOption
-	} else {
+	default:
 		userHomeDir, err := os.UserHomeDir()
 		if err != nil {
 			return fmt.Errorf("get user home dir failed: %s", err)

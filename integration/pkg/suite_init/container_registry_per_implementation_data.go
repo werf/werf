@@ -25,8 +25,7 @@ func (data *ContainerRegistryPerImplementationData) SetupRepo(ctx context.Contex
 	registry, err := docker_registry.NewDockerRegistry(repo, implData.WerfImplementationName, implData.RegistryOptions)
 	Expect(err).Should(Succeed())
 
-	switch implementationName {
-	case docker_registry.AwsEcrImplementationName:
+	if implementationName == docker_registry.AwsEcrImplementationName {
 		err := registry.CreateRepo(ctx, repo)
 		Expect(err).Should(Succeed())
 	}

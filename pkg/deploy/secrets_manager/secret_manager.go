@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/secret"
 )
 

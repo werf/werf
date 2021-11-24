@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/secret"
-
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/pkg/secret"
 )
 
 func SecretFileEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir, filePath, outputFilePath string) error {
@@ -45,12 +44,13 @@ func secretEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, worki
 		encoder = enc
 	}
 
-	if options.FilePath != "" {
+	switch {
+	case options.FilePath != "":
 		data, err = ReadFileData(options.FilePath)
 		if err != nil {
 			return err
 		}
-	} else if !terminal.IsTerminal(int(os.Stdin.Fd())) {
+	case !terminal.IsTerminal(int(os.Stdin.Fd())):
 		data, err = InputFromStdin()
 		if err != nil {
 			return err
@@ -59,7 +59,7 @@ func secretEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, worki
 		if len(data) == 0 {
 			return nil
 		}
-	} else {
+	default:
 		return ExpectedFilePathOrPipeError()
 	}
 

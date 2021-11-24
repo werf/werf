@@ -16,7 +16,6 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -1139,9 +1138,9 @@ func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manag
 	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigTemplatesDirPath), nil
 }
 
-func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.WerfConfigOptions {
+func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.WerfConfigOptions {
 	return config.WerfConfigOptions{
-		LogRenderedFilePath: LogRenderedFilePath,
+		LogRenderedFilePath: logRenderedFilePath,
 		Env:                 *cmdData.Environment,
 	}
 }
@@ -1352,13 +1351,14 @@ func ProcessLogOptions(cmdData *CmdData) error {
 		return err
 	}
 
-	if *cmdData.LogDebug {
+	switch {
+	case *cmdData.LogDebug:
 		logboek.SetAcceptedLevel(level.Debug)
 		logboek.Streams().EnablePrefixWithTime()
 		logboek.Streams().SetPrefixStyle(style.Details())
-	} else if *cmdData.LogVerbose {
+	case *cmdData.LogVerbose:
 		logboek.SetAcceptedLevel(level.Info)
-	} else if *cmdData.LogQuiet {
+	case *cmdData.LogQuiet:
 		logboek.SetAcceptedLevel(level.Error)
 	}
 

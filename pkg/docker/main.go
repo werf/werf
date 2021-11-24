@@ -8,16 +8,14 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/docker/go-connections/tlsconfig"
-
-	"github.com/spf13/cobra"
-	"golang.org/x/net/context"
-
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/tlsconfig"
+	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
 )
@@ -117,11 +115,12 @@ func newDockerCli(opts []command.DockerCliOption) (command.Cli, error) {
 
 func cli(ctx context.Context) command.Cli {
 	cliInterf := ctx.Value(ctxDockerCliKey)
-	if cliInterf != nil {
+	switch {
+	case cliInterf != nil:
 		return cliInterf.(command.Cli)
-	} else if ctx == context.Background() {
+	case ctx == context.Background():
 		return defaultCLi
-	} else {
+	default:
 		panic("context is not bound with docker cli")
 	}
 }

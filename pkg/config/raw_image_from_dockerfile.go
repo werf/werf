@@ -94,11 +94,12 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 		return nil, err
 	}
 
-	if len(contextAddFile) > 0 && len(contextAddFiles) > 0 {
+	switch {
+	case len(contextAddFile) > 0 && len(contextAddFiles) > 0:
 		return nil, newDetailedConfigError("only one out of contextAddFiles and contextAddFile directives can be used at a time, but both specified in werf.yaml. Move everything out of the contextAddFile: [] directive into the contextAddFiles: [] directive and remove contextAddFile: [] from werf.yaml", nil, c.doc)
-	} else if len(contextAddFile) > 0 {
+	case len(contextAddFile) > 0:
 		image.ContextAddFiles = contextAddFile
-	} else {
+	default:
 		image.ContextAddFiles = contextAddFiles
 	}
 

@@ -12,11 +12,9 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
-
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/util/timestamps"
 	"github.com/werf/werf/pkg/werf"
-
-	"github.com/werf/logboek"
 )
 
 type WithWorkTreeOptions struct {
@@ -63,7 +61,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 
 	gitDirPath := filepath.Join(workTreeCacheDir, "git_dir")
 	if _, err := os.Stat(gitDirPath); os.IsNotExist(err) {
-		if err := ioutil.WriteFile(gitDirPath, []byte(repoDir+"\n"), 0644); err != nil {
+		if err := ioutil.WriteFile(gitDirPath, []byte(repoDir+"\n"), 0o644); err != nil {
 			return "", fmt.Errorf("error writing %s: %s", gitDirPath, err)
 		}
 	} else if err != nil {
@@ -92,40 +90,46 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 
 	currentCommit := ""
 	currentCommitPath := filepath.Join(workTreeCacheDir, "current_commit")
-	currentCommitPathExists := true
-	if _, err := os.Stat(currentCommitPath); os.IsNotExist(err) {
-		currentCommitPathExists = false
-	} else if err != nil {
-		return "", fmt.Errorf("unable to access %s: %s", currentCommitPath, err)
-	}
 
-	if isWorkTreeDirExist && !isWorkTreeRegistered {
-		logboek.Context(ctx).Info().LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
+	if isWorkTreeDirExist {
+		if !isWorkTreeRegistered {
+			logboek.Context(ctx).Info().LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
 
-		if err := os.RemoveAll(currentCommitPath); err != nil {
-			return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
-		}
-		currentCommitPathExists = false
-
-		if err := os.RemoveAll(workTreeDir); err != nil {
-			return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %s", workTreeDir, err)
-		}
-		isWorkTreeDirExist = false
-	} else if isWorkTreeDirExist && currentCommitPathExists {
-		if data, err := ioutil.ReadFile(currentCommitPath); err == nil {
-			currentCommit = strings.TrimSpace(string(data))
-
-			if currentCommit == commit {
-				return workTreeDir, nil
+			if err := os.RemoveAll(currentCommitPath); err != nil {
+				return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
 			}
-		} else {
-			return "", fmt.Errorf("error reading %s: %s", currentCommitPath, err)
-		}
 
-		if err := os.RemoveAll(currentCommitPath); err != nil {
-			return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+			if err := os.RemoveAll(workTreeDir); err != nil {
+				return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %s", workTreeDir, err)
+			}
+			isWorkTreeDirExist = false
+		} else {
+			currentCommitPathExists := true
+			if _, err := os.Stat(currentCommitPath); os.IsNotExist(err) {
+				currentCommitPathExists = false
+			} else if err != nil {
+				return "", fmt.Errorf("unable to access %s: %s", currentCommitPath, err)
+			}
+
+			if currentCommitPathExists {
+				if data, err := ioutil.ReadFile(currentCommitPath); err == nil {
+					currentCommit = strings.TrimSpace(string(data))
+
+					if currentCommit == commit {
+						return workTreeDir, nil
+					}
+				} else {
+					return "", fmt.Errorf("error reading %s: %s", currentCommitPath, err)
+				}
+
+				if err := os.RemoveAll(currentCommitPath); err != nil {
+					return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+				}
+			}
 		}
 	}
+
+	_ = isWorkTreeDirExist
 
 	// Switch worktree state to the desired commit.
 	// If worktree already exists — it will be used as a cache.
@@ -141,7 +145,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %s", workTreeDir, commit, err)
 	}
 
-	if err := ioutil.WriteFile(currentCommitPath, []byte(commit+"\n"), 0644); err != nil {
+	if err := ioutil.WriteFile(currentCommitPath, []byte(commit+"\n"), 0o644); err != nil {
 		return "", fmt.Errorf("error writing %s: %s", currentCommitPath, err)
 	}
 
@@ -153,46 +157,50 @@ func debugWorktreeSwitch() bool {
 }
 
 func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit string, withSubmodules bool) error {
-	var err error
 	var cmd *exec.Cmd
 	var output *bytes.Buffer
 
-	if _, err := os.Stat(workTreeDir); os.IsNotExist(err) {
+	_, err := os.Stat(workTreeDir)
+	switch {
+	case os.IsNotExist(err):
 		cmd = exec.Command(
 			"git", append(getCommonGitOptions(), "-C", repoDir,
 				"worktree", "add", "--force", "--detach", workTreeDir, commit)...,
 		)
+
 		output = SetCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
-		err = cmd.Run()
-		if err != nil {
+
+		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("git worktree add failed: %s\n%s", err, output.String())
 		}
-	} else if err != nil {
+	case err != nil:
 		return fmt.Errorf("error accessing %s: %s", workTreeDir, err)
-	} else {
+	default:
 		cmd = exec.Command("git", append(getCommonGitOptions(), "checkout", "--force", "--detach", commit)...)
 		cmd.Dir = workTreeDir
+
 		output = SetCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
-		err = cmd.Run()
-		if err != nil {
+
+		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("git checkout failed: %s\n%s", err, output.String())
 		}
 	}
 
 	cmd = exec.Command("git", append(getCommonGitOptions(), "reset", "--hard", commit)...)
 	cmd.Dir = workTreeDir
+
 	output = SetCommandRecordingLiveOutput(ctx, cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 	}
-	err = cmd.Run()
-	if err != nil {
+
+	if err = cmd.Run(); err != nil {
 		return fmt.Errorf("git reset failed: %s\n%s", err, output.String())
 	}
 
@@ -201,25 +209,22 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 			"clean", "-d", "-f", "-f", "-x")...,
 	)
 	cmd.Dir = workTreeDir
+
 	output = SetCommandRecordingLiveOutput(ctx, cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 	}
-	err = cmd.Run()
-	if err != nil {
+
+	if err = cmd.Run(); err != nil {
 		return fmt.Errorf("git clean failed: %s\n%s", err, output.String())
 	}
 
 	if withSubmodules {
-		var err error
-
-		err = syncSubmodules(ctx, repoDir, workTreeDir)
-		if err != nil {
+		if err = syncSubmodules(ctx, repoDir, workTreeDir); err != nil {
 			return fmt.Errorf("cannot sync submodules: %s", err)
 		}
 
-		err = updateSubmodules(ctx, repoDir, workTreeDir)
-		if err != nil {
+		if err = updateSubmodules(ctx, repoDir, workTreeDir); err != nil {
 			return fmt.Errorf("cannot update submodules: %s", err)
 		}
 
@@ -228,12 +233,13 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 
 		cmd = exec.Command("git", gitArgs...)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
+
 		output = SetCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
-		err = cmd.Run()
-		if err != nil {
+
+		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("git submodules reset failed: %s\n%s", err, output.String())
 		}
 
@@ -242,12 +248,13 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 
 		cmd = exec.Command("git", gitArgs...)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
+
 		output = SetCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
-		err = cmd.Run()
-		if err != nil {
+
+		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("git submodules clean failed: %s\n%s", err, output.String())
 		}
 	}
@@ -292,13 +299,14 @@ func GetWorkTreeList(repoDir string) ([]WorktreeDescriptor, error) {
 			worktreeDesc = &WorktreeDescriptor{}
 		}
 
-		if strings.HasPrefix(line, "worktree ") {
+		switch {
+		case strings.HasPrefix(line, "worktree "):
 			worktreeDesc.Path = strings.TrimPrefix(line, "worktree ")
-		} else if strings.HasPrefix(line, "HEAD ") {
+		case strings.HasPrefix(line, "HEAD "):
 			worktreeDesc.Head = strings.TrimPrefix(line, "HEAD ")
-		} else if strings.HasPrefix(line, "branch ") {
+		case strings.HasPrefix(line, "branch "):
 			worktreeDesc.Branch = strings.TrimPrefix(line, "branch ")
-		} else if line == "" {
+		case line == "":
 			res = append(res, *worktreeDesc)
 			worktreeDesc = nil
 		}

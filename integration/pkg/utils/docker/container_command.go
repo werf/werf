@@ -7,13 +7,11 @@ import (
 	"strings"
 
 	"github.com/alessio/shellescape"
-
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/stapel"
-
-	"github.com/werf/werf/integration/pkg/utils"
 )
 
 func init() {
@@ -52,8 +50,10 @@ func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string
 	baseWerfArgs := []string{
 		"run", "--docker-options", strings.Join(dockerOptions, " "), "--", stapel.BashBinPath(), "-ec",
 	}
+
 	containerCommand := strings.Join(cmds, " && ")
-	werfArgs := append(baseWerfArgs, utils.ShelloutPack(containerCommand))
+	werfArgs := baseWerfArgs
+	werfArgs = append(werfArgs, utils.ShelloutPack(containerCommand))
 
 	_, err = utils.RunCommandWithOptions(
 		projectPath,

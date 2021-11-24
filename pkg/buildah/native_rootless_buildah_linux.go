@@ -25,9 +25,10 @@ import (
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/errgo.v2/fmt/errors"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah/types"
-	"gopkg.in/errgo.v2/fmt/errors"
 )
 
 const (

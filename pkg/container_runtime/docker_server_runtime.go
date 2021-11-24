@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/uuid"
-	"github.com/werf/werf/pkg/image"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/google/uuid"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/image"
 )
 
 type DockerServerRuntime struct{}

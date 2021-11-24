@@ -4,25 +4,20 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-
-	"github.com/werf/werf/pkg/deploy/lock_manager"
-
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-
 	"github.com/spf13/cobra"
-	"github.com/werf/werf/cmd/werf/common"
-	cmd_werf_common "github.com/werf/werf/cmd/werf/common"
-
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/deploy/lock_manager"
 )
 
-var installCmdData cmd_werf_common.CmdData
+var installCmdData common.CmdData
 
 func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
-	cmd, helmAction := cmd_helm.NewInstallCmd(actionConfig, os.Stdout, cmd_helm.InstallCmdOptions{
+	cmd, helmAction := helm_v3.NewInstallCmd(actionConfig, os.Stdout, helm_v3.InstallCmdOptions{
 		ChainPostRenderer: wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &installCmdData)
@@ -42,7 +37,7 @@ func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfCh
 				return fmt.Errorf("unable to init werf chart: %s", err)
 			}
 
-			if m, err := lock_manager.NewLockManager(cmd_helm.Settings.Namespace()); err != nil {
+			if m, err := lock_manager.NewLockManager(helm_v3.Settings.Namespace()); err != nil {
 				return fmt.Errorf("unable to create lock manager: %s", err)
 			} else {
 				return command_helpers.LockReleaseWrapper(ctx, releaseName, m, func() error {

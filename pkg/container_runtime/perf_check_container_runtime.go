@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/image"
 )
 

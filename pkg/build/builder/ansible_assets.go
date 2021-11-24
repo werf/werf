@@ -74,7 +74,7 @@ os.environ['PATH'] = os.pathsep.join(path_components)
 
 execfile("%s")
 `, stapel.PythonBinPath(), path.Join(b.containerWorkDir(), "lib"), stapel.AnsiblePlaybookBinPath())),
-		os.FileMode(0777),
+		os.FileMode(0o777),
 	)
 
 	stageWorkDirLib := filepath.Join(stageWorkDir, "lib")
@@ -142,13 +142,13 @@ func (b *Ansible) stagePlaybook(userStageName string) ([]map[string]interface{},
 	return playbooks, nil
 }
 
-//query tasks from ansible config
-//create dump_config structure
-//returns structure:
-//{ 'tasks' => [array of tasks for stage],
-//'dump_config' => {
-//'dump_config_doc' => 'dump of doc',
-//'dump_config_sections' => {'task_0'=>'dump for task 0', 'task_1'=>'dump for task 1', ... }}
+// query tasks from ansible config
+// create dump_config structure
+// returns structure:
+// { 'tasks' => [array of tasks for stage],
+// 'dump_config' => {
+// 'dump_config_doc' => 'dump of doc',
+// 'dump_config_sections' => {'task_0'=>'dump for task 0', 'task_1'=>'dump for task 1', ... }}
 func (b *Ansible) stageConfig(userStageName string) (map[string]interface{}, error) {
 	dumpConfigSections := map[string]interface{}{}
 	var tasks []interface{}
@@ -211,9 +211,9 @@ func (b *Ansible) containerTmpDir() string {
 }
 
 func mkdirP(path string) error {
-	return os.MkdirAll(path, os.FileMode(0775))
+	return os.MkdirAll(path, os.FileMode(0o775))
 }
 
 func writeFile(path string, content string) error {
-	return ioutil.WriteFile(path, []byte(content), os.FileMode(0664))
+	return ioutil.WriteFile(path, []byte(content), os.FileMode(0o664))
 }

@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/werf/logboek"
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/getter"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config"
@@ -302,7 +302,7 @@ func runExport(ctx context.Context) error {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, cmd_helm.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 	})
@@ -325,7 +325,7 @@ func runExport(ctx context.Context) error {
 		wc.SetServiceValues(vals)
 	}
 
-	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
+	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender:               wc,
@@ -341,7 +341,7 @@ func runExport(ctx context.Context) error {
 
 	chartVersion := fmt.Sprintf("0.0.0-%d", time.Now().Unix())
 
-	p := getter.All(cmd_helm.Settings)
+	p := getter.All(helm_v3.Settings)
 	vals, err := valueOpts.MergeValues(p, wc)
 	if err != nil {
 		return err

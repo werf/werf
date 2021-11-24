@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+
 	"github.com/werf/werf/pkg/util"
 )
 

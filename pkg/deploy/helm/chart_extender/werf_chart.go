@@ -11,27 +11,23 @@ import (
 	"strings"
 	"text/template"
 
-	"helm.sh/helm/v3/pkg/postrender"
-
 	"github.com/mitchellh/copystructure"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-
-	"github.com/werf/logboek"
-	"sigs.k8s.io/yaml"
-
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/postrender"
+	"sigs.k8s.io/yaml"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/giterminism_manager"
-
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers/secrets"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/pkg/giterminism_manager"
 )
 
 type WerfChartOptions struct {
