@@ -33,7 +33,6 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
-
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -97,6 +96,8 @@ func (cache *Cache) FetchReference(ref *Reference) (*CacheRefSummary, error) {
 		Tag:  ref.Tag,
 	}
 	for _, desc := range cache.ociStore.ListReferences() {
+		desc := desc
+
 		if desc.Annotations[ocispec.AnnotationRefName] == r.Name {
 			r.Exists = true
 			manifestBytes, err := cache.fetchBlob(&desc)
@@ -117,8 +118,8 @@ func (cache *Cache) FetchReference(ref *Reference) (*CacheRefSummary, error) {
 			}
 			var contentLayer *ocispec.Descriptor
 			for _, layer := range manifest.Layers {
-				switch layer.MediaType {
-				case HelmChartContentLayerMediaType:
+				layer := layer
+				if layer.MediaType == HelmChartContentLayerMediaType {
 					contentLayer = &layer
 				}
 			}
@@ -287,7 +288,7 @@ func (cache *Cache) saveChartConfig(ch *chart.Chart) (*ocispec.Descriptor, bool,
 // saveChartContentLayer stores the chart as tarball blob and returns a descriptor
 func (cache *Cache) saveChartContentLayer(ch *chart.Chart) (*ocispec.Descriptor, bool, error) {
 	destDir := filepath.Join(cache.rootDir, ".build")
-	os.MkdirAll(destDir, 0755)
+	os.MkdirAll(destDir, 0o755)
 	tmpFile, err := chartutil.Save(ch, destDir)
 	defer os.Remove(tmpFile)
 	if err != nil {
