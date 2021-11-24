@@ -9,12 +9,14 @@ type StageDependencies struct {
 }
 
 func (c *StageDependencies) validate() error {
-	if !allRelativePaths(c.Install) {
+	switch {
+	case !allRelativePaths(c.Install):
 		return newDetailedConfigError("`install: [PATH, ...]|PATH` should be relative paths!", c.raw, c.raw.rawGit.rawStapelImage.doc)
-	} else if !allRelativePaths(c.Setup) {
+	case !allRelativePaths(c.Setup):
 		return newDetailedConfigError("`setup: [PATH, ...]|PATH` should be relative paths!", c.raw, c.raw.rawGit.rawStapelImage.doc)
-	} else if !allRelativePaths(c.BeforeSetup) {
+	case !allRelativePaths(c.BeforeSetup):
 		return newDetailedConfigError("`beforeSetup: [PATH, ...]|PATH` should be relative paths!", c.raw, c.raw.rawGit.rawStapelImage.doc)
 	}
+
 	return nil
 }

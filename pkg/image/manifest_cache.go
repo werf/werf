@@ -47,15 +47,18 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 
 	now := time.Now()
 
-	if record, err := cache.readRecord(ctx, storageName, imageName); err != nil {
+	record, err := cache.readRecord(ctx, storageName, imageName)
+	switch {
+	case err != nil:
 		return nil, err
-	} else if record != nil {
+	case record != nil:
 		record.AccessTimestamp = now.Unix()
 		if err := cache.writeRecord(storageName, record); err != nil {
 			return nil, err
 		}
+
 		return record.Info, nil
-	} else {
+	default:
 		return nil, nil
 	}
 }

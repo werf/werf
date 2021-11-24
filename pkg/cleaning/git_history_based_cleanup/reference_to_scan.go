@@ -89,12 +89,13 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 			}
 
 			tagObject, err := gitRepository.TagObject(reference.Hash())
-			if err == nil {
-				modifiedAt = tagObject.Tagger.When
-			} else if err == plumbing.ErrObjectNotFound { // lightweight tag
+			switch {
+			case err == plumbing.ErrObjectNotFound: // lightweight tag
 				modifiedAt = refCommit.Committer.When
-			} else {
+			case err != nil:
 				return fmt.Errorf("tag object %s failed: %s", reference.Hash(), err)
+			default:
+				modifiedAt = tagObject.Tagger.When
 			}
 		}
 

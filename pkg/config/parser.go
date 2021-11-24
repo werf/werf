@@ -530,35 +530,32 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImage
 			return nil, nil, nil, newYamlUnmarshalError(err, doc)
 		}
 
-		if isMetaDoc(raw) {
+		switch {
+		case isMetaDoc(raw):
 			if resultMeta != nil {
 				return nil, nil, nil, newYamlUnmarshalError(errors.New("duplicate meta config section definition"), doc)
 			}
-
 			rawMeta := &rawMeta{doc: doc}
 			err := yaml.UnmarshalStrict(doc.Content, &rawMeta)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)
 			}
-
 			resultMeta = rawMeta.toMeta()
-		} else if isImageFromDockerfileDoc(raw) {
+		case isImageFromDockerfileDoc(raw):
 			imageFromDockerfile := &rawImageFromDockerfile{doc: doc}
 			err := yaml.UnmarshalStrict(doc.Content, &imageFromDockerfile)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)
 			}
-
 			rawImagesFromDockerfile = append(rawImagesFromDockerfile, imageFromDockerfile)
-		} else if isImageDoc(raw) {
+		case isImageDoc(raw):
 			image := &rawStapelImage{doc: doc}
 			err := yaml.UnmarshalStrict(doc.Content, &image)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)
 			}
-
 			rawStapelImages = append(rawStapelImages, image)
-		} else {
+		default:
 			return nil, nil, nil, newYamlUnmarshalError(errors.New("cannot recognize type of config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132):\n * 'configVersion' required for meta config section;\n * 'image' required for the image config sections;\n * 'artifact' required for the artifact config sections;"), doc)
 		}
 	}

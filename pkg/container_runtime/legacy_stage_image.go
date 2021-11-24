@@ -179,11 +179,12 @@ func (i *LegacyStageImage) MustGetBuiltId() string {
 }
 
 func (i *LegacyStageImage) GetBuiltId() string {
-	if i.dockerfileImageBuilder != nil {
+	switch {
+	case i.dockerfileImageBuilder != nil:
 		return i.dockerfileImageBuilder.GetBuiltId()
-	} else if i.buildImage != nil {
+	case i.buildImage != nil:
 		return i.buildImage.Name()
-	} else {
+	default:
 		return ""
 	}
 }

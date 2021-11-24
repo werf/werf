@@ -72,12 +72,13 @@ func processUsedImages(ctx context.Context, images []types.ImageSummary, options
 	for _, container := range containers {
 		for _, img := range images {
 			if img.ID == container.ImageID {
-				if options.SkipUsedImages {
+				switch {
+				case options.SkipUsedImages:
 					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", logImageName(img), logContainerName(container))
 					imagesToExclude = append(imagesToExclude, img)
-				} else if options.RmContainersThatUseWerfImages {
+				case options.RmContainersThatUseWerfImages:
 					containersToRemove = append(containersToRemove, container)
-				} else {
+				default:
 					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(img), logContainerName(container), "Use --force option to remove all containers that are based on deleting werf docker images")
 				}
 			}

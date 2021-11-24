@@ -179,15 +179,16 @@ func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, re
 }
 
 func (s *commitHistoryScanner) handleStopCommitList(ctx context.Context, ref *ReferenceToScan) ([]string, []string, map[string][]string, error) {
-	if s.referenceScanOptions.scanDepthLimit != 0 {
+	switch {
+	case s.referenceScanOptions.scanDepthLimit != 0:
 		if len(s.reachedStageIDList()) == len(s.expectedStageIDCommitList) {
 			s.stopCommitList = append(s.stopCommitList, s.reachedCommitList[len(s.reachedCommitList)-1])
 		} else {
 			return s.reachedStageIDList(), s.stopCommitList, s.stageIDHitCommitList(), nil
 		}
-	} else if len(s.reachedStageIDList()) != 0 {
+	case len(s.reachedStageIDList()) != 0:
 		s.stopCommitList = append(s.stopCommitList, s.reachedCommitList[len(s.reachedCommitList)-1])
-	} else {
+	default:
 		s.stopCommitList = append(s.stopCommitList, ref.HeadCommit.Hash.String())
 	}
 	logboek.Context(ctx).Debug().LogF("Stop commit %s added\n", s.stopCommitList[len(s.stopCommitList)-1])

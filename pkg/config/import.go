@@ -24,22 +24,24 @@ func (c *Import) validate() error {
 		return err
 	}
 
-	if c.ArtifactName == "" && c.ImageName == "" {
+	switch {
+	case c.ArtifactName == "" && c.ImageName == "":
 		return newDetailedConfigError("artifact name `artifact: NAME` or image name `image: NAME` required for import!", c.raw, c.raw.rawStapelImage.doc)
-	} else if c.ArtifactName != "" && c.ImageName != "" {
+	case c.ArtifactName != "" && c.ImageName != "":
 		return newDetailedConfigError("specify only one artifact name using `artifact: NAME` or image name using `image: NAME` for import!", c.raw, c.raw.rawStapelImage.doc)
-	} else if c.Before != "" && c.After != "" {
+	case c.Before != "" && c.After != "":
 		return newDetailedConfigError("specify only one artifact stage using `before: install|setup` or `after: install|setup` for import!", c.raw, c.raw.rawStapelImage.doc)
-	} else if c.Before == "" && c.After == "" {
+	case c.Before == "" && c.After == "":
 		return newDetailedConfigError("artifact stage is not specified with `before: install|setup` or `after: install|setup` for import!", c.raw, c.raw.rawStapelImage.doc)
-	} else if c.Before != "" && checkInvalidRelation(c.Before) {
+	case c.Before != "" && checkInvalidRelation(c.Before):
 		return newDetailedConfigError(fmt.Sprintf("invalid artifact stage `before: %s` for import: expected install or setup!", c.Before), c.raw, c.raw.rawStapelImage.doc)
-	} else if c.After != "" && checkInvalidRelation(c.After) {
+	case c.After != "" && checkInvalidRelation(c.After):
 		return newDetailedConfigError(fmt.Sprintf("invalid artifact stage `after: %s` for import: expected install or setup!", c.After), c.raw, c.raw.rawStapelImage.doc)
-	} else if c.Stage != "" && checkInvalidStage(c.Stage) {
+	case c.Stage != "" && checkInvalidStage(c.Stage):
 		return newDetailedConfigError(fmt.Sprintf("invalid stage `stage: %s` for import: expected beforeInstall, install, beforeSetup or setup", c.Stage), c.raw, c.raw.rawStapelImage.doc)
+	default:
+		return nil
 	}
-	return nil
 }
 
 func checkInvalidRelation(rel string) bool {

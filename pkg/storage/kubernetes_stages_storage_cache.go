@@ -147,18 +147,27 @@ func (cache *KubernetesStagesStorageCache) DeleteStagesByDigest(ctx context.Cont
 func (cache *KubernetesStagesStorageCache) changeCacheData(ctx context.Context, projectName string, changeFunc func(obj *v1.ConfigMap, cacheData *KubernetesStagesStorageCacheData) error) error {
 RETRY_CHANGE:
 
-	if obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
+	obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName))
+	if err != nil {
 		return err
-	} else if cacheData, err := cache.extractCacheData(ctx, obj); err != nil {
+	}
+
+	cacheData, err := cache.extractCacheData(ctx, obj)
+	if err != nil {
 		return err
-	} else if cacheData != nil {
+	}
+
+	if cacheData != nil {
 		if err := changeFunc(obj, cacheData); err != nil {
 			return err
 		}
 
-		if _, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{}); errors.IsConflict(err) {
-			goto RETRY_CHANGE
-		} else if err != nil {
+		_, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{})
+		if err != nil {
+			if errors.IsConflict(err) {
+				goto RETRY_CHANGE
+			}
+
 			return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
 		}
 	} else {
@@ -166,9 +175,12 @@ RETRY_CHANGE:
 			return err
 		}
 
-		if _, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{}); errors.IsConflict(err) {
-			goto RETRY_CHANGE
-		} else if err != nil {
+		_, err := cache.KubeClient.CoreV1().ConfigMaps(cache.Namespace).Update(context.Background(), obj, metav1.UpdateOptions{})
+		if err != nil {
+			if errors.IsConflict(err) {
+				goto RETRY_CHANGE
+			}
+
 			return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
 		}
 	}

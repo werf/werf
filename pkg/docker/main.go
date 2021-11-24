@@ -117,11 +117,12 @@ func newDockerCli(opts []command.DockerCliOption) (command.Cli, error) {
 
 func cli(ctx context.Context) command.Cli {
 	cliInterf := ctx.Value(ctxDockerCliKey)
-	if cliInterf != nil {
+	switch {
+	case cliInterf != nil:
 		return cliInterf.(command.Cli)
-	} else if ctx == context.Background() {
+	case ctx == context.Background():
 		return defaultCLi
-	} else {
+	default:
 		panic("context is not bound with docker cli")
 	}
 }

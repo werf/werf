@@ -153,46 +153,50 @@ func debugWorktreeSwitch() bool {
 }
 
 func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit string, withSubmodules bool) error {
-	var err error
 	var cmd *exec.Cmd
 	var output *bytes.Buffer
 
-	if _, err := os.Stat(workTreeDir); os.IsNotExist(err) {
+	_, err := os.Stat(workTreeDir)
+	switch {
+	case os.IsNotExist(err):
 		cmd = exec.Command(
 			"git", append(getCommonGitOptions(), "-C", repoDir,
 				"worktree", "add", "--force", "--detach", workTreeDir, commit)...,
 		)
+
 		output = SetCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
-		err = cmd.Run()
-		if err != nil {
+
+		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("git worktree add failed: %s\n%s", err, output.String())
 		}
-	} else if err != nil {
+	case err != nil:
 		return fmt.Errorf("error accessing %s: %s", workTreeDir, err)
-	} else {
+	default:
 		cmd = exec.Command("git", append(getCommonGitOptions(), "checkout", "--force", "--detach", commit)...)
 		cmd.Dir = workTreeDir
+
 		output = SetCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
-		err = cmd.Run()
-		if err != nil {
+
+		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("git checkout failed: %s\n%s", err, output.String())
 		}
 	}
 
 	cmd = exec.Command("git", append(getCommonGitOptions(), "reset", "--hard", commit)...)
 	cmd.Dir = workTreeDir
+
 	output = SetCommandRecordingLiveOutput(ctx, cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 	}
-	err = cmd.Run()
-	if err != nil {
+
+	if err = cmd.Run(); err != nil {
 		return fmt.Errorf("git reset failed: %s\n%s", err, output.String())
 	}
 
@@ -201,25 +205,22 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 			"clean", "-d", "-f", "-f", "-x")...,
 	)
 	cmd.Dir = workTreeDir
+
 	output = SetCommandRecordingLiveOutput(ctx, cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 	}
-	err = cmd.Run()
-	if err != nil {
+
+	if err = cmd.Run(); err != nil {
 		return fmt.Errorf("git clean failed: %s\n%s", err, output.String())
 	}
 
 	if withSubmodules {
-		var err error
-
-		err = syncSubmodules(ctx, repoDir, workTreeDir)
-		if err != nil {
+		if err = syncSubmodules(ctx, repoDir, workTreeDir); err != nil {
 			return fmt.Errorf("cannot sync submodules: %s", err)
 		}
 
-		err = updateSubmodules(ctx, repoDir, workTreeDir)
-		if err != nil {
+		if err = updateSubmodules(ctx, repoDir, workTreeDir); err != nil {
 			return fmt.Errorf("cannot update submodules: %s", err)
 		}
 
@@ -228,12 +229,13 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 
 		cmd = exec.Command("git", gitArgs...)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
+
 		output = SetCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
-		err = cmd.Run()
-		if err != nil {
+
+		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("git submodules reset failed: %s\n%s", err, output.String())
 		}
 
@@ -242,12 +244,13 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 
 		cmd = exec.Command("git", gitArgs...)
 		cmd.Dir = workTreeDir // required for `git submodule` to work
+
 		output = SetCommandRecordingLiveOutput(ctx, cmd)
 		if debugWorktreeSwitch() {
 			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
 		}
-		err = cmd.Run()
-		if err != nil {
+
+		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("git submodules clean failed: %s\n%s", err, output.String())
 		}
 	}
@@ -292,13 +295,14 @@ func GetWorkTreeList(repoDir string) ([]WorktreeDescriptor, error) {
 			worktreeDesc = &WorktreeDescriptor{}
 		}
 
-		if strings.HasPrefix(line, "worktree ") {
+		switch {
+		case strings.HasPrefix(line, "worktree "):
 			worktreeDesc.Path = strings.TrimPrefix(line, "worktree ")
-		} else if strings.HasPrefix(line, "HEAD ") {
+		case strings.HasPrefix(line, "HEAD "):
 			worktreeDesc.Head = strings.TrimPrefix(line, "HEAD ")
-		} else if strings.HasPrefix(line, "branch ") {
+		case strings.HasPrefix(line, "branch "):
 			worktreeDesc.Branch = strings.TrimPrefix(line, "branch ")
-		} else if line == "" {
+		case line == "":
 			res = append(res, *worktreeDesc)
 			worktreeDesc = nil
 		}

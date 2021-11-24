@@ -796,11 +796,12 @@ func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, boo
 	var from string
 	var fromImageName string
 
-	if imageBaseConfig.From != "" {
+	switch {
+	case imageBaseConfig.From != "":
 		from = imageBaseConfig.From
-	} else if imageBaseConfig.FromImageName != "" {
+	case imageBaseConfig.FromImageName != "":
 		fromImageName = imageBaseConfig.FromImageName
-	} else if imageBaseConfig.FromArtifactName != "" {
+	case imageBaseConfig.FromArtifactName != "":
 		fromImageName = imageBaseConfig.FromArtifactName
 	}
 

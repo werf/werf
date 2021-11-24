@@ -80,12 +80,13 @@ func (m dockerfileIgnorePathMatcher) shouldGoThrough(path string) bool {
 			}
 
 			inProgressGlob, matchedGlob := matchGlob(pathPart, p.pattern)
-			if inProgressGlob != "" {
+			switch {
+			case inProgressGlob != "":
 				p.pattern = inProgressGlob
-			} else if matchedGlob != "" {
+			case matchedGlob != "":
 				p.isMatched = true
 				p.isInProgress = false
-			} else {
+			default:
 				p.isInProgress = false
 			}
 		}

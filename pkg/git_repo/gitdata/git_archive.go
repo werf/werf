@@ -97,14 +97,17 @@ func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) 
 
 				archivePath := filepath.Join(hashDir, fmt.Sprintf("%s.tar", strings.TrimSuffix(finfo.Name(), ".meta.json")))
 
-				if archiveInfo, err := os.Stat(archivePath); os.IsNotExist(err) {
-					continue
-				} else if err != nil {
+				archiveInfo, err := os.Stat(archivePath)
+				if err != nil {
+					if os.IsNotExist(err) {
+						continue
+					}
+
 					return nil, fmt.Errorf("error accessing %q: %s", archivePath, err)
-				} else {
-					desc.ArchivePath = archivePath
-					desc.Size = uint64(archiveInfo.Size())
 				}
+
+				desc.ArchivePath = archivePath
+				desc.Size = uint64(archiveInfo.Size())
 			}
 		}
 	}

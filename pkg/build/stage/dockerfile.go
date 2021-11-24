@@ -158,16 +158,17 @@ func (ds *DockerStages) AddDockerStageArg(dockerStageID int, key, value string) 
 	}
 
 	var resolvedValue string
-	if buildArgValue, ok := ds.dockerBuildArgsHash[resolvedKey]; ok {
+	buildArgValue, ok := ds.dockerBuildArgsHash[resolvedKey]
+	switch {
+	case ok:
 		resolvedValue = buildArgValue
-	} else if value == "" {
+	case value == "":
 		resolvedValue = ds.dockerMetaArgsHash[resolvedKey]
-	} else {
+	default:
 		rValue, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, value)
 		if err != nil {
 			return "", "", err
 		}
-
 		resolvedValue = rValue
 	}
 

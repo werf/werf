@@ -113,16 +113,19 @@ func (storage *DockerServerStagesStorage) DeleteRepo(_ context.Context) error {
 func (storage *DockerServerStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, digest, uniqueID)
 
-	if inspect, err := storage.DockerServerRuntime.GetImageInspect(ctx, stageImageName); err != nil {
+	inspect, err := storage.DockerServerRuntime.GetImageInspect(ctx, stageImageName)
+	if err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", stageImageName, err)
-	} else if inspect != nil {
+	}
+
+	if inspect != nil {
 		return &image.StageDescription{
 			StageID: &image.StageID{Digest: digest, UniqueID: uniqueID},
 			Info:    image.NewInfoFromInspect(stageImageName, inspect),
 		}, nil
-	} else {
-		return nil, nil
 	}
+
+	return nil, nil
 }
 
 func (storage *DockerServerStagesStorage) AddStageCustomTag(_ context.Context, _ *image.StageDescription, _ string) error {
@@ -209,13 +212,16 @@ func (storage *DockerServerStagesStorage) GetImportMetadata(ctx context.Context,
 	fullImageName := makeLocalImportMetadataName(projectName, id)
 	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
 
-	if inspect, err := storage.DockerServerRuntime.GetImageInspect(ctx, fullImageName); err != nil {
+	inspect, err := storage.DockerServerRuntime.GetImageInspect(ctx, fullImageName)
+	if err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", fullImageName, err)
-	} else if inspect != nil {
-		return newImportMetadataFromLabels(inspect.Config.Labels), nil
-	} else {
-		return nil, nil
 	}
+
+	if inspect != nil {
+		return newImportMetadataFromLabels(inspect.Config.Labels), nil
+	}
+
+	return nil, nil
 }
 
 func (storage *DockerServerStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
@@ -384,12 +390,13 @@ func processRelatedContainers(ctx context.Context, stageDescriptionList []*image
 			imageInfo := stageDescription.Info
 
 			if imageInfo.ID == container.ImageID {
-				if options.skipUsedImages {
+				switch {
+				case options.skipUsedImages:
 					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", logImageName(imageInfo), logContainerName(container))
 					stageDescriptionListToExcept = append(stageDescriptionListToExcept, stageDescription)
-				} else if options.rmContainersThatUseImage {
+				case options.rmContainersThatUseImage:
 					containerListToRemove = append(containerListToRemove, container)
-				} else {
+				default:
 					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", logImageName(imageInfo), logContainerName(container), ImageDeletionFailedDueToUsedByContainerErrorTip)
 				}
 			}

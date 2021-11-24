@@ -28,12 +28,13 @@ type RepoData struct {
 }
 
 func (d *RepoData) GetContainerRegistry() string {
-	if *d.ContainerRegistry != "" {
+	switch {
+	case *d.ContainerRegistry != "":
 		return *d.ContainerRegistry
-	} else if *d.Implementation != "" {
+	case *d.Implementation != "":
 		logboek.Context(BackgroundContext()).Warn().LogLn("DEPRECATION WARNING: The option --repo-implementation ($WERF_REPO_IMPLEMENTATION) is renamed to --repo-container-registry ($WERF_REPO_CONTAINER_REGISTRY) and will be removed in v1.3!")
 		return *d.Implementation
-	} else {
+	default:
 		return ""
 	}
 }

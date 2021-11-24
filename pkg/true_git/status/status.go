@@ -115,11 +115,12 @@ func parseOrdinaryEntry(r *Result, entryLine string) error {
 		raw:  entryLine,
 	}
 
-	if entry.sub == "N..." {
+	switch {
+	case entry.sub == "N...":
 		return parseOrdinaryRegularFileEntry(r, entry)
-	} else if entry.sub[0] == 'S' {
+	case entry.sub[0] == 'S':
 		return parseOrdinarySubmoduleEntry(r, entry)
-	} else {
+	default:
 		return fmt.Errorf("invalid git status ordinary <sub> field: %q (%q)", entry.raw, entry.sub)
 	}
 }

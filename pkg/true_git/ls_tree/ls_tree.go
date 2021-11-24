@@ -347,15 +347,16 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repoHandle repo_handle.Handl
 
 func lsTreeDirOrSubmoduleEntryMatchBase(path string, opts LsTreeOptions, addTreeFunc, checkTreeFunc, skipTreeFunc func() error) error {
 	pathMatcher := opts.formattedPathMatcher()
-	if pathMatcher.ShouldGoThrough(path) {
+	switch {
+	case pathMatcher.ShouldGoThrough(path):
 		return checkTreeFunc()
-	} else if pathMatcher.IsPathMatched(path) {
+	case pathMatcher.IsPathMatched(path):
 		if opts.AllFiles {
 			return checkTreeFunc()
-		} else {
-			return addTreeFunc()
 		}
-	} else {
+
+		return addTreeFunc()
+	default:
 		return skipTreeFunc()
 	}
 }

@@ -174,16 +174,19 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 			return err
 		}
 
-		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name(), container_runtime.GetImageInfoOpts{}); err != nil {
+		info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name(), container_runtime.GetImageInfoOpts{})
+		if err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
-		} else if info == nil {
-			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name())
-		} else {
-			i.baseImage.SetStageDescription(&image.StageDescription{
-				StageID: nil, // this is not a stage actually, TODO
-				Info:    info,
-			})
 		}
+
+		if info == nil {
+			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name())
+		}
+
+		i.baseImage.SetStageDescription(&image.StageDescription{
+			StageID: nil, // this is not a stage actually, TODO
+			Info:    info,
+		})
 	case StageAsBaseImage:
 		// TODO: check no bug introduced
 		// if err := c.ContainerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: i.baseImage}); err != nil {
@@ -203,12 +206,13 @@ func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, c *Conveyor,
 	c.getServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Lock()
 	defer c.getServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Unlock()
 
-	if i.baseImageRepoId != "" {
+	switch {
+	case i.baseImageRepoId != "":
 		return i.baseImageRepoId, nil
-	} else if c.IsBaseImagesRepoIdsCacheExist(baseImageName) {
+	case c.IsBaseImagesRepoIdsCacheExist(baseImageName):
 		i.baseImageRepoId = c.GetBaseImagesRepoIdsCache(baseImageName)
 		return i.baseImageRepoId, nil
-	} else if c.IsBaseImagesRepoErrCacheExist(baseImageName) {
+	case c.IsBaseImagesRepoErrCacheExist(baseImageName):
 		return "", c.GetBaseImagesRepoErrCache(baseImageName)
 	}
 

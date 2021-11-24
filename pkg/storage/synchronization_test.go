@@ -29,24 +29,25 @@ func TestParseKubernetesSynchronization(t *testing.T) {
 }
 
 func checkKubernetesSynchronization(t *testing.T, address string, expected *KubernetesSynchronizationParams) {
-	if params, err := ParseKubernetesSynchronization(address); err != nil {
+	params, err := ParseKubernetesSynchronization(address)
+	if err != nil {
 		t.Error(err)
-	} else if expected == nil {
-		if params != nil {
+	}
+
+	if expected == nil && params != nil {
 			t.Errorf("expected nil kubernetes params, got %#v", params)
-		}
-	} else {
-		if params.ConfigContext != expected.ConfigContext {
-			t.Errorf("expected kube context %#v, got %#v", expected.ConfigContext, params.ConfigContext)
-		}
-		if params.ConfigDataBase64 != expected.ConfigDataBase64 {
-			t.Errorf("expected config data base64:\n%s\n\ngot:\n%s", expected.ConfigDataBase64, params.ConfigDataBase64)
-		}
-		if params.ConfigPath != expected.ConfigPath {
-			t.Errorf("expected config path %#v, got %#v", expected.ConfigPath, params.ConfigPath)
-		}
-		if params.Namespace != expected.Namespace {
-			t.Errorf("expected namespace %#v, got %#v", expected.Namespace, params.Namespace)
-		}
+	}
+
+	if params.ConfigContext != expected.ConfigContext {
+		t.Errorf("expected kube context %#v, got %#v", expected.ConfigContext, params.ConfigContext)
+	}
+	if params.ConfigDataBase64 != expected.ConfigDataBase64 {
+		t.Errorf("expected config data base64:\n%s\n\ngot:\n%s", expected.ConfigDataBase64, params.ConfigDataBase64)
+	}
+	if params.ConfigPath != expected.ConfigPath {
+		t.Errorf("expected config path %#v, got %#v", expected.ConfigPath, params.ConfigPath)
+	}
+	if params.Namespace != expected.Namespace {
+		t.Errorf("expected namespace %#v, got %#v", expected.Namespace, params.Namespace)
 	}
 }

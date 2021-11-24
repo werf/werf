@@ -313,12 +313,12 @@ func (p *diffParser) handleIndexDiffLine(line string) error {
 	var prefix, hashes, suffix string
 
 	parts := strings.SplitN(line, " ", 3)
-	if len(parts) == 3 {
+	switch {
+	case len(parts) == 3:
 		prefix, hashes, suffix = parts[0], parts[1], parts[2]
-	} else if len(parts) == 2 {
+	case len(parts) == 2:
 		prefix, hashes = parts[0], parts[1]
-	} else {
-		// unexpected format
+	default:
 		return p.writeOutLine(line)
 	}
 

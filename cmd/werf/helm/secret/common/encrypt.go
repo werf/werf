@@ -45,12 +45,13 @@ func secretEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, worki
 		encoder = enc
 	}
 
-	if options.FilePath != "" {
+	switch {
+	case options.FilePath != "":
 		data, err = ReadFileData(options.FilePath)
 		if err != nil {
 			return err
 		}
-	} else if !terminal.IsTerminal(int(os.Stdin.Fd())) {
+	case !terminal.IsTerminal(int(os.Stdin.Fd())):
 		data, err = InputFromStdin()
 		if err != nil {
 			return err
@@ -59,7 +60,7 @@ func secretEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, worki
 		if len(data) == 0 {
 			return nil
 		}
-	} else {
+	default:
 		return ExpectedFilePathOrPipeError()
 	}
 

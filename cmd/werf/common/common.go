@@ -1352,13 +1352,14 @@ func ProcessLogOptions(cmdData *CmdData) error {
 		return err
 	}
 
-	if *cmdData.LogDebug {
+	switch {
+	case *cmdData.LogDebug:
 		logboek.SetAcceptedLevel(level.Debug)
 		logboek.Streams().EnablePrefixWithTime()
 		logboek.Streams().SetPrefixStyle(style.Details())
-	} else if *cmdData.LogVerbose {
+	case *cmdData.LogVerbose:
 		logboek.SetAcceptedLevel(level.Info)
-	} else if *cmdData.LogQuiet {
+	case *cmdData.LogQuiet:
 		logboek.SetAcceptedLevel(level.Error)
 	}
 

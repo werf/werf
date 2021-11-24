@@ -63,11 +63,12 @@ func (r FileReader) NewSubmoduleCommitChangedError(submodulePath string) error {
 
 func (r FileReader) NewUntrackedFilesError(relPaths ...string) error {
 	var errorMsg string
-	if len(relPaths) == 1 {
+	switch {
+	case len(relPaths) == 1:
 		errorMsg = fmt.Sprintf("the untracked file %q %s", filepath.ToSlash(relPaths[0]), r.uncommittedUntrackedExpectedAction())
-	} else if len(relPaths) > 1 {
+	case len(relPaths) > 1:
 		errorMsg = fmt.Sprintf("the following untracked files %s:\n\n%s", r.uncommittedUntrackedExpectedAction(), prepareListOfFilesString(relPaths))
-	} else {
+	default:
 		panic("unexpected condition")
 	}
 
@@ -76,11 +77,12 @@ func (r FileReader) NewUntrackedFilesError(relPaths ...string) error {
 
 func (r FileReader) NewUncommittedFilesError(relPaths ...string) error {
 	var errorMsg string
-	if len(relPaths) == 1 {
+	switch {
+	case len(relPaths) == 1:
 		errorMsg = fmt.Sprintf("the file %q %s", filepath.ToSlash(relPaths[0]), r.uncommittedUntrackedExpectedAction())
-	} else if len(relPaths) > 1 {
+	case len(relPaths) > 1:
 		errorMsg = fmt.Sprintf("the following files %s:\n\n%s", r.uncommittedUntrackedExpectedAction(), prepareListOfFilesString(relPaths))
-	} else {
+	default:
 		panic("unexpected condition")
 	}
 
