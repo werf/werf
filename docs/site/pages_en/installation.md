@@ -79,9 +79,9 @@ arch:
       <div class="installation-selector__title">Installation method</div>
       <div class="tabs tabs_simple_condensed">
         <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="method" data-install-tab="trdl">with trdl (recommended)</a>
+          data-install-tab-group="method" data-install-tab="trdl">manually</a>
         <a href="javascript:void(0)" class="tabs__btn"
-          data-install-tab-group="method" data-install-tab="binary">download binary file</a>
+          data-install-tab-group="method" data-install-tab="installer">installer</a>
       </div>
     </div><!-- /selector -->
   </div><!-- /selector-row -->
@@ -137,7 +137,7 @@ arch:
 </div><!-- /os -->
 
       </div><!-- /method -->
-      <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="binary">
+      <div class="installation-instruction__tab-content" data-install-content-group="method" data-install-content="installer">
         <div class="installation-instruction__tab-content" data-install-content-group="os" data-install-content="linux">
   {% for version in page.versions %}
     <div class="installation-instruction__tab-content" data-install-content-group="version" data-install-content="{{ version }}">
@@ -145,10 +145,8 @@ arch:
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
           {% for arch in page.arch %}
             <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
-  {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
-  {% assign download_version = site.data.channels_versions.versions[version_key] | replace_first: "v", "" %}
 <div markdown="1">
-{% include en/installation/binary_linux.md version=download_version arch=arch %}
+{% include en/installation/installer_linux_macos.md version=version channel=channel %}
 </div>
             </div>
           {% endfor %}
@@ -165,10 +163,8 @@ arch:
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
           {% for arch in page.arch %}
             <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
-  {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
-  {% assign download_version = site.data.channels_versions.versions[version_key] | replace_first: "v", "" %}
 <div markdown="1">
-{% include en/installation/binary_macos.md version=download_version arch=arch %}
+{% include en/installation/installer_linux_macos.md version=version channel=channel %}
 </div>
             </div>
           {% endfor %}
@@ -185,10 +181,8 @@ arch:
         <div class="installation-instruction__tab-content" data-install-content-group="channel" data-install-content="{{ channel }}">
           {% for arch in page.arch %}
             <div class="installation-instruction__tab-content" data-install-content-group="arch" data-install-content="{{ arch }}">
-  {% capture version_key %}{{ channel }}-{{ version }}{% endcapture %}
-  {% assign download_version = site.data.channels_versions.versions[version_key] | replace_first: "v", "" %}
 <div markdown="1">
-{% include en/installation/binary_windows.md version=download_version arch=arch %}
+{% include en/installation/installer_windows.md version=version channel=channel %}
 </div>
             </div>
           {% endfor %}
