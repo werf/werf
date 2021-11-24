@@ -4,21 +4,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-
 	"github.com/spf13/cobra"
-	"github.com/werf/werf/cmd/werf/common"
-	cmd_werf_common "github.com/werf/werf/cmd/werf/common"
-
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 )
 
-var templateCmdData cmd_werf_common.CmdData
+var templateCmdData common.CmdData
 
 func NewTemplateCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
-	cmd, _ := cmd_helm.NewTemplateCmd(actionConfig, os.Stdout, cmd_helm.TemplateCmdOptions{
+	cmd, _ := helm_v3.NewTemplateCmd(actionConfig, os.Stdout, helm_v3.TemplateCmdOptions{
 		ChainPostRenderer: wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &templateCmdData)

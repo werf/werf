@@ -9,14 +9,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/true_git"
-
-	"github.com/werf/werf/pkg/util"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/werf/lockgate"
-
-	uuid "github.com/satori/go.uuid"
+	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 

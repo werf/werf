@@ -9,11 +9,9 @@ import (
 	"text/template"
 
 	"github.com/google/go-containerregistry/pkg/name"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/git_repo"

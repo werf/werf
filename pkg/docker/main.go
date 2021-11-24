@@ -8,16 +8,14 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/docker/go-connections/tlsconfig"
-
-	"github.com/spf13/cobra"
-	"golang.org/x/net/context"
-
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/tlsconfig"
+	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
 )

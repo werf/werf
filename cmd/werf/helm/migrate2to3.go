@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/deploy/helm"
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"github.com/spf13/cobra"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
 	"github.com/werf/kubedog/pkg/kube"
-
-	"github.com/spf13/cobra"
-
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/maintenance_helper"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -138,7 +136,7 @@ func runMigrate2To3(ctx context.Context) error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), targetNamespace, cmd_helm.Settings, helmRegistryClientHandler, actionConfig, helm.InitActionConfigOptions{KubeConfigOptions: kubeConfigOptions}); err != nil {
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), targetNamespace, helm_v3.Settings, helmRegistryClientHandler, actionConfig, helm.InitActionConfigOptions{KubeConfigOptions: kubeConfigOptions}); err != nil {
 		return err
 	}
 

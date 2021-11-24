@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	. "github.com/onsi/gomega"
+
 	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 )

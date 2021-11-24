@@ -7,12 +7,10 @@ import (
 	"strings"
 
 	"github.com/werf/lockgate"
-	"github.com/werf/werf/pkg/werf"
-
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type LegacyStageImage struct {

@@ -6,35 +6,24 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/werf/pkg/deploy/bundles"
-
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-
-	"github.com/werf/werf/pkg/deploy/lock_manager"
-
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-
+	uuid "github.com/satori/go.uuid"
+	"github.com/spf13/cobra"
+	"helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
 
 	"github.com/werf/kubedog/pkg/kube"
-
-	uuid "github.com/satori/go.uuid"
-
-	"github.com/werf/werf/pkg/werf/global_warnings"
-
-	"github.com/werf/werf/pkg/deploy/helm"
-
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart/loader"
-
-	"github.com/spf13/cobra"
-
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy/bundles"
+	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -142,7 +131,7 @@ func runApply() error {
 		return err
 	}
 
-	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
+	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
 	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
@@ -155,7 +144,7 @@ func runApply() error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), *commonCmdData.Namespace, cmd_helm.Settings, helmRegistryClientHandle, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), *commonCmdData.Namespace, helm_v3.Settings, helmRegistryClientHandle, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -192,7 +181,7 @@ func runApply() error {
 		userExtraAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 	}
 
-	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, cmd_helm.Settings, helmRegistryClientHandle, chart_extender.BundleOptions{
+	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.BundleOptions{
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
 	})
@@ -215,7 +204,7 @@ func runApply() error {
 		ChartExtender: bundle,
 	}
 
-	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.Context(ctx).OutStream(), cmd_helm.UpgradeCmdOptions{
+	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.Context(ctx).OutStream(), helm_v3.UpgradeCmdOptions{
 		ChainPostRenderer: bundle.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),

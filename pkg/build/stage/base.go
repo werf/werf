@@ -10,10 +10,8 @@ import (
 	"strings"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/util"
@@ -147,8 +145,8 @@ func (s *BaseStage) IsEmpty(_ context.Context, _ Conveyor, _ container_runtime.L
 	return false, nil
 }
 
-func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDescription) (*image.StageDescription, error) {
-	var oldestStage *image.StageDescription
+func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*imagePkg.StageDescription) (*imagePkg.StageDescription, error) {
+	var oldestStage *imagePkg.StageDescription
 	for _, stageDesc := range stages {
 		if oldestStage == nil {
 			oldestStage = stageDesc
@@ -159,8 +157,8 @@ func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*image.StageDe
 	return oldestStage, nil
 }
 
-func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Conveyor, stages []*image.StageDescription) ([]*image.StageDescription, error) {
-	var suitableStages []*image.StageDescription
+func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Conveyor, stages []*imagePkg.StageDescription) ([]*imagePkg.StageDescription, error) {
+	var suitableStages []*imagePkg.StageDescription
 	var currentCommitsByIndex []string
 
 	for _, gitMapping := range s.gitMappings {
@@ -219,7 +217,7 @@ ScanImages:
 	return suitableStages, nil
 }
 
-func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
+func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []*imagePkg.StageDescription) (*imagePkg.StageDescription, error) {
 	return s.selectStageByOldestCreationTimestamp(stages)
 }
 

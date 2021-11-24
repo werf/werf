@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/secret"
-
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )

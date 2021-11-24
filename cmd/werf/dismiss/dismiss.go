@@ -5,24 +5,21 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/storage/lrumeta"
-
 	"github.com/spf13/cobra"
-
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
@@ -205,7 +202,7 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, cmd_helm.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{})
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
 		return err
@@ -215,7 +212,7 @@ func runDismiss(ctx context.Context) error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, cmd_helm.Settings, helmRegistryClientHandle, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, helmRegistryClientHandle, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -228,7 +225,7 @@ func runDismiss(ctx context.Context) error {
 		return err
 	}
 
-	helmUninstallCmd := cmd_helm.NewUninstallCmd(actionConfig, logboek.Context(ctx).OutStream(), cmd_helm.UninstallCmdOptions{
+	helmUninstallCmd := helm_v3.NewUninstallCmd(actionConfig, logboek.Context(ctx).OutStream(), helm_v3.UninstallCmdOptions{
 		DeleteNamespace: &cmdData.WithNamespace,
 		DeleteHooks:     &cmdData.WithHooks,
 	})

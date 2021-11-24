@@ -7,13 +7,11 @@ import (
 	"strings"
 
 	"github.com/alessio/shellescape"
-
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/stapel"
-
-	"github.com/werf/werf/integration/pkg/utils"
 )
 
 func init() {

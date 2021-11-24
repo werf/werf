@@ -13,7 +13,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/werf"
 )

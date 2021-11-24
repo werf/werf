@@ -3,13 +3,13 @@ package e2e_build_test
 import (
 	"strings"
 
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
+
 	"github.com/werf/werf/test/pkg/contruntime"
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 	"github.com/werf/werf/test/pkg/werf"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Build", func() {

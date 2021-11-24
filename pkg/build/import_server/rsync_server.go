@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/stapel"

@@ -14,7 +14,6 @@ import (
 	"sync"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/path_matcher"

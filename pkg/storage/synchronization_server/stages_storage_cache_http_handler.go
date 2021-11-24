@@ -6,9 +6,8 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/util"
-
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/util"
 )
 
 func NewStagesStorageCacheHttpHandler(stagesStorageCache storage.StagesStorageCache) *StagesStorageCacheHttpHandler {

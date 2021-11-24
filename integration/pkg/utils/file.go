@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/otiai10/copy"
-
 	. "github.com/onsi/gomega"
+	"github.com/otiai10/copy"
 )
 
 var LineBreak = "\n"

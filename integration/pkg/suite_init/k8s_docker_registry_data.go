@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/onsi/ginkgo"
-
 	"github.com/prashantv/gostub"
 )
 

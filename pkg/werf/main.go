@@ -7,11 +7,10 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/file_lock"
 	"github.com/werf/lockgate/pkg/file_locker"
 	"github.com/werf/logboek"
-
-	"github.com/werf/lockgate"
 )
 
 var Version = "dev"

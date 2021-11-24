@@ -5,17 +5,15 @@ import (
 	"fmt"
 	"strings"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/integration/pkg/utils/liveexec"
 	"github.com/werf/werf/integration/pkg/utils/resourcesfactory"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Resources adopter", func() {

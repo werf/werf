@@ -12,11 +12,9 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
-
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/util/timestamps"
 	"github.com/werf/werf/pkg/werf"
-
-	"github.com/werf/logboek"
 )
 
 type WithWorkTreeOptions struct {

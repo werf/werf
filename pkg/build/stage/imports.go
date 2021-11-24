@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"

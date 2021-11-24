@@ -17,7 +17,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/docker_registry"

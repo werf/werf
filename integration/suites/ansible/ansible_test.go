@@ -5,12 +5,11 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/werf/werf/integration/pkg/utils"
-
-	"github.com/werf/werf/integration/pkg/utils/liveexec"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/integration/pkg/utils"
+	"github.com/werf/werf/integration/pkg/utils/liveexec"
 )
 
 var _ = Describe("Stapel builder with ansible", func() {

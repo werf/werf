@@ -6,7 +6,6 @@ import (
 	"github.com/onsi/ginkgo"
 
 	"github.com/werf/werf/integration/pkg/suite_init"
-
 	"github.com/werf/werf/integration/pkg/utils"
 )
 

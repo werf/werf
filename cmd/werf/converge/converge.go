@@ -8,35 +8,28 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/werf/pkg/container_runtime"
-
-	"helm.sh/helm/v3/pkg/postrender"
-
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/giterminism_manager"
-
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/deploy/helm/maintenance_helper"
-
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"github.com/spf13/cobra"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
-
-	"github.com/spf13/cobra"
+	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/deploy/helm/maintenance_helper"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/pkg/git_repo/gitdata"
+	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/lrumeta"
@@ -381,7 +374,7 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 		return fmt.Errorf("unable to create helm registry client: %s", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, cmd_helm.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
 		SecretValueFiles: common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations: userExtraAnnotations,
 		ExtraLabels:      userExtraLabels,
@@ -438,7 +431,7 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 		return err
 	}
 
-	helmUpgradeCmd, _ := cmd_helm.NewUpgradeCmd(actionConfig, logboek.OutStream(), cmd_helm.UpgradeCmdOptions{
+	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.OutStream(), helm_v3.UpgradeCmdOptions{
 		ChainPostRenderer: wc.ChainPostRenderer,
 		ValueOpts:         valueOpts,
 		CreateNamespace:   common.NewBool(true),
@@ -517,7 +510,7 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 			return err
 		}
 
-		helmTemplateCmd, _ := cmd_helm.NewTemplateCmd(actionConfig, ioutil.Discard, cmd_helm.TemplateCmdOptions{
+		helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, ioutil.Discard, helm_v3.TemplateCmdOptions{
 			ChainPostRenderer: chainPostRenderer,
 			ValueOpts:         valueOpts,
 			Validate:          common.NewBool(true),

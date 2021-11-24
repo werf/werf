@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/docker/docker/pkg/stringid"
+
 	"github.com/werf/logboek"
 )
 

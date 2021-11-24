@@ -6,18 +6,15 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers/secrets"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/werf/werf/pkg/deploy/helm"
-
-	"helm.sh/helm/v3/pkg/cli"
-
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers/secrets"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 )
 
 func NewWerfChartStub(ctx context.Context) *WerfChartStub {

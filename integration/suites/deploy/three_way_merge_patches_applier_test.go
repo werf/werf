@@ -3,14 +3,13 @@ package deploy_test
 import (
 	"context"
 
-	"github.com/werf/werf/integration/pkg/utils"
-
-	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/integration/pkg/utils/liveexec"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/werf/integration/pkg/utils"
+	"github.com/werf/werf/integration/pkg/utils/liveexec"
 )
 
 var _ = Describe("Three way merge patches applier", func() {

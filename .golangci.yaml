@@ -5,6 +5,8 @@ linters-settings:
   gocritic:
     disabled-checks:
       - dupBranchBody
+  gci:
+    local-prefixes: github.com/werf/
 
 linters:
   disable-all: true
@@ -19,5 +21,6 @@ linters:
     - bodyclose
     - errname
     - exportloopref
+    - gci
     - gocritic
     - gofumpt

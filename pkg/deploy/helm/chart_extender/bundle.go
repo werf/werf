@@ -9,24 +9,18 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/postrender"
-
-	"github.com/werf/logboek"
 	"sigs.k8s.io/yaml"
 
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/chartutil"
-
+	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-
-	"helm.sh/helm/v3/pkg/chart/loader"
-
-	"helm.sh/helm/v3/pkg/cli"
-
-	"github.com/werf/werf/pkg/deploy/helm"
-
-	"helm.sh/helm/v3/pkg/chart"
 )
 
 type BundleOptions struct {

@@ -4,11 +4,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/onsi/ginkgo"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
-
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 

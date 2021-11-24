@@ -16,7 +16,6 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
-
 	parallelConstant "github.com/werf/werf/pkg/util/parallel/constant"
 )
 

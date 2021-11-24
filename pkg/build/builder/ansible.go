@@ -15,7 +15,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/util"

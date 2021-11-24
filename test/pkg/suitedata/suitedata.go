@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	. "github.com/onsi/gomega"
+
 	"github.com/werf/werf/integration/pkg/suite_init"
 	"github.com/werf/werf/integration/pkg/utils"
 )

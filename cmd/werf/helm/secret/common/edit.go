@@ -13,14 +13,12 @@ import (
 	"runtime"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/ssh/terminal"
+	"gopkg.in/yaml.v2"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
-
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/secret"
 	"github.com/werf/werf/pkg/util"

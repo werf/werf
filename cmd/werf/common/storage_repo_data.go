@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/docker_registry"
 )
 

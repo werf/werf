@@ -5,18 +5,16 @@ import (
 	"fmt"
 	"sync"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/werf/lockgate/pkg/distributed_locker"
-	"github.com/werf/werf/pkg/kubeutils"
-	"github.com/werf/werf/pkg/werf/locker_with_retry"
-
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/werf/lockgate"
+	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/kubeutils"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/locker_with_retry"
 )
 
 func NewKubernetesLockManager(namespace string, kubeClient kubernetes.Interface, kubeDynamicClient dynamic.Interface, getConfigMapNameFunc func(projectName string) string) *KubernetesLockManager {

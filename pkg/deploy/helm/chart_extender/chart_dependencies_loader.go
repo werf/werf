@@ -9,25 +9,20 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/werf/werf/pkg/util"
-
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	"github.com/werf/lockgate"
-
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/provenance"
-
-	"github.com/pkg/errors"
-	"github.com/werf/werf/pkg/werf"
-	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-
-	"helm.sh/helm/v3/pkg/chart/loader"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func GetChartDependenciesCacheDir(lockChecksum string) string {

@@ -6,13 +6,12 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/werf/werf/pkg/secret"
-
-	"github.com/werf/werf/pkg/util"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
-
 	"sigs.k8s.io/yaml"
+
+	"github.com/werf/werf/pkg/secret"
+	"github.com/werf/werf/pkg/util"
 )
 
 const (

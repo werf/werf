@@ -10,12 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/werf/kubedog/pkg/trackers/elimination"
-
-	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/kubedog/pkg/tracker"
-	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack"
-	"github.com/werf/logboek"
+	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
+	flaggerscheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
 	helm_kube "helm.sh/helm/v3/pkg/kube"
 	appsv1 "k8s.io/api/apps/v1"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
@@ -29,8 +25,11 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/kubectl/pkg/scheme"
 
-	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
-	flaggerscheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
+	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/kubedog/pkg/tracker"
+	"github.com/werf/kubedog/pkg/trackers/elimination"
+	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack"
+	"github.com/werf/logboek"
 )
 
 func init() {

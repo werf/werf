@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/werf/logboek"
-
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/cli-runtime/pkg/resource"
+
+	"github.com/werf/logboek"
 )
 
 func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3Namespace string, maintenanceHelper *MaintenanceHelper) error {

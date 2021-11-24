@@ -4,16 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/deploy/bundles"
-
-	"github.com/werf/werf/pkg/werf/global_warnings"
-
-	cmd_helm "helm.sh/helm/v3/cmd/helm"
-
 	"github.com/spf13/cobra"
+	"helm.sh/helm/v3/cmd/helm"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy/bundles"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -85,7 +82,7 @@ func runDownload() error {
 		return err
 	}
 
-	cmd_helm.Settings.Debug = *commonCmdData.LogDebug
+	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
 	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
 	if err != nil {

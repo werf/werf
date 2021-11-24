@@ -8,14 +8,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/werf/werf/pkg/container_runtime"
-
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/giterminism_manager"

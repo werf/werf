@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/docker"
-
 	"github.com/werf/werf/pkg/buildah"
-
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker"
 )
 
 func ContainerRuntimeProcessStartupHook() (bool, error) {

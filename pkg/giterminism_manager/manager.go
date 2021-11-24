@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager/config"
 	"github.com/werf/werf/pkg/giterminism_manager/errors"

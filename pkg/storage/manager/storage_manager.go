@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -19,7 +21,6 @@ import (
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/util/parallel"
 	"github.com/werf/werf/pkg/werf"
-	"gopkg.in/yaml.v2"
 )
 
 var (

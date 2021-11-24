@@ -5,18 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/werf/werf/pkg/kubeutils"
-
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/logboek"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/werf/werf/pkg/image"
-	v1 "k8s.io/api/core/v1"
+	"github.com/werf/werf/pkg/kubeutils"
 )
 
 const (

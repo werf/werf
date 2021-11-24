@@ -16,7 +16,6 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"

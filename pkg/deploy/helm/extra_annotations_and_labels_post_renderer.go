@@ -8,15 +8,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/werf/werf/pkg/werf"
-
-	"github.com/werf/logboek"
-
+	"helm.sh/helm/v3/pkg/releaseutil"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	"helm.sh/helm/v3/pkg/releaseutil"
+	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/werf"
 )
 
 var WerfRuntimeAnnotations = map[string]string{

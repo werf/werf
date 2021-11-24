@@ -2,6 +2,7 @@ package contruntime
 
 import (
 	"github.com/google/uuid"
+
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 )
 

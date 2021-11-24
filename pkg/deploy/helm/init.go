@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
-
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	helm_kube "helm.sh/helm/v3/pkg/kube"

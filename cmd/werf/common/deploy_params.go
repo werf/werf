@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"

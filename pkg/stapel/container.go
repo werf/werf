@@ -6,11 +6,9 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
-
-	"github.com/werf/werf/pkg/werf"
-
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type container struct {

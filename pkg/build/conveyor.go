@@ -14,7 +14,6 @@ import (
 	"sync"
 
 	"github.com/gookit/color"
-
 	"github.com/moby/buildkit/frontend/dockerfile/dockerignore"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -22,7 +21,6 @@ import (
 	"github.com/werf/logboek"
 	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-
 	"github.com/werf/werf/pkg/build/import_server"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"

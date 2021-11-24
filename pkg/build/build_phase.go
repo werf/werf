@@ -17,10 +17,8 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/storage"
@@ -449,7 +447,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context.Context, img *Image, stg stage.Interface) (bool, error) {
 	foundSuitableStage := false
 
-	atomicCopySuitableStageFromSecondaryStagesStorage := func(secondaryStageDesc *image.StageDescription, secondaryStagesStorage storage.StagesStorage) error {
+	atomicCopySuitableStageFromSecondaryStagesStorage := func(secondaryStageDesc *imagePkg.StageDescription, secondaryStagesStorage storage.StagesStorage) error {
 		// Lock the primary stages storage
 		var stageUnlocked bool
 		var unlockStage func()
@@ -494,7 +492,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 					i.SetStageDescription(copiedStageDesc)
 					stg.SetImage(i)
 
-					var stageIDs []image.StageID
+					var stageIDs []imagePkg.StageID
 					for _, stageDesc := range stages {
 						stageIDs = append(stageIDs, *stageDesc.StageID)
 					}
@@ -782,7 +780,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			return err
 		}
 
-		var stageIDs []image.StageID
+		var stageIDs []imagePkg.StageID
 		for _, stageDesc := range stages {
 			stageIDs = append(stageIDs, *stageDesc.StageID)
 		}
@@ -819,7 +817,7 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 }
 
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor) (string, error) {
-	checksumArgs := []string{image.BuildCacheVersion, stageName, stageDependencies}
+	checksumArgs := []string{imagePkg.BuildCacheVersion, stageName, stageDependencies}
 	if prevNonEmptyStage != nil {
 		prevStageDependencies, err := prevNonEmptyStage.GetNextStageDependencies(ctx, conveyor)
 		if err != nil {

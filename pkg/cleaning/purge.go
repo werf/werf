@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/werf/logboek"
-
 	"github.com/werf/werf/pkg/cleaning/stage_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"

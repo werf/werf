@@ -5,12 +5,12 @@ import (
 	"path"
 	"strings"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/integration/pkg/utils/liveexec"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 func werfBuild(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {

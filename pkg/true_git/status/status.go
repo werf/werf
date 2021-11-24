@@ -10,7 +10,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-
 	"github.com/werf/werf/pkg/true_git"
 )
 

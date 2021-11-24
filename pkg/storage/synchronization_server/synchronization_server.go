@@ -9,12 +9,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/werf/werf/pkg/util"
-
 	"github.com/werf/lockgate/pkg/distributed_locker"
-
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/util"
 )
 
 func RunSynchronizationServer(_ context.Context, ip, port string, distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(clientID string) (storage.StagesStorageCache, error)) error {
