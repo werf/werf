@@ -18,7 +18,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.40 # fix bundles bug
+      version: 1.2.41 # fix 3 way merge
     - name: beta
       version: 1.2.39 # buildah and build args + debug object not found
     - name: ea
