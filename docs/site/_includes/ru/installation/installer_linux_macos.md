@@ -20,3 +20,8 @@ source "$(~/bin/trdl use werf {{ include.version }} {{ include.channel }})"
 ```shell
 ./install.sh -h
 ```
+
+После активации `werf` должен быть доступен в той же shell-сессии, в которой он был активирован:
+```shell
+werf version
+```
