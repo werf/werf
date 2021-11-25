@@ -22,7 +22,7 @@ func newGenericApi(ctx context.Context, options apiOptions) (*genericApi, error)
 	d.commonApi = newAPI(options)
 
 	// init registry mirrors if docker cli initialized in context
-	if docker.IsContext(ctx) {
+	if docker.IsEnabled() && docker.IsContext(ctx) {
 		info, err := docker.Info(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get docker system info: %s", err)

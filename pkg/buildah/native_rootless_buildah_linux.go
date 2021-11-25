@@ -144,7 +144,7 @@ func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushO
 
 func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	buildOpts := define.BuildOptions{
-		Isolation:    define.IsolationOCIRootless,
+		Isolation:    define.IsolationChroot,
 		OutputFormat: buildah.Dockerv2ImageManifest,
 		CommonBuildOpts: &define.CommonBuildOptions{
 			ShmSize: DefaultShmSize,

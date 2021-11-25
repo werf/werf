@@ -399,7 +399,7 @@ func (c *Conveyor) checkContainerRuntimeSupported(ctx context.Context) error {
 
 Please select only dockerfile images or delete all non-dockerfile images from your werf.yaml.
 
-Or disable buildah runtime by unsetting WERF_BUILDAH_CONTAINER_RUNTIME environment variable.`, strings.Join(nonDockerfileImages, ", "))
+Or disable buildah runtime by unsetting WERF_CONTAINER_RUNTIME_BUILDAH environment variable.`, strings.Join(nonDockerfileImages, ", "))
 	}
 
 	return nil
