@@ -20,3 +20,8 @@ List of installation options:
 ```shell
 ./install.sh -h
 ```
+
+After activation `werf` should be available in the shell-session from which it was activated:
+```shell
+werf version
+```
