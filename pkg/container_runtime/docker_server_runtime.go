@@ -70,6 +70,8 @@ func (runtime *DockerServerRuntime) GetImageInfo(ctx context.Context, ref string
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
 		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("unable to inspect docker image: %s", err)
 	}
 
 	return image.NewInfoFromInspect(ref, inspect), nil
