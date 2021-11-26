@@ -70,7 +70,8 @@ git:
   owner: jekyll
   group: jekyll
   excludePaths:
-  - '**/*.sh'
+  - 'documentation/**/*.sh'
+  - 'site/.werf/**/*.sh'
   - '**/werf*.yaml'
   - '**/docker-compose.yml'
   - site/.werf

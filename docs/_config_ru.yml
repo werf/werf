@@ -12,7 +12,7 @@ exclude:
 - Gemfile
 - Gemfile.lock
 - werf.yaml
-- "*.sh"
+- ".werf/artifacts/*.sh"
 - backend
 
 include:
