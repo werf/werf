@@ -30,4 +30,4 @@ groups:
     - name: beta
       version: 1.2.41 # fix 3 way merge
     - name: ea
-      version: 1.2.37+fix1 # debug object not found
+      version: 1.2.40 # fix bundle publish
