@@ -5,7 +5,7 @@ main() {
   declare -r REQUIRED_BASH_VERSION="3.2.57"
   declare -r REQUIRED_GIT_VERSION="2.18.0"
 
-  declare -r DEFAULT_TRDL_INITIAL_VERSION="0.1.3"
+  declare -r DEFAULT_TRDL_INITIAL_VERSION="0.3.1"
   declare -r DEFAULT_TRDL_TUF_REPO="https://tuf.trdl.dev"
   declare -r DEFAULT_TRDL_GPG_PUBKEY_URL="https://trdl.dev/trdl.asc"
   declare -r DEFAULT_WERF_TUF_REPO_URL="https://tuf.werf.io"
