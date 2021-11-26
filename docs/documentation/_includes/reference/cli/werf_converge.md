@@ -337,7 +337,7 @@ werf converge --repo registry.mydomain.com/web --env production
             Use a tag alias in helm templates instead of an image content-based tag (NOT            
             RECOMMENDED).
             It is necessary to use the image name shortcut %image% or %image_slug% in the tag       
-            format if there is more than one image in the werf config. 
+            format if there is more than one image in the werf config.
             Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g.                                    
             $WERF_USE_CUSTOM_TAG="%image%-tag").
             For cleaning custom tags and associated content-based tag are treated as one
