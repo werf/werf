@@ -3,6 +3,14 @@ groups:
    channels:
     - name: alpha
       version: 1.0.13+fix9
+    - name: beta
+      version: 1.0.13+fix9
+    - name: ea
+      version: 1.0.13+fix9
+    - name: stable
+      version: 1.0.13+fix9
+    - name: rock-solid
+      version: 1.0.13+fix9
  - name: "1.1"
    channels:
     - name: alpha
@@ -12,7 +20,7 @@ groups:
     - name: ea
       version: 1.1.23+fix51
     - name: stable
-      version: 1.1.23+fix50
+      version: 1.1.23+fix51
     - name: rock-solid
       version: 1.1.23+fix50
  - name: "1.2"
@@ -20,6 +28,6 @@ groups:
     - name: alpha
       version: 1.2.41 # fix 3 way merge
     - name: beta
-      version: 1.2.39 # buildah and build args + debug object not found
+      version: 1.2.41 # fix 3 way merge
     - name: ea
-      version: 1.2.37+fix1 # debug object not found
+      version: 1.2.40 # fix bundle publish

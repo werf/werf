@@ -9,19 +9,19 @@
         },
         {
           "name": "beta",
-          "version": "v1.0.13+fix5"
+          "version": "v1.0.13+fix9"
         },
         {
           "name": "ea",
-          "version": "v1.0.13+fix5"
+          "version": "v1.0.13+fix9"
         },
         {
           "name": "stable",
-          "version": "v1.0.13+fix5"
+          "version": "v1.0.13+fix9"
         },
         {
           "name": "rock-solid",
-          "version": "v1.0.13+fix5"
+          "version": "v1.0.13+fix9"
         }
       ]
     },
@@ -42,7 +42,7 @@
         },
         {
           "name": "stable",
-          "version": "v1.1.23+fix50"
+          "version": "v1.1.23+fix51"
         },
         {
           "name": "rock-solid",
@@ -59,11 +59,11 @@
         },
         {
           "name": "beta",
-          "version": "v1.2.39"
+          "version": "v1.2.41"
         },
         {
           "name": "ea",
-          "version": "v1.2.37+fix1"
+          "version": "v1.2.40"
         }
       ]
     }
