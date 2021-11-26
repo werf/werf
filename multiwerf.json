@@ -9,19 +9,19 @@
         },
         {
           "name": "beta",
-          "version": "v1.0.13+fix5"
+          "version": "v1.0.13+fix9"
         },
         {
           "name": "ea",
-          "version": "v1.0.13+fix5"
+          "version": "v1.0.13+fix9"
         },
         {
           "name": "stable",
-          "version": "v1.0.13+fix5"
+          "version": "v1.0.13+fix9"
         },
         {
           "name": "rock-solid",
-          "version": "v1.0.13+fix5"
+          "version": "v1.0.13+fix9"
         }
       ]
     },
