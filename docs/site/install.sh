@@ -184,7 +184,7 @@ get_arch() {
 
   case "$arch" in
     x86_64) arch="amd64" ;;
-    armv8* | aarch64*) arch="arm64" ;;
+    arm64 | armv8* | aarch64*) arch="arm64" ;;
     i386 | i486 | i586 | i686) abort "werf is not available for x86 architecture." ;;
     arm | armv7*) abort "werf is not available for 32-bit ARM architectures." ;;
     *) abort "werf is not available for \"$arch\" architecture." ;;
