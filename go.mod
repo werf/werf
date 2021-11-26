@@ -16,7 +16,7 @@ require (
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
-	github.com/containerd/containerd v1.5.7
+	github.com/containerd/containerd v1.5.8
 	github.com/containers/buildah v1.23.1
 	github.com/containers/common v0.44.2
 	github.com/containers/image/v5 v5.16.0
@@ -56,7 +56,7 @@ require (
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.16.0
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec v1.0.2-0.20210819154149-5ad6f50d6283
+	github.com/opencontainers/image-spec v1.0.2
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
