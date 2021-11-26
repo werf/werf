@@ -5,7 +5,7 @@ main() {
   declare -r REQUIRED_BASH_VERSION="3.2.57"
   declare -r REQUIRED_GIT_VERSION="2.18.0"
 
-  declare -r DEFAULT_TRDL_INITIAL_VERSION="0.1.3"
+  declare -r DEFAULT_TRDL_INITIAL_VERSION="0.3.1"
   declare -r DEFAULT_TRDL_TUF_REPO="https://tuf.trdl.dev"
   declare -r DEFAULT_TRDL_GPG_PUBKEY_URL="https://trdl.dev/trdl.asc"
   declare -r DEFAULT_WERF_TUF_REPO_URL="https://tuf.werf.io"
@@ -98,11 +98,23 @@ main() {
   [[ $trdl_skip_signature_verification == "no" ]] && ensure_cmds_available gpg
   validate_git_version "$REQUIRED_GIT_VERSION"
 
-  declare -r arch="$(get_arch)"
-  declare -r os="$(get_os)"
+  declare arch
+  arch="$(get_arch)" || abort "Failure getting system architecture."
+
+  declare os
+  os="$(get_os)" || abort "Failure getting OS."
+
   [[ $shell == "auto" ]] && get_shell "shell"
-  # [[ $os == "linux" ]] && declare linux_distro="$(get_linux_distro)"
-  # [[ $os == "darwin" ]] && declare darwin_version="$(sw_vers -productVersion)"
+
+  # declare linux_distro
+  # if [[ $os == "linux" ]]; then
+  #   linux_distro="$(get_linux_distro)" || abort "Failure getting Linux distro."
+  # fi
+
+  # declare darwin_version
+  # if [[ $os == "darwin" ]]; then
+  #   darwin_version="$(sw_vers -productVersion)" || abort "Failure getting macOS version."
+  # fi
 
   [[ $os == "linux" ]] && propose_joining_docker_group "$werf_join_docker_group"
   setup_trdl_bin_path "$shell" "$trdl_enable_setup_bin_path"
@@ -427,8 +439,8 @@ create_file() {
 
   [[ -e $file ]] && return 0
 
-  declare stderr="$(touch "$file" 2>&1 1>/dev/null)"
-  if [[ $? -gt 0 ]] && [[ $stderr == *"Permission denied"* ]]; then
+  declare stderr
+  if ! stderr="$(touch "$file" 2>&1 1>/dev/null)" && [[ $stderr == *"Permission denied"* ]]; then
     run_as_root "touch '$file'" || abort "Unable to create file \"$file\"."
   fi
 }
