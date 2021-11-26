@@ -3,6 +3,14 @@ groups:
    channels:
     - name: alpha
       version: 1.0.13+fix9
+    - name: beta
+      version: 1.0.13+fix9
+    - name: ea
+      version: 1.0.13+fix9
+    - name: stable
+      version: 1.0.13+fix9
+    - name: rock-solid
+      version: 1.0.13+fix9
  - name: "1.1"
    channels:
     - name: alpha
