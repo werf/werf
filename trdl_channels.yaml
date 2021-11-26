@@ -20,7 +20,7 @@ groups:
     - name: ea
       version: 1.1.23+fix51
     - name: stable
-      version: 1.1.23+fix50
+      version: 1.1.23+fix51
     - name: rock-solid
       version: 1.1.23+fix50
  - name: "1.2"
