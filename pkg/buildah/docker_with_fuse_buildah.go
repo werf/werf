@@ -47,6 +47,14 @@ func (b *DockerWithFuseBuildah) Push(ctx context.Context, ref string, opts PushO
 	return err
 }
 
+func (b *DockerWithFuseBuildah) Mount(ctx context.Context, container string, opts MountOpts) (string, error) {
+	panic("not implemented")
+}
+
+func (b *DockerWithFuseBuildah) Umount(ctx context.Context, container string, opts UmountOpts) error {
+	panic("not implemented")
+}
+
 func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	sessionTmpDir, _, _, err := b.prepareBuildFromDockerfile(dockerfile, opts.ContextTar)
 	if err != nil {
@@ -94,11 +102,12 @@ func (b *DockerWithFuseBuildah) RunCommand(ctx context.Context, container string
 	return err
 }
 
-func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error {
+func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error) {
 	_, _, err := b.runBuildah(ctx, []string{}, []string{
 		"from", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), "--name", container, image,
 	}, opts.LogWriter)
-	return err
+	// FIXME: return container name
+	return "", err
 }
 
 // TODO(ilya-lesikov): make it more generic to handle not only images

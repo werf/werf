@@ -184,9 +184,28 @@ func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 	return imageId, nil
 }
 
+func (b *NativeRootlessBuildah) Mount(ctx context.Context, container string, opts MountOpts) (string, error) {
+	builder, err := b.openContainerBuilder(ctx, container)
+	if err != nil {
+		return "", fmt.Errorf("unable to open container %q builder: %s", container, err)
+	}
+
+	return builder.Mount("")
+}
+
+func (b *NativeRootlessBuildah) Umount(ctx context.Context, container string, opts UmountOpts) error {
+	builder, err := b.openContainerBuilder(ctx, container)
+	if err != nil {
+		return fmt.Errorf("unable to open container %q builder: %s", container, err)
+	}
+
+	return builder.Unmount()
+}
+
 func (b *NativeRootlessBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
 	runOpts := buildah.RunOptions{
-		Args: opts.Args,
+		Args:   opts.Args,
+		Mounts: opts.Mounts,
 	}
 
 	stderr := &bytes.Buffer{}
@@ -197,17 +216,9 @@ func (b *NativeRootlessBuildah) RunCommand(ctx context.Context, container string
 		runOpts.Stderr = stderr
 	}
 
-	builder, err := buildah.OpenBuilder(b.Store, container)
-	switch {
-	case os.IsNotExist(errors.Cause(err)):
-		builder, err = buildah.ImportBuilder(ctx, b.Store, buildah.ImportOptions{
-			Container: container,
-		})
-		if err != nil {
-			return fmt.Errorf("unable to import builder for container %q: %s", container, err)
-		}
-	case err != nil:
-		return fmt.Errorf("unable to open builder for container %q: %s", container, err)
+	builder, err := b.openContainerBuilder(ctx, container)
+	if err != nil {
+		return fmt.Errorf("unable to open container %q builder: %s", container, err)
 	}
 
 	if err := builder.Run(command, runOpts); err != nil {
@@ -217,8 +228,16 @@ func (b *NativeRootlessBuildah) RunCommand(ctx context.Context, container string
 	return nil
 }
 
-func (b *NativeRootlessBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error {
-	panic("not implemented yet")
+func (b *NativeRootlessBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error) {
+	builder, err := buildah.NewBuilder(ctx, b.Store, buildah.BuilderOptions{
+		FromImage: image,
+		Container: container,
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to create builder: %s", err)
+	}
+
+	return builder.Container, builder.Save()
 }
 
 func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
@@ -281,4 +300,21 @@ func (b *NativeRootlessBuildah) getImageBuilder(ctx context.Context, imgName str
 	}
 
 	return builder, nil
+}
+
+func (b *NativeRootlessBuildah) openContainerBuilder(ctx context.Context, container string) (*buildah.Builder, error) {
+	builder, err := buildah.OpenBuilder(b.Store, container)
+	switch {
+	case os.IsNotExist(errors.Cause(err)):
+		builder, err = buildah.ImportBuilder(ctx, b.Store, buildah.ImportOptions{
+			Container: container,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to import builder for container %q: %s", container, err)
+		}
+	case err != nil:
+		return nil, fmt.Errorf("unable to open builder for container %q: %s", container, err)
+	}
+
+	return builder, err
 }

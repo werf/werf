@@ -59,25 +59,19 @@ func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string, opts RmiOpts
 
 func (runtime *BuildahRuntime) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	return runtime.buildah.Pull(ctx, ref, buildah.PullOpts{
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: logboek.Context(ctx).OutStream(),
-		},
+		LogWriter: logboek.Context(ctx).OutStream(),
 	})
 }
 
 func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
 	return runtime.buildah.Tag(ctx, ref, newRef, buildah.TagOpts{
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: logboek.Context(ctx).OutStream(),
-		},
+		LogWriter: logboek.Context(ctx).OutStream(),
 	})
 }
 
 func (runtime *BuildahRuntime) Push(ctx context.Context, ref string, opts PushOpts) error {
 	return runtime.buildah.Push(ctx, ref, buildah.PushOpts{
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: logboek.Context(ctx).OutStream(),
-		},
+		LogWriter: logboek.Context(ctx).OutStream(),
 	})
 }
 

@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/docker"
@@ -13,54 +17,57 @@ import (
 	"github.com/werf/werf/pkg/werf"
 )
 
-var errUsage = errors.New("./buildah-test {auto|native-rootless|docker-with-fuse} DOCKERFILE_PATH [CONTEXT_PATH]")
+var errUsage = errors.New(`
+	./buildah-test {auto|native-rootless|docker-with-fuse} { dockerfile DOCKERFILE_PATH [CONTEXT_PATH] |
+	                                                         stapel }
+`)
 
-func do(ctx context.Context) error {
-	var mode buildah.Mode
-	if v := os.Getenv("BUILDAH_TEST_MODE"); v != "" {
-		mode = buildah.Mode(v)
-	} else {
-		if len(os.Args) < 2 {
-			return errUsage
-		}
-		mode = buildah.ResolveMode(buildah.Mode(os.Args[1]))
-
-		os.Setenv("BUILDAH_TEST_MODE", string(mode))
-	}
-
-	shouldTerminate, err := buildah.ProcessStartupHook(mode)
+func runStapel(ctx context.Context, mode buildah.Mode) error {
+	b, err := buildah.NewBuildah(mode, buildah.BuildahOpts{})
 	if err != nil {
-		return fmt.Errorf("buildah process startup hook failed: %s", err)
-	}
-	if shouldTerminate {
-		return nil
+		return fmt.Errorf("unable to create buildah client: %s", err)
 	}
 
-	if err := werf.Init("", ""); err != nil {
-		return fmt.Errorf("unable to init werf subsystem: %s", err)
+	// TODO: get this working
+	// if _, err := b.FromCommand(ctx, "mycontainer", "ubuntu:20.04", buildah.FromCommandOpts{}); err != nil {
+	//	return fmt.Errorf("unable to create mycontainer from ubuntu:20.04: %s", err)
+	// }
+
+	buildStageSh := `#!/bin/bash
+
+echo HELLO > /FILE
+`
+
+	if err := os.WriteFile("/tmp/build_stage.sh", []byte(buildStageSh), os.ModePerm); err != nil {
+		return err
 	}
 
-	mode = buildah.ResolveMode(mode)
-
-	fmt.Printf("Using buildah mode: %s\n", mode)
-
-	if mode == buildah.ModeDockerWithFuse {
-		if err := docker.Init(ctx, "", false, false, ""); err != nil {
-			return err
-		}
+	if err := b.RunCommand(ctx, "mycontainer", []string{"/.werf/build_stage.sh"}, buildah.RunCommandOpts{
+		Mounts: []specs.Mount{
+			{
+				Type:        "bind",
+				Source:      "/tmp/build_stage.sh",
+				Destination: "/.werf/build_stage.sh",
+			},
+		},
+	}); err != nil {
+		return fmt.Errorf("unable to run build_stage.sh: %s", err)
 	}
 
-	if len(os.Args) < 3 {
-		return errUsage
+	containerRootDir, err := b.Mount(ctx, "mycontainer", buildah.MountOpts{})
+	if err != nil {
+		return fmt.Errorf("unable to mount mycontainer root dir: %s", err)
+	}
+	defer b.Umount(ctx, containerRootDir, buildah.UmountOpts{})
+
+	if err := os.WriteFile(filepath.Join(containerRootDir, "/FILE_FROM_GOLANG"), []byte("HELLO WORLD\n"), os.ModePerm); err != nil {
+		return fmt.Errorf("unable to write /FILE_FROM_GOLANG into %q: %s", containerRootDir, err)
 	}
 
-	dockerfilePath := os.Args[2]
+	return nil
+}
 
-	var contextDir string
-	if len(os.Args) > 3 {
-		contextDir = os.Args[3]
-	}
-
+func runDockerfile(ctx context.Context, mode buildah.Mode, dockerfilePath, contextDir string) error {
 	b, err := buildah.NewBuildah(mode, buildah.BuildahOpts{})
 	if err != nil {
 		return fmt.Errorf("unable to create buildah client: %s", err)
@@ -115,6 +122,69 @@ func do(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func do(ctx context.Context) error {
+	var mode buildah.Mode
+
+	if v := os.Getenv("BUILDAH_TEST_MODE"); v != "" {
+		mode = buildah.Mode(v)
+	} else if strings.HasPrefix(os.Args[0], "buildah-") || strings.HasPrefix(os.Args[0], "chrootuser-") || strings.HasPrefix(os.Args[0], "storage-") {
+		mode = "native-rootless"
+	} else {
+		if len(os.Args) < 2 {
+			return errUsage
+		}
+		mode = buildah.ResolveMode(buildah.Mode(os.Args[1]))
+
+		os.Setenv("BUILDAH_TEST_MODE", string(mode))
+	}
+
+	shouldTerminate, err := buildah.ProcessStartupHook(mode)
+	if err != nil {
+		return fmt.Errorf("buildah process startup hook failed: %s", err)
+	}
+	if shouldTerminate {
+		return nil
+	}
+
+	if err := werf.Init("", ""); err != nil {
+		return fmt.Errorf("unable to init werf subsystem: %s", err)
+	}
+
+	mode = buildah.ResolveMode(mode)
+
+	fmt.Printf("Using buildah mode: %s\n", mode)
+
+	if mode == buildah.ModeDockerWithFuse {
+		if err := docker.Init(ctx, "", false, false, ""); err != nil {
+			return err
+		}
+	}
+
+	if len(os.Args) < 3 {
+		return errUsage
+	}
+
+	switch os.Args[2] {
+	case "dockerfile":
+		if len(os.Args) < 4 {
+			return errUsage
+		}
+
+		dockerfilePath := os.Args[3]
+
+		var contextDir string
+		if len(os.Args) > 4 {
+			contextDir = os.Args[4]
+		}
+
+		return runDockerfile(ctx, mode, dockerfilePath, contextDir)
+	case "stapel":
+		return runStapel(ctx, mode)
+	default:
+		return fmt.Errorf("bad argument given %q: expected dockerfile or stapel\n\n%s\n", os.Args[2], errUsage)
+	}
 }
 
 func main() {
