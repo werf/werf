@@ -111,7 +111,7 @@ By default, werf can automatically clean up the outdated host data as part of an
 ```shell
 # /etc/cron.d/werf-host-cleanup
 SHELL=/bin/bash
-*/30 * * * * gitlab-runner source ~/.profile ; source $(trdl use werf 1.2 ea) ; werf host cleanup
+*/30 * * * * gitlab-runner source ~/.profile ; source $(trdl use werf 1.2 stable) ; werf host cleanup
 ```
 
 By default, without additional parameters, the `werf host cleanup` command cleans up the data of all projects on the host. If invoked with the `--project-name PROJECT` parameter, the command can only clean up images on the local docker server. In this mode, the support for the command is partial.

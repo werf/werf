@@ -9,7 +9,7 @@ $(document).ready(function () {
 
   var defaults = {
     version: '1.2',
-    channel: 'ea',
+    channel: 'stable',
     os: default_os,
     method: 'trdl',
     arch: 'amd64'
@@ -37,8 +37,7 @@ $(document).ready(function () {
     if (group == "version") {
       if (param == "1.2") {
         $(`[data-install-tab="rock-solid"]`).hide();
-        $(`[data-install-tab="stable"]`).hide();
-        doInstallSelect("channel", "ea")
+        doInstallSelect("channel", "stable")
       } else {
         $(`[data-install-tab="rock-solid"]`).show();
         $(`[data-install-tab="stable"]`).show();
