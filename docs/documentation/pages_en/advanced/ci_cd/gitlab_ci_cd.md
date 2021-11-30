@@ -515,7 +515,7 @@ Options for rolling back changes in production:
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Cleanup:
@@ -573,7 +573,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -688,7 +688,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -790,7 +790,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -891,7 +891,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
