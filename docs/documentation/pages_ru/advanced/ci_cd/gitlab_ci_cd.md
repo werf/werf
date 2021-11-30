@@ -113,7 +113,7 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -144,7 +144,7 @@ Build and Publish:
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 .base_deploy: &base_deploy
@@ -205,7 +205,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.2 ea)
+    - type trdl && . $(trdl use werf 1.2 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -262,7 +262,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.2 ea)
+    - type trdl && . $(trdl use werf 1.2 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -302,7 +302,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.2 ea)
+    - type trdl && . $(trdl use werf 1.2 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -330,7 +330,7 @@ Stop Review:
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Review:
@@ -509,7 +509,7 @@ Deploy to Production:
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Cleanup:
@@ -567,7 +567,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -682,7 +682,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -784,7 +784,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -885,7 +885,7 @@ stages:
   - cleanup
 
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
