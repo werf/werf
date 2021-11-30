@@ -26,8 +26,8 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.41 # fix 3 way merge
+      version: 1.2.45 # buildah improvements and fixed panic
     - name: beta
-      version: 1.2.41 # fix 3 way merge
+      version: 1.2.45 # buildah improvements and fixed panic
     - name: ea
-      version: 1.2.40 # fix bundle publish
+      version: 1.2.45 # buildah improvements and fixed panic
