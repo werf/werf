@@ -338,7 +338,7 @@ install_trdl() {
   fi
 
   install "$tmp_dir/trdl" "$HOME/bin" || abort "Can't install trdl binary from \"$tmp_dir/trdl\" to \"$HOME/bin\"."
-  rm -rf "$tmp_dir"
+  rm -rf "$tmp_dir" 2>/dev/null
 }
 
 is_trdl_installed_and_up_to_date() {
@@ -347,7 +347,7 @@ is_trdl_installed_and_up_to_date() {
   [[ -x "$HOME/bin/trdl" ]] || return 1
 
   declare current_trdl_version
-  current_trdl_version="$("$HOME/bin/trdl" version | cut -c2-)" || return 1
+  current_trdl_version="$("$HOME/bin/trdl" version 2>/dev/null | cut -c2-)" || return 1
 
   compare_versions "$current_trdl_version" "$required_trdl_version"
   test $? -lt 2
@@ -360,7 +360,7 @@ add_trdl_werf_repo() {
   declare werf_tuf_repo_root_sha="$3"
 
   log::info "Adding werf repo to trdl."
-  "$HOME/bin/trdl" add werf "$werf_tuf_repo_url" "$werf_tuf_repo_root_version" "$werf_tuf_repo_root_sha"
+  "$HOME/bin/trdl" add werf "$werf_tuf_repo_url" "$werf_tuf_repo_root_version" "$werf_tuf_repo_root_sha" || abort "Can't add \"werf\" repo to trdl."
 }
 
 enable_automatic_werf_activation() {
@@ -440,7 +440,7 @@ create_file() {
   [[ -e $file ]] && return 0
 
   declare stderr
-  if ! stderr="$(touch "$file" 2>&1 1>/dev/null)" && [[ $stderr == *"Permission denied"* ]]; then
+  if ! stderr="$(touch "$file" 1>/dev/null 2>&1)" && [[ $stderr == *"Permission denied"* ]]; then
     run_as_root "touch '$file'" || abort "Unable to create file \"$file\"."
   fi
 }
@@ -465,7 +465,7 @@ is_user_in_group() {
   declare user="$1"
   declare group="$2"
 
-  id -nG "$user" | grep -wq "$group"
+  id -nG "$user" 2>/dev/null | grep -wqs "$group"
   return
 }
 
@@ -602,7 +602,7 @@ get_linux_distro() {
     # Older Red Hat, CentOS, etc.
     distro="redhat"
   else
-    abort "unable to detect Linux distro"
+    abort "Unable to detect Linux distro."
   fi
 
   printf '%s' "$distro" | tr '[:upper:]' '[:lower:]'
