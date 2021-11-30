@@ -116,7 +116,7 @@ Once the GitLab runner is up and ready, you can start configuring the pipeline.
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
@@ -146,7 +146,7 @@ First of all, you need to define a template – the general part of the deployme
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 .base_deploy: &base_deploy
@@ -207,7 +207,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.2 ea)
+    - type trdl && . $(trdl use werf 1.2 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -264,7 +264,7 @@ Review:
 Stop Review: 
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.2 ea)
+    - type trdl && . $(trdl use werf 1.2 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -304,7 +304,7 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.2 ea)
+    - type trdl && . $(trdl use werf 1.2 stable)
     - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
@@ -331,7 +331,7 @@ By assigning a specific label, the user activates automatic deployment to review
 {% raw %}
 ```yaml
 .base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 ea)
+  - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Review:

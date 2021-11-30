@@ -9,7 +9,7 @@ $(document).ready(function () {
 
   var defaults = {
     version: '1.2',
-    channel: 'ea',
+    channel: 'stable',
     os: default_os,
     method: 'trdl',
     arch: 'amd64'
@@ -35,17 +35,11 @@ $(document).ready(function () {
 
     // Update buttons status
     if (group == "version") {
-      if (param == "1.2") {
-        $(`[data-install-tab="rock-solid"]`).hide();
-        $(`[data-install-tab="stable"]`).hide();
-        doInstallSelect("channel", "ea")
-      } else {
-        $(`[data-install-tab="rock-solid"]`).show();
-        $(`[data-install-tab="stable"]`).show();
-        $(`[data-install-tab="ea"]`).show();
-        $(`[data-install-tab="beta"]`).show();
-        doInstallSelect("channel", "stable")
-      }
+      $(`[data-install-tab="rock-solid"]`).show();
+      $(`[data-install-tab="stable"]`).show();
+      $(`[data-install-tab="ea"]`).show();
+      $(`[data-install-tab="beta"]`).show();
+      doInstallSelect("channel", "stable")
     }
 
     if (group == "os") {
