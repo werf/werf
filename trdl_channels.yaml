@@ -31,3 +31,5 @@ groups:
       version: 1.2.45 # buildah improvements and fixed panic
     - name: ea
       version: 1.2.45 # buildah improvements and fixed panic
+    - name: stable
+      version: 1.2.45 # buildah improvements and fixed panic

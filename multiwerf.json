@@ -64,6 +64,10 @@
         {
           "name": "ea",
           "version": "v1.2.45"
+        },
+        {
+          "name": "stable",
+          "version": "v1.2.45"
         }
       ]
     }
