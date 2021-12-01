@@ -23,6 +23,9 @@ en:
   /advanced/ci_cd: &documentation-advanced-ci-cd
     title: CI/CD
     url: advanced/ci_cd/ci_cd_workflow_basics.html
+  /advanced/ci_cd/werf_in_container: &documentation-advanced-ci-cd-werf-in-container
+    title: CI/CD
+    url: advanced/ci_cd/werf_in_container/use_docker.html
   /advanced/helm: &documentation-advanced-helm
     title: Helm
     url: advanced/helm/overview.html
