@@ -108,6 +108,27 @@ entries:
               - title: GitHub Actions
                 url: /advanced/ci_cd/github_actions.html
 
+              - title: Werf in container (experimental, NEW!)
+                f:
+
+                  - title: Run werf in docker server
+                    url: /advanced/ci_cd/werf_in_container/use_docker.html
+
+                  - title: Run werf in kubernetes
+                    url: /advanced/ci_cd/werf_in_container/use_kubernetes.html
+
+                  - title: Use Gitlab CI/CD with docker executor
+                    url: /advanced/ci_cd/werf_in_container/use_docker_for_gitlab_ci_cd.html
+
+                  - title: Use Gitlab CI/CD with kubernetes executor
+                    url: /advanced/ci_cd/werf_in_container/use_kubernetes_for_gitlab_ci_cd.html
+
+                  - title: Use Github Actions with docker executor (coming soon)
+                    url: /advanced/ci_cd/werf_in_container/use_docker_for_github_actions.html
+
+                  - title: Use Github Actions with kubernetes executor (coming soon)
+                    url: /advanced/ci_cd/werf_in_container/use_kubernetes_for_github_actions.html
+
           - title: Building images with stapel
             f:
 
@@ -185,7 +206,7 @@ entries:
 
           - title: Changelog
             url: /whats_new_in_v1_2/changelog.html
-          
+
           - title: How to migrate from v1.1 to v1.2
             url: /whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html
 
