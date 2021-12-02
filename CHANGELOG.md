@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.45](https://www.github.com/werf/werf/compare/v1.2.44...v1.2.45) (2021-12-02)
+
+
+### Features
+
+* **docs**: added docs for running werf in container in experimental mode.
+
 ### [1.2.44](https://www.github.com/werf/werf/compare/v1.2.43...v1.2.44) (2021-11-26)
 
 
