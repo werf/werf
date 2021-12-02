@@ -320,7 +320,7 @@ func (c *WerfConfig) imageDependenciesInOrder(images []ImageInterface) (imageDep
 
 	outerLoop:
 		for _, dep := range imageDeps[current] {
-			for key, _ := range imageDeps {
+			for key := range imageDeps {
 				if key == dep {
 					continue outerLoop
 				}

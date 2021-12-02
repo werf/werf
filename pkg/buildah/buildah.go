@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
+
 	"github.com/werf/werf/pkg/buildah/types"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -28,25 +30,17 @@ type BuildFromDockerfileOpts struct {
 	BuildArgs  map[string]string
 }
 
+type RunMount struct {
+	Type        string
+	TmpfsSize   string
+	Source      string
+	Destination string
+}
+
 type RunCommandOpts struct {
 	CommonOpts
-	Args []string
-}
-
-type FromCommandOpts struct {
-	CommonOpts
-}
-
-type PullOpts struct {
-	CommonOpts
-}
-
-type PushOpts struct {
-	CommonOpts
-}
-
-type TagOpts struct {
-	CommonOpts
+	Args   []string
+	Mounts []specs.Mount
 }
 
 type RmiOpts struct {
@@ -54,15 +48,26 @@ type RmiOpts struct {
 	Force bool
 }
 
+type (
+	FromCommandOpts CommonOpts
+	PushOpts        CommonOpts
+	PullOpts        CommonOpts
+	TagOpts         CommonOpts
+	MountOpts       CommonOpts
+	UmountOpts      CommonOpts
+)
+
 type Buildah interface {
 	Tag(ctx context.Context, ref, newRef string, opts TagOpts) error
 	Push(ctx context.Context, ref string, opts PushOpts) error
 	BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error)
 	RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error
-	FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) error
+	FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error)
 	Pull(ctx context.Context, ref string, opts PullOpts) error
 	Inspect(ctx context.Context, ref string) (*types.BuilderInfo, error)
 	Rmi(ctx context.Context, ref string, opts RmiOpts) error
+	Mount(ctx context.Context, container string, opts MountOpts) (string, error)
+	Umount(ctx context.Context, container string, opts UmountOpts) error
 }
 
 type Mode string
