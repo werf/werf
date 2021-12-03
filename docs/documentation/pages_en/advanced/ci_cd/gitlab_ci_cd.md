@@ -53,7 +53,7 @@ There are various configuration options for deploying to review, staging, and pr
 
 You can run werf in the Docker container, however, this method is not supported. You can find more information and discuss this approach in the relevant [issue](https://github.com/werf/werf/issues/1926). In this example (and in general), we recommend you to use the _shell executor_.
 
-The deployment process requires access to the cluster via `kubectl`, so you have to install and configure the `kubectl` interface on the node where werf will be run. 
+The deployment process requires access to the cluster via `kubectl`, so you have to install and configure the `kubectl` interface on the node where werf will be run.
 werf will use the default `kubectl` context if there is no context specified via the `--kube-context` option or the `WERF_KUBE_CONTEXT` environment variable.
 
 werf requires access to the following nodes it uses:
@@ -79,7 +79,7 @@ Let us install and configure the GitLab runner on the node where werf will be ru
    ```shell
    sudo usermod -aG docker gitlab-runner
    ```
-   
+
 1. Install [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) and configure `kubectl` (if they were not installed before).
 1. Install [werf dependencies](/installation.html#install-dependencies).
 1. Install [trdl](https://github.com/werf/trdl) under the `gitlab-runner` user:
@@ -111,18 +111,25 @@ Let us install and configure the GitLab runner on the node where werf will be ru
 
 Once the GitLab runner is up and ready, you can start configuring the pipeline.
 
+## werf activate
+
+Define a default array of commands that should run before the script commands in all jobs.
+
+{% raw %}
+```yaml
+before_script:
+  - type trdl && . $(trdl use werf 1.2 stable)
+  - type werf && source $(werf ci-env gitlab --as-file)
+```
+{% endraw %}
+
 ## Building and publishing application images
 
 {% raw %}
 ```yaml
-.base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 stable)
-  - type werf && source $(werf ci-env gitlab --as-file)
-
 Build and Publish:
   stage: build
   script:
-    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
@@ -141,18 +148,13 @@ If you need to authorize using the custom credentials, the `docker login` comman
 
 ## Deploying an application
 
-First of all, you need to define a template – the general part of the deployment process suitable for any tier. This way, you will decrease the size of the `.gitlab-ci.yml` file while improving its readability. This will allow you to focus on the workflow. 
+First of all, you need to define a template – the general part of the deployment process suitable for any tier. This way, you will decrease the size of the `.gitlab-ci.yml` file while improving its readability. This will allow you to focus on the workflow.
 
 {% raw %}
 ```yaml
-.base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 stable)
-  - type werf && source $(werf ci-env gitlab --as-file)
-
-.base_deploy: &base_deploy
+.base_deploy:
   stage: deploy
   script:
-    - *base_werf
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -166,7 +168,7 @@ With the `base_deploy` template, each tier will have its own GitLab environment:
 {% raw %}
 ```yaml
 Example:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: <environment name>
     url: <url>
@@ -179,21 +181,21 @@ When running a job, `werf ci-env` sets the `WERF_ENV` variable according to the 
 
 In order to configure the application for using in different tiers, you can take advantage of Go templates and the `.Values.werf.env` variable in helm templates. This is analogous to setting the `–-env` option or the `WERF_ENV` environment variable.
 
-The template also makes use of the environment address – the URL for accessing the application deployed to the tier. It is passed via the `env_url` parameter. 
+The template also makes use of the environment address – the URL for accessing the application deployed to the tier. It is passed via the `env_url` parameter.
 This value can be used in helm templates, for example, for configuring Ingress resources.
 
 Below, we will discuss some popular strategies and practices that may serve as a basis for building your processes in GitLab.
 
-### Setting up a review environment – various scenarios 
+### Setting up a review environment – various scenarios
 
 As we said before, the review environment is a temporary tier. That is why, in addition to the deployment, this environment should also have a cleanup process.
 
-Let us look at the basic configurations of `Review` and `Stop Review` jobs. They will serve as the basis for all the options. 
+Let us look at the basic configurations of `Review` and `Stop Review` jobs. They will serve as the basis for all the options.
 
 {% raw %}
 ```yaml
 Review:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
     url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
@@ -204,11 +206,9 @@ Review:
       - werf.yaml
   only: [merge_requests]
 
-Stop Review: 
+Stop Review:
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.2 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -249,7 +249,7 @@ It is the most simplistic approach that can be useful when rollouts are rare, an
 {% raw %}
 ```yaml
 Review:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
     url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
@@ -261,11 +261,9 @@ Review:
   only: [merge_requests]
   when: manual
 
-Stop Review: 
+Stop Review:
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.2 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -289,7 +287,7 @@ In the configuration below, the code is automatically released with every commit
 {% raw %}
 ```yaml
 Review:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
     url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
@@ -304,8 +302,6 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - type trdl && . $(trdl use werf 1.2 stable)
-    - type werf && source $(werf ci-env gitlab --as-file)
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -330,14 +326,9 @@ By assigning a specific label, the user activates automatic deployment to review
 
 {% raw %}
 ```yaml
-.base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 stable)
-  - type werf && source $(werf ci-env gitlab --as-file)
-
 Review:
   stage: deploy
   script:
-    - *base_werf
     - >
       # do optional deploy/dismiss
 
@@ -364,7 +355,6 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -397,7 +387,7 @@ The code is automatically deployed to **production** in response to any changes 
 {% raw %}
 ```yaml
 Deploy to Staging:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: staging
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
@@ -405,7 +395,7 @@ Deploy to Staging:
   when: manual
 
 Deploy to Production:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: production
     url: https://www.company.org
@@ -427,19 +417,19 @@ Deploying to **production** is triggered by clicking the button associated with 
 {% raw %}
 ```yaml
 Deploy to Staging:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: staging
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
 
 Deploy to Production:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: production
     url: https://www.company.org
   only: [master]
-  when: manual  
+  when: manual
 ```
 {% endraw %}
 
@@ -457,7 +447,7 @@ The rollout to **production** is triggered when the tag is assigned; deploying t
 {% raw %}
 ```yaml
 Deploy to Staging:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: staging
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
@@ -465,7 +455,7 @@ Deploy to Staging:
   when: manual
 
 Deploy to Production:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: production
     url: https://www.company.org
@@ -488,14 +478,14 @@ The code is deployed to **production** automatically; rolling out to **staging**
 {% raw %}
 ```yaml
 Deploy to Staging:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: staging
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
 
 Deploy to Production:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: production
     url: https://www.company.org
@@ -514,14 +504,9 @@ Options for rolling back changes in production:
 
 {% raw %}
 ```yaml
-.base_werf: &base_werf
-  - type trdl && . $(trdl use werf 1.2 stable)
-  - type werf && source $(werf ci-env gitlab --as-file)
-
 Cleanup:
   stage: cleanup
   script:
-    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -572,22 +557,20 @@ stages:
   - dismiss
   - cleanup
 
-.base_werf: &base_werf
+before_script:
   - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
   stage: build
   script:
-    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
 
-.base_deploy: &base_deploy
+.base_deploy:
   stage: deploy
   script:
-    - *base_werf
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -596,7 +579,6 @@ Build and Publish:
 Review:
   stage: deploy
   script:
-    - *base_werf
     - >
       # do optional deploy/dismiss
 
@@ -623,7 +605,6 @@ Review:
 Stop Review:
   stage: dismiss
   script:
-    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -637,7 +618,7 @@ Stop Review:
   tags: [werf]
 
 Deploy to Staging:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: staging
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
@@ -645,7 +626,7 @@ Deploy to Staging:
   when: manual
 
 Deploy to Production:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: production
     url: https://www.company.org
@@ -654,7 +635,6 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -687,22 +667,20 @@ stages:
   - dismiss
   - cleanup
 
-.base_werf: &base_werf
+before_script:
   - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
   stage: build
   script:
-    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
 
-.base_deploy: &base_deploy
+.base_deploy:
   stage: deploy
   script:
-    - *base_werf
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -710,7 +688,7 @@ Build and Publish:
   tags: [werf]
 
 Review:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
     url: http://${CI_PROJECT_NAME}-${CI_MERGE_REQUEST_ID}.kube.DOMAIN
@@ -722,10 +700,9 @@ Review:
   only: [merge_requests]
   when: manual
 
-Stop Review: 
+Stop Review:
   stage: dismiss
   script:
-    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -739,24 +716,23 @@ Stop Review:
   tags: [werf]
 
 Deploy to Staging:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: staging
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
 
 Deploy to Production:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: production
     url: https://www.company.org
   only: [master]
-  when: manual  
+  when: manual
 
 Cleanup:
   stage: cleanup
   script:
-    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -776,7 +752,7 @@ Cleanup:
 * [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 1 Manually](#1-manually).
 * Deploying to staging and production tiers via the strategy [No. 3 Tag Everything](#3-tag-everything-recommended).
-* [Cleaning up stages](#cleaning-up-images). 
+* [Cleaning up stages](#cleaning-up-images).
 
 ### .gitlab-ci.yml
 {:.no_toc}
@@ -789,22 +765,20 @@ stages:
   - dismiss
   - cleanup
 
-.base_werf: &base_werf
+before_script:
   - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
   stage: build
   script:
-    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
 
-.base_deploy: &base_deploy
+.base_deploy:
   stage: deploy
   script:
-    - *base_werf
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -812,7 +786,7 @@ Build and Publish:
   tags: [werf]
 
 Review:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
@@ -824,10 +798,9 @@ Review:
   only: [merge_requests]
   when: manual
 
-Stop Review: 
+Stop Review:
   stage: dismiss
   script:
-    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -841,7 +814,7 @@ Stop Review:
   tags: [werf]
 
 Deploy to Staging:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: staging
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
@@ -849,7 +822,7 @@ Deploy to Staging:
   when: manual
 
 Deploy to Production:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: production
     url: https://www.company.org
@@ -858,7 +831,6 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
@@ -877,7 +849,7 @@ Cleanup:
 * [Building and publishing](#building-and-publishing-application-images).
 * Deploying to the review tier via the strategy [No. 2 Automatically using a branch name](#2-automatically-using-a-branch-name).
 * Deploying to staging and production tiers via the strategy [No. 4 Branch, branch, branch!](#4-branch-branch-branch).
-* [Cleaning up stages](#cleaning-up-images). 
+* [Cleaning up stages](#cleaning-up-images).
 
 ### .gitlab-ci.yml
 {:.no_toc}
@@ -890,22 +862,20 @@ stages:
   - dismiss
   - cleanup
 
-.base_werf: &base_werf
+before_script:
   - type trdl && . $(trdl use werf 1.2 stable)
   - type werf && source $(werf ci-env gitlab --as-file)
 
 Build and Publish:
   stage: build
   script:
-    - *base_werf
     - werf build
   except: [schedules]
   tags: [werf]
 
-.base_deploy: &base_deploy
+.base_deploy:
   stage: deploy
   script:
-    - *base_werf
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   dependencies:
     - Build and Publish
@@ -913,7 +883,7 @@ Build and Publish:
   tags: [werf]
 
 Review:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
@@ -925,10 +895,9 @@ Review:
   rules:
     - if: $CI_MERGE_REQUEST_ID && $CI_COMMIT_REF_NAME =~ /^review-/
 
-Stop Review: 
+Stop Review:
   stage: dismiss
   script:
-    - *base_werf
     - werf dismiss --with-namespace
   environment:
     name: review-${CI_MERGE_REQUEST_ID}
@@ -942,23 +911,22 @@ Stop Review:
   tags: [werf]
 
 Deploy to Staging:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: staging
     url: http://${CI_PROJECT_NAME}.kube.DOMAIN
   only: [master]
 
 Deploy to Production:
-  <<: *base_deploy
+  extends: .base_deploy
   environment:
     name: production
     url: https://www.company.org
   only: [production]
-    
+
 Cleanup:
   stage: cleanup
   script:
-    - *base_werf
     - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
