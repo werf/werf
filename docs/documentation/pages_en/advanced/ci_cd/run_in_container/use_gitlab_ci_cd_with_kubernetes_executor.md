@@ -1,30 +1,30 @@
 ---
-title: Run werf in Gitlab CI/CD with kubernetes executor
-permalink: advanced/ci_cd/werf_in_container/use_kubernetes_for_gitlab_ci_cd.html
+title: Use Gitlab CI/CD with kubernetes executor
+permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_kubernetes_executor.html
 ---
 
-Werf currently supports building of images _with docker server_ or _without docker server_ (in experimental mode).
+werf currently supports building of images _with docker server_ or _without docker server_ (in experimental mode).
 
-**NOTE** This page contains instructions, which are only applicable for experimental mode _without docker server_. Only dockerfile-images builder is available for this mode for now. Stapel-images builder will be available soon.
+> NOTICE: This page contains instructions, which are only applicable for experimental mode _without docker server_. Only dockerfile-images builder is available for this mode for now. Stapel-images builder will be available soon.
 
 [comment]: <> (## 1. Prepare kubernetes cluster)
 
-[comment]: <> (Create fuse device plugin daemonset, to access /dev/fuse on each kubernetes node. This is needed for werf to build images. Werf internally uses buildah with fuse-overlayfs overlayfs implementation.)
+[comment]: <> (Create fuse device plugin daemonset, to access /dev/fuse on each kubernetes node. This is needed for werf to build images. werf internally uses buildah with fuse-overlayfs overlayfs implementation.)
 
 ## 1. Setup kubernetes gitlab runner
 
 Basic runner configuration (`/etc/gitlab-runner/config.toml`):
 
-```
+```toml
 [[runners]]
   name = "kubernetes-runner-for-werf"
-  url = GITLAB_URL
-  token = RUNNER_TOKEN
   executor = "kubernetes"
   builds_dir = "/builds"
   environment = ["HOME=/builds"]
+  ...
   [runners.kubernetes]
-    privileged = true # FIXME
+    ...
+    privileged = true
     [runners.kubernetes.pod_security_context]
       fs_group = 1000
       run_as_group = 1000
@@ -45,7 +45,7 @@ There are 2 ways to access kubernetes cluster which is the target cluster to dep
 
 Example service account configuration named `gitlab-kubernetes-runner-deploy`:
 
-```
+```yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -67,7 +67,7 @@ subjects:
 
 Adjust gitlab-runner configuration (`/etc/gitlab-runner/config.toml`) to use this service account:
 
-```
+```toml
 [[runners]]
   name = "kubernetes-runner-for-werf"
   ...
@@ -79,7 +79,7 @@ Adjust gitlab-runner configuration (`/etc/gitlab-runner/config.toml`) to use thi
 
 ### Kube config
 
-Setup `WERF_KUBECONFIG_BASE64` secret environment variable in gitlab project with the content of `~/.kube/config` in base64 encoding. Werf will automatically use this configuration to connect to the kubernetes cluster which is the target for application.
+Setup `WERF_KUBECONFIG_BASE64` secret environment variable in gitlab project with the content of `~/.kube/config` in base64 encoding. werf will automatically use this configuration to connect to the kubernetes cluster which is the target for application.
 
 This method is suitable when kubernetes executor and target kubernetes cluster are 2 different clusters.
 
@@ -87,7 +87,7 @@ This method is suitable when kubernetes executor and target kubernetes cluster a
 
 Basic build and deploy job for a project:
 
-```
+```yaml
 stages:
   - build-and-deploy
 
