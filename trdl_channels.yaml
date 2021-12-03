@@ -26,10 +26,10 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.45 # buildah improvements and fixed panic
+      version: 1.2.47 # fixed harbor cleanup issue
     - name: beta
-      version: 1.2.45 # buildah improvements and fixed panic
+      version: 1.2.47 # fixed harbor cleanup issue
     - name: ea
-      version: 1.2.45 # buildah improvements and fixed panic
+      version: 1.2.47 # fixed harbor cleanup issue
     - name: stable
-      version: 1.2.45 # buildah improvements and fixed panic
+      version: 1.2.47 # fixed harbor cleanup issue
