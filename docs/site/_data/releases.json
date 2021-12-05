@@ -1,9 +1,0 @@
-{
-  "releases": [
-    {
-      "tag_name": "v1.2.8+fix2",
-      "html_url": "https://github.com/werf/werf/releases/tag/v1.2.8%2Bfix2",
-      "body": "{% raw %}# New site infra  \n  \nFix CI.  \n  \n# Installation  \n  \n[Linux amd64](https://dl.bintray.com/flant/werf/v1.2.8+fix2/werf-linux-amd64-v1.2.8+fix2)  \n  \n[Darwin amd64](https://dl.bintray.com/flant/werf/v1.2.8+fix2/werf-darwin-amd64-v1.2.8+fix2)  \n  \n[Windows amd64](https://dl.bintray.com/flant/werf/v1.2.8+fix2/werf-windows-amd64-v1.2.8+fix2.exe)  \n  \n{% endraw %}\n\n"
-    }
-  ]
-}

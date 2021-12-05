@@ -20,33 +20,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Print review URL
-      env:
-        ENV_URL: "review-${{ github.event.number }}.werf.dev.flant.com"
+    - name: Message
       run: |
-          echo "https://${ENV_URL}"
-          echo "https://ru.${ENV_URL}"
-
-    - name: Converge documentation to Review
-      uses: werf/actions/converge@v1.2
-      with:
-        env: review-${{ github.event.number }}
-      env:
-        WERF_DIR: "docs/documentation"
-        WERF_RELEASE: "werfio-documentation"
-        WERF_LOG_VERBOSE: "on"
-        WERF_KUBE_CONTEXT: dev
-        WERF_SET_GITHUB_REF: "global.github_ref=v1.2.3-dev"
-
-    - name: Converge site to Review
-      uses: werf/actions/converge@v1.2
-      with:
-        env: review-${{ github.event.number }}
-      env:
-        WERF_RELEASE: "werfio-site"
-        WERF_LOOSE_GITERMINISM: true
-        WERF_DIR: "docs/site"
-        WERF_LOG_VERBOSE: "on"
-        WERF_KUBE_CONTEXT: dev
-        WERF_SET_GITHUB_REF: "global.github_ref=v1.2.3-dev"
+          echo "Temporarily disabled"
 

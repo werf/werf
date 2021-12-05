@@ -36,32 +36,3 @@ jobs:
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
         WERF_SET_GITHUB_REF: "global.github_ref=v1.2.3-dev"
-
-  converge_test_site:
-    name: Converge site to Test
-    if: github.event.label.name == 'test docs' || contains( github.event.pull_request.labels.*.name, 'test docs' )
-    runs-on: tfprod-werf
-    steps:
-
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
-    - name: Set version name
-      id: value_set
-      run: |
-          echo "Version=$( echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')" >> $GITHUB_ENV
-
-    - name: Converge
-      uses: werf/actions/converge@v1.2
-      with:
-        env: test
-      env:
-        WERF_RELEASE: "werfio-site-test"
-        WERF_NAMESPACE: "werfio-test"
-        WERF_DIR: "docs/site"
-        WERF_LOOSE_GITERMINISM: true
-        WERF_LOG_VERBOSE: "on"
-        WERF_KUBE_CONTEXT: dev
-        WERF_SET_GITHUB_REF: "global.github_ref=v1.2.3-dev"

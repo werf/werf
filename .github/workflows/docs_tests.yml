@@ -48,7 +48,7 @@ jobs:
       - name: Prepare
         run: |
           cd docs
-          mkdir -m 777 documentation/.jekyll-cache site/.jekyll-cache _site
+          mkdir -m 777 documentation/.jekyll-cache  documentation/_site
           cd documentation
           gem update bundler
           bundle install
@@ -56,18 +56,14 @@ jobs:
       - name: Build (ru)
         if: matrix.lang == 'ru'
         run: |
-          cd docs/site
-          bundle exec jekyll build -d ../_site/ --config _config.yml,_config_ru.yml
-          cd ../documentation
-          bundle exec jekyll build -d ../_site/documentation --config _config.yml,_config_ru.yml
+          cd docs/documentation
+          bundle exec jekyll build -d _site --config _config.yml,_config_ru.yml
 
       - name: Build (en)
         if: matrix.lang == 'en'
         run: |
-          cd docs/site
-          bundle exec jekyll build -d ../_site/ --config _config.yml
-          cd ../documentation
-          bundle exec jekyll build -d ../_site/documentation --config _config.yml
+          cd docs/documentation
+          bundle exec jekyll build -d _site --config _config.yml
 
       - name: Check links
         run: |
@@ -79,4 +75,4 @@ jobs:
             --url_ignore "/localhost/,/example.com/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/habr.com/,/cncf.io/,/\/guides/,/\/introduction\.html/,/\/installation\.html/,/werf_yaml.html#configuring-cleanup-policies/" \
             --url_swap "documentation/v[0-9]+[^/]+/:documentation/" \
             --http-status-ignore 0 \
-            ../_site/
+            _site
