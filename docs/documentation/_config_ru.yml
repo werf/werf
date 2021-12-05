@@ -1,1 +1,22 @@
-../_config_ru.yml
+company_name: Флант
+company_url: https://flant.ru
+url: https://ru.werf.io
+site_lang: ru
+site_description: Инструмент консистентной доставки. Используем Git как единый источник истины. Собираем, деплоим в Kubernetes, синхронизируем изменения.
+
+exclude:
+- pages_en/
+- .idea/
+- .gitignore
+- vendor
+- Gemfile
+- Gemfile.lock
+- werf.yaml
+- ".werf/artifacts/*.sh"
+- backend
+
+include:
+- pages_ru/
+
+breadcrumbs:
+  hometext: "Начало"
