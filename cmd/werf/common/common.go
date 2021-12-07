@@ -498,7 +498,16 @@ func statusProgressPeriodDefaultValue() *int64 {
 	}
 
 	if v == nil {
-		return &defaultValue
+		v, err = GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD")
+		if err != nil {
+			TerminateWithError(err.Error(), 1)
+		}
+
+		if v == nil {
+			return &defaultValue
+		} else {
+			return v
+		}
 	} else {
 		return v
 	}
@@ -528,7 +537,16 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 	}
 
 	if v == nil {
-		return defaultValue
+		v, err = GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD")
+		if err != nil {
+			TerminateWithError(err.Error(), 1)
+		}
+
+		if v == nil {
+			return defaultValue
+		} else {
+			return v
+		}
 	} else {
 		return v
 	}
