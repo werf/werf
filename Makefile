@@ -10,7 +10,7 @@ buildah-test:
 
 
 fmt:
-	gci -w -local github.com/werf/ pkg/ cmd/
+	gci -w -local github.com/werf/ pkg/ cmd/ test/
 	gofumpt -w cmd/ pkg/
 
 lint:
