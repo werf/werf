@@ -5,19 +5,24 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/werf/pkg/buildah/types"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
 const (
 	DefaultShmSize              = "65536k"
+	DefaultSignaturePolicy      = `{"default": [{"type": "insecureAcceptAnything"}], "transports": {"docker-daemon": {"": [{"type": "insecureAcceptAnything"}]}}}`
 	BuildahImage                = "ghcr.io/werf/buildah:v1.22.3-1"
 	BuildahStorageContainerName = "werf-buildah-storage"
+
+	DefaultStorageDriver StorageDriver = StorageDriverOverlay
 )
 
 type CommonOpts struct {
@@ -74,6 +79,7 @@ type Mode string
 
 const (
 	ModeAuto           Mode = "auto"
+	ModeDisabled       Mode = "disabled"
 	ModeNativeRootless Mode = "native-rootless"
 	ModeDockerWithFuse Mode = "docker-with-fuse"
 )
@@ -89,9 +95,18 @@ func ProcessStartupHook(mode Mode) (bool, error) {
 	}
 }
 
+type StorageDriver string
+
+const (
+	StorageDriverOverlay StorageDriver = "overlay"
+	StorageDriverVFS     StorageDriver = "vfs"
+)
+
 type CommonBuildahOpts struct {
-	TmpDir   string
-	Insecure bool
+	Isolation     *types.Isolation
+	StorageDriver *StorageDriver
+	TmpDir        string
+	Insecure      bool
 }
 
 type NativeRootlessModeOpts struct{}
@@ -105,6 +120,19 @@ type BuildahOpts struct {
 }
 
 func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
+	if opts.CommonBuildahOpts.Isolation == nil {
+		defIsolation, err := GetDefaultIsolation()
+		if err != nil {
+			return b, fmt.Errorf("unable to determine default isolation: %s", err)
+		}
+		opts.CommonBuildahOpts.Isolation = &defIsolation
+	}
+
+	if opts.CommonBuildahOpts.StorageDriver == nil {
+		defStorageDriver := DefaultStorageDriver
+		opts.CommonBuildahOpts.StorageDriver = &defStorageDriver
+	}
+
 	if opts.CommonBuildahOpts.TmpDir == "" {
 		opts.CommonBuildahOpts.TmpDir = filepath.Join(werf.GetHomeDir(), "buildah", "tmp")
 	}
@@ -143,6 +171,33 @@ func ResolveMode(mode Mode) Mode {
 		}
 	default:
 		return mode
+	}
+}
+
+func GetOverlayOptions() ([]string, error) {
+	fuseOverlayBinPath, err := exec.LookPath("fuse-overlayfs")
+	if err != nil {
+		return nil, fmt.Errorf("\"fuse-overlayfs\" binary not found in PATH: %s", err)
+	}
+
+	result := []string{fmt.Sprintf("overlay.mount_program=%s", fuseOverlayBinPath)}
+
+	if isInContainer, err := util.IsInContainer(); err != nil {
+		return nil, fmt.Errorf("unable to determine whether we are in the container: %s", err)
+	} else if isInContainer {
+		result = append(result, fmt.Sprintf("overlay.mountopt=%s", "nodev,fsync=0"))
+	}
+
+	return result, nil
+}
+
+func GetDefaultIsolation() (types.Isolation, error) {
+	if isInContainer, err := util.IsInContainer(); err != nil {
+		return 0, fmt.Errorf("unable to determine if is in container: %s", err)
+	} else if isInContainer {
+		return types.IsolationChroot, nil
+	} else {
+		return types.IsolationOCIRootless, nil
 	}
 }
 

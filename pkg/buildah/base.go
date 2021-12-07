@@ -7,26 +7,43 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/werf/werf/pkg/buildah/types"
 	"github.com/werf/werf/pkg/util"
 )
 
 type BaseBuildah struct {
-	TmpDir   string
-	Insecure bool
+	Isolation           types.Isolation
+	TmpDir              string
+	InstanceTmpDir      string
+	SignaturePolicyPath string
+	Insecure            bool
 }
 
 type BaseBuildahOpts struct {
-	Insecure bool
+	Isolation types.Isolation
+	Insecure  bool
 }
 
 func NewBaseBuildah(tmpDir string, opts BaseBuildahOpts) (*BaseBuildah, error) {
 	b := &BaseBuildah{
-		TmpDir:   tmpDir,
-		Insecure: opts.Insecure,
+		Isolation: opts.Isolation,
+		TmpDir:    tmpDir,
+		Insecure:  opts.Insecure,
 	}
 
 	if err := os.MkdirAll(b.TmpDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("unable to create dir %q: %s", b.TmpDir, err)
+	}
+
+	var err error
+	b.InstanceTmpDir, err = ioutil.TempDir(b.TmpDir, "instance")
+	if err != nil {
+		return nil, fmt.Errorf("unable to create instance tmp dir: %s", err)
+	}
+
+	b.SignaturePolicyPath = filepath.Join(b.InstanceTmpDir, "policy.json")
+	if err := ioutil.WriteFile(b.SignaturePolicyPath, []byte(DefaultSignaturePolicy), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to write file %q: %s", b.SignaturePolicyPath, err)
 	}
 
 	return b, nil

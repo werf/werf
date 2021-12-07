@@ -3,16 +3,13 @@ package contruntime
 import (
 	"github.com/google/uuid"
 
-	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
+	"github.com/werf/werf/pkg/buildah/types"
 )
 
-type BuildahInspect struct {
-	Docker struct {
-		Config manifest.Schema2Config `json:"config"`
-	} `json:"Docker"`
+type BaseContainerRuntime struct {
+	CommonCliArgs []string
+	Isolation     types.Isolation
 }
-
-type BaseContainerRuntime struct{}
 
 func expectCmdsToSucceed(r ContainerRuntime, image string, cmds ...string) {
 	containerName := uuid.New().String()

@@ -6,11 +6,25 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/integration/pkg/utils"
+	"github.com/werf/werf/pkg/buildah"
+	"github.com/werf/werf/pkg/buildah/types"
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 )
 
-func NewNativeRootlessBuildahRuntime() ContainerRuntime {
-	return &NativeRootlessBuildahRuntime{}
+func NewNativeRootlessBuildahRuntime(isolation types.Isolation, storageDriver buildah.StorageDriver) ContainerRuntime {
+	var commonCliArgs []string
+
+	commonBuildahCliArgs, err := buildah.GetCommonBuildahCliArgs(storageDriver)
+	Expect(err).NotTo(HaveOccurred())
+
+	commonCliArgs = append(commonCliArgs, commonBuildahCliArgs...)
+
+	return &NativeRootlessBuildahRuntime{
+		BaseContainerRuntime: BaseContainerRuntime{
+			CommonCliArgs: commonCliArgs,
+			Isolation:     isolation,
+		},
+	}
 }
 
 type NativeRootlessBuildahRuntime struct {
@@ -22,30 +36,39 @@ func (r *NativeRootlessBuildahRuntime) ExpectCmdsToSucceed(image string, cmds ..
 }
 
 func (r *NativeRootlessBuildahRuntime) RunSleepingContainer(containerName, image string) {
-	utils.RunSucceedCommand("/",
-		"buildah", "from", "--tls-verify=false", "--format", "docker", "--name", containerName, image,
-	)
+	args := r.CommonCliArgs
+	args = append(args, "from", "--tls-verify=false", "--isolation", r.Isolation.String(), "--format", "docker", "--name", containerName, image)
+	utils.RunSucceedCommand("/", "buildah", args...)
 }
 
 func (r *NativeRootlessBuildahRuntime) Exec(containerName string, cmds ...string) {
 	for _, cmd := range cmds {
-		utils.RunSucceedCommand("/", "buildah", "run", containerName, "--", "sh", "-ec", cmd)
+		args := r.CommonCliArgs
+		args = append(args, "run", "--isolation", r.Isolation.String(), containerName, "--", "sh", "-ec", cmd)
+		utils.RunSucceedCommand("/", "buildah", args...)
 	}
 }
 
 func (r *NativeRootlessBuildahRuntime) Rm(containerName string) {
-	utils.RunSucceedCommand("/", "buildah", "rm", containerName)
+	args := r.CommonCliArgs
+	args = append(args, "rm", containerName)
+	utils.RunSucceedCommand("/", "buildah", args...)
 }
 
 func (r *NativeRootlessBuildahRuntime) Pull(image string) {
-	utils.RunSucceedCommand("/", "buildah", "pull", "--tls-verify=false", image)
+	args := r.CommonCliArgs
+	args = append(args, "pull", "--tls-verify=false", image)
+	utils.RunSucceedCommand("/", "buildah", args...)
 }
 
 func (r *NativeRootlessBuildahRuntime) GetImageInspectConfig(image string) (config manifest.Schema2Config) {
 	r.Pull(image)
 
-	inspectRaw, err := utils.RunCommand("/", "buildah", "inspect", "--type", "image", image)
+	args := r.CommonCliArgs
+	args = append(args, "inspect", "--type", "image", image)
+	inspectRaw, err := utils.RunCommand("/", "buildah", args...)
 	Expect(err).NotTo(HaveOccurred())
+
 	var inspect BuildahInspect
 	Expect(json.Unmarshal(inspectRaw, &inspect)).To(Succeed())
 

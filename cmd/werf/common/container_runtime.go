@@ -7,25 +7,78 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/buildah"
+	"github.com/werf/werf/pkg/buildah/types"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/pkg/util"
 )
 
 func ContainerRuntimeProcessStartupHook() (bool, error) {
-	buildahMode := GetContainerRuntimeBuildahMode()
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return false, fmt.Errorf("unable to determine buildah mode: %s", err)
+	}
 
 	switch {
-	case buildahMode != "":
-		return buildah.ProcessStartupHook(buildahMode)
+	case *buildahMode != buildah.ModeDisabled:
+		return buildah.ProcessStartupHook(*buildahMode)
 	case strings.HasPrefix(os.Args[0], "buildah-") || strings.HasPrefix(os.Args[0], "chrootuser-") || strings.HasPrefix(os.Args[0], "storage-"):
-		return buildah.ProcessStartupHook("native-rootless")
+		return buildah.ProcessStartupHook(buildah.ModeNativeRootless)
 	}
 
 	return false, nil
 }
 
-func GetContainerRuntimeBuildahMode() buildah.Mode {
-	return buildah.Mode(os.Getenv("WERF_CONTAINER_RUNTIME_BUILDAH"))
+func GetBuildahMode() (*buildah.Mode, *types.Isolation, error) {
+	var (
+		mode      buildah.Mode
+		isolation types.Isolation
+	)
+
+	modeRaw := os.Getenv("WERF_BUILDAH_MODE")
+	switch modeRaw {
+	case "native-rootless":
+		if isInContainer, err := util.IsInContainer(); err != nil {
+			return nil, nil, fmt.Errorf("unable to determine if is in container: %s", err)
+		} else if isInContainer {
+			return nil, nil, fmt.Errorf("native rootless mode is not available in containers: %s", err)
+		}
+		mode = buildah.ModeNativeRootless
+		isolation = types.IsolationOCIRootless
+	case "native-chroot":
+		mode = buildah.ModeNativeRootless
+		isolation = types.IsolationChroot
+	case "docker-with-fuse":
+		mode = buildah.ModeDockerWithFuse
+		isolation = types.IsolationChroot
+	case "default", "auto":
+		mode = buildah.ModeAuto
+		var err error
+		isolation, err = buildah.GetDefaultIsolation()
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to determine default isolation: %s", err)
+		}
+	case "docker", "":
+		mode = buildah.ModeDisabled
+	default:
+		return nil, nil, fmt.Errorf("unexpected mode specified: %s", modeRaw)
+	}
+
+	return &mode, &isolation, nil
+}
+
+func GetBuildahStorageDriver() (*buildah.StorageDriver, error) {
+	storageDriverRaw := os.Getenv("WERF_BUILDAH_STORAGE_DRIVER")
+	var storageDriver buildah.StorageDriver
+	switch storageDriverRaw {
+	case string(buildah.StorageDriverOverlay), string(buildah.StorageDriverVFS):
+		storageDriver = buildah.StorageDriver(storageDriverRaw)
+	case "default", "auto", "":
+		storageDriver = buildah.DefaultStorageDriver
+	default:
+		return nil, fmt.Errorf("unexpected driver specified: %s", storageDriverRaw)
+	}
+	return &storageDriver, nil
 }
 
 func wrapContainerRuntime(containerRuntime container_runtime.ContainerRuntime) container_runtime.ContainerRuntime {
@@ -36,9 +89,13 @@ func wrapContainerRuntime(containerRuntime container_runtime.ContainerRuntime) c
 }
 
 func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (container_runtime.ContainerRuntime, context.Context, error) {
-	buildahMode := GetContainerRuntimeBuildahMode()
-	if buildahMode != "" {
-		resolvedMode := buildah.ResolveMode(buildahMode)
+	buildahMode, buildahIsolation, err := GetBuildahMode()
+	if err != nil {
+		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %s", err)
+	}
+
+	if *buildahMode != buildah.ModeDisabled {
+		resolvedMode := buildah.ResolveMode(*buildahMode)
 		if resolvedMode == buildah.ModeDockerWithFuse {
 			newCtx, err := InitProcessDocker(ctx, cmdData)
 			if err != nil {
@@ -47,10 +104,17 @@ func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (contain
 			ctx = newCtx
 		}
 
+		storageDriver, err := GetBuildahStorageDriver()
+		if err != nil {
+			return nil, ctx, fmt.Errorf("unable to determine buildah container runtime storage driver: %s", err)
+		}
+
 		insecure := *cmdData.InsecureRegistry || *cmdData.SkipTlsVerifyRegistry
 		b, err := buildah.NewBuildah(resolvedMode, buildah.BuildahOpts{
 			CommonBuildahOpts: buildah.CommonBuildahOpts{
-				Insecure: insecure,
+				Insecure:      insecure,
+				Isolation:     buildahIsolation,
+				StorageDriver: storageDriver,
 			},
 		})
 		if err != nil {

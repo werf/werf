@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -17,10 +18,11 @@ import (
 	"github.com/containers/buildah/imagebuildah"
 	"github.com/containers/common/libimage"
 	"github.com/containers/image/v5/manifest"
-	is "github.com/containers/image/v5/storage"
+	imgstor "github.com/containers/image/v5/storage"
 	"github.com/containers/image/v5/transports/alltransports"
 	imgtypes "github.com/containers/image/v5/types"
 	"github.com/containers/storage"
+	"github.com/containers/storage/pkg/homedir"
 	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/hashicorp/go-multierror"
@@ -59,23 +61,33 @@ type NativeRootlessBuildah struct {
 func NewNativeRootlessBuildah(commonOpts CommonBuildahOpts, opts NativeRootlessModeOpts) (*NativeRootlessBuildah, error) {
 	b := &NativeRootlessBuildah{}
 
-	baseBuildah, err := NewBaseBuildah(commonOpts.TmpDir, BaseBuildahOpts{Insecure: commonOpts.Insecure})
+	baseBuildah, err := NewBaseBuildah(commonOpts.TmpDir, BaseBuildahOpts{
+		Isolation: *commonOpts.Isolation,
+		Insecure:  commonOpts.Insecure,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to create BaseBuildah: %s", err)
 	}
 	b.BaseBuildah = *baseBuildah
 
-	storeOpts, err := storage.DefaultStoreOptions(unshare.IsRootless(), unshare.GetRootlessUID())
+	storeOpts, err := NewNativeStoreOptions(unshare.GetRootlessUID(), *commonOpts.StorageDriver)
 	if err != nil {
-		return nil, fmt.Errorf("unable to set default storage opts: %s", err)
+		return nil, fmt.Errorf("unable to initialize storage opts: %s", err)
 	}
-	b.Store, err = storage.GetStore(storeOpts)
+
+	b.Store, err = storage.GetStore(storage.StoreOptions(*storeOpts))
 	if err != nil {
 		return nil, fmt.Errorf("unable to get storage: %s", err)
 	}
-	is.Transport.SetStore(b.Store)
 
-	runtime, err := libimage.RuntimeFromStore(b.Store, &libimage.RuntimeOptions{})
+	imgstor.Transport.SetStore(b.Store)
+	runtime, err := libimage.RuntimeFromStore(b.Store, &libimage.RuntimeOptions{
+		SystemContext: &imgtypes.SystemContext{
+			OCIInsecureSkipTLSVerify:          b.Insecure,
+			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
+			DockerDaemonInsecureSkipTLSVerify: b.Insecure,
+		},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error getting runtime from store: %s", err)
 	}
@@ -114,11 +126,12 @@ func (b *NativeRootlessBuildah) Tag(_ context.Context, ref, newRef string, opts 
 
 func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
 	pushOpts := buildah.PushOptions{
-		Compression:  define.Gzip,
-		Store:        b.Store,
-		ManifestType: manifest.DockerV2Schema2MediaType,
-		MaxRetries:   MaxPullPushRetries,
-		RetryDelay:   PullPushRetryDelay,
+		Compression:         define.Gzip,
+		Store:               b.Store,
+		ManifestType:        manifest.DockerV2Schema2MediaType,
+		MaxRetries:          MaxPullPushRetries,
+		RetryDelay:          PullPushRetryDelay,
+		SignaturePolicyPath: b.SignaturePolicyPath,
 		SystemContext: &imgtypes.SystemContext{
 			OCIInsecureSkipTLSVerify:          b.Insecure,
 			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
@@ -144,11 +157,14 @@ func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushO
 
 func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	buildOpts := define.BuildOptions{
-		Isolation:    define.IsolationChroot,
+		Isolation: define.Isolation(b.Isolation),
+		// FIXME(ilya-lesikov):
+		// IDMappingOptions: nil,
 		OutputFormat: buildah.Dockerv2ImageManifest,
 		CommonBuildOpts: &define.CommonBuildOptions{
 			ShmSize: DefaultShmSize,
 		},
+		SignaturePolicyPath: b.SignaturePolicyPath,
 		SystemContext: &imgtypes.SystemContext{
 			OCIInsecureSkipTLSVerify:          b.Insecure,
 			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
@@ -204,8 +220,9 @@ func (b *NativeRootlessBuildah) Umount(ctx context.Context, container string, op
 
 func (b *NativeRootlessBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
 	runOpts := buildah.RunOptions{
-		Args:   opts.Args,
-		Mounts: opts.Mounts,
+		Args:      opts.Args,
+		Isolation: define.Isolation(b.Isolation),
+		Mounts:    opts.Mounts,
 	}
 
 	stderr := &bytes.Buffer{}
@@ -242,10 +259,11 @@ func (b *NativeRootlessBuildah) FromCommand(ctx context.Context, container strin
 
 func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	pullOpts := buildah.PullOptions{
-		Store:      b.Store,
-		MaxRetries: MaxPullPushRetries,
-		RetryDelay: PullPushRetryDelay,
-		PullPolicy: define.PullIfNewer,
+		Store:               b.Store,
+		MaxRetries:          MaxPullPushRetries,
+		RetryDelay:          PullPushRetryDelay,
+		PullPolicy:          define.PullIfNewer,
+		SignaturePolicyPath: b.SignaturePolicyPath,
 		SystemContext: &imgtypes.SystemContext{
 			OCIInsecureSkipTLSVerify:          b.Insecure,
 			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
@@ -266,8 +284,8 @@ func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullO
 
 func (b *NativeRootlessBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	_, rmiErrors := b.Runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
-		// REVIEW(ilya-lesikov): readonly=false is default, is it ok?
 		Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
+		Force:   opts.Force,
 	})
 
 	var multiErr *multierror.Error
@@ -279,7 +297,7 @@ func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
 		ManifestList: true,
 	})
 	if err != nil {
-		fmt.Errorf("error looking up image %q: %s", ref, err)
+		return nil, fmt.Errorf("error looking up image %q: %s", ref, err)
 	}
 
 	return image, nil
@@ -288,7 +306,13 @@ func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
 // getImageBuilder returns nil, nil if image not found.
 func (b *NativeRootlessBuildah) getImageBuilder(ctx context.Context, imgName string) (builder *buildah.Builder, err error) {
 	builder, err = buildah.ImportBuilderFromImage(ctx, b.Store, buildah.ImportFromImageOptions{
-		Image: imgName,
+		Image:               imgName,
+		SignaturePolicyPath: b.SignaturePolicyPath,
+		SystemContext: &imgtypes.SystemContext{
+			OCIInsecureSkipTLSVerify:          b.Insecure,
+			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
+			DockerDaemonInsecureSkipTLSVerify: b.Insecure,
+		},
 	})
 	switch {
 	case err != nil && strings.HasSuffix(err.Error(), storage.ErrImageUnknown.Error()):
@@ -317,4 +341,56 @@ func (b *NativeRootlessBuildah) openContainerBuilder(ctx context.Context, contai
 	}
 
 	return builder, err
+}
+
+func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*types.StoreOptions, error) {
+	var (
+		runRoot string
+		err     error
+	)
+
+	if rootlessUID == 0 {
+		runRoot = "/run/containers/storage"
+	} else {
+		runRoot, err = storage.GetRootlessRuntimeDir(rootlessUID)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get runtime dir: %s", err)
+		}
+	}
+
+	home, err := homedir.GetDataHome()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get HOME data dir: %s", err)
+	}
+
+	rootlessStoragePath := filepath.Join(home, "containers", "storage")
+
+	var graphRoot string
+	if rootlessUID == 0 {
+		graphRoot = "/var/lib/containers/storage"
+	} else {
+		graphRoot = rootlessStoragePath
+	}
+
+	var graphDriverOptions []string
+	if driver == StorageDriverOverlay {
+		overlayOpts, err := GetOverlayOptions()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get overlay options: %s", err)
+		}
+		graphDriverOptions = append(graphDriverOptions, overlayOpts...)
+	}
+
+	return &types.StoreOptions{
+		RunRoot:             runRoot,
+		GraphRoot:           graphRoot,
+		RootlessStoragePath: rootlessStoragePath,
+		GraphDriverName:     string(driver),
+		GraphDriverOptions:  graphDriverOptions,
+		// FIXME(ilya-lesikov):
+		// AutoNsMinSize: 2000,
+		// AutoNsMaxSize: 50000,
+		// UIDMap: nil,
+		// GIDMap: nil,
+	}, nil
 }
