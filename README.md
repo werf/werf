@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/werf/werf/raw/main/docs/site/images/werf-logo.svg?sanitize=true" style="max-height:100%;" height="175">
+  <img src="https://werf.io/assets/images/werf-logo.svg?sanitize=true" style="max-height:100%;" height="175">
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 <p align="center">
   <a href="https://werf.io/introduction.html">
-    <img src="https://github.com/werf/werf/raw/main/docs/site/images/werf-schema.png" width=80%>
+    <img src="https://werf.io/assets/images/werf-schema.png" width=80%>
   </a>
 </p>
 
