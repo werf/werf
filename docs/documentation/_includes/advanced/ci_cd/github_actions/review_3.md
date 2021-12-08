@@ -27,7 +27,7 @@ jobs:
         run: |
           pr_id=${{ github.event.number }}
           github_repository_id=$(echo ${GITHUB_REPOSITORY} | sed -r s/[^a-zA-Z0-9]+/-/g | sed -r s/^-+\|-+$//g | tr A-Z a-z)
-          echo WERF_SET_ENV_URL=global.env_url=http://${github_repository_id}-${pr_id}.kube.DOMAIN >> $GITHUB_ENV
+          echo WERF_SET_ENV_URL=envUrl=http://${github_repository_id}-${pr_id}.kube.DOMAIN >> $GITHUB_ENV
         if: contains( github.event.pull_request.labels.*.name, 'review' )
 
       - name: Converge

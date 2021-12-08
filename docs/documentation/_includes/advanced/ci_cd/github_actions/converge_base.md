@@ -16,6 +16,6 @@ converge:
         env: ANY_ENV_NAME
         kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
       env:
-        WERF_SET_ENV_URL: "global.env_url=ANY_ENV_URL"
+        WERF_SET_ENV_URL: "envUrl=ANY_ENV_URL"
 ```
 {% endraw %}

@@ -76,7 +76,7 @@ The action `werf/actions/converge` combines all the necessary steps, sets up an 
     env: ANY_ENV_NAME
     kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
   env:
-    WERF_SET_ENV_URL: "global.env_url=ANY_ENV_URL"
+    WERF_SET_ENV_URL: "envUrl=ANY_ENV_URL"
 ```
 {% endraw %}
 
@@ -110,7 +110,7 @@ Now, let us explore other parameters used in this step:
   with:
     env: ANY_ENV_NAME
   env:
-    WERF_SET_ENV_URL: "global.env_url=ANY_ENV_URL"
+    WERF_SET_ENV_URL: "envUrl=ANY_ENV_URL"
 ```
 {% endraw %}
 
@@ -123,7 +123,7 @@ In order to configure the application for using in different tiers, you can use 
 
 > The address of an environment is optional. In this article, it is used solely for illustrative purposes and to demonstrate the usage of werf when working with actions (all werf options can be set via environment variables)
 
-You can also use the environment address — the URL for accessing the application deployed to the tier — in helm templates (for example, for configuring Ingress resources). It is passed via the `global.env_url` parameter. You can find out the URL via the `WERF_SET_ENV_URL` environment variable (it is analogous to run werf with the `--set` (`WERF_SET_<ANY_NAME>`) argument).
+You can also use the environment address — the URL for accessing the application deployed to the tier — in helm templates (for example, for configuring Ingress resources). It is passed via the `envUrl` parameter. You can find out the URL via the `WERF_SET_ENV_URL` environment variable (it is analogous to run werf with the `--set` (`WERF_SET_<ANY_NAME>`) argument).
 
 > To encrypt variable values using werf, you need to add the `encryption key` to the `WERF_SECRET_KEY` variable in the project's Settings/Secrets and the secret to the `env` section
 
@@ -149,7 +149,7 @@ This job is identical to the basic configuration except for the `Define environm
   run: |
     pr_id=${{ github.event.number }}
     github_repository_id=$(echo ${GITHUB_REPOSITORY} | sed -r s/[^a-zA-Z0-9]+/-/g | sed -r s/^-+\|-+$//g | tr A-Z a-z)
-    echo WERF_SET_ENV_URL=global.env_url=http://${github_repository_id}-${pr_id}.kube.DOMAIN >> $GITHUB_ENV
+    echo WERF_SET_ENV_URL=envUrl=http://${github_repository_id}-${pr_id}.kube.DOMAIN >> $GITHUB_ENV
 ```
 {% endraw %}
 
