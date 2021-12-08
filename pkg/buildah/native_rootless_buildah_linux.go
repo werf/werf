@@ -157,9 +157,7 @@ func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushO
 
 func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	buildOpts := define.BuildOptions{
-		Isolation: define.Isolation(b.Isolation),
-		// FIXME(ilya-lesikov):
-		// IDMappingOptions: nil,
+		Isolation:    define.Isolation(b.Isolation),
 		OutputFormat: buildah.Dockerv2ImageManifest,
 		CommonBuildOpts: &define.CommonBuildOptions{
 			ShmSize: DefaultShmSize,
@@ -387,10 +385,5 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*types.StoreO
 		RootlessStoragePath: rootlessStoragePath,
 		GraphDriverName:     string(driver),
 		GraphDriverOptions:  graphDriverOptions,
-		// FIXME(ilya-lesikov):
-		// AutoNsMinSize: 2000,
-		// AutoNsMaxSize: 50000,
-		// UIDMap: nil,
-		// GIDMap: nil,
 	}, nil
 }
