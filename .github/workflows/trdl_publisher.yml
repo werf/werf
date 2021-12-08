@@ -36,3 +36,18 @@ jobs:
         WERF_NAMESPACE: "werfio-production"
         WERF_KUBE_CONTEXT: prod
         WERF_DIR: "ci"
+
+  publish_werf_images:
+    name: Publish images with werf by trdl group and channel
+    needs: release
+    runs-on: tfprod-werf
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Build and publish werf images
+      run: |
+        docker login ghcr.io/werf/werf -u ${{ secrets.WERF_IN_IMAGE_REPO_LOGIN }} -p ${{ secrets.WERF_IN_IMAGE_REPO_PASSWORD }}
+        . $(trdl use werf 1.2 stable)
+        ./scripts/werf-in-image/build-and-publish.sh
