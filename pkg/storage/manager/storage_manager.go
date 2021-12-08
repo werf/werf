@@ -232,17 +232,9 @@ func (m *StorageManager) ResetStagesStorageCache(ctx context.Context) error {
 }
 
 func (m *StorageManager) GetStageDescriptionList(ctx context.Context) ([]*image.StageDescription, error) {
-	var stageIDs []image.StageID
-
-	found, stageIDs, err := m.StagesStorageCache.GetAllStages(ctx, m.ProjectName)
+	stageIDs, err := m.StagesStorage.GetStagesIDs(ctx, m.ProjectName)
 	if err != nil {
-		return nil, fmt.Errorf("error getting stages ids from stages storage cache: %s", err)
-	}
-	if !found {
-		stageIDs, err = m.StagesStorage.GetStagesIDs(ctx, m.ProjectName)
-		if err != nil {
-			return nil, fmt.Errorf("error getting stages ids from %s: %s", m.StagesStorage, err)
-		}
+		return nil, fmt.Errorf("error getting stages ids from %s: %s", m.StagesStorage, err)
 	}
 
 	var mutex sync.Mutex
