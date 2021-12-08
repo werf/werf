@@ -64,7 +64,7 @@ werf предоставляет следующие команды compose:
  - [`werf compose down`]({{ "/reference/cli/werf_compose_down.html" | true_relative_url }}) — запуск команды `docker-compose down` с прокинутыми именами образов из `werf.yaml`;
  - [`werf compose up`]({{ "/reference/cli/werf_compose_up.html" | true_relative_url }}) — запуск команды `docker-compose up` с прокинутыми именами образов из `werf.yaml`;
 
-## Новый функционал бандлов
+## Бандлы
 
  - Бандлы позволяют разделить процесс создания нового релиза кода приложения и процесс деплоя этого релиза в кластер kubernetes.
  - Бандлы хранятся в container registry.
