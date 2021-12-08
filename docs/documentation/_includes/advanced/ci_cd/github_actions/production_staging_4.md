@@ -27,7 +27,7 @@ jobs:
           env: staging
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
         env:
-          WERF_SET_ENV_URL: "global.env_url=http://staging-company.kube.DOMAIN"
+          WERF_SET_ENV_URL: "envUrl=http://staging-company.kube.DOMAIN"
 ```
 {% endraw %}
 
@@ -63,7 +63,7 @@ jobs:
           env: production
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
         env:
-          WERF_SET_ENV_URL: "global.env_url=https://www.company.org"
+          WERF_SET_ENV_URL: "envUrl=https://www.company.org"
 ```
 {% endraw %}
 
