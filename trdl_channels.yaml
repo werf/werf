@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.47 # fixed harbor cleanup issue
+      version: 1.2.47+fix1 # fixed cleanup to not use stages-storage-cache to get all images
     - name: beta
       version: 1.2.47 # fixed harbor cleanup issue
     - name: ea
