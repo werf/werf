@@ -9,11 +9,27 @@ import (
 
 	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/pkg/buildah"
+	"github.com/werf/werf/pkg/buildah/types"
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 )
 
-func NewDockerWithFuseBuildahRuntime() ContainerRuntime {
-	return &DockerWithFuseBuildahRuntime{}
+func NewDockerWithFuseBuildahRuntime(isolation types.Isolation, storageDriver buildah.StorageDriver) ContainerRuntime {
+	home, err := os.UserHomeDir()
+	Expect(err).NotTo(HaveOccurred())
+
+	commonCliArgs := append([]string{"run", "--rm"}, buildah.BuildahWithFuseDockerArgs(buildah.BuildahStorageContainerName, filepath.Join(home, ".docker"))...)
+
+	commonBuildahCliArgs, err := buildah.GetCommonBuildahCliArgs(storageDriver)
+	Expect(err).NotTo(HaveOccurred())
+
+	commonCliArgs = append(commonCliArgs, commonBuildahCliArgs...)
+
+	return &DockerWithFuseBuildahRuntime{
+		BaseContainerRuntime: BaseContainerRuntime{
+			CommonCliArgs: commonCliArgs,
+			Isolation:     isolation,
+		},
+	}
 }
 
 type DockerWithFuseBuildahRuntime struct {
@@ -25,44 +41,40 @@ func (r *DockerWithFuseBuildahRuntime) ExpectCmdsToSucceed(image string, cmds ..
 }
 
 func (r *DockerWithFuseBuildahRuntime) RunSleepingContainer(containerName, image string) {
-	args := append(buildahDockerWithFuseDockerArgs(), "from", "--tls-verify=false", "--format", "docker", "--name", containerName, image)
+	args := r.CommonCliArgs
+	args = append(args, "from", "--tls-verify=false", "--isolation", r.Isolation.String(), "--format", "docker", "--name", containerName, image)
 	utils.RunSucceedCommand("/", "docker", args...)
 }
 
 func (r *DockerWithFuseBuildahRuntime) Exec(containerName string, cmds ...string) {
 	for _, cmd := range cmds {
-		args := append(buildahDockerWithFuseDockerArgs(), "run", containerName, "--", "sh", "-ec", cmd)
+		args := r.CommonCliArgs
+		args = append(args, "run", "--isolation", r.Isolation.String(), containerName, "--", "sh", "-ec", cmd)
 		utils.RunSucceedCommand("/", "docker", args...)
 	}
 }
 
 func (r *DockerWithFuseBuildahRuntime) Rm(containerName string) {
-	args := append(buildahDockerWithFuseDockerArgs(), "rm", containerName)
+	args := r.CommonCliArgs
+	args = append(args, "rm", containerName)
 	utils.RunSucceedCommand("/", "docker", args...)
 }
 
 func (r *DockerWithFuseBuildahRuntime) Pull(image string) {
-	args := append(buildahDockerWithFuseDockerArgs(), "pull", "--tls-verify=false", image)
+	args := r.CommonCliArgs
+	args = append(args, "pull", "--tls-verify=false", image)
 	utils.RunSucceedCommand("/", "docker", args...)
 }
 
 func (r *DockerWithFuseBuildahRuntime) GetImageInspectConfig(image string) (config manifest.Schema2Config) {
 	r.Pull(image)
 
-	args := append(buildahDockerWithFuseDockerArgs(), "inspect", "--type", "image", image)
+	args := r.CommonCliArgs
+	args = append(args, "inspect", "--type", "image", image)
 	inspectRaw, err := utils.RunCommand("/", "docker", args...)
 	Expect(err).NotTo(HaveOccurred())
 
 	var inspect BuildahInspect
 	Expect(json.Unmarshal(inspectRaw, &inspect)).To(Succeed())
 	return inspect.Docker.Config
-}
-
-func buildahDockerWithFuseDockerArgs() []string {
-	home, err := os.UserHomeDir()
-	Expect(err).NotTo(HaveOccurred())
-
-	args := []string{"run", "--rm"}
-
-	return append(args, buildah.BuildahWithFuseDockerArgs(buildah.BuildahStorageContainerName, filepath.Join(home, ".docker"))...)
 }

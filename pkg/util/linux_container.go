@@ -35,3 +35,19 @@ func ToLinuxContainerPath(path string) string {
 		),
 	)
 }
+
+func IsInContainer() (bool, error) {
+	if dockerEnvExist, err := RegularFileExists("/.dockerenv"); err != nil {
+		return false, fmt.Errorf("unable to check for /.dockerenv existence: %s", err)
+	} else if dockerEnvExist {
+		return true, nil
+	}
+
+	if containerEnvExist, err := RegularFileExists("/run/.containerenv"); err != nil {
+		return false, fmt.Errorf("unable to check for /run/.containerenv existence: %s", err)
+	} else if containerEnvExist {
+		return true, nil
+	}
+
+	return false, nil
+}

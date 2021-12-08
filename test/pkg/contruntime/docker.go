@@ -22,27 +22,35 @@ func (r *DockerRuntime) ExpectCmdsToSucceed(image string, cmds ...string) {
 }
 
 func (r *DockerRuntime) RunSleepingContainer(containerName, image string) {
-	utils.RunSucceedCommand("/",
-		"docker", "run", "--rm", "-d", "--entrypoint=", "--name", containerName, image, "tail", "-f", "/dev/null",
-	)
+	args := r.CommonCliArgs
+	args = append(args, "run", "--rm", "-d", "--entrypoint=", "--name", containerName, image, "tail", "-f", "/dev/null")
+	utils.RunSucceedCommand("/", "docker", args...)
 }
 
 func (r *DockerRuntime) Exec(containerName string, cmds ...string) {
 	for _, cmd := range cmds {
-		utils.RunSucceedCommand("/", "docker", "exec", containerName, "sh", "-ec", cmd)
+		args := r.CommonCliArgs
+		args = append(args, "exec", containerName, "sh", "-ec", cmd)
+		utils.RunSucceedCommand("/", "docker", args...)
 	}
 }
 
 func (r *DockerRuntime) Rm(containerName string) {
-	utils.RunSucceedCommand("/", "docker", "rm", "-fv", containerName)
+	args := r.CommonCliArgs
+	args = append(args, "rm", "-fv", containerName)
+	utils.RunSucceedCommand("/", "docker", args...)
 }
 
 func (r *DockerRuntime) Pull(image string) {
-	utils.RunSucceedCommand("/", "docker", "pull", image)
+	args := r.CommonCliArgs
+	args = append(args, "pull", image)
+	utils.RunSucceedCommand("/", "docker", args...)
 }
 
 func (r *DockerRuntime) GetImageInspectConfig(image string) (config manifest.Schema2Config) {
-	configRaw, err := utils.RunCommand("/", "docker", "image", "inspect", "-f", "{{ json .Config }}", image)
+	args := r.CommonCliArgs
+	args = append(args, "image", "inspect", "-f", "{{ json .Config }}", image)
+	configRaw, err := utils.RunCommand("/", "docker", args...)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(json.Unmarshal(configRaw, &config)).To(Succeed())
 
