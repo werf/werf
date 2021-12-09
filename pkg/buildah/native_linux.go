@@ -86,6 +86,8 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 			OCIInsecureSkipTLSVerify:          b.Insecure,
 			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
 			DockerDaemonInsecureSkipTLSVerify: b.Insecure,
+			SystemRegistriesConfPath:          b.RegistriesConfigPath,
+			SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
 		},
 	})
 	if err != nil {
@@ -136,6 +138,8 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 			OCIInsecureSkipTLSVerify:          b.Insecure,
 			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
 			DockerDaemonInsecureSkipTLSVerify: b.Insecure,
+			SystemRegistriesConfPath:          b.RegistriesConfigPath,
+			SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
 		},
 	}
 
@@ -167,6 +171,8 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []by
 			OCIInsecureSkipTLSVerify:          b.Insecure,
 			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
 			DockerDaemonInsecureSkipTLSVerify: b.Insecure,
+			SystemRegistriesConfPath:          b.RegistriesConfigPath,
+			SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
 		},
 		Args: opts.BuildArgs,
 	}
@@ -266,6 +272,8 @@ func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) err
 			OCIInsecureSkipTLSVerify:          b.Insecure,
 			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
 			DockerDaemonInsecureSkipTLSVerify: b.Insecure,
+			SystemRegistriesConfPath:          b.RegistriesConfigPath,
+			SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
 		},
 	}
 
@@ -310,6 +318,8 @@ func (b *NativeBuildah) getImageBuilder(ctx context.Context, imgName string) (bu
 			OCIInsecureSkipTLSVerify:          b.Insecure,
 			DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
 			DockerDaemonInsecureSkipTLSVerify: b.Insecure,
+			SystemRegistriesConfPath:          b.RegistriesConfigPath,
+			SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
 		},
 	})
 	switch {
