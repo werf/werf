@@ -5,8 +5,11 @@
 
 ### Features
 
-* **buildah:** 4 new base Docker images to run werf ([c2220f7](https://www.github.com/werf/werf/commit/c2220f7a85b82c0dd3f9597f911488c5a15fba05))
-* **buildah:** native OCI rootless mode; vfs storage driver; bugfixes ([58e92a2](https://www.github.com/werf/werf/commit/58e92a28b65f2492b5388582740bcb18f3e26068))
+* **buildah:** added new official werf images:
+  * ghcr.io/werf/werf:1.2-{alpha|beta|ea|stable}-{alpine|ubuntu|centos|fedora};
+  * ghcr.io/werf/werf:1.2-{alpha|beta|ea|stable} (same as ghcr.io/werf/werf:1.2-{alpha|beta|ea|stable}-alpine);
+* **buildah:** native OCI rootless mode; vfs storage driver; bugfixes ([58e92a2](https://www.github.com/werf/werf/commit/58e92a28b65f2492b5388582740bcb18f3e26068)).
+* **buildah:** improve docs about running werf in containers.
 
 
 ### Bug Fixes
