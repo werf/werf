@@ -14,4 +14,5 @@ USER build:build
 RUN mkdir -p /home/build/.local/share/containers
 VOLUME /home/build/.local/share/containers
 
+WORKDIR /home/build
 ENV WERF_BUILDAH_MODE=auto
