@@ -14,7 +14,7 @@ import (
 func NewNativeBuildahRuntime(isolation thirdparty.Isolation, storageDriver buildah.StorageDriver) ContainerRuntime {
 	var commonCliArgs []string
 
-	commonBuildahCliArgs, err := buildah.GetCommonBuildahCliArgs(storageDriver)
+	commonBuildahCliArgs, err := buildah.GetBasicBuildahCliArgs(storageDriver)
 	Expect(err).NotTo(HaveOccurred())
 
 	commonCliArgs = append(commonCliArgs, commonBuildahCliArgs...)

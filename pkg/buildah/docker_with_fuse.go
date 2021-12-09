@@ -42,13 +42,20 @@ func NewDockerWithFuseBuildah(commonOpts CommonBuildahOpts, opts DockerWithFuseM
 	}
 	b.BaseBuildah = *baseBuildah
 
-	// TODO: remove this string and mount the previously generated policy.json file inside of a docker-with-fuse container
+	// TODO: remove these strings and mount previously generated config files inside of a docker-with-fuse container
 	b.SignaturePolicyPath = "/etc/containers/policy.json"
+	b.RegistriesConfigPath = "/etc/containers/registries.conf"
+	b.RegistriesConfigDirPath = "/etc/containers/registries.conf.d"
 
-	b.commonBuildahCliArgs, err = GetCommonBuildahCliArgs(*commonOpts.StorageDriver)
+	b.commonBuildahCliArgs, err = GetBasicBuildahCliArgs(*commonOpts.StorageDriver)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get common Buildah cli args: %s", err)
 	}
+
+	b.commonBuildahCliArgs = append(
+		b.commonBuildahCliArgs, "--registries-conf", b.RegistriesConfigPath,
+		"--registries-conf-dir", b.RegistriesConfigDirPath,
+	)
 
 	return b, nil
 }
@@ -213,7 +220,7 @@ func BuildahWithFuseDockerArgs(storageContainerName, dockerConfigDir string) []s
 	}
 }
 
-func GetCommonBuildahCliArgs(driver StorageDriver) ([]string, error) {
+func GetBasicBuildahCliArgs(driver StorageDriver) ([]string, error) {
 	var result []string
 
 	cliStoreOpts, err := newBuildahCliStoreOptions(driver)
