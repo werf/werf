@@ -1,6 +1,7 @@
+//go:build !linux
 // +build !linux
 
-package types
+package thirdparty
 
 //
 //  Types extracted from Docker

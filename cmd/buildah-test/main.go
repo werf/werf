@@ -18,7 +18,7 @@ import (
 )
 
 var errUsage = errors.New(`
-	./buildah-test {auto|native-rootless|docker-with-fuse} { dockerfile DOCKERFILE_PATH [CONTEXT_PATH] |
+	./buildah-test {auto|native|docker-with-fuse} { dockerfile DOCKERFILE_PATH [CONTEXT_PATH] |
 	                                                         stapel }
 `)
 
@@ -130,7 +130,7 @@ func do(ctx context.Context) error {
 	if v := os.Getenv("BUILDAH_TEST_MODE"); v != "" {
 		mode = buildah.Mode(v)
 	} else if strings.HasPrefix(os.Args[0], "buildah-") || strings.HasPrefix(os.Args[0], "chrootuser-") || strings.HasPrefix(os.Args[0], "storage-") {
-		mode = "native-rootless"
+		mode = "native"
 	} else {
 		if len(os.Args) < 2 {
 			return errUsage

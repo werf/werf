@@ -9,11 +9,11 @@ import (
 
 	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/buildah/types"
+	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 )
 
-func NewDockerWithFuseBuildahRuntime(isolation types.Isolation, storageDriver buildah.StorageDriver) ContainerRuntime {
+func NewDockerWithFuseBuildahRuntime(isolation thirdparty.Isolation, storageDriver buildah.StorageDriver) ContainerRuntime {
 	home, err := os.UserHomeDir()
 	Expect(err).NotTo(HaveOccurred())
 

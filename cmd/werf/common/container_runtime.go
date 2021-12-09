@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/buildah/types"
+	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/util"
@@ -23,16 +23,16 @@ func ContainerRuntimeProcessStartupHook() (bool, error) {
 	case *buildahMode != buildah.ModeDisabled:
 		return buildah.ProcessStartupHook(*buildahMode)
 	case strings.HasPrefix(os.Args[0], "buildah-") || strings.HasPrefix(os.Args[0], "chrootuser-") || strings.HasPrefix(os.Args[0], "storage-"):
-		return buildah.ProcessStartupHook(buildah.ModeNativeRootless)
+		return buildah.ProcessStartupHook(buildah.ModeNative)
 	}
 
 	return false, nil
 }
 
-func GetBuildahMode() (*buildah.Mode, *types.Isolation, error) {
+func GetBuildahMode() (*buildah.Mode, *thirdparty.Isolation, error) {
 	var (
 		mode      buildah.Mode
-		isolation types.Isolation
+		isolation thirdparty.Isolation
 	)
 
 	modeRaw := os.Getenv("WERF_BUILDAH_MODE")
@@ -43,14 +43,14 @@ func GetBuildahMode() (*buildah.Mode, *types.Isolation, error) {
 		} else if isInContainer {
 			return nil, nil, fmt.Errorf("native rootless mode is not available in containers: %s", err)
 		}
-		mode = buildah.ModeNativeRootless
-		isolation = types.IsolationOCIRootless
+		mode = buildah.ModeNative
+		isolation = thirdparty.IsolationOCIRootless
 	case "native-chroot":
-		mode = buildah.ModeNativeRootless
-		isolation = types.IsolationChroot
+		mode = buildah.ModeNative
+		isolation = thirdparty.IsolationChroot
 	case "docker-with-fuse":
 		mode = buildah.ModeDockerWithFuse
-		isolation = types.IsolationChroot
+		isolation = thirdparty.IsolationChroot
 	case "default", "auto":
 		mode = buildah.ModeAuto
 		var err error

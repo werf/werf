@@ -11,7 +11,7 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/werf/werf/pkg/buildah/types"
+	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -23,6 +23,13 @@ const (
 	BuildahStorageContainerName = "werf-buildah-storage"
 
 	DefaultStorageDriver StorageDriver = StorageDriverOverlay
+)
+
+type StorageDriver string
+
+const (
+	StorageDriverOverlay StorageDriver = "overlay"
+	StorageDriverVFS     StorageDriver = "vfs"
 )
 
 type CommonOpts struct {
@@ -69,7 +76,7 @@ type Buildah interface {
 	RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error
 	FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error)
 	Pull(ctx context.Context, ref string, opts PullOpts) error
-	Inspect(ctx context.Context, ref string) (*types.BuilderInfo, error)
+	Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error)
 	Rmi(ctx context.Context, ref string, opts RmiOpts) error
 	Mount(ctx context.Context, container string, opts MountOpts) (string, error)
 	Umount(ctx context.Context, container string, opts UmountOpts) error
@@ -80,43 +87,25 @@ type Mode string
 const (
 	ModeAuto           Mode = "auto"
 	ModeDisabled       Mode = "disabled"
-	ModeNativeRootless Mode = "native-rootless"
+	ModeNative         Mode = "native"
 	ModeDockerWithFuse Mode = "docker-with-fuse"
 )
 
-func ProcessStartupHook(mode Mode) (bool, error) {
-	switch ResolveMode(mode) {
-	case ModeNativeRootless:
-		return NativeRootlessProcessStartupHook(), nil
-	case ModeDockerWithFuse:
-		return false, nil
-	default:
-		return false, fmt.Errorf("unsupported mode %q", mode)
-	}
-}
-
-type StorageDriver string
-
-const (
-	StorageDriverOverlay StorageDriver = "overlay"
-	StorageDriverVFS     StorageDriver = "vfs"
-)
-
 type CommonBuildahOpts struct {
-	Isolation     *types.Isolation
+	Isolation     *thirdparty.Isolation
 	StorageDriver *StorageDriver
 	TmpDir        string
 	Insecure      bool
 }
 
-type NativeRootlessModeOpts struct{}
+type NativeModeOpts struct{}
 
 type DockerWithFuseModeOpts struct{}
 
 type BuildahOpts struct {
 	CommonBuildahOpts
 	DockerWithFuseModeOpts
-	NativeRootlessModeOpts
+	NativeModeOpts
 }
 
 func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
@@ -138,15 +127,15 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 	}
 
 	switch ResolveMode(mode) {
-	case ModeNativeRootless:
+	case ModeNative:
 		switch runtime.GOOS {
 		case "linux":
-			b, err = NewNativeRootlessBuildah(opts.CommonBuildahOpts, opts.NativeRootlessModeOpts)
+			b, err = NewNativeBuildah(opts.CommonBuildahOpts, opts.NativeModeOpts)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create new Buildah instance with mode %q: %s", mode, err)
 			}
 		default:
-			panic("ModeNativeRootless can't be used on this OS")
+			panic("ModeNative can't be used on this OS")
 		}
 	case ModeDockerWithFuse:
 		b, err = NewDockerWithFuseBuildah(opts.CommonBuildahOpts, opts.DockerWithFuseModeOpts)
@@ -160,12 +149,23 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 	return b, nil
 }
 
+func ProcessStartupHook(mode Mode) (bool, error) {
+	switch ResolveMode(mode) {
+	case ModeNative:
+		return NativeProcessStartupHook(), nil
+	case ModeDockerWithFuse:
+		return false, nil
+	default:
+		return false, fmt.Errorf("unsupported mode %q", mode)
+	}
+}
+
 func ResolveMode(mode Mode) Mode {
 	switch mode {
 	case ModeAuto:
 		switch runtime.GOOS {
 		case "linux":
-			return ModeNativeRootless
+			return ModeNative
 		default:
 			return ModeDockerWithFuse
 		}
@@ -191,13 +191,13 @@ func GetOverlayOptions() ([]string, error) {
 	return result, nil
 }
 
-func GetDefaultIsolation() (types.Isolation, error) {
+func GetDefaultIsolation() (thirdparty.Isolation, error) {
 	if isInContainer, err := util.IsInContainer(); err != nil {
 		return 0, fmt.Errorf("unable to determine if is in container: %s", err)
 	} else if isInContainer {
-		return types.IsolationChroot, nil
+		return thirdparty.IsolationChroot, nil
 	} else {
-		return types.IsolationOCIRootless, nil
+		return thirdparty.IsolationOCIRootless, nil
 	}
 }
 

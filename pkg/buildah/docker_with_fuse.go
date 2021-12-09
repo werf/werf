@@ -14,7 +14,7 @@ import (
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/buildah/types"
+	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -131,7 +131,7 @@ func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container strin
 }
 
 // TODO: make it more generic to handle not only images
-func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (*types.BuilderInfo, error) {
+func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error) {
 	stdout, stderr, err := b.runBuildah(ctx, []string{}, []string{"inspect", "--type", "image", ref}, nil)
 	if err != nil {
 		if strings.Contains(stderr, "image not known") {
@@ -140,7 +140,7 @@ func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (*types
 		return nil, err
 	}
 
-	var res types.BuilderInfo
+	var res thirdparty.BuilderInfo
 	if err := json.Unmarshal([]byte(stdout), &res); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal buildah inspect json output: %s", err)
 	}
@@ -201,6 +201,37 @@ func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []str
 	return stdout.String(), stderr.String(), err
 }
 
+func BuildahWithFuseDockerArgs(storageContainerName, dockerConfigDir string) []string {
+	return []string{
+		"--user", "1000",
+		"--device", "/dev/fuse",
+		"--security-opt", "seccomp=unconfined",
+		"--security-opt", "apparmor=unconfined",
+		"--volume", fmt.Sprintf("%s:%s", dockerConfigDir, "/home/build/.docker"),
+		"--volumes-from", storageContainerName,
+		BuildahImage, "buildah",
+	}
+}
+
+func GetCommonBuildahCliArgs(driver StorageDriver) ([]string, error) {
+	var result []string
+
+	cliStoreOpts, err := newBuildahCliStoreOptions(driver)
+	if err != nil {
+		return result, fmt.Errorf("unable to get buildah cli store options: %s", err)
+	}
+
+	if cliStoreOpts.GraphDriverName != "" {
+		result = append(result, "--storage-driver", cliStoreOpts.GraphDriverName)
+	}
+
+	if len(cliStoreOpts.GraphDriverOptions) > 0 {
+		result = append(result, "--storage-opt", strings.Join(cliStoreOpts.GraphDriverOptions, ","))
+	}
+
+	return result, nil
+}
+
 func runStorageContainer(ctx context.Context, name, image string) error {
 	exist, err := docker.ContainerExist(ctx, name)
 	if err != nil {
@@ -233,37 +264,6 @@ func runStorageContainer(ctx context.Context, name, image string) error {
 			return docker.CliCreate(ctx, "--name", name, image)
 		})
 	})
-}
-
-func BuildahWithFuseDockerArgs(storageContainerName, dockerConfigDir string) []string {
-	return []string{
-		"--user", "1000",
-		"--device", "/dev/fuse",
-		"--security-opt", "seccomp=unconfined",
-		"--security-opt", "apparmor=unconfined",
-		"--volume", fmt.Sprintf("%s:%s", dockerConfigDir, "/home/build/.docker"),
-		"--volumes-from", storageContainerName,
-		BuildahImage, "buildah",
-	}
-}
-
-func GetCommonBuildahCliArgs(driver StorageDriver) ([]string, error) {
-	var result []string
-
-	cliStoreOpts, err := newBuildahCliStoreOptions(driver)
-	if err != nil {
-		return result, fmt.Errorf("unable to get buildah cli store options: %s", err)
-	}
-
-	if cliStoreOpts.GraphDriverName != "" {
-		result = append(result, "--storage-driver", cliStoreOpts.GraphDriverName)
-	}
-
-	if len(cliStoreOpts.GraphDriverOptions) > 0 {
-		result = append(result, "--storage-opt", strings.Join(cliStoreOpts.GraphDriverOptions, ","))
-	}
-
-	return result, nil
 }
 
 func newBuildahCliStoreOptions(driver StorageDriver) (*StoreOptions, error) {
