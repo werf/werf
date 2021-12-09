@@ -19,7 +19,7 @@ func NewDockerWithFuseBuildahRuntime(isolation thirdparty.Isolation, storageDriv
 
 	commonCliArgs := append([]string{"run", "--rm"}, buildah.BuildahWithFuseDockerArgs(buildah.BuildahStorageContainerName, filepath.Join(home, ".docker"))...)
 
-	commonBuildahCliArgs, err := buildah.GetCommonBuildahCliArgs(storageDriver)
+	commonBuildahCliArgs, err := buildah.GetBasicBuildahCliArgs(storageDriver)
 	Expect(err).NotTo(HaveOccurred())
 
 	commonCliArgs = append(commonCliArgs, commonBuildahCliArgs...)
