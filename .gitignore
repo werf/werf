@@ -23,7 +23,7 @@
 /bin
 /tests-coverage
 /precompiled_tests_binaries
-/test/*.test
+/test/**/*.test
 
 /docs/\.jekyll-cache/
 /docs/site/backend/root/
