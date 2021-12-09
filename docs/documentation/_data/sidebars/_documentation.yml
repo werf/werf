@@ -93,6 +93,9 @@ entries:
           - title: Bundles
             url: /advanced/bundles.html
 
+          - title: Buildah mode
+            url: /advanced/buildah_mode.html
+
           - title: CI/CD
             f:
 

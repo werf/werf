@@ -126,3 +126,11 @@ After building a tree of image dependencies, werf splits the assembly process in
 │ - ⛵ image app
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
+
+## Buildah
+
+Werf supports usage of buildah in experimental mode to build images. In this mode only dockerfile-images are supported for now (stapel support is planned).
+
+In this mode overall build process remains the same, only backend containers engine and storage changed from docker-server to buildah.
+
+More information about buildah is available in the [buildah mode article]({{ "/advanced/buildah_mode.html" | true_relative_url }})
