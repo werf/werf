@@ -56,7 +56,7 @@ git:
 {{-     range $_, $distro := $.Distros }}
 ---
 image: {{ $group }}-{{ $channel }}-{{ $distro }}
-from: {{ $distro }}
+fromImage: {{ $distro }}
 import:
 - image: trdl
   after: install
