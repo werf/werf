@@ -6,7 +6,7 @@ import (
 	"runtime"
 
 	"github.com/werf/werf/pkg/buildah"
-	bdTypes "github.com/werf/werf/pkg/buildah/types"
+	bdTypes "github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 )
 
@@ -20,12 +20,12 @@ func NewContainerRuntime(buildahMode string) (ContainerRuntime, error) {
 		if runtime.GOOS != "linux" {
 			return nil, ErrRuntimeUnavailable
 		}
-		return NewNativeRootlessBuildahRuntime(bdTypes.IsolationOCIRootless, buildah.DefaultStorageDriver), nil
+		return NewNativeBuildahRuntime(bdTypes.IsolationOCIRootless, buildah.DefaultStorageDriver), nil
 	case "native-chroot":
 		if runtime.GOOS != "linux" {
 			return nil, ErrRuntimeUnavailable
 		}
-		return NewNativeRootlessBuildahRuntime(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
+		return NewNativeBuildahRuntime(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
 	case "docker-with-fuse":
 		return NewDockerWithFuseBuildahRuntime(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
 	default:

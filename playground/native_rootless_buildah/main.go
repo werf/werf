@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	b, err := buildah.NewBuildah(buildah.ModeNativeRootless, buildah.BuildahOpts{})
+	b, err := buildah.NewBuildah(buildah.ModeNative, buildah.BuildahOpts{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func runCommand(b buildah.Buildah) error {
 }
 
 func buildFromDockerfile(b buildah.Buildah) (string, error) {
-	contextFile := filepath.Join(os.Getenv("HOME"), "go", "src", "github.com", "werf", "werf", "playground", "native_rootless_buildah", "context.tar")
+	contextFile := filepath.Join(os.Getenv("HOME"), "go", "src", "github.com", "werf", "werf", "playground", "native_buildah", "context.tar")
 	tarFileReader, err := os.OpenFile(contextFile, os.O_RDONLY, 0)
 	if err != nil {
 		return "", err

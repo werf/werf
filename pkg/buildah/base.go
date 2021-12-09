@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/buildah/types"
+	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/pkg/util"
 )
 
 type BaseBuildah struct {
-	Isolation           types.Isolation
+	Isolation           thirdparty.Isolation
 	TmpDir              string
 	InstanceTmpDir      string
 	SignaturePolicyPath string
@@ -20,7 +20,7 @@ type BaseBuildah struct {
 }
 
 type BaseBuildahOpts struct {
-	Isolation types.Isolation
+	Isolation thirdparty.Isolation
 	Insecure  bool
 }
 

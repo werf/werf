@@ -30,7 +30,7 @@ import (
 	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/buildah/types"
+	"github.com/werf/werf/pkg/buildah/thirdparty"
 )
 
 const (
@@ -38,7 +38,7 @@ const (
 	PullPushRetryDelay = 2 * time.Second
 )
 
-func NativeRootlessProcessStartupHook() bool {
+func NativeProcessStartupHook() bool {
 	if reexec.Init() {
 		return true
 	}
@@ -51,15 +51,15 @@ func NativeRootlessProcessStartupHook() bool {
 	return false
 }
 
-type NativeRootlessBuildah struct {
+type NativeBuildah struct {
 	BaseBuildah
 
 	Store   storage.Store
 	Runtime libimage.Runtime
 }
 
-func NewNativeRootlessBuildah(commonOpts CommonBuildahOpts, opts NativeRootlessModeOpts) (*NativeRootlessBuildah, error) {
-	b := &NativeRootlessBuildah{}
+func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
+	b := &NativeBuildah{}
 
 	baseBuildah, err := NewBaseBuildah(commonOpts.TmpDir, BaseBuildahOpts{
 		Isolation: *commonOpts.Isolation,
@@ -97,7 +97,7 @@ func NewNativeRootlessBuildah(commonOpts CommonBuildahOpts, opts NativeRootlessM
 }
 
 // Inspect returns nil, nil if image not found.
-func (b *NativeRootlessBuildah) Inspect(ctx context.Context, ref string) (*types.BuilderInfo, error) {
+func (b *NativeBuildah) Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error) {
 	builder, err := b.getImageBuilder(ctx, ref)
 	if err != nil {
 		return nil, fmt.Errorf("error doing inspect: %s", err)
@@ -106,12 +106,12 @@ func (b *NativeRootlessBuildah) Inspect(ctx context.Context, ref string) (*types
 		return nil, nil
 	}
 
-	buildInfo := types.BuilderInfo(buildah.GetBuildInfo(builder))
+	buildInfo := thirdparty.BuilderInfo(buildah.GetBuildInfo(builder))
 
 	return &buildInfo, nil
 }
 
-func (b *NativeRootlessBuildah) Tag(_ context.Context, ref, newRef string, opts TagOpts) error {
+func (b *NativeBuildah) Tag(_ context.Context, ref, newRef string, opts TagOpts) error {
 	image, err := b.getImage(ref)
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func (b *NativeRootlessBuildah) Tag(_ context.Context, ref, newRef string, opts 
 	return nil
 }
 
-func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
+func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
 	pushOpts := buildah.PushOptions{
 		Compression:         define.Gzip,
 		Store:               b.Store,
@@ -155,7 +155,7 @@ func (b *NativeRootlessBuildah) Push(ctx context.Context, ref string, opts PushO
 	return nil
 }
 
-func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
+func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	buildOpts := define.BuildOptions{
 		Isolation:    define.Isolation(b.Isolation),
 		OutputFormat: buildah.Dockerv2ImageManifest,
@@ -198,7 +198,7 @@ func (b *NativeRootlessBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 	return imageId, nil
 }
 
-func (b *NativeRootlessBuildah) Mount(ctx context.Context, container string, opts MountOpts) (string, error) {
+func (b *NativeBuildah) Mount(ctx context.Context, container string, opts MountOpts) (string, error) {
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return "", fmt.Errorf("unable to open container %q builder: %s", container, err)
@@ -207,7 +207,7 @@ func (b *NativeRootlessBuildah) Mount(ctx context.Context, container string, opt
 	return builder.Mount("")
 }
 
-func (b *NativeRootlessBuildah) Umount(ctx context.Context, container string, opts UmountOpts) error {
+func (b *NativeBuildah) Umount(ctx context.Context, container string, opts UmountOpts) error {
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return fmt.Errorf("unable to open container %q builder: %s", container, err)
@@ -216,7 +216,7 @@ func (b *NativeRootlessBuildah) Umount(ctx context.Context, container string, op
 	return builder.Unmount()
 }
 
-func (b *NativeRootlessBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
+func (b *NativeBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
 	runOpts := buildah.RunOptions{
 		Args:      opts.Args,
 		Isolation: define.Isolation(b.Isolation),
@@ -243,7 +243,7 @@ func (b *NativeRootlessBuildah) RunCommand(ctx context.Context, container string
 	return nil
 }
 
-func (b *NativeRootlessBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error) {
+func (b *NativeBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error) {
 	builder, err := buildah.NewBuilder(ctx, b.Store, buildah.BuilderOptions{
 		FromImage: image,
 		Container: container,
@@ -255,7 +255,7 @@ func (b *NativeRootlessBuildah) FromCommand(ctx context.Context, container strin
 	return builder.Container, builder.Save()
 }
 
-func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
+func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	pullOpts := buildah.PullOptions{
 		Store:               b.Store,
 		MaxRetries:          MaxPullPushRetries,
@@ -280,7 +280,7 @@ func (b *NativeRootlessBuildah) Pull(ctx context.Context, ref string, opts PullO
 	return nil
 }
 
-func (b *NativeRootlessBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
+func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	_, rmiErrors := b.Runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
 		Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
 		Force:   opts.Force,
@@ -290,7 +290,7 @@ func (b *NativeRootlessBuildah) Rmi(ctx context.Context, ref string, opts RmiOpt
 	return multierror.Append(multiErr, rmiErrors...).ErrorOrNil()
 }
 
-func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
+func (b *NativeBuildah) getImage(ref string) (*libimage.Image, error) {
 	image, _, err := b.Runtime.LookupImage(ref, &libimage.LookupImageOptions{
 		ManifestList: true,
 	})
@@ -302,7 +302,7 @@ func (b *NativeRootlessBuildah) getImage(ref string) (*libimage.Image, error) {
 }
 
 // getImageBuilder returns nil, nil if image not found.
-func (b *NativeRootlessBuildah) getImageBuilder(ctx context.Context, imgName string) (builder *buildah.Builder, err error) {
+func (b *NativeBuildah) getImageBuilder(ctx context.Context, imgName string) (builder *buildah.Builder, err error) {
 	builder, err = buildah.ImportBuilderFromImage(ctx, b.Store, buildah.ImportFromImageOptions{
 		Image:               imgName,
 		SignaturePolicyPath: b.SignaturePolicyPath,
@@ -324,7 +324,7 @@ func (b *NativeRootlessBuildah) getImageBuilder(ctx context.Context, imgName str
 	return builder, nil
 }
 
-func (b *NativeRootlessBuildah) openContainerBuilder(ctx context.Context, container string) (*buildah.Builder, error) {
+func (b *NativeBuildah) openContainerBuilder(ctx context.Context, container string) (*buildah.Builder, error) {
 	builder, err := buildah.OpenBuilder(b.Store, container)
 	switch {
 	case os.IsNotExist(errors.Cause(err)):
@@ -341,7 +341,7 @@ func (b *NativeRootlessBuildah) openContainerBuilder(ctx context.Context, contai
 	return builder, err
 }
 
-func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*types.StoreOptions, error) {
+func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.StoreOptions, error) {
 	var (
 		runRoot string
 		err     error
@@ -379,7 +379,7 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*types.StoreO
 		graphDriverOptions = append(graphDriverOptions, overlayOpts...)
 	}
 
-	return &types.StoreOptions{
+	return &thirdparty.StoreOptions{
 		RunRoot:             runRoot,
 		GraphRoot:           graphRoot,
 		RootlessStoragePath: rootlessStoragePath,

@@ -3,12 +3,12 @@ package contruntime
 import (
 	"github.com/google/uuid"
 
-	"github.com/werf/werf/pkg/buildah/types"
+	"github.com/werf/werf/pkg/buildah/thirdparty"
 )
 
 type BaseContainerRuntime struct {
 	CommonCliArgs []string
-	Isolation     types.Isolation
+	Isolation     thirdparty.Isolation
 }
 
 func expectCmdsToSucceed(r ContainerRuntime, image string, cmds ...string) {

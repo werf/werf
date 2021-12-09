@@ -1,6 +1,7 @@
+//go:build !linux
 // +build !linux
 
-package types
+package thirdparty
 
 import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"

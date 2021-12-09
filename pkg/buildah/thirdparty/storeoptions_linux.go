@@ -1,7 +1,7 @@
 //go:build linux
 // +build linux
 
-package types
+package thirdparty
 
 import "github.com/containers/storage"
 

@@ -12,4 +12,4 @@ FROM ghcr.io/werf/buildah:v1.22.3-1
 ARG build_version
 RUN yum install -y git curl gpg
 COPY --from=0 /werf/release-build/$build_version/linux-amd64/bin/werf /usr/local/bin/werf
-ENV WERF_CONTAINER_RUNTIME_BUILDAH=native-rootless
+ENV WERF_BUILDAH_MODE=native-rootless

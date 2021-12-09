@@ -2,7 +2,7 @@
 //go:build !linux
 // +build !linux
 
-package types
+package thirdparty
 
 // IDMap contains a single entry for user namespace range remapping. An array
 // of IDMap entries represents the structure that will be provided to the Linux
