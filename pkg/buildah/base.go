@@ -12,11 +12,14 @@ import (
 )
 
 type BaseBuildah struct {
-	Isolation           thirdparty.Isolation
-	TmpDir              string
-	InstanceTmpDir      string
-	SignaturePolicyPath string
-	Insecure            bool
+	Isolation               thirdparty.Isolation
+	TmpDir                  string
+	InstanceTmpDir          string
+	ConfigTmpDir            string
+	SignaturePolicyPath     string
+	RegistriesConfigPath    string
+	RegistriesConfigDirPath string
+	Insecure                bool
 }
 
 type BaseBuildahOpts struct {
@@ -41,9 +44,24 @@ func NewBaseBuildah(tmpDir string, opts BaseBuildahOpts) (*BaseBuildah, error) {
 		return nil, fmt.Errorf("unable to create instance tmp dir: %s", err)
 	}
 
-	b.SignaturePolicyPath = filepath.Join(b.InstanceTmpDir, "policy.json")
+	b.ConfigTmpDir = filepath.Join(b.InstanceTmpDir, "config")
+	if err := os.MkdirAll(b.ConfigTmpDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %q: %s", b.ConfigTmpDir, err)
+	}
+
+	b.SignaturePolicyPath = filepath.Join(b.ConfigTmpDir, "policy.json")
 	if err := ioutil.WriteFile(b.SignaturePolicyPath, []byte(DefaultSignaturePolicy), os.ModePerm); err != nil {
 		return nil, fmt.Errorf("unable to write file %q: %s", b.SignaturePolicyPath, err)
+	}
+
+	b.RegistriesConfigPath = filepath.Join(b.ConfigTmpDir, "registries.conf")
+	if err := ioutil.WriteFile(b.RegistriesConfigPath, []byte(DefaultRegistriesConfig), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to write file %q: %s", b.RegistriesConfigPath, err)
+	}
+
+	b.RegistriesConfigDirPath = filepath.Join(b.ConfigTmpDir, "registries.conf.d")
+	if err := os.MkdirAll(b.RegistriesConfigDirPath, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %q: %s", b.RegistriesConfigDirPath, err)
 	}
 
 	return b, nil

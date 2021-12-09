@@ -19,6 +19,7 @@ import (
 const (
 	DefaultShmSize              = "65536k"
 	DefaultSignaturePolicy      = `{"default": [{"type": "insecureAcceptAnything"}], "transports": {"docker-daemon": {"": [{"type": "insecureAcceptAnything"}]}}}`
+	DefaultRegistriesConfig     = `unqualified-search-registries = ["docker.io"]`
 	BuildahImage                = "ghcr.io/werf/buildah:v1.22.3-1"
 	BuildahStorageContainerName = "werf-buildah-storage"
 
