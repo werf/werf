@@ -38,10 +38,8 @@ func GetBuildahMode() (*buildah.Mode, *thirdparty.Isolation, error) {
 	modeRaw := os.Getenv("WERF_BUILDAH_MODE")
 	switch modeRaw {
 	case "native-rootless":
-		if isInContainer, err := util.IsInContainer(); err != nil {
-			return nil, nil, fmt.Errorf("unable to determine if is in container: %s", err)
-		} else if isInContainer {
-			return nil, nil, fmt.Errorf("native rootless mode is not available in containers: %s", err)
+		if util.IsInContainer() {
+			return nil, nil, fmt.Errorf("native rootless mode is not available in containers")
 		}
 		mode = buildah.ModeNative
 		isolation = thirdparty.IsolationOCIRootless
