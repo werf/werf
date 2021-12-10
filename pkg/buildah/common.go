@@ -183,9 +183,7 @@ func GetOverlayOptions() ([]string, error) {
 
 	result := []string{fmt.Sprintf("overlay.mount_program=%s", fuseOverlayBinPath)}
 
-	if isInContainer, err := util.IsInContainer(); err != nil {
-		return nil, fmt.Errorf("unable to determine whether we are in the container: %s", err)
-	} else if isInContainer {
+	if util.IsInContainer() {
 		result = append(result, fmt.Sprintf("overlay.mountopt=%s", "nodev,fsync=0"))
 	}
 
@@ -193,13 +191,10 @@ func GetOverlayOptions() ([]string, error) {
 }
 
 func GetDefaultIsolation() (thirdparty.Isolation, error) {
-	if isInContainer, err := util.IsInContainer(); err != nil {
-		return 0, fmt.Errorf("unable to determine if is in container: %s", err)
-	} else if isInContainer {
+	if util.IsInContainer() {
 		return thirdparty.IsolationChroot, nil
-	} else {
-		return thirdparty.IsolationOCIRootless, nil
 	}
+	return thirdparty.IsolationOCIRootless, nil
 }
 
 func debug() bool {

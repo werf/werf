@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -36,18 +37,22 @@ func ToLinuxContainerPath(path string) string {
 	)
 }
 
-func IsInContainer() (bool, error) {
-	if dockerEnvExist, err := RegularFileExists("/.dockerenv"); err != nil {
-		return false, fmt.Errorf("unable to check for /.dockerenv existence: %s", err)
-	} else if dockerEnvExist {
-		return true, nil
+func IsInContainer() bool {
+	// Docker-daemon
+	if isInContainer, err := RegularFileExists("/.dockerenv"); err == nil && isInContainer {
+		return true
 	}
 
-	if containerEnvExist, err := RegularFileExists("/run/.containerenv"); err != nil {
-		return false, fmt.Errorf("unable to check for /run/.containerenv existence: %s", err)
-	} else if containerEnvExist {
-		return true, nil
+	// Podman, CRI-O
+	if isInContainer, err := RegularFileExists("/run/.containerenv"); err == nil && isInContainer {
+		return true
 	}
 
-	return false, nil
+	// containerd without Docker-daemon
+	if cgroupsData, err := os.ReadFile("/proc/1/cgroup"); err == nil &&
+		strings.Contains(string(cgroupsData), "/cri-containerd-") {
+		return true
+	}
+
+	return false
 }
