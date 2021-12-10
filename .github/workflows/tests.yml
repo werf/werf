@@ -85,7 +85,7 @@ jobs:
       shell: bash
 
     - name: Compile tests werf binary
-      run: GOBIN=$PWD ./go-build.sh
+      run: GOBIN=$PWD make werf
 
     - name: Upload integration default tests binaries
       uses: actions/upload-artifact@master
