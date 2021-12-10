@@ -26,10 +26,10 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.50 # reworked buildah and new run-in-container docs
+      version: 1.2.51 # reworked buildah and new run-in-container docs
     - name: beta
-      version: 1.2.47+fix1 # fixed cleanup to not use stages-storage-cache to get all images
+      version: 1.2.51 # reworked buildah and new run-in-container docs
     - name: ea
-      version: 1.2.47+fix1 # fixed cleanup to not use stages-storage-cache to get all images
+      version: 1.2.51 # reworked buildah and new run-in-container docs
     - name: stable
-      version: 1.2.47+fix1 # fixed cleanup to not use stages-storage-cache to get all images
+      version: 1.2.51 # reworked buildah and new run-in-container docs
