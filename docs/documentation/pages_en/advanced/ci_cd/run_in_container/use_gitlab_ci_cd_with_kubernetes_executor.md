@@ -93,17 +93,10 @@ Basic runner configuration (`/etc/gitlab-runner/config.toml`):
 [[runners]]
   name = "kubernetes-runner-for-werf"
   executor = "kubernetes"
-  builds_dir = "/builds"
-  environment = ["HOME=/builds"]
   ...
   [runners.kubernetes]
     ...
     pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
-    [runners.kubernetes.pod_security_context]
-      fs_group = 1000
-      run_as_group = 1000
-      run_as_non_root = true
-      run_as_user = 1000
 ```
 
 For more options consult [gitlab kubernetes executor documentation page](https://docs.gitlab.com/runner/executors/kubernetes.html).
@@ -116,17 +109,10 @@ Basic runner configuration (`/etc/gitlab-runner/config.toml`):
 [[runners]]
   name = "kubernetes-runner-for-werf"
   executor = "kubernetes"
-  builds_dir = "/builds"
-  environment = ["HOME=/builds"]
   ...
   [runners.kubernetes]
     ...
     privileged = true
-    [runners.kubernetes.pod_security_context]
-      fs_group = 1000
-      run_as_group = 1000
-      run_as_non_root = true
-      run_as_user = 1000
 ```
 
 For more options consult [gitlab kubernetes executor documentation page](https://docs.gitlab.com/runner/executors/kubernetes.html).
@@ -139,18 +125,11 @@ Basic runner configuration (`/etc/gitlab-runner/config.toml`):
 [[runners]]
   name = "kubernetes-runner-for-werf"
   executor = "kubernetes"
-  builds_dir = "/builds"
-  environment = ["HOME=/builds"]
   ...
   [runners.kubernetes]
     ...
     namespace = "gitlab-ci"
     pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
-    [runners.kubernetes.pod_security_context]
-      fs_group = 1000
-      run_as_group = 1000
-      run_as_non_root = true
-      run_as_user = 1000
 ```
 
 Note that `gitlab-ci` namespace has been specified. The same namespace should be used as in the step 1 to create auto pod limit settings.

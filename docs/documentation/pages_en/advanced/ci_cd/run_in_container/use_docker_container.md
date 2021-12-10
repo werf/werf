@@ -18,9 +18,8 @@ Select and proceed with one of the [available modes of operation]({{ "advanced/c
 Only disable seccomp and apparmor profiles in such case. Example command:
 
 ```shell
-docker run --rm --user 1000 \
-    --security-opt seccomp=unconfined \
-    --security-opt apparmor=unconfined \
+docker run \
+    --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
     ghcr.io/werf/werf:latest WERF_COMMAND
 ```
 
@@ -29,7 +28,7 @@ docker run --rm --user 1000 \
 Just use privileged container in such case. Example command:
 
 ```shell
-docker run --rm --user 1000 \
+docker run \
     --privileged \
     ghcr.io/werf/werf:latest WERF_COMMAND
 ```
@@ -39,10 +38,9 @@ docker run --rm --user 1000 \
 Disable seccomp and apparmor profiles and enable `/dev/fuse` in the container (so that `fuse-overlayfs` could work) in such case. Example command:
 
 ```shell
-docker run --rm --user 1000 \
+docker run \
     --device /dev/fuse \
-    --security-opt seccomp=unconfined \
-    --security-opt apparmor=unconfined \
+    --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
     ghcr.io/werf/werf:latest WERF_COMMAND
 ```
 
@@ -55,10 +53,11 @@ This method supports building of dockerfile-images or stapel-images.
 Example command:
 
 ```shell
-docker run --rm --privileged \
-    -v $HOME/.werf:/root/.werf \
-    -v /tmp:/tmp \
-    -v /var/run/docker.sock:/var/run/docker.sock \
+docker run \
+    --privileged \
+    --volume $HOME/.werf:/root/.werf \
+    --volume /tmp:/tmp \
+    --volume /var/run/docker.sock:/var/run/docker.sock \
     IMAGE WERF_COMMAND
 ```
 
@@ -75,10 +74,12 @@ Build your own docker image based on `docker:dind` for this method.
 Example command:
 
 ```shell
-docker run --rm \
-    -e DOCKER_HOST="tcp://HOST:PORT" \
+docker run \
+    --env DOCKER_HOST="tcp://HOST:PORT" \
     IMAGE WERF_COMMAND
 ```
+
+Build your own docker image with werf for this method.
 
 ## Troubleshooting
 
