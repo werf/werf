@@ -2,7 +2,7 @@ project: werf-in-image
 configVersion: 1
 {{  $_ := set $ "Groups" (list "1.2") -}}
 {{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable") -}}
-{{- $_ := set $ "Distros" (list "alpine" "ubuntu" "fedora" "centos") -}}
+{{- $_ := set $ "Distros" (list "alpine" "ubuntu" "centos") -}}
 
 {{ range $_, $distro := $.Distros }}
 ---
@@ -21,7 +21,7 @@ shell:
     - gpg --verify trdl.sig trdl
     - rm trdl.sig
     - chmod +x ./trdl
-    - mv trdl /usr/local/bin/trdl 
+    - mv trdl /usr/local/bin/trdl
     - trdl add werf https://tuf.werf.io 1 b7ff6bcbe598e072a86d595a3621924c8612c7e6dc6a82e919abe89707d7e3f468e616b5635630680dd1e98fc362ae5051728406700e6274c5ed1ad92bea52a2
     - wget https://github.com/mikefarah/yq/releases/download/v4.16.1/yq_linux_amd64 -O /usr/local/bin/yq
     - chmod +x /usr/local/bin/yq
