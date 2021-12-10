@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containers/storage/drivers/overlay"
+
 	"github.com/containers/buildah"
 	"github.com/containers/buildah/define"
 	"github.com/containers/buildah/imagebuildah"
@@ -360,12 +362,23 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	}
 
 	var graphDriverOptions []string
-	if driver == StorageDriverOverlay {
-		overlayOpts, err := GetOverlayOptions()
+	switch driver {
+	case StorageDriverOverlay:
+		supportsNative, err := overlay.SupportsNativeOverlay(graphRoot, runRoot)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get overlay options: %s", err)
+			return nil, fmt.Errorf("unable to check native overlayfs support: %s", err)
 		}
-		graphDriverOptions = append(graphDriverOptions, overlayOpts...)
+
+		if !supportsNative {
+			fuseOpts, err := GetFuseOverlayfsOptions()
+			if err != nil {
+				return nil, fmt.Errorf("unable to get fuse overlayfs options: %s", err)
+			}
+
+			graphDriverOptions = append(graphDriverOptions, fuseOpts...)
+		}
+
+		graphDriverOptions = append(graphDriverOptions, fmt.Sprintf("%s.ignore_chown_errors=true", StorageDriverOverlay))
 	}
 
 	return &thirdparty.StoreOptions{

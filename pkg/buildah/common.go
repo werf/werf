@@ -175,7 +175,7 @@ func ResolveMode(mode Mode) Mode {
 	}
 }
 
-func GetOverlayOptions() ([]string, error) {
+func GetFuseOverlayfsOptions() ([]string, error) {
 	fuseOverlayBinPath, err := exec.LookPath("fuse-overlayfs")
 	if err != nil {
 		return nil, fmt.Errorf("\"fuse-overlayfs\" binary not found in PATH: %s", err)
