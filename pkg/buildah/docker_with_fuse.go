@@ -276,11 +276,12 @@ func runStorageContainer(ctx context.Context, name, image string) error {
 func newBuildahCliStoreOptions(driver StorageDriver) (*StoreOptions, error) {
 	var graphDriverOptions []string
 	if driver == StorageDriverOverlay {
-		overlayOpts, err := GetOverlayOptions()
+		fuseOpts, err := GetFuseOverlayfsOptions()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get overlay options: %s", err)
 		}
-		graphDriverOptions = append(graphDriverOptions, overlayOpts...)
+		graphDriverOptions = append(graphDriverOptions, fuseOpts...)
+		graphDriverOptions = append(graphDriverOptions, fmt.Sprintf("%s.ignore_chown_errors=true", StorageDriverOverlay))
 	}
 
 	return &StoreOptions{

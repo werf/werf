@@ -8,7 +8,7 @@ PROJECT_DIR="$(dirname $SOURCE_PATH)/../.."
 function regen() {
   saved_dir="$PWD"
   cd "$PROJECT_DIR"
-  ./go-build.sh
+  make werf
 
   # regen CLI partials, pages and sidebar
   HOME='~' werf docs --log-terminal-width=100

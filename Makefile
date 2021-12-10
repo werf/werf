@@ -18,5 +18,5 @@ lint:
 
 
 clean:
-	rm /home/distorhead/go/bin/werf
-	rm /home/distorhead/go/bin/buildah-test
+	rm -f $$GOPATH/bin/werf
+	rm -f $$GOPATH/buildah-test
