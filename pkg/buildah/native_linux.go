@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/storage/drivers/overlay"
-
 	"github.com/containers/buildah"
 	"github.com/containers/buildah/define"
 	"github.com/containers/buildah/imagebuildah"
@@ -24,6 +22,7 @@ import (
 	"github.com/containers/image/v5/transports/alltransports"
 	imgtypes "github.com/containers/image/v5/types"
 	"github.com/containers/storage"
+	"github.com/containers/storage/drivers/overlay"
 	"github.com/containers/storage/pkg/homedir"
 	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
@@ -362,8 +361,7 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	}
 
 	var graphDriverOptions []string
-	switch driver {
-	case StorageDriverOverlay:
+	if driver == StorageDriverOverlay {
 		supportsNative, err := overlay.SupportsNativeOverlay(graphRoot, runRoot)
 		if err != nil {
 			return nil, fmt.Errorf("unable to check native overlayfs support: %s", err)
