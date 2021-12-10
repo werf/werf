@@ -375,8 +375,6 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 
 			graphDriverOptions = append(graphDriverOptions, fuseOpts...)
 		}
-
-		graphDriverOptions = append(graphDriverOptions, fmt.Sprintf("%s.ignore_chown_errors=true", StorageDriverOverlay))
 	}
 
 	return &thirdparty.StoreOptions{

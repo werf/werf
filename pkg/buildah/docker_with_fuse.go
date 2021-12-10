@@ -281,7 +281,6 @@ func newBuildahCliStoreOptions(driver StorageDriver) (*StoreOptions, error) {
 			return nil, fmt.Errorf("unable to get overlay options: %s", err)
 		}
 		graphDriverOptions = append(graphDriverOptions, fuseOpts...)
-		graphDriverOptions = append(graphDriverOptions, fmt.Sprintf("%s.ignore_chown_errors=true", StorageDriverOverlay))
 	}
 
 	return &StoreOptions{

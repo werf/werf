@@ -136,8 +136,8 @@ spec:
   - name: werf-converge
     image: ghcr.io/werf/werf
     args:
-      - "bash"
-      - "-lec"
+      - "sh"
+      - "-ec"
       - |
         git clone --depth 1 https://github.com/werf/quickstart-application.git $HOME/quickstart-application &&
         cd $HOME/quickstart-application &&
@@ -186,8 +186,8 @@ spec:
     securityContext:
       privileged: true
     args:
-      - "bash"
-      - "-lec"
+      - "sh"
+      - "-ec"
       - |
         git clone --depth 1 https://github.com/werf/quickstart-application.git $HOME/quickstart-application &&
         cd $HOME/quickstart-application &&
@@ -239,8 +239,8 @@ spec:
       limits:
         github.com/fuse: 1
     args:
-      - "bash"
-      - "-lec"
+      - "sh"
+      - "-ec"
       - |
         git clone --depth 1 https://github.com/werf/quickstart-application.git $HOME/quickstart-application &&
         cd $HOME/quickstart-application &&
