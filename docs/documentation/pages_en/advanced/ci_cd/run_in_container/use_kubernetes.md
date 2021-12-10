@@ -131,15 +131,10 @@ metadata:
 spec:
   serviceAccount: werf
   automountServiceAccountToken: true
-  securityContext:
-    fsGroup: 1000
   restartPolicy: Never
   containers:
   - name: werf-converge
     image: ghcr.io/werf/werf
-    securityContext:
-      runAsUser: 1000
-      runAsGroup: 1000
     args:
       - "bash"
       - "-lec"
@@ -184,15 +179,11 @@ metadata:
 spec:
   serviceAccount: werf
   automountServiceAccountToken: true
-  securityContext:
-    fsGroup: 1000
   restartPolicy: Never
   containers:
   - name: werf-converge
     image: ghcr.io/werf/werf
     securityContext:
-      runAsUser: 1000
-      runAsGroup: 1000
       privileged: true
     args:
       - "bash"
@@ -240,15 +231,10 @@ metadata:
 spec:
   serviceAccount: werf
   automountServiceAccountToken: true
-  securityContext:
-    fsGroup: 1000
   restartPolicy: Never
   containers:
   - name: werf-converge
     image: ghcr.io/werf/werf
-    securityContext:
-      runAsUser: 1000
-      runAsGroup: 1000
     resources:
       limits:
         github.com/fuse: 1
