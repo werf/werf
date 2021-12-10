@@ -1,9 +1,7 @@
 project: werf-in-image
 configVersion: 1
 {{  $_ := set $ "Groups" (list "1.2") -}}
-# TODO: enable all channels as v1.2.48 with working buildah progressing through all of these channels
-#{{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable") -}}
-{{- $_ := set $ "Channels" (list "alpha") -}}
+{{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable") -}}
 {{- $_ := set $ "Distros" (list "alpine" "ubuntu" "fedora" "centos") -}}
 
 {{ range $_, $distro := $.Distros }}
@@ -74,7 +72,6 @@ fromImage: {{ $group }}-{{ $channel }}-alpine
 {{-   end -}}
 {{- end }}
 
-# TODO: enable this as v1.2.48 will progress to stable
-#---
-#image: latest
-#fromImage: 1.2-alpha
+---
+image: latest
+fromImage: 1.2-alpha

@@ -1,7 +1,7 @@
-FROM registry.fedoraproject.org/fedora:36
+FROM registry.fedoraproject.org/fedora-minimal:36
 
-RUN dnf -y install fuse-overlayfs git && \
-    dnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*
+RUN microdnf -y install fuse-overlayfs git && \
+    microdnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
 # Fix messed up setuid/setgid capabilities.
 RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
