@@ -48,26 +48,26 @@ jobs:
       - name: Prepare
         run: |
           cd docs
-          mkdir -m 777 documentation/.jekyll-cache  documentation/_site
-          cd documentation
+          mkdir -m 777 .jekyll-cache  _site
           gem update bundler
           bundle install
+          curl https://werf.io/css/configuration-table.css -o css/configuration-table.css
 
       - name: Build (ru)
         if: matrix.lang == 'ru'
         run: |
-          cd docs/documentation
+          cd docs
           bundle exec jekyll build -d _site --config _config.yml,_config_ru.yml
 
       - name: Build (en)
         if: matrix.lang == 'en'
         run: |
-          cd docs/documentation
+          cd docs
           bundle exec jekyll build -d _site --config _config.yml
 
       - name: Check links
         run: |
-          cd docs/documentation
+          cd docs
           bundle exec htmlproofer \
             --allow-hash-href \
             --empty-alt-ignore \

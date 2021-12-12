@@ -34,7 +34,7 @@ jobs:
       env:
         WERF_RELEASE: "werfio-${{ env.Version }}-production"
         WERF_NAMESPACE: "werfio-production"
-        WERF_DIR: "docs/documentation"
+        WERF_DIR: "docs"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: prod
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
@@ -61,7 +61,7 @@ jobs:
       env:
         WERF_RELEASE: "werfio-${{ env.Version }}-test"
         WERF_NAMESPACE: "werfio-test"
-        WERF_DIR: "docs/documentation"
+        WERF_DIR: "docs"
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
