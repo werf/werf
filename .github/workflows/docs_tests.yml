@@ -51,7 +51,6 @@ jobs:
           mkdir -m 777 .jekyll-cache  _site
           gem update bundler
           bundle install
-          curl https://werf.io/css/configuration-table.css -o css/configuration-table.css
 
       - name: Build (ru)
         if: matrix.lang == 'ru'
@@ -72,7 +71,7 @@ jobs:
             --allow-hash-href \
             --empty-alt-ignore \
             --check_html \
-            --url_ignore "/localhost/,/example.com/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/habr.com/,/cncf.io/,/\/guides/,/\/introduction\.html/,/\/installation\.html/,/werf_yaml.html#configuring-cleanup-policies/" \
+            --url_ignore "/localhost/,/example.com/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/habr.com/,/cncf.io/,/\/guides/,/\/introduction\.html/,/\/installation\.html/,/werf_yaml.html#configuring-cleanup-policies/,/css\/configuration-table.css/" \
             --url_swap "documentation/v[0-9]+[^/]+/:documentation/" \
-            --http-status-ignore 0 \
+            --http-status-ignore "0,429" \
             _site
