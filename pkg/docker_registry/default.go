@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -12,6 +13,7 @@ const DefaultImplementationName = "default"
 
 type defaultImplementation struct {
 	*api
+	Implementation string
 }
 
 type defaultImplementationOptions struct {
@@ -19,9 +21,46 @@ type defaultImplementationOptions struct {
 }
 
 func newDefaultImplementation(options defaultImplementationOptions) (*defaultImplementation, error) {
+	return newDefaultAPIForImplementation(DefaultImplementationName, options)
+}
+
+func newDefaultAPIForImplementation(implementation string, options defaultImplementationOptions) (*defaultImplementation, error) {
 	d := &defaultImplementation{}
 	d.api = newAPI(options.apiOptions)
+	d.Implementation = implementation
 	return d, nil
+}
+
+func (r *defaultImplementation) Tags(ctx context.Context, reference string) ([]string, error) {
+	tags, err := r.api.Tags(ctx, reference)
+
+	if (IsHarbor404Error(err) || IsHarborNotFoundError(err)) && r.Implementation != HarborImplementationName {
+		logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for harbor container registry implementation!\n")
+		logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=harbor option (or WERF_CONTAINER_REGISTRY env var)\n")
+		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use harbor driver.\n")
+	}
+
+	return tags, err
+}
+
+func (r *defaultImplementation) IsRepoImageExists(ctx context.Context, reference string) (bool, error) {
+	if imgInfo, err := r.TryGetRepoImage(ctx, reference); err != nil {
+		return false, err
+	} else {
+		return imgInfo != nil, nil
+	}
+}
+
+func (r *defaultImplementation) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
+	info, err := r.api.TryGetRepoImage(ctx, reference)
+
+	if (IsHarbor404Error(err) || IsHarborNotFoundError(err)) && r.Implementation != HarborImplementationName {
+		logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for harbor container registry implementation!\n")
+		logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=harbor option (or WERF_CONTAINER_REGISTRY env var)\n")
+		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use harbor driver.\n")
+	}
+
+	return info, err
 }
 
 func (r *defaultImplementation) CreateRepo(_ context.Context, _ string) error {
@@ -54,16 +93,4 @@ func IsBlobUnknownError(err error) bool {
 
 func IsNameUnknownError(err error) bool {
 	return (err != nil) && strings.Contains(err.Error(), "NAME_UNKNOWN")
-}
-
-func IsHarbor404Error(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	// Example error:
-	// GET https://domain/harbor/s3/object/name/prefix/docker/registry/v2/blobs/sha256/2d/3d8c68cd9df32f1beb4392298a123eac58aba1433a15b3258b2f3728bad4b7d1/data?X-Amz-Algorithm=REDACTED&X-Amz-Credential=REDACTED&X-Amz-Date=REDACTED&X-Amz-Expires=REDACTED&X-Amz-Signature=REDACTED&X-Amz-SignedHeaders=REDACTED: unsupported status code 404; body: <?xml version="1.0" encoding="UTF-8"?>
-	// <Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><Resource>/harbor/s3/object/name/prefix/docker/registry/v2/blobs/sha256/3d/3d8c68cd9df32f1beb4392298a123eac58aba1433a15b3258b2f3728bad4b7d1/data</Resource><RequestId>c5bb943c-1e85-5930-b455-c3e8edbbaccd</RequestId></Error>
-
-	return strings.Contains(err.Error(), "unsupported status code 404")
 }

@@ -68,7 +68,7 @@ type gitHubPackagesOptions struct {
 }
 
 func newGitHubPackages(options gitHubPackagesOptions) (*gitHubPackages, error) {
-	d, err := newDefaultImplementation(options.defaultImplementationOptions)
+	d, err := newDefaultAPIForImplementation(GitHubPackagesImplementationName, options.defaultImplementationOptions)
 	if err != nil {
 		return nil, err
 	}

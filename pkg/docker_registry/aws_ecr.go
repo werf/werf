@@ -29,7 +29,7 @@ type awsEcrOptions struct {
 }
 
 func newAwsEcr(options awsEcrOptions) (*awsEcr, error) {
-	d, err := newDefaultImplementation(options.defaultImplementationOptions)
+	d, err := newDefaultAPIForImplementation(AwsEcrImplementationName, options.defaultImplementationOptions)
 	if err != nil {
 		return nil, err
 	}

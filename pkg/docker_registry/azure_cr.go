@@ -40,7 +40,7 @@ type azureCrOptions struct {
 }
 
 func newAzureCr(options azureCrOptions) (*azureCr, error) {
-	d, err := newDefaultImplementation(options.defaultImplementationOptions)
+	d, err := newDefaultAPIForImplementation(AzureCrImplementationName, options.defaultImplementationOptions)
 	if err != nil {
 		return nil, err
 	}

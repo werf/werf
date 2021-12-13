@@ -64,7 +64,7 @@ type dockerHubCredentials struct {
 }
 
 func newDockerHub(options dockerHubOptions) (*dockerHub, error) {
-	d, err := newDefaultImplementation(options.defaultImplementationOptions)
+	d, err := newDefaultAPIForImplementation(DockerHubImplementationName, options.defaultImplementationOptions)
 	if err != nil {
 		return nil, err
 	}

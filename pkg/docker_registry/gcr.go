@@ -20,7 +20,7 @@ type GcrOptions struct {
 }
 
 func newGcr(options GcrOptions) (*gcr, error) {
-	d, err := newDefaultImplementation(options.defaultImplementationOptions)
+	d, err := newDefaultAPIForImplementation(GcrImplementationName, options.defaultImplementationOptions)
 	if err != nil {
 		return nil, err
 	}
