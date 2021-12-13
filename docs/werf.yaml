@@ -14,7 +14,7 @@ ansible:
     shell: bundle install
     args:
       executable: /bin/bash
-      chdir: /app/docs/documentation
+      chdir: /app/docs
   beforeSetup:
   - file:
       path: "{{`{{ item }}`}}"
@@ -24,11 +24,11 @@ ansible:
     - /app/_site/main/
     - /app/_site/ru/
   - shell: |
-      JEKYLL_ENV=production jekyll build -s /app/docs/documentation  -d /app/_site/main/ --config /app/docs/_config.yml
-      JEKYLL_ENV=production jekyll build -s /app/docs/documentation  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/ --config /app/docs/_config.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml
     args:
       executable: /bin/bash
-      chdir: /app/docs/documentation
+      chdir: /app/docs
 git:
 - add: /docs
   to: /app/docs
@@ -36,12 +36,11 @@ git:
   group: jekyll
   excludePaths:
   - '**/*.sh'
-  - '**/werf.yaml'
-  - documentation/.helm
-  - documentation/site
+  - 'werf.yaml'
+  - .helm
   - .github
   stageDependencies:
-    install: ['documentation/Gemfile','documentation/Gemfile.lock']
+    install: ['Gemfile','Gemfile.lock']
     beforeSetup: '**/*'
 ---
 image: web

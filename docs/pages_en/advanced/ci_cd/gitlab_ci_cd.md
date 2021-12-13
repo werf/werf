@@ -406,7 +406,7 @@ Deploy to Production:
 Options for rolling back changes in production:
 
 - by [revert](https://git-scm.com/docs/git-revert)-ing changes in master (**recommended**);
-- by rolling out a stable MR or via the [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) button.
+- by rolling out a stable MR or via the [Rollback](https://docs.gitlab.com/ee/ci/environments/#environment-rollback) button.
 
 #### 2. Push the button
 
@@ -435,7 +435,7 @@ Deploy to Production:
 
 Options for rolling back changes in production:
 
-- by clicking the button associated with the stable commit or via the [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) button (**recommended**);
+- by clicking the button associated with the stable commit or via the [Rollback environment](https://docs.gitlab.com/ee/ci/environments/#environment-rollback) button (**recommended**);
 - by using the stable MR and clicking the button.
 
 #### 3. Tag everything (recommended)
@@ -495,7 +495,7 @@ Deploy to Production:
 
 Options for rolling back changes in production:
 
-- using the [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) button;
+- using the [Rollback environment](https://docs.gitlab.com/ee/ci/environments/#environment-rollback) button;
 - by [revert](https://git-scm.com/docs/git-revert)-ing changes in the production branch;
 - by [revert](https://git-scm.com/docs/git-revert)-ing changes to master and fast-forwarding merge to the production branch;
 - by deleting a commit from the production branch and then making a push-force.

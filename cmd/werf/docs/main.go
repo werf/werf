@@ -27,9 +27,9 @@ func NewCmd(cmdGroups *templates.CommandGroups) *cobra.Command {
 
 			workingDir := common.GetWorkingDir(&commonCmdData)
 
-			partialsDir := filepath.Join(workingDir, "docs/documentation/_includes/reference/cli")
-			pagesDir := filepath.Join(workingDir, "docs/documentation/pages_en/reference/cli")
-			sidebarPath := filepath.Join(workingDir, "docs/documentation/_data/sidebars/_cli.yml")
+			partialsDir := filepath.Join(workingDir, "docs/_includes/reference/cli")
+			pagesDir := filepath.Join(workingDir, "docs/pages_en/reference/cli")
+			sidebarPath := filepath.Join(workingDir, "docs/_data/sidebars/_cli.yml")
 
 			for _, path := range []string{partialsDir, pagesDir} {
 				if err := createEmptyFolder(path); err != nil {

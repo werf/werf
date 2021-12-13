@@ -404,7 +404,7 @@ Deploy to Production:
 
 Варианты отката изменений в production:
 - [revert изменений](https://git-scm.com/docs/git-revert) в master (**рекомендованный**);
-- выкат стабильного MR или воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback).
+- выкат стабильного MR или воспользовавшись кнопкой [Rollback environment](https://docs.gitlab.com/ee/ci/environments/#environment-rollback).
 
 #### №2 Push the Button
 
@@ -432,7 +432,7 @@ Deploy to Production:
 {% endraw %}
 
 Варианты отката изменений в production:
-- по кнопке у стабильного коммита или воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback) (**рекомендованный**);
+- по кнопке у стабильного коммита или воспользовавшись кнопкой [Rollback environment](https://docs.gitlab.com/ee/ci/environments/#environment-rollback) (**рекомендованный**);
 - выкат стабильного MR и нажатии кнопки.
 
 #### №3 Tag everything (рекомендованный)
@@ -490,7 +490,7 @@ Deploy to Production:
 {% endraw %}
 
 Варианты отката изменений в production:
-- воспользовавшись кнопкой [Rollback](https://docs.gitlab.com/ee/ci/environments.html#what-to-expect-with-a-rollback);
+- воспользовавшись кнопкой [Rollback environment](https://docs.gitlab.com/ee/ci/environments/#environment-rollback);
 - [revert изменений](https://git-scm.com/docs/git-revert) в ветке production;
 - [revert изменений](https://git-scm.com/docs/git-revert) в master и fast-forward merge в ветку production;
 - удаление коммита из ветки production и push-force.
