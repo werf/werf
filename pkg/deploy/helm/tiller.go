@@ -545,10 +545,10 @@ func releaseRollback(releaseName string, revision int32, userSpecifiedThreeWayMe
 }
 
 func displayReleaseLogMessages(ctx context.Context) {
-	logboek.Context(ctx).LogOptionalLn()
-	logboek.Context(ctx).Default().LogBlock("Debug info").Do(func() {
+	logboek.Context(ctx).Info().LogOptionalLn()
+	logboek.Context(ctx).Info().LogBlock("Debug info").Do(func() {
 		for _, msg := range releaseLogMessages {
-			logboek.Context(ctx).LogF("%s\n", style.Details().Colorize(secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg)))
+			logboek.Context(ctx).Info().LogF("%s\n", style.Details().Colorize(secretvalues.MaskSecretValuesInString(releaseLogSecretValuesToMask, msg)))
 		}
 	})
 }
