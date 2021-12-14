@@ -51,6 +51,7 @@ require (
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/moby/buildkit v0.8.2
+	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
 	github.com/oleiade/reflections v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.16.4
@@ -58,10 +59,9 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.2-0.20211123152302-43a7dee1ec31
 	github.com/opencontainers/runc v1.0.3 // indirect
-	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
+	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
-	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
 	github.com/prashantv/gostub v1.0.0
 	github.com/rodaine/table v1.0.0
@@ -70,7 +70,6 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.7.0
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
 	github.com/werf/kubedog v0.6.3-0.20211020172441-2ae4bcd3d36f
@@ -80,6 +79,7 @@ require (
 	go.mongodb.org/mongo-driver v1.5.1 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
+	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/errgo.v2 v2.1.0
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
@@ -98,6 +98,7 @@ require (
 	k8s.io/klog/v2 v2.9.0
 	k8s.io/kubectl v0.22.1
 	mvdan.cc/xurls v1.1.0
+	oras.land/oras-go v0.4.0
 	sigs.k8s.io/yaml v1.2.1-0.20210128145534-11e43d4a8b92
 )
 
