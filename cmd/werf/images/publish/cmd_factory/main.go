@@ -89,6 +89,8 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) error {
 	ctx := common.BackgroundContext()
 
+	werf.PostponeMultiwerfNotUpToDateWarning()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
