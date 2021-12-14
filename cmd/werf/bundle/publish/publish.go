@@ -142,6 +142,8 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 }
 
 func runPublish(ctx context.Context) error {
+	global_warnings.PostponeMultiwerfNotUpToDateWarning()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}

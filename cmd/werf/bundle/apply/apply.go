@@ -103,6 +103,8 @@ func NewCmd() *cobra.Command {
 func runApply() error {
 	ctx := common.BackgroundContext()
 
+	global_warnings.PostponeMultiwerfNotUpToDateWarning()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}

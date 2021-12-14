@@ -126,6 +126,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 }
 
 func runMain(ctx context.Context, args []string) error {
+	global_warnings.PostponeMultiwerfNotUpToDateWarning()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
