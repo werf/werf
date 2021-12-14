@@ -46,7 +46,7 @@ type quayCredentials struct {
 }
 
 func newQuay(options quayOptions) (*quay, error) {
-	d, err := newDefaultImplementation(options.defaultImplementationOptions)
+	d, err := newDefaultAPIForImplementation(QuayImplementationName, options.defaultImplementationOptions)
 	if err != nil {
 		return nil, err
 	}

@@ -41,7 +41,7 @@ type gitLabRegistryOptions struct {
 }
 
 func newGitLabRegistry(options gitLabRegistryOptions) (*gitLabRegistry, error) {
-	d, err := newDefaultImplementation(options.defaultImplementationOptions)
+	d, err := newDefaultAPIForImplementation(GitLabRegistryImplementationName, options.defaultImplementationOptions)
 	if err != nil {
 		return nil, err
 	}
