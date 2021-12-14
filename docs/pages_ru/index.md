@@ -19,7 +19,7 @@ editme_button: false
             </div>
             <div class="overview__step-title">Начни с изучения основ</div>
             <div class="overview__step-actions">
-                <a class="overview__step-action" href="/introduction.html">Введение</a>
+                <a class="overview__step-action" href="/how_it_works.html">Как это работает</a>
             </div>
         </div>
         <div class="overview__step">
