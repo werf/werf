@@ -20,7 +20,7 @@ editme_button: false
             </div>
             <div class="overview__step-title">Start your journey with basics</div>
             <div class="overview__step-actions">
-                <a class="overview__step-action" href="/introduction.html">Introduction</a>
+                <a class="overview__step-action" href="/how_it_works.html">How it works</a>
             </div>
         </div>
         <div class="overview__step">
