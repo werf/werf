@@ -103,11 +103,15 @@ global:
 ```yaml
 werf:
   name: myapp
+  namespace: myapp-production
   env: production
   repo: registry.domain.com/apps/myapp
   image:
-    assets: registry.domain.com/apps/myapp/assets:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
-    rails: registry.domain.com/apps/myapp/rails:e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
+    assets: registry.domain.com/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+    rails: registry.domain.com/apps/myapp:e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
+  tag:
+    assets: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+    rails: e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
 
 global:
   werf:
@@ -119,9 +123,11 @@ global:
 
  - Имя проекта из файла конфигурации `werf.yaml`: `.Values.werf.name`.
  - Используемая версия werf: `.Values.werf.version`.
+ - Развертывание будет осуществлено в namespace `.Values.werf.namespace`.
  - Название окружения CI/CD системы, используемое во время деплоя: `.Values.werf.env`.
  - Адрес container registry репозитория, используемый во время деплоя: `.Values.werf.repo`.
  - Полное имя и тег Docker-образа для каждого описанного в файле конфигурации `werf.yaml` образа: `.Values.werf.image.NAME`. Больше информации про использование этих значений доступно [в статье про шаблоны]({{ "/advanced/helm/configuration/templates.html#интеграция-с-собранными-образами" | true_relative_url }}).
+ - Только теги собранных Docker-образов. Предназначены в первую очередь для использования совместно с `.Values.werf.repo`, для проброса полного имени и тега образов по-отдельности.
 
 ### Сервисные данные в сабчартах
 

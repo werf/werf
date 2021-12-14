@@ -103,11 +103,15 @@ Here is an example of service data:
 ```yaml
 werf:
   name: myapp
+  namespace: myapp-production
   env: production
   repo: registry.domain.com/apps/myapp
   image:
-    assets: registry.domain.com/apps/myapp/assets:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
-    rails: registry.domain.com/apps/myapp/rails:e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
+    assets: registry.domain.com/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+    rails: registry.domain.com/apps/myapp:e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
+  tag:
+    assets: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+    rails: e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
 
 global:
   werf:
@@ -118,9 +122,11 @@ global:
 There are following service values:
  - The name of the werf project: `.Values.werf.name`.
  - Version of the werf cli util: `.Values.werf.version`.
+ - Resources will be deployed in `.Values.werf.namespace` namespace.
  - Name of a CI/CD environment used during the current deploy process: `.Values.werf.env`.
  - Container registry repo used during the current deploy process: `.Values.werf.repo`.
  - Full images names used during the current deploy process: `.Values.werf.image.NAME`. More info about using this available in [the templates article]({{ "/advanced/helm/configuration/templates.html#integration-with-built-images" | true_relative_url }}).
+ - Only tags of built images. Usually used in combination with `.Values.werf.repo` to pass image repos and image tags separately.
 
 ### Service values in the subcharts
 
