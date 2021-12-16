@@ -162,6 +162,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 }
 
 func runMain(ctx context.Context) error {
+	global_warnings.PostponeMultiwerfNotUpToDateWarning()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
