@@ -78,6 +78,14 @@ func PostponeMultiwerfNotUpToDateWarning() {
 	)
 }
 
+func PostponeWerf11DeprecationWarning() {
+	GlobalWarningLines = append(
+		GlobalWarningLines,
+		"werf v1.1 is DEPRECATED. Consider switching to the more recent version of werf: https://werf.io/installation.html",
+		"No support and no updates will be provided for werf v1.1 after July 1, 2022.",
+	)
+}
+
 func printGlobalWarningLn(ctx context.Context, line string) {
 	logboek.Context(ctx).Error().LogF("WARNING: %s\n", line)
 }

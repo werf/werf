@@ -143,6 +143,7 @@ func runDeploy() error {
 	ctx := common.BackgroundContext()
 
 	werf.PostponeMultiwerfNotUpToDateWarning()
+	werf.PostponeWerf11DeprecationWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
