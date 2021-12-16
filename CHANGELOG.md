@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.1.28](https://www.github.com/werf/werf/compare/v1.1.27...v1.1.28) (2021-12-16)
+
+
+### Features
+
+* **deprecation:** add deprecation warning for werf v1.1 ([95718ad](https://www.github.com/werf/werf/commit/95718adc5ed321f4088379b5a8b0f6a56015afe1))
+* **multiwerf:** print multiwerf deprecation warning if multiwerf outdated ([fe083e1](https://www.github.com/werf/werf/commit/fe083e1e1f6dddedcc4790949789ebad3bbd2435))
+
 ### [1.1.27](https://www.github.com/werf/werf/compare/v1.1.26...v1.1.27) (2021-09-20)
 
 
