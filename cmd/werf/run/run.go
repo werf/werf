@@ -168,6 +168,8 @@ func processArgs(cmd *cobra.Command, args []string) error {
 func runRun() error {
 	ctx := common.BackgroundContext()
 
+	werf.PostponeMultiwerfNotUpToDateWarning()
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
