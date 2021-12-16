@@ -123,8 +123,6 @@ werf converge
 
 Usually, a CI/CD system checks out to the current git commit in a fully automatic manner, and you don’t have to do anything. But some systems may not perform this step automatically. If this is the case, then you have to check out the target git commit in the project repository before running main werf commands (`werf converge`, `werf dismiss`, or `werf cleanup`).
 
-Read more about the converge process in the [introduction](/introduction.html#what-is-converge).
-
 ### Other werf CI/CD settings
 
 There are other optional settings (they are typically configured for werf in CI/CD):

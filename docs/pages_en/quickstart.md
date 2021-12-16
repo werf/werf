@@ -4,7 +4,7 @@ permalink: quickstart.html
 description: Deploy your first application with werf
 ---
 
-In this article we will show you how to set up the deployment of an [example application](https://github.com/werf/quickstart-application) (a cool voting app in our case) using werf. It is better to start with a [short introduction](/introduction.html) first if you haven't read it yet.
+In this article we will show you how to set up the deployment of an [example application](https://github.com/werf/quickstart-application) (a cool voting app in our case) using werf. It is better to start with a [short introduction](/how_it_works.html) first if you haven't read it yet.
 
 ## Prepare your host
 
@@ -432,7 +432,7 @@ Our application is a basic voting system. Let’s check it!
 
 ## How it works
 
-To deploy an application using werf, we should define the desired state in the Git (as set out in the [introduction](/introduction.html)).
+To deploy an application using werf, we should define the desired state in the Git (as set out in the [How it works](/how_it_works.html)).
 
 1. We have the following Dockerfiles in our repository:
 
