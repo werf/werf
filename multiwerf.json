@@ -55,11 +55,11 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.2.51"
+          "version": "v1.2.52"
         },
         {
           "name": "beta",
-          "version": "v1.2.51"
+          "version": "v1.2.52"
         },
         {
           "name": "ea",

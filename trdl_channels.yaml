@@ -26,9 +26,9 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.51 # reworked buildah and new run-in-container docs
+      version: 1.2.52 # deprecation warning for outdated mutliwerf
     - name: beta
-      version: 1.2.51 # reworked buildah and new run-in-container docs
+      version: 1.2.52 # deprecation warning for outdated mutliwerf
     - name: ea
       version: 1.2.51 # reworked buildah and new run-in-container docs
     - name: stable
