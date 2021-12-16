@@ -8,6 +8,7 @@ import (
 	"regexp"
 
 	"github.com/Masterminds/semver"
+
 	"github.com/werf/logboek"
 )
 
