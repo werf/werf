@@ -20,12 +20,12 @@ ___
 werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system. It literally "connects the dots" to bring these practices into your application. We consider it a new generation of high-level CI/CD tools.
 
 <p align="center">
-  <a href="https://werf.io/introduction.html">
+  <a href="https://werf.io/how_it_works.html">
     <img src="https://werf.io/assets/images/werf-schema.png" width=80%>
   </a>
 </p>
 
-## [How it works?](https://werf.io/introduction.html)
+## [How it works?](https://werf.io/how_it_works.html)
 
 ## [Quickstart](https://werf.io/documentation/quickstart.html)
 
