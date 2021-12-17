@@ -124,6 +124,11 @@ You're also welcome to:
 * follow [@werf_io](https://twitter.com/werf_io) to stay informed about all important news, new articles, etc;
 * join our Telegram chat for announcements and ongoing talks: [werf_io](https://t.me/werf_io). _(There is a Russian-speaking Telegram chat [werf_ru](https://t.me/werf_ru) as well.)_
 
+## Featured in
+
+<p>
+  <a href="https://console.dev" title="Visit Console - the best tools for developers"><img src="https://console.dev/img/badges/1.0/svg/console-badge-logo-dark-border.svg" alt="Console - Developer Tool of the Week" /></a>
+</p>
 
 ## License
 
