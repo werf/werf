@@ -82,7 +82,7 @@ kubectl -n quickstart-application apply -f registrysecret.yaml
 
 ## 3. Настройте service account для werf
 
-Service account необходим werf для доступа к кластеру kubernetes при развертывании приложения.
+Service account необходим werf для доступа к кластеру Kubernetes при развертывании приложения.
 
 ```yaml
 # werf-service-account.yaml

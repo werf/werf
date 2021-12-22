@@ -29,6 +29,6 @@ Normally, the user should just go with the default `overlay` driver. The storage
 
 ### System requirements
 
-Rootless OverlayFS is available since Linux kernel version 5.11 (strictly speaking,  it was first implemented in version 5.13 which contains a bugfix to enable rootless overlayFS in SELinux, but most major linux distributions has been backported it into kernel 5.11).
+Rootless OverlayFS is available since Linux kernel version 5.11 (strictly speaking, it was first implemented in version 5.13 which contains a bugfix to enable rootless overlayFS in SELinux, but most major Linux distributions have backported it into kernel 5.11).
 
 If your kernel does not support rootless OverlayFS, fuse-overlayfs will be used.
