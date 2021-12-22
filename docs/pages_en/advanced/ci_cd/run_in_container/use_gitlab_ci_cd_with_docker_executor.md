@@ -5,7 +5,7 @@ permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_docker_executor
 
 > NOTICE: werf currently supports building images _with the Docker server_ or _without the Docker server_ (in experimental mode). This page contains information applicable only to the experimental mode _without the Docker server_. For now, only the Dockerfile image builder is available for this mode. The Stapel image builder will be available soon.
 
-## 1. Configure Kubernetes runner for GitLab
+## 1. Configure GitLab rinner for Kubernetes
 
 Select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}) (depending on the capabilities of your GitLab runner) and navigate to it.
 
