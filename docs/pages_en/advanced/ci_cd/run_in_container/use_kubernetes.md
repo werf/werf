@@ -1,25 +1,25 @@
 ---
-title: Use kubernetes
+title: Use Kubernetes
 permalink: advanced/ci_cd/run_in_container/use_kubernetes.html
 ---
 
-> NOTICE: werf currently supports building of images _with docker server_ or _without docker server_ (in experimental mode). This page contains instructions, which are only applicable for experimental mode _without docker server_. Only dockerfile-images builder is available for this mode for now. Stapel-images builder will be available soon.
+> NOTICE: werf currently supports building images _with the Docker server_ or _without the Docker server_ (in experimental mode). This page contains information applicable only to the experimental mode _without the Docker server_. For now, only the Dockerfile image builder is available for this mode. The Stapel image builder will be available soon.
 
-## 1. Prepare kubernetes cluster
+## 1. Prepare the Kubernetes cluster
 
-Select and proceed with one of the [available modes of operation]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
+Select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}) and navigate to it.
 
-### Linux kernel with rootless overlayfs
+### Linux kernel with rootless OverlayFS
 
-No actions needed.
+No additional actions are required.
 
-### Linux kernel without rootless overlayfs and privileged container
+### Linux kernel without rootless OverlayFS and privileged container
 
-No actions needed.
+No additional actions are required.
 
-### Linux kernel without rootless overlayfs and non-privileged container
+### Linux kernel without rootless OverlayFS and non-privileged container
 
-[Fuse device plugin](https://github.com/kuberenetes-learning-group/fuse-device-plugin) needed to enable `/dev/fuse` device in containers running werf:
+The [fuse device plugin](https://github.com/kuberenetes-learning-group/fuse-device-plugin) is required to enable the `/dev/fuse` device in werf containers:
 
 ```
 # werf-fuse-device-plugin-ds.yaml
@@ -53,15 +53,15 @@ spec:
             path: /var/lib/kubelet/device-plugins
 ```
 
-Apply provided device plugin in the `kube-system` namespace:
+Apply the above plugin manifest to the `kube-system` namespace:
 
 ```
 kubectl -n kube-system apply -f werf-fuse-device-plugin-ds.yaml
 ```
 
-## 2. Configure access to container registry
+## 2. Configure access to the container registry
 
-Prepare base64 docker config to access your registry.
+Prepare the Docker configuration in base64 format to access the registry.
 
 ```yaml
 # registrysecret.yaml
@@ -74,7 +74,7 @@ data:
 type: kubernetes.io/dockerconfigjson
 ```
 
-Create `registrysecret` in the target application namespace:
+Create the `registrysecret` in the application namespace:
 
 ```shell
 kubectl -n quickstart-application apply -f registrysecret.yaml
@@ -82,7 +82,7 @@ kubectl -n quickstart-application apply -f registrysecret.yaml
 
 ## 3. Configure service account for werf
 
-werf need a service account to access kubernetes cluster when deploying application.
+A service account is needed for werf to access the Kubernetes cluster when deploying the application.
 
 ```yaml
 # werf-service-account.yaml
@@ -106,19 +106,19 @@ subjects:
     namespace: quickstart-application
 ```
 
-Create described special service account `werf` with `cluster-admin` role in the target application namespace:
+Create the `werf` service account described above with the `cluster-admin` role in the target application namespace:
 
 ```shell
 kubectl -n quickstart-application apply -f werf-service-account.yaml
 ```
 
-## 4. Perform application deployment
+## 4. Deploy the application
 
-Select and proceed with one of the [available modes of operation]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
+Select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}) and navigate to it.
 
-### Linux kernel with rootless overlayfs
+### Linux kernel with rootless OverlayFS
 
-werf converge command will run in the one-shot Pod. Note that `CONTAINER_REGISTRY_REPO` should be replaced with real address of container registry repo, for which there is `registrysecret` configured in the previous step.
+The werf converge command will be executed in a special Pod.  Note that `CONTAINER_REGISTRY_REPO` must be replaced with the real address of the container registry repo for which we configured `registrysecret` at the previous step.
 
 ```yaml
 # werf-converge.yaml
@@ -159,16 +159,16 @@ spec:
             path: config.json
 ```
 
-Create pod and perform application deployment in the target namespace:
+Create a Pod and deploy the application to the target namespace:
 
 ```shell
 kubectl -n quickstart-application apply -f werf-converge.yaml
 kubectl -n quickstart-application logs -f werf-converge
 ```
 
-### Linux kernel without rootless overlayfs and privileged container
+### Linux kernel without rootless OverlayFS and privileged container
 
-werf converge command will run in the one-shot Pod. Note that `CONTAINER_REGISTRY_REPO` should be replaced with real address of container registry repo, for which there is `registrysecret` configured in the previous step.
+The werf converge command will be executed in a special Pod.  Note that `CONTAINER_REGISTRY_REPO` must be replaced with the real address of the container registry repo for which we configured `registrysecret` at the previous step.
 
 ```yaml
 # werf-converge.yaml
@@ -216,9 +216,9 @@ kubectl -n quickstart-application apply -f werf-converge.yaml
 kubectl -n quickstart-application logs -f werf-converge
 ```
 
-### Linux kernel without rootless overlayfs and non-privileged container
+### Linux kernel without rootless OverlayFS and non-privileged container
 
-werf converge command will run in the one-shot Pod. Note that `CONTAINER_REGISTRY_REPO` should be replaced with real address of container registry repo, for which there is `registrysecret` configured in the previous step.
+The werf converge command will be executed in a special Pod.  Note that `CONTAINER_REGISTRY_REPO` must be replaced with the real address of the container registry repo for which we configured `registrysecret` at the previous step.
 
 ```yaml
 # werf-converge.yaml
@@ -271,4 +271,4 @@ kubectl -n quickstart-application logs -f werf-converge
 
 ## Troubleshooting
 
-If you have any problems please refer to the [troubleshooting section]({{ "advanced/ci_cd/run_in_container/how_it_works.html#troubleshooting" | true_relative_url }})
+In case of problems, refer to the [Troubleshooting section]({{ "advanced/ci_cd/run_in_container/how_it_works.html#troubleshooting" | true_relative_url }})
