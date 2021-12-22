@@ -1,11 +1,11 @@
 ---
-title: Use docker container
+title: Use Docker container
 permalink: advanced/ci_cd/run_in_container/use_docker_container.html
 ---
 
 > NOTICE: werf currently supports building images _with the Docker server_ or _without the Docker server_ (in experimental mode). Building images without the Docker server is still experimental, however, it is the only recommended mode.
 
-## Build images without Docker server (NEW!)
+## Build images without the Docker server (NEW!)
 
 > NOTICE: For now, only the Dockerfile image builder is available for this type of builds. The Stapel image builder will be available soon.
 
@@ -44,7 +44,7 @@ docker run \
     ghcr.io/werf/werf:latest WERF_COMMAND
 ```
 
-## Build images with Docker server (not recommended)
+## Build images with the Docker server (not recommended)
 
 ### Local Docker server
 
