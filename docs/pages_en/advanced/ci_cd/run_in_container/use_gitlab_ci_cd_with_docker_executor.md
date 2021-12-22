@@ -1,15 +1,15 @@
 ---
-title: Use Gitlab CI/CD with docker executor
+title: Use Gitlab CI/CD with Docker executor
 permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_docker_executor.html
 ---
 
-> NOTICE: werf currently supports building of images _with docker server_ or _without docker server_ (in experimental mode). This page contains instructions, which are only applicable for experimental mode _without docker server_. Only dockerfile-images builder is available for this mode for now. Stapel-images builder will be available soon.
+> NOTICE: werf currently supports building images _with the Docker server_ or _without the Docker server_ (in experimental mode). This page contains information applicable only to the experimental mode _without the Docker server_. For now, only the Dockerfile image builder is available for this mode. The Stapel image builder will be available soon.
 
-## 1. Setup kubernetes gitlab runner
+## 1. Configure Kubernetes runner for GitLab
 
-Select and proceed with one of the [available modes of operation]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}), depending on your gitlab runner capabilities.
+Select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}) (depending on the capabilities of your GitLab runner) and navigate to it.
 
-### Linux kernel with rootless overlayfs
+### Linux kernel with rootless OverlayFS
 
 Basic runner configuration:
 
@@ -23,7 +23,7 @@ Basic runner configuration:
     ...
 ```
 
-### Linux kernel without rootless overlayfs and privileged container
+### Linux kernel without rootless OverlayFS and privileged container
 
 Basic runner configuration:
 
@@ -37,7 +37,7 @@ Basic runner configuration:
     ...
 ```
 
-### Linux kernel without rootless overlayfs and non-privileged container
+### Linux kernel without rootless OverlayFS and non-privileged container
 
 Basic runner configuration:
 
@@ -52,13 +52,13 @@ Basic runner configuration:
     ...
 ```
 
-## 2. Setup access for kubernetes cluster
+## 2. Configure access to the Kubernetes cluster
 
-Setup `WERF_KUBECONFIG_BASE64` secret environment variable in gitlab project with the content of `~/.kube/config` in base64 encoding. werf will automatically use this configuration to connect to the kubernetes cluster.
+Assign the `WERF_KUBECONFIG_BASE64` environment variable in the GitLab project a base64-encoded value from `~/.kube/config`. werf will automatically use this configuration to connect to the Kubernetes cluster.
 
-## 3. Configure project gitlab-ci.yml
+## 3. Configure gitlab-ci.yml of the project
 
-Basic build and deploy job for a project:
+Below is a basic build and deploy job for a project:
 
 ```yaml
 stages:
@@ -75,4 +75,4 @@ Build and deploy application:
 
 ## Troubleshooting
 
-If you have any problems please refer to the [troubleshooting section]({{ "advanced/ci_cd/run_in_container/how_it_works.html#troubleshooting" | true_relative_url }})
+In case of problems, refer to the [Troubleshooting section]({{ "advanced/ci_cd/run_in_container/how_it_works.html#troubleshooting" | true_relative_url }})
