@@ -13,7 +13,7 @@ Buildah is enabled by setting the `WERF_BUILDAH_MODE` environment variable to on
 
 * `auto` — select the mode automatically based on your platform and environment.
 * `native-chroot` works only on Linux and uses the `chroot` isolation level when running build containers.
-* `native-rootless` works only on Linux and uses the `rootless` isolation leven when running build containers. At this isolation level, werf will use container runtime (runc or crun).
+* `native-rootless` works only on Linux and uses the `rootless` isolation level when running build containers. At this isolation level, werf will use container runtime (runc or crun).
 * `docker-with-fuse` is a cross-platform mode and is the only choice available on MacOS or Windows.
 
 Most users only need to set `WERF_BUILDAH_MODE=auto` to enable the experimental Buildah-based mode.
@@ -29,6 +29,6 @@ Normally, the user should just go with the default `overlay` driver. The storage
 
 ### System requirements
 
-Rootless OverlayFS is available since Linux kernel version 5.11 (strictly speaking, it was first implemented in version 5.13 which contains a bugfix to enable rootless overlayFS in SELinux, but most major Linux distributions have backported it into kernel 5.11).
+Rootless OverlayFS is available starting with Linux kernel version 5.11 (strictly speaking, it was initially implemented in version 5.13 via a bugfix to enable rootless overlayFS in SELinux, but most major Linux distributions have backported it into kernel 5.11).
 
 If your kernel does not support rootless OverlayFS, fuse-overlayfs will be used.
