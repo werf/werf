@@ -1,25 +1,25 @@
 ---
-title: Use Gitlab CI/CD with kubernetes executor
+title: Use GitLab CI/CD with Kubernetes executor
 permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_kubernetes_executor.html
 ---
 
-> NOTICE: werf currently supports building of images _with docker server_ or _without docker server_ (in experimental mode). This page contains instructions, which are only applicable for experimental mode _without docker server_. Only dockerfile-images builder is available for this mode for now. Stapel-images builder will be available soon.
+> NOTICE: werf currently supports building images _with the Docker server_ or _without the Docker server_ (in experimental mode). This page contains information applicable only to the experimental mode _without the Docker server_. For now, only the Dockerfile image builder is available for this mode. The Stapel image builder will be available soon.
 
-## 1. Prepare kubernetes cluster
+## 1. Prepare the Kubernetes cluster
 
-Select and proceed with one of the [available modes of operation]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
+Select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
 
-### Linux kernel with rootless overlayfs
+### Linux kernel with rootless OverlayFS
 
-No actions needed.
+No additional actions are required.
 
-### Linux kernel without rootless overlayfs and privileged container
+### Linux kernel without rootless OverlayFS and privileged container
 
-No actions needed.
+No additional actions are required.
 
-### Linux kernel without rootless overlayfs and non-privileged container
+### Linux kernel without rootless OverlayFS and non-privileged container
 
-[Fuse device plugin](https://github.com/kuberenetes-learning-group/fuse-device-plugin) needed to enable `/dev/fuse` device in containers running werf:
+The [fuse device plugin](https://github.com/kuberenetes-learning-group/fuse-device-plugin) is one of the ways to enable the `/dev/fuse` device in containers with werf:
 
 ```
 # werf-fuse-device-plugin-ds.yaml
@@ -53,13 +53,13 @@ spec:
             path: /var/lib/kubelet/device-plugins
 ```
 
-Apply provided device plugin in the `kube-system` namespace:
+Apply the above plugin manifest to the `kube-system` namespace:
 
 ```
 kubectl -n kube-system apply -f werf-fuse-device-plugin-ds.yaml
 ```
 
-Also let's define a limit range so that Pods created in some namespace will have an access to the `/dev/fuse`:
+Let's also create a LimitRange policy so that Pods created in some namespace have access to `/dev/fuse`:
 
 ```
 # enable-fuse-limit-range.yaml
@@ -74,18 +74,18 @@ spec:
       github.com/fuse: 1
 ```
 
-Create namespace `gitlab-ci` and limit range in this namespace (later we will setup gitlab-runner to use this namespace when creating Pods to run ci-jobs):
+Create a `gitlab-ci` namespace and apply the LimitRange manifest in that namespace (we will later configure the GitLab runner to use that namespace when creating Pods for running CI jobs):
 
 ```
 kubectl create namespace gitlab-ci
 kubectl apply -f enable-fuse-pod-limit-range.yaml
 ```
 
-## 2. Setup kubernetes gitlab runner
+## 2. Setup the GitLab runner in Kubernetes
 
 Select and proceed with one of the [available modes of operation]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
 
-### Linux kernel with rootless overlayfs
+### Linux kernel with rootless OverlayFS
 
 Basic runner configuration (`/etc/gitlab-runner/config.toml`):
 
@@ -99,9 +99,9 @@ Basic runner configuration (`/etc/gitlab-runner/config.toml`):
     pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
 ```
 
-For more options consult [gitlab kubernetes executor documentation page](https://docs.gitlab.com/runner/executors/kubernetes.html).
+For more options, consult the [Kubernetes executor for GitLab runner documentation](https://docs.gitlab.com/runner/executors/kubernetes.html).
 
-### Linux kernel without rootless overlayfs and privileged container
+### Linux kernel without rootless OverlayFS and privileged container
 
 Basic runner configuration (`/etc/gitlab-runner/config.toml`):
 
@@ -115,9 +115,9 @@ Basic runner configuration (`/etc/gitlab-runner/config.toml`):
     privileged = true
 ```
 
-For more options consult [gitlab kubernetes executor documentation page](https://docs.gitlab.com/runner/executors/kubernetes.html).
+For more options, consult the [Kubernetes executor for GitLab runner documentation](https://docs.gitlab.com/runner/executors/kubernetes.html).
 
-### Linux kernel without rootless overlayfs and non-privileged container
+### Linux kernel without rootless OverlayFS and non-privileged container
 
 Basic runner configuration (`/etc/gitlab-runner/config.toml`):
 
@@ -132,20 +132,20 @@ Basic runner configuration (`/etc/gitlab-runner/config.toml`):
     pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
 ```
 
-Note that `gitlab-ci` namespace has been specified. The same namespace should be used as in the step 1 to create auto pod limit settings.
+Note that the `gitlab-ci` namespace has been specified. This namespace should be the same as in step 1 to automatically generate Pod limits.
 
-For more options consult [gitlab kubernetes executor documentation page](https://docs.gitlab.com/runner/executors/kubernetes.html).
+For more options, consult the [Kubernetes executor for GitLab runner documentation](https://docs.gitlab.com/runner/executors/kubernetes.html).
 
-## 3. Configure project access to target kubernetes cluster
+## 3. Configure project access to the target Kubernetes cluster
 
-There are 2 ways to access kubernetes cluster which is the target cluster to deploy your application into:
+There are 2 ways to access the target Kubernetes cluster to which the application is deployed:
 
-1. Using special service account from kubernetes executor. This method only suitable when kubernetes executor runs in the target kubernetes cluster.
-2. Using configured kube config.
+1. Using Service Account for the Kubenetes executor. This method is only suitable if the Kubernetes executor is running in the target Kubernetes cluster.
+2. Using kubeconfig with the appropriate settings.
 
-### Service account
+### Service Account
 
-Example service account configuration named `gitlab-kubernetes-runner-deploy`:
+Here is an example configuration of a Service Account named `gitlab-kubernetes-runner-deploy`:
 
 ```yaml
 apiVersion: v1
@@ -167,7 +167,7 @@ subjects:
     namespace: default
 ```
 
-Adjust gitlab-runner configuration (`/etc/gitlab-runner/config.toml`) to use this service account:
+Adjust the GitLab runner configuration (`/etc/gitlab-runner/config.toml`) to use this Service Account:
 
 ```toml
 [[runners]]
@@ -178,15 +178,15 @@ Adjust gitlab-runner configuration (`/etc/gitlab-runner/config.toml`) to use thi
     ...
 ```
 
-### Kube config
+### Kubeconfig
 
-Setup `WERF_KUBECONFIG_BASE64` secret environment variable in gitlab project with the content of `~/.kube/config` in base64 encoding. werf will automatically use this configuration to connect to the kubernetes cluster which is the target for application.
+Assign the base64-encoded contents of `~/.kube/config` to the `WERF_KUBECONFIG_BASE64` environment variable in the GitLab project. werf will automatically use this configuration to connect to the target Kubernetes cluster.
 
-This method is suitable when kubernetes executor and target kubernetes cluster are 2 different clusters.
+This method is appropriate when the Kubernetes executor and the target Kubernetes cluster are two different clusters.
 
-## 4. Configure project gitlab-ci.yml
+## 4. Configure gitlab-ci.yml of the project
 
-Basic build and deploy job for a project:
+Below is a description of the basic build and deploy job for a project:
 
 ```yaml
 stages:
@@ -203,4 +203,4 @@ Build and deploy application:
 
 ## Troubleshooting
 
-If you have any problems please refer to the [troubleshooting section]({{ "advanced/ci_cd/run_in_container/how_it_works.html#troubleshooting" | true_relative_url }})
+In case of problems, refer to the [Troubleshooting section]({{ "advanced/ci_cd/run_in_container/how_it_works.html#troubleshooting" | true_relative_url }})

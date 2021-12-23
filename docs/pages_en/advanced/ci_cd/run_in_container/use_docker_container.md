@@ -1,21 +1,21 @@
 ---
-title: Use docker container
+title: Use Docker container
 permalink: advanced/ci_cd/run_in_container/use_docker_container.html
 ---
 
-> NOTICE: werf currently supports building of images with connection to the docker-server or without connection docker-server (in experimental mode). Building of images without docker-server is available in experimental mode for now and it is the only recommended way.
+> NOTICE: werf currently supports building images _with the Docker server_ or _without the Docker server_ (in experimental mode). Building images without the Docker server is still experimental, however, it is the only recommended mode.
 
-## Build images without docker server (NEW!)
+## Build images without the Docker server (NEW!)
 
-> NOTICE: Only dockerfile-images builder is available for this type of build for now. Stapel-images builder will be available soon.
+> NOTICE: For now, only the Dockerfile image builder is available for this type of builds. The Stapel image builder will be available soon.
 
-There is official image with werf 1.2 for this method (1.1 is not supported): `ghcr.io/werf/werf`.
+There is an official image with werf 1.2 for this method (1.1 is not supported): `ghcr.io/werf/werf`.
 
-Select and proceed with one of the [available modes of operation]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
+Select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
 
-### Linux kernel with rootless overlayfs
+### Linux kernel with rootless OverlayFS
 
-Only disable seccomp and apparmor profiles in such case. Example command:
+In this case, you only need to disable the seccomp and AppArmor profiles. Below is an example of a command that does this:
 
 ```shell
 docker run \
@@ -23,9 +23,9 @@ docker run \
     ghcr.io/werf/werf:latest WERF_COMMAND
 ```
 
-### Linux kernel without rootless overlayfs and privileged container
+### Linux kernel without rootless OverlayFS and privileged container
 
-Just use privileged container in such case. Example command:
+In this case, just use the privileged container. Below is an example of a command that does this:
 
 ```shell
 docker run \
@@ -33,9 +33,9 @@ docker run \
     ghcr.io/werf/werf:latest WERF_COMMAND
 ```
 
-### Linux kernel without rootless overlayfs and non-privileged container
+### Linux kernel without rootless OverlayFS and non-privileged container
 
-Disable seccomp and apparmor profiles and enable `/dev/fuse` in the container (so that `fuse-overlayfs` could work) in such case. Example command:
+In this case, disable the seccomp and AppArmor profiles and enable `/dev/fuse` in the container (so that `fuse-overlayfs` can work). Below is an example of a command that does this:
 
 ```shell
 docker run \
@@ -44,13 +44,13 @@ docker run \
     ghcr.io/werf/werf:latest WERF_COMMAND
 ```
 
-## Build images with docker server (not recommended)
+## Build images with the Docker server (not recommended)
 
-### Local docker server
+### Local Docker server
 
-This method supports building of dockerfile-images or stapel-images.
+This method supports building Dockerfile images or Stapel images.
 
-Example command:
+Below is an example of a command that does this:
 
 ```shell
 docker run \
@@ -61,17 +61,17 @@ docker run \
     IMAGE WERF_COMMAND
 ```
 
-Build your own docker image with werf for this method.
+For this method, build your own Docker image using werf.
 
-### Remote docker server
+### Remote Docker server
 
-This method supports only building of dockerfile-images. Stapel-images is not supported, because stapel images builder use mounts from host system into docker images.
+This method only supports building Dockerfile images. Stapel images are not supported because the Stapel image builder uses mounts from the host system to Docker images.
 
-The easiest way to use remote docker server inside docker container is docker-in-docker (dind).
+The easiest way to use a remote Docker server inside a Docker container is Docker-in-Docker (dind).
 
-Build your own docker image based on `docker:dind` for this method.
+For this method, build your own image based on `docker:dind`.
 
-Example command:
+Below is an example of a command:
 
 ```shell
 docker run \
@@ -83,4 +83,4 @@ Build your own docker image with werf for this method.
 
 ## Troubleshooting
 
-If you have any problems please refer to the [troubleshooting section]({{ "advanced/ci_cd/run_in_container/how_it_works.html#troubleshooting" | true_relative_url }})
+In case of problems, refer to the [troubleshooting section]({{ "advanced/ci_cd/run_in_container/how_it_works.html#troubleshooting" | true_relative_url }})
