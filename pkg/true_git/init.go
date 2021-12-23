@@ -77,7 +77,7 @@ func getGitCliVersion() (string, error) {
 		return "", errors.New(errMsg)
 	}
 
-	fullVersionMatch := regexp.MustCompile(`git version ([0-9]+\.[0-9]+\.[0-9]+)`).FindStringSubmatch(stdout.String())
+	fullVersionMatch := regexp.MustCompile(`git version ([.0-9]+)`).FindStringSubmatch(stdout.String())
 	if len(fullVersionMatch) < 2 {
 		return "", errors.New(fmt.Sprintf("unable to parse git version from stdout: %s", stdout.String()))
 	}
