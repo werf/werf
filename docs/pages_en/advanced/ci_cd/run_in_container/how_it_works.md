@@ -27,7 +27,7 @@ One of the options in this case is to run werf in a **privileged container** to 
 
 ### Linux kernel without rootless OverlayFS and non-privileged container
 
-If your Linux kernel does not support [OverlayFS in rootless mode]({{ "/advanced/buildah_mode.html#system-requirements" | true_relative_url }}), Buildah and werf will use fuse-overlayfs instead.
+If your Linux kernel does not support [OverlayFS in the rootless mode]({{ "/advanced/buildah_mode.html#system-requirements" | true_relative_url }}), Buildah and werf will use fuse-overlayfs instead.
 
 To use fuse-overlayfs without a privileged container, run werf in a container with the following parameters:
 
