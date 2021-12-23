@@ -19,7 +19,7 @@ No additional actions are required.
 
 ### Linux kernel without rootless OverlayFS and non-privileged container
 
-The [fuse device plugin](https://github.com/kuberenetes-learning-group/fuse-device-plugin) is required to use the `/dev/fuse` device in containers with werf:
+The [fuse device plugin](https://github.com/kuberenetes-learning-group/fuse-device-plugin) is one of the ways to enable the `/dev/fuse` device in containers with werf:
 
 ```
 # werf-fuse-device-plugin-ds.yaml
