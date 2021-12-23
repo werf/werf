@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -62,9 +63,8 @@ func Init(opts Options) error {
 func getGitCliVersion() (string, error) {
 	cmd := exec.Command("git", "version")
 
-	out := bytes.Buffer{}
-	cmd.Stdout = &out
-	cmd.Stderr = &out
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
 
 	err := cmd.Run()
 	if err != nil {
@@ -77,10 +77,11 @@ func getGitCliVersion() (string, error) {
 		return "", errors.New(errMsg)
 	}
 
-	strippedOut := strings.TrimSpace(out.String())
-	rightPart := strings.TrimPrefix(strippedOut, "git version ")
-	fullVersion := strings.Split(rightPart, " ")[0]
-	fullVersionParts := strings.Split(fullVersion, ".")
+	fullVersionMatch := regexp.MustCompile(`git version ([0-9]+\.[0-9]+\.[0-9]+)`).FindStringSubmatch(stdout.String())
+	if len(fullVersionMatch) < 2 {
+		return "", errors.New(fmt.Sprintf("unable to parse git version from stdout: %s", stdout.String()))
+	}
+	fullVersionParts := strings.Split(fullVersionMatch[1], ".")
 
 	lowestVersionPartInd := 3
 	if len(fullVersionParts) < lowestVersionPartInd {
