@@ -13,7 +13,7 @@ Buildah is enabled by setting the `WERF_BUILDAH_MODE` environment variable to on
 
 * `auto` — select the mode automatically based on your platform and environment.
 * `native-chroot` works only on Linux and uses the `chroot` isolation level when running build containers.
-* `native-rootless` works only on Linux and uses the `rootless` isolation level when running build containers. At this isolation level, werf will use container runtime (runc or crun).
+* `native-rootless` works only on Linux and uses the `rootless` isolation level when running build containers. At this isolation level werf will use container runtime (runc or crun).
 * `docker-with-fuse` is a cross-platform mode and is the only choice available on MacOS or Windows.
 
 Most users only need to set `WERF_BUILDAH_MODE=auto` to enable the experimental Buildah-based mode.
