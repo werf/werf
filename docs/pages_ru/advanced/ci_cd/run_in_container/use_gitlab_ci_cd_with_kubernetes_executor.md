@@ -1,5 +1,5 @@
 ---
-title: С помощью Gitlab CI/CD с Kubernetes executor
+title: С помощью GitLab CI/CD с Kubernetes executor
 permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_kubernetes_executor.html
 ---
 
