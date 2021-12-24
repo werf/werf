@@ -18,11 +18,11 @@ groups:
     - name: beta
       version: 1.1.28 # deprecation warnings for werf v1.1 and outdated mutliwerf
     - name: ea
-      version: 1.1.23+fix52
+      version: 1.1.28 # deprecation warnings for werf v1.1 and outdated mutliwerf
     - name: stable
-      version: 1.1.23+fix52
+      version: 1.1.28 # deprecation warnings for werf v1.1 and outdated mutliwerf
     - name: rock-solid
-      version: 1.1.23+fix51
+      version: 1.1.28 # deprecation warnings for werf v1.1 and outdated mutliwerf
  - name: "1.2"
    channels:
     - name: alpha
@@ -30,6 +30,6 @@ groups:
     - name: beta
       version: 1.2.53 # deprecation warning for outdated mutliwerf
     - name: ea
-      version: 1.2.51 # reworked buildah and new run-in-container docs
+      version: 1.2.53 # deprecation warning for outdated mutliwerf
     - name: stable
-      version: 1.2.51 # reworked buildah and new run-in-container docs
+      version: 1.2.53 # deprecation warning for outdated mutliwerf
