@@ -30,6 +30,6 @@ groups:
     - name: beta
       version: 1.2.53 # deprecation warning for outdated mutliwerf
     - name: ea
-      version: 1.2.51 # reworked buildah and new run-in-container docs
+      version: 1.2.53 # deprecation warning for outdated mutliwerf
     - name: stable
-      version: 1.2.51 # reworked buildah and new run-in-container docs
+      version: 1.2.53 # deprecation warning for outdated mutliwerf
