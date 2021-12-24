@@ -38,15 +38,15 @@
         },
         {
           "name": "ea",
-          "version": "v1.1.23+fix52"
+          "version": "v1.1.28"
         },
         {
           "name": "stable",
-          "version": "v1.1.23+fix52"
+          "version": "v1.1.28"
         },
         {
           "name": "rock-solid",
-          "version": "v1.1.23+fix51"
+          "version": "v1.1.28"
         }
       ]
     },
