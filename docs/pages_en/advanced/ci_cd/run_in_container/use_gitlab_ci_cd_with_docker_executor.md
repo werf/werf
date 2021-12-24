@@ -1,5 +1,5 @@
 ---
-title: Use Gitlab CI/CD with Docker executor
+title: Use GitLab CI/CD with Docker executor
 permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_docker_executor.html
 ---
 
