@@ -30,6 +30,6 @@ groups:
     - name: beta
       version: 1.2.54 # fix git version validation
     - name: ea
-      version: 1.2.53 # deprecation warning for outdated mutliwerf
+      version: 1.2.54 # deprecation warning for outdated multiwerf
     - name: stable
-      version: 1.2.53 # deprecation warning for outdated mutliwerf
+      version: 1.2.53 # deprecation warning for outdated multiwerf
