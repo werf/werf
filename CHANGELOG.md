@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.55](https://www.github.com/werf/werf/compare/v1.2.54...v1.2.55) (2021-12-29)
+
+
+### Features
+
+* Added login and logout cli commands for container registry ([0b7e147](https://www.github.com/werf/werf/commit/0b7e14716145af54a7790c1303c48802cbc19faa))
+
+### Docs
+
+* Buildah articles & run in container (#4043). Correcting & translating Buildah and Run in Kubernetes articles to russian.
+
+
 ### [1.2.54](https://www.github.com/werf/werf/compare/v1.2.53...v1.2.54) (2021-12-24)
 
 
