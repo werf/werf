@@ -97,7 +97,7 @@ func secretDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, worki
 	}
 
 	if terminal.IsTerminal(int(os.Stdin.Fd())) {
-		encodedData, err = secret_common.InputFromInteractiveStdin()
+		encodedData, err = secret_common.InputFromInteractiveStdin("Enter secret: ")
 		if err != nil {
 			return err
 		}

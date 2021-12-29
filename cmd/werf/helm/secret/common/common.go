@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/moby/term"
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/werf/logboek"
@@ -39,16 +40,46 @@ func ReadFileData(filePath string) ([]byte, error) {
 	return fileData, err
 }
 
-func InputFromInteractiveStdin() ([]byte, error) {
+func InputFromInteractiveStdin(prompt string) ([]byte, error) {
 	var data []byte
 	var err error
 
 	isStdoutTerminal := terminal.IsTerminal(int(os.Stdout.Fd()))
 	if isStdoutTerminal {
-		fmt.Printf(logboek.Colorize(style.Highlight(), "Enter secret: "))
+		fmt.Printf(logboek.Colorize(style.Highlight(), prompt))
 	}
 
+	prepareTerminal := func() (func() error, error) {
+		state, err := term.SetRawTerminal(os.Stdin.Fd())
+		if err != nil {
+			return nil, fmt.Errorf("unable to put terminal into raw mode: %s", err)
+		}
+
+		restored := false
+
+		return func() error {
+			if restored {
+				return nil
+			}
+			if err := term.RestoreTerminal(os.Stdin.Fd(), state); err != nil {
+				return err
+			}
+			restored = true
+			return nil
+		}, nil
+	}
+
+	restoreTerminal, err := prepareTerminal()
+	if err != nil {
+		return nil, err
+	}
+	defer restoreTerminal()
+
 	data, err = terminal.ReadPassword(int(os.Stdin.Fd()))
+
+	if err := restoreTerminal(); err != nil {
+		return nil, fmt.Errorf("unable to restore terminal: %s", err)
+	}
 
 	if isStdoutTerminal {
 		fmt.Println()

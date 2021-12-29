@@ -314,6 +314,15 @@ cli: &cli
       - title: werf helm version
         url: /reference/cli/werf_helm_version.html
 
+    - title: werf cr
+      f:
+
+      - title: werf cr login
+        url: /reference/cli/werf_cr_login.html
+
+      - title: werf cr logout
+        url: /reference/cli/werf_cr_logout.html
+
   - title: Other commands
     f:
 

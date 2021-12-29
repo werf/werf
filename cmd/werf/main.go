@@ -24,6 +24,8 @@ import (
 	config_list "github.com/werf/werf/cmd/werf/config/list"
 	config_render "github.com/werf/werf/cmd/werf/config/render"
 	"github.com/werf/werf/cmd/werf/converge"
+	cr_login "github.com/werf/werf/cmd/werf/cr/login"
+	cr_logout "github.com/werf/werf/cmd/werf/cr/logout"
 	"github.com/werf/werf/cmd/werf/dismiss"
 	"github.com/werf/werf/cmd/werf/docs"
 	"github.com/werf/werf/cmd/werf/export"
@@ -118,6 +120,7 @@ Find more information at https://werf.io`),
 				managedImagesCmd(),
 				hostCmd(),
 				helm.NewCmd(),
+				crCmd(),
 			},
 		},
 		{
@@ -148,6 +151,19 @@ func dockerComposeCmd() *cobra.Command {
 		compose.NewRunCmd(),
 		compose.NewUpCmd(),
 		compose.NewDownCmd(),
+	)
+
+	return cmd
+}
+
+func crCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cr",
+		Short: "Work with container registry: authenticate, list and remove images, etc.",
+	}
+	cmd.AddCommand(
+		cr_login.NewCmd(),
+		cr_logout.NewCmd(),
 	)
 
 	return cmd
