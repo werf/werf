@@ -1,10 +1,10 @@
 source "https://rubygems.org"
 
-gem "jekyll-assets"
+gem "jekyll-assets", git: "https://github.com/envygeeks/jekyll-assets", group: :jekyll_plugins
 gem "jekyll"
 gem "html-proofer"
 gem "kramdown-parser-gfm"
 
-gem "sprockets", "~> 3.7"
+gem "sprockets", "~> 4.0"
 gem "nokogiri", ">= 1.12.5"
 gem "kramdown", ">= 2.3.0"

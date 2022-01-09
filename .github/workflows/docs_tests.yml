@@ -33,7 +33,7 @@ jobs:
           ./scripts/ci/go-test.sh ./integration/suites/docs
 
   check_links:
-    container: jekyll/builder:3
+    container: jekyll/builder:4
     name: Check broken links
     runs-on: ubuntu-latest
     strategy:

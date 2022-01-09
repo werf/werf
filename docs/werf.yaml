@@ -2,9 +2,9 @@ project: werfio-ng
 configVersion: 1
 
 ---
-artifact: asset
-from: jekyll/builder:3
-fromCacheVersion: 20210318
+image: assets
+from: jekyll/builder:4
+fromCacheVersion: 20220110
 ansible:
   install:
   - shell: |
@@ -34,11 +34,21 @@ git:
   to: /app/docs
   owner: jekyll
   group: jekyll
-  excludePaths:
-  - '**/*.sh'
-  - 'werf.yaml'
-  - .helm
-  - .github
+  includePaths:
+    - _data
+    - _includes
+    - _layouts
+    - _plugins
+    - css
+    - images
+    - pages_ru
+    - pages_en
+    - ssi
+    - _config.yml
+    - _config_ru.yml
+    - Gemfile
+    - Gemfile.lock
+    - "*.xml"
   stageDependencies:
     install: ['Gemfile','Gemfile.lock']
     beforeSetup: '**/*'
@@ -53,7 +63,7 @@ ansible:
 {{ .Files.Get ".werf/nginx.conf" | indent 8 }}
       dest: /etc/nginx/nginx.conf
 import:
-- artifact: asset
+- image: assets
   add: /app/_site
   to: /app
   before: setup
