@@ -32,13 +32,14 @@ social_links:
 exclude:
 - .idea/
 - .gitignore
-- vendor
+- .werf/
+- DEVELOPMENT.md
+- docker-compose*.yml
 - Gemfile
 - Gemfile.lock
-- werf.yaml
-- ".werf/artifacts/*.sh"
-- backend
 - pages_ru/
+- vendor
+- werf.yaml
 
 highlighter: rouge
 
