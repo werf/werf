@@ -204,6 +204,24 @@ func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWe
 	}
 	templateData["Env"] = env
 
+	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
+	if err != nil {
+		return "", "", fmt.Errorf("unable to get HEAD commit hash: %s", err)
+	}
+
+	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
+	if err != nil {
+		return "", "", fmt.Errorf("unable to get HEAD commit time: %s", err)
+	}
+
+	templateData["Commit"] = map[string]interface{}{
+		"Hash": headHash,
+		"Date": map[string]string{
+			"Human": headTime.String(),
+			"Unix":  strconv.FormatInt(headTime.Unix(), 10),
+		},
+	}
+
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)
 
 	return configPath, config, err

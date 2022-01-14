@@ -204,7 +204,7 @@ func (gm *GitMapping) getLatestCommit(ctx context.Context) (string, error) {
 		return gm.GitRepo().LatestBranchCommit(ctx, gm.Branch)
 	}
 
-	commit, err := gm.GitRepo().HeadCommit(ctx)
+	commit, err := gm.GitRepo().HeadCommitHash(ctx)
 	if err != nil {
 		return "", err
 	}
