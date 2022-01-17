@@ -39,6 +39,14 @@ The `.Env` variable allows organizing configuration for several environments (te
 
 > In helm templates, there is the `.Values.werf.env` variable that can be used the same way (read more about helm templates [here]({{ "/advanced/helm/configuration/templates.html#environment" | true_relative_url }}))
 
+### current commit information
+
+#### .Commit
+
+`.Commit.Hash` provides current commit SHA.
+`.Commit.Date.Human` provides commit date in Human form.
+`.Commit.Date.Unix` provides commit date in Unix epoch form.
+
 ### templating
 
 #### include

@@ -39,6 +39,14 @@ werf не поддерживает функцию `expandenv` и имеет св
 
 > В helm шаблонах таким же образом может использоваться переменная `.Values.werf.env` (подробнее шаблоны helm [здесь]({{ "/advanced/helm/configuration/templates.html#окружение" | true_relative_url }})).
 
+### Информация о текущем коммите
+
+#### .Commit
+
+`.Commit.Hash` возвращает SHA текущего коммита.
+`.Commit.Date.Human` возвращает дату текущего коммита в человекопонятной форме.
+`.Commit.Date.Unix` возвращает дату текущего коммита в формате Unix epoch.
+
 ### Шаблонизация
 
 #### include
