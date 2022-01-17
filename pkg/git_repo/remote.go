@@ -225,8 +225,13 @@ func (repo *Remote) Fetch(ctx context.Context) error {
 	})
 }
 
-func (repo *Remote) HeadCommit(_ context.Context) (string, error) {
+func (repo *Remote) HeadCommitHash(_ context.Context) (string, error) {
 	return getHeadCommit(repo.GetClonePath())
+}
+
+func (repo *Remote) HeadCommitTime(ctx context.Context) (*time.Time, error) {
+	time, err := baseHeadCommitTime(repo, ctx)
+	return time, err
 }
 
 func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (string, error) {

@@ -79,6 +79,10 @@ func (h *handle) Submodules() []SubmoduleHandle {
 	return h.submoduleHandleList
 }
 
+func (h *handle) Repository() *git.Repository {
+	return h.repository
+}
+
 type submoduleHandle struct {
 	Handle
 	config *config.Submodule

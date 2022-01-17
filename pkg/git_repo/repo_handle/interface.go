@@ -14,6 +14,7 @@ import (
 // caching the necessary data from the worktree during initialization,
 // and then working exclusively with git objects.
 type Handle interface {
+	Repository() *git.Repository
 	Submodule(submodulePath string) (SubmoduleHandle, error)
 	Submodules() []SubmoduleHandle
 	ReadBlobObjectContent(hash plumbing.Hash) ([]byte, error)

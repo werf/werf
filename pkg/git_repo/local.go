@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 
@@ -27,7 +28,7 @@ type Local struct {
 	WorkTreeDir string
 	GitDir      string
 
-	headCommit string
+	headCommitHash string
 
 	statusResult *status.Result
 	mutex        sync.Mutex
@@ -81,7 +82,7 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 				l.GitDir,
 				l.WorkTreeDir,
 				l.getRepoWorkTreeCacheDir(l.getRepoID()),
-				l.headCommit,
+				l.headCommitHash,
 				true_git.SyncSourceWorktreeWithServiceBranchOptions{
 					ServiceBranchPrefix: opts.ServiceBranchOptions.Prefix,
 					GlobExcludeList:     opts.ServiceBranchOptions.GlobExcludeList,
@@ -91,7 +92,7 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 				return l, err
 			}
 
-			l.headCommit = devHeadCommit
+			l.headCommitHash = devHeadCommit
 		}
 	}
 
@@ -105,9 +106,9 @@ func newLocal(name, workTreeDir, gitDir string) (l *Local, err error) {
 	}
 
 	l = &Local{
-		WorkTreeDir: workTreeDir,
-		GitDir:      gitDir,
-		headCommit:  headCommit,
+		WorkTreeDir:    workTreeDir,
+		GitDir:         gitDir,
+		headCommitHash: headCommit,
 	}
 	l.Base = NewBase(name, l.initRepoHandleBackedByWorkTree)
 
@@ -223,8 +224,13 @@ func (repo *Local) RemoteOriginUrl(_ context.Context) (string, error) {
 	return repo.remoteOriginUrl(repo.WorkTreeDir)
 }
 
-func (repo *Local) HeadCommit(_ context.Context) (string, error) {
-	return repo.headCommit, nil
+func (repo *Local) HeadCommitHash(_ context.Context) (string, error) {
+	return repo.headCommitHash, nil
+}
+
+func (repo *Local) HeadCommitTime(ctx context.Context) (*time.Time, error) {
+	time, err := baseHeadCommitTime(repo, ctx)
+	return time, err
 }
 
 func (repo *Local) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {

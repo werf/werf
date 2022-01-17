@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -66,7 +67,11 @@ func (repo *Base) initRepoHandleBackedByWorkTree(ctx context.Context, commit str
 	return repo.initRepoHandleBackedByWorkTreeFunc(ctx, commit)
 }
 
-func (repo *Base) HeadCommit(ctx context.Context) (string, error) {
+func (repo *Base) HeadCommitHash(ctx context.Context) (string, error) {
+	panic("not implemented")
+}
+
+func (repo *Base) HeadCommitTime(ctx context.Context) (*time.Time, error) {
 	panic("not implemented")
 }
 
@@ -1018,4 +1023,37 @@ func (repo *Base) ListCommitFilesWithGlob(ctx context.Context, commit string, di
 	}
 
 	return result, nil
+}
+
+func baseHeadCommitTime(repo gitRepo, ctx context.Context) (*time.Time, error) {
+	headCommitHash, err := repo.HeadCommitHash(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get HEAD hash: %s", err)
+	}
+
+	var time *time.Time
+	if err := repo.withRepoHandle(ctx, headCommitHash, func(repoHandle repo_handle.Handle) error {
+		headHash, err := newHash(headCommitHash)
+		if err != nil {
+			return fmt.Errorf("unable to create new Hash object from commit SHA %q: %s", headCommitHash, err)
+		}
+
+		repo := repoHandle.Repository()
+		if repo == nil {
+			return fmt.Errorf("unable to get repository from repoHandle")
+		}
+
+		commit, err := repo.CommitObject(headHash)
+		if err != nil {
+			return fmt.Errorf("unable to get commit object for ref %q: %s", headCommitHash, err)
+		}
+
+		time = &commit.Author.When
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return time, nil
 }

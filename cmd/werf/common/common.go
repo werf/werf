@@ -1189,7 +1189,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 		return nil, err
 	}
 
-	headCommit, err := localGitRepo.HeadCommit(BackgroundContext())
+	headCommit, err := localGitRepo.HeadCommitHash(BackgroundContext())
 	if err != nil {
 		return nil, err
 	}

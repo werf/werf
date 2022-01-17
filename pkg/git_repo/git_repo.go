@@ -3,6 +3,7 @@ package git_repo
 import (
 	"context"
 	"path/filepath"
+	"time"
 
 	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -45,7 +46,8 @@ type GitRepo interface {
 	GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error)
 	GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (string, error)
 	GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error)
-	HeadCommit(ctx context.Context) (string, error)
+	HeadCommitHash(ctx context.Context) (string, error)
+	HeadCommitTime(ctx context.Context) (*time.Time, error)
 	IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error)
 	IsCommitDirectoryExist(ctx context.Context, commit, path string) (bool, error)
 	IsCommitExists(ctx context.Context, commit string) (bool, error)
@@ -62,8 +64,12 @@ type GitRepo interface {
 	ResolveCommitFilePath(ctx context.Context, commit, path string) (string, error)
 	TagCommit(ctx context.Context, tag string) (string, error)
 	WalkCommitFiles(ctx context.Context, commit string, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error
+}
 
-	initRepoHandleBackedByWorkTree(ctx context.Context, commit string) (repo_handle.Handle, error)
+type gitRepo interface {
+	GitRepo
+
+	withRepoHandle(ctx context.Context, commit string, f func(handle repo_handle.Handle) error) error
 }
 
 type Patch interface {
