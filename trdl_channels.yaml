@@ -28,8 +28,8 @@ groups:
     - name: alpha
       version: 1.2.55 # werf-in-kubernetes ru-docs, werf cr login/logout commands
     - name: beta
-      version: 1.2.54 # fix git version validation
+      version: 1.2.55 # werf-in-kubernetes ru-docs, werf cr login/logout commands
     - name: ea
-      version: 1.2.54 # deprecation warning for outdated multiwerf
+      version: 1.2.55 # fix warning in git version break werf
     - name: stable
-      version: 1.2.53 # deprecation warning for outdated multiwerf
+      version: 1.2.55 # fix warning in git version break werf
