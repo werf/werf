@@ -41,11 +41,37 @@ The `.Env` variable allows organizing configuration for several environments (te
 
 ### current commit information
 
-#### .Commit
+#### .Commit.Hash
 
-`.Commit.Hash` provides current commit SHA.
-`.Commit.Date.Human` provides commit date in Human form.
-`.Commit.Date.Unix` provides commit date in Unix epoch form.
+{% raw %}`{{ .Commit.Hash }}`{% endraw %} provides current commit SHA. It's best to avoid using `.Commit.Hash` if possible, since it might trigger many unneeded stage rebuilds.
+
+#### .Commit.Date
+
+{% raw %}`{{ .Commit.Date.Human }}`{% endraw %} provides commit date in Human form.
+
+{% raw %}`{{ .Commit.Date.Unix }}`{% endraw %} provides commit date in Unix epoch form.
+
+##### Example: rebuild whole image every month
+
+{% raw %}
+```yaml
+image: app
+from: ubuntu
+git:
+- add: /
+  to: /app
+  stageDependencies:
+    install:
+    - "*"
+fromCacheVersion: {{ div .Commit.Date.Unix (mul 60 60 24 30) }}
+shell:
+  beforeInstall:
+  - apt-get update
+  - apt-get install -y nodejs npm
+  install:
+  - npm ci
+```
+{% endraw %}
 
 ### templating
 
