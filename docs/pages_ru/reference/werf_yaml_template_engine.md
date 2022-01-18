@@ -41,11 +41,37 @@ werf не поддерживает функцию `expandenv` и имеет св
 
 ### Информация о текущем коммите
 
-#### .Commit
+#### .Commit.Hash
 
-`.Commit.Hash` возвращает SHA текущего коммита.
-`.Commit.Date.Human` возвращает дату текущего коммита в человекопонятной форме.
-`.Commit.Date.Unix` возвращает дату текущего коммита в формате Unix epoch.
+{% raw %}`{{ .Commit.Hash }}`{% endraw %} возвращает SHA текущего коммита. Если есть возможность, лучше избегать использование `.Commit.Hash`, т. к. это может приводить к ненужным пересборкам слоев.
+
+#### .Commit.Date
+
+{% raw %}`{{ .Commit.Date.Human }}`{% endraw %} возвращает дату текущего коммита в человекопонятной форме.
+
+{% raw %}`{{ .Commit.Date.Unix }}`{% endraw %} возвращает дату текущего коммита в формате Unix epoch.
+
+##### Пример: пересобирать образ целиком каждый месяц
+
+{% raw %}
+```yaml
+image: app
+from: ubuntu
+git:
+- add: /
+  to: /app
+  stageDependencies:
+    install:
+    - "*"
+fromCacheVersion: {{ div .Commit.Date.Unix (mul 60 60 24 30) }}
+shell:
+  beforeInstall:
+  - apt-get update
+  - apt-get install -y nodejs npm
+  install:
+  - npm ci
+```
+{% endraw %}
 
 ### Шаблонизация
 
