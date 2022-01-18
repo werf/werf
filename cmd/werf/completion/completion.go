@@ -22,6 +22,8 @@ func NewCmd(rootCmd *cobra.Command) *cobra.Command {
 		Short:                 "Generate bash completion scripts",
 		Example: fmt.Sprintf(`  # Load bash completion
   $ source <(%[1]s completion)
+  # or for older bash versions (e.g. bash 3.2 on macOS):
+  $ source /dev/stdin <<< "$(%[1]s completion)"
 
   # Load zsh completion
   $ autoload -Uz compinit && compinit -C
