@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -221,31 +220,17 @@ type runGitCmdOptions struct {
 	stdin io.Reader
 }
 
+// TODO(ilya-lesikov): remove this function, replace with NewGitCmd()
 func runGitCmd(ctx context.Context, args []string, dir string, opts runGitCmdOptions) (*bytes.Buffer, error) {
-	allArgs := append(getCommonGitOptions(), args...)
-	cmd := exec.Command("git", allArgs...)
-	cmd.Dir = dir
+	gitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: dir}, args...)
 
 	if opts.stdin != nil {
-		cmd.Stdin = opts.stdin
+		gitCmd.Stdin = opts.stdin
 	}
 
-	output := SetCommandRecordingLiveOutput(ctx, cmd)
-
-	err := cmd.Run()
-
-	cmdWithArgs := strings.Join(append([]string{cmd.Path, "-C " + dir}, cmd.Args[1:]...), " ")
-	if debug() {
-		fmt.Printf("[DEBUG] %s\n%s\n", cmdWithArgs, output)
+	if err := gitCmd.Run(ctx); err != nil {
+		return nil, fmt.Errorf("git command run failed: %s", err)
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	return output, err
-}
-
-func debug() bool {
-	return os.Getenv("WERF_DEBUG_TRUE_GIT") == "1"
+	return gitCmd.OutBuf, nil
 }

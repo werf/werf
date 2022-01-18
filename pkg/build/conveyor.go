@@ -909,7 +909,7 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 		localGitRepo := c.giterminismManager.LocalGitRepo()
 
 		if !c.werfConfig.Meta.GitWorktree.GetForceShallowClone() {
-			isShallowClone, err := localGitRepo.IsShallowClone()
+			isShallowClone, err := localGitRepo.IsShallowClone(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("check shallow clone failed: %s", err)
 			}

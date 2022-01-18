@@ -1,12 +1,10 @@
 package true_git
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -78,7 +76,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 	}
 
 	isWorkTreeRegistered := false
-	if workTreeList, err := GetWorkTreeList(repoDir); err != nil {
+	if workTreeList, err := GetWorkTreeList(ctx, repoDir); err != nil {
 		return "", fmt.Errorf("unable to get worktree list for repo %s: %s", repoDir, err)
 	} else {
 		for _, workTreeDesc := range workTreeList {
@@ -152,71 +150,31 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 	return workTreeDir, nil
 }
 
-func debugWorktreeSwitch() bool {
-	return os.Getenv("WERF_TRUE_GIT_DEBUG_WORKTREE_SWITCH") == "1"
-}
-
 func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit string, withSubmodules bool) error {
-	var cmd *exec.Cmd
-	var output *bytes.Buffer
-
 	_, err := os.Stat(workTreeDir)
 	switch {
 	case os.IsNotExist(err):
-		cmd = exec.Command(
-			"git", append(getCommonGitOptions(), "-C", repoDir,
-				"worktree", "add", "--force", "--detach", workTreeDir, commit)...,
-		)
-
-		output = SetCommandRecordingLiveOutput(ctx, cmd)
-		if debugWorktreeSwitch() {
-			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
-		}
-
-		if err = cmd.Run(); err != nil {
-			return fmt.Errorf("git worktree add failed: %s\n%s", err, output.String())
+		wtAddCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "add", "--force", "--detach", workTreeDir, commit)
+		if err = wtAddCmd.Run(ctx); err != nil {
+			return fmt.Errorf("git worktree add command failed: %s", err)
 		}
 	case err != nil:
 		return fmt.Errorf("error accessing %s: %s", workTreeDir, err)
 	default:
-		cmd = exec.Command("git", append(getCommonGitOptions(), "checkout", "--force", "--detach", commit)...)
-		cmd.Dir = workTreeDir
-
-		output = SetCommandRecordingLiveOutput(ctx, cmd)
-		if debugWorktreeSwitch() {
-			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
-		}
-
-		if err = cmd.Run(); err != nil {
-			return fmt.Errorf("git checkout failed: %s\n%s", err, output.String())
+		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "checkout", "--force", "--detach", commit)
+		if err = checkoutCmd.Run(ctx); err != nil {
+			return fmt.Errorf("git checkout command failed: %s", err)
 		}
 	}
 
-	cmd = exec.Command("git", append(getCommonGitOptions(), "reset", "--hard", commit)...)
-	cmd.Dir = workTreeDir
-
-	output = SetCommandRecordingLiveOutput(ctx, cmd)
-	if debugWorktreeSwitch() {
-		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
+	resetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "reset", "--hard", commit)
+	if err = resetCmd.Run(ctx); err != nil {
+		return fmt.Errorf("git reset command failed: %s", err)
 	}
 
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("git reset failed: %s\n%s", err, output.String())
-	}
-
-	cmd = exec.Command(
-		"git", append(getCommonGitOptions(), "--work-tree", workTreeDir,
-			"clean", "-d", "-f", "-f", "-x")...,
-	)
-	cmd.Dir = workTreeDir
-
-	output = SetCommandRecordingLiveOutput(ctx, cmd)
-	if debugWorktreeSwitch() {
-		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
-	}
-
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("git clean failed: %s\n%s", err, output.String())
+	cleanCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "--work-tree", workTreeDir, "clean", "-d", "-f", "-f", "-x")
+	if err = cleanCmd.Run(ctx); err != nil {
+		return fmt.Errorf("git worktree clean command failed: %s", err)
 	}
 
 	if withSubmodules {
@@ -228,51 +186,37 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 			return fmt.Errorf("cannot update submodules: %s", err)
 		}
 
-		gitArgs := append(getCommonGitOptions(), "--work-tree", workTreeDir, "submodule", "foreach", "--recursive")
-		gitArgs = append(append(gitArgs, "git"), append(getCommonGitOptions(), "reset", "--hard")...)
+		submResetArgs := []string{
+			"--work-tree", workTreeDir, "submodule", "foreach", "--recursive",
+		}
+		submResetArgs = append(submResetArgs, append([]string{"git"}, append(getCommonGitOptions(), "reset", "--hard")...)...)
 
-		cmd = exec.Command("git", gitArgs...)
-		cmd.Dir = workTreeDir // required for `git submodule` to work
-
-		output = SetCommandRecordingLiveOutput(ctx, cmd)
-		if debugWorktreeSwitch() {
-			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
+		submResetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, submResetArgs...)
+		if err = submResetCmd.Run(ctx); err != nil {
+			return fmt.Errorf("git submodules reset commands failed: %s", err)
 		}
 
-		if err = cmd.Run(); err != nil {
-			return fmt.Errorf("git submodules reset failed: %s\n%s", err, output.String())
+		submCleanArgs := []string{
+			"--work-tree", workTreeDir, "submodule", "foreach", "--recursive",
 		}
+		submCleanArgs = append(submCleanArgs, append([]string{"git"}, append(getCommonGitOptions(), "clean", "-d", "-f", "-f", "-x")...)...)
 
-		gitArgs = append(getCommonGitOptions(), "--work-tree", workTreeDir, "submodule", "foreach", "--recursive")
-		gitArgs = append(append(gitArgs, "git"), append(getCommonGitOptions(), "clean", "-d", "-f", "-f", "-x")...)
-
-		cmd = exec.Command("git", gitArgs...)
-		cmd.Dir = workTreeDir // required for `git submodule` to work
-
-		output = SetCommandRecordingLiveOutput(ctx, cmd)
-		if debugWorktreeSwitch() {
-			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
-		}
-
-		if err = cmd.Run(); err != nil {
-			return fmt.Errorf("git submodules clean failed: %s\n%s", err, output.String())
+		submCleanCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, submCleanArgs...)
+		if err = submCleanCmd.Run(ctx); err != nil {
+			return fmt.Errorf("git submodules clean commands failed: %s", err)
 		}
 	}
 
 	return nil
 }
 
-func ResolveRepoDir(repoDir string) (string, error) {
-	gitArgs := append(getCommonGitOptions(), "--git-dir", repoDir, "rev-parse", "--git-dir")
-
-	cmd := exec.Command("git", gitArgs...)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("%q failed (%s): %s:\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), repoDir, err, output)
+func ResolveRepoDir(ctx context.Context, repoDir string) (string, error) {
+	revParseCmd := NewGitCmd(ctx, nil, "--git-dir", repoDir, "rev-parse", "--git-dir")
+	if err := revParseCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git parse git-dir command failed: %s", err)
 	}
 
-	return strings.TrimSpace(string(output)), nil
+	return strings.TrimSpace(revParseCmd.OutBuf.String()), nil
 }
 
 type WorktreeDescriptor struct {
@@ -281,18 +225,15 @@ type WorktreeDescriptor struct {
 	Branch string
 }
 
-func GetWorkTreeList(repoDir string) ([]WorktreeDescriptor, error) {
-	gitArgs := append(getCommonGitOptions(), "-C", repoDir, "worktree", "list", "--porcelain")
-	cmd := exec.Command("git", gitArgs...)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("%q failed (%s): %s:\n%s", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "), repoDir, err, output)
+func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor, error) {
+	wtListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "list", "--porcelain")
+	if err := wtListCmd.Run(ctx); err != nil {
+		return nil, fmt.Errorf("git worktree list command failed: %s", err)
 	}
 
 	var worktreeDesc *WorktreeDescriptor
 	var res []WorktreeDescriptor
-	for _, line := range strings.Split(string(output), "\n") {
+	for _, line := range strings.Split(wtListCmd.OutBuf.String(), "\n") {
 		if line == "" && worktreeDesc == nil {
 			continue
 		} else if worktreeDesc == nil {

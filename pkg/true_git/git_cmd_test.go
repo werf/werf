@@ -30,11 +30,21 @@ var _ = Describe("Git command", func() {
 			"commit", "--allow-empty", "-m", "Initial commit",
 		)
 
-		Ω(Init(Options{})).Should(Succeed())
+		Ω(Init(context.Background(), Options{})).Should(Succeed())
 	})
 
-	When("git repo contains broken ref", func() {
-		It("does not ignore git cmd warnings in output due to bug", func() {
+	When("looking for existent ref", func() {
+		It("succeeds, returning branch name", func() {
+			ctx := context.Background()
+
+			output, err := runGitCmd(ctx, []string{"branch", "--list", "master"}, gitRepoPath, runGitCmdOptions{})
+			Expect(err).To(Succeed())
+			Expect(output.String()).To(ContainSubstring("master"))
+		})
+	})
+
+	When("looking for non-existent ref", func() {
+		It("succeeds, ignoring stderr in git output and returning only (empty) stdout", func() {
 			ctx := context.Background()
 
 			brokenHeadPath := filepath.Join(gitRepoPath, ".git", "refs", "heads", "foo")
@@ -42,7 +52,7 @@ var _ = Describe("Git command", func() {
 
 			output, err := runGitCmd(ctx, []string{"branch", "--list", "no-such-branch"}, gitRepoPath, runGitCmdOptions{})
 			Expect(err).To(Succeed())
-			Expect(output.Len()).NotTo(Equal(0))
+			Expect(output.Len()).To(Equal(0))
 		})
 	})
 })

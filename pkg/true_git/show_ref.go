@@ -1,8 +1,8 @@
 package true_git
 
 import (
+	"context"
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
@@ -24,19 +24,15 @@ type ShowRefResult struct {
 	Refs []RefDescriptor
 }
 
-func ShowRef(repoDir string) (*ShowRefResult, error) {
-	gitArgs := append(getCommonGitOptions(), "-C", repoDir, "show-ref", "--head")
-
-	cmd := exec.Command("git", gitArgs...)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("%v failed: %s:\n%s", strings.Join(append([]string{"git"}, gitArgs...), " "), err, output)
+func ShowRef(ctx context.Context, repoDir string) (*ShowRefResult, error) {
+	headRefCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "show-ref", "--head")
+	if err := headRefCmd.Run(ctx); err != nil {
+		return nil, fmt.Errorf("git get refs from HEAD command failed: %s", err)
 	}
 
 	res := &ShowRefResult{}
 
-	outputLines := strings.Split(string(output), "\n")
+	outputLines := strings.Split(headRefCmd.OutBuf.String(), "\n")
 	for _, line := range outputLines {
 		parts := strings.SplitN(line, " ", 2)
 		if len(parts) != 2 {
