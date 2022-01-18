@@ -26,9 +26,9 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.55 # werf-in-kubernetes ru-docs, werf cr login/logout commands
+      version: 1.2.56 # expose commit info in werf templates
     - name: beta
-      version: 1.2.55 # werf-in-kubernetes ru-docs, werf cr login/logout commands
+      version: 1.2.56 # expose commit info in werf templates
     - name: ea
       version: 1.2.55 # fix warning in git version break werf
     - name: stable
