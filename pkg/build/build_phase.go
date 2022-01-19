@@ -19,6 +19,7 @@ import (
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/git_repo"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/storage"
@@ -272,7 +273,13 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 			commits = append(commits, headCommit)
 
 			if phase.Conveyor.GetLocalGitRepoVirtualMergeOptions().VirtualMerge {
-				fromCommit := phase.Conveyor.GetLocalGitRepoVirtualMergeOptions().VirtualMergeFromCommit
+				phase.Conveyor.giterminismManager.LocalGitRepo().GetMergeCommitParents(ctx, headCommit)
+
+				fromCommit, _, err := git_repo.GetVirtualMergeParents(ctx, phase.Conveyor.giterminismManager.LocalGitRepo(), headCommit)
+				if err != nil {
+					return fmt.Errorf("unable to get virtual merge commit %q parents: %s", headCommit, err)
+				}
+
 				commits = append(commits, fromCommit)
 			}
 

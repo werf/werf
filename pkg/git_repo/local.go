@@ -115,6 +115,10 @@ func newLocal(ctx context.Context, name, workTreeDir, gitDir string) (l *Local, 
 	return l, nil
 }
 
+func (repo *Local) IsLocal() bool {
+	return true
+}
+
 func (repo *Local) PlainOpen() (*git.Repository, error) {
 	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {

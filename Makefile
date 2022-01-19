@@ -1,4 +1,4 @@
-.PHONY: all werf buildah-test unit-test fmt lint clean
+.PHONY: all werf buildah-test unit-test fmt lint docs clean
 
 all: werf
 
@@ -18,6 +18,10 @@ fmt:
 
 lint:
 	golangci-lint run ./... --build-tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build"
+
+
+docs:
+	./docs/regen.sh
 
 
 clean:

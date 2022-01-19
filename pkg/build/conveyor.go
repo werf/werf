@@ -1077,7 +1077,7 @@ func gitRemoteArtifactInit(ctx context.Context, remoteGitMappingConfig *config.G
 	gitMapping.Branch = remoteGitMappingConfig.Branch
 
 	gitMapping.Name = remoteGitMappingConfig.Name
-	gitMapping.RemoteGitRepo = remoteGitRepo
+	gitMapping.SetGitRepo(remoteGitRepo)
 
 	gitMappingTo, err := makeGitMappingTo(ctx, gitMapping, remoteGitMappingConfig.GitLocalExport.GitMappingTo(), c)
 	if err != nil {
@@ -1092,7 +1092,7 @@ func gitLocalPathInit(ctx context.Context, localGitMappingConfig *config.GitLoca
 	gitMapping := baseGitMappingInit(localGitMappingConfig.GitLocalExport, imageName, c)
 
 	gitMapping.Name = "own"
-	gitMapping.LocalGitRepo = c.giterminismManager.LocalGitRepo()
+	gitMapping.SetGitRepo(c.giterminismManager.LocalGitRepo())
 
 	gitMappingTo, err := makeGitMappingTo(ctx, gitMapping, localGitMappingConfig.GitLocalExport.GitMappingTo(), c)
 	if err != nil {
