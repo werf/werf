@@ -10,7 +10,7 @@ import (
 	"github.com/Masterminds/semver"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/cmd/helm"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -117,8 +117,6 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
-	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
-	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 

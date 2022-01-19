@@ -107,8 +107,6 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 
 	common.SetupAddCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
-	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
-	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 	common.SetupFollow(&commonCmdData, cmd)

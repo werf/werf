@@ -236,8 +236,6 @@ services:
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
-	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
-	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedDockerStorageVolumeUsage(&commonCmdData, cmd)

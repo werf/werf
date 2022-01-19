@@ -29,7 +29,5 @@ type Conveyor interface {
 }
 
 type VirtualMergeOptions struct {
-	VirtualMerge           bool
-	VirtualMergeFromCommit string
-	VirtualMergeIntoCommit string
+	VirtualMerge bool
 }

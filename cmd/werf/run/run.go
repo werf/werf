@@ -147,8 +147,6 @@ func NewCmd() *cobra.Command {
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
-	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
-	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
 	common.SetupPlatform(&commonCmdData, cmd)
 

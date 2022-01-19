@@ -36,6 +36,10 @@ func OpenRemoteRepo(name, url string) (*Remote, error) {
 	return repo, repo.ValidateEndpoint()
 }
 
+func (repo *Remote) IsLocal() bool {
+	return false
+}
+
 func (repo *Remote) ValidateEndpoint() error {
 	if ep, err := transport.NewEndpoint(repo.Url); err != nil {
 		return fmt.Errorf("bad url %q: %s", repo.Url, err)

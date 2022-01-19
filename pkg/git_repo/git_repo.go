@@ -39,6 +39,7 @@ const (
 type GitRepo interface {
 	String() string
 	GetName() string
+	IsLocal() bool
 
 	CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error)
 	GetCommitTreeEntry(ctx context.Context, commit string, path string) (*ls_tree.LsTreeEntry, error)

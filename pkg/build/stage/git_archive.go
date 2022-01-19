@@ -50,7 +50,7 @@ func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, s
 func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
-		if gitMapping.LocalGitRepo != nil {
+		if gitMapping.IsLocal() {
 			if err := c.GiterminismManager().Inspector().InspectBuildContextFiles(ctx, gitMapping.getPathMatcher()); err != nil {
 				return "", err
 			}

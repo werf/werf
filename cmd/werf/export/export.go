@@ -97,8 +97,6 @@ All meta-information related to werf is removed from the exported images, and th
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
-	common.SetupVirtualMergeFromCommit(&commonCmdData, cmd)
-	common.SetupVirtualMergeIntoCommit(&commonCmdData, cmd)
 
 	common.SetupPlatform(&commonCmdData, cmd)
 

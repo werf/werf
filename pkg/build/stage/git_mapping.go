@@ -22,9 +22,6 @@ import (
 )
 
 type GitMapping struct {
-	LocalGitRepo  *git_repo.Local
-	RemoteGitRepo *git_repo.Remote
-
 	Name               string
 	As                 string
 	Branch             string
@@ -45,6 +42,7 @@ type GitMapping struct {
 
 	BaseCommitByPrevBuiltImageName map[string]string
 
+	gitRepo git_repo.GitRepo
 	mutexes map[string]*sync.Mutex
 	mutex   sync.Mutex
 }
@@ -89,14 +87,12 @@ func (gm *GitMapping) getMutex(key string) *sync.Mutex {
 	return m
 }
 
-func (gm *GitMapping) GitRepo() git_repo.GitRepo {
-	if gm.LocalGitRepo != nil {
-		return gm.LocalGitRepo
-	} else if gm.RemoteGitRepo != nil {
-		return gm.RemoteGitRepo
-	}
+func (gm *GitMapping) SetGitRepo(gitRepo git_repo.GitRepo) {
+	gm.gitRepo = gitRepo
+}
 
-	panic("GitRepo not initialized")
+func (gm *GitMapping) GitRepo() git_repo.GitRepo {
+	return gm.gitRepo
 }
 
 func (gm *GitMapping) makeArchiveOptions(ctx context.Context, commit string) (*git_repo.ArchiveOptions, error) {
@@ -184,11 +180,7 @@ func (gm *GitMapping) getFileRenames(ctx context.Context, commit string) (map[st
 }
 
 func (gm *GitMapping) IsLocal() bool {
-	if gm.LocalGitRepo != nil {
-		return true
-	} else {
-		return false
-	}
+	return gm.GitRepo().IsLocal()
 }
 
 func (gm *GitMapping) getLatestCommit(ctx context.Context) (string, error) {
@@ -280,31 +272,25 @@ func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (Imag
 		res.Commit = commit
 	}
 
-	if _, isLocal := gm.GitRepo().(*git_repo.Local); isLocal && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge {
+	if gm.GitRepo().IsLocal() && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge {
 		res.VirtualMerge = true
-		res.VirtualMergeFromCommit = c.GetLocalGitRepoVirtualMergeOptions().VirtualMergeFromCommit
-		res.VirtualMergeIntoCommit = c.GetLocalGitRepoVirtualMergeOptions().VirtualMergeIntoCommit
 
-		if res.VirtualMergeFromCommit == "" || res.VirtualMergeIntoCommit == "" {
-			if parents, err := gm.GitRepo().GetMergeCommitParents(ctx, res.Commit); err != nil {
-				return ImageCommitInfo{}, fmt.Errorf("unable to get virtual merge commit %s parents for git repo %s: %s", res.Commit, gm.GitRepo().GetName(), err)
-			} else if len(parents) == 2 {
-				if res.VirtualMergeIntoCommit == "" {
-					res.VirtualMergeIntoCommit = parents[0]
-					logboek.Context(ctx).Debug().LogF("Got virtual-merge-into-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeIntoCommit)
-				}
-				if res.VirtualMergeFromCommit == "" {
-					res.VirtualMergeFromCommit = parents[1]
-					logboek.Context(ctx).Debug().LogF("Got virtual-merge-from-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeFromCommit)
-				}
-			}
+		fromCommit, intoCommit, err := git_repo.GetVirtualMergeParents(ctx, gm.GitRepo(), res.Commit)
+		if err != nil {
+			return ImageCommitInfo{}, fmt.Errorf("unable to get virtual merge commit %q parents: %s", res.Commit, err)
 		}
+
+		res.VirtualMergeFromCommit = fromCommit
+		logboek.Context(ctx).Debug().LogF("Got virtual-merge-from-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeFromCommit)
+
+		res.VirtualMergeIntoCommit = intoCommit
+		logboek.Context(ctx).Debug().LogF("Got virtual-merge-into-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeIntoCommit)
 
 		if res.VirtualMergeFromCommit == "" {
-			return ImageCommitInfo{}, fmt.Errorf("unable to detect --virtual-merge-from-commit for virtual merge commit %s", res.Commit)
+			return ImageCommitInfo{}, fmt.Errorf("unable to detect virtual-merge-from-commit for virtual merge commit %q", res.Commit)
 		}
 		if res.VirtualMergeIntoCommit == "" {
-			return ImageCommitInfo{}, fmt.Errorf("unable to detect --virtual-merge-into-commit for virtual merge commit %s", res.Commit)
+			return ImageCommitInfo{}, fmt.Errorf("unable to detect virtual-merge-into-commit for virtual merge commit %q", res.Commit)
 		}
 	}
 
@@ -346,7 +332,7 @@ func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conv
 	if prevBuiltImageCommitInfo.VirtualMerge {
 		if latestCommit, err := gm.getLatestCommit(ctx); err != nil {
 			return "", err
-		} else if _, isLocal := gm.GitRepo().(*git_repo.Local); isLocal && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge && latestCommit == prevBuiltImageCommitInfo.Commit {
+		} else if gm.GitRepo().IsLocal() && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge && latestCommit == prevBuiltImageCommitInfo.Commit {
 			baseCommit = prevBuiltImageCommitInfo.Commit
 		} else {
 			if detachedMergeCommit, err := gm.GitRepo().CreateDetachedMergeCommit(ctx, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit); err != nil {
@@ -365,8 +351,10 @@ func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conv
 }
 
 type ImageCommitInfo struct {
-	Commit string
-	VirtualMergeOptions
+	Commit                 string
+	VirtualMerge           bool
+	VirtualMergeFromCommit string
+	VirtualMergeIntoCommit string
 }
 
 func makeInvalidImageError(label string) error {
