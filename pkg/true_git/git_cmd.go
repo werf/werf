@@ -63,7 +63,8 @@ func (c *GitCmd) Run(ctx context.Context) error {
 
 	switch err := c.Cmd.Run(); err.(type) {
 	case *exec.ExitError:
-		return fmt.Errorf("error running command %q: %s\nStdout:\n%s\nStderr:\n%s", c, err, c.OutBuf, c.ErrBuf)
+		// return fmt.Errorf("error running command %q: %s\nStdout:\n%s\nStderr:\n%s", c, err, c.OutBuf, c.ErrBuf)
+		return err
 	case error:
 		return fmt.Errorf("error running command %q: %s", c, err)
 	}
