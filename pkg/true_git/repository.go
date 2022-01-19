@@ -2,14 +2,13 @@ package true_git
 
 import (
 	"context"
-	"os/exec"
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/Masterminds/semver"
 	"github.com/go-git/go-git/v5"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -27,8 +26,7 @@ type FetchOptions struct {
 }
 
 func Fetch(ctx context.Context, path string, options FetchOptions) error {
-	command := "git"
-	commandArgs := append(getCommonGitOptions(), "-C", path, "fetch")
+	commandArgs := []string{"fetch"}
 
 	if options.Unshallow {
 		commandArgs = append(commandArgs, "--unshallow")
@@ -54,16 +52,12 @@ func Fetch(ctx context.Context, path string, options FetchOptions) error {
 		commandArgs = append(commandArgs, remote, refSpec)
 	}
 
-	logboek.Context(ctx).Debug().LogLnDetails(command, strings.Join(commandArgs, " "))
+	gitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: path}, commandArgs...)
 
-	cmd := exec.Command(command, commandArgs...)
-	cmd.Stdout = logboek.Context(ctx).OutStream()
-	cmd.Stderr = logboek.Context(ctx).ErrStream()
-
-	return cmd.Run()
+	return gitCmd.Run(ctx)
 }
 
-func IsShallowClone(path string) (bool, error) {
+func IsShallowClone(ctx context.Context, path string) (bool, error) {
 	if gitVersion.LessThan(semver.MustParse("2.15.0")) {
 		exist, err := util.FileExists(filepath.Join(path, ".git", "shallow"))
 		if err != nil {
@@ -73,12 +67,10 @@ func IsShallowClone(path string) (bool, error) {
 		return exist, nil
 	}
 
-	cmd := exec.Command("git", "-C", path, "rev-parse", "--is-shallow-repository")
-
-	res, err := cmd.Output()
-	if err != nil {
-		return false, err
+	checkShallowCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: path}, "rev-parse", "--is-shallow-repository")
+	if err := checkShallowCmd.Run(ctx); err != nil {
+		return false, fmt.Errorf("git shallow repository check command failed: %s", err)
 	}
 
-	return strings.TrimSpace(string(res)) == "true", nil
+	return strings.TrimSpace(checkShallowCmd.OutBuf.String()) == "true", nil
 }

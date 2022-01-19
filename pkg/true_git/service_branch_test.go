@@ -41,7 +41,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		headCommit = utils.GetHeadCommit(sourceWorkTreeDir)
 
 		Ω(werf.Init("", "")).Should(Succeed())
-		Ω(Init(Options{})).Should(Succeed())
+		Ω(Init(context.Background(), Options{})).Should(Succeed())
 	})
 
 	It("no changes", func() {

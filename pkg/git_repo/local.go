@@ -54,12 +54,12 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 		return l, err
 	}
 
-	gitDir, err := true_git.ResolveRepoDir(filepath.Join(workTreeDir, git.GitDirName))
+	gitDir, err := true_git.ResolveRepoDir(ctx, filepath.Join(workTreeDir, git.GitDirName))
 	if err != nil {
 		return l, fmt.Errorf("unable to resolve git repo dir for %s: %s", workTreeDir, err)
 	}
 
-	l, err = newLocal(name, workTreeDir, gitDir)
+	l, err = newLocal(ctx, name, workTreeDir, gitDir)
 	if err != nil {
 		return l, err
 	}
@@ -99,8 +99,8 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 	return l, nil
 }
 
-func newLocal(name, workTreeDir, gitDir string) (l *Local, err error) {
-	headCommit, err := getHeadCommit(workTreeDir)
+func newLocal(ctx context.Context, name, workTreeDir, gitDir string) (l *Local, err error) {
+	headCommit, err := getHeadCommit(ctx, workTreeDir)
 	if err != nil {
 		return l, fmt.Errorf("unable to get git repo head commit: %s", err)
 	}
@@ -125,7 +125,7 @@ func (repo *Local) PlainOpen() (*git.Repository, error) {
 }
 
 func (repo *Local) SyncWithOrigin(ctx context.Context) error {
-	isShallow, err := repo.IsShallowClone()
+	isShallow, err := repo.IsShallowClone(ctx)
 	if err != nil {
 		return fmt.Errorf("check shallow clone failed: %s", err)
 	}
@@ -156,7 +156,7 @@ func (repo *Local) SyncWithOrigin(ctx context.Context) error {
 }
 
 func (repo *Local) FetchOrigin(ctx context.Context) error {
-	isShallow, err := repo.IsShallowClone()
+	isShallow, err := repo.IsShallowClone(ctx)
 	if err != nil {
 		return fmt.Errorf("check shallow clone failed: %s", err)
 	}
@@ -184,8 +184,8 @@ func (repo *Local) FetchOrigin(ctx context.Context) error {
 	})
 }
 
-func (repo *Local) IsShallowClone() (bool, error) {
-	return true_git.IsShallowClone(repo.WorkTreeDir)
+func (repo *Local) IsShallowClone(ctx context.Context) (bool, error) {
+	return true_git.IsShallowClone(ctx, repo.WorkTreeDir)
 }
 
 func (repo *Local) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
@@ -216,8 +216,8 @@ func (repo *Local) IsEmpty(ctx context.Context) (bool, error) {
 	return repo.isEmpty(ctx, repo.WorkTreeDir)
 }
 
-func (repo *Local) IsAncestor(_ context.Context, ancestorCommit, descendantCommit string) (bool, error) {
-	return true_git.IsAncestor(ancestorCommit, descendantCommit, repo.GitDir)
+func (repo *Local) IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error) {
+	return true_git.IsAncestor(ctx, ancestorCommit, descendantCommit, repo.GitDir)
 }
 
 func (repo *Local) RemoteOriginUrl(_ context.Context) (string, error) {

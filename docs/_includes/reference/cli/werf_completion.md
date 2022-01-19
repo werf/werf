@@ -16,6 +16,8 @@ werf completion [options]
 ```shell
   # Load bash completion
   $ source <(werf completion)
+  # or for older bash versions (e.g. bash 3.2 on macOS):
+  $ source /dev/stdin <<< "$(werf completion)"
 
   # Load zsh completion
   $ autoload -Uz compinit && compinit -C

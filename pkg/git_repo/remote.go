@@ -74,7 +74,7 @@ func (repo *Remote) IsEmpty(ctx context.Context) (bool, error) {
 }
 
 func (repo *Remote) IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error) {
-	return true_git.IsAncestor(ancestorCommit, descendantCommit, repo.GetClonePath())
+	return true_git.IsAncestor(ctx, ancestorCommit, descendantCommit, repo.GetClonePath())
 }
 
 func (repo *Remote) CloneAndFetch(ctx context.Context) error {
@@ -225,8 +225,8 @@ func (repo *Remote) Fetch(ctx context.Context) error {
 	})
 }
 
-func (repo *Remote) HeadCommitHash(_ context.Context) (string, error) {
-	return getHeadCommit(repo.GetClonePath())
+func (repo *Remote) HeadCommitHash(ctx context.Context) (string, error) {
+	return getHeadCommit(ctx, repo.GetClonePath())
 }
 
 func (repo *Remote) HeadCommitTime(ctx context.Context) (*time.Time, error) {

@@ -1,11 +1,10 @@
 package true_git
 
 import (
-	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 
@@ -31,12 +30,12 @@ type Options struct {
 	LiveGitOutput bool
 }
 
-func Init(opts Options) error {
+func Init(ctx context.Context, opts Options) error {
 	liveGitOutput = opts.LiveGitOutput
 
 	var err error
 
-	v, err := getGitCliVersion()
+	v, err := getGitCliVersion(ctx)
 	if err != nil {
 		return err
 	}
@@ -60,16 +59,11 @@ func Init(opts Options) error {
 	return nil
 }
 
-func getGitCliVersion() (string, error) {
-	cmd := exec.Command("git", "version")
-
-	var stdout bytes.Buffer
-	cmd.Stdout = &stdout
-
-	err := cmd.Run()
-	if err != nil {
+func getGitCliVersion(ctx context.Context) (string, error) {
+	versionCmd := NewGitCmd(ctx, nil, "version")
+	if err := versionCmd.Run(ctx); err != nil {
 		errMsg := strings.Join([]string{
-			fmt.Sprintf("Git version command failed: %s", err),
+			fmt.Sprintf("git version command failed: %s", err),
 			minGitVersionErrorMsg,
 			forbiddenGitVersionErrorMsg,
 		}, ".\n")
@@ -77,9 +71,9 @@ func getGitCliVersion() (string, error) {
 		return "", errors.New(errMsg)
 	}
 
-	fullVersionMatch := regexp.MustCompile(`git version ([.0-9]+)`).FindStringSubmatch(stdout.String())
+	fullVersionMatch := regexp.MustCompile(`git version ([.0-9]+)`).FindStringSubmatch(versionCmd.OutBuf.String())
 	if len(fullVersionMatch) < 2 {
-		return "", errors.New(fmt.Sprintf("unable to parse git version from stdout: %s", stdout.String()))
+		return "", fmt.Errorf("unable to parse git version from stdout: %s", versionCmd.OutBuf)
 	}
 	fullVersionParts := strings.Split(fullVersionMatch[1], ".")
 

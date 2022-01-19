@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/werf/logboek"
@@ -39,26 +38,16 @@ func Status(ctx context.Context, workTreeDir string) (r Result, err error) {
 func status(ctx context.Context, workTreeDir string) (Result, error) {
 	result := Result{}
 
-	args := append([]string{}, "-c", "core.quotePath=false", "status", "--porcelain=v2", "--untracked-files=all", "--no-renames")
-	cmd := exec.Command("git", args...)
-	cmd.Dir = workTreeDir
+	statusCmd := true_git.NewGitCmd(ctx, &true_git.GitCmdOptions{RepoDir: workTreeDir}, "-c", "core.quotePath=false", "status", "--porcelain=v2", "--untracked-files=all", "--no-renames")
+	if err := statusCmd.Run(ctx); err != nil {
+		return result, fmt.Errorf("git status command failed: %s", err)
+	}
 
-	outputBuffer := true_git.SetCommandRecordingLiveOutput(ctx, cmd)
-	commandString := strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " ")
 	detailedErrFunc := func(err error) error {
-		return fmt.Errorf("%s\n\ncommand: %q\noutput:\n%s", err, commandString, outputBuffer.String())
+		return fmt.Errorf("%s\n\ncommand: %q\noutput:\n%s", err, statusCmd, statusCmd.OutErrBuf)
 	}
 
-	err := cmd.Run()
-	if debug() {
-		logboek.Context(ctx).Debug().LogLn("command:", commandString)
-		logboek.Context(ctx).Debug().LogLn("err:", err)
-	}
-	if err != nil {
-		return result, detailedErrFunc(fmt.Errorf("git command failed: %q", err))
-	}
-
-	scanner := bufio.NewScanner(outputBuffer)
+	scanner := bufio.NewScanner(statusCmd.OutBuf)
 	for scanner.Scan() {
 		entryLine := scanner.Text()
 		if len(entryLine) == 0 {
@@ -86,7 +75,7 @@ func status(ctx context.Context, workTreeDir string) (Result, error) {
 		}
 	}
 
-	return result, err
+	return result, nil
 }
 
 type ordinaryEntry struct {

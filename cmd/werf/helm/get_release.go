@@ -62,11 +62,11 @@ func runGetRelease() error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{LiveGitOutput: *getReleaseCmdData.LogVerbose || *getReleaseCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *getReleaseCmdData.LogVerbose || *getReleaseCmdData.LogDebug}); err != nil {
 		return err
 	}
 
-	giterminismManager, err := common.GetGiterminismManager(&getReleaseCmdData)
+	giterminismManager, err := common.GetGiterminismManager(ctx, &getReleaseCmdData)
 	if err != nil {
 		return err
 	}

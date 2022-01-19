@@ -1,9 +1,9 @@
 package true_git
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -12,7 +12,7 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func UpwardLookupAndVerifyWorkTree(lookupPath string) (bool, string, error) {
+func UpwardLookupAndVerifyWorkTree(ctx context.Context, lookupPath string) (bool, string, error) {
 	lookupPath = util.GetAbsoluteFilepath(lookupPath)
 
 	for {
@@ -25,7 +25,7 @@ func UpwardLookupAndVerifyWorkTree(lookupPath string) (bool, string, error) {
 			}
 		} else if err != nil {
 			return false, "", fmt.Errorf("error accessing %q: %s", dotGitPath, err)
-		} else if isValid, err := IsValidGitDir(dotGitPath); err != nil {
+		} else if isValid, err := IsValidGitDir(ctx, dotGitPath); err != nil {
 			return false, "", err
 		} else if isValid {
 			return true, lookupPath, nil
@@ -37,21 +37,18 @@ func UpwardLookupAndVerifyWorkTree(lookupPath string) (bool, string, error) {
 	return false, "", nil
 }
 
-func IsValidWorkTree(workTree string) (bool, error) {
-	return IsValidGitDir(filepath.Join(workTree, git.GitDirName))
+func IsValidWorkTree(ctx context.Context, workTree string) (bool, error) {
+	return IsValidGitDir(ctx, filepath.Join(workTree, git.GitDirName))
 }
 
-func IsValidGitDir(gitDir string) (bool, error) {
-	gitArgs := append(getCommonGitOptions(), []string{"--git-dir", gitDir, "rev-parse"}...)
-
-	cmd := exec.Command("git", gitArgs...)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		if strings.HasPrefix(string(output), "fatal: not a git repository: ") {
+func IsValidGitDir(ctx context.Context, gitDir string) (bool, error) {
+	detectGitCmd := NewGitCmd(ctx, nil, "--git-dir", gitDir, "rev-parse")
+	if err := detectGitCmd.Run(ctx); err != nil {
+		if strings.HasPrefix(detectGitCmd.ErrBuf.String(), "fatal: not a git repository: ") {
 			return false, nil
 		}
-		return false, fmt.Errorf("%v failed: %s:\n%s", strings.Join(append([]string{"git"}, gitArgs...), " "), err, output)
+
+		return false, fmt.Errorf("git rev parse command failed: %s", err)
 	}
 
 	return true, nil

@@ -122,8 +122,8 @@ func (repo *Base) isEmpty(ctx context.Context, repoPath string) (bool, error) {
 	return false, nil
 }
 
-func getHeadCommit(repoPath string) (string, error) {
-	res, err := true_git.ShowRef(repoPath)
+func getHeadCommit(ctx context.Context, repoPath string) (string, error) {
+	res, err := true_git.ShowRef(ctx, repoPath)
 	if err != nil {
 		return "", err
 	}

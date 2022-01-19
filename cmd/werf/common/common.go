@@ -1163,10 +1163,10 @@ func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.Wer
 	}
 }
 
-func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, error) {
+func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_manager.Interface, error) {
 	workingDir := GetWorkingDir(cmdData)
 
-	gitWorkTree, err := GetGitWorkTree(cmdData, workingDir)
+	gitWorkTree, err := GetGitWorkTree(ctx, cmdData, workingDir)
 	if err != nil {
 		return nil, err
 	}
@@ -1200,11 +1200,11 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 	})
 }
 
-func GetGitWorkTree(cmdData *CmdData, workingDir string) (string, error) {
+func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (string, error) {
 	if *cmdData.GitWorkTree != "" {
 		workTree := *cmdData.GitWorkTree
 
-		if isValid, err := true_git.IsValidWorkTree(workTree); err != nil {
+		if isValid, err := true_git.IsValidWorkTree(ctx, workTree); err != nil {
 			return "", err
 		} else if isValid {
 			return util.GetAbsoluteFilepath(workTree), nil
@@ -1213,7 +1213,7 @@ func GetGitWorkTree(cmdData *CmdData, workingDir string) (string, error) {
 		return "", fmt.Errorf("werf requires a git work tree for the project to exist: not a valid git work tree %q specified", workTree)
 	}
 
-	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree(workingDir); err != nil {
+	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree(ctx, workingDir); err != nil {
 		return "", err
 	} else if found {
 		return util.GetAbsoluteFilepath(workTree), nil

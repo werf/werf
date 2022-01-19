@@ -62,11 +62,11 @@ func runGetNamespace() error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{LiveGitOutput: *getNamespaceCmdData.LogVerbose || *getNamespaceCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *getNamespaceCmdData.LogVerbose || *getNamespaceCmdData.LogDebug}); err != nil {
 		return err
 	}
 
-	giterminismManager, err := common.GetGiterminismManager(&getNamespaceCmdData)
+	giterminismManager, err := common.GetGiterminismManager(ctx, &getNamespaceCmdData)
 	if err != nil {
 		return err
 	}

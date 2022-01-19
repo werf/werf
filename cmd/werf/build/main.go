@@ -155,7 +155,7 @@ func runMain(ctx context.Context, args []string) error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
@@ -172,7 +172,7 @@ func runMain(ctx context.Context, args []string) error {
 		}
 	}()
 
-	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
+	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}

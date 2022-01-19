@@ -80,11 +80,11 @@ func runRotateSecretKey(ctx context.Context, cmd *cobra.Command, secretValuesPat
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
-	giterminismManager, err := common.GetGiterminismManager(&commonCmdData)
+	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
