@@ -17,7 +17,7 @@ fmt:
 	gofumpt -w cmd/ pkg/
 
 lint:
-	golangci-lint -E bidichk -E errname run ./... --build-tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build"
+	golangci-lint run ./... --build-tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build"
 
 
 clean:
