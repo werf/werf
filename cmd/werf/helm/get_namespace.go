@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/config/deploy_params"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/true_git"
@@ -76,7 +77,7 @@ func runGetNamespace() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	namespace, err := common.GetKubernetesNamespace("", *getNamespaceCmdData.Environment, werfConfig)
+	namespace, err := deploy_params.GetKubernetesNamespace("", *getNamespaceCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
