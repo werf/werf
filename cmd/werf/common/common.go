@@ -28,6 +28,7 @@ import (
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 type CmdData struct {
@@ -1182,17 +1183,17 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_m
 		openLocalRepoOptions.ServiceBranchOptions.GlobExcludeList = GetDevIgnore(cmdData)
 	}
 
-	localGitRepo, err := git_repo.OpenLocalRepo(BackgroundContext(), "own", gitWorkTree, openLocalRepoOptions)
+	localGitRepo, err := git_repo.OpenLocalRepo(GetContext(), "own", gitWorkTree, openLocalRepoOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	headCommit, err := localGitRepo.HeadCommitHash(BackgroundContext())
+	headCommit, err := localGitRepo.HeadCommitHash(GetContext())
 	if err != nil {
 		return nil, err
 	}
 
-	return giterminism_manager.NewManager(BackgroundContext(), workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
+	return giterminism_manager.NewManager(GetContext(), workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		Dev:              *cmdData.Dev,
 	})
@@ -1520,6 +1521,70 @@ func SetupPlatform(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.Platform, "platform", "", defaultValue, "Enable platform emulation when building images with werf. The only supported option for now is linux/amd64.")
 }
 
-func BackgroundContext() context.Context {
+func GetContext() context.Context {
 	return logboek.NewContext(context.Background(), logboek.DefaultLogger())
+}
+
+func WithContext(allowBackgroundMode bool, f func(ctx context.Context) error) error {
+	var ctx context.Context
+
+	if allowBackgroundMode && IsBackgroundModeEnabled() {
+		out, err := os.OpenFile(GetBackgroundOutputFile(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
+		if err != nil {
+			return fmt.Errorf("unable to open background output file %q: %s", GetBackgroundOutputFile(), err)
+		}
+		defer out.Close()
+
+		ctx = logboek.NewContext(context.Background(), logboek.NewLogger(out, out))
+
+		if err := f(ctx); err != nil {
+			if err := os.WriteFile(GetLastBackgroundErrorFile(), []byte(err.Error()+"\n"), 0o644); err != nil {
+				logboek.Context(ctx).Warn().LogF("ERROR: unable to write %q: %s\n", GetLastBackgroundErrorFile(), err)
+			}
+			return err
+		}
+
+		return nil
+	} else {
+		ctx = logboek.NewContext(context.Background(), logboek.DefaultLogger())
+
+		if allowBackgroundMode {
+			if backgroundErr, err := GetAndRemoveLastBackgroundError(); err != nil {
+				return fmt.Errorf("unable to get last background error: %s", err)
+			} else if backgroundErr != nil {
+				global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("last background error: %s", backgroundErr))
+			}
+		}
+
+		return f(ctx)
+	}
+}
+
+func GetAndRemoveLastBackgroundError() (error, error) {
+	data, err := os.ReadFile(GetLastBackgroundErrorFile())
+	if err != nil {
+		return nil, nil
+	}
+
+	if err := os.RemoveAll(GetLastBackgroundErrorFile()); err != nil {
+		return nil, fmt.Errorf("unable to remove %q: %s", GetLastBackgroundErrorFile(), err)
+	}
+
+	if len(data) != 0 {
+		return fmt.Errorf("%s", string(data)), nil
+	}
+
+	return nil, nil
+}
+
+func IsBackgroundModeEnabled() bool {
+	return os.Getenv("_WERF_BACKGROUND_MODE_ENABLED") == "1"
+}
+
+func GetBackgroundOutputFile() string {
+	return filepath.Join(werf.GetServiceDir(), "background_output.log")
+}
+
+func GetLastBackgroundErrorFile() string {
+	return filepath.Join(werf.GetServiceDir(), "last_background_error")
 }

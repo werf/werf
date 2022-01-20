@@ -23,14 +23,16 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData) error {
 		return fmt.Errorf("incompatible params --allowed-local-cache-volume-usage=%d and --allowed-local-cache-volume-usage-margin=%d: margin percentage should be less than allowed volume usage level percentage", *cmdData.AllowedLocalCacheVolumeUsage, *cmdData.AllowedLocalCacheVolumeUsageMargin)
 	}
 
-	return host_cleaning.RunAutoHostCleanup(ctx, host_cleaning.HostCleanupOptions{
-		DryRun: false,
-		Force:  false,
-		AllowedDockerStorageVolumeUsagePercentage:       cmdData.AllowedDockerStorageVolumeUsage,
-		AllowedDockerStorageVolumeUsageMarginPercentage: cmdData.AllowedDockerStorageVolumeUsageMargin,
-		AllowedLocalCacheVolumeUsagePercentage:          cmdData.AllowedLocalCacheVolumeUsage,
-		AllowedLocalCacheVolumeUsageMarginPercentage:    cmdData.AllowedLocalCacheVolumeUsageMargin,
-		DockerServerStoragePath:                         *cmdData.DockerServerStoragePath,
+	return host_cleaning.RunAutoHostCleanup(ctx, host_cleaning.AutoHostCleanupOptions{
+		HostCleanupOptions: host_cleaning.HostCleanupOptions{
+			DryRun: false,
+			Force:  false,
+			AllowedDockerStorageVolumeUsagePercentage:       cmdData.AllowedDockerStorageVolumeUsage,
+			AllowedDockerStorageVolumeUsageMarginPercentage: cmdData.AllowedDockerStorageVolumeUsageMargin,
+			AllowedLocalCacheVolumeUsagePercentage:          cmdData.AllowedLocalCacheVolumeUsage,
+			AllowedLocalCacheVolumeUsageMarginPercentage:    cmdData.AllowedLocalCacheVolumeUsageMargin,
+			DockerServerStoragePath:                         cmdData.DockerServerStoragePath,
+		},
 	})
 }
 

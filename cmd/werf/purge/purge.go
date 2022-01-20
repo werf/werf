@@ -30,7 +30,7 @@ func NewCmd() *cobra.Command {
 
 WARNING: Images that are being used in the Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.BackgroundContext()
+			ctx := common.GetContext()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 

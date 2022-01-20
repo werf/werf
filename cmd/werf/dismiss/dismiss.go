@@ -53,7 +53,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
   $ werf dismiss --release myrelease --namespace myns`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.BackgroundContext()
+			ctx := common.GetContext()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 

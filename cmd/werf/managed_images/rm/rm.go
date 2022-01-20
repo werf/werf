@@ -27,7 +27,7 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Remove image record from the list of managed images which will be preserved during cleanup procedure",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.BackgroundContext()
+			ctx := common.GetContext()
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)

@@ -21,7 +21,7 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Render werf.yaml",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.BackgroundContext()
+			ctx := common.GetContext()
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -62,7 +62,7 @@ func NewCmd() *cobra.Command {
 				return err
 			}
 
-			return config.RenderWerfConfig(common.BackgroundContext(), customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, args, giterminismManager, configOpts)
+			return config.RenderWerfConfig(common.GetContext(), customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, args, giterminismManager, configOpts)
 		},
 	}
 

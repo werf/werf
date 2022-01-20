@@ -74,7 +74,7 @@ func NewMigrate2To3Cmd() *cobra.Command {
 				return err
 			}
 
-			return runMigrate2To3(common.BackgroundContext())
+			return runMigrate2To3(common.GetContext())
 		},
 	}
 

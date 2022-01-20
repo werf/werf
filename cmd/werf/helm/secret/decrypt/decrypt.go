@@ -48,7 +48,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 				return err
 			}
 
-			return runSecretDecrypt(common.BackgroundContext())
+			return runSecretDecrypt(common.GetContext())
 		},
 	}
 

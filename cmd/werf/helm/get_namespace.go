@@ -47,7 +47,7 @@ func NewGetNamespaceCmd() *cobra.Command {
 }
 
 func runGetNamespace() error {
-	ctx := common.BackgroundContext()
+	ctx := common.GetContext()
 
 	if err := werf.Init(*getNamespaceCmdData.TmpDir, *getNamespaceCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
@@ -71,7 +71,7 @@ func runGetNamespace() error {
 		return err
 	}
 
-	_, werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &getNamespaceCmdData, giterminismManager, common.GetWerfConfigOptions(&getNamespaceCmdData, false))
+	_, werfConfig, err := common.GetRequiredWerfConfig(common.GetContext(), &getNamespaceCmdData, giterminismManager, common.GetWerfConfigOptions(&getNamespaceCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

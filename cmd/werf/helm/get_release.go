@@ -47,7 +47,7 @@ func NewGetReleaseCmd() *cobra.Command {
 }
 
 func runGetRelease() error {
-	ctx := common.BackgroundContext()
+	ctx := common.GetContext()
 
 	if err := werf.Init(*getReleaseCmdData.TmpDir, *getReleaseCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
@@ -71,7 +71,7 @@ func runGetRelease() error {
 		return err
 	}
 
-	_, werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
+	_, werfConfig, err := common.GetRequiredWerfConfig(common.GetContext(), &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}

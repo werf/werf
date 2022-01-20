@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -47,7 +47,7 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.BackgroundContext()
+			ctx := common.GetContext()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 

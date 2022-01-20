@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -52,7 +52,7 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.BackgroundContext()
+			ctx := common.GetContext()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 

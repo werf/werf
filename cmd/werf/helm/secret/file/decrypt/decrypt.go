@@ -49,7 +49,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 				filePath = args[0]
 			}
 
-			if err := runSecretDecrypt(common.BackgroundContext(), filePath); err != nil {
+			if err := runSecretDecrypt(common.GetContext(), filePath); err != nil {
 				if strings.HasSuffix(err.Error(), secret_common.ExpectedFilePathOrPipeError().Error()) {
 					common.PrintHelp(cmd)
 				}

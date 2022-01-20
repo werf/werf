@@ -53,7 +53,7 @@ func NewCmd() *cobra.Command {
 }
 
 func run() error {
-	ctx := common.BackgroundContext()
+	ctx := common.GetContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
@@ -77,7 +77,7 @@ func run() error {
 		return err
 	}
 
-	_, werfConfig, err := common.GetRequiredWerfConfig(common.BackgroundContext(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
+	_, werfConfig, err := common.GetRequiredWerfConfig(common.GetContext(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return err
 	}

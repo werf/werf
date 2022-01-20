@@ -44,7 +44,7 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.BackgroundContext())
+			defer global_warnings.PrintGlobalWarnings(common.GetContext())
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -101,7 +101,7 @@ func NewCmd() *cobra.Command {
 }
 
 func runApply() error {
-	ctx := common.BackgroundContext()
+	ctx := common.GetContext()
 
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 

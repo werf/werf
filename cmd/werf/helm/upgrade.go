@@ -24,7 +24,7 @@ func NewUpgradeCmd(actionConfig *action.Configuration, wc *chart_extender.WerfCh
 
 	oldRunE := cmd.RunE
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		ctx := common.BackgroundContext()
+		ctx := common.GetContext()
 
 		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 			return err
