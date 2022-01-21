@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -657,6 +658,21 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 				imageRunOptions.AddVolume(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", phase.Conveyor.sshAuthSock))
 				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
 			}
+
+			headHash, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitHash(ctx)
+			if err != nil {
+				return fmt.Errorf("error getting HEAD commit hash: %s", err)
+			}
+			imageRunOptions.AddEnv(map[string]string{"WERF_COMMIT_HASH": headHash})
+
+			headTime, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitTime(ctx)
+			if err != nil {
+				return fmt.Errorf("error getting HEAD commit time: %s", err)
+			}
+			imageRunOptions.AddEnv(map[string]string{
+				"WERF_COMMIT_TIME_HUMAN": headTime.String(),
+				"WERF_COMMIT_TIME_UNIX":  strconv.FormatInt(headTime.Unix(), 10),
+			})
 		}
 	}
 
