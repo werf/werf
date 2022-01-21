@@ -41,7 +41,7 @@ werf cr login -p token registry.example.com
 werf cr login --insecure-registry registry.example.com`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.BackgroundContext()
+			ctx := common.GetContext()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 

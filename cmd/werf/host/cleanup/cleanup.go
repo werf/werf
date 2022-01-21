@@ -40,17 +40,21 @@ The data include:
 It is safe to run this command periodically by automated cleanup job in parallel with other werf commands such as build, converge and cleanup.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.BackgroundContext()
-
-			defer global_warnings.PrintGlobalWarnings(ctx)
-
-			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
-				common.PrintHelp(cmd)
-				return err
+			if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+				return fmt.Errorf("initialization error: %s", err)
 			}
-			common.LogVersion()
 
-			return common.LogRunningTime(func() error { return runGC(ctx) })
+			return common.WithContext(true, func(ctx context.Context) error {
+				defer global_warnings.PrintGlobalWarnings(ctx)
+
+				if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+					common.PrintHelp(cmd)
+					return err
+				}
+				common.LogVersion()
+
+				return common.LogRunningTime(func() error { return runCleanup(ctx) })
+			})
 		},
 	}
 
@@ -78,11 +82,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	return cmd
 }
 
-func runGC(ctx context.Context) error {
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
-	}
-
+func runCleanup(ctx context.Context) error {
 	_, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func runGC(ctx context.Context) error {
 		AllowedDockerStorageVolumeUsageMarginPercentage: commonCmdData.AllowedDockerStorageVolumeUsageMargin,
 		AllowedLocalCacheVolumeUsagePercentage:          commonCmdData.AllowedLocalCacheVolumeUsage,
 		AllowedLocalCacheVolumeUsageMarginPercentage:    commonCmdData.AllowedLocalCacheVolumeUsageMargin,
-		DockerServerStoragePath:                         *commonCmdData.DockerServerStoragePath,
+		DockerServerStoragePath:                         commonCmdData.DockerServerStoragePath,
 	}
 
 	return host_cleaning.RunHostCleanup(ctx, hostCleanupOptions)

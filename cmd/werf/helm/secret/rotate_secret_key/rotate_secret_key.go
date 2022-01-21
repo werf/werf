@@ -46,7 +46,7 @@ Command will extract data with the old key, generate new secret data and rewrite
 				return err
 			}
 
-			return runRotateSecretKey(common.BackgroundContext(), cmd, args...)
+			return runRotateSecretKey(common.GetContext(), cmd, args...)
 		},
 	}
 

@@ -80,7 +80,7 @@ func NewCmd() *cobra.Command {
 }
 
 func runSynchronization() error {
-	ctx := common.BackgroundContext()
+	ctx := common.GetContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)

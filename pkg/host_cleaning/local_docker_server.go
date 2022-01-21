@@ -58,10 +58,10 @@ func GetLocalDockerServerStoragePath(ctx context.Context) (string, error) {
 	return storagePath, nil
 }
 
-func getDockerServerStoragePath(ctx context.Context, dockerServerStoragePathOption string) (string, error) {
+func getDockerServerStoragePath(ctx context.Context, dockerServerStoragePathOption *string) (string, error) {
 	var dockerServerStoragePath string
-	if dockerServerStoragePathOption != "" {
-		dockerServerStoragePath = dockerServerStoragePathOption
+	if dockerServerStoragePathOption != nil {
+		dockerServerStoragePath = *dockerServerStoragePathOption
 	} else {
 		path, err := GetLocalDockerServerStoragePath(ctx)
 		if err != nil {

@@ -23,7 +23,7 @@ func NewCmd() *cobra.Command {
 		Long:                  common.GetLongCommandDescription(`Logout from a remote registry`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.BackgroundContext()
+			ctx := common.GetContext()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 

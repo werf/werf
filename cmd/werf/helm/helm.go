@@ -41,7 +41,7 @@ func NewCmd() *cobra.Command {
 		Short: "Manage application deployment with helm",
 	}
 
-	ctx := common.BackgroundContext()
+	ctx := common.GetContext()
 
 	wc := chart_extender.NewWerfChartStub(ctx)
 
@@ -122,7 +122,7 @@ func NewCmd() *cobra.Command {
 				// FIXME: setup namespace env var for helm diff plugin
 				os.Setenv("WERF_HELM3_MODE", "1")
 
-				ctx := common.BackgroundContext()
+				ctx := common.GetContext()
 
 				if vals, err := helpers.GetServiceValues(ctx, "PROJECT", "REPO", nil, helpers.ServiceValuesOptions{Namespace: namespace, IsStub: true}); err != nil {
 					return fmt.Errorf("error creating service values: %s", err)

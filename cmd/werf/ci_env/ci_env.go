@@ -87,7 +87,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 func runCIEnv(cmd *cobra.Command, args []string) error {
 	logboek.SetAcceptedLevel(level.Error)
 
-	ctx := common.BackgroundContext()
+	ctx := common.GetContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
