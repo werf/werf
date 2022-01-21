@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/config/deploy_params"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/true_git"
@@ -76,7 +77,12 @@ func runGetRelease() error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	release, err := common.GetHelmRelease("", *getReleaseCmdData.Environment, werfConfig)
+	namespace, err := deploy_params.GetKubernetesNamespace(*getReleaseCmdData.Namespace, *getReleaseCmdData.Environment, werfConfig)
+	if err != nil {
+		return err
+	}
+
+	release, err := deploy_params.GetHelmRelease("", *getReleaseCmdData.Environment, namespace, werfConfig)
 	if err != nil {
 		return err
 	}

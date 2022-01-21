@@ -47,7 +47,7 @@ deploy:
   helmReleaseSlug: false
 ```
 
-В качестве значения для `deploy.helmRelease` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `project` и `env`. Значение шаблона имени релиза по умолчанию: `[[ project ]]-[[ env ]]`.
+В качестве значения для `deploy.helmRelease` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `[[ project ]]`, `[[ env ]]` и `[[ namespace ]]`. Значение шаблона имени релиза по умолчанию: `[[ project ]]-[[ env ]]`.
 
 Можно комбинировать переменные доступные в Go-шаблоне с переменными окружения следующим образом:
 
@@ -55,7 +55,7 @@ deploy:
 ```yaml
 deploy:
   helmRelease: >-
-    [[ project ]]-{{ env "HELM_RELEASE_EXTRA" }}-[[ env ]]
+    [[ project ]]-[[ namespace ]]-[[ env ]]-{{ env "HELM_RELEASE_EXTRA" }}
 ```
 {% endraw %}
 

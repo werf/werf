@@ -44,13 +44,13 @@ deploy:
   helmReleaseSlug: false
 ```
 
-`deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. Default: `[[ project ]]-[[ env ]]`. Template can be customized as follows:
+`deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` and `[[ namespace ]]` functions support. Default: `[[ project ]]-[[ env ]]`. Template can be customized as follows:
 
 {% raw %}
 ```yaml
 deploy:
   helmRelease: >-
-    [[ project ]]-{{ env "HELM_RELEASE_EXTRA" }}-[[ env ]]
+    [[ project ]]-[[ namespace ]]-[[ env ]]-{{ env "HELM_RELEASE_EXTRA" }}
 ```
 {% endraw %}
 
