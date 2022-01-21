@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,8 +59,9 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 		return "", fmt.Errorf("unable to get or prepare service branch head commit: %s", err)
 	}
 
-	if _, err := runGitCmd(ctx, []string{"checkout", branchName}, serviceWorktreeDir, runGitCmdOptions{}); err != nil {
-		return "", fmt.Errorf("unable to checkout service branch: %s", err)
+	checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", branchName)
+	if err = checkoutCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git checkout command failed: %s", err)
 	}
 
 	revertedChangesExist, err := revertExcludedChangesInServiceWorktreeIndex(ctx, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, serviceBranchHeadCommit, globExcludeList)
@@ -91,27 +91,29 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 }
 
 func getOrPrepareServiceBranchHeadCommit(ctx context.Context, serviceWorktreeDir string, sourceCommit string, branchName string) (string, error) {
-	var isServiceBranchExist bool
-	output, err := runGitCmd(ctx, []string{"branch", "--list", branchName}, serviceWorktreeDir, runGitCmdOptions{})
-	if err != nil {
-		return "", err
+	branchListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "branch", "--list", branchName)
+	if err := branchListCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git branch list command failed: %s", err)
 	}
-	isServiceBranchExist = output.Len() != 0
+
+	var isServiceBranchExist bool
+	isServiceBranchExist = branchListCmd.OutBuf.Len() != 0
 
 	if !isServiceBranchExist {
-		if _, err := runGitCmd(ctx, []string{"checkout", "-b", branchName, sourceCommit}, serviceWorktreeDir, runGitCmdOptions{}); err != nil {
-			return "", err
+		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", "-b", branchName, sourceCommit)
+		if err := checkoutCmd.Run(ctx); err != nil {
+			return "", fmt.Errorf("git checkout command failed: %s", err)
 		}
 
 		return sourceCommit, nil
 	}
 
-	output, err = runGitCmd(ctx, []string{"rev-parse", branchName}, serviceWorktreeDir, runGitCmdOptions{})
-	if err != nil {
-		return "", err
+	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "rev-parse", branchName)
+	if err := revParseCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git rev parse branch command failed: %s", err)
 	}
 
-	serviceBranchHeadCommit := strings.TrimSpace(output.String())
+	serviceBranchHeadCommit := strings.TrimSpace(revParseCmd.OutBuf.String())
 	return serviceBranchHeadCommit, nil
 }
 
@@ -130,17 +132,19 @@ func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWork
 	}
 	gitDiffArgs = append(gitDiffArgs, globExcludeList...)
 
-	diffOutput, err := runGitCmd(ctx, gitDiffArgs, sourceWorktreeDir, runGitCmdOptions{})
-	if err != nil {
-		return false, err
+	diffCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, gitDiffArgs...)
+	if err := diffCmd.Run(ctx); err != nil {
+		return false, fmt.Errorf("git diff command failed: %s", err)
 	}
 
-	if len(diffOutput.Bytes()) == 0 {
+	if diffCmd.OutBuf.Len() == 0 {
 		return false, nil
 	}
 
-	if _, err := runGitCmd(ctx, []string{"apply", "--binary", "--index"}, serviceWorktreeDir, runGitCmdOptions{stdin: diffOutput}); err != nil {
-		return false, err
+	applyCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "apply", "--binary", "--index")
+	applyCmd.Stdin = diffCmd.OutBuf
+	if err := applyCmd.Run(ctx); err != nil {
+		return false, fmt.Errorf("git apply command failed: %s", err)
 	}
 
 	return true, nil
@@ -179,58 +183,43 @@ func runGitAddCmd(ctx context.Context, sourceWorktreeDir string, serviceWorktree
 		}
 	}
 
-	var runOptions runGitCmdOptions
+	var pathSpecFileBuf *bytes.Buffer
 	if gitVersion.LessThan(semver.MustParse("2.25.0")) {
 		gitAddArgs = append(gitAddArgs, "--")
 		gitAddArgs = append(gitAddArgs, pathSpecList...)
 	} else {
 		gitAddArgs = append(gitAddArgs, "--pathspec-from-file=-", "--pathspec-file-nul")
-		pathspecFileBuf := bytes.NewBufferString(strings.Join(pathSpecList, "\000"))
-		runOptions = runGitCmdOptions{stdin: pathspecFileBuf}
+		pathSpecFileBuf = bytes.NewBufferString(strings.Join(pathSpecList, "\000"))
 	}
 
-	output, err := runGitCmd(ctx, gitAddArgs, serviceWorktreeDir, runOptions)
-	if err != nil {
+	addCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, gitAddArgs...)
+	if pathSpecFileBuf != nil {
+		addCmd.Stdin = pathSpecFileBuf
+	}
+	if err := addCmd.Run(ctx); err != nil {
 		return nil, err
 	}
 
-	return output, nil
+	return addCmd.OutBuf, nil
 }
 
 func commitNewChangesInServiceBranch(ctx context.Context, serviceWorktreeDir string, branchName string) (string, error) {
-	gitArgs := []string{"-c", "user.email=werf@werf.io", "-c", "user.name=werf", "commit", "--no-verify", "-m", time.Now().String()}
-	if _, err := runGitCmd(ctx, gitArgs, serviceWorktreeDir, runGitCmdOptions{}); err != nil {
-		return "", err
+	commitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "commit", "--no-verify", "-m", time.Now().String())
+	if err := commitCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git commit command failed: %s", err)
 	}
 
-	output, err := runGitCmd(ctx, []string{"rev-parse", branchName}, serviceWorktreeDir, runGitCmdOptions{})
-	if err != nil {
-		return "", err
+	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "rev-parse", branchName)
+	if err := revParseCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git rev parse branch command failed: %s", err)
 	}
-	serviceNewCommit := strings.TrimSpace(output.String())
 
-	if _, err := runGitCmd(ctx, []string{"checkout", "--force", "--detach", serviceNewCommit}, serviceWorktreeDir, runGitCmdOptions{}); err != nil {
-		return "", err
+	serviceNewCommit := strings.TrimSpace(revParseCmd.OutBuf.String())
+
+	checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", "--force", "--detach", serviceNewCommit)
+	if err := checkoutCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git checkout command failed: %s", err)
 	}
 
 	return serviceNewCommit, nil
-}
-
-type runGitCmdOptions struct {
-	stdin io.Reader
-}
-
-// TODO(ilya-lesikov): remove this function, replace with NewGitCmd()
-func runGitCmd(ctx context.Context, args []string, dir string, opts runGitCmdOptions) (*bytes.Buffer, error) {
-	gitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: dir}, args...)
-
-	if opts.stdin != nil {
-		gitCmd.Stdin = opts.stdin
-	}
-
-	if err := gitCmd.Run(ctx); err != nil {
-		return nil, fmt.Errorf("git command run failed: %s", err)
-	}
-
-	return gitCmd.OutBuf, nil
 }

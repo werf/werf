@@ -34,25 +34,18 @@ var _ = Describe("Git command", func() {
 	})
 
 	When("looking for existent ref", func() {
-		It("succeeds, returning branch name", func() {
+		It("succeeds, populates stdout/err/outerr buffers correctly", func() {
 			ctx := context.Background()
 
-			output, err := runGitCmd(ctx, []string{"branch", "--list", "master"}, gitRepoPath, runGitCmdOptions{})
+			brokenHeadPath := filepath.Join(gitRepoPath, ".git", "refs", "heads", "broken")
+			Expect(os.WriteFile(brokenHeadPath, []byte("invalid"), os.ModePerm)).To(Succeed())
+
+			branchCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: gitRepoPath}, "branch", "--list", "master")
+			err := branchCmd.Run(ctx)
 			Expect(err).To(Succeed())
-			Expect(output.String()).To(ContainSubstring("master"))
-		})
-	})
-
-	When("looking for non-existent ref", func() {
-		It("succeeds, ignoring stderr in git output and returning only (empty) stdout", func() {
-			ctx := context.Background()
-
-			brokenHeadPath := filepath.Join(gitRepoPath, ".git", "refs", "heads", "foo")
-			Expect(os.WriteFile(brokenHeadPath, []byte("bad"), os.ModePerm)).To(Succeed())
-
-			output, err := runGitCmd(ctx, []string{"branch", "--list", "no-such-branch"}, gitRepoPath, runGitCmdOptions{})
-			Expect(err).To(Succeed())
-			Expect(output.Len()).To(Equal(0))
+			Expect(branchCmd.OutBuf.String()).To(Equal("* master\n"))
+			Expect(branchCmd.ErrBuf.String()).To(Equal("warning: ignoring broken ref refs/heads/broken\n"))
+			Expect(branchCmd.OutErrBuf.String()).To(Equal("warning: ignoring broken ref refs/heads/broken\n* master\n"))
 		})
 	})
 })
