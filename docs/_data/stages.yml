@@ -72,11 +72,11 @@ en:
           - <task>
           cacheVersion: <arbitrary string>
           beforeInstallCacheVersion: <arbitrary string>
-    - &image_artifact_imports_before_install
-      name: importsBeforeInstall
+    - &image_artifact_dependencies_before_install
+      name: dependenciesBeforeInstall
       type: "image artifact"
       dependencies:
-        - imports before install
+        - dependencies before install
       references:
         - name: "Importing from images and artifacts"
           link: "/advanced/building_images_with_stapel/import_directive.html"
@@ -151,11 +151,11 @@ en:
           install:
           - <task>
           installCacheVersion: <arbitrary string>
-    - &image_artifact_imports_after_install
-      name: importsAfterInstall
+    - &image_artifact_dependencies_after_install
+      name: dependenciesAfterInstall
       type: "image artifact"
       dependencies:
-        - imports after install
+        - dependencies after install
       werf_config: |
         import:
         - artifact: <artifact name>
@@ -200,11 +200,11 @@ en:
           beforeSetup:
           - <task>
           beforeSetupCacheVersion: <arbitrary string>
-    - &image_artifact_imports_before_setup
-      name: importsBeforeSetup
+    - &image_artifact_dependencies_before_setup
+      name: dependenciesBeforeSetup
       type: "image artifact"
       dependencies:
-        - imports before setup
+        - dependencies before setup
       werf_config: |
         import:
         - artifact: <artifact name>
@@ -257,11 +257,11 @@ en:
       references:
         - name: "More details: gitArchive, gitCache, gitLatestPatch"
           link: "/advanced/building_images_with_stapel/git_directive.html#more-details-gitarchive-gitcache-gitlatestpatch"
-    - &image_imports_after_setup
-      name: importsAfterSetup
+    - &image_dependencies_after_setup
+      name: dependenciesAfterSetup
       type: "image artifact"
       dependencies:
-        - imports after setup
+        - dependencies after setup
       werf_config: |
         import:
         - artifact: <artifact name>
@@ -324,7 +324,7 @@ ru:
       references:
         - name: "Запуск инструкций сборки"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html"
-    - << : *image_artifact_imports_before_install
+    - << : *image_artifact_dependencies_before_install
       references:
         - name: "Импорт из артефактов и образов"
           link: "/advanced/building_images_with_stapel/import_directive.html"
@@ -338,7 +338,7 @@ ru:
           link: "/advanced/building_images_with_stapel/assembly_instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-изменений-в-git-репозитории"
-    - << : *image_artifact_imports_after_install
+    - << : *image_artifact_dependencies_after_install
       references:
         - name: "Импорт из артефактов и образов"
           link: "/advanced/building_images_with_stapel/import_directive.html"
@@ -348,7 +348,7 @@ ru:
           link: "/advanced/building_images_with_stapel/assembly_instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-изменений-в-git-репозитории"
-    - << : *image_artifact_imports_before_setup
+    - << : *image_artifact_dependencies_before_setup
       references:
         - name: "Импорт из артефактов и образов"
           link: "/advanced/building_images_with_stapel/import_directive.html"
@@ -362,7 +362,7 @@ ru:
       references:
         - name: "Подробнее про gitArchive, gitCache, gitLatestPatch"
           link: "/advanced/building_images_with_stapel/git_directive.html#подробнее-про-gitarchive-gitcache-gitlatestpatch"
-    - << : *image_imports_after_setup
+    - << : *image_dependencies_after_setup
       references:
         - name: "Импорт из артефактов и образов"
           link: "/advanced/building_images_with_stapel/import_directive.html"

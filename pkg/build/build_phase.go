@@ -578,7 +578,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg sta
 		return false, nil, err
 	}
 
-	stageDigest, err := calculateDigest(ctx, string(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
+	stageDigest, err := calculateDigest(ctx, stage.GetLegacyCompatibleStageName(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
 	if err != nil {
 		return false, nil, err
 	}
