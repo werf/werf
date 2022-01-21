@@ -3,6 +3,7 @@ package ci_env_test
 import (
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/bmatcuk/doublestar"
@@ -64,10 +65,14 @@ var _ = Describe("base", func() {
 				)
 
 				scriptPath := strings.TrimSpace(useAsFileOutput)
-				scriptData, err := ioutil.ReadFile(scriptPath)
+				scriptDataByte, err := ioutil.ReadFile(scriptPath)
 				Ω(err).ShouldNot(HaveOccurred())
 
-				Ω(len(string(scriptData))).Should(Equal(len(output)))
+				re := regexp.MustCompile("(.*/tmp/werf-docker-config-)[0-9]+(.*)")
+				scriptData := re.ReplaceAllString(string(scriptDataByte), "${1}${2}")
+				output = re.ReplaceAllString(output, "${1}${2}")
+
+				Ω(len(scriptData)).Should(Equal(len(output)))
 			})
 		})
 	}
