@@ -867,18 +867,18 @@ func initStages(ctx context.Context, image *Image, imageInterfaceConfig config.S
 
 	stages = appendIfExist(ctx, stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateBeforeInstallStage(ctx, imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateImportsBeforeInstallStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
 	if gitMappingsExist {
 		stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
 	}
 
 	stages = appendIfExist(ctx, stages, stage.GenerateInstallStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateImportsAfterInstallStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterInstallStage(imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateBeforeSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateImportsBeforeSetupStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeSetupStage(imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateImportsAfterSetupStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterSetupStage(imageBaseConfig, baseStageOptions))
 
 	if !imageArtifact {
 		if gitMappingsExist {

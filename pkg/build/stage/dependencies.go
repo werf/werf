@@ -37,20 +37,20 @@ func getImports(imageBaseConfig *config.StapelImageBase, options *getImportsOpti
 	return imports
 }
 
-func newImportsStage(imports []*config.Import, name StageName, baseStageOptions *NewBaseStageOptions) *ImportsStage {
-	s := &ImportsStage{}
+func newDependenciesStage(imports []*config.Import, name StageName, baseStageOptions *NewBaseStageOptions) *DependenciesStage {
+	s := &DependenciesStage{}
 	s.imports = imports
 	s.BaseStage = newBaseStage(name, baseStageOptions)
 	return s
 }
 
-type ImportsStage struct {
+type DependenciesStage struct {
 	*BaseStage
 
 	imports []*config.Import
 }
 
-func (s *ImportsStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
+func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
 	var args []string
 
 	for ind, elm := range s.imports {
@@ -71,7 +71,7 @@ func (s *ImportsStage) GetDependencies(ctx context.Context, c Conveyor, _, _ con
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ImportsStage) PrepareImage(ctx context.Context, c Conveyor, _, image container_runtime.LegacyImageInterface) error {
+func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, image container_runtime.LegacyImageInterface) error {
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
 		srv, err := c.GetImportServer(ctx, sourceImageName, elm.Stage)
@@ -101,7 +101,7 @@ func (s *ImportsStage) PrepareImage(ctx context.Context, c Conveyor, _, image co
 	return nil
 }
 
-func (s *ImportsStage) getImportSourceChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {
+func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {
 	importSourceID := getImportSourceID(c, importElm)
 	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 	if err != nil {
@@ -129,7 +129,7 @@ func (s *ImportsStage) getImportSourceChecksum(ctx context.Context, c Conveyor, 
 	return importMetadata.Checksum, nil
 }
 
-func (s *ImportsStage) generateImportChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {
+func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {
 	sourceImageDockerImageName := getSourceImageDockerImageName(c, importElm)
 	importSourceID := getImportSourceID(c, importElm)
 

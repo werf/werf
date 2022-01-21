@@ -21,34 +21,50 @@ import (
 type StageName string
 
 const (
-	From                 StageName = "from"
-	BeforeInstall        StageName = "beforeInstall"
-	ImportsBeforeInstall StageName = "importsBeforeInstall"
-	GitArchive           StageName = "gitArchive"
-	Install              StageName = "install"
-	ImportsAfterInstall  StageName = "importsAfterInstall"
-	BeforeSetup          StageName = "beforeSetup"
-	ImportsBeforeSetup   StageName = "importsBeforeSetup"
-	Setup                StageName = "setup"
-	ImportsAfterSetup    StageName = "importsAfterSetup"
-	GitCache             StageName = "gitCache"
-	GitLatestPatch       StageName = "gitLatestPatch"
-	DockerInstructions   StageName = "dockerInstructions"
+	From                      StageName = "from"
+	BeforeInstall             StageName = "beforeInstall"
+	DependenciesBeforeInstall StageName = "dependenciesBeforeInstall"
+	GitArchive                StageName = "gitArchive"
+	Install                   StageName = "install"
+	DependenciesAfterInstall  StageName = "dependenciesAfterInstall"
+	BeforeSetup               StageName = "beforeSetup"
+	DependenciesBeforeSetup   StageName = "dependenciesBeforeSetup"
+	Setup                     StageName = "setup"
+	DependenciesAfterSetup    StageName = "dependenciesAfterSetup"
+	GitCache                  StageName = "gitCache"
+	GitLatestPatch            StageName = "gitLatestPatch"
+	DockerInstructions        StageName = "dockerInstructions"
 
 	Dockerfile StageName = "dockerfile"
 )
 
+// TODO(compatibility): remove in v1.3
+func GetLegacyCompatibleStageName(name StageName) string {
+	switch name {
+	case DependenciesBeforeInstall:
+		return "importsBeforeInstall"
+	case DependenciesAfterInstall:
+		return "importsAfterInstall"
+	case DependenciesBeforeSetup:
+		return "importsBeforeSetup"
+	case DependenciesAfterSetup:
+		return "importsAfterSetup"
+	default:
+		return string(name)
+	}
+}
+
 var AllStages = []StageName{
 	From,
 	BeforeInstall,
-	ImportsBeforeInstall,
+	DependenciesBeforeInstall,
 	GitArchive,
 	Install,
-	ImportsAfterInstall,
+	DependenciesAfterInstall,
 	BeforeSetup,
-	ImportsBeforeSetup,
+	DependenciesBeforeSetup,
 	Setup,
-	ImportsAfterSetup,
+	DependenciesAfterSetup,
 	GitCache,
 	GitLatestPatch,
 	DockerInstructions,
