@@ -34,6 +34,7 @@ func NewGetReleaseCmd() *cobra.Command {
 	common.SetupGitWorkTree(&getReleaseCmdData, cmd)
 	common.SetupConfigTemplatesDir(&getReleaseCmdData, cmd)
 	common.SetupConfigPath(&getReleaseCmdData, cmd)
+	common.SetupNamespace(&getReleaseCmdData, cmd)
 	common.SetupEnvironment(&getReleaseCmdData, cmd)
 
 	common.SetupGiterminismOptions(&getReleaseCmdData, cmd)
