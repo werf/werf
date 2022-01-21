@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"sigs.k8s.io/yaml"
 
@@ -38,6 +39,8 @@ type ServiceValuesOptions struct {
 	IsStub          bool
 	StubImagesNames []string
 	CustomTagFunc   func(string) string
+	CommitHash      string
+	CommitDate      *time.Time
 
 	SetDockerConfigJsonValue bool
 	DockerConfigPath         string
@@ -57,6 +60,13 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 		"repo":    repo,
 		"image":   map[string]interface{}{},
 		"tag":     map[string]interface{}{},
+		"commit": map[string]interface{}{
+			"hash": opts.CommitHash,
+			"date": map[string]interface{}{
+				"human": opts.CommitDate.String(),
+				"unix":  opts.CommitDate.Unix(),
+			},
+		},
 	}
 
 	if opts.Env != "" {

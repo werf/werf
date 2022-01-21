@@ -229,7 +229,23 @@ func runGetServiceValues(ctx context.Context) error {
 		return err
 	}
 
-	serviceValues, err := helpers.GetServiceValues(ctx, projectName, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{Namespace: namespace, Env: environment, CustomTagFunc: useCustomTagFunc})
+	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
+	if err != nil {
+		return fmt.Errorf("getting HEAD commit hash failed: %s", err)
+	}
+
+	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
+	if err != nil {
+		return fmt.Errorf("getting HEAD commit time failed: %s", err)
+	}
+
+	serviceValues, err := helpers.GetServiceValues(ctx, projectName, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+		Namespace:     namespace,
+		Env:           environment,
+		CustomTagFunc: useCustomTagFunc,
+		CommitHash:    headHash,
+		CommitDate:    headTime,
+	})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
