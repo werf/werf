@@ -112,6 +112,11 @@ werf:
   tag:
     assets: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
     rails: e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
+  commit:
+    date:
+      human: 2022-01-21 18:51:39 +0300 +0300
+      unix: 1642780299
+    hash: 1b28e6843a963c5bdb3579f6fc93317cc028051c
 
 global:
   werf:
@@ -128,6 +133,7 @@ global:
  - Адрес container registry репозитория, используемый во время деплоя: `.Values.werf.repo`.
  - Полное имя и тег Docker-образа для каждого описанного в файле конфигурации `werf.yaml` образа: `.Values.werf.image.NAME`. Больше информации про использование этих значений доступно [в статье про шаблоны]({{ "/advanced/helm/configuration/templates.html#интеграция-с-собранными-образами" | true_relative_url }}).
  - Только теги собранных Docker-образов. Предназначены в первую очередь для использования совместно с `.Values.werf.repo`, для проброса полного имени и тега образов по-отдельности.
+ - Информация о коммите, с которого werf был запущен: `.Values.werf.commit.hash`, `.Values.werf.commit.date.human`, `.Values.werf.commit.date.unix`.
 
 ### Сервисные данные в сабчартах
 
