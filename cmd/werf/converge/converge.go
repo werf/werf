@@ -397,12 +397,24 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 		return err
 	}
 
+	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
+	if err != nil {
+		return fmt.Errorf("getting HEAD commit hash failed: %s", err)
+	}
+
+	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
+	if err != nil {
+		return fmt.Errorf("getting HEAD commit time failed: %s", err)
+	}
+
 	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
 		CustomTagFunc:            useCustomTagFunc,
+		CommitHash:               headHash,
+		CommitDate:               headTime,
 	}); err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	} else {

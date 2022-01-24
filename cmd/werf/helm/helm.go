@@ -124,7 +124,14 @@ func NewCmd() *cobra.Command {
 
 				ctx := common.GetContext()
 
-				if vals, err := helpers.GetServiceValues(ctx, "PROJECT", "REPO", nil, helpers.ServiceValuesOptions{Namespace: namespace, IsStub: true}); err != nil {
+				stubCommitDate := time.Unix(0, 0)
+
+				if vals, err := helpers.GetServiceValues(ctx, "PROJECT", "REPO", nil, helpers.ServiceValuesOptions{
+					Namespace:  namespace,
+					IsStub:     true,
+					CommitHash: "COMMIT_HASH",
+					CommitDate: &stubCommitDate,
+				}); err != nil {
 					return fmt.Errorf("error creating service values: %s", err)
 				} else {
 					wc.SetStubServiceValues(vals)
