@@ -27,9 +27,9 @@ jobs:
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"
 
-      - name: Test
+      - name: Tests
         run: |
-          make unit-test
+          make unit-tests
 
   lint:
     name: Lint
