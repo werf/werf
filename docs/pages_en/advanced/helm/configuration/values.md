@@ -112,6 +112,11 @@ werf:
   tag:
     assets: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
     rails: e760e9311f938e3d92681e93da3a81e176aa7f7e684ee06d092ec199-1598269478292
+  commit:
+    date:
+      human: 2022-01-21 18:51:39 +0300 +0300
+      unix: 1642780299
+    hash: 1b28e6843a963c5bdb3579f6fc93317cc028051c
 
 global:
   werf:
@@ -127,6 +132,7 @@ There are following service values:
  - Container registry repo used during the current deploy process: `.Values.werf.repo`.
  - Full images names used during the current deploy process: `.Values.werf.image.NAME`. More info about using this available in [the templates article]({{ "/advanced/helm/configuration/templates.html#integration-with-built-images" | true_relative_url }}).
  - Only tags of built images. Usually used in combination with `.Values.werf.repo` to pass image repos and image tags separately.
+ - Info about commit from which werf was executed: `.Values.werf.commit.hash`, `.Values.werf.commit.date.human`, `.Values.werf.commit.date.unix`.
 
 ### Service values in the subcharts
 
