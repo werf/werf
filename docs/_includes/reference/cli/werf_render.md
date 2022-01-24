@@ -125,9 +125,10 @@ werf render [options]
             
             IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
             image specified with ~.
-            STAGE_NAME should be one of the following: from, beforeInstall, importsBeforeInstall,   
-            gitArchive, install, importsAfterInstall, beforeSetup, importsBeforeSetup, setup,       
-            importsAfterSetup, gitCache, gitLatestPatch, dockerInstructions, dockerfile
+            STAGE_NAME should be one of the following: from, beforeInstall,                         
+            dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
+            dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
+            dockerInstructions, dockerfile
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        

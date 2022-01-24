@@ -138,9 +138,10 @@ werf bundle publish [options]
             
             IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
             image specified with ~.
-            STAGE_NAME should be one of the following: from, beforeInstall, importsBeforeInstall,   
-            gitArchive, install, importsAfterInstall, beforeSetup, importsBeforeSetup, setup,       
-            importsAfterSetup, gitCache, gitLatestPatch, dockerInstructions, dockerfile
+            STAGE_NAME should be one of the following: from, beforeInstall,                         
+            dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
+            dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
+            dockerInstructions, dockerfile
       --kube-config=''
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
