@@ -28,6 +28,10 @@ func (c *StapelImageBase) GetName() string {
 	return c.Name
 }
 
+func (c *StapelImageBase) IsStapel() bool {
+	return true
+}
+
 func (c *StapelImageBase) imports() []*Import {
 	return c.Import
 }
