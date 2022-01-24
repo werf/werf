@@ -42,3 +42,7 @@ func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.In
 func (c *ImageFromDockerfile) GetName() string {
 	return c.Name
 }
+
+func (c *ImageFromDockerfile) IsStapel() bool {
+	return false
+}
