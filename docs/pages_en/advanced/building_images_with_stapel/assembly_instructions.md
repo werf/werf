@@ -312,6 +312,26 @@ src: {{`{{item}}`}}
 - Only raw and command modules support Live stdout output. Other modules display contents of stdout and stderr streams after execution.
 - The `apt` module hangs the build process in some debian and ubuntu versions. The derived images are affected as well ([issue #645](https://github.com/werf/werf/issues/645)).
 
+## Environment variables of build container
+
+You can use service environment variables which are available in build container during the build. They can be used in your shell assembly instructions. Using them will not change the build instructions thus will not trigger stage rebuilds, even when these service environment variables change.
+
+Following environment variables are available:
+- `WERF_COMMIT_HASH`. Example of value: `cda9d17265d174c62424e8f7b5e5640bf749c565`
+- `WERF_COMMIT_TIME_HUMAN`. Example of value: `2022-01-24 17:26:19 +0300 +0300`
+- `WERF_COMMIT_TIME_UNIX`. Example of value: `1643034379`
+
+Usage example:
+{% raw %}
+```yaml
+shell:
+  install:
+  - echo "Commands on the Install stage for $WERF_COMMIT_HASH"
+```
+{% endraw %}
+
+In the example above the hash of the current commit will be added to the `echo ...` command, but this will happen in the very last moment — when the build instructions will be interpreted and executed by the shell. This way there will be no "install" stage rebuilds on every commit.
+
 ## Dependencies of user stages
 
 werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ "internals/stages_and_storage.html" | true_relative_url }}), _stages_ are built one by one, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
