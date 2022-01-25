@@ -16,6 +16,7 @@ type ImageFromDockerfile struct {
 	AddHost         []string
 	Network         string
 	SSH             string
+	Dependencies    []*Dependency
 
 	raw *rawImageFromDockerfile
 }

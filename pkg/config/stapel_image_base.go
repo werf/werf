@@ -20,6 +20,7 @@ type StapelImageBase struct {
 	Ansible          *Ansible
 	Mount            []*Mount
 	Import           []*Import
+	Dependencies     []*Dependency
 
 	raw *rawStapelImage
 }
