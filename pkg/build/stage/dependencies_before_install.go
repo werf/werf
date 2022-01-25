@@ -4,16 +4,17 @@ import "github.com/werf/werf/pkg/config"
 
 func GenerateDependenciesBeforeInstallStage(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) *DependenciesBeforeInstallStage {
 	imports := getImports(imageBaseConfig, &getImportsOptions{Before: Install})
-	if len(imports) != 0 {
-		return newDependenciesBeforeInstallStage(imports, baseStageOptions)
+	dependencies := getDependencies(imageBaseConfig, &getImportsOptions{Before: Install})
+	if len(imports)+len(dependencies) > 0 {
+		return newDependenciesBeforeInstallStage(imports, dependencies, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newDependenciesBeforeInstallStage(imports []*config.Import, baseStageOptions *NewBaseStageOptions) *DependenciesBeforeInstallStage {
+func newDependenciesBeforeInstallStage(imports []*config.Import, dependencies []*config.Dependency, baseStageOptions *NewBaseStageOptions) *DependenciesBeforeInstallStage {
 	s := &DependenciesBeforeInstallStage{}
-	s.DependenciesStage = newDependenciesStage(imports, DependenciesBeforeInstall, baseStageOptions)
+	s.DependenciesStage = newDependenciesStage(imports, dependencies, DependenciesBeforeInstall, baseStageOptions)
 	return s
 }
 

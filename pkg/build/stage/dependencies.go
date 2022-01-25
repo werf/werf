@@ -37,9 +37,14 @@ func getImports(imageBaseConfig *config.StapelImageBase, options *getImportsOpti
 	return imports
 }
 
-func newDependenciesStage(imports []*config.Import, name StageName, baseStageOptions *NewBaseStageOptions) *DependenciesStage {
+func getDependencies(imageBaseConfig *config.StapelImageBase, options *getImportsOptions) []*config.Dependency {
+	return nil // TODO(images-dependencies)
+}
+
+func newDependenciesStage(imports []*config.Import, dependencies []*config.Dependency, name StageName, baseStageOptions *NewBaseStageOptions) *DependenciesStage {
 	s := &DependenciesStage{}
 	s.imports = imports
+	s.dependencies = dependencies
 	s.BaseStage = newBaseStage(name, baseStageOptions)
 	return s
 }
@@ -47,7 +52,8 @@ func newDependenciesStage(imports []*config.Import, name StageName, baseStageOpt
 type DependenciesStage struct {
 	*BaseStage
 
-	imports []*config.Import
+	imports      []*config.Import
+	dependencies []*config.Dependency
 }
 
 func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
@@ -68,10 +74,17 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, 
 		args = append(args, elm.Group, elm.Owner)
 	}
 
+	for _, dep := range s.dependencies {
+		args = append(args, "Dependency", c.GetImageNameForLastImageStage(dep.ImageName))
+		for _, imp := range dep.Imports {
+			args = append(args, "DependencyImport", getDependencyImportID(imp))
+		}
+	}
+
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, image container_runtime.LegacyImageInterface) error {
+func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, img container_runtime.LegacyImageInterface) error {
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
 		srv, err := c.GetImportServer(ctx, sourceImageName, elm.Stage)
@@ -80,9 +93,9 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, ima
 		}
 
 		command := srv.GetCopyCommand(ctx, elm)
-		image.Container().AddServiceRunCommands(command)
+		img.Container().AddServiceRunCommands(command)
 
-		imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()
+		imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
 
 		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
 
@@ -96,6 +109,37 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, ima
 		labelValue := importMetadata.Checksum
 
 		imageServiceCommitChangeOptions.AddLabel(map[string]string{labelKey: labelValue})
+	}
+
+	for _, dep := range s.dependencies {
+		depImageServiceOptions := img.Container().ServiceCommitChangeOptions()
+
+		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
+		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
+		depImageRepo, depImageTag := imagePkg.ParseRepositoryAndTag(depImageName)
+
+		for _, img := range dep.Imports {
+			switch img.Type {
+			case config.ImageRepoImport:
+				depImageServiceOptions.AddEnv(map[string]string{
+					img.TargetEnv: depImageRepo,
+				})
+			case config.ImageTagImport:
+				depImageServiceOptions.AddEnv(map[string]string{
+					img.TargetEnv: depImageTag,
+				})
+			case config.ImageNameImport:
+				depImageServiceOptions.AddEnv(map[string]string{
+					img.TargetEnv: depImageName,
+				})
+			case config.ImageIDImport:
+				depImageServiceOptions.AddEnv(map[string]string{
+					img.TargetEnv: depImageID,
+				})
+			default:
+				panic("unexpected configuration")
+			}
+		}
 	}
 
 	return nil
@@ -236,6 +280,13 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 
 func formatIncludeAndExcludePath(path string) string {
 	return strings.TrimRight(path, "*/")
+}
+
+func getDependencyImportID(dependencyImport *config.DependencyImport) string {
+	return util.Sha256Hash(
+		"Type", string(dependencyImport.Type),
+		"TargetEnv", dependencyImport.TargetEnv,
+	)
 }
 
 func getImportID(importElm *config.Import) string {
