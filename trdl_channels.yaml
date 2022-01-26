@@ -33,3 +33,5 @@ groups:
       version: 1.2.55 # fix warning in git version break werf
     - name: stable
       version: 1.2.55 # fix warning in git version break werf
+    - name: rock-solid
+      version: 1.2.55 # fix warning in git version break werf

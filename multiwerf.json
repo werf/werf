@@ -68,6 +68,10 @@
         {
           "name": "stable",
           "version": "v1.2.55"
+        },
+        {
+          "name": "rock-solid",
+          "version": "v1.2.55"
         }
       ]
     }
