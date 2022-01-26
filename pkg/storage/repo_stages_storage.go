@@ -273,7 +273,7 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 		return nil, nil
 	}
 
-	if docker_registry.IsBlobUnknownError(err) || docker_registry.IsHarbor404Error(err) {
+	if docker_registry.IsBlobUnknownError(err) || docker_registry.IsHarbor404Error(err) || docker_registry.IsQuayTagExpiredErr(err) {
 		return nil, ErrBrokenImage
 	}
 
