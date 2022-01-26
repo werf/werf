@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.57+fix1](https://www.github.com/werf/werf/compare/v1.2.57...v1.2.57+fix1) (2022-01-26)
+
+
+### Bug Fixes
+
+* **quay:** ignore TAG_EXPIRED broken tags
+
 ### [1.2.57](https://www.github.com/werf/werf/compare/v1.2.56...v1.2.57) (2022-01-19)
 
 
