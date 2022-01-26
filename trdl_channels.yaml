@@ -26,9 +26,9 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.57 # fixes for virtual merge commits and dev mode
+      version: 1.2.57+fix1 # fixes for virtual merge commits and dev mode and ignore quay TAG_EXPIRED
     - name: beta
-      version: 1.2.56 # expose commit info in werf templates
+      version: 1.2.57+fix1 # fixes for virtual merge commits and dev mode and ignore quay TAG_EXPIRED
     - name: ea
       version: 1.2.55 # fix warning in git version break werf
     - name: stable
