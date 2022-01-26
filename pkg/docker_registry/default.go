@@ -40,6 +40,12 @@ func (r *defaultImplementation) Tags(ctx context.Context, reference string) ([]s
 		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use harbor driver.\n")
 	}
 
+	if IsQuayTagExpiredErr(err) && r.Implementation != QuayImplementationName {
+		logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for quay container registry implementation!\n")
+		logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=quay option (or WERF_CONTAINER_REGISTRY env var)\n")
+		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use quay driver.\n")
+	}
+
 	return tags, err
 }
 
@@ -58,6 +64,12 @@ func (r *defaultImplementation) TryGetRepoImage(ctx context.Context, reference s
 		logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for harbor container registry implementation!\n")
 		logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=harbor option (or WERF_CONTAINER_REGISTRY env var)\n")
 		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use harbor driver.\n")
+	}
+
+	if IsQuayTagExpiredErr(err) && r.Implementation != QuayImplementationName {
+		logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for quay container registry implementation!\n")
+		logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=quay option (or WERF_CONTAINER_REGISTRY env var)\n")
+		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use quay driver.\n")
 	}
 
 	return info, err

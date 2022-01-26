@@ -25,7 +25,11 @@ func NewQuayRepositoryNotFoundErr(err error) QuayRepositoryNotFoundErr {
 }
 
 func IsQuayRepositoryNotFoundErr(err error) bool {
-	return strings.Contains(err.Error(), quayRepositoryNotFoundErrPrefix)
+	return err != nil && strings.Contains(err.Error(), quayRepositoryNotFoundErrPrefix)
+}
+
+func IsQuayTagExpiredErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "TAG_EXPIRED: ")
 }
 
 var quayPatterns = []string{"^quay\\.io", "^quay\\..*\\.com"}
