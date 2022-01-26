@@ -30,7 +30,7 @@ groups:
     - name: beta
       version: 1.2.57+fix1 # fixes for virtual merge commits and dev mode and ignore quay TAG_EXPIRED
     - name: ea
-      version: 1.2.55 # fix warning in git version break werf
+      version: 1.2.56 # expose commit info in werf templates
     - name: stable
       version: 1.2.55 # fix warning in git version break werf
     - name: rock-solid
