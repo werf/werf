@@ -268,19 +268,19 @@ type dockerfileInstructionInterface interface {
 func (s *DockerfileStage) FetchDependencies(ctx context.Context, _ Conveyor, containerRuntime container_runtime.ContainerRuntime) error {
 outerLoop:
 	for ind, stage := range s.dockerStages {
+		resolvedBaseName, err := s.ShlexProcessWordWithMetaArgs(stage.BaseName)
+		if err != nil {
+			return err
+		}
+
 		for relatedStageIndex, relatedStage := range s.dockerStages {
 			if ind == relatedStageIndex {
 				continue
 			}
 
-			if stage.BaseName == relatedStage.Name {
+			if resolvedBaseName == relatedStage.Name {
 				continue outerLoop
 			}
-		}
-
-		resolvedBaseName, err := s.ShlexProcessWordWithMetaArgs(stage.BaseName)
-		if err != nil {
-			return err
 		}
 
 		_, ok := s.imageOnBuildInstructions[resolvedBaseName]
