@@ -82,14 +82,14 @@ func (s *sharedOptions) ProjectDir() string {
 }
 
 func (s *sharedOptions) RelativeToGitProjectDir() string {
-	return util.GetRelativeToBaseFilepath(s.LocalGitRepo().WorkTreeDir, s.projectDir)
+	return util.GetRelativeToBaseFilepath(s.localGitRepo.WorkTreeDir, s.projectDir)
 }
 
 func (s *sharedOptions) HeadCommit() string {
 	return s.headCommit
 }
 
-func (s *sharedOptions) LocalGitRepo() *git_repo.Local {
+func (s *sharedOptions) LocalGitRepo() git_repo.GitRepo {
 	return s.localGitRepo
 }
 

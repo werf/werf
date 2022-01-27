@@ -1134,8 +1134,8 @@ func GetCustomWerfConfigRelPath(giterminismManager giterminism_manager.Interface
 	}
 
 	customConfigPath = util.GetAbsoluteFilepath(customConfigPath)
-	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().WorkTreeDir, customConfigPath) {
-		return "", fmt.Errorf("the werf config %q must be in the project git work tree %q", customConfigPath, giterminismManager.LocalGitRepo().WorkTreeDir)
+	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().GetWorkTreeDir(), customConfigPath) {
+		return "", fmt.Errorf("the werf config %q must be in the project git work tree %q", customConfigPath, giterminismManager.LocalGitRepo().GetWorkTreeDir())
 	}
 
 	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigPath), nil
@@ -1148,8 +1148,8 @@ func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manag
 	}
 
 	customConfigTemplatesDirPath = util.GetAbsoluteFilepath(customConfigTemplatesDirPath)
-	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().WorkTreeDir, customConfigTemplatesDirPath) {
-		return "", fmt.Errorf("the werf configuration templates directory %q must be in the project git work tree %q", customConfigTemplatesDirPath, giterminismManager.LocalGitRepo().WorkTreeDir)
+	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().GetWorkTreeDir(), customConfigTemplatesDirPath) {
+		return "", fmt.Errorf("the werf configuration templates directory %q must be in the project git work tree %q", customConfigTemplatesDirPath, giterminismManager.LocalGitRepo().GetWorkTreeDir())
 	}
 
 	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigTemplatesDirPath), nil
@@ -1240,8 +1240,8 @@ func GetHelmChartDir(werfConfigPath string, werfConfig *config.WerfConfig, giter
 	}
 
 	absHelmChartDir := filepath.Join(giterminismManager.ProjectDir(), helmChartDir)
-	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().WorkTreeDir, absHelmChartDir) {
-		return "", fmt.Errorf("the chart directory %s must be in the project git work tree %s", absHelmChartDir, giterminismManager.LocalGitRepo().WorkTreeDir)
+	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().GetWorkTreeDir(), absHelmChartDir) {
+		return "", fmt.Errorf("the chart directory %s must be in the project git work tree %s", absHelmChartDir, giterminismManager.LocalGitRepo().GetWorkTreeDir())
 	}
 
 	return helmChartDir, nil

@@ -31,7 +31,7 @@ func (r FileReader) gitRelativePathToProjectDirRelativePath(relToGitPath string)
 }
 
 func (r FileReader) isSubpathOfWorkTreeDir(absPath string) bool {
-	return util.IsSubpathOfBasePath(r.sharedOptions.LocalGitRepo().WorkTreeDir, absPath)
+	return util.IsSubpathOfBasePath(r.sharedOptions.LocalGitRepo().GetWorkTreeDir(), absPath)
 }
 
 func (r FileReader) ValidateFileByStatusResult(ctx context.Context, relPath string) error {

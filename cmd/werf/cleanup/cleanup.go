@@ -240,7 +240,7 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 
 	cleanupOptions := cleaning.CleanupOptions{
 		ImageNameList:                           imagesNames,
-		LocalGit:                                giterminismManager.LocalGitRepo(),
+		LocalGit:                                giterminismManager.LocalGitRepo().(*git_repo.Local),
 		KubernetesContextClients:                kubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients),
 		WithoutKube:                             *commonCmdData.WithoutKube,
