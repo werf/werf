@@ -136,8 +136,6 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, img
 				depImageServiceOptions.AddEnv(map[string]string{
 					img.TargetEnv: depImageID,
 				})
-			default:
-				panic("unexpected configuration")
 			}
 		}
 	}

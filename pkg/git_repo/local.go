@@ -119,6 +119,10 @@ func (repo *Local) IsLocal() bool {
 	return true
 }
 
+func (repo *Local) GetWorkTreeDir() string {
+	return repo.WorkTreeDir
+}
+
 func (repo *Local) PlainOpen() (*git.Repository, error) {
 	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {

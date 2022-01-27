@@ -1,4 +1,4 @@
-package stage_test
+package stage
 
 import (
 	"testing"

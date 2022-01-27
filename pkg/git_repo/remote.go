@@ -16,6 +16,7 @@ import (
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/timestamps"
@@ -40,6 +41,10 @@ func (repo *Remote) IsLocal() bool {
 	return false
 }
 
+func (repo *Remote) GetWorkTreeDir() string {
+	panic("not implemented")
+}
+
 func (repo *Remote) ValidateEndpoint() error {
 	if ep, err := transport.NewEndpoint(repo.Url); err != nil {
 		return fmt.Errorf("bad url %q: %s", repo.Url, err)
@@ -57,6 +62,14 @@ func (repo *Remote) GetMergeCommitParents(_ context.Context, commit string) ([]s
 	return repo.getMergeCommitParents(repo.GetClonePath(), commit)
 }
 
+func (repo *Remote) StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) ([]string, error) {
+	panic("not implemented")
+}
+
+func (repo *Remote) ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error {
+	panic("not implemented")
+}
+
 func (repo *Remote) getFilesystemRelativePathByEndpoint() string {
 	host := repo.Endpoint.Host
 	if repo.Endpoint.Port > 0 {
@@ -69,12 +82,16 @@ func (repo *Remote) GetClonePath() string {
 	return filepath.Join(GetGitRepoCacheDir(), repo.getRepoID())
 }
 
-func (repo *Remote) RemoteOriginUrl() (string, error) {
+func (repo *Remote) RemoteOriginUrl(_ context.Context) (string, error) {
 	return repo.remoteOriginUrl(repo.GetClonePath())
 }
 
 func (repo *Remote) IsEmpty(ctx context.Context) (bool, error) {
 	return repo.isEmpty(ctx, repo.GetClonePath())
+}
+
+func (repo *Remote) IsShallowClone(ctx context.Context) (bool, error) {
+	panic("not implemented")
 }
 
 func (repo *Remote) IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error) {
@@ -90,7 +107,7 @@ func (repo *Remote) CloneAndFetch(ctx context.Context) error {
 		return nil
 	}
 
-	return repo.Fetch(ctx)
+	return repo.FetchOrigin(ctx)
 }
 
 func (repo *Remote) isCloneExists() (bool, error) {
@@ -189,7 +206,11 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 	})
 }
 
-func (repo *Remote) Fetch(ctx context.Context) error {
+func (repo *Remote) SyncWithOrigin(ctx context.Context) error {
+	panic("not implemented")
+}
+
+func (repo *Remote) FetchOrigin(ctx context.Context) error {
 	if repo.IsDryRun {
 		return nil
 	}

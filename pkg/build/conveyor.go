@@ -9,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/werf/logboek"
 	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+	"github.com/werf/werf/pkg/build/dockerfile_helpers"
 	"github.com/werf/werf/pkg/build/import_server"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -1257,33 +1257,19 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		return nil, err
 	}
 
-	resolveDockerStagesFromValue(dockerStages)
+	dockerfile_helpers.ResolveDockerStagesFromValue(dockerStages)
 
-	dockerTargetIndex, err := getDockerTargetStageIndex(dockerStages, imageFromDockerfileConfig.Target)
+	dockerTargetIndex, err := dockerfile_helpers.GetDockerTargetStageIndex(dockerStages, imageFromDockerfileConfig.Target)
 	if err != nil {
 		return nil, err
 	}
 
-	dockerTargetStage := dockerStages[dockerTargetIndex]
-
-	ds, err := stage.NewDockerStages(
+	ds := stage.NewDockerStages(
 		dockerStages,
 		util.MapStringInterfaceToMapStringString(imageFromDockerfileConfig.Args),
 		dockerMetaArgs,
 		dockerTargetIndex,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	resolvedBaseName, err := ds.ShlexProcessWordWithMetaArgs(dockerTargetStage.BaseName)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := handleImageFromName(ctx, resolvedBaseName, false, img, c); err != nil {
-		return nil, err
-	}
 
 	baseStageOptions := &stage.NewBaseStageOptions{
 		ImageName:   imageFromDockerfileConfig.Name,
@@ -1305,6 +1291,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		ds,
 		stage.NewContextChecksum(dockerignorePathMatcher),
 		baseStageOptions,
+		imageFromDockerfileConfig.Dependencies,
 	)
 
 	img.stages = append(img.stages, dockerfileStage)
@@ -1312,39 +1299,4 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 	logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())
 
 	return img, nil
-}
-
-func resolveDockerStagesFromValue(stages []instructions.Stage) {
-	nameToIndex := make(map[string]string)
-	for i, s := range stages {
-		name := strings.ToLower(s.Name)
-		index := strconv.Itoa(i)
-		if name != index {
-			nameToIndex[name] = index
-		}
-
-		for _, cmd := range s.Commands {
-			copyCmd, ok := cmd.(*instructions.CopyCommand)
-			if ok && copyCmd.From != "" {
-				from := strings.ToLower(copyCmd.From)
-				if val, ok := nameToIndex[from]; ok {
-					copyCmd.From = val
-				}
-			}
-		}
-	}
-}
-
-func getDockerTargetStageIndex(dockerStages []instructions.Stage, dockerTargetStage string) (int, error) {
-	if dockerTargetStage == "" {
-		return len(dockerStages) - 1, nil
-	}
-
-	for i, s := range dockerStages {
-		if s.Name == dockerTargetStage {
-			return i, nil
-		}
-	}
-
-	return -1, fmt.Errorf("%s is not a valid target build stage", dockerTargetStage)
 }

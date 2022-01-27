@@ -40,6 +40,11 @@ type GitRepo interface {
 	String() string
 	GetName() string
 	IsLocal() bool
+	GetWorkTreeDir() string
+	RemoteOriginUrl(_ context.Context) (string, error)
+	IsShallowClone(ctx context.Context) (bool, error)
+	FetchOrigin(ctx context.Context) error
+	SyncWithOrigin(ctx context.Context) error
 
 	CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error)
 	GetCommitTreeEntry(ctx context.Context, commit string, path string) (*ls_tree.LsTreeEntry, error)
@@ -65,6 +70,9 @@ type GitRepo interface {
 	ResolveCommitFilePath(ctx context.Context, commit, path string) (string, error)
 	TagCommit(ctx context.Context, tag string) (string, error)
 	WalkCommitFiles(ctx context.Context, commit string, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error
+
+	StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (list []string, err error)
+	ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error
 }
 
 type gitRepo interface {

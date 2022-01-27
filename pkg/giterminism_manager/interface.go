@@ -14,7 +14,7 @@ type Interface interface {
 	FileReader() FileReader
 	Inspector() Inspector
 
-	LocalGitRepo() *git_repo.Local
+	LocalGitRepo() git_repo.GitRepo
 	HeadCommit() string
 	ProjectDir() string
 	RelativeToGitProjectDir() string

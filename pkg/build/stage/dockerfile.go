@@ -16,6 +16,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/context_manager"
 	"github.com/werf/werf/pkg/docker_registry"
@@ -26,21 +27,24 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func GenerateDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions) *DockerfileStage {
-	return newDockerfileStage(dockerRunArgs, dockerStages, contextChecksum, baseStageOptions)
+func GenerateDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions, dependencies []*config.Dependency) *DockerfileStage {
+	return newDockerfileStage(dockerRunArgs, dockerStages, contextChecksum, baseStageOptions, dependencies)
 }
 
-func newDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions) *DockerfileStage {
+func newDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions, dependencies []*config.Dependency) *DockerfileStage {
 	s := &DockerfileStage{}
 	s.DockerRunArgs = dockerRunArgs
 	s.DockerStages = dockerStages
 	s.ContextChecksum = contextChecksum
 	s.BaseStage = newBaseStage(Dockerfile, baseStageOptions)
+	s.dependencies = dependencies
 
 	return s
 }
 
 type DockerfileStage struct {
+	dependencies []*config.Dependency
+
 	*DockerRunArgs
 	*DockerStages
 	*ContextChecksum
@@ -90,25 +94,31 @@ type DockerStages struct {
 	dockerStages           []instructions.Stage
 	dockerTargetStageIndex int
 	dockerBuildArgsHash    map[string]string
-	dockerMetaArgsHash     map[string]string
+	dockerMetaArgs         []instructions.ArgCommand
 	dockerStageArgsHash    map[int]map[string]string
 	dockerStageEnvs        map[int]map[string]string
 
 	imageOnBuildInstructions map[string][]string
 }
 
-func NewDockerStages(dockerStages []instructions.Stage, dockerBuildArgsHash map[string]string, dockerMetaArgs []instructions.ArgCommand, dockerTargetStageIndex int) (*DockerStages, error) {
+func NewDockerStages(dockerStages []instructions.Stage, dockerBuildArgsHash map[string]string, dockerMetaArgs []instructions.ArgCommand, dockerTargetStageIndex int) *DockerStages {
 	ds := &DockerStages{
 		dockerStages:             dockerStages,
 		dockerTargetStageIndex:   dockerTargetStageIndex,
 		dockerBuildArgsHash:      dockerBuildArgsHash,
+		dockerMetaArgs:           dockerMetaArgs,
 		dockerStageArgsHash:      map[int]map[string]string{},
 		dockerStageEnvs:          map[int]map[string]string{},
 		imageOnBuildInstructions: map[string][]string{},
 	}
 
-	ds.dockerMetaArgsHash = map[string]string{}
-	for _, argInstruction := range dockerMetaArgs {
+	return ds
+}
+
+func (ds *DockerStages) resolveDockerMetaArgs(resolvedDependenciesArgsHash map[string]string) (map[string]string, error) {
+	resolved := map[string]string{}
+
+	for _, argInstruction := range ds.dockerMetaArgs {
 		for _, keyValuePairOptional := range argInstruction.Args {
 			key := keyValuePairOptional.Key
 
@@ -117,61 +127,98 @@ func NewDockerStages(dockerStages []instructions.Stage, dockerBuildArgsHash map[
 				value = *keyValuePairOptional.Value
 			}
 
-			if _, _, err := ds.addDockerMetaArg(key, value); err != nil {
-				return nil, err
+			resolvedKey, resolvedValue, err := ds.resolveDockerMetaArg(key, value, resolved, resolvedDependenciesArgsHash)
+			if err != nil {
+				return nil, fmt.Errorf("unable to resolve docker meta arg: %w", err)
 			}
+
+			resolved[resolvedKey] = resolvedValue
 		}
 	}
 
-	return ds, nil
+	return resolved, nil
 }
 
 // addDockerMetaArg function sets --build-arg value or resolved meta ARG value
-func (ds *DockerStages) addDockerMetaArg(key, value string) (string, string, error) {
-	resolvedKey, err := ds.ShlexProcessWordWithMetaArgs(key)
+func (ds *DockerStages) resolveDockerMetaArg(key, value string, resolvedDockerMetaArgsHash map[string]string, resolvedDependenciesArgsHash map[string]string) (string, string, error) {
+	resolvedKey, err := ds.ShlexProcessWordWithMetaArgs(key, resolvedDockerMetaArgsHash)
 	if err != nil {
 		return "", "", err
 	}
 
 	var resolvedValue string
-	if buildArgValue, ok := ds.dockerBuildArgsHash[resolvedKey]; ok {
-		resolvedValue = buildArgValue
-	} else {
-		rValue, err := ds.ShlexProcessWordWithMetaArgs(value)
-		if err != nil {
-			return "", "", err
-		}
 
-		resolvedValue = rValue
+	dependencyArgValue, ok := resolvedDependenciesArgsHash[resolvedKey]
+	if ok {
+		resolvedValue = dependencyArgValue
+	} else {
+		if buildArgValue, ok := ds.dockerBuildArgsHash[resolvedKey]; ok {
+			resolvedValue = buildArgValue
+		} else {
+			rValue, err := ds.ShlexProcessWordWithMetaArgs(value, resolvedDockerMetaArgsHash)
+			if err != nil {
+				return "", "", err
+			}
+
+			resolvedValue = rValue
+		}
 	}
 
-	ds.dockerMetaArgsHash[resolvedKey] = resolvedValue
 	return resolvedKey, resolvedValue, err
 }
 
-// AddDockerStageArg function sets --build-arg value or resolved dockerfile stage ARG value or resolved meta ARG value (if stage ARG value is empty)
-func (ds *DockerStages) AddDockerStageArg(dockerStageID int, key, value string) (string, string, error) {
+func resolveDependenciesArgsHash(dependencies []*config.Dependency, c Conveyor) map[string]string {
+	resolved := make(map[string]string)
+
+	for _, dep := range dependencies {
+		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
+		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
+		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
+
+		for _, img := range dep.Imports {
+			switch img.Type {
+			case config.ImageRepoImport:
+				resolved[img.TargetBuildArg] = depImageRepo
+			case config.ImageTagImport:
+				resolved[img.TargetBuildArg] = depImageTag
+			case config.ImageNameImport:
+				resolved[img.TargetBuildArg] = depImageName
+			case config.ImageIDImport:
+				resolved[img.TargetBuildArg] = depImageID
+			}
+		}
+	}
+
+	return resolved
+}
+
+// resolveDockerStageArg function sets dependency arg value, or --build-arg value, or resolved dockerfile stage ARG value, or resolved meta ARG value (if stage ARG value is empty)
+func (ds *DockerStages) resolveDockerStageArg(dockerStageID int, key, value string, resolvedDockerMetaArgsHash map[string]string, resolvedDependenciesArgsHash map[string]string) (string, string, error) {
 	resolvedKey, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, key)
 	if err != nil {
 		return "", "", err
 	}
 
 	var resolvedValue string
-	buildArgValue, ok := ds.dockerBuildArgsHash[resolvedKey]
-	switch {
-	case ok:
-		resolvedValue = buildArgValue
-	case value == "":
-		resolvedValue = ds.dockerMetaArgsHash[resolvedKey]
-	default:
-		rValue, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, value)
-		if err != nil {
-			return "", "", err
+	dependencyArgValue, ok := resolvedDependenciesArgsHash[resolvedKey]
+	if ok {
+		resolvedValue = dependencyArgValue
+	} else {
+		buildArgValue, ok := ds.dockerBuildArgsHash[resolvedKey]
+		switch {
+		case ok:
+			resolvedValue = buildArgValue
+		case value == "":
+			resolvedValue = resolvedDockerMetaArgsHash[resolvedKey]
+		default:
+			rValue, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, value)
+			if err != nil {
+				return "", "", err
+			}
+			resolvedValue = rValue
 		}
-		resolvedValue = rValue
 	}
 
-	ds.DockerStageArgsHash(dockerStageID)[resolvedKey] = resolvedValue
 	return resolvedKey, resolvedValue, nil
 }
 
@@ -190,8 +237,8 @@ func (ds *DockerStages) AddDockerStageEnv(dockerStageID int, key, value string) 
 	return resolvedKey, resolvedValue, nil
 }
 
-func (ds *DockerStages) ShlexProcessWordWithMetaArgs(value string) (string, error) {
-	return shlexProcessWord(value, toArgsArray(ds.dockerMetaArgsHash))
+func (ds *DockerStages) ShlexProcessWordWithMetaArgs(value string, resolvedDockerMetaArgsHash map[string]string) (string, error) {
+	return shlexProcessWord(value, toArgsArray(resolvedDockerMetaArgsHash))
 }
 
 func (ds *DockerStages) ShlexProcessWordWithStageArgsAndEnvs(dockerStageID int, value string) (string, error) {
@@ -265,10 +312,17 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *DockerfileStage) FetchDependencies(ctx context.Context, _ Conveyor, containerRuntime container_runtime.ContainerRuntime) error {
+func (s *DockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerRuntime container_runtime.ContainerRuntime) error {
+	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
+
+	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
+	if err != nil {
+		return fmt.Errorf("unable to resolve docker meta args: %w", err)
+	}
+
 outerLoop:
 	for ind, stage := range s.dockerStages {
-		resolvedBaseName, err := s.ShlexProcessWordWithMetaArgs(stage.BaseName)
+		resolvedBaseName, err := s.ShlexProcessWordWithMetaArgs(stage.BaseName, resolvedDockerMetaArgsHash)
 		if err != nil {
 			return err
 		}
@@ -347,6 +401,13 @@ func isUnsupportedMediaTypeError(err error) bool {
 var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
 func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
+	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
+
+	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve docker meta args: %w", err)
+	}
+
 	var stagesDependencies [][]string
 	var stagesOnBuildDependencies [][]string
 
@@ -356,7 +417,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 
 		dependencies = append(dependencies, s.addHost...)
 
-		resolvedBaseName, err := s.ShlexProcessWordWithMetaArgs(stage.BaseName)
+		resolvedBaseName, err := s.ShlexProcessWordWithMetaArgs(stage.BaseName, resolvedDockerMetaArgsHash)
 		if err != nil {
 			return "", err
 		}
@@ -366,7 +427,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 		onBuildInstructions, ok := s.imageOnBuildInstructions[resolvedBaseName]
 		if ok {
 			for _, instruction := range onBuildInstructions {
-				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, c.GiterminismManager(), ind, instruction, true)
+				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, c.GiterminismManager(), resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash, ind, instruction, true)
 				if err != nil {
 					return "", err
 				}
@@ -376,7 +437,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 		}
 
 		for _, cmd := range stage.Commands {
-			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(ctx, c.GiterminismManager(), ind, cmd, false, false)
+			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(ctx, c.GiterminismManager(), resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash, ind, cmd, false, false)
 			if err != nil {
 				return "", err
 			}
@@ -421,7 +482,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ 
 	return util.Sha256Hash(dockerfileStageDependencies...), nil
 }
 
-func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, dockerStageID int, cmd interface{}, isOnbuildInstruction bool, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash map[string]string, resolvedDependenciesArgsHash map[string]string, dockerStageID int, cmd interface{}, isOnbuildInstruction bool, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
 	var dependencies []string
 	var onBuildDependencies []string
 
@@ -463,10 +524,12 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 		var resolvedKey, resolvedValue string
 		var err error
 		if !isOnbuildInstruction {
-			resolvedKey, resolvedValue, err = s.AddDockerStageArg(dockerStageID, key, value)
+			resolvedKey, resolvedValue, err = s.resolveDockerStageArg(dockerStageID, key, value, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash)
 			if err != nil {
 				return "", "", err
 			}
+
+			s.DockerStageArgsHash(dockerStageID)[resolvedKey] = resolvedValue
 		} else {
 			resolvedKey, resolvedValue, err = resolveKeyAndValueFunc(key, value)
 			if err != nil {
@@ -563,7 +626,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 			dependencies = append(dependencies, checksum)
 		}
 	case *instructions.OnbuildCommand:
-		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, giterminismManager, dockerStageID, c.Expression, false)
+		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, giterminismManager, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash, dockerStageID, c.Expression, false)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -584,7 +647,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	return dependencies, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash map[string]string, resolvedDependenciesArgsHash map[string]string, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
 	p, err := parser.Parse(bytes.NewReader([]byte(expression)))
 	if err != nil {
 		return nil, nil, err
@@ -600,7 +663,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 		return nil, nil, err
 	}
 
-	onBuildDependencies, _, err := s.dockerfileInstructionDependencies(ctx, giterminismManager, dockerStageID, cmd, true, isBaseImageOnbuildInstruction)
+	onBuildDependencies, _, err := s.dockerfileInstructionDependencies(ctx, giterminismManager, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash, dockerStageID, cmd, true, isBaseImageOnbuildInstruction)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -614,7 +677,7 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img c
 		return err
 	}
 
-	if err := s.SetupDockerImageBuilder(img.DockerfileImageBuilder()); err != nil {
+	if err := s.SetupDockerImageBuilder(img.DockerfileImageBuilder(), c); err != nil {
 		return err
 	}
 
@@ -664,7 +727,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	return archivePath, nil
 }
 
-func (s *DockerfileStage) SetupDockerImageBuilder(b *container_runtime.DockerfileImageBuilder) error {
+func (s *DockerfileStage) SetupDockerImageBuilder(b *container_runtime.DockerfileImageBuilder, c Conveyor) error {
 	b.SetDockerfile(s.dockerfile)
 	b.SetDockerfileCtxRelPath(s.dockerfilePath)
 
@@ -674,6 +737,13 @@ func (s *DockerfileStage) SetupDockerImageBuilder(b *container_runtime.Dockerfil
 
 	if len(s.buildArgs) > 0 {
 		for key, value := range s.buildArgs {
+			b.AppendBuildArgs(fmt.Sprintf("%s=%v", key, value))
+		}
+	}
+
+	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
+	if len(resolvedDependenciesArgsHash) > 0 {
+		for key, value := range resolvedDependenciesArgsHash {
 			b.AppendBuildArgs(fmt.Sprintf("%s=%v", key, value))
 		}
 	}

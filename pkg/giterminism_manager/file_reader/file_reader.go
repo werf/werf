@@ -32,7 +32,7 @@ type giterminismConfig interface {
 type sharedOptions interface {
 	ProjectDir() string
 	RelativeToGitProjectDir() string
-	LocalGitRepo() *git_repo.Local
+	LocalGitRepo() git_repo.GitRepo
 	HeadCommit() string
 	LooseGiterminism() bool
 	Dev() bool
