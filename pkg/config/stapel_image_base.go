@@ -37,6 +37,10 @@ func (c *StapelImageBase) imports() []*Import {
 	return c.Import
 }
 
+func (c *StapelImageBase) dependencies() []*Dependency {
+	return c.Dependencies
+}
+
 func (c *StapelImageBase) ImageBaseConfig() *StapelImageBase {
 	return c
 }

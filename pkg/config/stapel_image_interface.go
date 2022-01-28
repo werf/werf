@@ -7,4 +7,5 @@ type StapelImageInterface interface {
 	IsArtifact() bool
 
 	imports() []*Import
+	dependencies() []*Dependency
 }

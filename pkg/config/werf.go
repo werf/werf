@@ -387,7 +387,14 @@ func (c *WerfConfig) imageDependencies(interf ImageInterface) (deps []ImageInter
 				deps = append(deps, c.GetArtifact(imp.ArtifactName))
 			}
 		}
+
+		for _, dep := range i.dependencies() {
+			deps = append(deps, c.GetImage(dep.ImageName))
+		}
 	case *ImageFromDockerfile:
+		for _, dep := range i.Dependencies {
+			deps = append(deps, c.GetImage(dep.ImageName))
+		}
 	}
 
 	return deps
