@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -33,6 +34,16 @@ func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.In
 		for _, contextAddFile := range c.ContextAddFiles {
 			if err := giterminismManager.Inspector().InspectConfigDockerfileContextAddFile(filepath.Join(c.Context, contextAddFile)); err != nil {
 				return newDetailedConfigError(err.Error(), nil, c.raw.doc)
+			}
+		}
+	}
+
+	if len(c.Args) > 0 {
+		for _, dep := range c.Dependencies {
+			for _, depImport := range dep.Imports {
+				if _, ok := c.Args[depImport.TargetBuildArg]; ok {
+					return newDetailedConfigError(fmt.Sprintf("dockerfile `args:` build arg %q already defined in dependency import `targetBuildArg:` directive. This is not allowed, avoid duplicated build args!", depImport.TargetBuildArg), nil, c.raw.doc)
+				}
 			}
 		}
 	}

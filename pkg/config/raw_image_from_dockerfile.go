@@ -17,6 +17,7 @@ type rawImageFromDockerfile struct {
 	AddHost         interface{}            `yaml:"addHost,omitempty"`
 	Network         string                 `yaml:"network,omitempty"`
 	SSH             string                 `yaml:"ssh,omitempty"`
+	RawDependencies []*rawDependency       `yaml:"dependencies,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -114,6 +115,15 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 
 	image.Network = c.Network
 	image.SSH = c.SSH
+
+	for _, rawDep := range c.RawDependencies {
+		dependencyDirective, err := rawDep.toDirective()
+		if err != nil {
+			return nil, err
+		}
+
+		image.Dependencies = append(image.Dependencies, dependencyDirective)
+	}
 
 	image.raw = c
 
