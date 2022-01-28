@@ -72,7 +72,7 @@ If you have configured the `docker` tool to access the private container registr
 <a href="javascript:void(0)" class="details__summary">Otherwise, perform the standard docker login procedure into your container registry.</a>
 <div class="details__content" markdown="1">
 ```shell
-docker login registry.mydomain.org/application -uUSER -pPASSWORD
+docker login registry.mydomain.org/application -u USER -p PASSWORD
 ```
 
 If you don't want your runner host to be logged into the container registry all the time, perform the docker login procedure in each CI/CD job individually. It is recommended to create a temporary docker config for each CI/CD job (instead of using the default `~/.docker/` config directory) to prevent a conflict of different jobs running on the same runner host while logging in at the same time.
@@ -80,10 +80,10 @@ If you don't want your runner host to be logged into the container registry all 
 ```shell
 # Job 1
 export DOCKER_CONFIG=$(mktemp -d)
-docker login registry.mydomain.org/application -uUSER -pPASSWORD
+docker login registry.mydomain.org/application -u USER -p PASSWORD
 # Job 2
 export DOCKER_CONFIG=$(mktemp -d)
-docker login registry.mydomain.org/application -uUSER -pPASSWORD
+docker login registry.mydomain.org/application -u USER -p PASSWORD
 ```
 </div>
 </div>
