@@ -531,6 +531,10 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 		return nil, err
 	}
 
+	if err := werfConfig.validateDependencies(); err != nil {
+		return nil, err
+	}
+
 	return werfConfig, nil
 }
 

@@ -215,6 +215,42 @@ func (c *WerfConfig) validateImportImage(i *Import) error {
 	return nil
 }
 
+func (c *WerfConfig) validateDependencies() error {
+	if err := c.validateDependenciesImages(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *WerfConfig) validateDependenciesImages() error {
+	for _, dfImage := range c.ImagesFromDockerfile {
+		for _, imgDep := range dfImage.Dependencies {
+			if imgDep.ImageName == dfImage.Name {
+				return newDetailedConfigError(fmt.Sprintf("image can't depend on itself: `%s`!", imgDep.ImageName), imgDep.raw, dfImage.raw.doc)
+			}
+
+			if !c.HasImage(imgDep.ImageName) {
+				return newDetailedConfigError(fmt.Sprintf("no such image: `%s`!", imgDep.ImageName), imgDep.raw, dfImage.raw.doc)
+			}
+		}
+	}
+
+	for _, stapelImage := range c.StapelImages {
+		for _, imgDep := range stapelImage.Dependencies {
+			if imgDep.ImageName == stapelImage.Name {
+				return newDetailedConfigError(fmt.Sprintf("image can't depend on itself: `%s`!", imgDep.ImageName), imgDep.raw, stapelImage.raw.doc)
+			}
+
+			if !c.HasImage(imgDep.ImageName) {
+				return newDetailedConfigError(fmt.Sprintf("no such image: `%s`!", imgDep.ImageName), imgDep.raw, stapelImage.raw.doc)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (c *WerfConfig) validateImagesFrom() error {
 	for _, image := range c.StapelImages {
 		if err := c.validateImageFrom(image.StapelImageBase); err != nil {

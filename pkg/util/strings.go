@@ -1,5 +1,7 @@
 package util
 
+import "sort"
+
 func UniqStrings(arr []string) []string {
 	res := []string{}
 
@@ -81,4 +83,25 @@ func Reverse(s string) string {
 		r[i], r[j] = r[j], r[i]
 	}
 	return string(r)
+}
+
+func FindDuplicatedStrings(elems []string) []string {
+	if len(elems) <= 1 {
+		return []string{}
+	}
+
+	sort.Strings(elems)
+
+	var duplicates []string
+	for i, elem := range elems {
+		if i == 0 {
+			continue
+		}
+
+		if elem == elems[i-1] {
+			duplicates = append(duplicates, elem)
+		}
+	}
+
+	return duplicates
 }

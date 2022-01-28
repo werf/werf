@@ -7,19 +7,20 @@ import (
 )
 
 type rawStapelImage struct {
-	Images           []string     `yaml:"-"`
-	Artifact         string       `yaml:"artifact,omitempty"`
-	From             string       `yaml:"from,omitempty"`
-	FromLatest       bool         `yaml:"fromLatest,omitempty"`
-	FromCacheVersion string       `yaml:"fromCacheVersion,omitempty"`
-	FromImage        string       `yaml:"fromImage,omitempty"`
-	FromArtifact     string       `yaml:"fromArtifact,omitempty"`
-	RawGit           []*rawGit    `yaml:"git,omitempty"`
-	RawShell         *rawShell    `yaml:"shell,omitempty"`
-	RawAnsible       *rawAnsible  `yaml:"ansible,omitempty"`
-	RawMount         []*rawMount  `yaml:"mount,omitempty"`
-	RawDocker        *rawDocker   `yaml:"docker,omitempty"`
-	RawImport        []*rawImport `yaml:"import,omitempty"`
+	Images           []string         `yaml:"-"`
+	Artifact         string           `yaml:"artifact,omitempty"`
+	From             string           `yaml:"from,omitempty"`
+	FromLatest       bool             `yaml:"fromLatest,omitempty"`
+	FromCacheVersion string           `yaml:"fromCacheVersion,omitempty"`
+	FromImage        string           `yaml:"fromImage,omitempty"`
+	FromArtifact     string           `yaml:"fromArtifact,omitempty"`
+	RawGit           []*rawGit        `yaml:"git,omitempty"`
+	RawShell         *rawShell        `yaml:"shell,omitempty"`
+	RawAnsible       *rawAnsible      `yaml:"ansible,omitempty"`
+	RawMount         []*rawMount      `yaml:"mount,omitempty"`
+	RawDocker        *rawDocker       `yaml:"docker,omitempty"`
+	RawImport        []*rawImport     `yaml:"import,omitempty"`
+	RawDependencies  []*rawDependency `yaml:"dependencies,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -113,7 +114,7 @@ func (c *rawStapelImage) toStapelImageArtifactDirectives(giterminismManager gite
 	imageArtifact := &StapelImageArtifact{}
 
 	var err error
-	if imageArtifact.StapelImageBase, err = c.toStapelImageBaseDirective(giterminismManager, c.Artifact); err != nil {
+	if imageArtifact.StapelImageBase, err = c.toStapelImageBaseDirective(giterminismManager, c.Artifact, true); err != nil {
 		return nil, err
 	}
 
@@ -127,7 +128,7 @@ func (c *rawStapelImage) toStapelImageArtifactDirectives(giterminismManager gite
 func (c *rawStapelImage) toStapelImageDirective(giterminismManager giterminism_manager.Interface, name string) (*StapelImage, error) {
 	image := &StapelImage{}
 
-	if imageBase, err := c.toStapelImageBaseDirective(giterminismManager, name); err != nil {
+	if imageBase, err := c.toStapelImageBaseDirective(giterminismManager, name, false); err != nil {
 		return nil, err
 	} else {
 		image.StapelImageBase = imageBase
@@ -202,7 +203,7 @@ func (c *rawStapelImage) validateStapelImageArtifactDirective(imageArtifact *Sta
 	return nil
 }
 
-func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager giterminism_manager.Interface, name string) (imageBase *StapelImageBase, err error) {
+func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager giterminism_manager.Interface, name string, isArtifact bool) (imageBase *StapelImageBase, err error) {
 	if imageBase, err = c.toBaseStapelImageBaseDirective(giterminismManager, name); err != nil {
 		return nil, err
 	}
@@ -251,6 +252,19 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 		} else {
 			imageBase.Import = append(imageBase.Import, importArtifactDirective)
 		}
+	}
+
+	if isArtifact && len(c.RawDependencies) > 0 {
+		return nil, newDetailedConfigError(fmt.Sprintf("dependencies directive is specified for %q artifact, but dependencies are not supported for artifacts!", name), nil, c.doc)
+	}
+
+	for _, rawDep := range c.RawDependencies {
+		dependencyDirective, err := rawDep.toDirective()
+		if err != nil {
+			return nil, err
+		}
+
+		imageBase.Dependencies = append(imageBase.Dependencies, dependencyDirective)
 	}
 
 	if err := c.validateStapelImageBaseDirective(giterminismManager, imageBase); err != nil {
