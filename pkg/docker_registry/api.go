@@ -349,7 +349,7 @@ func (api *api) ParseReferenceParts(reference string) (referenceParts, error) {
 	// validate reference
 	parsedReference, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
-		return referenceParts{}, fmt.Errorf("unable to parse reference: %s", err)
+		return referenceParts{}, fmt.Errorf("unable to parse reference %q: %s", reference, err)
 	}
 
 	res := dockerReference.ReferenceRegexp.FindStringSubmatch(reference)
