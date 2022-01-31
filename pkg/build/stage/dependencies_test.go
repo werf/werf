@@ -205,7 +205,7 @@ var _ = Describe("DependenciesStage", func() {
 
 var _ = Describe("getDependencies helper", func() {
 	When("using stapel image dependencies", func() {
-		It("", func() {
+		It("selects dependencies which are suitable for specified stage", func() {
 			img := &config.StapelImageBase{
 				Dependencies: []*config.Dependency{
 					{
