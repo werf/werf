@@ -20,6 +20,7 @@ import (
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
@@ -376,7 +377,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 		return nil
 	}
 
-	if err := stg.FetchDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerRuntime); err != nil {
+	if err := stg.FetchDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerRuntime, docker_registry.API()); err != nil {
 		return fmt.Errorf("unable to fetch dependencies for stage %s: %s", stg.LogDetailedName(), err)
 	}
 

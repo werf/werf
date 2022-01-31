@@ -13,6 +13,51 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
+func testDockerfileToDockerStages(dockerfile []byte) ([]instructions.Stage, []instructions.ArgCommand) {
+	p, err := parser.Parse(bytes.NewReader(dockerfile))
+	Expect(err).To(Succeed())
+
+	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	Expect(err).To(Succeed())
+
+	dockerfile_helpers.ResolveDockerStagesFromValue(dockerStages)
+
+	return dockerStages, dockerMetaArgs
+}
+
+func newTestDockerfileStage(dockerfile []byte, target string, buildArgs map[string]interface{}, dockerStages []instructions.Stage, dockerMetaArgs []instructions.ArgCommand, dependencies []*TestDependency) *DockerfileStage {
+	dockerTargetIndex, err := dockerfile_helpers.GetDockerTargetStageIndex(dockerStages, target)
+	Expect(err).To(Succeed())
+
+	ds := NewDockerStages(
+		dockerStages,
+		util.MapStringInterfaceToMapStringString(buildArgs),
+		dockerMetaArgs,
+		dockerTargetIndex,
+	)
+
+	return newDockerfileStage(
+		NewDockerRunArgs(
+			dockerfile,
+			"no-such-path",
+			target,
+			"",
+			nil,
+			buildArgs,
+			nil,
+			"",
+			"",
+		),
+		ds,
+		NewContextChecksum(nil),
+		&NewBaseStageOptions{
+			ImageName:   "example-image",
+			ProjectName: "example-project",
+		},
+		GetConfigDependencies(dependencies),
+	)
+}
+
 var _ = Describe("DockerfileStage", func() {
 	DescribeTable("configuring images dependencies for dockerfile stage",
 		func(data TestDockerfileDependencies) {
@@ -20,44 +65,9 @@ var _ = Describe("DockerfileStage", func() {
 
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")), data.TestDependencies.Dependencies)
 
-			p, err := parser.Parse(bytes.NewReader(data.Dockerfile))
-			Expect(err).To(Succeed())
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(data.Dockerfile)
 
-			dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
-			Expect(err).To(Succeed())
-
-			dockerfile_helpers.ResolveDockerStagesFromValue(dockerStages)
-
-			dockerTargetIndex, err := dockerfile_helpers.GetDockerTargetStageIndex(dockerStages, data.Target)
-			Expect(err).To(Succeed())
-
-			ds := NewDockerStages(
-				dockerStages,
-				util.MapStringInterfaceToMapStringString(data.BuildArgs),
-				dockerMetaArgs,
-				dockerTargetIndex,
-			)
-
-			stage := newDockerfileStage(
-				NewDockerRunArgs(
-					data.Dockerfile,
-					"no-such-path",
-					data.Target,
-					"",
-					nil,
-					data.BuildArgs,
-					nil,
-					"",
-					"",
-				),
-				ds,
-				NewContextChecksum(nil),
-				&NewBaseStageOptions{
-					ImageName:   "example-image",
-					ProjectName: "example-project",
-				},
-				GetConfigDependencies(data.TestDependencies.Dependencies),
-			)
+			stage := newTestDockerfileStage(data.Dockerfile, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies)
 
 			img := NewLegacyImageStub()
 
@@ -260,6 +270,32 @@ RUN echo hello
 			},
 		),
 	)
+
+	When("Dockerfile uses undefined build argument", func() {
+		It("should report descriptive error when fetching dockerfile stage dependencies", func() {
+			dockerfile := []byte(`
+ARG BASE_NAME=alpine:latest
+
+FROM ${BASE_NAME1}
+RUN echo hello
+`)
+
+			ctx := context.Background()
+
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")), nil)
+
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
+
+			stage := newTestDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
+
+			containerRuntime := NewContainerRuntimeMock()
+
+			dockerRegistry := NewDockerRegistryStub()
+
+			err := stage.FetchDependencies(ctx, conveyor, containerRuntime, dockerRegistry)
+			Expect(IsErrInvalidBaseImage(err)).To(BeTrue())
+		})
+	})
 })
 
 type TestDockerfileDependencies struct {
