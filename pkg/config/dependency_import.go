@@ -15,7 +15,7 @@ type DependencyImport struct {
 
 func (i *DependencyImport) validate() error {
 	switch i.Type {
-	case ImageNameImport, ImageTagImport, ImageRepoImport:
+	case ImageNameImport, ImageTagImport, ImageRepoImport, ImageIDImport:
 	default:
 		return newDetailedConfigError(fmt.Sprintf("invalid `type: %s` for dependency import, expected one of: %s", i.Type, strings.Join([]string{string(ImageNameImport), string(ImageTagImport), string(ImageRepoImport)}, ", ")), i.raw, i.raw.rawDependency.doc())
 	}
