@@ -182,7 +182,7 @@ Let us examine each policy individually:
 
 1. Keep an image for the last 10 tags (by date of creation).
 2. Keep no more than two images published over the past week, for no more than 10 branches active over the past week.
-3. Keep the 10 latest images for master, staging, and production branches.
+3. Keep the 10 latest images for main, staging, and production branches.
 
 ## Git worktree
 

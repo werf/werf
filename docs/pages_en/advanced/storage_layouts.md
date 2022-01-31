@@ -56,7 +56,7 @@ You do not need to **clean up** the secondary repo since it acts as the primary 
 
 ### Caching repository
 
-* You can specify it via the `--cache-repo` parameter (or `WERF_SECONDARY_REPO_<NAME>` environment variable).
+* You can specify it via the `--cache-repo` parameter (or `WERF_CACHE_REPO_<NAME>` environment variable).
 * There can be one or more such repos.
 
 This repo stores the previously assembled stages *(see the [primary repository](#primary-repository) functions)*. Unlike a secondary repository, a caching one supports reading and writing. Thus, werf can write newly built stages to the cache and use the stages from that cache.
