@@ -72,7 +72,7 @@ werf converge
 <a href="javascript:void(0)" class="details__summary">В противном случае выполните стандартную процедуру входа в container registry.</a>
 <div class="details__content" markdown="1">
 ```shell
-docker login registry.mydomain.org/application -uUSER -pPASSWORD
+docker login registry.mydomain.org/application -u USER -p PASSWORD
 ```
   
 Если постоянный логин раннер-хоста в container registry не требуется, выполните процедуру входа в каждом из заданий Ci/CD. Мы рекомендуем создавать временную конфигурацию docker для каждого CI/CD-задания (вместо использования директории по умолчанию `~/.docker/`), чтобы предотвратить конфликт разных заданий, выполняющихся на одном и том же раннере в одно и то же время.
@@ -80,10 +80,10 @@ docker login registry.mydomain.org/application -uUSER -pPASSWORD
 ```shell
 # Job 1
 export DOCKER_CONFIG=$(mktemp -d)
-docker login registry.mydomain.org/application -uUSER -pPASSWORD
+docker login registry.mydomain.org/application -u USER -p PASSWORD
 # Job 2
 export DOCKER_CONFIG=$(mktemp -d)
-docker login registry.mydomain.org/application -uUSER -pPASSWORD
+docker login registry.mydomain.org/application -u USER -p PASSWORD
 ```
 </div>
 </div>
