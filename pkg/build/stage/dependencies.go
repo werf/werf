@@ -38,7 +38,18 @@ func getImports(imageBaseConfig *config.StapelImageBase, options *getImportsOpti
 }
 
 func getDependencies(imageBaseConfig *config.StapelImageBase, options *getImportsOptions) []*config.Dependency {
-	return nil // TODO(images-dependencies)
+	var dependencies []*config.Dependency
+
+	for _, dep := range imageBaseConfig.Dependencies {
+		switch {
+		case dep.Before != "" && string(options.Before) == dep.Before:
+			dependencies = append(dependencies, dep)
+		case dep.After != "" && string(options.After) == dep.After:
+			dependencies = append(dependencies, dep)
+		}
+	}
+
+	return dependencies
 }
 
 func newDependenciesStage(imports []*config.Import, dependencies []*config.Dependency, name StageName, baseStageOptions *NewBaseStageOptions) *DependenciesStage {

@@ -5,6 +5,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/pkg/config"
 )
 
 var _ = Describe("DependenciesStage", func() {
@@ -199,4 +201,65 @@ var _ = Describe("DependenciesStage", func() {
 				},
 			}),
 	)
+})
+
+var _ = Describe("getDependencies helper", func() {
+	When("using stapel image dependencies", func() {
+		It("", func() {
+			img := &config.StapelImageBase{
+				Dependencies: []*config.Dependency{
+					{
+						ImageName: "one",
+						Before:    "setup",
+					},
+					{
+						ImageName: "two",
+						Before:    "setup",
+					},
+					{
+						ImageName: "three",
+						Before:    "install",
+					},
+					{
+						ImageName: "four",
+						After:     "install",
+					},
+					{
+						ImageName: "five",
+						After:     "install",
+					},
+					{
+						ImageName: "six",
+						After:     "setup",
+					},
+				},
+			}
+
+			{
+				deps := getDependencies(img, &getImportsOptions{Before: "install"})
+				Expect(len(deps)).To(Equal(1))
+				Expect(deps[0].ImageName).To(Equal("three"))
+			}
+
+			{
+				deps := getDependencies(img, &getImportsOptions{After: "install"})
+				Expect(len(deps)).To(Equal(2))
+				Expect(deps[0].ImageName).To(Equal("four"))
+				Expect(deps[1].ImageName).To(Equal("five"))
+			}
+
+			{
+				deps := getDependencies(img, &getImportsOptions{Before: "setup"})
+				Expect(len(deps)).To(Equal(2))
+				Expect(deps[0].ImageName).To(Equal("one"))
+				Expect(deps[1].ImageName).To(Equal("two"))
+			}
+
+			{
+				deps := getDependencies(img, &getImportsOptions{After: "setup"})
+				Expect(len(deps)).To(Equal(1))
+				Expect(deps[0].ImageName).To(Equal("six"))
+			}
+		})
+	})
 })
