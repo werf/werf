@@ -3,11 +3,14 @@ package stage
 import (
 	"context"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/pkg/image"
 )
 
 type LegacyImageStub struct {
@@ -166,4 +169,39 @@ func NewGitRepoArchiveStub() *GitRepoArchiveStub {
 
 func (archive *GitRepoArchiveStub) GetFilePath() string {
 	return "no-such-file"
+}
+
+type ContainerRuntimeMock struct {
+	container_runtime.ContainerRuntime
+
+	_PulledImages map[string]bool
+}
+
+func NewContainerRuntimeMock() *ContainerRuntimeMock {
+	return &ContainerRuntimeMock{
+		_PulledImages: make(map[string]bool),
+	}
+}
+
+func (containerRuntime *ContainerRuntimeMock) GetImageInfo(ctx context.Context, ref string, opts container_runtime.GetImageInfoOpts) (*image.Info, error) {
+	return nil, nil
+}
+
+func (containerRuntime *ContainerRuntimeMock) Pull(ctx context.Context, ref string, opts container_runtime.PullOpts) error {
+	containerRuntime._PulledImages[ref] = true
+	return nil
+}
+
+type DockerRegistryStub struct {
+	docker_registry.DockerRegistryInterface
+}
+
+func NewDockerRegistryStub() *DockerRegistryStub {
+	return &DockerRegistryStub{}
+}
+
+func (dockerRegistry *DockerRegistryStub) GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
+	return &v1.ConfigFile{
+		Config: v1.Config{},
+	}, nil
 }

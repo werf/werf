@@ -27,6 +27,12 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
+var ErrInvalidBaseImage = errors.New("invalid base image")
+
+func IsErrInvalidBaseImage(err error) bool {
+	return err != nil && errors.Is(err, ErrInvalidBaseImage)
+}
+
 func GenerateDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions, dependencies []*config.Dependency) *DockerfileStage {
 	return newDockerfileStage(dockerRunArgs, dockerStages, contextChecksum, baseStageOptions, dependencies)
 }
@@ -312,7 +318,7 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *DockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerRuntime container_runtime.ContainerRuntime) error {
+func (s *DockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerRuntime container_runtime.ContainerRuntime, dockerRegistry docker_registry.DockerRegistryInterface) error {
 	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
@@ -325,6 +331,10 @@ outerLoop:
 		resolvedBaseName, err := s.ShlexProcessWordWithMetaArgs(stage.BaseName, resolvedDockerMetaArgsHash)
 		if err != nil {
 			return err
+		}
+
+		if resolvedBaseName == "" {
+			return ErrInvalidBaseImage
 		}
 
 		for relatedStageIndex, relatedStage := range s.dockerStages {
@@ -356,9 +366,9 @@ outerLoop:
 		}
 
 		getBaseImageOnBuildRemotely := func() ([]string, error) {
-			configFile, err := docker_registry.API().GetRepoImageConfigFile(ctx, resolvedBaseName)
+			configFile, err := dockerRegistry.GetRepoImageConfigFile(ctx, resolvedBaseName)
 			if err != nil {
-				return nil, fmt.Errorf("get repo image %s config file failed: %s", resolvedBaseName, err)
+				return nil, fmt.Errorf("get repo image %q config file failed: %s", resolvedBaseName, err)
 			}
 
 			return configFile.Config.OnBuild, nil

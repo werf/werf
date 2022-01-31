@@ -12,6 +12,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/docker_registry"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/util"
@@ -121,7 +122,7 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
-func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_runtime.ContainerRuntime) error {
+func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_runtime.ContainerRuntime, _ docker_registry.DockerRegistryInterface) error {
 	return nil
 }
 
