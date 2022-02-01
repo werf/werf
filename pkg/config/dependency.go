@@ -17,17 +17,31 @@ type Dependency struct {
 }
 
 func (d *Dependency) validate() error {
-	switch {
-	case d.ImageName == "":
+	if d.ImageName == "" {
 		return newDetailedConfigError("image name is not specified for dependency", d.raw, d.raw.doc())
-	case d.Before == "" && d.After == "":
-		return newDetailedConfigError("dependency stage is not specified with `before: install|setup` or `after: install|setup`", d.raw, d.raw.doc())
-	case d.Before != "" && d.After != "":
-		return newDetailedConfigError("only one dependency stage can be specified with `before: install|setup` or `after: install|setup`, but not both", d.raw, d.raw.doc())
-	case d.Before != "" && d.Before != "install" && d.Before != "setup":
-		return newDetailedConfigError(fmt.Sprintf("invalid dependency stage `before: %s`: expected install or setup!", d.Before), d.raw, d.raw.doc())
-	case d.After != "" && d.After != "install" && d.After != "setup":
-		return newDetailedConfigError(fmt.Sprintf("invalid dependency stage `after: %s`: expected install or setup!", d.After), d.raw, d.raw.doc())
+	}
+
+	switch imageType := d.raw.imageType(); imageType {
+	case dependencyImageTypeStapel:
+		switch {
+		case d.Before == "" && d.After == "":
+			return newDetailedConfigError("dependency stage is not specified with `before: install|setup` or `after: install|setup`", d.raw, d.raw.doc())
+		case d.Before != "" && d.After != "":
+			return newDetailedConfigError("only one dependency stage can be specified with `before: install|setup` or `after: install|setup`, but not both", d.raw, d.raw.doc())
+		case d.Before != "" && d.Before != "install" && d.Before != "setup":
+			return newDetailedConfigError(fmt.Sprintf("invalid dependency stage `before: %s`: expected install or setup!", d.Before), d.raw, d.raw.doc())
+		case d.After != "" && d.After != "install" && d.After != "setup":
+			return newDetailedConfigError(fmt.Sprintf("invalid dependency stage `after: %s`: expected install or setup!", d.After), d.raw, d.raw.doc())
+		}
+	case dependencyImageTypeDockerfile:
+		switch {
+		case d.Before != "":
+			return newDetailedConfigError("`before:` directive is not supported for dockerfile dependencies", d.raw, d.raw.doc())
+		case d.After != "":
+			return newDetailedConfigError("`after:` directive is not supported for dockerfile dependencies", d.raw, d.raw.doc())
+		}
+	default:
+		panic(fmt.Sprintf("unexpected imageType: %s", imageType))
 	}
 
 	var targetEnvs, targetBuildArgs []string
