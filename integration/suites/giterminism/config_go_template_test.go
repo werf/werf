@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/integration/pkg/utils"
+	"github.com/werf/werf/test/pkg/utils"
 )
 
 var _ = Describe("config go template", func() {

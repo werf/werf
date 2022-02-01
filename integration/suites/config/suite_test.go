@@ -3,7 +3,7 @@ package config_test
 import (
 	"testing"
 
-	"github.com/werf/werf/integration/pkg/suite_init"
+	"github.com/werf/werf/test/pkg/suite_init"
 )
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Config suite", suite_init.TestSuiteEntrypointFuncOptions{})

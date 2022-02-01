@@ -10,8 +10,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 
-	"github.com/werf/werf/integration/pkg/utils"
-	utilsDocker "github.com/werf/werf/integration/pkg/utils/docker"
+	"github.com/werf/werf/test/pkg/utils"
+	utilsDocker "github.com/werf/werf/test/pkg/utils/docker"
 )
 
 var _ = Describe("cleanup empty directories with git patch apply", func() {

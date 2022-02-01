@@ -6,8 +6,8 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	iutils "github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/pkg/build"
+	iutils "github.com/werf/werf/test/pkg/utils"
 )
 
 func NewProject(werfBinPath, repoPath string) *Project {

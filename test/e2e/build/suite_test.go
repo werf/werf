@@ -4,9 +4,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/werf/werf/integration/pkg/suite_init"
-	"github.com/werf/werf/integration/pkg/utils/docker"
-	"github.com/werf/werf/test/pkg/suitedata"
+	"github.com/werf/werf/test/pkg/suite_init"
+	"github.com/werf/werf/test/pkg/utils/docker"
 )
 
 func TestSuite(t *testing.T) {
@@ -20,7 +19,7 @@ func TestSuite(t *testing.T) {
 }
 
 var SuiteData = struct {
-	suitedata.SuiteData
+	suite_init.SuiteData
 
 	RegistryLocalAddress    string
 	RegistryInternalAddress string

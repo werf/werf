@@ -9,8 +9,8 @@ import (
 	"github.com/onsi/ginkgo"
 	"github.com/prashantv/gostub"
 
-	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/test/pkg/utils"
 )
 
 type ProjectNameData struct {
