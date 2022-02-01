@@ -14,8 +14,8 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/integration/pkg/utils"
-	"github.com/werf/werf/integration/pkg/utils/docker"
+	"github.com/werf/werf/test/pkg/utils"
+	"github.com/werf/werf/test/pkg/utils/docker"
 )
 
 var _ = Describe("file lifecycle", func() {

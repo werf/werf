@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/integration/pkg/utils"
+	"github.com/werf/werf/test/pkg/utils"
 )
 
 var _ = Describe("helm secret file/values encrypt/decrypt", func() {

@@ -3,7 +3,7 @@ package get_test
 import (
 	"testing"
 
-	"github.com/werf/werf/integration/pkg/suite_init"
+	"github.com/werf/werf/test/pkg/suite_init"
 )
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Helm/Get suite", suite_init.TestSuiteEntrypointFuncOptions{})

@@ -8,9 +8,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/integration/pkg/suite_init"
-	"github.com/werf/werf/integration/pkg/utils"
 	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/test/pkg/suite_init"
+	"github.com/werf/werf/test/pkg/utils"
 )
 
 const branchName = "test_branch"
