@@ -26,9 +26,9 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.59 # fixes multi-stage, quay, werf helm get-release panic
+      version: 1.2.60 # the dependencies directive
     - name: beta
-      version: 1.2.59 # fixes multi-stage, quay, werf helm get-release panic
+      version: 1.2.60 # the dependencies directive
     - name: ea
       version: 1.2.57+fix1 # fixes for virtual merge commits and dev mode and ignore quay TAG_EXPIRED
     - name: stable
