@@ -47,6 +47,10 @@ func TestSlug(t *testing.T) {
 			if len(result) > DefaultSlugMaxSize {
 				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", DefaultSlugMaxSize, len(result))
 			}
+
+			tRunIdempotence(t, test.name, test.data, func(s string) string {
+				return LimitedSlug(s, DefaultSlugMaxSize)
+			})
 		})
 	}
 }
@@ -90,6 +94,8 @@ func TestDockerTag(t *testing.T) {
 				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", dockerTagMaxSize, len(result))
 			}
 		})
+
+		tRunIdempotence(t, test.name, test.data, DockerTag)
 	}
 }
 
@@ -137,6 +143,8 @@ func TestHelmRelease(t *testing.T) {
 				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", helmReleaseMaxSize, len(result))
 			}
 		})
+
+		tRunIdempotence(t, test.name, test.data, HelmRelease)
 	}
 }
 
@@ -179,5 +187,17 @@ func TestKubernetesNamespace(t *testing.T) {
 				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", kubernetesNamespaceMaxSize, len(result))
 			}
 		})
+
+		tRunIdempotence(t, test.name, test.data, KubernetesNamespace)
 	}
+}
+
+func tRunIdempotence(t *testing.T, testName, testData string, slugger func(string) string) {
+	t.Run(testName+"-idempotence", func(t *testing.T) {
+		firstResult := slugger(testData)
+		secondResult := slugger(firstResult)
+		if firstResult != secondResult {
+			t.Errorf("\n[EXPECTED]: %s (%d)\n[GOT]: %s (%d)", firstResult, len(firstResult), secondResult, len(secondResult))
+		}
+	})
 }
