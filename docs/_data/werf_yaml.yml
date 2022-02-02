@@ -788,3 +788,4 @@ sections:
               description:
                 en: "Name of environment variable which will contain specified type of information about image"
                 ru: "Имя переменной окружения, которая будет содержать указанный тип информации об образе"
+
