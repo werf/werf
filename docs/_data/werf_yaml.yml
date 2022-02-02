@@ -628,7 +628,7 @@ sections:
               ru: "Описание сетевых портов, которые будут прослушиваться в запущенном контейнере"
             detailsLink: "https://docs.docker.com/engine/reference/builder/#expose"
           - name: ENTRYPOINT
-            value: "string"
+            value: "string | [ string, ... ]"
             description:
               en: "To configure a container that will run as an executable"
               ru: "Команда по умолчанию, которая будет выполнена при запуске контейнера"
