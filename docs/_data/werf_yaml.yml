@@ -239,6 +239,38 @@ sections:
         description:
           en: SSH agent socket or keys to the build (only if BuildKit enabled) (see docker build --ssh option)
           ru: Сокет агента SSH или ключи для сборки определённых слоёв (только если используется BuildKit) (подобно docker build --ssh)
+      - name: dependencies
+        description:
+          en: "Dependencies images for current image"
+          ru: "Образы-зависимости для текущего образа"
+        #detailsArticle:
+          #all: "/advanced/building_images_with_stapel/import_directive.html"
+        collapsible: true
+        isCollapsedByDefault: false
+        directiveList:
+          - name: image
+            value: "string"
+            description:
+              en: "Dependency image name, which should be built before building current image"
+              ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа"
+          - name: imports
+            description:
+              en: "Define target build args to import image information into current image (optional)"
+              ru: "Определить аргументы для импорта информации о зависимом образе в текущий образ используя Dockerfile build-args (опционально)"
+            collapsible: false
+            isCollapsedByDefault: false
+            directiveList:
+            - name: type
+              value: "string"
+              description:
+                en: "Type of image info: ImageName, ImageID, ImageRepo or ImageTag"
+                ru: "Тип импортируемой информации об образе: ImageName, ImageID, ImageRepo или ImageTag"
+            - name: targetBuildArg
+              value: "string"
+              description:
+                en: "Name of build argument which will contain specified type of information about image"
+                ru: "Имя аргумента (Dockerfile build-args), который будет содержать указанный тип информации об образе"
+
   - id: stapel-section
     description:
       en: "Stapel image/artifact section: optional, define as many image sections as you need"
@@ -715,3 +747,44 @@ sections:
             description:
               en: "Globs for excluding"
               ru: "Глобы исключения"
+      - name: dependencies
+        description:
+          en: "Dependencies images for current image"
+          ru: "Образы-зависимости для текущего образа"
+        #detailsArticle:
+          #all: "/advanced/building_images_with_stapel/import_directive.html"
+        collapsible: true
+        isCollapsedByDefault: false
+        directiveList:
+          - name: image
+            value: "string"
+            description:
+              en: "Dependency image name, which should be built before building current image"
+              ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа"
+          - name: before
+            value: "string"
+            description:
+              en: "The stage name before which image info should be imported (specify install or setup). Specified target env variables will be available at user stages after stage specified by this directive."
+              ru: "Выбор стадии перед которой должна быть импортирована информация об образе (требуется указать install или setup). Указанные переменные окружения будут доступны в пользовательских стадиях после указанной данной директивой стадии."
+          - name: after
+            value: "string"
+            description:
+              en: "The stage name after which image info should be imported (specify install or setup). Specified target env variables will be available at user stages after stage specified by this directive."
+              ru: "Выбор стадии после которой должна быть импортирована информация об образе (требуется указать install или setup). Указанные переменные окружения будут доступны в пользовательских стадиях после указанной данной директивой стадии."
+          - name: imports
+            description:
+              en: "Define target environment variables to import image information into current image (optional)"
+              ru: "Определить аргументы для импорта информации о зависимом образе в текущий образ используя переменные окружения (опционально)"
+            collapsible: false
+            isCollapsedByDefault: false
+            directiveList:
+            - name: type
+              value: "string"
+              description:
+                en: "Type of image info: ImageName, ImageID, ImageRepo or ImageTag"
+                ru: "Тип импортируемой информации об образе: ImageName, ImageID, ImageRepo или ImageTag"
+            - name: targetEnv
+              value: "string"
+              description:
+                en: "Name of environment variable which will contain specified type of information about image"
+                ru: "Имя переменной окружения, которая будет содержать указанный тип информации об образе"
