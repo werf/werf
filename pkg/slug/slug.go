@@ -30,7 +30,7 @@ func Slug(data string) string {
 }
 
 func LimitedSlug(data string, slugMaxSize int) string {
-	if len(data) == 0 || slugify(data) == data && len(data) < slugMaxSize {
+	if len(data) == 0 || slugify(data) == data && len(data) <= slugMaxSize {
 		return data
 	}
 
