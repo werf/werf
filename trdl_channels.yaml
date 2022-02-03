@@ -26,9 +26,9 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.61 # the dependencies directive with docs
+      version: 1.2.62 # fix unexpected cleanup fail when getting metadata for custom tag with long name
     - name: beta
-      version: 1.2.61 # the dependencies directive with docs
+      version: 1.2.62 # fix unexpected cleanup fail when getting metadata for custom tag with long name
     - name: ea
       version: 1.2.59 # fixes multi-stage, quay, werf helm get-release panic
     - name: stable
