@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.63 # fix bundles incompatibility with helm 3
+      version: 1.2.63 # fix bundles incompatibility with helm 3 
     - name: beta
       version: 1.2.62 # fix unexpected cleanup fail when getting metadata for custom tag with long name
     - name: ea
