@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.64](https://www.github.com/werf/werf/compare/v1.2.63...v1.2.64) (2022-02-07)
+
+
+### Features
+
+* **buildah:** update buildah subsystem to v1.24.1 ([f0f3816](https://www.github.com/werf/werf/commit/f0f38165689662984b3232ea710d66d934f22da1))
+* **dev-mode:** less rebuilds due to better cache handling ([34df9d2](https://www.github.com/werf/werf/commit/34df9d279ef9ed6c3676588ac91fe526f919588f))
+
 ### [1.2.63](https://www.github.com/werf/werf/compare/v1.2.62...v1.2.63) (2022-02-04)
 
 
