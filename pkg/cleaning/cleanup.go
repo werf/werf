@@ -260,8 +260,9 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 		var reachedStageIDs []string
 		var hitStageIDCommitList map[string][]string
 		if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(imageName, false)).DoError(func() error {
-			if logboek.Context(ctx).Streams().Width() > 90 {
+			if logboek.Context(ctx).Streams().Width() > 120 {
 				m.printStageIDCommitListTable(ctx, imageName)
+				m.printStageIDCustomTagListTable(ctx)
 			}
 
 			if err := logboek.Context(ctx).LogProcess("Scanning git references history").DoError(func() error {
@@ -312,37 +313,12 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 }
 
 func (m *cleanupManager) printStageIDCommitListTable(ctx context.Context, imageName string) {
-	if logboek.Context(ctx).Streams().ContentWidth() < 120 {
-		return
-	}
-
 	stageIDCommitList := m.stageManager.GetStageIDCommitListToCleanup(imageName)
 	if countStageIDCommitList(stageIDCommitList) == 0 {
 		return
 	}
 
-	var rows [][]interface{}
-	for stageID, commitList := range stageIDCommitList {
-		for ind, commit := range commitList {
-			var columns []interface{}
-			if ind == 0 {
-				stageIDColumn := stageID
-
-				space := len(stageID) - len(commit) - 1
-				if logboek.Context(ctx).Streams().ContentWidth() < space {
-					stageIDColumn = fmt.Sprintf("%s..%s", stageID[:space-5], stageID[space-3:])
-				}
-
-				columns = append(columns, stageIDColumn)
-			} else {
-				columns = append(columns, "")
-			}
-
-			columns = append(columns, commit)
-			rows = append(rows, columns)
-		}
-	}
-
+	rows := m.prepareStageIDTableRows(ctx, stageIDCommitList)
 	if len(rows) != 0 {
 		tbl := table.New("Tag", "Commits")
 		tbl.WithWriter(logboek.Context(ctx).OutStream())
@@ -356,6 +332,54 @@ func (m *cleanupManager) printStageIDCommitListTable(ctx context.Context, imageN
 
 		logboek.Context(ctx).LogOptionalLn()
 	}
+}
+
+func (m *cleanupManager) printStageIDCustomTagListTable(ctx context.Context) {
+	stageIDCustomTagList := m.stageManager.GetCustomTagsMetadata()
+	if len(stageIDCustomTagList) == 0 {
+		return
+	}
+
+	rows := m.prepareStageIDTableRows(ctx, stageIDCustomTagList)
+	if len(rows) != 0 {
+		tbl := table.New("Tag", "Custom tags")
+		tbl.WithWriter(logboek.Context(ctx).OutStream())
+		tbl.WithHeaderFormatter(func(format string, a ...interface{}) string {
+			return logboek.ColorizeF(color.New(color.OpUnderscore), format, a...)
+		})
+		for _, row := range rows {
+			tbl.AddRow(row...)
+		}
+		tbl.Print()
+
+		logboek.Context(ctx).LogOptionalLn()
+	}
+}
+
+func (m *cleanupManager) prepareStageIDTableRows(ctx context.Context, stageIDAnyList map[string][]string) [][]interface{} {
+	var rows [][]interface{}
+	for stageID, anyList := range stageIDAnyList {
+		for ind, any := range anyList {
+			var columns []interface{}
+			if ind == 0 {
+				stageIDColumn := stageID
+
+				space := len(stageID) - len(any) - 1
+				if logboek.Context(ctx).Streams().ContentWidth() < space {
+					stageIDColumn = fmt.Sprintf("%s..%s", stageID[:space-5], stageID[space-3:])
+				}
+
+				columns = append(columns, stageIDColumn)
+			} else {
+				columns = append(columns, "")
+			}
+
+			columns = append(columns, any)
+			rows = append(rows, columns)
+		}
+	}
+
+	return rows
 }
 
 func (m *cleanupManager) handleSavedStageIDs(ctx context.Context, savedStageIDs []string) {
