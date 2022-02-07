@@ -57,6 +57,15 @@ func Fetch(ctx context.Context, path string, options FetchOptions) error {
 	return gitCmd.Run(ctx)
 }
 
+func GetLastBranchCommitSHA(ctx context.Context, repoPath, branch string) (string, error) {
+	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoPath}, "rev-parse", branch)
+	if err := revParseCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git rev parse branch command failed: %s", err)
+	}
+
+	return strings.TrimSpace(revParseCmd.OutBuf.String()), nil
+}
+
 func IsShallowClone(ctx context.Context, path string) (bool, error) {
 	if gitVersion.LessThan(semver.MustParse("2.15.0")) {
 		exist, err := util.FileExists(filepath.Join(path, ".git", "shallow"))

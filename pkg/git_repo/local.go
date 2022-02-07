@@ -40,7 +40,7 @@ type OpenLocalRepoOptions struct {
 }
 
 type ServiceBranchOptions struct {
-	Prefix          string
+	Name            string
 	GlobExcludeList []string
 }
 
@@ -71,29 +71,22 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 			defer werf.ReleaseHostLock(lock)
 		}
 
-		gitStatusResult, err := l.status(ctx)
+		devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceBranch(
+			context.Background(),
+			l.GitDir,
+			l.WorkTreeDir,
+			l.getRepoWorkTreeCacheDir(l.getRepoID()),
+			l.headCommitHash,
+			true_git.SyncSourceWorktreeWithServiceBranchOptions{
+				ServiceBranch:   opts.ServiceBranchOptions.Name,
+				GlobExcludeList: opts.ServiceBranchOptions.GlobExcludeList,
+			},
+		)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get git status: %s", err)
+			return l, err
 		}
 
-		if len(gitStatusResult.PathListWithSubmodules()) != 0 {
-			devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceBranch(
-				context.Background(),
-				l.GitDir,
-				l.WorkTreeDir,
-				l.getRepoWorkTreeCacheDir(l.getRepoID()),
-				l.headCommitHash,
-				true_git.SyncSourceWorktreeWithServiceBranchOptions{
-					ServiceBranchPrefix: opts.ServiceBranchOptions.Prefix,
-					GlobExcludeList:     opts.ServiceBranchOptions.GlobExcludeList,
-				},
-			)
-			if err != nil {
-				return l, err
-			}
-
-			l.headCommitHash = devHeadCommit
-		}
+		l.headCommitHash = devHeadCommit
 	}
 
 	return l, nil

@@ -93,7 +93,7 @@ type CmdData struct {
 	LooseGiterminism *bool
 	Dev              *bool
 	DevIgnore        *[]string
-	DevBranchPrefix  *string
+	DevBranch        *string
 
 	IntrospectBeforeError *bool
 	IntrospectAfterError  *bool
@@ -178,7 +178,7 @@ func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
 	setupLooseGiterminism(cmdData, cmd)
 	setupDev(cmdData, cmd)
 	setupDevIgnore(cmdData, cmd)
-	setupDevBranchPrefix(cmdData, cmd)
+	setupDevBranch(cmdData, cmd)
 }
 
 func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
@@ -198,16 +198,16 @@ func setupDevIgnore(cmdData *CmdData, cmd *cobra.Command) {
 Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)`)
 }
 
-func setupDevBranchPrefix(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DevBranchPrefix = new(string)
+func setupDevBranch(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DevBranch = new(string)
 
-	defaultValue := "werf-dev-"
-	envValue := os.Getenv("WERF_DEV_BRANCH_PREFIX")
+	defaultValue := "_werf-dev"
+	envValue := os.Getenv("WERF_DEV_BRANCH")
 	if envValue != "" {
 		defaultValue = envValue
 	}
 
-	cmd.Flags().StringVarP(cmdData.DevBranchPrefix, "dev-branch-prefix", "", defaultValue, `Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)`)
+	cmd.Flags().StringVarP(cmdData.DevBranch, "dev-branch", "", defaultValue, fmt.Sprintf("Set dev git branch name (default $WERF_DEV_BRANCH or %q)", defaultValue))
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -1179,7 +1179,7 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_m
 	var openLocalRepoOptions git_repo.OpenLocalRepoOptions
 	if *cmdData.Dev {
 		openLocalRepoOptions.WithServiceHeadCommit = true
-		openLocalRepoOptions.ServiceBranchOptions.Prefix = *cmdData.DevBranchPrefix
+		openLocalRepoOptions.ServiceBranchOptions.Name = *cmdData.DevBranch
 		openLocalRepoOptions.ServiceBranchOptions.GlobExcludeList = GetDevIgnore(cmdData)
 	}
 
