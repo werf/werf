@@ -30,8 +30,8 @@ werf managed-images add [options]
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
             debugging and development
-      --dev-branch-prefix='werf-dev-'
-            Set dev git branch prefix (default $WERF_DEV_BRANCH_PREFIX or werf-dev-)
+      --dev-branch='_werf-dev'
+            Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
