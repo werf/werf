@@ -17,10 +17,10 @@ require (
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
 	github.com/containerd/containerd v1.5.9
-	github.com/containers/buildah v1.23.1
-	github.com/containers/common v0.44.2
-	github.com/containers/image/v5 v5.18.0
-	github.com/containers/storage v1.37.0
+	github.com/containers/buildah v1.24.1
+	github.com/containers/common v0.47.3
+	github.com/containers/image/v5 v5.19.1
+	github.com/containers/storage v1.38.2
 	github.com/deislabs/oras v0.12.0
 	github.com/djherbis/buffer v1.1.0
 	github.com/djherbis/nio/v3 v3.0.1
@@ -28,7 +28,7 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go v1.5.1-1 // indirect
-	github.com/docker/go-connections v0.4.0
+	github.com/docker/go-connections v0.4.1-0.20210727194412-58542c764a11
 	github.com/docker/go-units v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fluxcd/flagger v1.8.0
@@ -47,19 +47,21 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/helm/helm-2to3 v0.8.1
 	github.com/jinzhu/gorm v1.9.12 // indirect
+	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
+	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/moby/buildkit v0.8.2
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
+	github.com/mtrmac/gpgme v0.1.2 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
 	github.com/oleiade/reflections v1.0.1 // indirect
-	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/ginkgo/v2 v2.0.0 // indirect
-	github.com/onsi/gomega v1.17.0
+	github.com/onsi/gomega v1.18.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.3-0.20211202193544-a5463b7f9c84
-	github.com/opencontainers/runc v1.0.3 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/otiai10/copy v1.0.1
 	github.com/otiai10/curr v1.0.0 // indirect
@@ -69,7 +71,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
@@ -79,12 +81,12 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	go.mongodb.org/mongo-driver v1.5.1 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
+	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/errgo.v2 v2.1.0
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
-	gopkg.in/ini.v1 v1.62.0
+	gopkg.in/ini.v1 v1.66.2
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
