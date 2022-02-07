@@ -7,6 +7,21 @@ werf currently supports building images _with the Docker server_ or _without the
 
 In the experimental mode _without the Docker server_, werf uses built-in Buildah in rootless mode.
 
+## System requirements
+
+Host requirements for running werf in Buildah mode on a host system without Docker/Kubernetes can be found in the [installation instructions]({{ "/installation.html" | true_relative_url }}). But for running werf in Kubernetes or in Docker containers the requirements are as follows:
+* If your Linux kernel version is 5.13+ (5.11+ for some distros), make sure `overlay` kernel module is loaded with `lsmod | grep overlay`. If your kernel is older or if you can't activate `overlay` kernel module, then install `fuse-overlayfs`, which should be available in your distro package repos. As a last resort, `vfs` storage driver can be used.
+* Command `sysctl kernel.unprivileged_userns_clone` should return `1`. Else execute:
+  ```shell
+  echo 'kernel.unprivileged_userns_clone = 1' | sudo tee -a /etc/sysctl.conf
+  sudo sysctl -p
+  ```
+* Command `sysctl user.max_user_namespaces` should return at least `15000`. Else execute:
+  ```shell
+  echo 'user.max_user_namespaces = 15000' | sudo tee -a /etc/sysctl.conf
+  sudo sysctl -p
+  ```
+
 ## Enable Buildah
 
 Buildah is enabled by setting the `WERF_BUILDAH_MODE` environment variable to one of the following: `auto`, `native-chroot`, `native-rootless` or `docker-with-fuse`.
@@ -26,9 +41,3 @@ werf can use `overlay` or `vfs` storage driver:
 * `vfs` allows you to use a virtual filesystem emulation instead of OverlayFS. This filesystem has worse performance and requires a privileged container, so its use is not recommended. However, it may be required in some cases.
 
 Normally, the user should just go with the default `overlay` driver. The storage driver can be selected with the `WERF_BUILDAH_STORAGE_DRIVER` environment variable.
-
-### System requirements
-
-Rootless OverlayFS is available starting with Linux kernel version 5.11 (strictly speaking, it was initially implemented in version 5.13 via a bugfix to enable rootless overlayFS in SELinux, but most major Linux distributions have backported it into kernel 5.11).
-
-If your kernel does not support rootless OverlayFS, fuse-overlayfs will be used.

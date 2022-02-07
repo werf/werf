@@ -11,7 +11,7 @@ permalink: advanced/ci_cd/run_in_container/use_docker_container.html
 
 Для этого метода доступен официальный образ с werf 1.2 (1.1 не поддерживается): `ghcr.io/werf/werf`.
 
-Выберите один из [доступных режимов работы]({{ "advanced/ci_cd/run_in_container/how_it_works.html#режимы-работы" | true_relative_url }}) и перейдите к нему.
+Убедитесь, что удовлетворены [системные требования]({{ "advanced/buildah_mode.html#системные-требования" | true_relative_url }}) и выберите один из [доступных режимов работы]({{ "advanced/ci_cd/run_in_container/how_it_works.html#режимы-работы" | true_relative_url }}) и перейдите к нему.
 
 ### Ядро Linux с поддержкой OverlayFS в режиме rootless
 
