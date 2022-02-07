@@ -47,17 +47,11 @@ func main() {
 	}
 	fmt.Fprintf(os.Stdout, "INFO: imageId is %s\n", imageId)
 
-	if err := b.Pull(context.Background(), "ubuntu:20.04", buildah.PullOpts{
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: os.Stdout,
-		},
-	}); err != nil {
+	if err := b.Pull(context.Background(), "ubuntu:20.04", buildah.PullOpts{LogWriter: os.Stdout}); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := b.Tag(context.Background(), "ubuntu:20.04", newImage, buildah.TagOpts{
-		CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout},
-	}); err != nil {
+	if err := b.Tag(context.Background(), "ubuntu:20.04", newImage, buildah.TagOpts{LogWriter: os.Stdout}); err != nil {
 		log.Fatal(err)
 	}
 
@@ -73,11 +67,7 @@ func main() {
 	}
 	log.Print(builderInfo)
 
-	if err := b.Push(context.Background(), newImage, buildah.PushOpts{
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: os.Stdout,
-		},
-	}); err != nil {
+	if err := b.Push(context.Background(), newImage, buildah.PushOpts{LogWriter: os.Stdout}); err != nil {
 		log.Fatal(err)
 	}
 
