@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -16,8 +17,8 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 	var sourceWorkTreeDir string
 	var gitDir string
 	var workTreeCacheDir string
-	var headCommit string
-	defaultOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranchPrefix: "dev-"}
+	var sourceHeadCommit string
+	defaultOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
 
 	BeforeEach(func() {
 		sourceWorkTreeDir = filepath.Join(SuiteData.TestDirPath, "source")
@@ -38,7 +39,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			"commit", "--allow-empty", "-m", "Initial commit",
 		)
 
-		headCommit = utils.GetHeadCommit(sourceWorkTreeDir)
+		sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
 
 		Ω(werf.Init("", "")).Should(Succeed())
 		Ω(Init(context.Background(), Options{})).Should(Succeed())
@@ -50,12 +51,12 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			gitDir,
 			sourceWorkTreeDir,
 			workTreeCacheDir,
-			headCommit,
+			sourceHeadCommit,
 			defaultOptions,
 		)
 
 		Ω(err).Should(Succeed())
-		Ω(commit).Should(Equal(headCommit))
+		Ω(commit).Should(Equal(sourceHeadCommit))
 	})
 
 	When("tracked changes", func() {
@@ -79,12 +80,12 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				gitDir,
 				sourceWorkTreeDir,
 				workTreeCacheDir,
-				headCommit,
+				sourceHeadCommit,
 				defaultOptions,
 			)
 
 			Ω(err).Should(Succeed())
-			Ω(serviceCommit1).ShouldNot(Equal(headCommit))
+			Ω(serviceCommit1).ShouldNot(Equal(sourceHeadCommit))
 
 			diff := utils.SucceedCommandOutputString(
 				sourceWorkTreeDir,
@@ -99,7 +100,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				gitDir,
 				sourceWorkTreeDir,
 				workTreeCacheDir,
-				headCommit,
+				sourceHeadCommit,
 				defaultOptions,
 			)
 
@@ -124,12 +125,12 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				gitDir,
 				sourceWorkTreeDir,
 				workTreeCacheDir,
-				headCommit,
+				sourceHeadCommit,
 				defaultOptions,
 			)
 
 			Ω(err).Should(Succeed())
-			Ω(serviceCommit1).ShouldNot(Equal(headCommit))
+			Ω(serviceCommit1).ShouldNot(Equal(sourceHeadCommit))
 
 			content := utils.SucceedCommandOutputString(
 				sourceWorkTreeDir,
@@ -144,7 +145,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				gitDir,
 				sourceWorkTreeDir,
 				workTreeCacheDir,
-				headCommit,
+				sourceHeadCommit,
 				defaultOptions,
 			)
 
@@ -162,7 +163,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 					gitDir,
 					sourceWorkTreeDir,
 					workTreeCacheDir,
-					headCommit,
+					sourceHeadCommit,
 					defaultOptions,
 				)
 
@@ -179,7 +180,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 					gitDir,
 					sourceWorkTreeDir,
 					workTreeCacheDir,
-					headCommit,
+					sourceHeadCommit,
 					defaultOptions,
 				)
 
@@ -207,7 +208,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 					gitDir,
 					sourceWorkTreeDir,
 					workTreeCacheDir,
-					headCommit,
+					sourceHeadCommit,
 					defaultOptions,
 				)
 
@@ -231,7 +232,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 					gitDir,
 					sourceWorkTreeDir,
 					workTreeCacheDir,
-					headCommit,
+					sourceHeadCommit,
 					defaultOptions,
 				)
 
@@ -247,6 +248,69 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 
 				output := string(bytes)
 				Ω(output).Should(ContainSubstring(fmt.Sprintf("'%s' does not exist in '%s'", trackedFileRelPath, serviceCommit)))
+			})
+
+			It("staged and synced, then modified, staged and synced: service branch contains last main branch commit", func() {
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", trackedFilePath)
+
+				_, err := SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
+
+				utils.WriteFile(trackedFilePath, trackedFileContent2)
+
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", trackedFilePath)
+
+				_, err = SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
+
+				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "master", "HEAD")
+			})
+
+			It("staged and synced, then committed and synced: service branch contains last main branch commit", func() {
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", trackedFilePath)
+
+				_, err := SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
+
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "1")
+
+				revParseResult, err := utils.RunCommandWithOptions(sourceWorkTreeDir, "git", []string{"rev-parse", "HEAD"}, utils.RunCommandOptions{ShouldSucceed: true})
+				Ω(err).Should(Succeed())
+
+				sourceHeadCommit = strings.TrimSpace(string(revParseResult))
+
+				_, err = SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
+
+				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "master", "HEAD")
 			})
 		})
 	})
@@ -265,7 +329,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				gitDir,
 				sourceWorkTreeDir,
 				workTreeCacheDir,
-				headCommit,
+				sourceHeadCommit,
 				defaultOptions,
 			)
 
@@ -282,7 +346,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				gitDir,
 				sourceWorkTreeDir,
 				workTreeCacheDir,
-				headCommit,
+				sourceHeadCommit,
 				defaultOptions,
 			)
 
@@ -298,7 +362,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				gitDir,
 				sourceWorkTreeDir,
 				workTreeCacheDir,
-				headCommit,
+				sourceHeadCommit,
 				defaultOptions,
 			)
 
