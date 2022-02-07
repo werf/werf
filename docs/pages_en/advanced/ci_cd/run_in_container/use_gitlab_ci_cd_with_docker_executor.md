@@ -7,7 +7,7 @@ permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_docker_executor
 
 ## 1. Configure GitLab rinner for Kubernetes
 
-Select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}) (depending on the capabilities of your GitLab runner) and navigate to it.
+Make sure you meet all [system requirements]({{ "advanced/buildah_mode.html#system-requirements" | true_relative_url }}) and select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}) (depending on the capabilities of your GitLab runner) and navigate to it.
 
 ### Linux kernel with rootless OverlayFS
 

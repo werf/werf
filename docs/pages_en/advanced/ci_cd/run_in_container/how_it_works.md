@@ -101,3 +101,12 @@ ERRO[0000] (unable to determine exit status)
 ```
 
 Solution: disable AppArmor and seccomp profiles with `--security-opt seccomp=unconfined` and `--security-opt apparmor=unconfined`, add special annotations to a Pod or use a privileged container ([details](#modes-of-operation)).
+
+### `User namespaces are not enabled in /proc/sys/kernel/unprivileged_userns_clone`
+
+Solution:
+```bash
+# Enable unprivileged user namespaces:
+echo 'kernel.unprivileged_userns_clone = 1' | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+```

@@ -11,7 +11,7 @@ permalink: advanced/ci_cd/run_in_container/use_docker_container.html
 
 There is an official image with werf 1.2 for this method (1.1 is not supported): `ghcr.io/werf/werf`.
 
-Select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
+Make sure you meet all [system requirements]({{ "advanced/buildah_mode.html#system-requirements" | true_relative_url }}) and select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
 
 ### Linux kernel with rootless OverlayFS
 

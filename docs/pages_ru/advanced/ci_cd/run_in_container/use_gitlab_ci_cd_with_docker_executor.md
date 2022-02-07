@@ -7,7 +7,7 @@ permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_docker_executor
 
 ## 1. Настройте GitLab-раннер в Kubernetes
 
-Выберите один из [доступных режимов работы]({{ "advanced/ci_cd/run_in_container/how_it_works.html#режимы-работы" | true_relative_url }}) (в зависимости от возможностей вашего GitLab-раннера) и перейдите к нему.
+Убедитесь, что удовлетворены [системные требования]({{ "advanced/buildah_mode.html#системные-требования" | true_relative_url }}) и выберите один из [доступных режимов работы]({{ "advanced/ci_cd/run_in_container/how_it_works.html#режимы-работы" | true_relative_url }}) (в зависимости от возможностей вашего GitLab-раннера) и перейдите к нему.
 
 ### Ядро Linux с поддержкой OverlayFS в режиме rootless
 
