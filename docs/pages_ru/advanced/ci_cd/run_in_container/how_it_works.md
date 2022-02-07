@@ -11,10 +11,6 @@ permalink: advanced/ci_cd/run_in_container/how_it_works.html
 
 В зависимости от соответствия системы пользователя [требованиям режима Buildah]({{ "/advanced/buildah_mode.html#системные-требования" | true_relative_url }}) и в зависимости от потребностей пользователя существует 3 способа использования werf с Buildah внутри контейнеров:
 
-1. Использовать [ядро Linux с поддержкой OverlayFS в режиме rootless]({{ "/advanced/buildah_mode.html#системные-требования" | true_relative_url }}).
-2. Использовать [ядро Linux без поддержки OverlayFS в режиме rootless]({{ "/advanced/buildah_mode.html#системные-требования" | true_relative_url }}) и привилегированный контейнер.
-3. Использовать [ядро Linux без поддержки OverlayFS в режиме rootless]({{ "/advanced/buildah_mode.html#системные-требования" | true_relative_url }}) и непривилегированный контейнер с дополнительными настройками.
-
 ### Ядро Linux с поддержкой OverlayFS в режиме rootless
 
 В данном случае необходимо только **отключить** профили **seccomp** и **AppArmor** в контейнере с werf.

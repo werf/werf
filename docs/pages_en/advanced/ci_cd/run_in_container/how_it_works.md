@@ -11,10 +11,6 @@ General info on how to enable Buildah in werf is available on the [Buildah mode 
 
 Depending on whether the user's system meets the [Buildah mode system requirements]({{ "/advanced/buildah_mode.html#system-requirements" | true_relative_url }}) and depending on the user needs, there are 3 ways to use werf with Buildah inside containers:
 
-1. Use [Linux kernel with rootless OverlayFS]({{ "/advanced/buildah_mode.html#system-requirements" | true_relative_url }}).
-2. Use [Linux kernel without rootless OverlayFS]({{ "/advanced/buildah_mode.html#system-requirements" | true_relative_url }}) and a privileged container.
-3. Use [Linux kernel without rootless OverlayFS]({{ "/advanced/buildah_mode.html#system-requirements" | true_relative_url }}) and an unprivileged container with additional settings.
-
 ### Linux kernel with rootless OverlayFS
 
 In this case, you only need to **disable the AppArmor** and **seccomp** profiles in the container where werf is running.
