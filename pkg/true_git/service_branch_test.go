@@ -29,6 +29,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		utils.RunSucceedCommand(
 			sourceWorkTreeDir,
 			"git",
+			"-c", "init.defaultBranch=main",
 			"init",
 		)
 		gitDir = filepath.Join(sourceWorkTreeDir, ".git")
@@ -277,7 +278,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				)
 				Ω(err).Should(Succeed())
 
-				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "master", "HEAD")
+				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
 			})
 
 			It("staged and synced, then committed and synced: service branch contains last main branch commit", func() {
@@ -310,7 +311,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				)
 				Ω(err).Should(Succeed())
 
-				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "master", "HEAD")
+				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
 			})
 		})
 	})
