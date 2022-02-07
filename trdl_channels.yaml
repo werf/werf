@@ -30,7 +30,7 @@ groups:
     - name: beta
       version: 1.2.62 # fix unexpected cleanup fail when getting metadata for custom tag with long name
     - name: ea
-      version: 1.2.59 # fixes multi-stage, quay, werf helm get-release panic
+      version: 1.2.62 # fix unexpected cleanup fail when getting metadata for custom tag with long name
     - name: stable
       version: 1.2.59 # fixes multi-stage, quay, werf helm get-release panic
     - name: rock-solid
