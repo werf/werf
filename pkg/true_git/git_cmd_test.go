@@ -21,6 +21,7 @@ var _ = Describe("Git command", func() {
 		utils.RunSucceedCommand(
 			gitRepoPath,
 			"git",
+			"-c", "init.defaultBranch=main",
 			"init",
 		)
 
@@ -40,12 +41,12 @@ var _ = Describe("Git command", func() {
 			brokenHeadPath := filepath.Join(gitRepoPath, ".git", "refs", "heads", "broken")
 			Expect(os.WriteFile(brokenHeadPath, []byte("invalid"), os.ModePerm)).To(Succeed())
 
-			branchCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: gitRepoPath}, "branch", "--list", "master")
+			branchCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: gitRepoPath}, "branch", "--list", "main")
 			err := branchCmd.Run(ctx)
 			Expect(err).To(Succeed())
-			Expect(branchCmd.OutBuf.String()).To(Equal("* master\n"))
+			Expect(branchCmd.OutBuf.String()).To(Equal("* main\n"))
 			Expect(branchCmd.ErrBuf.String()).To(Equal("warning: ignoring broken ref refs/heads/broken\n"))
-			Expect(branchCmd.OutErrBuf.String()).To(Equal("warning: ignoring broken ref refs/heads/broken\n* master\n"))
+			Expect(branchCmd.OutErrBuf.String()).To(Equal("warning: ignoring broken ref refs/heads/broken\n* main\n"))
 		})
 	})
 })
