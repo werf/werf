@@ -78,28 +78,8 @@ Let us install and configure the GitLab runner on the node where werf will be ru
    sudo usermod -aG docker gitlab-runner
    ```
 
-1. Install [Docker](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) and configure `kubectl` (if they were not installed before).
-1. Install [werf dependencies](/installation.html#install-dependencies).
-1. Install [trdl](https://github.com/werf/trdl) under the `gitlab-runner` user:
-
-    ```shell
-    sudo su gitlab-runner
-
-    export PATH=$PATH:$HOME/bin
-    echo 'export PATH=$PATH:$HOME/bin' >> ~/.profile
-
-    mkdir -p $HOME/bin
-    curl -LO https://tuf.trdl.dev/targets/releases/0.1.3/linux-amd64/bin/trdl
-    install ./trdl $HOME/bin/trdl
-    ```
-
-1. Add official werf TUF-repository into trdl:
-
-    ```shell
-    trdl add werf https://tuf.werf.io 1 b7ff6bcbe598e072a86d595a3621924c8612c7e6dc6a82e919abe89707d7e3f468e616b5635630680dd1e98fc362ae5051728406700e6274c5ed1ad92bea52a2
-    ```
-
-1. Copy the kubectl config to the home directory of the gitlab-runner user.
+1. [Install werf](/installation.html).
+1. Install `kubectl` and copy the kubectl config to the home directory of the gitlab-runner user.
 
    ```shell
    mkdir -p /home/gitlab-runner/.kube &&

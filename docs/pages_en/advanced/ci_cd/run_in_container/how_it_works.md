@@ -32,7 +32,7 @@ To use fuse-overlayfs without a privileged container, run werf in a container wi
 
 ## Available werf images
 
-Below is a list of images with built-in werf. Each image is updated as part of a release process based on the trdl package manager ([learn more about the release channels]({{ "installation.html#all-changes-in-werf-go-through-all-release-channels" | true_relative_url }}).
+Below is a list of images with built-in werf. Each image is updated as part of a release process based on the trdl package manager ([learn more about the release channels]({{ site.url }}/about/release_channels.html).
 
 * `ghcr.io/werf/werf:latest` -> `ghcr.io/werf/werf:1.2-stable`;
 * `ghcr.io/werf/werf:1.2-alpha` -> `ghcr.io/werf/werf:1.2-alpha-alpine`;

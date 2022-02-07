@@ -9,7 +9,7 @@ In the experimental mode _without the Docker server_, werf uses built-in Buildah
 
 ## System requirements
 
-Host requirements for running werf in Buildah mode on a host system without Docker/Kubernetes can be found in the [installation instructions]({{ "/installation.html" | true_relative_url }}). But for running werf in Kubernetes or in Docker containers the requirements are as follows:
+Host requirements for running werf in Buildah mode on a host system without Docker/Kubernetes can be found in the [installation instructions](/installation.html). But for running werf in Kubernetes or in Docker containers the requirements are as follows:
 * If your Linux kernel version is 5.13+ (5.11+ for some distros), make sure `overlay` kernel module is loaded with `lsmod | grep overlay`. If your kernel is older or if you can't activate `overlay` kernel module, then install `fuse-overlayfs`, which should be available in your distro package repos. As a last resort, `vfs` storage driver can be used.
 * Command `sysctl kernel.unprivileged_userns_clone` should return `1`. Else execute:
   ```shell

@@ -5,13 +5,15 @@ set -e
 SOURCE_PATH="$(realpath "${BASH_SOURCE[0]}")"
 PROJECT_DIR="$(dirname $SOURCE_PATH)/.."
 
+BUILT_WERF_BIN="${BUILT_WERF_BIN:-werf}"
+
 function regen() {
   saved_dir="$PWD"
   cd "$PROJECT_DIR"
   make werf
 
   # regen CLI partials, pages and sidebar
-  HOME='~' werf docs --log-terminal-width=100
+  HOME='~' $BUILT_WERF_BIN docs --log-terminal-width=100
 
   cd "$saved_dir"
 }

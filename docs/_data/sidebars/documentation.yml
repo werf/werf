@@ -640,6 +640,9 @@ entries:
           - title: Бандлы
             url: /advanced/bundles.html
 
+          - title: Buildah
+            url: /advanced/buildah_mode.html
+
           - title: CI/CD
             f:
 

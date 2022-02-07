@@ -104,7 +104,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 ## Production ready
 
-werf is a mature, reliable tool you can trust. [Read about release channels](https://werf.io/installation.html#all-changes-in-werf-go-through-all-release-channels).
+werf is a mature, reliable tool you can trust. [Read about release channels](https://werf.io/about/release_channels.html).
 
 
 ## Documentation

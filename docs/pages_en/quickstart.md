@@ -6,18 +6,9 @@ description: Deploy your first application with werf
 
 In this article we will show you how to set up the deployment of an [example application](https://github.com/werf/quickstart-application) (a cool voting app in our case) using werf. It is better to start with a [short introduction](/how_it_works.html) first if you haven't read it yet.
 
-## Prepare your host
+## Prepare
 
- 1. Install [dependencies](/installation.html#install-dependencies) (Docker and Git).
- 2. Install [trdl and werf](/installation.html#install-werf).
-
-Make sure you have `werf` command available in your shell before proceeding to the next step:
-   
-```
-werf version
-```
-
-## Prepare your Kubernetes and container registry
+[Install werf](/installation.html).
 
 You should have access to the Kubernetes cluster and be able to push images to your container registry. The container registry should also be accessible from the Kubernetes cluster to pull images.
 

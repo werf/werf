@@ -32,7 +32,7 @@ permalink: advanced/ci_cd/run_in_container/how_it_works.html
 
 ## Доступные образы werf
 
-Ниже приведен список образов со встроенной утилитой werf. Каждый образ обновляется в рамках релизного процесса, основанного на менеджере пакетов trdl ([подробнее о каналах обновлений]({{ "installation.html#все-изменения-в-werf-проходят-через-цепочку-каналов-обновлений" | true_relative_url }})).
+Ниже приведен список образов со встроенной утилитой werf. Каждый образ обновляется в рамках релизного процесса, основанного на менеджере пакетов trdl ([подробнее о каналах обновлений]({{ site.url }}/about/release_channels.html)).
 
 * `ghcr.io/werf/werf:latest` -> `ghcr.io/werf/werf:1.2-stable`;
 * `ghcr.io/werf/werf:1.2-alpha` -> `ghcr.io/werf/werf:1.2-alpha-alpine`;
