@@ -89,7 +89,7 @@ func do(ctx context.Context) error {
 
 	containerName := uuid.New().String()
 
-	if err := b.FromCommand(ctx, containerName, imageID, buildah.FromCommandOpts{CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout}}); err != nil {
+	if _, err := b.FromCommand(ctx, containerName, imageID, buildah.FromCommandOpts{LogWriter: os.Stdout}); err != nil {
 		return err
 	}
 
