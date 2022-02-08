@@ -47,18 +47,15 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/helm/helm-2to3 v0.8.1
 	github.com/jinzhu/gorm v1.9.12 // indirect
-	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/moby/buildkit v0.8.2
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
-	github.com/mtrmac/gpgme v0.1.2 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
 	github.com/oleiade/reflections v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/ginkgo/v2 v2.0.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.0.0
 	github.com/onsi/gomega v1.18.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.3-0.20211202193544-a5463b7f9c84
