@@ -313,6 +313,61 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 
 				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
 			})
+
+			It("try to trigger a merge conflict: merge conflict not happening", func() {
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", ".")
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "1")
+
+				revParseResult, err := utils.RunCommandWithOptions(sourceWorkTreeDir, "git", []string{"rev-parse", "HEAD"}, utils.RunCommandOptions{ShouldSucceed: true})
+				Ω(err).Should(Succeed())
+				sourceHeadCommit = strings.TrimSpace(string(revParseResult))
+
+				_, err = SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
+
+				trackedFilePathMoved := fmt.Sprintf("%s-moved", trackedFilePath)
+
+				utils.RunSucceedCommand(sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
+				utils.WriteFile(trackedFilePathMoved, trackedFileContent2)
+
+				_, err = SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
+
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "reset", "--hard")
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "clean", "-f")
+
+				utils.RunSucceedCommand(sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", ".")
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "2")
+
+				revParseResult, err = utils.RunCommandWithOptions(sourceWorkTreeDir, "git", []string{"rev-parse", "HEAD"}, utils.RunCommandOptions{ShouldSucceed: true})
+				Ω(err).Should(Succeed())
+				sourceHeadCommit = strings.TrimSpace(string(revParseResult))
+
+				_, err = SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
+			})
 		})
 	})
 
