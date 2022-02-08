@@ -67,6 +67,7 @@ apiVersion: v1
 kind: LimitRange
 metadata:
   name: enable-fuse-limit-range
+  namespace: gitlab-ci
 spec:
   limits:
   - type: "Container"
@@ -96,6 +97,7 @@ kubectl apply -f enable-fuse-pod-limit-range.yaml
   ...
   [runners.kubernetes]
     ...
+    namespace = "gitlab-ci"
     pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
 ```
 
@@ -112,6 +114,7 @@ kubectl apply -f enable-fuse-pod-limit-range.yaml
   ...
   [runners.kubernetes]
     ...
+    namespace = "gitlab-ci"
     privileged = true
 ```
 
@@ -131,8 +134,6 @@ kubectl apply -f enable-fuse-pod-limit-range.yaml
     namespace = "gitlab-ci"
     pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
 ```
-
-Обратите внимание, что было указано пространство имен `gitlab-ci`. Это пространство имен должно быть таким же, что и на шаге 1, для автоматической генерации лимитов Pod'ов.
 
 О дополнительных опциях можно узнать из документации к [Kubernetes executor](https://docs.gitlab.com/runner/executors/kubernetes.html).
 
@@ -156,15 +157,15 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: werf
+  name: gitlab-kubernetes-runner-deploy
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: cluster-admin
 subjects:
   - kind: ServiceAccount
-    name: werf
-    namespace: default
+    name: gitlab-kubernetes-runner-deploy
+    namespace: gitlab-ci
 ```
 
 Скорректируйте конфигурацию GitLab-раннера (`/etc/gitlab-runner/config.toml`), чтобы использовать этот Service Account:

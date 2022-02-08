@@ -67,6 +67,7 @@ apiVersion: v1
 kind: LimitRange
 metadata:
   name: enable-fuse-limit-range
+  namespace: gitlab-ci
 spec:
   limits:
   - type: "Container"
@@ -96,6 +97,7 @@ Basic runner configuration (`/etc/gitlab-runner/config.toml`):
   ...
   [runners.kubernetes]
     ...
+    namespace = "gitlab-ci"
     pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
 ```
 
@@ -112,6 +114,7 @@ Basic runner configuration (`/etc/gitlab-runner/config.toml`):
   ...
   [runners.kubernetes]
     ...
+    namespace = "gitlab-ci"
     privileged = true
 ```
 
@@ -131,8 +134,6 @@ Basic runner configuration (`/etc/gitlab-runner/config.toml`):
     namespace = "gitlab-ci"
     pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
 ```
-
-Note that the `gitlab-ci` namespace has been specified. This namespace should be the same as in step 1 to automatically generate Pod limits.
 
 For more options, consult the [Kubernetes executor for GitLab runner documentation](https://docs.gitlab.com/runner/executors/kubernetes.html).
 
@@ -156,15 +157,15 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: werf
+  name: gitlab-kubernetes-runner-deploy
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: cluster-admin
 subjects:
   - kind: ServiceAccount
-    name: werf
-    namespace: default
+    name: gitlab-kubernetes-runner-deploy
+    namespace: gitlab-ci
 ```
 
 Adjust the GitLab runner configuration (`/etc/gitlab-runner/config.toml`) to use this Service Account:
