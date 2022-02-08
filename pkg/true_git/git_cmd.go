@@ -3,6 +3,7 @@ package true_git
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -61,12 +62,13 @@ func (c *GitCmd) Run(ctx context.Context) error {
 		logboek.Context(ctx).Debug().LogF("Running command %q\n", c)
 	}
 
-	switch err := c.Cmd.Run(); err.(type) {
-	case *exec.ExitError:
-		// return fmt.Errorf("error running command %q: %s\nStdout:\n%s\nStderr:\n%s", c, err, c.OutBuf, c.ErrBuf)
-		return err
-	case error:
-		return fmt.Errorf("error running command %q: %s", c, err)
+	if err := c.Cmd.Run(); err != nil {
+		var errExit *exec.ExitError
+		if errors.As(err, &errExit) {
+			return fmt.Errorf("error running command %q: %w\nStdout:\n%s\nStderr:\n%s", c, err, c.OutBuf, c.ErrBuf)
+		}
+
+		return fmt.Errorf("error running command %q: %w", c, err)
 	}
 
 	return nil
