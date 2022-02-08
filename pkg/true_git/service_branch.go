@@ -119,7 +119,7 @@ func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir str
 	mergeCmd := NewGitCmd(
 		ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir},
 		"-c", "user.email=werf@werf.io", "-c", "user.name=werf",
-		"merge", "--no-edit", "--no-ff", "--allow-unrelated-histories", "-s", "recursive", "-X", "theirs", sourceCommit,
+		"merge", "--no-edit", "--no-ff", "--allow-unrelated-histories", "-s", "ours", sourceCommit,
 	)
 	if err = mergeCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git merge of source commit %q into service branch failed: %s", sourceCommit, err)
