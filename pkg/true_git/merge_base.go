@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -9,13 +10,13 @@ import (
 
 func IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string, gitDir string) (bool, error) {
 	mergeBaseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: gitDir}, "merge-base", "--is-ancestor", ancestorCommit, descendantCommit)
-	err := mergeBaseCmd.Run(ctx)
-	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			if exitError.ExitCode() == 1 {
+	if err := mergeBaseCmd.Run(ctx); err != nil {
+		var errExit *exec.ExitError
+		if errors.As(err, &errExit) {
+			if errExit.ExitCode() == 1 {
 				return false, nil
 			}
-			if exitError.ExitCode() == 128 && strings.HasPrefix(mergeBaseCmd.ErrBuf.String(), "fatal: Not a valid commit name ") {
+			if errExit.ExitCode() == 128 && strings.HasPrefix(mergeBaseCmd.ErrBuf.String(), "fatal: Not a valid commit name ") {
 				return false, nil
 			}
 		}

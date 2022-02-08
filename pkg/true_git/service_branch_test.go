@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -295,11 +294,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				Ω(err).Should(Succeed())
 
 				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "1")
-
-				revParseResult, err := utils.RunCommandWithOptions(sourceWorkTreeDir, "git", []string{"rev-parse", "HEAD"}, utils.RunCommandOptions{ShouldSucceed: true})
-				Ω(err).Should(Succeed())
-
-				sourceHeadCommit = strings.TrimSpace(string(revParseResult))
+				sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
 
 				_, err = SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
@@ -312,6 +307,55 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				Ω(err).Should(Succeed())
 
 				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
+			})
+
+			It("try to trigger a merge conflict: merge conflict not happening", func() {
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", ".")
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "1")
+				sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
+
+				_, err := SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
+
+				trackedFilePathMoved := fmt.Sprintf("%s-moved", trackedFilePath)
+
+				utils.RunSucceedCommand(sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
+				utils.WriteFile(trackedFilePathMoved, trackedFileContent2)
+
+				_, err = SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
+
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "reset", "--hard")
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "clean", "-f")
+
+				utils.RunSucceedCommand(sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", ".")
+				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "2")
+				sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
+
+				_, err = SyncSourceWorktreeWithServiceBranch(
+					context.Background(),
+					gitDir,
+					sourceWorkTreeDir,
+					workTreeCacheDir,
+					sourceHeadCommit,
+					defaultOptions,
+				)
+				Ω(err).Should(Succeed())
 			})
 		})
 	})
