@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -295,11 +294,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				Ω(err).Should(Succeed())
 
 				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "1")
-
-				revParseResult, err := utils.RunCommandWithOptions(sourceWorkTreeDir, "git", []string{"rev-parse", "HEAD"}, utils.RunCommandOptions{ShouldSucceed: true})
-				Ω(err).Should(Succeed())
-
-				sourceHeadCommit = strings.TrimSpace(string(revParseResult))
+				sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
 
 				_, err = SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
@@ -317,12 +312,9 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			It("try to trigger a merge conflict: merge conflict not happening", func() {
 				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", ".")
 				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "1")
+				sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
 
-				revParseResult, err := utils.RunCommandWithOptions(sourceWorkTreeDir, "git", []string{"rev-parse", "HEAD"}, utils.RunCommandOptions{ShouldSucceed: true})
-				Ω(err).Should(Succeed())
-				sourceHeadCommit = strings.TrimSpace(string(revParseResult))
-
-				_, err = SyncSourceWorktreeWithServiceBranch(
+				_, err := SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
 					gitDir,
 					sourceWorkTreeDir,
@@ -353,10 +345,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				utils.RunSucceedCommand(sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
 				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", ".")
 				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "2")
-
-				revParseResult, err = utils.RunCommandWithOptions(sourceWorkTreeDir, "git", []string{"rev-parse", "HEAD"}, utils.RunCommandOptions{ShouldSucceed: true})
-				Ω(err).Should(Succeed())
-				sourceHeadCommit = strings.TrimSpace(string(revParseResult))
+				sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
 
 				_, err = SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
