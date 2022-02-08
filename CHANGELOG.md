@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.65](https://www.github.com/werf/werf/compare/v1.2.64...v1.2.65) (2022-02-08)
+
+
+### Bug Fixes
+
+* **dev-mode:** dev branch breaking on complex merge conflicts ([a628ce6](https://www.github.com/werf/werf/commit/a628ce60bad29bf080ee98efa6586f95f444e680))
+
 ### [1.2.64](https://www.github.com/werf/werf/compare/v1.2.63...v1.2.64) (2022-02-07)
 
 
