@@ -83,6 +83,10 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, 
 		args = append(args, sourceChecksum)
 		args = append(args, elm.To)
 		args = append(args, elm.Group, elm.Owner)
+
+		if elm.CacheVersion != "" { // TODO: backward compatibility, remove the condition in the next MINOR release
+			args = append(args, elm.CacheVersion)
+		}
 	}
 
 	for _, dep := range s.dependencies {
@@ -108,8 +112,6 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, img
 
 		imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
 
-		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
-
 		importSourceID := getImportSourceID(c, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 		if err != nil {
@@ -117,9 +119,19 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, img
 		} else if importMetadata == nil {
 			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
 		}
-		labelValue := importMetadata.Checksum
 
-		imageServiceCommitChangeOptions.AddLabel(map[string]string{labelKey: labelValue})
+		importID := getImportID(elm)
+		{
+			labelNameImportChecksum := imagePkg.WerfImportChecksumLabelPrefix + importID
+			labelValueImportChecksum := importMetadata.Checksum
+			imageServiceCommitChangeOptions.AddLabel(map[string]string{labelNameImportChecksum: labelValueImportChecksum})
+		}
+
+		if elm.CacheVersion != "" {
+			labelNameImportCacheVersion := imagePkg.WerfImportCacheVersionLabelPrefix + importID
+			labelValueImportCacheVersion := elm.CacheVersion
+			imageServiceCommitChangeOptions.AddLabel(map[string]string{labelNameImportCacheVersion: labelValueImportCacheVersion})
+		}
 	}
 
 	for _, dep := range s.dependencies {
@@ -172,6 +184,7 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 			ImportSourceID: importSourceID,
 			SourceImageID:  sourceImageID,
 			Checksum:       checksum,
+			CacheVersion:   importElm.CacheVersion,
 		}
 
 		if err := c.PutImportMetadata(ctx, s.projectName, importMetadata); err != nil {
@@ -315,12 +328,18 @@ func getImportID(importElm *config.Import) string {
 }
 
 func getImportSourceID(c Conveyor, importElm *config.Import) string {
-	return util.Sha256Hash(
+	dependencies := []string{
 		"SourceImageContentDigest", getSourceImageContentDigest(c, importElm),
 		"Add", importElm.Add,
 		"IncludePaths", strings.Join(importElm.IncludePaths, "///"),
 		"ExcludePaths", strings.Join(importElm.ExcludePaths, "///"),
-	)
+	}
+
+	if importElm.CacheVersion != "" { // TODO: backward compatibility, remove the condition in the next MINOR release
+		dependencies = append(dependencies, "CacheVersion", importElm.CacheVersion)
+	}
+
+	return util.Sha256Hash(dependencies...)
 }
 
 func getSourceImageDockerImageName(c Conveyor, importElm *config.Import) string {

@@ -1,0 +1,26 @@
+project: none
+configVersion: 1
+cleanup:
+  keepPolicies:
+    - references:
+        branch: test_branch
+      imagesPerReference:
+        last: 1
+---
+image: image
+from: alpine
+fromCacheVersion: 2 # +
+shell:
+  setup: date
+import:
+- artifact: artifact
+  add: /artifact
+  to: /artifact
+  before: setup
+  cacheVersion: 1 # +
+---
+artifact: artifact
+from: alpine
+fromCacheVersion: 2 # +
+shell:
+  install: echo "123" > /artifact

@@ -700,6 +700,75 @@ var _ = Describe("cleanup command", func() {
 								Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(0))
 							}
 						})
+
+						Context("references.branch=test_branch, imagesPerReference.last=1", func() {
+							It("should remove unused artifact associated with unused import cache version", func() {
+								SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
+								utils.RunSucceedCommand(
+									SuiteData.TestDirPath,
+									SuiteData.WerfBinPath,
+									"build",
+								)
+
+								stagesCountAfterFirstBuild := StagesCount()
+								Ω(stagesCountAfterFirstBuild > 0).Should(BeTrue())
+								importMetadataIDsAfterFirstBuild := ImportMetadataIDs()
+								Ω(len(importMetadataIDsAfterFirstBuild) > 0).Should(BeTrue())
+
+								{
+									utils.RunSucceedCommand(
+										SuiteData.TestDirPath,
+										"git",
+										"commit", "--allow-empty", "-m", "test",
+									)
+
+									SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_2c.yaml")
+									utils.RunSucceedCommand(
+										SuiteData.TestDirPath,
+										SuiteData.WerfBinPath,
+										"build",
+									)
+
+									utils.RunSucceedCommand(
+										SuiteData.TestDirPath,
+										"git",
+										"push", "--set-upstream", "origin", branchName,
+									)
+								}
+
+								stagesCountAfterSecondBuild := StagesCount()
+								importMetadataIDsAfterSecondBuild := ImportMetadataIDs()
+								if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
+									Ω(stagesCountAfterSecondBuild > stagesCountAfterFirstBuild).Should(BeTrue())
+									Ω(len(importMetadataIDsAfterSecondBuild) > len(importMetadataIDsAfterFirstBuild)).Should(BeTrue())
+								}
+
+								utils.RunSucceedCommand(
+									SuiteData.TestDirPath,
+									SuiteData.WerfBinPath,
+									"cleanup",
+								)
+
+								if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
+									stagesCountAfterCleanup := StagesCount()
+									Ω(stagesCountAfterCleanup).Should(Equal(stagesCountAfterSecondBuild - stagesCountAfterFirstBuild))
+									Ω(len(ImportMetadataIDs())).Should(BeEquivalentTo(len(importMetadataIDsAfterSecondBuild)))
+								}
+
+								utils.RunSucceedCommand(
+									SuiteData.TestDirPath,
+									SuiteData.WerfBinPath,
+									"cleanup",
+								)
+
+								importMetadataIDsAfterCleanup := ImportMetadataIDs()
+								if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
+									for _, importMetadataID := range importMetadataIDsAfterFirstBuild {
+										Ω(importMetadataIDsAfterCleanup).ShouldNot(ContainElement(importMetadataID))
+									}
+								}
+							})
+						})
 					})
 
 					Context("custom tags", func() {

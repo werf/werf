@@ -747,6 +747,11 @@ sections:
             description:
               en: "Globs for excluding"
               ru: "Глобы исключения"
+          - name: cacheVersion
+            value: "string"
+            description:
+              en: "Import cache version"
+              ru: "Версия кеша импорта"
       - name: dependencies
         description:
           en: "Dependencies images for current image"

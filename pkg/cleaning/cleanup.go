@@ -59,8 +59,8 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 type cleanupManager struct {
 	stageManager stage_manager.Manager
 
-	checksumSourceImageIDs       map[string][]string
-	nonexistentImportMetadataIDs []string
+	checksumCacheVersionSourceImageIDs map[string]map[string][]string
+	nonexistentImportMetadataIDs       []string
 
 	ProjectName                             string
 	StorageManager                          manager.StorageManagerInterface
@@ -697,7 +697,7 @@ FilterOutFinalStages:
 }
 
 func (m *cleanupManager) initImportsMetadata(ctx context.Context, stageDescriptionList []*image.StageDescription) error {
-	m.checksumSourceImageIDs = map[string][]string{}
+	m.checksumCacheVersionSourceImageIDs = map[string]map[string][]string{}
 
 	importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName)
 	if err != nil {
@@ -724,18 +724,26 @@ func (m *cleanupManager) initImportsMetadata(ctx context.Context, stageDescripti
 		importSourceID := metadata.ImportSourceID
 		sourceImageID := metadata.SourceImageID
 		checksum := metadata.Checksum
+		cacheVersion := metadata.CacheVersion
 
 		mutex.Lock()
 		defer mutex.Unlock()
 
 		stage := findStageByImageID(stageDescriptionList, sourceImageID)
 		if stage != nil {
-			sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
+			cacheVersionSourceImageIDs, ok := m.checksumCacheVersionSourceImageIDs[checksum]
+			if !ok {
+				cacheVersionSourceImageIDs = map[string][]string{}
+			}
+
+			sourceImageIDs, ok := cacheVersionSourceImageIDs[cacheVersion]
 			if !ok {
 				sourceImageIDs = []string{}
 			}
 
-			m.checksumSourceImageIDs[checksum] = append(sourceImageIDs, sourceImageID)
+			sourceImageIDs = append(sourceImageIDs, sourceImageID)
+			cacheVersionSourceImageIDs[cacheVersion] = sourceImageIDs
+			m.checksumCacheVersionSourceImageIDs[checksum] = cacheVersionSourceImageIDs
 		} else {
 			m.nonexistentImportMetadataIDs = append(m.nonexistentImportMetadataIDs, importSourceID)
 		}
@@ -808,13 +816,23 @@ func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDe
 
 	for label, checksum := range stage.Info.Labels {
 		if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-			sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
-			if ok {
-				for _, sourceImageID := range sourceImageIDs {
-					var excludedImportStages []*image.StageDescription
-					stages, excludedImportStages = m.excludeStageAndRelativesByImageID(stages, sourceImageID)
-					excludedStages = append(excludedStages, excludedImportStages...)
-				}
+			importID := strings.TrimPrefix(label, image.WerfImportChecksumLabelPrefix)
+			importCacheVersion := stage.Info.Labels[image.WerfImportCacheVersionLabelPrefix+importID]
+
+			cacheVersionSourceImageIDs, ok := m.checksumCacheVersionSourceImageIDs[checksum]
+			if !ok {
+				continue
+			}
+
+			sourceImageIDs, ok := cacheVersionSourceImageIDs[importCacheVersion]
+			if !ok {
+				continue
+			}
+
+			for _, sourceImageID := range sourceImageIDs {
+				var excludedImportStages []*image.StageDescription
+				stages, excludedImportStages = m.excludeStageAndRelativesByImageID(stages, sourceImageID)
+				excludedStages = append(excludedStages, excludedImportStages...)
 			}
 		}
 	}

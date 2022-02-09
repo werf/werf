@@ -160,5 +160,29 @@ var _ = Describe("Stapel imports", func() {
 
 			Ω(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
 		})
+
+		It("should rebuild image when import cache version was changed", func() {
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_cache_version", "001"), "initial commit")
+
+			utils.RunSucceedCommand(
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				SuiteData.WerfBinPath,
+				"build",
+			)
+
+			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
+
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("import_cache_version", "002"), "update import cache version")
+
+			utils.RunSucceedCommand(
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				SuiteData.WerfBinPath,
+				"build",
+			)
+
+			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
+
+			Ω(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
+		})
 	})
 })

@@ -11,6 +11,7 @@ type Import struct {
 	Before       string
 	After        string
 	Stage        string
+	CacheVersion string
 
 	raw *rawImport
 }

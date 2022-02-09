@@ -92,6 +92,7 @@ en:
           - <relative path or glob>
           excludePaths:
           - <relative path or glob>
+          cacheVersion: <cache version>
     - &image_artifact_git_archive
       name: gitArchive
       type: "image artifact"
@@ -168,6 +169,7 @@ en:
           - <relative path or glob>
           excludePaths:
           - <relative path or glob>
+          cacheVersion: <cache version>
       references:
         - name: "Importing from images and artifacts"
           link: "/advanced/building_images_with_stapel/import_directive.html"
@@ -217,6 +219,7 @@ en:
           - <relative path or glob>
           excludePaths:
           - <relative path or glob>
+          cacheVersion: <cache version>
       references:
         - name: "Importing from images and artifacts"
           link: "/advanced/building_images_with_stapel/import_directive.html"
@@ -274,6 +277,7 @@ en:
           - <relative path or glob>
           excludePaths:
           - <relative path or glob>
+          cacheVersion: <cache version>
       references:
         - name: "Importing from images and artifacts"
           link: "/advanced/building_images_with_stapel/import_directive.html"

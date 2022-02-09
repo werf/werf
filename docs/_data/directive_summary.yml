@@ -145,6 +145,7 @@ en:
         - <relative path or glob>
         excludePaths:
         - <relative path or glob>
+        cacheVersion: <cache version>
   artifact: &artifact
     link: "images/configuration/stapel_artifact1.png"
     preview_link: "images/configuration/stapel_artifact1_preview.png"
