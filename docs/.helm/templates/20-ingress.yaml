@@ -6,7 +6,7 @@
 {{- $host = ( printf "%s.%s" .Values.werf.env (pluck "dev" .Values.host | first | default .Values.host._default ) | lower ) }}
 {{- end }}
 
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
@@ -36,14 +36,20 @@ spec:
     http:
       paths:
       - path: /documentation/{{ .VersionURLNormalized }}
+        pathType: Prefix
         backend:
-          serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
-          servicePort: http
+          service:
+            name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+            port:
+              name: http
   - host: ru.{{ $host }}
     http:
       paths:
       - path: /documentation/{{ .VersionURLNormalized }}
+        pathType: Prefix
         backend:
-          serviceName: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
-          servicePort: http
+          service:
+            name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+            port:
+              name: http
 ---
