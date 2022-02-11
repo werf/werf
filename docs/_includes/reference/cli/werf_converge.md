@@ -218,7 +218,7 @@ werf converge --repo registry.mydomain.com/web --env production
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
   -p, --parallel=true
-            Run in parallel (default $WERF_PARALLEL)
+            Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
