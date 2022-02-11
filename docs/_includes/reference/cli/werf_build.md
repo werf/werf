@@ -199,7 +199,7 @@ werf build [IMAGE_NAME...] [options]
             more info https://werf.io/documentation/advanced/giterminism.html, default              
             $WERF_LOOSE_GITERMINISM)
   -p, --parallel=true
-            Run in parallel (default $WERF_PARALLEL)
+            Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)

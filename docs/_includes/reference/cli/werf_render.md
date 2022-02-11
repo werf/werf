@@ -161,7 +161,7 @@ werf render [options]
             Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
             default)
   -p, --parallel=true
-            Run in parallel (default $WERF_PARALLEL)
+            Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
