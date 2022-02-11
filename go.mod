@@ -25,7 +25,7 @@ require (
 	github.com/djherbis/buffer v1.1.0
 	github.com/djherbis/nio/v3 v3.0.1
 	github.com/docker/cli v20.10.7+incompatible
-	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution v2.8.0+incompatible
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go v1.5.1-1 // indirect
 	github.com/docker/go-connections v0.4.1-0.20210727194412-58542c764a11
