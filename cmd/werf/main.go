@@ -21,6 +21,7 @@ import (
 	"github.com/werf/werf/cmd/werf/common/templates"
 	"github.com/werf/werf/cmd/werf/completion"
 	"github.com/werf/werf/cmd/werf/compose"
+	config_graph "github.com/werf/werf/cmd/werf/config/graph"
 	config_list "github.com/werf/werf/cmd/werf/config/list"
 	config_render "github.com/werf/werf/cmd/werf/config/render"
 	"github.com/werf/werf/cmd/werf/converge"
@@ -192,6 +193,7 @@ func configCmd() *cobra.Command {
 	cmd.AddCommand(
 		config_render.NewCmd(),
 		config_list.NewCmd(),
+		config_graph.NewCmd(),
 	)
 
 	return cmd

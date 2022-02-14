@@ -81,6 +81,9 @@ cli: &cli
     - title: werf config
       f:
 
+      - title: werf config graph
+        url: /reference/cli/werf_config_graph.html
+
       - title: werf config list
         url: /reference/cli/werf_config_list.html
 
