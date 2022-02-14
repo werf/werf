@@ -18,7 +18,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/util"
@@ -42,26 +41,25 @@ func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfCo
 		}
 
 		fmt.Print(werfConfigRenderContent)
-	} else {
-		var imageDocs []string
-
-		for _, imageToProcess := range imagesToProcess {
-			if !werfConfig.HasImageOrArtifact(imageToProcess) {
-				return fmt.Errorf("specified image %s is not defined in werf.yaml", logging.ImageLogName(imageToProcess, false))
-			} else {
-				if i := werfConfig.GetArtifact(imageToProcess); i != nil {
-					imageDocs = append(imageDocs, string(i.raw.doc.Content))
-				} else if i := werfConfig.GetStapelImage(imageToProcess); i != nil {
-					imageDocs = append(imageDocs, string(i.raw.doc.Content))
-				} else if i := werfConfig.GetDockerfileImage(imageToProcess); i != nil {
-					imageDocs = append(imageDocs, string(i.raw.doc.Content))
-				}
-			}
-		}
-
-		fmt.Print(strings.Join(imageDocs, "---\n"))
+		return nil
 	}
 
+	if err := werfConfig.CheckThatImagesExist(imagesToProcess); err != nil {
+		return err
+	}
+
+	var imageDocs []string
+	for _, imageToProcess := range imagesToProcess {
+		if i := werfConfig.GetArtifact(imageToProcess); i != nil {
+			imageDocs = append(imageDocs, string(i.raw.doc.Content))
+		} else if i := werfConfig.GetStapelImage(imageToProcess); i != nil {
+			imageDocs = append(imageDocs, string(i.raw.doc.Content))
+		} else if i := werfConfig.GetDockerfileImage(imageToProcess); i != nil {
+			imageDocs = append(imageDocs, string(i.raw.doc.Content))
+		}
+	}
+
+	fmt.Print(strings.Join(imageDocs, "---\n"))
 	return nil
 }
 

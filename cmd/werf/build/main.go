@@ -14,7 +14,6 @@ import (
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -205,10 +204,8 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 
 	projectName := werfConfig.Meta.Project
 
-	for _, imageToProcess := range imagesToProcess {
-		if !werfConfig.HasImageOrArtifact(imageToProcess) {
-			return fmt.Errorf("specified image %s is not found in werf.yaml", logging.ImageLogName(imageToProcess, false))
-		}
+	if err := werfConfig.CheckThatImagesExist(imagesToProcess); err != nil {
+		return err
 	}
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)

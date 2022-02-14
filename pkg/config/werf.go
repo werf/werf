@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/werf/werf/pkg/logging"
 )
 
 type WerfConfig struct {
@@ -23,6 +25,40 @@ func (c *WerfConfig) HasNamelessImage() bool {
 
 func (c *WerfConfig) HasImage(imageName string) bool {
 	return c.GetImage(imageName) != nil
+}
+
+func (c *WerfConfig) CheckThatImagesExist(names []string) error {
+	for _, name := range names {
+		if !c.HasImageOrArtifact(name) {
+			return fmt.Errorf("image %q not defined in werf.yaml", logging.ImageLogName(name, false))
+		}
+	}
+
+	return nil
+}
+
+func (c *WerfConfig) GetSpecificImages(names []string) ([]ImageInterface, error) {
+	var imageConfigsToProcess []ImageInterface
+
+	if len(names) == 0 {
+		return c.GetAllImages(), nil
+	}
+
+	if err := c.CheckThatImagesExist(names); err != nil {
+		return nil, err
+	}
+
+	for _, name := range names {
+		var imageToProcess ImageInterface
+		imageToProcess = c.GetImage(name)
+		if imageToProcess == nil {
+			imageToProcess = c.GetArtifact(name)
+		}
+
+		imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
+	}
+
+	return imageConfigsToProcess, nil
 }
 
 func (c *WerfConfig) GetAllImages() []ImageInterface {
@@ -313,91 +349,96 @@ func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
 	return nil
 }
 
-func (c *WerfConfig) ImagesWithDependenciesBySets(images []ImageInterface) (sets [][]ImageInterface) {
-	sets = [][]ImageInterface{}
-	isDepChecked := map[ImageInterface]bool{}
-	imageDepsToHandle := c.imageDependenciesInOrder(images)
+func (c *WerfConfig) GroupImagesByIndependentSets(names []string) (sets [][]ImageInterface, err error) {
+	images, err := c.GetSpecificImages(names)
+	if err != nil {
+		return nil, err
+	}
 
-	for len(imageDepsToHandle) != 0 {
-		var currentDeps []ImageInterface
+	sets = [][]ImageInterface{}
+	isImageChecked := map[ImageInterface]bool{}
+	imageRelativesListToHandle := c.getImageRelativesInOrder(images)
+
+	for len(imageRelativesListToHandle) != 0 {
+		var currentRelatives []ImageInterface
 
 	outerLoop:
-		for image, deps := range imageDepsToHandle {
-			for _, dep := range deps {
-				_, ok := isDepChecked[dep]
+		for image, relatives := range imageRelativesListToHandle {
+			for _, relativeImage := range relatives {
+				_, ok := isImageChecked[relativeImage]
 				if !ok {
 					continue outerLoop
 				}
 			}
 
-			currentDeps = append(currentDeps, image)
+			currentRelatives = append(currentRelatives, image)
 		}
 
-		for _, dep := range currentDeps {
-			isDepChecked[dep] = true
-			delete(imageDepsToHandle, dep)
+		for _, relativeImage := range currentRelatives {
+			isImageChecked[relativeImage] = true
+			delete(imageRelativesListToHandle, relativeImage)
 		}
 
-		sets = append(sets, currentDeps)
+		sets = append(sets, currentRelatives)
 	}
 
-	return sets
+	return sets, nil
 }
 
-func (c *WerfConfig) imageDependenciesInOrder(images []ImageInterface) (imageDeps map[ImageInterface][]ImageInterface) {
-	imageDeps = map[ImageInterface][]ImageInterface{}
+func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) (imageRelatives map[ImageInterface][]ImageInterface) {
+	imageRelatives = map[ImageInterface][]ImageInterface{}
 	stack := images
 
 	for len(stack) != 0 {
 		current := stack[0]
 		stack = stack[1:]
 
-		imageDeps[current] = c.imageDependencies(current)
+		imageRelatives[current] = c.imageRelatives(current)
 
 	outerLoop:
-		for _, dep := range imageDeps[current] {
-			for key := range imageDeps {
-				if key == dep {
+		for _, relativeImage := range imageRelatives[current] {
+			for key := range imageRelatives {
+				if key == relativeImage {
 					continue outerLoop
 				}
 			}
 
-			stack = append(stack, dep)
+			stack = append(stack, relativeImage)
 		}
 	}
 
-	return imageDeps
+	return imageRelatives
 }
 
-func (c *WerfConfig) imageDependencies(interf ImageInterface) (deps []ImageInterface) {
+func (c *WerfConfig) imageRelatives(interf ImageInterface) (relatives []ImageInterface) {
 	switch i := interf.(type) {
 	case StapelImageInterface:
 		if i.ImageBaseConfig().FromImageName != "" {
-			deps = append(deps, c.GetImage(i.ImageBaseConfig().FromImageName))
+			relatives = append(relatives, c.GetImage(i.ImageBaseConfig().FromImageName))
 		}
 
 		if i.ImageBaseConfig().FromArtifactName != "" {
-			deps = append(deps, c.GetArtifact(i.ImageBaseConfig().FromArtifactName))
+			relatives = append(relatives, c.GetArtifact(i.ImageBaseConfig().FromArtifactName))
 		}
 
 		for _, imp := range i.imports() {
 			if imp.ImageName != "" {
-				deps = append(deps, c.GetImage(imp.ImageName))
+				relatives = append(relatives, c.GetImage(imp.ImageName))
 			} else if imp.ArtifactName != "" {
-				deps = append(deps, c.GetArtifact(imp.ArtifactName))
+				relatives = append(relatives, c.GetArtifact(imp.ArtifactName))
 			}
 		}
 
 		for _, dep := range i.dependencies() {
-			deps = append(deps, c.GetImage(dep.ImageName))
+			relatives = append(relatives, c.GetImage(dep.ImageName))
 		}
 	case *ImageFromDockerfile:
 		for _, dep := range i.Dependencies {
-			deps = append(deps, c.GetImage(dep.ImageName))
+			relatives = append(relatives, c.GetImage(dep.ImageName))
 		}
 	}
 
-	return deps
+	return relatives
 }
 
 func (c *WerfConfig) relatedImageImages(interf ImageInterface) (images []ImageInterface) {
