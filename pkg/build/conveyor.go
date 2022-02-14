@@ -372,13 +372,18 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 	return envArray
 }
 
-func (c *Conveyor) checkContainerRuntimeSupported(ctx context.Context) error {
+func (c *Conveyor) checkContainerRuntimeSupported(_ context.Context) error {
 	if _, isBuildah := c.ContainerRuntime.(*container_runtime.BuildahRuntime); !isBuildah {
 		return nil
 	}
 
+	imageConfigList, err := c.werfConfig.GetSpecificImages(c.imageNamesToProcess)
+	if err != nil {
+		return err
+	}
+
 	var nonDockerfileImages []string
-	for _, processImage := range getImageConfigsToProcess(ctx, c) {
+	for _, processImage := range imageConfigList {
 		for _, stapelImage := range c.werfConfig.StapelImages {
 			if processImage.GetName() == stapelImage.Name {
 				nonDockerfileImages = append(nonDockerfileImages, processImage.GetName())
@@ -452,10 +457,12 @@ func (c *Conveyor) determineStages(ctx context.Context) error {
 }
 
 func (c *Conveyor) doDetermineStages(ctx context.Context) error {
-	imageConfigsToProcess := getImageConfigsToProcess(ctx, c)
-	configSets := c.werfConfig.ImagesWithDependenciesBySets(imageConfigsToProcess)
+	imageConfigSets, err := c.werfConfig.GroupImagesByIndependentSets(c.imageNamesToProcess)
+	if err != nil {
+		return err
+	}
 
-	for _, iteration := range configSets {
+	for _, iteration := range imageConfigSets {
 		var imageSet []*Image
 
 		for _, imageInterfaceConfig := range iteration {
@@ -803,31 +810,6 @@ func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, boo
 	}
 
 	return from, fromImageName, imageBaseConfig.FromLatest
-}
-
-func getImageConfigsToProcess(ctx context.Context, c *Conveyor) []config.ImageInterface {
-	var imageConfigsToProcess []config.ImageInterface
-
-	if len(c.imageNamesToProcess) == 0 {
-		imageConfigsToProcess = c.werfConfig.GetAllImages()
-	} else {
-		for _, imageName := range c.imageNamesToProcess {
-			if !c.werfConfig.HasImageOrArtifact(imageName) {
-				logboek.Context(ctx).Warn().LogF("WARNING: Specified image %s isn't defined in werf.yaml!\n", imageName)
-				continue
-			}
-
-			var imageToProcess config.ImageInterface
-			imageToProcess = c.werfConfig.GetImage(imageName)
-			if imageToProcess == nil {
-				imageToProcess = c.werfConfig.GetArtifact(imageName)
-			}
-
-			imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
-		}
-	}
-
-	return imageConfigsToProcess
 }
 
 func initStages(ctx context.Context, image *Image, imageInterfaceConfig config.StapelImageInterface, c *Conveyor) error {
