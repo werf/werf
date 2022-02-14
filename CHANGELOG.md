@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.66](https://www.github.com/werf/werf/compare/v1.2.65...v1.2.66) (2022-02-14)
+
+
+### Features
+
+* **config:** dependency graph for werf.yaml images ([403bcb0](https://www.github.com/werf/werf/commit/403bcb05174a8d3fa199d0453b16e009ff51fc72))
+
+
+### Bug Fixes
+
+* **cleanup:** odd warning message with a nonexistent tag ([e873376](https://www.github.com/werf/werf/commit/e873376bc5a8c355e15e9cdf7feb444bf392eb43))
+
 ### [1.2.65](https://www.github.com/werf/werf/compare/v1.2.64...v1.2.65) (2022-02-08)
 
 
