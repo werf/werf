@@ -741,7 +741,7 @@ func makeRepoImageMetadataName(repoAddress, imageNameOrID, commit, stageID strin
 func makeRepoImageMetadataNameByImageID(repoAddress, imageID, commit, stageID string) string {
 	return strings.Join([]string{
 		repoAddress,
-		fmt.Sprintf(RepoImageMetadataByCommitRecord_TagFormat, imageID, commit, stageID),
+		slug.DockerTag(fmt.Sprintf(RepoImageMetadataByCommitRecord_TagFormat, imageID, commit, stageID)),
 	}, ":")
 }
 
