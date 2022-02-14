@@ -446,36 +446,26 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageOrArtifactName string, image
 		panic("runtime error")
 	}
 
+	var imageNames []string
 	if imageBaseConfig.FromImageName != "" {
-		if err, errImagesStack := c.validateImageInfiniteLoop(imageBaseConfig.FromImageName, imageNameStack); err != nil {
-			return err, append([]string{imageOrArtifactName}, errImagesStack...)
-		}
+		imageNames = append(imageNames, imageBaseConfig.FromImageName)
 	}
 
 	if imageBaseConfig.FromArtifactName != "" {
-		if err, errImagesStack := c.validateImageInfiniteLoop(imageBaseConfig.FromArtifactName, imageNameStack); err != nil {
-			return err, append([]string{imageOrArtifactName}, errImagesStack...)
-		}
+		imageNames = append(imageNames, imageBaseConfig.FromArtifactName)
 	}
 
 	for _, imp := range image.imports() {
 		if imp.ImageName != "" {
-			var importImageName string
-
-			switch i := c.GetImage(imp.ImageName).(type) {
-			case *ImageFromDockerfile:
-				importImageName = i.Name
-			case *StapelImage:
-				importImageName = i.Name
-			}
-
-			if err, errImagesStack := c.validateImageInfiniteLoop(importImageName, imageNameStack); err != nil {
-				return err, append([]string{imageOrArtifactName}, errImagesStack...)
-			}
+			imageNames = append(imageNames, imp.ImageName)
 		} else if imp.ArtifactName != "" {
-			if err, errImagesStack := c.validateImageInfiniteLoop(imp.ArtifactName, imageNameStack); err != nil {
-				return err, append([]string{imageOrArtifactName}, errImagesStack...)
-			}
+			imageNames = append(imageNames, imp.ArtifactName)
+		}
+	}
+
+	for _, imageName := range imageNames {
+		if err, errImagesStack := c.validateImageInfiniteLoop(imageName, imageNameStack); err != nil {
+			return err, append([]string{imageOrArtifactName}, errImagesStack...)
 		}
 	}
 
