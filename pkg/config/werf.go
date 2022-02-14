@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/logging"
+	"github.com/werf/werf/pkg/util"
 )
 
 type WerfConfig struct {
@@ -356,7 +357,7 @@ func (c *WerfConfig) GroupImagesByIndependentSets(names []string) (sets [][]Imag
 	}
 
 	sets = [][]ImageInterface{}
-	isImageChecked := map[ImageInterface]bool{}
+	isRelativeChecked := map[ImageInterface]bool{}
 	imageRelativesListToHandle := c.getImageRelativesInOrder(images)
 
 	for len(imageRelativesListToHandle) != 0 {
@@ -365,7 +366,7 @@ func (c *WerfConfig) GroupImagesByIndependentSets(names []string) (sets [][]Imag
 	outerLoop:
 		for image, relatives := range imageRelativesListToHandle {
 			for _, relativeImage := range relatives {
-				_, ok := isImageChecked[relativeImage]
+				_, ok := isRelativeChecked[relativeImage]
 				if !ok {
 					continue outerLoop
 				}
@@ -375,7 +376,7 @@ func (c *WerfConfig) GroupImagesByIndependentSets(names []string) (sets [][]Imag
 		}
 
 		for _, relativeImage := range currentRelatives {
-			isImageChecked[relativeImage] = true
+			isRelativeChecked[relativeImage] = true
 			delete(imageRelativesListToHandle, relativeImage)
 		}
 
@@ -393,7 +394,7 @@ func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) (imageRel
 		current := stack[0]
 		stack = stack[1:]
 
-		imageRelatives[current] = c.imageRelatives(current)
+		imageRelatives[current] = c.getImageRelatives(current)
 
 	outerLoop:
 		for _, relativeImage := range imageRelatives[current] {
@@ -410,17 +411,34 @@ func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) (imageRel
 	return imageRelatives
 }
 
-func (c *WerfConfig) imageRelatives(interf ImageInterface) (relatives []ImageInterface) {
+func (c *WerfConfig) getImageRelatives(interf ImageInterface) (relatives []ImageInterface) {
+	if from := c.getImageFromRelative(interf); from != nil {
+		relatives = append(relatives, from)
+	}
+	relatives = append(relatives, c.getImageRelativesFromImports(interf)...)
+	relatives = append(relatives, c.getImageRelativesFromDependencies(interf)...)
+	return relatives
+}
+
+func (c *WerfConfig) getImageFromRelative(interf ImageInterface) ImageInterface {
 	switch i := interf.(type) {
 	case StapelImageInterface:
 		if i.ImageBaseConfig().FromImageName != "" {
-			relatives = append(relatives, c.GetImage(i.ImageBaseConfig().FromImageName))
+			return c.GetImage(i.ImageBaseConfig().FromImageName)
 		}
 
 		if i.ImageBaseConfig().FromArtifactName != "" {
-			relatives = append(relatives, c.GetArtifact(i.ImageBaseConfig().FromArtifactName))
+			return c.GetArtifact(i.ImageBaseConfig().FromArtifactName)
 		}
+	case *ImageFromDockerfile:
+	}
 
+	return nil
+}
+
+func (c *WerfConfig) getImageRelativesFromImports(interf ImageInterface) (relatives []ImageInterface) {
+	switch i := interf.(type) {
+	case StapelImageInterface:
 		for _, imp := range i.imports() {
 			if imp.ImageName != "" {
 				relatives = append(relatives, c.GetImage(imp.ImageName))
@@ -428,7 +446,15 @@ func (c *WerfConfig) imageRelatives(interf ImageInterface) (relatives []ImageInt
 				relatives = append(relatives, c.GetArtifact(imp.ArtifactName))
 			}
 		}
+	case *ImageFromDockerfile:
+	}
 
+	return relatives
+}
+
+func (c *WerfConfig) getImageRelativesFromDependencies(interf ImageInterface) (relatives []ImageInterface) {
+	switch i := interf.(type) {
+	case StapelImageInterface:
 		for _, dep := range i.dependencies() {
 			relatives = append(relatives, c.GetImage(dep.ImageName))
 		}
@@ -511,4 +537,44 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageOrArtifactName string, image
 	}
 
 	return nil, nil
+}
+
+type imageGraph struct {
+	ImageName string `yaml:"image,omitempty"`
+	DependsOn struct {
+		From         string   `yaml:"from,omitempty"`
+		Imports      []string `yaml:"import,omitempty"`
+		Dependencies []string `yaml:"dependencies,omitempty"`
+	} `yaml:"dependsOn,omitempty"`
+}
+
+func (c *WerfConfig) GetImageGraphList(names []string) ([]imageGraph, error) {
+	images, err := c.GetSpecificImages(names)
+	if err != nil {
+		return nil, err
+	}
+
+	var graphList []imageGraph
+	for _, image := range images {
+		graph := imageGraph{}
+		graph.ImageName = image.GetName()
+
+		if from := c.getImageFromRelative(image); from != nil {
+			graph.DependsOn.From = from.GetName()
+		}
+
+		for _, imp := range c.getImageRelativesFromImports(image) {
+			graph.DependsOn.Imports = append(graph.DependsOn.Imports, imp.GetName())
+		}
+		graph.DependsOn.Imports = util.UniqStrings(graph.DependsOn.Imports)
+
+		for _, imp := range c.getImageRelativesFromDependencies(image) {
+			graph.DependsOn.Dependencies = append(graph.DependsOn.Dependencies, imp.GetName())
+		}
+		graph.DependsOn.Dependencies = util.UniqStrings(graph.DependsOn.Dependencies)
+
+		graphList = append(graphList, graph)
+	}
+
+	return graphList, nil
 }
