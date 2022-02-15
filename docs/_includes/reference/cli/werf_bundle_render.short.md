@@ -1,0 +1,1 @@
+render Kubernetes manifests from bundle
