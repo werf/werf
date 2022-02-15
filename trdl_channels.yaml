@@ -14,7 +14,7 @@ groups:
  - name: "1.1"
    channels:
     - name: alpha
-      version: 1.1.28 # deprecation warnings for werf v1.1 and outdated mutliwerf
+      version: 1.1.30 # fix git worktree switch
     - name: beta
       version: 1.1.28 # deprecation warnings for werf v1.1 and outdated mutliwerf
     - name: ea
