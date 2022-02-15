@@ -3,6 +3,7 @@ package util
 import (
 	"os"
 	"strings"
+	"reflect"
 )
 
 // FileExists returns true if path exists
@@ -38,4 +39,29 @@ func isNotExistError(err error) bool {
 
 func IsNotADirectoryError(err error) bool {
 	return strings.HasSuffix(err.Error(), "not a directory")
+}
+
+func IsSubpathOfBasePath(basePath, path string) bool {
+	basePathParts := SplitFilepath(basePath)
+	pathParts := SplitFilepath(path)
+
+	if len(basePathParts) > len(pathParts) {
+		return false
+	}
+
+	if reflect.DeepEqual(basePathParts, pathParts) {
+		return false
+	}
+
+	for ind := range basePathParts {
+		if basePathParts[ind] == "" {
+			continue
+		}
+
+		if basePathParts[ind] != pathParts[ind] {
+			return false
+		}
+	}
+
+	return true
 }
