@@ -374,7 +374,7 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(ctx context.Context, ex
 
 	repoImage, err := phase.ImagesRepo.GetRepoImage(ctx, werfImageName, imageMetaTag)
 	if err != nil {
-		if docker_registry.IsNameUnknownError(err) || docker_registry.IsManifestUnknownError(err) || docker_registry.IsBlobUnknownError(err) {
+		if docker_registry.IsNameUnknownError(err) || docker_registry.IsManifestUnknownError(err) || docker_registry.IsBlobUnknownError(err) || docker_registry.IsHarbor404Error(err) {
 			return false, nil, nil
 		}
 

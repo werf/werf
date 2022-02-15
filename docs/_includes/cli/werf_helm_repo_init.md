@@ -41,7 +41,7 @@ werf helm repo init [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --skip-refresh=false
             do not refresh (download) the local repository cache
-      --stable-repo-url='https://kubernetes-charts.storage.googleapis.com'
+      --stable-repo-url='https://charts.bitnami.com/bitnami'
             URL for stable repository
 ```
 
