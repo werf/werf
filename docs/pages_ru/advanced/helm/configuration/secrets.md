@@ -83,6 +83,7 @@ env:
  - [`werf helm secret file encrypt`]({{ "reference/cli/werf_helm_secret_file_encrypt.html" | true_relative_url }})
  - [`werf helm secret file decrypt`]({{ "reference/cli/werf_helm_secret_file_decrypt.html" | true_relative_url }})
 
+> **ПРИМЕЧАНИЕ** werf расшиврует содержимое всех файлов в `.helm/secret` перед рендерингом шаблонов helm-чарта. Необходимо удостовериться что директория `.helm/secret` содержит корректные зашифрованные файлы.
 
 ### Использование в шаблонах чарта
 
