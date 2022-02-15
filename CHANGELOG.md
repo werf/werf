@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.1.29](https://www.github.com/werf/werf/compare/v1.1.28...v1.1.29) (2022-02-15)
+
+
+### Bug Fixes
+
+* add lost fixes from v1.1.23+fix51, v1.1.23+fix52 and v1.1.23+fix53 ([b673ead](https://www.github.com/werf/werf/commit/b673eadd8f0885a3d6b832f663e7ca3471d53461))
+
 ### [1.1.28](https://www.github.com/werf/werf/compare/v1.1.27...v1.1.28) (2021-12-16)
 
 
