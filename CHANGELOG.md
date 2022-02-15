@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.67](https://www.github.com/werf/werf/compare/v1.2.66...v1.2.67) (2022-02-15)
+
+
+### Features
+
+* **bundle:** new command "werf bundle render" ([ad0181e](https://www.github.com/werf/werf/commit/ad0181ea0adc787c81dd9a8047f3ef3e825801b5))
+
+
+### Bug Fixes
+
+* "unable to switch worktree" in gitlab ([fe6c2d4](https://www.github.com/werf/werf/commit/fe6c2d49a45ea8cd8b7c343b3c7eee51fb05ad42))
+
 ### [1.2.66](https://www.github.com/werf/werf/compare/v1.2.65...v1.2.66) (2022-02-14)
 
 
