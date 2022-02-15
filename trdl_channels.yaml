@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.65 # dev-mode: less rebuilds due to better cache handling
+      version: 1.2.67 # bundle render & config graph
     - name: beta
       version: 1.2.65 # dev-mode: less rebuilds due to better cache handling
     - name: ea
