@@ -95,6 +95,8 @@ To manage secret files use the following commands:
  - [`werf helm secret file encrypt` command]({{ "reference/cli/werf_helm_secret_file_encrypt.html" | true_relative_url }})
  - [`werf helm secret file decrypt` command]({{ "reference/cli/werf_helm_secret_file_decrypt.html" | true_relative_url }})
 
+> **NOTE** werf will decrypt all files in the `.helm/secret` directory prior rendering helm chart templates. Make sure that `.helm/secret` contains valid encrypted files.
+
 ### Using in a chart template
 
 <!-- Move to reference -->
