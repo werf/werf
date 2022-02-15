@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -44,7 +45,7 @@ var _ = Describe("Bundles", func() {
 				SuiteData.TeardownRepo(context.Background(), SuiteData.Repo, implementationName, SuiteData.StubsData)
 			})
 
-			It("should publish latest quickstart-application bundle then apply into kubernetes", func() {
+			It("should publish latest quickstart-application bundle, then apply into kubernetes, then export it, then render it from exported dir, then render it from registry", func() {
 				switch implementationName {
 				case "dockerhub":
 					Skip("Skip due to the unresolved issue: https://github.com/werf/werf/issues/3184")
@@ -55,6 +56,33 @@ var _ = Describe("Bundles", func() {
 				Expect(liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, []string{"clone", "https://github.com/werf/quickstart-application", SuiteData.ProjectName}...)).To(Succeed())
 				Expect(liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "bundle", "publish")).Should(Succeed())
 				Expect(liveExecWerf(".", liveexec.ExecCommandOptions{}, "bundle", "apply", "--release", SuiteData.ProjectName, "--namespace", SuiteData.ProjectName, "--set-docker-config-json-value")).Should(Succeed())
+
+				exportedBundleDir := utils.GetTempDir()
+				Expect(liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{}, "bundle", "export", "--destination", exportedBundleDir)).Should(Succeed())
+
+				SuiteData.Stubs.UnsetEnv("WERF_REPO")
+
+				gotKindDeploymentInLocalRender := false
+				Expect(liveExecWerf(exportedBundleDir, liveexec.ExecCommandOptions{
+					OutputLineHandler: func(line string) {
+						if strings.TrimSpace(line) == "kind: Deployment" {
+							gotKindDeploymentInLocalRender = true
+						}
+					},
+				}, "bundle", "render", "--bundle-dir", ".")).Should(Succeed())
+				Expect(gotKindDeploymentInLocalRender).To(BeTrue())
+
+				SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.Repo)
+
+				gotKindDeploymentInRemoteRender := false
+				Expect(liveExecWerf(SuiteData.ProjectName, liveexec.ExecCommandOptions{
+					OutputLineHandler: func(line string) {
+						if strings.TrimSpace(line) == "kind: Deployment" {
+							gotKindDeploymentInRemoteRender = true
+						}
+					},
+				}, "bundle", "render")).Should(Succeed())
+				Expect(gotKindDeploymentInRemoteRender).To(BeTrue())
 			})
 		})
 	}
