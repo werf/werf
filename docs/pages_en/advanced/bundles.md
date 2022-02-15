@@ -38,7 +38,7 @@ When publishing a bundle by the tag which already exists in the container regist
 
 Bundle published into the container registry could be deployed into the kubernetes by the werf.
 
-[werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command used to deploy a published bundle version into the kubernetes. This command **does not need a project git directory** to run, because bundle contains all needed files and images to deploy an application. This command accepts params which is analogous to [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command.
+[werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command used to deploy a published bundle version into the kubernetes. This command **does not need a project git directory** to run, because bundle contains all needed files and images to deploy an application. This command accepts params which is analogous to [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command. For `werf bundle apply` you should explicitly specify Helm release name (`--release`) and namespace to be used for deployment (`--namespace`).
 
 [Values for helm chart]({{ "/advanced/helm/configuration/values.html" | true_relative_url }}), [annotations and labels]({{ "/advanced/helm/deploy_process/annotating_and_labeling.html" | true_relative_url }}) which has been passed to the [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command will be united with the values, annotations and labels, which has been passed during publication of the bundle being applied.
 
@@ -85,7 +85,7 @@ werf bundle publish --repo registry.mydomain.io/project --tag main --set "myvalu
 Let's deploy published bundle by the `v3.4.9` tag, run on an arbitrary host with access to the kubernetes and container registry:
 
 ```
-werf bundle apply --repo registry.mydomain.io/project --tag v3.4.9 --env production --set "sentry.url=sentry.mydomain.io"
+werf bundle apply --repo registry.mydomain.io/project --tag v3.4.9 --env production --release myproject --namespace myproject --set "sentry.url=sentry.mydomain.io"
 ```
 
 ## Auto updates of bundles
@@ -95,11 +95,11 @@ werf supports automatical redeployment of the bundle, which has been published b
 When deploying bundle by such tag werf will download the latest actual version of the bundle published into the container registry.
 
 ### Deployment by semver constraint
-
+https://github.com/cli/cli/releases/latest
 Auto updates by semver constraint is not supported yet, but [planned](https://github.com/werf/werf/issues/3169):
 
 ```
-werf bundle apply --repo registry.mydomain.io/project --tag-mask v3.5.*
+werf bundle apply --repo registry.mydomain.io/project --tag-mask v3.5.* --release myproject --namespace myproject
 ```
 
 This bundle apply should check available versions by specified mask `v3.5.*`, select latest version then deploy this version into the kubernetes.
