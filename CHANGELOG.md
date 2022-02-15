@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.1.30](https://www.github.com/werf/werf/compare/v1.1.29...v1.1.30) (2022-02-15)
+
+
+### Bug Fixes
+
+* "unable to switch worktree" in gitlab ([2ef0735](https://www.github.com/werf/werf/commit/2ef0735353ca8bb3d309c8529d2010eb25724842))
+
 ### [1.1.29](https://www.github.com/werf/werf/compare/v1.1.28...v1.1.29) (2022-02-15)
 
 
