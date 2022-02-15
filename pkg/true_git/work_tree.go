@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/timestamps"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -67,31 +68,38 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 	}
 
 	workTreeDir := filepath.Join(workTreeCacheDir, "worktree")
-
-	isWorkTreeDirExist := false
-	if _, err := os.Stat(workTreeDir); err == nil {
-		isWorkTreeDirExist = true
-	} else if !os.IsNotExist(err) {
-		return "", fmt.Errorf("error accessing %s: %s", workTreeDir, err)
-	}
-
-	isWorkTreeRegistered := false
-	if workTreeList, err := GetWorkTreeList(ctx, repoDir); err != nil {
-		return "", fmt.Errorf("unable to get worktree list for repo %s: %s", repoDir, err)
-	} else {
-		for _, workTreeDesc := range workTreeList {
-			if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(workTreeDir) {
-				isWorkTreeRegistered = true
-			}
-		}
-	}
-
 	currentCommit := ""
 	currentCommitPath := filepath.Join(workTreeCacheDir, "current_commit")
 
-	if isWorkTreeDirExist {
+	_, err := os.Stat(workTreeDir)
+	switch {
+	case os.IsNotExist(err):
+	case err != nil:
+	default:
+		isWorkTreeRegistered := false
+		if workTreeList, err := GetWorkTreeList(ctx, repoDir); err != nil {
+			return "", fmt.Errorf("unable to get worktree list for repo %s: %s", repoDir, err)
+		} else {
+			for _, workTreeDesc := range workTreeList {
+				if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(workTreeDir) {
+					isWorkTreeRegistered = true
+				}
+			}
+		}
 		if !isWorkTreeRegistered {
-			logboek.Context(ctx).Info().LogFDetails("Removing unregistered work tree dir %s of repo %s\n", workTreeDir, repoDir)
+			logboek.Context(ctx).Default().LogFDetails("Detected unregistered work tree dir %q of repo %s\n", workTreeDir, repoDir)
+		}
+
+		isWorkTreeConsistent, err := verifyWorkTreeConsistency(ctx, repoDir, workTreeDir)
+		if err != nil {
+			return "", fmt.Errorf("unable to verify work tree %q consistency: %s", workTreeDir, err)
+		}
+		if !isWorkTreeConsistent {
+			logboek.Context(ctx).Default().LogFDetails("Detected inconsistent work tree dir %q of repo %s\n", workTreeDir, repoDir)
+		}
+
+		if !isWorkTreeRegistered || !isWorkTreeConsistent {
+			logboek.Context(ctx).Default().LogF("Removing invalidated work tree dir %q of repo %s\n", workTreeDir, repoDir)
 
 			if err := os.RemoveAll(currentCommitPath); err != nil {
 				return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
@@ -100,7 +108,6 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 			if err := os.RemoveAll(workTreeDir); err != nil {
 				return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %s", workTreeDir, err)
 			}
-			isWorkTreeDirExist = false
 		} else {
 			currentCommitPathExists := true
 			if _, err := os.Stat(currentCommitPath); os.IsNotExist(err) {
@@ -127,8 +134,6 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 		}
 	}
 
-	_ = isWorkTreeDirExist
-
 	// Switch worktree state to the desired commit.
 	// If worktree already exists — it will be used as a cache.
 	logProcessMsg := fmt.Sprintf("Switch work tree %s to commit %s", workTreeDir, commit)
@@ -138,6 +143,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 		if currentCommit != "" {
 			logboek.Context(ctx).Info().LogFDetails("Current commit: %s\n", currentCommit)
 		}
+
 		return switchWorkTree(ctx, repoDir, workTreeDir, commit, withSubmodules)
 	}); err != nil {
 		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %s", workTreeDir, commit, err)
@@ -148,6 +154,48 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 	}
 
 	return workTreeDir, nil
+}
+
+func verifyWorkTreeConsistency(ctx context.Context, repoDir, workTreeDir string) (bool, error) {
+	resolvedGitDir, err := resolveDotGitFile(ctx, filepath.Join(workTreeDir, ".git"))
+	if err != nil {
+		return false, fmt.Errorf("unable to resolve dot-git file %q: %s", filepath.Join(workTreeDir, ".git"), err)
+	}
+
+	if !util.IsSubpathOfBasePath(repoDir, resolvedGitDir) {
+		return false, nil
+	}
+
+	_, err = os.Stat(resolvedGitDir)
+	switch {
+	case os.IsNotExist(err):
+		return false, nil
+	case err != nil:
+		return false, fmt.Errorf("error accessing resolved dot git dir %q: %s", resolvedGitDir, err)
+	}
+
+	return true, nil
+}
+
+func resolveDotGitFile(ctx context.Context, dotGitPath string) (string, error) {
+	data, err := os.ReadFile(dotGitPath)
+	if err != nil {
+		return "", fmt.Errorf("error reading %q: %s", dotGitPath, err)
+	}
+
+	lines := util.SplitLines(string(data))
+	if len(lines) == 0 {
+		goto InvalidDotGit
+	}
+
+	if !strings.HasPrefix(lines[0], "gitdir: ") {
+		goto InvalidDotGit
+	}
+
+	return strings.TrimSpace(strings.TrimPrefix(lines[0], "gitdir: ")), nil
+
+InvalidDotGit:
+	return "", fmt.Errorf("invalid file format: expected gitdir record")
 }
 
 func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit string, withSubmodules bool) error {
