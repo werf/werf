@@ -6,6 +6,7 @@
 
 /docs/vendor
 /docs/.ruby-version
+docs/\.jekyll-cache/
 
 /stapel/*/omnibus/build
 /stapel/*/omnibus/vendor
@@ -22,5 +23,3 @@
 /tests/integration/three-way-merge/**/main
 /bin
 /tests-coverage
-
-docs/\.jekyll-cache/
