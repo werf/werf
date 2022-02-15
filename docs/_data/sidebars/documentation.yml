@@ -35,6 +35,9 @@ cli: &cli
       - title: werf bundle publish
         url: /reference/cli/werf_bundle_publish.html
 
+      - title: werf bundle render
+        url: /reference/cli/werf_bundle_render.html
+
   - title: Cleaning commands
     f:
 
