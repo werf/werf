@@ -1309,6 +1309,13 @@ func GetRequiredRelease(cmdData *CmdData) (string, error) {
 	return *cmdData.Release, nil
 }
 
+func GetOptionalRelease(cmdData *CmdData) string {
+	if *cmdData.Release == "" {
+		return "werf-stub"
+	}
+	return *cmdData.Release
+}
+
 func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
 	isStageExist := func(sName string) bool {
 		for _, stageName := range allStagesNames() {
