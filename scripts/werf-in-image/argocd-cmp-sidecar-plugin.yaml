@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ConfigManagementPlugin
+metadata:
+  name: werf
+spec:
+  generate:
+    command:
+    - sh
+    - -ec
+    - |
+      export WERF_RELEASE="${WERF_RELEASE:-$ARGOCD_APP_NAME}"
+      export WERF_NAMESPACE="${WERF_NAMESPACE:-$ARGOCD_APP_NAMESPACE}"
+      export WERF_BUNDLE_DIR="."
+      werf bundle render
+  discover:
+    # TODO: better werf bundle detection
+    filename: "./templates/_werf_helpers.tpl"
+  allowConcurrency: true
