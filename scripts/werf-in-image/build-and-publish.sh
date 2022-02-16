@@ -10,8 +10,8 @@ export WERF_REPO="$BASE_REPO/werf"
 
 werf build
 
-werf export --tag "$BASE_REPO/werf:latest" "1.2-alpha-alpine"
-werf export --tag "$BASE_REPO/werf-argocd-cmp-sidecar:latest" "argocd-cmp-sidecar-1.2-alpha-ubuntu"
+werf export --tag "$BASE_REPO/werf:latest" "1.2-stable-alpine"
+werf export --tag "$BASE_REPO/werf-argocd-cmp-sidecar:latest" "argocd-cmp-sidecar-1.2-stable-ubuntu"
 
 for group in "1.2"; do
   werf export --tag "$BASE_REPO/werf:$group" "$group-stable-alpine"
