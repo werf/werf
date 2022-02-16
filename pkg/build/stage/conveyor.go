@@ -16,6 +16,8 @@ type Conveyor interface {
 	GetImageStageContentDigest(imageName, stageName string) string
 	GetImageContentDigest(imageName string) string
 
+	FetchImageStage(ctx context.Context, imageName, stageName string) error
+	FetchLastNonEmptyImageStage(ctx context.Context, imageName string) error
 	GetImageNameForLastImageStage(imageName string) string
 	GetImageIDForLastImageStage(imageName string) string
 

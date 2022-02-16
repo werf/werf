@@ -183,6 +183,10 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 }
 
 func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {
+	if err := fetchSourceImageDockerImage(ctx, c, importElm); err != nil {
+		return "", fmt.Errorf("unable to fetch source image: %w", err)
+	}
+
 	sourceImageDockerImageName := getSourceImageDockerImageName(c, importElm)
 	importSourceID := getImportSourceID(c, importElm)
 
@@ -321,6 +325,15 @@ func getImportSourceID(c Conveyor, importElm *config.Import) string {
 		"IncludePaths", strings.Join(importElm.IncludePaths, "///"),
 		"ExcludePaths", strings.Join(importElm.ExcludePaths, "///"),
 	)
+}
+
+func fetchSourceImageDockerImage(ctx context.Context, c Conveyor, importElm *config.Import) error {
+	sourceImageName := getSourceImageName(importElm)
+	if importElm.Stage == "" {
+		return c.FetchLastNonEmptyImageStage(ctx, sourceImageName)
+	} else {
+		return c.FetchImageStage(ctx, sourceImageName, importElm.Stage)
+	}
 }
 
 func getSourceImageDockerImageName(c Conveyor, importElm *config.Import) string {
