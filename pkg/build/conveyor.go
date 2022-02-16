@@ -714,9 +714,21 @@ func (c *Conveyor) getImageStage(imageName, stageName string) stage.Interface {
 	if stg := c.GetImage(imageName).GetStage(stage.StageName(stageName)); stg != nil {
 		return stg
 	} else {
-		// FIXME: find first existing stage after specified unexisting
-		return c.GetImage(imageName).GetLastNonEmptyStage()
+		return c.getLastNonEmptyImageStage(imageName)
 	}
+}
+
+func (c *Conveyor) getLastNonEmptyImageStage(imageName string) stage.Interface {
+	// FIXME: find first existing stage after specified unexisting
+	return c.GetImage(imageName).GetLastNonEmptyStage()
+}
+
+func (c *Conveyor) FetchImageStage(ctx context.Context, imageName, stageName string) error {
+	return c.StorageManager.FetchStage(ctx, c.ContainerRuntime, c.getImageStage(imageName, stageName))
+}
+
+func (c *Conveyor) FetchLastNonEmptyImageStage(ctx context.Context, imageName string) error {
+	return c.StorageManager.FetchStage(ctx, c.ContainerRuntime, c.getLastNonEmptyImageStage(imageName))
 }
 
 func (c *Conveyor) GetImageNameForLastImageStage(imageName string) string {
