@@ -95,7 +95,7 @@ werf supports automatical redeployment of the bundle, which has been published b
 When deploying bundle by such tag werf will download the latest actual version of the bundle published into the container registry.
 
 ### Deployment by semver constraint
-https://github.com/cli/cli/releases/latest
+
 Auto updates by semver constraint is not supported yet, but [planned](https://github.com/werf/werf/issues/3169):
 
 ```
