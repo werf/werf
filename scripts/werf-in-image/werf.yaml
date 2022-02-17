@@ -1,14 +1,7 @@
 project: werf-in-image
 configVersion: 1
-{{  $_ := set $ "Groups" (list "1.2") -}}
-{{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable") -}}
-{{- $_ := set $ "Distros" (list "alpine" "ubuntu" "centos") -}}
-
-{{ range $_, $distro := $.Distros }}
----
-image: {{ $distro }}
-dockerfile: ./{{ $distro }}.Dockerfile
-{{- end }}
+{{- $_ := set $ "Groups" (list "1.2") }}
+{{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable") }}
 
 ---
 image: trdl
@@ -49,29 +42,41 @@ git:
   stageDependencies:
     install: [""]
 
-{{ range $_, $group := $.Groups -}}
-{{-   range $_, $channel := $.Channels }}
-{{-     range $_, $distro := $.Distros }}
+{{- range $_, $distro := list "alpine" "ubuntu" "centos" }}
 ---
-image: {{ $group }}-{{ $channel }}-{{ $distro }}
-fromImage: {{ $distro }}
+image: "{{ $distro }}"
+dockerfile: "./{{ $distro }}.Dockerfile"
+
+  {{- range $_, $group := $.Groups }}
+    {{- range $_, $channel := $.Channels }}
+---
+image: "{{ $group }}-{{ $channel }}-{{ $distro }}"
+fromImage: "{{ $distro }}"
 import:
 - image: trdl
   after: install
-  add: /usr/local/bin/werf-{{ $group }}-{{ $channel }}
+  add: "/usr/local/bin/werf-{{ $group }}-{{ $channel }}"
   to: /usr/local/bin/werf
-{{-     end -}}
-{{-   end -}}
+    {{- end }}
+  {{- end }}
 {{- end }}
 
-{{ range $_, $group := $.Groups -}}
-{{-   range $_, $channel := $.Channels }}
----
-image: {{ $group }}-{{ $channel }}
-fromImage: {{ $group }}-{{ $channel }}-alpine
-{{-   end -}}
-{{- end }}
 
+{{- range $_, $distro := list "ubuntu" }}
 ---
-image: latest
-fromImage: 1.2-alpha
+image: "argocd-cmp-sidecar-{{ $distro }}"
+dockerfile: "./argocd-cmp-sidecar-{{ $distro }}.Dockerfile"
+
+  {{- range $_, $group := $.Groups }}
+    {{- range $_, $channel := $.Channels }}
+---
+image: "argocd-cmp-sidecar-{{ $group }}-{{ $channel }}-{{ $distro }}"
+fromImage: "argocd-cmp-sidecar-{{ $distro }}"
+import:
+- image: trdl
+  after: install
+  add: "/usr/local/bin/werf-{{ $group }}-{{ $channel }}"
+  to: /usr/local/bin/werf
+    {{- end }}
+  {{- end }}
+{{- end }}
