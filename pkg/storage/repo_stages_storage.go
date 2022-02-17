@@ -551,19 +551,39 @@ func (storage *RepoStagesStorage) RmImageMetadata(ctx context.Context, projectNa
 	return nil
 }
 
-func (storage *RepoStagesStorage) selectMetadataNameImage(ctx context.Context, imageNameOrID, commit, stageID string) (*image.Info, error) {
-	for _, fullImageName := range []string{
-		makeRepoImageMetadataName(storage.RepoAddress, imageNameOrID, commit, stageID),
-		makeRepoImageMetadataNameByImageID(storage.RepoAddress, imageNameOrID, commit, stageID),
-	} {
-		if img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName); err != nil {
+func (storage *RepoStagesStorage) selectMetadataNameImage(ctx context.Context, imageNameOrManagedImageNameImageMetadataID, commit, stageID string) (*image.Info, error) {
+	tryGetRepoImageFunc := func(fullImageName string) (*image.Info, error) {
+		img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+		if err != nil {
 			return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
-		} else if img != nil {
+		}
+
+		return img, nil
+	}
+
+	// try as imageName or managedImageName
+	{
+		dockerImageName := makeRepoImageMetadataName(storage.RepoAddress, imageNameOrManagedImageNameImageMetadataID, commit, stageID)
+		img, err := tryGetRepoImageFunc(dockerImageName)
+		if err != nil {
+			return nil, err
+		}
+
+		if img != nil {
 			return img, nil
 		}
 	}
 
-	return nil, nil
+	// try as imageMetadataID
+	{
+		dockerImageTag := makeRepoImageMetadataTagNameByImageMetadataID(imageNameOrManagedImageNameImageMetadataID, commit, stageID)
+		if !slug.IsValidDockerTag(dockerImageTag) { // it is not imageMetadataID
+			return nil, nil
+		}
+
+		dockerImageName := makeRepoImageMetadataNameByImageMetadataID(storage.RepoAddress, imageNameOrManagedImageNameImageMetadataID, commit, stageID)
+		return tryGetRepoImageFunc(dockerImageName)
+	}
 }
 
 func (storage *RepoStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) (bool, error) {
@@ -730,14 +750,14 @@ func makeRepoImageMetadataName(repoAddress, imageNameOrManagedImageName, commit,
 }
 
 func makeRepoImageMetadataNameByImageMetadataID(repoAddress, imageMetadataID, commit, stageID string) string {
-	return strings.Join([]string{repoAddress, makeRepoImageMetadataTagNameByImageID(imageMetadataID, commit, stageID)}, ":")
+	return strings.Join([]string{repoAddress, makeRepoImageMetadataTagNameByImageMetadataID(imageMetadataID, commit, stageID)}, ":")
 }
 
 func makeRepoImageMetadataTagName(imageNameOrManagedImageName, commit, stageID string) string {
-	return makeRepoImageMetadataTagNameByImageID(getImageMetadataID(imageNameOrManagedImageName), commit, stageID)
+	return makeRepoImageMetadataTagNameByImageMetadataID(getImageMetadataID(imageNameOrManagedImageName), commit, stageID)
 }
 
-func makeRepoImageMetadataTagNameByImageID(imageMetadataID, commit, stageID string) string {
+func makeRepoImageMetadataTagNameByImageMetadataID(imageMetadataID, commit, stageID string) string {
 	return fmt.Sprintf(RepoImageMetadataByCommitRecord_TagFormat, imageMetadataID, commit, stageID)
 }
 
