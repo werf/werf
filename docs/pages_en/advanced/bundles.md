@@ -50,6 +50,18 @@ werf will check that bundle has been updated in the container registry for the s
 
 ## Other commands to work with bundles
 
+### Render bundle manifests
+
+[`werf bundle render`]({{ "/reference/cli/werf_bundle_render.html" | true_relative_url }}) command renders Kubernetes manifests that can be passed to other software which will handle the deployment part (e.g. ArgoCD) or can be used just for the debugging.
+
+Command **does not require project git directory**. One of the two options has to be specified:
+1. `--repo`, to render bundle from the remote OCI-repository.
+2. or `--bundle-dir`, to render bundle from the directory containing the extracted bundle.
+
+If you are going to deploy resulting manifests, then you should provide values for the options `--release` and `--namespace`, otherwise stub values will be used for them.
+
+Option `--output` might be used to save rendered manifests to an arbitrary file.
+
 ### Export bundle into the directory
 
 [werf-bundle-export]({{ "/reference/cli/werf_bundle_export.html" | true_relative_url }}) command will create bundle directory in the same way as it will be published into the container registry.
