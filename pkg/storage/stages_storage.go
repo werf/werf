@@ -44,14 +44,20 @@ type StagesStorage interface {
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error
 
-	AddManagedImage(ctx context.Context, projectName, imageName string) error
-	RmManagedImage(ctx context.Context, projectName, imageName string) error
+	// AddManagedImage adds managed image.
+	AddManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error
+	// RmManagedImage removes managed image by imageName or managedImageName.
+	// Typically, the managedImageName is the same as the imageName, but may be different
+	// if the name contains unsupported special characters, or
+	// if the name exceeds the docker tag limit.
+	RmManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error
+	// GetManagedImages returns the list of managedImageName.
 	GetManagedImages(ctx context.Context, projectName string) ([]string, error)
 
-	PutImageMetadata(ctx context.Context, projectName, imageName, commit, stageID string) error
-	RmImageMetadata(ctx context.Context, projectName, imageNameOrID, commit, stageID string) error
-	IsImageMetadataExist(ctx context.Context, projectName, imageName, commit, stageID string) (bool, error)
-	GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameList []string) (map[string]map[string][]string, map[string]map[string][]string, error)
+	PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error
+	RmImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID string) error
+	IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) (bool, error)
+	GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string) (map[string]map[string][]string, map[string]map[string][]string, error)
 
 	GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error)
 	PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error
