@@ -80,7 +80,7 @@ func RunAutoHostCleanup(ctx context.Context, options AutoHostCleanupOptions) err
 	if options.AllowedLocalCacheVolumeUsageMarginPercentage != nil {
 		args = append(args, "--allowed-docker-storage-volume-usage-margin", fmt.Sprintf("%d", *options.AllowedLocalCacheVolumeUsageMarginPercentage))
 	}
-	if options.DockerServerStoragePath != nil {
+	if options.DockerServerStoragePath != nil && *options.DockerServerStoragePath != "" {
 		args = append(args, "--docker-server-storage-path", *options.DockerServerStoragePath)
 	}
 
