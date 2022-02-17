@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
@@ -57,6 +58,8 @@ func RunAutoHostCleanup(ctx context.Context, options AutoHostCleanupOptions) err
 		}
 	}
 
+	logboek.Context(ctx).Debug().LogF("RunAutoHostCleanup forking ...\n")
+
 	var args []string
 
 	args = append(args,
@@ -82,8 +85,19 @@ func RunAutoHostCleanup(ctx context.Context, options AutoHostCleanupOptions) err
 	}
 
 	cmd := exec.Command(os.Args[0], args...)
-	cmd.Env = append(cmd.Env, os.Environ()...)
-	cmd.Env = append(cmd.Env, "_WERF_BACKGROUND_MODE_ENABLED=1")
+
+	var env []string
+	for _, spec := range os.Environ() {
+		k := strings.SplitN(spec, "=", 2)[0]
+		if k == "WERF_ENABLE_PROCESS_EXTERMINATOR" {
+			continue
+		}
+
+		env = append(env, spec)
+	}
+	env = append(env, "_WERF_BACKGROUND_MODE_ENABLED=1")
+
+	cmd.Env = env
 
 	if err := cmd.Start(); err != nil {
 		logboek.Context(ctx).Warn().LogF("WARNING: unable to start background auto host cleanup process: %s\n", err)
