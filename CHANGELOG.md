@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.69](https://www.github.com/werf/werf/compare/v1.2.68...v1.2.69) (2022-02-18)
+
+
+### Bug Fixes
+
+* possible error during worktree switch procedure due to lost error handling ([82b1770](https://www.github.com/werf/werf/commit/82b177070086085a872e566cbf49ea2696f74604))
+
 ### [1.2.68](https://www.github.com/werf/werf/compare/v1.2.67...v1.2.68) (2022-02-18)
 
 
