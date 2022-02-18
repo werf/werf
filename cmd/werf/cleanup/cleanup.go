@@ -9,6 +9,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -133,6 +134,9 @@ func runCleanup(ctx context.Context) error {
 	}
 
 	defer func() {
+		if _, match := containerRuntime.(*container_runtime.DockerServerRuntime); !match {
+			return
+		}
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}
