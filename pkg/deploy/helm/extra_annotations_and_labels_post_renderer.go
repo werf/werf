@@ -89,7 +89,9 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 			fmt.Printf("Unpacket obj annotations: %#v\n", obj.GetAnnotations())
 		}
 
-		if len(extraAnnotations) > 0 {
+		if obj.IsList() && len(extraAnnotations) > 0 {
+			logboek.Warn().LogF("werf annotations won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind\n", obj.GetKind())
+		} else if len(extraAnnotations) > 0 {
 			annotations := obj.GetAnnotations()
 			if annotations == nil {
 				annotations = make(map[string]string)
@@ -100,7 +102,9 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 			obj.SetAnnotations(annotations)
 		}
 
-		if len(extraLabels) > 0 {
+		if obj.IsList() && len(extraLabels) > 0 {
+			logboek.Warn().LogF("werf labels won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind\n", obj.GetKind())
+		} else if len(extraLabels) > 0 {
 			labels := obj.GetLabels()
 			if labels == nil {
 				labels = make(map[string]string)
