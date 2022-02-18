@@ -78,8 +78,8 @@ func TestDockerTag(t *testing.T) {
 		},
 		{
 			name:   "maxSizeExceeded",
-			data:   strings.Repeat("x", dockerTagMaxSize+1),
-			result: strings.Repeat("x", dockerTagMaxSize-servicePartSize) + "-8cca70eb",
+			data:   strings.Repeat("x", DockerTagMaxSize+1),
+			result: strings.Repeat("x", DockerTagMaxSize-servicePartSize) + "-8cca70eb",
 		},
 	}
 
@@ -90,8 +90,8 @@ func TestDockerTag(t *testing.T) {
 				t.Errorf("\n[EXPECTED]: %s (%d)\n[GOT]: %s (%d)", test.result, len(test.result), result, len(result))
 			}
 
-			if len(result) > dockerTagMaxSize {
-				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", dockerTagMaxSize, len(result))
+			if len(result) > DockerTagMaxSize {
+				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", DockerTagMaxSize, len(result))
 			}
 		})
 

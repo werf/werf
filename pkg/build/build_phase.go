@@ -225,16 +225,16 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 	img.SetLastNonEmptyStage(phase.StagesIterator.PrevNonEmptyStage)
 	img.SetContentDigest(phase.StagesIterator.PrevNonEmptyStage.GetContentDigest())
 
-	if img.isArtifact {
-		return nil
-	}
-
 	if err := phase.addManagedImage(ctx, img); err != nil {
 		return err
 	}
 
 	if err := phase.publishImageMetadata(ctx, img); err != nil {
 		return err
+	}
+
+	if img.isArtifact {
+		return nil
 	}
 
 	if !phase.ShouldBeBuiltMode {

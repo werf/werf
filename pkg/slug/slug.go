@@ -16,7 +16,7 @@ var (
 	DefaultSlugMaxSize = 42 // legacy
 
 	dockerTagRegexp  = regexp.MustCompile(`^[\w][\w.-]*$`)
-	dockerTagMaxSize = 128
+	DockerTagMaxSize = 128
 
 	projectNameRegex   = regexp.MustCompile(`^(?:[a-z0-9]|[a-z0-9][a-z0-9-]*[a-z0-9])$`)
 	projectNameMaxSize = 50
@@ -61,13 +61,21 @@ func validateProject(name string) error {
 
 func DockerTag(name string) string {
 	if err := ValidateDockerTag(name); err != nil {
-		return slug(name, dockerTagMaxSize)
+		return slug(name, DockerTagMaxSize)
 	}
 	return name
 }
 
+func IsValidDockerTag(name string) bool {
+	if shouldNotBeSlugged(name, dockerTagRegexp, DockerTagMaxSize) {
+		return true
+	}
+
+	return false
+}
+
 func ValidateDockerTag(name string) error {
-	if shouldNotBeSlugged(name, dockerTagRegexp, dockerTagMaxSize) {
+	if IsValidDockerTag(name) {
 		return nil
 	}
 
