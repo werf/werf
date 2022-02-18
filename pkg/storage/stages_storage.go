@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
@@ -17,6 +18,10 @@ const (
 )
 
 var ErrBrokenImage = errors.New("broken image")
+
+func IsErrBrokenImage(err error) bool {
+	return err != nil && strings.HasSuffix(err.Error(), ErrBrokenImage.Error())
+}
 
 type StagesStorage interface {
 	GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error)
