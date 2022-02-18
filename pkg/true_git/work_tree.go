@@ -75,6 +75,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 	switch {
 	case os.IsNotExist(err):
 	case err != nil:
+		return "", fmt.Errorf("error accessing %q: %s", workTreeDir, err)
 	default:
 		isWorkTreeRegistered := false
 		if workTreeList, err := GetWorkTreeList(ctx, repoDir); err != nil {
