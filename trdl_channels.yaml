@@ -26,12 +26,12 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.68 # cleaning up artifacts by git history-based policy / host cleanup and build fixes
+      version: 1.2.69 # cleaning up artifacts by git history-based policy / host cleanup and build fixes
     - name: beta
-      version: 1.2.67 # bundle render & config graph
+      version: 1.2.67+fix1 # bundle render & config graph
     - name: ea
-      version: 1.2.67 # bundle render & config graph
+      version: 1.2.67+fix1 # bundle render & config graph
     - name: stable
-      version: 1.2.62 # fix unexpected cleanup fail when getting metadata for custom tag with long name
+      version: 1.2.62+fix1 # fix unexpected cleanup fail when getting metadata for custom tag with long name
     - name: rock-solid
-      version: 1.2.59 # fixes multi-stage, quay, werf helm get-release panic
+      version: 1.2.59+fix1 # fixes multi-stage, quay, werf helm get-release panic
