@@ -1,4 +1,4 @@
-.PHONY: all werf buildah-test unit-test fmt lint docs clean
+.PHONY: all werf buildah-test fmt lint docs clean
 
 all: werf
 
@@ -14,6 +14,7 @@ acceptance-tests:
 	export WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD=""
 	CGO_ENABLED=1 ginkgo -r -v -compiler gc -ldflags="-linkmode external -extldflags=-static" -tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" integration/suites test/e2e
 
+.PHONY: unit-tests
 unit-tests:
 	CGO_ENABLED=1 go test -v -compiler gc -ldflags="-linkmode external -extldflags=-static" -tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" github.com/werf/werf/pkg/...
 
