@@ -17,6 +17,7 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/git_repo"
@@ -162,6 +163,9 @@ func runExport(ctx context.Context) error {
 	}
 
 	defer func() {
+		if _, match := containerRuntime.(*container_runtime.DockerServerRuntime); !match {
+			return
+		}
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}

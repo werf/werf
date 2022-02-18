@@ -323,6 +323,9 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 	}
 
 	defer func() {
+		if _, match := containerRuntime.(*container_runtime.DockerServerRuntime); !match {
+			return
+		}
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}
