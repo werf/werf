@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -15,6 +16,8 @@ import (
 	"github.com/werf/werf/pkg/util/timestamps"
 	"github.com/werf/werf/pkg/werf"
 )
+
+var ErrInvalidDotGit = errors.New("invalid file format: expected gitdir record")
 
 type WithWorkTreeOptions struct {
 	HasSubmodules bool
@@ -196,7 +199,7 @@ func resolveDotGitFile(ctx context.Context, dotGitPath string) (string, error) {
 	return strings.TrimSpace(strings.TrimPrefix(lines[0], "gitdir: ")), nil
 
 InvalidDotGit:
-	return "", fmt.Errorf("invalid file format: expected gitdir record")
+	return "", ErrInvalidDotGit
 }
 
 func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit string, withSubmodules bool) error {
