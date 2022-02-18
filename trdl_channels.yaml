@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.67 # bundle render & config graph
+      version: 1.2.68 # cleaning up artifacts by git history-based policy / host cleanup and build fixes
     - name: beta
       version: 1.2.67 # bundle render & config graph
     - name: ea
