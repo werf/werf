@@ -549,7 +549,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 			return ErrShouldResetStagesStorageCache
 		}
 
-		if err == storage.ErrBrokenImage {
+		if storage.IsErrBrokenImage(err) {
 			logboek.Context(ctx).Error().LogF("Invalid stage %s image %q! Stage image is broken and is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
 
 			logboek.Context(ctx).Error().LogF("Will mark image %q as rejected in the stages storage %s\n", stg.GetImage().Name(), m.StagesStorage.String())
@@ -994,7 +994,7 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 	logboek.Context(ctx).Debug().LogF("Getting digest %q uniqueID %d stage info from %s...\n", stageID.Digest, stageID.UniqueID, stagesStorage.String())
 	stageDesc, err := stagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
 	switch {
-	case err == storage.ErrBrokenImage:
+	case storage.IsErrBrokenImage(err):
 		if opts.AllowStagesStorageCacheReset {
 			stageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
 
