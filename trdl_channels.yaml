@@ -28,9 +28,9 @@ groups:
     - name: alpha
       version: 1.2.67 # bundle render & config graph
     - name: beta
-      version: 1.2.65 # dev-mode: less rebuilds due to better cache handling
+      version: 1.2.67 # bundle render & config graph
     - name: ea
-      version: 1.2.62 # fix unexpected cleanup fail when getting metadata for custom tag with long name
+      version: 1.2.67 # bundle render & config graph
     - name: stable
       version: 1.2.62 # fix unexpected cleanup fail when getting metadata for custom tag with long name
     - name: rock-solid
