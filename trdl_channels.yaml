@@ -28,7 +28,7 @@ groups:
     - name: alpha
       version: 1.2.69 # cleaning up artifacts by git history-based policy / host cleanup and build fixes
     - name: beta
-      version: 1.2.67+fix1 # bundle render & config graph
+      version: 1.2.69 # cleaning up artifacts by git history-based policy / host cleanup and build fixes
     - name: ea
       version: 1.2.67+fix1 # bundle render & config graph
     - name: stable
