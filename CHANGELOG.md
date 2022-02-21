@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.70](https://www.github.com/werf/werf/compare/v1.2.69...v1.2.70) (2022-02-21)
+
+
+### Bug Fixes
+
+* **helm:** don't add annotations and labels to *List Kinds ([4f2d029](https://www.github.com/werf/werf/commit/4f2d02906f64d9e13760b58f1ecbe4377057357a))
+* panic when auto host cleanup runs in some werf commands ([a7064ff](https://www.github.com/werf/werf/commit/a7064ff89a4104853e84033ad851dd52aa9f2667))
+
 ### [1.2.69](https://www.github.com/werf/werf/compare/v1.2.68...v1.2.69) (2022-02-18)
 
 
