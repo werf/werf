@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 	"strings"
 	"text/tabwriter"
@@ -89,7 +90,9 @@ func loadChartfile(chartPath string) (*chart.Chart, error) {
 }
 
 type InitOptions struct {
-	KubeConfig                  string
+	KubeConfig string
+	// We are using WERF_KUBE_CONFIG, WERF_KUBECONFIG and KUBECONFIG variables directly at this level (1.1 only)
+	// KubeConfigPathMergeList     []string
 	KubeConfigBase64            string
 	KubeContext                 string
 	HelmReleaseStorageNamespace string
@@ -119,6 +122,15 @@ func Init(ctx context.Context, options InitOptions) error {
 	}
 
 	HelmSettings.KubeConfig = options.KubeConfig
+
+	// Make sure WERF_KUBE_CONFIG and WERF_KUBECONFIG variables with config path merge list are supported
+	for _, env := range []string{"WERF_KUBE_CONFIG", "WERF_KUBECONFIG"} {
+		if v := os.Getenv(env); v != "" {
+			os.Setenv("KUBECONFIG", v)
+			break
+		}
+	}
+
 	HelmSettings.KubeContext = options.KubeContext
 	HelmSettings.TillerNamespace = options.HelmReleaseStorageNamespace
 

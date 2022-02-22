@@ -136,9 +136,10 @@ func runDismiss() error {
 	logboek.LogOptionalLn()
 
 	err = kube.Init(kube.InitOptions{kube.KubeConfigOptions{
-		Context:          *commonCmdData.KubeContext,
-		ConfigPath:       *commonCmdData.KubeConfig,
-		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+		Context:             *commonCmdData.KubeContext,
+		ConfigPath:          *commonCmdData.KubeConfig,
+		ConfigDataBase64:    *commonCmdData.KubeConfigBase64,
+		ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
 	}})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
