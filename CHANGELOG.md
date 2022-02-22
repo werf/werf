@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.1.31](https://www.github.com/werf/werf/compare/v1.1.30...v1.1.31) (2022-02-22)
+
+
+### Bug Fixes
+
+* support WERF_KUBECONFIG_BASE64 in werf-cleanup command ([e553f25](https://www.github.com/werf/werf/commit/e553f258ed3ddb3f96ae3c01b7917177247fbe53))
+* warn in werf cleanup if kube config not found ([5755229](https://www.github.com/werf/werf/commit/5755229fd719d6b7d9da9c4f90a9855a8fe5df5f))
+
 ### [1.1.30](https://www.github.com/werf/werf/compare/v1.1.29...v1.1.30) (2022-02-15)
 
 
