@@ -18,10 +18,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code
@@ -106,10 +106,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code
@@ -160,10 +160,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code
@@ -275,10 +275,10 @@ jobs:
 
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code
@@ -347,10 +347,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code
@@ -423,10 +423,10 @@ jobs:
 #    runs-on: [self-hosted, "${{ matrix.os }}"]
 #    steps:
 #
-#    - name: Set up Go 1.14
+#    - name: Set up Go 1.17
 #      uses: actions/setup-go@v1
 #      with:
-#        go-version: 1.14
+#        go-version: 1.17
 #      id: go
 #
 #    - name: Checkout code
@@ -504,10 +504,10 @@ jobs:
 #    runs-on: [self-hosted, "${{ matrix.os }}"]
 #    steps:
 #
-#    - name: Set up Go 1.14
+#    - name: Set up Go 1.17
 #      uses: actions/setup-go@v1
 #      with:
-#        go-version: 1.14
+#        go-version: 1.17
 #      id: go
 #
 #    - name: Checkout code
@@ -598,10 +598,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code

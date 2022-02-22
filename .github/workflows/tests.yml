@@ -30,10 +30,10 @@ jobs:
     if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # run tests label
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code
@@ -91,10 +91,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code
@@ -132,10 +132,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code
@@ -188,10 +188,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.14
+    - name: Set up Go 1.17
       uses: actions/setup-go@v1
       with:
-        go-version: 1.14
+        go-version: 1.17
       id: go
 
     - name: Checkout code
