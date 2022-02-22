@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/cmd/helm"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -125,9 +125,10 @@ func runMigrate2To3(ctx context.Context) error {
 	}
 
 	kubeConfigOptions := kube.KubeConfigOptions{
-		Context:          *migrate2To3CommonCmdData.KubeContext,
-		ConfigPath:       *migrate2To3CommonCmdData.KubeConfig,
-		ConfigDataBase64: *migrate2To3CommonCmdData.KubeConfigBase64,
+		Context:             *migrate2To3CommonCmdData.KubeContext,
+		ConfigPath:          *migrate2To3CommonCmdData.KubeConfig,
+		ConfigDataBase64:    *migrate2To3CommonCmdData.KubeConfigBase64,
+		ConfigPathMergeList: *migrate2To3CommonCmdData.KubeConfigPathMergeList,
 	}
 
 	helmRegistryClientHandler, err := common.NewHelmRegistryClientHandle(ctx, &migrate2To3CommonCmdData)
