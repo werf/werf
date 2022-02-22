@@ -233,7 +233,11 @@ func (m *imagesCleanupManager) run(ctx context.Context) error {
 	var err error
 
 	if !m.WithoutKube {
-		if err := logboek.Context(ctx).LogProcess("Skipping repo images that are being used in Kubernetes").DoError(func() error {
+		if len(m.KubernetesContextClients) == 0 {
+			logboek.Context(ctx).Warn().LogF("WARNING: No kubernetes configs found to skip images being used in the Kubernetes, pass --without-kube option (or WERF_WITHOUT_KUBE env var) to silence this warning\n")
+		}
+
+		if err := logboek.Context(ctx).LogProcess("Skipping repo images that are being used in the Kubernetes").DoError(func() error {
 			repoImagesToCleanup, exceptedRepoImages, err = exceptRepoImagesByWhitelist(ctx, repoImagesToCleanup, m.KubernetesContextClients, m.KubernetesNamespaceRestrictionByContext)
 			return err
 		}); err != nil {
