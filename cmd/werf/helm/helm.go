@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/cmd/helm"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -148,9 +148,10 @@ func NewCmd() *cobra.Command {
 					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 					HooksStatusProgressPeriod: time.Duration(*_commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 					KubeConfigOptions: kube.KubeConfigOptions{
-						Context:          *_commonCmdData.KubeContext,
-						ConfigPath:       *_commonCmdData.KubeConfig,
-						ConfigDataBase64: *_commonCmdData.KubeConfigBase64,
+						Context:             *_commonCmdData.KubeContext,
+						ConfigPath:          *_commonCmdData.KubeConfig,
+						ConfigPathMergeList: *_commonCmdData.KubeConfigPathMergeList,
+						ConfigDataBase64:    *_commonCmdData.KubeConfigBase64,
 					},
 					ReleasesHistoryMax: *_commonCmdData.ReleasesHistoryMax,
 				})

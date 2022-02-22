@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"helm.sh/helm/v3/cmd/helm"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -40,9 +40,10 @@ func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, 
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
-			Context:          *commonCmdData.KubeContext,
-			ConfigPath:       *commonCmdData.KubeConfig,
-			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+			Context:             *commonCmdData.KubeContext,
+			ConfigPath:          *commonCmdData.KubeConfig,
+			ConfigDataBase64:    *commonCmdData.KubeConfigBase64,
+			ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 	}); err != nil {
