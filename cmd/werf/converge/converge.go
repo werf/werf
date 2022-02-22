@@ -236,9 +236,10 @@ func runConverge() error {
 	}
 
 	kubeConfigOptions := kube.KubeConfigOptions{
-		Context:          *commonCmdData.KubeContext,
-		ConfigPath:       *commonCmdData.KubeConfig,
-		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+		Context:             *commonCmdData.KubeContext,
+		ConfigPath:          *commonCmdData.KubeConfig,
+		ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
+		ConfigDataBase64:    *commonCmdData.KubeConfigBase64,
 	}
 
 	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kubeConfigOptions}); err != nil {

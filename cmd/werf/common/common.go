@@ -56,6 +56,7 @@ type CmdData struct {
 	KubeContext                      *string
 	KubeConfig                       *string
 	KubeConfigBase64                 *string
+	KubeConfigPathMergeList          *[]string
 	HelmReleaseStorageNamespace      *string
 	HelmReleaseStorageType           *string
 	StatusProgressPeriodSeconds      *int64
@@ -300,7 +301,13 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeConfig = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.KubeConfig, "kube-config", "", getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG"), "Kubernetes config file path (default $WERF_KUBE_CONFIG or $WERF_KUBECONFIG or $KUBECONFIG)")
+	cmd.PersistentFlags().StringVarP(cmdData.KubeConfig, "kube-config", "", "", "Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or $KUBECONFIG)")
+
+	cmdData.KubeConfigPathMergeList = new([]string)
+	kubeConfigPathMergeListStr := getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG")
+	for _, path := range filepath.SplitList(kubeConfigPathMergeListStr) {
+		*cmdData.KubeConfigPathMergeList = append(*cmdData.KubeConfigPathMergeList, path)
+	}
 }
 
 func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {

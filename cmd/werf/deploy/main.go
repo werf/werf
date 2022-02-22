@@ -190,9 +190,10 @@ func runDeploy() error {
 	ctx = ctxWithDockerCli
 
 	kubeConfigOptions := kube.KubeConfigOptions{
-		Context:          *commonCmdData.KubeContext,
-		ConfigPath:       *commonCmdData.KubeConfig,
-		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+		Context:             *commonCmdData.KubeContext,
+		ConfigPath:          *commonCmdData.KubeConfig,
+		ConfigDataBase64:    *commonCmdData.KubeConfigBase64,
+		ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
 	}
 
 	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kubeConfigOptions}); err != nil {

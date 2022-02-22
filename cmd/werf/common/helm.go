@@ -21,9 +21,10 @@ func NewActionConfig(ctx context.Context, namespace string, commonCmdData *CmdDa
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
-			Context:          *commonCmdData.KubeContext,
-			ConfigPath:       *commonCmdData.KubeConfig,
-			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+			Context:             *commonCmdData.KubeContext,
+			ConfigPath:          *commonCmdData.KubeConfig,
+			ConfigDataBase64:    *commonCmdData.KubeConfigBase64,
+			ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 	}); err != nil {

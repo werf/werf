@@ -176,9 +176,10 @@ func runDeploy() error {
 	}
 
 	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kube.KubeConfigOptions{
-		Context:          *commonCmdData.KubeContext,
-		ConfigPath:       *commonCmdData.KubeConfig,
-		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+		Context:             *commonCmdData.KubeContext,
+		ConfigPath:          *commonCmdData.KubeConfig,
+		ConfigDataBase64:    *commonCmdData.KubeConfigBase64,
+		ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
 	}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
