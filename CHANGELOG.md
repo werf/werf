@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.71](https://www.github.com/werf/werf/compare/v1.2.70...v1.2.71) (2022-02-24)
+
+
+### Features
+
+* **cleanup:** optimization of cleaning images which are used when importing ([1b82a47](https://www.github.com/werf/werf/commit/1b82a476af8d97f4e4abd0852fc4635ad1aac63d))
+
+
+### Bug Fixes
+
+* add werf-cleanup command warning when no kube configs available ([e87261b](https://www.github.com/werf/werf/commit/e87261bcfb39cebe4a6d707641579305c3ed84b6))
+* WERF_KUBE_CONFIG and WERF_KUBECONFIG environment variables not working ([b0615b0](https://www.github.com/werf/werf/commit/b0615b0ab583a9788d39c786a31cc251336fe945))
+
 ### [1.2.70](https://www.github.com/werf/werf/compare/v1.2.69...v1.2.70) (2022-02-21)
 
 
