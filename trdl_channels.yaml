@@ -26,9 +26,9 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.70 # don't add annotations and labels to *List Kinds 
+      version: 1.2.70 # don't add annotations and labels to *List Kinds
     - name: beta
-      version: 1.2.69 # cleaning up artifacts by git history-based policy / host cleanup and build fixes
+      version: 1.2.70 # don't add annotations and labels to *List Kinds
     - name: ea
       version: 1.2.69 # cleaning up artifacts by git history-based policy / host cleanup and build fixes
     - name: stable
