@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.70 # don't add annotations and labels to *List Kinds
+      version: 1.2.71 # remove import checksum-based cleanup policy
     - name: beta
       version: 1.2.70 # don't add annotations and labels to *List Kinds
     - name: ea
