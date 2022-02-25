@@ -41,6 +41,7 @@ type BuildFromDockerfileOpts struct {
 	CommonOpts
 	ContextTar io.Reader
 	BuildArgs  map[string]string
+	Target     string
 }
 
 type RunMount struct {

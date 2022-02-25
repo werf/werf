@@ -91,6 +91,7 @@ func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile [
 		},
 		ContextTar: opts.ContextTar,
 		BuildArgs:  buildArgs,
+		Target:     opts.Target,
 	})
 }
 
