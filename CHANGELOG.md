@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.72](https://www.github.com/werf/werf/compare/v1.2.71...v1.2.72) (2022-02-25)
+
+
+### Bug Fixes
+
+* **buildah:** support Dockerfile builder target param to build specific stage ([44bc718](https://www.github.com/werf/werf/commit/44bc71810b79379132555bc4bfe022f7863fbabb))
+
 ### [1.2.71](https://www.github.com/werf/werf/compare/v1.2.70...v1.2.71) (2022-02-24)
 
 
