@@ -30,7 +30,7 @@ groups:
     - name: beta
       version: 1.2.70 # don't add annotations and labels to *List Kinds
     - name: ea
-      version: 1.2.69 # cleaning up artifacts by git history-based policy / host cleanup and build fixes
+      version: 1.2.70 # don't add annotations and labels to *List Kinds
     - name: stable
       version: 1.2.67+fix1 # bundle render & config graph
     - name: rock-solid
