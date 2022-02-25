@@ -167,6 +167,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []by
 		SignaturePolicyPath: b.SignaturePolicyPath,
 		SystemContext:       &b.DefaultSystemContext,
 		Args:                opts.BuildArgs,
+		Target:              opts.Target,
 	}
 
 	errLog := &bytes.Buffer{}
