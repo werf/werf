@@ -30,7 +30,7 @@ groups:
     - name: beta
       version: 1.2.71 # remove import checksum-based cleanup policy
     - name: ea
-      version: 1.2.70 # don't add annotations and labels to *List Kinds
+      version: 1.2.71 # remove import checksum-based cleanup policy
     - name: stable
       version: 1.2.67+fix1 # bundle render & config graph
     - name: rock-solid
