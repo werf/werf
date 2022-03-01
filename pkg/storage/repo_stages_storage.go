@@ -199,8 +199,6 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesByDigest fetched tags for %q: %#v\n", storage.RepoAddress, tags)
-
 		var rejectedStages []image.StageID
 
 		for _, tag := range tags {
@@ -225,7 +223,6 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 	FindSuitableStages:
 		for _, tag := range tags {
 			if !strings.HasPrefix(tag, digest) {
-				logboek.Context(ctx).Debug().LogF("Discard tag %q: should have prefix %q\n", tag, digest)
 				continue
 			}
 
