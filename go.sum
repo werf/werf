@@ -1985,6 +1985,10 @@ github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59b
 github.com/weppos/publicsuffix-go v0.4.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
 github.com/weppos/publicsuffix-go v0.5.0 h1:rutRtjBJViU/YjcI5d80t4JAVvDltS6bciJg2K1HrLU=
 github.com/weppos/publicsuffix-go v0.5.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
+github.com/werf/3p-helm/v3 v3.0.0-20220302103929-c9a7b3836f9d h1:FHNvRUnK54bEHkCamjbsPAjGP/mfWZotdHb5noVzvZA=
+github.com/werf/3p-helm/v3 v3.0.0-20220302103929-c9a7b3836f9d/go.mod h1:3eOeBD3Z+O/ELiuu19zynZSN8jP1ErXLuyP21SZeMq8=
+github.com/werf/3p-helm/v3 v3.0.0-20220302144706-183ef12e4afb h1:cxNdowqZzcgZLDC3+oINAMqhu8dJFZMdspR0hHI/79Y=
+github.com/werf/3p-helm/v3 v3.0.0-20220302144706-183ef12e4afb/go.mod h1:3eOeBD3Z+O/ELiuu19zynZSN8jP1ErXLuyP21SZeMq8=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f h1:81YscYTF9mmTf0ULOsCmm42YWQp+qWDzWi1HjWniZrg=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
 github.com/werf/helm/v3 v3.0.0-20211112190515-e733b755e5af h1:MakPeB2Rpww0G9wYd4Xv7gS1lF0is8M3VstHRU9PP0g=
