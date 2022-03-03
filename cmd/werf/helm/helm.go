@@ -82,7 +82,7 @@ func NewCmd() *cobra.Command {
 		helm_v3.NewPluginCmd(os.Stdout),
 		helm_v3.NewPullCmd(actionConfig, os.Stdout),
 		helm_v3.NewSearchCmd(os.Stdout),
-		helm_v3.NewShowCmd(os.Stdout),
+		helm_v3.NewShowCmd(actionConfig, os.Stdout),
 		helm_v3.NewStatusCmd(actionConfig, os.Stdout),
 		helm_v3.NewTestCmd(actionConfig, os.Stdout),
 		helm_v3.NewVerifyCmd(os.Stdout),

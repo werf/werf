@@ -24,7 +24,7 @@ require (
 	github.com/deislabs/oras v0.12.0
 	github.com/djherbis/buffer v1.1.0
 	github.com/djherbis/nio/v3 v3.0.1
-	github.com/docker/cli v20.10.7+incompatible
+	github.com/docker/cli v20.10.11+incompatible
 	github.com/docker/distribution v2.8.0+incompatible
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go v1.5.1-1 // indirect
@@ -37,7 +37,6 @@ require (
 	github.com/go-openapi/spec v0.19.5
 	github.com/go-openapi/strfmt v0.19.5
 	github.com/go-openapi/validate v0.19.8
-	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/google/go-containerregistry v0.5.1
 	github.com/google/uuid v1.3.0
 	github.com/gookit/color v1.3.7
@@ -49,7 +48,7 @@ require (
 	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
-	github.com/mitchellh/copystructure v1.1.1
+	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.8.2
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/mvdan/xurls v1.1.0 // indirect
@@ -88,17 +87,17 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	helm.sh/helm/v3 v3.6.3
-	k8s.io/api v0.22.1
-	k8s.io/apimachinery v0.22.1
-	k8s.io/cli-runtime v0.22.1
-	k8s.io/client-go v0.22.1
+	k8s.io/api v0.23.1
+	k8s.io/apimachinery v0.23.1
+	k8s.io/cli-runtime v0.23.1
+	k8s.io/client-go v0.23.1
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog v1.0.0
-	k8s.io/klog/v2 v2.9.0
-	k8s.io/kubectl v0.22.1
+	k8s.io/klog/v2 v2.30.0
+	k8s.io/kubectl v0.23.1
 	mvdan.cc/xurls v1.1.0
-	oras.land/oras-go v0.4.0
-	sigs.k8s.io/yaml v1.2.1-0.20210128145534-11e43d4a8b92
+	oras.land/oras-go v1.1.0
+	sigs.k8s.io/yaml v1.3.0
 )
 
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
@@ -107,4 +106,4 @@ replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 
 replace github.com/deislabs/oras => github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8
 
-replace helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20220302144706-183ef12e4afb
+replace helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20220304092913-4f412c1ef00f

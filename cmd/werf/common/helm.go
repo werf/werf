@@ -6,34 +6,35 @@ import (
 
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/registry"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/deploy/bundles/registry"
+	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/pkg/deploy/helm"
 )
 
-func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*helm_v3.RegistryClientHandle, error) {
-	if registryClient, err := helm_v3.NewRegistryClient(logboek.Context(ctx).Debug().IsAccepted(), *commonCmdData.InsecureHelmDependencies, logboek.Context(ctx).OutStream()); err != nil {
-		return nil, err
-	} else {
-		return helm_v3.NewRegistryClientHandle(registryClient), nil
-	}
+func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*registry.Client, error) {
+	return registry.NewClient(
+		registry.ClientOptDebug(logboek.Context(ctx).Debug().IsAccepted()),
+		registry.ClientOptInsecure(*commonCmdData.InsecureHelmDependencies),
+		registry.ClientOptWriter(logboek.Context(ctx).OutStream()),
+	)
 }
 
-func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*registry.Client, error) {
+func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bundles_registry.Client, error) {
 	debug := logboek.Context(ctx).Debug().IsAccepted()
 	insecure := *commonCmdData.InsecureHelmDependencies
 	out := logboek.Context(ctx).OutStream()
 
-	return registry.NewClient(
-		registry.ClientOptDebug(debug),
-		registry.ClientOptInsecure(insecure),
-		registry.ClientOptWriter(out),
+	return bundles_registry.NewClient(
+		bundles_registry.ClientOptDebug(debug),
+		bundles_registry.ClientOptInsecure(insecure),
+		bundles_registry.ClientOptWriter(out),
 	)
 }
 
-func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, namespace string, commonCmdData *CmdData, registryClient *helm_v3.RegistryClientHandle) (*action.Configuration, error) {
+func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, namespace string, commonCmdData *CmdData, registryClient *registry.Client) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 
 	if err := helm.InitActionConfig(ctx, kubeInitializer, namespace, helm_v3.Settings, registryClient, actionConfig, helm.InitActionConfigOptions{
