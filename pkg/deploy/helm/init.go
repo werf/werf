@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	helm_kube "helm.sh/helm/v3/pkg/kube"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	"sigs.k8s.io/yaml"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -29,7 +29,7 @@ type InitActionConfigOptions struct {
 	ReleasesHistoryMax        int
 }
 
-func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, namespace string, envSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
+func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, namespace string, envSettings *cli.EnvSettings, registryClient *registry.Client, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
 	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{
 		KubeConfigOptions: opts.KubeConfigOptions,
 		Namespace:         namespace,
@@ -63,7 +63,7 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 	kubeClient.ResourcesWaiter = NewResourcesWaiter(kubeInitializer, kubeClient, time.Now(), opts.StatusProgressPeriod, opts.HooksStatusProgressPeriod)
 	kubeClient.Extender = NewHelmKubeClientExtender()
 
-	actionConfig.RegistryClient = registryClientHandle.RegistryClient
+	actionConfig.RegistryClient = registryClient
 
 	return nil
 }

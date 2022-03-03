@@ -9,12 +9,13 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/cmd/helm"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/postrender"
+	"helm.sh/helm/v3/pkg/registry"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -498,7 +499,7 @@ func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configura
 	return maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
 }
 
-func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, helmRegistryClientHandle *helm_v3.RegistryClientHandle) error {
+func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, helmRegistryClient *registry.Client) error {
 	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
 		return fmt.Errorf("error checking availability of helm 2 and existence of helm 2 release %q: %s", releaseName, err)
 	} else if !helm2Exists {
@@ -525,7 +526,7 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 
 	logboek.Context(ctx).Default().LogOptionalLn()
 	if err := logboek.Context(ctx).LogProcess("Rendering helm 3 templates for the current project state").DoError(func() error {
-		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClientHandle)
+		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
 		if err != nil {
 			return err
 		}
