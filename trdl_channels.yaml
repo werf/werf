@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.72 # support dockerfile stage for buildah container runtime
+      version: 1.2.73 # helm 3.8.0 and server dry run
     - name: beta
       version: 1.2.72 # support dockerfile stage for buildah container runtime
     - name: ea
