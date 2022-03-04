@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.73](https://www.github.com/werf/werf/compare/v1.2.72...v1.2.73) (2022-03-04)
+
+
+### Features
+
+* **deploy:** support server side validation in converge/dismiss commands ([6df39c9](https://www.github.com/werf/werf/commit/6df39c956a25ccd81fea8bc4cde12443f8207e06))
+* update to helm v3.8.0 ([6fff511](https://www.github.com/werf/werf/commit/6fff511f8646baae15a1ee6ee1bf1ee6c1e43c36))
+
 ### [1.2.72](https://www.github.com/werf/werf/compare/v1.2.71...v1.2.72) (2022-02-25)
 
 
