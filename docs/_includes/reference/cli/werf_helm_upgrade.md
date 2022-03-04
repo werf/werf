@@ -13,9 +13,9 @@ version will be specified unless the &#39;--version&#39; flag is set.
 
 To override values in a chart, use either the &#39;--values&#39; flag and pass in a file
 or use the &#39;--set&#39; flag and pass configuration from the command line, to force string
-values, use &#39;--set-string&#39;. In case a value is large and therefore
-you want not to use neither &#39;--values&#39; nor &#39;--set&#39;, use &#39;--set-file&#39; to read the
-single large value from file.
+values, use &#39;--set-string&#39;. You can use &#39;--set-file&#39; to set individual
+values from a file when the value itself is too long for the command line
+or is dynamically generated.
 
 You can specify the &#39;--values&#39;/&#39;-f&#39; flag multiple times. The priority will be given to the
 last (right-most) file specified. For example, if both myvalues.yaml and override.yaml
