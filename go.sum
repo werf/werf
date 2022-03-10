@@ -2045,6 +2045,8 @@ github.com/werf/3p-helm/v3 v3.0.0-20220303155613-8c5164a644f7 h1:TTlxBdWEk/Uz3K8
 github.com/werf/3p-helm/v3 v3.0.0-20220303155613-8c5164a644f7/go.mod h1:0nYPSuvuj8TTJDLRSAfbzGGbazPZsayaDpP8s9FfZT8=
 github.com/werf/3p-helm/v3 v3.0.0-20220304092913-4f412c1ef00f h1:438PIe92mvIKfAFi/EnsSuuJHBApe9UWYbGJxmktA/g=
 github.com/werf/3p-helm/v3 v3.0.0-20220304092913-4f412c1ef00f/go.mod h1:0nYPSuvuj8TTJDLRSAfbzGGbazPZsayaDpP8s9FfZT8=
+github.com/werf/3p-helm/v3 v3.0.0-20220310151612-8fdd4eb95c03 h1:NP6bowgb7ol+Xh3HqmtJgqgZ7b//Zx34XtwNXqA82fs=
+github.com/werf/3p-helm/v3 v3.0.0-20220310151612-8fdd4eb95c03/go.mod h1:0nYPSuvuj8TTJDLRSAfbzGGbazPZsayaDpP8s9FfZT8=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f h1:81YscYTF9mmTf0ULOsCmm42YWQp+qWDzWi1HjWniZrg=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
 github.com/werf/helm/v3 v3.0.0-20211112190515-e733b755e5af h1:MakPeB2Rpww0G9wYd4Xv7gS1lF0is8M3VstHRU9PP0g=
