@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.74](https://www.github.com/werf/werf/compare/v1.2.73...v1.2.74) (2022-03-10)
+
+
+### Bug Fixes
+
+* **deploy:** fix server side validation false positive failure case ([b64b8bb](https://www.github.com/werf/werf/commit/b64b8bb1af715f0ea868618fbc7b889a0b0ffe01))
+
 ### [1.2.73](https://www.github.com/werf/werf/compare/v1.2.72...v1.2.73) (2022-03-04)
 
 
