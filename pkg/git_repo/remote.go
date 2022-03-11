@@ -191,7 +191,7 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to clone repo: %s", err)
 		}
 
 		if err := repo.updateLastAccessAt(ctx, tmpPath); err != nil {

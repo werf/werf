@@ -23,6 +23,11 @@ var (
 	tmpSockPath string
 )
 
+func setupProcessSSHAgent(sshAuthSock string) error {
+	SSHAuthSock = sshAuthSock
+	return os.Setenv("SSH_AUTH_SOCK", SSHAuthSock)
+}
+
 func Init(ctx context.Context, keys []string) error {
 	for _, key := range keys {
 		if keyExists, err := util.FileExists(key); !keyExists {
@@ -35,10 +40,11 @@ func Init(ctx context.Context, keys []string) error {
 	if len(keys) > 0 {
 		agentSock, err := runSSHAgentWithKeys(ctx, keys)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to run ssh agent with specified keys: %s", err)
 		}
-		SSHAuthSock = agentSock
-
+		if err := setupProcessSSHAgent(agentSock); err != nil {
+			return fmt.Errorf("unable to init ssh auth socket to %q: %s", agentSock, err)
+		}
 		return nil
 	}
 
@@ -80,9 +86,11 @@ func Init(ctx context.Context, keys []string) error {
 		if len(validKeys) > 0 {
 			agentSock, err := runSSHAgentWithKeys(ctx, validKeys)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to run ssh agent with specified keys: %s", err)
 			}
-			SSHAuthSock = agentSock
+			if err := setupProcessSSHAgent(agentSock); err != nil {
+				return fmt.Errorf("unable to init ssh auth socket to %q: %s", agentSock, err)
+			}
 		}
 	}
 
