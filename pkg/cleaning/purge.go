@@ -38,7 +38,7 @@ type purgeManager struct {
 
 func (m *purgeManager) run(ctx context.Context) error {
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting stages").DoError(func() error {
-		stages, err := m.StorageManager.GetStageDescriptionList(ctx)
+		stages, err := m.StorageManager.GetStageDescriptionListWithCache(ctx)
 		if err != nil {
 			return err
 		}

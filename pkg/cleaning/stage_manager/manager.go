@@ -63,7 +63,7 @@ func (m *Manager) newImageMetadata(imageName string, stageID string) *imageMetad
 }
 
 func (m *Manager) InitStages(ctx context.Context, storageManager manager.StorageManagerInterface) error {
-	stageDescriptionList, err := storageManager.GetStageDescriptionList(ctx)
+	stageDescriptionList, err := storageManager.GetStageDescriptionListWithCache(ctx)
 	if err != nil {
 		return err
 	}
