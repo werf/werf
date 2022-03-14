@@ -143,7 +143,7 @@ func (storage *DockerServerStagesStorage) GetStageCustomTagMetadata(_ context.Co
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (storage *DockerServerStagesStorage) GetStageCustomTagMetadataIDs(_ context.Context) ([]string, error) {
+func (storage *DockerServerStagesStorage) GetStageCustomTagMetadataIDs(_ context.Context, _ ...Option) ([]string, error) {
 	return nil, nil
 }
 
@@ -155,7 +155,11 @@ func (storage *DockerServerStagesStorage) RmManagedImage(_ context.Context, _, _
 	return nil
 }
 
-func (storage *DockerServerStagesStorage) GetManagedImages(_ context.Context, _ string) ([]string, error) {
+func (storage *DockerServerStagesStorage) IsManagedImageExist(_ context.Context, _, _ string, _ ...Option) (bool, error) {
+	return false, nil
+}
+
+func (storage *DockerServerStagesStorage) GetManagedImages(_ context.Context, _ string, _ ...Option) ([]string, error) {
 	return []string{}, nil
 }
 
@@ -197,11 +201,11 @@ func (storage *DockerServerStagesStorage) selectFullImageMetadataName(_ context.
 	return "", nil
 }
 
-func (storage *DockerServerStagesStorage) IsImageMetadataExist(_ context.Context, _, _, _, _ string) (bool, error) {
+func (storage *DockerServerStagesStorage) IsImageMetadataExist(_ context.Context, _, _, _, _ string, _ ...Option) (bool, error) {
 	return false, nil
 }
 
-func (storage *DockerServerStagesStorage) GetAllAndGroupImageMetadataByImageName(_ context.Context, _ string, _ []string) (map[string]map[string][]string, map[string]map[string][]string, error) {
+func (storage *DockerServerStagesStorage) GetAllAndGroupImageMetadataByImageName(_ context.Context, _ string, _ []string, _ ...Option) (map[string]map[string][]string, map[string]map[string][]string, error) {
 	return map[string]map[string][]string{}, map[string]map[string][]string{}, nil
 }
 
@@ -264,7 +268,7 @@ func (storage *DockerServerStagesStorage) RmImportMetadata(ctx context.Context, 
 	return nil
 }
 
-func (storage *DockerServerStagesStorage) GetImportMetadataIDs(ctx context.Context, projectName string) ([]string, error) {
+func (storage *DockerServerStagesStorage) GetImportMetadataIDs(ctx context.Context, projectName string, _ ...Option) ([]string, error) {
 	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.GetImportMetadataIDs %s\n", projectName)
 
 	filterSet := filters.NewArgs()
@@ -303,7 +307,7 @@ func (storage *DockerServerStagesStorage) Address() string {
 	return LocalStorageAddress
 }
 
-func (storage *DockerServerStagesStorage) GetClientIDRecords(ctx context.Context, projectName string) ([]*ClientIDRecord, error) {
+func (storage *DockerServerStagesStorage) GetClientIDRecords(ctx context.Context, projectName string, _ ...Option) ([]*ClientIDRecord, error) {
 	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.GetClientID for project %s\n", projectName)
 
 	filterSet := filters.NewArgs()

@@ -94,7 +94,7 @@ func (api *genericApi) GetRepoImage(ctx context.Context, reference string) (*ima
 func (api *genericApi) mirrorReferenceList(reference string) ([]string, error) {
 	var referenceList []string
 
-	referenceParts, err := api.commonApi.ParseReferenceParts(reference)
+	referenceParts, err := api.commonApi.parseReferenceParts(reference)
 	if err != nil {
 		return nil, err
 	}

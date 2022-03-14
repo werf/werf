@@ -33,7 +33,7 @@ type StagesStorage interface {
 	AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error
 	CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error
 	DeleteStageCustomTag(ctx context.Context, tag string) error
-	GetStageCustomTagMetadataIDs(ctx context.Context) ([]string, error)
+	GetStageCustomTagMetadataIDs(ctx context.Context, opts ...Option) ([]string, error)
 	GetStageCustomTagMetadata(ctx context.Context, tagOrID string) (*CustomTagMetadata, error)
 
 	RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error
@@ -56,20 +56,21 @@ type StagesStorage interface {
 	// if the name contains unsupported special characters, or
 	// if the name exceeds the docker tag limit.
 	RmManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error
+	IsManagedImageExist(ctx context.Context, projectName, imageNameOrManagedImageName string, opts ...Option) (bool, error)
 	// GetManagedImages returns the list of managedImageName.
-	GetManagedImages(ctx context.Context, projectName string) ([]string, error)
+	GetManagedImages(ctx context.Context, projectName string, opts ...Option) ([]string, error)
 
 	PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error
 	RmImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID string) error
-	IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) (bool, error)
-	GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string) (map[string]map[string][]string, map[string]map[string][]string, error)
+	IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error)
+	GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error)
 
 	GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error)
 	PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error
 	RmImportMetadata(ctx context.Context, projectName, id string) error
-	GetImportMetadataIDs(ctx context.Context, projectName string) ([]string, error)
+	GetImportMetadataIDs(ctx context.Context, projectName string, opts ...Option) ([]string, error)
 
-	GetClientIDRecords(ctx context.Context, projectName string) ([]*ClientIDRecord, error)
+	GetClientIDRecords(ctx context.Context, projectName string, opts ...Option) ([]*ClientIDRecord, error)
 	PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error
 
 	String() string

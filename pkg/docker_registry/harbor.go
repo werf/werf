@@ -61,7 +61,7 @@ func newHarbor(options harborOptions) (*harbor, error) {
 	return harbor, nil
 }
 
-func (r *harbor) Tags(ctx context.Context, reference string) ([]string, error) {
+func (r *harbor) Tags(ctx context.Context, reference string, _ ...Option) ([]string, error) {
 	tags, err := r.defaultImplementation.Tags(ctx, reference)
 	if err != nil {
 		if IsHarborNotFoundError(err) {
@@ -71,14 +71,6 @@ func (r *harbor) Tags(ctx context.Context, reference string) ([]string, error) {
 	}
 
 	return tags, nil
-}
-
-func (r *harbor) IsRepoImageExists(ctx context.Context, reference string) (bool, error) {
-	if imgInfo, err := r.TryGetRepoImage(ctx, reference); err != nil {
-		return false, err
-	} else {
-		return imgInfo != nil, nil
-	}
 }
 
 func (r *harbor) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
