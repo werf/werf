@@ -219,6 +219,10 @@ func (api *api) MutateAndPushImage(_ context.Context, sourceReference, destinati
 	return nil
 }
 
+type PushImageOptions struct {
+	Labels map[string]string
+}
+
 func (api *api) PushImage(ctx context.Context, reference string, opts *PushImageOptions) error {
 	retriesLimit := 5
 

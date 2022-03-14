@@ -192,15 +192,15 @@ func (containerRuntime *ContainerRuntimeMock) Pull(ctx context.Context, ref stri
 	return nil
 }
 
-type DockerRegistryStub struct {
-	docker_registry.DockerRegistryInterface
+type DockerRegistryApiStub struct {
+	docker_registry.ApiInterface
 }
 
-func NewDockerRegistryStub() *DockerRegistryStub {
-	return &DockerRegistryStub{}
+func NewDockerRegistryApiStub() *DockerRegistryApiStub {
+	return &DockerRegistryApiStub{}
 }
 
-func (dockerRegistry *DockerRegistryStub) GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
+func (dockerRegistry *DockerRegistryApiStub) GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
 	return &v1.ConfigFile{
 		Config: v1.Config{},
 	}, nil

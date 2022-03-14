@@ -14,7 +14,7 @@ type Interface interface {
 
 	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error)
 
-	FetchDependencies(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, dockerRegistry docker_registry.DockerRegistryInterface) error
+	FetchDependencies(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, dockerRegistry docker_registry.ApiInterface) error
 	GetDependencies(ctx context.Context, c Conveyor, prevImage container_runtime.LegacyImageInterface, prevBuiltImage container_runtime.LegacyImageInterface) (string, error)
 	GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error)
 

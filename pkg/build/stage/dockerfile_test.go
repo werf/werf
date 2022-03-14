@@ -290,7 +290,7 @@ RUN echo hello
 
 			containerRuntime := NewContainerRuntimeMock()
 
-			dockerRegistry := NewDockerRegistryStub()
+			dockerRegistry := NewDockerRegistryApiStub()
 
 			err := stage.FetchDependencies(ctx, conveyor, containerRuntime, dockerRegistry)
 			Expect(IsErrInvalidBaseImage(err)).To(BeTrue())

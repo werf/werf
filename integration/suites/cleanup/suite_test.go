@@ -33,7 +33,7 @@ var SuiteData struct {
 	suite_init.SuiteData
 	TestImplementation string
 	StagesStorage      storage.StagesStorage
-	ContainerRegistry  docker_registry.DockerRegistry
+	ContainerRegistry  docker_registry.Interface
 }
 
 var (
