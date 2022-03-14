@@ -60,7 +60,7 @@ func isUnexpectedTagFormatError(err error) bool {
 
 type RepoStagesStorage struct {
 	RepoAddress      string
-	DockerRegistry   docker_registry.DockerRegistry
+	DockerRegistry   docker_registry.Interface
 	ContainerRuntime container_runtime.ContainerRuntime
 }
 

@@ -122,7 +122,7 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
-func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_runtime.ContainerRuntime, _ docker_registry.DockerRegistryInterface) error {
+func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_runtime.ContainerRuntime, _ docker_registry.ApiInterface) error {
 	return nil
 }
 

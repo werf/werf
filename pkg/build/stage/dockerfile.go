@@ -318,7 +318,7 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *DockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerRuntime container_runtime.ContainerRuntime, dockerRegistry docker_registry.DockerRegistryInterface) error {
+func (s *DockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerRuntime container_runtime.ContainerRuntime, dockerRegistry docker_registry.ApiInterface) error {
 	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)

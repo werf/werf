@@ -32,7 +32,7 @@ func TestSuite(t *testing.T) {
 var SuiteData = struct {
 	suite_init.SuiteData
 	StagesStorage     storage.StagesStorage
-	ContainerRegistry docker_registry.DockerRegistry
+	ContainerRegistry docker_registry.Interface
 }{}
 
 var (
