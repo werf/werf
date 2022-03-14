@@ -63,6 +63,7 @@ type StorageManagerInterface interface {
 	GetStagesByDigest(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error)
 	GetStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error)
 	GetStageDescriptionList(ctx context.Context) ([]*image.StageDescription, error)
+	GetStageDescriptionListWithCache(ctx context.Context) ([]*image.StageDescription, error)
 	GetFinalStageDescriptionList(ctx context.Context) ([]*image.StageDescription, error)
 
 	FetchStage(ctx context.Context, containerRuntime container_runtime.ContainerRuntime, stg stage.Interface) error
@@ -214,8 +215,16 @@ func (m *StorageManager) MaxNumberOfWorkers() int {
 	return 1
 }
 
+func (m *StorageManager) GetStageDescriptionListWithCache(ctx context.Context) ([]*image.StageDescription, error) {
+	return m.getStageDescriptionList(ctx, storage.WithCache())
+}
+
 func (m *StorageManager) GetStageDescriptionList(ctx context.Context) ([]*image.StageDescription, error) {
-	stageIDs, err := m.StagesStorage.GetStagesIDs(ctx, m.ProjectName)
+	return m.getStageDescriptionList(ctx)
+}
+
+func (m *StorageManager) getStageDescriptionList(ctx context.Context, opts ...storage.Option) ([]*image.StageDescription, error) {
+	stageIDs, err := m.StagesStorage.GetStagesIDs(ctx, m.ProjectName, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting stages ids from %s: %s", m.StagesStorage, err)
 	}
