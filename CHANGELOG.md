@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.75](https://www.github.com/werf/werf/compare/v1.2.74...v1.2.75) (2022-03-14)
+
+
+### Features
+
+* **ssh-key:** support passphrases for --ssh-key options ([9ed3c96](https://www.github.com/werf/werf/commit/9ed3c9629a167caceef75c347b1eb288947b3ed5))
+
+
+### Bug Fixes
+
+* broken --ssh-key option ([c389259](https://www.github.com/werf/werf/commit/c38925991b3b78dfadf3ca11b837abc5bcf15ecd))
+* server dry-run validation breaks helm 2 to 3 transition ([0450171](https://www.github.com/werf/werf/commit/0450171502fb49d271ef09f5f90144cfc7a9ce89))
+
 ### [1.2.74](https://www.github.com/werf/werf/compare/v1.2.73...v1.2.74) (2022-03-10)
 
 
