@@ -352,14 +352,7 @@ func (storage *DockerServerStagesStorage) PostClientIDRecord(ctx context.Context
 
 	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.PostClientID full image name: %s\n", fullImageName)
 
-	if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
-		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
-	} else if exists {
-		return nil
-	}
-
 	labels := map[string]string{image.WerfLabel: projectName}
-
 	if err := docker.CreateImage(ctx, fullImageName, labels); err != nil {
 		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
 	}

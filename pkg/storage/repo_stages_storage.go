@@ -167,21 +167,12 @@ func (storage *RepoStagesStorage) RejectStage(ctx context.Context, projectName, 
 	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, digest, uniqueID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage full image name: %s\n", rejectedImageName)
 
-	if isExists, err := storage.DockerRegistry.IsTagExist(ctx, rejectedImageName); err != nil {
-		return err
-	} else if isExists {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage record %q is exists => exiting\n", rejectedImageName)
-		return nil
-	}
-
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
-
 	if err := storage.DockerRegistry.PushImage(ctx, rejectedImageName, opts); err != nil {
 		return fmt.Errorf("unable to push rejected stage image record %s: %s", rejectedImageName, err)
 	}
 
 	logboek.Context(ctx).Info().LogF("Rejected stage by digest %s uniqueID %d\n", digest, uniqueID)
-
 	return nil
 }
 
@@ -415,17 +406,7 @@ func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectNa
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageNameOrManagedImageName)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage full image name: %s\n", fullImageName)
 
-	if isExists, err := storage.DockerRegistry.IsTagExist(ctx, fullImageName); err != nil {
-		return err
-	} else if isExists {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q is exists => exiting\n", fullImageName)
-		return nil
-	}
-
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q does not exist => creating record\n", fullImageName)
-
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
-
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
 	}
@@ -874,13 +855,6 @@ func (storage *RepoStagesStorage) PostClientIDRecord(ctx context.Context, projec
 	fullImageName := fmt.Sprintf(RepoClientIDRecord_ImageNameFormat, storage.RepoAddress, rec.ClientID, rec.TimestampMillisec)
 
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostClientID full image name: %s\n", fullImageName)
-
-	if isExists, err := storage.DockerRegistry.IsTagExist(ctx, fullImageName); err != nil {
-		return err
-	} else if isExists {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q is exists => exiting\n", fullImageName)
-		return nil
-	}
 
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 
