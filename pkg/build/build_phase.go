@@ -258,7 +258,17 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 
 func (phase *BuildPhase) addManagedImage(ctx context.Context, img *Image) error {
 	if phase.ShouldAddManagedImageRecord {
-		if err := phase.Conveyor.StorageManager.GetStagesStorage().AddManagedImage(ctx, phase.Conveyor.projectName(), img.GetName()); err != nil {
+		stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
+		exist, err := stagesStorage.IsManagedImageExist(ctx, phase.Conveyor.projectName(), img.GetName(), storage.WithCache())
+		if err != nil {
+			return fmt.Errorf("unable to check existence of managed image: %w", err)
+		}
+
+		if exist {
+			return nil
+		}
+
+		if err := stagesStorage.AddManagedImage(ctx, phase.Conveyor.projectName(), img.GetName()); err != nil {
 			return fmt.Errorf("unable to add image %q to the managed images of project %q: %s", img.GetName(), phase.Conveyor.projectName(), err)
 		}
 	}
@@ -286,13 +296,14 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 			}
 
 			for _, commit := range commits {
-				exists, err := phase.Conveyor.StorageManager.GetStagesStorage().IsImageMetadataExist(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID())
+				stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
+				exist, err := stagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID(), storage.WithCache())
 				if err != nil {
 					return fmt.Errorf("unable to get image %s metadata by commit %s and stage ID %s: %s", img.GetName(), commit, img.GetStageID(), err)
 				}
 
-				if !exists {
-					if err := phase.Conveyor.StorageManager.GetStagesStorage().PutImageMetadata(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID()); err != nil {
+				if !exist {
+					if err := stagesStorage.PutImageMetadata(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID()); err != nil {
 						return fmt.Errorf("unable to put image %s metadata by commit %s and stage ID %s: %s", img.GetName(), commit, img.GetStageID(), err)
 					}
 				}

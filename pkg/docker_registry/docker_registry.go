@@ -92,6 +92,16 @@ func (o *DockerRegistryOptions) defaultOptions() defaultImplementationOptions {
 }
 
 func NewDockerRegistry(repositoryAddress string, implementation string, options DockerRegistryOptions) (Interface, error) {
+	dockerRegistry, err := newDockerRegistry(repositoryAddress, implementation, options)
+	if err != nil {
+		return nil, err
+	}
+
+	dockerRegistryWithCache := newDockerRegistryWithCache(dockerRegistry)
+	return dockerRegistryWithCache, nil
+}
+
+func newDockerRegistry(repositoryAddress string, implementation string, options DockerRegistryOptions) (Interface, error) {
 	switch implementation {
 	case AwsEcrImplementationName:
 		return newAwsEcr(options.awsEcrOptions())

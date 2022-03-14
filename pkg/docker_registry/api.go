@@ -39,7 +39,7 @@ func newAPI(options apiOptions) *api {
 	}
 }
 
-func (api *api) Tags(ctx context.Context, reference string) ([]string, error) {
+func (api *api) Tags(ctx context.Context, reference string, _ ...Option) ([]string, error) {
 	return api.tags(ctx, reference)
 }
 
@@ -134,7 +134,7 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 		}
 	}
 
-	referenceParts, err := api.ParseReferenceParts(reference)
+	referenceParts, err := api.parseReferenceParts(reference)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse reference %q: %s", reference, err)
 	}
@@ -349,7 +349,7 @@ type referenceParts struct {
 	digest     string
 }
 
-func (api *api) ParseReferenceParts(reference string) (referenceParts, error) {
+func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
 	// validate reference
 	parsedReference, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {

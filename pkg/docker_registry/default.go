@@ -31,7 +31,7 @@ func newDefaultAPIForImplementation(implementation string, options defaultImplem
 	return d, nil
 }
 
-func (r *defaultImplementation) Tags(ctx context.Context, reference string) ([]string, error) {
+func (r *defaultImplementation) Tags(ctx context.Context, reference string, _ ...Option) ([]string, error) {
 	tags, err := r.api.Tags(ctx, reference)
 
 	if (IsHarbor404Error(err) || IsHarborNotFoundError(err)) && r.Implementation != HarborImplementationName {
@@ -49,12 +49,8 @@ func (r *defaultImplementation) Tags(ctx context.Context, reference string) ([]s
 	return tags, err
 }
 
-func (r *defaultImplementation) IsRepoImageExists(ctx context.Context, reference string) (bool, error) {
-	if imgInfo, err := r.TryGetRepoImage(ctx, reference); err != nil {
-		return false, err
-	} else {
-		return imgInfo != nil, nil
-	}
+func (r *defaultImplementation) IsTagExist(_ context.Context, _ string, _ ...Option) (bool, error) {
+	panic("not implemented")
 }
 
 func (r *defaultImplementation) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {

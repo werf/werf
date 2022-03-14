@@ -167,7 +167,7 @@ func (storage *RepoStagesStorage) RejectStage(ctx context.Context, projectName, 
 	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, digest, uniqueID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage full image name: %s\n", rejectedImageName)
 
-	if isExists, err := storage.DockerRegistry.IsRepoImageExists(ctx, rejectedImageName); err != nil {
+	if isExists, err := storage.DockerRegistry.IsTagExist(ctx, rejectedImageName); err != nil {
 		return err
 	} else if isExists {
 		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage record %q is exists => exiting\n", rejectedImageName)
@@ -389,8 +389,9 @@ func (storage *RepoStagesStorage) GetStageCustomTagMetadata(ctx context.Context,
 	return newCustomTagMetadataFromLabels(img.Labels), nil
 }
 
-func (storage *RepoStagesStorage) GetStageCustomTagMetadataIDs(ctx context.Context) ([]string, error) {
-	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress)
+func (storage *RepoStagesStorage) GetStageCustomTagMetadataIDs(ctx context.Context, opts ...Option) ([]string, error) {
+	o := makeOptions(opts...)
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
 	}
@@ -414,7 +415,7 @@ func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectNa
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageNameOrManagedImageName)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage full image name: %s\n", fullImageName)
 
-	if isExists, err := storage.DockerRegistry.IsRepoImageExists(ctx, fullImageName); err != nil {
+	if isExists, err := storage.DockerRegistry.IsTagExist(ctx, fullImageName); err != nil {
 		return err
 	} else if isExists {
 		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q is exists => exiting\n", fullImageName)
@@ -454,22 +455,29 @@ func (storage *RepoStagesStorage) RmManagedImage(ctx context.Context, projectNam
 	return nil
 }
 
-func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectName string) ([]string, error) {
+func (storage *RepoStagesStorage) IsManagedImageExist(ctx context.Context, _, imageNameOrManagedImageName string, opts ...Option) (bool, error) {
+	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageNameOrManagedImageName)
+	o := makeOptions(opts...)
+	return storage.DockerRegistry.IsTagExist(ctx, fullImageName, o.dockerRegistryOptions...)
+}
+
+func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectName string, opts ...Option) ([]string, error) {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetManagedImages %s\n", projectName)
 
-	var res []string
-
-	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
+	o := makeOptions(opts...)
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
+	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
-	} else {
-		for _, tag := range tags {
-			if !strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) {
-				continue
-			}
+	}
 
-			managedImageName := getManagedImageNameFromManagedImageID(strings.TrimPrefix(tag, RepoManagedImageRecord_ImageTagPrefix))
-			res = append(res, managedImageName)
+	var res []string
+	for _, tag := range tags {
+		if !strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) {
+			continue
 		}
+
+		managedImageName := getManagedImageNameFromManagedImageID(strings.TrimPrefix(tag, RepoManagedImageRecord_ImageTagPrefix))
+		res = append(res, managedImageName)
 	}
 
 	return res, nil
@@ -583,20 +591,21 @@ func (storage *RepoStagesStorage) selectMetadataNameImage(ctx context.Context, i
 	}
 }
 
-func (storage *RepoStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) (bool, error) {
+func (storage *RepoStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error) {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.IsImageMetadataExist %s %s %s %s\n", projectName, imageNameOrManagedImageName, commit, stageID)
 
 	fullImageName := makeRepoImageMetadataName(storage.RepoAddress, imageNameOrManagedImageName, commit, stageID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.IsImageMetadataExist full image name: %s\n", fullImageName)
 
-	img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
-	return img != nil, err
+	o := makeOptions(opts...)
+	return storage.DockerRegistry.IsTagExist(ctx, fullImageName, o.dockerRegistryOptions...)
 }
 
-func (storage *RepoStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string) (map[string]map[string][]string, map[string]map[string][]string, error) {
+func (storage *RepoStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error) {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageNameStageIDCommitList %s %s\n", projectName)
 
-	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress)
+	o := makeOptions(opts...)
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
 	}
@@ -660,10 +669,11 @@ func (storage *RepoStagesStorage) RmImportMetadata(ctx context.Context, _, id st
 	return nil
 }
 
-func (storage *RepoStagesStorage) GetImportMetadataIDs(ctx context.Context, _ string) ([]string, error) {
+func (storage *RepoStagesStorage) GetImportMetadataIDs(ctx context.Context, _ string, opts ...Option) ([]string, error) {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImportMetadataIDs\n")
 
-	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress)
+	o := makeOptions(opts...)
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
 	}
@@ -821,37 +831,38 @@ func unslugImageName(tag string) string {
 	return res
 }
 
-func (storage *RepoStagesStorage) GetClientIDRecords(ctx context.Context, projectName string) ([]*ClientIDRecord, error) {
+func (storage *RepoStagesStorage) GetClientIDRecords(ctx context.Context, projectName string, opts ...Option) ([]*ClientIDRecord, error) {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetClientIDRecords for project %s\n", projectName)
 
-	var res []*ClientIDRecord
-
-	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
+	o := makeOptions(opts...)
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
+	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
-	} else {
-		for _, tag := range tags {
-			if !strings.HasPrefix(tag, RepoClientIDRecord_ImageTagPrefix) {
-				continue
-			}
+	}
 
-			tagWithoutPrefix := strings.TrimPrefix(tag, RepoClientIDRecord_ImageTagPrefix)
-			dataParts := strings.SplitN(util.Reverse(tagWithoutPrefix), "-", 2)
-			if len(dataParts) != 2 {
-				continue
-			}
-
-			clientID, timestampMillisecStr := util.Reverse(dataParts[1]), util.Reverse(dataParts[0])
-
-			timestampMillisec, err := strconv.ParseInt(timestampMillisecStr, 10, 64)
-			if err != nil {
-				continue
-			}
-
-			rec := &ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
-			res = append(res, rec)
-
-			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetClientIDRecords got clientID record: %s\n", rec)
+	var res []*ClientIDRecord
+	for _, tag := range tags {
+		if !strings.HasPrefix(tag, RepoClientIDRecord_ImageTagPrefix) {
+			continue
 		}
+
+		tagWithoutPrefix := strings.TrimPrefix(tag, RepoClientIDRecord_ImageTagPrefix)
+		dataParts := strings.SplitN(util.Reverse(tagWithoutPrefix), "-", 2)
+		if len(dataParts) != 2 {
+			continue
+		}
+
+		clientID, timestampMillisecStr := util.Reverse(dataParts[1]), util.Reverse(dataParts[0])
+
+		timestampMillisec, err := strconv.ParseInt(timestampMillisecStr, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		rec := &ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
+		res = append(res, rec)
+
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetClientIDRecords got clientID record: %s\n", rec)
 	}
 
 	return res, nil
@@ -864,7 +875,7 @@ func (storage *RepoStagesStorage) PostClientIDRecord(ctx context.Context, projec
 
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostClientID full image name: %s\n", fullImageName)
 
-	if isExists, err := storage.DockerRegistry.IsRepoImageExists(ctx, fullImageName); err != nil {
+	if isExists, err := storage.DockerRegistry.IsTagExist(ctx, fullImageName); err != nil {
 		return err
 	} else if isExists {
 		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage record %q is exists => exiting\n", fullImageName)

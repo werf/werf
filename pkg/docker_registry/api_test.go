@@ -12,7 +12,7 @@ type ParseReferencePartsEntry struct {
 }
 
 var _ = DescribeTable("Api_ParseReferenceParts", func(entry ParseReferencePartsEntry) {
-	parts, err := (&api{}).ParseReferenceParts(entry.reference)
+	parts, err := (&api{}).parseReferenceParts(entry.reference)
 	Ω(err).ShouldNot(HaveOccurred())
 	Ω(parts).Should(Equal(entry.expectation))
 },
