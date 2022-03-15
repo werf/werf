@@ -473,6 +473,18 @@ entries:
                   - title: How it works
                     url: /advanced/ci_cd/run_in_container/how_it_works.html
 
+              - title: werf with ArgoCD (experimental)
+                f:
+
+                  - title: CI/CD flow overview
+                    url: /advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
+
+                  - title: Prepare Kubernetes cluster
+                    url: /advanced/ci_cd/werf_with_argocd/prepare_kubernetes_cluster.html
+
+                  - title: Configure CI/CD
+                    url: /advanced/ci_cd/werf_with_argocd/configure_ci_cd.html
+
           - title: Building images with stapel
             f:
 
