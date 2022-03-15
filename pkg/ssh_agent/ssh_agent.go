@@ -128,17 +128,17 @@ func Init(ctx context.Context, userKeys []string) error {
 		return nil
 	}
 
-	var defaultConfigs []*sshKeyConfig
+	var defaultConfigs []sshKeyConfig
 	for _, defaultFileName := range []string{"id_rsa", "id_dsa"} {
 		path := filepath.Join(os.Getenv("HOME"), ".ssh", defaultFileName)
 
 		if keyExists, _ := util.FileExists(path); keyExists {
-			defaultConfigs = append(defaultConfigs, &sshKeyConfig{FilePath: path})
+			defaultConfigs = append(defaultConfigs, sshKeyConfig{FilePath: path})
 		}
 	}
 
 	if len(defaultConfigs) > 0 {
-		keys, err := loadSshKeys(ctx, configs, loadSshKeysOptions{WarnInvalidKeys: true})
+		keys, err := loadSshKeys(ctx, defaultConfigs, loadSshKeysOptions{WarnInvalidKeys: true})
 		if err != nil {
 			return fmt.Errorf("unable to load ssh keys: %s", err)
 		}
