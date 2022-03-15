@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.76](https://www.github.com/werf/werf/compare/v1.2.75...v1.2.76) (2022-03-15)
+
+
+### Bug Fixes
+
+* default ~/.ssh/id_rsa key not loaded ([2c186fe](https://www.github.com/werf/werf/commit/2c186fe7405422d5f37be1f37eaedcebbcfb7ae4))
+
 ### [1.2.75](https://www.github.com/werf/werf/compare/v1.2.74...v1.2.75) (2022-03-14)
 
 
