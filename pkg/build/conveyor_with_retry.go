@@ -44,7 +44,7 @@ func (wrapper *ConveyorWithRetryWrapper) Terminate() error {
 }
 
 func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f func(c *Conveyor) error) error {
-	return manager.RetryOnStagesStorageCacheResetError(ctx, wrapper.StorageManager, func() error {
+	return manager.RetryOnUnexpectedStagesStorageState(ctx, wrapper.StorageManager, func() error {
 		newConveyor := NewConveyor(
 			wrapper.WerfConfig,
 			wrapper.GiterminismManager,
