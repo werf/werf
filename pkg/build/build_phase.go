@@ -518,10 +518,6 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 					}
 					stageIDs = append(stageIDs, *copiedStageDesc.StageID)
 
-					if err := phase.Conveyor.StorageManager.AtomicStoreStagesByDigestToCache(ctx, string(stg.Name()), stg.GetDigest(), stageIDs); err != nil {
-						return err
-					}
-
 					logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
 					container_runtime.LogImageInfo(ctx, stg.GetImage(), phase.getPrevNonEmptyStageImageSize())
 
@@ -820,10 +816,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			stageIDs = append(stageIDs, *stageDesc.StageID)
 		}
 		stageIDs = append(stageIDs, *stageImage.GetStageDescription().StageID)
-
-		if err := phase.Conveyor.StorageManager.AtomicStoreStagesByDigestToCache(ctx, string(stg.Name()), stg.GetDigest(), stageIDs); err != nil {
-			return fmt.Errorf("unable to store stages by digest into stages storage cache: %s", err)
-		}
 
 		unlockStage()
 
