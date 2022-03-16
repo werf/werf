@@ -56,7 +56,7 @@ func (storage *DockerServerStagesStorage) ConstructStageImageName(projectName, d
 	return fmt.Sprintf(LocalStage_ImageFormat, projectName, digest, uniqueID)
 }
 
-func (storage *DockerServerStagesStorage) GetStagesIDs(ctx context.Context, projectName string) ([]image.StageID, error) {
+func (storage *DockerServerStagesStorage) GetStagesIDs(ctx context.Context, projectName string, _ ...Option) ([]image.StageID, error) {
 	filterSet := localStagesStorageFilterSetBase(projectName)
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
@@ -163,7 +163,7 @@ func (storage *DockerServerStagesStorage) GetManagedImages(_ context.Context, _ 
 	return []string{}, nil
 }
 
-func (storage *DockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string) ([]image.StageID, error) {
+func (storage *DockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, _ ...Option) ([]image.StageID, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
 	// NOTE digest already depends on build-cache-version
