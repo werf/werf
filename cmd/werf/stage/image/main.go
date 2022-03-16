@@ -177,10 +177,6 @@ func run(ctx context.Context, imageName string) error {
 	if err != nil {
 		return err
 	}
-	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
-	if err != nil {
-		return err
-	}
 	storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
 	if err != nil {
 		return err
@@ -194,7 +190,7 @@ func run(ctx context.Context, imageName string) error {
 		return err
 	}
 
-	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
+	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
 	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()

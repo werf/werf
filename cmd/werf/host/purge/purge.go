@@ -114,16 +114,12 @@ func runReset(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
-		if err != nil {
-			return err
-		}
 		storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
 		if err != nil {
 			return err
 		}
 
-		storageManager := manager.NewStorageManager(projectName, stagesStorage, nil, nil, nil, storageLockManager, stagesStorageCache)
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, nil, nil, nil, storageLockManager)
 		purgeOptions := cleaning.PurgeOptions{
 			RmContainersThatUseWerfImages: cmdData.Force,
 			DryRun:                        *commonCmdData.DryRun,
