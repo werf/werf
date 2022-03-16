@@ -97,12 +97,12 @@ func (m *purgeManager) run(ctx context.Context) error {
 
 	if m.StorageManager.GetFinalStagesStorage() != nil {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages").DoError(func() error {
-			stages, err := m.StorageManager.GetStageDescriptionList(ctx)
+			finalStages, err := m.StorageManager.GetFinalStageDescriptionList(ctx)
 			if err != nil {
 				return err
 			}
 
-			return m.deleteStages(ctx, stages, true)
+			return m.deleteStages(ctx, finalStages, true)
 		}); err != nil {
 			return err
 		}
