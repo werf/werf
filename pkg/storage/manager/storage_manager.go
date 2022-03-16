@@ -311,12 +311,6 @@ func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEach
 		stagesDescriptions = filteredStagesDescriptions
 	}
 
-	for _, stageDesc := range stagesDescriptions {
-		if err := m.StagesStorageCache.DeleteStagesByDigest(ctx, m.ProjectName, stageDesc.StageID.Digest); err != nil {
-			return fmt.Errorf("unable to delete storage cache record (%s): %s", stageDesc.StageID.Digest, err)
-		}
-	}
-
 	return parallel.DoTasks(ctx, len(stagesDescriptions), parallel.DoTasksOptions{
 		MaxNumberOfWorkers:         m.MaxNumberOfWorkers(),
 		InitDockerCLIForEachWorker: true,
