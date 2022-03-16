@@ -53,7 +53,6 @@ type StorageManagerInterface interface {
 	GenerateStageUniqueID(digest string, stages []*image.StageDescription) (string, int64)
 
 	LockStageImage(ctx context.Context, imageName string) error
-	AtomicStoreStagesByDigestToCache(ctx context.Context, stageName, stageDigest string, stageIDs []image.StageID) error
 	GetStagesByDigest(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error)
 	GetStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error)
 	GetStageDescriptionList(ctx context.Context) ([]*image.StageDescription, error)
@@ -706,22 +705,6 @@ func (m *StorageManager) SelectSuitableStage(ctx context.Context, c stage.Convey
 		})
 
 	return stageDesc, nil
-}
-
-func (m *StorageManager) AtomicStoreStagesByDigestToCache(ctx context.Context, stageName, stageDigest string, stageIDs []image.StageID) error {
-	if lock, err := m.StorageLockManager.LockStageCache(ctx, m.ProjectName, stageDigest); err != nil {
-		return fmt.Errorf("error locking stage %s cache by digest %s: %s", stageName, stageDigest, err)
-	} else {
-		defer m.StorageLockManager.Unlock(ctx, lock)
-	}
-
-	return logboek.Context(ctx).Info().LogProcess("Storing stage %s images by digest %s into storage cache", stageName, stageDigest).
-		DoError(func() error {
-			if err := m.StagesStorageCache.StoreStagesByDigest(ctx, m.ProjectName, stageDigest, stageIDs); err != nil {
-				return fmt.Errorf("error storing stage %s images by digest %s into storage cache: %s", stageName, stageDigest, err)
-			}
-			return nil
-		})
 }
 
 func (m *StorageManager) GetStagesByDigest(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error) {
