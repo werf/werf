@@ -8,7 +8,6 @@ import (
 
 type LockManager interface {
 	LockStage(ctx context.Context, projectName, digest string) (LockHandle, error)
-	LockStageCache(ctx context.Context, projectName, digest string) (LockHandle, error)
 	Unlock(ctx context.Context, lockHandle LockHandle) error
 }
 
