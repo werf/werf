@@ -11,11 +11,10 @@ import (
 
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
 )
 
-func RunSynchronizationServer(_ context.Context, ip, port string, distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(clientID string) (storage.StagesStorageCache, error)) error {
+func RunSynchronizationServer(_ context.Context, ip, port string, distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(clientID string) (StagesStorageCacheInterface, error)) error {
 	handler := NewSynchronizationServerHandler(distributedLockerBackendFactoryFunc, stagesStorageCacheFactoryFunc)
 	return http.ListenAndServe(fmt.Sprintf("%s:%s", ip, port), handler)
 }
@@ -24,13 +23,13 @@ type SynchronizationServerHandler struct {
 	*http.ServeMux
 
 	DistributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error)
-	StagesStorageCacheFactoryFunc       func(clientID string) (storage.StagesStorageCache, error)
+	StagesStorageCacheFactoryFunc       func(clientID string) (StagesStorageCacheInterface, error)
 
 	mux                             sync.Mutex
 	SynchronizationServerByClientID map[string]*SynchronizationServerHandlerByClientID
 }
 
-func NewSynchronizationServerHandler(distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(requestID string) (storage.StagesStorageCache, error)) *SynchronizationServerHandler {
+func NewSynchronizationServerHandler(distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error), stagesStorageCacheFactoryFunc func(requestID string) (StagesStorageCacheInterface, error)) *SynchronizationServerHandler {
 	srv := &SynchronizationServerHandler{
 		ServeMux:                            http.NewServeMux(),
 		DistributedLockerBackendFactoryFunc: distributedLockerBackendFactoryFunc,
@@ -158,10 +157,10 @@ type SynchronizationServerHandlerByClientID struct {
 	ClientID string
 
 	DistributedLockerBackend distributed_locker.DistributedLockerBackend
-	StagesStorageCache       storage.StagesStorageCache
+	StagesStorageCache       StagesStorageCacheInterface
 }
 
-func NewSynchronizationServerHandlerByClientID(clientID string, distributedLockerBackend distributed_locker.DistributedLockerBackend, stagesStorageCache storage.StagesStorageCache) *SynchronizationServerHandlerByClientID {
+func NewSynchronizationServerHandlerByClientID(clientID string, distributedLockerBackend distributed_locker.DistributedLockerBackend, stagesStorageCache StagesStorageCacheInterface) *SynchronizationServerHandlerByClientID {
 	srv := &SynchronizationServerHandlerByClientID{
 		ServeMux:                 http.NewServeMux(),
 		ClientID:                 clientID,

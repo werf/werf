@@ -6,7 +6,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -15,7 +14,7 @@ type StageIDLegacy struct {
 	UniqueID  int64  `json:"uniqueID"`
 }
 
-func NewStagesStorageCacheHttpHandlerLegacy(stagesStorageCache storage.StagesStorageCache) *StagesStorageCacheHttpHandlerLegacy {
+func NewStagesStorageCacheHttpHandlerLegacy(stagesStorageCache StagesStorageCacheInterface) *StagesStorageCacheHttpHandlerLegacy {
 	handler := &StagesStorageCacheHttpHandlerLegacy{
 		StagesStorageCache: stagesStorageCache,
 		ServeMux:           http.NewServeMux(),
@@ -30,7 +29,7 @@ func NewStagesStorageCacheHttpHandlerLegacy(stagesStorageCache storage.StagesSto
 
 type StagesStorageCacheHttpHandlerLegacy struct {
 	*http.ServeMux
-	StagesStorageCache storage.StagesStorageCache
+	StagesStorageCache StagesStorageCacheInterface
 }
 
 type GetAllStagesRequestLegacy struct {

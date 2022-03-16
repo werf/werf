@@ -6,11 +6,10 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
 )
 
-func NewStagesStorageCacheHttpHandler(stagesStorageCache storage.StagesStorageCache) *StagesStorageCacheHttpHandler {
+func NewStagesStorageCacheHttpHandler(stagesStorageCache StagesStorageCacheInterface) *StagesStorageCacheHttpHandler {
 	handler := &StagesStorageCacheHttpHandler{
 		StagesStorageCache: stagesStorageCache,
 		ServeMux:           http.NewServeMux(),
@@ -25,7 +24,7 @@ func NewStagesStorageCacheHttpHandler(stagesStorageCache storage.StagesStorageCa
 
 type StagesStorageCacheHttpHandler struct {
 	*http.ServeMux
-	StagesStorageCache storage.StagesStorageCache
+	StagesStorageCache StagesStorageCacheInterface
 }
 
 type GetAllStagesRequest struct {
