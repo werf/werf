@@ -24,11 +24,18 @@ import (
 )
 
 var (
-	ErrShouldResetStagesStorageCache = errors.New("should reset storage cache")
-	ErrStageNotFound                 = errors.New("stage not found")
+	ErrUnexpectedStagesStorageState = errors.New("unexpected stages storage state")
+	ErrStageNotFound                = errors.New("stage not found")
 )
 
-func IsStageNotFound(err error) bool {
+func IsErrUnexpectedStagesStorageState(err error) bool {
+	if err != nil {
+		return strings.HasSuffix(err.Error(), ErrUnexpectedStagesStorageState.Error())
+	}
+	return false
+}
+
+func IsErrStageNotFound(err error) bool {
 	if err != nil {
 		return strings.HasSuffix(err.Error(), ErrStageNotFound.Error())
 	}
@@ -73,18 +80,11 @@ type StorageManagerInterface interface {
 	ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error) error
 }
 
-func ShouldResetStagesStorageCache(err error) bool {
-	if err != nil {
-		return strings.HasSuffix(err.Error(), ErrShouldResetStagesStorageCache.Error())
-	}
-	return false
-}
-
-func RetryOnStagesStorageCacheResetError(_ context.Context, _ StorageManagerInterface, f func() error) error {
+func RetryOnUnexpectedStagesStorageState(_ context.Context, _ StorageManagerInterface, f func() error) error {
 Retry:
 	err := f()
 
-	if ShouldResetStagesStorageCache(err) {
+	if IsErrUnexpectedStagesStorageState(err) {
 		goto Retry
 	}
 
@@ -436,7 +436,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 
 			err := doFetchStage(ctx, m.ProjectName, stagesStorage, *stageID, stageImage)
 
-			if IsStageNotFound(err) {
+			if IsErrStageNotFound(err) {
 				logboek.Context(ctx).Default().LogF("Stage not found\n")
 				proc.End()
 				return nil, err
@@ -492,7 +492,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 	for _, cacheStagesStorage := range m.CacheStagesStorageList {
 		cacheImg, err := fetchStageFromCache(cacheStagesStorage)
 		if err != nil {
-			if !IsStageNotFound(err) {
+			if !IsErrStageNotFound(err) {
 				logboek.Context(ctx).Warn().LogF("Unable to fetch stage %s from cache stages storage %s: %s\n", stg.GetImage().GetStageDescription().StageID.String(), cacheStagesStorage.String(), err)
 			}
 
@@ -522,20 +522,20 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 				return doFetchStage(ctx, m.ProjectName, m.StagesStorage, *stageID, img)
 			})
 
-		if err == ErrStageNotFound {
-			logboek.Context(ctx).Error().LogF("Invalid stage %s image %q! Stage is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
-			return ErrShouldResetStagesStorageCache
+		if IsErrStageNotFound(err) {
+			logboek.Context(ctx).Error().LogF("Stage is no longer available in the %q!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
+			return ErrUnexpectedStagesStorageState
 		}
 
 		if storage.IsErrBrokenImage(err) {
-			logboek.Context(ctx).Error().LogF("Invalid stage %s image %q! Stage image is broken and is no longer available in the %s. Stages storage cache for project %q should be reset!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
+			logboek.Context(ctx).Error().LogF("Invalid stage %q!\n", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), m.ProjectName)
 
 			logboek.Context(ctx).Error().LogF("Will mark image %q as rejected in the stages storage %s\n", stg.GetImage().Name(), m.StagesStorage.String())
 			if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stageID.Digest, stageID.UniqueID); err != nil {
 				return fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %s", stg.LogDetailedName(), stg.GetImage().Name(), m.StagesStorage.String(), err)
 			}
 
-			return ErrShouldResetStagesStorageCache
+			return ErrUnexpectedStagesStorageState
 		}
 
 		if err != nil {
