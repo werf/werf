@@ -104,7 +104,7 @@ func runSynchronization() error {
 	}
 
 	var distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error)
-	var stagesStorageCacheFactoryFunc func(clientID string) (storage.StagesStorageCache, error)
+	var stagesStorageCacheFactoryFunc func(clientID string) (synchronization_server.StagesStorageCacheInterface, error)
 
 	if cmdData.Kubernetes {
 		if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
@@ -137,7 +137,7 @@ func runSynchronization() error {
 			return distributed_locker.NewOptimisticLockingStorageBasedBackend(store), nil
 		}
 
-		stagesStorageCacheFactoryFunc = func(clientID string) (storage.StagesStorageCache, error) {
+		stagesStorageCacheFactoryFunc = func(clientID string) (synchronization_server.StagesStorageCacheInterface, error) {
 			return storage.NewKubernetesStagesStorageCache("werf-synchronization", kube.Client, func(projectName string) string {
 				return fmt.Sprintf("werf-%s", clientID)
 			}), nil
@@ -153,7 +153,7 @@ func runSynchronization() error {
 			return distributed_locker.NewOptimisticLockingStorageBasedBackend(store), nil
 		}
 
-		stagesStorageCacheFactoryFunc = func(clientID string) (storage.StagesStorageCache, error) {
+		stagesStorageCacheFactoryFunc = func(clientID string) (synchronization_server.StagesStorageCacheInterface, error) {
 			return storage.NewFileStagesStorageCache(filepath.Join(stagesStorageCacheBaseDir, clientID)), nil
 		}
 	}
