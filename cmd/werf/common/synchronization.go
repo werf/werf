@@ -167,32 +167,6 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 	}
 }
 
-func GetStagesStorageCache(synchronization *SynchronizationParams) (storage.StagesStorageCache, error) {
-	switch synchronization.SynchronizationType {
-	case LocalSynchronization:
-		return storage.NewFileStagesStorageCache(werf.GetStagesStorageCacheDir()), nil
-	case KubernetesSynchronization:
-		if config, err := kube.GetKubeConfig(kube.KubeConfigOptions{
-			ConfigPath:          synchronization.KubeParams.ConfigPath,
-			ConfigDataBase64:    synchronization.KubeParams.ConfigDataBase64,
-			ConfigPathMergeList: synchronization.KubeParams.ConfigPathMergeList,
-			Context:             synchronization.KubeParams.ConfigContext,
-		}); err != nil {
-			return nil, fmt.Errorf("unable to load synchronization kube config (context %q): %s", synchronization.KubeParams.ConfigContext, err)
-		} else if client, err := kubernetes.NewForConfig(config.Config); err != nil {
-			return nil, fmt.Errorf("unable to create synchronization kubernetes client: %s", err)
-		} else {
-			return storage.NewKubernetesStagesStorageCache(synchronization.KubeParams.Namespace, client, func(projectName string) string {
-				return fmt.Sprintf("werf-%s", projectName)
-			}), nil
-		}
-	case HttpSynchronization:
-		return synchronization_server.NewStagesStorageCacheHttpClient(fmt.Sprintf("%s/stages-storage-cache", synchronization.Address)), nil
-	default:
-		panic(fmt.Sprintf("unsupported synchronization address %q", synchronization.Address))
-	}
-}
-
 func GetStorageLockManager(ctx context.Context, synchronization *SynchronizationParams) (storage.LockManager, error) {
 	switch synchronization.SynchronizationType {
 	case LocalSynchronization:

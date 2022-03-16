@@ -152,10 +152,6 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
-	if err != nil {
-		return err
-	}
 	storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
 	if err != nil {
 		return err
@@ -170,7 +166,6 @@ func run(ctx context.Context) error {
 	}
 
 	_ = finalStagesStorage
-	_ = stagesStorageCache
 	_ = storageLockManager
 	_ = secondaryStagesStorageList
 	_ = cacheStagesStorageList

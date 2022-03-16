@@ -208,10 +208,6 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 	if err != nil {
 		return err
 	}
-	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
-	if err != nil {
-		return err
-	}
 	storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
 	if err != nil {
 		return err
@@ -225,7 +221,7 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 		return err
 	}
 
-	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
+	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
 	if *commonCmdData.Parallel {
 		storageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))

@@ -403,10 +403,6 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 	if err != nil {
 		return err
 	}
-	stagesStorageCache, err := common.GetStagesStorageCache(synchronization)
-	if err != nil {
-		return err
-	}
 	storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
 	if err != nil {
 		return err
@@ -420,7 +416,7 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 		return err
 	}
 
-	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager, stagesStorageCache)
+	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 

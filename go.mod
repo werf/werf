@@ -97,6 +97,7 @@ require (
 	k8s.io/kubectl v0.23.1
 	mvdan.cc/xurls v1.1.0
 	oras.land/oras-go v1.1.0
+	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.3.0
 )
 
