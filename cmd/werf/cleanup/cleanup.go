@@ -253,8 +253,6 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 		DryRun:                                  *commonCmdData.DryRun,
 	}
 
-	return manager.RetryOnStagesStorageCacheResetError(ctx, storageManager, func() error {
-		logboek.LogOptionalLn()
-		return cleaning.Cleanup(ctx, projectName, storageManager, cleanupOptions)
-	})
+	logboek.LogOptionalLn()
+	return cleaning.Cleanup(ctx, projectName, storageManager, cleanupOptions)
 }
