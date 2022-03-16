@@ -248,7 +248,7 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 	}
 
 	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
-		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalRepo(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerRuntime); err != nil {
+		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerRuntime); err != nil {
 			return err
 		}
 	}
@@ -530,7 +530,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 			unlockStage()
 
-			if err := phase.Conveyor.StorageManager.CopyStageIntoCache(ctx, stg, phase.Conveyor.ContainerRuntime); err != nil {
+			if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerRuntime); err != nil {
 				return fmt.Errorf("unable to copy stage %s into cache storages: %s", stg.GetImage().GetStageDescription().StageID.String(), err)
 			}
 
@@ -819,7 +819,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 
 		unlockStage()
 
-		if err := phase.Conveyor.StorageManager.CopyStageIntoCache(ctx, stg, phase.Conveyor.ContainerRuntime); err != nil {
+		if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerRuntime); err != nil {
 			return fmt.Errorf("unable to copy stage %s into cache storages: %s", stageImage.GetStageDescription().StageID.String(), err)
 		}
 

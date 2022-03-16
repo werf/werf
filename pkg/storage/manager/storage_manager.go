@@ -62,8 +62,8 @@ type StorageManagerInterface interface {
 	FetchStage(ctx context.Context, containerRuntime container_runtime.ContainerRuntime, stg stage.Interface) error
 	SelectSuitableStage(ctx context.Context, c stage.Conveyor, stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error)
 	CopySuitableByDigestStage(ctx context.Context, stageDesc *image.StageDescription, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime) (*image.StageDescription, error)
-	CopyStageIntoCache(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error
-	CopyStageIntoFinalRepo(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error
+	CopyStageIntoCacheStorages(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error
+	CopyStageIntoFinalStorage(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error
 
 	ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error
 	ForEachDeleteFinalStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error
@@ -584,7 +584,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerRuntime contai
 	return nil
 }
 
-func (m *StorageManager) CopyStageIntoCache(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error {
+func (m *StorageManager) CopyStageIntoCacheStorages(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error {
 	for _, cacheStagesStorage := range m.CacheStagesStorageList {
 		stageID := stg.GetImage().GetStageDescription().StageID
 		img := stg.GetImage()
@@ -621,7 +621,7 @@ func (m *StorageManager) getOrCreateFinalStagesListCache(ctx context.Context) (*
 	return m.FinalStagesListCache, nil
 }
 
-func (m *StorageManager) CopyStageIntoFinalRepo(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error {
+func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stg stage.Interface, containerRuntime container_runtime.ContainerRuntime) error {
 	existingStagesListCache, err := m.getOrCreateFinalStagesListCache(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting existing stages list of final repo %s: %s", m.FinalStagesStorage.String(), err)
