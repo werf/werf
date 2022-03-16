@@ -86,10 +86,11 @@ func (storage *RepoStagesStorage) ConstructStageImageName(_, digest string, uniq
 	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, digest, uniqueID)
 }
 
-func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string) ([]image.StageID, error) {
+func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, opts ...Option) ([]image.StageID, error) {
 	var res []image.StageID
 
-	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
+	o := makeOptions(opts...)
+	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...); err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
 		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStagesIDs fetched tags for %q: %#v\n", storage.RepoAddress, tags)
@@ -184,10 +185,11 @@ func (storage *RepoStagesStorage) DeleteRepo(ctx context.Context) error {
 	return storage.DockerRegistry.DeleteRepo(ctx, storage.RepoAddress)
 }
 
-func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, digest string) ([]image.StageID, error) {
+func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, digest string, opts ...Option) ([]image.StageID, error) {
 	var res []image.StageID
 
-	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress); err != nil {
+	o := makeOptions(opts...)
+	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...); err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
 	} else {
 		var rejectedStages []image.StageID
