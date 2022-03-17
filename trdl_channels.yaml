@@ -32,6 +32,6 @@ groups:
     - name: ea
       version: 1.2.72 # support dockerfile stage for buildah container runtime
     - name: stable
-      version: 1.2.71 # remove import checksum-based cleanup policy
+      version: 1.2.72 # support dockerfile stage for buildah container runtime
     - name: rock-solid
       version: 1.2.71 # remove import checksum-based cleanup policy
