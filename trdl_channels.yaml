@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.76 # ssh-key option fix and server dry-run validation
+      version: 1.2.77 # runtime caching instead stages storage cache on sync server
     - name: beta
       version: 1.2.76 # ssh-key option fix and server dry-run validation
     - name: ea
