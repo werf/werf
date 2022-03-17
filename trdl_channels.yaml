@@ -34,4 +34,4 @@ groups:
     - name: stable
       version: 1.2.71 # remove import checksum-based cleanup policy
     - name: rock-solid
-      version: 1.2.67+fix1 # bundle render & config graph
+      version: 1.2.71 # remove import checksum-based cleanup policy
