@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.77](https://www.github.com/werf/werf/compare/v1.2.76...v1.2.77) (2022-03-17)
+
+
+### Features
+
+* **build:** speeding up with runtime caching for meta images ([7ea0a4c](https://www.github.com/werf/werf/commit/7ea0a4cd92427567b34734e036c66821b37d2a14))
+* **build:** speeding up with runtime caching for stages ([a13a7b0](https://www.github.com/werf/werf/commit/a13a7b0e610c06db072133931208f0bbc644b127))
+* **cleanup/purge:** speeding up with runtime caching for stages ([cbb31b2](https://www.github.com/werf/werf/commit/cbb31b29778a94bd0a900eee021a4967c626217b))
+
+
+### Bug Fixes
+
+* **purge:** fix final repo stages deletion ([11ed6f7](https://www.github.com/werf/werf/commit/11ed6f7fcb61b6b7e5481eadc1e0b60a7b189072))
+
 ### [1.2.76](https://www.github.com/werf/werf/compare/v1.2.75...v1.2.76) (2022-03-15)
 
 
