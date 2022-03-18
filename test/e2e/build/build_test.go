@@ -35,12 +35,12 @@ var _ = Describe("Build", func() {
 
 				By("state0: building images")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName))
+				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 				Expect(buildOut).NotTo(ContainSubstring("Use cache image"))
 
 				By("state0: rebuilding same images")
-				Expect(werfProject.Build()).To(And(
+				Expect(werfProject.Build(nil)).To(And(
 					ContainSubstring("Use cache image"),
 					Not(ContainSubstring("Building stage")),
 				))
@@ -90,11 +90,11 @@ var _ = Describe("Build", func() {
 
 				By("state1: building images")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName))
+				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
 				By("state1: rebuilding same images")
-				Expect(werfProject.Build()).To(And(
+				Expect(werfProject.Build(nil)).To(And(
 					ContainSubstring("Use cache image"),
 					Not(ContainSubstring("Building stage")),
 				))
