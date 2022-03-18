@@ -34,6 +34,7 @@ import (
 	"github.com/werf/werf/cmd/werf/helm"
 	host_cleanup "github.com/werf/werf/cmd/werf/host/cleanup"
 	host_purge "github.com/werf/werf/cmd/werf/host/purge"
+	"github.com/werf/werf/cmd/werf/kube_run"
 	"github.com/werf/werf/cmd/werf/kubectl"
 	managed_images_add "github.com/werf/werf/cmd/werf/managed_images/add"
 	managed_images_ls "github.com/werf/werf/cmd/werf/managed_images/ls"
@@ -111,6 +112,7 @@ Find more information at https://werf.io`),
 				build.NewCmd(),
 				export.NewExportCmd(),
 				run.NewCmd(),
+				kube_run.NewCmd(),
 				dockerComposeCmd(),
 				slugify.NewCmd(),
 				render.NewCmd(),
