@@ -1,0 +1,1 @@
+kubectl controls the Kubernetes cluster manager

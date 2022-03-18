@@ -1,0 +1,1 @@
+print the supported API resources on the server

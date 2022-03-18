@@ -1,0 +1,1 @@
+display clusters defined in the kubeconfig

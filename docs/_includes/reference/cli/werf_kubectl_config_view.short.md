@@ -1,0 +1,1 @@
+display merged kubeconfig settings or a specified kubeconfig file

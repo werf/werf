@@ -1,0 +1,115 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
+Set the selector on a resource. Note that the new selector will overwrite the old selector if the resource had one prior to the invocation of &#39;set selector&#39;.
+
+ A selector must begin with a letter or number, and may contain letters, numbers, hyphens, dots, and underscores, up to  63 characters. If --resource-version is specified, then updates will use this resource version, otherwise the existing resource-version will be used. Note: currently selectors can only be set on Service objects.
+
+{{ header }} Syntax
+
+```shell
+werf kubectl set selector (-f FILENAME | TYPE NAME) EXPRESSIONS [--resource-version=version] [options]
+```
+
+{{ header }} Examples
+
+```shell
+  # Set the labels and selector before creating a deployment/service pair
+  kubectl create service clusterip my-svc --clusterip="None" -o yaml --dry-run=client | kubectl set selector --local -f - 'environment=qa' -o yaml | kubectl create -f -
+  kubectl create deployment my-dep -o yaml --dry-run=client | kubectl label --local -f - environment=qa -o yaml | kubectl create -f -
+```
+
+{{ header }} Options
+
+```shell
+      --all=false
+            Select all resources in the namespace of the specified resource types
+      --allow-missing-template-keys=true
+            If true, ignore any errors in templates when a field or map key is missing in the       
+            template. Only applies to golang and jsonpath output formats.
+      --dry-run='none'
+            Must be "none", "server", or "client". If client strategy, only print the object that   
+            would be sent, without sending it. If server strategy, submit server-side request       
+            without persisting the resource.
+      --field-manager='kubectl-set'
+            Name of the manager used to track field ownership.
+  -f, --filename=[]
+            identifying the resource.
+      --local=false
+            If true, annotation will NOT contact api-server but run locally.
+  -o, --output=''
+            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
+            |jsonpath|jsonpath-as-json|jsonpath-file.
+  -R, --recursive=true
+            Process the directory used in -f, --filename recursively. Useful when you want to       
+            manage related manifests organized within the same directory.
+      --resource-version=''
+            If non-empty, the selectors update will only succeed if this is the current             
+            resource-version for the object. Only valid when specifying a single resource.
+      --show-managed-fields=false
+            If true, keep the managedFields when printing objects in JSON or YAML format.
+      --template=''
+            Template string or path to template file to use when -o=go-template,                    
+            -o=go-template-file. The template format is golang templates                            
+            [http://golang.org/pkg/text/template/#pkg-overview].
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --as=''
+            Username to impersonate for the operation. User could be a regular user or a service    
+            account in a namespace.
+      --as-group=[]
+            Group to impersonate for the operation, this flag can be repeated to specify multiple   
+            groups.
+      --as-uid=''
+            UID to impersonate for the operation.
+      --cache-dir='~/.kube/cache'
+            Default cache directory
+      --certificate-authority=''
+            Path to a cert file for the certificate authority
+      --client-certificate=''
+            Path to a client certificate file for TLS
+      --client-key=''
+            Path to a client key file for TLS
+      --cluster=''
+            The name of the kubeconfig cluster to use
+      --context=''
+            The name of the kubeconfig context to use
+      --insecure-skip-tls-verify=false
+            If true, the server`s certificate will not be checked for validity. This will make your 
+            HTTPS connections insecure
+      --kubeconfig=''
+            Path to the kubeconfig file to use for CLI requests.
+      --match-server-version=false
+            Require server version to match client version
+  -n, --namespace=''
+            If present, the namespace scope for this CLI request
+      --password=''
+            Password for basic authentication to the API server
+      --profile='none'
+            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+      --profile-output='profile.pprof'
+            Name of the file to write the profile to
+      --request-timeout='0'
+            The length of time to wait before giving up on a single server request. Non-zero values 
+            should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 
+            timeout requests.
+  -s, --server=''
+            The address and port of the Kubernetes API server
+      --tls-server-name=''
+            Server name to use for server certificate validation. If it is not provided, the        
+            hostname used to contact the server is used
+      --token=''
+            Bearer token for authentication to the API server
+      --user=''
+            The name of the kubeconfig user to use
+      --username=''
+            Username for basic authentication to the API server
+      --warnings-as-errors=false
+            Treat warnings received from the server as errors and exit with a non-zero exit code
+```
+

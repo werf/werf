@@ -1,0 +1,1 @@
+display users defined in the kubeconfig

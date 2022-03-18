@@ -1,0 +1,1 @@
+check whether an action is allowed

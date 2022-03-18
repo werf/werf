@@ -1,0 +1,117 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
+Execute a command in a container.
+
+{{ header }} Syntax
+
+```shell
+werf kubectl exec (POD | TYPE/NAME) [-c CONTAINER] [flags] -- COMMAND [args...] [options]
+```
+
+{{ header }} Examples
+
+```shell
+  # Get output from running the 'date' command from pod mypod, using the first container by default
+  kubectl exec mypod -- date
+  
+  # Get output from running the 'date' command in ruby-container from pod mypod
+  kubectl exec mypod -c ruby-container -- date
+  
+  # Switch to raw terminal mode; sends stdin to 'bash' in ruby-container from pod mypod
+  # and sends stdout/stderr from 'bash' back to the client
+  kubectl exec mypod -c ruby-container -i -t -- bash -il
+  
+  # List contents of /usr from the first container of pod mypod and sort by modification time
+  # If the command you want to execute in the pod has any flags in common (e.g. -i),
+  # you must use two dashes (--) to separate your command's flags/arguments
+  # Also note, do not surround your command and its flags/arguments with quotes
+  # unless that is how you would execute it normally (i.e., do ls -t /usr, not "ls -t /usr")
+  kubectl exec mypod -i -t -- ls -t /usr
+  
+  # Get output from running 'date' command from the first pod of the deployment mydeployment, using the first container by default
+  kubectl exec deploy/mydeployment -- date
+  
+  # Get output from running 'date' command from the first pod of the service myservice, using the first container by default
+  kubectl exec svc/myservice -- date
+```
+
+{{ header }} Options
+
+```shell
+  -c, --container=''
+            Container name. If omitted, use the kubectl.kubernetes.io/default-container annotation  
+            for selecting the container to be attached or the first container in the pod will be    
+            chosen
+  -f, --filename=[]
+            to use to exec into the resource
+      --pod-running-timeout=1m0s
+            The length of time (like 5s, 2m, or 3h, higher than zero) to wait until at least one    
+            pod is running
+  -q, --quiet=false
+            Only print output from the remote session
+  -i, --stdin=false
+            Pass stdin to the container
+  -t, --tty=false
+            Stdin is a TTY
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --as=''
+            Username to impersonate for the operation. User could be a regular user or a service    
+            account in a namespace.
+      --as-group=[]
+            Group to impersonate for the operation, this flag can be repeated to specify multiple   
+            groups.
+      --as-uid=''
+            UID to impersonate for the operation.
+      --cache-dir='~/.kube/cache'
+            Default cache directory
+      --certificate-authority=''
+            Path to a cert file for the certificate authority
+      --client-certificate=''
+            Path to a client certificate file for TLS
+      --client-key=''
+            Path to a client key file for TLS
+      --cluster=''
+            The name of the kubeconfig cluster to use
+      --context=''
+            The name of the kubeconfig context to use
+      --insecure-skip-tls-verify=false
+            If true, the server`s certificate will not be checked for validity. This will make your 
+            HTTPS connections insecure
+      --kubeconfig=''
+            Path to the kubeconfig file to use for CLI requests.
+      --match-server-version=false
+            Require server version to match client version
+  -n, --namespace=''
+            If present, the namespace scope for this CLI request
+      --password=''
+            Password for basic authentication to the API server
+      --profile='none'
+            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+      --profile-output='profile.pprof'
+            Name of the file to write the profile to
+      --request-timeout='0'
+            The length of time to wait before giving up on a single server request. Non-zero values 
+            should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 
+            timeout requests.
+  -s, --server=''
+            The address and port of the Kubernetes API server
+      --tls-server-name=''
+            Server name to use for server certificate validation. If it is not provided, the        
+            hostname used to contact the server is used
+      --token=''
+            Bearer token for authentication to the API server
+      --user=''
+            The name of the kubeconfig user to use
+      --username=''
+            Username for basic authentication to the API server
+      --warnings-as-errors=false
+            Treat warnings received from the server as errors and exit with a non-zero exit code
+```
+

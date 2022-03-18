@@ -1,0 +1,111 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
+Display merged kubeconfig settings or a specified kubeconfig file.
+
+ You can use --output jsonpath={...} to extract specific values using a jsonpath expression.
+
+{{ header }} Syntax
+
+```shell
+werf kubectl config view [flags] [options]
+```
+
+{{ header }} Examples
+
+```shell
+  # Show merged kubeconfig settings
+  kubectl config view
+  
+  # Show merged kubeconfig settings and raw certificate data
+  kubectl config view --raw
+  
+  # Get the password for the e2e user
+  kubectl config view -o jsonpath='{.users[?(@.name == "e2e")].user.password}'
+```
+
+{{ header }} Options
+
+```shell
+      --allow-missing-template-keys=true
+            If true, ignore any errors in templates when a field or map key is missing in the       
+            template. Only applies to golang and jsonpath output formats.
+      --flatten=false
+            Flatten the resulting kubeconfig file into self-contained output (useful for creating   
+            portable kubeconfig files)
+      --merge=true
+            Merge the full hierarchy of kubeconfig files
+      --minify=false
+            Remove all information not used by current-context from the output
+  -o, --output='yaml'
+            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
+            |jsonpath|jsonpath-as-json|jsonpath-file.
+      --raw=false
+            Display raw byte data
+      --show-managed-fields=false
+            If true, keep the managedFields when printing objects in JSON or YAML format.
+      --template=''
+            Template string or path to template file to use when -o=go-template,                    
+            -o=go-template-file. The template format is golang templates                            
+            [http://golang.org/pkg/text/template/#pkg-overview].
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --as=''
+            Username to impersonate for the operation. User could be a regular user or a service    
+            account in a namespace.
+      --as-group=[]
+            Group to impersonate for the operation, this flag can be repeated to specify multiple   
+            groups.
+      --as-uid=''
+            UID to impersonate for the operation.
+      --cache-dir='~/.kube/cache'
+            Default cache directory
+      --certificate-authority=''
+            Path to a cert file for the certificate authority
+      --client-certificate=''
+            Path to a client certificate file for TLS
+      --client-key=''
+            Path to a client key file for TLS
+      --cluster=''
+            The name of the kubeconfig cluster to use
+      --context=''
+            The name of the kubeconfig context to use
+      --insecure-skip-tls-verify=false
+            If true, the server`s certificate will not be checked for validity. This will make your 
+            HTTPS connections insecure
+      --kubeconfig=''
+            use a particular kubeconfig file
+      --match-server-version=false
+            Require server version to match client version
+  -n, --namespace=''
+            If present, the namespace scope for this CLI request
+      --password=''
+            Password for basic authentication to the API server
+      --profile='none'
+            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+      --profile-output='profile.pprof'
+            Name of the file to write the profile to
+      --request-timeout='0'
+            The length of time to wait before giving up on a single server request. Non-zero values 
+            should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 
+            timeout requests.
+  -s, --server=''
+            The address and port of the Kubernetes API server
+      --tls-server-name=''
+            Server name to use for server certificate validation. If it is not provided, the        
+            hostname used to contact the server is used
+      --token=''
+            Bearer token for authentication to the API server
+      --user=''
+            The name of the kubeconfig user to use
+      --username=''
+            Username for basic authentication to the API server
+      --warnings-as-errors=false
+            Treat warnings received from the server as errors and exit with a non-zero exit code
+```
+

@@ -1,0 +1,1 @@
+display resource (CPU/memory) usage of pods

@@ -1,0 +1,1 @@
+list all visible plugin executables on a user's PATH

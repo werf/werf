@@ -1,0 +1,1 @@
+create a config map from a local file, directory or literal value
