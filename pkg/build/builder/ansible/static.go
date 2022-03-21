@@ -208,7 +208,6 @@ func FSMustString(useLocal bool, name string) string {
 }
 
 var _escData = map[string]*_escFile{
-
 	"/ansible/callback/__init__.py": {
 		name:    "__init__.py",
 		local:   "ansible/callback/__init__.py",
@@ -877,7 +876,6 @@ dHlwZShzKSkKAQAA///3bZmkphcAAA==
 }
 
 var _escDirs = map[string][]os.FileInfo{
-
 	"ansible": {
 		_escData["/ansible/callback"],
 		_escData["/ansible/crypt.py"],
