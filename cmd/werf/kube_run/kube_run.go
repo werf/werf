@@ -139,8 +139,9 @@ func NewCmd() *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
+	// TODO(ilya-lesikov): doesn't work, need to be passed to `werf kubectl` somehow
+	// common.SetupKubeConfig(&commonCmdData, cmd)
+	// common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
@@ -257,7 +258,9 @@ func runMain(ctx context.Context) error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+	// TODO(ilya-lesikov): doesn't work, need to be passed to `werf kubectl` somehow
+	// common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, "", "", nil)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
