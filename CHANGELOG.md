@@ -1,5 +1,22 @@
 # Changelog
 
+### [1.2.78](https://www.github.com/werf/werf/compare/v1.2.77...v1.2.78) (2022-03-21)
+
+
+### Features
+
+* kubectl exposed via `werf kubectl` ([c6435d8](https://www.github.com/werf/werf/commit/c6435d82a954076a7b76abca342ef78b7419dc44))
+* new command `werf kube-run` ([3da4449](https://www.github.com/werf/werf/commit/3da444970dc1c92f36c9747849804991df343d6f))
+
+
+### Bug Fixes
+
+* "unable to get docker system info" error when container runtime not used ([93b6f5a](https://www.github.com/werf/werf/commit/93b6f5a0cd07865d208049ac1455a9da1386ad78))
+* **build:** do not store images into final repo when --skip-build is set ([69e1bb0](https://www.github.com/werf/werf/commit/69e1bb0783700586fc902f4367a283fcdf391b6f))
+* context extraction error ([d19cfb6](https://www.github.com/werf/werf/commit/d19cfb6f6f60f4ca5ea952cd794c5ac9d439dbaf))
+* **deploy:** fix --set-file giving []uint{} array intead of string ([aa3aa4e](https://www.github.com/werf/werf/commit/aa3aa4ea2e842ac52b4f59aaccf2e8a938c6a19f))
+* temporarily disable broken server-dry-run ([e648787](https://www.github.com/werf/werf/commit/e648787f499a24529ea91295574cdbc8bc16fa00))
+
 ### [1.2.77](https://www.github.com/werf/werf/compare/v1.2.76...v1.2.77) (2022-03-17)
 
 
