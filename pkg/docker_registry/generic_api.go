@@ -14,25 +14,12 @@ import (
 
 type genericApi struct {
 	commonApi *api
-	mirrors   []string
+	mirrors   *[]string
 }
 
-func newGenericApi(ctx context.Context, options apiOptions) (*genericApi, error) {
+func newGenericApi(_ context.Context, options apiOptions) (*genericApi, error) {
 	d := &genericApi{}
 	d.commonApi = newAPI(options)
-
-	// init registry mirrors if docker cli initialized in context
-	if docker.IsEnabled() && docker.IsContext(ctx) {
-		info, err := docker.Info(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get docker system info: %s", err)
-		}
-
-		if info.RegistryConfig != nil {
-			d.mirrors = info.RegistryConfig.Mirrors
-		}
-	}
-
 	return d, nil
 }
 
@@ -41,7 +28,7 @@ func (api *genericApi) MutateAndPushImage(ctx context.Context, sourceReference, 
 }
 
 func (api *genericApi) GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
-	mirrorReferenceList, err := api.mirrorReferenceList(reference)
+	mirrorReferenceList, err := api.mirrorReferenceList(ctx, reference)
 	if err != nil {
 		return nil, fmt.Errorf("unable to prepare mirror reference list: %s", err)
 	}
@@ -72,7 +59,7 @@ func (api *genericApi) getRepoImageConfigFile(_ context.Context, reference strin
 }
 
 func (api *genericApi) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
-	mirrorReferenceList, err := api.mirrorReferenceList(reference)
+	mirrorReferenceList, err := api.mirrorReferenceList(ctx, reference)
 	if err != nil {
 		return nil, fmt.Errorf("unable to prepare mirror reference list: %s", err)
 	}
@@ -91,7 +78,7 @@ func (api *genericApi) GetRepoImage(ctx context.Context, reference string) (*ima
 	return api.commonApi.GetRepoImage(ctx, reference)
 }
 
-func (api *genericApi) mirrorReferenceList(reference string) ([]string, error) {
+func (api *genericApi) mirrorReferenceList(ctx context.Context, reference string) ([]string, error) {
 	var referenceList []string
 
 	referenceParts, err := api.commonApi.parseReferenceParts(reference)
@@ -104,7 +91,12 @@ func (api *genericApi) mirrorReferenceList(reference string) ([]string, error) {
 		return nil, nil
 	}
 
-	for _, mirrorRegistry := range api.mirrors {
+	mirrors, err := api.getOrCreateRegistryMirrors(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, mirrorRegistry := range mirrors {
 		mirrorRegistryUrl, err := url.Parse(mirrorRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse mirror registry url %q: %s", mirrorRegistry, err)
@@ -122,4 +114,26 @@ func (api *genericApi) mirrorReferenceList(reference string) ([]string, error) {
 	}
 
 	return referenceList, nil
+}
+
+func (api *genericApi) getOrCreateRegistryMirrors(ctx context.Context) ([]string, error) {
+	if api.mirrors == nil {
+		var mirrors []string
+
+		// init registry mirrors if docker cli initialized in context
+		if docker.IsEnabled() && docker.IsContext(ctx) {
+			info, err := docker.Info(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get docker system info: %s", err)
+			}
+
+			if info.RegistryConfig != nil {
+				mirrors = info.RegistryConfig.Mirrors
+			}
+		}
+
+		api.mirrors = &mirrors
+	}
+
+	return *api.mirrors, nil
 }
