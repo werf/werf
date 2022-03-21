@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"sync"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -15,6 +16,7 @@ import (
 type genericApi struct {
 	commonApi *api
 	mirrors   *[]string
+	mutex     sync.Mutex
 }
 
 func newGenericApi(_ context.Context, options apiOptions) (*genericApi, error) {
@@ -117,6 +119,9 @@ func (api *genericApi) mirrorReferenceList(ctx context.Context, reference string
 }
 
 func (api *genericApi) getOrCreateRegistryMirrors(ctx context.Context) ([]string, error) {
+	api.mutex.Lock()
+	defer api.mutex.Unlock()
+
 	if api.mirrors == nil {
 		var mirrors []string
 
