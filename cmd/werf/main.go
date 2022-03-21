@@ -50,6 +50,8 @@ import (
 )
 
 func main() {
+	os.Setenv("DISABLE_SERVER_DRY_RUN", "1")
+
 	shouldTerminate, err := common.ContainerRuntimeProcessStartupHook()
 	if err != nil {
 		common.TerminateWithError(err.Error(), 1)
