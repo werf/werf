@@ -1,3 +1,4 @@
+//go:build integration_coverage
 // +build integration_coverage
 
 package main
