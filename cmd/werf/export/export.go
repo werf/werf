@@ -222,7 +222,7 @@ func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 
 		return c.Export(ctx, build.ExportOptions{
 			BuildPhaseOptions: build.BuildPhaseOptions{
-				BuildOptions:      build.BuildOptions{},
+				BuildOptions:      build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev},
 				ShouldBeBuiltMode: *commonCmdData.SkipBuild,
 			},
 			ExportPhaseOptions: build.ExportPhaseOptions{
