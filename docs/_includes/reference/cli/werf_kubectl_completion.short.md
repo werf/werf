@@ -1,0 +1,1 @@
+output shell completion code for the specified shell (bash, zsh or fish)

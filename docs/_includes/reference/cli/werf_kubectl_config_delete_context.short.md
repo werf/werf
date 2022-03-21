@@ -1,0 +1,1 @@
+delete the specified context from the kubeconfig

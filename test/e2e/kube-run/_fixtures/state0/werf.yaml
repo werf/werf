@@ -1,0 +1,6 @@
+project: werf-e2e-kube-run-test
+configVersion: 1
+
+---
+image: main
+from: alpine:3

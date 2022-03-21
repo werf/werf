@@ -1,0 +1,1 @@
+set specific features on objects

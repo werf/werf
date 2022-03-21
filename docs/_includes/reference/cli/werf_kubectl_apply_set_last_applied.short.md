@@ -1,0 +1,1 @@
+set the last-applied-configuration annotation on a live object to match the contents of a file

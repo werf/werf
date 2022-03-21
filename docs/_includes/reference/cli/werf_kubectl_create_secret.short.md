@@ -1,0 +1,1 @@
+create a secret using specified subcommand

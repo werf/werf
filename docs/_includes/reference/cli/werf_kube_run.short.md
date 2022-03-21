@@ -1,0 +1,1 @@
+run container for project image in Kubernetes

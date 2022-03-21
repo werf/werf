@@ -1,0 +1,1 @@
+show details of a specific resource or group of resources

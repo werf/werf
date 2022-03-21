@@ -1,0 +1,131 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
+Create a cluster role.
+
+{{ header }} Syntax
+
+```shell
+werf kubectl create clusterrole NAME --verb=verb --resource=resource.group [--resource-name=resourcename] [--dry-run=server|client|none] [options]
+```
+
+{{ header }} Examples
+
+```shell
+  # Create a cluster role named "pod-reader" that allows user to perform "get", "watch" and "list" on pods
+  kubectl create clusterrole pod-reader --verb=get,list,watch --resource=pods
+  
+  # Create a cluster role named "pod-reader" with ResourceName specified
+  kubectl create clusterrole pod-reader --verb=get --resource=pods --resource-name=readablepod --resource-name=anotherpod
+  
+  # Create a cluster role named "foo" with API Group specified
+  kubectl create clusterrole foo --verb=get,list,watch --resource=rs.extensions
+  
+  # Create a cluster role named "foo" with SubResource specified
+  kubectl create clusterrole foo --verb=get,list,watch --resource=pods,pods/status
+  
+  # Create a cluster role name "foo" with NonResourceURL specified
+  kubectl create clusterrole "foo" --verb=get --non-resource-url=/logs/*
+  
+  # Create a cluster role name "monitoring" with AggregationRule specified
+  kubectl create clusterrole monitoring --aggregation-rule="rbac.example.com/aggregate-to-monitoring=true"
+```
+
+{{ header }} Options
+
+```shell
+      --aggregation-rule=
+            An aggregation label selector for combining ClusterRoles.
+      --allow-missing-template-keys=true
+            If true, ignore any errors in templates when a field or map key is missing in the       
+            template. Only applies to golang and jsonpath output formats.
+      --dry-run='none'
+            Must be "none", "server", or "client". If client strategy, only print the object that   
+            would be sent, without sending it. If server strategy, submit server-side request       
+            without persisting the resource.
+      --field-manager='kubectl-create'
+            Name of the manager used to track field ownership.
+      --non-resource-url=[]
+            A partial url that user should have access to.
+  -o, --output=''
+            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
+            |jsonpath|jsonpath-as-json|jsonpath-file.
+      --resource=[]
+            Resource that the rule applies to
+      --resource-name=[]
+            Resource in the white list that the rule applies to, repeat this flag for multiple items
+      --save-config=false
+            If true, the configuration of current object will be saved in its annotation.           
+            Otherwise, the annotation will be unchanged. This flag is useful when you want to       
+            perform kubectl apply on this object in the future.
+      --show-managed-fields=false
+            If true, keep the managedFields when printing objects in JSON or YAML format.
+      --template=''
+            Template string or path to template file to use when -o=go-template,                    
+            -o=go-template-file. The template format is golang templates                            
+            [http://golang.org/pkg/text/template/#pkg-overview].
+      --validate=true
+            If true, use a schema to validate the input before sending it
+      --verb=[]
+            Verb that applies to the resources contained in the rule
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --as=''
+            Username to impersonate for the operation. User could be a regular user or a service    
+            account in a namespace.
+      --as-group=[]
+            Group to impersonate for the operation, this flag can be repeated to specify multiple   
+            groups.
+      --as-uid=''
+            UID to impersonate for the operation.
+      --cache-dir='~/.kube/cache'
+            Default cache directory
+      --certificate-authority=''
+            Path to a cert file for the certificate authority
+      --client-certificate=''
+            Path to a client certificate file for TLS
+      --client-key=''
+            Path to a client key file for TLS
+      --cluster=''
+            The name of the kubeconfig cluster to use
+      --context=''
+            The name of the kubeconfig context to use
+      --insecure-skip-tls-verify=false
+            If true, the server`s certificate will not be checked for validity. This will make your 
+            HTTPS connections insecure
+      --kubeconfig=''
+            Path to the kubeconfig file to use for CLI requests.
+      --match-server-version=false
+            Require server version to match client version
+  -n, --namespace=''
+            If present, the namespace scope for this CLI request
+      --password=''
+            Password for basic authentication to the API server
+      --profile='none'
+            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+      --profile-output='profile.pprof'
+            Name of the file to write the profile to
+      --request-timeout='0'
+            The length of time to wait before giving up on a single server request. Non-zero values 
+            should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 
+            timeout requests.
+  -s, --server=''
+            The address and port of the Kubernetes API server
+      --tls-server-name=''
+            Server name to use for server certificate validation. If it is not provided, the        
+            hostname used to contact the server is used
+      --token=''
+            Bearer token for authentication to the API server
+      --user=''
+            The name of the kubeconfig user to use
+      --username=''
+            Username for basic authentication to the API server
+      --warnings-as-errors=false
+            Treat warnings received from the server as errors and exit with a non-zero exit code
+```
+

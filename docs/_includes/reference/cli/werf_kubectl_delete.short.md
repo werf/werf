@@ -1,0 +1,1 @@
+delete resources by file names, stdin, resources and names, or by resources and label selector

@@ -1,0 +1,1 @@
+set a cluster entry in kubeconfig

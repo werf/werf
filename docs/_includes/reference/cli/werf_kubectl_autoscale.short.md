@@ -1,0 +1,1 @@
+auto-scale a deployment, replica set, stateful set, or replication controller

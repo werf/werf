@@ -1,0 +1,1 @@
+create a secret for use with a Docker registry

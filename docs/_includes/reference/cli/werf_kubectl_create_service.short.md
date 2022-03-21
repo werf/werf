@@ -1,0 +1,1 @@
+create a service using a specified subcommand
