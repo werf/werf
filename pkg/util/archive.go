@@ -192,6 +192,10 @@ func ExtractTar(tarFileReader io.Reader, dstDir string) error {
 				return fmt.Errorf("unable to create new dir %q while extracting tar: %s", tarEntryPath, err)
 			}
 		case tar.TypeReg, tar.TypeSymlink, tar.TypeLink, tar.TypeGNULongName, tar.TypeGNULongLink:
+			if err := os.MkdirAll(filepath.Dir(tarEntryPath), os.ModePerm); err != nil {
+				return fmt.Errorf("unable to create new directory %q while extracting tar: %w", filepath.Dir(tarEntryPath), err)
+			}
+
 			file, err := os.OpenFile(tarEntryPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, tarEntryFileInfo.Mode())
 			if err != nil {
 				return fmt.Errorf("unable to create new file %q while extracting tar: %s", tarEntryPath, err)
