@@ -18,8 +18,8 @@ import (
 )
 
 var errUsage = errors.New(`
-	./buildah-test {auto|native|docker-with-fuse} { dockerfile DOCKERFILE_PATH [CONTEXT_PATH] |
-	                                                         stapel }
+    ./buildah-test {auto|native|docker-with-fuse} { dockerfile DOCKERFILE_PATH [CONTEXT_PATH] |
+                                                    stapel }
 `)
 
 func runStapel(ctx context.Context, mode buildah.Mode) error {
@@ -28,19 +28,26 @@ func runStapel(ctx context.Context, mode buildah.Mode) error {
 		return fmt.Errorf("unable to create buildah client: %s", err)
 	}
 
-	// TODO: get this working
-	// if _, err := b.FromCommand(ctx, "mycontainer", "ubuntu:20.04", buildah.FromCommandOpts{}); err != nil {
-	//	return fmt.Errorf("unable to create mycontainer from ubuntu:20.04: %s", err)
-	// }
+	// TODO: b.Rm(ctx, "mycontainer", buildah.RmOpts{})
+
+	if _, err := b.FromCommand(ctx, "mycontainer", "ubuntu:20.04", buildah.FromCommandOpts{}); err != nil {
+		return fmt.Errorf("unable to create mycontainer from ubuntu:20.04: %s", err)
+	}
 
 	buildStageSh := `#!/bin/bash
 
-echo HELLO > /FILE
+echo START
+id
+ls -lah /
+echo "HELLO FROM BUILD INSTRUCTION" > /root/HELLO
+ls -lah /root
+echo STOP
 `
 
 	if err := os.WriteFile("/tmp/build_stage.sh", []byte(buildStageSh), os.ModePerm); err != nil {
 		return err
 	}
+	defer os.RemoveAll("/tmp/build_stage.sh")
 
 	if err := b.RunCommand(ctx, "mycontainer", []string{"/.werf/build_stage.sh"}, buildah.RunCommandOpts{
 		Mounts: []specs.Mount{
@@ -63,6 +70,8 @@ echo HELLO > /FILE
 	if err := os.WriteFile(filepath.Join(containerRootDir, "/FILE_FROM_GOLANG"), []byte("HELLO WORLD\n"), os.ModePerm); err != nil {
 		return fmt.Errorf("unable to write /FILE_FROM_GOLANG into %q: %s", containerRootDir, err)
 	}
+
+	// TODO: b.Commit(ctx, "mycontainer, "docker://ghcr.io/GROUP/NAME:TAG", buildah.CommitOpts{})
 
 	return nil
 }
