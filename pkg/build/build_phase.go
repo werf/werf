@@ -42,7 +42,8 @@ type BuildOptions struct {
 	ReportPath   string
 	ReportFormat ReportFormat
 
-	CustomTagFuncList []func(string) string
+	SkipImageMetadataPublication bool
+	CustomTagFuncList            []func(string) string
 }
 
 type IntrospectOptions struct {
@@ -230,8 +231,10 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 		return err
 	}
 
-	if err := phase.publishImageMetadata(ctx, img); err != nil {
-		return err
+	if !phase.BuildPhaseOptions.SkipImageMetadataPublication {
+		if err := phase.publishImageMetadata(ctx, img); err != nil {
+			return err
+		}
 	}
 
 	if img.isArtifact {

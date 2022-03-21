@@ -64,7 +64,8 @@ func GetBuildOptions(commonCmdData *CmdData, giterminismManager giterminism_mana
 	}
 
 	buildOptions = build.BuildOptions{
-		CustomTagFuncList: customTagFuncList,
+		SkipImageMetadataPublication: *commonCmdData.Dev,
+		CustomTagFuncList:            customTagFuncList,
 		ImageBuildOptions: container_runtime.LegacyBuildOptions{
 			IntrospectAfterError:  *commonCmdData.IntrospectAfterError,
 			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
