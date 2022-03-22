@@ -154,8 +154,8 @@ func NewCmd() *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfig(&commonCmdData, cmd)
 	// TODO(ilya-lesikov): doesn't work, need to be passed to `werf kubectl` somehow
-	// common.SetupKubeConfig(&commonCmdData, cmd)
 	// common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
@@ -277,7 +277,7 @@ func runMain(ctx context.Context) error {
 
 	// TODO(ilya-lesikov): doesn't work, need to be passed to `werf kubectl` somehow
 	// common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
-	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, "", "", nil)
+	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, "", *commonCmdData.KubeConfigPathMergeList)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
@@ -419,6 +419,20 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 
 	if cmdData.AllocateTty {
 		args = append(args, "-t")
+	}
+
+	if *commonCmdData.KubeContext != "" {
+		args = append(args, "--context", *commonCmdData.KubeContext)
+	}
+
+	if *commonCmdData.KubeConfig != "" {
+		args = append(args, "--kubeconfig", *commonCmdData.KubeConfig)
+	}
+
+	if kubeConf := common.GetFirstExistingKubeConfigEnvVar(); kubeConf != "" {
+		if err := os.Setenv("KUBECONFIG", kubeConf); err != nil {
+			return fmt.Errorf("unable to set $KUBECONFIG env var: %w", err)
+		}
 	}
 
 	var overrides map[string]interface{}

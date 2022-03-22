@@ -352,18 +352,22 @@ func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(cmdData.KubeConfig, "kube-config", "", "", "Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or $KUBECONFIG)")
 
 	cmdData.KubeConfigPathMergeList = new([]string)
-	kubeConfigPathMergeListStr := getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG")
+	kubeConfigPathMergeListStr := GetFirstExistingKubeConfigEnvVar()
 	for _, path := range filepath.SplitList(kubeConfigPathMergeListStr) {
 		*cmdData.KubeConfigPathMergeList = append(*cmdData.KubeConfigPathMergeList, path)
 	}
 }
 
-func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.KubeConfigBase64 = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.KubeConfigBase64, "kube-config-base64", "", getFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64"), "Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)")
+func GetFirstExistingKubeConfigEnvVar() string {
+	return GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG")
 }
 
-func getFirstExistingEnvVarAsString(envNames ...string) string {
+func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeConfigBase64 = new(string)
+	cmd.PersistentFlags().StringVarP(cmdData.KubeConfigBase64, "kube-config-base64", "", GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64"), "Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)")
+}
+
+func GetFirstExistingEnvVarAsString(envNames ...string) string {
 	for _, envName := range envNames {
 		if v := os.Getenv(envName); v != "" {
 			return v
