@@ -37,7 +37,7 @@ type BuildWithReportOptions struct {
 
 type KubeRunOptions struct {
 	CommonOptions
-	Command string
+	Command []string
 	Image   string
 }
 
@@ -94,8 +94,9 @@ func (p *Project) KubeRun(opts *KubeRunOptions) string {
 		args = append(args, opts.Image)
 	}
 
-	if opts.Command != "" {
-		args = append(args, "--", opts.Command)
+	if len(opts.Command) > 0 {
+		args = append(args, "--")
+		args = append(args, opts.Command...)
 	}
 
 	return p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
