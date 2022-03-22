@@ -27,6 +27,10 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 {{ header }} Options
 
 ```shell
+      --auto-pull-secret=true
+            Automatically create docker config secret in the namespace and plug it via pod`s        
+            imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if 
+            not specified)
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -100,12 +104,6 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
   -i, --interactive=false
             Enable interactive mode (default $WERF_INTERACTIVE or false if not specified)
-      --kube-config=''
-            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
-            $KUBECONFIG)
-      --kube-config-base64=''
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=''
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto'
@@ -167,7 +165,8 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --repo-quay-token=''
             quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --rm=true
-            Remove pod after command completion (default $WERF_RM or true if not specified)
+            Remove pod and other created resources after command completion (default $WERF_RM or    
+            true if not specified)
       --rm-with-namespace=false
             Remove also a namespace after command completion (default $WERF_RM_WITH_NAMESPACE or    
             false if not specified)
