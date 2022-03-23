@@ -25,7 +25,7 @@ var _ = Describe("kube-run", func() {
 		Entry(
 			"show output and succeed, running non-interactively",
 			&werf.KubeRunOptions{
-				Command: `sh -c "cat /etc/os-release"`,
+				Command: []string{"sh", "-c", "cat /etc/os-release"},
 				Image:   "main",
 			},
 			func(out string) {
@@ -35,7 +35,7 @@ var _ = Describe("kube-run", func() {
 		Entry(
 			"show output and succeed, running interactively with TTY",
 			&werf.KubeRunOptions{
-				Command: `sh -c "cat /etc/os-release"`,
+				Command: []string{"sh", "-c", "cat /etc/os-release"},
 				Image:   "main",
 				CommonOptions: werf.CommonOptions{
 					ExtraArgs: []string{"-i", "-t"},
@@ -48,7 +48,7 @@ var _ = Describe("kube-run", func() {
 		Entry(
 			"show output and fail, running non-interactively",
 			&werf.KubeRunOptions{
-				Command: `sh -c "cat /etc/os-release; exit 1"`,
+				Command: []string{"sh", "-c", "cat /etc/os-release; exit 1"},
 				Image:   "main",
 				CommonOptions: werf.CommonOptions{
 					ShouldFail: true,
@@ -61,7 +61,7 @@ var _ = Describe("kube-run", func() {
 		Entry(
 			"show output and fail, running interactively with TTY",
 			&werf.KubeRunOptions{
-				Command: `sh -c "cat /etc/os-release; exit 1"`,
+				Command: []string{"sh", "-c", "cat /etc/os-release; exit 1"},
 				Image:   "main",
 				CommonOptions: werf.CommonOptions{
 					ShouldFail: true,
@@ -70,6 +70,19 @@ var _ = Describe("kube-run", func() {
 			},
 			func(out string) {
 				Expect(out).To(ContainSubstring("ID=alpine"))
+			},
+		),
+		Entry(
+			"produce expected --overrides flag, running in dry-run mode",
+			&werf.KubeRunOptions{
+				Command: []string{"hostname"},
+				Image:   "main",
+				CommonOptions: werf.CommonOptions{
+					ExtraArgs: []string{"--dry-run", "--pod=testpod", "--overrides", `{"spec": {"imagePullSecrets": [{"name": "testsecret"}], "nodeName": "testnode"}}`},
+				},
+			},
+			func(out string) {
+				Expect(out).To(ContainSubstring(`{"spec":{"imagePullSecrets":[{"name":"testsecret"},{"name":"testpod"}],"nodeName":"testnode"}}`))
 			},
 		),
 	)
