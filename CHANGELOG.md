@@ -1,5 +1,24 @@
 # Changelog
 
+### [1.2.79](https://www.github.com/werf/werf/compare/v1.2.78...v1.2.79) (2022-03-23)
+
+
+### Features
+
+* **kube-run:** --auto-pull-secret provides private registry access for pod ([d94104f](https://www.github.com/werf/werf/commit/d94104f4ef88200f77ce0b4a4eefe9a6c4f5d0b6))
+* **kube-run:** add --kube-config, fix --kube-context opts ([8014d98](https://www.github.com/werf/werf/commit/8014d982bc62c62e5fc031bc99ad32dbf70ef2c5))
+* **kubectl:** respect a few global $WERF_* env vars ([a2d523e](https://www.github.com/werf/werf/commit/a2d523eeb29ceaa2c9ae7d92b8f12ecde1a8609a))
+
+
+### Bug Fixes
+
+* **cleanup:** fail when no kubernetes configs available and no --without-kube option specified ([14de74f](https://www.github.com/werf/werf/commit/14de74f57d85bc79a6d5408c70ce183d25554c4a))
+* **docs:** update cli reference ([7f65ca2](https://www.github.com/werf/werf/commit/7f65ca2d62fd448954af8739a04c6f8400d982e4))
+* **docs:** update cli reference ([ad3a705](https://www.github.com/werf/werf/commit/ad3a705bc662c6bfec9f4e69a2896fc7961cf36c))
+* **docs:** update cli reference ([588eb2d](https://www.github.com/werf/werf/commit/588eb2d5aea35d0c6e3bece766f34c7b83232bfc))
+* **kube-run:** temporarily disable --kube-config* opts ([352a0bd](https://www.github.com/werf/werf/commit/352a0bd883438723314671c24bbae18c68113657))
+* **server-dry-run:** fix "admission webhook ... does not support dry-run" ([5b118f4](https://www.github.com/werf/werf/commit/5b118f406256b16b68a78044e79d18fc1e952c6a))
+
 ### [1.2.78](https://www.github.com/werf/werf/compare/v1.2.77...v1.2.78) (2022-03-21)
 
 
