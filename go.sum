@@ -2018,6 +2018,10 @@ github.com/werf/3p-helm/v3 v3.0.0-20220314123815-d65b76305f76 h1:mR9OzGdtudmpWo4
 github.com/werf/3p-helm/v3 v3.0.0-20220314123815-d65b76305f76/go.mod h1:0nYPSuvuj8TTJDLRSAfbzGGbazPZsayaDpP8s9FfZT8=
 github.com/werf/3p-helm/v3 v3.0.0-20220321142856-19b057db67db h1:XTS3YcEVc7gT31A1bxbO4tFt9/vimAiE9a5FIsEg3f4=
 github.com/werf/3p-helm/v3 v3.0.0-20220321142856-19b057db67db/go.mod h1:0nYPSuvuj8TTJDLRSAfbzGGbazPZsayaDpP8s9FfZT8=
+github.com/werf/3p-helm/v3 v3.0.0-20220323074931-aa56a71bb67e h1:DRNWrYyPS9SkffYL1xDqz6i87v7zORpGAMhN9WFywQw=
+github.com/werf/3p-helm/v3 v3.0.0-20220323074931-aa56a71bb67e/go.mod h1:0nYPSuvuj8TTJDLRSAfbzGGbazPZsayaDpP8s9FfZT8=
+github.com/werf/3p-helm/v3 v3.0.0-20220323104627-79c3ac94b05f h1:9KumPfuJFi2a1KtsHS8zlrnJ9jUcQ7Hguc9zU6sAao0=
+github.com/werf/3p-helm/v3 v3.0.0-20220323104627-79c3ac94b05f/go.mod h1:0nYPSuvuj8TTJDLRSAfbzGGbazPZsayaDpP8s9FfZT8=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f h1:81YscYTF9mmTf0ULOsCmm42YWQp+qWDzWi1HjWniZrg=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
 github.com/werf/kubedog v0.6.4-0.20220222141823-4ca722ade0ef h1:jidfI8MH4qRvWHlxGw06VKWiKRdBIfGFcjQ3pGwsquc=
