@@ -53,10 +53,10 @@ werf kubectl config get-contexts [(-o|--output=)name)] [options]
       --cluster=''
             The name of the kubeconfig cluster to use
       --context=''
-            The name of the kubeconfig context to use
+            The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
       --insecure-skip-tls-verify=false
             If true, the server`s certificate will not be checked for validity. This will make your 
-            HTTPS connections insecure
+            HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --kubeconfig=''
             use a particular kubeconfig file
       --match-server-version=false

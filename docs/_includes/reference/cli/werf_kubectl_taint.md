@@ -93,12 +93,13 @@ werf kubectl taint NODE NAME KEY_1=VAL_1:TAINT_EFFECT_1 ... KEY_N=VAL_N:TAINT_EF
       --cluster=''
             The name of the kubeconfig cluster to use
       --context=''
-            The name of the kubeconfig context to use
+            The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
       --insecure-skip-tls-verify=false
             If true, the server`s certificate will not be checked for validity. This will make your 
-            HTTPS connections insecure
+            HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --kubeconfig=''
-            Path to the kubeconfig file to use for CLI requests.
+            Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
+            $WERF_KUBECONFIG, or $KUBECONFIG)
       --match-server-version=false
             Require server version to match client version
   -n, --namespace=''
