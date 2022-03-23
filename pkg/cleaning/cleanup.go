@@ -23,7 +23,6 @@ import (
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 type CleanupOptions struct {
@@ -121,7 +120,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	if m.LocalGit != nil {
 		if !m.WithoutKube {
 			if len(m.KubernetesContextClients) == 0 {
-				global_warnings.GlobalWarningLn(ctx, "No kubernetes configs found to skip images being used in the Kubernetes, pass --without-kube option (or WERF_WITHOUT_KUBE env var) to silence this warning")
+				return fmt.Errorf("no kubernetes configs found to skip images being used in the Kubernetes, pass --without-kube option (or WERF_WITHOUT_KUBE env var) to suppress this error")
 			}
 
 			deployedDockerImagesNames, err := m.deployedDockerImagesNames(ctx)
