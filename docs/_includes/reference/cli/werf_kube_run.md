@@ -104,6 +104,9 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
   -i, --interactive=false
             Enable interactive mode (default $WERF_INTERACTIVE or false if not specified)
+      --kube-config=''
+            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
+            $KUBECONFIG)
       --kube-context=''
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto'
