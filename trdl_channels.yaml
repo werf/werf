@@ -28,7 +28,7 @@ groups:
     - name: alpha
       version: 1.2.79 # runtime caching instead stages storage cache on sync server, werf kube-run, more fixes
     - name: beta
-      version: 1.2.76+fix2 # ssh-key option fix and server dry-run validation
+      version: 1.2.79 # runtime caching instead stages storage cache on sync server, werf kube-run, more fixes
     - name: ea
       version: 1.2.76+fix2 # ssh-key option fix and server dry-run validation
     - name: stable
