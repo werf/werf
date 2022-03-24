@@ -30,7 +30,7 @@ groups:
     - name: beta
       version: 1.2.76+fix2 # ssh-key option fix and server dry-run validation
     - name: ea
-      version: 1.2.72 # support dockerfile stage for buildah container runtime
+      version: 1.2.76+fix2 # ssh-key option fix and server dry-run validation
     - name: stable
       version: 1.2.72 # support dockerfile stage for buildah container runtime
     - name: rock-solid
