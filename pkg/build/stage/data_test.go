@@ -117,16 +117,16 @@ func CheckImageDependenciesAfterPrepare(img *LegacyImageStub, stageBuilderAccess
 		}
 
 		if dep.TargetBuildArgImageName != "" {
-			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageName, dep.GetDockerImageName())))
+			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageName, dep.GetDockerImageName()))).To(BeTrue())
 		}
 		if dep.TargetBuildArgImageRepo != "" {
-			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageRepo, dep.DockerImageRepo)))
+			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageRepo, dep.DockerImageRepo))).To(BeTrue())
 		}
 		if dep.TargetBuildArgImageTag != "" {
-			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageTag, dep.DockerImageTag)))
+			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageTag, dep.DockerImageTag))).To(BeTrue())
 		}
 		if dep.TargetBuildArgImageID != "" {
-			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageID, dep.DockerImageID)))
+			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageID, dep.DockerImageID))).To(BeTrue())
 		}
 	}
 }
