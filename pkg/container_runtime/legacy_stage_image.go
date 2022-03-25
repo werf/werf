@@ -15,10 +15,10 @@ import (
 
 type LegacyStageImage struct {
 	*legacyBaseImage
-	fromImage              *LegacyStageImage
-	container              *LegacyStageImageContainer
-	buildImage             *legacyBaseImage
-	dockerfileImageBuilder *DockerfileImageBuilder
+	fromImage  *LegacyStageImage
+	container  *LegacyStageImageContainer
+	buildImage *legacyBaseImage
+	builtID    string
 }
 
 func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerRuntime ContainerRuntime) *LegacyStageImage {
@@ -46,72 +46,67 @@ func (i *LegacyStageImage) GetID() string {
 }
 
 func (i *LegacyStageImage) Build(ctx context.Context, options LegacyBuildOptions) error {
-	if i.dockerfileImageBuilder != nil {
-		// FIXME(stapel-to-buildah): get rid of this if branch
-		panic("internal error")
+	containerLockName := ContainerLockName(i.container.Name())
+	if _, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
+		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
 	} else {
-		containerLockName := ContainerLockName(i.container.Name())
-		if _, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
-			return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
-		} else {
-			defer werf.ReleaseHostLock(lock)
+		defer werf.ReleaseHostLock(lock)
+	}
+
+	if debugDockerRunCommand() {
+		runArgs, err := i.container.prepareRunArgs(ctx)
+		if err != nil {
+			return err
 		}
 
-		if debugDockerRunCommand() {
-			runArgs, err := i.container.prepareRunArgs(ctx)
-			if err != nil {
-				return err
-			}
+		fmt.Printf("Docker run command:\ndocker run %s\n", strings.Join(runArgs, " "))
 
-			fmt.Printf("Docker run command:\ndocker run %s\n", strings.Join(runArgs, " "))
-
-			if len(i.container.prepareAllRunCommands()) != 0 {
-				fmt.Printf("Decoded command:\n%s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
-			}
+		if len(i.container.prepareAllRunCommands()) != 0 {
+			fmt.Printf("Decoded command:\n%s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 		}
+	}
 
-		if containerRunErr := i.container.run(ctx); containerRunErr != nil {
-			if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
-				if options.IntrospectBeforeError {
-					logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+	if containerRunErr := i.container.run(ctx); containerRunErr != nil {
+		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
+			if options.IntrospectBeforeError {
+				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 
-					if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
-						return i.introspectBefore(ctx)
-					}); err != nil {
-						return fmt.Errorf("introspect error failed: %s", err)
-					}
-				} else if options.IntrospectAfterError {
-					if err := i.Commit(ctx); err != nil {
-						return fmt.Errorf("introspect error failed: %s", err)
-					}
-
-					logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
-
-					if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
-						return i.Introspect(ctx)
-					}); err != nil {
-						return fmt.Errorf("introspect error failed: %s", err)
-					}
+				if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
+					return i.introspectBefore(ctx)
+				}); err != nil {
+					return fmt.Errorf("introspect error failed: %s", err)
+				}
+			} else if options.IntrospectAfterError {
+				if err := i.Commit(ctx); err != nil {
+					return fmt.Errorf("introspect error failed: %s", err)
 				}
 
-				if err := i.container.rm(ctx); err != nil {
+				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+
+				if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
+					return i.Introspect(ctx)
+				}); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			}
 
-			return containerRunErr
+			if err := i.container.rm(ctx); err != nil {
+				return fmt.Errorf("introspect error failed: %s", err)
+			}
 		}
 
-		if err := i.Commit(ctx); err != nil {
-			return err
-		}
-
-		if err := i.container.rm(ctx); err != nil {
-			return err
-		}
+		return containerRunErr
 	}
 
-	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.MustGetBuiltId(), GetImageInfoOpts{}); err != nil {
+	if err := i.Commit(ctx); err != nil {
+		return err
+	}
+
+	if err := i.container.rm(ctx); err != nil {
+		return err
+	}
+
+	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.MustGetBuiltID(), GetImageInfoOpts{}); err != nil {
 		return err
 	} else {
 		i.SetInfo(info)
@@ -131,6 +126,7 @@ func (i *LegacyStageImage) Commit(ctx context.Context) error {
 	}
 
 	i.buildImage = newLegacyBaseImage(builtId, i.ContainerRuntime)
+	i.builtID = builtId
 
 	return nil
 }
@@ -167,30 +163,26 @@ func (i *LegacyStageImage) GetInfo() *image.Info {
 	}
 }
 
-func (i *LegacyStageImage) MustGetBuiltId() string {
-	builtId := i.GetBuiltId()
+func (i *LegacyStageImage) MustGetBuiltID() string {
+	builtId := i.GetBuiltID()
 	if builtId == "" {
 		panic(fmt.Sprintf("image %s built id is not available", i.Name()))
 	}
 	return builtId
 }
 
-func (i *LegacyStageImage) GetBuiltId() string {
-	switch {
-	case i.dockerfileImageBuilder != nil:
-		// FIXME(stapel-to-buildah): get rid of GetBuiltID in this image object, or set explicitly externally from conveyor
-		return i.dockerfileImageBuilder.GetBuiltId()
-	case i.buildImage != nil:
-		return i.buildImage.Name()
-	default:
-		return ""
-	}
+func (i *LegacyStageImage) SetBuiltID(builtID string) {
+	i.builtID = builtID
+}
+
+func (i *LegacyStageImage) GetBuiltID() string {
+	return i.builtID
 }
 
 func (i *LegacyStageImage) TagBuiltImage(ctx context.Context) error {
 	_ = i.ContainerRuntime.(*DockerServerRuntime)
 
-	return docker.CliTag(ctx, i.MustGetBuiltId(), i.name)
+	return docker.CliTag(ctx, i.MustGetBuiltID(), i.name)
 }
 
 func (i *LegacyStageImage) Tag(ctx context.Context, name string) error {
@@ -215,14 +207,6 @@ func (i *LegacyStageImage) Push(ctx context.Context) error {
 	_ = i.ContainerRuntime.(*DockerServerRuntime)
 
 	return docker.CliPushWithRetries(ctx, i.name)
-}
-
-// FIXME(stapel-to-buildah): get rid of DockerfileImageBuilder in this image object
-func (i *LegacyStageImage) DockerfileImageBuilder() *DockerfileImageBuilder {
-	if i.dockerfileImageBuilder == nil {
-		i.dockerfileImageBuilder = NewDockerfileImageBuilder(i.ContainerRuntime) // TODO: Possibly need to change DockerServerRuntime to abstract ContainerRuntime
-	}
-	return i.dockerfileImageBuilder
 }
 
 func debugDockerRunCommand() bool {

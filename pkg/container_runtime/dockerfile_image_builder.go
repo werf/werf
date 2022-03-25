@@ -12,11 +12,11 @@ type DockerfileImageBuilder struct {
 	BuildDockerfileOptions BuildDockerfileOpts
 	ContextArchivePath     string
 
-	builtID string
+	Image ImageInterface
 }
 
-func NewDockerfileImageBuilder(containerRuntime ContainerRuntime) *DockerfileImageBuilder {
-	return &DockerfileImageBuilder{ContainerRuntime: containerRuntime}
+func NewDockerfileImageBuilder(containerRuntime ContainerRuntime, image ImageInterface) *DockerfileImageBuilder {
+	return &DockerfileImageBuilder{ContainerRuntime: containerRuntime, Image: image}
 }
 
 // filePathToStdin != "" ??
@@ -44,20 +44,16 @@ func (b *DockerfileImageBuilder) Build(ctx context.Context) error {
 		return fmt.Errorf("error building dockerfile with %s: %s", b.ContainerRuntime.String(), err)
 	}
 
-	b.builtID = builtID
+	b.Image.SetBuiltID(builtID)
 
 	return nil
 }
 
 func (b *DockerfileImageBuilder) Cleanup(ctx context.Context) error {
-	if err := b.ContainerRuntime.Rmi(ctx, b.builtID, RmiOpts{}); err != nil {
-		return fmt.Errorf("unable to remove built dockerfile image %q: %s", b.builtID, err)
+	if err := b.ContainerRuntime.Rmi(ctx, b.Image.GetBuiltID(), RmiOpts{}); err != nil {
+		return fmt.Errorf("unable to remove built dockerfile image %q: %s", b.Image.GetBuiltID(), err)
 	}
 	return nil
-}
-
-func (b *DockerfileImageBuilder) GetBuiltId() string {
-	return b.builtID
 }
 
 func (b *DockerfileImageBuilder) SetDockerfile(dockerfile []byte) {

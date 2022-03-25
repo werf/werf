@@ -206,7 +206,7 @@ func (runtime *DockerServerRuntime) PushBuiltImage(ctx context.Context, img Lega
 
 // TagBuiltImageByName is only available for DockerServerRuntime
 func (runtime *DockerServerRuntime) TagImageByName(ctx context.Context, img LegacyImageInterface) error {
-	if img.GetBuiltId() != "" {
+	if img.GetBuiltID() != "" {
 		if err := img.TagBuiltImage(ctx); err != nil {
 			return fmt.Errorf("unable to tag image %s: %s", img.Name(), err)
 		}

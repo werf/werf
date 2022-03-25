@@ -7,7 +7,7 @@ import (
 
 type StageImage struct {
 	Image                container_runtime.LegacyImageInterface
-	StageBuilderAccessor builder.StageBuilderAccessor
+	StageBuilderAccessor builder.StageBuilderAccessorInterface
 }
 
 func NewStageImage(containerRuntime container_runtime.ContainerRuntime, image container_runtime.LegacyImageInterface) *StageImage {

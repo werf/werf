@@ -6,39 +6,41 @@ import (
 	"github.com/werf/werf/pkg/container_runtime"
 )
 
-type StageBuilderAccessor interface {
-	StapelStageBuilder() StapelStageBuilder
-	NativeDockerfileStageBuilder() NativeDockerfileStageBuilder
-	LegacyStapelStageBuilder() LegacyStapelStageBuilder
+type StageBuilderAccessorInterface interface {
+	StapelStageBuilder() StapelStageBuilderInterface
+	NativeDockerfileStageBuilder() NativeDockerfileStageBuilderInterface
+	LegacyStapelStageBuilder() LegacyStapelStageBuilderInterface
 }
 
-type stageBuilderAccessor struct {
-	ContainerRuntime container_runtime.ContainerRuntime
-	Image            container_runtime.LegacyImageInterface
-	// FIXME(stapel-to-buildah): use this instead of LegacyImageInterface
-	// nativeDockerfileStageBuilder NativeDockerfileStageBuilder
+type StageBuilderAccessor struct {
+	ContainerRuntime       container_runtime.ContainerRuntime
+	Image                  container_runtime.LegacyImageInterface
+	DockerfileImageBuilder *container_runtime.DockerfileImageBuilder
 }
 
-func NewStageBuilderAccessor(containerRuntime container_runtime.ContainerRuntime, image container_runtime.LegacyImageInterface) *stageBuilderAccessor {
-	return &stageBuilderAccessor{
+func NewStageBuilderAccessor(containerRuntime container_runtime.ContainerRuntime, image container_runtime.LegacyImageInterface) *StageBuilderAccessor {
+	return &StageBuilderAccessor{
 		ContainerRuntime: containerRuntime,
 		Image:            image,
 	}
 }
 
-func (accessor *stageBuilderAccessor) StapelStageBuilder() StapelStageBuilder {
+func (accessor *StageBuilderAccessor) StapelStageBuilder() StapelStageBuilderInterface {
 	return NewStapelStageBuilder()
 }
 
-func (accessor *stageBuilderAccessor) LegacyStapelStageBuilder() LegacyStapelStageBuilder {
+func (accessor *StageBuilderAccessor) LegacyStapelStageBuilder() LegacyStapelStageBuilderInterface {
 	return NewLegacyStapelStageBuilder(accessor.ContainerRuntime, accessor.Image)
 }
 
-func (accessor *stageBuilderAccessor) NativeDockerfileStageBuilder() NativeDockerfileStageBuilder {
-	return accessor.Image.DockerfileImageBuilder()
+func (accessor *StageBuilderAccessor) NativeDockerfileStageBuilder() NativeDockerfileStageBuilderInterface {
+	if accessor.DockerfileImageBuilder == nil {
+		accessor.DockerfileImageBuilder = container_runtime.NewDockerfileImageBuilder(accessor.ContainerRuntime, accessor.Image)
+	}
+	return accessor.DockerfileImageBuilder
 }
 
-type StapelStageBuilder interface {
+type StapelStageBuilderInterface interface {
 	AppendPrepareContainerAction(action PrepareContainerAction)
 	// FIXME(stapel-to-buildah) more needed methods
 }
@@ -47,7 +49,7 @@ type PrepareContainerAction interface {
 	PrepareContainer(containerRoot string) error
 }
 
-// FIXME(stapel-to-buildah): full imlementation of new generation builder
+// FIXME(stapel-to-buildah): full builder imlementation
 type stapelStageBuilder struct {
 	ContainerRuntime container_runtime.ContainerRuntime
 }
@@ -60,10 +62,9 @@ func (builder *stapelStageBuilder) AppendPrepareContainerAction(action PrepareCo
 	panic("FIXME")
 }
 
-type NativeDockerfileStageBuilder interface {
+type NativeDockerfileStageBuilderInterface interface {
 	Build(ctx context.Context) error
 	Cleanup(ctx context.Context) error
-	GetBuiltId() string
 	SetDockerfile(dockerfile []byte)
 	SetDockerfileCtxRelPath(dockerfileCtxRelPath string)
 	SetTarget(target string)
@@ -75,7 +76,7 @@ type NativeDockerfileStageBuilder interface {
 	SetContextArchivePath(contextArchivePath string)
 }
 
-type LegacyStapelStageBuilder interface {
+type LegacyStapelStageBuilderInterface interface {
 	Container() container_runtime.LegacyContainer
 	BuilderContainer() container_runtime.LegacyBuilderContainer
 	Build(ctx context.Context, opts container_runtime.LegacyBuildOptions) error
