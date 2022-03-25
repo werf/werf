@@ -6,7 +6,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/container_runtime"
 )
 
 type StagesIterator struct {
@@ -22,26 +21,26 @@ func NewStagesIterator(conveyor *Conveyor) *StagesIterator {
 	return &StagesIterator{Conveyor: conveyor}
 }
 
-func (iterator *StagesIterator) GetPrevImage(img *Image, stg stage.Interface) container_runtime.LegacyImageInterface {
+func (iterator *StagesIterator) GetPrevImage(img *Image, stg stage.Interface) *stage.StageImage {
 	if stg.Name() == "from" {
 		return img.GetBaseImage()
 	} else if iterator.PrevNonEmptyStage != nil {
-		return iterator.PrevNonEmptyStage.GetImage()
+		return iterator.PrevNonEmptyStage.GetStageImage()
 	}
 	return nil
 }
 
-func (iterator *StagesIterator) GetPrevBuiltImage(img *Image, stg stage.Interface) container_runtime.LegacyImageInterface {
+func (iterator *StagesIterator) GetPrevBuiltImage(img *Image, stg stage.Interface) *stage.StageImage {
 	if stg.Name() == "from" {
 		return img.GetBaseImage()
 	} else if iterator.PrevBuiltStage != nil {
-		return iterator.PrevBuiltStage.GetImage()
+		return iterator.PrevBuiltStage.GetStageImage()
 	}
 	return nil
 }
 
 func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *Image, stg stage.Interface, onImageStageFunc func(img *Image, stg stage.Interface, isEmpty bool) error) error {
-	isEmpty, err := stg.IsEmpty(ctx, iterator.Conveyor, iterator.GetPrevBuiltImage(img, stg))
+	isEmpty, err := stg.IsEmpty(ctx, iterator.Conveyor, iterator.GetPrevBuiltImage(img, stg)) // FIXME(stapel-to-buildah): use StageImage
 	if err != nil {
 		return fmt.Errorf("error checking stage %s is empty: %s", stg.Name(), err)
 	}
@@ -64,14 +63,14 @@ func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *Image, st
 		iterator.PrevNonEmptyStage = stg
 		logboek.Context(ctx).Debug().LogF("Set prev non empty stage = %q %s\n", iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetDigest())
 
-		if iterator.PrevNonEmptyStage.GetImage().GetStageDescription() != nil {
-			iterator.PrevNonEmptyStageImageSize = iterator.PrevNonEmptyStage.GetImage().GetStageDescription().Info.Size
+		if iterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDescription() != nil {
+			iterator.PrevNonEmptyStageImageSize = iterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDescription().Info.Size
 			logboek.Context(ctx).Debug().LogF("Set prev non empty stage image size = %d %q %s\n", iterator.PrevNonEmptyStageImageSize, iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetDigest())
 		}
 
-		if stg.GetImage().GetStageDescription() != nil {
+		if stg.GetStageImage().Image.GetStageDescription() != nil {
 			iterator.PrevBuiltStage = stg
-			logboek.Context(ctx).Debug().LogF("Set prev built stage = %q (image %s)\n", iterator.PrevBuiltStage.Name(), iterator.PrevBuiltStage.GetImage().Name())
+			logboek.Context(ctx).Debug().LogF("Set prev built stage = %q (image %s)\n", iterator.PrevBuiltStage.Name(), iterator.PrevBuiltStage.GetStageImage().Image.Name())
 		}
 	}
 

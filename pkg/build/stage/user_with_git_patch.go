@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/build/builder"
-	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -35,15 +34,15 @@ func (s *UserWithGitPatchStage) GetNextStageDependencies(ctx context.Context, c 
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
-	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
+func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
+	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
 	if isPatchEmpty, err := s.GitPatchStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return err
 	} else if !isPatchEmpty {
-		if err := s.GitPatchStage.prepareImage(ctx, c, prevBuiltImage, image); err != nil {
+		if err := s.GitPatchStage.prepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
 			return err
 		}
 	}

@@ -64,18 +64,20 @@ var _ = Describe("DockerfileStage", func() {
 			ctx := context.Background()
 
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")), data.TestDependencies.Dependencies)
+			containerRuntime := NewContainerRuntimeMock()
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(data.Dockerfile)
 
 			stage := newTestDockerfileStage(data.Dockerfile, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies)
 
 			img := NewLegacyImageStub()
+			stageImage := NewStageImage(containerRuntime, img)
 
-			digest, err := stage.GetDependencies(ctx, conveyor, nil, img)
+			digest, err := stage.GetDependencies(ctx, conveyor, nil, stageImage)
 			Expect(err).To(Succeed())
 			Expect(digest).To(Equal(data.TestDependencies.ExpectedDigest))
 
-			err = stage.PrepareImage(ctx, conveyor, nil, img)
+			err = stage.PrepareImage(ctx, conveyor, nil, stageImage)
 			Expect(err).To(Succeed())
 			CheckDockerfileImageDependenciesAfterPrepare(img, data.TestDependencies.Dependencies)
 		},

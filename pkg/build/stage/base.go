@@ -97,7 +97,7 @@ type BaseStage struct {
 	imageName        string
 	digest           string
 	contentDigest    string
-	image            container_runtime.LegacyImageInterface
+	stageImage       *StageImage
 	gitMappings      []*GitMapping
 	imageTmpDir      string
 	containerWerfDir string
@@ -126,7 +126,7 @@ func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container
 	return nil
 }
 
-func (s *BaseStage) GetDependencies(_ context.Context, _ Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
+func (s *BaseStage) GetDependencies(_ context.Context, _ Conveyor, _, _ *StageImage) (string, error) {
 	panic("method must be implemented!")
 }
 
@@ -137,9 +137,9 @@ func (s *BaseStage) GetNextStageDependencies(_ context.Context, _ Conveyor) (str
 func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
-		if s.image != nil && s.image.GetStageDescription() != nil {
-			if commitInfo, err := gitMapping.GetBuiltImageCommitInfo(s.image.GetStageDescription().Info.Labels); err != nil {
-				return "", fmt.Errorf("unable to get built image commit info from image %s: %s", s.image.Name(), err)
+		if s.stageImage != nil && s.stageImage.Image.GetStageDescription() != nil {
+			if commitInfo, err := gitMapping.GetBuiltImageCommitInfo(s.stageImage.Image.GetStageDescription().Info.Labels); err != nil {
+				return "", fmt.Errorf("unable to get built image commit info from image %s: %s", s.stageImage.Image.Name(), err)
 			} else {
 				args = append(args, commitInfo.Commit)
 			}
@@ -158,7 +158,7 @@ func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor)
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *BaseStage) IsEmpty(_ context.Context, _ Conveyor, _ container_runtime.LegacyImageInterface) (bool, error) {
+func (s *BaseStage) IsEmpty(_ context.Context, _ Conveyor, _ *StageImage) (bool, error) {
 	return false, nil
 }
 
@@ -238,23 +238,23 @@ func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []
 	return s.selectStageByOldestCreationTimestamp(stages)
 }
 
-func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
+func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
+	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
-	s.addServiceMountsLabels(serviceMounts, image)
-	if err := s.addServiceMountsVolumes(serviceMounts, image); err != nil {
+	s.addServiceMountsLabels(serviceMounts, stageImage)
+	if err := s.addServiceMountsVolumes(serviceMounts, stageImage); err != nil {
 		return fmt.Errorf("error adding mounts volumes: %s", err)
 	}
 
 	customMounts := s.getCustomMounts(prevBuiltImage)
-	s.addCustomMountLabels(customMounts, image)
-	if err := s.addCustomMountVolumes(customMounts, image); err != nil {
+	s.addCustomMountLabels(customMounts, stageImage)
+	if err := s.addCustomMountVolumes(customMounts, stageImage); err != nil {
 		return fmt.Errorf("error adding mounts volumes: %s", err)
 	}
 
@@ -265,16 +265,16 @@ func (s *BaseStage) PreRunHook(_ context.Context, _ Conveyor) error {
 	return nil
 }
 
-func (s *BaseStage) getServiceMounts(prevBuiltImage container_runtime.LegacyImageInterface) map[string][]string {
+func (s *BaseStage) getServiceMounts(prevBuiltImage *StageImage) map[string][]string {
 	return mergeMounts(s.getServiceMountsFromLabels(prevBuiltImage), s.getServiceMountsFromConfig())
 }
 
-func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage container_runtime.LegacyImageInterface) map[string][]string {
+func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage *StageImage) map[string][]string {
 	mountpointsByType := map[string][]string{}
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.GetStageDescription().Info.Labels
+		labels = prevBuiltImage.Image.GetStageDescription().Info.Labels
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
@@ -308,7 +308,7 @@ func (s *BaseStage) getServiceMountsFromConfig() map[string][]string {
 	return mountpointsByType
 }
 
-func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, image container_runtime.LegacyImageInterface) error {
+func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, stageImage *StageImage) error {
 	for mountType, mountpoints := range mountpointsByType {
 		for _, mountpoint := range mountpoints {
 			absoluteMountpoint := path.Join("/", mountpoint)
@@ -328,14 +328,14 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 				return fmt.Errorf("error creating tmp path %s for mount: %s", absoluteFrom, err)
 			}
 
-			image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+			stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
 		}
 	}
 
 	return nil
 }
 
-func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, image container_runtime.LegacyImageInterface) {
+func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, stageImage *StageImage) {
 	for mountType, mountpoints := range mountpointsByType {
 		var labelName string
 		switch mountType {
@@ -349,20 +349,20 @@ func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string
 
 		labelValue := strings.Join(mountpoints, ";")
 
-		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
+		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}
 }
 
-func (s *BaseStage) getCustomMounts(prevBuiltImage container_runtime.LegacyImageInterface) map[string][]string {
+func (s *BaseStage) getCustomMounts(prevBuiltImage *StageImage) map[string][]string {
 	return mergeMounts(s.getCustomMountsFromLabels(prevBuiltImage), s.getCustomMountsFromConfig())
 }
 
-func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage container_runtime.LegacyImageInterface) map[string][]string {
+func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage *StageImage) map[string][]string {
 	mountpointsByFrom := map[string][]string{}
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.GetStageDescription().Info.Labels
+		labels = prevBuiltImage.Image.GetStageDescription().Info.Labels
 	}
 	for k, v := range labels {
 		if !strings.HasPrefix(k, imagePkg.WerfMountCustomDirLabelPrefix) {
@@ -396,7 +396,7 @@ func (s *BaseStage) getCustomMountsFromConfig() map[string][]string {
 	return mountpointsByFrom
 }
 
-func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, image container_runtime.LegacyImageInterface) error {
+func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, stageImage *StageImage) error {
 	for from, mountpoints := range mountpointsByFrom {
 		absoluteFrom := util.ExpandPath(from)
 
@@ -414,18 +414,18 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 
 		for _, mountpoint := range mountpoints {
 			absoluteMountpoint := path.Join("/", mountpoint)
-			image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+			stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
 		}
 	}
 
 	return nil
 }
 
-func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image container_runtime.LegacyImageInterface) {
+func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, stageImage *StageImage) {
 	for from, mountpoints := range mountpointsByFrom {
 		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.ReplaceAll(filepath.ToSlash(from), "/", "--"))
 		labelValue := strings.Join(mountpoints, ";")
-		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
+		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}
 }
 
@@ -445,12 +445,12 @@ func (s *BaseStage) GetContentDigest() string {
 	return s.contentDigest
 }
 
-func (s *BaseStage) SetImage(image container_runtime.LegacyImageInterface) {
-	s.image = image
+func (s *BaseStage) SetStageImage(stageImage *StageImage) {
+	s.stageImage = stageImage
 }
 
-func (s *BaseStage) GetImage() container_runtime.LegacyImageInterface {
-	return s.image
+func (s *BaseStage) GetStageImage() *StageImage {
+	return s.stageImage
 }
 
 func (s *BaseStage) SetGitMappings(gitMappings []*GitMapping) {

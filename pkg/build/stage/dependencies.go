@@ -11,7 +11,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
@@ -67,7 +66,7 @@ type DependenciesStage struct {
 	dependencies []*config.Dependency
 }
 
-func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
+func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, _ *StageImage) (string, error) {
 	var args []string
 
 	for ind, elm := range s.imports {
@@ -95,7 +94,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, img container_runtime.LegacyImageInterface) error {
+func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, stageImage *StageImage) error {
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
 		srv, err := c.GetImportServer(ctx, sourceImageName, elm.Stage)
@@ -104,9 +103,9 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, img
 		}
 
 		command := srv.GetCopyCommand(ctx, elm)
-		img.Container().AddServiceRunCommands(command)
+		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().AddServiceRunCommands(command)
 
-		imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
+		imageServiceCommitChangeOptions := stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
 		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
 
@@ -123,7 +122,7 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, img
 	}
 
 	for _, dep := range s.dependencies {
-		depImageServiceOptions := img.Container().ServiceCommitChangeOptions()
+		depImageServiceOptions := stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
 		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
 		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)

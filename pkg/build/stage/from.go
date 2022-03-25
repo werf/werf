@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/util"
@@ -47,7 +46,7 @@ type FromStage struct {
 	cacheVersion                 string
 }
 
-func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ container_runtime.LegacyImageInterface) (string, error) {
+func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ *StageImage) (string, error) {
 	var args []string
 
 	if s.cacheVersion != "" {
@@ -65,20 +64,20 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ 
 	if s.fromImageOrArtifactImageName != "" {
 		args = append(args, c.GetImageContentDigest(s.fromImageOrArtifactImageName))
 	} else {
-		args = append(args, prevImage.Name())
+		args = append(args, prevImage.Image.Name())
 	}
 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
-	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
+func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
+	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
-	s.addServiceMountsLabels(serviceMounts, image)
+	s.addServiceMountsLabels(serviceMounts, stageImage)
 
 	customMounts := s.getCustomMounts(prevBuiltImage)
-	s.addCustomMountLabels(customMounts, image)
+	s.addCustomMountLabels(customMounts, stageImage)
 
 	var mountpoints []string
 	for _, mountCfg := range s.configMounts {
@@ -86,7 +85,7 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage
 	}
 	if len(mountpoints) != 0 {
 		mountpointsStr := strings.Join(mountpoints, " ")
-		image.Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", stapel.RmBinPath(), mountpointsStr))
+		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", stapel.RmBinPath(), mountpointsStr))
 	}
 
 	return nil
