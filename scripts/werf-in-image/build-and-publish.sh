@@ -4,7 +4,7 @@ set -euo pipefail
 script_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd $script_dir
 
-export WERF_REPO=registry-write.werf.io/werf/werf-storage
+export WERF_REPO=ghcr.io/werf/werf-storage
 werf build
 
 for dest_repo in "ghcr.io/werf" "registry-write.werf.io/werf"; do
