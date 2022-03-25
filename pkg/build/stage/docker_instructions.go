@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -30,7 +29,7 @@ type DockerInstructionsStage struct {
 	instructions *config.Docker
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ context.Context, _ Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
+func (s *DockerInstructionsStage) GetDependencies(_ context.Context, _ Conveyor, _, _ *StageImage) (string, error) {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)
@@ -60,12 +59,12 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 	return
 }
 
-func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
-	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
+func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
+	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
-	imageCommitChangeOptions := image.Container().CommitChangeOptions()
+	imageCommitChangeOptions := stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().CommitChangeOptions()
 	imageCommitChangeOptions.AddVolume(s.instructions.Volume...)
 	imageCommitChangeOptions.AddExpose(s.instructions.Expose...)
 	imageCommitChangeOptions.AddEnv(s.instructions.Env)

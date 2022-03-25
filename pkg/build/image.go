@@ -38,7 +38,7 @@ type Image struct {
 
 	baseImageType    BaseImageType
 	stageAsBaseImage stage.Interface
-	baseImage        *container_runtime.LegacyStageImage
+	baseImage        *stage.StageImage
 }
 
 func (i *Image) LogName() string {
@@ -111,7 +111,7 @@ func (i *Image) GetStage(name stage.StageName) stage.Interface {
 }
 
 func (i *Image) GetStageID() string {
-	return i.GetLastNonEmptyStage().GetImage().GetStageDescription().Info.Tag
+	return i.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().Info.Tag
 }
 
 func (i *Image) GetName() string {
@@ -126,14 +126,14 @@ func (i *Image) SetupBaseImage(c *Conveyor) {
 	if i.baseImageImageName != "" {
 		i.baseImageType = StageAsBaseImage
 		i.stageAsBaseImage = c.GetImage(i.baseImageImageName).GetLastNonEmptyStage()
-		i.baseImage = c.GetOrCreateStageImage(nil, i.stageAsBaseImage.GetImage().Name())
+		i.baseImage = c.GetOrCreateStageImage(nil, i.stageAsBaseImage.GetStageImage().Image.Name())
 	} else {
 		i.baseImageType = ImageFromRegistryAsBaseImage
 		i.baseImage = c.GetOrCreateStageImage(nil, i.baseImageName)
 	}
 }
 
-func (i *Image) GetBaseImage() *container_runtime.LegacyStageImage {
+func (i *Image) GetBaseImage() *stage.StageImage {
 	return i.baseImage
 }
 
@@ -142,20 +142,20 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 	case ImageFromRegistryAsBaseImage:
 		containerRuntime := c.ContainerRuntime
 
-		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name(), container_runtime.GetImageInfoOpts{}); err != nil {
-			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
+		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Image.Name(), container_runtime.GetImageInfoOpts{}); err != nil {
+			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Image.Name(), err)
 		} else if info != nil {
 			// TODO: do not use container_runtime.LegacyStageImage for base image
-			i.baseImage.SetStageDescription(&image.StageDescription{
+			i.baseImage.Image.SetStageDescription(&image.StageDescription{
 				StageID: nil, // this is not a stage actually, TODO
 				Info:    info,
 			})
 
-			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, c, i.baseImage.Name())
+			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, c, i.baseImage.Image.Name())
 			if baseImageRepoId == info.ID || err != nil {
 				if err != nil {
-					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Name(), err)
-					logboek.Context(ctx).Warn().LogF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Image.Name(), err)
+					logboek.Context(ctx).Warn().LogF("WARNING: using existing image %s without pull\n", i.baseImage.Image.Name())
 					logboek.Context(ctx).Warn().LogOptionalLn()
 				}
 
@@ -163,26 +163,26 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 			}
 		}
 
-		if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseImage.Name()).
+		if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseImage.Image.Name()).
 			Options(func(options types.LogProcessOptionsInterface) {
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
-				return c.ContainerRuntime.PullImageFromRegistry(ctx, i.baseImage)
+				return c.ContainerRuntime.PullImageFromRegistry(ctx, i.baseImage.Image)
 			}); err != nil {
 			return err
 		}
 
-		info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Name(), container_runtime.GetImageInfoOpts{})
+		info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Image.Name(), container_runtime.GetImageInfoOpts{})
 		if err != nil {
-			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Name(), err)
+			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Image.Name(), err)
 		}
 
 		if info == nil {
-			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Name())
+			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Image.Name())
 		}
 
-		i.baseImage.SetStageDescription(&image.StageDescription{
+		i.baseImage.Image.SetStageDescription(&image.StageDescription{
 			StageID: nil, // this is not a stage actually, TODO
 			Info:    info,
 		})

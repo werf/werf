@@ -15,6 +15,7 @@ var _ = Describe("DependenciesStage", func() {
 			ctx := context.Background()
 
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")), data.Dependencies)
+			containerRuntime := NewContainerRuntimeMock()
 
 			stage := newDependenciesStage(nil, GetConfigDependencies(data.Dependencies), "example-stage", &NewBaseStageOptions{
 				ImageName:   "example-image",
@@ -22,12 +23,13 @@ var _ = Describe("DependenciesStage", func() {
 			})
 
 			img := NewLegacyImageStub()
+			stageImage := NewStageImage(containerRuntime, img)
 
-			digest, err := stage.GetDependencies(ctx, conveyor, nil, img)
+			digest, err := stage.GetDependencies(ctx, conveyor, nil, stageImage)
 			Expect(err).To(Succeed())
 			Expect(digest).To(Equal(data.ExpectedDigest))
 
-			err = stage.PrepareImage(ctx, conveyor, nil, img)
+			err = stage.PrepareImage(ctx, conveyor, nil, stageImage)
 			Expect(err).To(Succeed())
 			CheckImageDependenciesAfterPrepare(img, data.Dependencies)
 		},

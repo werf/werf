@@ -127,6 +127,7 @@ var _ = Describe("GitMapping", func() {
 		func(data BaseCommitForPrevBuiltImageCheckData, checkResultFunc func(string, BaseCommitForPrevBuiltImageCheckData)) {
 			ctx := context.Background()
 			c := NewConveyorStub(stage.VirtualMergeOptions{VirtualMerge: data.IsCurrentCommitVirtualMerge})
+			containerRuntime := stage.NewContainerRuntimeMock()
 
 			gitRepo := NewGitRepoStub("own", true, data.CurrentCommit)
 			gitMapping.SetGitRepo(gitRepo)
@@ -141,8 +142,9 @@ var _ = Describe("GitMapping", func() {
 					},
 				},
 			})
+			img := stage.NewStageImage(containerRuntime, prevBuiltImage)
 
-			baseCommit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
+			baseCommit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, img)
 			Expect(err).To(Succeed())
 
 			checkResultFunc(baseCommit, data)

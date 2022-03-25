@@ -16,6 +16,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/context_manager"
@@ -410,7 +411,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 
 var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
-func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
+func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ *StageImage) (string, error) {
 	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
@@ -681,22 +682,22 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, img container_runtime.LegacyImageInterface) error {
+func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, stageImage *StageImage) error {
 	archivePath, err := s.prepareContextArchive(ctx, c.GiterminismManager())
 	if err != nil {
 		return err
 	}
 
-	if err := s.SetupDockerImageBuilder(img.DockerfileImageBuilder(), c); err != nil {
+	if err := s.SetupDockerImageBuilder(stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder(), c); err != nil {
 		return err
 	}
 
-	img.DockerfileImageBuilder().SetContextArchivePath(archivePath)
+	stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder().SetContextArchivePath(archivePath)
 
-	img.DockerfileImageBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
+	stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
 
 	if c.GiterminismManager().Dev() {
-		img.DockerfileImageBuilder().AppendLabels(fmt.Sprintf("%s=true", image.WerfDevLabel))
+		stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder().AppendLabels(fmt.Sprintf("%s=true", image.WerfDevLabel))
 	}
 
 	return nil
@@ -737,7 +738,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	return archivePath, nil
 }
 
-func (s *DockerfileStage) SetupDockerImageBuilder(b *container_runtime.DockerfileImageBuilder, c Conveyor) error {
+func (s *DockerfileStage) SetupDockerImageBuilder(b builder.NativeDockerfileStageBuilder, c Conveyor) error {
 	b.SetDockerfile(s.dockerfile)
 	b.SetDockerfileCtxRelPath(s.dockerfilePath)
 

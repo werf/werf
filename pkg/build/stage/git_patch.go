@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
 )
 
@@ -35,7 +34,7 @@ type GitPatchStage struct {
 	ContainerScriptsDir  string
 }
 
-func (s *GitPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error) {
+func (s *GitPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {
 	if empty, err := s.GitStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return false, err
 	} else if empty {
@@ -45,7 +44,7 @@ func (s *GitPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage 
 	return s.hasPrevBuiltStageHadActualGitMappings(ctx, c, prevBuiltImage)
 }
 
-func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error) {
+func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
 		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 		if err != nil {
@@ -65,28 +64,28 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Contex
 	return true, nil
 }
 
-func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
-	if err := s.GitStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
+func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
+	if err := s.GitStage.PrepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
-	if err := s.prepareImage(ctx, c, prevBuiltImage, image); err != nil {
+	if err := s.prepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
+func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
 	for _, gitMapping := range s.gitMappings {
-		if err := gitMapping.ApplyPatchCommand(ctx, c, prevBuiltImage, image); err != nil {
+		if err := gitMapping.ApplyPatchCommand(ctx, c, prevBuiltImage, stageImage); err != nil {
 			return err
 		}
 	}
 
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetPatchesCacheDir(), s.ContainerPatchesDir))
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
+	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetPatchesCacheDir(), s.ContainerPatchesDir))
+	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
+	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 
 	return nil
 }

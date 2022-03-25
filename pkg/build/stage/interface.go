@@ -12,13 +12,13 @@ type Interface interface {
 	Name() StageName
 	LogDetailedName() string
 
-	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage container_runtime.LegacyImageInterface) (bool, error)
+	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error)
 
 	FetchDependencies(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, dockerRegistry docker_registry.ApiInterface) error
-	GetDependencies(ctx context.Context, c Conveyor, prevImage container_runtime.LegacyImageInterface, prevBuiltImage container_runtime.LegacyImageInterface) (string, error)
+	GetDependencies(ctx context.Context, c Conveyor, prevImage *StageImage, prevBuiltImage *StageImage) (string, error)
 	GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error)
 
-	PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error
+	PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error
 
 	PreRunHook(context.Context, Conveyor) error
 
@@ -28,8 +28,8 @@ type Interface interface {
 	SetContentDigest(contentDigest string)
 	GetContentDigest() string
 
-	SetImage(container_runtime.LegacyImageInterface)
-	GetImage() container_runtime.LegacyImageInterface
+	SetStageImage(*StageImage)
+	GetStageImage() *StageImage
 
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping

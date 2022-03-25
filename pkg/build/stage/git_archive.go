@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
@@ -47,7 +46,7 @@ func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, s
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
-func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ container_runtime.LegacyImageInterface) (string, error) {
+func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ *StageImage) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		if gitMapping.IsLocal() {
@@ -68,24 +67,24 @@ func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Convey
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, image container_runtime.LegacyImageInterface) error {
-	if err := s.GitStage.PrepareImage(ctx, c, prevBuiltImage, image); err != nil {
+func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
+	if err := s.GitStage.PrepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
 	for _, gitMapping := range s.gitMappings {
-		if err := gitMapping.ApplyArchiveCommand(ctx, c, image); err != nil {
+		if err := gitMapping.ApplyArchiveCommand(ctx, c, stageImage); err != nil {
 			return err
 		}
 	}
 
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
+	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
+	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 
 	return nil
 }
 
-func (s *GitArchiveStage) IsEmpty(ctx context.Context, c Conveyor, img container_runtime.LegacyImageInterface) (bool, error) {
+func (s *GitArchiveStage) IsEmpty(ctx context.Context, c Conveyor, stageImage *StageImage) (bool, error) {
 	for _, gitMapping := range s.gitMappings {
 		isGitMappingEmpty, err := gitMapping.isEmpty(ctx, c)
 		if err != nil {
@@ -96,5 +95,5 @@ func (s *GitArchiveStage) IsEmpty(ctx context.Context, c Conveyor, img container
 		}
 	}
 
-	return s.GitStage.IsEmpty(ctx, c, img)
+	return s.GitStage.IsEmpty(ctx, c, stageImage)
 }

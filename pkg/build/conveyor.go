@@ -52,7 +52,7 @@ type Conveyor struct {
 	images    []*Image
 	imageSets [][]*Image
 
-	stageImages        map[string]*container_runtime.LegacyStageImage
+	stageImages        map[string]*stage.StageImage
 	giterminismManager giterminism_manager.Interface
 	remoteGitRepos     map[string]*git_repo.Remote
 
@@ -92,7 +92,7 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 
 		giterminismManager: giterminismManager,
 
-		stageImages:            make(map[string]*container_runtime.LegacyStageImage),
+		stageImages:            make(map[string]*stage.StageImage),
 		baseImagesRepoIdsCache: make(map[string]string),
 		baseImagesRepoErrCache: make(map[string]error),
 		images:                 []*Image{},
@@ -209,7 +209,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, imageName, stageName str
 	}
 
 	if err := c.StorageManager.FetchStage(ctx, c.ContainerRuntime, stg); err != nil {
-		return nil, fmt.Errorf("unable to fetch stage %s: %s", stg.GetImage().Name(), err)
+		return nil, fmt.Errorf("unable to fetch stage %s: %s", stg.GetStageImage().Image.Name(), err)
 	}
 
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName)).
@@ -661,7 +661,7 @@ func (c *Conveyor) projectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) GetStageImage(name string) *container_runtime.LegacyStageImage {
+func (c *Conveyor) GetStageImage(name string) *stage.StageImage {
 	c.getServiceRWMutex("StageImages").RLock()
 	defer c.getServiceRWMutex("StageImages").RUnlock()
 
@@ -675,19 +675,21 @@ func (c *Conveyor) UnsetStageImage(name string) {
 	delete(c.stageImages, name)
 }
 
-func (c *Conveyor) SetStageImage(stageImage *container_runtime.LegacyStageImage) {
+func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
 	c.getServiceRWMutex("StageImages").Lock()
 	defer c.getServiceRWMutex("StageImages").Unlock()
 
-	c.stageImages[stageImage.Name()] = stageImage
+	c.stageImages[stageImage.Image.Name()] = stageImage
 }
 
-func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.LegacyStageImage, name string) *container_runtime.LegacyStageImage {
+func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.LegacyStageImage, name string) *stage.StageImage {
 	if img := c.GetStageImage(name); img != nil {
 		return img
 	}
 
-	img := container_runtime.NewLegacyStageImage(fromImage, name, c.ContainerRuntime)
+	i := container_runtime.NewLegacyStageImage(fromImage, name, c.ContainerRuntime)
+	img := stage.NewStageImage(c.ContainerRuntime, i)
+
 	c.SetStageImage(img)
 	return img
 }
@@ -732,11 +734,11 @@ func (c *Conveyor) FetchLastNonEmptyImageStage(ctx context.Context, imageName st
 }
 
 func (c *Conveyor) GetImageNameForLastImageStage(imageName string) string {
-	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().Name()
+	return c.GetImage(imageName).GetLastNonEmptyStage().GetStageImage().Image.Name()
 }
 
 func (c *Conveyor) GetImageNameForImageStage(imageName, stageName string) string {
-	return c.getImageStage(imageName, stageName).GetImage().Name()
+	return c.getImageStage(imageName, stageName).GetStageImage().Image.Name()
 }
 
 func (c *Conveyor) GetStageID(imageName string) string {
@@ -744,11 +746,11 @@ func (c *Conveyor) GetStageID(imageName string) string {
 }
 
 func (c *Conveyor) GetImageIDForLastImageStage(imageName string) string {
-	return c.GetImage(imageName).GetLastNonEmptyStage().GetImage().GetStageDescription().Info.ID
+	return c.GetImage(imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().Info.ID
 }
 
 func (c *Conveyor) GetImageIDForImageStage(imageName, stageName string) string {
-	return c.getImageStage(imageName, stageName).GetImage().GetStageDescription().Info.ID
+	return c.getImageStage(imageName, stageName).GetStageImage().Image.GetStageDescription().Info.ID
 }
 
 func (c *Conveyor) GetImageTmpDir(imageName string) string {

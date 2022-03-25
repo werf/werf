@@ -47,9 +47,8 @@ func (i *LegacyStageImage) GetID() string {
 
 func (i *LegacyStageImage) Build(ctx context.Context, options LegacyBuildOptions) error {
 	if i.dockerfileImageBuilder != nil {
-		if err := i.dockerfileImageBuilder.Build(ctx); err != nil {
-			return err
-		}
+		// FIXME(stapel-to-buildah): get rid of this if branch
+		panic("internal error")
 	} else {
 		containerLockName := ContainerLockName(i.container.Name())
 		if _, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
@@ -179,6 +178,7 @@ func (i *LegacyStageImage) MustGetBuiltId() string {
 func (i *LegacyStageImage) GetBuiltId() string {
 	switch {
 	case i.dockerfileImageBuilder != nil:
+		// FIXME(stapel-to-buildah): get rid of GetBuiltID in this image object, or set explicitly externally from conveyor
 		return i.dockerfileImageBuilder.GetBuiltId()
 	case i.buildImage != nil:
 		return i.buildImage.Name()
@@ -217,6 +217,7 @@ func (i *LegacyStageImage) Push(ctx context.Context) error {
 	return docker.CliPushWithRetries(ctx, i.name)
 }
 
+// FIXME(stapel-to-buildah): get rid of DockerfileImageBuilder in this image object
 func (i *LegacyStageImage) DockerfileImageBuilder() *DockerfileImageBuilder {
 	if i.dockerfileImageBuilder == nil {
 		i.dockerfileImageBuilder = NewDockerfileImageBuilder(i.ContainerRuntime) // TODO: Possibly need to change DockerServerRuntime to abstract ContainerRuntime
