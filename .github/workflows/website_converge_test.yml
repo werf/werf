@@ -5,7 +5,7 @@ on:
 
 env:
   WERF_SET_ACTIVE_RELEASE: "global.active_release=1.2"
-  WERF_REPO: ${{ secrets.WERF_REGISTRY_SERVER }}
+  WERF_REPO: ${{ secrets.WERF_REGISTRY_SERVER }}/werf/werfio
 
 jobs:
 
