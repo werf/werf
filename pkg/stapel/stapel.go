@@ -14,7 +14,7 @@ import (
 
 const (
 	VERSION = "0.6.2"
-	IMAGE   = "ghcr.io/werf/stapel"
+	IMAGE   = "registry.werf.io/werf/stapel"
 )
 
 func getVersion() string {

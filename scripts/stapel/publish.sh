@@ -9,8 +9,8 @@ fi
 
 VERSION=$1
 
-#docker tag ghcr.io/werf/stapel-base:dev ghcr.io/werf/stapel-base:$VERSION
-#docker push ghcr.io/werf/stapel-base:$VERSION
+#docker tag registry-write.werf.io/werf/stapel-base:dev registry-write.werf.io/werf/stapel-base:$VERSION
+#docker push registry-write.werf.io/werf/stapel-base:$VERSION
 
-docker tag ghcr.io/werf/stapel:dev ghcr.io/werf/stapel:$VERSION
-docker push ghcr.io/werf/stapel:$VERSION
+docker tag registry-write.werf.io/werf/stapel:dev registry-write.werf.io/werf/stapel:$VERSION
+docker push registry-write.werf.io/werf/stapel:$VERSION
