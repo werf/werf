@@ -28,19 +28,11 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Login to werf registry
-      uses: docker/login-action@v1
-      with:
-        registry: ${{ secrets.WERF_REGISTRY_SERVER }}
-        username: ${{ secrets.WERF_REGISTRY_USERNAME }}
-        password: ${{ secrets.WERF_REGISTRY_PASSWORD }}
-
     - name: Converge
       uses: werf/actions/converge@v1.2
       with:
         env: production
       env:
-        WERF_REPO: ${{ secrets.WERF_REGISTRY_SERVER }}/werf/werfio
         WERF_NAMESPACE: "werfio-production"
         WERF_KUBE_CONTEXT: prod
         WERF_DIR: "ci"
