@@ -66,7 +66,7 @@ stages:
 
 Build and deploy application:
   stage: build-and-deploy
-  image: ghcr.io/werf/werf
+  image: registry.werf.io/werf/werf
   script:
     - source $(werf ci-env gitlab --as-file)
     - werf converge

@@ -9,7 +9,7 @@ permalink: advanced/ci_cd/run_in_container/use_docker_container.html
 
 > NOTICE: For now, only the Dockerfile image builder is available for this type of builds. The Stapel image builder will be available soon.
 
-There is an official image with werf 1.2 for this method (1.1 is not supported): `ghcr.io/werf/werf`.
+There is an official image with werf 1.2 for this method (1.1 is not supported): `registry.werf.io/werf/werf`.
 
 Make sure you meet all [system requirements]({{ "advanced/buildah_mode.html#system-requirements" | true_relative_url }}) and select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}).
 
@@ -20,7 +20,7 @@ In this case, you only need to disable the seccomp and AppArmor profiles. Below 
 ```shell
 docker run \
     --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
-    ghcr.io/werf/werf:latest WERF_COMMAND
+    registry.werf.io/werf/werf:latest WERF_COMMAND
 ```
 
 ### Linux kernel without rootless OverlayFS and privileged container
@@ -30,7 +30,7 @@ In this case, just use the privileged container. Below is an example of a comman
 ```shell
 docker run \
     --privileged \
-    ghcr.io/werf/werf:latest WERF_COMMAND
+    registry.werf.io/werf/werf:latest WERF_COMMAND
 ```
 
 ### Linux kernel without rootless OverlayFS and non-privileged container
@@ -41,7 +41,7 @@ In this case, disable the seccomp and AppArmor profiles and enable `/dev/fuse` i
 docker run \
     --device /dev/fuse \
     --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
-    ghcr.io/werf/werf:latest WERF_COMMAND
+    registry.werf.io/werf/werf:latest WERF_COMMAND
 ```
 
 ## Build images with the Docker server (not recommended)

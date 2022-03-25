@@ -134,7 +134,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: werf-converge
-    image: ghcr.io/werf/werf
+    image: registry.werf.io/werf/werf
     args:
       - "sh"
       - "-ec"
@@ -182,7 +182,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: werf-converge
-    image: ghcr.io/werf/werf
+    image: registry.werf.io/werf/werf
     securityContext:
       privileged: true
     args:
@@ -234,7 +234,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: werf-converge
-    image: ghcr.io/werf/werf
+    image: registry.werf.io/werf/werf
     resources:
       limits:
         github.com/fuse: 1

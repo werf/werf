@@ -9,7 +9,7 @@ permalink: advanced/ci_cd/run_in_container/use_docker_container.html
 
 > ВНИМАНИЕ: Пока для этого типа сборки доступен только сборщик образов на основе Dockerfile'ов. Сборщик Stapel будет доступен через некоторое время.
 
-Для этого метода доступен официальный образ с werf 1.2 (1.1 не поддерживается): `ghcr.io/werf/werf`.
+Для этого метода доступен официальный образ с werf 1.2 (1.1 не поддерживается): `registry.werf.io/werf/werf`.
 
 Убедитесь, что удовлетворены [системные требования]({{ "advanced/buildah_mode.html#системные-требования" | true_relative_url }}) и выберите один из [доступных режимов работы]({{ "advanced/ci_cd/run_in_container/how_it_works.html#режимы-работы" | true_relative_url }}) и перейдите к нему.
 
@@ -20,7 +20,7 @@ permalink: advanced/ci_cd/run_in_container/use_docker_container.html
 ```shell
 docker run \
     --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
-    ghcr.io/werf/werf:latest WERF_COMMAND
+    registry.werf.io/werf/werf:latest WERF_COMMAND
 ```
 
 ### Ядро Linux без поддержки OverlayFS в режиме rootless и использование привилегированного контейнера
@@ -30,7 +30,7 @@ docker run \
 ```shell
 docker run \
     --privileged \
-    ghcr.io/werf/werf:latest WERF_COMMAND
+    registry.werf.io/werf/werf:latest WERF_COMMAND
 ```
 
 ### Ядро Linux без поддержки OverlayFS в режиме rootless и использование непривилегированного контейнера
@@ -41,7 +41,7 @@ docker run \
 docker run \
     --device /dev/fuse \
     --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
-    ghcr.io/werf/werf:latest WERF_COMMAND
+    registry.werf.io/werf/werf:latest WERF_COMMAND
 ```
 
 ## Сборка образов с помощью Docker-сервера (не рекомендуется)
