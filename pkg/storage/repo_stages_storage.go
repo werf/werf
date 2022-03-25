@@ -477,10 +477,11 @@ func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_
 	return nil
 }
 
+// FIXME(stapel-to-buildah): use ImageInterface instead of LegacyImageInterface
 func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
-	if img.GetBuiltId() != "" {
-		if err := storage.ContainerRuntime.Tag(ctx, img.GetBuiltId(), img.Name(), container_runtime.TagOpts{}); err != nil {
-			return fmt.Errorf("unable to tag built image %q by %q: %s", img.GetBuiltId(), img.Name(), err)
+	if img.GetBuiltID() != "" {
+		if err := storage.ContainerRuntime.Tag(ctx, img.GetBuiltID(), img.Name(), container_runtime.TagOpts{}); err != nil {
+			return fmt.Errorf("unable to tag built image %q by %q: %s", img.GetBuiltID(), img.Name(), err)
 		}
 	}
 

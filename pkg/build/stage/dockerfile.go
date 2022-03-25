@@ -738,7 +738,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	return archivePath, nil
 }
 
-func (s *DockerfileStage) SetupDockerImageBuilder(b builder.NativeDockerfileStageBuilder, c Conveyor) error {
+func (s *DockerfileStage) SetupDockerImageBuilder(b builder.NativeDockerfileStageBuilderInterface, c Conveyor) error {
 	b.SetDockerfile(s.dockerfile)
 	b.SetDockerfileCtxRelPath(s.dockerfilePath)
 

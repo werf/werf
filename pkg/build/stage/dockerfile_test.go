@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/build/dockerfile_helpers"
 	"github.com/werf/werf/pkg/util"
 )
@@ -71,7 +72,11 @@ var _ = Describe("DockerfileStage", func() {
 			stage := newTestDockerfileStage(data.Dockerfile, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies)
 
 			img := NewLegacyImageStub()
-			stageImage := NewStageImage(containerRuntime, img)
+			stageBuilderAccessor := builder.NewStageBuilderAccessor(containerRuntime, img)
+			stageImage := &StageImage{
+				Image:                img,
+				StageBuilderAccessor: stageBuilderAccessor,
+			}
 
 			digest, err := stage.GetDependencies(ctx, conveyor, nil, stageImage)
 			Expect(err).To(Succeed())
@@ -79,7 +84,7 @@ var _ = Describe("DockerfileStage", func() {
 
 			err = stage.PrepareImage(ctx, conveyor, nil, stageImage)
 			Expect(err).To(Succeed())
-			CheckDockerfileImageDependenciesAfterPrepare(img, data.TestDependencies.Dependencies)
+			CheckImageDependenciesAfterPrepare(img, stageBuilderAccessor, data.TestDependencies.Dependencies)
 		},
 
 		Entry("should calculate dockerfile stage digest when no dependencies are set",
@@ -306,22 +311,4 @@ type TestDockerfileDependencies struct {
 	BuildArgs  map[string]interface{}
 
 	TestDependencies *TestDependencies
-}
-
-func CheckDockerfileImageDependenciesAfterPrepare(img *LegacyImageStub, dependencies []*TestDependency) {
-	for _, dep := range dependencies {
-		if dep.TargetEnvImageName != "" {
-			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageName]).To(Equal(dep.GetDockerImageName()))
-		}
-		if dep.TargetEnvImageRepo != "" {
-			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageRepo]).To(Equal(dep.DockerImageRepo))
-		}
-		if dep.TargetEnvImageTag != "" {
-			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageTag]).To(Equal(dep.DockerImageTag))
-		}
-		if dep.TargetEnvImageID != "" {
-			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageID]).To(Equal(dep.DockerImageID))
-		}
-
-	}
 }

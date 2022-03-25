@@ -16,8 +16,7 @@ import (
 type LegacyImageStub struct {
 	container_runtime.LegacyImageInterface
 
-	_Container              *LegacyContainerStub
-	_DockerfileImageBuilder *container_runtime.DockerfileImageBuilder
+	_Container *LegacyContainerStub
 }
 
 func NewLegacyImageStub() *LegacyImageStub {
@@ -28,13 +27,6 @@ func NewLegacyImageStub() *LegacyImageStub {
 
 func (img *LegacyImageStub) Container() container_runtime.LegacyContainer {
 	return img._Container
-}
-
-func (img *LegacyImageStub) DockerfileImageBuilder() *container_runtime.DockerfileImageBuilder {
-	if img._DockerfileImageBuilder == nil {
-		img._DockerfileImageBuilder = container_runtime.NewDockerfileImageBuilder(nil)
-	}
-	return img._DockerfileImageBuilder
 }
 
 type LegacyContainerStub struct {

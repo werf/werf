@@ -22,10 +22,10 @@ type LegacyImageInterface interface {
 	// TODO: should be under a single separate interface
 	Container() LegacyContainer
 	BuilderContainer() LegacyBuilderContainer
-	DockerfileImageBuilder() *DockerfileImageBuilder
 
 	Build(context.Context, LegacyBuildOptions) error
-	GetBuiltId() string
+	SetBuiltID(builtID string)
+	GetBuiltID() string
 	TagBuiltImage(ctx context.Context) error
 
 	Introspect(ctx context.Context) error
