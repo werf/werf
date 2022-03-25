@@ -26,7 +26,7 @@ Enable werf sidecar plugin:
         ...
         spec:
           containers:
-          - image: ghcr.io/werf/werf-argocd-cmp-sidecar:1.2-alpha
+          - image: registry.werf.io/werf/werf-argocd-cmp-sidecar:1.2-alpha
             imagePullPolicy: Always
             name: werf-argocd-cmp-sidecar
             volumeMounts:
