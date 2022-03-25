@@ -34,27 +34,27 @@ permalink: advanced/ci_cd/run_in_container/how_it_works.html
 
 Ниже приведен список образов со встроенной утилитой werf. Каждый образ обновляется в рамках релизного процесса, основанного на менеджере пакетов trdl ([подробнее о каналах обновлений]({{ site.url }}/about/release_channels.html)).
 
-* `ghcr.io/werf/werf:latest` -> `ghcr.io/werf/werf:1.2-stable`;
-* `ghcr.io/werf/werf:1.2-alpha` -> `ghcr.io/werf/werf:1.2-alpha-alpine`;
-* `ghcr.io/werf/werf:1.2-beta` -> `ghcr.io/werf/werf:1.2-beta-alpine`;
-* `ghcr.io/werf/werf:1.2-ea` -> `ghcr.io/werf/werf:1.2-ea-alpine`;
-* `ghcr.io/werf/werf:1.2-stable` -> `ghcr.io/werf/werf:1.2-stable-alpine`;
-* `ghcr.io/werf/werf:1.2-alpha-alpine`;
-* `ghcr.io/werf/werf:1.2-beta-alpine`;
-* `ghcr.io/werf/werf:1.2-ea-alpine`;
-* `ghcr.io/werf/werf:1.2-stable-alpine`;
-* `ghcr.io/werf/werf:1.2-alpha-ubuntu`;
-* `ghcr.io/werf/werf:1.2-beta-ubuntu`;
-* `ghcr.io/werf/werf:1.2-ea-ubuntu`;
-* `ghcr.io/werf/werf:1.2-stable-ubuntu`;
-* `ghcr.io/werf/werf:1.2-alpha-centos`;
-* `ghcr.io/werf/werf:1.2-beta-centos`;
-* `ghcr.io/werf/werf:1.2-ea-centos`;
-* `ghcr.io/werf/werf:1.2-stable-centos`;
-* `ghcr.io/werf/werf:1.2-alpha-fedora`;
-* `ghcr.io/werf/werf:1.2-beta-fedora`;
-* `ghcr.io/werf/werf:1.2-ea-fedora`;
-* `ghcr.io/werf/werf:1.2-stable-fedora`.
+* `registry.werf.io/werf/werf:latest` -> `registry.werf.io/werf/werf:1.2-stable`;
+* `registry.werf.io/werf/werf:1.2-alpha` -> `registry.werf.io/werf/werf:1.2-alpha-alpine`;
+* `registry.werf.io/werf/werf:1.2-beta` -> `registry.werf.io/werf/werf:1.2-beta-alpine`;
+* `registry.werf.io/werf/werf:1.2-ea` -> `registry.werf.io/werf/werf:1.2-ea-alpine`;
+* `registry.werf.io/werf/werf:1.2-stable` -> `registry.werf.io/werf/werf:1.2-stable-alpine`;
+* `registry.werf.io/werf/werf:1.2-alpha-alpine`;
+* `registry.werf.io/werf/werf:1.2-beta-alpine`;
+* `registry.werf.io/werf/werf:1.2-ea-alpine`;
+* `registry.werf.io/werf/werf:1.2-stable-alpine`;
+* `registry.werf.io/werf/werf:1.2-alpha-ubuntu`;
+* `registry.werf.io/werf/werf:1.2-beta-ubuntu`;
+* `registry.werf.io/werf/werf:1.2-ea-ubuntu`;
+* `registry.werf.io/werf/werf:1.2-stable-ubuntu`;
+* `registry.werf.io/werf/werf:1.2-alpha-centos`;
+* `registry.werf.io/werf/werf:1.2-beta-centos`;
+* `registry.werf.io/werf/werf:1.2-ea-centos`;
+* `registry.werf.io/werf/werf:1.2-stable-centos`;
+* `registry.werf.io/werf/werf:1.2-alpha-fedora`;
+* `registry.werf.io/werf/werf:1.2-beta-fedora`;
+* `registry.werf.io/werf/werf:1.2-ea-fedora`;
+* `registry.werf.io/werf/werf:1.2-stable-fedora`.
 
 ## Устранение проблем
 
