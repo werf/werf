@@ -666,7 +666,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 		}
 	}
 
-	err := stg.PrepareImage(ctx, phase.Conveyor, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)
+	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerRuntime, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)
 	if err != nil {
 		return fmt.Errorf("error preparing stage %s: %s", stg.Name(), err)
 	}

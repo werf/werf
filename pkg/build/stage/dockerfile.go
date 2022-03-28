@@ -682,7 +682,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, _, stageImage *StageImage) error {
+func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, _, stageImage *StageImage) error {
 	archivePath, err := s.prepareContextArchive(ctx, c.GiterminismManager())
 	if err != nil {
 		return err

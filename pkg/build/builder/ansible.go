@@ -16,6 +16,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/util"
 )
@@ -43,20 +44,20 @@ func (b *Ansible) IsBeforeSetupEmpty(ctx context.Context) bool {
 }
 func (b *Ansible) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Setup") }
 
-func (b *Ansible) BeforeInstall(ctx context.Context, container Container) error {
-	return b.stage(ctx, "BeforeInstall", container)
+func (b *Ansible) BeforeInstall(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
+	return b.stage(ctx, cr, stageBuilder, "BeforeInstall")
 }
 
-func (b *Ansible) Install(ctx context.Context, container Container) error {
-	return b.stage(ctx, "Install", container)
+func (b *Ansible) Install(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
+	return b.stage(ctx, cr, stageBuilder, "Install")
 }
 
-func (b *Ansible) BeforeSetup(ctx context.Context, container Container) error {
-	return b.stage(ctx, "BeforeSetup", container)
+func (b *Ansible) BeforeSetup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
+	return b.stage(ctx, cr, stageBuilder, "BeforeSetup")
 }
 
-func (b *Ansible) Setup(ctx context.Context, container Container) error {
-	return b.stage(ctx, "Setup", container)
+func (b *Ansible) Setup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
+	return b.stage(ctx, cr, stageBuilder, "Setup")
 }
 
 func (b *Ansible) BeforeInstallChecksum(ctx context.Context) string {
@@ -72,63 +73,70 @@ func (b *Ansible) isEmptyStage(ctx context.Context, userStageName string) bool {
 	return b.stageChecksum(ctx, userStageName) == ""
 }
 
-func (b *Ansible) stage(ctx context.Context, userStageName string, container Container) error {
-	if len(b.stageTasks(userStageName)) == 0 {
+func (b *Ansible) stage(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface, userStageName string) error {
+	if cr.HasContainerRootMountSupport() {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
+	} else {
+		container := stageBuilder.LegacyStapelStageBuilder().BuilderContainer()
+
+		if len(b.stageTasks(userStageName)) == 0 {
+			return nil
+		}
+
+		if err := b.createStageWorkDirStructure(userStageName); err != nil {
+			return err
+		}
+
+		container.AddEnv(
+			map[string]string{
+				"ANSIBLE_CONFIG":              path.Join(b.containerWorkDir(), "ansible.cfg"),
+				"WERF_DUMP_CONFIG_DOC_PATH":   path.Join(b.containerWorkDir(), "dump_config.json"),
+				"PYTHONIOENCODING":            "utf-8",
+				"ANSIBLE_PREPEND_SYSTEM_PATH": stapel.AnsibleToolsOverlayPATH(),
+				"ANSIBLE_APPEND_SYSTEM_PATH":  stapel.SystemPATH(),
+				"LD_LIBRARY_PATH":             stapel.AnsibleLibsOverlayLDPATH(),
+				"LANG":                        "C.UTF-8",
+				"LC_ALL":                      "C.UTF-8",
+				"LOGBOEK_SO_PATH":             "/.werf/stapel/embedded/lib/python2.7/_logboek.so",
+			},
+		)
+
+		stageHostWorkDir, err := b.stageHostWorkDir(userStageName)
+		if err != nil {
+			return err
+		}
+
+		stageHostTmpDir, err := b.stageHostTmpDir(userStageName)
+		if err != nil {
+			return err
+		}
+
+		container.AddVolume(
+			fmt.Sprintf("%s:%s:ro", stageHostWorkDir, b.containerWorkDir()),
+			fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
+		)
+
+		containerName, err := stapel.GetOrCreateContainer(ctx)
+		if err != nil {
+			return err
+		}
+		container.AddVolumeFrom(fmt.Sprintf("%s:ro", containerName))
+
+		commandParts := []string{
+			path.Join(b.containerWorkDir(), "ansible-playbook"),
+			path.Join(b.containerWorkDir(), "playbook.yml"),
+		}
+
+		if value, exist := os.LookupEnv("WERF_DEBUG_ANSIBLE_ARGS"); exist {
+			commandParts = append(commandParts, value)
+		}
+
+		command := strings.Join(commandParts, " ")
+		container.AddServiceRunCommands(command)
+
 		return nil
 	}
-
-	if err := b.createStageWorkDirStructure(userStageName); err != nil {
-		return err
-	}
-
-	container.AddEnv(
-		map[string]string{
-			"ANSIBLE_CONFIG":              path.Join(b.containerWorkDir(), "ansible.cfg"),
-			"WERF_DUMP_CONFIG_DOC_PATH":   path.Join(b.containerWorkDir(), "dump_config.json"),
-			"PYTHONIOENCODING":            "utf-8",
-			"ANSIBLE_PREPEND_SYSTEM_PATH": stapel.AnsibleToolsOverlayPATH(),
-			"ANSIBLE_APPEND_SYSTEM_PATH":  stapel.SystemPATH(),
-			"LD_LIBRARY_PATH":             stapel.AnsibleLibsOverlayLDPATH(),
-			"LANG":                        "C.UTF-8",
-			"LC_ALL":                      "C.UTF-8",
-			"LOGBOEK_SO_PATH":             "/.werf/stapel/embedded/lib/python2.7/_logboek.so",
-		},
-	)
-
-	stageHostWorkDir, err := b.stageHostWorkDir(userStageName)
-	if err != nil {
-		return err
-	}
-
-	stageHostTmpDir, err := b.stageHostTmpDir(userStageName)
-	if err != nil {
-		return err
-	}
-
-	container.AddVolume(
-		fmt.Sprintf("%s:%s:ro", stageHostWorkDir, b.containerWorkDir()),
-		fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
-	)
-
-	containerName, err := stapel.GetOrCreateContainer(ctx)
-	if err != nil {
-		return err
-	}
-	container.AddVolumeFrom(fmt.Sprintf("%s:ro", containerName))
-
-	commandParts := []string{
-		path.Join(b.containerWorkDir(), "ansible-playbook"),
-		path.Join(b.containerWorkDir(), "playbook.yml"),
-	}
-
-	if value, exist := os.LookupEnv("WERF_DEBUG_ANSIBLE_ARGS"); exist {
-		commandParts = append(commandParts, value)
-	}
-
-	command := strings.Join(commandParts, " ")
-	container.AddServiceRunCommands(command)
-
-	return nil
 }
 
 func (b *Ansible) stageChecksum(ctx context.Context, userStageName string) string {

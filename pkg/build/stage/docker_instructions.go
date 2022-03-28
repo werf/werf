@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -59,21 +60,26 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 	return
 }
 
-func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
-	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
+func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+	if err := s.BaseStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
-	imageCommitChangeOptions := stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().CommitChangeOptions()
-	imageCommitChangeOptions.AddVolume(s.instructions.Volume...)
-	imageCommitChangeOptions.AddExpose(s.instructions.Expose...)
-	imageCommitChangeOptions.AddEnv(s.instructions.Env)
-	imageCommitChangeOptions.AddLabel(s.instructions.Label)
-	imageCommitChangeOptions.AddCmd(s.instructions.Cmd)
-	imageCommitChangeOptions.AddEntrypoint(s.instructions.Entrypoint)
-	imageCommitChangeOptions.AddUser(s.instructions.User)
-	imageCommitChangeOptions.AddWorkdir(s.instructions.Workdir)
-	imageCommitChangeOptions.AddHealthCheck(s.instructions.HealthCheck)
+	if cr.HasContainerRootMountSupport() {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
+	} else {
+		imageCommitChangeOptions := stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().CommitChangeOptions()
+		imageCommitChangeOptions.AddVolume(s.instructions.Volume...)
+		imageCommitChangeOptions.AddExpose(s.instructions.Expose...)
+		imageCommitChangeOptions.AddEnv(s.instructions.Env)
+		imageCommitChangeOptions.AddLabel(s.instructions.Label)
+		imageCommitChangeOptions.AddCmd(s.instructions.Cmd)
+		imageCommitChangeOptions.AddEntrypoint(s.instructions.Entrypoint)
+		imageCommitChangeOptions.AddUser(s.instructions.User)
+		imageCommitChangeOptions.AddWorkdir(s.instructions.Workdir)
+		imageCommitChangeOptions.AddHealthCheck(s.instructions.HealthCheck)
 
-	return nil
+		return nil
+	}
 }

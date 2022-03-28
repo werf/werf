@@ -5,6 +5,7 @@ import (
 
 	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
 )
 
 func GenerateBeforeInstallStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
@@ -30,12 +31,12 @@ func (s *BeforeInstallStage) GetDependencies(ctx context.Context, _ Conveyor, _,
 	return s.builder.BeforeInstallChecksum(ctx), nil
 }
 
-func (s *BeforeInstallStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
-	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
+func (s *BeforeInstallStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+	if err := s.BaseStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
-	if err := s.builder.BeforeInstall(ctx, stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().BuilderContainer()); err != nil {
+	if err := s.builder.BeforeInstall(ctx, cr, stageImage.StageBuilderAccessor); err != nil {
 		return err
 	}
 

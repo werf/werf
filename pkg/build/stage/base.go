@@ -238,27 +238,32 @@ func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []
 	return s.selectStageByOldestCreationTimestamp(stages)
 }
 
-func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
+func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
+	if cr.HasContainerRootMountSupport() {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
+	} else {
+		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
 
-	serviceMounts := s.getServiceMounts(prevBuiltImage)
-	s.addServiceMountsLabels(serviceMounts, stageImage)
-	if err := s.addServiceMountsVolumes(serviceMounts, stageImage); err != nil {
-		return fmt.Errorf("error adding mounts volumes: %s", err)
+		serviceMounts := s.getServiceMounts(prevBuiltImage)
+		s.addServiceMountsLabels(serviceMounts, stageImage)
+		if err := s.addServiceMountsVolumes(serviceMounts, stageImage); err != nil {
+			return fmt.Errorf("error adding mounts volumes: %s", err)
+		}
+
+		customMounts := s.getCustomMounts(prevBuiltImage)
+		s.addCustomMountLabels(customMounts, stageImage)
+		if err := s.addCustomMountVolumes(customMounts, stageImage); err != nil {
+			return fmt.Errorf("error adding mounts volumes: %s", err)
+		}
+
+		return nil
 	}
-
-	customMounts := s.getCustomMounts(prevBuiltImage)
-	s.addCustomMountLabels(customMounts, stageImage)
-	if err := s.addCustomMountVolumes(customMounts, stageImage); err != nil {
-		return fmt.Errorf("error adding mounts volumes: %s", err)
-	}
-
-	return nil
 }
 
 func (s *BaseStage) PreRunHook(_ context.Context, _ Conveyor) error {

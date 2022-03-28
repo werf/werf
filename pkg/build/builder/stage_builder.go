@@ -41,25 +41,41 @@ func (accessor *StageBuilderAccessor) NativeDockerfileStageBuilder() NativeDocke
 }
 
 type StapelStageBuilderInterface interface {
-	AppendPrepareContainerAction(action PrepareContainerAction)
-	// FIXME(stapel-to-buildah) more needed methods
+	AppendPrepareContainerAction(action PrepareContainerAction) StapelStageBuilderInterface
+	AddLabels(map[string]string) StapelStageBuilderInterface
+	AddContainerVolumes(volumes ...string) StapelStageBuilderInterface
 }
 
 type PrepareContainerAction interface {
 	PrepareContainer(containerRoot string) error
 }
 
-// FIXME(stapel-to-buildah): full builder imlementation
 type stapelStageBuilder struct {
 	ContainerRuntime container_runtime.ContainerRuntime
+
+	labels  map[string]string
+	volumes []string
 }
 
 func NewStapelStageBuilder() *stapelStageBuilder {
 	return &stapelStageBuilder{}
 }
 
-func (builder *stapelStageBuilder) AppendPrepareContainerAction(action PrepareContainerAction) {
+func (builder *stapelStageBuilder) AddLabels(labels map[string]string) StapelStageBuilderInterface {
+	for k, v := range labels {
+		builder.labels[k] = v
+	}
+	return builder
+}
+
+func (builder *stapelStageBuilder) AddContainerVolumes(volumes ...string) StapelStageBuilderInterface {
+	builder.volumes = append(builder.volumes, volumes...)
+	return builder
+}
+
+func (builder *stapelStageBuilder) AppendPrepareContainerAction(action PrepareContainerAction) StapelStageBuilderInterface {
 	panic("FIXME")
+	return builder
 }
 
 type NativeDockerfileStageBuilderInterface interface {

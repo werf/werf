@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/docker"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
@@ -94,7 +95,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, stageImage *StageImage) error {
+func (s *DependenciesStage) prepareImageWithDockerServer(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, _, stageImage *StageImage) error {
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
 		srv, err := c.GetImportServer(ctx, sourceImageName, elm.Stage)
@@ -151,6 +152,15 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, _, sta
 	}
 
 	return nil
+}
+
+func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevImage, stageImage *StageImage) error {
+	if cr.HasContainerRootMountSupport() {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
+	} else {
+		return s.prepareImageWithDockerServer(ctx, c, cr, prevImage, stageImage)
+	}
 }
 
 func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {

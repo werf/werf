@@ -22,6 +22,10 @@ func NewBuildahRuntime(buildah buildah.Buildah) *BuildahRuntime {
 	return &BuildahRuntime{buildah: buildah}
 }
 
+func (runtime *BuildahRuntime) HasContainerRootMountSupport() bool {
+	return true
+}
+
 // GetImageInfo returns nil, nil if image not found.
 func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	inspect, err := runtime.buildah.Inspect(ctx, ref)

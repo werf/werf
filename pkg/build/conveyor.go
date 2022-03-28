@@ -399,7 +399,7 @@ func (c *Conveyor) checkContainerRuntimeSupported(_ context.Context) error {
 		}
 	}
 
-	if len(nonDockerfileImages) > 0 {
+	if len(nonDockerfileImages) > 0 && os.Getenv("WERF_BUILDAH_FOR_STAPEL_ENABLED") != "1" {
 		return fmt.Errorf(`Unable to build stapel type images and artifacts with buildah container runtime: %s
 
 Please select only dockerfile images or delete all non-dockerfile images from your werf.yaml.
