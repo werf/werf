@@ -2,10 +2,10 @@ name: Website Deployment
 on:
   push:
     branches:
-    - multiwerf
+      - multiwerf
     paths:
-    - multiwerf.json
-    - trdl_channels.yaml
+      - multiwerf.json
+      - trdl_channels.yaml
 
 jobs:
 
