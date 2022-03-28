@@ -17,3 +17,19 @@ jobs:
         vault-auth-method: approle
         vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
         vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
+
+  notification:
+    name: Notification
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && always() }}
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: technote-space/workflow-conclusion-action@v2
+
+      - name: Notify
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: ${{ env.WORKFLOW_CONCLUSION }}
+          MSG_MINIMAL: "ref,actions url"
