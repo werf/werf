@@ -65,3 +65,22 @@ jobs:
       run: |
         . $(trdl use werf 1.2 stable)
         ./scripts/werf-in-image/build-and-publish.sh
+
+  notification:
+    name: Notification
+    if: always()
+    needs:
+      - release
+      - deploy_channels_cm_prod
+      - publish_werf_images
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: technote-space/workflow-conclusion-action@v2
+
+      - name: Notify
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: ${{ env.WORKFLOW_CONCLUSION }}
+          MSG_MINIMAL: "ref,actions url"
