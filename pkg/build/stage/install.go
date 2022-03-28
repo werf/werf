@@ -5,6 +5,7 @@ import (
 
 	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -36,12 +37,12 @@ func (s *InstallStage) GetDependencies(ctx context.Context, c Conveyor, _, _ *St
 	return util.Sha256Hash(s.builder.InstallChecksum(ctx), stageDependenciesChecksum), nil
 }
 
-func (s *InstallStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
-	if err := s.UserWithGitPatchStage.PrepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
+func (s *InstallStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+	if err := s.UserWithGitPatchStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
-	if err := s.builder.Install(ctx, stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().BuilderContainer()); err != nil {
+	if err := s.builder.Install(ctx, cr, stageImage.StageBuilderAccessor); err != nil {
 		return err
 	}
 

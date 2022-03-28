@@ -18,7 +18,7 @@ type Interface interface {
 	GetDependencies(ctx context.Context, c Conveyor, prevImage *StageImage, prevBuiltImage *StageImage) (string, error)
 	GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error)
 
-	PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error
+	PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error
 
 	PreRunHook(context.Context, Conveyor) error
 

@@ -82,7 +82,7 @@ var _ = Describe("DockerfileStage", func() {
 			Expect(err).To(Succeed())
 			Expect(digest).To(Equal(data.TestDependencies.ExpectedDigest))
 
-			err = stage.PrepareImage(ctx, conveyor, nil, stageImage)
+			err = stage.PrepareImage(ctx, conveyor, containerRuntime, nil, stageImage)
 			Expect(err).To(Succeed())
 			CheckImageDependenciesAfterPrepare(img, stageBuilderAccessor, data.TestDependencies.Dependencies)
 		},

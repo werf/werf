@@ -175,6 +175,10 @@ func NewContainerRuntimeMock() *ContainerRuntimeMock {
 	}
 }
 
+func (containerRuntime *ContainerRuntimeMock) HasContainerRootMountSupport() bool {
+	return false
+}
+
 func (containerRuntime *ContainerRuntimeMock) GetImageInfo(ctx context.Context, ref string, opts container_runtime.GetImageInfoOpts) (*image.Info, error) {
 	return nil, nil
 }

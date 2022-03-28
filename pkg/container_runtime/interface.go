@@ -63,6 +63,7 @@ type ContainerRuntime interface {
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
 	// StapelBuild(opts StapelBuildOptions) string
 
+	HasContainerRootMountSupport() bool
 	String() string
 
 	// Legacy

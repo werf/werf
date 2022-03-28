@@ -3,6 +3,7 @@ package stage
 import (
 	"context"
 
+	"github.com/werf/werf/pkg/container_runtime"
 	imagePkg "github.com/werf/werf/pkg/image"
 )
 
@@ -24,14 +25,19 @@ func (s *GitStage) isEmpty(_ context.Context) bool {
 	return len(s.gitMappings) == 0
 }
 
-func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
-	if err := s.BaseStage.PrepareImage(ctx, c, prevBuiltImage, stageImage); err != nil {
+func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+	if err := s.BaseStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
-	if c.GiterminismManager().Dev() {
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().BuilderContainer().AddLabel(map[string]string{imagePkg.WerfDevLabel: "true"})
-	}
+	if cr.HasContainerRootMountSupport() {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
+	} else {
+		if c.GiterminismManager().Dev() {
+			stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().BuilderContainer().AddLabel(map[string]string{imagePkg.WerfDevLabel: "true"})
+		}
 
-	return nil
+		return nil
+	}
 }

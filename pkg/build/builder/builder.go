@@ -3,6 +3,8 @@ package builder
 import (
 	"context"
 	"os"
+
+	"github.com/werf/werf/pkg/container_runtime"
 )
 
 type Builder interface {
@@ -10,10 +12,10 @@ type Builder interface {
 	IsInstallEmpty(ctx context.Context) bool
 	IsBeforeSetupEmpty(ctx context.Context) bool
 	IsSetupEmpty(ctx context.Context) bool
-	BeforeInstall(ctx context.Context, container Container) error
-	Install(ctx context.Context, container Container) error
-	BeforeSetup(ctx context.Context, container Container) error
-	Setup(ctx context.Context, container Container) error
+	BeforeInstall(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error
+	Install(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error
+	BeforeSetup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error
+	Setup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error
 	BeforeInstallChecksum(ctx context.Context) string
 	InstallChecksum(ctx context.Context) string
 	BeforeSetupChecksum(ctx context.Context) string

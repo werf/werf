@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/util"
 )
@@ -35,20 +36,20 @@ func (b *Shell) IsBeforeSetupEmpty(ctx context.Context) bool {
 }
 func (b *Shell) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Setup") }
 
-func (b *Shell) BeforeInstall(_ context.Context, container Container) error {
-	return b.stage("BeforeInstall", container)
+func (b *Shell) BeforeInstall(_ context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
+	return b.stage(cr, stageBuilder, "BeforeInstall")
 }
 
-func (b *Shell) Install(_ context.Context, container Container) error {
-	return b.stage("Install", container)
+func (b *Shell) Install(_ context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
+	return b.stage(cr, stageBuilder, "Install")
 }
 
-func (b *Shell) BeforeSetup(_ context.Context, container Container) error {
-	return b.stage("BeforeSetup", container)
+func (b *Shell) BeforeSetup(_ context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
+	return b.stage(cr, stageBuilder, "BeforeSetup")
 }
 
-func (b *Shell) Setup(_ context.Context, container Container) error {
-	return b.stage("Setup", container)
+func (b *Shell) Setup(_ context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
+	return b.stage(cr, stageBuilder, "Setup")
 }
 
 func (b *Shell) BeforeInstallChecksum(ctx context.Context) string {
@@ -64,25 +65,33 @@ func (b *Shell) isEmptyStage(ctx context.Context, userStageName string) bool {
 	return b.stageChecksum(ctx, userStageName) == ""
 }
 
-func (b *Shell) stage(userStageName string, container Container) error {
-	stageHostTmpDir, err := b.stageHostTmpDir(userStageName)
-	if err != nil {
-		return err
+func (b *Shell) stage(cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface, userStageName string) error {
+	if cr.HasContainerRootMountSupport() {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
+	} else {
+		container := stageBuilder.LegacyStapelStageBuilder().BuilderContainer()
+
+		stageHostTmpDir, err := b.stageHostTmpDir(userStageName)
+		if err != nil {
+			return err
+		}
+
+		container.AddVolume(
+			fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
+		)
+
+		stageHostTmpScriptFilePath := filepath.Join(stageHostTmpDir, scriptFileName)
+		containerTmpScriptFilePath := path.Join(b.containerTmpDir(), scriptFileName)
+
+		if err := stapel.CreateScript(stageHostTmpScriptFilePath, b.stageCommands(userStageName)); err != nil {
+			return err
+		}
+
+		container.AddServiceRunCommands(containerTmpScriptFilePath)
+
+		return nil
 	}
-
-	container.AddVolume(
-		fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
-	)
-
-	stageHostTmpScriptFilePath := filepath.Join(stageHostTmpDir, scriptFileName)
-	containerTmpScriptFilePath := path.Join(b.containerTmpDir(), scriptFileName)
-
-	if err := stapel.CreateScript(stageHostTmpScriptFilePath, b.stageCommands(userStageName)); err != nil {
-		return err
-	}
-
-	container.AddServiceRunCommands(containerTmpScriptFilePath)
-	return nil
 }
 
 func (b *Shell) stageChecksum(ctx context.Context, userStageName string) string {

@@ -20,6 +20,10 @@ func NewDockerServerRuntime() *DockerServerRuntime {
 	return &DockerServerRuntime{}
 }
 
+func (runtime *DockerServerRuntime) HasContainerRootMountSupport() bool {
+	return false
+}
+
 func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
 	switch {
 	case opts.ContextTar == nil:
