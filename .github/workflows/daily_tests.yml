@@ -787,3 +787,19 @@ jobs:
         ./cc-test-reporter upload-coverage
       env:
         CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+
+  notification:
+    name: Notification
+    if: always()
+    needs: upload_coverage
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: technote-space/workflow-conclusion-action@v2
+
+      - name: Notify
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: ${{ env.WORKFLOW_CONCLUSION }}
+          MSG_MINIMAL: "ref,actions url"
