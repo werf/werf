@@ -53,6 +53,23 @@ type BuildDockerfileOpts struct {
 //	Labels map[string]string
 // }
 
+type BuildStapelStageOpts struct {
+	BuildVolumes            []string
+	Labels                  []string
+	UserCommands            []string
+	PrepareContainerActions []PrepareContainerAction
+}
+
+type PrepareContainerAction interface {
+	PrepareContainer(containerRoot string) error
+}
+
+type PrepareContainerActionWith func(containerRoot string) error
+
+func (f PrepareContainerActionWith) PrepareContainer(containerRoot string) error {
+	return f(containerRoot)
+}
+
 type ContainerRuntime interface {
 	Tag(ctx context.Context, ref, newRef string, opts TagOpts) error
 	Push(ctx context.Context, ref string, opts PushOpts) error
@@ -61,9 +78,9 @@ type ContainerRuntime interface {
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
-	// StapelBuild(opts StapelBuildOptions) string
+	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error)
 
-	HasContainerRootMountSupport() bool
+	HasStapelBuildSupport() bool
 	String() string
 
 	// Legacy

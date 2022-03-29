@@ -78,20 +78,20 @@ func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cr contain
 }
 
 func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
-	if cr.HasContainerRootMountSupport() {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
-	} else {
+	if c.UseLegacyStapelBuilder(cr) {
 		for _, gitMapping := range s.gitMappings {
 			if err := gitMapping.ApplyPatchCommand(ctx, c, prevBuiltImage, stageImage); err != nil {
 				return err
 			}
 		}
 
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetPatchesCacheDir(), s.ContainerPatchesDir))
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
+		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetPatchesCacheDir(), s.ContainerPatchesDir))
+		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
+		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 
 		return nil
+	} else {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
 	}
 }

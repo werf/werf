@@ -244,26 +244,26 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cr container_r
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	if cr.HasContainerRootMountSupport() {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
+	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()}
+	if c.UseLegacyStapelBuilder(cr) {
+		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
-
-		serviceMounts := s.getServiceMounts(prevBuiltImage)
-		s.addServiceMountsLabels(serviceMounts, stageImage)
-		if err := s.addServiceMountsVolumes(serviceMounts, stageImage); err != nil {
-			return fmt.Errorf("error adding mounts volumes: %s", err)
-		}
-
-		customMounts := s.getCustomMounts(prevBuiltImage)
-		s.addCustomMountLabels(customMounts, stageImage)
-		if err := s.addCustomMountVolumes(customMounts, stageImage); err != nil {
-			return fmt.Errorf("error adding mounts volumes: %s", err)
-		}
-
-		return nil
+		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
 	}
+
+	serviceMounts := s.getServiceMounts(prevBuiltImage)
+	s.addServiceMountsLabels(serviceMounts, c, cr, stageImage)
+	if err := s.addServiceMountsVolumes(serviceMounts, stageImage); err != nil {
+		return fmt.Errorf("error adding mounts volumes: %s", err)
+	}
+
+	customMounts := s.getCustomMounts(prevBuiltImage)
+	s.addCustomMountLabels(customMounts, c, cr, stageImage)
+	if err := s.addCustomMountVolumes(customMounts, stageImage); err != nil {
+		return fmt.Errorf("error adding mounts volumes: %s", err)
+	}
+
+	return nil
 }
 
 func (s *BaseStage) PreRunHook(_ context.Context, _ Conveyor) error {
@@ -333,14 +333,14 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 				return fmt.Errorf("error creating tmp path %s for mount: %s", absoluteFrom, err)
 			}
 
-			stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+			stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
 		}
 	}
 
 	return nil
 }
 
-func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, stageImage *StageImage) {
+func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, c Conveyor, cr container_runtime.ContainerRuntime, stageImage *StageImage) {
 	for mountType, mountpoints := range mountpointsByType {
 		var labelName string
 		switch mountType {
@@ -354,7 +354,12 @@ func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string
 
 		labelValue := strings.Join(mountpoints, ";")
 
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
+		addLabels := map[string]string{labelName: labelValue}
+		if c.UseLegacyStapelBuilder(cr) {
+			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
+		} else {
+			stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
+		}
 	}
 }
 
@@ -419,18 +424,24 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 
 		for _, mountpoint := range mountpoints {
 			absoluteMountpoint := path.Join("/", mountpoint)
-			stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+			stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
 		}
 	}
 
 	return nil
 }
 
-func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, stageImage *StageImage) {
+func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, c Conveyor, cr container_runtime.ContainerRuntime, stageImage *StageImage) {
 	for from, mountpoints := range mountpointsByFrom {
 		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.ReplaceAll(filepath.ToSlash(from), "/", "--"))
 		labelValue := strings.Join(mountpoints, ";")
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
+
+		addLabels := map[string]string{labelName: labelValue}
+		if c.UseLegacyStapelBuilder(cr) {
+			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
+		} else {
+			stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
+		}
 	}
 }
 

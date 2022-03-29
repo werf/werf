@@ -95,7 +95,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *DependenciesStage) prepareImageWithDockerServer(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, _, stageImage *StageImage) error {
+func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, _, stageImage *StageImage) error {
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
 		srv, err := c.GetImportServer(ctx, sourceImageName, elm.Stage)
@@ -104,9 +104,9 @@ func (s *DependenciesStage) prepareImageWithDockerServer(ctx context.Context, c 
 		}
 
 		command := srv.GetCopyCommand(ctx, elm)
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().AddServiceRunCommands(command)
+		stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(command)
 
-		imageServiceCommitChangeOptions := stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
+		imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
 		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
 
@@ -123,7 +123,7 @@ func (s *DependenciesStage) prepareImageWithDockerServer(ctx context.Context, c 
 	}
 
 	for _, dep := range s.dependencies {
-		depImageServiceOptions := stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
+		depImageServiceOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
 		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
 		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
@@ -155,11 +155,11 @@ func (s *DependenciesStage) prepareImageWithDockerServer(ctx context.Context, c 
 }
 
 func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevImage, stageImage *StageImage) error {
-	if cr.HasContainerRootMountSupport() {
+	if c.UseLegacyStapelBuilder(cr) {
+		return s.prepareImageWithLegacyStapelBuilder(ctx, c, cr, prevImage, stageImage)
+	} else {
 		// TODO(stapel-to-buildah)
 		panic("not implemented")
-	} else {
-		return s.prepareImageWithDockerServer(ctx, c, cr, prevImage, stageImage)
 	}
 }
 

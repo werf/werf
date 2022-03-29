@@ -65,11 +65,8 @@ func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, 
 		return err
 	}
 
-	if cr.HasContainerRootMountSupport() {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
-	} else {
-		imageCommitChangeOptions := stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().CommitChangeOptions()
+	if c.UseLegacyStapelBuilder(cr) {
+		imageCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().CommitChangeOptions()
 		imageCommitChangeOptions.AddVolume(s.instructions.Volume...)
 		imageCommitChangeOptions.AddExpose(s.instructions.Expose...)
 		imageCommitChangeOptions.AddEnv(s.instructions.Env)
@@ -81,5 +78,8 @@ func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, 
 		imageCommitChangeOptions.AddHealthCheck(s.instructions.HealthCheck)
 
 		return nil
+	} else {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
 	}
 }

@@ -3,6 +3,7 @@ package stage
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -72,27 +73,41 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ 
 }
 
 func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
-	if cr.HasContainerRootMountSupport() {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
+	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()}
+	if c.UseLegacyStapelBuilder(cr) {
+		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()})
-
-		serviceMounts := s.getServiceMounts(prevBuiltImage)
-		s.addServiceMountsLabels(serviceMounts, stageImage)
-
-		customMounts := s.getCustomMounts(prevBuiltImage)
-		s.addCustomMountLabels(customMounts, stageImage)
-
-		var mountpoints []string
-		for _, mountCfg := range s.configMounts {
-			mountpoints = append(mountpoints, mountCfg.To)
-		}
-		if len(mountpoints) != 0 {
-			mountpointsStr := strings.Join(mountpoints, " ")
-			stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", stapel.RmBinPath(), mountpointsStr))
-		}
-
-		return nil
+		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
 	}
+
+	serviceMounts := s.getServiceMounts(prevBuiltImage)
+	s.addServiceMountsLabels(serviceMounts, c, cr, stageImage)
+
+	customMounts := s.getCustomMounts(prevBuiltImage)
+	s.addCustomMountLabels(customMounts, c, cr, stageImage)
+
+	var mountpoints []string
+	for _, mountCfg := range s.configMounts {
+		mountpoints = append(mountpoints, mountCfg.To)
+	}
+
+	if len(mountpoints) != 0 {
+		mountpointsStr := strings.Join(mountpoints, " ")
+
+		if c.UseLegacyStapelBuilder(cr) {
+			stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", stapel.RmBinPath(), mountpointsStr))
+		} else {
+			stageImage.Builder.StapelStageBuilder().AddPrepareContainerActions(container_runtime.PrepareContainerActionWith(func(containerRoot string) error {
+				for _, mountpoint := range mountpoints {
+					if err := os.RemoveAll(mountpoint); err != nil {
+						return fmt.Errorf("unable to remove %q: %s", mountpoint, err)
+					}
+				}
+
+				return nil
+			}))
+		}
+	}
+
+	return nil
 }

@@ -5,8 +5,8 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime/stage_builder"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -101,7 +101,7 @@ func GetConfigDependencies(dependencies []*TestDependency) (res []*config.Depend
 	return
 }
 
-func CheckImageDependenciesAfterPrepare(img *LegacyImageStub, stageBuilderAccessor *builder.StageBuilderAccessor, dependencies []*TestDependency) {
+func CheckImageDependenciesAfterPrepare(img *LegacyImageStub, stageBuilder *stage_builder.StageBuilder, dependencies []*TestDependency) {
 	for _, dep := range dependencies {
 		if dep.TargetEnvImageName != "" {
 			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageName]).To(Equal(dep.GetDockerImageName()))
@@ -117,16 +117,16 @@ func CheckImageDependenciesAfterPrepare(img *LegacyImageStub, stageBuilderAccess
 		}
 
 		if dep.TargetBuildArgImageName != "" {
-			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageName, dep.GetDockerImageName()))).To(BeTrue())
+			Expect(util.IsStringsContainValue(stageBuilder.GetDockerfileStageBuilderImplementation().BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageName, dep.GetDockerImageName()))).To(BeTrue())
 		}
 		if dep.TargetBuildArgImageRepo != "" {
-			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageRepo, dep.DockerImageRepo))).To(BeTrue())
+			Expect(util.IsStringsContainValue(stageBuilder.GetDockerfileStageBuilderImplementation().BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageRepo, dep.DockerImageRepo))).To(BeTrue())
 		}
 		if dep.TargetBuildArgImageTag != "" {
-			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageTag, dep.DockerImageTag))).To(BeTrue())
+			Expect(util.IsStringsContainValue(stageBuilder.GetDockerfileStageBuilderImplementation().BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageTag, dep.DockerImageTag))).To(BeTrue())
 		}
 		if dep.TargetBuildArgImageID != "" {
-			Expect(util.IsStringsContainValue(stageBuilderAccessor.DockerfileImageBuilder.BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageID, dep.DockerImageID))).To(BeTrue())
+			Expect(util.IsStringsContainValue(stageBuilder.GetDockerfileStageBuilderImplementation().BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageID, dep.DockerImageID))).To(BeTrue())
 		}
 	}
 }

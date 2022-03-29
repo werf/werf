@@ -6,8 +6,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_runtime/stage_builder"
 )
 
 var _ = Describe("DependenciesStage", func() {
@@ -24,10 +24,10 @@ var _ = Describe("DependenciesStage", func() {
 			})
 
 			img := NewLegacyImageStub()
-			stageBuilderAccessor := builder.NewStageBuilderAccessor(containerRuntime, img)
+			stageBuilder := stage_builder.NewStageBuilder(containerRuntime, nil, img)
 			stageImage := &StageImage{
-				Image:                img,
-				StageBuilderAccessor: stageBuilderAccessor,
+				Image:   img,
+				Builder: stageBuilder,
 			}
 
 			digest, err := stage.GetDependencies(ctx, conveyor, nil, stageImage)
@@ -36,7 +36,7 @@ var _ = Describe("DependenciesStage", func() {
 
 			err = stage.PrepareImage(ctx, conveyor, containerRuntime, nil, stageImage)
 			Expect(err).To(Succeed())
-			CheckImageDependenciesAfterPrepare(img, stageBuilderAccessor, data.Dependencies)
+			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.Dependencies)
 		},
 
 		Entry("should calculate basic stage digest when no dependencies are set",
