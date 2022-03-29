@@ -45,7 +45,7 @@ func (i *LegacyStageImage) GetID() string {
 	}
 }
 
-func (i *LegacyStageImage) Build(ctx context.Context, options LegacyBuildOptions) error {
+func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) error {
 	containerLockName := ContainerLockName(i.container.Name())
 	if _, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
 		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
@@ -175,8 +175,12 @@ func (i *LegacyStageImage) SetBuiltID(builtID string) {
 	i.builtID = builtID
 }
 
-func (i *LegacyStageImage) GetBuiltID() string {
+func (i *LegacyStageImage) BuiltID() string {
 	return i.builtID
+}
+
+func (i *LegacyStageImage) GetBuiltID() string {
+	return i.BuiltID()
 }
 
 func (i *LegacyStageImage) TagBuiltImage(ctx context.Context) error {

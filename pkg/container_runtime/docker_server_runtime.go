@@ -20,8 +20,12 @@ func NewDockerServerRuntime() *DockerServerRuntime {
 	return &DockerServerRuntime{}
 }
 
-func (runtime *DockerServerRuntime) HasContainerRootMountSupport() bool {
+func (runtime *DockerServerRuntime) HasStapelBuildSupport() bool {
 	return false
+}
+
+func (runtime *DockerServerRuntime) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error) {
+	panic("BuildStapelStage does not implemented for DockerServerRuntime. Please report the bug if you've received this message.")
 }
 
 func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
@@ -63,7 +67,7 @@ func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byt
 
 	cliArgs = append(cliArgs, "-")
 
-	if debug() {
+	if Debug() {
 		fmt.Printf("[DOCKER BUILD] docker build %s\n", strings.Join(cliArgs, " "))
 	}
 

@@ -73,21 +73,20 @@ func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cr conta
 		return err
 	}
 
-	if cr.HasContainerRootMountSupport() {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
-	} else {
-
+	if c.UseLegacyStapelBuilder(cr) {
 		for _, gitMapping := range s.gitMappings {
 			if err := gitMapping.ApplyArchiveCommand(ctx, c, stageImage); err != nil {
 				return err
 			}
 		}
 
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
+		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
+		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 
 		return nil
+	} else {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
 	}
 }
 

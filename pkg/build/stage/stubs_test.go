@@ -89,6 +89,10 @@ func NewConveyorStubForDependencies(giterminismManager *GiterminismManagerStub, 
 	return NewConveyorStub(giterminismManager, lastStageImageNameByImageName, lastStageImageIDByImageName)
 }
 
+func (c *ConveyorStub) UseLegacyStapelBuilder(cr container_runtime.ContainerRuntime) bool {
+	return true
+}
+
 func (c *ConveyorStub) GetImageNameForLastImageStage(imageName string) string {
 	return c.lastStageImageNameByImageName[imageName]
 }

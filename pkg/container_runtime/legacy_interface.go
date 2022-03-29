@@ -6,7 +6,7 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-type LegacyBuildOptions struct {
+type BuildOptions struct {
 	IntrospectBeforeError bool
 	IntrospectAfterError  bool
 }
@@ -23,9 +23,10 @@ type LegacyImageInterface interface {
 	Container() LegacyContainer
 	BuilderContainer() LegacyBuilderContainer
 
-	Build(context.Context, LegacyBuildOptions) error
+	Build(context.Context, BuildOptions) error
 	SetBuiltID(builtID string)
 	GetBuiltID() string
+	BuiltID() string
 	TagBuiltImage(ctx context.Context) error
 
 	Introspect(ctx context.Context) error

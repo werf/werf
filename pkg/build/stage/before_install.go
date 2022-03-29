@@ -36,7 +36,7 @@ func (s *BeforeInstallStage) PrepareImage(ctx context.Context, c Conveyor, cr co
 		return err
 	}
 
-	if err := s.builder.BeforeInstall(ctx, cr, stageImage.StageBuilderAccessor); err != nil {
+	if err := s.builder.BeforeInstall(ctx, cr, stageImage.Builder, c.UseLegacyStapelBuilder(cr)); err != nil {
 		return err
 	}
 

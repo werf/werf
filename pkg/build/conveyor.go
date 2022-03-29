@@ -125,6 +125,10 @@ func (c *Conveyor) getServiceRWMutex(service string) *sync.RWMutex {
 	return rwMutex
 }
 
+func (c *Conveyor) UseLegacyStapelBuilder(cr container_runtime.ContainerRuntime) bool {
+	return !cr.HasStapelBuildSupport()
+}
+
 func (c *Conveyor) IsBaseImagesRepoIdsCacheExist(key string) bool {
 	c.getServiceRWMutex("BaseImagesRepoIdsCache").RLock()
 	defer c.getServiceRWMutex("BaseImagesRepoIdsCache").RUnlock()
@@ -688,7 +692,7 @@ func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.LegacyStag
 	}
 
 	i := container_runtime.NewLegacyStageImage(fromImage, name, c.ContainerRuntime)
-	img := stage.NewStageImage(c.ContainerRuntime, i)
+	img := stage.NewStageImage(c.ContainerRuntime, fromImage, i)
 
 	c.SetStageImage(img)
 	return img

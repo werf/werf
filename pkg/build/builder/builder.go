@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_runtime/stage_builder"
 )
 
 type Builder interface {
@@ -12,10 +13,10 @@ type Builder interface {
 	IsInstallEmpty(ctx context.Context) bool
 	IsBeforeSetupEmpty(ctx context.Context) bool
 	IsSetupEmpty(ctx context.Context) bool
-	BeforeInstall(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error
-	Install(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error
-	BeforeSetup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error
-	Setup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error
+	BeforeInstall(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error
+	Install(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error
+	BeforeSetup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error
+	Setup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error
 	BeforeInstallChecksum(ctx context.Context) string
 	InstallChecksum(ctx context.Context) string
 	BeforeSetupChecksum(ctx context.Context) string

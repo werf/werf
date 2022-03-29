@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/image"
@@ -22,8 +24,60 @@ func NewBuildahRuntime(buildah buildah.Buildah) *BuildahRuntime {
 	return &BuildahRuntime{buildah: buildah}
 }
 
-func (runtime *BuildahRuntime) HasContainerRootMountSupport() bool {
+func (runtime *BuildahRuntime) HasStapelBuildSupport() bool {
 	return true
+}
+
+// FIXME(stapel-to-buildah): proper deep implementation
+func (runtime *BuildahRuntime) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error) {
+	/*
+		1. Create new temporary build container using 'from' and remain uniq container name.
+		2. Mount container root to host and run all prepare-container-actions, then unmount.
+		3. Run user instructions in container, mount volumes when build.
+		4. Set specified labels into container.
+		5. Save container name as builtID (ideally there is no need to commit an image here, because buildah allows to commit and push directly container, which would happen later).
+	*/
+
+	containerID := uuid.New().String()
+
+	_, err := runtime.buildah.FromCommand(ctx, containerID, baseImage, buildah.FromCommandOpts{})
+	if err != nil {
+		return "", fmt.Errorf("unable to create container using base image %q: %s", baseImage, err)
+	}
+
+	if len(opts.PrepareContainerActions) > 0 {
+		err := func() error {
+			containerRoot, err := runtime.buildah.Mount(ctx, containerID, buildah.MountOpts{})
+			if err != nil {
+				return fmt.Errorf("unable to mount container %q root dir: %s", containerID, err)
+			}
+			defer runtime.buildah.Umount(ctx, containerRoot, buildah.UmountOpts{})
+
+			for _, action := range opts.PrepareContainerActions {
+				if err := action.PrepareContainer(containerRoot); err != nil {
+					return fmt.Errorf("unable to prepare container in %q: %s", containerRoot, err)
+				}
+			}
+
+			return nil
+		}()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	for _, cmd := range opts.UserCommands {
+		if err := runtime.buildah.RunCommand(ctx, containerID, strings.Fields(cmd), buildah.RunCommandOpts{}); err != nil {
+			return "", fmt.Errorf("unable to run %q: %s", cmd, err)
+		}
+	}
+
+	// TODO(stapel-to-buildah): use buildah.Change to set labels
+	fmt.Printf("Setting labels %v for build container %q\n", opts.Labels, containerID)
+
+	fmt.Printf("Committing container %q\n", containerID)
+
+	return "", fmt.Errorf("not implemented yet")
 }
 
 // GetImageInfo returns nil, nil if image not found.

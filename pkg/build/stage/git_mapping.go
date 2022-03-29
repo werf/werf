@@ -297,18 +297,18 @@ func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (Imag
 }
 
 func (gm *GitMapping) AddGitCommitToImageLabels(stageImage *StageImage, commitInfo ImageCommitInfo) {
-	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+	stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 		gm.ImageGitCommitLabel(): commitInfo.Commit,
 	})
 
 	if commitInfo.VirtualMerge {
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 			gm.VirtualMergeLabel():           "true",
 			gm.VirtualMergeFromCommitLabel(): commitInfo.VirtualMergeFromCommit,
 			gm.VirtualMergeIntoCommitLabel(): commitInfo.VirtualMergeIntoCommit,
 		})
 	} else {
-		stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 			gm.VirtualMergeLabel(): "false",
 		})
 	}
@@ -595,7 +595,7 @@ func (gm *GitMapping) applyScript(stageImage *StageImage, commands []string) err
 		return err
 	}
 
-	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().AddServiceRunCommands(containerTmpScriptFilePath)
+	stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(containerTmpScriptFilePath)
 
 	return nil
 }
@@ -626,7 +626,7 @@ func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string
 		return nil, err
 	}
 
-	stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{gm.getArchiveTypeLabelName(): string(archiveType)})
+	stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{gm.getArchiveTypeLabelName(): string(archiveType)})
 
 	return commands, err
 }

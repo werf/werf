@@ -15,7 +15,7 @@ var (
 	logImageInfoFormat        = fmt.Sprintf("%%%ds: %%s\n", logImageInfoLeftPartWidth)
 )
 
-func debug() bool {
+func Debug() bool {
 	return os.Getenv("WERF_CONTAINER_RUNTIME_DEBUG") == "1"
 }
 

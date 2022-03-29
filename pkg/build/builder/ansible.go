@@ -17,6 +17,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_runtime/stage_builder"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/util"
 )
@@ -44,20 +45,20 @@ func (b *Ansible) IsBeforeSetupEmpty(ctx context.Context) bool {
 }
 func (b *Ansible) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Setup") }
 
-func (b *Ansible) BeforeInstall(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
-	return b.stage(ctx, cr, stageBuilder, "BeforeInstall")
+func (b *Ansible) BeforeInstall(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+	return b.stage(ctx, cr, stageBuilder, useLegacyStapelBuilder, "BeforeInstall")
 }
 
-func (b *Ansible) Install(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
-	return b.stage(ctx, cr, stageBuilder, "Install")
+func (b *Ansible) Install(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+	return b.stage(ctx, cr, stageBuilder, useLegacyStapelBuilder, "Install")
 }
 
-func (b *Ansible) BeforeSetup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
-	return b.stage(ctx, cr, stageBuilder, "BeforeSetup")
+func (b *Ansible) BeforeSetup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+	return b.stage(ctx, cr, stageBuilder, useLegacyStapelBuilder, "BeforeSetup")
 }
 
-func (b *Ansible) Setup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface) error {
-	return b.stage(ctx, cr, stageBuilder, "Setup")
+func (b *Ansible) Setup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+	return b.stage(ctx, cr, stageBuilder, useLegacyStapelBuilder, "Setup")
 }
 
 func (b *Ansible) BeforeInstallChecksum(ctx context.Context) string {
@@ -73,11 +74,8 @@ func (b *Ansible) isEmptyStage(ctx context.Context, userStageName string) bool {
 	return b.stageChecksum(ctx, userStageName) == ""
 }
 
-func (b *Ansible) stage(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder StageBuilderAccessorInterface, userStageName string) error {
-	if cr.HasContainerRootMountSupport() {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
-	} else {
+func (b *Ansible) stage(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool, userStageName string) error {
+	if useLegacyStapelBuilder {
 		container := stageBuilder.LegacyStapelStageBuilder().BuilderContainer()
 
 		if len(b.stageTasks(userStageName)) == 0 {
@@ -136,6 +134,9 @@ func (b *Ansible) stage(ctx context.Context, cr container_runtime.ContainerRunti
 		container.AddServiceRunCommands(command)
 
 		return nil
+	} else {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
 	}
 }
 

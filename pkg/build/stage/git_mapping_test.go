@@ -142,7 +142,7 @@ var _ = Describe("GitMapping", func() {
 					},
 				},
 			})
-			img := stage.NewStageImage(containerRuntime, prevBuiltImage)
+			img := stage.NewStageImage(containerRuntime, nil, prevBuiltImage)
 
 			baseCommit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, img)
 			Expect(err).To(Succeed())

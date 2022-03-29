@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/werf/pkg/build/import_server"
+	"github.com/werf/werf/pkg/container_runtime"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/storage"
 )
@@ -28,6 +29,8 @@ type Conveyor interface {
 	GetLocalGitRepoVirtualMergeOptions() VirtualMergeOptions
 
 	GiterminismManager() giterminism_manager.Interface
+
+	UseLegacyStapelBuilder(cr container_runtime.ContainerRuntime) bool
 }
 
 type VirtualMergeOptions struct {

@@ -9,8 +9,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/build/dockerfile_helpers"
+	"github.com/werf/werf/pkg/container_runtime/stage_builder"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -72,10 +72,10 @@ var _ = Describe("DockerfileStage", func() {
 			stage := newTestDockerfileStage(data.Dockerfile, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies)
 
 			img := NewLegacyImageStub()
-			stageBuilderAccessor := builder.NewStageBuilderAccessor(containerRuntime, img)
+			stageBuilder := stage_builder.NewStageBuilder(containerRuntime, nil, img)
 			stageImage := &StageImage{
-				Image:                img,
-				StageBuilderAccessor: stageBuilderAccessor,
+				Image:   img,
+				Builder: stageBuilder,
 			}
 
 			digest, err := stage.GetDependencies(ctx, conveyor, nil, stageImage)
@@ -84,7 +84,7 @@ var _ = Describe("DockerfileStage", func() {
 
 			err = stage.PrepareImage(ctx, conveyor, containerRuntime, nil, stageImage)
 			Expect(err).To(Succeed())
-			CheckImageDependenciesAfterPrepare(img, stageBuilderAccessor, data.TestDependencies.Dependencies)
+			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.TestDependencies.Dependencies)
 		},
 
 		Entry("should calculate dockerfile stage digest when no dependencies are set",

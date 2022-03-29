@@ -30,14 +30,14 @@ func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cr container_ru
 		return err
 	}
 
-	if cr.HasContainerRootMountSupport() {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
-	} else {
+	if c.UseLegacyStapelBuilder(cr) {
 		if c.GiterminismManager().Dev() {
-			stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().BuilderContainer().AddLabel(map[string]string{imagePkg.WerfDevLabel: "true"})
+			stageImage.Builder.LegacyStapelStageBuilder().BuilderContainer().AddLabel(map[string]string{imagePkg.WerfDevLabel: "true"})
 		}
 
 		return nil
+	} else {
+		// TODO(stapel-to-buildah)
+		panic("not implemented")
 	}
 }

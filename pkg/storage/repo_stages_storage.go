@@ -478,6 +478,7 @@ func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_
 }
 
 // FIXME(stapel-to-buildah): use ImageInterface instead of LegacyImageInterface
+// FIXME(stapel-to-buildah): possible optimization would be to push buildah container directly into registry wihtout committing a local image
 func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
 	if img.GetBuiltID() != "" {
 		if err := storage.ContainerRuntime.Tag(ctx, img.GetBuiltID(), img.Name(), container_runtime.TagOpts{}); err != nil {

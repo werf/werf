@@ -42,7 +42,7 @@ func (s *SetupStage) PrepareImage(ctx context.Context, c Conveyor, cr container_
 		return err
 	}
 
-	if err := s.builder.Setup(ctx, cr, stageImage.StageBuilderAccessor); err != nil {
+	if err := s.builder.Setup(ctx, cr, stageImage.Builder, c.UseLegacyStapelBuilder(cr)); err != nil {
 		return err
 	}
 

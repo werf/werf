@@ -15,8 +15,8 @@ func NewPerfCheckContainerRuntime(containerRuntime ContainerRuntime) *PerfCheckC
 	return &PerfCheckContainerRuntime{ContainerRuntime: containerRuntime}
 }
 
-func (runtime *PerfCheckContainerRuntime) HasContainerRootMountSupport() bool {
-	return runtime.ContainerRuntime.HasContainerRootMountSupport()
+func (runtime *PerfCheckContainerRuntime) HasStapelBuildSupport() bool {
+	return runtime.ContainerRuntime.HasStapelBuildSupport()
 }
 
 func (runtime *PerfCheckContainerRuntime) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (resImg *image.Info, resErr error) {
@@ -63,6 +63,14 @@ func (runtime *PerfCheckContainerRuntime) BuildDockerfile(ctx context.Context, d
 	logboek.Context(ctx).Default().LogProcess("ContainerRuntime.BuildDockerfile").
 		Do(func() {
 			resID, resErr = runtime.ContainerRuntime.BuildDockerfile(ctx, dockerfile, opts)
+		})
+	return
+}
+
+func (runtime *PerfCheckContainerRuntime) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (resID string, resErr error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerRuntime.BuildDockerfile").
+		Do(func() {
+			resID, resErr = runtime.ContainerRuntime.BuildStapelStage(ctx, baseImage, opts)
 		})
 	return
 }

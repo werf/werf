@@ -16,9 +16,9 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/build/builder"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_runtime/stage_builder"
 	"github.com/werf/werf/pkg/context_manager"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
@@ -688,16 +688,16 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr conta
 		return err
 	}
 
-	if err := s.SetupDockerImageBuilder(stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder(), c); err != nil {
+	if err := s.SetupDockerImageBuilder(stageImage.Builder.DockerfileStageBuilder(), c); err != nil {
 		return err
 	}
 
-	stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder().SetContextArchivePath(archivePath)
+	stageImage.Builder.DockerfileStageBuilder().SetContextArchivePath(archivePath)
 
-	stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
+	stageImage.Builder.DockerfileStageBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
 
 	if c.GiterminismManager().Dev() {
-		stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder().AppendLabels(fmt.Sprintf("%s=true", image.WerfDevLabel))
+		stageImage.Builder.DockerfileStageBuilder().AppendLabels(fmt.Sprintf("%s=true", image.WerfDevLabel))
 	}
 
 	return nil
@@ -738,7 +738,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	return archivePath, nil
 }
 
-func (s *DockerfileStage) SetupDockerImageBuilder(b builder.NativeDockerfileStageBuilderInterface, c Conveyor) error {
+func (s *DockerfileStage) SetupDockerImageBuilder(b stage_builder.DockerfileStageBuilderInterface, c Conveyor) error {
 	b.SetDockerfile(s.dockerfile)
 	b.SetDockerfileCtxRelPath(s.dockerfilePath)
 

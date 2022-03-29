@@ -36,7 +36,7 @@ type BuildPhaseOptions struct {
 }
 
 type BuildOptions struct {
-	ImageBuildOptions container_runtime.LegacyBuildOptions
+	ImageBuildOptions container_runtime.BuildOptions
 	IntrospectOptions
 
 	ReportPath   string
@@ -628,10 +628,10 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 		for key, value := range serviceLabels {
 			labels = append(labels, fmt.Sprintf("%s=%v", key, value))
 		}
-		stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder().AppendLabels(labels...)
+		stageImage.Builder.DockerfileStageBuilder().AppendLabels(labels...)
 
 		phase.Conveyor.AppendOnTerminateFunc(func() error {
-			return stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder().Cleanup(ctx)
+			return stageImage.Builder.DockerfileStageBuilder().Cleanup(ctx)
 		})
 
 	default:
@@ -675,7 +675,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 }
 
 func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.Interface) error {
-	if !img.isDockerfileImage {
+	if !img.isDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerRuntime) {
 		_, err := stapel.GetOrCreateContainer(ctx)
 		if err != nil {
 			return fmt.Errorf("get or create stapel container failed: %s", err)
@@ -724,11 +724,13 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 	}
 
 	if err := logboek.Context(ctx).Streams().DoErrorWithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
-		switch stg.Name() {
-		case "dockerfile":
-			return stageImage.StageBuilderAccessor.NativeDockerfileStageBuilder().Build(ctx)
+		switch {
+		case stg.Name() == "dockerfile":
+			return stageImage.Builder.DockerfileStageBuilder().Build(ctx)
+		case phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerRuntime):
+			return stageImage.Builder.LegacyStapelStageBuilder().Build(ctx, phase.ImageBuildOptions)
 		default:
-			return stageImage.StageBuilderAccessor.LegacyStapelStageBuilder().Build(ctx, phase.ImageBuildOptions)
+			return stageImage.Builder.StapelStageBuilder().Build(ctx, phase.ImageBuildOptions)
 		}
 	}); err != nil {
 		return fmt.Errorf("failed to build image for stage %s with digest %s: %s", stg.Name(), stg.GetDigest(), err)
