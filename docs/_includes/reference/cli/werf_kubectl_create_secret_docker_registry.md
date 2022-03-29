@@ -99,12 +99,17 @@ werf kubectl create secret docker-registry NAME --docker-username=user --docker-
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --home-dir=''
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false
             If true, the server`s certificate will not be checked for validity. This will make your 
             HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)
+      --kube-config-base64=''
+            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
+            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kubeconfig=''
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
-            $WERF_KUBECONFIG, or $KUBECONFIG)
+            $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
       --match-server-version=false
             Require server version to match client version
   -n, --namespace=''
@@ -124,6 +129,8 @@ werf kubectl create secret docker-registry NAME --docker-username=user --docker-
       --tls-server-name=''
             Server name to use for server certificate validation. If it is not provided, the        
             hostname used to contact the server is used
+      --tmp-dir=''
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --token=''
             Bearer token for authentication to the API server
       --user=''
