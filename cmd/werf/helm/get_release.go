@@ -39,8 +39,8 @@ func NewGetReleaseCmd() *cobra.Command {
 
 	common.SetupGiterminismOptions(&getReleaseCmdData, cmd)
 
-	common.SetupTmpDir(&getReleaseCmdData, cmd)
-	common.SetupHomeDir(&getReleaseCmdData, cmd)
+	common.SetupTmpDir(&getReleaseCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&getReleaseCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupDockerConfig(&getReleaseCmdData, cmd, "")
 
 	common.SetupLogOptions(&getReleaseCmdData, cmd)

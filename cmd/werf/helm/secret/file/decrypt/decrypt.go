@@ -62,8 +62,8 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 	}
 
 	common.SetupDir(&commonCmdData, cmd)
-	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 

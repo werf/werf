@@ -53,8 +53,8 @@ func NewCmd() *cobra.Command {
 	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
 
 	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", *helm_v3.Settings.GetNamespaceP(), "namespace scope for this request")
-	common.SetupTmpDir(&_commonCmdData, cmd)
-	common.SetupHomeDir(&_commonCmdData, cmd)
+	common.SetupTmpDir(&_commonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&_commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupKubeConfig(&_commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&_commonCmdData, cmd)
 	common.SetupKubeContext(&_commonCmdData, cmd)

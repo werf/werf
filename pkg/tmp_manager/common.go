@@ -12,11 +12,13 @@ import (
 const (
 	projectsServiceDir          = "projects"
 	dockerConfigsServiceDir     = "docker_configs"
+	kubeConfigsServiceDir       = "kubeconfigs"
 	werfConfigRendersServiceDir = "werf_config_renders"
 
 	CommonPrefix           = "werf-"
 	ProjectDirPrefix       = CommonPrefix + "project-data-"
 	DockerConfigDirPrefix  = CommonPrefix + "docker-config-"
+	KubeConfigDirPrefix    = CommonPrefix + "kubeconfig-"
 	WerfConfigRenderPrefix = CommonPrefix + "config-render-"
 )
 

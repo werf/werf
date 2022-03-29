@@ -58,8 +58,8 @@ It is safe to run this command periodically by automated cleanup job in parallel
 		},
 	}
 
-	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 	common.SetupProjectName(&commonCmdData, cmd)
 

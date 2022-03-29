@@ -78,8 +78,8 @@ func NewMigrate2To3Cmd() *cobra.Command {
 		},
 	}
 
-	common.SetupTmpDir(&migrate2To3CommonCmdData, cmd)
-	common.SetupHomeDir(&migrate2To3CommonCmdData, cmd)
+	common.SetupTmpDir(&migrate2To3CommonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&migrate2To3CommonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupKubeConfig(&migrate2To3CommonCmdData, cmd)
 	common.SetupKubeConfigBase64(&migrate2To3CommonCmdData, cmd)

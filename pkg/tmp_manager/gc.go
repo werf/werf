@@ -46,6 +46,21 @@ func ShouldRunAutoGC() (bool, error) {
 		}
 	}
 
+	createdKubeConfigsDir := filepath.Join(GetCreatedTmpDirs(), kubeConfigsServiceDir)
+	if _, err := os.Stat(createdKubeConfigsDir); !os.IsNotExist(err) {
+		var err error
+		createdDirs, err := ioutil.ReadDir(createdKubeConfigsDir)
+		if err != nil {
+			return false, fmt.Errorf("unable to list created kubeconfigs in %s: %w", createdKubeConfigsDir, err)
+		}
+
+		for _, info := range createdDirs {
+			if now.Sub(info.ModTime()) > 24*time.Hour {
+				return true, nil
+			}
+		}
+	}
+
 	createdWerfConfigRenderFiles := filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir)
 	if _, err := os.Stat(createdWerfConfigRenderFiles); !os.IsNotExist(err) {
 		var err error
@@ -78,6 +93,10 @@ func RunGC(ctx context.Context, dryRun bool) error {
 
 	if err := gcCreatedDockerConfigs(&pathsToRemove); err != nil {
 		return err
+	}
+
+	if err := gcCreatedKubeConfigs(&pathsToRemove); err != nil {
+		return fmt.Errorf("unable to gc kubeconfigs: %w", err)
 	}
 
 	if err := gcCreatedWerfConfigRenders(&pathsToRemove); err != nil {
@@ -191,6 +210,31 @@ func gcCreatedDockerConfigs(pathsToRemove *[]string) error {
 	}
 	*pathsToRemove = append(*pathsToRemove, dirs...)
 
+	for _, link := range linksToRemove {
+		*pathsToRemove = append(*pathsToRemove, link.LinkPath)
+	}
+
+	return nil
+}
+
+// Remove only these created kubeconfigs, which can be removed
+func gcCreatedKubeConfigs(pathsToRemove *[]string) error {
+	kubeConfigs, err := getLinks(filepath.Join(GetCreatedTmpDirs(), kubeConfigsServiceDir))
+	if err != nil {
+		return fmt.Errorf("unable to get created tmp kubeconfigs: %w", err)
+	}
+
+	linksToRemove, err := getCreatedFilesToRemove(kubeConfigs)
+	if err != nil {
+		return fmt.Errorf("cannot get created tmp files to remove: %w", err)
+	}
+
+	kubeConfigsToRemove, err := readLinks(linksToRemove)
+	if err != nil {
+		return fmt.Errorf("unable to read kubeconfigs links: %w", err)
+	}
+
+	*pathsToRemove = append(*pathsToRemove, kubeConfigsToRemove...)
 	for _, link := range linksToRemove {
 		*pathsToRemove = append(*pathsToRemove, link.LinkPath)
 	}
