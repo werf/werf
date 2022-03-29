@@ -155,8 +155,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
-	// TODO(ilya-lesikov): doesn't work, need to be passed to `werf kubectl` somehow
-	// common.SetupKubeConfigBase64(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
@@ -275,9 +274,7 @@ func runMain(ctx context.Context) error {
 		return fmt.Errorf("unable to load werf config: %s", err)
 	}
 
-	// TODO(ilya-lesikov): doesn't work, need to be passed to `werf kubectl` somehow
-	// common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
-	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, "", *commonCmdData.KubeConfigPathMergeList)
+	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
@@ -425,12 +422,14 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		args = append(args, "--context", *commonCmdData.KubeContext)
 	}
 
-	if *commonCmdData.KubeConfig != "" {
-		args = append(args, "--kubeconfig", *commonCmdData.KubeConfig)
-	}
-
-	if kubeConf := common.GetFirstExistingKubeConfigEnvVar(); kubeConf != "" {
-		if err := os.Setenv("KUBECONFIG", kubeConf); err != nil {
+	if *commonCmdData.KubeConfigBase64 != "" {
+		args = append(args, "--kube-config-base64", *commonCmdData.KubeConfigBase64)
+	} else if *commonCmdData.KubeConfig != "" {
+		if err := os.Setenv("KUBECONFIG", *commonCmdData.KubeConfig); err != nil {
+			return fmt.Errorf("unable to set $KUBECONFIG env var: %w", err)
+		}
+	} else if len(*commonCmdData.KubeConfigPathMergeList) > 0 {
+		if err := os.Setenv("KUBECONFIG", common.GetFirstExistingKubeConfigEnvVar()); err != nil {
 			return fmt.Errorf("unable to set $KUBECONFIG env var: %w", err)
 		}
 	}
