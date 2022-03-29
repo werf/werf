@@ -21,7 +21,7 @@ for dest_repo in "ghcr.io/werf" "registry-write.werf.io/werf"; do
       werf export --tag "$DEST_REPO/werf:$group-$channel" "$group-$channel-alpine"
       werf export --tag "$DEST_REPO/werf-argocd-cmp-sidecar:$group-$channel" "argocd-cmp-sidecar-$group-$channel-ubuntu"
 
-      for distro in "alpine" "ubuntu" "centos"; do
+      for distro in "alpine" "ubuntu" "centos" "fedora"; do
         werf export --tag "$DEST_REPO/werf:$group-$channel-$distro" "$group-$channel-$distro"
       done
 
