@@ -49,8 +49,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
-	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupSSHKey(&commonCmdData, cmd)
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)

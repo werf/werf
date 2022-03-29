@@ -50,8 +50,8 @@ Command will extract data with the old key, generate new secret data and rewrite
 		},
 	}
 
-	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)

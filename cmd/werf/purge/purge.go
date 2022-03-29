@@ -52,8 +52,8 @@ WARNING: Images that are being used in the Kubernetes cluster will also be delet
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
-	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)

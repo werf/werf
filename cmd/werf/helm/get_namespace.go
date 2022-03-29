@@ -38,8 +38,8 @@ func NewGetNamespaceCmd() *cobra.Command {
 
 	common.SetupGiterminismOptions(&getNamespaceCmdData, cmd)
 
-	common.SetupTmpDir(&getNamespaceCmdData, cmd)
-	common.SetupHomeDir(&getNamespaceCmdData, cmd)
+	common.SetupTmpDir(&getNamespaceCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&getNamespaceCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupDockerConfig(&getNamespaceCmdData, cmd, "")
 
 	common.SetupLogOptions(&getNamespaceCmdData, cmd)

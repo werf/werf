@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
@@ -169,9 +170,13 @@ func SetupConfigTemplatesDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
 }
 
-func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
+type SetupTmpDirOptions struct {
+	Persistent bool
+}
+
+func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command, opts SetupTmpDirOptions) {
 	cmdData.TmpDir = new(string)
-	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)")
+	getFlags(cmd, opts.Persistent).StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)")
 }
 
 func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
@@ -210,9 +215,13 @@ func setupDevBranch(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.DevBranch, "dev-branch", "", defaultValue, fmt.Sprintf("Set dev git branch name (default $WERF_DEV_BRANCH or %q)", defaultValue))
 }
 
-func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
+type SetupHomeDirOptions struct {
+	Persistent bool
+}
+
+func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command, opts SetupHomeDirOptions) {
 	cmdData.HomeDir = new(string)
-	cmd.Flags().StringVarP(cmdData.HomeDir, "home-dir", "", "", "Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)")
+	getFlags(cmd, opts.Persistent).StringVarP(cmdData.HomeDir, "home-dir", "", "", "Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)")
 }
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
@@ -364,7 +373,11 @@ func GetFirstExistingKubeConfigEnvVar() string {
 
 func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeConfigBase64 = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.KubeConfigBase64, "kube-config-base64", "", GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64"), "Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)")
+	cmd.PersistentFlags().StringVarP(cmdData.KubeConfigBase64, "kube-config-base64", "", GetFirstExistingKubeConfigBase64EnvVar(), "Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)")
+}
+
+func GetFirstExistingKubeConfigBase64EnvVar() string {
+	return GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64")
 }
 
 func GetFirstExistingEnvVarAsString(envNames ...string) string {
@@ -1598,4 +1611,12 @@ func GetBackgroundOutputFile() string {
 
 func GetLastBackgroundErrorFile() string {
 	return filepath.Join(werf.GetServiceDir(), "last_background_error")
+}
+
+func getFlags(cmd *cobra.Command, persistent bool) *pflag.FlagSet {
+	if persistent {
+		return cmd.PersistentFlags()
+	}
+
+	return cmd.Flags()
 }

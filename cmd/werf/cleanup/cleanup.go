@@ -59,8 +59,8 @@ It is safe to run this command periodically (daily is enough) by automated clean
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
-	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)

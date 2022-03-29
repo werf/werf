@@ -54,8 +54,8 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupTmpDir(&commonCmdData, cmd)
-	common.SetupHomeDir(&commonCmdData, cmd)
+	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
