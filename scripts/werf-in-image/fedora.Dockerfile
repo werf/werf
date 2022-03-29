@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos:stream9
+FROM fedora:35
 
 RUN dnf -y install fuse-overlayfs git && \
     dnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*

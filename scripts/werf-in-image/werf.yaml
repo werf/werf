@@ -42,7 +42,7 @@ git:
   stageDependencies:
     install: [""]
 
-{{- range $_, $distro := list "alpine" "ubuntu" "centos" }}
+{{- range $_, $distro := list "alpine" "ubuntu" "centos" "fedora" }}
 ---
 image: "{{ $distro }}"
 dockerfile: "./{{ $distro }}.Dockerfile"
