@@ -47,10 +47,6 @@ permalink: advanced/ci_cd/run_in_container/how_it_works.html
 * `registry.werf.io/werf/werf:1.2-beta-ubuntu`;
 * `registry.werf.io/werf/werf:1.2-ea-ubuntu`;
 * `registry.werf.io/werf/werf:1.2-stable-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-alpha-centos`;
-* `registry.werf.io/werf/werf:1.2-beta-centos`;
-* `registry.werf.io/werf/werf:1.2-ea-centos`;
-* `registry.werf.io/werf/werf:1.2-stable-centos`;
 * `registry.werf.io/werf/werf:1.2-alpha-fedora`;
 * `registry.werf.io/werf/werf:1.2-beta-fedora`;
 * `registry.werf.io/werf/werf:1.2-ea-fedora`;
