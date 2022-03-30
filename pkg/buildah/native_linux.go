@@ -323,6 +323,29 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 	return imgID, nil
 }
 
+func (b *NativeBuildah) Config(ctx context.Context, container string, opts ConfigOpts) error {
+	builder, err := b.getBuilderFromContainer(ctx, container)
+	if err != nil {
+		return fmt.Errorf("error getting builder: %w", err)
+	}
+
+	for _, label := range opts.Labels {
+		labelSlice := strings.SplitN(label, "=", 2)
+		switch {
+		case len(labelSlice) > 1:
+			builder.SetLabel(labelSlice[0], labelSlice[1])
+		case labelSlice[0] == "-":
+			builder.ClearLabels()
+		case strings.HasSuffix(labelSlice[0], "-"):
+			builder.UnsetLabel(strings.TrimSuffix(labelSlice[0], "-"))
+		default:
+			builder.SetLabel(labelSlice[0], "")
+		}
+	}
+
+	return builder.Save()
+}
+
 func (b *NativeBuildah) getImage(ref string) (*libimage.Image, error) {
 	image, _, err := b.Runtime.LookupImage(ref, &libimage.LookupImageOptions{
 		ManifestList: true,

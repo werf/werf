@@ -71,6 +71,18 @@ type CommitOpts struct {
 	Image string
 }
 
+type ConfigOpts struct {
+	CommonOpts
+	Labels []string
+	// TODO:
+	// Cmd        []string
+	// Entrypoint []string
+	// Env        []string
+	// Shell      string
+	// User       string
+	// WorkDir    string
+}
+
 type (
 	FromCommandOpts CommonOpts
 	PushOpts        CommonOpts
@@ -93,6 +105,7 @@ type Buildah interface {
 	Mount(ctx context.Context, container string, opts MountOpts) (string, error)
 	Umount(ctx context.Context, container string, opts UmountOpts) error
 	Commit(ctx context.Context, container string, opts CommitOpts) (string, error)
+	Config(ctx context.Context, container string, opts ConfigOpts) error
 }
 
 type Mode string

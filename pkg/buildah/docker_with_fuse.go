@@ -194,6 +194,17 @@ func (b *DockerWithFuseBuildah) Commit(ctx context.Context, container string, op
 	return imgID, err
 }
 
+func (b *DockerWithFuseBuildah) Config(ctx context.Context, container string, opts ConfigOpts) error {
+	args := []string{"config"}
+	for _, label := range opts.Labels {
+		args = append(args, "--label", label)
+	}
+	args = append(args, container)
+
+	_, _, err := b.runBuildah(ctx, []string{}, args, opts.LogWriter)
+	return err
+}
+
 func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []string, buildahArgs []string, logWriter io.Writer) (string, string, error) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
