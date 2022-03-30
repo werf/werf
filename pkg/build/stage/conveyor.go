@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/werf/pkg/build/import_server"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/storage"
 )
@@ -30,7 +30,7 @@ type Conveyor interface {
 
 	GiterminismManager() giterminism_manager.Interface
 
-	UseLegacyStapelBuilder(cr container_runtime.ContainerRuntime) bool
+	UseLegacyStapelBuilder(cr container_backend.ContainerBackend) bool
 }
 
 type VirtualMergeOptions struct {

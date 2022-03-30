@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 )
 
 type DockerfileStageBuilderInterface interface {
@@ -23,22 +23,22 @@ type DockerfileStageBuilderInterface interface {
 }
 
 type DockerfileStageBuilder struct {
-	ContainerRuntime       container_runtime.ContainerRuntime
+	ContainerBackend       container_backend.ContainerBackend
 	Dockerfile             []byte
-	BuildDockerfileOptions container_runtime.BuildDockerfileOpts
+	BuildDockerfileOptions container_backend.BuildDockerfileOpts
 	ContextArchivePath     string
 
-	Image container_runtime.ImageInterface
+	Image container_backend.ImageInterface
 }
 
-func NewDockerfileStageBuilder(containerRuntime container_runtime.ContainerRuntime, image container_runtime.ImageInterface) *DockerfileStageBuilder {
-	return &DockerfileStageBuilder{ContainerRuntime: containerRuntime, Image: image}
+func NewDockerfileStageBuilder(containerBackend container_backend.ContainerBackend, image container_backend.ImageInterface) *DockerfileStageBuilder {
+	return &DockerfileStageBuilder{ContainerBackend: containerBackend, Image: image}
 }
 
 func (b *DockerfileStageBuilder) Build(ctx context.Context) error {
 	// filePathToStdin != "" ??
 
-	if container_runtime.Debug() {
+	if container_backend.Debug() {
 		fmt.Printf("[DOCKER BUILD] context archive path: %s\n", b.ContextArchivePath)
 	}
 
@@ -51,14 +51,14 @@ func (b *DockerfileStageBuilder) Build(ctx context.Context) error {
 	opts := b.BuildDockerfileOptions
 	opts.ContextTar = contextReader
 
-	if container_runtime.Debug() {
+	if container_backend.Debug() {
 		fmt.Printf("ContextArchivePath=%q\n", b.ContextArchivePath)
 		fmt.Printf("BiuldDockerfileOptions: %#v\n", opts)
 	}
 
-	builtID, err := b.ContainerRuntime.BuildDockerfile(ctx, b.Dockerfile, opts)
+	builtID, err := b.ContainerBackend.BuildDockerfile(ctx, b.Dockerfile, opts)
 	if err != nil {
-		return fmt.Errorf("error building dockerfile with %s: %s", b.ContainerRuntime.String(), err)
+		return fmt.Errorf("error building dockerfile with %s: %s", b.ContainerBackend.String(), err)
 	}
 
 	b.Image.SetBuiltID(builtID)
@@ -67,7 +67,7 @@ func (b *DockerfileStageBuilder) Build(ctx context.Context) error {
 }
 
 func (b *DockerfileStageBuilder) Cleanup(ctx context.Context) error {
-	if err := b.ContainerRuntime.Rmi(ctx, b.Image.BuiltID(), container_runtime.RmiOpts{}); err != nil {
+	if err := b.ContainerBackend.Rmi(ctx, b.Image.BuiltID(), container_backend.RmiOpts{}); err != nil {
 		return fmt.Errorf("unable to remove built dockerfile image %q: %s", b.Image.BuiltID(), err)
 	}
 	return nil

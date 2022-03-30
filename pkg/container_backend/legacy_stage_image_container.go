@@ -1,4 +1,4 @@
-package container_runtime
+package container_backend
 
 import (
 	"context"
@@ -235,9 +235,9 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 		return nil, fmt.Errorf("unable to reset info for image %s: %s", c.image.fromImage.Name(), err)
 	}
 
-	dockerServerRuntime := c.image.ContainerRuntime.(*DockerServerRuntime)
+	dockerServerBackend := c.image.ContainerBackend.(*DockerServerBackend)
 
-	fromImageInspect, err := dockerServerRuntime.GetImageInspect(ctx, c.image.fromImage.Name())
+	fromImageInspect, err := dockerServerBackend.GetImageInspect(ctx, c.image.fromImage.Name())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get image inspect: %s", err)
 	}
@@ -260,7 +260,7 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 }
 
 func (c *LegacyStageImageContainer) run(ctx context.Context) error {
-	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
 	runArgs, err := c.prepareRunArgs(ctx)
 	if err != nil {
@@ -275,7 +275,7 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 }
 
 func (c *LegacyStageImageContainer) introspect(ctx context.Context) error {
-	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
 	runArgs, err := c.prepareIntrospectArgs(ctx)
 	if err != nil {
@@ -292,7 +292,7 @@ func (c *LegacyStageImageContainer) introspect(ctx context.Context) error {
 }
 
 func (c *LegacyStageImageContainer) introspectBefore(ctx context.Context) error {
-	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
 	runArgs, err := c.prepareIntrospectBeforeArgs(ctx)
 	if err != nil {
@@ -320,7 +320,7 @@ func IsStartContainerErr(err error) bool {
 }
 
 func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) {
-	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
 	commitChanges, err := c.prepareCommitChanges(ctx)
 	if err != nil {
@@ -337,7 +337,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 }
 
 func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
-	_ = c.image.ContainerRuntime.(*DockerServerRuntime)
+	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
 	return docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{})
 }

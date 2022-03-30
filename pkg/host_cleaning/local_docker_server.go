@@ -18,7 +18,7 @@ import (
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage/lrumeta"
@@ -294,7 +294,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 									allTagsRemoved = false
 								}
 							} else {
-								lockName := container_runtime.ImageLockName(ref)
+								lockName := container_backend.ImageLockName(ref)
 
 								isLocked, lock, err := werf.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{NonBlocking: true})
 								if err != nil {
@@ -517,7 +517,7 @@ ProcessContainers:
 		}
 
 		if err := func() error {
-			containerLockName := container_runtime.ContainerLockName(containerName)
+			containerLockName := container_backend.ContainerLockName(containerName)
 			isLocked, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{NonBlocking: true})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)

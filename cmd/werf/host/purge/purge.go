@@ -79,7 +79,7 @@ func runReset(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func runReset(ctx context.Context) error {
 			return err
 		}
 	} else {
-		stagesStorage, err := common.GetLocalStagesStorage(containerRuntime)
+		stagesStorage, err := common.GetLocalStagesStorage(containerBackend)
 		if err != nil {
 			return err
 		}

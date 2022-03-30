@@ -9,7 +9,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -102,7 +102,7 @@ func runCleanup(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func runCleanup(ctx context.Context) error {
 	}
 
 	defer func() {
-		if _, match := containerRuntime.(*container_runtime.DockerServerRuntime); !match {
+		if _, match := containerBackend.(*container_backend.DockerServerBackend); !match {
 			return
 		}
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
@@ -195,11 +195,11 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 
 		return err
 	}
-	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -212,11 +212,11 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 	if err != nil {
 		return err
 	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerRuntime, &commonCmdData)
+	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}

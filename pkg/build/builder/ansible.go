@@ -16,8 +16,8 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/container_runtime/stage_builder"
+	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/util"
 )
@@ -45,19 +45,19 @@ func (b *Ansible) IsBeforeSetupEmpty(ctx context.Context) bool {
 }
 func (b *Ansible) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Setup") }
 
-func (b *Ansible) BeforeInstall(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+func (b *Ansible) BeforeInstall(ctx context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
 	return b.stage(ctx, cr, stageBuilder, useLegacyStapelBuilder, "BeforeInstall")
 }
 
-func (b *Ansible) Install(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+func (b *Ansible) Install(ctx context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
 	return b.stage(ctx, cr, stageBuilder, useLegacyStapelBuilder, "Install")
 }
 
-func (b *Ansible) BeforeSetup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+func (b *Ansible) BeforeSetup(ctx context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
 	return b.stage(ctx, cr, stageBuilder, useLegacyStapelBuilder, "BeforeSetup")
 }
 
-func (b *Ansible) Setup(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+func (b *Ansible) Setup(ctx context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
 	return b.stage(ctx, cr, stageBuilder, useLegacyStapelBuilder, "Setup")
 }
 
@@ -74,7 +74,7 @@ func (b *Ansible) isEmptyStage(ctx context.Context, userStageName string) bool {
 	return b.stageChecksum(ctx, userStageName) == ""
 }
 
-func (b *Ansible) stage(ctx context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool, userStageName string) error {
+func (b *Ansible) stage(ctx context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool, userStageName string) error {
 	if useLegacyStapelBuilder {
 		container := stageBuilder.LegacyStapelStageBuilder().BuilderContainer()
 

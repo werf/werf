@@ -1,4 +1,4 @@
-package container_runtime
+package container_backend
 
 import (
 	"context"
@@ -12,13 +12,13 @@ type legacyBaseImage struct {
 	info      *image.Info
 	stageDesc *image.StageDescription
 
-	ContainerRuntime ContainerRuntime
+	ContainerBackend ContainerBackend
 }
 
-func newLegacyBaseImage(name string, containerRuntime ContainerRuntime) *legacyBaseImage {
+func newLegacyBaseImage(name string, containerBackend ContainerBackend) *legacyBaseImage {
 	img := &legacyBaseImage{}
 	img.name = name
-	img.ContainerRuntime = containerRuntime
+	img.ContainerBackend = containerBackend
 	return img
 }
 
@@ -31,7 +31,7 @@ func (i *legacyBaseImage) SetName(name string) {
 }
 
 func (i *legacyBaseImage) MustResetInfo(ctx context.Context) error {
-	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.Name(), GetImageInfoOpts{}); err != nil {
+	if info, err := i.ContainerBackend.GetImageInfo(ctx, i.Name(), GetImageInfoOpts{}); err != nil {
 		return fmt.Errorf("unable to get info for image %s: %s", i.Name(), err)
 	} else {
 		i.SetInfo(info)

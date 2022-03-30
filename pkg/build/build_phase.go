@@ -19,7 +19,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	imagePkg "github.com/werf/werf/pkg/image"
@@ -36,7 +36,7 @@ type BuildPhaseOptions struct {
 }
 
 type BuildOptions struct {
-	ImageBuildOptions container_runtime.BuildOptions
+	ImageBuildOptions container_backend.BuildOptions
 	IntrospectOptions
 
 	ReportPath   string
@@ -252,7 +252,7 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 	}
 
 	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
-		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerRuntime, manager.CopyStageIntoFinalStorageOptions{ShouldBeBuiltMode: phase.ShouldBeBuiltMode}); err != nil {
+		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerBackend, manager.CopyStageIntoFinalStorageOptions{ShouldBeBuiltMode: phase.ShouldBeBuiltMode}); err != nil {
 			return err
 		}
 	}
@@ -392,7 +392,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 		return nil
 	}
 
-	if err := stg.FetchDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerRuntime, docker_registry.API()); err != nil {
+	if err := stg.FetchDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, docker_registry.API()); err != nil {
 		return fmt.Errorf("unable to fetch dependencies for stage %s: %s", stg.LogDetailedName(), err)
 	}
 
@@ -418,7 +418,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 
 	if foundSuitableStage {
 		logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
-		container_runtime.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize())
+		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize())
 
 		logboek.Context(ctx).LogOptionalLn()
 
@@ -491,7 +491,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 		err := logboek.Context(ctx).Default().LogProcess("Copy suitable stage from secondary %s", secondaryStagesStorage.String()).DoError(func() error {
 			// Copy suitable stage from a secondary stages storage to the primary stages storage
 			// while primary stages storage lock for this digest is held
-			if copiedStageDesc, err := storageManager.CopySuitableByDigestStage(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerRuntime); err != nil {
+			if copiedStageDesc, err := storageManager.CopySuitableByDigestStage(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend); err != nil {
 				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %s", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetStagesStorage().String(), err)
 			} else {
 				i := phase.Conveyor.GetOrCreateStageImage(extractLegacyStageImage(phase.StagesIterator.GetPrevImage(img, stg)), copiedStageDesc.Info.Name)
@@ -499,7 +499,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				stg.SetStageImage(i)
 
 				logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
-				container_runtime.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize())
+				container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize())
 
 				return nil
 			}
@@ -510,7 +510,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 		unlockStage()
 
-		if err := storageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerRuntime); err != nil {
+		if err := storageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerBackend); err != nil {
 			return fmt.Errorf("unable to copy stage %s into cache storages: %s", stg.GetStageImage().Image.GetStageDescription().StageID.String(), err)
 		}
 
@@ -547,17 +547,17 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *Image,
 	case stg.Name() == "dockerfile":
 		return nil
 	default:
-		return phase.Conveyor.StorageManager.FetchStage(ctx, phase.Conveyor.ContainerRuntime, phase.StagesIterator.PrevBuiltStage)
+		return phase.Conveyor.StorageManager.FetchStage(ctx, phase.Conveyor.ContainerBackend, phase.StagesIterator.PrevBuiltStage)
 	}
 
 	return nil
 }
 
-func extractLegacyStageImage(stageImage *stage.StageImage) *container_runtime.LegacyStageImage {
+func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.LegacyStageImage {
 	if stageImage == nil || stageImage.Image == nil {
 		return nil
 	}
-	return stageImage.Image.(*container_runtime.LegacyStageImage)
+	return stageImage.Image.(*container_backend.LegacyStageImage)
 }
 
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg stage.Interface) (bool, func(), error) {
@@ -666,7 +666,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 		}
 	}
 
-	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerRuntime, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)
+	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)
 	if err != nil {
 		return fmt.Errorf("error preparing stage %s: %s", stg.Name(), err)
 	}
@@ -675,7 +675,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 }
 
 func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.Interface) error {
-	if !img.isDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerRuntime) {
+	if !img.isDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
 		_, err := stapel.GetOrCreateContainer(ctx)
 		if err != nil {
 			return fmt.Errorf("get or create stapel container failed: %s", err)
@@ -686,7 +686,7 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.I
 		if err != nil {
 			return
 		}
-		container_runtime.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize())
+		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize())
 	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Building stage %s", stg.LogDetailedName()).
@@ -727,7 +727,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 		switch {
 		case stg.Name() == "dockerfile":
 			return stageImage.Builder.DockerfileStageBuilder().Build(ctx)
-		case phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerRuntime):
+		case phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend):
 			return stageImage.Builder.LegacyStapelStageBuilder().Build(ctx, phase.ImageBuildOptions)
 		default:
 			return stageImage.Builder.StapelStageBuilder().Build(ctx, phase.ImageBuildOptions)
@@ -802,7 +802,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 
 		unlockStage()
 
-		if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerRuntime); err != nil {
+		if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerBackend); err != nil {
 			return fmt.Errorf("unable to copy stage %s into cache storages: %s", stageImage.Image.GetStageDescription().StageID.String(), err)
 		}
 
@@ -817,7 +817,7 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 		}).
 		DoError(func() error {
 			if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
-				return s.GetStageImage().Image.Introspect(ctx) // FIXME(stapel-to-buildah): use container runtime operation
+				return s.GetStageImage().Image.Introspect(ctx) // FIXME(stapel-to-buildah): use container backend operation
 			}); err != nil {
 				return fmt.Errorf("introspect error failed: %s", err)
 			}

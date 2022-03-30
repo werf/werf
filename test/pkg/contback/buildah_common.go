@@ -1,4 +1,4 @@
-package contruntime
+package contback
 
 import (
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"

@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/build/dockerfile_helpers"
-	"github.com/werf/werf/pkg/container_runtime/stage_builder"
+	"github.com/werf/werf/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -65,14 +65,14 @@ var _ = Describe("DockerfileStage", func() {
 			ctx := context.Background()
 
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")), data.TestDependencies.Dependencies)
-			containerRuntime := NewContainerRuntimeMock()
+			containerBackend := NewContainerBackendMock()
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(data.Dockerfile)
 
 			stage := newTestDockerfileStage(data.Dockerfile, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies)
 
 			img := NewLegacyImageStub()
-			stageBuilder := stage_builder.NewStageBuilder(containerRuntime, nil, img)
+			stageBuilder := stage_builder.NewStageBuilder(containerBackend, nil, img)
 			stageImage := &StageImage{
 				Image:   img,
 				Builder: stageBuilder,
@@ -82,7 +82,7 @@ var _ = Describe("DockerfileStage", func() {
 			Expect(err).To(Succeed())
 			Expect(digest).To(Equal(data.TestDependencies.ExpectedDigest))
 
-			err = stage.PrepareImage(ctx, conveyor, containerRuntime, nil, stageImage)
+			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage)
 			Expect(err).To(Succeed())
 			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.TestDependencies.Dependencies)
 		},
@@ -295,11 +295,11 @@ RUN echo hello
 
 			stage := newTestDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
 
-			containerRuntime := NewContainerRuntimeMock()
+			containerBackend := NewContainerBackendMock()
 
 			dockerRegistry := NewDockerRegistryApiStub()
 
-			err := stage.FetchDependencies(ctx, conveyor, containerRuntime, dockerRegistry)
+			err := stage.FetchDependencies(ctx, conveyor, containerBackend, dockerRegistry)
 			Expect(IsErrInvalidBaseImage(err)).To(BeTrue())
 		})
 	})

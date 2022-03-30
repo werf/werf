@@ -6,7 +6,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -14,7 +14,7 @@ import (
 )
 
 type LegacyImageStub struct {
-	container_runtime.LegacyImageInterface
+	container_backend.LegacyImageInterface
 
 	_Container *LegacyContainerStub
 }
@@ -25,12 +25,12 @@ func NewLegacyImageStub() *LegacyImageStub {
 	}
 }
 
-func (img *LegacyImageStub) Container() container_runtime.LegacyContainer {
+func (img *LegacyImageStub) Container() container_backend.LegacyContainer {
 	return img._Container
 }
 
 type LegacyContainerStub struct {
-	container_runtime.LegacyContainer
+	container_backend.LegacyContainer
 
 	_ServiceCommitChangeOptions *LegacyContainerOptionsStub
 }
@@ -41,12 +41,12 @@ func NewLegacyContainerStub() *LegacyContainerStub {
 	}
 }
 
-func (c *LegacyContainerStub) ServiceCommitChangeOptions() container_runtime.LegacyContainerOptions {
+func (c *LegacyContainerStub) ServiceCommitChangeOptions() container_backend.LegacyContainerOptions {
 	return c._ServiceCommitChangeOptions
 }
 
 type LegacyContainerOptionsStub struct {
-	container_runtime.LegacyContainerOptions
+	container_backend.LegacyContainerOptions
 
 	Env map[string]string
 }
@@ -89,7 +89,7 @@ func NewConveyorStubForDependencies(giterminismManager *GiterminismManagerStub, 
 	return NewConveyorStub(giterminismManager, lastStageImageNameByImageName, lastStageImageIDByImageName)
 }
 
-func (c *ConveyorStub) UseLegacyStapelBuilder(cr container_runtime.ContainerRuntime) bool {
+func (c *ConveyorStub) UseLegacyStapelBuilder(cr container_backend.ContainerBackend) bool {
 	return true
 }
 
@@ -167,28 +167,28 @@ func (archive *GitRepoArchiveStub) GetFilePath() string {
 	return "no-such-file"
 }
 
-type ContainerRuntimeMock struct {
-	container_runtime.ContainerRuntime
+type ContainerBackendMock struct {
+	container_backend.ContainerBackend
 
 	_PulledImages map[string]bool
 }
 
-func NewContainerRuntimeMock() *ContainerRuntimeMock {
-	return &ContainerRuntimeMock{
+func NewContainerBackendMock() *ContainerBackendMock {
+	return &ContainerBackendMock{
 		_PulledImages: make(map[string]bool),
 	}
 }
 
-func (containerRuntime *ContainerRuntimeMock) HasContainerRootMountSupport() bool {
+func (containerBackend *ContainerBackendMock) HasContainerRootMountSupport() bool {
 	return false
 }
 
-func (containerRuntime *ContainerRuntimeMock) GetImageInfo(ctx context.Context, ref string, opts container_runtime.GetImageInfoOpts) (*image.Info, error) {
+func (containerBackend *ContainerBackendMock) GetImageInfo(ctx context.Context, ref string, opts container_backend.GetImageInfoOpts) (*image.Info, error) {
 	return nil, nil
 }
 
-func (containerRuntime *ContainerRuntimeMock) Pull(ctx context.Context, ref string, opts container_runtime.PullOpts) error {
-	containerRuntime._PulledImages[ref] = true
+func (containerBackend *ContainerBackendMock) Pull(ctx context.Context, ref string, opts container_backend.PullOpts) error {
+	containerBackend._PulledImages[ref] = true
 	return nil
 }
 

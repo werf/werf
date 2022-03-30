@@ -50,7 +50,7 @@ import (
 )
 
 func main() {
-	shouldTerminate, err := common.ContainerRuntimeProcessStartupHook()
+	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
 	if err != nil {
 		common.TerminateWithError(err.Error(), 1)
 	}

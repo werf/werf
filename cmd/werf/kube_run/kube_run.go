@@ -26,7 +26,7 @@ import (
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/config/deploy_params"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -217,7 +217,7 @@ func runMain(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -295,7 +295,7 @@ func runMain(ctx context.Context) error {
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
 			cleanupResources(ctx, pod, secret, namespace)
 
-			if err := run(ctx, pod, secret, namespace, werfConfig, containerRuntime, giterminismManager); err != nil {
+			if err := run(ctx, pod, secret, namespace, werfConfig, containerBackend, giterminismManager); err != nil {
 				return err
 			}
 
@@ -304,7 +304,7 @@ func runMain(ctx context.Context) error {
 			return nil
 		})
 	} else {
-		if err := run(ctx, pod, secret, namespace, werfConfig, containerRuntime, giterminismManager); err != nil {
+		if err := run(ctx, pod, secret, namespace, werfConfig, containerBackend, giterminismManager); err != nil {
 			return err
 		}
 	}
@@ -312,7 +312,7 @@ func runMain(ctx context.Context) error {
 	return nil
 }
 
-func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.WerfConfig, containerRuntime container_runtime.ContainerRuntime, giterminismManager giterminism_manager.Interface) error {
+func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.WerfConfig, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface) error {
 	projectName := werfConfig.Meta.Project
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
@@ -334,11 +334,11 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 	if err != nil {
 		return err
 	}
-	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -350,11 +350,11 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 	if err != nil {
 		return err
 	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerRuntime, &commonCmdData)
+	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -363,7 +363,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	var image string

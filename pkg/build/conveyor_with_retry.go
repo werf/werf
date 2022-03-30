@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -17,14 +17,14 @@ type ConveyorWithRetryWrapper struct {
 	ProjectDir          string
 	BaseTmpDir          string
 	SshAuthSock         string
-	ContainerRuntime    container_runtime.ContainerRuntime
+	ContainerBackend    container_backend.ContainerBackend
 	StorageManager      *manager.StorageManager
 	StorageLockManager  storage.LockManager
 
 	ConveyorOptions ConveyorOptions
 }
 
-func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
+func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
 	return &ConveyorWithRetryWrapper{
 		WerfConfig:          werfConfig,
 		GiterminismManager:  giterminismManager,
@@ -32,7 +32,7 @@ func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManag
 		ProjectDir:          projectDir,
 		BaseTmpDir:          baseTmpDir,
 		SshAuthSock:         sshAuthSock,
-		ContainerRuntime:    containerRuntime,
+		ContainerBackend:    containerBackend,
 		StorageManager:      storageManager,
 		StorageLockManager:  storageLockManager,
 		ConveyorOptions:     opts,
@@ -52,7 +52,7 @@ func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f f
 			wrapper.ProjectDir,
 			wrapper.BaseTmpDir,
 			wrapper.SshAuthSock,
-			wrapper.ContainerRuntime,
+			wrapper.ContainerBackend,
 			wrapper.StorageManager,
 			wrapper.StorageLockManager,
 			wrapper.ConveyorOptions,

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -41,10 +41,10 @@ type StagesStorage interface {
 	ConstructStageImageName(projectName, digest string, uniqueID int64) string
 
 	// FetchImage will create a local image in the container-runtime
-	FetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) error
+	FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
-	StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error
-	ShouldFetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) (bool, error)
+	StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error
+	ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error)
 
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error
@@ -94,10 +94,10 @@ type StagesStorageOptions struct {
 	RepoStagesStorageOptions
 }
 
-func NewStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, options StagesStorageOptions) (StagesStorage, error) {
+func NewStagesStorage(stagesStorageAddress string, containerBackend container_backend.ContainerBackend, options StagesStorageOptions) (StagesStorage, error) {
 	if stagesStorageAddress == LocalStorageAddress {
-		return NewDockerServerStagesStorage(containerRuntime.(*container_runtime.DockerServerRuntime)), nil
+		return NewDockerServerStagesStorage(containerBackend.(*container_backend.DockerServerBackend)), nil
 	} else { // Docker registry based stages storage
-		return NewRepoStagesStorage(stagesStorageAddress, containerRuntime, options.RepoStagesStorageOptions)
+		return NewRepoStagesStorage(stagesStorageAddress, containerBackend, options.RepoStagesStorageOptions)
 	}
 }

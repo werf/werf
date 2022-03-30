@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
@@ -68,7 +68,7 @@ func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Convey
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	if err := s.GitStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}

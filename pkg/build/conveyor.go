@@ -24,7 +24,7 @@ import (
 	"github.com/werf/werf/pkg/build/import_server"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	imagePkg "github.com/werf/werf/pkg/image"
@@ -58,7 +58,7 @@ type Conveyor struct {
 
 	tmpDir string
 
-	ContainerRuntime container_runtime.ContainerRuntime
+	ContainerBackend container_backend.ContainerBackend
 
 	StorageLockManager storage.LockManager
 	StorageManager     manager.StorageManagerInterface
@@ -79,7 +79,7 @@ type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerRuntime container_runtime.ContainerRuntime, storageManager manager.StorageManagerInterface, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
 	return &Conveyor{
 		werfConfig:          werfConfig,
 		imageNamesToProcess: imageNamesToProcess,
@@ -101,7 +101,7 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 		tmpDir:                 filepath.Join(baseTmpDir, util.GenerateConsistentRandomString(10)),
 		importServers:          make(map[string]import_server.ImportServer),
 
-		ContainerRuntime:   containerRuntime,
+		ContainerBackend:   containerBackend,
 		StorageLockManager: storageLockManager,
 		StorageManager:     storageManager,
 
@@ -125,7 +125,7 @@ func (c *Conveyor) getServiceRWMutex(service string) *sync.RWMutex {
 	return rwMutex
 }
 
-func (c *Conveyor) UseLegacyStapelBuilder(cr container_runtime.ContainerRuntime) bool {
+func (c *Conveyor) UseLegacyStapelBuilder(cr container_backend.ContainerBackend) bool {
 	return !cr.HasStapelBuildSupport()
 }
 
@@ -212,7 +212,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, imageName, stageName str
 		stg = c.GetImage(imageName).GetLastNonEmptyStage()
 	}
 
-	if err := c.StorageManager.FetchStage(ctx, c.ContainerRuntime, stg); err != nil {
+	if err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
 		return nil, fmt.Errorf("unable to fetch stage %s: %s", stg.GetStageImage().Image.Name(), err)
 	}
 
@@ -333,7 +333,7 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, imageName string) error {
 	lastImageStage := c.GetImage(imageName).GetLastNonEmptyStage()
-	return c.StorageManager.FetchStage(ctx, c.ContainerRuntime, lastImageStage)
+	return c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
 }
 
 func (c *Conveyor) GetImageInfoGetters() (images []*imagePkg.InfoGetter) {
@@ -376,8 +376,8 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 	return envArray
 }
 
-func (c *Conveyor) checkContainerRuntimeSupported(_ context.Context) error {
-	if _, isBuildah := c.ContainerRuntime.(*container_runtime.BuildahRuntime); !isBuildah {
+func (c *Conveyor) checkContainerBackendSupported(_ context.Context) error {
+	if _, isBuildah := c.ContainerBackend.(*container_backend.BuildahBackend); !isBuildah {
 		return nil
 	}
 
@@ -404,7 +404,7 @@ func (c *Conveyor) checkContainerRuntimeSupported(_ context.Context) error {
 	}
 
 	if len(nonDockerfileImages) > 0 && os.Getenv("WERF_BUILDAH_FOR_STAPEL_ENABLED") != "1" {
-		return fmt.Errorf(`Unable to build stapel type images and artifacts with buildah container runtime: %s
+		return fmt.Errorf(`Unable to build stapel type images and artifacts with buildah container backend: %s
 
 Please select only dockerfile images or delete all non-dockerfile images from your werf.yaml.
 
@@ -415,7 +415,7 @@ Or disable buildah runtime by unsetting WERF_BUILDAH_MODE environment variable.`
 }
 
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
-	if err := c.checkContainerRuntimeSupported(ctx); err != nil {
+	if err := c.checkContainerBackendSupported(ctx); err != nil {
 		return err
 	}
 
@@ -686,13 +686,13 @@ func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
 	c.stageImages[stageImage.Image.Name()] = stageImage
 }
 
-func (c *Conveyor) GetOrCreateStageImage(fromImage *container_runtime.LegacyStageImage, name string) *stage.StageImage {
+func (c *Conveyor) GetOrCreateStageImage(fromImage *container_backend.LegacyStageImage, name string) *stage.StageImage {
 	if img := c.GetStageImage(name); img != nil {
 		return img
 	}
 
-	i := container_runtime.NewLegacyStageImage(fromImage, name, c.ContainerRuntime)
-	img := stage.NewStageImage(c.ContainerRuntime, fromImage, i)
+	i := container_backend.NewLegacyStageImage(fromImage, name, c.ContainerBackend)
+	img := stage.NewStageImage(c.ContainerBackend, fromImage, i)
 
 	c.SetStageImage(img)
 	return img
@@ -730,11 +730,11 @@ func (c *Conveyor) getLastNonEmptyImageStage(imageName string) stage.Interface {
 }
 
 func (c *Conveyor) FetchImageStage(ctx context.Context, imageName, stageName string) error {
-	return c.StorageManager.FetchStage(ctx, c.ContainerRuntime, c.getImageStage(imageName, stageName))
+	return c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getImageStage(imageName, stageName))
 }
 
 func (c *Conveyor) FetchLastNonEmptyImageStage(ctx context.Context, imageName string) error {
-	return c.StorageManager.FetchStage(ctx, c.ContainerRuntime, c.getLastNonEmptyImageStage(imageName))
+	return c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getLastNonEmptyImageStage(imageName))
 }
 
 func (c *Conveyor) GetImageNameForLastImageStage(imageName string) string {

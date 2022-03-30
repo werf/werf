@@ -1,4 +1,4 @@
-package container_runtime
+package container_backend
 
 import (
 	"context"
@@ -14,21 +14,21 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-type DockerServerRuntime struct{}
+type DockerServerBackend struct{}
 
-func NewDockerServerRuntime() *DockerServerRuntime {
-	return &DockerServerRuntime{}
+func NewDockerServerBackend() *DockerServerBackend {
+	return &DockerServerBackend{}
 }
 
-func (runtime *DockerServerRuntime) HasStapelBuildSupport() bool {
+func (runtime *DockerServerBackend) HasStapelBuildSupport() bool {
 	return false
 }
 
-func (runtime *DockerServerRuntime) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error) {
-	panic("BuildStapelStage does not implemented for DockerServerRuntime. Please report the bug if you've received this message.")
+func (runtime *DockerServerBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error) {
+	panic("BuildStapelStage does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
-func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
+func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
 	switch {
 	case opts.ContextTar == nil:
 		panic(fmt.Sprintf("ContextTar can't be nil: %+v", opts))
@@ -74,7 +74,7 @@ func (runtime *DockerServerRuntime) BuildDockerfile(ctx context.Context, _ []byt
 	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, opts.ContextTar, cliArgs...)
 }
 
-func (runtime *DockerServerRuntime) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
+func (runtime *DockerServerBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
 		return nil, nil
@@ -85,8 +85,8 @@ func (runtime *DockerServerRuntime) GetImageInfo(ctx context.Context, ref string
 	return image.NewInfoFromInspect(ref, inspect), nil
 }
 
-// GetImageInspect only available for DockerServerRuntime
-func (runtime *DockerServerRuntime) GetImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
+// GetImageInspect only available for DockerServerBackend
+func (runtime *DockerServerBackend) GetImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
 		return nil, nil
@@ -94,7 +94,7 @@ func (runtime *DockerServerRuntime) GetImageInspect(ctx context.Context, ref str
 	return inspect, err
 }
 
-func (runtime *DockerServerRuntime) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
+func (runtime *DockerServerBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
 	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
 		return err
 	} else {
@@ -103,7 +103,7 @@ func (runtime *DockerServerRuntime) RefreshImageObject(ctx context.Context, img 
 	return nil
 }
 
-func (runtime *DockerServerRuntime) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
+func (runtime *DockerServerBackend) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging image %s by name %s", img.Name(), newImageName)).DoError(func() error {
 		if err := docker.CliTag(ctx, img.Name(), newImageName); err != nil {
 			return fmt.Errorf("unable to tag image %s by name %s: %s", img.Name(), newImageName, err)
@@ -143,13 +143,13 @@ func (runtime *DockerServerRuntime) RenameImage(ctx context.Context, img LegacyI
 	return nil
 }
 
-func (runtime *DockerServerRuntime) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
+func (runtime *DockerServerBackend) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
 	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
 		return runtime.Rmi(ctx, img.Name(), RmiOpts{})
 	})
 }
 
-func (runtime *DockerServerRuntime) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
+func (runtime *DockerServerBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
 	if err := img.Pull(ctx); err != nil {
 		return fmt.Errorf("unable to pull image %s: %s", img.Name(), err)
 	}
@@ -163,26 +163,26 @@ func (runtime *DockerServerRuntime) PullImageFromRegistry(ctx context.Context, i
 	return nil
 }
 
-func (runtime *DockerServerRuntime) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
+func (runtime *DockerServerBackend) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
 	return docker.CliTag(ctx, ref, newRef)
 }
 
-func (runtime *DockerServerRuntime) Push(ctx context.Context, ref string, opts PushOpts) error {
+func (runtime *DockerServerBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
 	return docker.CliPushWithRetries(ctx, ref)
 }
 
-func (runtime *DockerServerRuntime) Pull(ctx context.Context, ref string, opts PullOpts) error {
+func (runtime *DockerServerBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	if err := docker.CliPull(ctx, ref); err != nil {
 		return fmt.Errorf("unable to pull image %s: %s", ref, err)
 	}
 	return nil
 }
 
-func (runtime *DockerServerRuntime) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
+func (runtime *DockerServerBackend) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	return docker.CliRmi(ctx, ref, "--force")
 }
 
-func (runtime *DockerServerRuntime) PushImage(ctx context.Context, img LegacyImageInterface) error {
+func (runtime *DockerServerBackend) PushImage(ctx context.Context, img LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", img.Name())).DoError(func() error {
 		return docker.CliPushWithRetries(ctx, img.Name())
 	}); err != nil {
@@ -192,8 +192,8 @@ func (runtime *DockerServerRuntime) PushImage(ctx context.Context, img LegacyIma
 	return nil
 }
 
-// PushBuiltImage is only available for DockerServerRuntime
-func (runtime *DockerServerRuntime) PushBuiltImage(ctx context.Context, img LegacyImageInterface) error {
+// PushBuiltImage is only available for DockerServerBackend
+func (runtime *DockerServerBackend) PushBuiltImage(ctx context.Context, img LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging built image by name %s", img.Name())).DoError(func() error {
 		if err := img.TagBuiltImage(ctx); err != nil {
 			return fmt.Errorf("unable to tag built image by name %s: %s", img.Name(), err)
@@ -212,8 +212,8 @@ func (runtime *DockerServerRuntime) PushBuiltImage(ctx context.Context, img Lega
 	return nil
 }
 
-// TagBuiltImageByName is only available for DockerServerRuntime
-func (runtime *DockerServerRuntime) TagImageByName(ctx context.Context, img LegacyImageInterface) error {
+// TagBuiltImageByName is only available for DockerServerBackend
+func (runtime *DockerServerBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) error {
 	if img.GetBuiltID() != "" {
 		if err := img.TagBuiltImage(ctx); err != nil {
 			return fmt.Errorf("unable to tag image %s: %s", img.Name(), err)
@@ -227,6 +227,6 @@ func (runtime *DockerServerRuntime) TagImageByName(ctx context.Context, img Lega
 	return nil
 }
 
-func (runtime *DockerServerRuntime) String() string {
+func (runtime *DockerServerBackend) String() string {
 	return "local-docker-server"
 }

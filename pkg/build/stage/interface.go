@@ -3,7 +3,7 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
 )
@@ -14,11 +14,11 @@ type Interface interface {
 
 	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error)
 
-	FetchDependencies(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, dockerRegistry docker_registry.ApiInterface) error
+	FetchDependencies(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, dockerRegistry docker_registry.ApiInterface) error
 	GetDependencies(ctx context.Context, c Conveyor, prevImage *StageImage, prevBuiltImage *StageImage) (string, error)
 	GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error)
 
-	PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error
+	PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error
 
 	PreRunHook(context.Context, Conveyor) error
 

@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/storage"
 )
@@ -13,7 +13,7 @@ import (
 func NewStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.StagesStorage {
 	s, err := storage.NewStagesStorage(
 		stagesStorageAddress,
-		&container_runtime.DockerServerRuntime{},
+		&container_backend.DockerServerBackend{},
 		storage.StagesStorageOptions{
 			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
 				DockerRegistryOptions: dockerRegistryOptions,

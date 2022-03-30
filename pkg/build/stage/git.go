@@ -3,7 +3,7 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	imagePkg "github.com/werf/werf/pkg/image"
 )
 
@@ -25,7 +25,7 @@ func (s *GitStage) isEmpty(_ context.Context) bool {
 	return len(s.gitMappings) == 0
 }
 
-func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	if err := s.BaseStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}

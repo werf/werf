@@ -127,13 +127,13 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
 	ctx = processCtx
 
-	_ = containerRuntime
+	_ = containerBackend
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {

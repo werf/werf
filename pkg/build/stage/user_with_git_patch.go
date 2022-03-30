@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/build/builder"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -35,7 +35,7 @@ func (s *UserWithGitPatchStage) GetNextStageDependencies(ctx context.Context, c 
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	if err := s.BaseStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}

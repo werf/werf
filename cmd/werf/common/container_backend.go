@@ -8,12 +8,12 @@ import (
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/util"
 )
 
-func ContainerRuntimeProcessStartupHook() (bool, error) {
+func ContainerBackendProcessStartupHook() (bool, error) {
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
 		return false, fmt.Errorf("unable to determine buildah mode: %s", err)
@@ -79,14 +79,14 @@ func GetBuildahStorageDriver() (*buildah.StorageDriver, error) {
 	return &storageDriver, nil
 }
 
-func wrapContainerRuntime(containerRuntime container_runtime.ContainerRuntime) container_runtime.ContainerRuntime {
+func wrapContainerBackend(containerBackend container_backend.ContainerBackend) container_backend.ContainerBackend {
 	if os.Getenv("WERF_PERF_TEST_CONTAINER_RUNTIME") == "1" {
-		return container_runtime.NewPerfCheckContainerRuntime(containerRuntime)
+		return container_backend.NewPerfCheckContainerBackend(containerBackend)
 	}
-	return containerRuntime
+	return containerBackend
 }
 
-func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (container_runtime.ContainerRuntime, context.Context, error) {
+func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (container_backend.ContainerBackend, context.Context, error) {
 	buildahMode, buildahIsolation, err := GetBuildahMode()
 	if err != nil {
 		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %s", err)
@@ -97,14 +97,14 @@ func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (contain
 		if resolvedMode == buildah.ModeDockerWithFuse {
 			newCtx, err := InitProcessDocker(ctx, cmdData)
 			if err != nil {
-				return nil, ctx, fmt.Errorf("unable to init process docker for buildah container runtime: %s", err)
+				return nil, ctx, fmt.Errorf("unable to init process docker for buildah container backend: %s", err)
 			}
 			ctx = newCtx
 		}
 
 		storageDriver, err := GetBuildahStorageDriver()
 		if err != nil {
-			return nil, ctx, fmt.Errorf("unable to determine buildah container runtime storage driver: %s", err)
+			return nil, ctx, fmt.Errorf("unable to determine buildah container backend storage driver: %s", err)
 		}
 
 		insecure := *cmdData.InsecureRegistry || *cmdData.SkipTlsVerifyRegistry
@@ -119,21 +119,21 @@ func InitProcessContainerRuntime(ctx context.Context, cmdData *CmdData) (contain
 			return nil, ctx, fmt.Errorf("unable to get buildah client: %s", err)
 		}
 
-		return wrapContainerRuntime(container_runtime.NewBuildahRuntime(b)), ctx, nil
+		return wrapContainerBackend(container_backend.NewBuildahBackend(b)), ctx, nil
 	}
 
 	newCtx, err := InitProcessDocker(ctx, cmdData)
 	if err != nil {
-		return nil, ctx, fmt.Errorf("unable to init process docker for docker-server container runtime: %s", err)
+		return nil, ctx, fmt.Errorf("unable to init process docker for docker-server container backend: %s", err)
 	}
 	ctx = newCtx
 
-	return wrapContainerRuntime(container_runtime.NewDockerServerRuntime()), ctx, nil
+	return wrapContainerBackend(container_backend.NewDockerServerBackend()), ctx, nil
 }
 
 func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {
 	if err := docker.Init(ctx, *cmdData.DockerConfig, *cmdData.LogVerbose, *cmdData.LogDebug, *cmdData.Platform); err != nil {
-		return ctx, fmt.Errorf("unable to init docker for buildah container runtime: %s", err)
+		return ctx, fmt.Errorf("unable to init docker for buildah container backend: %s", err)
 	}
 
 	ctxWithDockerCli, err := docker.NewContext(ctx)

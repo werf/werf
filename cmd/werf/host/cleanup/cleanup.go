@@ -83,7 +83,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 }
 
 func runCleanup(ctx context.Context) error {
-	_, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	_, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
