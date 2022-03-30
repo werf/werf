@@ -285,15 +285,18 @@ func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error
 	return multierror.Append(multiErr, rmiErrors...).ErrorOrNil()
 }
 
-func (b *NativeBuildah) Commit(ctx context.Context, container, image string, opts CommitOpts) (string, error) {
+func (b *NativeBuildah) Commit(ctx context.Context, container string, opts CommitOpts) (string, error) {
 	builder, err := b.getBuilderFromContainer(ctx, container)
 	if err != nil {
 		return "", fmt.Errorf("error getting builder: %w", err)
 	}
 
-	imageRef, err := alltransports.ParseImageName(image)
-	if err != nil {
-		return "", fmt.Errorf("error parsing image name: %w", err)
+	var imageRef imgtypes.ImageReference
+	if opts.Image != "" {
+		imageRef, err = alltransports.ParseImageName(opts.Image)
+		if err != nil {
+			return "", fmt.Errorf("error parsing image name: %w", err)
+		}
 	}
 
 	imgID, _, _, err := builder.Commit(ctx, imageRef, buildah.CommitOptions{
