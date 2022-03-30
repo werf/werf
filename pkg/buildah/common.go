@@ -64,6 +64,7 @@ type RmiOpts struct {
 
 type CommitOpts struct {
 	CommonOpts
+	Image string
 }
 
 type (
@@ -86,7 +87,7 @@ type Buildah interface {
 	Rmi(ctx context.Context, ref string, opts RmiOpts) error
 	Mount(ctx context.Context, container string, opts MountOpts) (string, error)
 	Umount(ctx context.Context, container string, opts UmountOpts) error
-	Commit(ctx context.Context, container, image string, opts CommitOpts) (string, error)
+	Commit(ctx context.Context, container string, opts CommitOpts) (string, error)
 }
 
 type Mode string
