@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
@@ -28,30 +29,32 @@ func (runtime *BuildahBackend) HasStapelBuildSupport() bool {
 	return true
 }
 
-// FIXME(stapel-to-buildah): proper deep implementation
+func (runtime *BuildahBackend) getBuildahCommonOpts(ctx context.Context, suppressLog bool) (opts buildah.CommonOpts) {
+	if !suppressLog {
+		opts.LogWriter = logboek.Context(ctx).OutStream()
+	}
+
+	return
+}
+
 func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error) {
-	/*
-		1. Create new temporary build container using 'from' and remain uniq container name.
-		2. Mount container root to host and run all prepare-container-actions, then unmount.
-		3. Run user instructions in container, mount volumes when build.
-		4. Set specified labels into container.
-		5. Save container name as builtID (ideally there is no need to commit an image here, because buildah allows to commit and push directly container, which would happen later).
-	*/
+	containerID := fmt.Sprintf("werf-stage-build-%s", uuid.New().String())
 
-	containerID := uuid.New().String()
-
-	_, err := runtime.buildah.FromCommand(ctx, containerID, baseImage, buildah.FromCommandOpts{})
+	_, err := runtime.buildah.FromCommand(ctx, containerID, baseImage, buildah.FromCommandOpts(runtime.getBuildahCommonOpts(ctx, true)))
 	if err != nil {
 		return "", fmt.Errorf("unable to create container using base image %q: %s", baseImage, err)
 	}
 
+	// TODO(stapel-to-buildah): cleanup orphan build containers in werf-host-cleanup procedure
+	// defer runtime.buildah.Rm(ctx, containerID, buildah.RmOpts{CommonOpts: runtime.getBuildahCommonOpts(ctx, true)})
+
 	if len(opts.PrepareContainerActions) > 0 {
 		err := func() error {
-			containerRoot, err := runtime.buildah.Mount(ctx, containerID, buildah.MountOpts{})
+			containerRoot, err := runtime.buildah.Mount(ctx, containerID, buildah.MountOpts(runtime.getBuildahCommonOpts(ctx, true)))
 			if err != nil {
 				return fmt.Errorf("unable to mount container %q root dir: %s", containerID, err)
 			}
-			defer runtime.buildah.Umount(ctx, containerRoot, buildah.UmountOpts{})
+			defer runtime.buildah.Umount(ctx, containerRoot, buildah.UmountOpts(runtime.getBuildahCommonOpts(ctx, true)))
 
 			for _, action := range opts.PrepareContainerActions {
 				if err := action.PrepareContainer(containerRoot); err != nil {
@@ -67,16 +70,44 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 	}
 
 	for _, cmd := range opts.UserCommands {
-		if err := runtime.buildah.RunCommand(ctx, containerID, strings.Fields(cmd), buildah.RunCommandOpts{}); err != nil {
+		var mounts []specs.Mount
+		for _, volume := range opts.BuildVolumes {
+			volumeParts := strings.SplitN(volume, ":", 2)
+			if len(volumeParts) != 2 {
+				panic(fmt.Sprintf("invalid volume %q: expected SOURCE:DESTINATION format", volume))
+			}
+
+			mounts = append(mounts, specs.Mount{
+				Type:        "bind",
+				Source:      volumeParts[0],
+				Destination: volumeParts[1],
+			})
+		}
+
+		// TODO(stapel-to-buildah): Consider support for shell script instead of separate run commands to allow shared
+		// 							  usage of shell variables and functions between multiple commands.
+		//                          Maybe there is no need of such function, instead provide options to select shell in the werf.yaml.
+		//                          Is it important to provide compatibility between docker-server-based werf.yaml and buildah-based?
+		if err := runtime.buildah.RunCommand(ctx, containerID, []string{"sh", "-c", cmd}, buildah.RunCommandOpts{
+			CommonOpts: runtime.getBuildahCommonOpts(ctx, false),
+			Mounts:     mounts,
+		}); err != nil {
 			return "", fmt.Errorf("unable to run %q: %s", cmd, err)
 		}
 	}
 
-	// TODO(stapel-to-buildah): use buildah.Change to set labels
-	fmt.Printf("[DEBUG] Setting labels %v for build container %q\n", opts.Labels, containerID)
+	logboek.Context(ctx).Debug().LogF("Setting labels %v for build container %q\n", opts.Labels, containerID)
+	if err := runtime.buildah.Config(ctx, containerID, buildah.ConfigOpts{
+		CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+		Labels:     opts.Labels,
+	}); err != nil {
+		return "", fmt.Errorf("unable to set container %q config: %s", containerID, err)
+	}
 
-	fmt.Printf("[DEBUG] Committing container %q\n", containerID)
-	imgID, err := runtime.buildah.Commit(ctx, containerID, buildah.CommitOpts{})
+	// TODO(stapel-to-buildah): Save container name as builtID. There is no need to commit an image here,
+	//                            because buildah allows to commit and push directly container, which would happen later.
+	logboek.Context(ctx).Debug().LogF("committing container %q\n", containerID)
+	imgID, err := runtime.buildah.Commit(ctx, containerID, buildah.CommitOpts{CommonOpts: runtime.getBuildahCommonOpts(ctx, true)})
 	if err != nil {
 		return "", fmt.Errorf("unable to commit container %q: %s", containerID, err)
 	}
