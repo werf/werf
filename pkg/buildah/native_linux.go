@@ -275,6 +275,15 @@ func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) err
 	return nil
 }
 
+func (b *NativeBuildah) Rm(ctx context.Context, ref string, opts RmOpts) error {
+	builder, err := b.getBuilderFromContainer(ctx, ref)
+	if err != nil {
+		return fmt.Errorf("error getting builder: %w", err)
+	}
+
+	return builder.Delete()
+}
+
 func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	_, rmiErrors := b.Runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
 		Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
