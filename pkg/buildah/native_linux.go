@@ -104,7 +104,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 
 // Inspect returns nil, nil if image not found.
 func (b *NativeBuildah) Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error) {
-	builder, err := b.getImageBuilder(ctx, ref)
+	builder, err := b.getBuilderFromImage(ctx, ref)
 	if err != nil {
 		return nil, fmt.Errorf("error doing inspect: %s", err)
 	}
@@ -285,6 +285,32 @@ func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error
 	return multierror.Append(multiErr, rmiErrors...).ErrorOrNil()
 }
 
+func (b *NativeBuildah) Commit(ctx context.Context, container, image string, opts CommitOpts) (string, error) {
+	builder, err := b.getBuilderFromContainer(ctx, container)
+	if err != nil {
+		return "", fmt.Errorf("error getting builder: %w", err)
+	}
+
+	imageRef, err := alltransports.ParseImageName(image)
+	if err != nil {
+		return "", fmt.Errorf("error parsing image name: %w", err)
+	}
+
+	imgID, _, _, err := builder.Commit(ctx, imageRef, buildah.CommitOptions{
+		PreferredManifestType: buildah.Dockerv2ImageManifest,
+		SignaturePolicyPath:   b.SignaturePolicyPath,
+		ReportWriter:          opts.LogWriter,
+		SystemContext:         &b.DefaultSystemContext,
+		MaxRetries:            MaxPullPushRetries,
+		RetryDelay:            PullPushRetryDelay,
+	})
+	if err != nil {
+		return "", fmt.Errorf("error doing commit: %w", err)
+	}
+
+	return imgID, nil
+}
+
 func (b *NativeBuildah) getImage(ref string) (*libimage.Image, error) {
 	image, _, err := b.Runtime.LookupImage(ref, &libimage.LookupImageOptions{
 		ManifestList: true,
@@ -296,8 +322,8 @@ func (b *NativeBuildah) getImage(ref string) (*libimage.Image, error) {
 	return image, nil
 }
 
-// getImageBuilder returns nil, nil if image not found.
-func (b *NativeBuildah) getImageBuilder(ctx context.Context, imgName string) (builder *buildah.Builder, err error) {
+// getBuilderFromImage returns nil, nil if image not found.
+func (b *NativeBuildah) getBuilderFromImage(ctx context.Context, imgName string) (builder *buildah.Builder, err error) {
 	builder, err = buildah.ImportBuilderFromImage(ctx, b.Store, buildah.ImportFromImageOptions{
 		Image:               imgName,
 		SignaturePolicyPath: b.SignaturePolicyPath,
@@ -310,6 +336,26 @@ func (b *NativeBuildah) getImageBuilder(ctx context.Context, imgName string) (bu
 		return nil, fmt.Errorf("error getting builder from image %q: %s", imgName, err)
 	case builder == nil:
 		panic("error mocking up build configuration")
+	}
+
+	return builder, nil
+}
+
+func (b *NativeBuildah) getBuilderFromContainer(ctx context.Context, container string) (*buildah.Builder, error) {
+	var builder *buildah.Builder
+	var err error
+
+	builder, err = buildah.OpenBuilder(b.Store, container)
+	if os.IsNotExist(errors.Cause(err)) {
+		builder, err = buildah.ImportBuilder(ctx, b.Store, buildah.ImportOptions{
+			Container: container,
+		})
+	}
+	if err != nil {
+		return nil, fmt.Errorf("unable to open builder: %w", err)
+	}
+	if builder == nil {
+		return nil, fmt.Errorf("error finding build container")
 	}
 
 	return builder, nil

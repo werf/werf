@@ -175,6 +175,15 @@ func (b *DockerWithFuseBuildah) Rmi(ctx context.Context, ref string, opts RmiOpt
 	return err
 }
 
+func (b *DockerWithFuseBuildah) Commit(ctx context.Context, container, image string, opts CommitOpts) (string, error) {
+	args := []string{
+		"commit", "--quiet", "--format", "docker", "--signature-policy", b.SignaturePolicyPath,
+		fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), container, image,
+	}
+	imgID, _, err := b.runBuildah(ctx, []string{}, args, opts.LogWriter)
+	return imgID, err
+}
+
 func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []string, buildahArgs []string, logWriter io.Writer) (string, string, error) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
