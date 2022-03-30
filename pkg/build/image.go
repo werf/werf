@@ -10,7 +10,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
@@ -140,12 +140,12 @@ func (i *Image) GetBaseImage() *stage.StageImage {
 func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
-		containerRuntime := c.ContainerRuntime
+		containerBackend := c.ContainerBackend
 
-		if info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Image.Name(), container_runtime.GetImageInfoOpts{}); err != nil {
+		if info, err := containerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Image.Name(), err)
 		} else if info != nil {
-			// TODO: do not use container_runtime.LegacyStageImage for base image
+			// TODO: do not use container_backend.LegacyStageImage for base image
 			i.baseImage.Image.SetStageDescription(&image.StageDescription{
 				StageID: nil, // this is not a stage actually, TODO
 				Info:    info,
@@ -168,12 +168,12 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
-				return c.ContainerRuntime.PullImageFromRegistry(ctx, i.baseImage.Image)
+				return c.ContainerBackend.PullImageFromRegistry(ctx, i.baseImage.Image)
 			}); err != nil {
 			return err
 		}
 
-		info, err := containerRuntime.GetImageInfo(ctx, i.baseImage.Image.Name(), container_runtime.GetImageInfoOpts{})
+		info, err := containerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{})
 		if err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Image.Name(), err)
 		}
@@ -188,10 +188,10 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 		})
 	case StageAsBaseImage:
 		// TODO: check no bug introduced
-		// if err := c.ContainerRuntime.RefreshImageObject(ctx, &container_runtime.Image{Image: i.baseImage}); err != nil {
+		// if err := c.ContainerBackend.RefreshImageObject(ctx, &container_backend.Image{Image: i.baseImage}); err != nil {
 		//	return err
 		// }
-		if err := c.StorageManager.FetchStage(ctx, c.ContainerRuntime, i.stageAsBaseImage); err != nil {
+		if err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, i.stageAsBaseImage); err != nil {
 			return err
 		}
 	default:

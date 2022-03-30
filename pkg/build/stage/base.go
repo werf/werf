@@ -11,7 +11,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
@@ -122,7 +122,7 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
-func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_runtime.ContainerRuntime, _ docker_registry.ApiInterface) error {
+func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _ docker_registry.ApiInterface) error {
 	return nil
 }
 
@@ -238,7 +238,7 @@ func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []
 	return s.selectStageByOldestCreationTimestamp(stages)
 }
 
-func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
@@ -340,7 +340,7 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 	return nil
 }
 
-func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, c Conveyor, cr container_runtime.ContainerRuntime, stageImage *StageImage) {
+func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, c Conveyor, cr container_backend.ContainerBackend, stageImage *StageImage) {
 	for mountType, mountpoints := range mountpointsByType {
 		var labelName string
 		switch mountType {
@@ -431,7 +431,7 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 	return nil
 }
 
-func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, c Conveyor, cr container_runtime.ContainerRuntime, stageImage *StageImage) {
+func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, c Conveyor, cr container_backend.ContainerBackend, stageImage *StageImage) {
 	for from, mountpoints := range mountpointsByFrom {
 		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.ReplaceAll(filepath.ToSlash(from), "/", "--"))
 		labelValue := strings.Join(mountpoints, ";")

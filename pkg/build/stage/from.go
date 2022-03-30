@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/util"
@@ -72,7 +72,7 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()}
 	if c.UseLegacyStapelBuilder(cr) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
@@ -97,7 +97,7 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_r
 		if c.UseLegacyStapelBuilder(cr) {
 			stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", stapel.RmBinPath(), mountpointsStr))
 		} else {
-			stageImage.Builder.StapelStageBuilder().AddPrepareContainerActions(container_runtime.PrepareContainerActionWith(func(containerRoot string) error {
+			stageImage.Builder.StapelStageBuilder().AddPrepareContainerActions(container_backend.PrepareContainerActionWith(func(containerRoot string) error {
 				for _, mountpoint := range mountpoints {
 					if err := os.RemoveAll(mountpoint); err != nil {
 						return fmt.Errorf("unable to remove %q: %s", mountpoint, err)

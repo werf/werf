@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime/stage_builder"
+	"github.com/werf/werf/pkg/container_backend/stage_builder"
 )
 
 var _ = Describe("DependenciesStage", func() {
@@ -16,7 +16,7 @@ var _ = Describe("DependenciesStage", func() {
 			ctx := context.Background()
 
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")), data.Dependencies)
-			containerRuntime := NewContainerRuntimeMock()
+			containerBackend := NewContainerBackendMock()
 
 			stage := newDependenciesStage(nil, GetConfigDependencies(data.Dependencies), "example-stage", &NewBaseStageOptions{
 				ImageName:   "example-image",
@@ -24,7 +24,7 @@ var _ = Describe("DependenciesStage", func() {
 			})
 
 			img := NewLegacyImageStub()
-			stageBuilder := stage_builder.NewStageBuilder(containerRuntime, nil, img)
+			stageBuilder := stage_builder.NewStageBuilder(containerBackend, nil, img)
 			stageImage := &StageImage{
 				Image:   img,
 				Builder: stageBuilder,
@@ -34,7 +34,7 @@ var _ = Describe("DependenciesStage", func() {
 			Expect(err).To(Succeed())
 			Expect(digest).To(Equal(data.ExpectedDigest))
 
-			err = stage.PrepareImage(ctx, conveyor, containerRuntime, nil, stageImage)
+			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage)
 			Expect(err).To(Succeed())
 			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.Dependencies)
 		},

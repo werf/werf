@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 )
 
@@ -65,7 +65,7 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Contex
 	return true, nil
 }
 
-func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	if err := s.GitStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cr contain
 	return nil
 }
 
-func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, prevBuiltImage, stageImage *StageImage) error {
+func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	if c.UseLegacyStapelBuilder(cr) {
 		for _, gitMapping := range s.gitMappings {
 			if err := gitMapping.ApplyPatchCommand(ctx, c, prevBuiltImage, stageImage); err != nil {

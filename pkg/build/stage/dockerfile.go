@@ -17,8 +17,8 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/container_runtime/stage_builder"
+	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/pkg/context_manager"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
@@ -319,7 +319,7 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *DockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerRuntime container_runtime.ContainerRuntime, dockerRegistry docker_registry.ApiInterface) error {
+func (s *DockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerBackend container_backend.ContainerBackend, dockerRegistry docker_registry.ApiInterface) error {
 	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
@@ -354,7 +354,7 @@ outerLoop:
 		}
 
 		getBaseImageOnBuildLocally := func() ([]string, error) {
-			info, err := containerRuntime.GetImageInfo(ctx, resolvedBaseName, container_runtime.GetImageInfoOpts{})
+			info, err := containerBackend.GetImageInfo(ctx, resolvedBaseName, container_backend.GetImageInfoOpts{})
 			if err != nil {
 				return nil, err
 			}
@@ -385,7 +385,7 @@ outerLoop:
 					logboek.Context(ctx).Warn().LogF("WARNING: Could not get base image manifest from local docker and from docker registry: %s\n", getRemotelyErr)
 					logboek.Context(ctx).Warn().LogLn("WARNING: The base image pulling is necessary for calculating digest of image correctly\n")
 					if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", resolvedBaseName).DoError(func() error {
-						return containerRuntime.Pull(ctx, resolvedBaseName, container_runtime.PullOpts{})
+						return containerBackend.Pull(ctx, resolvedBaseName, container_backend.PullOpts{})
 					}); err != nil {
 						return err
 					}
@@ -682,7 +682,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr container_runtime.ContainerRuntime, _, stageImage *StageImage) error {
+func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
 	archivePath, err := s.prepareContextArchive(ctx, c.GiterminismManager())
 	if err != nil {
 		return err

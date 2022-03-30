@@ -10,7 +10,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
@@ -45,11 +45,11 @@ func getDigestAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (strin
 
 type DockerServerStagesStorage struct {
 	// Local stages storage is compatible only with docker-server backed runtime
-	DockerServerRuntime *container_runtime.DockerServerRuntime
+	DockerServerBackend *container_backend.DockerServerBackend
 }
 
-func NewDockerServerStagesStorage(dockerServerRuntime *container_runtime.DockerServerRuntime) *DockerServerStagesStorage {
-	return &DockerServerStagesStorage{DockerServerRuntime: dockerServerRuntime}
+func NewDockerServerStagesStorage(dockerServerBackend *container_backend.DockerServerBackend) *DockerServerStagesStorage {
+	return &DockerServerStagesStorage{DockerServerBackend: dockerServerBackend}
 }
 
 func (storage *DockerServerStagesStorage) ConstructStageImageName(projectName, digest string, uniqueID int64) string {
@@ -112,7 +112,7 @@ func (storage *DockerServerStagesStorage) DeleteRepo(_ context.Context) error {
 func (storage *DockerServerStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, digest, uniqueID)
 
-	inspect, err := storage.DockerServerRuntime.GetImageInspect(ctx, stageImageName)
+	inspect, err := storage.DockerServerBackend.GetImageInspect(ctx, stageImageName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", stageImageName, err)
 	}
@@ -177,16 +177,16 @@ func (storage *DockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Conte
 	return convertToStagesList(images)
 }
 
-func (storage *DockerServerStagesStorage) ShouldFetchImage(_ context.Context, _ container_runtime.LegacyImageInterface) (bool, error) {
+func (storage *DockerServerStagesStorage) ShouldFetchImage(_ context.Context, _ container_backend.LegacyImageInterface) (bool, error) {
 	return false, nil
 }
 
-func (storage *DockerServerStagesStorage) FetchImage(_ context.Context, _ container_runtime.LegacyImageInterface) error {
+func (storage *DockerServerStagesStorage) FetchImage(_ context.Context, _ container_backend.LegacyImageInterface) error {
 	return nil
 }
 
-func (storage *DockerServerStagesStorage) StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
-	return storage.DockerServerRuntime.TagImageByName(ctx, img)
+func (storage *DockerServerStagesStorage) StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
+	return storage.DockerServerBackend.TagImageByName(ctx, img)
 }
 
 func (storage *DockerServerStagesStorage) PutImageMetadata(_ context.Context, _, _, _, _ string) error {
@@ -215,7 +215,7 @@ func (storage *DockerServerStagesStorage) GetImportMetadata(ctx context.Context,
 	fullImageName := makeLocalImportMetadataName(projectName, id)
 	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
 
-	inspect, err := storage.DockerServerRuntime.GetImageInspect(ctx, fullImageName)
+	inspect, err := storage.DockerServerBackend.GetImageInspect(ctx, fullImageName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get image %s inspect: %s", fullImageName, err)
 	}

@@ -1,4 +1,4 @@
-package container_runtime
+package container_backend
 
 import (
 	"context"
@@ -21,9 +21,9 @@ type LegacyStageImage struct {
 	builtID    string
 }
 
-func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerRuntime ContainerRuntime) *LegacyStageImage {
+func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerBackend ContainerBackend) *LegacyStageImage {
 	stage := &LegacyStageImage{}
-	stage.legacyBaseImage = newLegacyBaseImage(name, containerRuntime)
+	stage.legacyBaseImage = newLegacyBaseImage(name, containerBackend)
 	stage.fromImage = fromImage
 	stage.container = newLegacyStageImageContainer(stage)
 	return stage
@@ -106,7 +106,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 		return err
 	}
 
-	if info, err := i.ContainerRuntime.GetImageInfo(ctx, i.MustGetBuiltID(), GetImageInfoOpts{}); err != nil {
+	if info, err := i.ContainerBackend.GetImageInfo(ctx, i.MustGetBuiltID(), GetImageInfoOpts{}); err != nil {
 		return err
 	} else {
 		i.SetInfo(info)
@@ -125,7 +125,7 @@ func (i *LegacyStageImage) Commit(ctx context.Context) error {
 		return err
 	}
 
-	i.buildImage = newLegacyBaseImage(builtId, i.ContainerRuntime)
+	i.buildImage = newLegacyBaseImage(builtId, i.ContainerBackend)
 	i.builtID = builtId
 
 	return nil
@@ -184,19 +184,19 @@ func (i *LegacyStageImage) GetBuiltID() string {
 }
 
 func (i *LegacyStageImage) TagBuiltImage(ctx context.Context) error {
-	_ = i.ContainerRuntime.(*DockerServerRuntime)
+	_ = i.ContainerBackend.(*DockerServerBackend)
 
 	return docker.CliTag(ctx, i.MustGetBuiltID(), i.name)
 }
 
 func (i *LegacyStageImage) Tag(ctx context.Context, name string) error {
-	_ = i.ContainerRuntime.(*DockerServerRuntime)
+	_ = i.ContainerBackend.(*DockerServerBackend)
 
 	return docker.CliTag(ctx, i.GetID(), name)
 }
 
 func (i *LegacyStageImage) Pull(ctx context.Context) error {
-	_ = i.ContainerRuntime.(*DockerServerRuntime)
+	_ = i.ContainerBackend.(*DockerServerBackend)
 
 	if err := docker.CliPullWithRetries(ctx, i.name); err != nil {
 		return err
@@ -208,7 +208,7 @@ func (i *LegacyStageImage) Pull(ctx context.Context) error {
 }
 
 func (i *LegacyStageImage) Push(ctx context.Context) error {
-	_ = i.ContainerRuntime.(*DockerServerRuntime)
+	_ = i.ContainerBackend.(*DockerServerBackend)
 
 	return docker.CliPushWithRetries(ctx, i.name)
 }

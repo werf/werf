@@ -1,18 +1,18 @@
 package stage
 
 import (
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/container_runtime/stage_builder"
+	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/pkg/container_backend/stage_builder"
 )
 
 type StageImage struct {
-	Image   container_runtime.LegacyImageInterface
+	Image   container_backend.LegacyImageInterface
 	Builder stage_builder.StageBuilderInterface
 }
 
-func NewStageImage(containerRuntime container_runtime.ContainerRuntime, fromImage container_runtime.ImageInterface, image container_runtime.LegacyImageInterface) *StageImage {
+func NewStageImage(containerBackend container_backend.ContainerBackend, fromImage container_backend.ImageInterface, image container_backend.LegacyImageInterface) *StageImage {
 	return &StageImage{
 		Image:   image,
-		Builder: stage_builder.NewStageBuilder(containerRuntime, fromImage, image),
+		Builder: stage_builder.NewStageBuilder(containerBackend, fromImage, image),
 	}
 }

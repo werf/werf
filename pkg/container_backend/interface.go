@@ -1,4 +1,4 @@
-package container_runtime
+package container_backend
 
 import (
 	"context"
@@ -33,7 +33,7 @@ type BuildDockerfileOpts struct {
 	CommonOpts
 
 	ContextTar           io.ReadCloser
-	DockerfileCtxRelPath string // TODO: remove this and instead write the []byte dockerfile to /Dockerfile in the ContextTar inDockerServerRuntime.BuildDockerfile().
+	DockerfileCtxRelPath string // TODO: remove this and instead write the []byte dockerfile to /Dockerfile in the ContextTar inDockerServerBackend.BuildDockerfile().
 	Target               string
 	BuildArgs            []string // {"key1=value1", "key2=value2", ... }
 	AddHost              []string
@@ -70,7 +70,7 @@ func (f PrepareContainerActionWith) PrepareContainer(containerRoot string) error
 	return f(containerRoot)
 }
 
-type ContainerRuntime interface {
+type ContainerBackend interface {
 	Tag(ctx context.Context, ref, newRef string, opts TagOpts) error
 	Push(ctx context.Context, ref string, opts PushOpts) error
 	Pull(ctx context.Context, ref string, opts PullOpts) error

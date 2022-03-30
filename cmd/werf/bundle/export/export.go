@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/cmd/helm"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -17,7 +17,7 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/git_repo"
@@ -131,7 +131,7 @@ func runExport(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func runExport(ctx context.Context) error {
 	}
 
 	defer func() {
-		if _, match := containerRuntime.(*container_runtime.DockerServerRuntime); !match {
+		if _, match := containerBackend.(*container_backend.DockerServerBackend); !match {
 			return
 		}
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData); err != nil {
@@ -232,11 +232,11 @@ func runExport(ctx context.Context) error {
 	var imagesRepository string
 
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
-		stagesStorage, err := common.GetStagesStorage(repoAddress, containerRuntime, &commonCmdData)
+		stagesStorage, err := common.GetStagesStorage(repoAddress, containerBackend, &commonCmdData)
 		if err != nil {
 			return err
 		}
-		finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
+		finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
 		if err != nil {
 			return err
 		}
@@ -248,11 +248,11 @@ func runExport(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+		secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerBackend, &commonCmdData)
 		if err != nil {
 			return err
 		}
-		cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerRuntime, &commonCmdData)
+		cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerBackend, &commonCmdData)
 		if err != nil {
 			return err
 		}
@@ -266,7 +266,7 @@ func runExport(ctx context.Context) error {
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, nil, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, nil, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

@@ -9,7 +9,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
@@ -61,7 +61,7 @@ func isUnexpectedTagFormatError(err error) bool {
 type RepoStagesStorage struct {
 	RepoAddress      string
 	DockerRegistry   docker_registry.Interface
-	ContainerRuntime container_runtime.ContainerRuntime
+	ContainerBackend container_backend.ContainerBackend
 }
 
 type RepoStagesStorageOptions struct {
@@ -69,7 +69,7 @@ type RepoStagesStorageOptions struct {
 	ContainerRegistry string
 }
 
-func NewRepoStagesStorage(repoAddress string, containerRuntime container_runtime.ContainerRuntime, options RepoStagesStorageOptions) (*RepoStagesStorage, error) {
+func NewRepoStagesStorage(repoAddress string, containerBackend container_backend.ContainerBackend, options RepoStagesStorageOptions) (*RepoStagesStorage, error) {
 	dockerRegistry, err := docker_registry.NewDockerRegistry(repoAddress, options.ContainerRegistry, options.DockerRegistryOptions)
 	if err != nil {
 		return nil, fmt.Errorf("error creating container registry accessor for repo %q: %s", repoAddress, err)
@@ -78,7 +78,7 @@ func NewRepoStagesStorage(repoAddress string, containerRuntime container_runtime
 	return &RepoStagesStorage{
 		RepoAddress:      repoAddress,
 		DockerRegistry:   dockerRegistry,
-		ContainerRuntime: containerRuntime,
+		ContainerBackend: containerBackend,
 	}, nil
 }
 
@@ -466,8 +466,8 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
-	if err := storage.ContainerRuntime.PullImageFromRegistry(ctx, img); err != nil {
+func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
+	if err := storage.ContainerBackend.PullImageFromRegistry(ctx, img); err != nil {
 		if strings.HasSuffix(err.Error(), "unknown blob") {
 			return ErrBrokenImage
 		}
@@ -479,22 +479,22 @@ func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_
 
 // FIXME(stapel-to-buildah): use ImageInterface instead of LegacyImageInterface
 // FIXME(stapel-to-buildah): possible optimization would be to push buildah container directly into registry wihtout committing a local image
-func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_runtime.LegacyImageInterface) error {
+func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
 	if img.GetBuiltID() != "" {
-		if err := storage.ContainerRuntime.Tag(ctx, img.GetBuiltID(), img.Name(), container_runtime.TagOpts{}); err != nil {
+		if err := storage.ContainerBackend.Tag(ctx, img.GetBuiltID(), img.Name(), container_backend.TagOpts{}); err != nil {
 			return fmt.Errorf("unable to tag built image %q by %q: %s", img.GetBuiltID(), img.Name(), err)
 		}
 	}
 
-	if err := storage.ContainerRuntime.Push(ctx, img.Name(), container_runtime.PushOpts{}); err != nil {
+	if err := storage.ContainerBackend.Push(ctx, img.Name(), container_backend.PushOpts{}); err != nil {
 		return fmt.Errorf("unable to push image %q: %s", img.Name(), err)
 	}
 
 	return nil
 }
 
-func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_runtime.LegacyImageInterface) (bool, error) {
-	if info, err := storage.ContainerRuntime.GetImageInfo(ctx, img.Name(), container_runtime.GetImageInfoOpts{}); err != nil {
+func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error) {
+	if info, err := storage.ContainerBackend.GetImageInfo(ctx, img.Name(), container_backend.GetImageInfoOpts{}); err != nil {
 		return false, fmt.Errorf("unable to get inspect for image %s: %s", img.Name(), err)
 	} else if info != nil {
 		img.SetInfo(info)

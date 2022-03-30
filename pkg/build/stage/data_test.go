@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime/stage_builder"
+	"github.com/werf/werf/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/pkg/util"
 )
 

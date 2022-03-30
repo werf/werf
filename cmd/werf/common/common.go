@@ -20,7 +20,7 @@ import (
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -986,18 +986,18 @@ func GetOptionalStagesStorageAddress(cmdData *CmdData) string {
 	return *cmdData.StagesStorage
 }
 
-func GetLocalStagesStorage(containerRuntime container_runtime.ContainerRuntime) (storage.StagesStorage, error) {
+func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) (storage.StagesStorage, error) {
 	return storage.NewStagesStorage(
 		storage.LocalStorageAddress,
-		containerRuntime,
+		containerBackend,
 		storage.StagesStorageOptions{},
 	)
 }
 
-func GetStagesStorage(stagesStorageAddress string, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
-	if _, match := containerRuntime.(*container_runtime.BuildahRuntime); match {
+func GetStagesStorage(stagesStorageAddress string, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+	if _, match := containerBackend.(*container_backend.BuildahBackend); match {
 		if stagesStorageAddress == "" || stagesStorageAddress == storage.LocalStorageAddress {
-			return nil, fmt.Errorf(`"--repo" should be specified and not equal ":local" for Buildah container runtime`)
+			return nil, fmt.Errorf(`"--repo" should be specified and not equal ":local" for Buildah container backend`)
 		}
 	}
 
@@ -1007,7 +1007,7 @@ func GetStagesStorage(stagesStorageAddress string, containerRuntime container_ru
 
 	return storage.NewStagesStorage(
 		stagesStorageAddress,
-		containerRuntime,
+		containerBackend,
 		storage.StagesStorageOptions{
 			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
 				ContainerRegistry: cmdData.CommonRepoData.GetContainerRegistry(),
@@ -1027,7 +1027,7 @@ func GetStagesStorage(stagesStorageAddress string, containerRuntime container_ru
 	)
 }
 
-func GetOptionalFinalStagesStorage(containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) (storage.StagesStorage, error) {
+func GetOptionalFinalStagesStorage(containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
 	finalRepoAddress := *cmdData.FinalStagesStorage
 	if finalRepoAddress == "" {
 		return nil, nil
@@ -1039,7 +1039,7 @@ func GetOptionalFinalStagesStorage(containerRuntime container_runtime.ContainerR
 
 	return storage.NewStagesStorage(
 		finalRepoAddress,
-		containerRuntime,
+		containerBackend,
 		storage.StagesStorageOptions{
 			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
 				ContainerRegistry: cmdData.CommonFinalRepoData.GetContainerRegistry(),
@@ -1059,11 +1059,11 @@ func GetOptionalFinalStagesStorage(containerRuntime container_runtime.ContainerR
 	)
 }
 
-func GetCacheStagesStorageList(containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) ([]storage.StagesStorage, error) {
+func GetCacheStagesStorageList(containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
 	for _, address := range GetCacheStagesStorage(cmdData) {
-		repoStagesStorage, err := storage.NewStagesStorage(address, containerRuntime, storage.StagesStorageOptions{})
+		repoStagesStorage, err := storage.NewStagesStorage(address, containerBackend, storage.StagesStorageOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create cache stages storage at %s: %s", address, err)
 		}
@@ -1073,12 +1073,12 @@ func GetCacheStagesStorageList(containerRuntime container_runtime.ContainerRunti
 	return res, nil
 }
 
-func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containerRuntime container_runtime.ContainerRuntime, cmdData *CmdData) ([]storage.StagesStorage, error) {
+func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
-	if _, matched := containerRuntime.(*container_runtime.DockerServerRuntime); matched {
+	if _, matched := containerBackend.(*container_backend.DockerServerBackend); matched {
 		if stagesStorage.Address() != storage.LocalStorageAddress {
-			localStagesStorage, err := storage.NewStagesStorage(storage.LocalStorageAddress, containerRuntime, storage.StagesStorageOptions{})
+			localStagesStorage, err := storage.NewStagesStorage(storage.LocalStorageAddress, containerBackend, storage.StagesStorageOptions{})
 			if err != nil {
 				return nil, fmt.Errorf("unable to create local secondary stages storage: %s", err)
 			}
@@ -1087,7 +1087,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 	}
 
 	for _, address := range GetSecondaryStagesStorage(cmdData) {
-		repoStagesStorage, err := storage.NewStagesStorage(address, containerRuntime, storage.StagesStorageOptions{})
+		repoStagesStorage, err := storage.NewStagesStorage(address, containerBackend, storage.StagesStorageOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create secondary stages storage at %s: %s", address, err)
 		}

@@ -1,4 +1,4 @@
-package contruntime
+package contback
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"github.com/werf/werf/test/pkg/utils"
 )
 
-func NewNativeBuildahRuntime(isolation thirdparty.Isolation, storageDriver buildah.StorageDriver) ContainerRuntime {
+func NewNativeBuildahBackend(isolation thirdparty.Isolation, storageDriver buildah.StorageDriver) ContainerBackend {
 	var commonCliArgs []string
 
 	commonBuildahCliArgs, err := buildah.GetBasicBuildahCliArgs(storageDriver)
@@ -19,29 +19,29 @@ func NewNativeBuildahRuntime(isolation thirdparty.Isolation, storageDriver build
 
 	commonCliArgs = append(commonCliArgs, commonBuildahCliArgs...)
 
-	return &NativeBuildahRuntime{
-		BaseContainerRuntime: BaseContainerRuntime{
+	return &NativeBuildahBackend{
+		BaseContainerBackend: BaseContainerBackend{
 			CommonCliArgs: commonCliArgs,
 			Isolation:     isolation,
 		},
 	}
 }
 
-type NativeBuildahRuntime struct {
-	BaseContainerRuntime
+type NativeBuildahBackend struct {
+	BaseContainerBackend
 }
 
-func (r *NativeBuildahRuntime) ExpectCmdsToSucceed(image string, cmds ...string) {
+func (r *NativeBuildahBackend) ExpectCmdsToSucceed(image string, cmds ...string) {
 	expectCmdsToSucceed(r, image, cmds...)
 }
 
-func (r *NativeBuildahRuntime) RunSleepingContainer(containerName, image string) {
+func (r *NativeBuildahBackend) RunSleepingContainer(containerName, image string) {
 	args := r.CommonCliArgs
 	args = append(args, "from", "--tls-verify=false", "--isolation", r.Isolation.String(), "--format", "docker", "--name", containerName, image)
 	utils.RunSucceedCommand("/", "buildah", args...)
 }
 
-func (r *NativeBuildahRuntime) Exec(containerName string, cmds ...string) {
+func (r *NativeBuildahBackend) Exec(containerName string, cmds ...string) {
 	for _, cmd := range cmds {
 		args := r.CommonCliArgs
 		args = append(args, "run", "--isolation", r.Isolation.String(), containerName, "--", "sh", "-ec", cmd)
@@ -49,19 +49,19 @@ func (r *NativeBuildahRuntime) Exec(containerName string, cmds ...string) {
 	}
 }
 
-func (r *NativeBuildahRuntime) Rm(containerName string) {
+func (r *NativeBuildahBackend) Rm(containerName string) {
 	args := r.CommonCliArgs
 	args = append(args, "rm", containerName)
 	utils.RunSucceedCommand("/", "buildah", args...)
 }
 
-func (r *NativeBuildahRuntime) Pull(image string) {
+func (r *NativeBuildahBackend) Pull(image string) {
 	args := r.CommonCliArgs
 	args = append(args, "pull", "--tls-verify=false", image)
 	utils.RunSucceedCommand("/", "buildah", args...)
 }
 
-func (r *NativeBuildahRuntime) GetImageInspectConfig(image string) (config manifest.Schema2Config) {
+func (r *NativeBuildahBackend) GetImageInspectConfig(image string) (config manifest.Schema2Config) {
 	r.Pull(image)
 
 	args := r.CommonCliArgs

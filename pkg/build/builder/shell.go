@@ -11,8 +11,8 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
-	"github.com/werf/werf/pkg/container_runtime/stage_builder"
+	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/util"
 )
@@ -37,19 +37,19 @@ func (b *Shell) IsBeforeSetupEmpty(ctx context.Context) bool {
 }
 func (b *Shell) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Setup") }
 
-func (b *Shell) BeforeInstall(_ context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+func (b *Shell) BeforeInstall(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
 	return b.stage(cr, stageBuilder, useLegacyStapelBuilder, "BeforeInstall")
 }
 
-func (b *Shell) Install(_ context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+func (b *Shell) Install(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
 	return b.stage(cr, stageBuilder, useLegacyStapelBuilder, "Install")
 }
 
-func (b *Shell) BeforeSetup(_ context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+func (b *Shell) BeforeSetup(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
 	return b.stage(cr, stageBuilder, useLegacyStapelBuilder, "BeforeSetup")
 }
 
-func (b *Shell) Setup(_ context.Context, cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
+func (b *Shell) Setup(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
 	return b.stage(cr, stageBuilder, useLegacyStapelBuilder, "Setup")
 }
 
@@ -66,7 +66,7 @@ func (b *Shell) isEmptyStage(ctx context.Context, userStageName string) bool {
 	return b.stageChecksum(ctx, userStageName) == ""
 }
 
-func (b *Shell) stage(cr container_runtime.ContainerRuntime, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool, userStageName string) error {
+func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool, userStageName string) error {
 	if useLegacyStapelBuilder {
 		container := stageBuilder.LegacyStapelStageBuilder().BuilderContainer()
 

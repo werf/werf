@@ -94,7 +94,7 @@ func run(ctx context.Context, imageName string) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -164,11 +164,11 @@ func run(ctx context.Context, imageName string) error {
 	}
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
-	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -181,18 +181,18 @@ func run(ctx context.Context, imageName string) error {
 	if err != nil {
 		return err
 	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerRuntime, &commonCmdData)
+	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

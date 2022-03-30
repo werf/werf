@@ -1,4 +1,4 @@
-package contruntime
+package contback
 
 import (
 	"errors"
@@ -12,28 +12,28 @@ import (
 
 var ErrRuntimeUnavailable = errors.New("requested runtime unavailable")
 
-func NewContainerRuntime(buildahMode string) (ContainerRuntime, error) {
+func NewContainerBackend(buildahMode string) (ContainerBackend, error) {
 	switch buildahMode {
 	case "docker":
-		return NewDockerRuntime(), nil
+		return NewDockerBackend(), nil
 	case "native-rootless":
 		if runtime.GOOS != "linux" {
 			return nil, ErrRuntimeUnavailable
 		}
-		return NewNativeBuildahRuntime(bdTypes.IsolationOCIRootless, buildah.DefaultStorageDriver), nil
+		return NewNativeBuildahBackend(bdTypes.IsolationOCIRootless, buildah.DefaultStorageDriver), nil
 	case "native-chroot":
 		if runtime.GOOS != "linux" {
 			return nil, ErrRuntimeUnavailable
 		}
-		return NewNativeBuildahRuntime(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
+		return NewNativeBuildahBackend(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
 	case "docker-with-fuse":
-		return NewDockerWithFuseBuildahRuntime(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
+		return NewDockerWithFuseBuildahBackend(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
 	default:
 		panic(fmt.Sprintf("unexpected buildah mode: %s", buildahMode))
 	}
 }
 
-type ContainerRuntime interface {
+type ContainerBackend interface {
 	Pull(image string)
 	Exec(containerName string, cmds ...string)
 	Rm(containerName string)

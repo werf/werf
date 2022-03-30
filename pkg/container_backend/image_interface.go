@@ -1,4 +1,4 @@
-package container_runtime
+package container_backend
 
 type ImageInterface interface {
 	Name() string

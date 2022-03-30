@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/test/pkg/contruntime"
+	"github.com/werf/werf/test/pkg/contback"
 	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 	"github.com/werf/werf/test/pkg/werf"
 )
@@ -17,8 +17,8 @@ var _ = Describe("Build", func() {
 		func(withLocalRepo bool, buildahMode string) {
 			By("initializing")
 			setupEnv(withLocalRepo, buildahMode)
-			contRuntime, err := contruntime.NewContainerRuntime(buildahMode)
-			if err == contruntime.ErrRuntimeUnavailable {
+			contRuntime, err := contback.NewContainerBackend(buildahMode)
+			if err == contback.ErrRuntimeUnavailable {
 				Skip(err.Error())
 			} else if err != nil {
 				Fail(err.Error())

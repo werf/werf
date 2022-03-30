@@ -9,7 +9,7 @@ import (
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/storage"
@@ -66,7 +66,7 @@ func GetBuildOptions(commonCmdData *CmdData, giterminismManager giterminism_mana
 	buildOptions = build.BuildOptions{
 		SkipImageMetadataPublication: *commonCmdData.Dev,
 		CustomTagFuncList:            customTagFuncList,
-		ImageBuildOptions: container_runtime.BuildOptions{
+		ImageBuildOptions: container_backend.BuildOptions{
 			IntrospectAfterError:  *commonCmdData.IntrospectAfterError,
 			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
 		},

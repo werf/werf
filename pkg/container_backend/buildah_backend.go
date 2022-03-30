@@ -1,4 +1,4 @@
-package container_runtime
+package container_backend
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-type BuildahRuntime struct {
+type BuildahBackend struct {
 	buildah buildah.Buildah
 }
 
@@ -20,16 +20,16 @@ type BuildahImage struct {
 	Image LegacyImageInterface
 }
 
-func NewBuildahRuntime(buildah buildah.Buildah) *BuildahRuntime {
-	return &BuildahRuntime{buildah: buildah}
+func NewBuildahBackend(buildah buildah.Buildah) *BuildahBackend {
+	return &BuildahBackend{buildah: buildah}
 }
 
-func (runtime *BuildahRuntime) HasStapelBuildSupport() bool {
+func (runtime *BuildahBackend) HasStapelBuildSupport() bool {
 	return true
 }
 
 // FIXME(stapel-to-buildah): proper deep implementation
-func (runtime *BuildahRuntime) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error) {
+func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error) {
 	/*
 		1. Create new temporary build container using 'from' and remain uniq container name.
 		2. Mount container root to host and run all prepare-container-actions, then unmount.
@@ -81,7 +81,7 @@ func (runtime *BuildahRuntime) BuildStapelStage(ctx context.Context, baseImage s
 }
 
 // GetImageInfo returns nil, nil if image not found.
-func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
+func (runtime *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	inspect, err := runtime.buildah.Inspect(ctx, ref)
 	if err != nil {
 		return nil, fmt.Errorf("error getting buildah inspect of %q: %s", ref, err)
@@ -106,7 +106,7 @@ func (runtime *BuildahRuntime) GetImageInfo(ctx context.Context, ref string, opt
 	}, nil
 }
 
-func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
+func (runtime *BuildahBackend) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	return runtime.buildah.Rmi(ctx, ref, buildah.RmiOpts{
 		Force: true,
 		CommonOpts: buildah.CommonOpts{
@@ -115,25 +115,25 @@ func (runtime *BuildahRuntime) Rmi(ctx context.Context, ref string, opts RmiOpts
 	})
 }
 
-func (runtime *BuildahRuntime) Pull(ctx context.Context, ref string, opts PullOpts) error {
+func (runtime *BuildahBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	return runtime.buildah.Pull(ctx, ref, buildah.PullOpts{
 		LogWriter: logboek.Context(ctx).OutStream(),
 	})
 }
 
-func (runtime *BuildahRuntime) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
+func (runtime *BuildahBackend) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
 	return runtime.buildah.Tag(ctx, ref, newRef, buildah.TagOpts{
 		LogWriter: logboek.Context(ctx).OutStream(),
 	})
 }
 
-func (runtime *BuildahRuntime) Push(ctx context.Context, ref string, opts PushOpts) error {
+func (runtime *BuildahBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
 	return runtime.buildah.Push(ctx, ref, buildah.PushOpts{
 		LogWriter: logboek.Context(ctx).OutStream(),
 	})
 }
 
-func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error) {
+func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error) {
 	buildArgs := make(map[string]string)
 	for _, argStr := range opts.BuildArgs {
 		argParts := strings.SplitN(argStr, "=", 2)
@@ -153,7 +153,7 @@ func (runtime *BuildahRuntime) BuildDockerfile(ctx context.Context, dockerfile [
 	})
 }
 
-func (runtime *BuildahRuntime) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
+func (runtime *BuildahBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
 	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
 		return err
 	} else {
@@ -162,7 +162,7 @@ func (runtime *BuildahRuntime) RefreshImageObject(ctx context.Context, img Legac
 	return nil
 }
 
-func (runtime *BuildahRuntime) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
+func (runtime *BuildahBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
 	if err := runtime.Pull(ctx, img.Name(), PullOpts{}); err != nil {
 		return fmt.Errorf("unable to pull image %s: %s", img.Name(), err)
 	}
@@ -176,7 +176,7 @@ func (runtime *BuildahRuntime) PullImageFromRegistry(ctx context.Context, img Le
 	return nil
 }
 
-func (runtime *BuildahRuntime) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
+func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging image %s by name %s", img.Name(), newImageName)).DoError(func() error {
 		if err := runtime.Tag(ctx, img.Name(), newImageName, TagOpts{}); err != nil {
 			return fmt.Errorf("unable to tag image %s by name %s: %s", img.Name(), newImageName, err)
@@ -214,7 +214,7 @@ func (runtime *BuildahRuntime) RenameImage(ctx context.Context, img LegacyImageI
 	return nil
 }
 
-func (runtime *BuildahRuntime) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
+func (runtime *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
 		if err := runtime.Rmi(ctx, img.Name(), RmiOpts{}); err != nil {
 			return fmt.Errorf("unable to remove image %q: %s", img.Name(), err)
@@ -227,6 +227,6 @@ func (runtime *BuildahRuntime) RemoveImage(ctx context.Context, img LegacyImageI
 	return nil
 }
 
-func (runtime *BuildahRuntime) String() string {
+func (runtime *BuildahBackend) String() string {
 	return "buildah-runtime"
 }

@@ -1,4 +1,4 @@
-package contruntime
+package contback
 
 import (
 	"encoding/json"
@@ -9,25 +9,25 @@ import (
 	"github.com/werf/werf/test/pkg/utils"
 )
 
-func NewDockerRuntime() ContainerRuntime {
-	return &DockerRuntime{}
+func NewDockerBackend() ContainerBackend {
+	return &DockerBackend{}
 }
 
-type DockerRuntime struct {
-	BaseContainerRuntime
+type DockerBackend struct {
+	BaseContainerBackend
 }
 
-func (r *DockerRuntime) ExpectCmdsToSucceed(image string, cmds ...string) {
+func (r *DockerBackend) ExpectCmdsToSucceed(image string, cmds ...string) {
 	expectCmdsToSucceed(r, image, cmds...)
 }
 
-func (r *DockerRuntime) RunSleepingContainer(containerName, image string) {
+func (r *DockerBackend) RunSleepingContainer(containerName, image string) {
 	args := r.CommonCliArgs
 	args = append(args, "run", "--rm", "-d", "--entrypoint=", "--name", containerName, image, "tail", "-f", "/dev/null")
 	utils.RunSucceedCommand("/", "docker", args...)
 }
 
-func (r *DockerRuntime) Exec(containerName string, cmds ...string) {
+func (r *DockerBackend) Exec(containerName string, cmds ...string) {
 	for _, cmd := range cmds {
 		args := r.CommonCliArgs
 		args = append(args, "exec", containerName, "sh", "-ec", cmd)
@@ -35,19 +35,19 @@ func (r *DockerRuntime) Exec(containerName string, cmds ...string) {
 	}
 }
 
-func (r *DockerRuntime) Rm(containerName string) {
+func (r *DockerBackend) Rm(containerName string) {
 	args := r.CommonCliArgs
 	args = append(args, "rm", "-fv", containerName)
 	utils.RunSucceedCommand("/", "docker", args...)
 }
 
-func (r *DockerRuntime) Pull(image string) {
+func (r *DockerBackend) Pull(image string) {
 	args := r.CommonCliArgs
 	args = append(args, "pull", image)
 	utils.RunSucceedCommand("/", "docker", args...)
 }
 
-func (r *DockerRuntime) GetImageInspectConfig(image string) (config manifest.Schema2Config) {
+func (r *DockerBackend) GetImageInspectConfig(image string) (config manifest.Schema2Config) {
 	args := r.CommonCliArgs
 	args = append(args, "image", "inspect", "-f", "{{ json .Config }}", image)
 	configRaw, err := utils.RunCommand("/", "docker", args...)

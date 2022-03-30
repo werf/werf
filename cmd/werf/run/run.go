@@ -15,7 +15,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
@@ -219,7 +219,7 @@ func runMain(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
-	containerRuntime, processCtx, err := common.InitProcessContainerRuntime(ctx, &commonCmdData)
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -286,7 +286,7 @@ func runMain(ctx context.Context) error {
 				return err
 			}
 
-			if err := run(ctx, containerRuntime, headCommitGiterminismManager); err != nil {
+			if err := run(ctx, containerBackend, headCommitGiterminismManager); err != nil {
 				return err
 			}
 
@@ -312,7 +312,7 @@ func runMain(ctx context.Context) error {
 			return nil
 		})
 	} else {
-		if err := run(ctx, containerRuntime, giterminismManager); err != nil {
+		if err := run(ctx, containerBackend, giterminismManager); err != nil {
 			if statusErr, ok := err.(cli.StatusError); ok {
 				common.TerminateWithError(err.Error(), statusErr.StatusCode)
 			}
@@ -324,7 +324,7 @@ func runMain(ctx context.Context) error {
 	}
 }
 
-func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntime, giterminismManager giterminism_manager.Interface) error {
+func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface) error {
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %s", err)
@@ -348,11 +348,11 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 	}
 
 	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
-	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerRuntime, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerRuntime, &commonCmdData)
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -364,11 +364,11 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 	if err != nil {
 		return err
 	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerRuntime, &commonCmdData)
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerRuntime, &commonCmdData)
+	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -377,7 +377,7 @@ func run(ctx context.Context, containerRuntime container_runtime.ContainerRuntim
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerRuntime, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
 	defer conveyorWithRetry.Terminate()
 
 	var dockerImageName string

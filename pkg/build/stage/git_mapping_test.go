@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/container_runtime"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/image"
 )
@@ -127,7 +127,7 @@ var _ = Describe("GitMapping", func() {
 		func(data BaseCommitForPrevBuiltImageCheckData, checkResultFunc func(string, BaseCommitForPrevBuiltImageCheckData)) {
 			ctx := context.Background()
 			c := NewConveyorStub(stage.VirtualMergeOptions{VirtualMerge: data.IsCurrentCommitVirtualMerge})
-			containerRuntime := stage.NewContainerRuntimeMock()
+			containerBackend := stage.NewContainerBackendMock()
 
 			gitRepo := NewGitRepoStub("own", true, data.CurrentCommit)
 			gitMapping.SetGitRepo(gitRepo)
@@ -142,7 +142,7 @@ var _ = Describe("GitMapping", func() {
 					},
 				},
 			})
-			img := stage.NewStageImage(containerRuntime, nil, prevBuiltImage)
+			img := stage.NewStageImage(containerBackend, nil, prevBuiltImage)
 
 			baseCommit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, img)
 			Expect(err).To(Succeed())
@@ -231,7 +231,7 @@ var _ = Describe("GitMapping", func() {
 })
 
 type BuiltImageStub struct {
-	container_runtime.LegacyImageInterface
+	container_backend.LegacyImageInterface
 
 	name             string
 	stageDescription *image.StageDescription
