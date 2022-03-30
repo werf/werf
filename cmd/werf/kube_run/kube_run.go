@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/containers/image/v5/docker/reference"
@@ -52,6 +53,8 @@ type cmdDataType struct {
 	ImageName    string
 	Overrides    string
 	ExtraOptions string
+
+	registryCredsFound bool
 }
 
 var (
@@ -391,10 +394,13 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 			return fmt.Errorf("unable to get docker config credentials: %w", err)
 		}
 
-		if dockerAuthConf != (imgtypes.DockerAuthConfig{}) {
+		if dockerAuthConf == (imgtypes.DockerAuthConfig{}) {
+			logboek.Context(ctx).Debug().LogF("No credentials for werf repo found in Docker's config.json. No image pull secret will be created.\n")
+		} else {
 			if err := createDockerRegistrySecret(ctx, secret, namespace, *namedRef, dockerAuthConf); err != nil {
 				return fmt.Errorf("unable to create docker registry secret: %w", err)
 			}
+			cmdData.registryCredsFound = true
 		}
 	}
 
@@ -441,7 +447,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		}
 	}
 
-	if cmdData.AutoPullSecret {
+	if cmdData.AutoPullSecret && cmdData.registryCredsFound {
 		overrides, err = addImagePullSecret(secret, overrides)
 		if err != nil {
 			return fmt.Errorf("unable to add imagePullSecret to --overrides: %w", err)
@@ -513,7 +519,7 @@ func cleanupResources(ctx context.Context, pod, secret, namespace string) {
 		}
 	}
 
-	if cmdData.AutoPullSecret {
+	if cmdData.AutoPullSecret && cmdData.registryCredsFound {
 		if isSecretExist, err := isSecretExist(ctx, secret, namespace); err != nil {
 			logboek.Context(ctx).Warn().LogF("WARNING: unable to check for secret existence: %s\n", err)
 		} else if isSecretExist {
@@ -636,7 +642,12 @@ func getDockerConfigCredentials(ref string) (*reference.Named, imgtypes.DockerAu
 		return nil, imgtypes.DockerAuthConfig{}, fmt.Errorf("unable to parse docker config registry reference %q: %w", ref, err)
 	}
 
-	dockerAuthConf, err := config2.GetCredentialsForRef(&imgtypes.SystemContext{AuthFilePath: *commonCmdData.DockerConfig}, namedRef)
+	sysContext := &imgtypes.SystemContext{}
+	if *commonCmdData.DockerConfig != "" {
+		sysContext.AuthFilePath = filepath.Join(*commonCmdData.DockerConfig, "config.json")
+	}
+
+	dockerAuthConf, err := config2.GetCredentialsForRef(sysContext, namedRef)
 	if err != nil {
 		return nil, imgtypes.DockerAuthConfig{}, fmt.Errorf("unable to get docker registry creds for ref %q: %w", ref, err)
 	}
