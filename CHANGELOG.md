@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.80](https://www.github.com/werf/werf/compare/v1.2.79...v1.2.80) (2022-03-30)
+
+
+### Features
+
+* **kube-run:** add --kube-config-base64 ([a32cd4f](https://www.github.com/werf/werf/commit/a32cd4fd0c0c735b9c2a9b66548734da078ba6ce))
+* **kubectl:** add --tmp-dir, --home-dir, --kubeconfig-base64 ([cddc6b6](https://www.github.com/werf/werf/commit/cddc6b620f380f1407ecb268a80dbef914ac0373))
+* **stapel-to-buildah:** implement 'from' stage ([7cc7d71](https://www.github.com/werf/werf/commit/7cc7d71ccc2ec03aa1f039610d7d7011d6b1e1f2))
+
+
+### Bug Fixes
+
+* **kube-run:** broken --docker-config ([60b74b8](https://www.github.com/werf/werf/commit/60b74b8ea302aa9322c11745a07fb89e7404cdcc))
+
 ### [1.2.79](https://www.github.com/werf/werf/compare/v1.2.78...v1.2.79) (2022-03-23)
 
 
