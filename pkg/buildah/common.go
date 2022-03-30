@@ -57,6 +57,10 @@ type RunCommandOpts struct {
 	Mounts []specs.Mount
 }
 
+type RmOpts struct {
+	CommonOpts
+}
+
 type RmiOpts struct {
 	CommonOpts
 	Force bool
@@ -83,6 +87,7 @@ type Buildah interface {
 	FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error)
 	Pull(ctx context.Context, ref string, opts PullOpts) error
 	Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error)
+	Rm(ctx context.Context, ref string, opts RmOpts) error
 	Rmi(ctx context.Context, ref string, opts RmiOpts) error
 	Mount(ctx context.Context, container string, opts MountOpts) (string, error)
 	Umount(ctx context.Context, container string, opts UmountOpts) error
