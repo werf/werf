@@ -73,11 +73,15 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 	}
 
 	// TODO(stapel-to-buildah): use buildah.Change to set labels
-	fmt.Printf("Setting labels %v for build container %q\n", opts.Labels, containerID)
+	fmt.Printf("[DEBUG] Setting labels %v for build container %q\n", opts.Labels, containerID)
 
-	fmt.Printf("Committing container %q\n", containerID)
+	fmt.Printf("[DEBUG] Committing container %q\n", containerID)
+	imgID, err := runtime.buildah.Commit(ctx, containerID, buildah.CommitOpts{})
+	if err != nil {
+		return "", fmt.Errorf("unable to commit container %q: %s", containerID, err)
+	}
 
-	return "", fmt.Errorf("not implemented yet")
+	return imgID, nil
 }
 
 // GetImageInfo returns nil, nil if image not found.
