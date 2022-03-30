@@ -135,8 +135,7 @@ func (b *Ansible) stage(ctx context.Context, cr container_backend.ContainerBacke
 
 		return nil
 	} else {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
+		return fmt.Errorf("ansible builder is not supported when using buildah backend, please use shell builder instead")
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
 	imagePkg "github.com/werf/werf/pkg/image"
@@ -99,7 +100,9 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_b
 		} else {
 			stageImage.Builder.StapelStageBuilder().AddPrepareContainerActions(container_backend.PrepareContainerActionWith(func(containerRoot string) error {
 				for _, mountpoint := range mountpoints {
-					if err := os.RemoveAll(mountpoint); err != nil {
+					logboek.Context(ctx).Info().LogF("Removing mountpoint %q in the container dir: %q\n", mountpoint, filepath.Join(containerRoot, mountpoint))
+
+					if err := os.RemoveAll(filepath.Join(containerRoot, mountpoint)); err != nil {
 						return fmt.Errorf("unable to remove %q: %s", mountpoint, err)
 					}
 				}

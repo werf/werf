@@ -87,12 +87,11 @@ func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_
 		}
 
 		container.AddServiceRunCommands(containerTmpScriptFilePath)
-
-		return nil
 	} else {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
+		stageBuilder.StapelStageBuilder().AddUserCommands(b.stageCommands(userStageName)...)
 	}
+
+	return nil
 }
 
 func (b *Shell) stageChecksum(ctx context.Context, userStageName string) string {
