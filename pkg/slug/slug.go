@@ -30,11 +30,62 @@ func Slug(data string) string {
 }
 
 func LimitedSlug(data string, slugMaxSize int) string {
-	if len(data) == 0 || slugify(data) == data && len(data) <= slugMaxSize {
+	if !shouldBeSlugged(data, slugMaxSize) {
 		return data
 	}
 
 	return slug(data, slugMaxSize)
+}
+
+func shouldBeSlugged(data string, slugMaxSize int) bool {
+	// nothing to slug
+	if len(data) == 0 {
+		return false
+	}
+
+	// valid data
+	if slugify(data) == data && len(data) <= slugMaxSize {
+		return false
+	}
+
+	// legacy: this code provides idempotence for slugged data with sequence of two hyphens in a specific place
+	// Remove this block in the following major releases.
+	{
+		// data length cannot be more than max size
+		if len(data) > slugMaxSize {
+			return true
+		}
+
+		// data length cannot be equal or less than service part
+		servicePartSize := len(util.MurmurHash("ANY")) + len(slugSeparator)
+		if len(data) <= servicePartSize {
+			return true
+		}
+
+		// data must contain only one sequence
+		if strings.Count(data, "--") != 1 {
+			return true
+		}
+
+		// data must contain sequence in a certain place
+		{
+			firstHyphenInd := len(data) - servicePartSize - 1
+			ind := strings.Index(data, "--")
+			if firstHyphenInd != ind {
+				return true
+			}
+		}
+
+		// data without sequence must be valid
+		{
+			formattedData := strings.Replace(data, "--", "-", 1)
+			if slugify(formattedData) != formattedData {
+				return true
+			}
+		}
+
+		return false
+	}
 }
 
 func Project(name string) string {
@@ -142,6 +193,9 @@ func slug(data string, maxSize int) string {
 	var slugParts []string
 	if sluggedData != "" {
 		croppedSluggedData := cropSluggedData(sluggedData, murmurHash, maxSize)
+
+		// legacy: this check cannot be fixed without breaking reproducibility.
+		// Fix by replacing HasPrefix on HasSuffix in the following major releases.
 		if strings.HasPrefix(croppedSluggedData, "-") {
 			slugParts = append(slugParts, croppedSluggedData[:len(croppedSluggedData)-1])
 		} else {
