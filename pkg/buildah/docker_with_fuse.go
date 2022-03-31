@@ -67,7 +67,7 @@ func (b *DockerWithFuseBuildah) Tag(ctx context.Context, ref, newRef string, opt
 
 func (b *DockerWithFuseBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
 	args := []string{
-		"push", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)),
+		"push", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), "--format", "docker",
 		"--signature-policy", b.SignaturePolicyPath, ref, fmt.Sprintf("docker://%s", ref),
 	}
 	_, _, err := b.runBuildah(ctx, []string{}, args, opts.LogWriter)
@@ -98,7 +98,7 @@ func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 	}()
 
 	buildArgs := []string{
-		"bud", "--isolation", b.Isolation.String(), "--format", "docker",
+		"bud", "--isolation", b.Isolation.String(), "--format", "docker", "--shm-size", DefaultShmSize,
 		fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), "--signature-policy", b.SignaturePolicyPath,
 	}
 	for k, v := range opts.BuildArgs {
@@ -124,17 +124,16 @@ func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 }
 
 func (b *DockerWithFuseBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
-	_, _, err := b.runBuildah(ctx, []string{}, append([]string{"run", container}, command...), opts.LogWriter)
+	_, _, err := b.runBuildah(ctx, []string{}, append([]string{"run", "--isolation", b.Isolation.String(), "--runtime", DefaultRuntime, container}, command...), opts.LogWriter)
 	return err
 }
 
 func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error) {
-	_, _, err := b.runBuildah(ctx, []string{}, []string{
-		"from", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), "--name", container,
-		"--signature-policy", b.SignaturePolicyPath, "--isolation", b.Isolation.String(), "--format", "docker", image,
+	container, _, err := b.runBuildah(ctx, []string{}, []string{
+		"from", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), "--name", container, "--shm-size", DefaultShmSize,
+		"--signature-policy", b.SignaturePolicyPath, "--quiet", "--isolation", b.Isolation.String(), "--format", "docker", image,
 	}, opts.LogWriter)
-	// FIXME: return container name
-	return "", err
+	return container, err
 }
 
 // TODO: make it more generic to handle not only images

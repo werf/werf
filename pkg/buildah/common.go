@@ -20,6 +20,7 @@ const (
 	DefaultShmSize              = "65536k"
 	DefaultSignaturePolicy      = `{"default": [{"type": "insecureAcceptAnything"}], "transports": {"docker-daemon": {"": [{"type": "insecureAcceptAnything"}]}}}`
 	DefaultRegistriesConfig     = `unqualified-search-registries = ["docker.io"]`
+	DefaultRuntime              = "runc"
 	BuildahImage                = "registry.werf.io/werf/buildah:v1.22.3-1"
 	BuildahStorageContainerName = "werf-buildah-storage"
 
@@ -57,10 +58,6 @@ type RunCommandOpts struct {
 	Mounts []specs.Mount
 }
 
-type RmOpts struct {
-	CommonOpts
-}
-
 type RmiOpts struct {
 	CommonOpts
 	Force bool
@@ -90,6 +87,7 @@ type (
 	TagOpts         CommonOpts
 	MountOpts       CommonOpts
 	UmountOpts      CommonOpts
+	RmOpts          CommonOpts
 )
 
 type Buildah interface {

@@ -55,9 +55,10 @@ func NativeProcessStartupHook() bool {
 type NativeBuildah struct {
 	BaseBuildah
 
-	Store                storage.Store
-	Runtime              libimage.Runtime
-	DefaultSystemContext imgtypes.SystemContext
+	Store                     storage.Store
+	Runtime                   libimage.Runtime
+	DefaultSystemContext      imgtypes.SystemContext
+	DefaultCommonBuildOptions define.CommonBuildOptions
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
@@ -83,11 +84,16 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 	}
 
 	b.DefaultSystemContext = imgtypes.SystemContext{
+		SignaturePolicyPath:               b.SignaturePolicyPath,
+		SystemRegistriesConfPath:          b.RegistriesConfigPath,
+		SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
 		OCIInsecureSkipTLSVerify:          b.Insecure,
 		DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
 		DockerDaemonInsecureSkipTLSVerify: b.Insecure,
-		SystemRegistriesConfPath:          b.RegistriesConfigPath,
-		SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
+	}
+
+	b.DefaultCommonBuildOptions = define.CommonBuildOptions{
+		ShmSize: DefaultShmSize,
 	}
 
 	imgstor.Transport.SetStore(b.Store)
@@ -133,16 +139,13 @@ func (b *NativeBuildah) Tag(_ context.Context, ref, newRef string, opts TagOpts)
 func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
 	pushOpts := buildah.PushOptions{
 		Compression:         define.Gzip,
+		SignaturePolicyPath: b.SignaturePolicyPath,
+		ReportWriter:        opts.LogWriter,
 		Store:               b.Store,
+		SystemContext:       &b.DefaultSystemContext,
 		ManifestType:        manifest.DockerV2Schema2MediaType,
 		MaxRetries:          MaxPullPushRetries,
 		RetryDelay:          PullPushRetryDelay,
-		SignaturePolicyPath: b.SignaturePolicyPath,
-		SystemContext:       &b.DefaultSystemContext,
-	}
-
-	if opts.LogWriter != nil {
-		pushOpts.ReportWriter = opts.LogWriter
 	}
 
 	imageRef, err := alltransports.ParseImageName(fmt.Sprintf("docker://%s", ref))
@@ -159,15 +162,18 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 
 func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	buildOpts := define.BuildOptions{
-		Isolation:    define.Isolation(b.Isolation),
-		OutputFormat: buildah.Dockerv2ImageManifest,
-		CommonBuildOpts: &define.CommonBuildOptions{
-			ShmSize: DefaultShmSize,
-		},
-		SignaturePolicyPath: b.SignaturePolicyPath,
-		SystemContext:       &b.DefaultSystemContext,
+		Isolation:           define.Isolation(b.Isolation),
+		Runtime:             DefaultRuntime,
 		Args:                opts.BuildArgs,
+		SignaturePolicyPath: b.SignaturePolicyPath,
+		ReportWriter:        opts.LogWriter,
+		OutputFormat:        buildah.Dockerv2ImageManifest,
+		SystemContext:       &b.DefaultSystemContext,
+		ConfigureNetwork:    define.NetworkEnabled,
+		CommonBuildOpts:     &b.DefaultCommonBuildOptions,
 		Target:              opts.Target,
+		MaxPullPushRetries:  MaxPullPushRetries,
+		PullPushRetryDelay:  PullPushRetryDelay,
 	}
 
 	errLog := &bytes.Buffer{}
@@ -217,9 +223,12 @@ func (b *NativeBuildah) Umount(ctx context.Context, container string, opts Umoun
 
 func (b *NativeBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
 	runOpts := buildah.RunOptions{
-		Args:      opts.Args,
-		Isolation: define.Isolation(b.Isolation),
-		Mounts:    opts.Mounts,
+		Isolation:        define.Isolation(b.Isolation),
+		Runtime:          DefaultRuntime,
+		Args:             opts.Args,
+		Mounts:           opts.Mounts,
+		ConfigureNetwork: define.NetworkEnabled,
+		SystemContext:    &b.DefaultSystemContext,
 	}
 
 	stderr := &bytes.Buffer{}
@@ -244,8 +253,18 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 
 func (b *NativeBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error) {
 	builder, err := buildah.NewBuilder(ctx, b.Store, buildah.BuilderOptions{
-		FromImage: image,
-		Container: container,
+		FromImage:           image,
+		Container:           container,
+		SignaturePolicyPath: b.SignaturePolicyPath,
+		ReportWriter:        opts.LogWriter,
+		SystemContext:       &b.DefaultSystemContext,
+		Isolation:           define.Isolation(b.Isolation),
+		ConfigureNetwork:    define.NetworkEnabled,
+		CommonBuildOpts:     &b.DefaultCommonBuildOptions,
+		Format:              buildah.Dockerv2ImageManifest,
+		MaxPullRetries:      MaxPullPushRetries,
+		PullRetryDelay:      PullPushRetryDelay,
+		Capabilities:        define.DefaultCapabilities,
 	})
 	if err != nil {
 		return "", fmt.Errorf("unable to create builder: %s", err)
@@ -256,16 +275,13 @@ func (b *NativeBuildah) FromCommand(ctx context.Context, container string, image
 
 func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	pullOpts := buildah.PullOptions{
+		SignaturePolicyPath: b.SignaturePolicyPath,
+		ReportWriter:        opts.LogWriter,
 		Store:               b.Store,
+		SystemContext:       &b.DefaultSystemContext,
 		MaxRetries:          MaxPullPushRetries,
 		RetryDelay:          PullPushRetryDelay,
 		PullPolicy:          define.PullIfNewer,
-		SignaturePolicyPath: b.SignaturePolicyPath,
-		SystemContext:       &b.DefaultSystemContext,
-	}
-
-	if opts.LogWriter != nil {
-		pullOpts.ReportWriter = opts.LogWriter
 	}
 
 	if _, err := buildah.Pull(ctx, ref, pullOpts); err != nil {
@@ -286,8 +302,8 @@ func (b *NativeBuildah) Rm(ctx context.Context, ref string, opts RmOpts) error {
 
 func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	_, rmiErrors := b.Runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
-		Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
 		Force:   opts.Force,
+		Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
 	})
 
 	var multiErr *multierror.Error
@@ -383,7 +399,8 @@ func (b *NativeBuildah) getBuilderFromContainer(ctx context.Context, container s
 	builder, err = buildah.OpenBuilder(b.Store, container)
 	if os.IsNotExist(errors.Cause(err)) {
 		builder, err = buildah.ImportBuilder(ctx, b.Store, buildah.ImportOptions{
-			Container: container,
+			Container:           container,
+			SignaturePolicyPath: b.SignaturePolicyPath,
 		})
 	}
 	if err != nil {
@@ -401,7 +418,8 @@ func (b *NativeBuildah) openContainerBuilder(ctx context.Context, container stri
 	switch {
 	case os.IsNotExist(errors.Cause(err)):
 		builder, err = buildah.ImportBuilder(ctx, b.Store, buildah.ImportOptions{
-			Container: container,
+			Container:           container,
+			SignaturePolicyPath: b.SignaturePolicyPath,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to import builder for container %q: %s", container, err)
