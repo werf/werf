@@ -7,7 +7,7 @@
 # DO NOT EDIT!
 
 cli: &cli
-  
+
   - title: Overview of command groups
     url: /reference/cli/overview.html
 
