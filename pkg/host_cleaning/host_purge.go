@@ -69,7 +69,7 @@ func HostPurge(ctx context.Context, options HostPurgeOptions) error {
 	}
 
 	if err := tmp_manager.Purge(ctx, commonOptions.DryRun); err != nil {
-		return fmt.Errorf("tmp files purge failed: %s", err)
+		return fmt.Errorf("tmp files purge failed: %w", err)
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Running werf home data purge").DoError(func() error {
@@ -81,7 +81,7 @@ func HostPurge(ctx context.Context, options HostPurgeOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Deleting stapel").DoError(func() error {
 		return deleteStapel(ctx, commonOptions.DryRun)
 	}); err != nil {
-		return fmt.Errorf("stapel delete failed: %s", err)
+		return fmt.Errorf("stapel delete failed: %w", err)
 	}
 
 	return nil

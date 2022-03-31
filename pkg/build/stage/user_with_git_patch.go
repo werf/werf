@@ -26,7 +26,7 @@ type UserWithGitPatchStage struct {
 func (s *UserWithGitPatchStage) SelectSuitableStage(ctx context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
 	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(ctx, c, stages)
 	if err != nil {
-		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
+		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %w", err)
 	}
 	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
 }

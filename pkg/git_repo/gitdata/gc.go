@@ -29,7 +29,7 @@ const (
 func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsagePercentage float64) (bool, error) {
 	vu, err := volumeutils.GetVolumeUsageByPath(ctx, werf.GetLocalCacheDir())
 	if err != nil {
-		return false, fmt.Errorf("error getting volume usage by path %q: %s", werf.GetLocalCacheDir(), err)
+		return false, fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
 	return vu.Percentage > allowedVolumeUsagePercentage, nil
@@ -50,7 +50,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	var keepGitDataV1_1 bool
 	v1_1LastRunAt, err := werf.GetWerfLastRunAtV1_1(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting last run timestamp for werf v1.1: %s", err)
+		return fmt.Errorf("error getting last run timestamp for werf v1.1: %w", err)
 	}
 	if time.Since(v1_1LastRunAt) <= time.Hour*24*3 {
 		keepGitDataV1_1 = true
@@ -64,26 +64,26 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_repos")
 		if err := wipeCacheDirs(ctx, cacheRoot, keepCacheVersions); err != nil {
-			return fmt.Errorf("unable to wipe old git repos cache dirs in %q: %s", cacheRoot, err)
+			return fmt.Errorf("unable to wipe old git repos cache dirs in %q: %w", cacheRoot, err)
 		}
 
 		for _, dir := range []string{filepath.Join(cacheRoot, git_repo.GitReposCacheVersion), filepath.Join(cacheRoot, KeepGitRepoCacheVersionV1_1)} {
 			if _, err := os.Stat(dir); os.IsNotExist(err) {
 				continue
 			} else if err != nil {
-				return fmt.Errorf("error accessing dir %q: %s", dir, err)
+				return fmt.Errorf("error accessing dir %q: %w", dir, err)
 			}
 
 			files, err := ioutil.ReadDir(dir)
 			if err != nil {
-				return fmt.Errorf("error reading dir %q: %s", dir, err)
+				return fmt.Errorf("error reading dir %q: %w", dir, err)
 			}
 
 			for _, finfo := range files {
 				if strings.HasSuffix(finfo.Name(), ".tmp") {
 					path := filepath.Join(dir, finfo.Name())
 					if err := os.RemoveAll(path); err != nil {
-						return fmt.Errorf("unable to remove %q: %s", path, err)
+						return fmt.Errorf("unable to remove %q: %w", path, err)
 					}
 				}
 			}
@@ -98,27 +98,27 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_worktrees")
 		if err := wipeCacheDirs(ctx, cacheRoot, keepCacheVersions); err != nil {
-			return fmt.Errorf("unable to wipe old git worktrees cache dirs in %q: %s", cacheRoot, err)
+			return fmt.Errorf("unable to wipe old git worktrees cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
 
 	{
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_archives")
 		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitArchivesCacheVersion}); err != nil {
-			return fmt.Errorf("unable to wipe old git archives cache dirs in %q: %s", cacheRoot, err)
+			return fmt.Errorf("unable to wipe old git archives cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
 
 	{
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_patches")
 		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitPatchesCacheVersion}); err != nil {
-			return fmt.Errorf("unable to wipe old git patches cache dirs in %q: %s", cacheRoot, err)
+			return fmt.Errorf("unable to wipe old git patches cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
 
 	vu, err := volumeutils.GetVolumeUsageByPath(ctx, werf.GetLocalCacheDir())
 	if err != nil {
-		return fmt.Errorf("error getting volume usage by path %q: %s", werf.GetLocalCacheDir(), err)
+		return fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
 	targetVolumeUsagePercentage := allowedVolumeUsagePercentage - allowedVolumeUsageMarginPercentage
@@ -153,7 +153,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 
 		entries, err := GetExistingGitRepos(cacheVersionRoot)
 		if err != nil {
-			return fmt.Errorf("error getting existing git repos from %q: %s", cacheVersionRoot, err)
+			return fmt.Errorf("error getting existing git repos from %q: %w", cacheVersionRoot, err)
 		}
 
 		for _, entry := range entries {
@@ -166,7 +166,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 
 		entries, err := GetExistingGitWorktrees(cacheVersionRoot)
 		if err != nil {
-			return fmt.Errorf("error getting existing git repos from %q: %s", cacheVersionRoot, err)
+			return fmt.Errorf("error getting existing git repos from %q: %w", cacheVersionRoot, err)
 		}
 
 		for _, entry := range entries {
@@ -179,7 +179,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 
 		entries, err := GetExistingGitArchives(cacheVersionRoot)
 		if err != nil {
-			return fmt.Errorf("error getting existing git repos from %q: %s", cacheVersionRoot, err)
+			return fmt.Errorf("error getting existing git repos from %q: %w", cacheVersionRoot, err)
 		}
 
 		for _, entry := range entries {
@@ -192,7 +192,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 
 		entries, err := GetExistingGitPatches(cacheVersionRoot)
 		if err != nil {
-			return fmt.Errorf("error getting existing git repos from %q: %s", cacheVersionRoot, err)
+			return fmt.Errorf("error getting existing git repos from %q: %w", cacheVersionRoot, err)
 		}
 
 		for _, entry := range entries {
@@ -210,7 +210,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 			logboek.Context(ctx).LogF("Removing %s\n", path)
 
 			if err := RemovePathWithEmptyParentDirsInsideScope(werf.GetLocalCacheDir(), path); err != nil {
-				return fmt.Errorf("unable to remove %q: %s", path, err)
+				return fmt.Errorf("unable to remove %q: %w", path, err)
 			}
 		}
 
@@ -230,7 +230,7 @@ func RemovePathWithEmptyParentDirsInsideScope(scopeDir, path string) error {
 	}
 
 	if err := os.RemoveAll(path); err != nil {
-		return fmt.Errorf("unable to remove %q: %s", path, err)
+		return fmt.Errorf("unable to remove %q: %w", path, err)
 	}
 
 	dir := filepath.Dir(path)
@@ -250,7 +250,7 @@ func RemovePathWithEmptyParentDirsInsideScope(scopeDir, path string) error {
 		}
 
 		if err := os.Remove(dir); err != nil {
-			return fmt.Errorf("unable to remove empty dir %q: %s", dir, err)
+			return fmt.Errorf("unable to remove empty dir %q: %w", dir, err)
 		}
 
 		dir = filepath.Dir(dir)
@@ -263,12 +263,12 @@ func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions [
 	if _, err := os.Stat(cacheRootDir); os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("error accessing %q: %s", cacheRootDir, err)
+		return fmt.Errorf("error accessing %q: %w", cacheRootDir, err)
 	}
 
 	dirs, err := ioutil.ReadDir(cacheRootDir)
 	if err != nil {
-		return fmt.Errorf("error reading dir %q: %s", cacheRootDir, err)
+		return fmt.Errorf("error reading dir %q: %w", cacheRootDir, err)
 	}
 
 WipeCacheDirs:
@@ -281,7 +281,7 @@ WipeCacheDirs:
 
 		path := filepath.Join(cacheRootDir, finfo.Name())
 		if err := os.RemoveAll(path); err != nil {
-			return fmt.Errorf("unable to remove %q: %s", path, err)
+			return fmt.Errorf("unable to remove %q: %w", path, err)
 		}
 	}
 

@@ -213,7 +213,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, imageName, stageName str
 	}
 
 	if err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
-		return nil, fmt.Errorf("unable to fetch stage %s: %s", stg.GetStageImage().Image.Name(), err)
+		return nil, fmt.Errorf("unable to fetch stage %s: %w", stg.GetStageImage().Image.Name(), err)
 	}
 
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName)).
@@ -226,7 +226,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, imageName, stageName str
 			}
 
 			if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
-				return fmt.Errorf("unable to create dir %s: %s", tmpDir, err)
+				return fmt.Errorf("unable to create dir %s: %w", tmpDir, err)
 			}
 
 			var dockerImageName string
@@ -241,13 +241,13 @@ func (c *Conveyor) GetImportServer(ctx context.Context, imageName, stageName str
 			if srv != nil {
 				c.AppendOnTerminateFunc(func() error {
 					if err := srv.Shutdown(ctx); err != nil {
-						return fmt.Errorf("unable to shutdown import server %s: %s", srv.DockerContainerName, err)
+						return fmt.Errorf("unable to shutdown import server %s: %w", srv.DockerContainerName, err)
 					}
 					return nil
 				})
 			}
 			if err != nil {
-				return fmt.Errorf("unable to run rsync import server: %s", err)
+				return fmt.Errorf("unable to run rsync import server: %w", err)
 			}
 			return nil
 		}); err != nil {
@@ -523,7 +523,7 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 		logProcess.Start()
 		if err := phase.BeforeImages(ctx); err != nil {
 			logProcess.Fail()
-			return fmt.Errorf("phase %s before images handler failed: %s", phase.Name(), err)
+			return fmt.Errorf("phase %s before images handler failed: %w", phase.Name(), err)
 		}
 		logProcess.End()
 	}
@@ -536,7 +536,7 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 		if err := logboek.Context(ctx).Debug().LogProcess(fmt.Sprintf("Phase %s -- AfterImages()", phase.Name())).
 			DoError(func() error {
 				if err := phase.AfterImages(ctx); err != nil {
-					return fmt.Errorf("phase %s after images handler failed: %s", phase.Name(), err)
+					return fmt.Errorf("phase %s after images handler failed: %w", phase.Name(), err)
 				}
 
 				return nil
@@ -625,7 +625,7 @@ func (c *Conveyor) doImage(ctx context.Context, img *Image, phases []Phase, logI
 				logProcess.Start()
 				if err := phase.BeforeImageStages(ctx, img); err != nil {
 					logProcess.Fail()
-					return fmt.Errorf("phase %s before image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
+					return fmt.Errorf("phase %s before image %s stages handler failed: %w", phase.Name(), img.GetLogName(), err)
 				}
 				logProcess.End()
 
@@ -635,7 +635,7 @@ func (c *Conveyor) doImage(ctx context.Context, img *Image, phases []Phase, logI
 					logboek.Context(ctx).Debug().LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
 					if err := phase.OnImageStage(ctx, img, stg); err != nil {
 						logProcess.Fail()
-						return fmt.Errorf("phase %s on image %s stage %s handler failed: %s", phase.Name(), img.GetLogName(), stg.Name(), err)
+						return fmt.Errorf("phase %s on image %s stage %s handler failed: %w", phase.Name(), img.GetLogName(), stg.Name(), err)
 					}
 				}
 				logProcess.End()
@@ -644,7 +644,7 @@ func (c *Conveyor) doImage(ctx context.Context, img *Image, phases []Phase, logI
 				logProcess.Start()
 				if err := phase.AfterImageStages(ctx, img); err != nil {
 					logProcess.Fail()
-					return fmt.Errorf("phase %s after image %s stages handler failed: %s", phase.Name(), img.GetLogName(), err)
+					return fmt.Errorf("phase %s after image %s stages handler failed: %w", phase.Name(), img.GetLogName(), err)
 				}
 				logProcess.End()
 
@@ -911,7 +911,7 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 		if !c.werfConfig.Meta.GitWorktree.GetForceShallowClone() {
 			isShallowClone, err := localGitRepo.IsShallowClone(ctx)
 			if err != nil {
-				return nil, fmt.Errorf("check shallow clone failed: %s", err)
+				return nil, fmt.Errorf("check shallow clone failed: %w", err)
 			}
 
 			if isShallowClone {
@@ -944,7 +944,7 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 			var err error
 			remoteGitRepo, err = git_repo.OpenRemoteRepo(remoteGitMappingConfig.Name, remoteGitMappingConfig.Url)
 			if err != nil {
-				return nil, fmt.Errorf("unable to open remote git repo %s by url %s: %s", remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, err)
+				return nil, fmt.Errorf("unable to open remote git repo %s by url %s: %w", remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, err)
 			}
 
 			if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name)).
@@ -1049,7 +1049,7 @@ func filterAndLogGitMappings(ctx context.Context, c *Conveyor, gitMappings []*st
 
 			commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 			if err != nil {
-				return fmt.Errorf("unable to get commit of repo %q: %s", gitMapping.GitRepo().GetName(), err)
+				return fmt.Errorf("unable to get commit of repo %q: %w", gitMapping.GitRepo().GetName(), err)
 			}
 
 			if commitInfo.VirtualMerge {
@@ -1081,7 +1081,7 @@ func gitRemoteArtifactInit(ctx context.Context, remoteGitMappingConfig *config.G
 
 	gitMappingTo, err := makeGitMappingTo(ctx, gitMapping, remoteGitMappingConfig.GitLocalExport.GitMappingTo(), c)
 	if err != nil {
-		return nil, fmt.Errorf("unable to make remote git.to mapping for image %q: %s", imageName, err)
+		return nil, fmt.Errorf("unable to make remote git.to mapping for image %q: %w", imageName, err)
 	}
 	gitMapping.To = gitMappingTo
 
@@ -1096,7 +1096,7 @@ func gitLocalPathInit(ctx context.Context, localGitMappingConfig *config.GitLoca
 
 	gitMappingTo, err := makeGitMappingTo(ctx, gitMapping, localGitMappingConfig.GitLocalExport.GitMappingTo(), c)
 	if err != nil {
-		return nil, fmt.Errorf("unable to make local git.to mapping for image %q: %s", imageName, err)
+		return nil, fmt.Errorf("unable to make local git.to mapping for image %q: %w", imageName, err)
 	}
 	gitMapping.To = gitMappingTo
 
@@ -1134,11 +1134,11 @@ func makeGitMappingTo(ctx context.Context, gitMapping *stage.GitMapping, gitMapp
 	gitRepoName := gitMapping.GitRepo().GetName()
 	commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 	if err != nil {
-		return "", fmt.Errorf("unable to get latest commit info for repo %q: %s", gitRepoName, err)
+		return "", fmt.Errorf("unable to get latest commit info for repo %q: %w", gitRepoName, err)
 	}
 
 	if gitMappingAddIsDir, err := gitMapping.GitRepo().IsCommitTreeEntryDirectory(ctx, commitInfo.Commit, gitMapping.Add); err != nil {
-		return "", fmt.Errorf("unable to determine whether git `add: %s` is dir or file for repo %q: %s", gitMapping.Add, gitRepoName, err)
+		return "", fmt.Errorf("unable to determine whether git `add: %s` is dir or file for repo %q: %w", gitMapping.Add, gitRepoName, err)
 	} else if !gitMappingAddIsDir {
 		return "", fmt.Errorf("for git repo %q specifying `to: /` when adding a single file from git with `add: %s` is not allowed. Fix this by changing `to: /` to `to: /%s`.", gitRepoName, gitMapping.Add, filepath.Base(gitMapping.Add))
 	}
@@ -1191,7 +1191,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 		absContextAddFile := filepath.Join(c.projectDir, relContextAddFile)
 		exist, err := util.FileExists(absContextAddFile)
 		if err != nil {
-			return nil, fmt.Errorf("unable to check existence of file %s: %s", absContextAddFile, err)
+			return nil, fmt.Errorf("unable to check existence of file %s: %w", absContextAddFile, err)
 		}
 
 		if !exist {
@@ -1223,7 +1223,7 @@ func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDocker
 			r := bytes.NewReader(dockerignoreData)
 			dockerignorePatterns, err = dockerignore.ReadAll(r)
 			if err != nil {
-				return nil, fmt.Errorf("unable to read %q file: %s", relContextDockerignorePath, err)
+				return nil, fmt.Errorf("unable to read %q file: %w", relContextDockerignorePath, err)
 			}
 
 			break

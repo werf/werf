@@ -38,7 +38,7 @@ func NewDockerWithFuseBuildah(commonOpts CommonBuildahOpts, opts DockerWithFuseM
 		Insecure:  commonOpts.Insecure,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("unable to create BaseBuildah: %s", err)
+		return nil, fmt.Errorf("unable to create BaseBuildah: %w", err)
 	}
 	b.BaseBuildah = *baseBuildah
 
@@ -49,7 +49,7 @@ func NewDockerWithFuseBuildah(commonOpts CommonBuildahOpts, opts DockerWithFuseM
 
 	b.commonBuildahCliArgs, err = GetBasicBuildahCliArgs(*commonOpts.StorageDriver)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get common Buildah cli args: %s", err)
+		return nil, fmt.Errorf("unable to get common Buildah cli args: %w", err)
 	}
 
 	b.commonBuildahCliArgs = append(
@@ -85,7 +85,7 @@ func (b *DockerWithFuseBuildah) Umount(ctx context.Context, container string, op
 func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	sessionTmpDir, _, _, err := b.prepareBuildFromDockerfile(dockerfile, opts.ContextTar)
 	if err != nil {
-		return "", fmt.Errorf("error preparing for build from dockerfile: %s", err)
+		return "", fmt.Errorf("error preparing for build from dockerfile: %w", err)
 	}
 	defer func() {
 		if debug() {
@@ -149,7 +149,7 @@ func (b *DockerWithFuseBuildah) Inspect(ctx context.Context, ref string) (*third
 
 	var res thirdparty.BuilderInfo
 	if err := json.Unmarshal([]byte(stdout), &res); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal buildah inspect json output: %s", err)
+		return nil, fmt.Errorf("unable to unmarshal buildah inspect json output: %w", err)
 	}
 
 	return &res, nil
@@ -221,7 +221,7 @@ func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []str
 	}
 
 	if err := runStorageContainer(ctx, BuildahStorageContainerName, BuildahImage); err != nil {
-		return "", "", fmt.Errorf("unable to run werf buildah storage container: %s", err)
+		return "", "", fmt.Errorf("unable to run werf buildah storage container: %w", err)
 	}
 
 	args := []string{"--rm"}
@@ -255,7 +255,7 @@ func GetBasicBuildahCliArgs(driver StorageDriver) ([]string, error) {
 
 	cliStoreOpts, err := newBuildahCliStoreOptions(driver)
 	if err != nil {
-		return result, fmt.Errorf("unable to get buildah cli store options: %s", err)
+		return result, fmt.Errorf("unable to get buildah cli store options: %w", err)
 	}
 
 	if cliStoreOpts.GraphDriverName != "" {
@@ -272,7 +272,7 @@ func GetBasicBuildahCliArgs(driver StorageDriver) ([]string, error) {
 func runStorageContainer(ctx context.Context, name, image string) error {
 	exist, err := docker.ContainerExist(ctx, name)
 	if err != nil {
-		return fmt.Errorf("unable to check existence of docker container %q: %s", name, err)
+		return fmt.Errorf("unable to check existence of docker container %q: %w", name, err)
 	}
 	if exist {
 		return nil
@@ -282,7 +282,7 @@ func runStorageContainer(ctx context.Context, name, image string) error {
 		return logboek.Context(ctx).LogProcess("Creating container %s using image %s", name, image).DoError(func() error {
 			exist, err := docker.ContainerExist(ctx, name)
 			if err != nil {
-				return fmt.Errorf("unable to check existence of docker container %q: %s", name, err)
+				return fmt.Errorf("unable to check existence of docker container %q: %w", name, err)
 			}
 			if exist {
 				return nil
@@ -290,7 +290,7 @@ func runStorageContainer(ctx context.Context, name, image string) error {
 
 			imageExist, err := docker.ImageExist(ctx, image)
 			if err != nil {
-				return fmt.Errorf("unable to check existence of docker image %q: %s", image, err)
+				return fmt.Errorf("unable to check existence of docker image %q: %w", image, err)
 			}
 			if !imageExist {
 				if err := docker.CliPullWithRetries(ctx, image); err != nil {
@@ -308,7 +308,7 @@ func newBuildahCliStoreOptions(driver StorageDriver) (*StoreOptions, error) {
 	if driver == StorageDriverOverlay {
 		fuseOpts, err := GetFuseOverlayfsOptions()
 		if err != nil {
-			return nil, fmt.Errorf("unable to get overlay options: %s", err)
+			return nil, fmt.Errorf("unable to get overlay options: %w", err)
 		}
 		graphDriverOptions = append(graphDriverOptions, fuseOpts...)
 	}

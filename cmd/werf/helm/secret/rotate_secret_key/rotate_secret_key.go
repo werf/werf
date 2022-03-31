@@ -68,12 +68,12 @@ Command will extract data with the old key, generate new secret data and rewrite
 
 func runRotateSecretKey(ctx context.Context, cmd *cobra.Command, secretValuesPaths ...string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -91,12 +91,12 @@ func runRotateSecretKey(ctx context.Context, cmd *cobra.Command, secretValuesPat
 
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(context.Background(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	helmChartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
 	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %s", err)
+		return fmt.Errorf("getting helm chart dir failed: %w", err)
 	}
 
 	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{})
@@ -210,7 +210,7 @@ func regenerateSecrets(filesData, regeneratedFilesData map[string][]byte, decode
 			DoError(func() error {
 				data, err := decodeFunc(fileData)
 				if err != nil {
-					return fmt.Errorf("check old encryption key and file data: %s", err)
+					return fmt.Errorf("check old encryption key and file data: %w", err)
 				}
 
 				resultData, err := encodeFunc(data)

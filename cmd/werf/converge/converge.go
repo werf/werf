@@ -169,7 +169,7 @@ func runMain(ctx context.Context) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
@@ -180,7 +180,7 @@ func runMain(ctx context.Context) error {
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -220,7 +220,7 @@ func runMain(ctx context.Context) error {
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+		return fmt.Errorf("cannot initialize ssh agent: %w", err)
 	}
 	defer func() {
 		err := ssh_agent.Terminate()
@@ -247,19 +247,19 @@ func runMain(ctx context.Context) error {
 func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface) error {
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
 	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %s", err)
+		return fmt.Errorf("getting helm chart dir failed: %w", err)
 	}
 
 	projectName := werfConfig.Meta.Project
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
+		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
@@ -369,14 +369,14 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	var lockManager *lock_manager.LockManager
 	if m, err := lock_manager.NewLockManager(namespace); err != nil {
-		return fmt.Errorf("unable to create lock manager: %s", err)
+		return fmt.Errorf("unable to create lock manager: %w", err)
 	} else {
 		lockManager = m
 	}
 
 	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to create helm registry client: %s", err)
+		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
@@ -399,12 +399,12 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
-		return fmt.Errorf("getting HEAD commit hash failed: %s", err)
+		return fmt.Errorf("getting HEAD commit hash failed: %w", err)
 	}
 
 	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
 	if err != nil {
-		return fmt.Errorf("getting HEAD commit time failed: %s", err)
+		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
 	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
@@ -416,7 +416,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		CommitHash:               headHash,
 		CommitDate:               headTime,
 	}); err != nil {
-		return fmt.Errorf("error creating service values: %s", err)
+		return fmt.Errorf("error creating service values: %w", err)
 	} else {
 		wc.SetServiceValues(vals)
 	}
@@ -460,7 +460,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 		if err := helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
-			return fmt.Errorf("helm upgrade have failed: %s", err)
+			return fmt.Errorf("helm upgrade have failed: %w", err)
 		}
 		return nil
 	})
@@ -497,13 +497,13 @@ func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configura
 
 func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, helmRegistryClient *registry.Client) error {
 	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("error checking availability of helm 2 and existence of helm 2 release %q: %s", releaseName, err)
+		return fmt.Errorf("error checking availability of helm 2 and existence of helm 2 release %q: %w", releaseName, err)
 	} else if !helm2Exists {
 		return nil
 	}
 
 	if helm3Exists, err := checkHelm3ReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("error checking existence of helm 3 release %q: %s", releaseName, err)
+		return fmt.Errorf("error checking existence of helm 3 release %q: %w", releaseName, err)
 	} else if helm3Exists {
 		// helm 2 exists and helm 3 exists
 		// migration not needed, but we should warn user that some helm 2 release with the same name exists
@@ -541,7 +541,7 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 
 	if err := logboek.Context(ctx).Default().LogProcess("Migrating helm 2 release %q to helm 3 in the %q namespace", releaseName, namespace).DoError(func() error {
 		if err := maintenance_helper.Migrate2To3(ctx, releaseName, releaseName, namespace, maintenanceHelper); err != nil {
-			return fmt.Errorf("error migrating existing helm 2 release %q to helm 3 release %q in the namespace %q: %s", releaseName, releaseName, namespace, err)
+			return fmt.Errorf("error migrating existing helm 2 release %q to helm 3 release %q in the namespace %q: %w", releaseName, releaseName, namespace, err)
 		}
 		return nil
 	}); err != nil {
@@ -557,7 +557,7 @@ func checkHelm2AvailableAndReleaseExists(ctx context.Context, releaseName, names
 	} else if available {
 		foundHelm2Release, err := maintenanceHelper.IsHelm2ReleaseExist(ctx, releaseName)
 		if err != nil {
-			return false, fmt.Errorf("error checking existence of helm 2 release %q: %s", releaseName, err)
+			return false, fmt.Errorf("error checking existence of helm 2 release %q: %w", releaseName, err)
 		}
 
 		return foundHelm2Release, nil
@@ -569,7 +569,7 @@ func checkHelm2AvailableAndReleaseExists(ctx context.Context, releaseName, names
 func checkHelm3ReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
 	foundHelm3Release, err := maintenanceHelper.IsHelm3ReleaseExist(ctx, releaseName)
 	if err != nil {
-		return false, fmt.Errorf("error checking existence of helm 3 release %q: %s", releaseName, err)
+		return false, fmt.Errorf("error checking existence of helm 3 release %q: %w", releaseName, err)
 	}
 
 	return foundHelm3Release, nil

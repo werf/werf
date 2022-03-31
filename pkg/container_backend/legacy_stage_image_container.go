@@ -232,14 +232,14 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 	}
 
 	if err := c.image.fromImage.MustResetInfo(ctx); err != nil {
-		return nil, fmt.Errorf("unable to reset info for image %s: %s", c.image.fromImage.Name(), err)
+		return nil, fmt.Errorf("unable to reset info for image %s: %w", c.image.fromImage.Name(), err)
 	}
 
 	dockerServerBackend := c.image.ContainerBackend.(*DockerServerBackend)
 
 	fromImageInspect, err := dockerServerBackend.GetImageInspect(ctx, c.image.fromImage.Name())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get image inspect: %s", err)
+		return nil, fmt.Errorf("unable to get image inspect: %w", err)
 	}
 
 	if len(fromImageInspect.Config.Cmd) != 0 {
@@ -268,7 +268,7 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	}
 
 	if err := docker.CliRun_LiveOutput(ctx, runArgs...); err != nil {
-		return fmt.Errorf("container run failed: %s", err.Error())
+		return fmt.Errorf("container run failed: %w", err)
 	}
 
 	return nil

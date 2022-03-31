@@ -90,12 +90,12 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	ctx := common.GetContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -116,7 +116,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := docker.Init(ctx, dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
-		return fmt.Errorf("docker init failed in dir %q: %s", dockerConfig, err)
+		return fmt.Errorf("docker init failed in dir %q: %w", dockerConfig, err)
 	}
 
 	ctxWithDockerCli, err := docker.NewContext(ctx)
@@ -209,7 +209,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	if doLogin {
 		err := docker.Login(ctx, imagesUsername, imagesPassword, ciRegistryImageEnv)
 		if err != nil {
-			return fmt.Errorf("unable to login into docker repo %s: %s", ciRegistryImageEnv, err)
+			return fmt.Errorf("unable to login into docker repo %s: %w", ciRegistryImageEnv, err)
 		}
 	}
 
@@ -283,7 +283,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	defaultRegistry := docker_registry.GitHubPackagesRegistryAddress
 	defaultRepo, err := generateGithubDefaultRepo(ctx, defaultRegistry, ciGithubDockerPackage)
 	if err != nil {
-		return fmt.Errorf("unable to generate default repo: %s", err)
+		return fmt.Errorf("unable to generate default repo: %w", err)
 	}
 
 	// TODO: legacy, delete when upgrading to v1.3
@@ -299,7 +299,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	if ciGithubActor != "" && ciGithubToken != "" {
 		err := docker.Login(ctx, ciGithubActor, ciGithubToken, registryToLogin)
 		if err != nil {
-			return fmt.Errorf("unable to login into docker registry %s: %s", defaultRegistry, err)
+			return fmt.Errorf("unable to login into docker registry %s: %w", defaultRegistry, err)
 		}
 	}
 
@@ -350,7 +350,7 @@ func generateGithubDefaultRepo(ctx context.Context, defaultRegistry, ciGithubDoc
 
 		_, werfConfig, err := common.GetOptionalWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 		if err != nil {
-			return "", fmt.Errorf("unable to load werf config: %s", err)
+			return "", fmt.Errorf("unable to load werf config: %w", err)
 		}
 
 		if werfConfig != nil {
@@ -370,7 +370,7 @@ func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
 
 	dockerConfigDir, err := tmp_manager.CreateDockerConfigDir(ctx, dockerConfigPath)
 	if err != nil {
-		return "", fmt.Errorf("unable to create tmp docker config: %s", err)
+		return "", fmt.Errorf("unable to create tmp docker config: %w", err)
 	}
 
 	return dockerConfigDir, nil

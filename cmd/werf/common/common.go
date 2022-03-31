@@ -895,7 +895,7 @@ func getInt64EnvVar(varName string) (*int64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vInt, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("bad %s variable value %q: %s", varName, v, err)
+			return nil, fmt.Errorf("bad %s variable value %q: %w", varName, v, err)
 		}
 
 		res := new(int64)
@@ -919,7 +919,7 @@ func GetIntEnvVar(varName string) (*int64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vInt, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("bad %s variable value %q: %s", varName, v, err)
+			return nil, fmt.Errorf("bad %s variable value %q: %w", varName, v, err)
 		}
 
 		res := new(int64)
@@ -943,7 +943,7 @@ func GetUint64EnvVar(varName string) (*uint64, error) {
 	if v := os.Getenv(varName); v != "" {
 		vUint, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("bad %s variable value %q: %s", varName, v, err)
+			return nil, fmt.Errorf("bad %s variable value %q: %w", varName, v, err)
 		}
 
 		res := new(uint64)
@@ -1065,7 +1065,7 @@ func GetCacheStagesStorageList(containerBackend container_backend.ContainerBacke
 	for _, address := range GetCacheStagesStorage(cmdData) {
 		repoStagesStorage, err := storage.NewStagesStorage(address, containerBackend, storage.StagesStorageOptions{})
 		if err != nil {
-			return nil, fmt.Errorf("unable to create cache stages storage at %s: %s", address, err)
+			return nil, fmt.Errorf("unable to create cache stages storage at %s: %w", address, err)
 		}
 		res = append(res, repoStagesStorage)
 	}
@@ -1080,7 +1080,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 		if stagesStorage.Address() != storage.LocalStorageAddress {
 			localStagesStorage, err := storage.NewStagesStorage(storage.LocalStorageAddress, containerBackend, storage.StagesStorageOptions{})
 			if err != nil {
-				return nil, fmt.Errorf("unable to create local secondary stages storage: %s", err)
+				return nil, fmt.Errorf("unable to create local secondary stages storage: %w", err)
 			}
 			res = append(res, localStagesStorage)
 		}
@@ -1089,7 +1089,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 	for _, address := range GetSecondaryStagesStorage(cmdData) {
 		repoStagesStorage, err := storage.NewStagesStorage(address, containerBackend, storage.StagesStorageOptions{})
 		if err != nil {
-			return nil, fmt.Errorf("unable to create secondary stages storage at %s: %s", address, err)
+			return nil, fmt.Errorf("unable to create secondary stages storage at %s: %w", address, err)
 		}
 		res = append(res, repoStagesStorage)
 	}
@@ -1555,7 +1555,7 @@ func WithContext(allowBackgroundMode bool, f func(ctx context.Context) error) er
 	if allowBackgroundMode && IsBackgroundModeEnabled() {
 		out, err := os.OpenFile(GetBackgroundOutputFile(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
 		if err != nil {
-			return fmt.Errorf("unable to open background output file %q: %s", GetBackgroundOutputFile(), err)
+			return fmt.Errorf("unable to open background output file %q: %w", GetBackgroundOutputFile(), err)
 		}
 		defer out.Close()
 
@@ -1574,7 +1574,7 @@ func WithContext(allowBackgroundMode bool, f func(ctx context.Context) error) er
 
 		if allowBackgroundMode {
 			if backgroundErr, err := GetAndRemoveLastBackgroundError(); err != nil {
-				return fmt.Errorf("unable to get last background error: %s", err)
+				return fmt.Errorf("unable to get last background error: %w", err)
 			} else if backgroundErr != nil {
 				global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("last background error: %s", backgroundErr))
 			}
@@ -1591,7 +1591,7 @@ func GetAndRemoveLastBackgroundError() (error, error) {
 	}
 
 	if err := os.RemoveAll(GetLastBackgroundErrorFile()); err != nil {
-		return nil, fmt.Errorf("unable to remove %q: %s", GetLastBackgroundErrorFile(), err)
+		return nil, fmt.Errorf("unable to remove %q: %w", GetLastBackgroundErrorFile(), err)
 	}
 
 	if len(data) != 0 {

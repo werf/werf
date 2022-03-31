@@ -77,7 +77,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, 
 			sourceChecksum, err = s.getImportSourceChecksum(ctx, c, elm)
 			return err
 		}); err != nil {
-			return "", fmt.Errorf("unable to get import %d source checksum: %s", ind, err)
+			return "", fmt.Errorf("unable to get import %d source checksum: %w", ind, err)
 		}
 
 		args = append(args, sourceChecksum)
@@ -100,7 +100,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 		sourceImageName := getSourceImageName(elm)
 		srv, err := c.GetImportServer(ctx, sourceImageName, elm.Stage)
 		if err != nil {
-			return fmt.Errorf("unable to get import server for image %q: %s", sourceImageName, err)
+			return fmt.Errorf("unable to get import server for image %q: %w", sourceImageName, err)
 		}
 
 		command := srv.GetCopyCommand(ctx, elm)
@@ -113,7 +113,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 		importSourceID := getImportSourceID(c, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 		if err != nil {
-			return fmt.Errorf("unable to get import source checksum: %s", err)
+			return fmt.Errorf("unable to get import source checksum: %w", err)
 		} else if importMetadata == nil {
 			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
 		}
@@ -167,13 +167,13 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 	importSourceID := getImportSourceID(c, importElm)
 	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 	if err != nil {
-		return "", fmt.Errorf("unable to get import metadata: %s", err)
+		return "", fmt.Errorf("unable to get import metadata: %w", err)
 	}
 
 	if importMetadata == nil {
 		checksum, err := s.generateImportChecksum(ctx, c, importElm)
 		if err != nil {
-			return "", fmt.Errorf("unable to generate import source checksum: %s", err)
+			return "", fmt.Errorf("unable to generate import source checksum: %w", err)
 		}
 
 		sourceImageID := getSourceImageID(c, importElm)
@@ -184,7 +184,7 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 		}
 
 		if err := c.PutImportMetadata(ctx, s.projectName, importMetadata); err != nil {
-			return "", fmt.Errorf("unable to put import metadata: %s", err)
+			return "", fmt.Errorf("unable to put import metadata: %w", err)
 		}
 	}
 
@@ -214,7 +214,7 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 
 	command := generateChecksumCommand(importElm.Add, importElm.IncludePaths, importElm.ExcludePaths, resultChecksumContainerPath)
 	if err := stapel.CreateScript(importScriptHostTmpPath, []string{command}); err != nil {
-		return "", fmt.Errorf("unable to create script: %s", err)
+		return "", fmt.Errorf("unable to create script: %w", err)
 	}
 
 	runArgs := []string{
@@ -239,7 +239,7 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 
 	data, err := ioutil.ReadFile(resultChecksumHostTmpPath)
 	if err != nil {
-		return "", fmt.Errorf("unable to read file with import source checksum: %s", err)
+		return "", fmt.Errorf("unable to read file with import source checksum: %w", err)
 	}
 
 	checksum := strings.TrimSpace(string(data))

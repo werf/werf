@@ -136,12 +136,12 @@ func (server *SynchronizationServerHandler) getOrCreateHandlerByClientID(clientI
 	} else {
 		distributedLockerBackend, err := server.DistributedLockerBackendFactoryFunc(clientID)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create distributed locker backend for clientID %q: %s", clientID, err)
+			return nil, fmt.Errorf("unable to create distributed locker backend for clientID %q: %w", clientID, err)
 		}
 
 		stagesStorageCache, err := server.StagesStorageCacheFactoryFunc(clientID)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create stages storage cache for clientID %q: %s", clientID, err)
+			return nil, fmt.Errorf("unable to create stages storage cache for clientID %q: %w", clientID, err)
 		}
 
 		handler := NewSynchronizationServerHandlerByClientID(clientID, distributedLockerBackend, stagesStorageCache)

@@ -109,7 +109,7 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		res.Address = address
 
 		if params, err := storage.ParseKubernetesSynchronization(res.Address); err != nil {
-			return nil, fmt.Errorf("unable to parse synchronization address %s: %s", res.Address, err)
+			return nil, fmt.Errorf("unable to parse synchronization address %s: %w", res.Address, err)
 		} else {
 			res.KubeParams = params
 		}
@@ -135,7 +135,7 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		if err := logboek.Default().LogProcess(fmt.Sprintf("Getting client id for the http synchronization server")).
 			DoError(func() error {
 				if clientID, err := synchronization_server.GetOrCreateClientID(ctx, projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
-					return fmt.Errorf("unable to get synchronization client id: %s", err)
+					return fmt.Errorf("unable to get synchronization client id: %w", err)
 				} else {
 					address = fmt.Sprintf("%s/%s", synchronization, clientID)
 					logboek.Default().LogF("Using clientID %q for http synchronization server at address %s\n", clientID, address)
@@ -178,11 +178,11 @@ func GetStorageLockManager(ctx context.Context, synchronization *Synchronization
 			ConfigPathMergeList: synchronization.KubeParams.ConfigPathMergeList,
 			Context:             synchronization.KubeParams.ConfigContext,
 		}); err != nil {
-			return nil, fmt.Errorf("unable to load synchronization kube config %q (context %q): %s", synchronization.KubeParams.ConfigPath, synchronization.KubeParams.ConfigContext, err)
+			return nil, fmt.Errorf("unable to load synchronization kube config %q (context %q): %w", synchronization.KubeParams.ConfigPath, synchronization.KubeParams.ConfigContext, err)
 		} else if dynamicClient, err := dynamic.NewForConfig(config.Config); err != nil {
-			return nil, fmt.Errorf("unable to create synchronization kubernetes dynamic client: %s", err)
+			return nil, fmt.Errorf("unable to create synchronization kubernetes dynamic client: %w", err)
 		} else if client, err := kubernetes.NewForConfig(config.Config); err != nil {
-			return nil, fmt.Errorf("unable to create synchronization kubernetes client: %s", err)
+			return nil, fmt.Errorf("unable to create synchronization kubernetes client: %w", err)
 		} else {
 			return storage.NewKubernetesLockManager(synchronization.KubeParams.Namespace, client, dynamicClient, func(projectName string) string {
 				return fmt.Sprintf("werf-%s", projectName)

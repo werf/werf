@@ -25,13 +25,13 @@ var errUsage = errors.New(`
 func runStapel(ctx context.Context, mode buildah.Mode) error {
 	b, err := buildah.NewBuildah(mode, buildah.BuildahOpts{})
 	if err != nil {
-		return fmt.Errorf("unable to create buildah client: %s", err)
+		return fmt.Errorf("unable to create buildah client: %w", err)
 	}
 
 	// TODO: b.Rm(ctx, "mycontainer", buildah.RmOpts{})
 
 	if _, err := b.FromCommand(ctx, "mycontainer", "ubuntu:20.04", buildah.FromCommandOpts{}); err != nil {
-		return fmt.Errorf("unable to create mycontainer from ubuntu:20.04: %s", err)
+		return fmt.Errorf("unable to create mycontainer from ubuntu:20.04: %w", err)
 	}
 
 	buildStageSh := `#!/bin/bash
@@ -58,17 +58,17 @@ echo STOP
 			},
 		},
 	}); err != nil {
-		return fmt.Errorf("unable to run build_stage.sh: %s", err)
+		return fmt.Errorf("unable to run build_stage.sh: %w", err)
 	}
 
 	containerRootDir, err := b.Mount(ctx, "mycontainer", buildah.MountOpts{})
 	if err != nil {
-		return fmt.Errorf("unable to mount mycontainer root dir: %s", err)
+		return fmt.Errorf("unable to mount mycontainer root dir: %w", err)
 	}
 	defer b.Umount(ctx, containerRootDir, buildah.UmountOpts{})
 
 	if err := os.WriteFile(filepath.Join(containerRootDir, "/FILE_FROM_GOLANG"), []byte("HELLO WORLD\n"), os.ModePerm); err != nil {
-		return fmt.Errorf("unable to write /FILE_FROM_GOLANG into %q: %s", containerRootDir, err)
+		return fmt.Errorf("unable to write /FILE_FROM_GOLANG into %q: %w", containerRootDir, err)
 	}
 
 	// TODO: b.Commit(ctx, "mycontainer, "docker://ghcr.io/GROUP/NAME:TAG", buildah.CommitOpts{})
@@ -79,12 +79,12 @@ echo STOP
 func runDockerfile(ctx context.Context, mode buildah.Mode, dockerfilePath, contextDir string) error {
 	b, err := buildah.NewBuildah(mode, buildah.BuildahOpts{})
 	if err != nil {
-		return fmt.Errorf("unable to create buildah client: %s", err)
+		return fmt.Errorf("unable to create buildah client: %w", err)
 	}
 
 	dockerfileData, err := os.ReadFile(dockerfilePath)
 	if err != nil {
-		return fmt.Errorf("error reading %q: %s", dockerfilePath, err)
+		return fmt.Errorf("error reading %q: %w", dockerfilePath, err)
 	}
 
 	errCh := make(chan error, 0)
@@ -94,12 +94,12 @@ func runDockerfile(ctx context.Context, mode buildah.Mode, dockerfilePath, conte
 	if contextDir != "" {
 		contextTar = util.BufferedPipedWriterProcess(func(w io.WriteCloser) {
 			if err := util.WriteDirAsTar((contextDir), w); err != nil {
-				errCh <- fmt.Errorf("unable to write dir %q as tar: %s", contextDir, err)
+				errCh <- fmt.Errorf("unable to write dir %q as tar: %w", contextDir, err)
 				return
 			}
 
 			if err := w.Close(); err != nil {
-				errCh <- fmt.Errorf("unable to close buffered piped writer for context dir %q: %s", contextDir, err)
+				errCh <- fmt.Errorf("unable to close buffered piped writer for context dir %q: %w", contextDir, err)
 				return
 			}
 		})
@@ -113,7 +113,7 @@ func runDockerfile(ctx context.Context, mode buildah.Mode, dockerfilePath, conte
 			},
 		})
 		if err != nil {
-			errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
+			errCh <- fmt.Errorf("BuildFromDockerfile failed: %w", err)
 			return
 		}
 
@@ -151,14 +151,14 @@ func do(ctx context.Context) error {
 
 	shouldTerminate, err := buildah.ProcessStartupHook(mode)
 	if err != nil {
-		return fmt.Errorf("buildah process startup hook failed: %s", err)
+		return fmt.Errorf("buildah process startup hook failed: %w", err)
 	}
 	if shouldTerminate {
 		return nil
 	}
 
 	if err := werf.Init("", ""); err != nil {
-		return fmt.Errorf("unable to init werf subsystem: %s", err)
+		return fmt.Errorf("unable to init werf subsystem: %w", err)
 	}
 
 	mode = buildah.ResolveMode(mode)
@@ -192,7 +192,7 @@ func do(ctx context.Context) error {
 	case "stapel":
 		return runStapel(ctx, mode)
 	default:
-		return fmt.Errorf("bad argument given %q: expected dockerfile or stapel\n\n%s\n", os.Args[2], errUsage)
+		return fmt.Errorf("bad argument given %q: expected dockerfile or stapel\n\n%w\n", os.Args[2], errUsage)
 	}
 }
 

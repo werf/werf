@@ -157,7 +157,7 @@ permalink: reference/cli/%s.html
 
 	path := filepath.Join(pagesDir, fmt.Sprintf("%s.md", fullCommandName))
 	if err := ioutil.WriteFile(path, []byte(cmdPage), 0o644); err != nil {
-		return fmt.Errorf("unable to write %s: %s", path, err)
+		return fmt.Errorf("unable to write %s: %w", path, err)
 	}
 
 	for _, command := range cmd.Commands() {
@@ -179,7 +179,7 @@ func GenCliSidebar(cmdGroups templates.CommandGroups, sidebarPath string) error 
 # DO NOT EDIT!
 
 cli: &cli
-  
+
   - title: Overview of command groups
     url: /reference/cli/overview.html
 `)
@@ -209,7 +209,7 @@ cli: &cli
 	}
 
 	if err := ioutil.WriteFile(sidebarPath, buf.Bytes(), 0o644); err != nil {
-		return fmt.Errorf("unable to write %s: %s", sidebarPath, err)
+		return fmt.Errorf("unable to write %s: %w", sidebarPath, err)
 	}
 
 	return nil
@@ -291,7 +291,7 @@ toc: false
 
 	path := filepath.Join(pagesDir, "overview.md")
 	if err := ioutil.WriteFile(path, []byte(indexPage), 0o644); err != nil {
-		return fmt.Errorf("unable to write %s: %s", path, err)
+		return fmt.Errorf("unable to write %s: %w", path, err)
 	}
 
 	return nil
@@ -309,11 +309,11 @@ func GenCliPartials(cmd *cobra.Command, dir string) error {
 	}
 
 	if err := writeFullCommandMarkdownPartial(cmd, dir); err != nil {
-		return fmt.Errorf("unable to write full command partial: %s", err)
+		return fmt.Errorf("unable to write full command partial: %w", err)
 	}
 
 	if err := writeShortCommandMarkdownPartial(cmd, dir); err != nil {
-		return fmt.Errorf("unable to write full command partial: %s", err)
+		return fmt.Errorf("unable to write full command partial: %w", err)
 	}
 
 	return nil
@@ -348,7 +348,7 @@ func writeShortCommandMarkdownPartial(cmd *cobra.Command, dir string) error {
 	}
 
 	if err := ioutil.WriteFile(path, []byte(desc), 0o644); err != nil {
-		return fmt.Errorf("unable to write %s: %s", path, err)
+		return fmt.Errorf("unable to write %s: %w", path, err)
 	}
 
 	return nil

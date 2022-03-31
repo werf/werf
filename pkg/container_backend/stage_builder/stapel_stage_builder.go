@@ -45,7 +45,7 @@ func (builder *StapelStageBuilder) Build(ctx context.Context, opts container_bac
 		PrepareContainerActions: builder.prepareContainerActions,
 	})
 	if err != nil {
-		return fmt.Errorf("error building stapel stage with %s: %s", builder.ContainerBackend.String(), err)
+		return fmt.Errorf("error building stapel stage with %s: %w", builder.ContainerBackend.String(), err)
 	}
 
 	builder.Image.SetBuiltID(builtID)

@@ -132,7 +132,7 @@ func NewCmd() *cobra.Command {
 					CommitHash: "COMMIT_HASH",
 					CommitDate: &stubCommitDate,
 				}); err != nil {
-					return fmt.Errorf("error creating service values: %s", err)
+					return fmt.Errorf("error creating service values: %w", err)
 				} else {
 					wc.SetStubServiceValues(vals)
 				}
@@ -141,7 +141,7 @@ func NewCmd() *cobra.Command {
 
 				helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &_commonCmdData)
 				if err != nil {
-					return fmt.Errorf("unable to create helm registry client: %s", err)
+					return fmt.Errorf("unable to create helm registry client: %w", err)
 				}
 
 				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, helmRegistryClientHandle, actionConfig, helm.InitActionConfigOptions{

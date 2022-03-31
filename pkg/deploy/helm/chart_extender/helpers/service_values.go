@@ -121,7 +121,7 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 
 	if opts.SetDockerConfigJsonValue {
 		if err := writeDockerConfigJsonValue(ctx, res, opts.DockerConfigPath); err != nil {
-			return nil, fmt.Errorf("error writing docker config value: %s", err)
+			return nil, fmt.Errorf("error writing docker config value: %w", err)
 		}
 	}
 
@@ -158,7 +158,7 @@ func GetBundleServiceValues(ctx context.Context, opts ServiceValuesOptions) (map
 
 	if opts.SetDockerConfigJsonValue {
 		if err := writeDockerConfigJsonValue(ctx, res, opts.DockerConfigPath); err != nil {
-			return nil, fmt.Errorf("error writing docker config value: %s", err)
+			return nil, fmt.Errorf("error writing docker config value: %w", err)
 		}
 	}
 
@@ -177,11 +177,11 @@ func writeDockerConfigJsonValue(ctx context.Context, values map[string]interface
 	if _, err := os.Stat(configJsonPath); os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("error accessing %q: %s", configJsonPath, err)
+		return fmt.Errorf("error accessing %q: %w", configJsonPath, err)
 	}
 
 	if data, err := ioutil.ReadFile(configJsonPath); err != nil {
-		return fmt.Errorf("error reading %q: %s", configJsonPath, err)
+		return fmt.Errorf("error reading %q: %w", configJsonPath, err)
 	} else {
 		values["dockerconfigjson"] = base64.StdEncoding.EncodeToString(data)
 	}

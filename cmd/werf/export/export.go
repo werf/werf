@@ -107,7 +107,7 @@ It is necessary to use image name shortcut %image% or %image_slug% if multiple i
 
 func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
@@ -118,7 +118,7 @@ func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -149,7 +149,7 @@ func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+		return fmt.Errorf("cannot initialize ssh agent: %w", err)
 	}
 	defer func() {
 		err := ssh_agent.Terminate()
@@ -160,7 +160,7 @@ func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	if err := werfConfig.CheckThatImagesExist(imagesToProcess); err != nil {
@@ -171,7 +171,7 @@ func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
+		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
@@ -245,7 +245,7 @@ func getTagFuncList(imageNameList, tagTemplateList []string) ([]func(string) str
 	for _, tagTemplate := range tagTemplateList {
 		tagFunc, err := getExportTagFunc(tmpl, templateName, imageNameList, tagTemplate)
 		if err != nil {
-			return nil, fmt.Errorf("invalid tag template %q: %s", tagTemplate, err)
+			return nil, fmt.Errorf("invalid tag template %q: %w", tagTemplate, err)
 		}
 
 		tagFuncList = append(tagFuncList, tagFunc)

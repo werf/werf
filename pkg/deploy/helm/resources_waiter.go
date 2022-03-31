@@ -68,7 +68,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 
 	if waiter.KubeInitializer != nil {
 		if err := waiter.KubeInitializer.Init(ctx); err != nil {
-			return fmt.Errorf("kube initializer failed: %s", err)
+			return fmt.Errorf("kube initializer failed: %w", err)
 		}
 	}
 
@@ -79,7 +79,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *appsv1.Deployment:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.Deployments = append(specs.Deployments, *spec)
@@ -87,7 +87,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *appsv1beta1.Deployment:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.Deployments = append(specs.Deployments, *spec)
@@ -95,7 +95,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *appsv1beta2.Deployment:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.Deployments = append(specs.Deployments, *spec)
@@ -103,7 +103,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *extensions.Deployment:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "deploy")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.Deployments = append(specs.Deployments, *spec)
@@ -113,7 +113,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
@@ -123,7 +123,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
@@ -133,7 +133,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
@@ -141,7 +141,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *appsv1.StatefulSet:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
@@ -149,7 +149,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *appsv1beta1.StatefulSet:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
@@ -157,7 +157,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *appsv1beta2.StatefulSet:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: extractSpecReplicas(value.Spec.Replicas), defaultPerReplica: 1}, "sts")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.StatefulSets = append(specs.StatefulSets, *spec)
@@ -165,7 +165,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *batchv1.Job:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "job")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.Jobs = append(specs.Jobs, *spec)
@@ -179,7 +179,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 		case *flaggerv1beta1.Canary:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "canary")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.Canaries = append(specs.Canaries, *spec)
@@ -247,14 +247,14 @@ mainLoop:
 		case SkipLogsAnnoName:
 			boolValue, err := strconv.ParseBool(annoValue)
 			if err != nil {
-				return nil, fmt.Errorf("%s: bool expected: %s", invalidAnnoValueError, err)
+				return nil, fmt.Errorf("%s: bool expected: %w", invalidAnnoValueError, err)
 			}
 
 			multitrackSpec.SkipLogs = boolValue
 		case ShowEventsAnnoName:
 			boolValue, err := strconv.ParseBool(annoValue)
 			if err != nil {
-				return nil, fmt.Errorf("%s: bool expected: %s", invalidAnnoValueError, err)
+				return nil, fmt.Errorf("%s: bool expected: %w", invalidAnnoValueError, err)
 			}
 
 			multitrackSpec.ShowServiceMessages = boolValue
@@ -268,7 +268,7 @@ mainLoop:
 				}
 			}
 
-			return nil, fmt.Errorf("%s: choose one of %v", invalidAnnoValueError, values)
+			return nil, fmt.Errorf("%w: choose one of %v", invalidAnnoValueError, values)
 		case FailModeAnnoName:
 			failModeValue := multitrack.FailMode(annoValue)
 			values := []multitrack.FailMode{multitrack.IgnoreAndContinueDeployProcess, multitrack.FailWholeDeployProcessImmediately, multitrack.HopeUntilEndOfDeployProcess}
@@ -279,11 +279,11 @@ mainLoop:
 				}
 			}
 
-			return nil, fmt.Errorf("%s: choose one of %v", invalidAnnoValueError, values)
+			return nil, fmt.Errorf("%w: choose one of %v", invalidAnnoValueError, values)
 		case FailuresAllowedPerReplicaAnnoName:
 			intValue, err := strconv.Atoi(annoValue)
 			if err != nil || intValue < 0 {
-				return nil, fmt.Errorf("%s: positive or zero integer expected", invalidAnnoValueError)
+				return nil, fmt.Errorf("%w: positive or zero integer expected", invalidAnnoValueError)
 			}
 
 			allowFailuresCount := new(int)
@@ -292,7 +292,7 @@ mainLoop:
 		case LogRegexAnnoName:
 			regexpValue, err := regexp.Compile(annoValue)
 			if err != nil {
-				return nil, fmt.Errorf("%s: %s", invalidAnnoValueError, err)
+				return nil, fmt.Errorf("%s: %w", invalidAnnoValueError, err)
 			}
 
 			multitrackSpec.LogRegex = regexpValue
@@ -312,7 +312,7 @@ mainLoop:
 			for _, v := range strings.Split(annoValue, ",") {
 				containerName := strings.TrimSpace(v)
 				if containerName == "" {
-					return nil, fmt.Errorf("%s: containers names separated by comma expected", invalidAnnoValueError)
+					return nil, fmt.Errorf("%w: containers names separated by comma expected", invalidAnnoValueError)
 				}
 
 				containerNames = append(containerNames, containerName)
@@ -324,7 +324,7 @@ mainLoop:
 			for _, v := range strings.Split(annoValue, ",") {
 				containerName := strings.TrimSpace(v)
 				if containerName == "" {
-					return nil, fmt.Errorf("%s: containers names separated by comma expected", invalidAnnoValueError)
+					return nil, fmt.Errorf("%w: containers names separated by comma expected", invalidAnnoValueError)
 				}
 
 				containerNames = append(containerNames, containerName)
@@ -336,7 +336,7 @@ mainLoop:
 				if containerName := strings.TrimPrefix(annoName, LogRegexForAnnoPrefix); containerName != "" {
 					regexpValue, err := regexp.Compile(annoValue)
 					if err != nil {
-						return nil, fmt.Errorf("%s: %s", invalidAnnoValueError, err)
+						return nil, fmt.Errorf("%s: %w", invalidAnnoValueError, err)
 					}
 
 					multitrackSpec.LogRegexByContainerName[containerName] = regexpValue
@@ -346,10 +346,10 @@ mainLoop:
 				if containerName := strings.TrimPrefix(annoName, IgnoreReadinessProbeFailsForPrefix); containerName != "" {
 					ignoreDuration, err := time.ParseDuration(annoValue)
 					if err != nil {
-						return nil, fmt.Errorf("%s: %s", invalidAnnoValueError, err)
+						return nil, fmt.Errorf("%s: %w", invalidAnnoValueError, err)
 					}
 					if math.Signbit(ignoreDuration.Seconds()) {
-						return nil, fmt.Errorf("%s: can't be less than 0", invalidAnnoValueError)
+						return nil, fmt.Errorf("%w: can't be less than 0", invalidAnnoValueError)
 					}
 
 					multitrackSpec.IgnoreReadinessProbeFailsByContainerName[containerName] = ignoreDuration
@@ -364,7 +364,7 @@ mainLoop:
 func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, namespace string, resources helm_kube.ResourceList, timeout time.Duration) error {
 	if waiter.KubeInitializer != nil {
 		if err := waiter.KubeInitializer.Init(ctx); err != nil {
-			return fmt.Errorf("kube initializer failed: %s", err)
+			return fmt.Errorf("kube initializer failed: %w", err)
 		}
 	}
 
@@ -378,7 +378,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, namespace st
 
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "job")
 			if err != nil {
-				return fmt.Errorf("cannot track %s %s: %s", value.Kind, value.Name, err)
+				return fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
 			}
 			if spec != nil {
 				specs.Jobs = append(specs.Jobs, *spec)
@@ -418,7 +418,7 @@ func asVersioned(info *resource.Info) runtime.Object {
 func (waiter *ResourcesWaiter) WaitUntilDeleted(ctx context.Context, specs []*helm_kube.ResourcesWaiterDeleteResourceSpec, timeout time.Duration) error {
 	if waiter.KubeInitializer != nil {
 		if err := waiter.KubeInitializer.Init(ctx); err != nil {
-			return fmt.Errorf("kube initializer failed: %s", err)
+			return fmt.Errorf("kube initializer failed: %w", err)
 		}
 	}
 

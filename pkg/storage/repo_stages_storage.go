@@ -48,7 +48,7 @@ func getDigestAndUniqueIDFromRepoStageImageTag(repoStageImageTag string) (string
 	}
 
 	if uniqueID, err := image.ParseUniqueIDAsTimestamp(parts[1]); err != nil {
-		return "", 0, fmt.Errorf("%s %s: unable to parse unique id %s as timestamp: %s", UnexpectedTagFormatErrorPrefix, repoStageImageTag, parts[1], err)
+		return "", 0, fmt.Errorf("%s %s: unable to parse unique id %s as timestamp: %w", UnexpectedTagFormatErrorPrefix, repoStageImageTag, parts[1], err)
 	} else {
 		return parts[0], uniqueID, nil
 	}
@@ -72,7 +72,7 @@ type RepoStagesStorageOptions struct {
 func NewRepoStagesStorage(repoAddress string, containerBackend container_backend.ContainerBackend, options RepoStagesStorageOptions) (*RepoStagesStorage, error) {
 	dockerRegistry, err := docker_registry.NewDockerRegistry(repoAddress, options.ContainerRegistry, options.DockerRegistryOptions)
 	if err != nil {
-		return nil, fmt.Errorf("error creating container registry accessor for repo %q: %s", repoAddress, err)
+		return nil, fmt.Errorf("error creating container registry accessor for repo %q: %w", repoAddress, err)
 	}
 
 	return &RepoStagesStorage{
@@ -91,7 +91,7 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 
 	o := makeOptions(opts...)
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...); err != nil {
-		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
+		return nil, fmt.Errorf("unable to fetch tags for repo %q: %w", storage.RepoAddress, err)
 	} else {
 		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStagesIDs fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 
@@ -141,17 +141,17 @@ func mutateExportStageConfig(config v1.Config) (v1.Config, error) {
 
 func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, _ DeleteImageOptions) error {
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, stageDescription.Info); err != nil {
-		return fmt.Errorf("unable to remove repo image %s: %s", stageDescription.Info.Name, err)
+		return fmt.Errorf("unable to remove repo image %s: %w", stageDescription.Info.Name, err)
 	}
 
 	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, stageDescription.StageID.Digest, stageDescription.StageID.UniqueID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.DeleteStage full image name: %s\n", rejectedImageName)
 
 	if rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName); err != nil {
-		return fmt.Errorf("unable to get rejected image record %q: %s", rejectedImageName, err)
+		return fmt.Errorf("unable to get rejected image record %q: %w", rejectedImageName, err)
 	} else if rejectedImgInfo != nil {
 		if err := storage.DockerRegistry.DeleteRepoImage(ctx, rejectedImgInfo); err != nil {
-			return fmt.Errorf("unable to remove rejected image record %q: %s", rejectedImageName, err)
+			return fmt.Errorf("unable to remove rejected image record %q: %w", rejectedImageName, err)
 		}
 	}
 
@@ -170,7 +170,7 @@ func (storage *RepoStagesStorage) RejectStage(ctx context.Context, projectName, 
 
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 	if err := storage.DockerRegistry.PushImage(ctx, rejectedImageName, opts); err != nil {
-		return fmt.Errorf("unable to push rejected stage image record %s: %s", rejectedImageName, err)
+		return fmt.Errorf("unable to push rejected stage image record %s: %w", rejectedImageName, err)
 	}
 
 	logboek.Context(ctx).Info().LogF("Rejected stage by digest %s uniqueID %d\n", digest, uniqueID)
@@ -190,7 +190,7 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 
 	o := makeOptions(opts...)
 	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...); err != nil {
-		return nil, fmt.Errorf("unable to fetch tags for repo %q: %s", storage.RepoAddress, err)
+		return nil, fmt.Errorf("unable to fetch tags for repo %q: %w", storage.RepoAddress, err)
 	} else {
 		var rejectedStages []image.StageID
 
@@ -206,7 +206,7 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 					logboek.Context(ctx).Info().LogF("Unexpected tag %q format: %s\n", realTag, err)
 					continue
 				}
-				return nil, fmt.Errorf("unable to get digest and uniqueID from rejected stage tag %q: %s", tag, err)
+				return nil, fmt.Errorf("unable to get digest and uniqueID from rejected stage tag %q: %w", tag, err)
 			} else {
 				logboek.Context(ctx).Info().LogF("Found rejected stage %q\n", tag)
 				rejectedStages = append(rejectedStages, image.StageID{Digest: digest, UniqueID: uniqueID})
@@ -229,7 +229,7 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 					logboek.Context(ctx).Info().LogF("Unexpected tag %q format: %s\n", tag, err)
 					continue
 				}
-				return nil, fmt.Errorf("unable to get digest and uniqueID from tag %q: %s", tag, err)
+				return nil, fmt.Errorf("unable to get digest and uniqueID from tag %q: %w", tag, err)
 			} else {
 				stageID := image.StageID{Digest: digest, UniqueID: uniqueID}
 
@@ -268,14 +268,14 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to inspect repo image %s: %s", stageImageName, err)
+		return nil, fmt.Errorf("unable to inspect repo image %s: %w", stageImageName, err)
 	}
 
 	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, digest, uniqueID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStageDescription check rejected image name: %s\n", rejectedImageName)
 
 	if rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName); err != nil {
-		return nil, fmt.Errorf("unable to get repo image %q: %s", rejectedImageName, err)
+		return nil, fmt.Errorf("unable to get repo image %q: %w", rejectedImageName, err)
 	} else if rejectedImgInfo != nil {
 		logboek.Context(ctx).Info().LogF("Stage digest %s uniqueID %d image is rejected: ignore stage image\n", digest, uniqueID)
 		return nil, nil
@@ -307,7 +307,7 @@ func (storage *RepoStagesStorage) CheckStageCustomTag(ctx context.Context, stage
 
 func (storage *RepoStagesStorage) AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
 	if err := storage.addStageCustomTagMetadata(ctx, stageDescription, tag); err != nil {
-		return fmt.Errorf("unable to add stage custom tag metadata: %s", err)
+		return fmt.Errorf("unable to add stage custom tag metadata: %w", err)
 	}
 
 	return storage.DockerRegistry.TagRepoImage(ctx, stageDescription.Info, tag)
@@ -315,13 +315,13 @@ func (storage *RepoStagesStorage) AddStageCustomTag(ctx context.Context, stageDe
 
 func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag string) error {
 	if err := storage.deleteStageCustomTagMetadata(ctx, tag); err != nil {
-		return fmt.Errorf("unable to delete stage custom tag metadata: %s", err)
+		return fmt.Errorf("unable to delete stage custom tag metadata: %w", err)
 	}
 
 	fullImageName := strings.Join([]string{storage.RepoAddress, tag}, ":")
 	imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
 	if err != nil {
-		return fmt.Errorf("unable to get repo image %q info: %s", fullImageName, err)
+		return fmt.Errorf("unable to get repo image %q info: %w", fullImageName, err)
 	}
 
 	if imgInfo == nil {
@@ -329,7 +329,7 @@ func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag 
 	}
 
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
-		return fmt.Errorf("unable to delete image %q from repo: %s", fullImageName, err)
+		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
 	return nil
@@ -344,7 +344,7 @@ func (storage *RepoStagesStorage) addStageCustomTagMetadata(ctx context.Context,
 	opts.Labels[image.WerfLabel] = stageDescription.Info.Labels[image.WerfLabel]
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
-		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
+		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
 
 	return nil
@@ -354,7 +354,7 @@ func (storage *RepoStagesStorage) deleteStageCustomTagMetadata(ctx context.Conte
 	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tagOrID)
 	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
 	if err != nil {
-		return fmt.Errorf("unable to get repo image %q info: %s", fullImageName, err)
+		return fmt.Errorf("unable to get repo image %q info: %w", fullImageName, err)
 	}
 
 	if imgInfo == nil {
@@ -362,7 +362,7 @@ func (storage *RepoStagesStorage) deleteStageCustomTagMetadata(ctx context.Conte
 	}
 
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
-		return fmt.Errorf("unable to delete image %q from repo: %s", fullImageName, err)
+		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
 	return nil
@@ -372,7 +372,7 @@ func (storage *RepoStagesStorage) GetStageCustomTagMetadata(ctx context.Context,
 	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tagOrID)
 	img, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
+		return nil, fmt.Errorf("unable to get repo image %s: %w", fullImageName, err)
 	}
 
 	if img == nil {
@@ -386,7 +386,7 @@ func (storage *RepoStagesStorage) GetStageCustomTagMetadataIDs(ctx context.Conte
 	o := makeOptions(opts...)
 	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
+		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
 
 	var res []string
@@ -410,7 +410,7 @@ func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectNa
 
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
-		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
+		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
 
 	return nil
@@ -423,7 +423,7 @@ func (storage *RepoStagesStorage) RmManagedImage(ctx context.Context, projectNam
 
 	imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
 	if err != nil {
-		return fmt.Errorf("unable to get repo image %q info: %s", fullImageName, err)
+		return fmt.Errorf("unable to get repo image %q info: %w", fullImageName, err)
 	}
 
 	if imgInfo == nil {
@@ -432,7 +432,7 @@ func (storage *RepoStagesStorage) RmManagedImage(ctx context.Context, projectNam
 	}
 
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
-		return fmt.Errorf("unable to delete image %q from repo: %s", fullImageName, err)
+		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
 	return nil
@@ -450,7 +450,7 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 	o := makeOptions(opts...)
 	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
+		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
 
 	var res []string
@@ -482,12 +482,12 @@ func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_
 func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
 	if img.GetBuiltID() != "" {
 		if err := storage.ContainerBackend.Tag(ctx, img.GetBuiltID(), img.Name(), container_backend.TagOpts{}); err != nil {
-			return fmt.Errorf("unable to tag built image %q by %q: %s", img.GetBuiltID(), img.Name(), err)
+			return fmt.Errorf("unable to tag built image %q by %q: %w", img.GetBuiltID(), img.Name(), err)
 		}
 	}
 
 	if err := storage.ContainerBackend.Push(ctx, img.Name(), container_backend.PushOpts{}); err != nil {
-		return fmt.Errorf("unable to push image %q: %s", img.Name(), err)
+		return fmt.Errorf("unable to push image %q: %w", img.Name(), err)
 	}
 
 	return nil
@@ -495,7 +495,7 @@ func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_
 
 func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error) {
 	if info, err := storage.ContainerBackend.GetImageInfo(ctx, img.Name(), container_backend.GetImageInfoOpts{}); err != nil {
-		return false, fmt.Errorf("unable to get inspect for image %s: %s", img.Name(), err)
+		return false, fmt.Errorf("unable to get inspect for image %s: %w", img.Name(), err)
 	} else if info != nil {
 		img.SetInfo(info)
 		return false, nil
@@ -512,7 +512,7 @@ func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectN
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
-		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
+		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
 	logboek.Context(ctx).Info().LogF("Put image %s commit %s stage ID %s\n", imageNameOrManagedImageName, commit, stageID)
 
@@ -533,7 +533,7 @@ func (storage *RepoStagesStorage) RmImageMetadata(ctx context.Context, projectNa
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageMetadata full image name: %s\n", img.Tag)
 
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
-		return fmt.Errorf("unable to remove repo image %s: %s", img.Tag, err)
+		return fmt.Errorf("unable to remove repo image %s: %w", img.Tag, err)
 	}
 
 	logboek.Context(ctx).Info().LogF("Removed image %s commit %s stage ID %s\n", imageNameOrManagedImageNameOrImageMetadataID, commit, stageID)
@@ -545,7 +545,7 @@ func (storage *RepoStagesStorage) selectMetadataNameImage(ctx context.Context, i
 	tryGetRepoImageFunc := func(fullImageName string) (*image.Info, error) {
 		img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
+			return nil, fmt.Errorf("unable to get repo image %s: %w", fullImageName, err)
 		}
 
 		return img, nil
@@ -592,7 +592,7 @@ func (storage *RepoStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx con
 	o := makeOptions(opts...)
 	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
+		return nil, nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
 
 	return groupImageMetadataTagsByImageName(ctx, imageNameOrManagedImageList, tags, RepoImageMetadataByCommitRecord_ImageTagPrefix)
@@ -606,7 +606,7 @@ func (storage *RepoStagesStorage) GetImportMetadata(ctx context.Context, _, id s
 
 	img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
+		return nil, fmt.Errorf("unable to get repo image %s: %w", fullImageName, err)
 	}
 
 	if img != nil {
@@ -628,7 +628,7 @@ func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, project
 	opts.Labels[image.WerfLabel] = projectName
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
-		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
+		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
 
 	return nil
@@ -642,13 +642,13 @@ func (storage *RepoStagesStorage) RmImportMetadata(ctx context.Context, _, id st
 
 	img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
 	if err != nil {
-		return fmt.Errorf("unable to get repo image %s: %s", fullImageName, err)
+		return fmt.Errorf("unable to get repo image %s: %w", fullImageName, err)
 	} else if img == nil {
 		return nil
 	}
 
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
-		return fmt.Errorf("unable to remove repo image %s: %s", img.Tag, err)
+		return fmt.Errorf("unable to remove repo image %s: %w", img.Tag, err)
 	}
 
 	return nil
@@ -660,7 +660,7 @@ func (storage *RepoStagesStorage) GetImportMetadataIDs(ctx context.Context, _ st
 	o := makeOptions(opts...)
 	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
+		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
 
 	var ids []string
@@ -822,7 +822,7 @@ func (storage *RepoStagesStorage) GetClientIDRecords(ctx context.Context, projec
 	o := makeOptions(opts...)
 	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get repo %s tags: %s", storage.RepoAddress, err)
+		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
 
 	var res []*ClientIDRecord
@@ -863,7 +863,7 @@ func (storage *RepoStagesStorage) PostClientIDRecord(ctx context.Context, projec
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
-		return fmt.Errorf("unable to push image %s: %s", fullImageName, err)
+		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
 
 	logboek.Context(ctx).Info().LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)

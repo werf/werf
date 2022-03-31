@@ -40,7 +40,7 @@ func (r *ReferenceToScan) String() string {
 func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPolicies []*config.MetaCleanupKeepPolicy) ([]*ReferenceToScan, error) {
 	rs, err := gitRepository.References()
 	if err != nil {
-		return nil, fmt.Errorf("get repository references failed: %s", err)
+		return nil, fmt.Errorf("get repository references failed: %w", err)
 	}
 
 	var refs []*ReferenceToScan
@@ -70,7 +70,7 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 
 			refCommit, err = gitRepository.CommitObject(refHash)
 			if err != nil {
-				return fmt.Errorf("reference %s: commit object %s failed: %s", n.Short(), refHash.String(), err)
+				return fmt.Errorf("reference %s: commit object %s failed: %w", n.Short(), refHash.String(), err)
 			}
 
 			modifiedAt = refCommit.Committer.When
@@ -79,12 +79,12 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 
 			refHash, err := getCommitHashForReference(gitRepository, reference.Name().String())
 			if err != nil {
-				return fmt.Errorf("unable to get commit hash for reference %q: %s", reference.Name(), err)
+				return fmt.Errorf("unable to get commit hash for reference %q: %w", reference.Name(), err)
 			}
 
 			refCommit, err = gitRepository.CommitObject(refHash)
 			if err != nil {
-				return fmt.Errorf("reference %s: commit object %s failed: %s", n.Short(), refHash.String(), err)
+				return fmt.Errorf("reference %s: commit object %s failed: %w", n.Short(), refHash.String(), err)
 			}
 
 			tagObject, err := gitRepository.TagObject(reference.Hash())
@@ -92,7 +92,7 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 			case err == plumbing.ErrObjectNotFound: // lightweight tag
 				modifiedAt = refCommit.Committer.When
 			case err != nil:
-				return fmt.Errorf("tag object %s failed: %s", reference.Hash(), err)
+				return fmt.Errorf("tag object %s failed: %w", reference.Hash(), err)
 			default:
 				modifiedAt = tagObject.Tagger.When
 			}

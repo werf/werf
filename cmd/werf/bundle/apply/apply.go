@@ -106,7 +106,7 @@ func runApply() error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
@@ -137,7 +137,7 @@ func runApply() error {
 
 	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to create helm registry client: %s", err)
+		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
 	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
@@ -164,7 +164,7 @@ func runApply() error {
 	defer os.RemoveAll(bundleTmpDir)
 
 	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundleTmpDir, bundlesRegistryClient); err != nil {
-		return fmt.Errorf("unable to pull bundle: %s", err)
+		return fmt.Errorf("unable to pull bundle: %w", err)
 	}
 
 	namespace := common.GetNamespace(&commonCmdData)
@@ -175,7 +175,7 @@ func runApply() error {
 
 	var lockManager *lock_manager.LockManager
 	if m, err := lock_manager.NewLockManager(namespace); err != nil {
-		return fmt.Errorf("unable to create lock manager: %s", err)
+		return fmt.Errorf("unable to create lock manager: %w", err)
 	} else {
 		lockManager = m
 	}
@@ -198,7 +198,7 @@ func runApply() error {
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
 	}); err != nil {
-		return fmt.Errorf("error creating service values: %s", err)
+		return fmt.Errorf("error creating service values: %w", err)
 	} else {
 		bundle.SetServiceValues(vals)
 	}

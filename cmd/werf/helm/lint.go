@@ -23,7 +23,7 @@ func NewLintCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChart
 		ctx := common.GetContext()
 
 		if err := InitRenderRelatedWerfChartParams(ctx, &lintCmdData, wc); err != nil {
-			return fmt.Errorf("unable to init werf chart: %s", err)
+			return fmt.Errorf("unable to init werf chart: %w", err)
 		}
 
 		return oldRunE(cmd, args)

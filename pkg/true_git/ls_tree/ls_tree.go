@@ -391,7 +391,7 @@ func getSubmoduleTree(repoHandle repo_handle.SubmoduleHandle) (repo_handle.TreeH
 	expectedCommit := repoHandle.Status().Expected
 	tree, err := repoHandle.GetCommitTree(expectedCommit)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get submodule %q commit %q tree: %s", submoduleName, expectedCommit, err)
+		return nil, fmt.Errorf("unable to get submodule %q commit %q tree: %w", submoduleName, expectedCommit, err)
 	}
 
 	return tree, nil

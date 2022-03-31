@@ -25,7 +25,7 @@ func getWerfLastRunAtPathV1_1() string {
 func SetWerfLastRunAt(ctx context.Context) error {
 	path := getWerfLastRunAtPath()
 	if _, lock, err := AcquireHostLock(ctx, path, lockgate.AcquireOptions{OnWaitFunc: func(lockName string, doWait func() error) error { return doWait() }}); err != nil {
-		return fmt.Errorf("error locking path %q: %s", path, err)
+		return fmt.Errorf("error locking path %q: %w", path, err)
 	} else {
 		defer ReleaseHostLock(lock)
 	}
@@ -36,7 +36,7 @@ func SetWerfLastRunAt(ctx context.Context) error {
 func GetWerfLastRunAtV1_1(ctx context.Context) (time.Time, error) {
 	path := getWerfLastRunAtPathV1_1()
 	if _, lock, err := AcquireHostLock(ctx, path, lockgate.AcquireOptions{OnWaitFunc: func(lockName string, doWait func() error) error { return doWait() }}); err != nil {
-		return time.Time{}, fmt.Errorf("error locking path %q: %s", path, err)
+		return time.Time{}, fmt.Errorf("error locking path %q: %w", path, err)
 	} else {
 		defer ReleaseHostLock(lock)
 	}
@@ -47,13 +47,13 @@ func GetWerfLastRunAtV1_1(ctx context.Context) (time.Time, error) {
 func SetWerfFirstRunAt(ctx context.Context) error {
 	path := getWerfFirstRunAtPath()
 	if _, lock, err := AcquireHostLock(ctx, path, lockgate.AcquireOptions{OnWaitFunc: func(lockName string, doWait func() error) error { return doWait() }}); err != nil {
-		return fmt.Errorf("error locking path %q: %s", path, err)
+		return fmt.Errorf("error locking path %q: %w", path, err)
 	} else {
 		defer ReleaseHostLock(lock)
 	}
 
 	if exists, err := timestamps.CheckTimestampFileExists(path); err != nil {
-		return fmt.Errorf("error checking existence of %q: %s", path, err)
+		return fmt.Errorf("error checking existence of %q: %w", path, err)
 	} else if !exists {
 		return timestamps.WriteTimestampFile(path, time.Now())
 	}
@@ -63,7 +63,7 @@ func SetWerfFirstRunAt(ctx context.Context) error {
 func GetWerfFirstRunAt(ctx context.Context) (time.Time, error) {
 	path := getWerfFirstRunAtPath()
 	if _, lock, err := AcquireHostLock(ctx, path, lockgate.AcquireOptions{OnWaitFunc: func(lockName string, doWait func() error) error { return doWait() }}); err != nil {
-		return time.Time{}, fmt.Errorf("error locking path %q: %s", path, err)
+		return time.Time{}, fmt.Errorf("error locking path %q: %w", path, err)
 	} else {
 		defer ReleaseHostLock(lock)
 	}

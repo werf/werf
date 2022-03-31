@@ -40,11 +40,11 @@ func status(ctx context.Context, workTreeDir string) (Result, error) {
 
 	statusCmd := true_git.NewGitCmd(ctx, &true_git.GitCmdOptions{RepoDir: workTreeDir}, "-c", "core.quotePath=false", "status", "--porcelain=v2", "--untracked-files=all", "--no-renames")
 	if err := statusCmd.Run(ctx); err != nil {
-		return result, fmt.Errorf("git status command failed: %s", err)
+		return result, fmt.Errorf("git status command failed: %w", err)
 	}
 
 	detailedErrFunc := func(err error) error {
-		return fmt.Errorf("%s\n\ncommand: %q\noutput:\n%s", err, statusCmd, statusCmd.OutErrBuf)
+		return fmt.Errorf("%w\n\ncommand: %q\noutput:\n%s", err, statusCmd, statusCmd.OutErrBuf)
 	}
 
 	scanner := bufio.NewScanner(statusCmd.OutBuf)

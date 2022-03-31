@@ -24,7 +24,7 @@ func UpwardLookupAndVerifyWorkTree(ctx context.Context, lookupPath string) (bool
 				continue
 			}
 		} else if err != nil {
-			return false, "", fmt.Errorf("error accessing %q: %s", dotGitPath, err)
+			return false, "", fmt.Errorf("error accessing %q: %w", dotGitPath, err)
 		} else if isValid, err := IsValidGitDir(ctx, dotGitPath); err != nil {
 			return false, "", err
 		} else if isValid {
@@ -48,7 +48,7 @@ func IsValidGitDir(ctx context.Context, gitDir string) (bool, error) {
 			return false, nil
 		}
 
-		return false, fmt.Errorf("git rev parse command failed: %s", err)
+		return false, fmt.Errorf("git rev parse command failed: %w", err)
 	}
 
 	return true, nil

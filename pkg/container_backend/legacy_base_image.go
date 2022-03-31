@@ -32,7 +32,7 @@ func (i *legacyBaseImage) SetName(name string) {
 
 func (i *legacyBaseImage) MustResetInfo(ctx context.Context) error {
 	if info, err := i.ContainerBackend.GetImageInfo(ctx, i.Name(), GetImageInfoOpts{}); err != nil {
-		return fmt.Errorf("unable to get info for image %s: %s", i.Name(), err)
+		return fmt.Errorf("unable to get info for image %s: %w", i.Name(), err)
 	} else {
 		i.SetInfo(info)
 	}

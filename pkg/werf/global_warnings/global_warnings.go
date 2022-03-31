@@ -37,7 +37,7 @@ func IsMultiwerfUpToDate() (bool, error) {
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return false, fmt.Errorf("unable to get installed version of multiwerf: %s", err)
+		return false, fmt.Errorf("unable to get installed version of multiwerf: %w", err)
 	}
 
 	versionRegex := regexp.MustCompile(`^multiwerf v([.0-9]+)\s*$`)
@@ -47,12 +47,12 @@ func IsMultiwerfUpToDate() (bool, error) {
 	}
 	installedMultiwerfVersion, err := semver.NewVersion(regexResult[1])
 	if err != nil {
-		return false, fmt.Errorf("unable to parse version of installed multiwerf version: %s", err)
+		return false, fmt.Errorf("unable to parse version of installed multiwerf version: %w", err)
 	}
 
 	lastMultiwerfVersion, err := semver.NewVersion(LastMultiwerfVersion)
 	if err != nil {
-		return false, fmt.Errorf("unable to parse version of last available multiwerf version: %s", err)
+		return false, fmt.Errorf("unable to parse version of last available multiwerf version: %w", err)
 	}
 
 	return !installedMultiwerfVersion.LessThan(lastMultiwerfVersion), nil

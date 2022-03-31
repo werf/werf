@@ -59,7 +59,7 @@ func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) (path 
 		})
 
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to read werf config: %s", err)
+		return "", nil, fmt.Errorf("unable to read werf config: %w", err)
 	}
 
 	return path, data, nil

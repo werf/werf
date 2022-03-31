@@ -12,7 +12,7 @@ import (
 func (r FileReader) LocateChart(ctx context.Context, chartDir string, settings *cli.EnvSettings) (string, error) {
 	chartDir, err := r.locateChart(ctx, chartDir, settings)
 	if err != nil {
-		return "", fmt.Errorf("unable to locate chart directory: %s", err)
+		return "", fmt.Errorf("unable to locate chart directory: %w", err)
 	}
 
 	return chartDir, nil
@@ -38,7 +38,7 @@ func (r FileReader) ReadChartFile(ctx context.Context, path string) ([]byte, err
 
 	data, err := r.readChartFile(ctx, relPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read chart file %q: %s", filepath.ToSlash(relPath), err)
+		return nil, fmt.Errorf("unable to read chart file %q: %w", filepath.ToSlash(relPath), err)
 	}
 
 	return data, nil
@@ -53,7 +53,7 @@ func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*chart
 
 	files, err := r.loadChartDir(ctx, relDir)
 	if err != nil {
-		return nil, fmt.Errorf("unable to load chart directory: %s", err)
+		return nil, fmt.Errorf("unable to load chart directory: %w", err)
 	}
 
 	return files, nil

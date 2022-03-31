@@ -52,12 +52,12 @@ func runGetRelease() error {
 	ctx := common.GetContext()
 
 	if err := werf.Init(*getReleaseCmdData.TmpDir, *getReleaseCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -75,7 +75,7 @@ func runGetRelease() error {
 
 	_, werfConfig, err := common.GetRequiredWerfConfig(common.GetContext(), &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	namespace, err := deploy_params.GetKubernetesNamespace(*getReleaseCmdData.Namespace, *getReleaseCmdData.Environment, werfConfig)

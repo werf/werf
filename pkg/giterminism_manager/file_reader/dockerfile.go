@@ -45,7 +45,7 @@ func (r FileReader) ReadDockerfile(ctx context.Context, relPath string) (data []
 		})
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to read dockerfile %q: %s", filepath.ToSlash(relPath), err)
+		return nil, fmt.Errorf("unable to read dockerfile %q: %w", filepath.ToSlash(relPath), err)
 	}
 
 	return data, nil
@@ -72,7 +72,7 @@ func (r FileReader) ReadDockerignore(ctx context.Context, relPath string) (data 
 		})
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to read dockerignore file %q: %s", filepath.ToSlash(relPath), err)
+		return nil, fmt.Errorf("unable to read dockerignore file %q: %w", filepath.ToSlash(relPath), err)
 	}
 
 	return data, nil

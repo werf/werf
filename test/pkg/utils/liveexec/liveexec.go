@@ -117,7 +117,7 @@ func consumeOutputUntilEOF(reader io.Reader, handleChunk func(data []byte) error
 		}
 
 		if err != nil {
-			return fmt.Errorf("read error: %s", err)
+			return fmt.Errorf("read error: %w", err)
 		}
 	}
 }

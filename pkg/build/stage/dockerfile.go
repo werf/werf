@@ -369,7 +369,7 @@ outerLoop:
 		getBaseImageOnBuildRemotely := func() ([]string, error) {
 			configFile, err := dockerRegistry.GetRepoImageConfigFile(ctx, resolvedBaseName)
 			if err != nil {
-				return nil, fmt.Errorf("get repo image %q config file failed: %s", resolvedBaseName, err)
+				return nil, fmt.Errorf("get repo image %q config file failed: %w", resolvedBaseName, err)
 			}
 
 			return configFile.Config.OnBuild, nil
@@ -716,7 +716,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 		Commit: giterminismManager.HeadCommit(),
 	})
 	if err != nil {
-		return "", fmt.Errorf("unable to create archive: %s", err)
+		return "", fmt.Errorf("unable to create archive: %w", err)
 	}
 
 	archivePath := archive.GetFilePath()
@@ -801,7 +801,7 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminis
 		})
 		if contextAddChecksum, err := context_manager.ContextAddFilesChecksum(ctx, giterminismManager.ProjectDir(), s.context, s.contextAddFiles, wildcardsPathMatcher); err != nil {
 			logProcess.Fail()
-			return "", fmt.Errorf("unable to calculate checksum for contextAddFiles files list: %s", err)
+			return "", fmt.Errorf("unable to calculate checksum for contextAddFiles files list: %w", err)
 		} else {
 			if contextAddChecksum != "" {
 				logboek.Context(ctx).Debug().LogLn()

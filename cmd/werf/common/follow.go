@@ -23,7 +23,7 @@ func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx cont
 	iterFunc := func() error {
 		giterminismManager, err := GetGiterminismManager(ctx, cmdData)
 		if err != nil {
-			return fmt.Errorf("unable to get giterminism manager: %s", err)
+			return fmt.Errorf("unable to get giterminism manager: %w", err)
 		}
 
 		currentHeadCommit := giterminismManager.HeadCommit()

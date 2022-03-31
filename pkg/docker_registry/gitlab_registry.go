@@ -135,12 +135,12 @@ func (r *gitLabRegistry) deleteRepoImageWithCustomScope(repoImage *image.Info, s
 func (r *gitLabRegistry) customDeleteRepoImage(endpointFormat, reference string, scopeFunc func(ref name.Reference) []string) error {
 	ref, err := name.ParseReference(reference, r.api.parseReferenceOptions()...)
 	if err != nil {
-		return fmt.Errorf("parsing reference %q: %v", reference, err)
+		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
 	auth, authErr := authn.DefaultKeychain.Resolve(ref.Context().Registry)
 	if authErr != nil {
-		return fmt.Errorf("getting creds for %q: %v", ref, authErr)
+		return fmt.Errorf("getting creds for %q: %w", ref, authErr)
 	}
 
 	scope := scopeFunc(ref)

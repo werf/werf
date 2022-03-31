@@ -158,7 +158,7 @@ func (phase *BuildPhase) Name() string {
 
 func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 	if err := phase.Conveyor.StorageManager.InitCache(ctx); err != nil {
-		return fmt.Errorf("unable to init storage manager cache: %s", err)
+		return fmt.Errorf("unable to init storage manager cache: %w", err)
 	}
 	return nil
 }
@@ -193,7 +193,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 		switch phase.ReportFormat {
 		case ReportJSON:
 			if data, err = phase.ImagesReport.ToJsonData(); err != nil {
-				return fmt.Errorf("unable to prepare report json: %s", err)
+				return fmt.Errorf("unable to prepare report json: %w", err)
 			}
 			logboek.Context(ctx).Debug().LogF("Writing json report to the %q:\n%s", phase.ReportPath, data)
 		case ReportEnvFile:
@@ -204,7 +204,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 		}
 
 		if err := ioutil.WriteFile(phase.ReportPath, data, 0o644); err != nil {
-			return fmt.Errorf("unable to write report to %s: %s", phase.ReportPath, err)
+			return fmt.Errorf("unable to write report to %s: %w", phase.ReportPath, err)
 		}
 	}
 
@@ -243,7 +243,7 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 
 	if !phase.ShouldBeBuiltMode {
 		if err := phase.addCustomImageTagsToStagesStorage(ctx, img); err != nil {
-			return fmt.Errorf("unable to add custom image tags to stages storage: %s", err)
+			return fmt.Errorf("unable to add custom image tags to stages storage: %w", err)
 		}
 	} else {
 		if err := phase.checkCustomImageTagsExistence(ctx, img); err != nil {
@@ -273,7 +273,7 @@ func (phase *BuildPhase) addManagedImage(ctx context.Context, img *Image) error 
 		}
 
 		if err := stagesStorage.AddManagedImage(ctx, phase.Conveyor.projectName(), img.GetName()); err != nil {
-			return fmt.Errorf("unable to add image %q to the managed images of project %q: %s", img.GetName(), phase.Conveyor.projectName(), err)
+			return fmt.Errorf("unable to add image %q to the managed images of project %q: %w", img.GetName(), phase.Conveyor.projectName(), err)
 		}
 	}
 
@@ -293,7 +293,7 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 
 				fromCommit, _, err := git_repo.GetVirtualMergeParents(ctx, phase.Conveyor.giterminismManager.LocalGitRepo(), headCommit)
 				if err != nil {
-					return fmt.Errorf("unable to get virtual merge commit %q parents: %s", headCommit, err)
+					return fmt.Errorf("unable to get virtual merge commit %q parents: %w", headCommit, err)
 				}
 
 				commits = append(commits, fromCommit)
@@ -303,12 +303,12 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 				stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
 				exist, err := stagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID(), storage.WithCache())
 				if err != nil {
-					return fmt.Errorf("unable to get image %s metadata by commit %s and stage ID %s: %s", img.GetName(), commit, img.GetStageID(), err)
+					return fmt.Errorf("unable to get image %s metadata by commit %s and stage ID %s: %w", img.GetName(), commit, img.GetStageID(), err)
 				}
 
 				if !exist {
 					if err := stagesStorage.PutImageMetadata(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID()); err != nil {
-						return fmt.Errorf("unable to put image %s metadata by commit %s and stage ID %s: %s", img.GetName(), commit, img.GetStageID(), err)
+						return fmt.Errorf("unable to put image %s metadata by commit %s and stage ID %s: %w", img.GetName(), commit, img.GetStageID(), err)
 					}
 				}
 			}
@@ -365,7 +365,7 @@ func (phase *BuildPhase) checkCustomImageTagsExistence(ctx context.Context, img 
 	for _, tagFunc := range phase.CustomTagFuncList {
 		tag := tagFunc(img.GetName())
 		if err := phase.Conveyor.StorageManager.GetStagesStorage().CheckStageCustomTag(ctx, stageDesc, tag); err != nil {
-			return fmt.Errorf("check custom tag %q existence failed: %s", tag, err)
+			return fmt.Errorf("check custom tag %q existence failed: %w", tag, err)
 		}
 	}
 
@@ -393,7 +393,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 	}
 
 	if err := stg.FetchDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, docker_registry.API()); err != nil {
-		return fmt.Errorf("unable to fetch dependencies for stage %s: %s", stg.LogDetailedName(), err)
+		return fmt.Errorf("unable to fetch dependencies for stage %s: %w", stg.LogDetailedName(), err)
 	}
 
 	if stg.Name() != "from" && stg.Name() != "dockerfile" {
@@ -476,7 +476,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 		var stageUnlocked bool
 		var unlockStage func()
 		if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.projectName(), stg.GetDigest()); err != nil {
-			return fmt.Errorf("unable to lock project %s digest %s: %s", phase.Conveyor.projectName(), stg.GetDigest(), err)
+			return fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.projectName(), stg.GetDigest(), err)
 		} else {
 			unlockStage = func() {
 				if stageUnlocked {
@@ -492,7 +492,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 			// Copy suitable stage from a secondary stages storage to the primary stages storage
 			// while primary stages storage lock for this digest is held
 			if copiedStageDesc, err := storageManager.CopySuitableByDigestStage(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend); err != nil {
-				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %s", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetStagesStorage().String(), err)
+				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetStagesStorage().String(), err)
 			} else {
 				i := phase.Conveyor.GetOrCreateStageImage(extractLegacyStageImage(phase.StagesIterator.GetPrevImage(img, stg)), copiedStageDesc.Info.Name)
 				i.Image.SetStageDescription(copiedStageDesc)
@@ -511,7 +511,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 		unlockStage()
 
 		if err := storageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerBackend); err != nil {
-			return fmt.Errorf("unable to copy stage %s into cache storages: %s", stg.GetStageImage().Image.GetStageDescription().StageID.String(), err)
+			return fmt.Errorf("unable to copy stage %s into cache storages: %w", stg.GetStageImage().Image.GetStageDescription().StageID.String(), err)
 		}
 
 		return nil
@@ -527,7 +527,7 @@ ScanSecondaryStagesStorageList:
 				return false, err
 			} else if secondaryStageDesc != nil {
 				if err := atomicCopySuitableStageFromSecondaryStagesStorage(secondaryStageDesc, secondaryStagesStorage); err != nil {
-					return false, fmt.Errorf("unable to copy suitable stage %s from secondary stages storage %s: %s", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), err)
+					return false, fmt.Errorf("unable to copy suitable stage %s from secondary stages storage %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), err)
 				}
 				foundSuitableStage = true
 				break ScanSecondaryStagesStorageList
@@ -542,7 +542,7 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *Image,
 	switch {
 	case stg.Name() == "from":
 		if err := img.FetchBaseImage(ctx, phase.Conveyor); err != nil {
-			return fmt.Errorf("unable to fetch base image %s for stage %s: %s", img.GetBaseImage().Image.Name(), stg.LogDetailedName(), err)
+			return fmt.Errorf("unable to fetch base image %s for stage %s: %w", img.GetBaseImage().Image.Name(), stg.LogDetailedName(), err)
 		}
 	case stg.Name() == "dockerfile":
 		return nil
@@ -598,7 +598,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg sta
 
 	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor)
 	if err != nil {
-		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %s", stg.Name(), err)
+		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
 	}
 	stg.SetContentDigest(stageContentSig)
 
@@ -651,13 +651,13 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 
 			headHash, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitHash(ctx)
 			if err != nil {
-				return fmt.Errorf("error getting HEAD commit hash: %s", err)
+				return fmt.Errorf("error getting HEAD commit hash: %w", err)
 			}
 			imageRunOptions.AddEnv(map[string]string{"WERF_COMMIT_HASH": headHash})
 
 			headTime, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitTime(ctx)
 			if err != nil {
-				return fmt.Errorf("error getting HEAD commit time: %s", err)
+				return fmt.Errorf("error getting HEAD commit time: %w", err)
 			}
 			imageRunOptions.AddEnv(map[string]string{
 				"WERF_COMMIT_TIME_HUMAN": headTime.String(),
@@ -668,7 +668,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 
 	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)
 	if err != nil {
-		return fmt.Errorf("error preparing stage %s: %s", stg.Name(), err)
+		return fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
 	}
 
 	return nil
@@ -678,7 +678,7 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.I
 	if !img.isDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
 		_, err := stapel.GetOrCreateContainer(ctx)
 		if err != nil {
-			return fmt.Errorf("get or create stapel container failed: %s", err)
+			return fmt.Errorf("get or create stapel container failed: %w", err)
 		}
 	}
 
@@ -696,7 +696,7 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.I
 		}).
 		DoError(func() (err error) {
 			if err := stg.PreRunHook(ctx, phase.Conveyor); err != nil {
-				return fmt.Errorf("%s preRunHook failed: %s", stg.LogDetailedName(), err)
+				return fmt.Errorf("%s preRunHook failed: %w", stg.LogDetailedName(), err)
 			}
 
 			return phase.atomicBuildStageImage(ctx, img, stg)
@@ -733,7 +733,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			return stageImage.Builder.StapelStageBuilder().Build(ctx, phase.ImageBuildOptions)
 		}
 	}); err != nil {
-		return fmt.Errorf("failed to build image for stage %s with digest %s: %s", stg.Name(), stg.GetDigest(), err)
+		return fmt.Errorf("failed to build image for stage %s with digest %s: %w", stg.Name(), stg.GetDigest(), err)
 	}
 
 	if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE"); v != "" {
@@ -746,7 +746,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 	var stageUnlocked bool
 	var unlockStage func()
 	if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.projectName(), stg.GetDigest()); err != nil {
-		return fmt.Errorf("unable to lock project %s digest %s: %s", phase.Conveyor.projectName(), stg.GetDigest(), err)
+		return fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.projectName(), stg.GetDigest(), err)
 	} else {
 		unlockStage = func() {
 			if stageUnlocked {
@@ -788,10 +788,10 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 
 		if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 			if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, stageImage.Image); err != nil {
-				return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
+				return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			}
 			if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.projectName(), stg.GetDigest(), uniqueID); err != nil {
-				return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %s", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
+				return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			} else {
 				stageImageObj.Image.SetStageDescription(desc)
 			}
@@ -803,7 +803,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 		unlockStage()
 
 		if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerBackend); err != nil {
-			return fmt.Errorf("unable to copy stage %s into cache storages: %s", stageImage.Image.GetStageDescription().StageID.String(), err)
+			return fmt.Errorf("unable to copy stage %s into cache storages: %w", stageImage.Image.GetStageDescription().StageID.String(), err)
 		}
 
 		return nil
@@ -819,7 +819,7 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 			if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 				return s.GetStageImage().Image.Introspect(ctx) // FIXME(stapel-to-buildah): use container backend operation
 			}); err != nil {
-				return fmt.Errorf("introspect error failed: %s", err)
+				return fmt.Errorf("introspect error failed: %w", err)
 			}
 
 			return nil
@@ -831,7 +831,7 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 	if prevNonEmptyStage != nil {
 		prevStageDependencies, err := prevNonEmptyStage.GetNextStageDependencies(ctx, conveyor)
 		if err != nil {
-			return "", fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %s", prevNonEmptyStage.Name(), stageName, err)
+			return "", fmt.Errorf("unable to get prev stage %s dependencies for the stage %s: %w", prevNonEmptyStage.Name(), stageName, err)
 		}
 
 		checksumArgs = append(checksumArgs, prevNonEmptyStage.GetDigest(), prevStageDependencies)

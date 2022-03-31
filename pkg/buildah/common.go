@@ -138,7 +138,7 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 	if opts.CommonBuildahOpts.Isolation == nil {
 		defIsolation, err := GetDefaultIsolation()
 		if err != nil {
-			return b, fmt.Errorf("unable to determine default isolation: %s", err)
+			return b, fmt.Errorf("unable to determine default isolation: %w", err)
 		}
 		opts.CommonBuildahOpts.Isolation = &defIsolation
 	}
@@ -158,7 +158,7 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 		case "linux":
 			b, err = NewNativeBuildah(opts.CommonBuildahOpts, opts.NativeModeOpts)
 			if err != nil {
-				return nil, fmt.Errorf("unable to create new Buildah instance with mode %q: %s", mode, err)
+				return nil, fmt.Errorf("unable to create new Buildah instance with mode %q: %w", mode, err)
 			}
 		default:
 			panic("ModeNative can't be used on this OS")
@@ -166,7 +166,7 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 	case ModeDockerWithFuse:
 		b, err = NewDockerWithFuseBuildah(opts.CommonBuildahOpts, opts.DockerWithFuseModeOpts)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create new Buildah instance with mode %q: %s", mode, err)
+			return nil, fmt.Errorf("unable to create new Buildah instance with mode %q: %w", mode, err)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported mode %q", mode)
@@ -203,7 +203,7 @@ func ResolveMode(mode Mode) Mode {
 func GetFuseOverlayfsOptions() ([]string, error) {
 	fuseOverlayBinPath, err := exec.LookPath("fuse-overlayfs")
 	if err != nil {
-		return nil, fmt.Errorf("\"fuse-overlayfs\" binary not found in PATH: %s", err)
+		return nil, fmt.Errorf("\"fuse-overlayfs\" binary not found in PATH: %w", err)
 	}
 
 	result := []string{fmt.Sprintf("overlay.mount_program=%s", fuseOverlayBinPath)}

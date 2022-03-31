@@ -30,7 +30,7 @@ func (h *handle) ReadBlobObjectContent(hash plumbing.Hash) ([]byte, error) {
 
 	obj, err := h.repository.BlobObject(hash)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get blob %q object: %s", hash, err)
+		return nil, fmt.Errorf("unable to get blob %q object: %w", hash, err)
 	}
 
 	f, err := obj.Reader()
@@ -41,7 +41,7 @@ func (h *handle) ReadBlobObjectContent(hash plumbing.Hash) ([]byte, error) {
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read blob %q content: %s", hash, err)
+		return nil, fmt.Errorf("unable to read blob %q content: %w", hash, err)
 	}
 
 	return data, nil
@@ -53,12 +53,12 @@ func (h *handle) GetCommitTree(hash plumbing.Hash) (TreeHandle, error) {
 
 	commit, err := h.repository.CommitObject(hash)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get commit %q object: %s", hash, err)
+		return nil, fmt.Errorf("unable to get commit %q object: %w", hash, err)
 	}
 
 	tree, err := commit.Tree()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get commit %q tree: %s", hash, err)
+		return nil, fmt.Errorf("unable to get commit %q tree: %w", hash, err)
 	}
 
 	treeHandle := newTreeHandle(tree, h.mutex)

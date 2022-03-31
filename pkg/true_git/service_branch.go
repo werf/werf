@@ -22,26 +22,26 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 	if err := withWorkTreeCacheLock(ctx, worktreeCacheDir, func() error {
 		var err error
 		if gitDir, err = filepath.Abs(gitDir); err != nil {
-			return fmt.Errorf("bad git dir %s: %s", gitDir, err)
+			return fmt.Errorf("bad git dir %s: %w", gitDir, err)
 		}
 
 		if worktreeCacheDir, err = filepath.Abs(worktreeCacheDir); err != nil {
-			return fmt.Errorf("bad work tree cache dir %s: %s", worktreeCacheDir, err)
+			return fmt.Errorf("bad work tree cache dir %s: %w", worktreeCacheDir, err)
 		}
 
 		serviceWorktreeDir, err := prepareWorkTree(ctx, gitDir, worktreeCacheDir, commit, true)
 		if err != nil {
-			return fmt.Errorf("unable to prepare worktree for commit %v: %s", commit, err)
+			return fmt.Errorf("unable to prepare worktree for commit %v: %w", commit, err)
 		}
 
 		currentCommitPath := filepath.Join(worktreeCacheDir, "current_commit")
 		if err := os.RemoveAll(currentCommitPath); err != nil {
-			return fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+			return fmt.Errorf("unable to remove %s: %w", currentCommitPath, err)
 		}
 
 		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorktreeDir, serviceWorktreeDir, commit, opts.ServiceBranch, opts.GlobExcludeList)
 		if err != nil {
-			return fmt.Errorf("unable to sync worktree with service branch %q: %s", opts.ServiceBranch, err)
+			return fmt.Errorf("unable to sync worktree with service branch %q: %w", opts.ServiceBranch, err)
 		}
 
 		return nil
@@ -54,22 +54,22 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 
 func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, branchName string, globExcludeList []string) (string, error) {
 	if err := prepareAndCheckoutServiceBranch(ctx, serviceWorktreeDir, sourceCommit, branchName); err != nil {
-		return "", fmt.Errorf("unable to get or prepare service branch head commit: %s", err)
+		return "", fmt.Errorf("unable to get or prepare service branch head commit: %w", err)
 	}
 
 	serviceBranchHeadCommit, err := GetLastBranchCommitSHA(ctx, serviceWorktreeDir, branchName)
 	if err != nil {
-		return "", fmt.Errorf("unable to get service worktree commit SHA: %s", err)
+		return "", fmt.Errorf("unable to get service worktree commit SHA: %w", err)
 	}
 
 	revertedChangesExist, err := revertExcludedChangesInServiceWorktreeIndex(ctx, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, serviceBranchHeadCommit, globExcludeList)
 	if err != nil {
-		return "", fmt.Errorf("unable to revert excluded changes in service worktree index: %q", err)
+		return "", fmt.Errorf("unable to revert excluded changes in service worktree index: %w", err)
 	}
 
 	newChangesExist, err := checkNewChangesInSourceWorktreeDir(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList)
 	if err != nil {
-		return "", fmt.Errorf("unable to check new changes in source worktree: %s", err)
+		return "", fmt.Errorf("unable to check new changes in source worktree: %w", err)
 	}
 
 	if !revertedChangesExist && !newChangesExist {
@@ -77,12 +77,12 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 	}
 
 	if err = addNewChangesInServiceWorktreeDir(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList); err != nil {
-		return "", fmt.Errorf("unable to add new changes in service worktree: %s", err)
+		return "", fmt.Errorf("unable to add new changes in service worktree: %w", err)
 	}
 
 	newCommit, err := commitNewChangesInServiceBranch(ctx, serviceWorktreeDir, branchName)
 	if err != nil {
-		return "", fmt.Errorf("unable to commit new changes in service branch: %s", err)
+		return "", fmt.Errorf("unable to commit new changes in service branch: %w", err)
 	}
 
 	return newCommit, nil
@@ -91,13 +91,13 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir string, sourceCommit string, branchName string) error {
 	branchListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "branch", "--list", branchName)
 	if err := branchListCmd.Run(ctx); err != nil {
-		return fmt.Errorf("git branch list command failed: %s", err)
+		return fmt.Errorf("git branch list command failed: %w", err)
 	}
 
 	if branchListCmd.OutBuf.Len() == 0 {
 		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", "-b", branchName, sourceCommit)
 		if err := checkoutCmd.Run(ctx); err != nil {
-			return fmt.Errorf("git checkout command failed: %s", err)
+			return fmt.Errorf("git checkout command failed: %w", err)
 		}
 
 		return nil
@@ -105,12 +105,12 @@ func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir str
 
 	checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", branchName)
 	if err := checkoutCmd.Run(ctx); err != nil {
-		return fmt.Errorf("git checkout command failed: %s", err)
+		return fmt.Errorf("git checkout command failed: %w", err)
 	}
 
 	isSourceCommitInServiceBranch, err := IsAncestor(ctx, sourceCommit, branchName, serviceWorktreeDir)
 	if err != nil {
-		return fmt.Errorf("unable to detect whether sourceCommit %q is in service branch: %s", sourceCommit, err)
+		return fmt.Errorf("unable to detect whether sourceCommit %q is in service branch: %w", sourceCommit, err)
 	}
 	if isSourceCommitInServiceBranch {
 		return nil
@@ -122,7 +122,7 @@ func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir str
 		"merge", "--no-edit", "--no-ff", "--allow-unrelated-histories", "-s", "ours", sourceCommit,
 	)
 	if err = mergeCmd.Run(ctx); err != nil {
-		return fmt.Errorf("git merge of source commit %q into service branch %q failed: %s\nNOTE: To continue you can remove the service branch %q with \"git branch -D %s\", but we would also ask you to report this issue to https://github.com/werf/werf/issues", sourceCommit, branchName, err, branchName, branchName)
+		return fmt.Errorf("git merge of source commit %q into service branch %q failed: %w\nNOTE: To continue you can remove the service branch %q with \"git branch -D %s\", but we would also ask you to report this issue to https://github.com/werf/werf/issues", sourceCommit, branchName, err, branchName, branchName)
 	}
 
 	return nil
@@ -145,7 +145,7 @@ func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWork
 
 	diffCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, gitDiffArgs...)
 	if err := diffCmd.Run(ctx); err != nil {
-		return false, fmt.Errorf("git diff command failed: %s", err)
+		return false, fmt.Errorf("git diff command failed: %w", err)
 	}
 
 	if diffCmd.OutBuf.Len() == 0 {
@@ -155,7 +155,7 @@ func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWork
 	applyCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "apply", "--binary", "--index")
 	applyCmd.Stdin = diffCmd.OutBuf
 	if err := applyCmd.Run(ctx); err != nil {
-		return false, fmt.Errorf("git apply command failed: %s", err)
+		return false, fmt.Errorf("git apply command failed: %w", err)
 	}
 
 	return true, nil
@@ -217,19 +217,19 @@ func runGitAddCmd(ctx context.Context, sourceWorktreeDir string, serviceWorktree
 func commitNewChangesInServiceBranch(ctx context.Context, serviceWorktreeDir string, branchName string) (string, error) {
 	commitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "commit", "--no-verify", "-m", time.Now().String())
 	if err := commitCmd.Run(ctx); err != nil {
-		return "", fmt.Errorf("git commit command failed: %s", err)
+		return "", fmt.Errorf("git commit command failed: %w", err)
 	}
 
 	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "rev-parse", branchName)
 	if err := revParseCmd.Run(ctx); err != nil {
-		return "", fmt.Errorf("git rev parse branch command failed: %s", err)
+		return "", fmt.Errorf("git rev parse branch command failed: %w", err)
 	}
 
 	serviceNewCommit := strings.TrimSpace(revParseCmd.OutBuf.String())
 
 	checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", "--force", "--detach", serviceNewCommit)
 	if err := checkoutCmd.Run(ctx); err != nil {
-		return "", fmt.Errorf("git checkout command failed: %s", err)
+		return "", fmt.Errorf("git checkout command failed: %w", err)
 	}
 
 	return serviceNewCommit, nil

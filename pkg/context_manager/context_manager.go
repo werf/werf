@@ -32,7 +32,7 @@ func GetContextAddFilesPaths(projectDir string, contextDir string, contextAddFil
 
 		addFileInfo, err := os.Lstat(addFilePath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get file info for contextAddFile %q: %s", addFilePath, err)
+			return nil, fmt.Errorf("unable to get file info for contextAddFile %q: %w", addFilePath, err)
 		}
 
 		if addFileInfo.IsDir() {
@@ -46,7 +46,7 @@ func GetContextAddFilesPaths(projectDir string, contextDir string, contextAddFil
 				addFilePaths = append(addFilePaths, path)
 				return nil
 			}); err != nil {
-				return nil, fmt.Errorf("error occurred when recursively walking the contextAddFile dir %q: %s", addFilePath, err)
+				return nil, fmt.Errorf("error occurred when recursively walking the contextAddFile dir %q: %w", addFilePath, err)
 			}
 		} else {
 			addFilePaths = append(addFilePaths, addFilePath)
@@ -66,7 +66,7 @@ func ContextAddFilesChecksum(ctx context.Context, projectDir string, contextDir 
 	for _, addFilePath := range addFilePaths {
 		projectRelativeAddFilePath, err := filepath.Rel(projectDir, addFilePath)
 		if err != nil {
-			return "", fmt.Errorf("unable to get context relative path for %q: %s", addFilePath, err)
+			return "", fmt.Errorf("unable to get context relative path for %q: %w", addFilePath, err)
 		}
 		if !matcher.IsPathMatched(projectRelativeAddFilePath) {
 			continue
@@ -85,7 +85,7 @@ func ContextAddFilesChecksum(ctx context.Context, projectDir string, contextDir 
 
 		addFilePath := filepath.Join(projectDir, projectRelativeAddFilePath)
 		if exists, err := util.RegularFileExists(addFilePath); err != nil {
-			return "", fmt.Errorf("unable to check existence of file %q: %s", addFilePath, err)
+			return "", fmt.Errorf("unable to check existence of file %q: %w", addFilePath, err)
 		} else if !exists {
 			continue
 		}
@@ -93,12 +93,12 @@ func ContextAddFilesChecksum(ctx context.Context, projectDir string, contextDir 
 		if err := func() error {
 			f, err := os.Open(addFilePath)
 			if err != nil {
-				return fmt.Errorf("unable to open %q: %s", addFilePath, err)
+				return fmt.Errorf("unable to open %q: %w", addFilePath, err)
 			}
 			defer f.Close()
 
 			if _, err := io.Copy(h, f); err != nil {
-				return fmt.Errorf("unable to copy file %q: %s", addFilePath, err)
+				return fmt.Errorf("unable to copy file %q: %w", addFilePath, err)
 			}
 
 			return nil
@@ -125,11 +125,11 @@ func AddContextAddFilesToContextArchive(ctx context.Context, originalArchivePath
 		for _, addFilePathToCopy := range addFilePathsToCopy {
 			tarEntryName, err := filepath.Rel(filepath.Join(projectDir, contextDir), addFilePathToCopy)
 			if err != nil {
-				return fmt.Errorf("unable to get context relative path for %q: %s", addFilePathToCopy, err)
+				return fmt.Errorf("unable to get context relative path for %q: %w", addFilePathToCopy, err)
 			}
 			tarEntryName = filepath.ToSlash(tarEntryName)
 			if err := util.CopyFileIntoTar(tw, tarEntryName, addFilePathToCopy); err != nil {
-				return fmt.Errorf("unable to add contextAddFile %q to archive %q: %s", addFilePathToCopy, destinationArchivePath, err)
+				return fmt.Errorf("unable to add contextAddFile %q to archive %q: %w", addFilePathToCopy, destinationArchivePath, err)
 			}
 			logboek.Context(ctx).Debug().LogF("Extra file was added to the current context: %q\n", tarEntryName)
 		}

@@ -32,7 +32,7 @@ func (api *genericApi) MutateAndPushImage(ctx context.Context, sourceReference, 
 func (api *genericApi) GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
 	mirrorReferenceList, err := api.mirrorReferenceList(ctx, reference)
 	if err != nil {
-		return nil, fmt.Errorf("unable to prepare mirror reference list: %s", err)
+		return nil, fmt.Errorf("unable to prepare mirror reference list: %w", err)
 	}
 
 	for _, mirrorReference := range mirrorReferenceList {
@@ -63,13 +63,13 @@ func (api *genericApi) getRepoImageConfigFile(_ context.Context, reference strin
 func (api *genericApi) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
 	mirrorReferenceList, err := api.mirrorReferenceList(ctx, reference)
 	if err != nil {
-		return nil, fmt.Errorf("unable to prepare mirror reference list: %s", err)
+		return nil, fmt.Errorf("unable to prepare mirror reference list: %w", err)
 	}
 
 	for _, mirrorReference := range mirrorReferenceList {
 		info, err := api.commonApi.TryGetRepoImage(ctx, mirrorReference)
 		if err != nil {
-			return nil, fmt.Errorf("unable to try getting mirror repo image %q: %s", mirrorReference, err)
+			return nil, fmt.Errorf("unable to try getting mirror repo image %q: %w", mirrorReference, err)
 		}
 
 		if info != nil {
@@ -101,7 +101,7 @@ func (api *genericApi) mirrorReferenceList(ctx context.Context, reference string
 	for _, mirrorRegistry := range mirrors {
 		mirrorRegistryUrl, err := url.Parse(mirrorRegistry)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse mirror registry url %q: %s", mirrorRegistry, err)
+			return nil, fmt.Errorf("unable to parse mirror registry url %q: %w", mirrorRegistry, err)
 		}
 
 		mirrorReference := mirrorRegistryUrl.Host
@@ -129,7 +129,7 @@ func (api *genericApi) getOrCreateRegistryMirrors(ctx context.Context) ([]string
 		if docker.IsEnabled() && docker.IsContext(ctx) {
 			info, err := docker.Info(ctx)
 			if err != nil {
-				return nil, fmt.Errorf("unable to get docker system info: %s", err)
+				return nil, fmt.Errorf("unable to get docker system info: %w", err)
 			}
 
 			if info.RegistryConfig != nil {

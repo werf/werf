@@ -29,7 +29,7 @@ func GetConveyorOptionsWithParallel(commonCmdData *CmdData, buildStagesOptions b
 
 	parallelTasksLimit, err := GetParallelTasksLimit(commonCmdData)
 	if err != nil {
-		return conveyorOptions, fmt.Errorf("getting parallel tasks limit failed: %s", err)
+		return conveyorOptions, fmt.Errorf("getting parallel tasks limit failed: %w", err)
 	}
 
 	conveyorOptions.ParallelTasksLimit = parallelTasksLimit
@@ -104,12 +104,12 @@ func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism
 	for _, optionValue := range tagOptionValues {
 		tmpl, err := tmpl.Parse(optionValue)
 		if err != nil {
-			return nil, fmt.Errorf("invalid custom tag %q: %s", optionValue, err)
+			return nil, fmt.Errorf("invalid custom tag %q: %w", optionValue, err)
 		}
 
 		buf := bytes.NewBuffer(nil)
 		if err := tmpl.ExecuteTemplate(buf, templateName, nil); err != nil {
-			return nil, fmt.Errorf("invalid custom tag %q: %s", optionValue, err)
+			return nil, fmt.Errorf("invalid custom tag %q: %w", optionValue, err)
 		}
 
 		tagOrFormat := buf.String()
@@ -126,7 +126,7 @@ func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism
 			imageTag := tagFunc(img.GetName())
 
 			if err := slug.ValidateDockerTag(imageTag); err != nil {
-				return nil, fmt.Errorf("invalid custom tag %q: %s", optionValue, err)
+				return nil, fmt.Errorf("invalid custom tag %q: %w", optionValue, err)
 			}
 
 			if prevImageTag == "" {

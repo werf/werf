@@ -99,7 +99,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 
 func runCleanup(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
@@ -110,7 +110,7 @@ func runCleanup(ctx context.Context) error {
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -156,19 +156,19 @@ func runCleanup(ctx context.Context) error {
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
+		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	if !werfConfig.Meta.GitWorktree.GetForceShallowClone() && !werfConfig.Meta.GitWorktree.GetAllowFetchingOriginBranchesAndTags() {
 		isShallow, err := giterminismManager.LocalGitRepo().IsShallowClone(ctx)
 		if err != nil {
-			return fmt.Errorf("check shallow clone failed: %s", err)
+			return fmt.Errorf("check shallow clone failed: %w", err)
 		}
 
 		if isShallow {
@@ -182,7 +182,7 @@ func runCleanup(ctx context.Context) error {
 
 	if werfConfig.Meta.GitWorktree.GetAllowFetchingOriginBranchesAndTags() {
 		if err := giterminismManager.LocalGitRepo().SyncWithOrigin(ctx); err != nil {
-			return fmt.Errorf("synchronization failed: %s", err)
+			return fmt.Errorf("synchronization failed: %w", err)
 		}
 	}
 
@@ -235,7 +235,7 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 
 	kubernetesContextClients, err := common.GetKubernetesContextClients(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to get Kubernetes clusters connections: %s", err)
+		return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
 	}
 
 	cleanupOptions := cleaning.CleanupOptions{

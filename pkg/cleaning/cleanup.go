@@ -95,11 +95,11 @@ func (m *cleanupManager) init(ctx context.Context) error {
 
 	if err := logboek.Context(ctx).Info().LogProcess("Fetching metadata").DoError(func() error {
 		if err := m.stageManager.InitImagesMetadata(ctx, m.StorageManager, m.LocalGit, m.ProjectName, m.ImageNameList); err != nil {
-			return fmt.Errorf("unable to init images metadata: %s", err)
+			return fmt.Errorf("unable to init images metadata: %w", err)
 		}
 
 		if err := m.stageManager.InitCustomTagsMetadata(ctx, m.StorageManager); err != nil {
-			return fmt.Errorf("unable to init custom tags metadata: %s", err)
+			return fmt.Errorf("unable to init custom tags metadata: %w", err)
 		}
 
 		return nil
@@ -125,7 +125,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 
 			deployedDockerImagesNames, err := m.deployedDockerImagesNames(ctx)
 			if err != nil {
-				return fmt.Errorf("error getting deployed docker images names from Kubernetes: %s", err)
+				return fmt.Errorf("error getting deployed docker images names from Kubernetes: %w", err)
 			}
 
 			if err := logboek.Context(ctx).LogProcess("Skipping repo tags that are being used in Kubernetes").DoError(func() error {
@@ -231,7 +231,7 @@ func (m *cleanupManager) deployedDockerImagesNames(ctx context.Context) ([]strin
 			DoError(func() error {
 				kubernetesClientDeployedDockerImagesNames, err := allow_list.DeployedDockerImages(contextClient.Client, m.KubernetesNamespaceRestrictionByContext[contextClient.ContextName])
 				if err != nil {
-					return fmt.Errorf("cannot get deployed imagesStageList: %s", err)
+					return fmt.Errorf("cannot get deployed imagesStageList: %w", err)
 				}
 
 				deployedDockerImagesNames = append(deployedDockerImagesNames, kubernetesClientDeployedDockerImagesNames...)
@@ -248,7 +248,7 @@ func (m *cleanupManager) deployedDockerImagesNames(ctx context.Context) ([]strin
 func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 	gitRepository, err := m.LocalGit.PlainOpen()
 	if err != nil {
-		return fmt.Errorf("git plain open failed: %s", err)
+		return fmt.Errorf("git plain open failed: %w", err)
 	}
 
 	var referencesToScan []*git_history_based_cleanup.ReferenceToScan
@@ -309,7 +309,7 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 	}
 
 	if err := m.cleanupNonexistentImageMetadata(ctx); err != nil {
-		return fmt.Errorf("ubable to cleanup nonexistent image metadata: %s", err)
+		return fmt.Errorf("ubable to cleanup nonexistent image metadata: %w", err)
 	}
 
 	return nil
@@ -597,7 +597,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	if err := logboek.Context(ctx).Info().LogProcess("Fetching imports metadata").DoError(func() error {
 		return m.initImportsMetadata(ctx, stageDescriptionList)
 	}); err != nil {
-		return fmt.Errorf("unable to init imports metadata: %s", err)
+		return fmt.Errorf("unable to init imports metadata: %w", err)
 	}
 
 	stageDescriptionListToDelete := stageDescriptionList
@@ -652,7 +652,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	}
 
 	if err := m.deleteUnusedCustomTags(ctx); err != nil {
-		return fmt.Errorf("unable to cleanup custom tags metadata: %s", err)
+		return fmt.Errorf("unable to cleanup custom tags metadata: %w", err)
 	}
 
 	if len(m.nonexistentImportMetadataIDs) != 0 {
@@ -716,7 +716,7 @@ func (m *cleanupManager) initImportsMetadata(ctx context.Context, stageDescripti
 				DoError(func() error {
 					return m.deleteImportsMetadata(ctx, []string{metadataID})
 				}); err != nil {
-				return fmt.Errorf("unable to delete import metadata %s: %s", metadataID, err)
+				return fmt.Errorf("unable to delete import metadata %s: %w", metadataID, err)
 			}
 
 			return nil
@@ -867,14 +867,14 @@ loop:
 func handleDeletionError(err error) error {
 	switch {
 	case docker_registry.IsDockerHubUnauthorizedErr(err):
-		return fmt.Errorf(`%s
+		return fmt.Errorf(`%w
 
 You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
 Check --repo-docker-hub-token, --repo-docker-hub-username and --repo-docker-hub-password options.
 Be aware that access to the resource is forbidden with personal access token.
 Read more details here https://werf.io/documentation/v1.2/advanced/supported_container_registries.html#docker-hub`, err)
 	case docker_registry.IsGitHubPackagesUnauthorizedErr(err), docker_registry.IsGitHubPackagesForbiddenErr(err):
-		return fmt.Errorf(`%s
+		return fmt.Errorf(`%w
 
 You should specify a token with delete:packages and read:packages scopes to remove package versions.
 Check --repo-github-token option.

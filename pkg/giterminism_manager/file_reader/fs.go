@@ -121,7 +121,7 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 
 	resolvedDir, err := r.ResolveFilePath(ctx, relDir)
 	if err != nil {
-		return fmt.Errorf("unable to resolve file path %q: %s", relDir, err)
+		return fmt.Errorf("unable to resolve file path %q: %w", relDir, err)
 	}
 
 	absDirPath := r.projectRelativePathToAbsolutePath(resolvedDir)
@@ -163,7 +163,7 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 		if f.Mode()&os.ModeSymlink == os.ModeSymlink {
 			link, err := os.Readlink(path)
 			if err != nil {
-				return fmt.Errorf("unable to read symlink %q: %s", path, err)
+				return fmt.Errorf("unable to read symlink %q: %w", path, err)
 			}
 
 			resolvedLink := link
@@ -182,7 +182,7 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 
 			if lstat.IsDir() {
 				if err := r.walkFilesWithPathMatcher(ctx, notResolvedRelPath, pathMatcher, skipFileFunc, fileFunc); err != nil {
-					return fmt.Errorf("symlink %q resolve failed: %s", resolvedRelPath, err)
+					return fmt.Errorf("symlink %q resolve failed: %w", resolvedRelPath, err)
 				}
 
 				return nil
@@ -324,7 +324,7 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 
 		return nil
 	}(); err != nil {
-		return fmt.Errorf("accepted file %q check failed: %s", relPath, err)
+		return fmt.Errorf("accepted file %q check failed: %w", relPath, err)
 	}
 
 	return nil
@@ -382,7 +382,7 @@ func (r FileReader) readFile(relPath string) ([]byte, error) {
 	absPath := r.projectRelativePathToAbsolutePath(relPath)
 	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file %q: %s", absPath, err)
+		return nil, fmt.Errorf("unable to read file %q: %w", absPath, err)
 	}
 
 	return data, nil
@@ -415,13 +415,13 @@ func (r FileReader) isDirectoryExist(ctx context.Context, relPath string) (bool,
 			return false, nil
 		}
 
-		return false, fmt.Errorf("unable to resolve file path %q: %s", relPath, err)
+		return false, fmt.Errorf("unable to resolve file path %q: %w", relPath, err)
 	}
 
 	absPath := r.projectRelativePathToAbsolutePath(resolvedPath)
 	exist, err := util.DirExists(absPath)
 	if err != nil {
-		return false, fmt.Errorf("unable to check existence of directory %q: %s", absPath, err)
+		return false, fmt.Errorf("unable to check existence of directory %q: %w", absPath, err)
 	}
 
 	return exist, nil
@@ -454,13 +454,13 @@ func (r FileReader) isRegularFileExist(ctx context.Context, relPath string) (boo
 			return false, nil
 		}
 
-		return false, fmt.Errorf("unable to resolve file path %q: %s", relPath, err)
+		return false, fmt.Errorf("unable to resolve file path %q: %w", relPath, err)
 	}
 
 	absPath := r.projectRelativePathToAbsolutePath(resolvedPath)
 	exist, err := util.RegularFileExists(absPath)
 	if err != nil {
-		return false, fmt.Errorf("unable to check existence of file %q: %s", absPath, err)
+		return false, fmt.Errorf("unable to check existence of file %q: %w", absPath, err)
 	}
 
 	return exist, nil
@@ -557,14 +557,14 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 				return "", r.NewFileNotFoundInProjectDirectoryError(pathToResolve)
 			}
 
-			return "", fmt.Errorf("unable to access file %q: %s", absPathToResolve, err)
+			return "", fmt.Errorf("unable to access file %q: %w", absPathToResolve, err)
 		}
 
 		switch {
 		case lstat.Mode()&os.ModeSymlink == os.ModeSymlink:
 			link, err := os.Readlink(absPathToResolve)
 			if err != nil {
-				return "", fmt.Errorf("unable to read symlink %q: %s", link, err)
+				return "", fmt.Errorf("unable to read symlink %q: %w", link, err)
 			}
 
 			resolvedLink := link

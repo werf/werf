@@ -83,12 +83,12 @@ func runSynchronization() error {
 	ctx := common.GetContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -112,11 +112,11 @@ func runSynchronization() error {
 			ConfigPath:       *commonCmdData.KubeConfig,
 			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
 		}}); err != nil {
-			return fmt.Errorf("cannot initialize kube: %s", err)
+			return fmt.Errorf("cannot initialize kube: %w", err)
 		}
 
 		if err := common.InitKubedog(ctx); err != nil {
-			return fmt.Errorf("cannot init kubedog: %s", err)
+			return fmt.Errorf("cannot init kubedog: %w", err)
 		}
 
 		distributedLockerBackendFactoryFunc = func(clientID string) (distributed_locker.DistributedLockerBackend, error) {
@@ -124,7 +124,7 @@ func runSynchronization() error {
 			configMapName := fmt.Sprintf("werf-%s", clientID)
 
 			if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName); err != nil {
-				return nil, fmt.Errorf("unable to create cm/%s in ns/%s: %s", configMapName, namespace, err)
+				return nil, fmt.Errorf("unable to create cm/%s in ns/%s: %w", configMapName, namespace, err)
 			}
 
 			store := optimistic_locking_store.NewKubernetesResourceAnnotationsStore(

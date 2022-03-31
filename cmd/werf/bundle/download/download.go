@@ -70,7 +70,7 @@ func runDownload() error {
 	ctx := common.GetContext()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {

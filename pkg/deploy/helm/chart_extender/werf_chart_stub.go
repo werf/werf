@@ -72,7 +72,7 @@ func (wc *WerfChartStub) ChartCreated(c *chart.Chart) error {
 func (wc *WerfChartStub) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("error getting current process working directory: %s", err)
+		return fmt.Errorf("error getting current process working directory: %w", err)
 	}
 
 	if wc.SecretsManager != nil {
@@ -80,7 +80,7 @@ func (wc *WerfChartStub) ChartLoaded(files []*chart.ChartExtenderBufferedFile) e
 			CustomSecretValueFiles:  wc.SecretValueFiles,
 			LoadFromLocalFilesystem: true,
 		}); err != nil {
-			return fmt.Errorf("error decoding secrets: %s", err)
+			return fmt.Errorf("error decoding secrets: %w", err)
 		}
 	}
 

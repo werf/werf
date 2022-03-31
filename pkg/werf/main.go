@@ -121,7 +121,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
 		dir, err := filepath.EvalSymlinks(tmpDir)
 		if err != nil {
-			return fmt.Errorf("eval symlinks of path %s failed: %s", tmpDir, err)
+			return fmt.Errorf("eval symlinks of path %s failed: %w", tmpDir, err)
 		}
 
 		tmpDir = dir
@@ -136,7 +136,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 	default:
 		userHomeDir, err := os.UserHomeDir()
 		if err != nil {
-			return fmt.Errorf("get user home dir failed: %s", err)
+			return fmt.Errorf("get user home dir failed: %w", err)
 		}
 
 		homeDir = filepath.Join(userHomeDir, ".werf")
@@ -151,17 +151,17 @@ func Init(tmpDirOption, homeDirOption string) error {
 	file_lock.LegacyHashFunction = true
 
 	if locker, err := file_locker.NewFileLocker(filepath.Join(serviceDir, "locks")); err != nil {
-		return fmt.Errorf("error creating werf host file locker: %s", err)
+		return fmt.Errorf("error creating werf host file locker: %w", err)
 	} else {
 		hostLocker = locker
 	}
 
 	if err := SetWerfFirstRunAt(context.Background()); err != nil {
-		return fmt.Errorf("error setting werf first run at timestamp: %s", err)
+		return fmt.Errorf("error setting werf first run at timestamp: %w", err)
 	}
 
 	if err := SetWerfLastRunAt(context.Background()); err != nil {
-		return fmt.Errorf("error setting werf last run at timestamp: %s", err)
+		return fmt.Errorf("error setting werf last run at timestamp: %w", err)
 	}
 
 	return nil

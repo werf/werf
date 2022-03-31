@@ -42,7 +42,7 @@ func do(ctx context.Context) error {
 
 	dockerfileData, err := os.ReadFile(dockerfilePath)
 	if err != nil {
-		return fmt.Errorf("error reading %q: %s", dockerfilePath, err)
+		return fmt.Errorf("error reading %q: %w", dockerfilePath, err)
 	}
 
 	errCh := make(chan error, 0)
@@ -50,12 +50,12 @@ func do(ctx context.Context) error {
 
 	contextTar := util.BufferedPipedWriterProcess(func(w io.WriteCloser) {
 		if err := util.WriteDirAsTar((contextDir), w); err != nil {
-			errCh <- fmt.Errorf("unable to write dir %q as tar: %s", contextDir, err)
+			errCh <- fmt.Errorf("unable to write dir %q as tar: %w", contextDir, err)
 			return
 		}
 
 		if err := w.Close(); err != nil {
-			errCh <- fmt.Errorf("unable to close buffered piped writer for context dir %q: %s", contextDir, err)
+			errCh <- fmt.Errorf("unable to close buffered piped writer for context dir %q: %w", contextDir, err)
 			return
 		}
 	})
@@ -68,7 +68,7 @@ func do(ctx context.Context) error {
 			},
 		})
 		if err != nil {
-			errCh <- fmt.Errorf("BuildFromDockerfile failed: %s", err)
+			errCh <- fmt.Errorf("BuildFromDockerfile failed: %w", err)
 			return
 		}
 

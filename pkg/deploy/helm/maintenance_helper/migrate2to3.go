@@ -14,7 +14,7 @@ import (
 func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3Namespace string, maintenanceHelper *MaintenanceHelper) error {
 	foundHelm3Release, err := maintenanceHelper.IsHelm3ReleaseExist(ctx, helm3ReleaseName)
 	if err != nil {
-		return fmt.Errorf("error checking existence of helm 3 release %q: %s", helm2ReleaseName, err)
+		return fmt.Errorf("error checking existence of helm 3 release %q: %w", helm2ReleaseName, err)
 	}
 
 	if foundHelm3Release {
@@ -23,7 +23,7 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 
 	foundHelm2Release, err := maintenanceHelper.IsHelm2ReleaseExist(ctx, helm2ReleaseName)
 	if err != nil {
-		return fmt.Errorf("error checking existence of helm 2 release %q: %s", helm2ReleaseName, err)
+		return fmt.Errorf("error checking existence of helm 2 release %q: %w", helm2ReleaseName, err)
 	}
 
 	if !foundHelm2Release {
@@ -32,12 +32,12 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 
 	releaseData, err := maintenanceHelper.GetHelm2ReleaseData(ctx, helm2ReleaseName)
 	if err != nil {
-		return fmt.Errorf("unable to get helm 2 release %q info: %s", helm2ReleaseName, err)
+		return fmt.Errorf("unable to get helm 2 release %q info: %w", helm2ReleaseName, err)
 	}
 
 	infos, err := maintenanceHelper.BuildHelm2ResourcesInfos(releaseData)
 	if err != nil {
-		return fmt.Errorf("error building resources infos for release %q: %s", helm2ReleaseName, err)
+		return fmt.Errorf("error building resources infos for release %q: %w", helm2ReleaseName, err)
 	}
 
 	metadataAccessor := meta.NewAccessor()
@@ -54,12 +54,12 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 				logboek.Context(ctx).Default().LogF("    %s not found: ignoring\n", info.ObjectName())
 				continue
 			} else if err != nil {
-				return fmt.Errorf("error getting resource %s spec from %q namespace: %s", info.ObjectName(), info.Namespace, err)
+				return fmt.Errorf("error getting resource %s spec from %q namespace: %w", info.ObjectName(), info.Namespace, err)
 			}
 
 			annotations, err := metadataAccessor.Annotations(obj)
 			if err != nil {
-				return fmt.Errorf("error accessing annotations of %s: %s", info.ObjectName(), err)
+				return fmt.Errorf("error accessing annotations of %s: %w", info.ObjectName(), err)
 			}
 			if annotations == nil {
 				annotations = make(map[string]string)
@@ -67,23 +67,23 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 			annotations["meta.helm.sh/release-name"] = helm3ReleaseName
 			annotations["meta.helm.sh/release-namespace"] = helm3Namespace
 			if err := metadataAccessor.SetAnnotations(obj, annotations); err != nil {
-				return fmt.Errorf("error setting annotations of %s: %s", info.ObjectName(), err)
+				return fmt.Errorf("error setting annotations of %s: %w", info.ObjectName(), err)
 			}
 
 			labels, err := metadataAccessor.Labels(obj)
 			if err != nil {
-				return fmt.Errorf("error accessing labels of %s: %s", info.ObjectName(), err)
+				return fmt.Errorf("error accessing labels of %s: %w", info.ObjectName(), err)
 			}
 			if labels == nil {
 				labels = make(map[string]string)
 			}
 			labels["app.kubernetes.io/managed-by"] = "Helm"
 			if err := metadataAccessor.SetLabels(obj, labels); err != nil {
-				return fmt.Errorf("error setting labels of %s: %s", info.ObjectName(), err)
+				return fmt.Errorf("error setting labels of %s: %w", info.ObjectName(), err)
 			}
 
 			if _, err := helper.Replace(info.Namespace, info.Name, false, obj); err != nil {
-				return fmt.Errorf("error replacing %s: %s", info.ObjectName(), err)
+				return fmt.Errorf("error replacing %s: %w", info.ObjectName(), err)
 			}
 		}
 		return nil
@@ -94,7 +94,7 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 	logboek.Context(ctx).LogOptionalLn()
 	if err := logboek.Context(ctx).Default().LogProcess("Creating helm 3 release %q", helm3ReleaseName).DoError(func() error {
 		if err := maintenanceHelper.CreateHelm3ReleaseMetadataFromHelm2Release(ctx, helm3ReleaseName, helm3Namespace, releaseData); err != nil {
-			return fmt.Errorf("unable to create helm 3 release %q: %s", helm3ReleaseName, err)
+			return fmt.Errorf("unable to create helm 3 release %q: %w", helm3ReleaseName, err)
 		}
 		return nil
 	}); err != nil {
@@ -104,7 +104,7 @@ func Migrate2To3(ctx context.Context, helm2ReleaseName, helm3ReleaseName, helm3N
 	logboek.Context(ctx).LogOptionalLn()
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting helm 2 metadata for release %q", helm2ReleaseName).DoError(func() error {
 		if err := maintenanceHelper.DeleteHelm2ReleaseMetadata(ctx, helm2ReleaseName); err != nil {
-			return fmt.Errorf("unable to delete helm 2 release storage metadata for the release %q: %s", helm2ReleaseName, err)
+			return fmt.Errorf("unable to delete helm 2 release storage metadata for the release %q: %w", helm2ReleaseName, err)
 		}
 		return nil
 	}); err != nil {

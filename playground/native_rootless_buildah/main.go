@@ -103,7 +103,7 @@ COPY . /app
 			},
 		})
 	if err != nil {
-		return "", fmt.Errorf("BuildFromDockerfile failed: %s", err)
+		return "", fmt.Errorf("BuildFromDockerfile failed: %w", err)
 	}
 
 	return imageId, nil

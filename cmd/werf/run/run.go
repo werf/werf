@@ -216,7 +216,7 @@ func runMain(ctx context.Context) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
@@ -227,7 +227,7 @@ func runMain(ctx context.Context) error {
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -258,7 +258,7 @@ func runMain(ctx context.Context) error {
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+		return fmt.Errorf("cannot initialize ssh agent: %w", err)
 	}
 	defer func() {
 		err := ssh_agent.Terminate()
@@ -327,14 +327,14 @@ func runMain(ctx context.Context) error {
 func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface) error {
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	projectName := werfConfig.Meta.Project
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
+		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
@@ -421,11 +421,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 func safeDockerCliRmFunc(ctx context.Context, containerName string) error {
 	if exist, err := docker.ContainerExist(ctx, containerName); err != nil {
-		return fmt.Errorf("unable to check container %s existence: %s", containerName, err)
+		return fmt.Errorf("unable to check container %s existence: %w", containerName, err)
 	} else if exist {
 		logboek.Context(ctx).LogF("Removing container %s ...\n", containerName)
 		if err := docker.CliRm(ctx, "-f", containerName); err != nil {
-			return fmt.Errorf("unable to remove container %s: %s", containerName, err)
+			return fmt.Errorf("unable to remove container %s: %w", containerName, err)
 		}
 	}
 

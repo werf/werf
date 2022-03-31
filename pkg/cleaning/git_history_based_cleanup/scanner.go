@@ -39,7 +39,7 @@ func ScanReferencesHistory(ctx context.Context, gitRepository *git.Repository, r
 		if err := logboek.Context(ctx).Info().LogProcess(logProcessMessage).DoError(func() error {
 			refReachedStageIDs, refStopCommitList, refStageIDHitCommitList, err = scanReferenceHistory(ctx, gitRepository, ref, expectedStageIDCommitList, stopCommitList)
 			if err != nil {
-				return fmt.Errorf("scan reference history failed: %s", err)
+				return fmt.Errorf("scan reference history failed: %w", err)
 			}
 
 			stopCommitList = util.AddNewStringsToStringArray(stopCommitList, refStopCommitList...)
@@ -142,7 +142,7 @@ func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, re
 	}
 
 	if err := s.scanCommitHistory(ctx, ref.HeadCommit.Hash.String()); err != nil {
-		return nil, nil, nil, fmt.Errorf("scan commit %s history failed: %s", ref.HeadCommit.Hash.String(), err)
+		return nil, nil, nil, fmt.Errorf("scan commit %s history failed: %w", ref.HeadCommit.Hash.String(), err)
 	}
 
 	isImagesCleanupKeepPolicyLastWithoutLimit := s.referenceScanOptions.imagesCleanupKeepPolicy.Last != nil && *s.referenceScanOptions.imagesCleanupKeepPolicy.Last != -1
@@ -413,7 +413,7 @@ outerLoop:
 
 	co, err := s.gitRepository.CommitObject(plumbing.NewHash(commit))
 	if err != nil {
-		return nil, fmt.Errorf("commit hash %s resolve failed: %s", commit, err)
+		return nil, fmt.Errorf("commit hash %s resolve failed: %w", commit, err)
 	}
 
 	var parentHashes []string

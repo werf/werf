@@ -233,7 +233,7 @@ func (r *gitHubPackages) String() string {
 func (r *gitHubPackages) parseReference(reference string) (string, string, error) {
 	parsedReference, err := name.NewTag(reference)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to parse reference %q: %s", reference, err)
+		return "", "", fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
 
 	repositoryWithoutRegistry := strings.TrimPrefix(parsedReference.RepositoryStr(), parsedReference.RegistryStr()+"/")

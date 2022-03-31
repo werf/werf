@@ -28,10 +28,10 @@ func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) e
 		if _, err := client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{}); errors.IsAlreadyExists(err) {
 			return nil
 		} else if err != nil {
-			return fmt.Errorf("create Namespace %s error: %s", namespace, err)
+			return fmt.Errorf("create Namespace %s error: %w", namespace, err)
 		}
 	} else if err != nil {
-		return fmt.Errorf("get Namespace %s error: %s", namespace, err)
+		return fmt.Errorf("get Namespace %s error: %w", namespace, err)
 	}
 	return nil
 }
@@ -45,10 +45,10 @@ func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) e
 //		if _, err := client.CoreV1().ConfigMaps(namespace).Create(cm); errors.IsAlreadyExists(err) {
 //			return nil
 //		} else if err != nil {
-//			return fmt.Errorf("create ConfigMap %s error: %s", configMapName, err)
+//			return fmt.Errorf("create ConfigMap %s error: %w", configMapName, err)
 //		}
 //	  } else if err != nil {
-//	  	  return fmt.Errorf("get ConfigMap %s error: %s", configMapName, err)
+//	  	  return fmt.Errorf("get ConfigMap %s error: %w", configMapName, err)
 //	  }
 //	  return nil
 //  }
@@ -70,17 +70,17 @@ func GetOrCreateConfigMapWithNamespaceIfNotExists(client kubernetes.Interface, n
 		case errors.IsAlreadyExists(err):
 			obj, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), configMapName, metav1.GetOptions{})
 			if err != nil {
-				return nil, fmt.Errorf("get ConfigMap %s error: %s", configMapName, err)
+				return nil, fmt.Errorf("get ConfigMap %s error: %w", configMapName, err)
 			}
 
 			return obj, nil
 		case err != nil:
-			return nil, fmt.Errorf("create ConfigMap %s error: %s", cm.Name, err)
+			return nil, fmt.Errorf("create ConfigMap %s error: %w", cm.Name, err)
 		default:
 			return obj, nil
 		}
 	case err != nil:
-		return nil, fmt.Errorf("get ConfigMap %s error: %s", configMapName, err)
+		return nil, fmt.Errorf("get ConfigMap %s error: %w", configMapName, err)
 	default:
 		return obj, nil
 	}

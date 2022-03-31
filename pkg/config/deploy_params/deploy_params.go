@@ -15,7 +15,7 @@ func GetHelmRelease(releaseOption string, environmentOption string, namespace st
 	if releaseOption != "" {
 		err := slug.ValidateHelmRelease(releaseOption)
 		if err != nil {
-			return "", fmt.Errorf("bad Helm release specified %q: %s", releaseOption, err)
+			return "", fmt.Errorf("bad Helm release specified %q: %w", releaseOption, err)
 		}
 		return releaseOption, nil
 	}
@@ -34,7 +34,7 @@ func GetHelmRelease(releaseOption string, environmentOption string, namespace st
 		"namespace": namespace,
 	}, werfConfig)
 	if err != nil {
-		return "", fmt.Errorf("cannot render Helm release name by template %q: %s", releaseTemplate, err)
+		return "", fmt.Errorf("cannot render Helm release name by template %q: %w", releaseTemplate, err)
 	}
 
 	if renderedRelease == "" {
@@ -54,7 +54,7 @@ func GetHelmRelease(releaseOption string, environmentOption string, namespace st
 
 	err = slug.ValidateHelmRelease(renderedRelease)
 	if err != nil {
-		return "", fmt.Errorf("bad Helm release %q rendered by template %q: %s", renderedRelease, releaseTemplate, err)
+		return "", fmt.Errorf("bad Helm release %q rendered by template %q: %w", renderedRelease, releaseTemplate, err)
 	}
 
 	return renderedRelease, nil
@@ -64,7 +64,7 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	if namespaceOption != "" {
 		err := slug.ValidateKubernetesNamespace(namespaceOption)
 		if err != nil {
-			return "", fmt.Errorf("bad Kubernetes namespace specified %q: %s", namespaceOption, err)
+			return "", fmt.Errorf("bad Kubernetes namespace specified %q: %w", namespaceOption, err)
 		}
 		return namespaceOption, nil
 	}
@@ -81,7 +81,7 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 
 	renderedNamespace, err := renderDeployParamTemplate("namespace", namespaceTemplate, environmentOption, nil, werfConfig)
 	if err != nil {
-		return "", fmt.Errorf("cannot render Kubernetes namespace by template %q: %s", namespaceTemplate, err)
+		return "", fmt.Errorf("cannot render Kubernetes namespace by template %q: %w", namespaceTemplate, err)
 	}
 
 	if renderedNamespace == "" {
@@ -101,7 +101,7 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 
 	err = slug.ValidateKubernetesNamespace(renderedNamespace)
 	if err != nil {
-		return "", fmt.Errorf("bad Kubernetes namespace %q rendered by template %q: %s", renderedNamespace, namespaceTemplate, err)
+		return "", fmt.Errorf("bad Kubernetes namespace %q rendered by template %q: %w", renderedNamespace, namespaceTemplate, err)
 	}
 
 	return renderedNamespace, nil
@@ -136,7 +136,7 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 
 	tmpl, err := tmpl.Parse(templateText)
 	if err != nil {
-		return "", fmt.Errorf("bad template: %s", err)
+		return "", fmt.Errorf("bad template: %w", err)
 	}
 
 	buf := bytes.NewBuffer(nil)

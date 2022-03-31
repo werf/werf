@@ -44,7 +44,7 @@ func (b *DockerfileStageBuilder) Build(ctx context.Context) error {
 
 	contextReader, err := os.Open(b.ContextArchivePath)
 	if err != nil {
-		return fmt.Errorf("unable to open context archive %q: %s", b.ContextArchivePath, err)
+		return fmt.Errorf("unable to open context archive %q: %w", b.ContextArchivePath, err)
 	}
 	defer contextReader.Close()
 
@@ -58,7 +58,7 @@ func (b *DockerfileStageBuilder) Build(ctx context.Context) error {
 
 	builtID, err := b.ContainerBackend.BuildDockerfile(ctx, b.Dockerfile, opts)
 	if err != nil {
-		return fmt.Errorf("error building dockerfile with %s: %s", b.ContainerBackend.String(), err)
+		return fmt.Errorf("error building dockerfile with %s: %w", b.ContainerBackend.String(), err)
 	}
 
 	b.Image.SetBuiltID(builtID)
@@ -68,7 +68,7 @@ func (b *DockerfileStageBuilder) Build(ctx context.Context) error {
 
 func (b *DockerfileStageBuilder) Cleanup(ctx context.Context) error {
 	if err := b.ContainerBackend.Rmi(ctx, b.Image.BuiltID(), container_backend.RmiOpts{}); err != nil {
-		return fmt.Errorf("unable to remove built dockerfile image %q: %s", b.Image.BuiltID(), err)
+		return fmt.Errorf("unable to remove built dockerfile image %q: %w", b.Image.BuiltID(), err)
 	}
 	return nil
 }

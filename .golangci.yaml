@@ -9,6 +9,9 @@ linters-settings:
   gocritic:
     disabled-checks:
       - ifElseChain
+  errorlint:
+    comparison: false
+    asserts: false
 
 linters:
   disable-all: true
@@ -25,6 +28,7 @@ linters:
     - bidichk
     - bodyclose
     - errname
+    - errorlint
     - exportloopref
     - gci
     - gocritic

@@ -33,7 +33,7 @@ const (
 func GetLocalDockerServerStoragePath(ctx context.Context) (string, error) {
 	dockerInfo, err := docker.Info(ctx)
 	if err != nil {
-		return "", fmt.Errorf("unable to get docker info: %s", err)
+		return "", fmt.Errorf("unable to get docker info: %w", err)
 	}
 
 	var storagePath string
@@ -53,7 +53,7 @@ func GetLocalDockerServerStoragePath(ctx context.Context) (string, error) {
 	if _, err := os.Stat(storagePath); os.IsNotExist(err) {
 		return "", nil
 	} else if err != nil {
-		return "", fmt.Errorf("error accessing %q: %s", storagePath, err)
+		return "", fmt.Errorf("error accessing %q: %w", storagePath, err)
 	}
 	return storagePath, nil
 }
@@ -80,7 +80,7 @@ func ShouldRunAutoGCForLocalDockerServer(ctx context.Context, allowedVolumeUsage
 
 	vu, err := volumeutils.GetVolumeUsageByPath(ctx, dockerServerStoragePath)
 	if err != nil {
-		return false, fmt.Errorf("error getting volume usage by path %q: %s", dockerServerStoragePath, err)
+		return false, fmt.Errorf("error getting volume usage by path %q: %w", dockerServerStoragePath, err)
 	}
 
 	return vu.Percentage > allowedVolumeUsagePercentage, nil
@@ -103,7 +103,7 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 
 	vu, err := volumeutils.GetVolumeUsageByPath(ctx, dockerServerStoragePath)
 	if err != nil {
-		return nil, fmt.Errorf("error getting volume usage by path %q: %s", dockerServerStoragePath, err)
+		return nil, fmt.Errorf("error getting volume usage by path %q: %w", dockerServerStoragePath, err)
 	}
 	res.VolumeUsage = vu
 
@@ -116,7 +116,7 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 
 		imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 		if err != nil {
-			return nil, fmt.Errorf("unable to get werf docker images: %s", err)
+			return nil, fmt.Errorf("unable to get werf docker images: %w", err)
 		}
 		images = append(images, imgs...)
 	}
@@ -128,7 +128,7 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 
 		imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 		if err != nil {
-			return nil, fmt.Errorf("unable to get werf v1.1 legacy docker images: %s", err)
+			return nil, fmt.Errorf("unable to get werf v1.1 legacy docker images: %w", err)
 		}
 
 	ExcludeLocalV1_1StagesStorage:
@@ -149,7 +149,7 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 
 		t, err := werf.GetWerfLastRunAtV1_1(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("error getting v1.1 last run timestamp: %s", err)
+			return nil, fmt.Errorf("error getting v1.1 last run timestamp: %w", err)
 		}
 
 		// No werf v1.1 runs on this host.
@@ -170,7 +170,7 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 
 			imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 			if err != nil {
-				return nil, fmt.Errorf("unable to get werf service images: %s", err)
+				return nil, fmt.Errorf("unable to get werf service images: %w", err)
 			}
 
 			for _, img := range imgs {
@@ -203,7 +203,7 @@ CreateImagesDescs:
 
 			lastRecentlyUsedAt, err := lrumeta.CommonLRUImagesCache.GetImageLastAccessTime(ctx, ref)
 			if err != nil {
-				return nil, fmt.Errorf("error accessing last recently used images cache: %s", err)
+				return nil, fmt.Errorf("error accessing last recently used images cache: %w", err)
 			}
 
 			if lastRecentlyUsedAt.IsZero() {
@@ -238,7 +238,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 
 	checkResult, err := GetLocalDockerServerStorageCheck(ctx, dockerServerStoragePath)
 	if err != nil {
-		return fmt.Errorf("error getting local docker server storage check: %s", err)
+		return fmt.Errorf("error getting local docker server storage check: %w", err)
 	}
 
 	bytesToFree := checkResult.GetBytesToFree(targetVolumeUsage)
@@ -298,7 +298,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 
 								isLocked, lock, err := werf.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{NonBlocking: true})
 								if err != nil {
-									return fmt.Errorf("error locking image %q: %s", lockName, err)
+									return fmt.Errorf("error locking image %q: %w", lockName, err)
 								}
 
 								if !isLocked {
@@ -369,7 +369,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 
 		for _, lock := range acquiredHostLocks {
 			if err := werf.ReleaseHostLock(lock); err != nil {
-				return fmt.Errorf("unable to release lock %q: %s", lock.LockName, err)
+				return fmt.Errorf("unable to release lock %q: %w", lock.LockName, err)
 			}
 		}
 
@@ -384,7 +384,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 		if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for docker containers created by werf").DoError(func() error {
 			newProcessedContainersIDs, err := safeContainersCleanup(ctx, processedDockerContainersIDs, commonOptions)
 			if err != nil {
-				return fmt.Errorf("safe containers cleanup failed: %s", err)
+				return fmt.Errorf("safe containers cleanup failed: %w", err)
 			}
 
 			processedDockerContainersIDs = newProcessedContainersIDs
@@ -411,7 +411,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 
 		checkResult, err = GetLocalDockerServerStorageCheck(ctx, dockerServerStoragePath)
 		if err != nil {
-			return fmt.Errorf("error getting local docker server storage check: %s", err)
+			return fmt.Errorf("error getting local docker server storage check: %w", err)
 		}
 
 		if checkResult.VolumeUsage.Percentage <= targetVolumeUsage {
@@ -491,7 +491,7 @@ func safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error
 func safeContainersCleanup(ctx context.Context, processedDockerContainersIDs []string, options CommonOptions) ([]string, error) {
 	containers, err := werfContainersByFilterSet(ctx, filters.NewArgs())
 	if err != nil {
-		return nil, fmt.Errorf("cannot get stages build containers: %s", err)
+		return nil, fmt.Errorf("cannot get stages build containers: %w", err)
 	}
 
 ProcessContainers:
@@ -520,7 +520,7 @@ ProcessContainers:
 			containerLockName := container_backend.ContainerLockName(containerName)
 			isLocked, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{NonBlocking: true})
 			if err != nil {
-				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)
+				return fmt.Errorf("failed to lock %s for container %s: %w", containerLockName, logContainerName(container), err)
 			}
 
 			if !isLocked {
@@ -530,7 +530,7 @@ ProcessContainers:
 			defer werf.ReleaseHostLock(lock)
 
 			if err := containersRemove(ctx, []types.Container{container}, options); err != nil {
-				return fmt.Errorf("failed to remove container %s: %s", logContainerName(container), err)
+				return fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)
 			}
 
 			return nil

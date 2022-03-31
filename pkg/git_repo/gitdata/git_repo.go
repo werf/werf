@@ -35,12 +35,12 @@ func GetExistingGitRepos(cacheVersionRoot string) ([]*GitRepoDesc, error) {
 	if _, err := os.Stat(cacheVersionRoot); os.IsNotExist(err) {
 		return nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("error accessing dir %q: %s", cacheVersionRoot, err)
+		return nil, fmt.Errorf("error accessing dir %q: %w", cacheVersionRoot, err)
 	}
 
 	files, err := ioutil.ReadDir(cacheVersionRoot)
 	if err != nil {
-		return nil, fmt.Errorf("error reading dir %q: %s", cacheVersionRoot, err)
+		return nil, fmt.Errorf("error reading dir %q: %w", cacheVersionRoot, err)
 	}
 
 	for _, finfo := range files {
@@ -48,19 +48,19 @@ func GetExistingGitRepos(cacheVersionRoot string) ([]*GitRepoDesc, error) {
 
 		if !finfo.IsDir() {
 			if err := os.RemoveAll(repoPath); err != nil {
-				return nil, fmt.Errorf("unable to remove %q: %s", repoPath, err)
+				return nil, fmt.Errorf("unable to remove %q: %w", repoPath, err)
 			}
 		}
 
 		size, err := volumeutils.DirSizeBytes(repoPath)
 		if err != nil {
-			return nil, fmt.Errorf("error getting dir %q size: %s", repoPath, err)
+			return nil, fmt.Errorf("error getting dir %q size: %w", repoPath, err)
 		}
 
 		lastAccessAtPath := filepath.Join(repoPath, "last_access_at")
 		lastAccessAt, err := timestamps.ReadTimestampFile(lastAccessAtPath)
 		if err != nil {
-			return nil, fmt.Errorf("error reading last access timestamp file %q: %s", lastAccessAtPath, err)
+			return nil, fmt.Errorf("error reading last access timestamp file %q: %w", lastAccessAtPath, err)
 		}
 
 		res = append(res, &GitRepoDesc{

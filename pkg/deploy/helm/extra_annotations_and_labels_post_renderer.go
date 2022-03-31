@@ -116,7 +116,7 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 		}
 
 		if modifiedManifestContent, err := yaml.Marshal(obj.Object); err != nil {
-			return nil, fmt.Errorf("unable to modify manifest: %s\n%s\n---\n", err, manifestContent)
+			return nil, fmt.Errorf("unable to modify manifest: %w\n%s\n---\n", err, manifestContent)
 		} else {
 			splitModifiedManifests = append(splitModifiedManifests, manifestSource+"\n"+string(modifiedManifestContent))
 

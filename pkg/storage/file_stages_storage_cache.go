@@ -37,13 +37,13 @@ func (cache *FileStagesStorageCache) GetAllStages(ctx context.Context, projectNa
 	if _, err := os.Stat(sigDir); os.IsNotExist(err) {
 		return false, nil, nil
 	} else if err != nil {
-		return false, nil, fmt.Errorf("error accessing %s: %s", sigDir, err)
+		return false, nil, fmt.Errorf("error accessing %s: %w", sigDir, err)
 	}
 
 	var res []image.StageID
 
 	if entries, err := ioutil.ReadDir(sigDir); err != nil {
-		return false, nil, fmt.Errorf("error reading directory %s files: %s", sigDir, err)
+		return false, nil, fmt.Errorf("error reading directory %s files: %w", sigDir, err)
 	} else {
 		for _, finfo := range entries {
 			if _, stages, err := cache.GetStagesByDigest(ctx, projectName, finfo.Name()); err != nil {
@@ -60,7 +60,7 @@ func (cache *FileStagesStorageCache) GetAllStages(ctx context.Context, projectNa
 func (cache *FileStagesStorageCache) DeleteAllStages(_ context.Context, projectName string) error {
 	projectCacheDir := filepath.Join(cache.CacheDir, projectName)
 	if err := os.RemoveAll(projectCacheDir); err != nil {
-		return fmt.Errorf("unable to remove %s: %s", projectCacheDir, err)
+		return fmt.Errorf("unable to remove %s: %w", projectCacheDir, err)
 	}
 	return nil
 }
@@ -100,7 +100,7 @@ func (cache *FileStagesStorageCache) StoreStagesByDigest(ctx context.Context, pr
 	sigDir := filepath.Join(cache.CacheDir, projectName)
 	sigFile := filepath.Join(sigDir, digest)
 	if err := os.MkdirAll(sigDir, os.ModePerm); err != nil {
-		return fmt.Errorf("unable to create dir %s: %s", sigDir, err)
+		return fmt.Errorf("unable to create dir %s: %w", sigDir, err)
 	}
 
 	dataBytes, err := json.Marshal(StagesStorageCacheRecord{Stages: stages})
@@ -109,7 +109,7 @@ func (cache *FileStagesStorageCache) StoreStagesByDigest(ctx context.Context, pr
 	}
 
 	if err := ioutil.WriteFile(sigFile, append(dataBytes, []byte("\n")...), 0o644); err != nil {
-		return fmt.Errorf("error writing file %s: %s", sigFile, err)
+		return fmt.Errorf("error writing file %s: %w", sigFile, err)
 	}
 
 	return nil
@@ -126,7 +126,7 @@ func (cache *FileStagesStorageCache) DeleteStagesByDigest(ctx context.Context, p
 	sigFile := filepath.Join(sigDir, digest)
 
 	if err := os.RemoveAll(sigFile); err != nil {
-		return fmt.Errorf("error removing %s: %s", sigFile, err)
+		return fmt.Errorf("error removing %s: %w", sigFile, err)
 	}
 	return nil
 }

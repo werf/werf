@@ -29,17 +29,17 @@ func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir string, commit s
 
 		gitDir, err = filepath.Abs(gitDir)
 		if err != nil {
-			return fmt.Errorf("bad git dir %s: %s", gitDir, err)
+			return fmt.Errorf("bad git dir %s: %w", gitDir, err)
 		}
 
 		workTreeCacheDir, err = filepath.Abs(workTreeCacheDir)
 		if err != nil {
-			return fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
+			return fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 		}
 
 		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, opts.HasSubmodules)
 		if err != nil {
-			return fmt.Errorf("cannot prepare worktree: %s", err)
+			return fmt.Errorf("cannot prepare worktree: %w", err)
 		}
 
 		return f(workTreeDir)
@@ -53,21 +53,21 @@ func withWorkTreeCacheLock(ctx context.Context, workTreeCacheDir string, f func(
 
 func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, commit string, withSubmodules bool) (string, error) {
 	if err := os.MkdirAll(workTreeCacheDir, os.ModePerm); err != nil {
-		return "", fmt.Errorf("unable to create dir %s: %s", workTreeCacheDir, err)
+		return "", fmt.Errorf("unable to create dir %s: %w", workTreeCacheDir, err)
 	}
 
 	lastAccessAtPath := filepath.Join(workTreeCacheDir, "last_access_at")
 	if err := timestamps.WriteTimestampFile(lastAccessAtPath, time.Now()); err != nil {
-		return "", fmt.Errorf("error writing timestamp file %q: %s", lastAccessAtPath, err)
+		return "", fmt.Errorf("error writing timestamp file %q: %w", lastAccessAtPath, err)
 	}
 
 	gitDirPath := filepath.Join(workTreeCacheDir, "git_dir")
 	if _, err := os.Stat(gitDirPath); os.IsNotExist(err) {
 		if err := ioutil.WriteFile(gitDirPath, []byte(repoDir+"\n"), 0o644); err != nil {
-			return "", fmt.Errorf("error writing %s: %s", gitDirPath, err)
+			return "", fmt.Errorf("error writing %s: %w", gitDirPath, err)
 		}
 	} else if err != nil {
-		return "", fmt.Errorf("unable to access %s: %s", gitDirPath, err)
+		return "", fmt.Errorf("unable to access %s: %w", gitDirPath, err)
 	}
 
 	workTreeDir := filepath.Join(workTreeCacheDir, "worktree")
@@ -79,11 +79,11 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 	case os.IsNotExist(err):
 
 	case err != nil:
-		return "", fmt.Errorf("error accessing %q: %s", workTreeDir, err)
+		return "", fmt.Errorf("error accessing %q: %w", workTreeDir, err)
 	default:
 		isWorkTreeRegistered := false
 		if workTreeList, err := GetWorkTreeList(ctx, repoDir); err != nil {
-			return "", fmt.Errorf("unable to get worktree list for repo %s: %s", repoDir, err)
+			return "", fmt.Errorf("unable to get worktree list for repo %s: %w", repoDir, err)
 		} else {
 			for _, workTreeDesc := range workTreeList {
 				if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(workTreeDir) {
@@ -97,7 +97,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 
 		isWorkTreeConsistent, err := verifyWorkTreeConsistency(ctx, repoDir, workTreeDir)
 		if err != nil {
-			return "", fmt.Errorf("unable to verify work tree %q consistency: %s", workTreeDir, err)
+			return "", fmt.Errorf("unable to verify work tree %q consistency: %w", workTreeDir, err)
 		}
 		if !isWorkTreeConsistent {
 			logboek.Context(ctx).Default().LogFDetails("Detected inconsistent work tree dir %q of repo %s\n", workTreeDir, repoDir)
@@ -107,18 +107,18 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 			logboek.Context(ctx).Default().LogF("Removing invalidated work tree dir %q of repo %s\n", workTreeDir, repoDir)
 
 			if err := os.RemoveAll(currentCommitPath); err != nil {
-				return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+				return "", fmt.Errorf("unable to remove %s: %w", currentCommitPath, err)
 			}
 
 			if err := os.RemoveAll(workTreeDir); err != nil {
-				return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %s", workTreeDir, err)
+				return "", fmt.Errorf("unable to remove invalidated work tree dir %s: %w", workTreeDir, err)
 			}
 		} else {
 			currentCommitPathExists := true
 			if _, err := os.Stat(currentCommitPath); os.IsNotExist(err) {
 				currentCommitPathExists = false
 			} else if err != nil {
-				return "", fmt.Errorf("unable to access %s: %s", currentCommitPath, err)
+				return "", fmt.Errorf("unable to access %s: %w", currentCommitPath, err)
 			}
 
 			if currentCommitPathExists {
@@ -129,11 +129,11 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 						return workTreeDir, nil
 					}
 				} else {
-					return "", fmt.Errorf("error reading %s: %s", currentCommitPath, err)
+					return "", fmt.Errorf("error reading %s: %w", currentCommitPath, err)
 				}
 
 				if err := os.RemoveAll(currentCommitPath); err != nil {
-					return "", fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+					return "", fmt.Errorf("unable to remove %s: %w", currentCommitPath, err)
 				}
 			}
 		}
@@ -151,11 +151,11 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 
 		return switchWorkTree(ctx, repoDir, workTreeDir, commit, withSubmodules)
 	}); err != nil {
-		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %s", workTreeDir, commit, err)
+		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %w", workTreeDir, commit, err)
 	}
 
 	if err := ioutil.WriteFile(currentCommitPath, []byte(commit+"\n"), 0o644); err != nil {
-		return "", fmt.Errorf("error writing %s: %s", currentCommitPath, err)
+		return "", fmt.Errorf("error writing %s: %w", currentCommitPath, err)
 	}
 
 	return workTreeDir, nil
@@ -164,7 +164,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 func verifyWorkTreeConsistency(ctx context.Context, repoDir, workTreeDir string) (bool, error) {
 	resolvedGitDir, err := resolveDotGitFile(ctx, filepath.Join(workTreeDir, ".git"))
 	if err != nil {
-		return false, fmt.Errorf("unable to resolve dot-git file %q: %s", filepath.Join(workTreeDir, ".git"), err)
+		return false, fmt.Errorf("unable to resolve dot-git file %q: %w", filepath.Join(workTreeDir, ".git"), err)
 	}
 
 	if !util.IsSubpathOfBasePath(repoDir, resolvedGitDir) {
@@ -176,7 +176,7 @@ func verifyWorkTreeConsistency(ctx context.Context, repoDir, workTreeDir string)
 	case os.IsNotExist(err):
 		return false, nil
 	case err != nil:
-		return false, fmt.Errorf("error accessing resolved dot git dir %q: %s", resolvedGitDir, err)
+		return false, fmt.Errorf("error accessing resolved dot git dir %q: %w", resolvedGitDir, err)
 	}
 
 	return true, nil
@@ -185,7 +185,7 @@ func verifyWorkTreeConsistency(ctx context.Context, repoDir, workTreeDir string)
 func resolveDotGitFile(ctx context.Context, dotGitPath string) (string, error) {
 	data, err := os.ReadFile(dotGitPath)
 	if err != nil {
-		return "", fmt.Errorf("error reading %q: %s", dotGitPath, err)
+		return "", fmt.Errorf("error reading %q: %w", dotGitPath, err)
 	}
 
 	lines := util.SplitLines(string(data))
@@ -209,34 +209,34 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 	case os.IsNotExist(err):
 		wtAddCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "add", "--force", "--detach", workTreeDir, commit)
 		if err = wtAddCmd.Run(ctx); err != nil {
-			return fmt.Errorf("git worktree add command failed: %s", err)
+			return fmt.Errorf("git worktree add command failed: %w", err)
 		}
 	case err != nil:
-		return fmt.Errorf("error accessing %s: %s", workTreeDir, err)
+		return fmt.Errorf("error accessing %s: %w", workTreeDir, err)
 	default:
 		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "checkout", "--force", "--detach", commit)
 		if err = checkoutCmd.Run(ctx); err != nil {
-			return fmt.Errorf("git checkout command failed: %s", err)
+			return fmt.Errorf("git checkout command failed: %w", err)
 		}
 	}
 
 	resetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "reset", "--hard", commit)
 	if err = resetCmd.Run(ctx); err != nil {
-		return fmt.Errorf("git reset command failed: %s", err)
+		return fmt.Errorf("git reset command failed: %w", err)
 	}
 
 	cleanCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "--work-tree", workTreeDir, "clean", "-d", "-f", "-f", "-x")
 	if err = cleanCmd.Run(ctx); err != nil {
-		return fmt.Errorf("git worktree clean command failed: %s", err)
+		return fmt.Errorf("git worktree clean command failed: %w", err)
 	}
 
 	if withSubmodules {
 		if err = syncSubmodules(ctx, repoDir, workTreeDir); err != nil {
-			return fmt.Errorf("cannot sync submodules: %s", err)
+			return fmt.Errorf("cannot sync submodules: %w", err)
 		}
 
 		if err = updateSubmodules(ctx, repoDir, workTreeDir); err != nil {
-			return fmt.Errorf("cannot update submodules: %s", err)
+			return fmt.Errorf("cannot update submodules: %w", err)
 		}
 
 		submResetArgs := []string{
@@ -246,7 +246,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 
 		submResetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, submResetArgs...)
 		if err = submResetCmd.Run(ctx); err != nil {
-			return fmt.Errorf("git submodules reset commands failed: %s", err)
+			return fmt.Errorf("git submodules reset commands failed: %w", err)
 		}
 
 		submCleanArgs := []string{
@@ -256,7 +256,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 
 		submCleanCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, submCleanArgs...)
 		if err = submCleanCmd.Run(ctx); err != nil {
-			return fmt.Errorf("git submodules clean commands failed: %s", err)
+			return fmt.Errorf("git submodules clean commands failed: %w", err)
 		}
 	}
 
@@ -266,7 +266,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit str
 func ResolveRepoDir(ctx context.Context, repoDir string) (string, error) {
 	revParseCmd := NewGitCmd(ctx, nil, "--git-dir", repoDir, "rev-parse", "--git-dir")
 	if err := revParseCmd.Run(ctx); err != nil {
-		return "", fmt.Errorf("git parse git-dir command failed: %s", err)
+		return "", fmt.Errorf("git parse git-dir command failed: %w", err)
 	}
 
 	return strings.TrimSpace(revParseCmd.OutBuf.String()), nil
@@ -281,7 +281,7 @@ type WorktreeDescriptor struct {
 func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor, error) {
 	wtListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "list", "--porcelain")
 	if err := wtListCmd.Run(ctx); err != nil {
-		return nil, fmt.Errorf("git worktree list command failed: %s", err)
+		return nil, fmt.Errorf("git worktree list command failed: %w", err)
 	}
 
 	var worktreeDesc *WorktreeDescriptor

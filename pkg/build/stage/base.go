@@ -139,14 +139,14 @@ func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor)
 	for _, gitMapping := range s.gitMappings {
 		if s.stageImage != nil && s.stageImage.Image.GetStageDescription() != nil {
 			if commitInfo, err := gitMapping.GetBuiltImageCommitInfo(s.stageImage.Image.GetStageDescription().Info.Labels); err != nil {
-				return "", fmt.Errorf("unable to get built image commit info from image %s: %s", s.stageImage.Image.Name(), err)
+				return "", fmt.Errorf("unable to get built image commit info from image %s: %w", s.stageImage.Image.Name(), err)
 			} else {
 				args = append(args, commitInfo.Commit)
 			}
 		} else {
 			latestCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 			if err != nil {
-				return "", fmt.Errorf("unable to get latest commit of git mapping %s: %s", gitMapping.Name, err)
+				return "", fmt.Errorf("unable to get latest commit of git mapping %s: %w", gitMapping.Name, err)
 			}
 			args = append(args, latestCommitInfo.Commit)
 		}
@@ -181,7 +181,7 @@ func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Co
 	for _, gitMapping := range s.gitMappings {
 		currentCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 		if err != nil {
-			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %s", gitMapping.Name, err)
+			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %w", gitMapping.Name, err)
 		}
 
 		var currentCommit string
@@ -214,7 +214,7 @@ ScanImages:
 
 			isOurAncestor, err := gitMapping.GitRepo().IsAncestor(ctx, commitToCheckAncestry, currentCommit)
 			if err != nil {
-				return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %s", commitToCheckAncestry, currentCommit, err)
+				return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %w", commitToCheckAncestry, currentCommit, err)
 			}
 
 			if !isOurAncestor {
@@ -254,13 +254,13 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cr container_b
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, c, cr, stageImage)
 	if err := s.addServiceMountsVolumes(serviceMounts, c, cr, stageImage); err != nil {
-		return fmt.Errorf("error adding mounts volumes: %s", err)
+		return fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
 	customMounts := s.getCustomMounts(prevBuiltImage)
 	s.addCustomMountLabels(customMounts, c, cr, stageImage)
 	if err := s.addCustomMountVolumes(customMounts, c, cr, stageImage); err != nil {
-		return fmt.Errorf("error adding mounts volumes: %s", err)
+		return fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
 	return nil
@@ -330,7 +330,7 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 
 			err := os.MkdirAll(absoluteFrom, os.ModePerm)
 			if err != nil {
-				return fmt.Errorf("error creating tmp path %s for mount: %s", absoluteFrom, err)
+				return fmt.Errorf("error creating tmp path %s for mount: %w", absoluteFrom, err)
 			}
 
 			volume := fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint)
@@ -423,7 +423,7 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 		if !exist {
 			err := os.MkdirAll(absoluteFrom, os.ModePerm)
 			if err != nil {
-				return fmt.Errorf("error creating %s: %s", absoluteFrom, err)
+				return fmt.Errorf("error creating %s: %w", absoluteFrom, err)
 			}
 		}
 

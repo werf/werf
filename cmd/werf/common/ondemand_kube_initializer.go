@@ -42,11 +42,11 @@ func (initializer *OndemandKubeInitializer) Init(ctx context.Context) error {
 		ConfigDataBase64:    initializer.KubeConfigBase64,
 		ConfigPathMergeList: initializer.KubeConfigPathMergeList,
 	}}); err != nil {
-		return fmt.Errorf("cannot initialize kube: %s", err)
+		return fmt.Errorf("cannot initialize kube: %w", err)
 	}
 
 	if err := InitKubedog(ctx); err != nil {
-		return fmt.Errorf("cannot init kubedog: %s", err)
+		return fmt.Errorf("cannot init kubedog: %w", err)
 	}
 
 	initializer.initialized = true

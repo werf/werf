@@ -35,13 +35,13 @@ func GetHostGitDataManager(ctx context.Context) (*GitDataManager, error) {
 	tmpGitDataDir := filepath.Join(werf.GetServiceDir(), "tmp", "git_data")
 
 	if err := os.MkdirAll(archivesCacheDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %q: %s", archivesCacheDir, err)
+		return nil, fmt.Errorf("unable to create dir %q: %w", archivesCacheDir, err)
 	}
 	if err := os.MkdirAll(patchesCacheDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %q: %s", patchesCacheDir, err)
+		return nil, fmt.Errorf("unable to create dir %q: %w", patchesCacheDir, err)
 	}
 	if err := os.MkdirAll(tmpGitDataDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %q: %s", tmpGitDataDir, err)
+		return nil, fmt.Errorf("unable to create dir %q: %w", tmpGitDataDir, err)
 	}
 
 	return NewGitDataManager(archivesCacheDir, patchesCacheDir, tmpGitDataDir), nil
@@ -68,7 +68,7 @@ func (manager *GitDataManager) GetPatchesCacheDir() string {
 func (manager *GitDataManager) NewTmpFile() (string, error) {
 	path := filepath.Join(manager.TmpDir, uuid.NewV4().String())
 	if err := os.MkdirAll(filepath.Dir(path), 0o777); err != nil {
-		return "", fmt.Errorf("unable to create dir %q: %s", filepath.Dir(path), err)
+		return "", fmt.Errorf("unable to create dir %q: %w", filepath.Dir(path), err)
 	}
 	return path, nil
 }
@@ -110,21 +110,21 @@ func (manager *GitDataManager) GetArchiveFile(ctx context.Context, repoID string
 	}
 
 	if data, err := ioutil.ReadFile(metadataPath); err != nil {
-		return nil, fmt.Errorf("error reading %q: %s", metadataPath, err)
+		return nil, fmt.Errorf("error reading %q: %w", metadataPath, err)
 	} else {
 		var metadata *ArchiveMetadata
 
 		if err := json.Unmarshal(data, &metadata); err != nil {
-			return nil, fmt.Errorf("error unmarshalling json from %q: %s", metadataPath, err)
+			return nil, fmt.Errorf("error unmarshalling json from %q: %w", metadataPath, err)
 		}
 
 		metadata.LastAccessTimestamp = time.Now().Unix()
 
 		if metadataJson, err := json.Marshal(metadata); err != nil {
-			return nil, fmt.Errorf("error marshalling archive %s %s metadata json: %s", repoID, opts.Commit, err)
+			return nil, fmt.Errorf("error marshalling archive %s %s metadata json: %w", repoID, opts.Commit, err)
 		} else {
 			if err := ioutil.WriteFile(metadataPath, append(metadataJson, '\n'), 0o644); err != nil {
-				return nil, fmt.Errorf("error writing %q: %s", metadataPath, err)
+				return nil, fmt.Errorf("error writing %q: %w", metadataPath, err)
 			}
 		}
 
@@ -156,24 +156,24 @@ func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID str
 	}
 
 	if metadataJson, err := json.Marshal(metadata); err != nil {
-		return nil, fmt.Errorf("error marshalling archive %s %s metadata json: %s", repoID, opts.Commit, err)
+		return nil, fmt.Errorf("error marshalling archive %s %s metadata json: %w", repoID, opts.Commit, err)
 	} else {
 		metadataPath := filepath.Join(manager.ArchivesCacheDir, archiveMetadataFilePath(repoID, opts))
 		dir := filepath.Dir(metadataPath)
 
 		if err := os.MkdirAll(dir, 0o777); err != nil {
-			return nil, fmt.Errorf("unable to create dir %q: %s", dir, err)
+			return nil, fmt.Errorf("unable to create dir %q: %w", dir, err)
 		}
 
 		if err := ioutil.WriteFile(metadataPath, metadataJson, 0o644); err != nil {
-			return nil, fmt.Errorf("error writing %s: %s", metadataPath, err)
+			return nil, fmt.Errorf("error writing %s: %w", metadataPath, err)
 		}
 	}
 
 	path := filepath.Join(manager.ArchivesCacheDir, archiveFilePath(repoID, opts))
 
 	if err := os.Rename(tmpPath, path); err != nil {
-		return nil, fmt.Errorf("unable to rename %s to %s: %s", tmpPath, path, err)
+		return nil, fmt.Errorf("unable to rename %s to %s: %w", tmpPath, path, err)
 	}
 
 	return &git_repo.ArchiveFile{FilePath: path}, nil
@@ -207,21 +207,21 @@ func (manager *GitDataManager) GetPatchFile(ctx context.Context, repoID string, 
 	}
 
 	if data, err := ioutil.ReadFile(metadataPath); err != nil {
-		return nil, fmt.Errorf("error reading %s: %s", metadataPath, err)
+		return nil, fmt.Errorf("error reading %s: %w", metadataPath, err)
 	} else {
 		var metadata *PatchMetadata
 
 		if err := json.Unmarshal(data, &metadata); err != nil {
-			return nil, fmt.Errorf("error unmarshalling json from %s: %s", metadataPath, err)
+			return nil, fmt.Errorf("error unmarshalling json from %s: %w", metadataPath, err)
 		}
 
 		metadata.LastAccessTimestamp = time.Now().Unix()
 
 		if metadataJson, err := json.Marshal(metadata); err != nil {
-			return nil, fmt.Errorf("error marshalling patch %s %s %s metadata json: %s", repoID, opts.FromCommit, opts.ToCommit, err)
+			return nil, fmt.Errorf("error marshalling patch %s %s %s metadata json: %w", repoID, opts.FromCommit, opts.ToCommit, err)
 		} else {
 			if err := ioutil.WriteFile(metadataPath, append(metadataJson, '\n'), 0o644); err != nil {
-				return nil, fmt.Errorf("error writing %s: %s", metadataPath, err)
+				return nil, fmt.Errorf("error writing %s: %w", metadataPath, err)
 			}
 		}
 
@@ -258,24 +258,24 @@ func (manager *GitDataManager) CreatePatchFile(ctx context.Context, repoID strin
 	}
 
 	if metadataJson, err := json.Marshal(metadata); err != nil {
-		return nil, fmt.Errorf("error marshalling patch %s %s %s metadata json: %s", repoID, opts.FromCommit, opts.ToCommit, err)
+		return nil, fmt.Errorf("error marshalling patch %s %s %s metadata json: %w", repoID, opts.FromCommit, opts.ToCommit, err)
 	} else {
 		metadataPath := filepath.Join(manager.PatchesCacheDir, patchMetadataFilePath(repoID, opts))
 		dir := filepath.Dir(metadataPath)
 
 		if err := os.MkdirAll(dir, 0o777); err != nil {
-			return nil, fmt.Errorf("unable to create dir %q: %s", dir, err)
+			return nil, fmt.Errorf("unable to create dir %q: %w", dir, err)
 		}
 
 		if err := ioutil.WriteFile(metadataPath, append(metadataJson, '\n'), 0o644); err != nil {
-			return nil, fmt.Errorf("error writing %s: %s", metadataPath, err)
+			return nil, fmt.Errorf("error writing %s: %w", metadataPath, err)
 		}
 	}
 
 	path := filepath.Join(manager.PatchesCacheDir, patchFilePath(repoID, opts))
 
 	if err := os.Rename(tmpPath, path); err != nil {
-		return nil, fmt.Errorf("unable to rename %s to %s: %s", tmpPath, path, err)
+		return nil, fmt.Errorf("unable to rename %s to %s: %w", tmpPath, path, err)
 	}
 
 	return &git_repo.PatchFile{FilePath: path, Descriptor: desc}, nil

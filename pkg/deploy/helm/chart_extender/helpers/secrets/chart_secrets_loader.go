@@ -48,12 +48,12 @@ func LoadChartSecretValueFiles(chartDir string, secretDirFiles []*chart.ChartExt
 	for _, file := range secretDirFiles {
 		decodedData, err := encoder.DecryptYamlData(file.Data)
 		if err != nil {
-			return nil, fmt.Errorf("cannot decode file %q secret data: %s", filepath.Join(chartDir, file.Name), err)
+			return nil, fmt.Errorf("cannot decode file %q secret data: %w", filepath.Join(chartDir, file.Name), err)
 		}
 
 		rawValues := map[string]interface{}{}
 		if err := yaml.Unmarshal(decodedData, &rawValues); err != nil {
-			return nil, fmt.Errorf("cannot unmarshal secret values file %s: %s", filepath.Join(chartDir, file.Name), err)
+			return nil, fmt.Errorf("cannot unmarshal secret values file %s: %w", filepath.Join(chartDir, file.Name), err)
 		}
 
 		res = chartutil.CoalesceTables(rawValues, res)
@@ -72,7 +72,7 @@ func LoadChartSecretDirFilesData(chartDir string, secretFiles []*chart.ChartExte
 
 		decodedData, err := encoder.Decrypt([]byte(strings.TrimRightFunc(string(file.Data), unicode.IsSpace)))
 		if err != nil {
-			return nil, fmt.Errorf("error decoding %s: %s", filepath.Join(chartDir, file.Name), err)
+			return nil, fmt.Errorf("error decoding %s: %w", filepath.Join(chartDir, file.Name), err)
 		}
 
 		relPath := util.GetRelativeToBaseFilepath(SecretDirName, file.Name)

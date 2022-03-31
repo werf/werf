@@ -21,7 +21,7 @@ func ShouldRunAutoGC() (bool, error) {
 		var err error
 		releasedProjectsDirs, err := ioutil.ReadDir(releasedProjectsDir)
 		if err != nil {
-			return false, fmt.Errorf("unable to list released projects tmp dirs in %s: %s", releasedProjectsDir, err)
+			return false, fmt.Errorf("unable to list released projects tmp dirs in %s: %w", releasedProjectsDir, err)
 		}
 
 		if len(releasedProjectsDirs) > 50 {
@@ -36,7 +36,7 @@ func ShouldRunAutoGC() (bool, error) {
 		var err error
 		createdDirs, err := ioutil.ReadDir(createdDockerConfigsDir)
 		if err != nil {
-			return false, fmt.Errorf("unable to list created docker configs in %s: %s", createdDockerConfigsDir, err)
+			return false, fmt.Errorf("unable to list created docker configs in %s: %w", createdDockerConfigsDir, err)
 		}
 
 		for _, info := range createdDirs {
@@ -66,7 +66,7 @@ func ShouldRunAutoGC() (bool, error) {
 		var err error
 		createdFiles, err := ioutil.ReadDir(createdWerfConfigRenderFiles)
 		if err != nil {
-			return false, fmt.Errorf("unable to list created werf config render files in %s: %s", createdWerfConfigRenderFiles, err)
+			return false, fmt.Errorf("unable to list created werf config render files in %s: %w", createdWerfConfigRenderFiles, err)
 		}
 
 		for _, info := range createdFiles {
@@ -114,12 +114,12 @@ func RunGC(ctx context.Context, dryRun bool) error {
 			if runtime.GOOS == "windows" {
 				for _, path := range projectDirsToRemove {
 					if err := os.RemoveAll(path); err != nil {
-						removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp project dir %s: %s", path, err))
+						removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp project dir %s: %w", path, err))
 					}
 				}
 			} else {
 				if err := util.RemoveHostDirsWithLinuxContainer(ctx, werf.GetTmpDir(), projectDirsToRemove); err != nil {
-					removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
+					removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %w", strings.Join(projectDirsToRemove, ", "), err))
 				}
 			}
 		}
@@ -131,7 +131,7 @@ func RunGC(ctx context.Context, dryRun bool) error {
 		if !dryRun {
 			err := os.RemoveAll(path)
 			if err != nil {
-				removeErrors = append(removeErrors, fmt.Errorf("unable to remove path %s: %s", path, err))
+				removeErrors = append(removeErrors, fmt.Errorf("unable to remove path %s: %w", path, err))
 			}
 		}
 	}
@@ -151,12 +151,12 @@ func RunGC(ctx context.Context, dryRun bool) error {
 func gcReleasedProjectDirs(projectDirsToRemove, pathsToRemove *[]string) error {
 	releasedProjectDirsLinks, err := getLinks(filepath.Join(GetReleasedTmpDirs(), projectsServiceDir))
 	if err != nil {
-		return fmt.Errorf("unable to get released tmp projects dirs: %s", err)
+		return fmt.Errorf("unable to get released tmp projects dirs: %w", err)
 	}
 
 	dirs, err := readLinks(releasedProjectDirsLinks)
 	if err != nil {
-		return fmt.Errorf("unable to read links: %s", err)
+		return fmt.Errorf("unable to read links: %w", err)
 	}
 	*projectDirsToRemove = append(*projectDirsToRemove, dirs...)
 
@@ -171,17 +171,17 @@ func gcReleasedProjectDirs(projectDirsToRemove, pathsToRemove *[]string) error {
 func gcCreatedProjectDirs(projectDirsToRemove, pathsToRemove *[]string) error {
 	createdProjectDirsLinks, err := getLinks(filepath.Join(GetCreatedTmpDirs(), projectsServiceDir))
 	if err != nil {
-		return fmt.Errorf("unable to get created tmp projects dirs: %s", err)
+		return fmt.Errorf("unable to get created tmp projects dirs: %w", err)
 	}
 
 	linksToRemove, err := getCreatedFilesToRemove(createdProjectDirsLinks)
 	if err != nil {
-		return fmt.Errorf("cannot get created tmp files to remove: %s", err)
+		return fmt.Errorf("cannot get created tmp files to remove: %w", err)
 	}
 
 	dirs, err := readLinks(linksToRemove)
 	if err != nil {
-		return fmt.Errorf("unable to read links: %s", err)
+		return fmt.Errorf("unable to read links: %w", err)
 	}
 	*projectDirsToRemove = append(*projectDirsToRemove, dirs...)
 
@@ -196,17 +196,17 @@ func gcCreatedProjectDirs(projectDirsToRemove, pathsToRemove *[]string) error {
 func gcCreatedDockerConfigs(pathsToRemove *[]string) error {
 	createdDockerConfigsLinks, err := getLinks(filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir))
 	if err != nil {
-		return fmt.Errorf("unable to get created tmp docker configs: %s", err)
+		return fmt.Errorf("unable to get created tmp docker configs: %w", err)
 	}
 
 	linksToRemove, err := getCreatedFilesToRemove(createdDockerConfigsLinks)
 	if err != nil {
-		return fmt.Errorf("cannot get created tmp files to remove: %s", err)
+		return fmt.Errorf("cannot get created tmp files to remove: %w", err)
 	}
 
 	dirs, err := readLinks(linksToRemove)
 	if err != nil {
-		return fmt.Errorf("unable to read links: %s", err)
+		return fmt.Errorf("unable to read links: %w", err)
 	}
 	*pathsToRemove = append(*pathsToRemove, dirs...)
 
@@ -246,17 +246,17 @@ func gcCreatedKubeConfigs(pathsToRemove *[]string) error {
 func gcCreatedWerfConfigRenders(pathsToRemove *[]string) error {
 	createdWerfConfigRendersLinks, err := getLinks(filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir))
 	if err != nil {
-		return fmt.Errorf("unable to get created tmp werf config render files: %s", err)
+		return fmt.Errorf("unable to get created tmp werf config render files: %w", err)
 	}
 
 	linksToRemove, err := getCreatedFilesToRemove(createdWerfConfigRendersLinks)
 	if err != nil {
-		return fmt.Errorf("cannot get created tmp files to remove: %s", err)
+		return fmt.Errorf("cannot get created tmp files to remove: %w", err)
 	}
 
 	dirs, err := readLinks(linksToRemove)
 	if err != nil {
-		return fmt.Errorf("unable to read links: %s", err)
+		return fmt.Errorf("unable to read links: %w", err)
 	}
 	*pathsToRemove = append(*pathsToRemove, dirs...)
 
@@ -278,7 +278,7 @@ func getLinks(dir string) ([]*LinkDesc, error) {
 	if _, err := os.Stat(dir); !os.IsNotExist(err) {
 		infos, err := ioutil.ReadDir(dir)
 		if err != nil {
-			return nil, fmt.Errorf("unable to list files in %s: %s", dir, err)
+			return nil, fmt.Errorf("unable to list files in %s: %w", dir, err)
 		}
 
 		for _, info := range infos {
@@ -295,7 +295,7 @@ func readLinks(links []*LinkDesc) ([]string, error) {
 	for _, desc := range links {
 		origDir, err := os.Readlink(desc.LinkPath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to read link %s: %s", desc.LinkPath, err)
+			return nil, fmt.Errorf("unable to read link %s: %w", desc.LinkPath, err)
 		}
 		res = append(res, origDir)
 	}
