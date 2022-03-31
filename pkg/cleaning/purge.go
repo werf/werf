@@ -30,7 +30,7 @@ func newPurgeManager(projectName string, storageManager *manager.StorageManager,
 }
 
 type purgeManager struct {
-	StorageManager                *manager.StorageManager
+	StorageManager                manager.StorageManagerInterface
 	ProjectName                   string
 	RmContainersThatUseWerfImages bool
 	DryRun                        bool
@@ -167,12 +167,13 @@ func (m *purgeManager) deleteCustomTags(ctx context.Context) error {
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Deleting custom tags").DoError(func() error {
-		for _, customTagList := range stageIDCustomTagList {
-			for _, customTag := range customTagList {
-				if err := deleteCustomTag(ctx, m.StorageManager.GetStagesStorage(), customTag); err != nil {
-					return err
-				}
-			}
+		var customTagList []string
+		for _, list := range stageIDCustomTagList {
+			customTagList = append(customTagList, list...)
+		}
+
+		if err := deleteCustomTags(ctx, m.StorageManager, customTagList, m.DryRun); err != nil {
+			return err
 		}
 
 		return nil
@@ -183,18 +184,30 @@ func (m *purgeManager) deleteCustomTags(ctx context.Context) error {
 	return nil
 }
 
-func deleteCustomTag(ctx context.Context, stagesStorage storage.StagesStorage, customTag string) error {
-	err := stagesStorage.DeleteStageCustomTag(ctx, customTag)
-	if err != nil {
-		if err := handleDeletionError(err); err != nil {
-			return err
+func deleteCustomTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagList []string, dryRun bool) error {
+	if dryRun {
+		for _, customTag := range customTagList {
+			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", customTag)
+			logboek.Context(ctx).Default().LogOptionalLn()
 		}
 
 		return nil
 	}
 
-	logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", customTag)
-	logboek.Context(ctx).Default().LogOptionalLn()
+	if err := storageManager.ForEachDeleteStageCustomTag(ctx, customTagList, func(ctx context.Context, tag string, err error) error {
+		if err != nil {
+			if err := handleDeletionError(err); err != nil {
+				return err
+			}
+		}
+
+		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", tag)
+		logboek.Context(ctx).Default().LogOptionalLn()
+
+		return nil
+	}); err != nil {
+		return err
+	}
 
 	return nil
 }
