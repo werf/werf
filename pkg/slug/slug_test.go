@@ -10,10 +10,13 @@ import (
 var servicePartSize = len(util.MurmurHash("stub")) + len(slugSeparator)
 
 func TestSlug(t *testing.T) {
+	legacyCaseWithTwoHyphensMaxSize := 48
+
 	tests := []struct {
-		name   string
-		data   string
-		result string
+		name    string
+		data    string
+		maxSize *int
+		result  string
 	}{
 		{
 			name:   "empty",
@@ -35,21 +38,32 @@ func TestSlug(t *testing.T) {
 			data:   strings.Repeat("x", DefaultSlugMaxSize+1),
 			result: strings.Repeat("x", DefaultSlugMaxSize-servicePartSize) + "-27e2f02f",
 		},
+		{
+			name:    "legacyCaseWithTwoHyphen",
+			data:    "postgres-feature-31981-change-delivery-date-del-result",
+			maxSize: &legacyCaseWithTwoHyphensMaxSize,
+			result:  "postgres-feature-31981-change-delivery--852739dc",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := LimitedSlug(test.data, DefaultSlugMaxSize)
+			maxSize := DefaultSlugMaxSize
+			if test.maxSize != nil {
+				maxSize = *test.maxSize
+			}
+
+			result := LimitedSlug(test.data, maxSize)
 			if test.result != result {
 				t.Errorf("\n[EXPECTED]: %s (%d)\n[GOT]: %s (%d)", test.result, len(test.result), result, len(result))
 			}
 
-			if len(result) > DefaultSlugMaxSize {
-				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", DefaultSlugMaxSize, len(result))
+			if len(result) > maxSize {
+				t.Errorf("Max size exceeded: [EXPECTED]: %d [GOT]: %d", maxSize, len(result))
 			}
 
 			tRunIdempotence(t, test.name, test.data, func(s string) string {
-				return LimitedSlug(s, DefaultSlugMaxSize)
+				return LimitedSlug(s, maxSize)
 			})
 		})
 	}
