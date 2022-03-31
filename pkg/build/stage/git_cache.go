@@ -23,7 +23,7 @@ type GitCacheStage struct {
 func (s *GitCacheStage) SelectSuitableStage(ctx context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
 	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(ctx, c, stages)
 	if err != nil {
-		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
+		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %w", err)
 	}
 	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
 }
@@ -59,7 +59,7 @@ func (s *GitCacheStage) gitMappingsPatchSize(ctx context.Context, c Conveyor, pr
 	for _, gitMapping := range s.gitMappings {
 		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 		if err != nil {
-			return 0, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
+			return 0, fmt.Errorf("unable to get base commit for git mapping %s: %w", gitMapping.GitRepo().GetName(), err)
 		}
 
 		exist, err := gitMapping.GitRepo().IsCommitExists(ctx, commit)

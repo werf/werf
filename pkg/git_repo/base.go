@@ -86,12 +86,12 @@ func (repo *Base) TagCommit(ctx context.Context, branch string) (string, error) 
 func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return "", fmt.Errorf("cannot open repo %q: %s", repoPath, err)
+		return "", fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
 
 	cfg, err := repository.Config()
 	if err != nil {
-		return "", fmt.Errorf("cannot access repo config: %s", err)
+		return "", fmt.Errorf("cannot access repo config: %w", err)
 	}
 
 	if originCfg, hasKey := cfg.Remotes["origin"]; hasKey {
@@ -104,7 +104,7 @@ func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 func (repo *Base) isEmpty(ctx context.Context, repoPath string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return false, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
+		return false, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
 
 	commitIter, err := repository.CommitObjects()
@@ -185,27 +185,27 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
 
 	fromHash, err := newHash(opts.FromCommit)
 	if err != nil {
-		return nil, fmt.Errorf("bad `from` commit hash %q: %s", opts.FromCommit, err)
+		return nil, fmt.Errorf("bad `from` commit hash %q: %w", opts.FromCommit, err)
 	}
 
 	_, err = repository.CommitObject(fromHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad `from` commit %q: %s", opts.FromCommit, err)
+		return nil, fmt.Errorf("bad `from` commit %q: %w", opts.FromCommit, err)
 	}
 
 	toHash, err := newHash(opts.ToCommit)
 	if err != nil {
-		return nil, fmt.Errorf("bad `to` commit hash %q: %s", opts.ToCommit, err)
+		return nil, fmt.Errorf("bad `to` commit hash %q: %w", opts.ToCommit, err)
 	}
 
 	toCommit, err := repository.CommitObject(toHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad `to` commit %q: %s", opts.ToCommit, err)
+		return nil, fmt.Errorf("bad `to` commit %q: %w", opts.ToCommit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(toCommit)
@@ -220,7 +220,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 
 	fileHandler, err := os.OpenFile(tmpFile, os.O_RDWR|os.O_CREATE, 0o755)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open file %s: %s", tmpFile, err)
+		return nil, fmt.Errorf("cannot open file %s: %w", tmpFile, err)
 	}
 
 	var desc *true_git.PatchDescriptor
@@ -231,12 +231,12 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating patch between %q and %q commits: %s", opts.FromCommit, opts.ToCommit, err)
+		return nil, fmt.Errorf("error creating patch between %q and %q commits: %w", opts.FromCommit, opts.ToCommit, err)
 	}
 
 	err = fileHandler.Close()
 	if err != nil {
-		return nil, fmt.Errorf("error creating patch file %s: %s", tmpFile, err)
+		return nil, fmt.Errorf("error creating patch file %s: %w", tmpFile, err)
 	}
 
 	if patch, err := CommonGitDataManager.CreatePatchFile(ctx, repoID, opts, tmpFile, desc); err != nil {
@@ -266,15 +266,15 @@ func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, w
 
 	repository, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return "", fmt.Errorf("cannot open repo at %s: %s", path, err)
+		return "", fmt.Errorf("cannot open repo at %s: %w", path, err)
 	}
 	commitHash, err := newHash(toCommit)
 	if err != nil {
-		return "", fmt.Errorf("bad commit hash %s: %s", toCommit, err)
+		return "", fmt.Errorf("bad commit hash %s: %w", toCommit, err)
 	}
 	v1MergeIntoCommitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return "", fmt.Errorf("bad commit %s: %s", toCommit, err)
+		return "", fmt.Errorf("bad commit %s: %w", toCommit, err)
 	}
 	hasSubmodules, err := HasSubmodulesInCommit(v1MergeIntoCommitObj)
 	if err != nil {
@@ -287,15 +287,15 @@ func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, w
 func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error) {
 	repository, err := git.PlainOpenWithOptions(gitDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo at %s: %s", gitDir, err)
+		return nil, fmt.Errorf("cannot open repo at %s: %w", gitDir, err)
 	}
 	commitHash, err := newHash(commit)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit hash %s: %s", commit, err)
+		return nil, fmt.Errorf("bad commit hash %s: %w", commit, err)
 	}
 	commitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit %s: %s", commit, err)
+		return nil, fmt.Errorf("bad commit %s: %w", commit, err)
 	}
 
 	var res []string
@@ -347,17 +347,17 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
 
 	commitHash, err := newHash(opts.Commit)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit hash %q: %s", opts.Commit, err)
+		return nil, fmt.Errorf("bad commit hash %q: %w", opts.Commit, err)
 	}
 
 	commit, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit %q: %s", opts.Commit, err)
+		return nil, fmt.Errorf("bad commit %q: %w", opts.Commit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(commit)
@@ -372,7 +372,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 
 	fileHandler, err := os.OpenFile(tmpPath, os.O_RDWR|os.O_CREATE, 0o755)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open archive file: %s", err)
+		return nil, fmt.Errorf("cannot open archive file: %w", err)
 	}
 	defer fileHandler.Close()
 
@@ -383,11 +383,11 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating archive for commit %q: %s", opts.Commit, err)
+		return nil, fmt.Errorf("error creating archive for commit %q: %w", opts.Commit, err)
 	}
 
 	if err := fileHandler.Close(); err != nil {
-		return nil, fmt.Errorf("unable to close file %s: %s", tmpPath, err)
+		return nil, fmt.Errorf("unable to close file %s: %w", tmpPath, err)
 	}
 
 	if archive, err := CommonGitDataManager.CreateArchiveFile(ctx, repoID, opts, tmpPath); err != nil {
@@ -400,19 +400,19 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, commit string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return false, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
+		return false, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
 
 	commitHash, err := newHash(commit)
 	if err != nil {
-		return false, fmt.Errorf("bad commit hash %q: %s", commit, err)
+		return false, fmt.Errorf("bad commit hash %q: %w", commit, err)
 	}
 
 	_, err = repository.CommitObject(commitHash)
 	if err == plumbing.ErrObjectNotFound {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("bad commit %q: %s", commit, err)
+		return false, fmt.Errorf("bad commit %q: %w", commit, err)
 	}
 
 	return true, nil
@@ -421,7 +421,7 @@ func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, c
 func (repo *Base) tagsList(repoPath string) ([]string, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
 
 	tags, err := repository.Tags()
@@ -454,7 +454,7 @@ func (repo *Base) tagsList(repoPath string) ([]string, error) {
 func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo %q: %s", repoPath, err)
+		return nil, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
 
 	branches, err := repository.References()
@@ -688,7 +688,7 @@ func (repo *Base) resolveCommitFilePath(ctx context.Context, commit, path string
 	{
 		lsTreeEntry, err := repo.GetCommitTreeEntry(ctx, commit, path)
 		if err != nil {
-			return "", fmt.Errorf("unable to get commit tree entry %q: %s", path, err)
+			return "", fmt.Errorf("unable to get commit tree entry %q: %w", path, err)
 		}
 
 		if debugGiterminismManager() {
@@ -709,7 +709,7 @@ func (repo *Base) resolveCommitFilePath(ctx context.Context, commit, path string
 
 		lsTreeEntry, err := repo.GetCommitTreeEntry(ctx, commit, pathToResolve)
 		if err != nil {
-			return "", fmt.Errorf("unable to get commit tree entry %q: %s", pathToResolve, err)
+			return "", fmt.Errorf("unable to get commit tree entry %q: %w", pathToResolve, err)
 		}
 
 		if debugGiterminismManager() {
@@ -723,7 +723,7 @@ func (repo *Base) resolveCommitFilePath(ctx context.Context, commit, path string
 		case mode == filemode.Symlink:
 			data, err := repo.ReadCommitTreeEntryContent(ctx, commit, pathToResolve)
 			if err != nil {
-				return "", fmt.Errorf("unable to get commit tree entry content %q: %s", pathToResolve, err)
+				return "", fmt.Errorf("unable to get commit tree entry content %q: %w", pathToResolve, err)
 			}
 
 			link := string(data)
@@ -806,12 +806,12 @@ func (repo *Base) checkCommitFileMode(ctx context.Context, commit string, path s
 			return false, nil
 		}
 
-		return false, fmt.Errorf("unable to resolve commit file %q: %s", path, err)
+		return false, fmt.Errorf("unable to resolve commit file %q: %w", path, err)
 	}
 
 	lsTreeEntry, err := repo.GetCommitTreeEntry(ctx, commit, resolvedPath)
 	if err != nil {
-		return false, fmt.Errorf("unable to get commit tree entry %q: %s", resolvedPath, err)
+		return false, fmt.Errorf("unable to get commit tree entry %q: %w", resolvedPath, err)
 	}
 
 	for _, mode := range expectedFileModeList {
@@ -894,7 +894,7 @@ func (repo *Base) ReadCommitFile(ctx context.Context, commit, path string) (data
 func (repo *Base) readCommitFile(ctx context.Context, commit, path string) ([]byte, error) {
 	resolvedPath, err := repo.ResolveCommitFilePath(ctx, commit, path)
 	if err != nil {
-		return nil, fmt.Errorf("unable to resolve commit file %q: %s", path, err)
+		return nil, fmt.Errorf("unable to resolve commit file %q: %w", path, err)
 	}
 
 	return repo.ReadCommitTreeEntryContent(ctx, commit, resolvedPath)
@@ -929,7 +929,7 @@ func (repo *Base) WalkCommitFiles(ctx context.Context, commit string, dir string
 
 	resolvedDir, err := repo.ResolveCommitFilePath(ctx, commit, dir)
 	if err != nil {
-		return fmt.Errorf("unable to resolve commit file %q: %s", dir, err)
+		return fmt.Errorf("unable to resolve commit file %q: %w", dir, err)
 	}
 
 	result, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
@@ -1028,14 +1028,14 @@ func (repo *Base) ListCommitFilesWithGlob(ctx context.Context, commit string, di
 func baseHeadCommitTime(repo gitRepo, ctx context.Context) (*time.Time, error) {
 	headCommitHash, err := repo.HeadCommitHash(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get HEAD hash: %s", err)
+		return nil, fmt.Errorf("unable to get HEAD hash: %w", err)
 	}
 
 	var time *time.Time
 	if err := repo.withRepoHandle(ctx, headCommitHash, func(repoHandle repo_handle.Handle) error {
 		headHash, err := newHash(headCommitHash)
 		if err != nil {
-			return fmt.Errorf("unable to create new Hash object from commit SHA %q: %s", headCommitHash, err)
+			return fmt.Errorf("unable to create new Hash object from commit SHA %q: %w", headCommitHash, err)
 		}
 
 		repo := repoHandle.Repository()
@@ -1045,7 +1045,7 @@ func baseHeadCommitTime(repo gitRepo, ctx context.Context) (*time.Time, error) {
 
 		commit, err := repo.CommitObject(headHash)
 		if err != nil {
-			return fmt.Errorf("unable to get commit object for ref %q: %s", headCommitHash, err)
+			return fmt.Errorf("unable to get commit object for ref %q: %w", headCommitHash, err)
 		}
 
 		time = &commit.Author.When

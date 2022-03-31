@@ -163,9 +163,9 @@ func (bundle *Bundle) ReadFile(filePath string) (bool, []byte, error) {
 
 func writeBundleJsonMap(dataMap map[string]string, path string) error {
 	if data, err := json.Marshal(dataMap); err != nil {
-		return fmt.Errorf("unable to prepare %q data: %s", path, err)
+		return fmt.Errorf("unable to prepare %q data: %w", path, err)
 	} else if err := ioutil.WriteFile(path, append(data, []byte("\n")...), os.ModePerm); err != nil {
-		return fmt.Errorf("unable to write %q: %s", path, err)
+		return fmt.Errorf("unable to write %q: %w", path, err)
 	} else {
 		return nil
 	}
@@ -176,11 +176,11 @@ func readBundleJsonMap(path string) (map[string]string, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("error accessing %q: %s", path, err)
+		return nil, fmt.Errorf("error accessing %q: %w", path, err)
 	} else if data, err := ioutil.ReadFile(path); err != nil {
-		return nil, fmt.Errorf("error reading %q: %s", path, err)
+		return nil, fmt.Errorf("error reading %q: %w", path, err)
 	} else if err := json.Unmarshal(data, &res); err != nil {
-		return nil, fmt.Errorf("error unmarshalling json from %q: %s", path, err)
+		return nil, fmt.Errorf("error unmarshalling json from %q: %w", path, err)
 	} else {
 		return res, nil
 	}

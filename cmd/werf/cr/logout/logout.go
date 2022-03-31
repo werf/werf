@@ -63,11 +63,11 @@ func Logout(ctx context.Context, registry string, opts LogoutOptions) error {
 
 	cli, err := docker.NewClient(filepath.Join(dockerConfigDir, "config.json"))
 	if err != nil {
-		return fmt.Errorf("unable to create auth client: %s", err)
+		return fmt.Errorf("unable to create auth client: %w", err)
 	}
 
 	if err := cli.Logout(ctx, registry); err != nil {
-		return fmt.Errorf("unable to logout from %q: %s", registry, err)
+		return fmt.Errorf("unable to logout from %q: %w", registry, err)
 	}
 
 	logboek.Context(ctx).Default().LogFHighlight("Successful logout\n")

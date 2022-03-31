@@ -103,7 +103,7 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_b
 					logboek.Context(ctx).Info().LogF("Removing mountpoint %q in the container dir: %q\n", mountpoint, filepath.Join(containerRoot, mountpoint))
 
 					if err := os.RemoveAll(filepath.Join(containerRoot, mountpoint)); err != nil {
-						return fmt.Errorf("unable to remove %q: %s", mountpoint, err)
+						return fmt.Errorf("unable to remove %q: %w", mountpoint, err)
 					}
 				}
 

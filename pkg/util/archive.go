@@ -21,7 +21,7 @@ func CreateArchiveBasedOnAnotherOne(ctx context.Context, sourceArchivePath, dest
 	return CreateArchive(destinationArchivePath, func(tw *tar.Writer) error {
 		source, err := os.Open(sourceArchivePath)
 		if err != nil {
-			return fmt.Errorf("unable to open %q: %s", sourceArchivePath, err)
+			return fmt.Errorf("unable to open %q: %w", sourceArchivePath, err)
 		}
 		defer source.Close()
 
@@ -33,7 +33,7 @@ func CreateArchiveBasedOnAnotherOne(ctx context.Context, sourceArchivePath, dest
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				return fmt.Errorf("unable to read archive %q: %s", sourceArchivePath, err)
+				return fmt.Errorf("unable to read archive %q: %w", sourceArchivePath, err)
 			}
 
 			for _, pathToExclude := range pathsToExclude {
@@ -47,11 +47,11 @@ func CreateArchiveBasedOnAnotherOne(ctx context.Context, sourceArchivePath, dest
 			}
 
 			if err := tw.WriteHeader(hdr); err != nil {
-				return fmt.Errorf("unable to write header %q from %q archive to %q: %s", hdr.Name, sourceArchivePath, destinationArchivePath, err)
+				return fmt.Errorf("unable to write header %q from %q archive to %q: %w", hdr.Name, sourceArchivePath, destinationArchivePath, err)
 			}
 
 			if _, err := io.Copy(tw, tr); err != nil {
-				return fmt.Errorf("unable to copy file %q from %q archive to %q: %s", hdr.Name, sourceArchivePath, destinationArchivePath, err)
+				return fmt.Errorf("unable to copy file %q from %q archive to %q: %w", hdr.Name, sourceArchivePath, destinationArchivePath, err)
 			}
 
 			if debugArchiveUtil() {
@@ -65,12 +65,12 @@ func CreateArchiveBasedOnAnotherOne(ctx context.Context, sourceArchivePath, dest
 
 func CreateArchive(archivePath string, f func(tw *tar.Writer) error) error {
 	if err := os.MkdirAll(filepath.Dir(archivePath), 0o777); err != nil {
-		return fmt.Errorf("unable to create dir %q: %s", filepath.Dir(archivePath), err)
+		return fmt.Errorf("unable to create dir %q: %w", filepath.Dir(archivePath), err)
 	}
 
 	file, err := os.Create(archivePath)
 	if err != nil {
-		return fmt.Errorf("unable to create %q: %s", archivePath, err)
+		return fmt.Errorf("unable to create %q: %w", archivePath, err)
 	}
 	defer file.Close()
 
@@ -83,7 +83,7 @@ func CreateArchive(archivePath string, f func(tw *tar.Writer) error) error {
 func CopyFileIntoTar(tw *tar.Writer, tarEntryName string, filePath string) error {
 	stat, err := os.Lstat(filePath)
 	if err != nil {
-		return fmt.Errorf("unable to stat file %q: %s", filePath, err)
+		return fmt.Errorf("unable to stat file %q: %w", filePath, err)
 	}
 
 	if stat.Mode().IsDir() {
@@ -102,7 +102,7 @@ func CopyFileIntoTar(tw *tar.Writer, tarEntryName string, filePath string) error
 	if stat.Mode()&os.ModeSymlink != 0 {
 		linkname, err := os.Readlink(filePath)
 		if err != nil {
-			return fmt.Errorf("unable to read link %q: %s", filePath, err)
+			return fmt.Errorf("unable to read link %q: %w", filePath, err)
 		}
 
 		header.Linkname = linkname
@@ -110,13 +110,13 @@ func CopyFileIntoTar(tw *tar.Writer, tarEntryName string, filePath string) error
 	}
 
 	if err := tw.WriteHeader(header); err != nil {
-		return fmt.Errorf("unable to write tar header for file %s: %s", tarEntryName, err)
+		return fmt.Errorf("unable to write tar header for file %s: %w", tarEntryName, err)
 	}
 
 	if stat.Mode().IsRegular() {
 		f, err := os.Open(filePath)
 		if err != nil {
-			return fmt.Errorf("unable to open file %q: %s", filePath, err)
+			return fmt.Errorf("unable to open file %q: %w", filePath, err)
 		}
 		defer f.Close()
 
@@ -126,7 +126,7 @@ func CopyFileIntoTar(tw *tar.Writer, tarEntryName string, filePath string) error
 		}
 
 		if _, err := tw.Write(data); err != nil {
-			return fmt.Errorf("unable to write data to tar archive from file %q: %s", filePath, err)
+			return fmt.Errorf("unable to write data to tar archive from file %q: %w", filePath, err)
 		}
 	}
 
@@ -160,12 +160,12 @@ func CopyGitIndexEntryIntoTar(tw *tar.Writer, tarEntryName string, entry *index.
 	}
 
 	if err := tw.WriteHeader(header); err != nil {
-		return fmt.Errorf("unable to write tar header for git index entry %s: %s", tarEntryName, err)
+		return fmt.Errorf("unable to write tar header for git index entry %s: %w", tarEntryName, err)
 	}
 
 	if entry.Mode.IsFile() {
 		if _, err := io.Copy(tw, r); err != nil {
-			return fmt.Errorf("unable to write data to tar for git index entry %q: %s", tarEntryName, err)
+			return fmt.Errorf("unable to write data to tar for git index entry %q: %w", tarEntryName, err)
 		}
 	}
 
@@ -180,7 +180,7 @@ func ExtractTar(tarFileReader io.Reader, dstDir string) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("unable to Next() while extracting tar: %s", err)
+			return fmt.Errorf("unable to Next() while extracting tar: %w", err)
 		}
 
 		tarEntryPath := filepath.Join(dstDir, tarEntryHeader.Name)
@@ -189,7 +189,7 @@ func ExtractTar(tarFileReader io.Reader, dstDir string) error {
 		switch tarEntryHeader.Typeflag {
 		case tar.TypeDir:
 			if err = os.MkdirAll(tarEntryPath, tarEntryFileInfo.Mode()); err != nil {
-				return fmt.Errorf("unable to create new dir %q while extracting tar: %s", tarEntryPath, err)
+				return fmt.Errorf("unable to create new dir %q while extracting tar: %w", tarEntryPath, err)
 			}
 		case tar.TypeReg, tar.TypeSymlink, tar.TypeLink, tar.TypeGNULongName, tar.TypeGNULongLink:
 			if err := os.MkdirAll(filepath.Dir(tarEntryPath), os.ModePerm); err != nil {
@@ -198,7 +198,7 @@ func ExtractTar(tarFileReader io.Reader, dstDir string) error {
 
 			file, err := os.OpenFile(tarEntryPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, tarEntryFileInfo.Mode())
 			if err != nil {
-				return fmt.Errorf("unable to create new file %q while extracting tar: %s", tarEntryPath, err)
+				return fmt.Errorf("unable to create new file %q while extracting tar: %w", tarEntryPath, err)
 			}
 			defer file.Close()
 
@@ -219,7 +219,7 @@ func WriteDirAsTar(dir string, w io.Writer) error {
 
 	err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("error accessing %q: %s", path, err)
+			return fmt.Errorf("error accessing %q: %w", path, err)
 		}
 
 		relPath, err := filepath.Rel(dir, path)
@@ -242,7 +242,7 @@ func WriteDirAsTar(dir string, w io.Writer) error {
 
 			err = tarWriter.WriteHeader(header)
 			if err != nil {
-				return fmt.Errorf("could not tar write header for %q: %s", path, err)
+				return fmt.Errorf("could not tar write header for %q: %w", path, err)
 			}
 
 			if debugArchiveUtil() {
@@ -262,21 +262,21 @@ func WriteDirAsTar(dir string, w io.Writer) error {
 
 		err = tarWriter.WriteHeader(header)
 		if err != nil {
-			return fmt.Errorf("could not tar write header for %q: %s", path, err)
+			return fmt.Errorf("could not tar write header for %q: %w", path, err)
 		}
 
 		file, err := os.Open(path)
 		if err != nil {
-			return fmt.Errorf("unable to open %q: %s", path, err)
+			return fmt.Errorf("unable to open %q: %w", path, err)
 		}
 
 		n, err := io.Copy(tarWriter, file)
 		if err != nil {
-			return fmt.Errorf("unable to write %q into tar: %s", path, err)
+			return fmt.Errorf("unable to write %q into tar: %w", path, err)
 		}
 
 		if err := file.Close(); err != nil {
-			return fmt.Errorf("unable to close %q: %s", path, err)
+			return fmt.Errorf("unable to close %q: %w", path, err)
 		}
 
 		if debugArchiveUtil() {
@@ -290,7 +290,7 @@ func WriteDirAsTar(dir string, w io.Writer) error {
 	}
 
 	if err := tarWriter.Close(); err != nil {
-		return fmt.Errorf("unable to close tar writer: %s", err)
+		return fmt.Errorf("unable to close tar writer: %w", err)
 	}
 
 	return nil

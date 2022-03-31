@@ -249,7 +249,7 @@ func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context,
 
 		return nil
 	}(); err != nil {
-		return fmt.Errorf("symlink %q check failed: %s", relPath, err)
+		return fmt.Errorf("symlink %q check failed: %w", relPath, err)
 	}
 
 	return nil

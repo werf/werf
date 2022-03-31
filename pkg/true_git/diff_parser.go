@@ -73,7 +73,7 @@ func (p *diffParser) HandleStdout(data []byte) error {
 
 			err := p.handleDiffLine(line)
 			if err != nil {
-				return fmt.Errorf("error parsing diff line: %s", err)
+				return fmt.Errorf("error parsing diff line: %w", err)
 			}
 
 			continue
@@ -262,7 +262,7 @@ func (p *diffParser) handleDiffBegin(line string) (err error) {
 		if isPathQuoted {
 			pathWithPrefix, err = strconv.Unquote(data.PathWithPrefix)
 			if err != nil {
-				return fmt.Errorf("unable to unquote diff path %#v: %s", data.PathWithPrefix, err)
+				return fmt.Errorf("unable to unquote diff path %#v: %w", data.PathWithPrefix, err)
 			}
 		} else {
 			pathWithPrefix = data.PathWithPrefix

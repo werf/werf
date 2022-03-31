@@ -48,7 +48,7 @@ func (i *LegacyStageImage) GetID() string {
 func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) error {
 	containerLockName := ContainerLockName(i.container.Name())
 	if _, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
-		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
+		return fmt.Errorf("failed to lock %s: %w", containerLockName, err)
 	} else {
 		defer werf.ReleaseHostLock(lock)
 	}
@@ -74,11 +74,11 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 				if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 					return i.introspectBefore(ctx)
 				}); err != nil {
-					return fmt.Errorf("introspect error failed: %s", err)
+					return fmt.Errorf("introspect error failed: %w", err)
 				}
 			} else if options.IntrospectAfterError {
 				if err := i.Commit(ctx); err != nil {
-					return fmt.Errorf("introspect error failed: %s", err)
+					return fmt.Errorf("introspect error failed: %w", err)
 				}
 
 				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
@@ -86,12 +86,12 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 				if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 					return i.Introspect(ctx)
 				}); err != nil {
-					return fmt.Errorf("introspect error failed: %s", err)
+					return fmt.Errorf("introspect error failed: %w", err)
 				}
 			}
 
 			if err := i.container.rm(ctx); err != nil {
-				return fmt.Errorf("introspect error failed: %s", err)
+				return fmt.Errorf("introspect error failed: %w", err)
 			}
 		}
 

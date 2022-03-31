@@ -40,12 +40,12 @@ func RunRsyncServer(ctx context.Context, dockerImageName string, tmpDir string) 
 
 	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get or create stapel container: %s", err)
+		return nil, fmt.Errorf("unable to get or create stapel container: %w", err)
 	}
 
 	secretsFilePath := path.Join(tmpDir, "rsyncd.secrets")
 	if err := ioutil.WriteFile(secretsFilePath, []byte(fmt.Sprintf("%s:%s\n", srv.AuthUser, srv.AuthPassword)), 0o644); err != nil {
-		return nil, fmt.Errorf("unable to write %s: %s", secretsFilePath, err)
+		return nil, fmt.Errorf("unable to write %s: %w", secretsFilePath, err)
 	}
 
 	rsyncConfPath := path.Join(tmpDir, "rsyncd.conf")
@@ -65,7 +65,7 @@ auth users = %s
 secrets file = /.werf/rsyncd.secrets
 strict modes = false
 `, rsyncServerPort, srv.AuthUser)), 0o644); err != nil {
-		return nil, fmt.Errorf("unable to write %s: %s", rsyncConfPath, err)
+		return nil, fmt.Errorf("unable to write %s: %w", rsyncConfPath, err)
 	}
 
 	runArgs := []string{
@@ -94,7 +94,7 @@ strict modes = false
 	logboek.Context(ctx).Debug().LogF("Inspect container %s\n", srv.DockerContainerName)
 
 	if inspect, err := docker.ContainerInspect(ctx, srv.DockerContainerName); err != nil {
-		return nil, fmt.Errorf("unable to inspect import server container %s: %s", srv.DockerContainerName, err)
+		return nil, fmt.Errorf("unable to inspect import server container %s: %w", srv.DockerContainerName, err)
 	} else {
 		if inspect.NetworkSettings == nil {
 			return nil, fmt.Errorf("unable to get import server container %s ip address: no network settings available in inspect", srv.DockerContainerName)
@@ -108,7 +108,7 @@ strict modes = false
 func (srv *RsyncServer) Shutdown(ctx context.Context) error {
 	if output, err := docker.CliRm_RecordedOutput(ctx, "--force", srv.DockerContainerName); err != nil {
 		logboek.Context(ctx).Error().LogF("%s", output)
-		return fmt.Errorf("unable to remove container %s: %s", srv.DockerContainerName, err)
+		return fmt.Errorf("unable to remove container %s: %w", srv.DockerContainerName, err)
 	}
 	return nil
 }

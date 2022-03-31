@@ -21,7 +21,7 @@ func Purge(ctx context.Context, dryRun bool) error {
 func purge(ctx context.Context, dryRun bool) error {
 	tmpFiles, err := ioutil.ReadDir(werf.GetTmpDir())
 	if err != nil {
-		return fmt.Errorf("unable to list tmp files in %s: %s", werf.GetTmpDir(), err)
+		return fmt.Errorf("unable to list tmp files in %s: %w", werf.GetTmpDir(), err)
 	}
 
 	filesToRemove := []string{}
@@ -46,12 +46,12 @@ func purge(ctx context.Context, dryRun bool) error {
 			if runtime.GOOS == "windows" {
 				for _, path := range projectDirsToRemove {
 					if err := os.RemoveAll(path); err != nil {
-						errors = append(errors, fmt.Errorf("unable to remove tmp project dir %s: %s", path, err))
+						errors = append(errors, fmt.Errorf("unable to remove tmp project dir %s: %w", path, err))
 					}
 				}
 			} else {
 				if err := util.RemoveHostDirsWithLinuxContainer(ctx, werf.GetTmpDir(), projectDirsToRemove); err != nil {
-					errors = append(errors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
+					errors = append(errors, fmt.Errorf("unable to remove tmp projects dirs %s: %w", strings.Join(projectDirsToRemove, ", "), err))
 				}
 			}
 		}
@@ -65,7 +65,7 @@ func purge(ctx context.Context, dryRun bool) error {
 		if !dryRun {
 			err := os.RemoveAll(file)
 			if err != nil {
-				errors = append(errors, fmt.Errorf("unable to remove %s: %s", file, err))
+				errors = append(errors, fmt.Errorf("unable to remove %s: %w", file, err))
 			}
 		}
 	}

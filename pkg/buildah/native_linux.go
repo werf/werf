@@ -68,18 +68,18 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		Insecure:  commonOpts.Insecure,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("unable to create BaseBuildah: %s", err)
+		return nil, fmt.Errorf("unable to create BaseBuildah: %w", err)
 	}
 	b.BaseBuildah = *baseBuildah
 
 	storeOpts, err := NewNativeStoreOptions(unshare.GetRootlessUID(), *commonOpts.StorageDriver)
 	if err != nil {
-		return nil, fmt.Errorf("unable to initialize storage opts: %s", err)
+		return nil, fmt.Errorf("unable to initialize storage opts: %w", err)
 	}
 
 	b.Store, err = storage.GetStore(storage.StoreOptions(*storeOpts))
 	if err != nil {
-		return nil, fmt.Errorf("unable to get storage: %s", err)
+		return nil, fmt.Errorf("unable to get storage: %w", err)
 	}
 
 	b.DefaultSystemContext = imgtypes.SystemContext{
@@ -95,7 +95,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		SystemContext: &b.DefaultSystemContext,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error getting runtime from store: %s", err)
+		return nil, fmt.Errorf("error getting runtime from store: %w", err)
 	}
 	b.Runtime = *runtime
 
@@ -106,7 +106,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 func (b *NativeBuildah) Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error) {
 	builder, err := b.getBuilderFromImage(ctx, ref)
 	if err != nil {
-		return nil, fmt.Errorf("error doing inspect: %s", err)
+		return nil, fmt.Errorf("error doing inspect: %w", err)
 	}
 	if builder == nil {
 		return nil, nil
@@ -124,7 +124,7 @@ func (b *NativeBuildah) Tag(_ context.Context, ref, newRef string, opts TagOpts)
 	}
 
 	if err := image.Tag(newRef); err != nil {
-		return fmt.Errorf("error tagging image: %s", err)
+		return fmt.Errorf("error tagging image: %w", err)
 	}
 
 	return nil
@@ -147,11 +147,11 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 
 	imageRef, err := alltransports.ParseImageName(fmt.Sprintf("docker://%s", ref))
 	if err != nil {
-		return fmt.Errorf("error parsing image ref from %q: %s", ref, err)
+		return fmt.Errorf("error parsing image ref from %q: %w", ref, err)
 	}
 
 	if _, _, err = buildah.Push(ctx, ref, imageRef, pushOpts); err != nil {
-		return fmt.Errorf("error pushing image %q: %s", ref, err)
+		return fmt.Errorf("error pushing image %q: %w", ref, err)
 	}
 
 	return nil
@@ -180,7 +180,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []by
 
 	sessionTmpDir, contextTmpDir, dockerfileTmpPath, err := b.prepareBuildFromDockerfile(dockerfile, opts.ContextTar)
 	if err != nil {
-		return "", fmt.Errorf("error preparing for build from dockerfile: %s", err)
+		return "", fmt.Errorf("error preparing for build from dockerfile: %w", err)
 	}
 	defer func() {
 		if err = os.RemoveAll(sessionTmpDir); err != nil {
@@ -191,7 +191,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []by
 
 	imageId, _, err := imagebuildah.BuildDockerfiles(ctx, b.Store, buildOpts, dockerfileTmpPath)
 	if err != nil {
-		return "", fmt.Errorf("unable to build Dockerfile %q:\n%s\n%s", dockerfileTmpPath, errLog.String(), err)
+		return "", fmt.Errorf("unable to build Dockerfile %q:\n%s\n%w", dockerfileTmpPath, errLog.String(), err)
 	}
 
 	return imageId, nil
@@ -200,7 +200,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []by
 func (b *NativeBuildah) Mount(ctx context.Context, container string, opts MountOpts) (string, error) {
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
-		return "", fmt.Errorf("unable to open container %q builder: %s", container, err)
+		return "", fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
 	return builder.Mount("")
@@ -209,7 +209,7 @@ func (b *NativeBuildah) Mount(ctx context.Context, container string, opts MountO
 func (b *NativeBuildah) Umount(ctx context.Context, container string, opts UmountOpts) error {
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
-		return fmt.Errorf("unable to open container %q builder: %s", container, err)
+		return fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
 	return builder.Unmount()
@@ -232,11 +232,11 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
-		return fmt.Errorf("unable to open container %q builder: %s", container, err)
+		return fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
 	if err := builder.Run(command, runOpts); err != nil {
-		return fmt.Errorf("RunCommand failed:\n%s\n%s", stderr.String(), err)
+		return fmt.Errorf("RunCommand failed:\n%s\n%w", stderr.String(), err)
 	}
 
 	return nil
@@ -248,7 +248,7 @@ func (b *NativeBuildah) FromCommand(ctx context.Context, container string, image
 		Container: container,
 	})
 	if err != nil {
-		return "", fmt.Errorf("unable to create builder: %s", err)
+		return "", fmt.Errorf("unable to create builder: %w", err)
 	}
 
 	return builder.Container, builder.Save()
@@ -269,7 +269,7 @@ func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) err
 	}
 
 	if _, err := buildah.Pull(ctx, ref, pullOpts); err != nil {
-		return fmt.Errorf("error pulling image %q: %s", ref, err)
+		return fmt.Errorf("error pulling image %q: %w", ref, err)
 	}
 
 	return nil
@@ -351,7 +351,7 @@ func (b *NativeBuildah) getImage(ref string) (*libimage.Image, error) {
 		ManifestList: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error looking up image %q: %s", ref, err)
+		return nil, fmt.Errorf("error looking up image %q: %w", ref, err)
 	}
 
 	return image, nil
@@ -368,7 +368,7 @@ func (b *NativeBuildah) getBuilderFromImage(ctx context.Context, imgName string)
 	case err != nil && strings.HasSuffix(err.Error(), storage.ErrImageUnknown.Error()):
 		return nil, nil
 	case err != nil:
-		return nil, fmt.Errorf("error getting builder from image %q: %s", imgName, err)
+		return nil, fmt.Errorf("error getting builder from image %q: %w", imgName, err)
 	case builder == nil:
 		panic("error mocking up build configuration")
 	}
@@ -404,10 +404,10 @@ func (b *NativeBuildah) openContainerBuilder(ctx context.Context, container stri
 			Container: container,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("unable to import builder for container %q: %s", container, err)
+			return nil, fmt.Errorf("unable to import builder for container %q: %w", container, err)
 		}
 	case err != nil:
-		return nil, fmt.Errorf("unable to open builder for container %q: %s", container, err)
+		return nil, fmt.Errorf("unable to open builder for container %q: %w", container, err)
 	}
 
 	return builder, err
@@ -424,13 +424,13 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	} else {
 		runRoot, err = storage.GetRootlessRuntimeDir(rootlessUID)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get runtime dir: %s", err)
+			return nil, fmt.Errorf("unable to get runtime dir: %w", err)
 		}
 	}
 
 	home, err := homedir.GetDataHome()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get HOME data dir: %s", err)
+		return nil, fmt.Errorf("unable to get HOME data dir: %w", err)
 	}
 
 	rootlessStoragePath := filepath.Join(home, "containers", "storage")
@@ -446,13 +446,13 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	if driver == StorageDriverOverlay {
 		supportsNative, err := overlay.SupportsNativeOverlay(graphRoot, runRoot)
 		if err != nil {
-			return nil, fmt.Errorf("unable to check native overlayfs support: %s", err)
+			return nil, fmt.Errorf("unable to check native overlayfs support: %w", err)
 		}
 
 		if !supportsNative {
 			fuseOpts, err := GetFuseOverlayfsOptions()
 			if err != nil {
-				return nil, fmt.Errorf("unable to get fuse overlayfs options: %s", err)
+				return nil, fmt.Errorf("unable to get fuse overlayfs options: %w", err)
 			}
 
 			graphDriverOptions = append(graphDriverOptions, fuseOpts...)

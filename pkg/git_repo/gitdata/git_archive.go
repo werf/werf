@@ -35,12 +35,12 @@ func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) 
 	if _, err := os.Stat(cacheVersionRoot); os.IsNotExist(err) {
 		return nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("error accessing dir %q: %s", cacheVersionRoot, err)
+		return nil, fmt.Errorf("error accessing dir %q: %w", cacheVersionRoot, err)
 	}
 
 	files, err := ioutil.ReadDir(cacheVersionRoot)
 	if err != nil {
-		return nil, fmt.Errorf("error reading dir %q: %s", cacheVersionRoot, err)
+		return nil, fmt.Errorf("error reading dir %q: %w", cacheVersionRoot, err)
 	}
 
 	for _, finfo := range files {
@@ -48,13 +48,13 @@ func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) 
 
 		if !finfo.IsDir() {
 			if err := os.RemoveAll(repoArchivesRootDir); err != nil {
-				return nil, fmt.Errorf("unable to remove %q: %s", repoArchivesRootDir, err)
+				return nil, fmt.Errorf("unable to remove %q: %w", repoArchivesRootDir, err)
 			}
 		}
 
 		hashDirs, err := ioutil.ReadDir(repoArchivesRootDir)
 		if err != nil {
-			return nil, fmt.Errorf("error reading repo archives dir %q: %s", repoArchivesRootDir, err)
+			return nil, fmt.Errorf("error reading repo archives dir %q: %w", repoArchivesRootDir, err)
 		}
 
 		for _, finfo := range hashDirs {
@@ -62,13 +62,13 @@ func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) 
 
 			if !finfo.IsDir() {
 				if err := os.RemoveAll(hashDir); err != nil {
-					return nil, fmt.Errorf("unable to remove %q: %s", hashDir, err)
+					return nil, fmt.Errorf("unable to remove %q: %w", hashDir, err)
 				}
 			}
 
 			archivesFiles, err := ioutil.ReadDir(hashDir)
 			if err != nil {
-				return nil, fmt.Errorf("error reading repo archives from dir %q: %s", hashDir, err)
+				return nil, fmt.Errorf("error reading repo archives from dir %q: %w", hashDir, err)
 			}
 
 			for _, finfo := range archivesFiles {
@@ -76,7 +76,7 @@ func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) 
 
 				if finfo.IsDir() {
 					if err := os.RemoveAll(path); err != nil {
-						return nil, fmt.Errorf("unable to remove %q: %s", path, err)
+						return nil, fmt.Errorf("unable to remove %q: %w", path, err)
 					}
 				}
 
@@ -88,10 +88,10 @@ func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) 
 				res = append(res, desc)
 
 				if data, err := ioutil.ReadFile(path); err != nil {
-					return nil, fmt.Errorf("error reading metadata file %q: %s", path, err)
+					return nil, fmt.Errorf("error reading metadata file %q: %w", path, err)
 				} else {
 					if err := json.Unmarshal(data, &desc.Metadata); err != nil {
-						return nil, fmt.Errorf("error unmarshalling json from %q: %s", path, err)
+						return nil, fmt.Errorf("error unmarshalling json from %q: %w", path, err)
 					}
 				}
 
@@ -103,7 +103,7 @@ func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) 
 						continue
 					}
 
-					return nil, fmt.Errorf("error accessing %q: %s", archivePath, err)
+					return nil, fmt.Errorf("error accessing %q: %w", archivePath, err)
 				}
 
 				desc.ArchivePath = archivePath

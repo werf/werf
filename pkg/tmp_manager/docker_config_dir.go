@@ -35,7 +35,7 @@ func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string
 			destination := filepath.Join(newDir, file.Name())
 			err := copy.Copy(source, destination)
 			if err != nil {
-				return "", fmt.Errorf("unable to copy %q to %q: %s", source, destination, err)
+				return "", fmt.Errorf("unable to copy %q to %q: %w", source, destination, err)
 			}
 		}
 	}

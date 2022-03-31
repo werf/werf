@@ -42,7 +42,7 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 
 	_, err := runtime.buildah.FromCommand(ctx, containerID, baseImage, buildah.FromCommandOpts(runtime.getBuildahCommonOpts(ctx, true)))
 	if err != nil {
-		return "", fmt.Errorf("unable to create container using base image %q: %s", baseImage, err)
+		return "", fmt.Errorf("unable to create container using base image %q: %w", baseImage, err)
 	}
 
 	// TODO(stapel-to-buildah): cleanup orphan build containers in werf-host-cleanup procedure
@@ -52,13 +52,13 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 		err := func() error {
 			containerRoot, err := runtime.buildah.Mount(ctx, containerID, buildah.MountOpts(runtime.getBuildahCommonOpts(ctx, true)))
 			if err != nil {
-				return fmt.Errorf("unable to mount container %q root dir: %s", containerID, err)
+				return fmt.Errorf("unable to mount container %q root dir: %w", containerID, err)
 			}
 			defer runtime.buildah.Umount(ctx, containerRoot, buildah.UmountOpts(runtime.getBuildahCommonOpts(ctx, true)))
 
 			for _, action := range opts.PrepareContainerActions {
 				if err := action.PrepareContainer(containerRoot); err != nil {
-					return fmt.Errorf("unable to prepare container in %q: %s", containerRoot, err)
+					return fmt.Errorf("unable to prepare container in %q: %w", containerRoot, err)
 				}
 			}
 
@@ -92,7 +92,7 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 			CommonOpts: runtime.getBuildahCommonOpts(ctx, false),
 			Mounts:     mounts,
 		}); err != nil {
-			return "", fmt.Errorf("unable to run %q: %s", cmd, err)
+			return "", fmt.Errorf("unable to run %q: %w", cmd, err)
 		}
 	}
 
@@ -101,7 +101,7 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 		CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
 		Labels:     opts.Labels,
 	}); err != nil {
-		return "", fmt.Errorf("unable to set container %q config: %s", containerID, err)
+		return "", fmt.Errorf("unable to set container %q config: %w", containerID, err)
 	}
 
 	// TODO(stapel-to-buildah): Save container name as builtID. There is no need to commit an image here,
@@ -109,7 +109,7 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 	logboek.Context(ctx).Debug().LogF("committing container %q\n", containerID)
 	imgID, err := runtime.buildah.Commit(ctx, containerID, buildah.CommitOpts{CommonOpts: runtime.getBuildahCommonOpts(ctx, true)})
 	if err != nil {
-		return "", fmt.Errorf("unable to commit container %q: %s", containerID, err)
+		return "", fmt.Errorf("unable to commit container %q: %w", containerID, err)
 	}
 
 	return imgID, nil
@@ -119,7 +119,7 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 func (runtime *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	inspect, err := runtime.buildah.Inspect(ctx, ref)
 	if err != nil {
-		return nil, fmt.Errorf("error getting buildah inspect of %q: %s", ref, err)
+		return nil, fmt.Errorf("error getting buildah inspect of %q: %w", ref, err)
 	}
 	if inspect == nil {
 		return nil, nil
@@ -199,11 +199,11 @@ func (runtime *BuildahBackend) RefreshImageObject(ctx context.Context, img Legac
 
 func (runtime *BuildahBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
 	if err := runtime.Pull(ctx, img.Name(), PullOpts{}); err != nil {
-		return fmt.Errorf("unable to pull image %s: %s", img.Name(), err)
+		return fmt.Errorf("unable to pull image %s: %w", img.Name(), err)
 	}
 
 	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
-		return fmt.Errorf("unable to get inspect of image %s: %s", img.Name(), err)
+		return fmt.Errorf("unable to get inspect of image %s: %w", img.Name(), err)
 	} else {
 		img.SetInfo(info)
 	}
@@ -214,7 +214,7 @@ func (runtime *BuildahBackend) PullImageFromRegistry(ctx context.Context, img Le
 func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging image %s by name %s", img.Name(), newImageName)).DoError(func() error {
 		if err := runtime.Tag(ctx, img.Name(), newImageName, TagOpts{}); err != nil {
-			return fmt.Errorf("unable to tag image %s by name %s: %s", img.Name(), newImageName, err)
+			return fmt.Errorf("unable to tag image %s by name %s: %w", img.Name(), newImageName, err)
 		}
 		return nil
 	}); err != nil {
@@ -224,7 +224,7 @@ func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 	if removeOldName {
 		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing old image tag %s", img.Name())).DoError(func() error {
 			if err := runtime.Rmi(ctx, img.Name(), RmiOpts{}); err != nil {
-				return fmt.Errorf("unable to remove image %q: %s", img.Name(), err)
+				return fmt.Errorf("unable to remove image %q: %w", img.Name(), err)
 			}
 			return nil
 		}); err != nil {
@@ -252,7 +252,7 @@ func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 func (runtime *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
 		if err := runtime.Rmi(ctx, img.Name(), RmiOpts{}); err != nil {
-			return fmt.Errorf("unable to remove image %q: %s", img.Name(), err)
+			return fmt.Errorf("unable to remove image %q: %w", img.Name(), err)
 		}
 		return nil
 	}); err != nil {

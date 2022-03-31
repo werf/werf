@@ -56,7 +56,7 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 
 	gitDir, err := true_git.ResolveRepoDir(ctx, filepath.Join(workTreeDir, git.GitDirName))
 	if err != nil {
-		return l, fmt.Errorf("unable to resolve git repo dir for %s: %s", workTreeDir, err)
+		return l, fmt.Errorf("unable to resolve git repo dir for %s: %w", workTreeDir, err)
 	}
 
 	l, err = newLocal(ctx, name, workTreeDir, gitDir)
@@ -95,7 +95,7 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 func newLocal(ctx context.Context, name, workTreeDir, gitDir string) (l *Local, err error) {
 	headCommit, err := getHeadCommit(ctx, workTreeDir)
 	if err != nil {
-		return l, fmt.Errorf("unable to get git repo head commit: %s", err)
+		return l, fmt.Errorf("unable to get git repo head commit: %w", err)
 	}
 
 	l = &Local{
@@ -119,7 +119,7 @@ func (repo *Local) GetWorkTreeDir() string {
 func (repo *Local) PlainOpen() (*git.Repository, error) {
 	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open git work tree %q: %s", repo.WorkTreeDir, err)
+		return nil, fmt.Errorf("cannot open git work tree %q: %w", repo.WorkTreeDir, err)
 	}
 
 	return repository, nil
@@ -128,12 +128,12 @@ func (repo *Local) PlainOpen() (*git.Repository, error) {
 func (repo *Local) SyncWithOrigin(ctx context.Context) error {
 	isShallow, err := repo.IsShallowClone(ctx)
 	if err != nil {
-		return fmt.Errorf("check shallow clone failed: %s", err)
+		return fmt.Errorf("check shallow clone failed: %w", err)
 	}
 
 	remoteOriginUrl, err := repo.RemoteOriginUrl(ctx)
 	if err != nil {
-		return fmt.Errorf("get remote origin failed: %s", err)
+		return fmt.Errorf("get remote origin failed: %w", err)
 	}
 
 	if remoteOriginUrl == "" {
@@ -149,7 +149,7 @@ func (repo *Local) SyncWithOrigin(ctx context.Context) error {
 		}
 
 		if err := true_git.Fetch(ctx, repo.WorkTreeDir, fetchOptions); err != nil {
-			return fmt.Errorf("fetch failed: %s", err)
+			return fmt.Errorf("fetch failed: %w", err)
 		}
 
 		return nil
@@ -159,12 +159,12 @@ func (repo *Local) SyncWithOrigin(ctx context.Context) error {
 func (repo *Local) FetchOrigin(ctx context.Context) error {
 	isShallow, err := repo.IsShallowClone(ctx)
 	if err != nil {
-		return fmt.Errorf("check shallow clone failed: %s", err)
+		return fmt.Errorf("check shallow clone failed: %w", err)
 	}
 
 	remoteOriginUrl, err := repo.RemoteOriginUrl(ctx)
 	if err != nil {
-		return fmt.Errorf("get remote origin failed: %s", err)
+		return fmt.Errorf("get remote origin failed: %w", err)
 	}
 
 	if remoteOriginUrl == "" {
@@ -178,7 +178,7 @@ func (repo *Local) FetchOrigin(ctx context.Context) error {
 		}
 
 		if err := true_git.Fetch(ctx, repo.WorkTreeDir, fetchOptions); err != nil {
-			return fmt.Errorf("fetch failed: %s", err)
+			return fmt.Errorf("fetch failed: %w", err)
 		}
 
 		return nil
@@ -462,12 +462,12 @@ func (repo *Local) initRepoHandleBackedByWorkTree(ctx context.Context, commit st
 
 	commitHash, err := newHash(commit)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
+		return nil, fmt.Errorf("bad commit hash %q: %w", commit, err)
 	}
 
 	commitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit %q: %s", commit, err)
+		return nil, fmt.Errorf("bad commit %q: %w", commit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(commitObj)

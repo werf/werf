@@ -35,7 +35,7 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 		Namespace:         namespace,
 	})
 	if err != nil {
-		return fmt.Errorf("error creating kube config getter: %s", err)
+		return fmt.Errorf("error creating kube config getter: %w", err)
 	}
 
 	*envSettings.GetConfigP() = configGetter
@@ -52,7 +52,7 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 
 	helmDriver := os.Getenv("HELM_DRIVER")
 	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Context(ctx).Debug().LogF); err != nil {
-		return fmt.Errorf("action config init failed: %s", err)
+		return fmt.Errorf("action config init failed: %w", err)
 	}
 	if helmDriver == "memory" {
 		loadReleasesInMemory(envSettings, actionConfig)

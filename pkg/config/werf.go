@@ -343,7 +343,7 @@ func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
 
 	for _, imageOrArtifactName := range imageAndArtifactNames {
 		if err, errImagesStack := c.validateImageInfiniteLoop(imageOrArtifactName, []string{}); err != nil {
-			return fmt.Errorf("%s: %s", err, strings.Join(errImagesStack, " -> "))
+			return fmt.Errorf("%w: %s", err, strings.Join(errImagesStack, " -> "))
 		}
 	}
 

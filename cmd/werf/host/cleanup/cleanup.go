@@ -41,7 +41,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-				return fmt.Errorf("initialization error: %s", err)
+				return fmt.Errorf("initialization error: %w", err)
 			}
 
 			return common.WithContext(true, func(ctx context.Context) error {
@@ -96,7 +96,7 @@ func runCleanup(ctx context.Context) error {
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {

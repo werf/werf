@@ -27,7 +27,7 @@ func NewConfig(ctx context.Context, fileReader fileReader) (c Config, err error)
 
 	err = processWithOpenAPISchema(&data)
 	if err != nil {
-		return c, fmt.Errorf("the giterminism config validation failed: %s", err)
+		return c, fmt.Errorf("the giterminism config validation failed: %w", err)
 	}
 
 	if err := json.Unmarshal(data, &c); err != nil {

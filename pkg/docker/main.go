@@ -58,7 +58,7 @@ func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool, plat
 
 	err := os.Setenv("DOCKER_CONFIG", dockerConfigDir)
 	if err != nil {
-		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %s", dockerConfigDir, err)
+		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %w", dockerConfigDir, err)
 	}
 
 	isDebug = os.Getenv("WERF_DEBUG_DOCKER") == "1"
@@ -163,7 +163,7 @@ func cliWithCustomOptions(ctx context.Context, options []command.DockerCliOption
 func NewContext(ctx context.Context) (context.Context, error) {
 	c, err := newDockerCli(defaultCliOptions(ctx))
 	if err != nil {
-		return nil, fmt.Errorf("unable to create docker cli: %s", err)
+		return nil, fmt.Errorf("unable to create docker cli: %w", err)
 	}
 
 	newCtx := context.WithValue(ctx, ctxDockerCliKey, c)
@@ -189,7 +189,7 @@ func callCliWithProvidedOutput(ctx context.Context, stdoutWriter, stderrWriter i
 		},
 		commandCaller,
 	); err != nil {
-		return fmt.Errorf("docker failed:\n%s\n---\n%s", errOutput.String(), err)
+		return fmt.Errorf("docker failed:\n%s\n---\n%w", errOutput.String(), err)
 	}
 
 	return nil

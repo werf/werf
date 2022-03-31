@@ -21,7 +21,7 @@ func IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string, gi
 			}
 		}
 
-		return false, fmt.Errorf("git merge-base command failed: %s", err)
+		return false, fmt.Errorf("git merge-base command failed: %w", err)
 	}
 
 	return true, nil

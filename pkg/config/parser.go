@@ -80,7 +80,7 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 
 	err = writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath)
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to write rendered config to %s: %s", werfConfigRenderPath, err)
+		return "", nil, fmt.Errorf("unable to write rendered config to %s: %w", werfConfigRenderPath, err)
 	}
 
 	docs, err := splitByDocs(werfConfigRenderContent, werfConfigRenderPath)
@@ -96,7 +96,7 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 	if meta == nil {
 		defaultProjectName, err := GetDefaultProjectName(ctx, giterminismManager)
 		if err != nil {
-			return "", nil, fmt.Errorf("failed to get default project name: %s", err)
+			return "", nil, fmt.Errorf("failed to get default project name: %w", err)
 		}
 
 		format := "meta config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132) is not defined: add following example config section with required fields, e.g:\n\n" +
@@ -129,7 +129,7 @@ func GetDefaultProjectName(ctx context.Context, giterminismManager giterminism_m
 	} else if remoteOriginUrl != "" {
 		ep, err := transport.NewEndpoint(remoteOriginUrl)
 		if err != nil {
-			return "", fmt.Errorf("bad url %q: %s", remoteOriginUrl, err)
+			return "", fmt.Errorf("bad url %q: %w", remoteOriginUrl, err)
 		}
 
 		gitName := strings.TrimSuffix(ep.Path, ".git")
@@ -204,12 +204,12 @@ func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWe
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to get HEAD commit hash: %s", err)
+		return "", "", fmt.Errorf("unable to get HEAD commit hash: %w", err)
 	}
 
 	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to get HEAD commit time: %s", err)
+		return "", "", fmt.Errorf("unable to get HEAD commit time: %w", err)
 	}
 
 	templateData["Commit"] = map[string]interface{}{

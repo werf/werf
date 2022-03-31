@@ -81,12 +81,12 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 
 func runSecretDecrypt(ctx context.Context, filePath string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {

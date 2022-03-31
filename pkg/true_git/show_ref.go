@@ -27,7 +27,7 @@ type ShowRefResult struct {
 func ShowRef(ctx context.Context, repoDir string) (*ShowRefResult, error) {
 	headRefCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "show-ref", "--head")
 	if err := headRefCmd.Run(ctx); err != nil {
-		return nil, fmt.Errorf("git get refs from HEAD command failed: %s", err)
+		return nil, fmt.Errorf("git get refs from HEAD command failed: %w", err)
 	}
 
 	res := &ShowRefResult{}

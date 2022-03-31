@@ -127,9 +127,9 @@ func (r *azureCr) azRun(ctx context.Context, args ...string) error {
 
 	if err != nil {
 		return fmt.Errorf(
-			"command: %s\n%s\nerror: %s", command,
+			"command: %s\n%s\nerror: %w", command,
 			strings.TrimSpace(string(output)),
-			err.Error(),
+			err,
 		)
 	}
 

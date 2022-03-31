@@ -47,7 +47,7 @@ func (repo *Remote) GetWorkTreeDir() string {
 
 func (repo *Remote) ValidateEndpoint() error {
 	if ep, err := transport.NewEndpoint(repo.Url); err != nil {
-		return fmt.Errorf("bad url %q: %s", repo.Url, err)
+		return fmt.Errorf("bad url %q: %w", repo.Url, err)
 	} else {
 		repo.Endpoint = ep
 	}
@@ -117,7 +117,7 @@ func (repo *Remote) isCloneExists() (bool, error) {
 	}
 
 	if !os.IsNotExist(err) {
-		return false, fmt.Errorf("cannot clone git repo: %s", err)
+		return false, fmt.Errorf("cannot clone git repo: %w", err)
 	}
 
 	return false, nil
@@ -127,7 +127,7 @@ func (repo *Remote) updateLastAccessAt(ctx context.Context, repoPath string) err
 	path := filepath.Join(repoPath, "last_access_at")
 
 	if _, lock, err := werf.AcquireHostLock(ctx, path, lockgate.AcquireOptions{}); err != nil {
-		return fmt.Errorf("error locking path %q: %s", path, err)
+		return fmt.Errorf("error locking path %q: %w", path, err)
 	} else {
 		defer werf.ReleaseHostLock(lock)
 	}
@@ -154,7 +154,7 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 	}
 	if exists {
 		if err := repo.updateLastAccessAt(ctx, repo.GetClonePath()); err != nil {
-			return false, fmt.Errorf("error updating last access at timestamp: %s", err)
+			return false, fmt.Errorf("error updating last access at timestamp: %w", err)
 		}
 		return false, nil
 	}
@@ -166,7 +166,7 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		}
 		if exists {
 			if err := repo.updateLastAccessAt(ctx, repo.GetClonePath()); err != nil {
-				return fmt.Errorf("error updating last access at timestamp: %s", err)
+				return fmt.Errorf("error updating last access at timestamp: %w", err)
 			}
 
 			return nil
@@ -175,13 +175,13 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		logboek.Context(ctx).Default().LogFDetails("Clone %s\n", repo.Url)
 
 		if err := os.MkdirAll(filepath.Dir(repo.GetClonePath()), 0o755); err != nil {
-			return fmt.Errorf("unable to create dir %s: %s", filepath.Dir(repo.GetClonePath()), err)
+			return fmt.Errorf("unable to create dir %s: %w", filepath.Dir(repo.GetClonePath()), err)
 		}
 
 		tmpPath := fmt.Sprintf("%s.tmp", repo.GetClonePath())
 		// Remove previously created possibly existing dir
 		if err := os.RemoveAll(tmpPath); err != nil {
-			return fmt.Errorf("unable to prepare tmp path %s: failed to remove: %s", tmpPath, err)
+			return fmt.Errorf("unable to prepare tmp path %s: failed to remove: %w", tmpPath, err)
 		}
 		// Ensure cleanup on failure
 		defer os.RemoveAll(tmpPath)
@@ -191,15 +191,15 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
 		if err != nil {
-			return fmt.Errorf("unable to clone repo: %s", err)
+			return fmt.Errorf("unable to clone repo: %w", err)
 		}
 
 		if err := repo.updateLastAccessAt(ctx, tmpPath); err != nil {
-			return fmt.Errorf("error updating last access at timestamp: %s", err)
+			return fmt.Errorf("error updating last access at timestamp: %w", err)
 		}
 
 		if err := os.Rename(tmpPath, repo.GetClonePath()); err != nil {
-			return fmt.Errorf("rename %s to %s failed: %s", tmpPath, repo.GetClonePath(), err)
+			return fmt.Errorf("rename %s to %s failed: %w", tmpPath, repo.GetClonePath(), err)
 		}
 
 		return nil
@@ -219,7 +219,7 @@ func (repo *Remote) FetchOrigin(ctx context.Context) error {
 
 	cfg, err := ini.Load(cfgPath)
 	if err != nil {
-		return fmt.Errorf("cannot load repo %q config: %s", repo.String(), err)
+		return fmt.Errorf("cannot load repo %q config: %w", repo.String(), err)
 	}
 
 	remoteName := "origin"
@@ -229,21 +229,21 @@ func (repo *Remote) FetchOrigin(ctx context.Context) error {
 		oldUrlKey.SetValue(repo.Url)
 		err := cfg.SaveTo(cfgPath)
 		if err != nil {
-			return fmt.Errorf("cannot update url of repo %q: %s", repo.String(), err)
+			return fmt.Errorf("cannot update url of repo %q: %w", repo.String(), err)
 		}
 	}
 
 	return repo.withRemoteRepoLock(ctx, func() error {
 		rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 		if err != nil {
-			return fmt.Errorf("cannot open repo: %s", err)
+			return fmt.Errorf("cannot open repo: %w", err)
 		}
 
 		logboek.Context(ctx).Default().LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
-			return fmt.Errorf("cannot fetch remote %q of repo %q: %s", remoteName, repo.String(), err)
+			return fmt.Errorf("cannot fetch remote %q of repo %q: %w", remoteName, repo.String(), err)
 		}
 
 		return nil
@@ -287,7 +287,7 @@ func (repo *Remote) LatestBranchCommit(ctx context.Context, branch string) (stri
 
 	rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return "", fmt.Errorf("cannot open repo: %s", err)
+		return "", fmt.Errorf("cannot open repo: %w", err)
 	}
 
 	res, err := repo.findReference(rawRepo, fmt.Sprintf("refs/remotes/origin/%s", branch))
@@ -308,12 +308,12 @@ func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 
 	rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return "", fmt.Errorf("cannot open repo: %s", err)
+		return "", fmt.Errorf("cannot open repo: %w", err)
 	}
 
 	ref, err := rawRepo.Tag(tag)
 	if err != nil {
-		return "", fmt.Errorf("bad tag %q of repo %s: %s", tag, repo.String(), err)
+		return "", fmt.Errorf("bad tag %q of repo %s: %w", tag, repo.String(), err)
 	}
 
 	var res string
@@ -326,7 +326,7 @@ func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 	case plumbing.ErrObjectNotFound:
 		res = ref.Hash().String()
 	default:
-		return "", fmt.Errorf("bad tag %q of repo %s: %s", tag, repo.String(), err)
+		return "", fmt.Errorf("bad tag %q of repo %s: %w", tag, repo.String(), err)
 	}
 
 	logboek.Context(ctx).Info().LogF("Using commit %q of repo %q tag %q\n", res, repo.String(), tag)
@@ -385,17 +385,17 @@ func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit s
 
 	repository, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, fmt.Errorf("cannot open git repository %q: %s", repo.GetClonePath(), err)
+		return nil, fmt.Errorf("cannot open git repository %q: %w", repo.GetClonePath(), err)
 	}
 
 	commitHash, err := newHash(commit)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit hash %q: %s", commit, err)
+		return nil, fmt.Errorf("bad commit hash %q: %w", commit, err)
 	}
 
 	commitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return nil, fmt.Errorf("bad commit %q: %s", commit, err)
+		return nil, fmt.Errorf("bad commit %q: %w", commit, err)
 	}
 
 	hasSubmodules, err := HasSubmodulesInCommit(commitObj)

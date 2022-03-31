@@ -95,7 +95,7 @@ func Login(ctx context.Context, registry string, opts LoginOptions) error {
 
 	cli, err := docker.NewClient(filepath.Join(dockerConfigDir, "config.json"))
 	if err != nil {
-		return fmt.Errorf("unable to create oras auth client: %s", err)
+		return fmt.Errorf("unable to create oras auth client: %w", err)
 	}
 
 	if opts.Username == "" {
@@ -112,12 +112,12 @@ func Login(ctx context.Context, registry string, opts LoginOptions) error {
 		if terminal.IsTerminal(int(os.Stdin.Fd())) {
 			bytePassword, err = secret_common.InputFromInteractiveStdin("Password: ")
 			if err != nil {
-				return fmt.Errorf("error reading password from interactive stdin: %s", err)
+				return fmt.Errorf("error reading password from interactive stdin: %w", err)
 			}
 		} else {
 			bytePassword, err = secret_common.InputFromStdin()
 			if err != nil {
-				return fmt.Errorf("error reading password from stdin: %s", err)
+				return fmt.Errorf("error reading password from stdin: %w", err)
 			}
 		}
 
@@ -136,7 +136,7 @@ func Login(ctx context.Context, registry string, opts LoginOptions) error {
 		settings.Insecure = opts.InsecureRegistry
 		settings.UserAgent = fmt.Sprintf("werf %s", werf.Version)
 	}); err != nil {
-		return fmt.Errorf("unable to login into %q: %s", registry, err)
+		return fmt.Errorf("unable to login into %q: %w", registry, err)
 	}
 
 	logboek.Context(ctx).Default().LogFHighlight("Successful login\n")

@@ -52,7 +52,7 @@ func InputFromInteractiveStdin(prompt string) ([]byte, error) {
 	prepareTerminal := func() (func() error, error) {
 		state, err := term.SetRawTerminal(os.Stdin.Fd())
 		if err != nil {
-			return nil, fmt.Errorf("unable to put terminal into raw mode: %s", err)
+			return nil, fmt.Errorf("unable to put terminal into raw mode: %w", err)
 		}
 
 		restored := false
@@ -78,7 +78,7 @@ func InputFromInteractiveStdin(prompt string) ([]byte, error) {
 	data, err = terminal.ReadPassword(int(os.Stdin.Fd()))
 
 	if err := restoreTerminal(); err != nil {
-		return nil, fmt.Errorf("unable to restore terminal: %s", err)
+		return nil, fmt.Errorf("unable to restore terminal: %w", err)
 	}
 
 	if isStdoutTerminal {

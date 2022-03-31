@@ -101,7 +101,7 @@ func NewMigrate2To3Cmd() *cobra.Command {
 
 func runMigrate2To3(ctx context.Context) error {
 	if err := werf.Init(*migrate2To3CommonCmdData.TmpDir, *migrate2To3CommonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	common.SetupOndemandKubeInitializer(*migrate2To3CommonCmdData.KubeContext, *migrate2To3CommonCmdData.KubeConfig, *migrate2To3CommonCmdData.KubeConfigBase64, *migrate2To3CommonCmdData.KubeConfigPathMergeList)
@@ -133,7 +133,7 @@ func runMigrate2To3(ctx context.Context) error {
 
 	helmRegistryClientHandler, err := common.NewHelmRegistryClientHandle(ctx, &migrate2To3CommonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to create helm registry client: %s", err)
+		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
 	actionConfig := new(action.Configuration)

@@ -13,56 +13,56 @@ func DeployedDockerImages(kubernetesClient kubernetes.Interface, kubernetesNames
 
 	images, err := getPodsImages(kubernetesClient, kubernetesNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get Pods images: %s", err)
+		return nil, fmt.Errorf("cannot get Pods images: %w", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getReplicationControllersImages(kubernetesClient, kubernetesNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get ReplicationControllers images: %s", err)
+		return nil, fmt.Errorf("cannot get ReplicationControllers images: %w", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getDeploymentsImages(kubernetesClient, kubernetesNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get Deployments images: %s", err)
+		return nil, fmt.Errorf("cannot get Deployments images: %w", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getStatefulSetsImages(kubernetesClient, kubernetesNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get StatefulSets images: %s", err)
+		return nil, fmt.Errorf("cannot get StatefulSets images: %w", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getDaemonSetsImages(kubernetesClient, kubernetesNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get DaemonSets images: %s", err)
+		return nil, fmt.Errorf("cannot get DaemonSets images: %w", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getReplicaSetsImages(kubernetesClient, kubernetesNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get ReplicaSets images: %s", err)
+		return nil, fmt.Errorf("cannot get ReplicaSets images: %w", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getCronJobsImages(kubernetesClient, kubernetesNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get CronJobs images: %s", err)
+		return nil, fmt.Errorf("cannot get CronJobs images: %w", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getJobsImages(kubernetesClient, kubernetesNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get Jobs images: %s", err)
+		return nil, fmt.Errorf("cannot get Jobs images: %w", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)

@@ -144,7 +144,7 @@ func runPublish(ctx context.Context) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
@@ -155,7 +155,7 @@ func runPublish(ctx context.Context) error {
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -196,24 +196,24 @@ func runPublish(ctx context.Context) error {
 
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	projectName := werfConfig.Meta.Project
 
 	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
 	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %s", err)
+		return fmt.Errorf("getting helm chart dir failed: %w", err)
 	}
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
+		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+		return fmt.Errorf("cannot initialize ssh agent: %w", err)
 	}
 	defer func() {
 		err := ssh_agent.Terminate()
@@ -345,12 +345,12 @@ func runPublish(ctx context.Context) error {
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
-		return fmt.Errorf("getting HEAD commit hash failed: %s", err)
+		return fmt.Errorf("getting HEAD commit hash failed: %w", err)
 	}
 
 	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
 	if err != nil {
-		return fmt.Errorf("getting HEAD commit time failed: %s", err)
+		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
 	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
@@ -359,7 +359,7 @@ func runPublish(ctx context.Context) error {
 		CommitHash:    headHash,
 		CommitDate:    headTime,
 	}); err != nil {
-		return fmt.Errorf("error creating service values: %s", err)
+		return fmt.Errorf("error creating service values: %w", err)
 	} else {
 		wc.SetServiceValues(vals)
 	}
@@ -399,7 +399,7 @@ func runPublish(ctx context.Context) error {
 
 	bundle, err := wc.CreateNewBundle(ctx, bundleTmpDir, chartVersion, vals)
 	if err != nil {
-		return fmt.Errorf("unable to create bundle: %s", err)
+		return fmt.Errorf("unable to create bundle: %w", err)
 	}
 
 	return bundles.Publish(ctx, bundle, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlesRegistryClient)

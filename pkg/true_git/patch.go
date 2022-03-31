@@ -74,12 +74,12 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 
 	gitDir, err = filepath.Abs(gitDir)
 	if err != nil {
-		return nil, fmt.Errorf("bad git dir %s: %s", gitDir, err)
+		return nil, fmt.Errorf("bad git dir %s: %w", gitDir, err)
 	}
 
 	workTreeCacheDir, err = filepath.Abs(workTreeCacheDir)
 	if err != nil {
-		return nil, fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
+		return nil, fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 	}
 
 	if withSubmodules && workTreeCacheDir == "" {
@@ -109,7 +109,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 	if withSubmodules {
 		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules)
 		if err != nil {
-			return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.ToCommit, err)
+			return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %w", workTreeCacheDir, opts.ToCommit, err)
 		}
 
 		gitArgs := commonGitOpts
@@ -141,16 +141,16 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, fmt.Errorf("error creating git diff stdout pipe: %s", err)
+		return nil, fmt.Errorf("error creating git diff stdout pipe: %w", err)
 	}
 
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		return nil, fmt.Errorf("error creating git diff stderr pipe: %s", err)
+		return nil, fmt.Errorf("error creating git diff stderr pipe: %w", err)
 	}
 
 	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("error starting git diff: %s", err)
+		return nil, fmt.Errorf("error starting git diff: %w", err)
 	}
 
 	outputErrChan := make(chan error)
@@ -209,7 +209,7 @@ WaitForData:
 	for {
 		select {
 		case err := <-outputErrChan:
-			return nil, fmt.Errorf("error getting git diff output: %s\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
+			return nil, fmt.Errorf("error getting git diff output: %w\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 		case stdoutData := <-stdoutChan:
 			if err := p.HandleStdout(stdoutData); err != nil {
 				return nil, err
@@ -224,7 +224,7 @@ WaitForData:
 	}
 
 	if err := cmd.Wait(); err != nil {
-		return nil, fmt.Errorf("git diff error: %s\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
+		return nil, fmt.Errorf("git diff error: %w\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 	}
 
 	desc := &PatchDescriptor{
@@ -260,14 +260,14 @@ func consumePipeOutput(pipe io.ReadCloser, handleChunk func(data []byte) error) 
 		if err == io.EOF {
 			err := pipe.Close()
 			if err != nil {
-				return fmt.Errorf("error closing pipe: %s", err)
+				return fmt.Errorf("error closing pipe: %w", err)
 			}
 
 			return nil
 		}
 
 		if err != nil {
-			return fmt.Errorf("error reading pipe: %s", err)
+			return fmt.Errorf("error reading pipe: %w", err)
 		}
 	}
 }

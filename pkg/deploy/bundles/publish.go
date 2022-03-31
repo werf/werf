@@ -15,7 +15,7 @@ import (
 func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef string, bundlesRegistryClient *registry.Client) error {
 	r, err := registry.ParseReference(bundleRef)
 	if err != nil {
-		return fmt.Errorf("error parsing bundle ref %q: %s", bundleRef, err)
+		return fmt.Errorf("error parsing bundle ref %q: %w", bundleRef, err)
 	}
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{}
@@ -28,11 +28,11 @@ func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef strin
 
 		ch, err := loader.Load(path)
 		if err != nil {
-			return fmt.Errorf("error loading chart %q: %s", path, err)
+			return fmt.Errorf("error loading chart %q: %w", path, err)
 		}
 
 		if err := bundlesRegistryClient.SaveChart(ch, r); err != nil {
-			return fmt.Errorf("unable to save bundle to the local chart helm cache: %s", err)
+			return fmt.Errorf("unable to save bundle to the local chart helm cache: %w", err)
 		}
 		return nil
 	}); err != nil {

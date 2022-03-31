@@ -74,7 +74,7 @@ func NewCmd() *cobra.Command {
 
 func run(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
@@ -89,7 +89,7 @@ func run(ctx context.Context) error {
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -114,7 +114,7 @@ func run(ctx context.Context) error {
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
+		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
@@ -125,7 +125,7 @@ func run(ctx context.Context) error {
 
 	_, werfConfig, err := common.GetOptionalWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	var projectName string
@@ -171,7 +171,7 @@ func run(ctx context.Context) error {
 	_ = cacheStagesStorageList
 
 	if images, err := stagesStorage.GetManagedImages(ctx, projectName); err != nil {
-		return fmt.Errorf("unable to list known config image names for project %q: %s", projectName, err)
+		return fmt.Errorf("unable to list known config image names for project %q: %w", projectName, err)
 	} else {
 		for _, imgName := range images {
 			if imgName == "" {

@@ -46,7 +46,7 @@ func (r FileReader) ReadGiterminismConfig(ctx context.Context) (data []byte, err
 		})
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to read werf giterminism config: %s", err)
+		return nil, fmt.Errorf("unable to read werf giterminism config: %w", err)
 	}
 
 	return

@@ -49,12 +49,12 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Contex
 	for _, gitMapping := range s.gitMappings {
 		commit, err := gitMapping.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 		if err != nil {
-			return false, fmt.Errorf("unable to get base commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
+			return false, fmt.Errorf("unable to get base commit for git mapping %s: %w", gitMapping.GitRepo().GetName(), err)
 		}
 
 		latestCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 		if err != nil {
-			return false, fmt.Errorf("unable to get latest commit for git mapping %s: %s", gitMapping.GitRepo().GetName(), err)
+			return false, fmt.Errorf("unable to get latest commit for git mapping %s: %w", gitMapping.GitRepo().GetName(), err)
 		}
 
 		if commit != latestCommitInfo.Commit {

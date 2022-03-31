@@ -124,7 +124,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 func runDismiss(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
@@ -137,7 +137,7 @@ func runDismiss(ctx context.Context) error {
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -167,7 +167,7 @@ func runDismiss(ctx context.Context) error {
 
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 	logboek.LogOptionalLn()
 
@@ -188,19 +188,19 @@ func runDismiss(ctx context.Context) error {
 
 	var lockManager *lock_manager.LockManager
 	if m, err := lock_manager.NewLockManager(namespace); err != nil {
-		return fmt.Errorf("unable to create lock manager: %s", err)
+		return fmt.Errorf("unable to create lock manager: %w", err)
 	} else {
 		lockManager = m
 	}
 
 	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
 	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %s", err)
+		return fmt.Errorf("getting helm chart dir failed: %w", err)
 	}
 
 	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to create helm registry client: %s", err)
+		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{})

@@ -163,7 +163,7 @@ RETRY_CHANGE:
 			goto RETRY_CHANGE
 		}
 
-		return fmt.Errorf("update cm/%s error: %s", obj.Name, err)
+		return fmt.Errorf("update cm/%s error: %w", obj.Name, err)
 	}
 
 	return nil

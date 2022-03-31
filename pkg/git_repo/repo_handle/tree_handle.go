@@ -27,7 +27,7 @@ func (h *treeHandle) Tree(path string) (TreeHandle, error) {
 
 	tree, err := h.tree.Tree(path)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get tree %q: %s", path, err)
+		return nil, fmt.Errorf("unable to get tree %q: %w", path, err)
 	}
 
 	treeHandle := newTreeHandle(tree, h.mutex)

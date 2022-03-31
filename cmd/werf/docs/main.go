@@ -65,11 +65,11 @@ func NewCmd(cmdGroups *templates.CommandGroups) *cobra.Command {
 
 func createEmptyFolder(path string) error {
 	if err := os.RemoveAll(path); err != nil {
-		return fmt.Errorf("unable to remove %s: %s", path, err)
+		return fmt.Errorf("unable to remove %s: %w", path, err)
 	}
 
 	if err := os.MkdirAll(path, 0o777); err != nil {
-		return fmt.Errorf("unable to make dir %s: %s", path, err)
+		return fmt.Errorf("unable to make dir %s: %w", path, err)
 	}
 
 	return nil

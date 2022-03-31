@@ -34,11 +34,11 @@ func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfCh
 			return err
 		} else {
 			if err := InitRenderRelatedWerfChartParams(ctx, &installCmdData, wc); err != nil {
-				return fmt.Errorf("unable to init werf chart: %s", err)
+				return fmt.Errorf("unable to init werf chart: %w", err)
 			}
 
 			if m, err := lock_manager.NewLockManager(helm_v3.Settings.Namespace()); err != nil {
-				return fmt.Errorf("unable to create lock manager: %s", err)
+				return fmt.Errorf("unable to create lock manager: %w", err)
 			} else {
 				return command_helpers.LockReleaseWrapper(ctx, releaseName, m, func() error {
 					return oldRunE(cmd, args)

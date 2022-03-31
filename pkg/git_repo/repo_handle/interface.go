@@ -67,12 +67,12 @@ func getSubmoduleHandleList(parentRepository *git.Repository, mutex *sync.Mutex)
 	for _, s := range ss {
 		submoduleRepository, err := s.Repository()
 		if err != nil {
-			return nil, fmt.Errorf("unable to get submodule %q repository: %s", s.Config().Path, err)
+			return nil, fmt.Errorf("unable to get submodule %q repository: %w", s.Config().Path, err)
 		}
 
 		submoduleStatus, err := s.Status()
 		if err != nil {
-			return nil, fmt.Errorf("unable to get submodule %q status: %s", s.Config().Path, err)
+			return nil, fmt.Errorf("unable to get submodule %q status: %w", s.Config().Path, err)
 		}
 
 		handle, err := newHandleWithSubmodules(submoduleRepository, mutex)

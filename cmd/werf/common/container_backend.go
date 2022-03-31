@@ -16,7 +16,7 @@ import (
 func ContainerBackendProcessStartupHook() (bool, error) {
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
-		return false, fmt.Errorf("unable to determine buildah mode: %s", err)
+		return false, fmt.Errorf("unable to determine buildah mode: %w", err)
 	}
 
 	switch {
@@ -54,7 +54,7 @@ func GetBuildahMode() (*buildah.Mode, *thirdparty.Isolation, error) {
 		var err error
 		isolation, err = buildah.GetDefaultIsolation()
 		if err != nil {
-			return nil, nil, fmt.Errorf("unable to determine default isolation: %s", err)
+			return nil, nil, fmt.Errorf("unable to determine default isolation: %w", err)
 		}
 	case "docker", "":
 		mode = buildah.ModeDisabled
@@ -89,7 +89,7 @@ func wrapContainerBackend(containerBackend container_backend.ContainerBackend) c
 func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (container_backend.ContainerBackend, context.Context, error) {
 	buildahMode, buildahIsolation, err := GetBuildahMode()
 	if err != nil {
-		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %s", err)
+		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
 	}
 
 	if *buildahMode != buildah.ModeDisabled {
@@ -97,14 +97,14 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 		if resolvedMode == buildah.ModeDockerWithFuse {
 			newCtx, err := InitProcessDocker(ctx, cmdData)
 			if err != nil {
-				return nil, ctx, fmt.Errorf("unable to init process docker for buildah container backend: %s", err)
+				return nil, ctx, fmt.Errorf("unable to init process docker for buildah container backend: %w", err)
 			}
 			ctx = newCtx
 		}
 
 		storageDriver, err := GetBuildahStorageDriver()
 		if err != nil {
-			return nil, ctx, fmt.Errorf("unable to determine buildah container backend storage driver: %s", err)
+			return nil, ctx, fmt.Errorf("unable to determine buildah container backend storage driver: %w", err)
 		}
 
 		insecure := *cmdData.InsecureRegistry || *cmdData.SkipTlsVerifyRegistry
@@ -116,7 +116,7 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 			},
 		})
 		if err != nil {
-			return nil, ctx, fmt.Errorf("unable to get buildah client: %s", err)
+			return nil, ctx, fmt.Errorf("unable to get buildah client: %w", err)
 		}
 
 		return wrapContainerBackend(container_backend.NewBuildahBackend(b)), ctx, nil
@@ -124,7 +124,7 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 
 	newCtx, err := InitProcessDocker(ctx, cmdData)
 	if err != nil {
-		return nil, ctx, fmt.Errorf("unable to init process docker for docker-server container backend: %s", err)
+		return nil, ctx, fmt.Errorf("unable to init process docker for docker-server container backend: %w", err)
 	}
 	ctx = newCtx
 
@@ -133,12 +133,12 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 
 func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {
 	if err := docker.Init(ctx, *cmdData.DockerConfig, *cmdData.LogVerbose, *cmdData.LogDebug, *cmdData.Platform); err != nil {
-		return ctx, fmt.Errorf("unable to init docker for buildah container backend: %s", err)
+		return ctx, fmt.Errorf("unable to init docker for buildah container backend: %w", err)
 	}
 
 	ctxWithDockerCli, err := docker.NewContext(ctx)
 	if err != nil {
-		return ctx, fmt.Errorf("unable to init context for docker: %s", err)
+		return ctx, fmt.Errorf("unable to init context for docker: %w", err)
 	}
 	ctx = ctxWithDockerCli
 

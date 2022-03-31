@@ -21,36 +21,36 @@ func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, co
 
 		gitDir, err = filepath.Abs(gitDir)
 		if err != nil {
-			return fmt.Errorf("bad git dir %s: %s", gitDir, err)
+			return fmt.Errorf("bad git dir %s: %w", gitDir, err)
 		}
 
 		workTreeCacheDir, err = filepath.Abs(workTreeCacheDir)
 		if err != nil {
-			return fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
+			return fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 		}
 
 		if workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, mergeIntoCommit, opts.HasSubmodules); err != nil {
-			return fmt.Errorf("unable to prepare worktree for commit %v: %s", mergeIntoCommit, err)
+			return fmt.Errorf("unable to prepare worktree for commit %v: %w", mergeIntoCommit, err)
 		} else {
 			currentCommitPath := filepath.Join(workTreeCacheDir, "current_commit")
 			if err := os.RemoveAll(currentCommitPath); err != nil {
-				return fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+				return fmt.Errorf("unable to remove %s: %w", currentCommitPath, err)
 			}
 
 			mergeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "merge", "--no-edit", "--no-ff", commitToMerge)
 			if err := mergeCmd.Run(ctx); err != nil {
-				return fmt.Errorf("git merge failed: %s", err)
+				return fmt.Errorf("git merge failed: %w", err)
 			}
 
 			getHeadCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "rev-parse", "HEAD")
 			if err := getHeadCmd.Run(ctx); err != nil {
-				return fmt.Errorf("getting HEAD rev during git merge failed: %s", err)
+				return fmt.Errorf("getting HEAD rev during git merge failed: %w", err)
 			}
 
 			resCommit = strings.TrimSpace(getHeadCmd.OutBuf.String())
 
 			if err := ioutil.WriteFile(currentCommitPath, []byte(resCommit+"\n"), 0o644); err != nil {
-				return fmt.Errorf("unable to write %s: %s", currentCommitPath, err)
+				return fmt.Errorf("unable to write %s: %w", currentCommitPath, err)
 			}
 		}
 

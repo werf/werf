@@ -216,7 +216,7 @@ func embeddedBinPath(bin string) string {
 func CreateScript(path string, commands []string) error {
 	dirPath := filepath.Dir(path)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		return fmt.Errorf("unable to create dir %s: %s", dirPath, err)
+		return fmt.Errorf("unable to create dir %s: %w", dirPath, err)
 	}
 
 	var scriptLines []string

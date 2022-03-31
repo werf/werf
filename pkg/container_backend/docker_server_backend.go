@@ -79,7 +79,7 @@ func (runtime *DockerServerBackend) GetImageInfo(ctx context.Context, ref string
 	if client.IsErrNotFound(err) {
 		return nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("unable to inspect docker image: %s", err)
+		return nil, fmt.Errorf("unable to inspect docker image: %w", err)
 	}
 
 	return image.NewInfoFromInspect(ref, inspect), nil
@@ -106,7 +106,7 @@ func (runtime *DockerServerBackend) RefreshImageObject(ctx context.Context, img 
 func (runtime *DockerServerBackend) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging image %s by name %s", img.Name(), newImageName)).DoError(func() error {
 		if err := docker.CliTag(ctx, img.Name(), newImageName); err != nil {
-			return fmt.Errorf("unable to tag image %s by name %s: %s", img.Name(), newImageName, err)
+			return fmt.Errorf("unable to tag image %s by name %s: %w", img.Name(), newImageName, err)
 		}
 		return nil
 	}); err != nil {
@@ -151,11 +151,11 @@ func (runtime *DockerServerBackend) RemoveImage(ctx context.Context, img LegacyI
 
 func (runtime *DockerServerBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
 	if err := img.Pull(ctx); err != nil {
-		return fmt.Errorf("unable to pull image %s: %s", img.Name(), err)
+		return fmt.Errorf("unable to pull image %s: %w", img.Name(), err)
 	}
 
 	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
-		return fmt.Errorf("unable to get inspect of image %s: %s", img.Name(), err)
+		return fmt.Errorf("unable to get inspect of image %s: %w", img.Name(), err)
 	} else {
 		img.SetInfo(info)
 	}
@@ -173,7 +173,7 @@ func (runtime *DockerServerBackend) Push(ctx context.Context, ref string, opts P
 
 func (runtime *DockerServerBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	if err := docker.CliPull(ctx, ref); err != nil {
-		return fmt.Errorf("unable to pull image %s: %s", ref, err)
+		return fmt.Errorf("unable to pull image %s: %w", ref, err)
 	}
 	return nil
 }
@@ -196,7 +196,7 @@ func (runtime *DockerServerBackend) PushImage(ctx context.Context, img LegacyIma
 func (runtime *DockerServerBackend) PushBuiltImage(ctx context.Context, img LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging built image by name %s", img.Name())).DoError(func() error {
 		if err := img.TagBuiltImage(ctx); err != nil {
-			return fmt.Errorf("unable to tag built image by name %s: %s", img.Name(), err)
+			return fmt.Errorf("unable to tag built image by name %s: %w", img.Name(), err)
 		}
 		return nil
 	}); err != nil {
@@ -216,7 +216,7 @@ func (runtime *DockerServerBackend) PushBuiltImage(ctx context.Context, img Lega
 func (runtime *DockerServerBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) error {
 	if img.GetBuiltID() != "" {
 		if err := img.TagBuiltImage(ctx); err != nil {
-			return fmt.Errorf("unable to tag image %s: %s", img.Name(), err)
+			return fmt.Errorf("unable to tag image %s: %w", img.Name(), err)
 		}
 	} else {
 		if err := runtime.RefreshImageObject(ctx, img); err != nil {

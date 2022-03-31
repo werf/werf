@@ -80,7 +80,7 @@ func loadSshKeys(ctx context.Context, configs []sshKeyConfig, opts loadSshKeysOp
 				logboek.Context(ctx).Warn().LogF("WARNING: unable to parse ssh key %s: %s\n", cfg.FilePath, err)
 				continue
 			} else {
-				return nil, fmt.Errorf("unable to parse ssh key %s: %s", cfg.FilePath, err)
+				return nil, fmt.Errorf("unable to parse ssh key %s: %w", cfg.FilePath, err)
 			}
 		}
 
@@ -96,7 +96,7 @@ func Init(ctx context.Context, userKeys []string) error {
 	for _, key := range userKeys {
 		cfg, err := getSshKeyConfig(key)
 		if err != nil {
-			return fmt.Errorf("unable to get ssh key %s config: %s", key, err)
+			return fmt.Errorf("unable to get ssh key %s config: %w", key, err)
 		}
 
 		configs = append(configs, cfg)
@@ -105,16 +105,16 @@ func Init(ctx context.Context, userKeys []string) error {
 	if len(configs) > 0 {
 		keys, err := loadSshKeys(ctx, configs, loadSshKeysOptions{})
 		if err != nil {
-			return fmt.Errorf("unable to load ssh keys: %s", err)
+			return fmt.Errorf("unable to load ssh keys: %w", err)
 		}
 
 		if len(keys) > 0 {
 			agentSock, err := runSSHAgentWithKeys(ctx, keys)
 			if err != nil {
-				return fmt.Errorf("unable to run ssh agent with specified keys: %s", err)
+				return fmt.Errorf("unable to run ssh agent with specified keys: %w", err)
 			}
 			if err := setupProcessSSHAgent(agentSock); err != nil {
-				return fmt.Errorf("unable to init ssh auth socket to %q: %s", agentSock, err)
+				return fmt.Errorf("unable to init ssh auth socket to %q: %w", agentSock, err)
 			}
 			return nil
 		}
@@ -140,16 +140,16 @@ func Init(ctx context.Context, userKeys []string) error {
 	if len(defaultConfigs) > 0 {
 		keys, err := loadSshKeys(ctx, defaultConfigs, loadSshKeysOptions{WarnInvalidKeys: true})
 		if err != nil {
-			return fmt.Errorf("unable to load ssh keys: %s", err)
+			return fmt.Errorf("unable to load ssh keys: %w", err)
 		}
 
 		if len(keys) > 0 {
 			agentSock, err := runSSHAgentWithKeys(ctx, keys)
 			if err != nil {
-				return fmt.Errorf("unable to run ssh agent with specified keys: %s", err)
+				return fmt.Errorf("unable to run ssh agent with specified keys: %w", err)
 			}
 			if err := setupProcessSSHAgent(agentSock); err != nil {
-				return fmt.Errorf("unable to init ssh auth socket to %q: %s", agentSock, err)
+				return fmt.Errorf("unable to init ssh auth socket to %q: %w", agentSock, err)
 			}
 		}
 	}
@@ -161,7 +161,7 @@ func Terminate() error {
 	if tmpSockPath != "" {
 		err := os.RemoveAll(tmpSockPath)
 		if err != nil {
-			return fmt.Errorf("unable to remove tmp ssh agent sock %s: %s", tmpSockPath, err)
+			return fmt.Errorf("unable to remove tmp ssh agent sock %s: %w", tmpSockPath, err)
 		}
 	}
 
@@ -171,13 +171,13 @@ func Terminate() error {
 func runSSHAgentWithKeys(ctx context.Context, keys []sshKey) (string, error) {
 	agentSock, err := runSSHAgent(ctx)
 	if err != nil {
-		return "", fmt.Errorf("error running ssh agent: %s", err)
+		return "", fmt.Errorf("error running ssh agent: %w", err)
 	}
 
 	for _, key := range keys {
 		err := addSSHKey(ctx, agentSock, key)
 		if err != nil {
-			return "", fmt.Errorf("error adding ssh key: %s", err)
+			return "", fmt.Errorf("error adding ssh key: %w", err)
 		}
 	}
 
@@ -195,7 +195,7 @@ func runSSHAgent(ctx context.Context) (string, error) {
 
 	ln, err := net.Listen("unix", sockPath)
 	if err != nil {
-		return "", fmt.Errorf("error listen unix sock %s: %s", sockPath, err)
+		return "", fmt.Errorf("error listen unix sock %s: %w", sockPath, err)
 	}
 
 	logboek.Context(ctx).Info().LogF("Running ssh agent on unix sock: %s\n", sockPath)
@@ -234,7 +234,7 @@ func runSSHAgent(ctx context.Context) (string, error) {
 func addSSHKey(ctx context.Context, authSock string, key sshKey) error {
 	conn, err := net.Dial("unix", authSock)
 	if err != nil {
-		return fmt.Errorf("error dialing with ssh agent %s: %s", authSock, err)
+		return fmt.Errorf("error dialing with ssh agent %s: %w", authSock, err)
 	}
 	defer conn.Close()
 
@@ -253,7 +253,7 @@ func addSSHKey(ctx context.Context, authSock string, key sshKey) error {
 func parsePrivateSSHKey(cfg sshKeyConfig) (sshKey, error) {
 	keyData, err := ioutil.ReadFile(cfg.FilePath)
 	if err != nil {
-		return sshKey{}, fmt.Errorf("error reading key file %q: %s", cfg.FilePath, err)
+		return sshKey{}, fmt.Errorf("error reading key file %q: %w", cfg.FilePath, err)
 	}
 
 	var privateKey interface{}
@@ -266,7 +266,7 @@ func parsePrivateSSHKey(cfg sshKeyConfig) (sshKey, error) {
 			if len(cfg.Passphrase) == 0 {
 				if terminal.IsTerminal(int(os.Stdin.Fd())) {
 					if data, err := secret_common.InputFromInteractiveStdin(fmt.Sprintf("Enter passphrase for ssh key %s: ", cfg.FilePath)); err != nil {
-						return sshKey{}, fmt.Errorf("error getting passphrase for ssh key %s: %s", cfg.FilePath, err)
+						return sshKey{}, fmt.Errorf("error getting passphrase for ssh key %s: %w", cfg.FilePath, err)
 					} else {
 						passphrase = data
 					}
@@ -279,11 +279,11 @@ func parsePrivateSSHKey(cfg sshKeyConfig) (sshKey, error) {
 
 			privateKey, err = ssh.ParseRawPrivateKeyWithPassphrase(keyData, passphrase)
 			if err != nil {
-				return sshKey{}, fmt.Errorf("error parsing private key %s: %s", cfg.FilePath, err)
+				return sshKey{}, fmt.Errorf("error parsing private key %s: %w", cfg.FilePath, err)
 			}
 
 		default:
-			return sshKey{}, fmt.Errorf("error parsing private key %s: %s", cfg.FilePath, err)
+			return sshKey{}, fmt.Errorf("error parsing private key %s: %w", cfg.FilePath, err)
 		}
 	}
 

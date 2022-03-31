@@ -51,12 +51,12 @@ func runGetNamespace() error {
 	ctx := common.GetContext()
 
 	if err := werf.Init(*getNamespaceCmdData.TmpDir, *getNamespaceCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %s", err)
+		return fmt.Errorf("error getting host git data manager: %w", err)
 	}
 
 	if err := git_repo.Init(gitDataManager); err != nil {
@@ -74,7 +74,7 @@ func runGetNamespace() error {
 
 	_, werfConfig, err := common.GetRequiredWerfConfig(common.GetContext(), &getNamespaceCmdData, giterminismManager, common.GetWerfConfigOptions(&getNamespaceCmdData, false))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %s", err)
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	namespace, err := deploy_params.GetKubernetesNamespace("", *getNamespaceCmdData.Environment, werfConfig)

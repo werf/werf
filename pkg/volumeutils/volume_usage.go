@@ -18,7 +18,7 @@ type VolumeUsage struct {
 func GetVolumeUsageByPath(ctx context.Context, path string) (VolumeUsage, error) {
 	di, err := disk.GetInfo(path)
 	if err != nil {
-		return VolumeUsage{}, fmt.Errorf("unable to get disk info: %s", err)
+		return VolumeUsage{}, fmt.Errorf("unable to get disk info: %w", err)
 	}
 
 	usedBytes := di.Total - di.Free
@@ -33,7 +33,7 @@ func DirSizeBytes(path string) (uint64, error) {
 	var size uint64
 	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("error accessing %q: %s", path, err)
+			return fmt.Errorf("error accessing %q: %w", path, err)
 		}
 		if !info.IsDir() {
 			size += uint64(info.Size())

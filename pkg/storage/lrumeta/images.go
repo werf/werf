@@ -85,11 +85,11 @@ func (cache *LRUImagesCache) readRecord(ctx context.Context, imageRef string) (*
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("error accessing %s: %s", filePath, err)
+		return nil, fmt.Errorf("error accessing %s: %w", filePath, err)
 	}
 
 	if dataBytes, err := ioutil.ReadFile(filePath); err != nil {
-		return nil, fmt.Errorf("error reading %s: %s", filePath, err)
+		return nil, fmt.Errorf("error reading %s: %w", filePath, err)
 	} else {
 		record := &LRUImagesCacheRecord{}
 		if err := json.Unmarshal(dataBytes, record); err != nil {
@@ -105,14 +105,14 @@ func (cache *LRUImagesCache) writeRecord(record *LRUImagesCacheRecord) error {
 
 	dirPath := filepath.Dir(filePath)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		return fmt.Errorf("error creating dir %s: %s", dirPath, err)
+		return fmt.Errorf("error creating dir %s: %w", dirPath, err)
 	}
 
 	if dataBytes, err := json.Marshal(record); err != nil {
-		return fmt.Errorf("error marshalling json: %s", err)
+		return fmt.Errorf("error marshalling json: %w", err)
 	} else {
 		if err := ioutil.WriteFile(filePath, append(dataBytes, []byte("\n")...), 0o644); err != nil {
-			return fmt.Errorf("error writing %s: %s", filePath, err)
+			return fmt.Errorf("error writing %s: %w", filePath, err)
 		}
 		return nil
 	}
@@ -125,7 +125,7 @@ func (cache *LRUImagesCache) constructFilePathForImage(imageRef string) string {
 func (cache *LRUImagesCache) lock(ctx context.Context, imageRef string) (lockgate.LockHandle, error) {
 	lockName := fmt.Sprintf("lru_images_cache.%s", imageRef)
 	if _, lock, err := werf.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{}); err != nil {
-		return lockgate.LockHandle{}, fmt.Errorf("cannot acquire %s host lock: %s", lockName, err)
+		return lockgate.LockHandle{}, fmt.Errorf("cannot acquire %s host lock: %w", lockName, err)
 	} else {
 		return lock, nil
 	}
@@ -133,7 +133,7 @@ func (cache *LRUImagesCache) lock(ctx context.Context, imageRef string) (lockgat
 
 func (cache *LRUImagesCache) unlock(lock lockgate.LockHandle) error {
 	if err := werf.ReleaseHostLock(lock); err != nil {
-		return fmt.Errorf("cannot release %s host lock: %s", lock.LockName, err)
+		return fmt.Errorf("cannot release %s host lock: %w", lock.LockName, err)
 	}
 	return nil
 }

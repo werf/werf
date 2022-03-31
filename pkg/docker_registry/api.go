@@ -58,12 +58,12 @@ func (api *api) tags(_ context.Context, reference string, extraListOptions ...re
 func (api *api) tagImage(reference, tag string) error {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
-		return fmt.Errorf("parsing reference %q: %v", reference, err)
+		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
 	desc, err := remote.Get(ref, api.defaultRemoteOptions()...)
 	if err != nil {
-		return fmt.Errorf("getting reference %q: %v", reference, err)
+		return fmt.Errorf("getting reference %q: %w", reference, err)
 	}
 
 	dst := ref.Context().Tag(tag)
@@ -136,7 +136,7 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 
 	referenceParts, err := api.parseReferenceParts(reference)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse reference %q: %s", reference, err)
+		return nil, fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
 
 	repoImage := &image.Info{
@@ -158,7 +158,7 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 func (api *api) list(reference string, extraListOptions ...remote.Option) ([]string, error) {
 	repo, err := name.NewRepository(reference, api.newRepositoryOptions()...)
 	if err != nil {
-		return nil, fmt.Errorf("parsing repo %q: %v", reference, err)
+		return nil, fmt.Errorf("parsing repo %q: %w", reference, err)
 	}
 
 	listOptions := append(
@@ -167,7 +167,7 @@ func (api *api) list(reference string, extraListOptions ...remote.Option) ([]str
 	)
 	tags, err := remote.List(repo, listOptions...)
 	if err != nil {
-		return nil, fmt.Errorf("reading tags for %q: %v", repo, err)
+		return nil, fmt.Errorf("reading tags for %q: %w", repo, err)
 	}
 
 	return tags, nil
@@ -176,11 +176,11 @@ func (api *api) list(reference string, extraListOptions ...remote.Option) ([]str
 func (api *api) deleteImageByReference(reference string) error {
 	r, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
-		return fmt.Errorf("parsing reference %q: %v", reference, err)
+		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
 	if err := remote.Delete(r, api.defaultRemoteOptions()...); err != nil {
-		return fmt.Errorf("deleting image %q: %v", r, err)
+		return fmt.Errorf("deleting image %q: %w", r, err)
 	}
 
 	return nil
@@ -209,7 +209,7 @@ func (api *api) MutateAndPushImage(_ context.Context, sourceReference, destinati
 
 	ref, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
 	if err != nil {
-		return fmt.Errorf("parsing reference %q: %v", destinationReference, err)
+		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
 	}
 
 	if err = remote.Write(ref, newImg, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
@@ -257,7 +257,7 @@ attemptLoop:
 func (api *api) pushImage(_ context.Context, reference string, opts *PushImageOptions) error {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
-		return fmt.Errorf("parsing reference %q: %v", reference, err)
+		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
 	labels := map[string]string{}
@@ -273,7 +273,7 @@ func (api *api) pushImage(_ context.Context, reference string, opts *PushImageOp
 	http.DefaultTransport = oldDefaultTransport
 
 	if err != nil {
-		return fmt.Errorf("write to the remote %s have failed: %s", ref.String(), err)
+		return fmt.Errorf("write to the remote %s have failed: %w", ref.String(), err)
 	}
 
 	return nil
@@ -282,7 +282,7 @@ func (api *api) pushImage(_ context.Context, reference string, opts *PushImageOp
 func (api *api) image(reference string) (v1.Image, name.Reference, error) {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
-		return nil, nil, fmt.Errorf("parsing reference %q: %v", reference, err)
+		return nil, nil, fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
 	// FIXME: Hack for the go-containerregistry library,
@@ -294,7 +294,7 @@ func (api *api) image(reference string) (v1.Image, name.Reference, error) {
 	http.DefaultTransport = oldDefaultTransport
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("reading image %q: %v", ref, err)
+		return nil, nil, fmt.Errorf("reading image %q: %w", ref, err)
 	}
 
 	return img, ref, nil
@@ -353,7 +353,7 @@ func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
 	// validate reference
 	parsedReference, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
-		return referenceParts{}, fmt.Errorf("unable to parse reference %q: %s", reference, err)
+		return referenceParts{}, fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
 
 	res := dockerReference.ReferenceRegexp.FindStringSubmatch(reference)

@@ -108,7 +108,7 @@ func NewCmd() *cobra.Command {
 
 func runRender(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
+		return fmt.Errorf("initialization error: %w", err)
 	}
 
 	var isLocal bool
@@ -144,7 +144,7 @@ func runRender(ctx context.Context) error {
 
 	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
 	if err != nil {
-		return fmt.Errorf("unable to create helm registry client: %s", err)
+		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
 	actionConfig := new(action.Configuration)
@@ -174,7 +174,7 @@ func runRender(ctx context.Context) error {
 		defer os.RemoveAll(bundleDir)
 
 		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundleDir, bundlesRegistryClient); err != nil {
-			return fmt.Errorf("unable to pull bundle: %s", err)
+			return fmt.Errorf("unable to pull bundle: %w", err)
 		}
 	}
 
@@ -199,7 +199,7 @@ func runRender(ctx context.Context) error {
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
 	}); err != nil {
-		return fmt.Errorf("error creating service values: %s", err)
+		return fmt.Errorf("error creating service values: %w", err)
 	} else {
 		bundle.SetServiceValues(vals)
 	}
@@ -212,7 +212,7 @@ func runRender(ctx context.Context) error {
 	var output io.Writer
 	if cmdData.RenderOutput != "" {
 		if f, err := os.Create(cmdData.RenderOutput); err != nil {
-			return fmt.Errorf("unable to open file %q: %s", cmdData.RenderOutput, err)
+			return fmt.Errorf("unable to open file %q: %w", cmdData.RenderOutput, err)
 		} else {
 			defer f.Close()
 			output = f
@@ -234,7 +234,7 @@ func runRender(ctx context.Context) error {
 	})
 
 	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, bundleDir}); err != nil {
-		return fmt.Errorf("helm templates rendering failed: %s", err)
+		return fmt.Errorf("helm templates rendering failed: %w", err)
 	}
 
 	return nil

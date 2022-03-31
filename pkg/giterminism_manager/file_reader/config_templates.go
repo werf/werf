@@ -28,7 +28,7 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 		})
 
 	if err != nil {
-		return fmt.Errorf("unable to read werf config templates: %s", err)
+		return fmt.Errorf("unable to read werf config templates: %w", err)
 	}
 
 	return nil

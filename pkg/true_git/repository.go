@@ -60,7 +60,7 @@ func Fetch(ctx context.Context, path string, options FetchOptions) error {
 func GetLastBranchCommitSHA(ctx context.Context, repoPath, branch string) (string, error) {
 	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoPath}, "rev-parse", branch)
 	if err := revParseCmd.Run(ctx); err != nil {
-		return "", fmt.Errorf("git rev parse branch command failed: %s", err)
+		return "", fmt.Errorf("git rev parse branch command failed: %w", err)
 	}
 
 	return strings.TrimSpace(revParseCmd.OutBuf.String()), nil
@@ -78,7 +78,7 @@ func IsShallowClone(ctx context.Context, path string) (bool, error) {
 
 	checkShallowCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: path}, "rev-parse", "--is-shallow-repository")
 	if err := checkShallowCmd.Run(ctx); err != nil {
-		return false, fmt.Errorf("git shallow repository check command failed: %s", err)
+		return false, fmt.Errorf("git shallow repository check command failed: %w", err)
 	}
 
 	return strings.TrimSpace(checkShallowCmd.OutBuf.String()) == "true", nil

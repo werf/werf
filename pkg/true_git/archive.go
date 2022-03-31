@@ -65,22 +65,22 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 	gitDir, err = filepath.Abs(gitDir)
 	if err != nil {
-		return fmt.Errorf("bad git dir %s: %s", gitDir, err)
+		return fmt.Errorf("bad git dir %s: %w", gitDir, err)
 	}
 
 	workTreeCacheDir, err = filepath.Abs(workTreeCacheDir)
 	if err != nil {
-		return fmt.Errorf("bad work tree cache dir %s: %s", workTreeCacheDir, err)
+		return fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 	}
 
 	workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, withSubmodules)
 	if err != nil {
-		return fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.Commit, err)
+		return fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %w", workTreeCacheDir, opts.Commit, err)
 	}
 
 	repository, err := GitOpenWithCustomWorktreeDir(gitDir, workTreeDir)
 	if err != nil {
-		return fmt.Errorf("git open failed: %s", err)
+		return fmt.Errorf("git open failed: %w", err)
 	}
 
 	repoHandle, err := repo_handle.NewHandle(repository)
@@ -126,7 +126,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 		info, err := os.Lstat(absFilepath)
 		if err != nil {
-			return fmt.Errorf("lstat %q failed: %s", absFilepath, err)
+			return fmt.Errorf("lstat %q failed: %w", absFilepath, err)
 		}
 
 		dirEntry := filepath.Dir(tarEntryName)
@@ -157,7 +157,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				}
 
 				if err := tw.WriteHeader(header); err != nil {
-					return fmt.Errorf("unable to write tar header for dir %q: %s", p, err)
+					return fmt.Errorf("unable to write tar header for dir %q: %w", p, err)
 				}
 
 				creadedDirEntries[p] = true
@@ -176,22 +176,22 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				ChangeTime: info.ModTime(),
 			})
 			if err != nil {
-				return fmt.Errorf("unable to write tar header for file %q: %s", tarEntryName, err)
+				return fmt.Errorf("unable to write tar header for file %q: %w", tarEntryName, err)
 			}
 
 			f, err := os.Open(absFilepath)
 			if err != nil {
-				return fmt.Errorf("unable to open file %s: %s", absFilepath, err)
+				return fmt.Errorf("unable to open file %s: %w", absFilepath, err)
 			}
 
 			_, err = io.Copy(tw, f)
 			if err != nil {
-				return fmt.Errorf("unable to write data to tar archive from file %s: %s", absFilepath, err)
+				return fmt.Errorf("unable to write data to tar archive from file %s: %w", absFilepath, err)
 			}
 
 			err = f.Close()
 			if err != nil {
-				return fmt.Errorf("error closing file %s: %s", absFilepath, err)
+				return fmt.Errorf("error closing file %s: %w", absFilepath, err)
 			}
 
 			if debugArchive() {
@@ -204,12 +204,12 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 			if isSymlink {
 				linkname, err = os.Readlink(absFilepath)
 				if err != nil {
-					return fmt.Errorf("cannot read symlink %s: %s", absFilepath, err)
+					return fmt.Errorf("cannot read symlink %s: %w", absFilepath, err)
 				}
 			} else {
 				data, err := ioutil.ReadFile(absFilepath)
 				if err != nil {
-					return fmt.Errorf("cannot read file %s: %s", absFilepath, err)
+					return fmt.Errorf("cannot read file %s: %w", absFilepath, err)
 				}
 
 				linkname = string(bytes.TrimSpace(data))
@@ -227,7 +227,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				ChangeTime: info.ModTime(),
 			})
 			if err != nil {
-				return fmt.Errorf("unable to write tar symlink header for file %s: %s", tarEntryName, err)
+				return fmt.Errorf("unable to write tar symlink header for file %s: %w", tarEntryName, err)
 			}
 
 			if debugArchive() {
@@ -248,7 +248,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 	err = tw.Close()
 	if err != nil {
-		return fmt.Errorf("cannot write tar archive: %s", err)
+		return fmt.Errorf("cannot write tar archive: %w", err)
 	}
 
 	return nil

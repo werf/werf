@@ -37,7 +37,7 @@ func IsImageDeletionFailedDueToUsingByContainerErr(err error) bool {
 func getDigestAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
 	if uniqueID, err := image.ParseUniqueIDAsTimestamp(parts[1]); err != nil {
-		return "", 0, fmt.Errorf("unable to parse unique id %s as timestamp: %s", parts[1], err)
+		return "", 0, fmt.Errorf("unable to parse unique id %s as timestamp: %w", parts[1], err)
 	} else {
 		return parts[0], uniqueID, nil
 	}
@@ -60,7 +60,7 @@ func (storage *DockerServerStagesStorage) GetStagesIDs(ctx context.Context, proj
 	filterSet := localStagesStorageFilterSetBase(projectName)
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
-		return nil, fmt.Errorf("unable to get docker images: %s", err)
+		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
 
 	return convertToStagesList(images)
@@ -114,7 +114,7 @@ func (storage *DockerServerStagesStorage) GetStageDescription(ctx context.Contex
 
 	inspect, err := storage.DockerServerBackend.GetImageInspect(ctx, stageImageName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get image %s inspect: %s", stageImageName, err)
+		return nil, fmt.Errorf("unable to get image %s inspect: %w", stageImageName, err)
 	}
 
 	if inspect != nil {
@@ -171,7 +171,7 @@ func (storage *DockerServerStagesStorage) GetStagesIDsByDigest(ctx context.Conte
 
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
-		return nil, fmt.Errorf("unable to get docker images: %s", err)
+		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
 
 	return convertToStagesList(images)
@@ -217,7 +217,7 @@ func (storage *DockerServerStagesStorage) GetImportMetadata(ctx context.Context,
 
 	inspect, err := storage.DockerServerBackend.GetImageInspect(ctx, fullImageName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get image %s inspect: %s", fullImageName, err)
+		return nil, fmt.Errorf("unable to get image %s inspect: %w", fullImageName, err)
 	}
 
 	if inspect != nil {
@@ -234,7 +234,7 @@ func (storage *DockerServerStagesStorage) PutImportMetadata(ctx context.Context,
 	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
 	if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
-		return fmt.Errorf("unable to check existence of image %q: %s", fullImageName, err)
+		return fmt.Errorf("unable to check existence of image %q: %w", fullImageName, err)
 	} else if exists {
 		return nil
 	}
@@ -243,7 +243,7 @@ func (storage *DockerServerStagesStorage) PutImportMetadata(ctx context.Context,
 	labels[image.WerfLabel] = projectName
 
 	if err := docker.CreateImage(ctx, fullImageName, labels); err != nil {
-		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
+		return fmt.Errorf("unable to create image %q: %w", fullImageName, err)
 	}
 
 	return nil
@@ -256,13 +256,13 @@ func (storage *DockerServerStagesStorage) RmImportMetadata(ctx context.Context, 
 	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.RmImportMetadata full image name: %s\n", fullImageName)
 
 	if exists, err := docker.ImageExist(ctx, fullImageName); err != nil {
-		return fmt.Errorf("unable to check existence of image %s: %s", fullImageName, err)
+		return fmt.Errorf("unable to check existence of image %s: %w", fullImageName, err)
 	} else if !exists {
 		return nil
 	}
 
 	if err := docker.CliRmi(ctx, "--force", fullImageName); err != nil {
-		return fmt.Errorf("unable to remove image %s: %s", fullImageName, err)
+		return fmt.Errorf("unable to remove image %s: %w", fullImageName, err)
 	}
 
 	return nil
@@ -276,7 +276,7 @@ func (storage *DockerServerStagesStorage) GetImportMetadataIDs(ctx context.Conte
 
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
-		return nil, fmt.Errorf("unable to get docker images: %s", err)
+		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
 
 	var tags []string
@@ -315,7 +315,7 @@ func (storage *DockerServerStagesStorage) GetClientIDRecords(ctx context.Context
 
 	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
 	if err != nil {
-		return nil, fmt.Errorf("unable to get docker images: %s", err)
+		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
 
 	var res []*ClientIDRecord
@@ -354,7 +354,7 @@ func (storage *DockerServerStagesStorage) PostClientIDRecord(ctx context.Context
 
 	labels := map[string]string{image.WerfLabel: projectName}
 	if err := docker.CreateImage(ctx, fullImageName, labels); err != nil {
-		return fmt.Errorf("unable to create image %q: %s", fullImageName, err)
+		return fmt.Errorf("unable to create image %q: %w", fullImageName, err)
 	}
 
 	logboek.Context(ctx).Info().LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)

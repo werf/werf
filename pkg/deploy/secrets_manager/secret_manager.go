@@ -29,9 +29,9 @@ func (manager *SecretsManager) GetYamlEncoder(ctx context.Context, workingDir st
 	}
 
 	if key, err := GetRequiredSecretKey(workingDir); err != nil {
-		return nil, fmt.Errorf("unable to load secret key: %s", err)
+		return nil, fmt.Errorf("unable to load secret key: %w", err)
 	} else if enc, err := secret.NewAesEncoder(key); err != nil {
-		return nil, fmt.Errorf("check encryption key: %s", err)
+		return nil, fmt.Errorf("check encryption key: %w", err)
 	} else {
 		return secret.NewYamlEncoder(enc), nil
 	}
@@ -39,9 +39,9 @@ func (manager *SecretsManager) GetYamlEncoder(ctx context.Context, workingDir st
 
 func (manager *SecretsManager) GetYamlEncoderForOldKey(ctx context.Context) (*secret.YamlEncoder, error) {
 	if key, err := GetRequiredOldSecretKey(); err != nil {
-		return nil, fmt.Errorf("unable to load old secret key: %s", err)
+		return nil, fmt.Errorf("unable to load old secret key: %w", err)
 	} else if enc, err := secret.NewAesEncoder(key); err != nil {
-		return nil, fmt.Errorf("check old encryption key: %s", err)
+		return nil, fmt.Errorf("check old encryption key: %w", err)
 	} else {
 		return secret.NewYamlEncoder(enc), nil
 	}

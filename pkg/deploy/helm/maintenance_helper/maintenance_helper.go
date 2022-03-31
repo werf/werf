@@ -89,7 +89,7 @@ func (helper *MaintenanceHelper) initHelm2Storage() (*v2_storage.Storage, error)
 func (helper *MaintenanceHelper) getResourcesFactory() (util.Factory, error) {
 	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{KubeConfigOptions: helper.KubeConfigOptions})
 	if err != nil {
-		return nil, fmt.Errorf("error creating kube config getter: %s", err)
+		return nil, fmt.Errorf("error creating kube config getter: %w", err)
 	}
 	return util.NewFactory(configGetter), nil
 }
@@ -113,7 +113,7 @@ func (helper *MaintenanceHelper) CheckHelm3StorageAvailable(ctx context.Context)
 func (helper *MaintenanceHelper) CheckHelm2StorageAvailable(ctx context.Context) (bool, error) {
 	storage, err := helper.initHelm2Storage()
 	if err != nil {
-		return false, fmt.Errorf("error initializing helm 2 v2Storage: %s", err)
+		return false, fmt.Errorf("error initializing helm 2 v2Storage: %w", err)
 	}
 
 	logboek.Context(ctx).Debug().LogProcess("Checking helm 2 storage availability using history command").Do(func() {
@@ -141,7 +141,7 @@ func (helper *MaintenanceHelper) IsHelm3ReleaseExist(ctx context.Context, releas
 	}
 
 	if err != nil {
-		return false, fmt.Errorf("error getting helm 3 release %q history: %s", releaseName, err)
+		return false, fmt.Errorf("error getting helm 3 release %q history: %w", releaseName, err)
 	}
 
 	return true, nil
@@ -162,7 +162,7 @@ func (helper *MaintenanceHelper) IsHelm2ReleaseExist(ctx context.Context, releas
 	}
 
 	if err != nil {
-		return false, fmt.Errorf("error getting helm 2 release %q history: %s", releaseName, err)
+		return false, fmt.Errorf("error getting helm 2 release %q history: %w", releaseName, err)
 	}
 
 	return true, nil
@@ -171,11 +171,11 @@ func (helper *MaintenanceHelper) IsHelm2ReleaseExist(ctx context.Context, releas
 func (helper *MaintenanceHelper) CreateHelm3ReleaseMetadataFromHelm2Release(ctx context.Context, release, namespace string, releaseData *Helm2ReleaseData) error {
 	rls, err := helm2to3_v3.CreateRelease(releaseData.Release)
 	if err != nil {
-		return fmt.Errorf("cannot create helm 3 release %q metadata from helm 2 release %q metadata: %s", release, releaseData.Release.Name, err)
+		return fmt.Errorf("cannot create helm 3 release %q metadata from helm 2 release %q metadata: %w", release, releaseData.Release.Name, err)
 	}
 
 	if err := helper.v3ActionConfig.Releases.Create(rls); err != nil {
-		return fmt.Errorf("error saving helm 3 release %q into storage: %s", release, err)
+		return fmt.Errorf("error saving helm 3 release %q into storage: %w", release, err)
 	}
 
 	return nil
@@ -242,7 +242,7 @@ func (helper *MaintenanceHelper) DeleteHelm2ReleaseMetadata(ctx context.Context,
 
 	for _, rel := range releases {
 		if _, err := storage.Delete(rel.Name, rel.Version); err != nil {
-			return fmt.Errorf("error deleting helm 2 release %q version %d: %s", rel.Name, rel.Version, err)
+			return fmt.Errorf("error deleting helm 2 release %q version %d: %w", rel.Name, rel.Version, err)
 		}
 	}
 

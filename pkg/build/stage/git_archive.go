@@ -41,7 +41,7 @@ type GitArchiveStage struct {
 func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, stages []*image.StageDescription) (*image.StageDescription, error) {
 	ancestorsStages, err := s.selectStagesAncestorsByGitMappings(ctx, c, stages)
 	if err != nil {
-		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %s", err)
+		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %w", err)
 	}
 	return s.selectStageByOldestCreationTimestamp(ancestorsStages)
 }
@@ -94,7 +94,7 @@ func (s *GitArchiveStage) IsEmpty(ctx context.Context, c Conveyor, stageImage *S
 	for _, gitMapping := range s.gitMappings {
 		isGitMappingEmpty, err := gitMapping.isEmpty(ctx, c)
 		if err != nil {
-			return false, fmt.Errorf("error checking git mapping emptiness: %s", err)
+			return false, fmt.Errorf("error checking git mapping emptiness: %w", err)
 		}
 		if isGitMappingEmpty {
 			return false, fmt.Errorf(`"git.add: /%s" in werf.yaml matches no files. git.add requires at least one file matched by it. Fix and retry`, gitMapping.Add)

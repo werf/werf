@@ -242,7 +242,7 @@ func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Con
 	} else {
 		entrypoint, err = getEmptyEntrypointInstructionValue(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
+			return nil, fmt.Errorf("container options preparing failed: %w", err)
 		}
 	}
 

@@ -35,12 +35,12 @@ func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {
 	if _, err := os.Stat(cacheVersionRoot); os.IsNotExist(err) {
 		return nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("error accessing dir %q: %s", cacheVersionRoot, err)
+		return nil, fmt.Errorf("error accessing dir %q: %w", cacheVersionRoot, err)
 	}
 
 	files, err := ioutil.ReadDir(cacheVersionRoot)
 	if err != nil {
-		return nil, fmt.Errorf("error reading dir %q: %s", cacheVersionRoot, err)
+		return nil, fmt.Errorf("error reading dir %q: %w", cacheVersionRoot, err)
 	}
 
 	for _, finfo := range files {
@@ -48,13 +48,13 @@ func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {
 
 		if !finfo.IsDir() {
 			if err := os.RemoveAll(repoPatchesRootDir); err != nil {
-				return nil, fmt.Errorf("unable to remove %q: %s", repoPatchesRootDir, err)
+				return nil, fmt.Errorf("unable to remove %q: %w", repoPatchesRootDir, err)
 			}
 		}
 
 		hashDirs, err := ioutil.ReadDir(repoPatchesRootDir)
 		if err != nil {
-			return nil, fmt.Errorf("error reading repo archives dir %q: %s", repoPatchesRootDir, err)
+			return nil, fmt.Errorf("error reading repo archives dir %q: %w", repoPatchesRootDir, err)
 		}
 
 		for _, finfo := range hashDirs {
@@ -62,13 +62,13 @@ func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {
 
 			if !finfo.IsDir() {
 				if err := os.RemoveAll(hashDir); err != nil {
-					return nil, fmt.Errorf("unable to remove %q: %s", hashDir, err)
+					return nil, fmt.Errorf("unable to remove %q: %w", hashDir, err)
 				}
 			}
 
 			patchesFiles, err := ioutil.ReadDir(hashDir)
 			if err != nil {
-				return nil, fmt.Errorf("error reading repo patches from dir %q: %s", hashDir, err)
+				return nil, fmt.Errorf("error reading repo patches from dir %q: %w", hashDir, err)
 			}
 
 			for _, finfo := range patchesFiles {
@@ -76,7 +76,7 @@ func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {
 
 				if finfo.IsDir() {
 					if err := os.RemoveAll(path); err != nil {
-						return nil, fmt.Errorf("unable to remove %q: %s", path, err)
+						return nil, fmt.Errorf("unable to remove %q: %w", path, err)
 					}
 				}
 
@@ -88,10 +88,10 @@ func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {
 				res = append(res, desc)
 
 				if data, err := ioutil.ReadFile(path); err != nil {
-					return nil, fmt.Errorf("error reading metadata file %q: %s", path, err)
+					return nil, fmt.Errorf("error reading metadata file %q: %w", path, err)
 				} else {
 					if err := json.Unmarshal(data, &desc.Metadata); err != nil {
-						return nil, fmt.Errorf("error unmarshalling json from %q: %s", path, err)
+						return nil, fmt.Errorf("error unmarshalling json from %q: %w", path, err)
 					}
 				}
 
@@ -103,7 +103,7 @@ func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {
 						continue
 					}
 
-					return nil, fmt.Errorf("error accessing %q: %s", patchPath, err)
+					return nil, fmt.Errorf("error accessing %q: %w", patchPath, err)
 				}
 
 				desc.PatchPath = patchPath

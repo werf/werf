@@ -31,7 +31,7 @@ func NewYamlEncoder(encoder Encoder) *YamlEncoder {
 func (s *YamlEncoder) Encrypt(data []byte) ([]byte, error) {
 	resultData, err := s.generateFunc(data)
 	if err != nil {
-		return nil, fmt.Errorf("encryption failed: check encryption key and data: %s", err)
+		return nil, fmt.Errorf("encryption failed: check encryption key and data: %w", err)
 	}
 
 	return resultData, nil
@@ -40,7 +40,7 @@ func (s *YamlEncoder) Encrypt(data []byte) ([]byte, error) {
 func (s *YamlEncoder) EncryptYamlData(data []byte) ([]byte, error) {
 	resultData, err := doYamlData(s.generateFunc, data)
 	if err != nil {
-		return nil, fmt.Errorf("encryption failed: check encryption key and data: %s", err)
+		return nil, fmt.Errorf("encryption failed: check encryption key and data: %w", err)
 	}
 
 	return resultData, nil
@@ -50,10 +50,10 @@ func (s *YamlEncoder) Decrypt(data []byte) ([]byte, error) {
 	resultData, err := s.extractFunc(data)
 	if err != nil {
 		if IsExtractDataError(err) {
-			return nil, fmt.Errorf("decryption failed: check data `%s`: %s", string(data), err)
+			return nil, fmt.Errorf("decryption failed: check data `%s`: %w", string(data), err)
 		}
 
-		return nil, fmt.Errorf("decryption failed: check encryption key and data: %s", err)
+		return nil, fmt.Errorf("decryption failed: check encryption key and data: %w", err)
 	}
 
 	return resultData, nil
@@ -63,10 +63,10 @@ func (s *YamlEncoder) DecryptYamlData(data []byte) ([]byte, error) {
 	resultData, err := doYamlData(s.extractFunc, data)
 	if err != nil {
 		if IsExtractDataError(err) {
-			return nil, fmt.Errorf("decryption failed: check data `%s`: %s", string(data), err)
+			return nil, fmt.Errorf("decryption failed: check data `%s`: %w", string(data), err)
 		}
 
-		return nil, fmt.Errorf("decryption failed: check encryption key and data: %s", err)
+		return nil, fmt.Errorf("decryption failed: check encryption key and data: %w", err)
 	}
 
 	return resultData, nil

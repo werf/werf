@@ -45,14 +45,14 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.C
 		if opts.LoadFromLocalFilesystem {
 			data, err := ioutil.ReadFile(customSecretValuesFileName)
 			if err != nil {
-				return fmt.Errorf("unable to read custom secret values file %q from local filesystem: %s", customSecretValuesFileName, err)
+				return fmt.Errorf("unable to read custom secret values file %q from local filesystem: %w", customSecretValuesFileName, err)
 			}
 
 			file.Data = data
 		} else {
 			data, err := opts.GiterminismManager.FileReader().ReadChartFile(ctx, customSecretValuesFileName)
 			if err != nil {
-				return fmt.Errorf("unable to read custom secret values file %q: %s", customSecretValuesFileName, err)
+				return fmt.Errorf("unable to read custom secret values file %q: %w", customSecretValuesFileName, err)
 			}
 
 			file.Data = data
@@ -72,7 +72,7 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.C
 
 	if len(secretDirFiles) > 0 {
 		if data, err := LoadChartSecretDirFilesData(chartDir, secretDirFiles, encoder); err != nil {
-			return fmt.Errorf("error loading secret files data: %s", err)
+			return fmt.Errorf("error loading secret files data: %w", err)
 		} else {
 			secretsRuntimeData.DecodedSecretFilesData = data
 			for _, fileData := range secretsRuntimeData.DecodedSecretFilesData {
@@ -83,7 +83,7 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.C
 
 	if len(loadedSecretValuesFiles) > 0 {
 		if values, err := LoadChartSecretValueFiles(chartDir, loadedSecretValuesFiles, encoder); err != nil {
-			return fmt.Errorf("error loading secret value files: %s", err)
+			return fmt.Errorf("error loading secret value files: %w", err)
 		} else {
 			secretsRuntimeData.DecodedSecretValues = values
 			secretsRuntimeData.SecretValuesToMask = append(secretsRuntimeData.SecretValuesToMask, secretvalues.ExtractSecretValuesFromMap(values)...)

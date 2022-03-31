@@ -143,7 +143,7 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 		containerBackend := c.ContainerBackend
 
 		if info, err := containerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
-			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Image.Name(), err)
+			return fmt.Errorf("unable to inspect local image %s: %w", i.baseImage.Image.Name(), err)
 		} else if info != nil {
 			// TODO: do not use container_backend.LegacyStageImage for base image
 			i.baseImage.Image.SetStageDescription(&image.StageDescription{
@@ -175,7 +175,7 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 
 		info, err := containerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{})
 		if err != nil {
-			return fmt.Errorf("unable to inspect local image %s: %s", i.baseImage.Image.Name(), err)
+			return fmt.Errorf("unable to inspect local image %s: %w", i.baseImage.Image.Name(), err)
 		}
 
 		if info == nil {
@@ -222,7 +222,7 @@ func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, c *Conveyor,
 		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(ctx, baseImageName)
 		if fetchImageIdErr != nil {
 			c.SetBaseImagesRepoErrCache(baseImageName, fetchImageIdErr)
-			return fmt.Errorf("can not get base image id from registry (%s): %s", baseImageName, fetchImageIdErr)
+			return fmt.Errorf("can not get base image id from registry (%s): %w", baseImageName, fetchImageIdErr)
 		}
 
 		return nil

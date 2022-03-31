@@ -114,7 +114,7 @@ func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager
 			for _, commit := range commitList {
 				exist, err := localGit.IsCommitExists(ctx, commit)
 				if err != nil {
-					return fmt.Errorf("check commit %s in local git failed: %s", commit, err)
+					return fmt.Errorf("check commit %s in local git failed: %w", commit, err)
 				}
 
 				if exist {
@@ -142,7 +142,7 @@ func (m *Manager) InitCustomTagsMetadata(ctx context.Context, storageManager man
 func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (stageIDCustomTagList map[string][]string, err error) {
 	stageCustomTagMetadataIDs, err := storageManager.GetStagesStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %s", err)
+		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %w", err)
 	}
 
 	var mutex sync.Mutex
