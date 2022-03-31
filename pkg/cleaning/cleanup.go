@@ -832,10 +832,8 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 	if len(customTagListToDelete) != 0 {
 		header := fmt.Sprintf("Deleting unused custom tags (%d/%d)", len(customTagListToDelete), numberOfCustomTags)
 		if err := logboek.Context(ctx).LogProcess(header).DoError(func() error {
-			for _, customTag := range customTagListToDelete {
-				if err := deleteCustomTag(ctx, m.StorageManager.GetStagesStorage(), customTag); err != nil {
-					return err
-				}
+			if err := deleteCustomTags(ctx, m.StorageManager, customTagListToDelete, m.DryRun); err != nil {
+				return err
 			}
 
 			return nil

@@ -81,6 +81,7 @@ type StorageManagerInterface interface {
 	ForEachGetImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error) error
 	ForEachRmImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, id string, err error) error) error
 	ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error) error
+	ForEachDeleteStageCustomTag(ctx context.Context, ids []string, f func(ctx context.Context, tag string, err error) error) error
 }
 
 func RetryOnUnexpectedStagesStorageState(_ context.Context, _ StorageManagerInterface, f func() error) error {
@@ -1004,6 +1005,16 @@ func (m *StorageManager) ForEachRmImportMetadata(ctx context.Context, projectNam
 	}, func(ctx context.Context, taskId int) error {
 		id := ids[taskId]
 		err := m.StagesStorage.RmImportMetadata(ctx, projectName, id)
+		return f(ctx, id, err)
+	})
+}
+
+func (m *StorageManager) ForEachDeleteStageCustomTag(ctx context.Context, ids []string, f func(ctx context.Context, tag string, err error) error) error {
+	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		id := ids[taskId]
+		err := m.StagesStorage.DeleteStageCustomTag(ctx, id)
 		return f(ctx, id, err)
 	})
 }
