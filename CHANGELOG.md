@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.82](https://www.github.com/werf/werf/compare/v1.2.81...v1.2.82) (2022-04-01)
+
+
+### Bug Fixes
+
+* **dependencies:** broken imports checksum when files names contain spaces ([57ea901](https://www.github.com/werf/werf/commit/57ea901900710a40dae90065e7687241b68f68b4))
+
 ### [1.2.81](https://www.github.com/werf/werf/compare/v1.2.80...v1.2.81) (2022-04-01)
 
 
