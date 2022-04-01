@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.81](https://www.github.com/werf/werf/compare/v1.2.80...v1.2.81) (2022-04-01)
+
+
+### Features
+
+* **stapel-to-buildah:** support user stages and mounts ([da55b2a](https://www.github.com/werf/werf/commit/da55b2ae823c16ed3e2ea62cbe34e830f2a78d05))
+
+
+### Bug Fixes
+
+* **cleanup:** fail on getting manifests for some custom tag metadata ([90a3767](https://www.github.com/werf/werf/commit/90a3767c6847bc8782a0302c0fa58171811ad1e1))
+* **stapel-to-buildah:** working build of 'from' stage ([91527db](https://www.github.com/werf/werf/commit/91527db132ff822428a97a7a05fa6427c3150f04))
+
 ### [1.2.80](https://www.github.com/werf/werf/compare/v1.2.79...v1.2.80) (2022-03-30)
 
 
