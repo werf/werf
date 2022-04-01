@@ -286,7 +286,7 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 	sortCommandParts := append([]string{}, stapel.SortBinPath(), "-n")
 	sortCommand := strings.Join(sortCommandParts, " ")
 
-	xargsCommandParts := append([]string{}, stapel.XargsBinPath(), stapel.Md5sumBinPath())
+	xargsCommandParts := append([]string{}, stapel.XargsBinPath(), "-d'\n'", stapel.Md5sumBinPath())
 	xargsCommand := strings.Join(xargsCommandParts, " ")
 
 	md5SumCommand := stapel.Md5sumBinPath()
