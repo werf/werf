@@ -30,7 +30,7 @@ groups:
     - name: beta
       version: 1.2.80 # runtime caching instead stages storage cache on sync server, werf kube-run, more fixes
     - name: ea
-      version: 1.2.79 # runtime caching instead stages storage cache on sync server, werf kube-run, more fixes
+      version: 1.2.80 # runtime caching instead stages storage cache on sync server, werf kube-run, more fixes
     - name: stable
       version: 1.2.72 # support dockerfile stage for buildah container runtime
     - name: rock-solid
