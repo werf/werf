@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.83](https://www.github.com/werf/werf/compare/v1.2.82...v1.2.83) (2022-04-04)
+
+
+### Bug Fixes
+
+* **cleanup:** manage custom tags that do not have associated existent stages ([ef6efc3](https://www.github.com/werf/werf/commit/ef6efc3718a61248d08ee8230c347245d073ff0d))
+* ignoring broken config in container registry ([50ed5c7](https://www.github.com/werf/werf/commit/50ed5c7e1fe1b6c6767162e9c0be2714cac83518))
+
 ### [1.2.82](https://www.github.com/werf/werf/compare/v1.2.81...v1.2.82) (2022-04-01)
 
 
