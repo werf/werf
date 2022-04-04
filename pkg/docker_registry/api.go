@@ -3,6 +3,7 @@ package docker_registry
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker_registry/container_registry_extensions"
@@ -46,9 +48,10 @@ func (api *api) Tags(ctx context.Context, reference string, _ ...Option) ([]stri
 func (api *api) tags(_ context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
 	tags, err := api.list(reference, extraListOptions...)
 	if err != nil {
-		if IsNameUnknownError(err) {
+		if IsStatusNotFoundErr(err) {
 			return []string{}, nil
 		}
+
 		return nil, err
 	}
 
@@ -81,7 +84,7 @@ func (api *api) IsRepoImageExists(ctx context.Context, reference string) (bool, 
 
 func (api *api) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
 	if imgInfo, err := api.GetRepoImage(ctx, reference); err != nil {
-		if IsBlobUnknownError(err) || IsManifestUnknownError(err) || IsNameUnknownError(err) || IsHarbor404Error(err) || IsQuayTagExpiredErr(err) {
+		if IsStatusNotFoundErr(err) || IsQuayTagExpiredErr(err) {
 			// TODO: 1. auto reject images with manifest-unknown or blob-unknown errors
 			// TODO: 2. why TryGetRepoImage for rejected image records gives manifest-unknown errors?
 			// TODO: 3. make sure werf never ever creates rejected image records for name-unknown errors.
@@ -376,4 +379,13 @@ func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
 	referenceParts.digest = res[3]
 
 	return referenceParts, nil
+}
+
+func IsStatusNotFoundErr(err error) bool {
+	var transportError *transport.Error
+	if errors.As(err, &transportError) && transportError.StatusCode == 404 {
+		return true
+	}
+
+	return false
 }
