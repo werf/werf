@@ -202,7 +202,6 @@ func deleteCustomTags(ctx context.Context, storageManager manager.StorageManager
 		}
 
 		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", tag)
-		logboek.Context(ctx).Default().LogOptionalLn()
 
 		return nil
 	}); err != nil {
