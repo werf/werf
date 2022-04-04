@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.82 # fix dependencies not reimported if file name contains spaces
+      version: 1.2.83 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: beta
       version: 1.2.81 # fix sluggification and parallel custom tag deletion during cleanup
     - name: ea
