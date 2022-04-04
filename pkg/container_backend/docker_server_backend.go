@@ -24,7 +24,7 @@ func (runtime *DockerServerBackend) HasStapelBuildSupport() bool {
 	return false
 }
 
-func (runtime *DockerServerBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error) {
+func (runtime *DockerServerBackend) BuildStapelStage(ctx context.Context, stageType StapelStageType, opts BuildStapelStageOptions) (string, error) {
 	panic("BuildStapelStage does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 

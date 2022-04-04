@@ -3,12 +3,10 @@ package stage
 import (
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
 	imagePkg "github.com/werf/werf/pkg/image"
@@ -74,6 +72,10 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, prevImage, _ 
 }
 
 func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
+	if !c.UseLegacyStapelBuilder(cr) {
+		stageImage.Builder.StapelStageBuilder().SetStageType(container_backend.FromStage)
+	}
+
 	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()}
 	if c.UseLegacyStapelBuilder(cr) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
@@ -83,32 +85,28 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_b
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, c, cr, stageImage)
+	if !c.UseLegacyStapelBuilder(cr) {
+		if err := s.addServiceMountsVolumes(serviceMounts, c, cr, stageImage); err != nil {
+			return fmt.Errorf("error adding mounts volumes: %w", err)
+		}
+	}
 
 	customMounts := s.getCustomMounts(prevBuiltImage)
 	s.addCustomMountLabels(customMounts, c, cr, stageImage)
+	if !c.UseLegacyStapelBuilder(cr) {
+		if err := s.addCustomMountVolumes(customMounts, c, cr, stageImage); err != nil {
+			return fmt.Errorf("error adding mounts volumes: %w", err)
+		}
+	}
 
 	var mountpoints []string
 	for _, mountCfg := range s.configMounts {
 		mountpoints = append(mountpoints, mountCfg.To)
 	}
-
-	if len(mountpoints) != 0 {
-		mountpointsStr := strings.Join(mountpoints, " ")
-
+	if len(mountpoints) > 0 {
 		if c.UseLegacyStapelBuilder(cr) {
+			mountpointsStr := strings.Join(mountpoints, " ")
 			stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", stapel.RmBinPath(), mountpointsStr))
-		} else {
-			stageImage.Builder.StapelStageBuilder().AddPrepareContainerActions(container_backend.PrepareContainerActionWith(func(containerRoot string) error {
-				for _, mountpoint := range mountpoints {
-					logboek.Context(ctx).Info().LogF("Removing mountpoint %q in the container dir: %q\n", mountpoint, filepath.Join(containerRoot, mountpoint))
-
-					if err := os.RemoveAll(filepath.Join(containerRoot, mountpoint)); err != nil {
-						return fmt.Errorf("unable to remove %q: %w", mountpoint, err)
-					}
-				}
-
-				return nil
-			}))
 		}
 	}
 

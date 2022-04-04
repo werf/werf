@@ -78,6 +78,8 @@ require (
 	go.mongodb.org/mongo-driver v1.5.1 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
+	golang.org/x/sys v0.0.0-20220403205710-6acee93ad0eb // indirect
+	golang.org/x/tools v0.1.10 // indirect
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/errgo.v2 v2.1.0
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
