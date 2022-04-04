@@ -43,33 +43,6 @@ type BuildDockerfileOpts struct {
 	Tags                 []string
 }
 
-// type StapelBuildOptions struct {
-//	ServiceRunCommands []string
-//	RunCommands []string
-//	Volumes []string
-//	VolumesFrom []string
-//	Exposes []string
-//	Envs map[string]string
-//	Labels map[string]string
-// }
-
-type BuildStapelStageOpts struct {
-	BuildVolumes            []string
-	Labels                  []string
-	UserCommands            []string
-	PrepareContainerActions []PrepareContainerAction
-}
-
-type PrepareContainerAction interface {
-	PrepareContainer(containerRoot string) error
-}
-
-type PrepareContainerActionWith func(containerRoot string) error
-
-func (f PrepareContainerActionWith) PrepareContainer(containerRoot string) error {
-	return f(containerRoot)
-}
-
 type ContainerBackend interface {
 	Tag(ctx context.Context, ref, newRef string, opts TagOpts) error
 	Push(ctx context.Context, ref string, opts PushOpts) error
@@ -78,7 +51,7 @@ type ContainerBackend interface {
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
-	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error)
+	BuildStapelStage(ctx context.Context, stageType StapelStageType, opts BuildStapelStageOptions) (string, error)
 
 	HasStapelBuildSupport() bool
 	String() string

@@ -3,6 +3,8 @@ package container_backend
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
@@ -37,51 +39,46 @@ func (runtime *BuildahBackend) getBuildahCommonOpts(ctx context.Context, suppres
 	return
 }
 
-func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOpts) (string, error) {
-	containerID := fmt.Sprintf("werf-stage-build-%s", uuid.New().String())
-
-	_, err := runtime.buildah.FromCommand(ctx, containerID, baseImage, buildah.FromCommandOpts(runtime.getBuildahCommonOpts(ctx, true)))
+func (runtime *BuildahBackend) prepareContainerRoot(ctx context.Context, containerID string, fn func(containerRoot string) error) error {
+	containerRoot, err := runtime.buildah.Mount(ctx, containerID, buildah.MountOpts(runtime.getBuildahCommonOpts(ctx, true)))
 	if err != nil {
-		return "", fmt.Errorf("unable to create container using base image %q: %w", baseImage, err)
+		return fmt.Errorf("unable to mount container %q root dir: %w", containerID, err)
 	}
+	defer runtime.buildah.Umount(ctx, containerRoot, buildah.UmountOpts(runtime.getBuildahCommonOpts(ctx, true)))
 
-	// TODO(stapel-to-buildah): cleanup orphan build containers in werf-host-cleanup procedure
-	// defer runtime.buildah.Rm(ctx, containerID, buildah.RmOpts{CommonOpts: runtime.getBuildahCommonOpts(ctx, true)})
+	return fn(containerRoot)
+}
 
-	if len(opts.PrepareContainerActions) > 0 {
-		err := func() error {
-			containerRoot, err := runtime.buildah.Mount(ctx, containerID, buildah.MountOpts(runtime.getBuildahCommonOpts(ctx, true)))
-			if err != nil {
-				return fmt.Errorf("unable to mount container %q root dir: %w", containerID, err)
-			}
-			defer runtime.buildah.Umount(ctx, containerRoot, buildah.UmountOpts(runtime.getBuildahCommonOpts(ctx, true)))
+func (runtime *BuildahBackend) buildFromStage(ctx context.Context, containerID string, opts BuildStapelStageOptions) error {
+	if len(opts.BuildVolumes) > 0 {
+		var mountpoints []string
+		for _, volume := range opts.BuildVolumes {
+			volumeParts := strings.SplitN(volume, ":", 2)
+			mountpoints = append(mountpoints, volumeParts[1])
+		}
 
-			for _, action := range opts.PrepareContainerActions {
-				if err := action.PrepareContainer(containerRoot); err != nil {
-					return fmt.Errorf("unable to prepare container in %q: %w", containerRoot, err)
+		if err := runtime.prepareContainerRoot(ctx, containerID, func(containerRoot string) error {
+			for _, mountpoint := range mountpoints {
+				if err := os.RemoveAll(filepath.Join(containerRoot, mountpoint)); err != nil {
+					return fmt.Errorf("unable to remove %q: %w", mountpoint, err)
 				}
 			}
 
 			return nil
-		}()
-		if err != nil {
-			return "", err
+		}); err != nil {
+			return fmt.Errorf("unable to prepare container root mountpoints for 'from' stage: %w", err)
 		}
 	}
 
-	for _, cmd := range opts.UserCommands {
-		var mounts []specs.Mount
-		for _, volume := range opts.BuildVolumes {
-			volumeParts := strings.SplitN(volume, ":", 2)
-			if len(volumeParts) != 2 {
-				panic(fmt.Sprintf("invalid volume %q: expected SOURCE:DESTINATION format", volume))
-			}
+	return nil
+}
 
-			mounts = append(mounts, specs.Mount{
-				Type:        "bind",
-				Source:      volumeParts[0],
-				Destination: volumeParts[1],
-			})
+func (runtime *BuildahBackend) buildUserCommandsStage(ctx context.Context, containerID string, opts BuildStapelStageOptions) error {
+	for _, cmd := range opts.Commands {
+		var mounts []specs.Mount
+		mounts, err := makeBuildahMounts(opts.BuildVolumes)
+		if err != nil {
+			return err
 		}
 
 		// TODO(stapel-to-buildah): Consider support for shell script instead of separate run commands to allow shared
@@ -92,8 +89,35 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 			CommonOpts: runtime.getBuildahCommonOpts(ctx, false),
 			Mounts:     mounts,
 		}); err != nil {
-			return "", fmt.Errorf("unable to run %q: %w", cmd, err)
+			return fmt.Errorf("unable to run %q: %w", cmd, err)
 		}
+	}
+
+	return nil
+}
+
+func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, stageType StapelStageType, opts BuildStapelStageOptions) (string, error) {
+	containerID := fmt.Sprintf("werf-stage-build-%s", uuid.New().String())
+
+	_, err := runtime.buildah.FromCommand(ctx, containerID, opts.BaseImage, buildah.FromCommandOpts(runtime.getBuildahCommonOpts(ctx, true)))
+	if err != nil {
+		return "", fmt.Errorf("unable to create container using base image %q: %w", opts.BaseImage, err)
+	}
+	// TODO(stapel-to-buildah): cleanup orphan build containers in werf-host-cleanup procedure
+	// defer runtime.buildah.Rm(ctx, containerID, buildah.RmOpts{CommonOpts: runtime.getBuildahCommonOpts(ctx, true)})
+
+	switch stageType {
+	case FromStage:
+		if err := runtime.buildFromStage(ctx, containerID, opts); err != nil {
+			return "", err
+		}
+	case UserCommandsStage:
+		if err := runtime.buildUserCommandsStage(ctx, containerID, opts); err != nil {
+			return "", err
+		}
+	case DockerInstructionsStage:
+	default:
+		return "", fmt.Errorf("unsupported stage type %q", stageType.String())
 	}
 
 	logboek.Context(ctx).Debug().LogF("Setting labels %v for build container %q\n", opts.Labels, containerID)
@@ -264,4 +288,31 @@ func (runtime *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageI
 
 func (runtime *BuildahBackend) String() string {
 	return "buildah-runtime"
+}
+
+func parseVolume(volume string) (string, string, error) {
+	volumeParts := strings.SplitN(volume, ":", 2)
+	if len(volumeParts) != 2 {
+		return "", "", fmt.Errorf("expected SOURCE:DESTINATION format")
+	}
+	return volumeParts[0], volumeParts[1], nil
+}
+
+func makeBuildahMounts(volumes []string) ([]specs.Mount, error) {
+	var mounts []specs.Mount
+
+	for _, volume := range volumes {
+		from, to, err := parseVolume(volume)
+		if err != nil {
+			return nil, fmt.Errorf("invalid volume %q: %w", volume, err)
+		}
+
+		mounts = append(mounts, specs.Mount{
+			Type:        "bind",
+			Source:      from,
+			Destination: to,
+		})
+	}
+
+	return mounts, nil
 }
