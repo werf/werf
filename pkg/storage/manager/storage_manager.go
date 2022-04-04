@@ -247,6 +247,7 @@ func (m *StorageManager) getStageDescriptionList(ctx context.Context, opts ...st
 
 		if stageDesc == nil {
 			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s\n", stageID.String(), m.StagesStorage.String())
+			return nil
 		}
 
 		mutex.Lock()
