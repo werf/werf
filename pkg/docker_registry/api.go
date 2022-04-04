@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -377,6 +378,15 @@ func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
 	referenceParts.digest = res[3]
 
 	return referenceParts, nil
+}
+
+func ValidateRepositoryReference(reference string) error {
+	reg := regexp.MustCompile(`^` + dockerReference.NameRegexp.String() + `$`)
+	if !reg.MatchString(reference) {
+		return fmt.Errorf("invalid repository address %q", reference)
+	}
+
+	return nil
 }
 
 func IsStatusNotFoundErr(err error) bool {

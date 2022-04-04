@@ -102,6 +102,10 @@ func NewDockerRegistry(repositoryAddress string, implementation string, options 
 }
 
 func newDockerRegistry(repositoryAddress string, implementation string, options DockerRegistryOptions) (Interface, error) {
+	if err := ValidateRepositoryReference(repositoryAddress); err != nil {
+		return nil, err
+	}
+
 	switch implementation {
 	case AwsEcrImplementationName:
 		return newAwsEcr(options.awsEcrOptions())
