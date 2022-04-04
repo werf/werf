@@ -370,3 +370,7 @@ func (m *Manager) IsStageExist(stageID string) bool {
 func (m *Manager) GetCustomTagsMetadata() map[string][]string {
 	return m.stageIDCustomTagList
 }
+
+func (m *Manager) ForgetCustomTagsByStageID(stageID string) {
+	delete(m.stageIDCustomTagList, stageID)
+}

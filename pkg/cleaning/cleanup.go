@@ -170,12 +170,12 @@ func (m *cleanupManager) run(ctx context.Context) error {
 
 func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImagesNames []string) error {
 	handledDeployedStages := map[string]bool{}
-	handleTagFunc := func(tag, stageID string) {
+	handleTagFunc := func(tag, stageID string, f func()) {
 		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().Address(), tag)
 		for _, deployedDockerImageName := range deployedDockerImagesNames {
 			if deployedDockerImageName == dockerImageName {
 				if !handledDeployedStages[stageID] {
-					m.stageManager.MarkStageAsProtected(stageID)
+					f()
 
 					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", tag)
 					logboek.Context(ctx).LogOptionalLn()
@@ -188,12 +188,22 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 	}
 
 	for _, stageID := range m.stageManager.GetStageIDList() {
-		handleTagFunc(stageID, stageID)
+		handleTagFunc(stageID, stageID, func() {
+			m.stageManager.MarkStageAsProtected(stageID)
+		})
 	}
 
 	for stageID, customTagList := range m.stageManager.GetCustomTagsMetadata() {
 		for _, customTag := range customTagList {
-			handleTagFunc(customTag, stageID)
+			handleTagFunc(customTag, stageID, func() {
+				if m.stageManager.IsStageExist(stageID) {
+					// keep existent stage and associated custom tags
+					m.stageManager.MarkStageAsProtected(stageID)
+				} else {
+					// keep custom tags that do not have associated existent stage
+					m.stageManager.ForgetCustomTagsByStageID(stageID)
+				}
+			})
 		}
 	}
 
