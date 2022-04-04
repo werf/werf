@@ -353,20 +353,18 @@ type referenceParts struct {
 }
 
 func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
-	// validate reference
 	parsedReference, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
-		return referenceParts{}, fmt.Errorf("unable to parse reference %q: %w", reference, err)
+		return referenceParts{}, err
 	}
-
-	res := dockerReference.ReferenceRegexp.FindStringSubmatch(reference)
 
 	// res[0] full match
 	// res[1] repository
 	// res[2] tag
 	// res[3] digest
+	res := dockerReference.ReferenceRegexp.FindStringSubmatch(reference)
 	if len(res) != 4 {
-		panic(fmt.Sprintf("unexpected regexp find submatch result %v (%d)", res, len(res)))
+		panic(fmt.Sprintf("unexpected regexp find submatch result %v for reference %q (%d)", res, reference, len(res)))
 	}
 
 	referenceParts := referenceParts{}

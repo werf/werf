@@ -85,7 +85,7 @@ func (api *genericApi) mirrorReferenceList(ctx context.Context, reference string
 
 	referenceParts, err := api.commonApi.parseReferenceParts(reference)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
 
 	// nothing if container registry is not Docker Hub
