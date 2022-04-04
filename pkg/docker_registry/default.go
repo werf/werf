@@ -33,20 +33,17 @@ func newDefaultAPIForImplementation(implementation string, options defaultImplem
 
 func (r *defaultImplementation) Tags(ctx context.Context, reference string, _ ...Option) ([]string, error) {
 	tags, err := r.api.Tags(ctx, reference)
+	if err != nil {
+		if IsQuayTagExpiredErr(err) && r.Implementation != QuayImplementationName {
+			logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for quay container registry implementation!\n")
+			logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=quay option (or WERF_CONTAINER_REGISTRY env var)\n")
+			logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use quay driver.\n")
+		}
 
-	if (IsHarbor404Error(err) || IsHarborNotFoundError(err)) && r.Implementation != HarborImplementationName {
-		logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for harbor container registry implementation!\n")
-		logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=harbor option (or WERF_CONTAINER_REGISTRY env var)\n")
-		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use harbor driver.\n")
+		return []string{}, err
 	}
 
-	if IsQuayTagExpiredErr(err) && r.Implementation != QuayImplementationName {
-		logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for quay container registry implementation!\n")
-		logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=quay option (or WERF_CONTAINER_REGISTRY env var)\n")
-		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use quay driver.\n")
-	}
-
-	return tags, err
+	return tags, nil
 }
 
 func (r *defaultImplementation) IsTagExist(_ context.Context, _ string, _ ...Option) (bool, error) {
@@ -55,20 +52,17 @@ func (r *defaultImplementation) IsTagExist(_ context.Context, _ string, _ ...Opt
 
 func (r *defaultImplementation) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
 	info, err := r.api.TryGetRepoImage(ctx, reference)
+	if err != nil {
+		if IsQuayTagExpiredErr(err) && r.Implementation != QuayImplementationName {
+			logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for quay container registry implementation!\n")
+			logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=quay option (or WERF_CONTAINER_REGISTRY env var)\n")
+			logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use quay driver.\n")
+		}
 
-	if (IsHarbor404Error(err) || IsHarborNotFoundError(err)) && r.Implementation != HarborImplementationName {
-		logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for harbor container registry implementation!\n")
-		logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=harbor option (or WERF_CONTAINER_REGISTRY env var)\n")
-		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use harbor driver.\n")
+		return nil, err
 	}
 
-	if IsQuayTagExpiredErr(err) && r.Implementation != QuayImplementationName {
-		logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for quay container registry implementation!\n")
-		logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=quay option (or WERF_CONTAINER_REGISTRY env var)\n")
-		logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use quay driver.\n")
-	}
-
-	return info, err
+	return info, nil
 }
 
 func (r *defaultImplementation) CreateRepo(_ context.Context, _ string) error {
@@ -93,10 +87,6 @@ func (r *defaultImplementation) String() string {
 
 func IsManifestUnknownError(err error) bool {
 	return (err != nil) && strings.Contains(err.Error(), "MANIFEST_UNKNOWN")
-}
-
-func IsBlobUnknownError(err error) bool {
-	return (err != nil) && strings.Contains(err.Error(), "BLOB_UNKNOWN")
 }
 
 func IsNameUnknownError(err error) bool {

@@ -38,7 +38,7 @@ func (api *genericApi) GetRepoImageConfigFile(ctx context.Context, reference str
 	for _, mirrorReference := range mirrorReferenceList {
 		config, err := api.getRepoImageConfigFile(ctx, mirrorReference)
 		if err != nil {
-			if IsBlobUnknownError(err) || IsManifestUnknownError(err) || IsNameUnknownError(err) || IsHarbor404Error(err) || IsQuayTagExpiredErr(err) {
+			if IsStatusNotFoundErr(err) || IsQuayTagExpiredErr(err) {
 				continue
 			}
 
