@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/otiai10/copy"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
@@ -39,41 +40,87 @@ func (runtime *BuildahBackend) getBuildahCommonOpts(ctx context.Context, suppres
 	return
 }
 
-func (runtime *BuildahBackend) prepareContainerRoot(ctx context.Context, containerID string, fn func(containerRoot string) error) error {
-	containerRoot, err := runtime.buildah.Mount(ctx, containerID, buildah.MountOpts(runtime.getBuildahCommonOpts(ctx, true)))
-	if err != nil {
-		return fmt.Errorf("unable to mount container %q root dir: %w", containerID, err)
-	}
-	defer runtime.buildah.Umount(ctx, containerRoot, buildah.UmountOpts(runtime.getBuildahCommonOpts(ctx, true)))
-
-	return fn(containerRoot)
+type containerDesc struct {
+	ImageName string
+	Name      string
+	RootMount string
 }
 
-func (runtime *BuildahBackend) buildFromStage(ctx context.Context, containerID string, opts BuildStapelStageOptions) error {
-	if len(opts.BuildVolumes) > 0 {
-		var mountpoints []string
-		for _, volume := range opts.BuildVolumes {
-			volumeParts := strings.SplitN(volume, ":", 2)
-			mountpoints = append(mountpoints, volumeParts[1])
+func (runtime *BuildahBackend) createContainers(ctx context.Context, images []string) ([]*containerDesc, error) {
+	var res []*containerDesc
+
+	for _, img := range images {
+		containerID := fmt.Sprintf("werf-stage-build-%s", uuid.New().String())
+
+		_, err := runtime.buildah.FromCommand(ctx, containerID, img, buildah.FromCommandOpts(runtime.getBuildahCommonOpts(ctx, true)))
+		if err != nil {
+			return nil, fmt.Errorf("unable to create container using base image %q: %w", img, err)
 		}
 
-		if err := runtime.prepareContainerRoot(ctx, containerID, func(containerRoot string) error {
-			for _, mountpoint := range mountpoints {
-				if err := os.RemoveAll(filepath.Join(containerRoot, mountpoint)); err != nil {
-					return fmt.Errorf("unable to remove %q: %w", mountpoint, err)
-				}
-			}
+		res = append(res, &containerDesc{ImageName: img, Name: containerID})
+	}
 
-			return nil
-		}); err != nil {
-			return fmt.Errorf("unable to prepare container root mountpoints for 'from' stage: %w", err)
+	return res, nil
+}
+
+func (runtime *BuildahBackend) removeContainers(ctx context.Context, containers []*containerDesc) error {
+	for _, cont := range containers {
+		if err := runtime.buildah.Rm(ctx, cont.Name, buildah.RmOpts(runtime.getBuildahCommonOpts(ctx, true))); err != nil {
+			return fmt.Errorf("unable to remove container %q: %w", cont.Name, err)
 		}
 	}
 
 	return nil
 }
 
-func (runtime *BuildahBackend) buildUserCommandsStage(ctx context.Context, containerID string, opts BuildStapelStageOptions) error {
+func (runtime *BuildahBackend) mountContainers(ctx context.Context, containers []*containerDesc) error {
+	for _, cont := range containers {
+		containerRoot, err := runtime.buildah.Mount(ctx, cont.Name, buildah.MountOpts(runtime.getBuildahCommonOpts(ctx, true)))
+		if err != nil {
+			return fmt.Errorf("unable to mount container %q root dir: %w", cont.Name, err)
+		}
+		cont.RootMount = containerRoot
+	}
+
+	return nil
+}
+
+func (runtime *BuildahBackend) unmountContainers(ctx context.Context, containers []*containerDesc) error {
+	for _, cont := range containers {
+		if err := runtime.buildah.Umount(ctx, cont.Name, buildah.UmountOpts(runtime.getBuildahCommonOpts(ctx, true))); err != nil {
+			return fmt.Errorf("container %q: %w", cont.Name, err)
+		}
+	}
+
+	return nil
+}
+
+func (runtime *BuildahBackend) cleanupMountpoints(ctx context.Context, container *containerDesc, buildVolumes []string) error {
+	var mountpoints []string
+	for _, volume := range buildVolumes {
+		volumeParts := strings.SplitN(volume, ":", 2)
+		mountpoints = append(mountpoints, volumeParts[1])
+	}
+
+	if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
+		return err
+	}
+	defer func() {
+		if err := runtime.unmountContainers(ctx, []*containerDesc{container}); err != nil {
+			logboek.Context(ctx).Warn().LogF("ERROR: unable to unmount containers: %s\n", err)
+		}
+	}()
+
+	for _, mountpoint := range mountpoints {
+		if err := os.RemoveAll(filepath.Join(container.RootMount, mountpoint)); err != nil {
+			return fmt.Errorf("unable to remove mountpoint %q in container %s: %w", mountpoint, container.Name, err)
+		}
+	}
+
+	return nil
+}
+
+func (runtime *BuildahBackend) applyUserCommands(ctx context.Context, container *containerDesc, opts BuildStapelStageOptions) error {
 	for _, cmd := range opts.Commands {
 		var mounts []specs.Mount
 		mounts, err := makeBuildahMounts(opts.BuildVolumes)
@@ -85,7 +132,7 @@ func (runtime *BuildahBackend) buildUserCommandsStage(ctx context.Context, conta
 		// 							  usage of shell variables and functions between multiple commands.
 		//                          Maybe there is no need of such function, instead provide options to select shell in the werf.yaml.
 		//                          Is it important to provide compatibility between docker-server-based werf.yaml and buildah-based?
-		if err := runtime.buildah.RunCommand(ctx, containerID, []string{"sh", "-c", cmd}, buildah.RunCommandOpts{
+		if err := runtime.buildah.RunCommand(ctx, container.Name, []string{"sh", "-c", cmd}, buildah.RunCommandOpts{
 			CommonOpts: runtime.getBuildahCommonOpts(ctx, false),
 			Mounts:     mounts,
 		}); err != nil {
@@ -96,32 +143,105 @@ func (runtime *BuildahBackend) buildUserCommandsStage(ctx context.Context, conta
 	return nil
 }
 
-func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, stageType StapelStageType, opts BuildStapelStageOptions) (string, error) {
-	containerID := fmt.Sprintf("werf-stage-build-%s", uuid.New().String())
+type dependencyContainer struct {
+	Container *containerDesc
+	Import    DependencyImport
+}
 
-	_, err := runtime.buildah.FromCommand(ctx, containerID, opts.BaseImage, buildah.FromCommandOpts(runtime.getBuildahCommonOpts(ctx, true)))
-	if err != nil {
-		return "", fmt.Errorf("unable to create container using base image %q: %w", opts.BaseImage, err)
+func (runtime *BuildahBackend) applyDependencies(ctx context.Context, container *containerDesc, opts BuildStapelStageOptions) error {
+	var dependencies []*dependencyContainer
+
+	var dependenciesImages []string
+	for _, imp := range opts.Imports {
+		dependenciesImages = append(dependenciesImages, imp.ImageName)
 	}
+
+	logboek.Context(ctx).Debug().LogF("Creating containers for dependencies images %v\n", dependenciesImages)
+	dependenciesContainers, err := runtime.createContainers(ctx, dependenciesImages)
+	if err != nil {
+		return fmt.Errorf("unable to create dependencies containers: %w", err)
+	}
+	defer func() {
+		if err := runtime.removeContainers(ctx, dependenciesContainers); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal dependencies containers: %s\n", err)
+		}
+	}()
+
+	for _, cont := range dependenciesContainers {
+	FindImport:
+		for _, imp := range opts.Imports {
+			if imp.ImageName == cont.ImageName {
+				dependencies = append(dependencies, &dependencyContainer{
+					Container: cont,
+					Import:    imp,
+				})
+
+				break FindImport
+			}
+		}
+	}
+
+	logboek.Context(ctx).Debug().LogF("Mounting dependencies containers %v\n", dependenciesContainers)
+	if err := runtime.mountContainers(ctx, append(dependenciesContainers, container)); err != nil {
+		return fmt.Errorf("unable to mount containers: %w", err)
+	}
+	defer func() {
+		logboek.Context(ctx).Debug().LogF("Unmounting dependencies containers %v\n", dependenciesContainers)
+		if err := runtime.unmountContainers(ctx, append(dependenciesContainers, container)); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
+		}
+	}()
+
+	for _, dep := range dependencies {
+		copyFrom := filepath.Join(dep.Container.RootMount, dep.Import.FromPath)
+		copyTo := filepath.Join(container.RootMount, dep.Import.ToPath)
+		fmt.Printf("copying from %q to %q\n", copyFrom, copyTo)
+		logboek.Context(ctx).Debug().LogF("Copying dependency %v from %q to %q\n", dep.Import, copyFrom, copyTo)
+		if err := copy.Copy(copyFrom, copyTo); err != nil {
+			return fmt.Errorf("unable to copy %s to %s: %w", copyFrom, copyTo, err)
+		}
+	}
+
+	return nil
+}
+
+func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, stageType StapelStageType, opts BuildStapelStageOptions) (string, error) {
+	var container *containerDesc
+	if c, err := runtime.createContainers(ctx, []string{opts.BaseImage}); err != nil {
+		return "", err
+	} else {
+		container = c[0]
+	}
+	defer func() {
+		if err := runtime.removeContainers(ctx, []*containerDesc{container}); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal build container: %s\n", err)
+		}
+	}()
+
 	// TODO(stapel-to-buildah): cleanup orphan build containers in werf-host-cleanup procedure
-	// defer runtime.buildah.Rm(ctx, containerID, buildah.RmOpts{CommonOpts: runtime.getBuildahCommonOpts(ctx, true)})
 
 	switch stageType {
 	case FromStage:
-		if err := runtime.buildFromStage(ctx, containerID, opts); err != nil {
-			return "", err
+		if len(opts.BuildVolumes) > 0 {
+			if err := runtime.cleanupMountpoints(ctx, container, opts.BuildVolumes); err != nil {
+				return "", err
+			}
 		}
 	case UserCommandsStage:
-		if err := runtime.buildUserCommandsStage(ctx, containerID, opts); err != nil {
+		if err := runtime.applyUserCommands(ctx, container, opts); err != nil {
 			return "", err
 		}
 	case DockerInstructionsStage:
+	case DependenciesStage:
+		if err := runtime.applyDependencies(ctx, container, opts); err != nil {
+			return "", err
+		}
 	default:
 		return "", fmt.Errorf("unsupported stage type %q", stageType.String())
 	}
 
-	logboek.Context(ctx).Debug().LogF("Setting config for build container %q\n", containerID)
-	if err := runtime.buildah.Config(ctx, containerID, buildah.ConfigOpts{
+	logboek.Context(ctx).Debug().LogF("Setting config for build container %q\n", container.Name)
+	if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
 		CommonOpts:  runtime.getBuildahCommonOpts(ctx, true),
 		Labels:      opts.Labels,
 		Volumes:     opts.Volumes,
@@ -133,15 +253,15 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, stageType S
 		Workdir:     opts.Workdir,
 		Healthcheck: opts.Healthcheck,
 	}); err != nil {
-		return "", fmt.Errorf("unable to set container %q config: %w", containerID, err)
+		return "", fmt.Errorf("unable to set container %q config: %w", container.Name, err)
 	}
 
 	// TODO(stapel-to-buildah): Save container name as builtID. There is no need to commit an image here,
 	//                            because buildah allows to commit and push directly container, which would happen later.
-	logboek.Context(ctx).Debug().LogF("committing container %q\n", containerID)
-	imgID, err := runtime.buildah.Commit(ctx, containerID, buildah.CommitOpts{CommonOpts: runtime.getBuildahCommonOpts(ctx, true)})
+	logboek.Context(ctx).Debug().LogF("committing container %q\n", container.Name)
+	imgID, err := runtime.buildah.Commit(ctx, container.Name, buildah.CommitOpts{CommonOpts: runtime.getBuildahCommonOpts(ctx, true)})
 	if err != nil {
-		return "", fmt.Errorf("unable to commit container %q: %w", containerID, err)
+		return "", fmt.Errorf("unable to commit container %q: %w", container.Name, err)
 	}
 
 	return imgID, nil

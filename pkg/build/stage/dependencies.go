@@ -154,12 +154,68 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 	return nil
 }
 
+func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
+	stageImage.Builder.StapelStageBuilder().SetStageType(container_backend.DependenciesStage)
+
+	for _, elm := range s.imports {
+		sourceImageConfigName := getSourceImageName(elm)
+		var sourceImageName string
+		if elm.Stage == "" {
+			sourceImageName = c.GetImageNameForLastImageStage(sourceImageConfigName)
+		} else {
+			sourceImageName = c.GetImageNameForImageStage(sourceImageConfigName, elm.Stage)
+		}
+
+		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+
+		importSourceID := getImportSourceID(c, elm)
+		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+		if err != nil {
+			return fmt.Errorf("unable to get import source checksum: %w", err)
+		} else if importMetadata == nil {
+			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
+		}
+		labelValue := importMetadata.Checksum
+
+		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{labelKey: labelValue})
+		stageImage.Builder.StapelStageBuilder().DependenciesStage().AddDependencyImport(sourceImageName, elm.Add, elm.To, elm.IncludePaths, elm.ExcludePaths, elm.Owner, elm.Group)
+	}
+
+	for _, dep := range s.dependencies {
+		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
+		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
+		depImageRepo, depImageTag := imagePkg.ParseRepositoryAndTag(depImageName)
+
+		for _, img := range dep.Imports {
+			switch img.Type {
+			case config.ImageRepoImport:
+				stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{
+					img.TargetEnv: depImageRepo,
+				})
+			case config.ImageTagImport:
+				stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{
+					img.TargetEnv: depImageTag,
+				})
+			case config.ImageNameImport:
+				stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{
+					img.TargetEnv: depImageName,
+				})
+			case config.ImageIDImport:
+				stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{
+					img.TargetEnv: depImageID,
+				})
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevImage, stageImage *StageImage) error {
 	if c.UseLegacyStapelBuilder(cr) {
 		return s.prepareImageWithLegacyStapelBuilder(ctx, c, cr, prevImage, stageImage)
 	} else {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
+		return s.prepareImage(ctx, c, cr, prevImage, stageImage)
 	}
 }
 

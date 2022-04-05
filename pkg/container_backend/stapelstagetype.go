@@ -9,15 +9,16 @@ const (
 	FromStage StapelStageType = iota
 	UserCommandsStage
 	DockerInstructionsStage
+	DependenciesStage
 )
 
 type BuildStapelStageOptionsInterface interface {
 	SetBaseImage(baseImage string) BuildStapelStageOptionsInterface
 	AddLabels(labels map[string]string) BuildStapelStageOptionsInterface
 	AddVolumes(volumes []string) BuildStapelStageOptionsInterface
+	AddBuildVolumes(volumes ...string) BuildStapelStageOptionsInterface
 	AddExpose(expose []string) BuildStapelStageOptionsInterface
 	AddEnvs(envs map[string]string) BuildStapelStageOptionsInterface
-	AddBuildVolumes(volumes ...string) BuildStapelStageOptionsInterface
 	SetCmd(cmd []string) BuildStapelStageOptionsInterface
 	SetEntrypoint(entrypoint []string) BuildStapelStageOptionsInterface
 	SetUser(user string) BuildStapelStageOptionsInterface
@@ -25,10 +26,15 @@ type BuildStapelStageOptionsInterface interface {
 	SetHealthcheck(healthcheck string) BuildStapelStageOptionsInterface
 
 	UserCommandsStage() UserCommandsStageOptionsInterface
+	DependenciesStage() DependenciesStageOptionsInterface
 }
 
 type UserCommandsStageOptionsInterface interface {
 	AddUserCommands(commands ...string) UserCommandsStageOptionsInterface
+}
+
+type DependenciesStageOptionsInterface interface {
+	AddDependencyImport(imageName, fromPath, toPath string, includePaths, excludePaths []string, owner, group string) DependenciesStageOptionsInterface
 }
 
 type BuildStapelStageOptions struct {
@@ -45,6 +51,7 @@ type BuildStapelStageOptions struct {
 	Healthcheck  string
 
 	UserCommandsStageOptions
+	DependenciesStageOptions
 }
 
 func (opts *BuildStapelStageOptions) SetBaseImage(baseImage string) BuildStapelStageOptionsInterface {
@@ -115,11 +122,42 @@ func (opts *BuildStapelStageOptions) UserCommandsStage() UserCommandsStageOption
 	return &opts.UserCommandsStageOptions
 }
 
+func (opts *BuildStapelStageOptions) DependenciesStage() DependenciesStageOptionsInterface {
+	return &opts.DependenciesStageOptions
+}
+
 type UserCommandsStageOptions struct {
 	Commands []string
 }
 
 func (opts *UserCommandsStageOptions) AddUserCommands(commands ...string) UserCommandsStageOptionsInterface {
 	opts.Commands = append(opts.Commands, commands...)
+	return opts
+}
+
+type DependenciesStageOptions struct {
+	Imports []DependencyImport
+}
+
+type DependencyImport struct {
+	ImageName    string
+	FromPath     string
+	ToPath       string
+	IncludePaths []string
+	ExcludePaths []string
+	Owner        string
+	Group        string
+}
+
+func (opts *DependenciesStageOptions) AddDependencyImport(imageName, fromPath, toPath string, includePaths, excludePaths []string, owner, group string) DependenciesStageOptionsInterface {
+	opts.Imports = append(opts.Imports, DependencyImport{
+		ImageName:    imageName,
+		FromPath:     fromPath,
+		ToPath:       toPath,
+		IncludePaths: includePaths,
+		ExcludePaths: excludePaths,
+		Owner:        owner,
+		Group:        group,
+	})
 	return opts
 }
