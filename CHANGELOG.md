@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.84](https://www.github.com/werf/werf/compare/v1.2.83...v1.2.84) (2022-04-05)
+
+
+### Bug Fixes
+
+* **slugification:** kubernetes namespace and release name cannot contain dots ([e22eecb](https://www.github.com/werf/werf/commit/e22eecb91ce04d5af10c83cbed21db6518008d9c))
+
 ### [1.2.83](https://www.github.com/werf/werf/compare/v1.2.82...v1.2.83) (2022-04-04)
 
 
