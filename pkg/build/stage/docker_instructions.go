@@ -76,10 +76,19 @@ func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, 
 		imageCommitChangeOptions.AddUser(s.instructions.User)
 		imageCommitChangeOptions.AddWorkdir(s.instructions.Workdir)
 		imageCommitChangeOptions.AddHealthCheck(s.instructions.HealthCheck)
-
-		return nil
 	} else {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
+		stageImage.Builder.StapelStageBuilder().SetStageType(container_backend.DockerInstructionsStage)
+		stageImage.Builder.StapelStageBuilder().
+			AddVolumes(s.instructions.Volume).
+			AddExpose(s.instructions.Expose).
+			AddEnvs(s.instructions.Env).
+			AddLabels(s.instructions.Label).
+			SetCmd([]string{s.instructions.Cmd}).
+			SetEntrypoint([]string{s.instructions.Entrypoint}).
+			SetUser(s.instructions.User).
+			SetWorkdir(s.instructions.Workdir).
+			SetHealthcheck(s.instructions.HealthCheck)
 	}
+
+	return nil
 }

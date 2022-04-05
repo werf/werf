@@ -15,6 +15,7 @@ import (
 
 	"github.com/containers/buildah"
 	"github.com/containers/buildah/define"
+	"github.com/containers/buildah/docker"
 	"github.com/containers/buildah/imagebuildah"
 	"github.com/containers/common/libimage"
 	"github.com/containers/image/v5/manifest"
@@ -27,7 +28,9 @@ import (
 	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/hashicorp/go-multierror"
+	"github.com/mattn/go-shellwords"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/logboek"
@@ -359,6 +362,42 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 		}
 	}
 
+	for name, value := range opts.Envs {
+		builder.SetEnv(name, value)
+	}
+
+	for _, volume := range opts.Volumes {
+		builder.AddVolume(volume)
+	}
+
+	for _, expose := range opts.Expose {
+		builder.SetPort(expose)
+	}
+
+	if len(opts.Cmd) > 0 {
+		builder.SetCmd(opts.Cmd)
+	}
+
+	if len(opts.Entrypoint) > 0 {
+		builder.SetEntrypoint(opts.Entrypoint)
+	}
+
+	if opts.User != "" {
+		builder.SetUser(opts.User)
+	}
+
+	if opts.Workdir != "" {
+		builder.SetWorkDir(opts.Workdir)
+	}
+
+	if opts.Healthcheck != "" {
+		if healthcheck, err := newHealthConfigFromString(opts.Healthcheck); err != nil {
+			return fmt.Errorf("error creating HEALTHCHECK: %w", err)
+		} else if healthcheck != nil {
+			builder.SetHealthcheck(healthcheck)
+		}
+	}
+
 	return builder.Save()
 }
 
@@ -484,4 +523,59 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 		GraphDriverName:     string(driver),
 		GraphDriverOptions:  graphDriverOptions,
 	}, nil
+}
+
+// Can return nil pointer to HealthConfig.
+func newHealthConfigFromString(healthcheck string) (*docker.HealthConfig, error) {
+	if healthcheck == "" {
+		return nil, nil
+	}
+
+	healthConfig := &docker.HealthConfig{}
+
+	cmd := &cobra.Command{
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		Args:          cobra.ArbitraryArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return nil
+			}
+
+			switch args[0] {
+			case "NONE":
+				healthConfig = &docker.HealthConfig{
+					Test: []string{"NONE"},
+				}
+				return nil
+			case "CMD", "CMD-SHELL":
+				if len(args) == 1 {
+					return fmt.Errorf("HEALTHCHECK %s should have command specified", args[0])
+				}
+				healthConfig.Test = args
+				return nil
+			}
+
+			healthConfig = nil
+			return nil
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.DurationVar(&healthConfig.Interval, "interval", 30*time.Second, "")
+	flags.DurationVar(&healthConfig.Timeout, "timeout", 30*time.Second, "")
+	flags.DurationVar(&healthConfig.StartPeriod, "start-period", 0, "")
+	flags.IntVar(&healthConfig.Retries, "retries", 3, "")
+
+	healthcheckSlice, err := shellwords.Parse(healthcheck)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing HEALTHCHECK: %w", err)
+	}
+	cmd.SetArgs(healthcheckSlice)
+
+	if err := cmd.Execute(); err != nil {
+		return nil, fmt.Errorf("error parsing HEALTHCHECK: %w", err)
+	}
+
+	return healthConfig, nil
 }

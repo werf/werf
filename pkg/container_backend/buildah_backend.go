@@ -120,10 +120,18 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, stageType S
 		return "", fmt.Errorf("unsupported stage type %q", stageType.String())
 	}
 
-	logboek.Context(ctx).Debug().LogF("Setting labels %v for build container %q\n", opts.Labels, containerID)
+	logboek.Context(ctx).Debug().LogF("Setting config for build container %q\n", containerID)
 	if err := runtime.buildah.Config(ctx, containerID, buildah.ConfigOpts{
-		CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-		Labels:     opts.Labels,
+		CommonOpts:  runtime.getBuildahCommonOpts(ctx, true),
+		Labels:      opts.Labels,
+		Volumes:     opts.Volumes,
+		Expose:      opts.Expose,
+		Envs:        opts.Envs,
+		Cmd:         opts.Cmd,
+		Entrypoint:  opts.Entrypoint,
+		User:        opts.User,
+		Workdir:     opts.Workdir,
+		Healthcheck: opts.Healthcheck,
 	}); err != nil {
 		return "", fmt.Errorf("unable to set container %q config: %w", containerID, err)
 	}
