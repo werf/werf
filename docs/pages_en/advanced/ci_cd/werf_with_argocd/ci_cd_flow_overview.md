@@ -3,126 +3,126 @@ title: CI/CD flow overview
 permalink: advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
 ---
 
-In this article we will describe how to implement continuous delivery and continuous deployment for your project using werf with gitops model. Briefly it implies:
-* usage of **werf** to build and publish release artifacts;
-* usage of **argocd gitops tool** to deliver release artifacts into the kubernetes;
-* gluing together werf and argocd with **bundles**.
+In this article, we will describe how to implement continuous delivery and continuous deployment for your project using werf and the GitOps model. The following topics will be discussed:
+* using **werf** to build and publish release artifacts;
+* using the **ArgoCD GitOps tool** to deliver release artifacts to Kubernetes;
+* gluing together werf and ArgoCD using **bundles**.
 
-## Keypoints and principles
+## Key points and principles
 
-In this section we would define keypoints and principles used to implement CI/CD process.
+This section will outline the key points and principles needed to implement the CI/CD process.
 
 ### Single source of truth
 
-Project git repository is the single source of truth, which contains:
+The Git repository of the project is considered a single source of truth. It contains:
 * application source code;
-* instructions to build images;
-* helm chart files.
+* instructions for building images;
+* Helm chart files.
 
 ### Release artifacts
 
-1. Release artifacts published into container registry and consists of: 
+1. Release artifacts are published to the container registry and include: 
    * built images;
-   * helm chart.
-2. Release artifact could be prepared and published for an arbitrary git commit.
-3. Once published for a commit release artifact should be immutable and reproducible.
-4. Dependening on CI/CD flow:
-   * Release artifact could be published for each commit of the main branch, and then deployed into production.
-   * Release artifact could be published only for git tags, which represent application releases.
-5. Any conventional CI/CD system (like Gitlab CI/CD or GitHub Actions) could be used to prepare release artifacts.
+   * Helm charts.
+2. A release artifact can be prepared and published for an arbitrary git commit.
+3. There are two requirements for published artifacts: they must be immutable and reproducible.
+4. Dependening on CI/CD configuration, release artifacts can be published:
+   * for each commit in the main branch, followed by deployment to production;
+   * for Git tags that match the application's releases.
+5. You can use any common CI/CD system (such as Gitlab CI/CD or GitHub Actions) to prepare release artifacts.
 
-### Deploy into Kubernetes with GitOps
+### Deploying to Kubernetes with GitOps
 
-There is a gitops operator deployed into the cluster which implements pull model to deploy project releases:
-* Operator watches for new versions of release artifacts in the container registry.
-* Operator rollout some release artifact version into kubernetes cluster.
+There is a GitOps operator deployed into the cluster that implements a pull model for deploying project releases. It:
+* keeps track of new release artifact versions in the container registry;
+* rolls out a particular version of the artifact to the Kubernetes cluster.
 
-Depending on CI/CD flow GitOps operator can rollout release artifact either manually (Continuous Delivery) or automatically (Continous Deployment). 
+Depending on the CI/CD flow, the GitOps operator can deploy the release artifact either manually (Continuous Delivery) or automatically (Continous Deployment). 
 
 ## Reference CI/CD flow
 
-Reference CI/CD flow will be implemented using 2 main tools: werf and ArgoCD.
+The CI/CD reference flow will be implemented using two main tools: werf and ArgoCD.
 
-In the following scheme we have a flow blocks and specify which tool implement blocks of this flow.   
+The diagram below shows the blocks representing the stages of the cycle, as well as the tools for implementing them.   
 
 <a class="google-drawings" href="{{ "images/advanced/ci_cd/werf_with_argocd/ci-cd-flow.svg" | true_relative_url }}" data-featherlight="image">
 <img src="{{ "images/advanced/ci_cd/werf_with_argocd/ci-cd-flow.svg" | true_relative_url }}">
 </a>
 
-### 1. Local dev
+### 1. Local development
 
-Flow starts with local development which is covered by the following werf abilities:
-* All werf commands support `--dev` and `--follow` flags to simplify work with uncommitted changes and new changes introduced into the application source code.
-* werf allows usage of the same build and deploy configuration to deploy an application either locally or into production.
-* Using special environment (passed with the `--env ENV` param) project could have customizations of build and deploy configuration, which are used to deploy an application into the local Kubernetes cluster for local development purposes.
+The flow starts with local development, for which werf offers the following functionality:
+* All werf commands support the `--dev` and `--follow` flags to simplify handling uncommitted changes and additions made to the application source code.
+* werf allows you to use the same build and deploy configuration to deploy an application either locally or in production.
+* Special environments (passed by the `--env ENV` parameter) allow you to customize build and deployment configurations to deploy an application to a local Kubernetes cluster for local development.
 
-### 2. Commit
+### 2. Committing
 
-Commit stage implies that all werf build and deploy configuration and application source code should be strictly commited into the project git repository.
+The committing stage implies that the entire werf building and deployment configuration, as well as the application source code, must be committed to the project's Git repository.
 
-For example, when your CI/CD system checkout some commit and run some instructions these instructions could not accidentally or by intention generate some dynamic input configuration files for werf build and deploy configuration.
+For example, when your CI/CD system checks out some commit and run some instructions, these instructions should not accidentally or intentionally generate any dynamic input configuration files for the werf build and deploy configuration.
 
-This is default werf behaviour which is controlled by the **giterminism**. Giterminism is a tool which allows users to define how reproducible project's build and deploy configuration is (the most strict rules enabled by default, and could be loosened by the `werf-giterminism.yaml` config).
+This is default werf behaviour which is controlled by the **giterminism**. Giterminism allows the users to set the degree to which a project's build and deploy configurations are reproducible (the strictest rules are enabled by default; you can loosen them by making changes to the `werf-giterminism.yaml` configuration file).
 
-### 3. Build and publish images
+### 3. Building and publishing images
 
-werf supports building and publishing images into the container registry using Dockerfile or stapel builder, enables distributed layers caching, and content based tagging, which optimizes images rebuilds.
+werf supports building images using Dockerfile or Stapel and then publishing them to the container registry. It provides distributed layer caching and content-based tagging, preventing unnecessary reassembly of images.
 
-werf supports building of images with the `werf build` command. More info [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#build-and-publish-images" | true_relative_url }}).
+The images are built with the `werf build` command. More information can be found [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#building-and-publishing-images" | true_relative_url }}).
 
 ### 4. Fast commit testing
 
-It is essential part of CI/CD approach to perform so called fast testing of each commit in the git repository. Typically during this stage we run unit tests and linters.
+Fast testing of each commit in the Git repository is an essential part of the CI/CD approach. Typically, unit tests and linters are run at this stage.
 
-Such tests would run in one-shot containers in built images in the common case. werf supports running such one-shot containers with the following commands:
-* `werf run` — run one-shot command in container in the docker server.
-* `werf kube-run` — run one-shot command container in the Kubernetes cluster. 
+Usually, the tests are run in one-shot containers with built images. werf offers the following commands to run such one-shot containers:
+* `werf run` — run the one-shot command container on the Docker server;
+* `werf kube-run` — run the one-shot command container in the Kubernetes cluster. 
 
-More info [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#fast-commit-testing" | true_relative_url }}).
+More information can be found [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#fast-commit-testing" | true_relative_url }}).
 
-### 5. Prepare release artifacts
+### 5. Preparing release artifacts
 
-At this stage we should prepare [release artifact](#release-artifacts) using so called [werf bundles]({{ "advanced/bundles.html" | true_relative_url }}).
+At this stage, you need to prepare a [release artifact](#release-artifacts) using the so-called [werf bundles]({{ "advanced/bundles.html" | true_relative_url }}).
 
-`werf bundle publish` command:
-* ensures that all needed images are build;
-* publishes helm chart files configured to use built images into the container registry — so-called bundle.
+The `werf bundle publish` command:
+* ensures that all the necessary images are build;
+* publishes the Helm chart files, configured to use the built images, to the container registry — the so-called bundle.
 
-Published bundle can be later deployed into the kubernetes cluster by ArgoCD as a regular OCI helm chart.  
+The published bundle can then be deployed to a Kubernetes cluster using ArgoCD as a regular OCI Helm chart.  
 
-More info [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#prepare-release-artifacts" | true_relative_url }}).
+More information can be found [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#preparing-release-artifacts" | true_relative_url }}).
 
 ### 6. Acceptance testing
 
-It is also essential part of CI/CD to perform so called acceptance testing. Such tests are typically long-running and may require full production-like environment to be available during tests.
+Acceptance testing is an integral part of CI/CD. Such tests usually take a long time to run, and may require a production-like environment to be available during testing.
 
-Typically acceptance testing should be performed automatically after pull request merge into the main branch.
+Typically, acceptance testing is performed automatically after a Pull Request is merged into the main branch.
 
-Pass of acceptance tests do not block Continuous Integration process, but in most cases should block Continuous Delivery of new releases. It means that it is allowed to merge new commits and PRs into main branch without running acceptance tests, but it is required to pass acceptance tests for a release artifact before releasing it into production. 
+Acceptance testing of new releases is not necessary for Continuous Integration, but in most cases it is necessary for Continuous Delivery of new releases. In other words, you can add new commits and PRs to the main branch without conducting acceptance tests, but the release artifact must successfully pass acceptance tests before it can be deployed to production. 
 
-With werf we could define special test environment (with `--env ENV` param).
-* In the test environment there may be special build and deploy configuration files.
-* In the test environment there will be special helm post install `Job` resource.
+werf allows you to set a special test environment  (with `--env ENV` param).
+* In the test environment, there may be special build and deploy configuration files;
+* The test environment also has a special Helm post-install `Job` resource.
 
-werf supports running acceptance tests with the following commands:
-* `werf converge` to install production-like environment into the Kubernetes and run test `Job` as a helm post install hook.
-  * This command will need project git repository.
-* `werf dismiss` to uninstall previously installed production-like test environment.
-* `werf bundle apply` to install production-like environment into the Kubernetes and run test `Job` as a helm post install hook.
-  * This command will not need the git repository, only bundle published into the container registry.
+werf offers the following commands to run acceptance tests:
+* `werf converge` to deploy a production-like environment to the Kubernetes cluster and run the test `Job` as a Helm post-install hook;
+  * This command requires access to the project's Git repository.
+* `werf dismiss` to uninstall the previously deployed production-like test environment;
+* `werf bundle apply` to deploy a production-like environment to Kubernetes and run the test `Job` as a Helm post-install hook.
+  * This command does not require access to the Git repository, it only requires access to the bundle published in the container registry.
 
-Alternatively acceptance tests could be run by the ArgoCD using published release artifact — werf bundle. In such case ArgoCD would install production-like environment into the Kubernetes and run test `Job` as a helm post install hook.
+Acceptance tests can also be run by ArgoCD using a published release artifact, the werf bundle. In this case, ArgoCD will deploy a production-like environment to Kubernetes and run the test `Job` as a Helm post-install hook.
 
-More info [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#acceptance-testing" | true_relative_url }}).
+More information can be found [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#acceptance-testing" | true_relative_url }}).
 
-### 7. Deploy into production
+### 7. Deploying into production
 
-In this step ArgoCD should deploy published release artifact for target application commit into the Kubernetes cluster.
+In this step, ArgoCD must deploy the published release artifact for the target application commit to the Kubernetes cluster.
 
-We are using werf bundle as release artifact, which could be consumed as a regular OCI helm chart by the ArgoCD.
+Here, the werf bundle serves as the release artifact. ArgoCD treats it as a regular OCI Helm chart.
 
-ArgoCD could deploy target release artifact by manual user action.
+ArgoCD can deploy the target release artifact after a manual user command.
 
-ArgoCD Image Updater with the ["continuous deployment of OCI Helm chart type application" patch](https://github.com/argoproj-labs/argocd-image-updater/pull/405) could be used to enable automatic deploy to the latest version of published release artifact.
+ArgoCD Image Updater with the ["continuous deployment of OCI Helm chart type application" patch](https://github.com/argoproj-labs/argocd-image-updater/pull/405) can automatically deploy the latest version of a published release artifact.
 
-More info [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#acceptance-testing" | true_relative_url }}).
+More information can be found [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#acceptance-testing" | true_relative_url }}).
