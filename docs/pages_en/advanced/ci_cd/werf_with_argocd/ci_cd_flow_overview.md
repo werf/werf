@@ -10,7 +10,7 @@ In this article, we will describe how to implement continuous delivery and conti
 
 ## Key points and principles
 
-This section will outline the key points and principles needed to implement the CI/CD process.
+This section outlines the key points and principles needed to implement the CI/CD process.
 
 ### Single source of truth
 
