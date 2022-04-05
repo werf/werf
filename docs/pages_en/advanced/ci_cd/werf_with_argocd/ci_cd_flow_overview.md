@@ -115,7 +115,7 @@ Acceptance tests can also be run by ArgoCD using a published release artifact, t
 
 More information can be found [in the configuration article]({{ "advanced/ci_cd/werf_with_argocd/configure_ci_cd.html#acceptance-testing" | true_relative_url }}).
 
-### 7. Deploying into production
+### 7. Deploying to production
 
 In this step, ArgoCD must deploy the published release artifact for the target application commit to the Kubernetes cluster.
 
