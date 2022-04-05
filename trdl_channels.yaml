@@ -28,9 +28,9 @@ groups:
     - name: alpha
       version: 1.2.83 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: beta
-      version: 1.2.81 # fix sluggification and parallel custom tag deletion during cleanup
+      version: 1.2.83 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: ea
-      version: 1.2.80 # runtime caching instead stages storage cache on sync server, werf kube-run, more fixes
+      version: 1.2.83 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: stable
       version: 1.2.80 # runtime caching instead stages storage cache on sync server, werf kube-run, more fixes
     - name: rock-solid
