@@ -70,14 +70,15 @@ type CommitOpts struct {
 
 type ConfigOpts struct {
 	CommonOpts
-	Labels []string
-	// TODO:
-	// Cmd        []string
-	// Entrypoint []string
-	// Env        []string
-	// Shell      string
-	// User       string
-	// WorkDir    string
+	Labels      []string
+	Volumes     []string
+	Expose      []string
+	Envs        map[string]string
+	Cmd         []string
+	Entrypoint  []string
+	User        string
+	Workdir     string
+	Healthcheck string
 }
 
 type (

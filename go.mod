@@ -47,6 +47,7 @@ require (
 	github.com/helm/helm-2to3 v0.8.1
 	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
+	github.com/mattn/go-shellwords v1.0.12 // indirect
 	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.8.2
