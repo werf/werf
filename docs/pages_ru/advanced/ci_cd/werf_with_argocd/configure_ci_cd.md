@@ -77,7 +77,7 @@ werf dismiss --env test
 werf bundle apply --repo CONTAINER_REGISTRY --env test --namespace TEST_NAMESPACE --release TEST_RELEASE
 ```
 
-Обратите внимание, что для этой команды (в отличие от werf converge) не нужно указывать Git worktree проекта, иначе ее результаты и выходные данные будут такими же, что и у [werf converge](#run-with-werf-converge).
+Обратите внимание, что для этой команды (в отличие от werf converge) не нужно указывать Git worktree проекта, иначе ее результаты и выходные данные будут такими же, что и у [werf converge](#запуск-с-помощью-werf-converge).
 
 Переменные `TEST_NAMESPACE` и `TEST_RELEASE` должны быть указаны явно. Не забудьте удалить их после использования:
 
