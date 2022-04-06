@@ -69,25 +69,26 @@ func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Convey
 }
 
 func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
+	if !c.UseLegacyStapelBuilder(cr) {
+		stageImage.Builder.StapelStageBuilder().SetStageType(container_backend.DataArchivesStage)
+	}
+
 	if err := s.GitStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
-	if c.UseLegacyStapelBuilder(cr) {
-		for _, gitMapping := range s.gitMappings {
-			if err := gitMapping.ApplyArchiveCommand(ctx, c, stageImage); err != nil {
-				return err
-			}
+	for _, gitMapping := range s.gitMappings {
+		if err := gitMapping.PrepareArchiveForImage(ctx, c, cr, stageImage); err != nil {
+			return fmt.Errorf("unable to prepare git mapping %s for image stage: %w", gitMapping.Name, err)
 		}
+	}
 
+	if c.UseLegacyStapelBuilder(cr) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
 		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
-
-		return nil
-	} else {
-		// TODO(stapel-to-buildah)
-		panic("not implemented")
 	}
+
+	return nil
 }
 
 func (s *GitArchiveStage) IsEmpty(ctx context.Context, c Conveyor, stageImage *StageImage) (bool, error) {

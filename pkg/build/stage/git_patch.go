@@ -80,7 +80,7 @@ func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cr contain
 func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	if c.UseLegacyStapelBuilder(cr) {
 		for _, gitMapping := range s.gitMappings {
-			if err := gitMapping.ApplyPatchCommand(ctx, c, prevBuiltImage, stageImage); err != nil {
+			if err := gitMapping.ApplyPatchCommand(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 				return err
 			}
 		}

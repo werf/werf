@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/stapel"
@@ -237,7 +238,7 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyPatchCommand(ctx context.Context, c Conveyor, prevBuiltImage, stageImage *StageImage) error {
+func (gm *GitMapping) ApplyPatchCommand(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 	if err != nil {
 		return fmt.Errorf("unable to get base commit from built image: %w", err)
@@ -257,7 +258,7 @@ func (gm *GitMapping) ApplyPatchCommand(ctx context.Context, c Conveyor, prevBui
 		return err
 	}
 
-	gm.AddGitCommitToImageLabels(stageImage, toCommitInfo)
+	gm.AddGitCommitToImageLabels(ctx, c, cb, stageImage, toCommitInfo)
 
 	return nil
 }
@@ -296,21 +297,24 @@ func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (Imag
 	return res, nil
 }
 
-func (gm *GitMapping) AddGitCommitToImageLabels(stageImage *StageImage, commitInfo ImageCommitInfo) {
-	stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-		gm.ImageGitCommitLabel(): commitInfo.Commit,
-	})
+func (gm *GitMapping) AddGitCommitToImageLabels(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage, commitInfo ImageCommitInfo) {
+	addLabels := make(map[string]string)
+	addLabels[gm.ImageGitCommitLabel()] = commitInfo.Commit
 
 	if commitInfo.VirtualMerge {
-		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-			gm.VirtualMergeLabel():           "true",
-			gm.VirtualMergeFromCommitLabel(): commitInfo.VirtualMergeFromCommit,
-			gm.VirtualMergeIntoCommitLabel(): commitInfo.VirtualMergeIntoCommit,
-		})
+		addLabels[gm.VirtualMergeLabel()] = "true"
+		addLabels[gm.VirtualMergeFromCommitLabel()] = commitInfo.VirtualMergeFromCommit
+		addLabels[gm.VirtualMergeIntoCommitLabel()] = commitInfo.VirtualMergeIntoCommit
 	} else {
-		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-			gm.VirtualMergeLabel(): "false",
-		})
+		addLabels[gm.VirtualMergeLabel()] = "false"
+	}
+
+	if len(addLabels) > 0 {
+		if c.UseLegacyStapelBuilder(cb) {
+			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
+		} else {
+			stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
+		}
 	}
 }
 
@@ -567,22 +571,61 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 	return commands, nil
 }
 
-func (gm *GitMapping) ApplyArchiveCommand(ctx context.Context, c Conveyor, stageImage *StageImage) error {
+func (gm *GitMapping) PrepareArchiveForImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage) error {
 	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return fmt.Errorf("unable to get latest commit info: %w", err)
 	}
 
-	commands, err := gm.baseApplyArchiveCommand(ctx, commitInfo.Commit, stageImage)
-	if err != nil {
-		return err
+	if c.UseLegacyStapelBuilder(cb) {
+		commands, err := gm.baseApplyArchiveCommand(ctx, commitInfo.Commit, stageImage)
+		if err != nil {
+			return err
+		}
+
+		if err := gm.applyScript(stageImage, commands); err != nil {
+			return err
+		}
+	} else {
+		archiveOpts, err := gm.makeArchiveOptions(ctx, commitInfo.Commit)
+		if err != nil {
+			return err
+		}
+
+		archive, err := gm.GitRepo().GetOrCreateArchive(ctx, *archiveOpts)
+		if err != nil {
+			return fmt.Errorf("unable to create git archive for commit %s with path scope %s: %w", archiveOpts.Commit, archiveOpts.PathScope, err)
+		}
+
+		var archiveType container_backend.ArchiveType
+
+		gitArchiveType, err := gm.getArchiveType(ctx, commitInfo.Commit)
+		if err != nil {
+			return fmt.Errorf("unable to determine git archive type: %w", err)
+		}
+
+		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{gm.getArchiveTypeLabelName(): string(gitArchiveType)})
+
+		switch gitArchiveType {
+		case git_repo.FileArchive:
+			archiveType = container_backend.FileArchive
+		case git_repo.DirectoryArchive:
+			archiveType = container_backend.DirectoryArchive
+		}
+
+		f, err := os.Open(archive.GetFilePath())
+		if err != nil {
+			return fmt.Errorf("unable to open archive file %q: %w", archive.GetFilePath(), err)
+		}
+
+		stageImage.Builder.StapelStageBuilder().AddDataArchives(container_backend.DataArchive{
+			Data: f,
+			Type: archiveType,
+			To:   gm.To,
+		})
 	}
 
-	if err := gm.applyScript(stageImage, commands); err != nil {
-		return err
-	}
-
-	gm.AddGitCommitToImageLabels(stageImage, commitInfo)
+	gm.AddGitCommitToImageLabels(ctx, c, cb, stageImage, commitInfo)
 
 	return nil
 }

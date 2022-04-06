@@ -14,6 +14,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/util"
 )
 
 type BuildahBackend struct {
@@ -148,6 +149,64 @@ type dependencyContainer struct {
 	Import    DependencyImport
 }
 
+func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, opts BuildStapelStageOptions) error {
+	logboek.Context(ctx).Debug().LogF("Mounting container %q\n", container.Name)
+	if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
+		return fmt.Errorf("unable to mount containers: %w", err)
+	}
+	defer func() {
+		logboek.Context(ctx).Debug().LogF("Unmounting container %q\n", container.Name)
+		if err := runtime.unmountContainers(ctx, []*containerDesc{container}); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
+		}
+	}()
+
+	for _, archive := range opts.DataArchives {
+		destPath := filepath.Join(container.RootMount, archive.To)
+
+		var extractDestPath string
+		switch archive.Type {
+		case DirectoryArchive:
+			extractDestPath = destPath
+		case FileArchive:
+			extractDestPath = filepath.Dir(destPath)
+		default:
+			return fmt.Errorf("unknown archive type %q", archive.Type)
+		}
+
+		_, err := os.Stat(destPath)
+		switch {
+		case os.IsNotExist(err):
+		case err != nil:
+			return fmt.Errorf("unable to access container path %q: %w", destPath, err)
+		default:
+			logboek.Context(ctx).Debug().LogF("Removing archive destination path %s\n", archive.To)
+			if err := os.RemoveAll(destPath); err != nil {
+				return fmt.Errorf("unable to cleanup archive destination path %s: %w", archive.To, err)
+			}
+		}
+
+		logboek.Context(ctx).Debug().LogF("Extracting archive into container path %s\n", archive.To)
+		if err := util.ExtractTar(archive.Data, extractDestPath); err != nil {
+			return fmt.Errorf("unable to extract data archive into %s: %w", archive.To, err)
+		}
+		if err := archive.Data.Close(); err != nil {
+			return fmt.Errorf("error closing archive data stream: %w", err)
+		}
+	}
+
+	for _, path := range opts.PathsToRemove {
+		destPath := filepath.Join(container.RootMount, path)
+
+		logboek.Context(ctx).Debug().LogF("Removing container path %s\n", path)
+		if err := os.RemoveAll(destPath); err != nil {
+			return fmt.Errorf("unable to remove path %s: %w", path, err)
+		}
+	}
+
+	return nil
+}
+
 func (runtime *BuildahBackend) applyDependencies(ctx context.Context, container *containerDesc, opts BuildStapelStageOptions) error {
 	var dependencies []*dependencyContainer
 
@@ -181,12 +240,12 @@ func (runtime *BuildahBackend) applyDependencies(ctx context.Context, container 
 		}
 	}
 
-	logboek.Context(ctx).Debug().LogF("Mounting dependencies containers %v\n", dependenciesContainers)
+	logboek.Context(ctx).Debug().LogF("Mounting containers %v\n", append(dependenciesContainers, container))
 	if err := runtime.mountContainers(ctx, append(dependenciesContainers, container)); err != nil {
 		return fmt.Errorf("unable to mount containers: %w", err)
 	}
 	defer func() {
-		logboek.Context(ctx).Debug().LogF("Unmounting dependencies containers %v\n", dependenciesContainers)
+		logboek.Context(ctx).Debug().LogF("Unmounting containers %v\n", append(dependenciesContainers, container))
 		if err := runtime.unmountContainers(ctx, append(dependenciesContainers, container)); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 		}
@@ -234,6 +293,10 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, stageType S
 	case DockerInstructionsStage:
 	case DependenciesStage:
 		if err := runtime.applyDependencies(ctx, container, opts); err != nil {
+			return "", err
+		}
+	case DataArchivesStage:
+		if err := runtime.applyDataArchives(ctx, container, opts); err != nil {
 			return "", err
 		}
 	default:

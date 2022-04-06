@@ -1,6 +1,9 @@
 package container_backend
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 type StapelStageType int
 
@@ -10,6 +13,7 @@ const (
 	UserCommandsStage
 	DockerInstructionsStage
 	DependenciesStage
+	DataArchivesStage
 )
 
 type BuildStapelStageOptionsInterface interface {
@@ -24,6 +28,9 @@ type BuildStapelStageOptionsInterface interface {
 	SetUser(user string) BuildStapelStageOptionsInterface
 	SetWorkdir(workdir string) BuildStapelStageOptionsInterface
 	SetHealthcheck(healthcheck string) BuildStapelStageOptionsInterface
+
+	AddDataArchives(archives ...DataArchive) BuildStapelStageOptionsInterface
+	AddPathsToRemove(paths ...string) BuildStapelStageOptionsInterface
 
 	UserCommandsStage() UserCommandsStageOptionsInterface
 	DependenciesStage() DependenciesStageOptionsInterface
@@ -50,8 +57,25 @@ type BuildStapelStageOptions struct {
 	Workdir      string
 	Healthcheck  string
 
+	DataArchives  []DataArchive
+	PathsToRemove []string
+
 	UserCommandsStageOptions
 	DependenciesStageOptions
+}
+
+type ArchiveType int
+
+//go:generate stringer -type=ArchiveType
+const (
+	FileArchive ArchiveType = iota
+	DirectoryArchive
+)
+
+type DataArchive struct {
+	Data io.ReadCloser
+	Type ArchiveType
+	To   string
 }
 
 func (opts *BuildStapelStageOptions) SetBaseImage(baseImage string) BuildStapelStageOptionsInterface {
@@ -115,6 +139,16 @@ func (opts *BuildStapelStageOptions) SetHealthcheck(healthcheck string) BuildSta
 
 func (opts *BuildStapelStageOptions) AddBuildVolumes(volumes ...string) BuildStapelStageOptionsInterface {
 	opts.BuildVolumes = append(opts.BuildVolumes, volumes...)
+	return opts
+}
+
+func (opts *BuildStapelStageOptions) AddDataArchives(archives ...DataArchive) BuildStapelStageOptionsInterface {
+	opts.DataArchives = append(opts.DataArchives, archives...)
+	return opts
+}
+
+func (opts *BuildStapelStageOptions) AddPathsToRemove(paths ...string) BuildStapelStageOptionsInterface {
+	opts.PathsToRemove = append(opts.PathsToRemove, paths...)
 	return opts
 }
 
