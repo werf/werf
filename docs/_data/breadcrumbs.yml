@@ -83,6 +83,9 @@ ru:
   /advanced/ci_cd/run_in_container:
     << : *documentation-advanced-ci-cd-run-in-container
     title: Запуск в контейнерах
+  /advanced/ci_cd/werf_with_argocd:
+    << : *documentation-advanced-ci-cd-werf-with-argocd
+    title: GitOps с помощью werf и ArgoCD
   /advanced/helm:
     << : *documentation-advanced-helm
   /advanced/helm/configuration:

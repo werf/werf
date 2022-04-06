@@ -997,7 +997,7 @@ entries:
               - title: Интеграция с GitHub Actions
                 url: /advanced/ci_cd/github_actions.html
 
-              - title: Запуск в контейнерах (experimental)
+              - title: Запуск в контейнерах (экспериментальный функционал)
                 f:
 
                   - title: В Docker-контейнере
@@ -1014,6 +1014,18 @@ entries:
 
                   - title: Принципы работы
                     url: /advanced/ci_cd/run_in_container/how_it_works.html
+
+              - title: GitOps с помощью werf и ArgoCD (экспериментальный функционал)
+                f:
+
+                  - title: Обзор процесса CI/CD
+                    url: /advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
+
+                  - title: Подготовка кластера Kubernetes
+                    url: /advanced/ci_cd/werf_with_argocd/prepare_kubernetes_cluster.html
+
+                  - title: Настройка CI/CD
+                    url: /advanced/ci_cd/werf_with_argocd/configure_ci_cd.html
 
           - title: Сборка образов с помощью Stapel
             f:
