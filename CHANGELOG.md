@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.86](https://www.github.com/werf/werf/compare/v1.2.85...v1.2.86) (2022-04-08)
+
+
+### Bug Fixes
+
+* **server-dry-run:** possible fix for 'unable to recognize ...: no matches for kind ... in version ...' (part 2) ([e053dad](https://www.github.com/werf/werf/commit/e053dadade90a614c336e2c9d868bb21c51b87a1))
+
 ### [1.2.85](https://www.github.com/werf/werf/compare/v1.2.84...v1.2.85) (2022-04-08)
 
 
