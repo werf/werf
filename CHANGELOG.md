@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.85](https://www.github.com/werf/werf/compare/v1.2.84...v1.2.85) (2022-04-08)
+
+
+### Features
+
+* **stapel-to-buildah:** basic implementation of dependencies* stages ([9ead236](https://www.github.com/werf/werf/commit/9ead236edb0164c1b620c646085d1e114f73001c))
+
+
+### Bug Fixes
+
+* **buildah:** use crun instead of runc ([fbae777](https://www.github.com/werf/werf/commit/fbae77711aaae0c8ace8513626a7494348de8acc))
+* **server-dry-run:** possible fix for 'unable to recognize ...: no matches for kind ... in version ...' ([5b13270](https://www.github.com/werf/werf/commit/5b132701d44ba6e6481e4410cfd608960afb8ab8))
+
 ### [1.2.84](https://www.github.com/werf/werf/compare/v1.2.83...v1.2.84) (2022-04-05)
 
 
