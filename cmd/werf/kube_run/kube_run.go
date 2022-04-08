@@ -484,7 +484,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		return common.WithoutTerminationSignalsTrap(func() error {
 			logboek.Context(ctx).LogF("Running pod %q in namespace %q ...\n", pod, namespace)
 
-			cmd := exec.Command(os.Args[0], args...)
+			cmd := exec.Command(strings.TrimSuffix(os.Args[0], "-in-a-user-namespace"), args...)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stdin
 			cmd.Stdin = os.Stdin
