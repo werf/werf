@@ -1,4 +1,4 @@
-.PHONY: all werf buildah-test fmt lint docs clean
+.PHONY: all werf buildah-test fmt lint docs clean build-images
 
 all: werf
 
@@ -34,6 +34,10 @@ lint:
 
 docs:
 	./docs/regen.sh
+
+
+build-images:
+	cd ./scripts/images && PACKER_LOG=1 packer build -force template.pkr.hcl
 
 
 clean:

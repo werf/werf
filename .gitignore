@@ -34,3 +34,5 @@
 /.github/trdl/lib
 main
 buildah-test
+
+/scripts/images/image

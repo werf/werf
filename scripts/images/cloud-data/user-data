@@ -1,0 +1,26 @@
+#cloud-config
+fqdn: werf
+hostname: werf
+timezone: UTC
+locale: en_US
+disable_root: false
+ssh_pwauth: true
+
+ntp:
+  enabled: true
+
+system_info:
+  default_user:
+    name: werf
+    lock_passwd: false
+    plain_text_passwd: werf
+    shell: /bin/bash
+    groups:
+    - sudo
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+
+users:
+- default
+
+chpasswd:
+  expire: false
