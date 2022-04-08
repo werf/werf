@@ -171,12 +171,12 @@ func ValidateHelmRelease(name string) error {
 }
 
 func validateHelmRelease(name string) error {
-	errorMsgPrefix := fmt.Sprintf("helm release name should be a valid DNS-1123 label and be maximum %d chars", helmReleaseMaxSize)
+	errorMsgPrefix := fmt.Sprintf("helm release name should be a valid DNS-1123 subdomain and be maximum %d chars", helmReleaseMaxSize)
 	if len(name) == 0 {
 		return nil
 	} else if len(name) > helmReleaseMaxSize {
 		return fmt.Errorf("%s: %q is %d chars long", errorMsgPrefix, name, len(name))
-	} else if msgs := validation.IsDNS1123Label(name); len(msgs) > 0 {
+	} else if msgs := validation.IsDNS1123Subdomain(name); len(msgs) > 0 {
 		return fmt.Errorf("%s: %s", errorMsgPrefix, strings.Join(msgs, ", "))
 	}
 	return nil
