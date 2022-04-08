@@ -130,6 +130,11 @@ func TestHelmRelease(t *testing.T) {
 			result: "data",
 		},
 		{
+			name:   "validWithDot",
+			data:   "release.name",
+			result: "release.name",
+		},
+		{
 			name:   "notMatchRegexp_startWithDash",
 			data:   "-data",
 			result: "data-a871d86e",
@@ -182,6 +187,11 @@ func TestKubernetesNamespace(t *testing.T) {
 			name:   "notMatchRegexp_unsupportedChar",
 			data:   "da_ta",
 			result: "da-ta-3b339d14",
+		},
+		{
+			name:   "notMatchRegexp_dot",
+			data:   "kubernetes.namespace",
+			result: "kubernetes-namespace-1507f75c",
 		},
 		{
 			name:   "maxSizeExceeded",
