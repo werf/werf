@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.87](https://www.github.com/werf/werf/compare/v1.2.86...v1.2.87) (2022-04-08)
+
+
+### Bug Fixes
+
+* **slugification:** release name can contain dots ([766610b](https://www.github.com/werf/werf/commit/766610b433e93fc643ada27bc7fc06b1e5b561a0))
+
 ### [1.2.86](https://www.github.com/werf/werf/compare/v1.2.85...v1.2.86) (2022-04-08)
 
 
