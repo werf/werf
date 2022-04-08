@@ -78,7 +78,7 @@ func NewCmd() *cobra.Command {
 		NewUpgradeCmd(actionConfig, wc),
 		helm_v3.NewCreateCmd(os.Stdout),
 		helm_v3.NewEnvCmd(os.Stdout),
-		helm_v3.NewPackageCmd(os.Stdout),
+		helm_v3.NewPackageCmd(actionConfig, os.Stdout),
 		helm_v3.NewPluginCmd(os.Stdout),
 		helm_v3.NewPullCmd(actionConfig, os.Stdout),
 		helm_v3.NewSearchCmd(os.Stdout),
