@@ -27,18 +27,6 @@ git:
   to: /src/phantomjs
 ```
 
-## Motivation for git mappings
-
-The central idea is to infuse git history into the build process.
-
-### Patching instead of copying
-
-Most commits in the real application repository are about updating the code of the application itself. In this case, if the compilation is not required, assembling a new image equates to applying patches to the files of the previous image.
-
-### Remote repositories
-
-An application image may require source files from other repositories during the build process. werf provides the option to add files from remote repositories. Plus, it can detect changes in local and remote repositories.
-
 ## Syntax of a git mapping
 
 The _git mapping_ configuration for a local repository has the following parameters:
@@ -120,8 +108,6 @@ git:
   includePaths: assets
 ```
 
-> werf has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same
-
 ### Changing the owner
 
 The _git mapping_ configuration provides the `owner` and `group` parameters. These are the names or numerical ids of the owner and group common to all files and directories transferred to the image.
@@ -169,16 +155,6 @@ git:
 ```
 
 This git mapping configuration adds `.php` and `.js` files from `/src` except for files with suffixes starting with `-dev.` or `-test.`.
-
-werf uses the following algorithm to determine whether a file matches the mask:
-
- - take the next absolute file path inside the repository for checking;
- - compare this path with the configured include or exclude path mask or plain path:
-   - the path in `add` is concatenated with the mask or the raw path defined in include or exclude config directive;
-   - two paths are compared with using glob patterns: if a file matches the mask, then it will be included (for `includePaths`) or excluded (for `excludePaths`); the algorithm is complete.
- - compare this path with the configured include or exclude path mask or a plain path with the additional pattern:
-   - the path in `add` is concatenated with the mask or a raw path from the include or exclude config directive and is concatenated with additional suffix pattern `**/*`;
-   - two paths are then compared using glob patterns: if a file matches the mask, then it will be included (for `includePaths`) or excluded (for `excludePaths`), the algorithm is complete.
 
 > The step involving the addition of a `**/*` template is here for convenience: the most common use case of a _git mapping_ with filters is to configure recursive copying for the directory. The addition of `**/*` allows you to specify the directory name only; thus, its entire contents would match the filter
 
@@ -311,52 +287,13 @@ Let us review the process of adding files to the resulting image in more detail.
 
 The build sequence for these commits may be represented as follows:
 
-| | gitArchive | --- | gitLatestPatch |
-|---|:---:|:---:|:---:|
-| Commit No. 1 is made, build at 10:00 |  files as in commit No. 1 | --- | - |
-| Commit No. 2 is made, build at 10:05 |  files as in commit No. 1 | --- | files as in commit No. 2 |
-| Commit No. 3 is made, build at 10:15 |  files as in commit No. 1 | --- | files as in commit No. 3 |
+| | gitArchive | gitLatestPatch |
+|---|:---:|:---:|
+| Commit No. 1 is made, build at 10:00 |  files as in commit No. 1 | - |
+| Commit No. 2 is made, build at 10:05 |  files as in commit No. 1 | files as in commit No. 2 |
+| Commit No. 3 is made, build at 10:15 |  files as in commit No. 1 | files as in commit No. 3 |
 
-An empty column between layers in the above table is left intentionally. With time, the number of commits grows, and the size of the patch between commit No. 1 and the current one may become quite large. It will further increase the size of the latest layer and the total size of stages. To prevent the uncontrolled growth of the latest layer, werf provides the additional intermediary stage — _gitCache_. How does werf use these three stages? We need more commits to illustrate this, let's call them `1`, `2`, `3`, `4`, `5`, `6`, and `7`.
-
-- Build of a commit No. 1. As before, files are being added to the single layer depending on the configuration of _git mappings_. This is done with the help of the git archive command. This layer corresponds to the _gitArchive_ stage.
-- Build of a commit No. 2. The size of the patch between `1` and `2` does not exceed 1 MiB, so only the layer of the _gitLatestPatch_ stage is modified by applying the patch between `1` and `2`.
-- Build of a commit No. 3. The size of the patch between `1` and `3` does not exceed 1 MiB, so only the layer of the _gitLatestPatch_ stage is modified by applying the patch between `1` and `3`.
-- Build of a commit No. 4. The size of the patch between `1` and `4` now exceeds 1 MiB. As a result, the _gitCache_ stage layer is added. It contains differences between commits `1` and `4`.
-- Build of a commit No. 5. The size of the patch between `4` and `5` does not exceed 1 MiB, so only the layer of the _gitLatestPatch_ stage is modified by applying the patch between `4` and `5`.
-
-It means that while commits are being added starting with the moment of the first build, large patches gradually accumulate into the layer for the _gitCache_ stage, and only moderate patches are applied at the layer for the last _gitLatestPatch_ stage. This algorithm reduces the size of _stages_.
-
-| | gitArchive | gitCache | gitLatestPatch |
-|---|:---:|:---:|:---:|
-| Commit No. 1 is made, build at 12:00 |  1 |  - | - |
-| Commit No. 2 is made, build at 12:19 |  1 |  - | 2 |
-| Commit No. 3 is made, build at 12:25 |  1 |  - | 3 |
-| Commit No. 4 is made, build at 12:45 |  1 | *4 | - |
-| Commit No. 5 is made, build at 12:57 |  1 |  4 | 5 |
-
-\* — the size of the patch for a commit `4` exceeds 1 MiB, so this patch is applied at the layer for the _gitCache_ stage.
-
-<!---
-### Rebuild of gitArchive stage
-
-You may want to reset the _gitArchive_ stage - for example, to decrease the size of _stages_ and the image.
-
-To illustrate the excessive growth of the image size, let's assume there is a 2GiB file in the git repository (a rare case, obviously). The first build transfers this file to the layer of the _gitArchive_ stage. Then some optimization occurs, and the file is being recompiled. As a result, its size decreases to 1.6GiB. The build linked to this new commit applies a patch at the layer of the _gitCache_ stage. The size of the image grows to 3.6GiB, of which 2GiB is the cached version of the file. By resetting the _gitArchive_ stage, you can reduce the image size to 1.6GiB. This kind of situation is quite rare but provides a good overview of the correlation between layers of the _git stages_.
-
-You can reset the _gitArchive_ stage by inserting the **[werf reset]** or **[reset werf]** string in the commit message. Let us assume that, in the previous example, the commit `6` contains the **[werf reset]** string in its message. In this case, the resulting scheme of builds would look as follows:
-
-| | gitArchive | gitCache | gitLatestPatch |
-|---|:---:|:---:|:---:|
-| Commit No. 1 is made, build at 12:00 |  1 |  - | - |
-| Commit No. 2 is made, build at 12:19 |  1 |  - | 2 |
-| Commit No. 3 is made, build at 12:25 |  1 |  - | 3 |
-| Commit No. 4 is made, build at 12:45 |  1 |  4 | - |
-| Commit No. 5 is made, build at 12:57 |  1 |  4 | 5 |
-| Commit No. 6 is made, build at 13:22 |  *6 |  - | - |
-
-\* — the commit `6` contains the **[werf reset]** string in its message, so the _gitArchive_ stage is being rebuilt.
---->
+With time, the number of commits grows, and the size of the patch between commit No. 1 and the current one may become quite large. It will further increase the size of the latest layer and the total size of stages. To prevent the uncontrolled growth of the latest layer, werf provides the additional intermediary stage — _gitCache_. When _gitLatestPatch_ diff becomes too big, much of its diff is merged with the _gitCache_ diff, thus reducing the _gitLatestPatch_ stage size.
 
 ### _git stages_ and rebasing
 

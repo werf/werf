@@ -9,28 +9,6 @@ directive_summary: shell_and_ansible
 ***User stage*** is a [_stage_]({{ "internals/stages_and_storage.html" | true_relative_url }}) containing _assembly instructions_ from the config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create the specific docker layer by executing assembly instructions contained within the respective stage.
 
-## Motivation behind stages
-
-### Opinionated build structure
-
-The _user stages pattern_ is based on analysis of instructions for building real-life applications. It turns out that the categorization of assembly instructions into four _user stages_ is perfectly enough for most applications. Grouping decreases the size of layers and speeds up the image building process.
-
-### Framework for a build process
-
-The _user stages pattern_ defines the structure of a building process, and thus, sets boundaries for a developer. It distinguishes favorably from Dockerfile’s unstructured instructions since the developer has a good understanding of what instructions have to be included in each _stage_.
-
-### Run an assembly instruction on git changes
-
-The execution of a _user stage_ can depend on changes of files in a git repository werf supports local and remote git repositories. The user stage can be dependent on changes in several repositories. Various changes in the repository can lead to a rebuild of different _user stages_.
-
-### More build tools: shell, ansible, ...
-
-_Shell_ is a familiar and well-known build tool. Ansible is newer, and you have to spend some time studying it.
-
-If you need a prototype as soon as possible, then _the shell_ is your choice — it works like a `RUN` instruction in Dockerfile. The configuration of Ansible is declarative, mostly idempotent, and well suited for long-term maintenance.
-
-The stage execution is isolated in code, so implementing support for another tool is not so difficult.
-
 ## Using user stages
 
 werf provides four _user stages_ where assembly instructions can be defined. werf does not impose any restrictions on assembly instructions. You can specify the same variety of instructions as for the `RUN` instruction in Dockerfile. At the same time, the categorization of assembly instructions is based on our experience with real applications. So, the following actions are enough for building the vast majority of applications:
@@ -122,20 +100,7 @@ beforeInstall:
 - apt-get install -y build-essential g++ libcurl4
 ```
 
-werf performs _user stage_ commands as follows:
-- generate the temporary script on host machine
-
-    ```shell
-    #!/.werf/stapel/embedded/bin/bash -e
-
-    apt-get update
-    apt-get install -y build-essential g++ libcurl4
-    ```
-
-- mount it to the corresponding _user stage assembly container_ as `/.werf/shell/script.sh`, and
-- run the script.
-
-> The `bash` binary is stored in a _stapel volume_. You can find additional information about the concept in the [blog post [RU]](https://habr.com/company/flant/blog/352432/) (`dappdeps` was later renamed to `stapel`; nevertheless, the principle is the same)
+The `bash` binary is stored in a _stapel volume_. You can find additional information about the concept in the [blog post [RU]](https://habr.com/company/flant/blog/352432/) (`dappdeps` was later renamed to `stapel`; nevertheless, the principle is the same)
 
 ## Ansible
 
@@ -166,25 +131,15 @@ ansible:
 
 ### Ansible config and stage playbook
 
-_Ansible assembly instructions_ for _user stage_ is a set of ansible tasks. To run
-this tasks via `ansible-playbook` command, werf mounts the directory structure presented below into the _user stage assembly container_:
+_Ansible assembly instructions_ for _user stage_ is a set of ansible tasks.
 
-```shell
-/.werf/ansible-workdir
-├── ansible.cfg
-├── hosts
-└── playbook.yml
-```
-
-`ansible.cfg` contains settings for ansible:
+Generated `ansible.cfg` contains settings for ansible:
 - use local transport (transport = local)
 - werf's stdout_callback method for better logging (stdout_callback = werf)
 - turn on the force_color mode (force_color = 1)
 - use sudo for privilege escalation (to avoid using `become` in ansible tasks)
 
-`hosts` is an inventory file that contains the localhost as well as some ansible_* settings, e.g., the path to python in stapel.
-
-`playbook.yml` is a playbook with all tasks from the specific _user stage_. Here is an example of `werf.yaml` that includes the _install_ stage:
+Generated `playbook.yml` is a playbook with all tasks from the specific _user stage_. Here is an example of `werf.yaml` that includes the _install_ stage:
 
 ```yaml
 ansible:
@@ -198,30 +153,6 @@ ansible:
       name: curl
       update_cache: yes
   ...
-```
-
-werf would generate the following `playbook.yml` for the _install_ stage:
-```yaml
-- hosts: all
-  gather_facts: 'no'
-  tasks:
-  - debug: msg='Start install'  \
-  - file: path=/etc mode=0777   |
-  - copy:                        > these lines are copied from werf.yaml
-      src: /bin/sh              |
-      dest: /bin/sh.orig        |
-  - apk:                        |
-      name: curl                |
-      update_cache: yes         /
-  ...
-```
-
-werf plays the playbook of the _user stage_ in the _user stage assembly container_ via the `playbook-ansible`
-command:
-
-```shell
-$ export ANSIBLE_CONFIG="/.werf/ansible-workdir/ansible.cfg"
-$ ansible-playbook /.werf/ansible-workdir/playbook.yml
 ```
 
 `ansible` and `python` binaries/libraries are stored in a _stapel volume_. You can find more information about this concept in [this blog post [RU]](https://habr.com/company/flant/blog/352432/) (`dappdeps` was later renamed to `stapel`; nevertheless, the principle is the same).

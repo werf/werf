@@ -22,20 +22,6 @@ A key is required for encryption and decryption of data. There are two locations
 
 You can promptly generate a key using the [werf helm secret generate-secret-key command]({{ "reference/cli/werf_helm_secret_generate_secret_key.html" | true_relative_url }}).
 
-### Working with the WERF_SECRET_KEY environment variable
-
-If an environment variable is available in the environment where werf is launched, werf can use it.
-
-In a local environment, you can declare it from the console.
-
-For GitLab CI, use [CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/#variables) – they are only visible to repository masters, and regular developers will not see them.
-
-### Working with the .werf_secret_key file
-
-Using the `.werf_secret_key` file is much safer and more convenient, because:
-* users or release engineers are not required to add an encryption key for each launch;
-* the secret value described in the file cannot be included into the cli `~/.bash_history` log.
-
 > **ATTENTION! Do not save the file into the git repository. If you do it, the entire sense of encryption is lost, and anyone who has source files at hand can retrieve all the passwords. `.werf_secret_key` must be kept in `.gitignore`!**
 
 ## Secret key rotation

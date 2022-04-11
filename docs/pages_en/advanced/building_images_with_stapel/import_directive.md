@@ -28,26 +28,19 @@ Another solution is using multi-stage builds, which are supported starting with 
 
 ```
 FROM node:latest AS storefront
-WORKDIR /usr/src/atsea/app/react-app
+WORKDIR /app
 COPY react-app .
 RUN npm install
 RUN npm run build
 
 FROM maven:latest AS appserver
-WORKDIR /usr/src/atsea
-COPY pom.xml .
-RUN mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:resolve
+WORKDIR /app
 COPY . .
-RUN mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
+RUN mvn package
 
 FROM java:8-jdk-alpine
-RUN adduser -Dh /home/gordon gordon
-WORKDIR /static
-COPY --from=storefront /usr/src/atsea/app/react-app/build/ .
-WORKDIR /app
-COPY --from=appserver /usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar .
-ENTRYPOINT ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
-CMD ["--spring.profiles.active=postgres"]
+COPY --from=storefront /app/react-app/build/ /static
+COPY --from=appserver /app/target/AtSea-0.0.1-SNAPSHOT.jar /app/AtSea.jar
 ```
 
 The meaning of such an approach is as follows, describe several auxiliary images and selectively copy artifacts from one image to another leaving behind everything you do not want in the result image.
