@@ -38,10 +38,6 @@ func (s *InstallStage) GetDependencies(ctx context.Context, c Conveyor, _, _ *St
 }
 
 func (s *InstallStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
-	if !c.UseLegacyStapelBuilder(cr) {
-		stageImage.Builder.StapelStageBuilder().SetStageType(container_backend.UserCommandsStage)
-	}
-
 	if err := s.UserWithGitPatchStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}

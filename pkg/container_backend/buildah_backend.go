@@ -96,35 +96,10 @@ func (runtime *BuildahBackend) unmountContainers(ctx context.Context, containers
 	return nil
 }
 
-func (runtime *BuildahBackend) cleanupMountpoints(ctx context.Context, container *containerDesc, buildVolumes []string) error {
-	var mountpoints []string
-	for _, volume := range buildVolumes {
-		volumeParts := strings.SplitN(volume, ":", 2)
-		mountpoints = append(mountpoints, volumeParts[1])
-	}
-
-	if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
-		return err
-	}
-	defer func() {
-		if err := runtime.unmountContainers(ctx, []*containerDesc{container}); err != nil {
-			logboek.Context(ctx).Warn().LogF("ERROR: unable to unmount containers: %s\n", err)
-		}
-	}()
-
-	for _, mountpoint := range mountpoints {
-		if err := os.RemoveAll(filepath.Join(container.RootMount, mountpoint)); err != nil {
-			return fmt.Errorf("unable to remove mountpoint %q in container %s: %w", mountpoint, container.Name, err)
-		}
-	}
-
-	return nil
-}
-
-func (runtime *BuildahBackend) applyUserCommands(ctx context.Context, container *containerDesc, opts BuildStapelStageOptions) error {
-	for _, cmd := range opts.Commands {
+func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, buildVolumes []string, commands []string) error {
+	for _, cmd := range commands {
 		var mounts []specs.Mount
-		mounts, err := makeBuildahMounts(opts.BuildVolumes)
+		mounts, err := makeBuildahMounts(buildVolumes)
 		if err != nil {
 			return err
 		}
@@ -149,19 +124,8 @@ type dependencyContainer struct {
 	Import    DependencyImport
 }
 
-func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, opts BuildStapelStageOptions) error {
-	logboek.Context(ctx).Debug().LogF("Mounting container %q\n", container.Name)
-	if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
-		return fmt.Errorf("unable to mount containers: %w", err)
-	}
-	defer func() {
-		logboek.Context(ctx).Debug().LogF("Unmounting container %q\n", container.Name)
-		if err := runtime.unmountContainers(ctx, []*containerDesc{container}); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
-		}
-	}()
-
-	for _, archive := range opts.DataArchives {
+func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchive) error {
+	for _, archive := range dataArchives {
 		destPath := filepath.Join(container.RootMount, archive.To)
 
 		var extractDestPath string
@@ -195,7 +159,11 @@ func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container 
 		}
 	}
 
-	for _, path := range opts.PathsToRemove {
+	return nil
+}
+
+func (runtime *BuildahBackend) applyPathsToRemove(ctx context.Context, container *containerDesc, pathsToRemove []string) error {
+	for _, path := range pathsToRemove {
 		destPath := filepath.Join(container.RootMount, path)
 
 		logboek.Context(ctx).Debug().LogF("Removing container path %s\n", path)
@@ -207,11 +175,11 @@ func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container 
 	return nil
 }
 
-func (runtime *BuildahBackend) applyDependencies(ctx context.Context, container *containerDesc, opts BuildStapelStageOptions) error {
+func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, container *containerDesc, dependenciesImports []DependencyImport) error {
 	var dependencies []*dependencyContainer
 
 	var dependenciesImages []string
-	for _, imp := range opts.Imports {
+	for _, imp := range dependenciesImports {
 		dependenciesImages = append(dependenciesImages, imp.ImageName)
 	}
 
@@ -228,7 +196,7 @@ func (runtime *BuildahBackend) applyDependencies(ctx context.Context, container 
 
 	for _, cont := range dependenciesContainers {
 	FindImport:
-		for _, imp := range opts.Imports {
+		for _, imp := range dependenciesImports {
 			if imp.ImageName == cont.ImageName {
 				dependencies = append(dependencies, &dependencyContainer{
 					Container: cont,
@@ -240,13 +208,14 @@ func (runtime *BuildahBackend) applyDependencies(ctx context.Context, container 
 		}
 	}
 
-	logboek.Context(ctx).Debug().LogF("Mounting containers %v\n", append(dependenciesContainers, container))
-	if err := runtime.mountContainers(ctx, append(dependenciesContainers, container)); err != nil {
+	// NOTE: maybe it is more optimal not to mount all dependencies at once, but mount one-by-one
+	logboek.Context(ctx).Debug().LogF("Mounting dependencies containers %v\n", dependenciesContainers)
+	if err := runtime.mountContainers(ctx, dependenciesContainers); err != nil {
 		return fmt.Errorf("unable to mount containers: %w", err)
 	}
 	defer func() {
-		logboek.Context(ctx).Debug().LogF("Unmounting containers %v\n", append(dependenciesContainers, container))
-		if err := runtime.unmountContainers(ctx, append(dependenciesContainers, container)); err != nil {
+		logboek.Context(ctx).Debug().LogF("Unmounting dependencies containers %v\n", dependenciesContainers)
+		if err := runtime.unmountContainers(ctx, dependenciesContainers); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 		}
 	}()
@@ -264,7 +233,7 @@ func (runtime *BuildahBackend) applyDependencies(ctx context.Context, container 
 	return nil
 }
 
-func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, stageType StapelStageType, opts BuildStapelStageOptions) (string, error) {
+func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, opts BuildStapelStageOptions) (string, error) {
 	var container *containerDesc
 	if c, err := runtime.createContainers(ctx, []string{opts.BaseImage}); err != nil {
 		return "", err
@@ -276,31 +245,40 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, stageType S
 			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal build container: %s\n", err)
 		}
 	}()
-
 	// TODO(stapel-to-buildah): cleanup orphan build containers in werf-host-cleanup procedure
 
-	switch stageType {
-	case FromStage:
-		if len(opts.BuildVolumes) > 0 {
-			if err := runtime.cleanupMountpoints(ctx, container, opts.BuildVolumes); err != nil {
-				return "", err
+	if len(opts.DependenciesImports)+len(opts.DataArchives)+len(opts.PathsToRemove) > 0 {
+		logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
+		if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
+			return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
+		}
+		defer func() {
+			logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
+			if err := runtime.unmountContainers(ctx, []*containerDesc{container}); err != nil {
+				logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 			}
-		}
-	case UserCommandsStage:
-		if err := runtime.applyUserCommands(ctx, container, opts); err != nil {
+		}()
+	}
+
+	if len(opts.DependenciesImports) > 0 {
+		if err := runtime.applyDependenciesImports(ctx, container, opts.DependenciesImports); err != nil {
 			return "", err
 		}
-	case DockerInstructionsStage:
-	case DependenciesStage:
-		if err := runtime.applyDependencies(ctx, container, opts); err != nil {
+	}
+	if len(opts.DataArchives) > 0 {
+		if err := runtime.applyDataArchives(ctx, container, opts.DataArchives); err != nil {
 			return "", err
 		}
-	case DataArchivesStage:
-		if err := runtime.applyDataArchives(ctx, container, opts); err != nil {
+	}
+	if len(opts.PathsToRemove) > 0 {
+		if err := runtime.applyPathsToRemove(ctx, container, opts.PathsToRemove); err != nil {
 			return "", err
 		}
-	default:
-		return "", fmt.Errorf("unsupported stage type %q", stageType.String())
+	}
+	if len(opts.Commands) > 0 {
+		if err := runtime.applyCommands(ctx, container, opts.BuildVolumes, opts.Commands); err != nil {
+			return "", err
+		}
 	}
 
 	logboek.Context(ctx).Debug().LogF("Setting config for build container %q\n", container.Name)

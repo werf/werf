@@ -69,10 +69,6 @@ func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Convey
 }
 
 func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
-	if !c.UseLegacyStapelBuilder(cr) {
-		stageImage.Builder.StapelStageBuilder().SetStageType(container_backend.DataArchivesStage)
-	}
-
 	if err := s.GitStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}

@@ -88,7 +88,7 @@ func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_
 
 		container.AddServiceRunCommands(containerTmpScriptFilePath)
 	} else {
-		stageBuilder.StapelStageBuilder().UserCommandsStage().AddUserCommands(b.stageCommands(userStageName)...)
+		stageBuilder.StapelStageBuilder().AddCommands(b.stageCommands(userStageName)...)
 	}
 
 	return nil
