@@ -101,7 +101,6 @@ editme_button: false
 <div markdown="1">
  - [Building images]({{ "internals/build_process.html" | true_relative_url }}) — what image builder and stages are, how stages storage works, what is the synchronization server, other info related to the building process.
  - [How does the CI/CD integration work?]({{ "internals/how_ci_cd_integration_works/general_overview.html" | true_relative_url }}).
- - [The slug algorithm for naming]({{ "internals/names_slug_algorithm.html" | true_relative_url }}) describes the algorithm that werf uses under-the-hood to automatically replace invalid characters in input names so that other systems (such as Kubernetes namespaces or release names) can consume them.
  - [Integration with SSH agent]({{ "internals/integration_with_ssh_agent.html" | true_relative_url }}) shows how to integrate ssh-keys with the building process in werf.
  - [Development]({{ "internals/development/stapel_image.html" | true_relative_url }}) — this developers zone contains service/maintenance manuals and other docs written by werf developers and for werf developers. All this information sheds light on how specific werf subsystems work, describes how to keep the subsystem current, how to write and build new code for the werf, etc.
 </div>

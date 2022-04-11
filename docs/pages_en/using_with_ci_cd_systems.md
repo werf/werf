@@ -38,33 +38,9 @@ werf is designed to be easily embedded into any CI/CD system. The process is sim
 
 ### Connecting to the Kubernetes cluster
 
-werf requires [kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) in order to connect to the Kubernetes cluster and interact with it.
+werf requires [kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) in order to connect to the Kubernetes cluster and interact with it. By default it will use `~/.kube/config`, but you can change this via flags (`--kube-config` or `--kube-config-base64`) or corresponding environment variables (e.g. `WERF_KUBE_CONFIG`).
 
-If you have already installed and set up a `kubectl` tool to work with your Kubernetes cluster, then `werf` would also work out-of-the-box since it uses the same kubeconfig settings (the default `~/.kube/config` configuration file and the `KUBECONFIG` environment variable).
-
-Otherwise, you should create the kubeconfig file and pass it to the werf by setting the `--kube-config` flag (or `WERF_KUBE_CONFIG` environment variable), `--kube-context` flag (or `WERF_KUBE_CONTEXT` environment variable) or `--kube-config-base64` flag (or `WERF_KUBE_CONFIG_BASE64` environment variable) to pass the base64-encoded kubeconfig data directly into werf.
-
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">Example</a>
-<div class="details__content" markdown="1">
-Use a custom kubeconfig file `./my-kube-config`:
-
-```shell
-werf converge --kube-config ./my-kube-config
-```
-
-Pass the base64-encoded config using the environment variable:
-
-```shell
-export WERF_KUBE_CONFIG_BASE64="$(cat ./my-kube-config | base64 -w0)"
-werf converge
-```
-</div>
-</div>
-
-### Configure a CI/CD job to access the container registry
-
-You probably need a private container registry if your project involves any custom images (rather than publicly available) that have to be built for the project specifically. In such a case, the container registry instance should be accessible from the CI/CD runner host (to publish newly built images) and from within your Kubernetes cluster (to pull those images).
+### Configure a CI/CD job to access the private container registry
 
 If you have configured the `docker` tool to access the private container registry from your host, then `werf` would work with this container registry right out-of-the-box, since it uses the same docker config settings (the default `~/.docker/` config directory or the `DOCKER_CONFIG` environment variable).
 
@@ -100,28 +76,16 @@ werf supports the optional `--env` param (or the `WERF_ENV` environment variable
 Specify the `WERF_ENV` environment variable:
 
 ```shell
-export WERF_ENV=production
-werf converge
-```
-
-Or use the cli parameter:
-
-```shell
-werf converge --env staging
+WERF_ENV=production werf converge
 ```
 
 Or make use of built-in variables of your CI/CD system:
 
 ```shell
-export WERF_ENV=$CI_ENVIRONMENT_NAME
-werf converge
+werf converge --env $CI_ENVIRONMENT_NAME
 ```
 </div>
 </div>
-
-### Checkout the git commit and run werf
-
-Usually, a CI/CD system checks out to the current git commit in a fully automatic manner, and you don’t have to do anything. But some systems may not perform this step automatically. If this is the case, then you have to check out the target git commit in the project repository before running main werf commands (`werf converge`, `werf dismiss`, or `werf cleanup`).
 
 ### Other werf CI/CD settings
 

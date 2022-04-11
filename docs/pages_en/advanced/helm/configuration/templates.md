@@ -53,33 +53,7 @@ Also, the user can place `*.tpl` files into the `.helm/templates` directory or a
 
 ## Integration with built images
 
-Kubernetes resources needs a full docker image name, including the docker repo and the docker tag, in order to use the docker image in the chart resource specifications. But how do you designate an image contained in the `werf.yaml` file given that the full docker image name for such an image depends on the specified image repository and werf content based tagging?
-
 werf provides a pack of service values, which contain `.Values.werf.image` map, which contain mapping of docker images names by `werf.yaml` image short name. Full description of werf's service values is available in the [values article]({{ "/advanced/helm/configuration/values.html" | true_relative_url }}).
-
-### .Values.werf.image
-
-```
-map[string]string
-
-SHORT_IMAGE_NAME => FULL_DOCKER_IMAGE_NAME
-```
-
-This map contains full image name which can be used as a value for `image` key in the container section of a pod spec.
-
-##### Examples
-
-To retrieve docker image for an image named `backend` in the `werf.yaml`, use:
-
-```
-.Values.werf.image.backend
-```
-
-To retrieve docker image for an image named `nginx-assets` in the `werf.yaml`, use:
-
-```
-index .Values.werf.image "nginx-assets"
-```
 
 Here is how you can refer to an image called `backend` described in `werf.yaml`:
 
@@ -89,21 +63,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
-  labels:
-    service: backend
 spec:
-  selector:
-    matchLabels:
-      service: backend
   template:
-    metadata:
-      labels:
-        service: backend
     spec:
       containers:
-      - name: main
-        command: [ ... ]
-        image: {{ .Values.werf.image.backend }}
+      - image: {{ .Values.werf.image.backend }}
 ```
 {% endraw %}
 
@@ -117,38 +81,22 @@ spec:
 
 ### Environment
 
-All main werf commands (such as [`werf converge`]({{ "reference/cli/werf_converge.html" | true_relative_url }}), [`werf build`]({{ "reference/cli/werf_build.html" | true_relative_url }}), [`werf render`]({{ "reference/cli/werf_render.html" | true_relative_url }}) etc.).
+Current werf environment can be used in templates.
 
-This param could affect [release name]({{ "/advanced/helm/releases/naming.html" | true_relative_url }}) and [kubernetes namespace]({{ "/advanced/helm/releases/naming.html" | true_relative_url }}). Also it is possible to access environment in templates:
-
-{% raw %}
-```
-{{ .Values.werf.env }}
-```
-{% endraw %}
-
-It is acceptable to use this param in templates to generate different templates for different environments. For example:
+For example, you can use it to generate different templates for different environments:
 
 {% raw %}
 ```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regsecret
+type: kubernetes.io/dockerconfigjson
+data:
 {{ if eq .Values.werf.env "dev" }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: regsecret
-type: kubernetes.io/dockerconfigjson
-data:
   .dockerconfigjson: UmVhbGx5IHJlYWxseSByZWVlZWVlZWVlZWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGx5eXl5eXl5eXl5eXl5eXl5eXl5eSBsbGxsbGxsbGxsbGxsbG9vb29vb29vb29vb29vb29vb29vb29vb29vb25ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubmdnZ2dnZ2dnZ2dnZ2dnZ2dnZ2cgYXV0aCBrZXlzCg==
----
 {{ else }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: regsecret
-type: kubernetes.io/dockerconfigjson
-data:
   .dockerconfigjson: {{ .Values.dockerconfigjson }}
----
 {{ end }}
 ```
 {% endraw %}

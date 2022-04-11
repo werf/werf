@@ -29,7 +29,7 @@ You can also define the custom release name in the werf.yaml configuration [by s
 
 ### Slugging the release name
 
-The name of the Helm Release constructed using the template will be slugified according to the [*release slug procedure*]({{ "internals/names_slug_algorithm.html#basic-algorithm" | true_relative_url }}) to fit the requirements for the release name. This procedure generates a unique and valid Helm Release name.
+The name of the Helm Release constructed using the template will be slugified to fit the requirements for the release name. This procedure generates a unique and valid Helm Release name.
 
 This is the default behavior. You can disable it by [setting `deploy.helmReleaseSlug=false`]({{ "/reference/werf_yaml.html#release-name" | true_relative_url }}) in the `werf.yaml` configuration.
 
@@ -49,6 +49,6 @@ You can also define the custom Kubernetes Namespace in the werf.yaml configurati
 
 ### Slugging Kubernetes namespace
 
-The Kubernetes namespace that is constructed using the template will be slugified to fit the [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements according to the [*namespace slugging procedure*]({{ "internals/names_slug_algorithm.html#basic-algorithm" | true_relative_url }}) that generates a unique and valid Kubernetes Namespace.
+The Kubernetes namespace that is constructed using the template will be slugified to fit the [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements that generates a unique and valid Kubernetes Namespace.
 
 This is default behavior. It can be disabled by [setting `deploy.namespaceSlug=false`]({{ "/reference/werf_yaml.html#kubernetes-namespace" | true_relative_url }}) in the werf.yaml configuration.
