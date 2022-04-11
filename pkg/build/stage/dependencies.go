@@ -155,8 +155,6 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 }
 
 func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
-	stageImage.Builder.StapelStageBuilder().SetStageType(container_backend.DependenciesStage)
-
 	for _, elm := range s.imports {
 		sourceImageConfigName := getSourceImageName(elm)
 		var sourceImageName string
@@ -178,7 +176,7 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 		labelValue := importMetadata.Checksum
 
 		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{labelKey: labelValue})
-		stageImage.Builder.StapelStageBuilder().DependenciesStage().AddDependencyImport(sourceImageName, elm.Add, elm.To, elm.IncludePaths, elm.ExcludePaths, elm.Owner, elm.Group)
+		stageImage.Builder.StapelStageBuilder().AddDependencyImport(sourceImageName, elm.Add, elm.To, elm.IncludePaths, elm.ExcludePaths, elm.Owner, elm.Group)
 	}
 
 	for _, dep := range s.dependencies {

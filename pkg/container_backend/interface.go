@@ -51,7 +51,7 @@ type ContainerBackend interface {
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
-	BuildStapelStage(ctx context.Context, stageType StapelStageType, opts BuildStapelStageOptions) (string, error)
+	BuildStapelStage(ctx context.Context, opts BuildStapelStageOptions) (string, error)
 
 	HasStapelBuildSupport() bool
 	String() string

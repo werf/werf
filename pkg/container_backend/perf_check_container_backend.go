@@ -67,10 +67,10 @@ func (runtime *PerfCheckContainerBackend) BuildDockerfile(ctx context.Context, d
 	return
 }
 
-func (runtime *PerfCheckContainerBackend) BuildStapelStage(ctx context.Context, stageType StapelStageType, opts BuildStapelStageOptions) (resID string, resErr error) {
+func (runtime *PerfCheckContainerBackend) BuildStapelStage(ctx context.Context, opts BuildStapelStageOptions) (resID string, resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.BuildDockerfile").
 		Do(func() {
-			resID, resErr = runtime.ContainerBackend.BuildStapelStage(ctx, stageType, opts)
+			resID, resErr = runtime.ContainerBackend.BuildStapelStage(ctx, opts)
 		})
 	return
 }

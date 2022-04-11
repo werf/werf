@@ -77,7 +77,6 @@ func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, 
 		imageCommitChangeOptions.AddWorkdir(s.instructions.Workdir)
 		imageCommitChangeOptions.AddHealthCheck(s.instructions.HealthCheck)
 	} else {
-		stageImage.Builder.StapelStageBuilder().SetStageType(container_backend.DockerInstructionsStage)
 		stageImage.Builder.StapelStageBuilder().
 			AddVolumes(s.instructions.Volume).
 			AddExpose(s.instructions.Expose).

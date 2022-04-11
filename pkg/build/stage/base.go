@@ -253,13 +253,13 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cr container_b
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, c, cr, stageImage)
-	if err := s.addServiceMountsVolumes(serviceMounts, c, cr, stageImage); err != nil {
+	if err := s.addServiceMountsVolumes(serviceMounts, c, cr, stageImage, false); err != nil {
 		return fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
 	customMounts := s.getCustomMounts(prevBuiltImage)
 	s.addCustomMountLabels(customMounts, c, cr, stageImage)
-	if err := s.addCustomMountVolumes(customMounts, c, cr, stageImage); err != nil {
+	if err := s.addCustomMountVolumes(customMounts, c, cr, stageImage, false); err != nil {
 		return fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
@@ -313,7 +313,7 @@ func (s *BaseStage) getServiceMountsFromConfig() map[string][]string {
 	return mountpointsByType
 }
 
-func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, c Conveyor, cr container_backend.ContainerBackend, stageImage *StageImage) error {
+func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, c Conveyor, cr container_backend.ContainerBackend, stageImage *StageImage, cleanupMountpoints bool) error {
 	for mountType, mountpoints := range mountpointsByType {
 		for _, mountpoint := range mountpoints {
 			absoluteMountpoint := path.Join("/", mountpoint)
@@ -338,6 +338,9 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 				stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(volume)
 			} else {
 				stageImage.Builder.StapelStageBuilder().AddBuildVolumes(volume)
+				if cleanupMountpoints {
+					stageImage.Builder.StapelStageBuilder().AddPathsToRemove(absoluteMountpoint)
+				}
 			}
 		}
 	}
@@ -411,7 +414,7 @@ func (s *BaseStage) getCustomMountsFromConfig() map[string][]string {
 	return mountpointsByFrom
 }
 
-func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, c Conveyor, cr container_backend.ContainerBackend, stageImage *StageImage) error {
+func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, c Conveyor, cr container_backend.ContainerBackend, stageImage *StageImage, cleanupMountpoints bool) error {
 	for from, mountpoints := range mountpointsByFrom {
 		absoluteFrom := util.ExpandPath(from)
 
@@ -435,6 +438,9 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 				stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(volume)
 			} else {
 				stageImage.Builder.StapelStageBuilder().AddBuildVolumes(volume)
+				if cleanupMountpoints {
+					stageImage.Builder.StapelStageBuilder().AddPathsToRemove(absoluteMountpoint)
+				}
 			}
 		}
 	}
