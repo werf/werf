@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -38,7 +39,7 @@ type ServiceValuesOptions struct {
 	Env             string
 	IsStub          bool
 	StubImagesNames []string
-	CustomTagFunc   func(string) string
+	CustomTagFunc   build.CustomTagFunc
 	CommitHash      string
 	CommitDate      *time.Time
 
@@ -98,7 +99,7 @@ func GetServiceValues(ctx context.Context, projectName string, repo string, imag
 		var image string
 
 		if opts.CustomTagFunc != nil {
-			tag = opts.CustomTagFunc(imageInfoGetter.GetWerfImageName())
+			tag = opts.CustomTagFunc(imageInfoGetter.GetWerfImageName(), imageInfoGetter.GetTag())
 			image = strings.Join([]string{repo, tag}, ":")
 		} else {
 			tag = imageInfoGetter.GetTag()
