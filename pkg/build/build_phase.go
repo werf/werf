@@ -43,8 +43,10 @@ type BuildOptions struct {
 	ReportFormat ReportFormat
 
 	SkipImageMetadataPublication bool
-	CustomTagFuncList            []func(string) string
+	CustomTagFuncList            []CustomTagFunc
 }
+
+type CustomTagFunc func(string, string) string
 
 type IntrospectOptions struct {
 	Targets []IntrospectTarget
@@ -321,7 +323,7 @@ func (phase *BuildPhase) addCustomImageTagsToStagesStorage(ctx context.Context, 
 	return addCustomImageTags(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), img, phase.CustomTagFuncList)
 }
 
-func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage, img *Image, customTagFuncList []func(string) string) error {
+func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage, img *Image, customTagFuncList []CustomTagFunc) error {
 	if len(customTagFuncList) == 0 {
 		return nil
 	}
@@ -332,7 +334,7 @@ func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage
 		}).
 		DoError(func() error {
 			for _, tagFunc := range customTagFuncList {
-				tag := tagFunc(img.GetName())
+				tag := tagFunc(img.GetName(), img.GetStageID())
 				if err := addCustomImageTag(ctx, stagesStorage, img, tag); err != nil {
 					return err
 				}
@@ -363,7 +365,7 @@ func (phase *BuildPhase) checkCustomImageTagsExistence(ctx context.Context, img 
 
 	stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription()
 	for _, tagFunc := range phase.CustomTagFuncList {
-		tag := tagFunc(img.GetName())
+		tag := tagFunc(img.GetName(), img.GetStageID())
 		if err := phase.Conveyor.StorageManager.GetStagesStorage().CheckStageCustomTag(ctx, stageDesc, tag); err != nil {
 			return fmt.Errorf("check custom tag %q existence failed: %w", tag, err)
 		}

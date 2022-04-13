@@ -42,12 +42,14 @@ werf build [IMAGE_NAME...] [options]
 
 ```shell
       --add-custom-tag=[]
-            Set tag aliases for the content-based tag of each image.
-            It is necessary to use the image name shortcut %image% or %image_slug% in the tag       
-            format if there is more than one image in the werf config.
-            Also, can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g.                                  
-            $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2").
-            For cleaning custom tags and associated content-based tag are treated as one
+            Set tag alias for the content-based tag.
+            The alias may contain the following shortcuts:
+            - %image%, %image_slug% or %image_safe_slug% to use the image name (necessary if there  
+            is more than one image in the werf config);
+            - %image_content_based_tag% to use a content-based tag.
+            For cleaning custom tags and associated content-based tag are treated as one.
+            Also can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g.                                   
+            $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2")
       --allowed-docker-storage-volume-usage=70
             Set allowed percentage of docker storage volume usage which will cause cleanup of least 
             recently used local docker images (default 70% or                                       

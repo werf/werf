@@ -426,18 +426,22 @@ Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=
 
 func SetupAddCustomTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.AddCustomTag = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.AddCustomTag, "add-custom-tag", "", []string{}, `Set tag aliases for the content-based tag of each image.
-It is necessary to use the image name shortcut %image% or %image_slug% in the tag format if there is more than one image in the werf config.
-Also, can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g. $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2").
-For cleaning custom tags and associated content-based tag are treated as one`)
+	cmd.Flags().StringArrayVarP(cmdData.AddCustomTag, "add-custom-tag", "", []string{}, `Set tag alias for the content-based tag.
+The alias may contain the following shortcuts:
+- %image%, %image_slug% or %image_safe_slug% to use the image name (necessary if there is more than one image in the werf config);
+- %image_content_based_tag% to use a content-based tag.
+For cleaning custom tags and associated content-based tag are treated as one.
+Also can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g. $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2")`)
 }
 
 func SetupUseCustomTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.UseCustomTag = new(string)
 	cmd.Flags().StringVarP(cmdData.UseCustomTag, "use-custom-tag", "", os.Getenv("WERF_USE_CUSTOM_TAG"), `Use a tag alias in helm templates instead of an image content-based tag (NOT RECOMMENDED).
-It is necessary to use the image name shortcut %image% or %image_slug% in the tag format if there is more than one image in the werf config.
-Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag").
-For cleaning custom tags and associated content-based tag are treated as one`)
+The alias may contain the following shortcuts:
+- %image%, %image_slug% or %image_safe_slug% to use the image name (necessary if there is more than one image in the werf config);
+- %image_content_based_tag% to use a content-based tag.
+For cleaning custom tags and associated content-based tag are treated as one.
+Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag")`)
 }
 
 func SetupCacheStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {

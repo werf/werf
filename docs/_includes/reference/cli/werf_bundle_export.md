@@ -269,11 +269,12 @@ werf bundle export [options]
       --use-custom-tag=''
             Use a tag alias in helm templates instead of an image content-based tag (NOT            
             RECOMMENDED).
-            It is necessary to use the image name shortcut %image% or %image_slug% in the tag       
-            format if there is more than one image in the werf config.
-            Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g.                                    
-            $WERF_USE_CUSTOM_TAG="%image%-tag").
-            For cleaning custom tags and associated content-based tag are treated as one
+            The alias may contain the following shortcuts:
+            - %image%, %image_slug% or %image_safe_slug% to use the image name (necessary if there  
+            is more than one image in the werf config);
+            - %image_content_based_tag% to use a content-based tag.
+            For cleaning custom tags and associated content-based tag are treated as one.
+            Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag")
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple).
             Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, 

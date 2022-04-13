@@ -307,7 +307,7 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 }
 
 type ShouldBeBuiltOptions struct {
-	CustomTagFuncList []func(string) string
+	CustomTagFuncList []CustomTagFunc
 }
 
 func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) error {
