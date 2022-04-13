@@ -14,7 +14,7 @@ type ExportPhase struct {
 }
 
 type ExportPhaseOptions struct {
-	ExportTagFuncList []func(string) string
+	ExportTagFuncList []ExportTagFunc
 }
 
 func NewExportPhase(c *Conveyor, opts ExportPhaseOptions) *ExportPhase {
@@ -51,7 +51,7 @@ func (phase *ExportPhase) exportLastStageImage(ctx context.Context, img *Image) 
 		}).
 		DoError(func() error {
 			for _, tagFunc := range phase.ExportTagFuncList {
-				tag := tagFunc(img.GetName())
+				tag := tagFunc(img.GetName(), img.GetStageID())
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
 						stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription()
