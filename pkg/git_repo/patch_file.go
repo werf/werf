@@ -28,3 +28,7 @@ func (p *PatchFile) GetPaths() []string {
 func (p *PatchFile) GetBinaryPaths() []string {
 	return p.Descriptor.BinaryPaths
 }
+
+func (p *PatchFile) GetPathsToRemove() []string {
+	return p.Descriptor.PathsToRemove
+}

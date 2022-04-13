@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"archive/tar"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -12,6 +13,9 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/djherbis/buffer"
+	"github.com/djherbis/nio/v3"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/container_backend"
@@ -236,31 +240,6 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	commands = append(commands, strings.TrimLeft(gitCommand, " "))
 
 	return commands, nil
-}
-
-func (gm *GitMapping) ApplyPatchCommand(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
-	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
-	if err != nil {
-		return fmt.Errorf("unable to get base commit from built image: %w", err)
-	}
-
-	toCommitInfo, err := gm.GetLatestCommitInfo(ctx, c)
-	if err != nil {
-		return fmt.Errorf("unable to get latest commit info: %w", err)
-	}
-
-	commands, err := gm.baseApplyPatchCommand(ctx, fromCommit, toCommitInfo.Commit, prevBuiltImage)
-	if err != nil {
-		return err
-	}
-
-	if err := gm.applyScript(stageImage, commands); err != nil {
-		return err
-	}
-
-	gm.AddGitCommitToImageLabels(ctx, c, cb, stageImage, toCommitInfo)
-
-	return nil
 }
 
 func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (ImageCommitInfo, error) {
@@ -571,7 +550,111 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 	return commands, nil
 }
 
+func (gm *GitMapping) PreparePatchForImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
+	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
+	if err != nil {
+		return fmt.Errorf("unable to get base commit from built image: %w", err)
+	}
+	toCommitInfo, err := gm.GetLatestCommitInfo(ctx, c)
+	if err != nil {
+		return fmt.Errorf("unable to get latest commit info: %w", err)
+	}
+
+	if c.UseLegacyStapelBuilder(cb) {
+		commands, err := gm.baseApplyPatchCommand(ctx, fromCommit, toCommitInfo.Commit, prevBuiltImage)
+		if err != nil {
+			return err
+		}
+
+		if err := gm.applyScript(stageImage, commands); err != nil {
+			return err
+		}
+	} else {
+		patchOpts, err := gm.makePatchOptions(ctx, fromCommit, toCommitInfo.Commit, false, false)
+		if err != nil {
+			return fmt.Errorf("unable to make patch options: %w", err)
+		}
+		logboek.Context(ctx).Debug().LogF("Creating patch from %s to %s\n", fromCommit, toCommitInfo.Commit)
+		patch, err := gm.GitRepo().GetOrCreatePatch(ctx, *patchOpts)
+		if err != nil {
+			return fmt.Errorf("unable to create patch: %w", err)
+		}
+		if patch.IsEmpty() {
+			return nil
+		}
+
+		archiveOpts, err := gm.makeArchiveOptions(ctx, toCommitInfo.Commit)
+		if err != nil {
+			return err
+		}
+		logboek.Context(ctx).Debug().LogF("Creating archive for commit %s\n", toCommitInfo.Commit)
+		archive, err := gm.GitRepo().GetOrCreateArchive(ctx, *archiveOpts)
+		if err != nil {
+			return fmt.Errorf("unable to create git archive for commit %s with path scope %s: %w", archiveOpts.Commit, archiveOpts.PathScope, err)
+		}
+		var archiveType container_backend.ArchiveType
+		gitArchiveType, err := gm.getArchiveType(ctx, toCommitInfo.Commit)
+		if err != nil {
+			return fmt.Errorf("unable to determine git archive type: %w", err)
+		}
+		switch gitArchiveType {
+		case git_repo.FileArchive:
+			archiveType = container_backend.FileArchive
+		case git_repo.DirectoryArchive:
+			archiveType = container_backend.DirectoryArchive
+		}
+
+		tarBuf := buffer.New(64 * 1024 * 1024)
+		patchArchiveReader, patchArchiveWriter := nio.Pipe(tarBuf)
+		f, err := os.Open(archive.GetFilePath())
+		if err != nil {
+			return fmt.Errorf("unable to open archive file %q: %w", archive.GetFilePath(), err)
+		}
+
+		var includePaths []string
+		for _, path := range patch.GetPaths() {
+			if util.IsStringsContainValue(patch.GetPathsToRemove(), path) {
+				continue
+			}
+			includePaths = append(includePaths, path)
+		}
+
+		go func() {
+			logboek.Context(ctx).Debug().LogF("Starting archive %q filtering process, includePaths: %v\n", archive.GetFilePath(), includePaths)
+			tw := tar.NewWriter(patchArchiveWriter)
+			defer func() {
+				if err := tw.Close(); err != nil {
+					logboek.Context(ctx).Error().LogF("ERROR: %s\n", err)
+					panic("tar writer close failed")
+				}
+			}()
+
+			if err := util.CopyTar(ctx, f, tw, util.CopyTarOptions{IncludePaths: includePaths}); err != nil {
+				logboek.Context(ctx).Error().LogF("ERROR: %s\n", err)
+				panic("tar copy failed")
+			}
+		}()
+
+		logboek.Context(ctx).Debug().LogF("Adding git patch data archive with included paths: %v\n", includePaths)
+		stageImage.Builder.StapelStageBuilder().AddDataArchive(patchArchiveReader, archiveType, gm.To)
+
+		logboek.Context(ctx).Debug().LogF("Adding git paths to remove: %v\n", patch.GetPathsToRemove())
+		var pathsToRemove []string
+		for _, path := range patch.GetPathsToRemove() {
+			pathsToRemove = append(pathsToRemove, filepath.Join(gm.To, path))
+		}
+		stageImage.Builder.StapelStageBuilder().RemoveData(container_backend.RemoveExactPathWithEmptyParentDirs, pathsToRemove, []string{gm.To})
+	}
+
+	gm.AddGitCommitToImageLabels(ctx, c, cb, stageImage, toCommitInfo)
+
+	return nil
+}
+
 func (gm *GitMapping) PrepareArchiveForImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage) error {
+	// FIXME: legacy stapel
+	// FIXME: file-archive type
+
 	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return fmt.Errorf("unable to get latest commit info: %w", err)
@@ -591,12 +674,10 @@ func (gm *GitMapping) PrepareArchiveForImage(ctx context.Context, c Conveyor, cb
 		if err != nil {
 			return err
 		}
-
 		archive, err := gm.GitRepo().GetOrCreateArchive(ctx, *archiveOpts)
 		if err != nil {
 			return fmt.Errorf("unable to create git archive for commit %s with path scope %s: %w", archiveOpts.Commit, archiveOpts.PathScope, err)
 		}
-
 		var archiveType container_backend.ArchiveType
 
 		gitArchiveType, err := gm.getArchiveType(ctx, commitInfo.Commit)
@@ -618,11 +699,7 @@ func (gm *GitMapping) PrepareArchiveForImage(ctx context.Context, c Conveyor, cb
 			return fmt.Errorf("unable to open archive file %q: %w", archive.GetFilePath(), err)
 		}
 
-		stageImage.Builder.StapelStageBuilder().AddDataArchives(container_backend.DataArchive{
-			Data: f,
-			Type: archiveType,
-			To:   gm.To,
-		})
+		stageImage.Builder.StapelStageBuilder().AddDataArchive(f, archiveType, gm.To)
 	}
 
 	gm.AddGitCommitToImageLabels(ctx, c, cb, stageImage, commitInfo)

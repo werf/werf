@@ -20,6 +20,8 @@ type PatchOptions struct {
 	FromCommit, ToCommit string
 	FileRenames          map[string]string // Files to rename during patching. Git repo relative paths of original files as keys, new filenames (without base path) as values.
 
+	// TODO: maybe add --path-status option for git, so that created patch will be only presented by the descriptor without content-diff
+
 	WithEntireFileContext bool
 	WithBinary            bool
 }
@@ -45,8 +47,9 @@ func (opts PatchOptions) ID() string {
 }
 
 type PatchDescriptor struct {
-	Paths       []string
-	BinaryPaths []string
+	Paths         []string
+	BinaryPaths   []string
+	PathsToRemove []string
 }
 
 func PatchWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts PatchOptions) (*PatchDescriptor, error) {
@@ -228,8 +231,9 @@ WaitForData:
 	}
 
 	desc := &PatchDescriptor{
-		Paths:       p.Paths,
-		BinaryPaths: p.BinaryPaths,
+		Paths:         p.Paths,
+		BinaryPaths:   p.BinaryPaths,
+		PathsToRemove: p.PathsToRemove,
 	}
 
 	if debugPatch() {
