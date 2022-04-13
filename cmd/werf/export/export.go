@@ -36,6 +36,9 @@ func NewExportCmd() *cobra.Command {
 		Use:   "export [IMAGE_NAME...] [options]",
 		Short: "Export images",
 		Long: common.GetLongCommandDescription(`Export images to an arbitrary repository according to a template specified by the --tag option (build if needed).
+The tag may contain the following shortcuts:
+- %image%, %image_slug% or %image_safe_slug% to use the image name (necessary if there is more than one image in the werf config);
+- %image_content_based_tag% to use a content-based tag.
 All meta-information related to werf is removed from the exported images, and then images are completely under the user's responsibility`),
 		DisableFlagsInUseLine: true,
 		Example: `  # Export images to Docker Hub and GitHub Container Registry
@@ -232,16 +235,17 @@ func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 	})
 }
 
-func getTagFuncList(imageNameList, tagTemplateList []string) ([]func(string) string, error) {
+func getTagFuncList(imageNameList, tagTemplateList []string) ([]build.ExportTagFunc, error) {
 	templateName := "--tag"
 	tmpl := template.New(templateName).Delims("%", "%")
 	tmpl = tmpl.Funcs(map[string]interface{}{
-		"image":           func() string { return "%[1]s" },
-		"image_slug":      func() string { return "%[2]s" },
-		"image_safe_slug": func() string { return "%[3]s" },
+		"image":                   func() string { return "%[1]s" },
+		"image_slug":              func() string { return "%[2]s" },
+		"image_safe_slug":         func() string { return "%[3]s" },
+		"image_content_based_tag": func() string { return "%[4]s" },
 	})
 
-	var tagFuncList []func(string) string
+	var tagFuncList []build.ExportTagFunc
 	for _, tagTemplate := range tagTemplateList {
 		tagFunc, err := getExportTagFunc(tmpl, templateName, imageNameList, tagTemplate)
 		if err != nil {
@@ -254,7 +258,7 @@ func getTagFuncList(imageNameList, tagTemplateList []string) ([]func(string) str
 	return tagFuncList, nil
 }
 
-func getExportTagFunc(tmpl *template.Template, templateName string, imageNameList []string, tagTemplate string) (func(imageName string) string, error) {
+func getExportTagFunc(tmpl *template.Template, templateName string, imageNameList []string, tagTemplate string) (build.ExportTagFunc, error) {
 	tmpl, err := tmpl.Parse(tagTemplate)
 	if err != nil {
 		return nil, err
@@ -266,17 +270,19 @@ func getExportTagFunc(tmpl *template.Template, templateName string, imageNameLis
 	}
 
 	tagOrFormat := buf.String()
-	tagFunc := func(imageName string) string {
+	var tagFunc build.ExportTagFunc
+	tagFunc = func(imageName string, contentBasedTag string) string {
 		if strings.ContainsRune(tagOrFormat, '%') {
-			return fmt.Sprintf(tagOrFormat, imageName, slug.Slug(imageName), slug.DockerTag(imageName))
+			return fmt.Sprintf(tagOrFormat, imageName, slug.Slug(imageName), slug.DockerTag(imageName), contentBasedTag)
 		} else {
 			return tagOrFormat
 		}
 	}
 
+	contentBasedTagStub := strings.Repeat("x", 70) // 1b77754d35b0a3e603731828ee6f2400c4f937382874db2566c616bb-1624991915332
 	var prevImageTag string
 	for _, imageName := range imageNameList {
-		imageTag := tagFunc(imageName)
+		imageTag := tagFunc(imageName, contentBasedTagStub)
 
 		ref, err := name.ParseReference(imageTag, name.WeakValidation)
 		if err != nil {
