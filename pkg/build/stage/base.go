@@ -339,7 +339,7 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 			} else {
 				stageImage.Builder.StapelStageBuilder().AddBuildVolumes(volume)
 				if cleanupMountpoints {
-					stageImage.Builder.StapelStageBuilder().AddPathsToRemove(absoluteMountpoint)
+					stageImage.Builder.StapelStageBuilder().RemoveData(container_backend.RemoveInsidePath, []string{absoluteMountpoint}, nil)
 				}
 			}
 		}
@@ -439,7 +439,7 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 			} else {
 				stageImage.Builder.StapelStageBuilder().AddBuildVolumes(volume)
 				if cleanupMountpoints {
-					stageImage.Builder.StapelStageBuilder().AddPathsToRemove(absoluteMountpoint)
+					stageImage.Builder.StapelStageBuilder().RemoveData(container_backend.RemoveInsidePath, []string{absoluteMountpoint}, nil)
 				}
 			}
 		}

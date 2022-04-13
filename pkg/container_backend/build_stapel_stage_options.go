@@ -21,8 +21,8 @@ type BuildStapelStageOptionsInterface interface {
 	AddBuildVolumes(volumes ...string) BuildStapelStageOptionsInterface
 	AddCommands(commands ...string) BuildStapelStageOptionsInterface
 
-	AddDataArchives(archives ...DataArchive) BuildStapelStageOptionsInterface
-	AddPathsToRemove(paths ...string) BuildStapelStageOptionsInterface
+	AddDataArchive(archive io.ReadCloser, archiveType ArchiveType, to string) BuildStapelStageOptionsInterface
+	RemoveData(removeType RemoveType, paths []string, keepParentDirs []string) BuildStapelStageOptionsInterface
 	AddDependencyImport(imageName, fromPath, toPath string, includePaths, excludePaths []string, owner, group string) BuildStapelStageOptionsInterface
 }
 
@@ -42,9 +42,9 @@ type BuildStapelStageOptions struct {
 	BuildVolumes []string
 	Commands     []string
 
-	DataArchives        []DataArchive
-	PathsToRemove       []string
-	DependenciesImports []DependencyImport
+	DataArchiveSpecs      []DataArchiveSpec
+	RemoveDataSpecs       []RemoveDataSpec
+	DependencyImportSpecs []DependencyImportSpec
 }
 
 type ArchiveType int
@@ -55,13 +55,28 @@ const (
 	DirectoryArchive
 )
 
-type DataArchive struct {
-	Data io.ReadCloser
-	Type ArchiveType
-	To   string
+type DataArchiveSpec struct {
+	Archive io.ReadCloser
+	Type    ArchiveType
+	To      string
 }
 
-type DependencyImport struct {
+type RemoveType int
+
+//go:generate stringer -type=RemoveType
+const (
+	RemoveExactPath RemoveType = iota
+	RemoveExactPathWithEmptyParentDirs
+	RemoveInsidePath
+)
+
+type RemoveDataSpec struct {
+	Type           RemoveType
+	Paths          []string
+	KeepParentDirs []string
+}
+
+type DependencyImportSpec struct {
 	ImageName    string
 	FromPath     string
 	ToPath       string
@@ -140,18 +155,26 @@ func (opts *BuildStapelStageOptions) AddCommands(commands ...string) BuildStapel
 	return opts
 }
 
-func (opts *BuildStapelStageOptions) AddDataArchives(archives ...DataArchive) BuildStapelStageOptionsInterface {
-	opts.DataArchives = append(opts.DataArchives, archives...)
+func (opts *BuildStapelStageOptions) AddDataArchive(archive io.ReadCloser, archiveType ArchiveType, to string) BuildStapelStageOptionsInterface {
+	opts.DataArchiveSpecs = append(opts.DataArchiveSpecs, DataArchiveSpec{
+		Archive: archive,
+		Type:    archiveType,
+		To:      to,
+	})
 	return opts
 }
 
-func (opts *BuildStapelStageOptions) AddPathsToRemove(paths ...string) BuildStapelStageOptionsInterface {
-	opts.PathsToRemove = append(opts.PathsToRemove, paths...)
+func (opts *BuildStapelStageOptions) RemoveData(removeType RemoveType, paths []string, keepParentDirs []string) BuildStapelStageOptionsInterface {
+	opts.RemoveDataSpecs = append(opts.RemoveDataSpecs, RemoveDataSpec{
+		Type:           removeType,
+		Paths:          paths,
+		KeepParentDirs: keepParentDirs,
+	})
 	return opts
 }
 
 func (opts *BuildStapelStageOptions) AddDependencyImport(imageName, fromPath, toPath string, includePaths, excludePaths []string, owner, group string) BuildStapelStageOptionsInterface {
-	opts.DependenciesImports = append(opts.DependenciesImports, DependencyImport{
+	opts.DependencyImportSpecs = append(opts.DependencyImportSpecs, DependencyImportSpec{
 		ImageName:    imageName,
 		FromPath:     fromPath,
 		ToPath:       toPath,

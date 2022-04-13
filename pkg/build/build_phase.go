@@ -46,8 +46,10 @@ type BuildOptions struct {
 	CustomTagFuncList            []CustomTagFunc
 }
 
-type CustomTagFunc func(string, string) string
-type ExportTagFunc func(string, string) string
+type (
+	CustomTagFunc func(string, string) string
+	ExportTagFunc func(string, string) string
+)
 
 type IntrospectOptions struct {
 	Targets []IntrospectTarget

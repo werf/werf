@@ -17,7 +17,12 @@ import (
 	"github.com/werf/logboek"
 )
 
-func CreateArchiveBasedOnAnotherOne(ctx context.Context, sourceArchivePath, destinationArchivePath string, pathsToExclude []string, f func(tw *tar.Writer) error) error {
+type CreateArchiveOptions struct {
+	CopyTarOptions
+	AfterCopyFunc func(tw *tar.Writer) error
+}
+
+func CreateArchiveBasedOnAnotherOne(ctx context.Context, sourceArchivePath, destinationArchivePath string, opts CreateArchiveOptions) error {
 	return CreateArchive(destinationArchivePath, func(tw *tar.Writer) error {
 		source, err := os.Open(sourceArchivePath)
 		if err != nil {
@@ -25,41 +30,15 @@ func CreateArchiveBasedOnAnotherOne(ctx context.Context, sourceArchivePath, dest
 		}
 		defer source.Close()
 
-		tr := tar.NewReader(source)
-
-	ArchiveCopying:
-		for {
-			hdr, err := tr.Next()
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return fmt.Errorf("unable to read archive %q: %w", sourceArchivePath, err)
-			}
-
-			for _, pathToExclude := range pathsToExclude {
-				if hdr.Name == filepath.ToSlash(pathToExclude) {
-					if debugArchiveUtil() {
-						logboek.Context(ctx).Debug().LogF("Source archive file was excluded: %q\n", hdr.Name)
-					}
-
-					continue ArchiveCopying
-				}
-			}
-
-			if err := tw.WriteHeader(hdr); err != nil {
-				return fmt.Errorf("unable to write header %q from %q archive to %q: %w", hdr.Name, sourceArchivePath, destinationArchivePath, err)
-			}
-
-			if _, err := io.Copy(tw, tr); err != nil {
-				return fmt.Errorf("unable to copy file %q from %q archive to %q: %w", hdr.Name, sourceArchivePath, destinationArchivePath, err)
-			}
-
-			if debugArchiveUtil() {
-				logboek.Context(ctx).Debug().LogF("Source archive file was added: %q\n", hdr.Name)
-			}
+		if err := CopyTar(ctx, source, tw, opts.CopyTarOptions); err != nil {
+			return err
 		}
 
-		return f(tw)
+		if opts.AfterCopyFunc != nil {
+			return opts.AfterCopyFunc(tw)
+		}
+
+		return nil
 	})
 }
 
@@ -166,6 +145,63 @@ func CopyGitIndexEntryIntoTar(tw *tar.Writer, tarEntryName string, entry *index.
 	if entry.Mode.IsFile() {
 		if _, err := io.Copy(tw, r); err != nil {
 			return fmt.Errorf("unable to write data to tar for git index entry %q: %w", tarEntryName, err)
+		}
+	}
+
+	return nil
+}
+
+type CopyTarOptions struct {
+	IncludePaths []string
+	ExcludePaths []string
+}
+
+func CopyTar(ctx context.Context, in io.Reader, tw *tar.Writer, opts CopyTarOptions) error {
+	tr := tar.NewReader(in)
+
+ArchiveCopying:
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return fmt.Errorf("unable to read archive: %w", err)
+		}
+
+		for _, excPath := range opts.ExcludePaths {
+			if hdr.Name == filepath.ToSlash(excPath) {
+				if debugArchiveUtil() {
+					logboek.Context(ctx).Debug().LogF("Source archive file excluded: %q\n", hdr.Name)
+				}
+
+				continue ArchiveCopying
+			}
+		}
+
+		if len(opts.IncludePaths) > 0 {
+			for _, incPath := range opts.IncludePaths {
+				if hdr.Name == filepath.ToSlash(incPath) {
+					if debugArchiveUtil() {
+						logboek.Context(ctx).Debug().LogF("Source archive file included: %q\n", hdr.Name)
+					}
+					goto CopyEntry
+				}
+			}
+
+			continue ArchiveCopying
+		}
+
+	CopyEntry:
+		if err := tw.WriteHeader(hdr); err != nil {
+			return fmt.Errorf("unable to write tar header entry %q: %w", hdr.Name, err)
+		}
+
+		if _, err := io.Copy(tw, tr); err != nil {
+			return fmt.Errorf("unable to copy tar entry %q data: %w", hdr.Name, err)
+		}
+
+		if debugArchiveUtil() {
+			logboek.Context(ctx).Debug().LogF("Source archive file was added: %q\n", hdr.Name)
 		}
 	}
 

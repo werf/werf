@@ -121,10 +121,10 @@ func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *con
 
 type dependencyContainer struct {
 	Container *containerDesc
-	Import    DependencyImport
+	Import    DependencyImportSpec
 }
 
-func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchive) error {
+func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchiveSpec) error {
 	for _, archive := range dataArchives {
 		destPath := filepath.Join(container.RootMount, archive.To)
 
@@ -134,27 +134,29 @@ func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container 
 			extractDestPath = destPath
 		case FileArchive:
 			extractDestPath = filepath.Dir(destPath)
+
+			_, err := os.Stat(destPath)
+			switch {
+			case os.IsNotExist(err):
+			case err != nil:
+				return fmt.Errorf("unable to access container path %q: %w", destPath, err)
+			default:
+				logboek.Context(ctx).Debug().LogF("Removing archive destination path %s\n", archive.To)
+				if err := os.RemoveAll(destPath); err != nil {
+					return fmt.Errorf("unable to cleanup archive destination path %s: %w", archive.To, err)
+				}
+			}
 		default:
 			return fmt.Errorf("unknown archive type %q", archive.Type)
 		}
 
-		_, err := os.Stat(destPath)
-		switch {
-		case os.IsNotExist(err):
-		case err != nil:
-			return fmt.Errorf("unable to access container path %q: %w", destPath, err)
-		default:
-			logboek.Context(ctx).Debug().LogF("Removing archive destination path %s\n", archive.To)
-			if err := os.RemoveAll(destPath); err != nil {
-				return fmt.Errorf("unable to cleanup archive destination path %s: %w", archive.To, err)
-			}
-		}
+		logboek.Context(ctx).Debug().LogF("Apply data archive into %q\n", archive.To)
 
 		logboek.Context(ctx).Debug().LogF("Extracting archive into container path %s\n", archive.To)
-		if err := util.ExtractTar(archive.Data, extractDestPath); err != nil {
+		if err := util.ExtractTar(archive.Archive, extractDestPath); err != nil {
 			return fmt.Errorf("unable to extract data archive into %s: %w", archive.To, err)
 		}
-		if err := archive.Data.Close(); err != nil {
+		if err := archive.Archive.Close(); err != nil {
 			return fmt.Errorf("error closing archive data stream: %w", err)
 		}
 	}
@@ -162,20 +164,39 @@ func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container 
 	return nil
 }
 
-func (runtime *BuildahBackend) applyPathsToRemove(ctx context.Context, container *containerDesc, pathsToRemove []string) error {
-	for _, path := range pathsToRemove {
-		destPath := filepath.Join(container.RootMount, path)
-
-		logboek.Context(ctx).Debug().LogF("Removing container path %s\n", path)
-		if err := os.RemoveAll(destPath); err != nil {
-			return fmt.Errorf("unable to remove path %s: %w", path, err)
+func (runtime *BuildahBackend) applyRemoveData(ctx context.Context, container *containerDesc, removeData []RemoveDataSpec) error {
+	for _, spec := range removeData {
+		switch spec.Type {
+		case RemoveExactPath:
+			for _, path := range spec.Paths {
+				destPath := filepath.Join(container.RootMount, path)
+				if err := removeExactPath(ctx, destPath); err != nil {
+					return fmt.Errorf("unable to remove %q: %w", path, err)
+				}
+			}
+		case RemoveExactPathWithEmptyParentDirs:
+			for _, path := range spec.Paths {
+				destPath := filepath.Join(container.RootMount, path)
+				if err := removeExactPathWithEmptyParentDirs(ctx, destPath, spec.KeepParentDirs); err != nil {
+					return fmt.Errorf("unable to remove %q: %w", path, err)
+				}
+			}
+		case RemoveInsidePath:
+			for _, path := range spec.Paths {
+				destPath := filepath.Join(container.RootMount, path)
+				if err := removeInsidePath(ctx, destPath); err != nil {
+					return fmt.Errorf("unable to remove %q: %w", path, err)
+				}
+			}
+		default:
+			return fmt.Errorf("unknown remove operation type %q", spec.Type)
 		}
 	}
 
 	return nil
 }
 
-func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, container *containerDesc, dependenciesImports []DependencyImport) error {
+func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, container *containerDesc, dependenciesImports []DependencyImportSpec) error {
 	var dependencies []*dependencyContainer
 
 	var dependenciesImages []string
@@ -247,7 +268,7 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, opts BuildS
 	}()
 	// TODO(stapel-to-buildah): cleanup orphan build containers in werf-host-cleanup procedure
 
-	if len(opts.DependenciesImports)+len(opts.DataArchives)+len(opts.PathsToRemove) > 0 {
+	if len(opts.DependencyImportSpecs)+len(opts.DataArchiveSpecs)+len(opts.RemoveDataSpecs) > 0 {
 		logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
 		if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
 			return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
@@ -260,18 +281,18 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, opts BuildS
 		}()
 	}
 
-	if len(opts.DependenciesImports) > 0 {
-		if err := runtime.applyDependenciesImports(ctx, container, opts.DependenciesImports); err != nil {
+	if len(opts.DependencyImportSpecs) > 0 {
+		if err := runtime.applyDependenciesImports(ctx, container, opts.DependencyImportSpecs); err != nil {
 			return "", err
 		}
 	}
-	if len(opts.DataArchives) > 0 {
-		if err := runtime.applyDataArchives(ctx, container, opts.DataArchives); err != nil {
+	if len(opts.DataArchiveSpecs) > 0 {
+		if err := runtime.applyDataArchives(ctx, container, opts.DataArchiveSpecs); err != nil {
 			return "", err
 		}
 	}
-	if len(opts.PathsToRemove) > 0 {
-		if err := runtime.applyPathsToRemove(ctx, container, opts.PathsToRemove); err != nil {
+	if len(opts.RemoveDataSpecs) > 0 {
+		if err := runtime.applyRemoveData(ctx, container, opts.RemoveDataSpecs); err != nil {
 			return "", err
 		}
 	}

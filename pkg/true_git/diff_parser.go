@@ -50,6 +50,7 @@ type diffParser struct {
 
 	Paths         []string
 	BinaryPaths   []string
+	PathsToRemove []string
 	LastSeenPaths []string
 
 	state   parserState
@@ -403,6 +404,7 @@ func (p *diffParser) handleDeleteFilePath(line string) error {
 	newLine := fmt.Sprintf("--- a/%s", newPath)
 
 	p.state = diffBody
+	p.PathsToRemove = appendUnique(p.PathsToRemove, newPath)
 
 	return p.writeOutLine(newLine)
 }

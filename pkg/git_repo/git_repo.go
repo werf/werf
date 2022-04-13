@@ -87,6 +87,7 @@ type Patch interface {
 	HasBinary() bool
 	GetPaths() []string
 	GetBinaryPaths() []string
+	GetPathsToRemove() []string
 }
 
 type Archive interface {
