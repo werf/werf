@@ -27,7 +27,7 @@ type BeforeInstallStage struct {
 	*UserStage
 }
 
-func (s *BeforeInstallStage) GetDependencies(ctx context.Context, _ Conveyor, _, _ *StageImage) (string, error) {
+func (s *BeforeInstallStage) GetDependencies(ctx context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	return s.builder.BeforeInstallChecksum(ctx), nil
 }
 

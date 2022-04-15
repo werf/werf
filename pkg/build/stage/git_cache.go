@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
 )
@@ -45,7 +46,7 @@ func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage 
 	return isEmpty, nil
 }
 
-func (s *GitCacheStage) GetDependencies(ctx context.Context, c Conveyor, _, prevBuiltImage *StageImage) (string, error) {
+func (s *GitCacheStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, prevBuiltImage *StageImage) (string, error) {
 	patchSize, err := s.gitMappingsPatchSize(ctx, c, prevBuiltImage)
 	if err != nil {
 		return "", err

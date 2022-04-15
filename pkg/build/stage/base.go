@@ -126,7 +126,7 @@ func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container
 	return nil
 }
 
-func (s *BaseStage) GetDependencies(_ context.Context, _ Conveyor, _, _ *StageImage) (string, error) {
+func (s *BaseStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	panic("method must be implemented!")
 }
 

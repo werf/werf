@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
 )
@@ -49,7 +50,7 @@ func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuilt
 	return isEmpty, nil
 }
 
-func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, _, prevBuiltImage *StageImage) (string, error) {
+func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, prevBuiltImage *StageImage) (string, error) {
 	var args []string
 
 	for _, gitMapping := range s.gitMappings {

@@ -28,7 +28,7 @@ type SetupStage struct {
 	*UserWithGitPatchStage
 }
 
-func (s *SetupStage) GetDependencies(ctx context.Context, c Conveyor, _, _ *StageImage) (string, error) {
+func (s *SetupStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(ctx, c, Setup)
 	if err != nil {
 		return "", err

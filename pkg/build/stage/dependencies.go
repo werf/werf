@@ -67,14 +67,14 @@ type DependenciesStage struct {
 	dependencies []*config.Dependency
 }
 
-func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _, _ *StageImage) (string, error) {
+func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	var args []string
 
 	for ind, elm := range s.imports {
 		var sourceChecksum string
 		var err error
 		if err := logboek.Context(ctx).Info().LogProcess("Getting import %d source checksum ...", ind).DoError(func() error {
-			sourceChecksum, err = s.getImportSourceChecksum(ctx, c, elm)
+			sourceChecksum, err = s.getImportSourceChecksum(ctx, c, cb, elm)
 			return err
 		}); err != nil {
 			return "", fmt.Errorf("unable to get import %d source checksum: %w", ind, err)
@@ -217,7 +217,7 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cr con
 	}
 }
 
-func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {
+func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
 	importSourceID := getImportSourceID(c, importElm)
 	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 	if err != nil {
@@ -225,7 +225,7 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 	}
 
 	if importMetadata == nil {
-		checksum, err := s.generateImportChecksum(ctx, c, importElm)
+		checksum, err := s.generateImportChecksum(ctx, c, cb, importElm)
 		if err != nil {
 			return "", fmt.Errorf("unable to generate import source checksum: %w", err)
 		}
@@ -245,59 +245,83 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 	return importMetadata.Checksum, nil
 }
 
-func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Conveyor, importElm *config.Import) (string, error) {
+func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
 	if err := fetchSourceImageDockerImage(ctx, c, importElm); err != nil {
 		return "", fmt.Errorf("unable to fetch source image: %w", err)
 	}
 
 	sourceImageDockerImageName := getSourceImageDockerImageName(c, importElm)
-	importSourceID := getImportSourceID(c, importElm)
 
-	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
-	if err != nil {
-		return "", err
+	if c.UseLegacyStapelBuilder(cb) {
+		importSourceID := getImportSourceID(c, importElm)
+
+		stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
+		if err != nil {
+			return "", err
+		}
+
+		importHostTmpDir := filepath.Join(s.imageTmpDir, string(s.Name()), "imports", importSourceID)
+		importContainerDir := s.containerWerfDir
+
+		importScriptHostTmpPath := filepath.Join(importHostTmpDir, "script.sh")
+		resultChecksumHostTmpPath := filepath.Join(importHostTmpDir, "checksum")
+		importScriptContainerPath := path.Join(importContainerDir, "script.sh")
+		resultChecksumContainerPath := path.Join(importContainerDir, "checksum")
+
+		command := generateChecksumCommand(importElm.Add, importElm.IncludePaths, importElm.ExcludePaths, resultChecksumContainerPath)
+		if err := stapel.CreateScript(importScriptHostTmpPath, []string{command}); err != nil {
+			return "", fmt.Errorf("unable to create script: %w", err)
+		}
+
+		runArgs := []string{
+			"--rm",
+			"--user=0:0",
+			"--workdir=/",
+			fmt.Sprintf("--volumes-from=%s", stapelContainerName),
+			fmt.Sprintf("--volume=%s:%s", importHostTmpDir, importContainerDir),
+			fmt.Sprintf("--entrypoint=%s", stapel.BashBinPath()),
+			sourceImageDockerImageName,
+			importScriptContainerPath,
+		}
+
+		if debugImportSourceChecksum() {
+			fmt.Println(runArgs)
+		}
+
+		if output, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
+			logboek.Context(ctx).Error().LogF("%s", output)
+			return "", err
+		}
+
+		data, err := ioutil.ReadFile(resultChecksumHostTmpPath)
+		if err != nil {
+			return "", fmt.Errorf("unable to read file with import source checksum: %w", err)
+		}
+
+		checksum := strings.TrimSpace(string(data))
+
+		return checksum, nil
+	} else {
+		var checksum string
+		var err error
+
+		logboek.Context(ctx).Debug().LogProcess("Calculating dependency import checksum").Do(func() {
+			checksum, err = cb.CalculateDependencyImportChecksum(ctx, container_backend.DependencyImportSpec{
+				ImageName:    sourceImageDockerImageName,
+				FromPath:     importElm.Add,
+				ToPath:       importElm.To,
+				IncludePaths: importElm.IncludePaths,
+				ExcludePaths: importElm.ExcludePaths,
+				Owner:        importElm.Owner,
+				Group:        importElm.Group,
+			})
+		})
+
+		if err != nil {
+			return "", fmt.Errorf("unable to calculate dependency import checksum in %s: %w", sourceImageDockerImageName, err)
+		}
+		return checksum, nil
 	}
-
-	importHostTmpDir := filepath.Join(s.imageTmpDir, string(s.Name()), "imports", importSourceID)
-	importContainerDir := s.containerWerfDir
-
-	importScriptHostTmpPath := filepath.Join(importHostTmpDir, "script.sh")
-	resultChecksumHostTmpPath := filepath.Join(importHostTmpDir, "checksum")
-	importScriptContainerPath := path.Join(importContainerDir, "script.sh")
-	resultChecksumContainerPath := path.Join(importContainerDir, "checksum")
-
-	command := generateChecksumCommand(importElm.Add, importElm.IncludePaths, importElm.ExcludePaths, resultChecksumContainerPath)
-	if err := stapel.CreateScript(importScriptHostTmpPath, []string{command}); err != nil {
-		return "", fmt.Errorf("unable to create script: %w", err)
-	}
-
-	runArgs := []string{
-		"--rm",
-		"--user=0:0",
-		"--workdir=/",
-		fmt.Sprintf("--volumes-from=%s", stapelContainerName),
-		fmt.Sprintf("--volume=%s:%s", importHostTmpDir, importContainerDir),
-		fmt.Sprintf("--entrypoint=%s", stapel.BashBinPath()),
-		sourceImageDockerImageName,
-		importScriptContainerPath,
-	}
-
-	if debugImportSourceChecksum() {
-		fmt.Println(runArgs)
-	}
-
-	if output, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
-		logboek.Context(ctx).Error().LogF("%s", output)
-		return "", err
-	}
-
-	data, err := ioutil.ReadFile(resultChecksumHostTmpPath)
-	if err != nil {
-		return "", fmt.Errorf("unable to read file with import source checksum: %w", err)
-	}
-
-	checksum := strings.TrimSpace(string(data))
-	return checksum, nil
 }
 
 func generateChecksumCommand(from string, includePaths, excludePaths []string, resultChecksumPath string) string {

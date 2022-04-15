@@ -14,11 +14,11 @@ type Interface interface {
 
 	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error)
 
-	FetchDependencies(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, dockerRegistry docker_registry.ApiInterface) error
-	GetDependencies(ctx context.Context, c Conveyor, prevImage *StageImage, prevBuiltImage *StageImage) (string, error)
+	FetchDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, dockerRegistry docker_registry.ApiInterface) error
+	GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage *StageImage, prevBuiltImage *StageImage) (string, error)
 	GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error)
 
-	PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error
+	PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error
 
 	PreRunHook(context.Context, Conveyor) error
 

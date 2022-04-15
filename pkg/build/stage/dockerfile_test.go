@@ -78,7 +78,7 @@ var _ = Describe("DockerfileStage", func() {
 				Builder: stageBuilder,
 			}
 
-			digest, err := stage.GetDependencies(ctx, conveyor, nil, stageImage)
+			digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage)
 			Expect(err).To(Succeed())
 			Expect(digest).To(Equal(data.TestDependencies.ExpectedDigest))
 
