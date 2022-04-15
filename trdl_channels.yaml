@@ -26,12 +26,12 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.87 # fix namespace/release-name slugification, refactor cr package
+      version: 1.2.88 # fix namespace/release-name slugification, refactor cr package
     - name: beta
       version: 1.2.83+fix2 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: ea
       version: 1.2.83+fix2 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: stable
-      version: 1.2.72
+      version: 1.2.80+fix3
     - name: rock-solid
       version: 1.2.71 # remove import checksum-based cleanup policy
