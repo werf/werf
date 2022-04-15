@@ -55,7 +55,7 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.2.87"
+          "version": "v1.2.88"
         },
         {
           "name": "beta",
@@ -67,7 +67,7 @@
         },
         {
           "name": "stable",
-          "version": "v1.2.72"
+          "version": "v1.2.80+fix3"
         },
         {
           "name": "rock-solid",
