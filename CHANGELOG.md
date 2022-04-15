@@ -1,5 +1,22 @@
 # Changelog
 
+### [1.2.88](https://www.github.com/werf/werf/compare/v1.2.87...v1.2.88) (2022-04-15)
+
+
+### Features
+
+* **custom-tags:** add %image_content_based_tag% shortcut ([efd1072](https://www.github.com/werf/werf/commit/efd1072d1959aac824830a2128a49e47f4efb615))
+* **export:** add %image_content_based_tag% shortcut ([7122ee9](https://www.github.com/werf/werf/commit/7122ee97863b4b1f0fc57415e0879b035df607f1))
+* **stapel-to-buildah:** git archive stage implementation ([328b033](https://www.github.com/werf/werf/commit/328b0338f586636ba6eee6a361aab58c787d083b))
+* **stapel-to-buildah:** implemented dependencies checksum using buildah container backend ([9596f6d](https://www.github.com/werf/werf/commit/9596f6db61db4da88c3ff58ebafffacde871191d))
+* **stapel-to-buildah:** support git patches related stages ([79f71c1](https://www.github.com/werf/werf/commit/79f71c1890aba92ea9130e55afb5e5df87539815))
+
+
+### Bug Fixes
+
+* **kube-run:** didn't work in Native Buildah mode ([db1fec6](https://www.github.com/werf/werf/commit/db1fec686351f360174f45876d2155986d35cd50))
+* **tests:** fix ansible suite, change deprecated base image ([bdb6c9c](https://www.github.com/werf/werf/commit/bdb6c9c3b5d25ef07e5453c852f190b33c62d5ce))
+
 ### [1.2.87](https://www.github.com/werf/werf/compare/v1.2.86...v1.2.87) (2022-04-08)
 
 
