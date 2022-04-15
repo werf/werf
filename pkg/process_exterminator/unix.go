@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -45,6 +46,7 @@ func run(parentsPids []int) {
 				fmt.Fprintf(os.Stderr, "Process exterminator error: %s\n", err)
 			}
 
+			container_backend.TerminateRunningDockerContainers()
 			syscall.Kill(ownPid, syscall.SIGINT)
 
 			return

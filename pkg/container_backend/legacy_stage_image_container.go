@@ -267,10 +267,12 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 		return err
 	}
 
-	if err := docker.CliRun_LiveOutput(ctx, runArgs...); err != nil {
+	RegisterRunningContainer(c.name, ctx)
+	err = docker.CliRun_LiveOutput(ctx, runArgs...)
+	UnregisterRunningContainer(c.name)
+	if err != nil {
 		return fmt.Errorf("container run failed: %w", err)
 	}
-
 	return nil
 }
 
@@ -339,5 +341,12 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
-	return docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{})
+	err := docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
+	if err != nil {
+		if strings.Contains(err.Error(), fmt.Sprintf("removal of container %s is already in progress", c.name)) {
+			return nil
+		}
+		return fmt.Errorf("unable to remove container %s: %w", c.name, err)
+	}
+	return nil
 }
