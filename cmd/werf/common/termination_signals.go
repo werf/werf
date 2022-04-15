@@ -4,6 +4,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/werf/werf/pkg/container_backend"
 )
 
 var (
@@ -21,6 +23,8 @@ func EnableTerminationSignalsTrap() {
 	go func() {
 		select {
 		case <-terminationSignalsChan:
+			container_backend.TerminateRunningDockerContainers()
+
 			TerminateWithError("interrupted", 17)
 		case <-disableTerminationSignalsTrapChan:
 			return

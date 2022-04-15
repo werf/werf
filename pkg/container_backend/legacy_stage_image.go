@@ -91,7 +91,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 			}
 
 			if err := i.container.rm(ctx); err != nil {
-				return fmt.Errorf("introspect error failed: %w", err)
+				return fmt.Errorf("unable to remove container (original error %s): %w", containerRunErr, err)
 			}
 		}
 
