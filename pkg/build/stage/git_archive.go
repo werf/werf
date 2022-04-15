@@ -47,7 +47,7 @@ func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, s
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
-func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _, _ *StageImage) (string, error) {
+func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		if gitMapping.IsLocal() {

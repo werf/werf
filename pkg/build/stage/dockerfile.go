@@ -411,7 +411,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 
 var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
-func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _, _ *StageImage) (string, error) {
+func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)

@@ -30,7 +30,7 @@ type Conveyor interface {
 
 	GiterminismManager() giterminism_manager.Interface
 
-	UseLegacyStapelBuilder(cr container_backend.ContainerBackend) bool
+	UseLegacyStapelBuilder(cb container_backend.ContainerBackend) bool
 }
 
 type VirtualMergeOptions struct {

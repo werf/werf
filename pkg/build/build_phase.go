@@ -567,7 +567,7 @@ func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.Le
 
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg stage.Interface) (bool, func(), error) {
 	// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
-	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg))
+	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg))
 	if err != nil {
 		return false, nil, err
 	}

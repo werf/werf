@@ -28,6 +28,10 @@ func (runtime *DockerServerBackend) BuildStapelStage(ctx context.Context, opts B
 	panic("BuildStapelStage does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
+func (runtime *DockerServerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (string, error) {
+	panic("CalculateDependencyImportChecksum does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
+}
+
 func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
 	switch {
 	case opts.ContextTar == nil:

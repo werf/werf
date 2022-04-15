@@ -30,7 +30,7 @@ type DockerInstructionsStage struct {
 	instructions *config.Docker
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ context.Context, _ Conveyor, _, _ *StageImage) (string, error) {
+func (s *DockerInstructionsStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)
