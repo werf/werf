@@ -1,10 +1,14 @@
 package container_backend
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -14,6 +18,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -119,11 +124,6 @@ func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *con
 	return nil
 }
 
-type dependencyContainer struct {
-	Container *containerDesc
-	Import    DependencyImportSpec
-}
-
 func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchiveSpec) error {
 	for _, archive := range dataArchives {
 		destPath := filepath.Join(container.RootMount, archive.To)
@@ -196,58 +196,65 @@ func (runtime *BuildahBackend) applyRemoveData(ctx context.Context, container *c
 	return nil
 }
 
-func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, container *containerDesc, dependenciesImports []DependencyImportSpec) error {
-	var dependencies []*dependencyContainer
+func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, container *containerDesc, depImports []DependencyImportSpec) error {
+	var depImages []string
+	for _, imp := range depImports {
+		if util.IsStringsContainValue(depImages, imp.ImageName) {
+			continue
+		}
 
-	var dependenciesImages []string
-	for _, imp := range dependenciesImports {
-		dependenciesImages = append(dependenciesImages, imp.ImageName)
+		depImages = append(depImages, imp.ImageName)
 	}
 
-	logboek.Context(ctx).Debug().LogF("Creating containers for dependencies images %v\n", dependenciesImages)
-	dependenciesContainers, err := runtime.createContainers(ctx, dependenciesImages)
+	logboek.Context(ctx).Debug().LogF("Creating containers for depContainers images %v\n", depImages)
+	createdDepContainers, err := runtime.createContainers(ctx, depImages)
 	if err != nil {
-		return fmt.Errorf("unable to create dependencies containers: %w", err)
+		return fmt.Errorf("unable to create depContainers containers: %w", err)
 	}
 	defer func() {
-		if err := runtime.removeContainers(ctx, dependenciesContainers); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal dependencies containers: %s\n", err)
+		if err := runtime.removeContainers(ctx, createdDepContainers); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal depContainers containers: %s\n", err)
 		}
 	}()
 
-	for _, cont := range dependenciesContainers {
-	FindImport:
-		for _, imp := range dependenciesImports {
-			if imp.ImageName == cont.ImageName {
-				dependencies = append(dependencies, &dependencyContainer{
-					Container: cont,
-					Import:    imp,
-				})
-
-				break FindImport
-			}
-		}
-	}
-
 	// NOTE: maybe it is more optimal not to mount all dependencies at once, but mount one-by-one
-	logboek.Context(ctx).Debug().LogF("Mounting dependencies containers %v\n", dependenciesContainers)
-	if err := runtime.mountContainers(ctx, dependenciesContainers); err != nil {
+	logboek.Context(ctx).Debug().LogF("Mounting depContainers containers %v\n", createdDepContainers)
+	if err := runtime.mountContainers(ctx, createdDepContainers); err != nil {
 		return fmt.Errorf("unable to mount containers: %w", err)
 	}
 	defer func() {
-		logboek.Context(ctx).Debug().LogF("Unmounting dependencies containers %v\n", dependenciesContainers)
-		if err := runtime.unmountContainers(ctx, dependenciesContainers); err != nil {
+		logboek.Context(ctx).Debug().LogF("Unmounting depContainers containers %v\n", createdDepContainers)
+		if err := runtime.unmountContainers(ctx, createdDepContainers); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 		}
 	}()
 
-	for _, dep := range dependencies {
-		copyFrom := filepath.Join(dep.Container.RootMount, dep.Import.FromPath)
-		copyTo := filepath.Join(container.RootMount, dep.Import.ToPath)
-		fmt.Printf("copying from %q to %q\n", copyFrom, copyTo)
-		logboek.Context(ctx).Debug().LogF("Copying dependency %v from %q to %q\n", dep.Import, copyFrom, copyTo)
-		if err := copy.Copy(copyFrom, copyTo); err != nil {
-			return fmt.Errorf("unable to copy %s to %s: %w", copyFrom, copyTo, err)
+	for _, dep := range createdDepContainers {
+		for _, imp := range depImports {
+			if imp.ImageName != dep.ImageName {
+				continue
+			}
+
+			absFrom := filepath.Join(dep.RootMount, imp.FromPath)
+			absTo := filepath.Join(container.RootMount, imp.ToPath)
+
+			var uid, gid *uint32
+			if uid, gid, err = getUIDAndGID(imp.Owner, imp.Group, container.RootMount); err != nil {
+				return fmt.Errorf("error getting UID/GID: %w", err)
+			}
+
+			pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+				IncludeGlobs: imp.IncludePaths,
+				ExcludeGlobs: imp.ExcludePaths,
+			})
+
+			if err := copyFromTo(ctx, uid, gid, absFrom, absTo, pathMatcher); err != nil {
+				return fmt.Errorf("error copying dependency import files from %q to %q: %w", absFrom, absTo, err)
+			}
+
+			if err := updateOwner(absTo, uid, gid); err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("error updating file ownersnip: %w", err)
+			}
 		}
 	}
 
@@ -505,4 +512,222 @@ func makeBuildahMounts(volumes []string) ([]specs.Mount, error) {
 	}
 
 	return mounts, nil
+}
+
+func copyFromTo(ctx context.Context, uid *uint32, gid *uint32, absFrom, absTo string, pathMatcher path_matcher.PathMatcher) error {
+	if err := walkPath(absFrom, func(rootPathIsFile bool, relSrc string, dirEntry *fs.DirEntry, err error) error {
+		if rootPathIsFile {
+			logboek.Context(ctx).Debug().LogF("Copying dependency import %q to %q\n", absFrom, absTo)
+			if err := copy.Copy(absFrom, absTo); err != nil {
+				return fmt.Errorf("error copying file %q to %q: %w", absFrom, absTo, err)
+			}
+			return nil
+		}
+
+		if err != nil {
+			return fmt.Errorf("error while walking dir %q: %w", absFrom, err)
+		}
+
+		absSrc := filepath.Join(absFrom, relSrc)
+		absDst := filepath.Join(absTo, relSrc)
+
+		srcFileInfo, err := (*dirEntry).Info()
+		if errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("file %q was renamed or removed while we were trying to get info about it", absSrc)
+		} else if err != nil {
+			return fmt.Errorf("error getting info about file %q", absSrc)
+		}
+
+		if srcFileInfo.IsDir() {
+			if !pathMatcher.IsDirOrSubmodulePathMatched(relSrc) {
+				return fs.SkipDir
+			}
+
+			if pathMatcher.ShouldGoThrough(relSrc) {
+				if err := os.MkdirAll(relSrc, srcFileInfo.Mode()); err != nil {
+					return fmt.Errorf("error creating directory %q: %w", absSrc, err)
+				}
+				return nil
+			}
+		} else if !pathMatcher.IsPathMatched(relSrc) {
+			return nil
+		}
+
+		logboek.Context(ctx).Debug().LogF("Copying dependency import %q to %q\n", absSrc, absDst)
+		if err := copy.Copy(absSrc, absDst); err != nil {
+			return fmt.Errorf("error copying file %q to %q: %w", absSrc, absDst, err)
+		}
+
+		if err := updateOwner(absDst, uid, gid); err != nil {
+			return fmt.Errorf("error updating file ownership: %w", err)
+		}
+
+		if srcFileInfo.IsDir() {
+			return fs.SkipDir
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error walking dependency import source root: %w", err)
+	}
+	return nil
+}
+
+func walkPath(path string, fn func(rootPathIsFile bool, entryRelPath string, dirEntry *fs.DirEntry, err error) error) error {
+	fileInfo, err := os.Lstat(path)
+	if err != nil {
+		return fmt.Errorf("error getting file info for path %q: %w", path, err)
+	}
+
+	if !fileInfo.IsDir() {
+		return fn(true, "", nil, nil)
+	} else {
+		rootFs := os.DirFS(path)
+		if err := fs.WalkDir(rootFs, ".", func(relSrc string, entry fs.DirEntry, err error) error {
+			return fn(false, relSrc, &entry, err)
+		}); err != nil {
+			return fmt.Errorf("error walking directory %q: %w", rootFs, err)
+		}
+		return nil
+	}
+}
+
+func updateOwner(path string, uid *uint32, gid *uint32) error {
+	if uid == nil && gid == nil {
+		return nil
+	}
+
+	if err := walkPath(path, func(rootPathIsFile bool, entryRelPath string, dirEntry *fs.DirEntry, err error) error {
+		if rootPathIsFile {
+			return os.Lchown(path, uint32PtrUIDOrGIDToInt(uid), uint32PtrUIDOrGIDToInt(gid))
+		}
+
+		return os.Lchown(filepath.Join(path, entryRelPath), uint32PtrUIDOrGIDToInt(uid), uint32PtrUIDOrGIDToInt(gid))
+	}); err != nil {
+		return fmt.Errorf("error walking path %q: %w", path, err)
+	}
+
+	return nil
+}
+
+func uint32PtrUIDOrGIDToInt(uidOrGid *uint32) int {
+	if uidOrGid == nil {
+		return -1
+	}
+
+	return int(*uidOrGid)
+}
+
+func getUIDAndGID(userNameOrUID, groupNameOrGID, fsRoot string) (*uint32, *uint32, error) {
+	uid, err := getUID(userNameOrUID, fsRoot)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error getting UID: %w", err)
+	}
+
+	gid, err := getGID(groupNameOrGID, fsRoot)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error getting GID: %w", err)
+	}
+
+	return uid, gid, nil
+}
+
+// Returns nil pointer if username/UID is empty string.
+func getUID(userNameOrUID string, fsRoot string) (*uint32, error) {
+	var uid *uint32
+	if userNameOrUID != "" {
+		if parsed, err := strconv.ParseUint(userNameOrUID, 10, 32); errors.Is(err, strconv.ErrSyntax) {
+			result, err := getUIDFromUserName(userNameOrUID, filepath.Join(fsRoot, "etc", "passwd"))
+			if err != nil {
+				return nil, fmt.Errorf("error getting UID from user name: %w", err)
+			}
+			uid = &result
+		} else if err != nil {
+			return nil, fmt.Errorf("error parsing user ID: %w", err)
+		} else {
+			result := uint32(parsed)
+			uid = &result
+		}
+	}
+	return uid, nil
+}
+
+// Returns nil pointer if groupname/GID is empty string.
+func getGID(groupNameOrGID string, fsRoot string) (*uint32, error) {
+	var gid *uint32
+	if groupNameOrGID != "" {
+		if parsed, err := strconv.ParseUint(groupNameOrGID, 10, 32); errors.Is(err, strconv.ErrSyntax) {
+			result, err := getGIDFromGroupName(groupNameOrGID, filepath.Join(fsRoot, "etc", "group"))
+			if err != nil {
+				return nil, fmt.Errorf("error getting GID from group name: %w", err)
+			}
+			gid = &result
+		} else if err != nil {
+			return nil, fmt.Errorf("error parsing group ID: %w", err)
+		} else {
+			result := uint32(parsed)
+			gid = &result
+		}
+	}
+	return gid, nil
+}
+
+func getUIDFromUserName(user string, etcPasswdPath string) (uint32, error) {
+	passwd, err := os.Open(etcPasswdPath)
+	if err != nil {
+		return 0, fmt.Errorf("error opening passwd file: %w", err)
+	}
+	defer passwd.Close()
+
+	scanner := bufio.NewScanner(passwd)
+	for scanner.Scan() {
+		userParams := strings.Split(scanner.Text(), ":")
+		if len(userParams) < 3 {
+			continue
+		}
+
+		if userParams[0] == user {
+			uid, err := strconv.ParseUint(userParams[2], 10, 32)
+			if err != nil {
+				return 0, fmt.Errorf("unexpected UID in passwd file, can't parse to uint: %w", err)
+			}
+			return uint32(uid), nil
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return 0, fmt.Errorf("error scanning passwd file: %w", err)
+	}
+
+	return 0, fmt.Errorf("could not find UID for user %q in passwd file %q", user, etcPasswdPath)
+}
+
+func getGIDFromGroupName(group string, etcGroupPath string) (uint32, error) {
+	etcGroup, err := os.Open(etcGroupPath)
+	if err != nil {
+		return 0, fmt.Errorf("error opening group file: %w", err)
+	}
+	defer etcGroup.Close()
+
+	scanner := bufio.NewScanner(etcGroup)
+	for scanner.Scan() {
+		groupParams := strings.Split(scanner.Text(), ":")
+		if len(groupParams) < 3 {
+			continue
+		}
+
+		if groupParams[0] == group {
+			gid, err := strconv.ParseUint(groupParams[2], 10, 32)
+			if err != nil {
+				return 0, fmt.Errorf("unexpected GID in group file, can't parse to uint: %w", err)
+			}
+			return uint32(gid), nil
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return 0, fmt.Errorf("error scanning group file: %w", err)
+	}
+
+	return 0, fmt.Errorf("could not find GID for group %q in passwd file %q", group, etcGroupPath)
 }
