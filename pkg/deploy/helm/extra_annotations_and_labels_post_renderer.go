@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	orig_yaml "gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/releaseutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
@@ -32,6 +33,39 @@ func NewExtraAnnotationsAndLabelsPostRenderer(extraAnnotations, extraLabels map[
 type ExtraAnnotationsAndLabelsPostRenderer struct {
 	ExtraAnnotations map[string]string
 	ExtraLabels      map[string]string
+}
+
+func findMapByKey(mapSlice orig_yaml.MapSlice, key string) orig_yaml.MapSlice {
+	for _, item := range mapSlice {
+		if itemKey, ok := item.Key.(string); ok {
+			if itemKey == key {
+				if itemValue, ok := item.Value.(orig_yaml.MapSlice); ok {
+					return itemValue
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func setMapValueByKey(mapSlice orig_yaml.MapSlice, key string, value interface{}) (res orig_yaml.MapSlice) {
+	var found bool
+	for _, item := range mapSlice {
+		if itemKey, ok := item.Key.(string); ok {
+			if itemKey == key {
+				res = append(res, orig_yaml.MapItem{Key: key, Value: value})
+				found = true
+				continue
+			}
+		}
+		res = append(res, item)
+	}
+
+	if !found {
+		res = append(res, orig_yaml.MapItem{Key: key, Value: value})
+	}
+	return
 }
 
 func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
@@ -73,15 +107,20 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 		}
 
 		var obj unstructured.Unstructured
-
 		if err := yaml.Unmarshal([]byte(manifestContent), &obj); err != nil {
 			logboek.Warn().LogF("Unable to decode yaml manifest as unstructured object: %s: will not add extra annotations and labels to this object:\n%s\n---\n", err, manifestContent)
 			splitModifiedManifests = append(splitModifiedManifests, manifestContent)
 			continue
 		}
-
 		if obj.GetKind() == "" {
 			logboek.Debug().LogF("Skipping empty object\n")
+			continue
+		}
+
+		var objMapSlice orig_yaml.MapSlice
+		if err := orig_yaml.Unmarshal([]byte(manifestContent), &objMapSlice); err != nil {
+			logboek.Warn().LogF("Unable to decode yaml manifest as map slice: %s: will not add extra annotations and labels to this object:\n%s\n---\n", err, manifestContent)
+			splitModifiedManifests = append(splitModifiedManifests, manifestContent)
 			continue
 		}
 
@@ -92,30 +131,30 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 		if obj.IsList() && len(extraAnnotations) > 0 {
 			logboek.Warn().LogF("werf annotations won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind\n", obj.GetKind())
 		} else if len(extraAnnotations) > 0 {
-			annotations := obj.GetAnnotations()
-			if annotations == nil {
-				annotations = make(map[string]string)
+			if metadata := findMapByKey(objMapSlice, "metadata"); metadata != nil {
+				annotations := findMapByKey(metadata, "annotations")
+				for k, v := range extraAnnotations {
+					annotations = append(annotations, orig_yaml.MapItem{Key: k, Value: v})
+				}
+				metadata = setMapValueByKey(metadata, "annotations", annotations)
+				objMapSlice = setMapValueByKey(objMapSlice, "metadata", metadata)
 			}
-			for k, v := range extraAnnotations {
-				annotations[k] = v
-			}
-			obj.SetAnnotations(annotations)
 		}
 
 		if obj.IsList() && len(extraLabels) > 0 {
 			logboek.Warn().LogF("werf labels won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind\n", obj.GetKind())
 		} else if len(extraLabels) > 0 {
-			labels := obj.GetLabels()
-			if labels == nil {
-				labels = make(map[string]string)
+			if metadata := findMapByKey(objMapSlice, "metadata"); metadata != nil {
+				labels := findMapByKey(metadata, "labels")
+				for k, v := range extraLabels {
+					labels = append(labels, orig_yaml.MapItem{Key: k, Value: v})
+				}
+				metadata = setMapValueByKey(metadata, "labels", labels)
+				objMapSlice = setMapValueByKey(objMapSlice, "metadata", metadata)
 			}
-			for k, v := range extraLabels {
-				labels[k] = v
-			}
-			obj.SetLabels(labels)
 		}
 
-		if modifiedManifestContent, err := yaml.Marshal(obj.Object); err != nil {
+		if modifiedManifestContent, err := orig_yaml.Marshal(objMapSlice); err != nil {
 			return nil, fmt.Errorf("unable to modify manifest: %w\n%s\n---\n", err, manifestContent)
 		} else {
 			splitModifiedManifests = append(splitModifiedManifests, manifestSource+"\n"+string(modifiedManifestContent))
