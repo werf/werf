@@ -36,3 +36,6 @@ main
 buildah-test
 
 /scripts/images/image
+
+*.DS_Store
+._*
