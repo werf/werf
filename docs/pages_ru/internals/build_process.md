@@ -63,6 +63,12 @@ docker run \
 
 В противном случае поведение werf аналогично [поведению Docker](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
 
+### Как использовать Stapel-сборщик в закрытом контуре
+
+При запуске _сборочного контейнера_ werf монтирует инструментарий из специального образа, имя и тег которого зашиты в коде.
+
+Для сборки со Stapel в закрытом контуре (без доступа к служебному образу) необходимо загрузить образ в доступный container registry и переопределить имя с помощью переменных окружения `WERF_STAPEL_IMAGE_NAME` и `WERF_STAPEL_IMAGE_VERSION` (например, `WERF_STAPEL_IMAGE_NAME=localhost:5000/stapel` и `WERF_STAPEL_IMAGE_VERSION=0.6.2`). 
+
 ## Выборка стадий
 
 Алгоритм выборки стадии в werf можно представить следующим образом:
