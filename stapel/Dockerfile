@@ -408,7 +408,7 @@ RUN mkdir -p $TOOLS/ubuntu_tools/bin $TOOLS/ubuntu_tools/lib $TOOLS/ubuntu_tools
 
 # python-apt package will install all libs in docker.from image.
 # python-apt will be installed automatically by ansible apt module on first run.
-# flant/werf-stapel offers support for ansible-apt-module only for ubuntu:14.04 ubuntu:16.04 ubuntu:18.04
+# registry.werf.io/werf/stapel offers support for ansible-apt-module only for ubuntu:14.04 ubuntu:16.04 ubuntu:18.04
 RUN apt update && apt install -y python-apt libzstd1 apt-utils
 RUN \
 cp /usr/lib/x86_64-linux-gnu/libapt-private.so.0.0 $TOOLS/ubuntu_tools/lib/ && \

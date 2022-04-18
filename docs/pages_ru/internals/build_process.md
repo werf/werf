@@ -29,7 +29,7 @@ docker build --file=Dockerfile - < ~/.werf/service/tmp/context/4b9d6bc2-a549-42f
 
 Перед запуском _сборочного контейнера_ werf подготавливает набор инструкций, который зависит от типа стадии и содержит как служебные команды werf, так и [пользовательские]({{ "advanced/building_images_with_stapel/assembly_instructions.html" | true_relative_url }}), указанные в конфигурации `werf.yaml`. Например, среди служебных команд может быть добавление файлов, наложение патчей, запуск ansible заданий и т.п.
 
-Stapel-сборщик использует свой набор инструментов и библиотек, и никак не зависит от базового образа. При запуске _сборочного контейнера_ werf монтирует всё необходимое из специального служебного образа `flant/werf-stapel`. Подробнее об образе можно прочитать в [соответствующей статье]({{ "internals/development/stapel_image.html" | true_relative_url }}).
+Stapel-сборщик использует свой набор инструментов и библиотек, и никак не зависит от базового образа. При запуске _сборочного контейнера_ werf монтирует всё необходимое из специального служебного образа `registry.werf.io/werf/stapel`. Подробнее об образе можно прочитать в [соответствующей статье]({{ "internals/development/stapel_image.html" | true_relative_url }}).
 
 В _сборочный контейнер_ [пробрасывается сокет ssh-агента с хоста]({{ "internals/integration_with_ssh_agent.html" | true_relative_url }}), а также могут использоваться [пользовательские маунты]({{ "advanced/building_images_with_stapel/mount_directive.html" | true_relative_url }}).
 

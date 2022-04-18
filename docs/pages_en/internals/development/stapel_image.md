@@ -41,7 +41,7 @@ Stapel image periodically needs to be updated to actualize ansible or when new v
     ```shell
     scripts/stapel/build.sh
     ```
-    This command will create `flant/werf-stapel:dev` and secondary `flant/werf-stapel-base:dev` docker images.
+    This command will create `registry.werf.io/werf/stapel:dev` and secondary `registry.werf.io/werf/stapel-base:dev` docker images.
 4.  To test this newly built stapel image export environment variable `WERF_STAPEL_IMAGE_VERSION=dev` prior running werf commands:
     ```shell
     export WERF_STAPEL_IMAGE_VERSION=dev
