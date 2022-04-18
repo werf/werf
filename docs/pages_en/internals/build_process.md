@@ -29,7 +29,7 @@ During the build, the stage instructions are assumed to be run in a container ba
 
 Before starting the _build container_, werf prepares a set of instructions that depends on the stage type. It contains both werf service commands and [user commands]({{ "/advanced/building_images_with_stapel/assembly_instructions.html" | true_relative_url }}) specified in the `werf.yaml` configuration file. For example, service commands may include adding files, applying patches, running ansible tasks, and so on.
 
-The Stapel builder uses its own set of tools and libraries and runs independently of the base image. When starting the _build container_, werf mounts a special service image `flant/werf-stapel` that contains all the necessary tools and libraries. You may find more info about the stapel image in the [article]({{ "/internals/development/stapel_image.html" | true_relative_url }}).
+The Stapel builder uses its own set of tools and libraries and runs independently of the base image. When starting the _build container_, werf mounts a special service image `registry.werf.io/werf/stapel` that contains all the necessary tools and libraries. You may find more info about the stapel image in the [article]({{ "/internals/development/stapel_image.html" | true_relative_url }}).
 
 The [socket of the host's SSH agent]({{ "/internals/integration_with_ssh_agent.html" | true_relative_url }}) is forwarded to the _build container_. Also, werf can use [custom mounts]({{ "/advanced/building_images_with_stapel/mount_directive.html" | true_relative_url }}).
 
