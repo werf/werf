@@ -53,7 +53,7 @@ docker run \
 
 Подробнее о файле конфигурации сборки `werf.yaml` в [соответствующем разделе]({{ "reference/werf_yaml.html#stapel-сборщик" | true_relative_url }}).
 
-### Как сборщик Stapel работает с CMD и ENTRYPOINT
+### Как Stapel-сборщик работает с CMD и ENTRYPOINT
 
 Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT` а затем, заменяет их значениями [базового образа]({{ "advanced/building_images_with_stapel/base_image.html" | true_relative_url }}). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
 - `[]` для `CMD`;
