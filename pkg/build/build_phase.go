@@ -294,8 +294,6 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 			commits = append(commits, headCommit)
 
 			if phase.Conveyor.GetLocalGitRepoVirtualMergeOptions().VirtualMerge {
-				phase.Conveyor.giterminismManager.LocalGitRepo().GetMergeCommitParents(ctx, headCommit)
-
 				fromCommit, _, err := git_repo.GetVirtualMergeParents(ctx, phase.Conveyor.giterminismManager.LocalGitRepo(), headCommit)
 				if err != nil {
 					return fmt.Errorf("unable to get virtual merge commit %q parents: %w", headCommit, err)
