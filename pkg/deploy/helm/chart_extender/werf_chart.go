@@ -107,7 +107,7 @@ func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error
 
 	var opts helpers.GetHelmChartMetadataOptions
 	if wc.werfConfig != nil {
-		opts.OverrideName = wc.werfConfig.Meta.Project
+		opts.DefaultName = wc.werfConfig.Meta.Project
 	}
 	opts.DefaultVersion = "1.0.0"
 	wc.HelmChart.Metadata = helpers.AutosetChartMetadata(wc.HelmChart.Metadata, opts)
