@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.89](https://www.github.com/werf/werf/compare/v1.2.88...v1.2.89) (2022-04-19)
+
+
+### Bug Fixes
+
+* **deploy:** remove server-dry-run helm extension to prevent possible bug ([f77a8c0](https://www.github.com/werf/werf/commit/f77a8c00d608f5e0447f9d2f15182e68799ca0da))
+
 ### [1.2.88](https://www.github.com/werf/werf/compare/v1.2.87...v1.2.88) (2022-04-15)
 
 
