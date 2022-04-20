@@ -81,6 +81,11 @@ defaults:
       type: "pages"
     values:
       lang: ru
+  - scope:
+      path: "pages_ru/reference/cli"
+      type: "pages"
+    values:
+      single_lang: true
 
 timezone: Europe/Moscow
 

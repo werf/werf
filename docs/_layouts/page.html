@@ -35,6 +35,10 @@ layout: sidebar
     <h1 class="docs__title">{{ page.title }}</h1>
     {% endunless %}
 
+    {%- if page.single_lang == true %}
+      {%- include no-language-warning.html %}
+    {%- endif %}
+
     {%- if page.simple_map == true %}
 
     <script>
