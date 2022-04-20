@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/postrender"
-	"helm.sh/helm/v3/pkg/registry"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
@@ -29,11 +29,11 @@ type BundleOptions struct {
 	ExtraLabels                map[string]string
 }
 
-func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts BundleOptions) (*Bundle, error) {
+func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, opts BundleOptions) (*Bundle, error) {
 	bundle := &Bundle{
 		Dir:                            dir,
 		HelmEnvSettings:                helmEnvSettings,
-		RegistryClient:                 registryClient,
+		RegistryClientHandle:           registryClientHandle,
 		BuildChartDependenciesOpts:     opts.BuildChartDependenciesOpts,
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
@@ -68,7 +68,7 @@ type Bundle struct {
 	Dir                        string
 	HelmChart                  *chart.Chart
 	HelmEnvSettings            *cli.EnvSettings
-	RegistryClient             *registry.Client
+	RegistryClientHandle       *helm_v3.RegistryClientHandle
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
@@ -147,7 +147,7 @@ func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedF
 			return nil, err
 		}
 		return convertBufferedFilesForChartExtender(files), nil
-	}, dir, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.RegistryClient, bundle.BuildChartDependenciesOpts)
+	}, dir, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.RegistryClientHandle, bundle.BuildChartDependenciesOpts)
 	return true, res, err
 }
 

@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
-	"helm.sh/helm/v3/pkg/registry"
 
 	"github.com/werf/logboek"
 )
@@ -24,7 +24,7 @@ type BuildChartDependenciesOptions struct {
 	LoadOptions *loader.LoadOptions
 }
 
-func BuildChartDependenciesInDir(ctx context.Context, chartFile, chartLockFile *chart.ChartExtenderBufferedFile, targetDir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts BuildChartDependenciesOptions) error {
+func BuildChartDependenciesInDir(ctx context.Context, chartFile, chartLockFile *chart.ChartExtenderBufferedFile, targetDir string, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, opts BuildChartDependenciesOptions) error {
 	logboek.Context(ctx).Debug().LogF("-- BuildChartDependenciesInDir\n")
 
 	if err := os.MkdirAll(targetDir, os.ModePerm); err != nil {
@@ -52,7 +52,7 @@ func BuildChartDependenciesInDir(ctx context.Context, chartFile, chartLockFile *
 		Verify:     opts.Verify,
 
 		Getters:          getter.All(helmEnvSettings),
-		RegistryClient:   registryClient,
+		RegistryClient:   registryClientHandle.RegistryClient,
 		RepositoryConfig: helmEnvSettings.RepositoryConfig,
 		RepositoryCache:  helmEnvSettings.RepositoryCache,
 		Debug:            helmEnvSettings.Debug,
