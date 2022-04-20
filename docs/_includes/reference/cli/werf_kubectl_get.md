@@ -7,6 +7,8 @@ Display one or many resources.
 
  Prints a table of the most important information about the specified resources. You can filter the list using a label selector and the --selector flag. If the desired resource type is namespaced you will only see results in your current namespace unless you pass --all-namespaces.
 
+ Uninitialized objects are not shown unless --include-uninitialized is passed.
+
  By specifying the output as &#39;template&#39; and providing a Go template as the value of the --template flag, you can filter the attributes of the fetched resources.
 
 Use &#34;kubectl api-resources&#34; for a complete list of supported resources.
@@ -119,7 +121,8 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
             -o=go-template-file. The template format is golang templates                            
             [http://golang.org/pkg/text/template/#pkg-overview].
   -w, --watch=false
-            After listing/getting the requested object, watch for changes.
+            After listing/getting the requested object, watch for changes. Uninitialized objects    
+            are excluded if no object name is provided.
       --watch-only=false
             Watch for changes to the requested object(s), without listing/getting first.
 ```
@@ -128,13 +131,10 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

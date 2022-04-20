@@ -69,7 +69,7 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
       --env=[]
             Environment variables to set in the container.
       --expose=false
-            If true, create a ClusterIP service associated with the pod.  Requires `--port`.
+            If true, service is created for the container(s) which are run
       --field-manager='kubectl-run'
             Name of the manager used to track field ownership.
   -f, --filename=[]
@@ -85,12 +85,12 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
       --image=''
             The image for the container to run.
       --image-pull-policy=''
-            The image pull policy for the container.  If left empty, this value will not be         
-            specified by the client and defaulted by the server.
+            The image pull policy for the container. If left empty, this value will not be          
+            specified by the client and defaulted by the server
   -k, --kustomize=''
             Process a kustomization directory. This flag can`t be used together with -f or -R.
   -l, --labels=''
-            Comma separated labels to apply to the pod. Will override previous values.
+            Comma separated labels to apply to the pod(s). Will override previous values.
       --leave-stdin-open=false
             If the pod is started in interactive mode or with stdin, leave stdin open after the     
             first attach completes. By default, stdin will be closed after the first attach         
@@ -98,8 +98,6 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
   -o, --output=''
             Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
             |jsonpath|jsonpath-as-json|jsonpath-file.
-      --override-type='merge'
-            The method used to override the generated object: json, merge, or strategic.
       --overrides=''
             An inline JSON override for the generated object. If this is non-empty, it is used to   
             override the generated object. Requires that the object supply a valid apiVersion field.
@@ -118,8 +116,7 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
       --restart='Always'
             The restart policy for this Pod.  Legal values [Always, OnFailure, Never].
       --rm=false
-            If true, delete the pod after it exits.  Only valid when attaching to the container,    
-            e.g. with `--attach` or with `-i/--stdin`.
+            If true, delete resources created in this command for attached containers.
       --save-config=false
             If true, the configuration of current object will be saved in its annotation.           
             Otherwise, the annotation will be unchanged. This flag is useful when you want to       
@@ -127,7 +124,7 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
   -i, --stdin=false
-            Keep stdin open on the container in the pod, even if nothing is attached.
+            Keep stdin open on the container(s) in the pod, even if nothing is attached.
       --template=''
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
@@ -136,7 +133,7 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
             The length of time to wait before giving up on a delete, zero means determine a timeout 
             from the size of the object
   -t, --tty=false
-            Allocate a TTY for the container in the pod.
+            Allocated a TTY for each container in the pod.
       --wait=false
             If true, wait for resources to be gone before returning. This waits for finalizers.
 ```
@@ -145,13 +142,10 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

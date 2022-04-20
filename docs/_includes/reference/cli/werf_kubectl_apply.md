@@ -77,8 +77,9 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
             Automatically resolve conflicts between the modified and live configuration by using    
             values from the modified configuration
       --prune=false
-            Automatically delete resource objects, that do not appear in the configs and are        
-            created by either apply or create --save-config. Should be used with either -l or --all.
+            Automatically delete resource objects, including the uninitialized ones, that do not    
+            appear in the configs and are created by either apply or create --save-config. Should   
+            be used with either -l or --all.
       --prune-whitelist=[]
             Overwrite the default whitelist with <group/version/kind> for --prune
   -R, --recursive=false
@@ -108,13 +109,10 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

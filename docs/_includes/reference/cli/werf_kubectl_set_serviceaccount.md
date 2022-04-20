@@ -29,7 +29,8 @@ werf kubectl set serviceaccount (-f FILENAME | TYPE NAME) SERVICE_ACCOUNT [optio
 
 ```shell
       --all=false
-            Select all resources, in the namespace of the specified resource types
+            Select all resources, including uninitialized ones, in the namespace of the specified   
+            resource types
       --allow-missing-template-keys=true
             If true, ignore any errors in templates when a field or map key is missing in the       
             template. Only applies to golang and jsonpath output formats.
@@ -63,13 +64,10 @@ werf kubectl set serviceaccount (-f FILENAME | TYPE NAME) SERVICE_ACCOUNT [optio
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

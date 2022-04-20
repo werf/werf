@@ -31,8 +31,6 @@ werf kubectl top node [NAME | -l label] [options]
   -l, --selector=''
             Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
             key1=value1,key2=value2)
-      --show-capacity=false
-            Print node resources based on Capacity instead of Allocatable(default) of the nodes.
       --sort-by=''
             If non-empty, sort nodes list using specified field. The field can be either `cpu` or   
             `memory`.
@@ -44,13 +42,10 @@ werf kubectl top node [NAME | -l label] [options]
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

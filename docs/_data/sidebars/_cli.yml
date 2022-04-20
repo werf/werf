@@ -331,10 +331,7 @@ cli: &cli
       f:
 
       - title: werf kubectl alpha
-        f:
-
-        - title: werf kubectl alpha events
-          url: /reference/cli/werf_kubectl_alpha_events.html
+        url: /reference/cli/werf_kubectl_alpha.html
 
       - title: werf kubectl annotate
         url: /reference/cli/werf_kubectl_annotate.html

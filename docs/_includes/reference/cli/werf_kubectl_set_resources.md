@@ -35,7 +35,8 @@ werf kubectl set resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requ
 
 ```shell
       --all=false
-            Select all resources, in the namespace of the specified resource types
+            Select all resources, including uninitialized ones, in the namespace of the specified   
+            resource types
       --allow-missing-template-keys=true
             If true, ignore any errors in templates when a field or map key is missing in the       
             template. Only applies to golang and jsonpath output formats.
@@ -69,8 +70,8 @@ werf kubectl set resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requ
             `cpu=100m,memory=256Mi`.  Note that server side components may assign requests          
             depending on the server configuration, such as limit ranges.
   -l, --selector=''
-            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2)
+            Selector (label query) to filter on, not including uninitialized ones,supports `=`,     
+            `==`, and `!=`.(e.g. -l key1=value1,key2=value2)
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=''
@@ -83,13 +84,10 @@ werf kubectl set resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requ
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

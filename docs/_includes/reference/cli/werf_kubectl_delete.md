@@ -51,7 +51,8 @@ werf kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | -
 
 ```shell
       --all=false
-            Delete all resources, in the namespace of the specified resource types.
+            Delete all resources, including uninitialized ones, in the namespace of the specified   
+            resource types.
   -A, --all-namespaces=false
             If present, list the requested object(s) across all namespaces. Namespace in current    
             context is ignored even if specified with --namespace.
@@ -92,7 +93,7 @@ werf kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | -
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
   -l, --selector=''
-            Selector (label query) to filter on.
+            Selector (label query) to filter on, not including uninitialized ones.
       --timeout=0s
             The length of time to wait before giving up on a delete, zero means determine a timeout 
             from the size of the object
@@ -104,13 +105,10 @@ werf kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | -
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

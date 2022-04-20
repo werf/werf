@@ -53,6 +53,8 @@ werf kubectl drain NODE [options]
             default value specified in the pod will be used.
       --ignore-daemonsets=false
             Ignore DaemonSet-managed pods.
+      --ignore-errors=false
+            Ignore errors occurred between drain nodes in group.
       --pod-selector=''
             Label selector to filter pods on the node
   -l, --selector=''
@@ -68,13 +70,10 @@ werf kubectl drain NODE [options]
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

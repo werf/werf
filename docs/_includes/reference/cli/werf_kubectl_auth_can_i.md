@@ -5,7 +5,7 @@
 {% endif %}
 Check whether an action is allowed.
 
- VERB is a logical Kubernetes API verb like &#39;get&#39;, &#39;list&#39;, &#39;watch&#39;, &#39;delete&#39;, etc. TYPE is a Kubernetes resource. Shortcuts and groups will be resolved. NONRESOURCEURL is a partial URL that starts with &#34;/&#34;. NAME is the name of a particular Kubernetes resource. This command pairs nicely with impersonation. See --as global flag.
+ VERB is a logical Kubernetes API verb like &#39;get&#39;, &#39;list&#39;, &#39;watch&#39;, &#39;delete&#39;, etc. TYPE is a Kubernetes resource. Shortcuts and groups will be resolved. NONRESOURCEURL is a partial URL that starts with &#34;/&#34;. NAME is the name of a particular Kubernetes resource.
 
 {{ header }} Syntax
 
@@ -57,13 +57,10 @@ werf kubectl auth can-i VERB [TYPE | TYPE/NAME | NONRESOURCEURL] [options]
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

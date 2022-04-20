@@ -5,7 +5,7 @@
 {% endif %}
 
 This command inspects a chart (directory, file, or URL) and displays the contents
-of the CustomResourceDefinition files
+of the CustomResourceDefintion files
 
 
 {{ header }} Syntax
