@@ -118,7 +118,7 @@ It should be noted that cleaning up stages and the container registry implies ru
 
 The task configuration is quite simple, that is why we prefer to focus on what it lacks — an explicit authorization in the container registry, and calling the `docker login`.
 
-In the simplest case, if an integrated container registry is used, then the authorization is performed automatically when the `werf ci-env` command is executed. The `CI_JOB_TOKEN` (you can learn more about the GitLab job permissions model [here](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)) and `CI_REGISTRY_IMAGE` GitLab environment variables act as arguments in this case.
+In the simplest case, if an integrated container registry is used, then the authorization is performed automatically when the `werf ci-env` command is executed. The `CI_JOB_TOKEN` (you can learn more about the GitLab job permissions model [here](https://docs.gitlab.com/ee/user/permissions.html)) and `CI_REGISTRY_IMAGE` GitLab environment variables act as arguments in this case.
 
 As a result of the `werf ci-env` command, a temporary docker config is created. It is used by all the commands in the shell session (including docker). It means that parallel tasks do not overlap when using docker, and the temporary token is preserved (not overwritten) in the configuration.
 
