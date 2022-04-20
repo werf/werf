@@ -3,7 +3,7 @@ configVersion: 1
 
 ---
 image: assets
-from: jekyll/builder:4
+from: jekyll/builder:4.2.0
 fromCacheVersion: 20220110
 ansible:
   install:
