@@ -1631,8 +1631,9 @@ github.com/onsi/ginkgo v1.14.0/go.mod h1:iSB4RoI2tjJc9BBv4NKIKWKya62Rps+oPG/Lv9k
 github.com/onsi/ginkgo v1.16.4/go.mod h1:dX+/inL/fNMqNlz0e9LfyB9TswhZpCVdJM/Z6Vvnwo0=
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=
 github.com/onsi/ginkgo v1.16.5/go.mod h1:+E8gABHa3K6zRBolWtd+ROzc/U5bkGt0FwiG042wbpU=
-github.com/onsi/ginkgo/v2 v2.0.0 h1:CcuG/HvWNkkaqCUpJifQY8z7qEMBJya6aLPx6ftGyjQ=
 github.com/onsi/ginkgo/v2 v2.0.0/go.mod h1:vw5CSIxN1JObi/U8gcbwft7ZxR2dgaR70JSE3/PpL4c=
+github.com/onsi/ginkgo/v2 v2.1.3 h1:e/3Cwtogj0HA+25nMP1jCMDIf8RtRYbGwGGuBIFztkc=
+github.com/onsi/ginkgo/v2 v2.1.3/go.mod h1:vw5CSIxN1JObi/U8gcbwft7ZxR2dgaR70JSE3/PpL4c=
 github.com/onsi/gomega v0.0.0-20151007035656-2152b45fa28a/go.mod h1:C1qb7wdrVGGVU+Z6iS04AVkA3Q65CEZX59MT0QO5uiA=
 github.com/onsi/gomega v0.0.0-20170829124025-dcabb60a477c/go.mod h1:C1qb7wdrVGGVU+Z6iS04AVkA3Q65CEZX59MT0QO5uiA=
 github.com/onsi/gomega v1.4.3/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
@@ -2058,10 +2059,10 @@ github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59b
 github.com/weppos/publicsuffix-go v0.4.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
 github.com/weppos/publicsuffix-go v0.5.0 h1:rutRtjBJViU/YjcI5d80t4JAVvDltS6bciJg2K1HrLU=
 github.com/weppos/publicsuffix-go v0.5.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
-github.com/werf/3p-helm/v3 v3.0.0-20220408112844-a661f7cd4c64 h1:SuB96B8WTpKdBjHSc3uyCJiX3YcQJEc9HyZD4kzURzo=
-github.com/werf/3p-helm/v3 v3.0.0-20220408112844-a661f7cd4c64/go.mod h1:Nm0Z2ciZFFvR9cRKpiRE2SMhJTgqY0b+ezT2cDcyqNw=
 github.com/werf/3p-helm/v3 v3.0.0-20220419131239-a2df9b725de3 h1:H3C8D/30GQ71laOCsLGJrIHZMAa4Joab48hkOfTH8KA=
 github.com/werf/3p-helm/v3 v3.0.0-20220419131239-a2df9b725de3/go.mod h1:Nm0Z2ciZFFvR9cRKpiRE2SMhJTgqY0b+ezT2cDcyqNw=
+github.com/werf/copy-recurse v0.2.2 h1:OpBB+Ezsv7j+iQR02p7zUQXSefZ7UaKBtQPMg2dxi7M=
+github.com/werf/copy-recurse v0.2.2/go.mod h1:KVHSQ90p19xflWW0B7BJhLBwmSbEtuxIaBnjlUYRPhk=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f h1:81YscYTF9mmTf0ULOsCmm42YWQp+qWDzWi1HjWniZrg=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
 github.com/werf/kubedog v0.6.4-0.20220222141823-4ca722ade0ef h1:jidfI8MH4qRvWHlxGw06VKWiKRdBIfGFcjQ3pGwsquc=

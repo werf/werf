@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -16,8 +15,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/otiai10/copy"
 
+	"github.com/werf/copy-recurse"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/image"
@@ -336,12 +335,29 @@ func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 				ExcludeGlobs: imp.ExcludePaths,
 			})
 
-			if err := copyFromTo(ctx, uid, gid, absFrom, absTo, pathMatcher); err != nil {
-				return fmt.Errorf("error copying dependency import files from %q to %q: %w", absFrom, absTo, err)
+			copyRec, err := copyrec.New(absFrom, absTo, copyrec.Options{
+				MatchDir: func(path string) (copyrec.DirAction, error) {
+					switch {
+					case pathMatcher.IsPathMatched(path):
+						return copyrec.DirMatch, nil
+					case pathMatcher.ShouldGoThrough(path):
+						return copyrec.DirFallThrough, nil
+					default:
+						return copyrec.DirSkip, nil
+					}
+				},
+				MatchFile: func(path string) (bool, error) {
+					return pathMatcher.IsPathMatched(path), err
+				},
+				UID: uid,
+				GID: gid,
+			})
+			if err != nil {
+				return fmt.Errorf("error creating recursive copy command: %w", err)
 			}
 
-			if err := updateOwner(absTo, uid, gid); err != nil && !errors.Is(err, fs.ErrNotExist) {
-				return fmt.Errorf("error updating file ownersnip: %w", err)
+			if err := copyRec.Run(ctx); err != nil {
+				return fmt.Errorf("error copying dependency import files from %q to %q: %w", absFrom, absTo, err)
 			}
 		}
 	}
@@ -600,110 +616,6 @@ func makeBuildahMounts(volumes []string) ([]specs.Mount, error) {
 	}
 
 	return mounts, nil
-}
-
-func copyFromTo(ctx context.Context, uid *uint32, gid *uint32, absFrom, absTo string, pathMatcher path_matcher.PathMatcher) error {
-	if err := walkPath(absFrom, func(rootPathIsFile bool, relSrc string, dirEntry *fs.DirEntry, err error) error {
-		if rootPathIsFile {
-			logboek.Context(ctx).Debug().LogF("Copying dependency import %q to %q\n", absFrom, absTo)
-			if err := copy.Copy(absFrom, absTo); err != nil {
-				return fmt.Errorf("error copying file %q to %q: %w", absFrom, absTo, err)
-			}
-			return nil
-		}
-
-		if err != nil {
-			return fmt.Errorf("error while walking dir %q: %w", absFrom, err)
-		}
-
-		absSrc := filepath.Join(absFrom, relSrc)
-		absDst := filepath.Join(absTo, relSrc)
-
-		srcFileInfo, err := (*dirEntry).Info()
-		if errors.Is(err, fs.ErrNotExist) {
-			return fmt.Errorf("file %q was renamed or removed while we were trying to get info about it", absSrc)
-		} else if err != nil {
-			return fmt.Errorf("error getting info about file %q", absSrc)
-		}
-
-		if srcFileInfo.IsDir() {
-			if !pathMatcher.IsDirOrSubmodulePathMatched(relSrc) {
-				return fs.SkipDir
-			}
-
-			if pathMatcher.ShouldGoThrough(relSrc) {
-				if err := os.MkdirAll(relSrc, srcFileInfo.Mode()); err != nil {
-					return fmt.Errorf("error creating directory %q: %w", absSrc, err)
-				}
-				return nil
-			}
-		} else if !pathMatcher.IsPathMatched(relSrc) {
-			return nil
-		}
-
-		logboek.Context(ctx).Debug().LogF("Copying dependency import %q to %q\n", absSrc, absDst)
-		if err := copy.Copy(absSrc, absDst); err != nil {
-			return fmt.Errorf("error copying file %q to %q: %w", absSrc, absDst, err)
-		}
-
-		if err := updateOwner(absDst, uid, gid); err != nil {
-			return fmt.Errorf("error updating file ownership: %w", err)
-		}
-
-		if srcFileInfo.IsDir() {
-			return fs.SkipDir
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("error walking dependency import source root: %w", err)
-	}
-	return nil
-}
-
-func walkPath(path string, fn func(rootPathIsFile bool, entryRelPath string, dirEntry *fs.DirEntry, err error) error) error {
-	fileInfo, err := os.Lstat(path)
-	if err != nil {
-		return fmt.Errorf("error getting file info for path %q: %w", path, err)
-	}
-
-	if !fileInfo.IsDir() {
-		return fn(true, "", nil, nil)
-	} else {
-		rootFs := os.DirFS(path)
-		if err := fs.WalkDir(rootFs, ".", func(relSrc string, entry fs.DirEntry, err error) error {
-			return fn(false, relSrc, &entry, err)
-		}); err != nil {
-			return fmt.Errorf("error walking directory %q: %w", rootFs, err)
-		}
-		return nil
-	}
-}
-
-func updateOwner(path string, uid *uint32, gid *uint32) error {
-	if uid == nil && gid == nil {
-		return nil
-	}
-
-	if err := walkPath(path, func(rootPathIsFile bool, entryRelPath string, dirEntry *fs.DirEntry, err error) error {
-		if rootPathIsFile {
-			return os.Lchown(path, uint32PtrUIDOrGIDToInt(uid), uint32PtrUIDOrGIDToInt(gid))
-		}
-
-		return os.Lchown(filepath.Join(path, entryRelPath), uint32PtrUIDOrGIDToInt(uid), uint32PtrUIDOrGIDToInt(gid))
-	}); err != nil {
-		return fmt.Errorf("error walking path %q: %w", path, err)
-	}
-
-	return nil
-}
-
-func uint32PtrUIDOrGIDToInt(uidOrGid *uint32) int {
-	if uidOrGid == nil {
-		return -1
-	}
-
-	return int(*uidOrGid)
 }
 
 func getUIDAndGID(userNameOrUID, groupNameOrGID, fsRoot string) (*uint32, *uint32, error) {
