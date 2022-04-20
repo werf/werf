@@ -37,8 +37,8 @@ werf kubectl describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) 
   # Describe pods by label name=myLabel
   kubectl describe po -l name=myLabel
   
-  # Describe all pods managed by the 'frontend' replication controller
-  # (rc-created pods get the name of the rc as a prefix in the pod name)
+  # Describe all pods managed by the 'frontend' replication controller (rc-created pods
+  # get the name of the rc as a prefix in the pod the name)
   kubectl describe pods frontend
 ```
 
@@ -69,13 +69,10 @@ werf kubectl describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) 
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

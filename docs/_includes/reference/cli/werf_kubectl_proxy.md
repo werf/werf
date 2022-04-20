@@ -48,9 +48,6 @@ werf kubectl proxy [--port=PORT] [--www=static-dir] [--www-prefix=prefix] [--api
             The IP address on which to serve on.
       --api-prefix='/'
             Prefix to serve the proxied API under.
-      --append-server-path=false
-            If true, enables automatic path appending of the kube context server path to each       
-            request.
       --disable-filter=false
             If true, disable request filtering in the proxy. This is dangerous, and can leave you   
             vulnerable to XSRF attacks, when used with an accessible port.
@@ -77,13 +74,10 @@ werf kubectl proxy [--port=PORT] [--www=static-dir] [--www-prefix=prefix] [--api
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

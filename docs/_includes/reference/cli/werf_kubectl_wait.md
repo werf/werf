@@ -14,7 +14,7 @@ Experimental: Wait for a specific condition on one or many resources.
 {{ header }} Syntax
 
 ```shell
-werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'=value] [options]
+werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=delete|--for condition=available] [options]
 ```
 
 {{ header }} Examples
@@ -25,9 +25,6 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
   
   # The default value of status condition is true; you can set it to false
   kubectl wait --for=condition=Ready=false pod/busybox1
-  
-  # Wait for the pod "busybox1" to contain the status phase to be "Running".
-  kubectl wait --for=jsonpath='{.status.phase}'=Running pod/busybox1
   
   # Wait for the pod "busybox1" to be deleted, with a timeout of 60s, after having issued the "delete" command
   kubectl delete pod/busybox1
@@ -52,9 +49,8 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
   -f, --filename=[]
             identifying the resource.
       --for=''
-            The condition to wait on: [delete|condition=condition-name|jsonpath=`{JSONPath          
-            expression}`=JSONPath Condition]. The default status value of condition-name is true,   
-            you can set false with condition=condition-name=false.
+            The condition to wait on: [delete|condition=condition-name]. The default status value   
+            of condition-name is true, you can set false with condition=condition-name=false
       --local=false
             If true, annotation will NOT contact api-server but run locally.
   -o, --output=''
@@ -81,13 +77,10 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

@@ -50,22 +50,16 @@ werf kubectl cp <file-spec-src> <file-spec-dest> [options]
       --no-preserve=false
             The copied file/directory`s ownership and permissions will not be preserved in the      
             container
-      --retries=0
-            Set number of retries to complete a copy operation from a container. Specify 0 to       
-            disable or any negative value for infinite retrying. The default is 0 (no retry).
 ```
 
 {{ header }} Options inherited from parent commands
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

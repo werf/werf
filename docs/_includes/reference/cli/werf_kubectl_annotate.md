@@ -45,7 +45,8 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
 
 ```shell
       --all=false
-            Select all resources, in the namespace of the specified resource types.
+            Select all resources, including uninitialized ones, in the namespace of the specified   
+            resource types.
   -A, --all-namespaces=false
             If true, check the specified action in all namespaces.
       --allow-missing-template-keys=true
@@ -82,8 +83,8 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
             If non-empty, the annotation update will only succeed if this is the current            
             resource-version for the object. Only valid when specifying a single resource.
   -l, --selector=''
-            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2).
+            Selector (label query) to filter on, not including uninitialized ones, supports `=`,    
+            `==`, and `!=`.(e.g. -l key1=value1,key2=value2).
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=''
@@ -96,13 +97,10 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

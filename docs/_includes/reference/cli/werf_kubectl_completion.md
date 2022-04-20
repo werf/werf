@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Output shell completion code for the specified shell (bash, zsh, fish, or powershell). The shell code must be evaluated to provide interactive completion of kubectl commands.  This can be done by sourcing it from the .bash_profile.
+Output shell completion code for the specified shell (bash or zsh). The shell code must be evaluated to provide interactive completion of kubectl commands.  This can be done by sourcing it from the .bash_profile.
 
  Detailed instructions on how to do this are available here:
 
@@ -54,38 +54,16 @@ werf kubectl completion SHELL
   source <(kubectl completion zsh)
   # Set the kubectl completion code for zsh[1] to autoload on startup
   kubectl completion zsh > "${fpath[1]}/_kubectl"
-  
-  
-  # Load the kubectl completion code for fish[2] into the current shell
-  kubectl completion fish | source
-  # To load completions for each session, execute once:
-  kubectl completion fish > ~/.config/fish/completions/kubectl.fish
-  
-  # Load the kubectl completion code for powershell into the current shell
-  kubectl completion powershell | Out-String | Invoke-Expression
-  # Set kubectl completion code for powershell to run on startup
-  ## Save completion code to a script and execute in the profile
-  kubectl completion powershell > $HOME\.kube\completion.ps1
-  Add-Content $PROFILE "$HOME\.kube\completion.ps1"
-  ## Execute completion code in the profile
-  Add-Content $PROFILE "if (Get-Command kubectl -ErrorAction SilentlyContinue) {
-  kubectl completion powershell | Out-String | Invoke-Expression
-  }"
-  ## Add completion code directly to the $PROFILE script
-  kubectl completion powershell >> $PROFILE
 ```
 
 {{ header }} Options inherited from parent commands
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

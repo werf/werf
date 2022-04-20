@@ -32,8 +32,8 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
   # Create a new secret named my-secret using a combination of a file and a literal
   kubectl create secret generic my-secret --from-file=ssh-privatekey=path/to/id_rsa --from-literal=passphrase=topsecret
   
-  # Create a new secret named my-secret from env files
-  kubectl create secret generic my-secret --from-env-file=path/to/foo.env --from-env-file=path/to/bar.env
+  # Create a new secret named my-secret from an env file
+  kubectl create secret generic my-secret --from-env-file=path/to/bar.env
 ```
 
 {{ header }} Options
@@ -50,7 +50,7 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
             without persisting the resource.
       --field-manager='kubectl-create'
             Name of the manager used to track field ownership.
-      --from-env-file=[]
+      --from-env-file=''
             Specify the path to a file to read lines of key=val pairs to create a secret (i.e. a    
             Docker .env file).
       --from-file=[]
@@ -83,13 +83,10 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

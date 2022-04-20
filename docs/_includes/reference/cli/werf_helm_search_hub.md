@@ -34,8 +34,6 @@ werf helm search hub [KEYWORD] [flags] [options]
 ```shell
       --endpoint='https://hub.helm.sh'
             Hub instance to query for charts
-      --list-repo-url=false
-            print charts repository URL
       --max-col-width=50
             maximum column width for output table
   -o, --output=table

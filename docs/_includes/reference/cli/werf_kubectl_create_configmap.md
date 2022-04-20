@@ -33,7 +33,7 @@ werf kubectl create configmap NAME [--from-file=[key=]source] [--from-literal=ke
   kubectl create configmap my-config --from-file=path/to/bar
   
   # Create a new config map named my-config from an env file
-  kubectl create configmap my-config --from-env-file=path/to/foo.env --from-env-file=path/to/bar.env
+  kubectl create configmap my-config --from-env-file=path/to/bar.env
 ```
 
 {{ header }} Options
@@ -50,7 +50,7 @@ werf kubectl create configmap NAME [--from-file=[key=]source] [--from-literal=ke
             without persisting the resource.
       --field-manager='kubectl-create'
             Name of the manager used to track field ownership.
-      --from-env-file=[]
+      --from-env-file=''
             Specify the path to a file to read lines of key=val pairs to create a configmap (i.e. a 
             Docker .env file).
       --from-file=[]
@@ -81,13 +81,10 @@ werf kubectl create configmap NAME [--from-file=[key=]source] [--from-literal=ke
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''

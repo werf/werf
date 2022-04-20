@@ -79,8 +79,6 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
   -o, --output=''
             Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
             |jsonpath|jsonpath-as-json|jsonpath-file.
-      --override-type='merge'
-            The method used to override the generated object: json, merge, or strategic.
       --overrides=''
             An inline JSON override for the generated object. If this is non-empty, it is used to   
             override the generated object. Requires that the object supply a valid apiVersion field.
@@ -121,13 +119,10 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
 
 ```shell
       --as=''
-            Username to impersonate for the operation. User could be a regular user or a service    
-            account in a namespace.
+            Username to impersonate for the operation
       --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
-      --as-uid=''
-            UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
       --certificate-authority=''
