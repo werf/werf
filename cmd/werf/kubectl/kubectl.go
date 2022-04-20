@@ -25,12 +25,7 @@ var (
 func NewCmd() *cobra.Command {
 	configFlags = genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 
-	kubectlCmd := cmd.NewDefaultKubectlCommandWithArgs(cmd.KubectlOptions{
-		PluginHandler: cmd.NewDefaultPluginHandler(plugin.ValidPluginFilenamePrefixes),
-		Arguments:     os.Args,
-		ConfigFlags:   configFlags,
-		IOStreams:     genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr},
-	})
+	kubectlCmd := cmd.NewDefaultKubectlCommandWithArgs(cmd.NewDefaultPluginHandler(plugin.ValidPluginFilenamePrefixes), os.Args, os.Stdin, os.Stdout, os.Stderr)
 
 	common.SetupHomeDir(&commonCmdData, kubectlCmd, common.SetupHomeDirOptions{Persistent: true})
 	common.SetupTmpDir(&commonCmdData, kubectlCmd, common.SetupTmpDirOptions{Persistent: true})

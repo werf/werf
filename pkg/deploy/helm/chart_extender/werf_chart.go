@@ -12,12 +12,12 @@ import (
 	"text/template"
 
 	"github.com/mitchellh/copystructure"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/postrender"
-	"helm.sh/helm/v3/pkg/registry"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
@@ -38,13 +38,13 @@ type WerfChartOptions struct {
 	DisableSecrets             bool
 }
 
-func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretsManager *secrets_manager.SecretsManager, chartDir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts WerfChartOptions) *WerfChart {
+func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretsManager *secrets_manager.SecretsManager, chartDir string, helmEnvSettings *cli.EnvSettings, registryClientHandle *helm_v3.RegistryClientHandle, opts WerfChartOptions) *WerfChart {
 	wc := &WerfChart{
-		ChartDir:         chartDir,
-		SecretValueFiles: opts.SecretValueFiles,
-		HelmEnvSettings:  helmEnvSettings,
-		RegistryClient:   registryClient,
-		DisableSecrets:   opts.DisableSecrets,
+		ChartDir:             chartDir,
+		SecretValueFiles:     opts.SecretValueFiles,
+		HelmEnvSettings:      helmEnvSettings,
+		RegistryClientHandle: registryClientHandle,
+		DisableSecrets:       opts.DisableSecrets,
 
 		GiterminismManager: giterminismManager,
 		SecretsManager:     secretsManager,
@@ -72,7 +72,7 @@ type WerfChart struct {
 	ChartDir                   string
 	SecretValueFiles           []string
 	HelmEnvSettings            *cli.EnvSettings
-	RegistryClient             *registry.Client
+	RegistryClientHandle       *helm_v3.RegistryClientHandle
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 	DisableSecrets             bool
 
@@ -204,7 +204,7 @@ func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFi
 		return true, nil, fmt.Errorf("giterministic files loader failed: %s", err)
 	}
 
-	res, err := LoadChartDependencies(wc.ChartExtenderContext, wc.GiterminismManager.FileReader().LoadChartDir, dir, chartFiles, wc.HelmEnvSettings, wc.RegistryClient, wc.BuildChartDependenciesOpts)
+	res, err := LoadChartDependencies(wc.ChartExtenderContext, wc.GiterminismManager.FileReader().LoadChartDir, dir, chartFiles, wc.HelmEnvSettings, wc.RegistryClientHandle, wc.BuildChartDependenciesOpts)
 	if err != nil {
 		return true, res, fmt.Errorf("chart dependencies loader failed: %s", err)
 	}
@@ -373,5 +373,5 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 		}
 	}
 
-	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClient, BundleOptions{BuildChartDependenciesOpts: wc.BuildChartDependenciesOpts})
+	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClientHandle, BundleOptions{BuildChartDependenciesOpts: wc.BuildChartDependenciesOpts})
 }
