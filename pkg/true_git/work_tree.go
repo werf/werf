@@ -81,12 +81,17 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, comm
 	case err != nil:
 		return "", fmt.Errorf("error accessing %q: %w", workTreeDir, err)
 	default:
+		resolvedWorkTreeDir, err := filepath.EvalSymlinks(workTreeDir)
+		if err != nil {
+			return "", fmt.Errorf("unable to eval symlinks of %q: %w", workTreeDir, err)
+		}
+
 		isWorkTreeRegistered := false
 		if workTreeList, err := GetWorkTreeList(ctx, repoDir); err != nil {
 			return "", fmt.Errorf("unable to get worktree list for repo %s: %w", repoDir, err)
 		} else {
 			for _, workTreeDesc := range workTreeList {
-				if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(workTreeDir) {
+				if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(resolvedWorkTreeDir) {
 					isWorkTreeRegistered = true
 				}
 			}
