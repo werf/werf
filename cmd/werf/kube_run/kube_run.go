@@ -416,6 +416,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		"--restart", "Never",
 		"--quiet",
 		"--attach",
+		"--override-type", "strategic",
 	}
 
 	if cmdData.Interactive {
