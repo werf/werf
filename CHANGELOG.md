@@ -1,5 +1,20 @@
 # Changelog
 
+### [1.2.90](https://www.github.com/werf/werf/compare/v1.2.89...v1.2.90) (2022-04-21)
+
+
+### Features
+
+* **kube-run:** pod and container name can be used in --overrides ([686b402](https://www.github.com/werf/werf/commit/686b40293734609a1b2ad9523f0a74a392717411))
+* **kube-run:** set --overrides-type=strategic for better merges ([9f222a5](https://www.github.com/werf/werf/commit/9f222a547741335458f9d33b72d4f1ec195cb858))
+
+
+### Bug Fixes
+
+* .helm/Chart.yaml chart name redefines project name from werf.yaml ([cda82f7](https://www.github.com/werf/werf/commit/cda82f729dd7bf3d3f73ab91c01ea1a0b5e0a9b3))
+* **build:** cleanup orphan build containers on ctrl-c or gitlab cancel ([8702efa](https://www.github.com/werf/werf/commit/8702efaf5cae11da9c60e174397a280fa9537ba2))
+* **deploy:** do not print secret values in debug mode by default ([44be01a](https://www.github.com/werf/werf/commit/44be01a3461d471b16757954ce9617d7cd3f317f))
+
 ### [1.2.89](https://www.github.com/werf/werf/compare/v1.2.88...v1.2.89) (2022-04-19)
 
 
