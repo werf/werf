@@ -72,7 +72,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20200727161949-f79598599c5d // indirect
-	github.com/werf/copy-recurse v0.2.2
+	github.com/werf/copy-recurse v0.2.3
 	github.com/werf/kubedog v0.6.4-0.20220222141823-4ca722ade0ef
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.5.4
