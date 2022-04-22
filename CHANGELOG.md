@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.91](https://www.github.com/werf/werf/compare/v1.2.90...v1.2.91) (2022-04-22)
+
+
+### Bug Fixes
+
+* **buildah_backend:** bump copyrec, fix broken windows build ([cefeb72](https://www.github.com/werf/werf/commit/cefeb72c7b3d2e4261df3c82bf2587cce214384c))
+* git worktree switch invalidation loop ([e698bff](https://www.github.com/werf/werf/commit/e698bff8f547f35043cba3057f629fa0b7a9ad7e))
+
 ### [1.2.90](https://www.github.com/werf/werf/compare/v1.2.89...v1.2.90) (2022-04-21)
 
 
