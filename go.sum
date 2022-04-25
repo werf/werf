@@ -2061,6 +2061,8 @@ github.com/weppos/publicsuffix-go v0.5.0 h1:rutRtjBJViU/YjcI5d80t4JAVvDltS6bciJg
 github.com/weppos/publicsuffix-go v0.5.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
 github.com/werf/3p-helm/v3 v3.0.0-20220419131239-a2df9b725de3 h1:H3C8D/30GQ71laOCsLGJrIHZMAa4Joab48hkOfTH8KA=
 github.com/werf/3p-helm/v3 v3.0.0-20220419131239-a2df9b725de3/go.mod h1:Nm0Z2ciZFFvR9cRKpiRE2SMhJTgqY0b+ezT2cDcyqNw=
+github.com/werf/3p-helm/v3 v3.0.0-20220426084422-a22e7bc5d766 h1:Z1vzNVuptwHZBzHcSZ1rrJ8MVVdh8Sh7P39onUS9a3k=
+github.com/werf/3p-helm/v3 v3.0.0-20220426084422-a22e7bc5d766/go.mod h1:Nm0Z2ciZFFvR9cRKpiRE2SMhJTgqY0b+ezT2cDcyqNw=
 github.com/werf/copy-recurse v0.2.2 h1:OpBB+Ezsv7j+iQR02p7zUQXSefZ7UaKBtQPMg2dxi7M=
 github.com/werf/copy-recurse v0.2.2/go.mod h1:KVHSQ90p19xflWW0B7BJhLBwmSbEtuxIaBnjlUYRPhk=
 github.com/werf/copy-recurse v0.2.3 h1:bi43vHBDQiX2Qnq+Ci9IGqtm7YdzzpkBO+8MKjp6x8g=
