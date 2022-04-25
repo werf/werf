@@ -13,7 +13,7 @@ werf supports passing secrets as:
 
 ## Encryption key
 
-A key is required for encryption and decryption of data. There are two locations from which werf can read the key:
+A key is required for encryption and decryption of data. There are three locations from which werf can read the key:
 * from the `WERF_SECRET_KEY` environment variable
 * from a special `.werf_secret_key` file in the project root
 * from `~/.werf/global_secret_key` (globally)
