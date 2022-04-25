@@ -142,8 +142,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupRepoOptions(&commonCmdData, cmd)
+	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
 

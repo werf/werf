@@ -78,8 +78,8 @@ All meta-information related to werf is removed from the exported images, and th
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupRepoOptions(&commonCmdData, cmd)
+	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
