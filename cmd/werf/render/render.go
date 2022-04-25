@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
@@ -31,6 +32,7 @@ import (
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
@@ -39,6 +41,7 @@ var cmdData struct {
 	RenderOutput string
 	Validate     bool
 	IncludeCRDs  bool
+	ShowOnly     []string
 }
 
 var commonCmdData common.CmdData
@@ -127,8 +130,13 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.IncludeCRDs, "include-crds", "", common.GetBoolEnvironmentDefaultTrue("WERF_INCLUDE_CRDS"), "Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)")
 
 	cmd.Flags().StringVarP(&cmdData.RenderOutput, "output", "", os.Getenv("WERF_RENDER_OUTPUT"), "Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by default)")
+	cmd.Flags().StringArrayVarP(&cmdData.ShowOnly, "show-only", "s", []string{}, "only show manifests rendered from the given templates")
 
 	return cmd
+}
+
+func getShowOnly() []string {
+	return append(common.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...)
 }
 
 func runRender(ctx context.Context) error {
@@ -387,7 +395,7 @@ func runRender(ctx context.Context) error {
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
 	}
 
-	helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, output, helm_v3.TemplateCmdOptions{
+	templateOpts := helm_v3.TemplateCmdOptions{
 		ChainPostRenderer: wc.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),
@@ -397,7 +405,29 @@ func runRender(ctx context.Context) error {
 		},
 		Validate:    &cmdData.Validate,
 		IncludeCrds: &cmdData.IncludeCRDs,
-	})
+	}
+
+	fullChartDir := filepath.Join(giterminismManager.ProjectDir(), chartDir)
+
+	if showOnly := getShowOnly(); len(showOnly) > 0 {
+		var showFiles []string
+
+		for _, p := range showOnly {
+			pAbs := util.GetAbsoluteFilepath(p)
+			if strings.HasPrefix(pAbs, fullChartDir) {
+				tp := util.GetRelativeToBaseFilepath(fullChartDir, pAbs)
+				logboek.Context(ctx).Debug().LogF("Process show-only params: use path %q\n", tp)
+				showFiles = append(showFiles, tp)
+			} else {
+				logboek.Context(ctx).Debug().LogF("Process show-only params: use path %q\n", p)
+				showFiles = append(showFiles, p)
+			}
+		}
+
+		templateOpts.ShowFiles = &showFiles
+	}
+
+	helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, output, templateOpts)
 	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
 		return fmt.Errorf("helm templates rendering failed: %s", err)
 	}
