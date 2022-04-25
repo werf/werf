@@ -64,11 +64,8 @@ type CmdData struct {
 	SecretValues             *[]string
 	IgnoreSecretKey          *bool
 
-	CommonRepoData *RepoData
-	StagesStorage  *string
-
-	CommonFinalRepoData *RepoData
-	FinalStagesStorage  *string
+	Repo      *RepoData
+	FinalRepo *RepoData
 
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
@@ -390,34 +387,6 @@ func GetFirstExistingEnvVarAsString(envNames ...string) string {
 	return ""
 }
 
-func SetupCommonRepoData(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.CommonRepoData = &RepoData{IsCommon: true}
-
-	SetupImplementationForRepoData(cmdData.CommonRepoData, cmd, "repo-implementation", []string{"WERF_REPO_IMPLEMENTATION"}) // legacy
-	SetupContainerRegistryForRepoData(cmdData.CommonRepoData, cmd, "repo-container-registry", []string{"WERF_REPO_CONTAINER_REGISTRY"})
-	SetupDockerHubUsernameForRepoData(cmdData.CommonRepoData, cmd, "repo-docker-hub-username", []string{"WERF_REPO_DOCKER_HUB_USERNAME"})
-	SetupDockerHubPasswordForRepoData(cmdData.CommonRepoData, cmd, "repo-docker-hub-password", []string{"WERF_REPO_DOCKER_HUB_PASSWORD"})
-	SetupDockerHubTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-docker-hub-token", []string{"WERF_REPO_DOCKER_HUB_TOKEN"})
-	SetupGithubTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-github-token", []string{"WERF_REPO_GITHUB_TOKEN"})
-	SetupHarborUsernameForRepoData(cmdData.CommonRepoData, cmd, "repo-harbor-username", []string{"WERF_REPO_HARBOR_USERNAME"})
-	SetupHarborPasswordForRepoData(cmdData.CommonRepoData, cmd, "repo-harbor-password", []string{"WERF_REPO_HARBOR_PASSWORD"})
-	SetupQuayTokenForRepoData(cmdData.CommonRepoData, cmd, "repo-quay-token", []string{"WERF_REPO_QUAY_TOKEN"})
-}
-
-func SetupCommonFinalRepoData(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.CommonFinalRepoData = &RepoData{}
-
-	cmdData.CommonFinalRepoData.Implementation = new(string) // legacy
-	SetupContainerRegistryForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-container-registry", []string{"WERF_FINAL_REPO_CONTAINER_REGISTRY"})
-	SetupDockerHubUsernameForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-docker-hub-username", []string{"WERF_FINAL_REPO_DOCKER_HUB_USERNAME"})
-	SetupDockerHubPasswordForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-docker-hub-password", []string{"WERF_FINAL_REPO_DOCKER_HUB_PASSWORD"})
-	SetupDockerHubTokenForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-docker-hub-token", []string{"WERF_FINAL_REPO_DOCKER_HUB_TOKEN"})
-	SetupGithubTokenForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-github-token", []string{"WERF_FINAL_REPO_GITHUB_TOKEN"})
-	SetupHarborUsernameForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-harbor-username", []string{"WERF_FINAL_REPO_HARBOR_USERNAME"})
-	SetupHarborPasswordForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-harbor-password", []string{"WERF_FINAL_REPO_HARBOR_PASSWORD"})
-	SetupQuayTokenForRepoData(cmdData.CommonFinalRepoData, cmd, "final-repo-quay-token", []string{"WERF_FINAL_REPO_QUAY_TOKEN"})
-}
-
 func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SecondaryStagesStorage = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", []string{}, `Specify one or multiple secondary read-only repos with images that will be used as a cache.
@@ -450,26 +419,20 @@ func SetupCacheStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)`)
 }
 
-func SetupStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
+func SetupRepoOptions(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
 	SetupInsecureRegistry(cmdData, cmd)
 	SetupSkipTlsVerifyRegistry(cmdData, cmd)
-	SetupCommonRepoData(cmdData, cmd)
-	setupStagesStorage(cmdData, cmd)
+	SetupRepo(cmdData, cmd, opts)
 }
 
-func SetupFinalStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
-	SetupCommonFinalRepoData(cmdData, cmd)
-	setupFinalStagesStorage(cmdData, cmd)
+func SetupRepo(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
+	cmdData.Repo = NewRepoData("repo", opts)
+	cmdData.Repo.SetupCmd(cmd)
 }
 
-func setupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesStorage = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesStorage, "repo", "", os.Getenv("WERF_REPO"), fmt.Sprintf("Docker Repo to store stages (default $WERF_REPO)"))
-}
-
-func setupFinalStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.FinalStagesStorage = new(string)
-	cmd.Flags().StringVarP(cmdData.FinalStagesStorage, "final-repo", "", os.Getenv("WERF_FINAL_REPO"), fmt.Sprintf("Docker Repo to store only those stages which are going to be used by the Kubernetes cluster, in other word final images (default $WERF_FINAL_REPO)"))
+func SetupFinalRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.FinalRepo = NewRepoData("final-repo", RepoDataOptions{})
+	cmdData.FinalRepo.SetupCmd(cmd)
 }
 
 func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
@@ -974,104 +937,43 @@ func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
 	}
 }
 
-func GetStagesStorageAddress(cmdData *CmdData) (string, error) {
-	if *cmdData.StagesStorage == "" || *cmdData.StagesStorage == storage.LocalStorageAddress {
-		return "", fmt.Errorf("--repo=ADDRESS param required")
-	}
-
-	return *cmdData.StagesStorage, nil
+func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) storage.StagesStorage {
+	return storage.NewDockerServerStagesStorage(containerBackend.(*container_backend.DockerServerBackend))
 }
 
-func GetOptionalStagesStorageAddress(cmdData *CmdData) string {
-	if *cmdData.StagesStorage == "" {
-		return storage.LocalStorageAddress
-	}
-
-	return *cmdData.StagesStorage
-}
-
-func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) (storage.StagesStorage, error) {
-	return storage.NewStagesStorage(
-		storage.LocalStorageAddress,
-		containerBackend,
-		storage.StagesStorageOptions{},
-	)
-}
-
-func GetStagesStorage(stagesStorageAddress string, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+func GetStagesStorage(containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
 	if _, match := containerBackend.(*container_backend.BuildahBackend); match {
-		if stagesStorageAddress == "" || stagesStorageAddress == storage.LocalStorageAddress {
+		addr, err := cmdData.Repo.GetAddress()
+		if err != nil {
+			return nil, err
+		}
+
+		if addr == storage.LocalStorageAddress {
 			return nil, fmt.Errorf(`"--repo" should be specified and not equal ":local" for Buildah container backend`)
 		}
 	}
-
-	if err := ValidateRepoContainerRegistry(cmdData.CommonRepoData.GetContainerRegistry()); err != nil {
-		return nil, err
-	}
-
-	return storage.NewStagesStorage(
-		stagesStorageAddress,
-		containerBackend,
-		storage.StagesStorageOptions{
-			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
-				ContainerRegistry: cmdData.CommonRepoData.GetContainerRegistry(),
-				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
-					InsecureRegistry:      *cmdData.InsecureRegistry,
-					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-					DockerHubUsername:     *cmdData.CommonRepoData.DockerHubUsername,
-					DockerHubPassword:     *cmdData.CommonRepoData.DockerHubPassword,
-					DockerHubToken:        *cmdData.CommonRepoData.DockerHubToken,
-					GitHubToken:           *cmdData.CommonRepoData.GitHubToken,
-					HarborUsername:        *cmdData.CommonRepoData.HarborUsername,
-					HarborPassword:        *cmdData.CommonRepoData.HarborPassword,
-					QuayToken:             *cmdData.CommonRepoData.QuayToken,
-				},
-			},
-		},
-	)
+	return cmdData.Repo.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
 func GetOptionalFinalStagesStorage(containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	finalRepoAddress := *cmdData.FinalStagesStorage
-	if finalRepoAddress == "" {
+	if *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
-
-	if err := ValidateRepoContainerRegistry(cmdData.CommonFinalRepoData.GetContainerRegistry()); err != nil {
-		return nil, err
-	}
-
-	return storage.NewStagesStorage(
-		finalRepoAddress,
-		containerBackend,
-		storage.StagesStorageOptions{
-			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
-				ContainerRegistry: cmdData.CommonFinalRepoData.GetContainerRegistry(),
-				DockerRegistryOptions: docker_registry.DockerRegistryOptions{
-					InsecureRegistry:      *cmdData.InsecureRegistry,
-					SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-					DockerHubUsername:     *cmdData.CommonFinalRepoData.DockerHubUsername,
-					DockerHubPassword:     *cmdData.CommonFinalRepoData.DockerHubPassword,
-					DockerHubToken:        *cmdData.CommonFinalRepoData.DockerHubToken,
-					GitHubToken:           *cmdData.CommonFinalRepoData.GitHubToken,
-					HarborUsername:        *cmdData.CommonFinalRepoData.HarborUsername,
-					HarborPassword:        *cmdData.CommonFinalRepoData.HarborPassword,
-					QuayToken:             *cmdData.CommonFinalRepoData.QuayToken,
-				},
-			},
-		},
-	)
+	return cmdData.FinalRepo.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
 func GetCacheStagesStorageList(containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
 	for _, address := range GetCacheStagesStorage(cmdData) {
-		repoStagesStorage, err := storage.NewStagesStorage(address, containerBackend, storage.StagesStorageOptions{})
+		repoData := NewRepoData("cache-repo", RepoDataOptions{})
+		repoData.Address = &address
+
+		storage, err := repoData.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create cache stages storage at %s: %w", address, err)
+			return nil, fmt.Errorf("unable to create cache stages storage in %s: %w", address, err)
 		}
-		res = append(res, repoStagesStorage)
+		res = append(res, storage)
 	}
 
 	return res, nil
@@ -1080,22 +982,21 @@ func GetCacheStagesStorageList(containerBackend container_backend.ContainerBacke
 func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
-	if _, matched := containerBackend.(*container_backend.DockerServerBackend); matched {
+	if dockerBackend, matched := containerBackend.(*container_backend.DockerServerBackend); matched {
 		if stagesStorage.Address() != storage.LocalStorageAddress {
-			localStagesStorage, err := storage.NewStagesStorage(storage.LocalStorageAddress, containerBackend, storage.StagesStorageOptions{})
-			if err != nil {
-				return nil, fmt.Errorf("unable to create local secondary stages storage: %w", err)
-			}
-			res = append(res, localStagesStorage)
+			res = append(res, storage.NewDockerServerStagesStorage(dockerBackend))
 		}
 	}
 
 	for _, address := range GetSecondaryStagesStorage(cmdData) {
-		repoStagesStorage, err := storage.NewStagesStorage(address, containerBackend, storage.StagesStorageOptions{})
+		repoData := NewRepoData("secondary-repo", RepoDataOptions{})
+		repoData.Address = &address
+
+		storage, err := repoData.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create secondary stages storage at %s: %w", address, err)
+			return nil, fmt.Errorf("unable to create secondary stages storage in %s: %w", address, err)
 		}
-		res = append(res, repoStagesStorage)
+		res = append(res, storage)
 	}
 
 	return res, nil
@@ -1466,19 +1367,6 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 
 func DockerRegistryInit(ctx context.Context, cmdData *CmdData) error {
 	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
-}
-
-func ValidateRepoContainerRegistry(containerRegistry string) error {
-	supportedValues := docker_registry.ImplementationList()
-	supportedValues = append(supportedValues, "auto", "")
-
-	for _, supportedContainerRegistry := range supportedValues {
-		if supportedContainerRegistry == containerRegistry {
-			return nil
-		}
-	}
-
-	return fmt.Errorf("specified container registry %q is not supported", containerRegistry)
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {

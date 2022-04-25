@@ -9,7 +9,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/cmd/helm"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -64,8 +64,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
-	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -114,17 +114,17 @@ func runRender(ctx context.Context) error {
 	var isLocal bool
 	switch {
 	case cmdData.BundleDir != "":
-		if *commonCmdData.StagesStorage != "" {
+		if *commonCmdData.Repo.Address != "" {
 			return fmt.Errorf("only one of --bundle-dir or --repo should be specified, but both provided")
 		}
-		if *commonCmdData.FinalStagesStorage != "" {
+		if *commonCmdData.FinalRepo.Address != "" {
 			return fmt.Errorf("only one of --bundle-dir or --final-repo should be specified, but both provided")
 		}
 
 		isLocal = true
-	case *commonCmdData.StagesStorage == storage.LocalStorageAddress:
+	case *commonCmdData.Repo.Address == storage.LocalStorageAddress:
 		return fmt.Errorf("--repo %s is not allowed, specify remote storage address", storage.LocalStorageAddress)
-	case *commonCmdData.StagesStorage != "":
+	case *commonCmdData.Repo.Address != "":
 		isLocal = false
 	default:
 		return fmt.Errorf("either --bundle-dir or --repo required")
@@ -165,7 +165,7 @@ func runRender(ctx context.Context) error {
 			return err
 		}
 
-		repoAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+		repoAddress, err := commonCmdData.Repo.GetAddress()
 		if err != nil {
 			return err
 		}

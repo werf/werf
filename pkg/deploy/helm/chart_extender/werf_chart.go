@@ -293,7 +293,7 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 			return nil, fmt.Errorf("unable to construct bundle input values: %w", err)
 		}
 
-		valsData, err = json.MarshalIndent(vals, "", "  ")
+		valsData, err = yaml.Marshal(vals)
 		if err != nil {
 			return nil, fmt.Errorf("unable to prepare values: %w", err)
 		}
@@ -313,7 +313,7 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 	logboek.Context(ctx).Debug().LogF("Saving bundle values:\n%s\n---\n", valsData)
 
 	valuesFile := filepath.Join(destDir, "values.yaml")
-	if err := ioutil.WriteFile(valuesFile, append(valsData, []byte("\n")...), os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(valuesFile, valsData, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("unable to write %q: %w", valuesFile, err)
 	}
 

@@ -210,8 +210,8 @@ services:
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
@@ -390,8 +390,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	stagesStorageAddress := common.GetOptionalStagesStorageAddress(&commonCmdData)
-	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerBackend, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
