@@ -65,8 +65,8 @@ It is safe to run this command periodically (daily is enough) by automated clean
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
@@ -189,14 +189,14 @@ func runCleanup(ctx context.Context) error {
 
 	projectName := werfConfig.Meta.Project
 
-	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
+	_, err = commonCmdData.Repo.GetAddress()
 	if err != nil {
 		logboek.Context(ctx).Default().LogLnDetails(`The "werf cleanup" command is only used to cleaning the container registry. In case you need to clean the runner or the localhost, use the commands of the "werf host" group.
 It is worth noting that auto-cleaning is enabled by default, and manual use is usually not required (if not, we would appreciate feedback and creating an issue https://github.com/werf/werf/issues/new).`)
 
 		return err
 	}
-	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerBackend, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}

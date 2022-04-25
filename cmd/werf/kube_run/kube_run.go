@@ -142,8 +142,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
 
@@ -332,11 +332,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		return fmt.Errorf("image %q is not defined in werf.yaml", logging.ImageLogName(imageName, false))
 	}
 
-	stagesStorageAddress, err := common.GetStagesStorageAddress(&commonCmdData)
-	if err != nil {
-		return err
-	}
-	stagesStorage, err := common.GetStagesStorage(stagesStorageAddress, containerBackend, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}

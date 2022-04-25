@@ -82,8 +82,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -223,16 +223,11 @@ func runExport(ctx context.Context) error {
 
 	logboek.LogOptionalLn()
 
-	repoAddress, err := common.GetStagesStorageAddress(&commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepository string
 
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
-		stagesStorage, err := common.GetStagesStorage(repoAddress, containerBackend, &commonCmdData)
+		stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
 		if err != nil {
 			return err
 		}
