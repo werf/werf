@@ -89,15 +89,3 @@ func (rec *ClientIDRecord) String() string {
 type ImageMetadata struct {
 	ContentDigest string
 }
-
-type StagesStorageOptions struct {
-	RepoStagesStorageOptions
-}
-
-func NewStagesStorage(stagesStorageAddress string, containerBackend container_backend.ContainerBackend, options StagesStorageOptions) (StagesStorage, error) {
-	if stagesStorageAddress == LocalStorageAddress {
-		return NewDockerServerStagesStorage(containerBackend.(*container_backend.DockerServerBackend)), nil
-	} else { // Docker registry based stages storage
-		return NewRepoStagesStorage(stagesStorageAddress, containerBackend, options.RepoStagesStorageOptions)
-	}
-}

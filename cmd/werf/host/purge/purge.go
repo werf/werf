@@ -106,10 +106,7 @@ func runReset(ctx context.Context) error {
 			return err
 		}
 	} else {
-		stagesStorage, err := common.GetLocalStagesStorage(containerBackend)
-		if err != nil {
-			return err
-		}
+		stagesStorage := common.GetLocalStagesStorage(containerBackend)
 		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err
