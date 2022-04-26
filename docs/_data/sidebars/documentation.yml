@@ -1051,9 +1051,6 @@ entries:
               - title: Интроспекция стадий
                 url: /advanced/development_and_debug/stage_introspection.html
 
-              - title: Рендеринг и проверка конфигурации
-                url: /advanced/development_and_debug/lint_and_render_chart.html
-
           - title: Поддерживаемые container registries
             url: /advanced/supported_container_registries.html
 
@@ -1080,9 +1077,6 @@ entries:
 
               - title: GitHub Actions
                 url: /internals/how_ci_cd_integration_works/github_actions.html
-
-          - title: Преобразование имен в werf
-            url: /internals/names_slug_algorithm.html
 
           - title: Интеграция с SSH-агентом
             url: /internals/integration_with_ssh_agent.html

@@ -48,7 +48,6 @@ At this stage, you can prepare an application for tuning some parameters. It sup
 
 This stage is intended for configuring application settings. The corresponding set of actions includes copying some profiles into `/etc`, copying configuration files to already-known locations, creating a file containing the application version. These actions should not be time-consuming since they will likely be executed on every commit.
 
-
 ### custom strategy
 
 Once again, no limitations are imposed on assembly instructions. The previous definitions of _user stages_ are just suggestions arising from our experience with real-world applications. You can even use merely a single _user stage_ or define your strategy for grouping assembly instructions and benefit from caching and Git dependencies.
