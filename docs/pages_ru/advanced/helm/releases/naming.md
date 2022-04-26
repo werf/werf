@@ -29,7 +29,7 @@ permalink: advanced/helm/releases/naming.html
 
 ### Слагификация имени релиза
 
-Сформированное по шаблону имя Helm-релиза [слагифицируется]({{ "internals/names_slug_algorithm.html#базовый-алгоритм" | true_relative_url }}), в результате чего получается уникальное имя Helm-релиза.
+Сформированное по шаблону имя Helm-релиза слагифицируется, в результате чего получается уникальное имя Helm-релиза.
 
 Слагификация имени Helm-релиза включена по умолчанию, но может быть отключена указанием параметра [`deploy.helmReleaseSlug=false`]({{ "/reference/werf_yaml.html#имя-релиза" | true_relative_url }}) в файле конфигурации `werf.yaml`.
 
@@ -48,6 +48,6 @@ permalink: advanced/helm/releases/naming.html
 
 ### Слагификация namespace Kubernetes
 
-Сформированное по шаблону имя namespace [слагифицируется]({{ "internals/names_slug_algorithm.html#базовый-алгоритм" | true_relative_url }}), чтобы удовлетворять требованиям к [DNS именам](https://www.ietf.org/rfc/rfc1035.txt), в результате чего получается уникальное имя namespace в Kubernetes.
+Сформированное по шаблону имя namespace слагифицируется, чтобы удовлетворять требованиям к [DNS именам](https://www.ietf.org/rfc/rfc1035.txt), в результате чего получается уникальное имя namespace в Kubernetes.
 
 Слагификация имени namespace включена по умолчанию, но может быть отключена указанием параметра [`deploy.namespaceSlug=false`]({{ "/reference/werf_yaml.html#namespace-в-kubernetes" | true_relative_url }}) в файле конфигурации `werf.yaml`.

@@ -9,15 +9,16 @@ directive_summary: shell_and_ansible
 ***User stage*** is a [_stage_]({{ "internals/stages_and_storage.html" | true_relative_url }}) containing _assembly instructions_ from the config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create the specific docker layer by executing assembly instructions contained within the respective stage.
 
+
 ## Using user stages
 
 werf provides four _user stages_ where assembly instructions can be defined. werf does not impose any restrictions on assembly instructions. You can specify the same variety of instructions as for the `RUN` instruction in Dockerfile. At the same time, the categorization of assembly instructions is based on our experience with real applications. So, the following actions are enough for building the vast majority of applications:
 
-- install system packages
-- install system dependencies
-- install application dependencies
-- setup system applications
-- setup application
+- install system packages;
+- install system dependencies;
+- install application dependencies;
+- setup system applications;
+- setup application.
 
 What is the best strategy to execute them? You might think the best way is to execute them one by one while caching interim results. On the other side, it is better not to mix instructions for these actions because of different file dependencies. The _user stages pattern_ suggests the following strategy:
 
@@ -28,7 +29,7 @@ What is the best strategy to execute them? You might think the best way is to ex
 
 ### beforeInstall
 
-This stage executes various instructions before installing an application. It is best suited for system applications that rarely change. At the same time, their installation process is very time-consuming. Also, at this stage, you can configure some system parameters that rarely change, such as setting a locale or a timezone, adding groups and users, etc. For example, you can install language distributions and build tools like PHP and composer, java and gradle, and so on, at this stage.
+This stage executes various instructions before installing an application. It is best suited for system applications that rarely change. At the same time, their installation process is very time-consuming. Also, at this stage, you can configure some system parameters that rarely change, such as setting a locale or a timezone, adding groups and users, etc. For example, you can install language distributions and build tools like PHP and Composer, Java and Gradle, and so on, at this stage.
 
 In practice, all these components rarely change, and the _beforeInstall_ stage caches
 them for an extended period.
@@ -37,7 +38,7 @@ them for an extended period.
 
 This stage is for installing an application. It is best suited for installing application dependencies and configuring some basic settings.
 
-Instructions on this stage have access to application source codes, so you can install application dependencies using build tools (like composer, gradle, npm, etc.) that require a manifest file (e.g., pom.xml, Gruntfile) to work. A best practice is to make this stage dependent on changes in that manifest file.
+Instructions on this stage have access to application source codes, so you can install application dependencies using build tools (like Composer, Gradle, npm, etc.) that require a manifest file (e.g., pom.xml, Gruntfile) to work. A best practice is to make this stage dependent on changes in that manifest file.
 
 ### beforeSetup
 
@@ -47,19 +48,20 @@ At this stage, you can prepare an application for tuning some parameters. It sup
 
 This stage is intended for configuring application settings. The corresponding set of actions includes copying some profiles into `/etc`, copying configuration files to already-known locations, creating a file containing the application version. These actions should not be time-consuming since they will likely be executed on every commit.
 
+
 ### custom strategy
 
-Once again, no limitations are imposed on assembly instructions. The previous definitions of _user stages_ are just suggestions arising from our experience with real-world applications. You can even use merely a single _user stage_ or define your strategy for grouping assembly instructions and benefit from caching and git dependencies.
+Once again, no limitations are imposed on assembly instructions. The previous definitions of _user stages_ are just suggestions arising from our experience with real-world applications. You can even use merely a single _user stage_ or define your strategy for grouping assembly instructions and benefit from caching and Git dependencies.
 
 ## Syntax
 
 There are two top-level ***builder directives*** for assembly instructions that are mutually exclusive: `shell` and `ansible`. You can build an image either via ***shell instructions*** or via their ***ansible counterparts***.
 
 The _builder directive_ includes four directives that define assembly instructions for each _user stage_:
-- `beforeInstall`
-- `install`
-- `beforeSetup`
-- `setup`
+- `beforeInstall`;
+- `install`;
+- `beforeSetup`;
+- `setup`.
 
 Builder directives can also contain ***cacheVersion directives*** that, in essence, are user-defined parts of _user-stage digests_. The detailed information is available in the [CacheVersion](#dependency-on-the-cacheversion-value) section.
 
@@ -134,10 +136,10 @@ ansible:
 _Ansible assembly instructions_ for _user stage_ is a set of ansible tasks.
 
 Generated `ansible.cfg` contains settings for ansible:
-- use local transport (transport = local)
-- werf's stdout_callback method for better logging (stdout_callback = werf)
-- turn on the force_color mode (force_color = 1)
-- use sudo for privilege escalation (to avoid using `become` in ansible tasks)
+- use local transport (transport = local);
+- werf's stdout_callback method for better logging (stdout_callback = werf);
+- turn on the force_color mode (force_color = 1);
+- use sudo for privilege escalation (to avoid using `become` in ansible tasks).
 
 Generated `playbook.yml` is a playbook with all tasks from the specific _user stage_. Here is an example of `werf.yaml` that includes the _install_ stage:
 
@@ -228,12 +230,12 @@ In this case, the Jinja expression `{{item}}` must be escaped:
 
 {% raw %}
 ```yaml
-# escape {{ only
+# Escape {{ only.
 src: {{"{{"}} item }}
 ```
 or
 ```yaml
-# escape the whole expression
+# Escape the whole expression.
 src: {{`{{item}}`}}
 ```
 {% endraw %}
@@ -248,9 +250,9 @@ src: {{`{{item}}`}}
 You can use service environment variables which are available in build container during the build. They can be used in your shell assembly instructions. Using them will not change the build instructions thus will not trigger stage rebuilds, even when these service environment variables change.
 
 Following environment variables are available:
-- `WERF_COMMIT_HASH`. Example of value: `cda9d17265d174c62424e8f7b5e5640bf749c565`
-- `WERF_COMMIT_TIME_HUMAN`. Example of value: `2022-01-24 17:26:19 +0300 +0300`
-- `WERF_COMMIT_TIME_UNIX`. Example of value: `1643034379`
+- `WERF_COMMIT_HASH`. Example of value: `cda9d17265d174c62424e8f7b5e5640bf749c565`.
+- `WERF_COMMIT_TIME_HUMAN`. Example of value: `2022-01-24 17:26:19 +0300 +0300`.
+- `WERF_COMMIT_TIME_UNIX`. Example of value: `1643034379`.
 
 Usage example:
 {% raw %}

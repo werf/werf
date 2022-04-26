@@ -261,7 +261,6 @@ git:
 
 A good understanding of the process of werf searching for access keys is required to use the remote repositories over ssh (read more below).
 
-
 #### Working with ssh keys
 
 The ssh-agent provides keys for ssh connections. It is a daemon operating via a file socket. The path to the socket is stored in the environment variable `SSH_AUTH_SOCK`. werf mounts this file socket into all _assembly containers_ and sets the environment variable `SSH_AUTH_SOCK`, i.e., connection to remote git repositories is established using keys registered in the running ssh-agent.
