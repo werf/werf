@@ -13,7 +13,7 @@ permalink: internals/how_ci_cd_integration_works/github_actions.html
 
 ## WERF_ADD_ANNOTATION_PROJECT_GIT
 
-Значение для установки переменной окружения [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ "internals/how_ci_cd_integration_works/general_overview.html#werf_add_annotation_project_git" | true_relative_url }}) формируется на основе переменной окружения GitHub Actions [`GITHUB_REPOSITORY`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) следующим образом:
+Значение для установки переменной окружения [`WERF_ADD_ANNOTATION_PROJECT_GIT`]({{ "internals/how_ci_cd_integration_works/general_overview.html#werf_add_annotation_project_git" | true_relative_url }}) формируется на основе переменной окружения GitHub Actions [`GITHUB_REPOSITORY`](https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables) следующим образом:
 
 ```
 project.werf.io/git=https://github.com/$GITHUB_REPOSITORY
@@ -21,7 +21,7 @@ project.werf.io/git=https://github.com/$GITHUB_REPOSITORY
 
 ## WERF_ADD_ANNOTATION_CI_COMMIT
 
-Значение для установки переменной окружения [`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ "internals/how_ci_cd_integration_works/general_overview.html#werf_add_annotation_ci_commit" | true_relative_url }}) формируется на основе переменной окружения GitHub Actions [`GITHUB_SHA`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) следующим образом:
+Значение для установки переменной окружения [`WERF_ADD_ANNOTATION_CI_COMMIT`]({{ "internals/how_ci_cd_integration_works/general_overview.html#werf_add_annotation_ci_commit" | true_relative_url }}) формируется на основе переменной окружения GitHub Actions [`GITHUB_SHA`](https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables) следующим образом:
 
 ```
 ci.werf.io/commit=$GITHUB_SHA
@@ -29,7 +29,7 @@ ci.werf.io/commit=$GITHUB_SHA
 
 ## WERF_ADD_ANNOTATION_GITHUB_ACTIONS_RUN_URL
 
-Значение для установки переменной окружения `WERF_ADD_ANNOTATION_GITHUB_CI_WORKFLOW_URL` формируется на основе переменной окружения GitHub Actions [`GITHUB_RUN_ID`](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables) следующим образом:
+Значение для установки переменной окружения `WERF_ADD_ANNOTATION_GITHUB_CI_WORKFLOW_URL` формируется на основе переменной окружения GitHub Actions [`GITHUB_RUN_ID`](https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables) следующим образом:
 
 ```
 github.ci.werf.io/workflow-run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
