@@ -1,5 +1,5 @@
 ---
-in production successfully.title: CI/CD workflow basics
+title: CI/CD workflow basics
 permalink: advanced/ci_cd/ci_cd_workflow_basics.html
 ---
 
