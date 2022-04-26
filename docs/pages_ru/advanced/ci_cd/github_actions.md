@@ -39,7 +39,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 * Кластер Kubernetes.
 * Проект на [GitHub](https://github.com/).
 * Приложение, которое успешно собирается и деплоится с помощью werf.
-* Понимание [основных концептов GitHub Actions](https://help.github.com/en/actions/getting-started-with-github-actions/core-concepts-for-github-actions).
+* Понимание [основных концептов GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions).
   
 > Далее в примерах статьи будут использоваться виртуальные машины, предоставляемые GitHub, с OS Linux (`runs-on: ubuntu-latest`). Тем не менее, все примеры также справедливы для предустановленных self-hosted runners на базе любой OS
 
@@ -96,7 +96,7 @@ author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igryc
 
 Конфигурация задания достаточно проста, поэтому хочется сделать акцент на том, чего в ней нет — явной авторизации в container registry, вызова `docker login`. 
 
-В простейшем случае, при использовании встроенного [container registry](https://help.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages), авторизация выполняется автоматически при вызове команды `werf ci-env`. В качестве необходимых аргументов используются переменные окружения GitHub, [секретная переменная `GITHUB_TOKEN`](https://help.github.com/en/actions/configuring-and-managing-workflows/authenticating-with-the-github_token#about-the-github_token-secret), а также имя пользователя (`GITHUB_ACTOR`) инициировавшего запуск workflow.
+В простейшем случае, при использовании встроенного [container registry](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#external-events-repository_dispatch), авторизация выполняется автоматически при вызове команды `werf ci-env`. В качестве необходимых аргументов используются переменные окружения GitHub, [секретная переменная `GITHUB_TOKEN`](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret), а также имя пользователя (`GITHUB_ACTOR`) инициировавшего запуск workflow.
 
 Если необходимо выполнить авторизацию с произвольными учётными данными или с внешним container registry, то необходимо использовать готовый action для вашего container registry или просто выполнить `docker login` перед использованием werf. 
 
