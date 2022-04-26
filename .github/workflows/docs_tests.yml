@@ -8,6 +8,9 @@ on:
       - 'README.md'
       - 'README_ru.md'
 
+env:
+  GOPATH: ${{ github.workspace }}/go
+
 jobs:
 
   check_cli_and_readme_partials:
@@ -19,7 +22,16 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
-        id: go
+
+      - name: Setup Golang caches
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
 
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev
@@ -33,7 +45,6 @@ jobs:
           ./scripts/ci/go-test.sh ./integration/suites/docs
 
   check_links:
-    container: jekyll/builder:4.2.0
     name: Check broken links
     runs-on: ubuntu-latest
     strategy:
@@ -42,36 +53,32 @@ jobs:
         lang: [ru, en]
     steps:
 
+      - name: Set up Go 1.17
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Setup Golang caches
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
+
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Prepare
-        run: |
-          cd docs
-          mkdir -m 777 .jekyll-cache  _site
-          gem update bundler
-          bundle install
-
-      - name: Build (ru)
-        if: matrix.lang == 'ru'
-        run: |
-          cd docs
-          bundle exec jekyll build -d _site --config _config.yml,_config_ru.yml
-
-      - name: Build (en)
-        if: matrix.lang == 'en'
-        run: |
-          cd docs
-          bundle exec jekyll build -d _site --config _config.yml
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check links
-        run: |
-          cd docs
-          bundle exec htmlproofer \
-            --allow-hash-href \
-            --empty-alt-ignore \
-            --check_html \
-            --url_ignore "/localhost/,/example.com/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/habr.com/,/cncf.io/,/\/guides/,/\/how_it_works\.html/,/\/installation\.html/,/werf_yaml.html#configuring-cleanup-policies/,/css\/configuration-table.css/,/kubernetes.io\/cluster-service=true/" \
-            --url_swap "documentation/v[0-9]+[^/]+/:documentation/" \
-            --http-status-ignore "0,429" \
-            _site
+        run: make docs_check_broken_links_${{ matrix.lang }}
+        env:
+          WERF_REPO: "ghcr.io/${{ github.repository_owner }}/werfio"
