@@ -34,14 +34,17 @@ fmt:
 lint:
 	golangci-lint run ./... --build-tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build"
 
+docs: werf
+	./scripts/docs/regen.sh $$GOPATH/bin/werf
 
-docs:
-	./docs/regen.sh
+docs_check_broken_links_ru: werf
+	./scripts/docs/check_broken_links.sh ru $$GOPATH/bin/werf
 
+docs_check_broken_links_en: werf
+	./scripts/docs/check_broken_links.sh main $$GOPATH/bin/werf
 
 build-images:
 	cd ./scripts/images && PACKER_LOG=1 packer build -force template.pkr.hcl
-
 
 clean:
 	rm -f $$GOPATH/bin/werf
