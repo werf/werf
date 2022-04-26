@@ -245,6 +245,8 @@ werf render [options]
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
+  -s, --show-only=[]
+            only show manifests rendered from the given templates
   -Z, --skip-build=false
             Disable building of docker images, cached images in the repo should exist in the repo   
             if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)

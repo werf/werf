@@ -87,7 +87,7 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
             print headers).
   -o, --output=''
             Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file|custom-columns-file|custom-columns|wide See    
+            |jsonpath|jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide See    
             custom columns [https://kubernetes.io/docs/reference/kubectl/overview/#custom-columns], 
             golang template [http://golang.org/pkg/text/template/#pkg-overview] and jsonpath        
             template [https://kubernetes.io/docs/reference/kubectl/jsonpath/].
