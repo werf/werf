@@ -38,29 +38,7 @@ werf изначально поддерживает GitLab CI/CD и GitHub Action
 
 ### Подключение к кластеру Kubernetes
 
-werf подключается и работает с кластером Kubernetes через файлы [kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/).
-
-Если `kubectl` уже установлен и сконфигурирован для работы с кластером Kubernetes, то `werf` также будет работать "из коробки", поскольку он использует те же самые kubeconfig-настройки (дефолтный файл настроек `~/.kube/config` и переменную среды `KUBECONFIG`).
-
-В ином случае необходимо создать файл kubeconfig и передать его в werf с помощью флага `--kube-config` (или переменной среды `WERF_KUBE_CONFIG`), флага `--kube-context` (или переменной `WERF_KUBE_CONTEXT`) или флага `--kube-config-base64` (переменной `WERF_KUBE_CONFIG_BASE64`), чтобы передать закодированные base64 kubeconfig-настройки непосредственно в werf.
-
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">Пример</a>
-<div class="details__content" markdown="1">
-Используем кастомный файл kubeconfig `./my-kube-config`:
-
-```shell
-werf converge --kube-config ./my-kube-config
-```
-
-Передаем закодированный в base64 конфиг с помощью переменной окружения:
-
-```shell
-export WERF_KUBE_CONFIG_BASE64="$(cat ./my-kube-config | base64 -w0)"
-werf converge
-```
-</div>
-</div>
+werf подключается и работает с кластером Kubernetes через файлы [kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/). По умолчанию используется `~/.kube/config`, но вы можете изменить это с помощью флагов (`--kube-config` или `--kube-config-base64`) или соответствующих переменных среды (например, `WERF_KUBE_CONFIG`) .
 
 ### Настройка доступа задания CI/CD к container registry
 
@@ -74,7 +52,7 @@ werf converge
 ```shell
 docker login registry.mydomain.org/application -u USER -p PASSWORD
 ```
-  
+
 Если постоянный логин раннер-хоста в container registry не требуется, выполните процедуру входа в каждом из заданий Ci/CD. Мы рекомендуем создавать временную конфигурацию docker для каждого CI/CD-задания (вместо использования директории по умолчанию `~/.docker/`), чтобы предотвратить конфликт разных заданий, выполняющихся на одном и том же раннере в одно и то же время.
 
 ```shell
@@ -97,34 +75,19 @@ docker login registry.mydomain.org/application -u USER -p PASSWORD
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">Пример</a>
 <div class="details__content" markdown="1">
-
 Задаем переменную среду `WERF_ENV`:
 
 ```shell
-export WERF_ENV=production
-werf converge
+WERF_ENV=production werf converge
 ```
 
-Используем флаг cli:
+Или используем встроенные переменные среды CI/CD-системы:
 
 ```shell
-werf converge --env staging
-```
-
-Используем встроенные переменные среды CI/CD-системы:
-
-```shell
-export WERF_ENV=$CI_ENVIRONMENT_NAME
-werf converge
+werf converge --env $CI_ENVIRONMENT_NAME
 ```
 </div>
 </div>
-
-### Checkout на коммит git и запуск werf
-
-Обычно CI/CD-система производит checkout на текущий git-коммит полностью автоматически, и пользователю не приходится этим заниматься самостоятельно. Однако некоторые системы могут быть лишены подобной функциональности. В этом случае вы должны самостоятельно произвести checkout на целевой git-коммит в репозитории проекта перед запуском основных команд werf (`werf converge`, `werf dismiss`, `werf cleanup`).
-
-Примечание: поведение команды werf converge полностью детерминировано и прозрачно с точки зрения репозитория git. После завершения ее работы приложение будет запущено. Оно будет соответствовать состоянию, определенному в целевом git-коммите. -
 
 ### Другие настройки werf, связанные с CI/CD
 
