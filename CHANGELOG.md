@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.92](https://www.github.com/werf/werf/compare/v1.2.91...v1.2.92) (2022-04-27)
+
+
+### Features
+
+* **bundle:** implement 'bundle copy' command ([92122e7](https://www.github.com/werf/werf/commit/92122e7fa9cdd8f1710555b2df6bddb1cd7f1cdc))
+* support --show-only|-s helm-style render option + export-values chaining ([e9e3b86](https://www.github.com/werf/werf/commit/e9e3b86549ad078b9db6686e0984a76d3cc10271))
+
+
+### Bug Fixes
+
+* **render:** manifests keys sort order not preserved after rendering ([469ce7a](https://www.github.com/werf/werf/commit/469ce7af96b3442f29ad4106d056c75d7bb6b312))
+
 ### [1.2.91](https://www.github.com/werf/werf/compare/v1.2.90...v1.2.91) (2022-04-22)
 
 
