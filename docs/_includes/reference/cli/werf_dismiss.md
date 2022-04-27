@@ -92,27 +92,28 @@ werf dismiss [options]
       --env=''
             Use specified environment (default $WERF_ENV)
       --final-repo=''
-            Container registry storage address (default $WERF_FINAL_REPO)
+            Docker Repo to store only those stages which are going to be used by the Kubernetes     
+            cluster, in other word final images (default $WERF_FINAL_REPO)
       --final-repo-container-registry=''
-            Choose final-repo container registry implementation.
+            Choose repo container registry for .
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
             github, gitlab, harbor, quay.
             Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
             repo address).
       --final-repo-docker-hub-password=''
-            final-repo Docker Hub password (default $WERF_FINAL_REPO_DOCKER_HUB_PASSWORD)
+            Docker Hub password for  (default $WERF_FINAL_REPO_DOCKER_HUB_PASSWORD)
       --final-repo-docker-hub-token=''
-            final-repo Docker Hub token (default $WERF_FINAL_REPO_DOCKER_HUB_TOKEN)
+            Docker Hub token for  (default $WERF_FINAL_REPO_DOCKER_HUB_TOKEN)
       --final-repo-docker-hub-username=''
-            final-repo Docker Hub username (default $WERF_FINAL_REPO_DOCKER_HUB_USERNAME)
+            Docker Hub username for  (default $WERF_FINAL_REPO_DOCKER_HUB_USERNAME)
       --final-repo-github-token=''
-            final-repo GitHub token (default $WERF_FINAL_REPO_GITHUB_TOKEN)
+            GitHub token for  (default $WERF_FINAL_REPO_GITHUB_TOKEN)
       --final-repo-harbor-password=''
-            final-repo Harbor password (default $WERF_FINAL_REPO_HARBOR_PASSWORD)
+            Harbor password for  (default $WERF_FINAL_REPO_HARBOR_PASSWORD)
       --final-repo-harbor-username=''
-            final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
+            Harbor username for  (default $WERF_FINAL_REPO_HARBOR_USERNAME)
       --final-repo-quay-token=''
-            final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
+            quay.io token for  (default $WERF_FINAL_REPO_QUAY_TOKEN)
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
@@ -172,27 +173,27 @@ werf dismiss [options]
             Max releases to keep in release storage. Can be set by environment variable             
             $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
       --repo=''
-            Container registry storage address (default $WERF_REPO)
+            Docker Repo to store stages (default $WERF_REPO)
       --repo-container-registry=''
-            Choose repo container registry implementation.
+            Choose repo container registry.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
             github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
       --repo-docker-hub-password=''
-            repo Docker Hub password (default $WERF_REPO_DOCKER_HUB_PASSWORD)
+            Docker Hub password (default $WERF_REPO_DOCKER_HUB_PASSWORD)
       --repo-docker-hub-token=''
-            repo Docker Hub token (default $WERF_REPO_DOCKER_HUB_TOKEN)
+            Docker Hub token (default $WERF_REPO_DOCKER_HUB_TOKEN)
       --repo-docker-hub-username=''
-            repo Docker Hub username (default $WERF_REPO_DOCKER_HUB_USERNAME)
+            Docker Hub username (default $WERF_REPO_DOCKER_HUB_USERNAME)
       --repo-github-token=''
-            repo GitHub token (default $WERF_REPO_GITHUB_TOKEN)
+            GitHub token (default $WERF_REPO_GITHUB_TOKEN)
       --repo-harbor-password=''
-            repo Harbor password (default $WERF_REPO_HARBOR_PASSWORD)
+            Harbor password (default $WERF_REPO_HARBOR_PASSWORD)
       --repo-harbor-username=''
-            repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
+            Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
-            repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+            quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
