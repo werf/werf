@@ -11,13 +11,19 @@ import (
 )
 
 func NewStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.StagesStorage {
-	if stagesStorageAddress == storage.LocalStorageAddress {
-		return storage.NewDockerServerStagesStorage(&container_backend.DockerServerBackend{})
-	} else {
-		dockerRegistry, err := docker_registry.NewDockerRegistry(stagesStorageAddress, implementationName, dockerRegistryOptions)
-		Expect(err).ShouldNot(HaveOccurred())
-		return storage.NewRepoStagesStorage(stagesStorageAddress, &container_backend.DockerServerBackend{}, dockerRegistry)
-	}
+	s, err := storage.NewStagesStorage(
+		stagesStorageAddress,
+		&container_backend.DockerServerBackend{},
+		storage.StagesStorageOptions{
+			RepoStagesStorageOptions: storage.RepoStagesStorageOptions{
+				DockerRegistryOptions: dockerRegistryOptions,
+				ContainerRegistry:     implementationName,
+			},
+		},
+	)
+	Ω(err).ShouldNot(HaveOccurred())
+
+	return s
 }
 
 func StagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {

@@ -64,12 +64,22 @@ type RepoStagesStorage struct {
 	ContainerBackend container_backend.ContainerBackend
 }
 
-func NewRepoStagesStorage(repoAddress string, containerBackend container_backend.ContainerBackend, dockerRegistry docker_registry.Interface) *RepoStagesStorage {
+type RepoStagesStorageOptions struct {
+	docker_registry.DockerRegistryOptions
+	ContainerRegistry string
+}
+
+func NewRepoStagesStorage(repoAddress string, containerBackend container_backend.ContainerBackend, options RepoStagesStorageOptions) (*RepoStagesStorage, error) {
+	dockerRegistry, err := docker_registry.NewDockerRegistry(repoAddress, options.ContainerRegistry, options.DockerRegistryOptions)
+	if err != nil {
+		return nil, fmt.Errorf("error creating container registry accessor for repo %q: %w", repoAddress, err)
+	}
+
 	return &RepoStagesStorage{
 		RepoAddress:      repoAddress,
 		DockerRegistry:   dockerRegistry,
 		ContainerBackend: containerBackend,
-	}
+	}, nil
 }
 
 func (storage *RepoStagesStorage) ConstructStageImageName(_, digest string, uniqueID int64) string {

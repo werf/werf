@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy/bundles"
@@ -50,8 +50,8 @@ func NewCmd() *cobra.Command {
 	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
-	common.SetupRepoOptions(&commonCmdData, cmd) // FIXME
-	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd) // FIXME
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)

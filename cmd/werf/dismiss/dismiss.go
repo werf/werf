@@ -83,8 +83,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupRepoOptions(&commonCmdData, cmd)
-	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupRelease(&commonCmdData, cmd)

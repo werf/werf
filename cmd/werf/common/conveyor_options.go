@@ -84,7 +84,7 @@ func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism
 		return nil, nil
 	}
 
-	if *commonCmdData.Repo.Address == "" || *commonCmdData.Repo.Address == storage.LocalStorageAddress {
+	if *commonCmdData.StagesStorage == "" || *commonCmdData.StagesStorage == storage.LocalStorageAddress {
 		return nil, fmt.Errorf("custom tags can only be used with remote storage: --repo=ADDRESS param required")
 	}
 
