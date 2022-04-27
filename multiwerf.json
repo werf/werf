@@ -42,11 +42,11 @@
         },
         {
           "name": "stable",
-          "version": "v1.1.30"
+          "version": "v1.1.31"
         },
         {
           "name": "rock-solid",
-          "version": "v1.1.28"
+          "version": "v1.1.30"
         }
       ]
     },
@@ -55,7 +55,7 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.2.91"
+          "version": "v1.2.92"
         },
         {
           "name": "beta",
