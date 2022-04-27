@@ -366,15 +366,15 @@ func (m *cleanupManager) printStageIDCustomTagListTable(ctx context.Context) {
 	}
 }
 
-func (m *cleanupManager) prepareStageIDTableRows(ctx context.Context, stageIDAnyList map[string][]string) [][]interface{} {
+func (m *cleanupManager) prepareStageIDTableRows(ctx context.Context, stageIDCustomTagOrCommitList map[string][]string) [][]interface{} {
 	var rows [][]interface{}
-	for stageID, anyList := range stageIDAnyList {
-		for ind, any := range anyList {
+	for stageID, anyList := range stageIDCustomTagOrCommitList {
+		for ind, customTagOrCommit := range anyList {
 			var columns []interface{}
 			if ind == 0 {
 				stageIDColumn := stageID
 
-				space := len(stageID) - len(any) - 1
+				space := len(stageID) - len(customTagOrCommit) - 1
 				if logboek.Context(ctx).Streams().ContentWidth() < space {
 					stageIDColumn = fmt.Sprintf("%s..%s", stageID[:space-5], stageID[space-3:])
 				}
@@ -384,7 +384,7 @@ func (m *cleanupManager) prepareStageIDTableRows(ctx context.Context, stageIDAny
 				columns = append(columns, "")
 			}
 
-			columns = append(columns, any)
+			columns = append(columns, customTagOrCommit)
 			rows = append(rows, columns)
 		}
 	}
