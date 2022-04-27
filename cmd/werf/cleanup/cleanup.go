@@ -64,8 +64,8 @@ It is safe to run this command periodically (daily is enough) by automated clean
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupRepoOptions(&commonCmdData, cmd)
-	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")

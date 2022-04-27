@@ -9,7 +9,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	"helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -64,8 +64,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
-	common.SetupRepoOptions(&commonCmdData, cmd)
-	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -114,17 +114,17 @@ func runRender(ctx context.Context) error {
 	var isLocal bool
 	switch {
 	case cmdData.BundleDir != "":
-		if *commonCmdData.Repo.Address != "" {
+		if *commonCmdData.StagesStorage != "" {
 			return fmt.Errorf("only one of --bundle-dir or --repo should be specified, but both provided")
 		}
-		if *commonCmdData.FinalRepo.Address != "" {
+		if *commonCmdData.FinalStagesStorage != "" {
 			return fmt.Errorf("only one of --bundle-dir or --final-repo should be specified, but both provided")
 		}
 
 		isLocal = true
-	case *commonCmdData.Repo.Address == storage.LocalStorageAddress:
+	case *commonCmdData.StagesStorage == storage.LocalStorageAddress:
 		return fmt.Errorf("--repo %s is not allowed, specify remote storage address", storage.LocalStorageAddress)
-	case *commonCmdData.Repo.Address != "":
+	case *commonCmdData.StagesStorage != "":
 		isLocal = false
 	default:
 		return fmt.Errorf("either --bundle-dir or --repo required")

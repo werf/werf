@@ -64,8 +64,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupRepoOptions(&commonCmdData, cmd)
-	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalStagesStorageOptions(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)

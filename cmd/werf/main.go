@@ -12,7 +12,6 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/build"
 	bundle_apply "github.com/werf/werf/cmd/werf/bundle/apply"
-	bundle_copy "github.com/werf/werf/cmd/werf/bundle/copy"
 	bundle_download "github.com/werf/werf/cmd/werf/bundle/download"
 	bundle_export "github.com/werf/werf/cmd/werf/bundle/export"
 	bundle_publish "github.com/werf/werf/cmd/werf/bundle/publish"
@@ -187,7 +186,6 @@ func bundleCmd() *cobra.Command {
 		bundle_export.NewCmd(),
 		bundle_download.NewCmd(),
 		bundle_render.NewCmd(),
-		bundle_copy.NewCmd(),
 	)
 
 	return cmd
