@@ -95,7 +95,13 @@ sections:
             value: "bool"
             description:
               en: Disable a cleanup policy that allows not to remove images built in last hours (keepImagesBuiltWithinLastNHours)
-              ru: Отключить политику очистки, которая позволяет не удалять образы собранные в рамках заданного периода времени (keepImagesBuiltWithinLastNHours)
+              ru: Отключить политику очистки, которая позволяет не удалять образы, собранные в рамках заданного периода времени (keepImagesBuiltWithinLastNHours)
+          - name: keepImagesBuiltWithinLastNHours
+            value: "uint"
+            description:
+              en: The minimum number of hours that must elapse since the image is built
+              ru: Минимальное количество часов, которое должно пройти с момента сборки образа
+            default: "2"
           - name: keepPolicies
             description:
               en: Set of policies to select relevant images using the Git history

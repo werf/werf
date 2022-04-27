@@ -11,6 +11,7 @@ type MetaCleanup struct {
 	DisableKubernetesBasedPolicy       bool
 	DisableGitHistoryBasedPolicy       bool
 	DisableBuiltWithinLastNHoursPolicy bool
+	KeepImagesBuiltWithinLastNHours    uint64
 	KeepPolicies                       []*MetaCleanupKeepPolicy
 }
 
