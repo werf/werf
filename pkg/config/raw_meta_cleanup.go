@@ -8,7 +8,10 @@ import (
 )
 
 type rawMetaCleanup struct {
-	KeepPolicies []*rawMetaCleanupKeepPolicy `yaml:"keepPolicies,omitempty"`
+	DisableKubernetesBasedPolicy       bool                        `yaml:"disableKubernetesBasedPolicy,omitempty"`
+	DisableGitHistoryBasedPolicy       bool                        `yaml:"disableGitHistoryBasedPolicy,omitempty"`
+	DisableBuiltWithinLastNHoursPolicy bool                        `yaml:"disableBuiltWithinLastNHoursPolicy,omitempty"`
+	KeepPolicies                       []*rawMetaCleanupKeepPolicy `yaml:"keepPolicies,omitempty"`
 
 	rawMeta               *rawMeta
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
@@ -180,6 +183,10 @@ func (c *rawMetaCleanupKeepPolicyReferences) processRegexpString(name, configVal
 
 func (c *rawMetaCleanup) toMetaCleanup() MetaCleanup {
 	metaCleanup := MetaCleanup{}
+
+	metaCleanup.DisableKubernetesBasedPolicy = c.DisableKubernetesBasedPolicy
+	metaCleanup.DisableBuiltWithinLastNHoursPolicy = c.DisableBuiltWithinLastNHoursPolicy
+	metaCleanup.DisableGitHistoryBasedPolicy = c.DisableGitHistoryBasedPolicy
 
 	for _, policy := range c.KeepPolicies {
 		metaCleanup.KeepPolicies = append(metaCleanup.KeepPolicies, policy.toMetaCleanupKeepPolicy())

@@ -30,8 +30,8 @@ type CleanupOptions struct {
 	LocalGit                                GitRepo
 	KubernetesContextClients                []*kube.ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
-	WithoutKube                             bool
-	GitHistoryBasedCleanupOptions           config.MetaCleanup
+	WithoutKube                             bool // legacy
+	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         uint64
 	DryRun                                  bool
 }
@@ -51,7 +51,7 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 		KubernetesContextClients:                options.KubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: options.KubernetesNamespaceRestrictionByContext,
 		WithoutKube:                             options.WithoutKube,
-		GitHistoryBasedCleanupOptions:           options.GitHistoryBasedCleanupOptions,
+		ConfigMetaCleanup:                       options.ConfigMetaCleanup,
 		KeepStagesBuiltWithinLastNHours:         options.KeepStagesBuiltWithinLastNHours,
 	}
 }
@@ -68,7 +68,7 @@ type cleanupManager struct {
 	KubernetesContextClients                []*kube.ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool
-	GitHistoryBasedCleanupOptions           config.MetaCleanup
+	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         uint64
 	DryRun                                  bool
 }
@@ -117,38 +117,35 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if m.LocalGit != nil {
-		if !m.WithoutKube {
-			if len(m.KubernetesContextClients) == 0 {
-				return fmt.Errorf("no kubernetes configs found to skip images being used in the Kubernetes, pass --without-kube option (or WERF_WITHOUT_KUBE env var) to suppress this error")
-			}
-
-			deployedDockerImagesNames, err := m.deployedDockerImagesNames(ctx)
-			if err != nil {
-				return fmt.Errorf("error getting deployed docker images names from Kubernetes: %w", err)
-			}
-
-			if err := logboek.Context(ctx).LogProcess("Skipping repo tags that are being used in Kubernetes").DoError(func() error {
-				return m.skipStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImagesNames)
-			}); err != nil {
-				return err
-			}
-
-			if err := logboek.Context(ctx).LogProcess("Skipping final repo tags that are being used in Kubernetes").DoError(func() error {
-				return m.skipFinalStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImagesNames)
-			}); err != nil {
-				return err
-			}
+	if !(m.WithoutKube || m.ConfigMetaCleanup.DisableKubernetesBasedPolicy) {
+		if len(m.KubernetesContextClients) == 0 {
+			return fmt.Errorf("no kubernetes configs found to skip images being used in the Kubernetes, pass --without-kube option (or WERF_WITHOUT_KUBE env var) to suppress this error")
 		}
 
+		deployedDockerImagesNames, err := m.deployedDockerImagesNames(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting deployed docker images names from Kubernetes: %w", err)
+		}
+
+		if err := logboek.Context(ctx).LogProcess("Skipping repo tags that are being used in Kubernetes").DoError(func() error {
+			return m.skipStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImagesNames)
+		}); err != nil {
+			return err
+		}
+
+		if err := logboek.Context(ctx).LogProcess("Skipping final repo tags that are being used in Kubernetes").DoError(func() error {
+			return m.skipFinalStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImagesNames)
+		}); err != nil {
+			return err
+		}
+	}
+
+	if !m.ConfigMetaCleanup.DisableGitHistoryBasedPolicy {
 		if err := logboek.Context(ctx).LogProcess("Git history-based cleanup").DoError(func() error {
 			return m.gitHistoryBasedCleanup(ctx)
 		}); err != nil {
 			return err
 		}
-	} else {
-		logboek.Context(ctx).Warn().LogLn("WARNING: Git history-based cleanup skipped due to local git repository was not detected")
-		logboek.Context(ctx).Default().LogOptionalLn()
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Cleanup unused stages").DoError(func() error {
@@ -263,7 +260,7 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 
 	var referencesToScan []*git_history_based_cleanup.ReferenceToScan
 	if err := logboek.Context(ctx).Default().LogProcess("Preparing references to scan").DoError(func() error {
-		referencesToScan, err = git_history_based_cleanup.ReferencesToScan(ctx, gitRepository, m.GitHistoryBasedCleanupOptions.KeepPolicies)
+		referencesToScan, err = git_history_based_cleanup.ReferencesToScan(ctx, gitRepository, m.ConfigMetaCleanup.KeepPolicies)
 		return err
 	}); err != nil {
 		return err
@@ -610,8 +607,8 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		return fmt.Errorf("unable to init imports metadata: %w", err)
 	}
 
+	// skip stages and their relatives covered by Kubernetes- or git history-based cleanup policies
 	stageDescriptionListToDelete := stageDescriptionList
-	// skip stages and their relatives based on deployed images in k8s and git history based cleanup policies
 	{
 		var excludedSDList []*image.StageDescription
 		for _, sd := range m.stageManager.GetProtectedStageDescriptionList() {
