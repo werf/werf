@@ -625,26 +625,28 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		})
 	}
 
-	// skip stages and their relatives based on KeepStagesBuiltWithinLastNHours policy
-	{
-		if m.KeepStagesBuiltWithinLastNHours != 0 {
-			var excludedSDList []*image.StageDescription
-			for _, sd := range stageDescriptionListToDelete {
-				if (time.Since(sd.Info.GetCreatedAt()).Hours()) <= float64(m.KeepStagesBuiltWithinLastNHours) {
-					var excludedRelativesSDList []*image.StageDescription
-					stageDescriptionListToDelete, excludedRelativesSDList = m.excludeStageAndRelativesByImageID(stageDescriptionListToDelete, sd.Info.ID)
-					excludedSDList = append(excludedSDList, excludedRelativesSDList...)
-				}
-			}
+	keepImagesBuiltWithinLastNHours := m.ConfigMetaCleanup.KeepImagesBuiltWithinLastNHours
+	if m.KeepStagesBuiltWithinLastNHours != 0 {
+		keepImagesBuiltWithinLastNHours = m.KeepStagesBuiltWithinLastNHours
+	}
 
-			if len(excludedSDList) != 0 {
-				logboek.Context(ctx).Default().LogBlock("Saved stages that were built within last %d hours (%d/%d)", m.KeepStagesBuiltWithinLastNHours, len(excludedSDList), len(stageDescriptionList)).Do(func() {
-					for _, stage := range excludedSDList {
-						logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stage.Info.Tag)
-						logboek.Context(ctx).LogOptionalLn()
-					}
-				})
+	if !(m.ConfigMetaCleanup.DisableBuiltWithinLastNHoursPolicy || keepImagesBuiltWithinLastNHours == 0) {
+		var excludedSDList []*image.StageDescription
+		for _, sd := range stageDescriptionListToDelete {
+			if (time.Since(sd.Info.GetCreatedAt()).Hours()) <= float64(keepImagesBuiltWithinLastNHours) {
+				var excludedRelativesSDList []*image.StageDescription
+				stageDescriptionListToDelete, excludedRelativesSDList = m.excludeStageAndRelativesByImageID(stageDescriptionListToDelete, sd.Info.ID)
+				excludedSDList = append(excludedSDList, excludedRelativesSDList...)
 			}
+		}
+
+		if len(excludedSDList) != 0 {
+			logboek.Context(ctx).Default().LogBlock("Saved stages that were built within last %d hours (%d/%d)", keepImagesBuiltWithinLastNHours, len(excludedSDList), len(stageDescriptionList)).Do(func() {
+				for _, stage := range excludedSDList {
+					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stage.Info.Tag)
+					logboek.Context(ctx).LogOptionalLn()
+				}
+			})
 		}
 	}
 

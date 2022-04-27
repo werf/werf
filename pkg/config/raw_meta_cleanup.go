@@ -12,6 +12,7 @@ type rawMetaCleanup struct {
 	DisableGitHistoryBasedPolicy       bool                        `yaml:"disableGitHistoryBasedPolicy,omitempty"`
 	DisableBuiltWithinLastNHoursPolicy bool                        `yaml:"disableBuiltWithinLastNHoursPolicy,omitempty"`
 	KeepPolicies                       []*rawMetaCleanupKeepPolicy `yaml:"keepPolicies,omitempty"`
+	KeepImagesBuiltWithinLastNHours    *uint64                     `yaml:"keepImagesBuiltWithinLastNHours,omitempty"`
 
 	rawMeta               *rawMeta
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
@@ -63,6 +64,11 @@ func (c *rawMetaCleanup) UnmarshalYAML(unmarshal func(interface{}) error) error 
 
 	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawMeta.doc); err != nil {
 		return err
+	}
+
+	if c.KeepImagesBuiltWithinLastNHours == nil {
+		defaultKeepImagesBuiltWithinLastNHours := uint64(2)
+		c.KeepImagesBuiltWithinLastNHours = &defaultKeepImagesBuiltWithinLastNHours
 	}
 
 	return nil
@@ -191,6 +197,8 @@ func (c *rawMetaCleanup) toMetaCleanup() MetaCleanup {
 	for _, policy := range c.KeepPolicies {
 		metaCleanup.KeepPolicies = append(metaCleanup.KeepPolicies, policy.toMetaCleanupKeepPolicy())
 	}
+
+	metaCleanup.KeepImagesBuiltWithinLastNHours = *c.KeepImagesBuiltWithinLastNHours
 
 	return metaCleanup
 }
