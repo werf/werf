@@ -14,19 +14,19 @@ groups:
  - name: "1.1"
    channels:
     - name: alpha
-      version: 1.1.31 # fix WERF_KUBECONFIG_BASE64
+      version: 1.1.31
     - name: beta
-      version: 1.1.31 # fix WERF_KUBECONFIG_BASE64
+      version: 1.1.31
     - name: ea
-      version: 1.1.31 # fix WERF_KUBECONFIG_BASE64
+      version: 1.1.31
     - name: stable
-      version: 1.1.30 # fix git worktree switch
+      version: 1.1.31 # fix WERF_KUBECONFIG_BASE64
     - name: rock-solid
-      version: 1.1.28 # deprecation warnings for werf v1.1 and outdated mutliwerf
+      version: 1.1.30 # fix git worktree switch
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.91 # fix windows build, git worktree switch invalidation loop
+      version: 1.2.92 # fix windows build, git worktree switch invalidation loop
     - name: beta
       version: 1.2.83+fix3 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: ea
