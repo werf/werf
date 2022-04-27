@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
@@ -233,18 +234,24 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 	}
 	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
 
-	kubernetesContextClients, err := common.GetKubernetesContextClients(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
+	var kubernetesContextClients []*kube.ContextClient
+	var kubernetesNamespaceRestrictionByContext map[string]string
+	if !(*commonCmdData.WithoutKube || werfConfig.Meta.Cleanup.DisableKubernetesBasedPolicy) {
+		kubernetesContextClients, err = common.GetKubernetesContextClients(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
+		}
+
+		kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
 	}
 
 	cleanupOptions := cleaning.CleanupOptions{
 		ImageNameList:                           imagesNames,
 		LocalGit:                                giterminismManager.LocalGitRepo().(*git_repo.Local),
 		KubernetesContextClients:                kubernetesContextClients,
-		KubernetesNamespaceRestrictionByContext: common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients),
+		KubernetesNamespaceRestrictionByContext: kubernetesNamespaceRestrictionByContext,
 		WithoutKube:                             *commonCmdData.WithoutKube,
-		GitHistoryBasedCleanupOptions:           werfConfig.Meta.Cleanup,
+		ConfigMetaCleanup:                       werfConfig.Meta.Cleanup,
 		KeepStagesBuiltWithinLastNHours:         *commonCmdData.KeepStagesBuiltWithinLastNHours,
 		DryRun:                                  *commonCmdData.DryRun,
 	}

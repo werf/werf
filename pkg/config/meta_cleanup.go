@@ -8,7 +8,10 @@ import (
 )
 
 type MetaCleanup struct {
-	KeepPolicies []*MetaCleanupKeepPolicy
+	DisableKubernetesBasedPolicy       bool
+	DisableGitHistoryBasedPolicy       bool
+	DisableBuiltWithinLastNHoursPolicy bool
+	KeepPolicies                       []*MetaCleanupKeepPolicy
 }
 
 type MetaCleanupKeepPolicy struct {

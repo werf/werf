@@ -81,9 +81,24 @@ sections:
         collapsible: true
         isCollapsedByDefault: false
         directives:
+          - name: disableKubernetesBasedPolicy
+            value: "bool"
+            description:
+              en: Disable a cleanup policy that allows not to remove images deployed in Kubernetes from the container registry
+              ru: Отключить политику очистки, которая позволяет не удалять запущенные в Kubernetes образы из container registry
+          - name: disableGitHistoryBasedPolicy
+            value: "bool"
+            description:
+              en: Disable a cleanup policy that allows not to remove images taking into account user-defined policies by the Git history (keepPolicies)
+              ru: Отключить политику очистки, которая позволяет не удалять образы с учётом пользовательских политик по истории Git (keepPolicies)
+          - name: disableBuiltWithinLastNHoursPolicy
+            value: "bool"
+            description:
+              en: Disable a cleanup policy that allows not to remove images built in last hours (keepImagesBuiltWithinLastNHours)
+              ru: Отключить политику очистки, которая позволяет не удалять образы собранные в рамках заданного периода времени (keepImagesBuiltWithinLastNHours)
           - name: keepPolicies
             description:
-              en: Set of policies to select relevant images using the git history
+              en: Set of policies to select relevant images using the Git history
               ru: Набор политик для выборки актуальных образов, используя историю Git
             detailsAnchor:
               en: "#configuring-cleanup-policies"
