@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.94](https://www.github.com/werf/werf/compare/v1.2.93...v1.2.94) (2022-04-28)
+
+
+### Bug Fixes
+
+* broken export-values ([ec1c0e4](https://www.github.com/werf/werf/commit/ec1c0e4631c49e2cf4530cac953cc984fe2f035b))
+
 ### [1.2.93](https://www.github.com/werf/werf/compare/v1.2.92...v1.2.93) (2022-04-28)
 
 
