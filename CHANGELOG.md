@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.93](https://www.github.com/werf/werf/compare/v1.2.92...v1.2.93) (2022-04-28)
+
+
+### Features
+
+* **bundle:** implement 'bundle copy' command ([16dbd2e](https://www.github.com/werf/werf/commit/16dbd2e8e9a2f3e15bb85f598a009b479a636188))
+* **cleanup:** add cleanup.keepBuiltWithinLastNHours directive in werf.yaml ([aabfcea](https://www.github.com/werf/werf/commit/aabfcea7172d6241906e207578009645abe5daec))
+* **cleanup:** disable cleanup policies in werf.yaml ([c293f3d](https://www.github.com/werf/werf/commit/c293f3d8b8509f00615edd772e89065c704298e2))
+
 ### [1.2.92](https://www.github.com/werf/werf/compare/v1.2.91...v1.2.92) (2022-04-27)
 
 
