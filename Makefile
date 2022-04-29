@@ -9,13 +9,17 @@ endif
 all: werf
 
 ifeq ($(uname_S), Linux)
-werf:
-	CGO_ENABLED=1 go install -compiler gc -ldflags="-linkmode external -extldflags=-static" -tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" github.com/werf/werf/cmd/werf
+# Cgo needed for proper buildah support
+werf: werf-with-cgo
 else
-werf:
-	CGO_ENABLED=0 go install -tags="dfrunmount dfssh containers_image_openpgp" "github.com/werf/werf/cmd/werf"
+werf: werf-without-cgo
 endif
 
+werf-with-cgo:
+	CGO_ENABLED=1 go install -compiler gc -ldflags="-linkmode external -extldflags=-static" -tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" github.com/werf/werf/cmd/werf
+
+werf-without-cgo:
+	CGO_ENABLED=0 go install -tags="dfrunmount dfssh containers_image_openpgp" "github.com/werf/werf/cmd/werf"
 
 buildah-test:
 	CGO_ENABLED=1 go install -compiler gc -ldflags="-linkmode external -extldflags=-static" -tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" github.com/werf/werf/cmd/buildah-test
@@ -46,10 +50,10 @@ lint:
 docs: werf
 	./scripts/docs/regen.sh $$GOPATH/bin/werf
 
-docs_check_broken_links_ru: werf
+docs_check_broken_links_ru: werf-without-cgo
 	./scripts/docs/check_broken_links.sh ru $$GOPATH/bin/werf
 
-docs_check_broken_links_en: werf
+docs_check_broken_links_en: werf-without-cgo
 	./scripts/docs/check_broken_links.sh main $$GOPATH/bin/werf
 
 build-images:
