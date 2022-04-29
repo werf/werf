@@ -8,6 +8,7 @@ description: Разверните ваше первое приложение с 
 
 ## Подготовка
 
+
 Установите [werf](/installation.html).
 
 У вас должен быть доступ к кластеру Kubernetes и возможность push'ить образы в container registry. Container registry также должен быть доступен из кластера для извлечения образов.
