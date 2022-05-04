@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"regexp"
 	"sort"
 	"strings"
 
-	orig_yaml "gopkg.in/yaml.v2"
+	yaml_v3 "gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/releaseutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
@@ -35,37 +34,73 @@ type ExtraAnnotationsAndLabelsPostRenderer struct {
 	ExtraLabels      map[string]string
 }
 
-func findMapByKey(mapSlice orig_yaml.MapSlice, key string) orig_yaml.MapSlice {
-	for _, item := range mapSlice {
-		if itemKey, ok := item.Key.(string); ok {
-			if itemKey == key {
-				if itemValue, ok := item.Value.(orig_yaml.MapSlice); ok {
-					return itemValue
-				}
-			}
+func replaceNodeByKey(node *yaml_v3.Node, key string, value *yaml_v3.Node) {
+	content := node.Content
+	end := len(content)
+
+	for pos := 0; pos < end; pos += 2 {
+		keyNode := content[pos]
+
+		if keyNode.Tag != "!!str" {
+			continue
+		}
+
+		var k string
+		if err := keyNode.Decode(&k); err != nil {
+			continue
+		}
+
+		if k == key {
+			content[pos+1] = value
+			return
+		}
+	}
+}
+
+func findNodeByKey(node *yaml_v3.Node, key string) *yaml_v3.Node {
+	content := node.Content
+	end := len(content)
+
+	for pos := 0; pos < end; pos += 2 {
+		keyNode := content[pos]
+		valueNode := content[pos+1]
+
+		if keyNode.Tag != "!!str" {
+			continue
+		}
+
+		var k string
+		if err := keyNode.Decode(&k); err != nil {
+			continue
+		}
+
+		if k == key {
+			return valueNode
 		}
 	}
 
 	return nil
 }
 
-func setMapValueByKey(mapSlice orig_yaml.MapSlice, key string, value interface{}) (res orig_yaml.MapSlice) {
-	var found bool
-	for _, item := range mapSlice {
-		if itemKey, ok := item.Key.(string); ok {
-			if itemKey == key {
-				res = append(res, orig_yaml.MapItem{Key: key, Value: value})
-				found = true
-				continue
+func getMapNode(docNode *yaml_v3.Node) *yaml_v3.Node {
+	if docNode.Kind == yaml_v3.DocumentNode {
+		if len(docNode.Content) > 0 {
+			n := docNode.Content[0]
+			if n.Tag == "!!map" {
+				return n
 			}
 		}
-		res = append(res, item)
 	}
+	return nil
+}
 
-	if !found {
-		res = append(res, orig_yaml.MapItem{Key: key, Value: value})
+func createNode(v interface{}) *yaml_v3.Node {
+	newNode := &yaml_v3.Node{}
+	if err := newNode.Encode(v); err != nil {
+		logboek.Warn().LogF("Unable to encode map %#v into yaml node: %s\n", v, err)
+		return nil
 	}
-	return
+	return newNode
 }
 
 func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
@@ -95,10 +130,8 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 
 	splitModifiedManifests := make([]string, 0)
 
-	manifestNameRegex := regexp.MustCompile("# Source: .*")
 	for _, manifestKey := range manifestsKeys {
 		manifestContent := splitManifestsByKeys[manifestKey]
-		manifestSource := manifestNameRegex.FindString(manifestContent)
 
 		if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
 			fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- original manifest BEGIN\n")
@@ -117,8 +150,8 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 			continue
 		}
 
-		var objMapSlice orig_yaml.MapSlice
-		if err := orig_yaml.Unmarshal([]byte(manifestContent), &objMapSlice); err != nil {
+		var objNode yaml_v3.Node
+		if err := yaml_v3.Unmarshal([]byte(manifestContent), &objNode); err != nil {
 			logboek.Warn().LogF("Unable to decode yaml manifest as map slice: %s: will not add extra annotations and labels to this object:\n%s\n---\n", err, manifestContent)
 			splitModifiedManifests = append(splitModifiedManifests, manifestContent)
 			continue
@@ -131,37 +164,77 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 		if obj.IsList() && len(extraAnnotations) > 0 {
 			logboek.Warn().LogF("werf annotations won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind\n", obj.GetKind())
 		} else if len(extraAnnotations) > 0 {
-			if metadata := findMapByKey(objMapSlice, "metadata"); metadata != nil {
-				annotations := findMapByKey(metadata, "annotations")
-				for k, v := range extraAnnotations {
-					annotations = append(annotations, orig_yaml.MapItem{Key: k, Value: v})
+			if objMapNode := getMapNode(&objNode); objMapNode != nil {
+				if metadataNode := findNodeByKey(objMapNode, "metadata"); metadataNode != nil {
+					if annotationsNode := findNodeByKey(metadataNode, "annotations"); annotationsNode != nil {
+						if annotationsNode.Kind == yaml_v3.AliasNode {
+							if newMetadataAnnotationsNode := createNode(map[string]interface{}{"annotations": map[string]string{}}); newMetadataAnnotationsNode != nil {
+								if newAnnotationsNode := findNodeByKey(newMetadataAnnotationsNode, "annotations"); newAnnotationsNode != nil {
+									newAnnotationsNode.Content = append(newAnnotationsNode.Content, annotationsNode.Alias.Content...)
+
+									if newExtraAnnotationsNode := createNode(extraAnnotations); newExtraAnnotationsNode != nil {
+										newAnnotationsNode.Content = append(newAnnotationsNode.Content, newExtraAnnotationsNode.Content...)
+									}
+								}
+								replaceNodeByKey(metadataNode, "annotations", newMetadataAnnotationsNode)
+							}
+						} else {
+							if newExtraAnnotationsNode := createNode(extraAnnotations); newExtraAnnotationsNode != nil {
+								annotationsNode.Content = append(annotationsNode.Content, newExtraAnnotationsNode.Content...)
+							}
+						}
+					} else {
+						if newMetadataAnnotationsNode := createNode(map[string]interface{}{"annotations": extraAnnotations}); newMetadataAnnotationsNode != nil {
+							metadataNode.Content = append(metadataNode.Content, newMetadataAnnotationsNode.Content...)
+						}
+					}
 				}
-				metadata = setMapValueByKey(metadata, "annotations", annotations)
-				objMapSlice = setMapValueByKey(objMapSlice, "metadata", metadata)
 			}
 		}
 
 		if obj.IsList() && len(extraLabels) > 0 {
 			logboek.Warn().LogF("werf labels won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind\n", obj.GetKind())
 		} else if len(extraLabels) > 0 {
-			if metadata := findMapByKey(objMapSlice, "metadata"); metadata != nil {
-				labels := findMapByKey(metadata, "labels")
-				for k, v := range extraLabels {
-					labels = append(labels, orig_yaml.MapItem{Key: k, Value: v})
+			if objMapNode := getMapNode(&objNode); objMapNode != nil {
+				if metadataNode := findNodeByKey(objMapNode, "metadata"); metadataNode != nil {
+					if labelsNode := findNodeByKey(metadataNode, "labels"); labelsNode != nil {
+						if labelsNode.Kind == yaml_v3.AliasNode {
+							if newMetadataLabelsNode := createNode(map[string]interface{}{"labels": map[string]string{}}); newMetadataLabelsNode != nil {
+								if newLabelsNode := findNodeByKey(newMetadataLabelsNode, "labels"); newLabelsNode != nil {
+									newLabelsNode.Content = append(newLabelsNode.Content, labelsNode.Alias.Content...)
+
+									if newExtraLabelsNode := createNode(extraLabels); newExtraLabelsNode != nil {
+										newLabelsNode.Content = append(newLabelsNode.Content, newExtraLabelsNode.Content...)
+									}
+								}
+								replaceNodeByKey(metadataNode, "labels", newMetadataLabelsNode)
+							}
+						} else {
+							if newExtraLabelsNode := createNode(extraLabels); newExtraLabelsNode != nil {
+								labelsNode.Content = append(labelsNode.Content, newExtraLabelsNode.Content...)
+							}
+						}
+					} else {
+						if newMetadataLabelsNode := createNode(map[string]interface{}{"labels": extraLabels}); newMetadataLabelsNode != nil {
+							metadataNode.Content = append(metadataNode.Content, newMetadataLabelsNode.Content...)
+						}
+					}
 				}
-				metadata = setMapValueByKey(metadata, "labels", labels)
-				objMapSlice = setMapValueByKey(objMapSlice, "metadata", metadata)
 			}
 		}
 
-		if modifiedManifestContent, err := orig_yaml.Marshal(objMapSlice); err != nil {
+		var modifiedManifestContent bytes.Buffer
+		yamlEncoder := yaml_v3.NewEncoder(&modifiedManifestContent)
+		yamlEncoder.SetIndent(2)
+
+		if err := yamlEncoder.Encode(&objNode); err != nil {
 			return nil, fmt.Errorf("unable to modify manifest: %w\n%s\n---\n", err, manifestContent)
 		} else {
-			splitModifiedManifests = append(splitModifiedManifests, manifestSource+"\n"+string(modifiedManifestContent))
+			splitModifiedManifests = append(splitModifiedManifests, modifiedManifestContent.String())
 
 			if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
 				fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifest BEGIN\n")
-				fmt.Printf("%s\n", modifiedManifestContent)
+				fmt.Printf("%s\n", modifiedManifestContent.String())
 				fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifest END\n")
 			}
 		}
