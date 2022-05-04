@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.95](https://www.github.com/werf/werf/compare/v1.2.94...v1.2.95) (2022-05-04)
+
+
+### Bug Fixes
+
+* anchors support for extra annotations and labels post-renderer ([b8211a9](https://www.github.com/werf/werf/commit/b8211a995d85c59a29bcc0bc644af97dcf0949cb))
+
 ### [1.2.94](https://www.github.com/werf/werf/compare/v1.2.93...v1.2.94) (2022-04-28)
 
 
