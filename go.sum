@@ -2069,6 +2069,8 @@ github.com/werf/3p-helm/v3 v3.0.0-20220428190238-94f85ca83011 h1:/5kpc5aE+ih8HTn
 github.com/werf/3p-helm/v3 v3.0.0-20220428190238-94f85ca83011/go.mod h1:Nm0Z2ciZFFvR9cRKpiRE2SMhJTgqY0b+ezT2cDcyqNw=
 github.com/werf/3p-helm/v3 v3.0.0-20220505124452-ccb543496feb h1:PqeCBXwmQ7YDRmVrIkHQfVt51EVmO5MXN1XbPiOF/oE=
 github.com/werf/3p-helm/v3 v3.0.0-20220505124452-ccb543496feb/go.mod h1:NxtE2KObf2PrzDl6SIamPFPKyAqWi10iWuvKlQn/Yao=
+github.com/werf/3p-helm/v3 v3.0.0-20220505172810-cd89189d526c h1:7sxe84Bne3NiHv6TbFiF+miCsDjSzCuCD16LSCY9X/A=
+github.com/werf/3p-helm/v3 v3.0.0-20220505172810-cd89189d526c/go.mod h1:NxtE2KObf2PrzDl6SIamPFPKyAqWi10iWuvKlQn/Yao=
 github.com/werf/copy-recurse v0.2.2 h1:OpBB+Ezsv7j+iQR02p7zUQXSefZ7UaKBtQPMg2dxi7M=
 github.com/werf/copy-recurse v0.2.2/go.mod h1:KVHSQ90p19xflWW0B7BJhLBwmSbEtuxIaBnjlUYRPhk=
 github.com/werf/copy-recurse v0.2.3 h1:bi43vHBDQiX2Qnq+Ci9IGqtm7YdzzpkBO+8MKjp6x8g=
