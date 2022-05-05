@@ -128,6 +128,7 @@ You're also welcome to:
 
 <p>
   <a href="https://console.dev" title="Visit Console - the best tools for developers"><img src="https://console.dev/img/badges/1.0/svg/console-badge-logo-dark-border.svg" alt="Console - Developer Tool of the Week" /></a>
+  <a href="https://thenewstack.io/werf-automates-kubernetes-based-gitops-workflows-from-the-command-line/" title="WERF Automates Kubernetes-based GitOps from the Command Line"><img alt="Scheme" src="https://raw.githubusercontent.com/werf/werf/main/docs/images/thenewstack.svg" height="54px"></a>
 </p>
 
 ## License
