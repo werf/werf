@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.96](https://www.github.com/werf/werf/compare/v1.2.95...v1.2.96) (2022-05-05)
+
+
+### Features
+
+* update helm v3.8.1 to v3.8.2 ([7f4e6b7](https://www.github.com/werf/werf/commit/7f4e6b71e5899a0868338ec185fd98e59d6c4e26))
+
+
+### Bug Fixes
+
+* **helm:** solved broken 3 way merge case when pre-upgrade hook fails ([a4610e3](https://www.github.com/werf/werf/commit/a4610e3e8c930b49ef215a3ca073e3074bd74e8b))
+
 ### [1.2.95](https://www.github.com/werf/werf/compare/v1.2.94...v1.2.95) (2022-05-04)
 
 
