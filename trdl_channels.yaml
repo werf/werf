@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.94
+      version: 1.2.95
     - name: beta
       version: 1.2.83+fix3 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: ea
