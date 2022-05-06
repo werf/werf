@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.98](https://www.github.com/werf/werf/compare/v1.2.97...v1.2.98) (2022-05-06)
+
+
+### Features
+
+* **docs:** added info about deploying bundles as helm chart dependencies ([188ec71](https://www.github.com/werf/werf/commit/188ec71bcf65b3bcf324369355afcd5a7d83442b))
+* **docs:** werf cheat sheet ([091383e](https://www.github.com/werf/werf/commit/091383e091809c8bb3afcadebc097ec92c51270c))
+* **stapel-to-buildah:** run user stages commands in the script using sh or bash ([e9aa1d4](https://www.github.com/werf/werf/commit/e9aa1d444a00cab465d3797a31388c1f6e48e6c8))
+
 ### [1.2.97](https://www.github.com/werf/werf/compare/v1.2.96...v1.2.97) (2022-05-06)
 
 
