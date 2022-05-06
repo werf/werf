@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.97](https://www.github.com/werf/werf/compare/v1.2.96...v1.2.97) (2022-05-06)
+
+
+### Bug Fixes
+
+* **helm:** fix export-values in subcharts case, improve broken 3wm case handling ([bf04268](https://www.github.com/werf/werf/commit/bf0426800e0778481fa8d6f1d537bb2887d1d33c))
+
 ### [1.2.96](https://www.github.com/werf/werf/compare/v1.2.95...v1.2.96) (2022-05-05)
 
 
