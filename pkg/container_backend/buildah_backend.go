@@ -16,7 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/werf/copy-recurse"
+	copyrec "github.com/werf/copy-recurse"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/image"
@@ -25,6 +25,7 @@ import (
 )
 
 type BuildahBackend struct {
+	TmpDir  string
 	buildah buildah.Buildah
 }
 
@@ -32,8 +33,8 @@ type BuildahImage struct {
 	Image LegacyImageInterface
 }
 
-func NewBuildahBackend(buildah buildah.Buildah) *BuildahBackend {
-	return &BuildahBackend{buildah: buildah}
+func NewBuildahBackend(buildah buildah.Buildah, tmpDir string) *BuildahBackend {
+	return &BuildahBackend{buildah: buildah, TmpDir: tmpDir}
 }
 
 func (runtime *BuildahBackend) HasStapelBuildSupport() bool {
@@ -103,24 +104,62 @@ func (runtime *BuildahBackend) unmountContainers(ctx context.Context, containers
 	return nil
 }
 
-func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, buildVolumes []string, commands []string) error {
-	for _, cmd := range commands {
-		var mounts []specs.Mount
-		mounts, err := makeBuildahMounts(buildVolumes)
-		if err != nil {
-			return err
-		}
+func makeScript(commands []string) []byte {
+	var scriptCommands []string
+	for _, c := range commands {
+		scriptCommands = append(scriptCommands, fmt.Sprintf(`printf "$ %%s\n" %q`, c))
+		scriptCommands = append(scriptCommands, c)
+	}
 
-		// TODO(stapel-to-buildah): Consider support for shell script instead of separate run commands to allow shared
-		// 							  usage of shell variables and functions between multiple commands.
-		//                          Maybe there is no need of such function, instead provide options to select shell in the werf.yaml.
-		//                          Is it important to provide compatibility between docker-server-based werf.yaml and buildah-based?
-		if err := runtime.buildah.RunCommand(ctx, container.Name, []string{"sh", "-c", cmd}, buildah.RunCommandOpts{
-			CommonOpts: runtime.getBuildahCommonOpts(ctx, false),
-			Mounts:     mounts,
-		}); err != nil {
-			return fmt.Errorf("unable to run %q: %w", cmd, err)
-		}
+	return []byte(fmt.Sprintf(`#!/bin/sh
+
+set -e
+
+if [ "x$_IS_REEXEC" = "x" ]; then
+	if type bash >/dev/null 2>&1 ; then
+		echo "# Using bash to execute commands"
+		echo
+		export _IS_REEXEC="1"
+		exec bash $0
+	else
+		echo "# Using /bin/sh to execute commands"
+		echo
+	fi
+fi
+
+%s
+`, strings.Join(scriptCommands, "\n")))
+}
+
+func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, buildVolumes []string, commands []string) error {
+	hostScriptPath := filepath.Join(runtime.TmpDir, fmt.Sprintf("script-%s.sh", uuid.New().String()))
+	if err := os.WriteFile(hostScriptPath, makeScript(commands), os.FileMode(0o555)); err != nil {
+		return fmt.Errorf("unable to write script file %q: %w", hostScriptPath, err)
+	}
+	defer os.RemoveAll(hostScriptPath)
+
+	logboek.Context(ctx).Default().LogF("Executing script %s\n", hostScriptPath)
+
+	destScriptPath := "/.werf/script.sh"
+
+	var mounts []specs.Mount
+	mounts = append(mounts, specs.Mount{
+		Type:        "bind",
+		Source:      hostScriptPath,
+		Destination: destScriptPath,
+	})
+
+	if m, err := makeBuildahMounts(buildVolumes); err != nil {
+		return err
+	} else {
+		mounts = append(mounts, m...)
+	}
+
+	if err := runtime.buildah.RunCommand(ctx, container.Name, []string{"sh", destScriptPath}, buildah.RunCommandOpts{
+		CommonOpts: runtime.getBuildahCommonOpts(ctx, false),
+		Mounts:     mounts,
+	}); err != nil {
+		return fmt.Errorf("unable to run commands script: %w", err)
 	}
 
 	return nil
