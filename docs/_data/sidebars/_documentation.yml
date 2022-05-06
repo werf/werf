@@ -30,6 +30,9 @@ entries:
           - title: Command line interface
             f: *cli
 
+          - title: Cheat sheet
+            url: /reference/cheat_sheet.html
+
       - title: Advanced
         f:
 
@@ -244,6 +247,9 @@ entries:
 
           - title: Интерфейс командной строки
             f: *cli
+
+          - title: Шпаргалка
+            url: /reference/cheat_sheet.html
 
       - title: Документация продвинутого уровня
         f:
