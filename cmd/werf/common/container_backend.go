@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/werf/werf/pkg/buildah"
@@ -11,6 +12,7 @@ import (
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func ContainerBackendProcessStartupHook() (bool, error) {
@@ -110,6 +112,7 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 		insecure := *cmdData.InsecureRegistry || *cmdData.SkipTlsVerifyRegistry
 		b, err := buildah.NewBuildah(resolvedMode, buildah.BuildahOpts{
 			CommonBuildahOpts: buildah.CommonBuildahOpts{
+				TmpDir:        filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
 				Insecure:      insecure,
 				Isolation:     buildahIsolation,
 				StorageDriver: storageDriver,
@@ -119,7 +122,7 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 			return nil, ctx, fmt.Errorf("unable to get buildah client: %w", err)
 		}
 
-		return wrapContainerBackend(container_backend.NewBuildahBackend(b)), ctx, nil
+		return wrapContainerBackend(container_backend.NewBuildahBackend(b, filepath.Join(werf.GetServiceDir(), "tmp", "buildah"))), ctx, nil
 	}
 
 	newCtx, err := InitProcessDocker(ctx, cmdData)
