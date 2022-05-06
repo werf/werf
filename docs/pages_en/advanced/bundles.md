@@ -36,11 +36,39 @@ When publishing a bundle by the tag which already exists in the container regist
 
 ## Bundles deployment
 
-Bundle published into the container registry could be deployed into the kubernetes by the werf.
+Bundle published into the container registry could be deployed into the kubernetes by the werf with one of the following ways:
+ 1. With `werf bundle apply` command directly from container registry.
+ 2. From another werf project as helm chart dependency.
+
+### Deploy with werf bundle apply
 
 [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command used to deploy a published bundle version into the kubernetes. This command **does not need a project git directory** to run, because bundle contains all needed files and images to deploy an application. This command accepts params which is analogous to [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command. For `werf bundle apply` you should explicitly specify Helm release name (`--release`) and namespace to be used for deployment (`--namespace`).
 
 [Values for helm chart]({{ "/advanced/helm/configuration/values.html" | true_relative_url }}), [annotations and labels]({{ "/advanced/helm/deploy_process/annotating_and_labeling.html" | true_relative_url }}) which has been passed to the [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command will be united with the values, annotations and labels, which has been passed during publication of the bundle being applied.
+
+### Deploy as helm chart dependency
+
+Configure dependency in the target werf project `.helm/Chart.yaml`:
+
+```yaml
+apiVersion: v2
+dependencies:
+- name: project
+  repository: "oci://ghcr.io/group"
+  version: 1.4.x
+```
+
+Update project chart dependencies (this command will actualize `.helm/Chart.lock`):
+
+```
+werf helm dependency update .helm
+```
+
+Deploy project with dependencies:
+
+```
+werf converge --repo ghcr.io/group/otherproject
+```
 
 ### Versioning during deployment
 
