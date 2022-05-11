@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.99](https://www.github.com/werf/werf/compare/v1.2.98...v1.2.99) (2022-05-11)
+
+
+### Bug Fixes
+
+* **helm-for-werf:** detailed error message for "current release manifest contains removed kubernetes api(s) ..." error ([8e8e5df](https://www.github.com/werf/werf/commit/8e8e5df89c991e81149bf0778699da853ab45199))
+* **stapel-to-buildah:** added missing ssh-auth-sock and commit related envs, labels and volumes ([3835e62](https://www.github.com/werf/werf/commit/3835e62235e55b7253f35d64c43d99436488abf2))
+
 ### [1.2.98](https://www.github.com/werf/werf/compare/v1.2.97...v1.2.98) (2022-05-06)
 
 
