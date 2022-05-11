@@ -240,8 +240,9 @@ func (phase *PublishImagesPhase) publishImageByTag(ctx context.Context, img *Ima
 	imageRepository := phase.ImagesRepo.ImageRepositoryName(img.GetName())
 	imageName := phase.ImagesRepo.ImageRepositoryNameWithTag(img.GetName(), imageMetaTag)
 	imageActualTag := phase.ImagesRepo.ImageRepositoryTag(img.GetName(), imageMetaTag)
+	imageStageID := img.GetLastNonEmptyStage().GetImage().GetStageDescription().Info.ID
 
-	alreadyExists, alreadyExistingRepoImageInfo, err := phase.checkImageAlreadyExists(ctx, opts.ExistingTagsList, img.GetName(), imageMetaTag, img.GetContentSignature())
+	alreadyExists, alreadyExistingRepoImageInfo, err := phase.checkImageAlreadyExists(ctx, opts.ExistingTagsList, img.GetName(), imageMetaTag, img.GetContentSignature(), imageStageID)
 	if err != nil {
 		return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 	}
@@ -311,7 +312,7 @@ func (phase *PublishImagesPhase) publishImageByTag(ctx context.Context, img *Ima
 			return err
 		}
 
-		alreadyExists, alreadyExistingRepoImageInfo, err := phase.checkImageAlreadyExists(ctx, existingTags, img.GetName(), imageMetaTag, img.GetContentSignature())
+		alreadyExists, alreadyExistingRepoImageInfo, err := phase.checkImageAlreadyExists(ctx, existingTags, img.GetName(), imageMetaTag, img.GetContentSignature(), imageStageID)
 		if err != nil {
 			return fmt.Errorf("error checking image %s already exists in the images repo: %s", img.LogName(), err)
 		}
@@ -365,7 +366,7 @@ func (phase *PublishImagesPhase) publishImageByTag(ctx context.Context, img *Ima
 		DoError(publishingFunc)
 }
 
-func (phase *PublishImagesPhase) checkImageAlreadyExists(ctx context.Context, existingTags []string, werfImageName, imageMetaTag, imageContentSignature string) (bool, *image.Info, error) {
+func (phase *PublishImagesPhase) checkImageAlreadyExists(ctx context.Context, existingTags []string, werfImageName, imageMetaTag, imageContentSignature, imageStageID string) (bool, *image.Info, error) {
 	imageActualTag := phase.ImagesRepo.ImageRepositoryTag(werfImageName, imageMetaTag)
 
 	if !util.IsStringsContainValue(existingTags, imageActualTag) {
@@ -379,6 +380,10 @@ func (phase *PublishImagesPhase) checkImageAlreadyExists(ctx context.Context, ex
 		}
 
 		return false, nil, fmt.Errorf("error getting repo image %q manifest: %s", phase.ImagesRepo.ImageRepositoryNameWithTag(werfImageName, imageMetaTag), err)
+	}
+
+	if repoImage.ParentID != imageStageID {
+		return false, nil, nil
 	}
 
 	repoImageContentSignature := repoImage.Labels[image.WerfContentSignatureLabel]
