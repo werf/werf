@@ -48,7 +48,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Prepare environment
         run: ./scripts/ci/git.sh
@@ -74,7 +74,7 @@ jobs:
       run: sudo apt-get install -y libbtrfs-dev
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Compile integration tests binaries
       run: |
@@ -140,11 +140,11 @@ jobs:
       run: sudo apt-get install -y libbtrfs-dev
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''ansible.test'''
 
     - name: Checkout code (git history as fixtures for tests)
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''ansible.test'''
@@ -198,7 +198,7 @@ jobs:
       run: sudo apt-get install -y libbtrfs-dev
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download integration k8s_per_version tests binaries
       uses: actions/download-artifact@master
@@ -300,7 +300,7 @@ jobs:
       run: sudo apt-get install -y libbtrfs-dev
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download integration k8s_per_version_and_container_registry_per_implementation tests binaries
       uses: actions/download-artifact@master

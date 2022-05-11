@@ -37,7 +37,7 @@ jobs:
         run: sudo apt-get install -y libbtrfs-dev
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Test
         run: |
@@ -69,7 +69,7 @@ jobs:
             ${{ runner.os }}-golang-
 
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
