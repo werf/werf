@@ -14,7 +14,7 @@ groups:
  - name: "1.1"
    channels:
     - name: alpha
-      version: 1.1.31
+      version: 1.1.32 # override images if related stages are lost
     - name: beta
       version: 1.1.31
     - name: ea
