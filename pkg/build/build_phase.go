@@ -638,34 +638,50 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 		})
 
 	default:
-		imageServiceCommitChangeOptions := stageImage.Image.Container().ServiceCommitChangeOptions()
-		imageServiceCommitChangeOptions.AddLabel(serviceLabels)
+		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
+			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(serviceLabels)
+		} else {
+			stageImage.Builder.StapelStageBuilder().AddLabels(serviceLabels)
+		}
 
 		if phase.Conveyor.sshAuthSock != "" {
-			imageRunOptions := stageImage.Image.Container().RunOptions()
-
 			if runtime.GOOS == "darwin" {
-				imageRunOptions.AddVolume("/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock")
-				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"})
+				if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
+					stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume("/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock")
+					stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddEnv(map[string]string{"SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"})
+				} else {
+					stageImage.Builder.StapelStageBuilder().AddBuildVolumes("/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock")
+					stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{"SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"})
+				}
 			} else {
-				imageRunOptions.AddVolume(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", phase.Conveyor.sshAuthSock))
-				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
+				if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
+					stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", phase.Conveyor.sshAuthSock))
+					stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddEnv(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
+				} else {
+					stageImage.Builder.StapelStageBuilder().AddBuildVolumes(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", phase.Conveyor.sshAuthSock))
+					stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
+				}
 			}
+		}
 
-			headHash, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitHash(ctx)
-			if err != nil {
-				return fmt.Errorf("error getting HEAD commit hash: %w", err)
-			}
-			imageRunOptions.AddEnv(map[string]string{"WERF_COMMIT_HASH": headHash})
+		headHash, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitHash(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting HEAD commit hash: %w", err)
+		}
+		headTime, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitTime(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting HEAD commit time: %w", err)
+		}
+		commitEnvs := map[string]string{
+			"WERF_COMMIT_HASH":       headHash,
+			"WERF_COMMIT_TIME_HUMAN": headTime.String(),
+			"WERF_COMMIT_TIME_UNIX":  strconv.FormatInt(headTime.Unix(), 10),
+		}
 
-			headTime, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitTime(ctx)
-			if err != nil {
-				return fmt.Errorf("error getting HEAD commit time: %w", err)
-			}
-			imageRunOptions.AddEnv(map[string]string{
-				"WERF_COMMIT_TIME_HUMAN": headTime.String(),
-				"WERF_COMMIT_TIME_UNIX":  strconv.FormatInt(headTime.Unix(), 10),
-			})
+		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
+			stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddEnv(commitEnvs)
+		} else {
+			stageImage.Builder.StapelStageBuilder().AddEnvs(commitEnvs)
 		}
 	}
 
