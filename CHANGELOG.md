@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.1.32](https://www.github.com/werf/werf/compare/v1.1.31...v1.1.32) (2022-05-11)
+
+
+### Bug Fixes
+
+* **publish:** override images when related stages are lost ([0d26c80](https://www.github.com/werf/werf/commit/0d26c80f6fd08bc87ee6e2de1786fbc2d68a1448))
+
 ### [1.1.31](https://www.github.com/werf/werf/compare/v1.1.30...v1.1.31) (2022-02-22)
 
 
