@@ -26,7 +26,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     # To compress werf_with_coverage binary for macOS
     # This fixes related with monkey patching panic (panic: permission denied [recovered])
@@ -113,7 +113,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download unit tests binaries
       uses: actions/download-artifact@master
@@ -169,11 +169,11 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''ansible.test'''
 
     - name: Checkout code (git history as fixtures for tests)
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''ansible.test'''
@@ -285,7 +285,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download integration container_registry_per_implementation tests binaries
       uses: actions/download-artifact@master
@@ -360,7 +360,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download integration k8s_per_version tests binaries
       uses: actions/download-artifact@master
@@ -470,7 +470,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download integration k8s_per_version_and_container_registry_per_implementation tests binaries
       uses: actions/download-artifact@master
@@ -562,11 +562,11 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: matrix.extra-find-args != '! -name ''git.test*'' ! -name ''ansible.test*'''
 
     - name: Checkout code (git history as fixtures for tests)
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test*'' ! -name ''ansible.test*'''
@@ -644,7 +644,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download integration k8s_per_version tests binaries
       uses: actions/download-artifact@master
@@ -739,7 +739,7 @@ jobs:
       run: sudo apt-get install -y libbtrfs-dev
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download coverage artifact
       uses: actions/download-artifact@master
