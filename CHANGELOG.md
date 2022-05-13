@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.100](https://www.github.com/werf/werf/compare/v1.2.99...v1.2.100) (2022-05-13)
+
+
+### Bug Fixes
+
+* **imports:** recursive copying issues ([9351c25](https://www.github.com/werf/werf/commit/9351c25fe3aa8ef0842c23624b5d3a6a4b742e0d))
+* switch to actions/checkout@v3 ([ba3ac8e](https://www.github.com/werf/werf/commit/ba3ac8ecbd4a6201ec8eb5c23bb6642bd25e7c4d))
+
 ### [1.2.99](https://www.github.com/werf/werf/compare/v1.2.98...v1.2.99) (2022-05-11)
 
 
