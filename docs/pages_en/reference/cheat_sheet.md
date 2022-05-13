@@ -4,15 +4,15 @@ permalink: reference/cheat_sheet.html
 toc: false
 ---
 
-## Build and deploy with a single command
+## Building and deploying with a single command
 
-Build and deploy to production:
+Build an image and deploy it to production:
 
 ```
 werf converge --repo ghcr.io/group/project --env production
 ```
 
-Build and deploy to default environment, but use custom image tags:
+Build an image and deploy it to the default environment, but use custom image tags:
 
 ```
 werf converge --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
@@ -20,46 +20,46 @@ werf converge --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
 
 ## Pipeline building blocks
 
-Following commands can be composed to make a pipeline suited for your needs.
+You can create a pipeline tailored to your needs using the commands below.
 
-Running most commands will trigger rebuild of missing images first. You can skip the rebuild with the `--skip-build` flag. Make sure required images are built beforehand with `werf build`.
+Running most of the commands will first cause the missing images to be rebuilt. You can skip the rebuild by using the `--skip-build` flag. Make sure that the necessary images are built beforehand using the `werf build` command.
 
-### integrate with a CI system (GitLab and GitHub Workflows supported)
+### Integrating with a CI system (GitLab and GitHub-based workflows are currently supported)
 
-Set the defaults for werf commands and perform login into a container registry based on GitLab environment variables:
+Set default values for werf commands and log in to the container registry based on GitLab environment variables:
 
 ```
 . $(werf ci-env gitlab --as-file) 
 ```
-### build, tag, and publish images
+### Building, tagging, and publishing images
 
-Build images using container registry:
+Build images using the container registry:
 
 ```
 werf build --repo ghcr.io/group/project
 ```
 
-Build images with custom tags in addition to content-based tags:
+Build images and attach custom tags to them in addition to content-based tags:
 
 ```
 werf build --repo ghcr.io/group/project --add-custom-tag latest --add-custom-tag 1.2.1
 ```
 
-Build and store final images in a separate registry that is deployed in the Kubernetes cluster:
+Build and store the final images in a separate registry deployed in the Kubernetes cluster:
 
 ```
 werf build --repo ghcr.io/group/project --final-repo fast-in-cluster-registry.cluster/group/project
 ```
 
-Build images using container registry (or local storage if needed) and export them into another container registry:
+Build images using the container registry (or local storage if needed) and export them to another container registry:
 
 ```
 werf export --repo ghcr.io/group/project --tag ghcr.io/group/otherproject/%image%:latest
 ```
 
-### run one-off tasks (unit-tests, lint, one-time jobs)
+### Running one-off tasks (unit-tests, lints, one-time jobs)
 
-Run tests in built image `frontend_image` in Kubernetes Pod:
+Use the following command to run tests in the previously built `frontend_image` in the Kubernetes Pod:
 
 ```
 werf kube-run frontend_image --repo ghcr.io/group/project -- npm test
@@ -75,60 +75,60 @@ Run tests in Pod and get the coverage report:
 werf kube-run frontend_image --repo ghcr.io/group/project --copy-from "/app/report:." -- go test -coverprofile report ./...
 ```
 
-Run default command of built image in Kubernetes in a Pod with CPU requests set:
+The command below executes the default command of the built image in the Kubernetes Pod with the CPU requests set:
 
 ```
 werf kube-run frontend_image --repo ghcr.io/group/project --overrides='{"spec":{"containers":[{"name": "%container_name%", "resources":{"requests":{"cpu":"100m"}}}]}}'
 ```
 
-### run integration tests
+### Running integration tests
 
-Generally, you need a production-like environment (prepared with converge or bundle) and a container with a command to run some integration tests (e2e, acceptance, security, etc.). 
+Generally, to run some integration tests (e2e, acceptance, security, etc.) you will need a production environment (you can prepare it with converge or bundle) and a container with the appropriate command. 
 
-Run integration tests using converge:
+Running integration tests using converge:
 
 ```
 werf converge --repo ghcr.io/group/project --env integration
 ```
 
-Run integration tests using converge to prepare environment and kube-run to run one-off task:
+Running integration tests using converge to prepare the environment and kube-run to run a one-off task:
 
 ```
 werf converge --repo ghcr.io/group/project --env integration_infra
 werf kube-run --repo ghcr.io/group/project --env integration -- npm run acceptance-tests
 ```
 
-### prepare release artifact (optional)
+### Preparing a release artifact (optional)
 
-Use werf bundles to prepare release artifacts that could be tested or deployed later (by the werf or Argo CD, or Helm), and store them into the container registry using a specified tag. 
+Use werf bundles to prepare release artifacts that can be tested or deployed later (using werf, Argo CD, or Helm), and save them to the container registry using the specified tag. 
 
-Use helm OCI chart compatible semver tag:
+Using a semver tag that is compatible with the Helm OCI chart:
 
 ```
 werf bundle publish --repo ghcr.io/group/project --tag 1.0.0
 ```
 
-Use arbitrary symbolic tag:
+Using an arbitrary symbolic tag:
 
 ```
 werf bundle publish --repo ghcr.io/group/project --tag latest
 ```
 
-### deploy application
+### Deploying the application
 
-Build and deploy the application to production:
+Building and deploying the application to production:
 
 ```
 werf converge --skip-build --repo ghcr.io/group/project --env production
 ```
 
-Build and deploy the application using a custom tag built on a previous step :
+Deploying the application you built in the previous step and attaching a custom tag to it:
 
 ```
 werf converge --skip-build --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
 ```
 
-Deploy previously published bundle with tag 1.0.0 to production:
+Deploying the previously published bundle with the 1.0.0 tag to production:
 
 ```
 werf bundle apply --repo ghcr.io/group/project --env production --tag 1.0.0
@@ -136,45 +136,45 @@ werf bundle apply --repo ghcr.io/group/project --env production --tag 1.0.0
 
 ## Local development
 
-Most commands have the `--dev` flag, usually this is what you want for local development. It allows running werf commands without `git add`ing them first. `--follow` flag allows restarting the command when files in the repository are changed.
+Most commands have the `--dev` flag, which is usually what you need for local development. It allows you to run werf commands without first `git add`ing them. The `--follow` flag allows you to restart the command when files in the repository change.
 
-Render and show manifests:
+Rendering and showing manifests:
 
 ```
 werf render --dev
 ```
 
-Build image, but open interactive shell in a container with a failed stage on failure:
+Building an image and starting the interactive shell in a container with a failed stage in case of failure:
 
 ```
 werf build --dev [--follow] --introspect-error
 ```
 
-Build and run command in a Kubernetes Pod in a specified image:
+Building an image, running it in a Kubernetes Pod, and executing the command in it:
 
 ```
 werf kube-run --dev [--follow] --repo ghcr.io/group/project frontend -- npm lint
 ```
 
-Open an interactive shell in a container of a Kubernetes Pod for specified image:
+Starting an interactive shell in a container in a Kubernetes Pod for the specified image:
 
 ```
 werf kube-run --dev --repo ghcr.io/group/project -it frontend -- bash
 ```
 
-Build and deploy in a dev cluster, which might be a local one:
+Building an image and deploying it to a dev cluster (can be local):
 
 ```
 werf converge --dev [--follow] --repo ghcr.io/group/project
 ```
 
-Build and deploy in a dev cluster, use stages from another secondary read-only registry to speed up the build:
+Building an image and deploying it to a dev cluster; using stages from the secondary read-only registry to speed up the build:
 
 ```
 werf converge --dev [--follow] --repo ghcr.io/group/project --secondary-repo ghcr.io/group/otherproject
 ```
 
-Run "docker-compose up" command with forwarded image names:
+Running the "docker-compose up" command with the forwarded image names:
 ```
 werf compose up --dev [--follow]
 ```
