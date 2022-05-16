@@ -34,4 +34,4 @@ groups:
     - name: stable
       version: 1.2.80+fix5
     - name: rock-solid
-      version: v1.2.80+fix5
+      version: 1.2.80+fix5
