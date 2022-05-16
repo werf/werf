@@ -381,34 +381,25 @@ func (c *Conveyor) checkContainerBackendSupported(_ context.Context) error {
 		return nil
 	}
 
-	imageConfigList, err := c.werfConfig.GetSpecificImages(c.imageNamesToProcess)
-	if err != nil {
-		return err
-	}
+	var stapelImagesWithAnsible []*config.StapelImage
 
-	var nonDockerfileImages []string
-	for _, processImage := range imageConfigList {
-		for _, stapelImage := range c.werfConfig.StapelImages {
-			if processImage.GetName() == stapelImage.Name {
-				nonDockerfileImages = append(nonDockerfileImages, processImage.GetName())
-				break
-			}
-		}
-
-		for _, artifactImage := range c.werfConfig.Artifacts {
-			if processImage.GetName() == artifactImage.Name {
-				nonDockerfileImages = append(nonDockerfileImages, processImage.GetName())
-				break
-			}
+	for _, img := range c.werfConfig.StapelImages {
+		if img.Ansible != nil {
+			stapelImagesWithAnsible = append(stapelImagesWithAnsible, img)
 		}
 	}
 
-	if len(nonDockerfileImages) > 0 && os.Getenv("WERF_BUILDAH_FOR_STAPEL_ENABLED") != "1" {
-		return fmt.Errorf(`Unable to build stapel type images and artifacts with buildah container backend: %s
+	if len(stapelImagesWithAnsible) > 0 {
+		var names []string
+		for _, img := range stapelImagesWithAnsible {
+			names = append(names, fmt.Sprintf("%q", img.GetName()))
+		}
 
-Please select only dockerfile images or delete all non-dockerfile images from your werf.yaml.
+		return fmt.Errorf(`Unable to build stapel images [%s], which use ansible builder when buildah container backend is enabled.
 
-Or disable buildah runtime by unsetting WERF_BUILDAH_MODE environment variable.`, strings.Join(nonDockerfileImages, ", "))
+Please use shell builder instead, or select docker server backend to continue usage of ansible builder (disable buildah runtime by unsetting WERF_BUILDAH_MODE environment variable).
+
+It is recommended to use shell builder, because ansible builder will be deprecated soon.`, strings.Join(names, ", "))
 	}
 
 	return nil
