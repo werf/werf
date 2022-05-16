@@ -327,6 +327,8 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 		}
 	}
 
+	builder.SetLabel("werf.io/base-image-id", fmt.Sprintf("sha256:%s", builder.FromImageID))
+
 	imgID, _, _, err := builder.Commit(ctx, imageRef, buildah.CommitOptions{
 		PreferredManifestType: buildah.Dockerv2ImageManifest,
 		SignaturePolicyPath:   b.SignaturePolicyPath,

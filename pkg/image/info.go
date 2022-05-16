@@ -45,6 +45,14 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
 		repoDigest = inspect.RepoDigests[0]
 	}
 
+	var parentID string
+	if id, ok := inspect.Config.Labels["werf.io/base-image-id"]; ok {
+		parentID = id
+	} else {
+		// TODO(1.3): Legacy compatibility mode
+		parentID = inspect.Config.Image
+	}
+
 	return &Info{
 		Name:              ref,
 		Repository:        repository,
@@ -54,7 +62,7 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
 		CreatedAtUnixNano: MustParseTimestampString(inspect.Created).UnixNano(),
 		RepoDigest:        repoDigest,
 		ID:                inspect.ID,
-		ParentID:          inspect.Config.Image,
+		ParentID:          parentID,
 		Size:              inspect.Size,
 	}
 }

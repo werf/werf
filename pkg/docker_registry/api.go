@@ -143,13 +143,21 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 		return nil, fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
 
+	var parentID string
+	if baseImageID, ok := configFile.Config.Labels["werf.io/base-image-id"]; ok {
+		parentID = baseImageID
+	} else {
+		// TODO(1.3): Legacy compatibility mode
+		parentID = configFile.Config.Image
+	}
+
 	repoImage := &image.Info{
 		Name:       reference,
 		Repository: strings.Join([]string{referenceParts.registry, referenceParts.repository}, "/"),
 		ID:         manifest.Config.Digest.String(),
 		Tag:        referenceParts.tag,
 		RepoDigest: digest.String(),
-		ParentID:   configFile.Config.Image,
+		ParentID:   parentID,
 		Labels:     configFile.Config.Labels,
 		Size:       totalSize,
 	}

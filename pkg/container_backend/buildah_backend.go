@@ -491,17 +491,24 @@ func (runtime *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 
 	repository, tag := image.ParseRepositoryAndTag(ref)
 
+	var parentID string
+	if id, ok := inspect.Docker.Config.Labels["werf.io/base-image-id"]; ok {
+		parentID = id
+	} else {
+		parentID = string(inspect.Docker.Parent)
+	}
+
 	return &image.Info{
 		Name:              ref,
 		Repository:        repository,
 		Tag:               tag,
 		Labels:            inspect.Docker.Config.Labels,
 		CreatedAtUnixNano: inspect.Docker.Created.UnixNano(),
-		// RepoDigest:        repoDigest, // FIXME
-		OnBuild:  inspect.Docker.Config.OnBuild,
-		ID:       inspect.Docker.ID,
-		ParentID: inspect.Docker.Config.Image,
-		Size:     inspect.Docker.Size,
+		RepoDigest:        inspect.FromImageDigest,
+		OnBuild:           inspect.Docker.Config.OnBuild,
+		ID:                inspect.FromImageID,
+		ParentID:          parentID,
+		Size:              inspect.Docker.Size,
 	}, nil
 }
 
