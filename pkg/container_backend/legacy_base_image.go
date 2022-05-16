@@ -57,6 +57,7 @@ func (i *legacyBaseImage) UnsetInfo() {
 
 func (i *legacyBaseImage) SetStageDescription(stageDesc *image.StageDescription) {
 	i.stageDesc = stageDesc
+	i.SetInfo(stageDesc.Info)
 }
 
 func (i *legacyBaseImage) GetStageDescription() *image.StageDescription {
