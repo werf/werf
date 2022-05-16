@@ -1,4 +1,4 @@
-FROM golang:1.17-bullseye
+FROM golang:1.18.2-bullseye
 
 RUN apt-get update && \
     apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev parallel && \

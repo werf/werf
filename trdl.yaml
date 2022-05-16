@@ -1,4 +1,4 @@
-docker_image: registry.werf.io/werf/builder:afd00fa1348645658b718df6b2b7447c6cead90b@sha256:829a6fd3d5850fc24366b5a3fb10402fe2d5615dcfd045b7225819c7a8ec5011
+docker_image: registry.werf.io/werf/builder:adfeb920ae92a9c07c78a3b65ace081aff883df5@sha256:7e55db7338976dff07a611a2bf9c14f50836e8ef081efca05155448ec6693ce5
 commands:
  - scripts/build_release_v3.sh {{ .Tag }}
  - cp -a release-build/{{ .Tag }}/* /result
