@@ -28,10 +28,10 @@ groups:
     - name: alpha
       version: 1.2.100 # fix imports: recursive copying improved
     - name: beta
-      version: 1.2.100
+      version: 1.2.83+fix3 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: ea
-      version: 1.2.100
+      version: 1.2.83+fix3 # fix dependencies not reimported if file name contains spaces, custom tags cleanup fixes
     - name: stable
       version: 1.2.80+fix5
     - name: rock-solid
-      version: 1.2.80+fix5
+      version: 1.2.71 # remove import checksum-based cleanup policy
