@@ -18,7 +18,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/kubectl/pkg/scheme"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -412,7 +414,6 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		"--restart", "Never",
 		"--quiet",
 		"--attach",
-		"--override-type", "strategic",
 	}
 
 	if cmdData.Interactive {
@@ -439,26 +440,10 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		}
 	}
 
-	var overrides map[string]interface{}
-	if cmdData.Overrides != "" {
-		if err := json.Unmarshal([]byte(cmdData.Overrides), &overrides); err != nil {
-			return fmt.Errorf("unable to unmarshal --overrides: %w", err)
-		}
-	}
-
-	if cmdData.AutoPullSecret && cmdData.registryCredsFound {
-		overrides, err = addImagePullSecret(secret, overrides)
-		if err != nil {
-			return fmt.Errorf("unable to add imagePullSecret to --overrides: %w", err)
-		}
-	}
-
-	if len(overrides) > 0 {
-		overridesB, err := json.Marshal(overrides)
-		if err != nil {
-			return fmt.Errorf("unable to marshal generated --overrides: %w", err)
-		}
-		args = append(args, "--overrides", string(overridesB))
+	if overrides, err := generateOverrides(secret); err != nil {
+		return fmt.Errorf("error generating --overrides: %w", err)
+	} else if overrides != nil {
+		args = append(args, "--overrides", string(overrides), "--override-type", "strategic")
 	}
 
 	if cmdData.ExtraOptions != "" {
@@ -495,6 +480,38 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 			return nil
 		})
 	})
+}
+
+// Can return nil overrides.
+func generateOverrides(secret string) ([]byte, error) {
+	if (!cmdData.AutoPullSecret || !cmdData.registryCredsFound) && cmdData.Overrides == "" {
+		return nil, nil
+	}
+
+	codec := runtime.NewCodec(scheme.DefaultJSONEncoder(), scheme.Codecs.UniversalDeserializer())
+
+	podOverrides := &corev1.Pod{}
+	if err := runtime.DecodeInto(codec, []byte(cmdData.Overrides), podOverrides); err != nil {
+		return nil, fmt.Errorf("error decoding --overrides: %w", err)
+	}
+
+	if cmdData.AutoPullSecret && cmdData.registryCredsFound {
+		if err := addImagePullSecret(secret, podOverrides); err != nil {
+			return nil, fmt.Errorf("error adding imagePullSecret to --overrides: %w", err)
+		}
+	}
+
+	overrides, err := runtime.Encode(codec, podOverrides)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding generated --overrides: %w", err)
+	}
+
+	overrides, err = cleanPodManifest(overrides)
+	if err != nil {
+		return nil, fmt.Errorf("error cleaning --overrides: %w", err)
+	}
+
+	return overrides, nil
 }
 
 func cleanupResources(ctx context.Context, pod, secret, namespace string) {
@@ -654,51 +671,41 @@ func getDockerConfigCredentials(ref string) (*reference.Named, imgtypes.DockerAu
 	return &namedRef, dockerAuthConf, nil
 }
 
-func addImagePullSecret(secret string, overrides map[string]interface{}) (map[string]interface{}, error) {
+func addImagePullSecret(secret string, podOverrides *corev1.Pod) error {
 	if secret == "" {
 		panic("secret name can't be empty")
 	}
 
-	newImagePullSecret := map[string]interface{}{"name": secret}
-	newImagePullSecrets := []interface{}{newImagePullSecret}
-	newSpec := map[string]interface{}{"imagePullSecrets": newImagePullSecrets}
-	newOverrides := map[string]interface{}{"spec": newSpec}
-
-	if len(overrides) == 0 {
-		return newOverrides, nil
+	for _, imagePullSecret := range podOverrides.Spec.ImagePullSecrets {
+		if imagePullSecret.Name == secret {
+			return nil
+		}
 	}
 
-	if _, ok := overrides["spec"]; !ok {
-		overrides["spec"] = newSpec
-		return overrides, nil
-	}
+	podOverrides.Spec.ImagePullSecrets = append(podOverrides.Spec.ImagePullSecrets, corev1.LocalObjectReference{Name: secret})
 
-	overridesSpec, ok := overrides["spec"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unexpected pod spec overrides format: %+v", overrides)
-	}
-
-	if len(overridesSpec) == 0 {
-		overrides["spec"] = newSpec
-		return overrides, nil
-	}
-
-	_, ok = overridesSpec["imagePullSecrets"]
-	if !ok {
-		overrides["spec"].(map[string]interface{})["imagePullSecrets"] = newImagePullSecrets
-		return overrides, nil
-	}
-
-	_, ok = overridesSpec["imagePullSecrets"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unexpected imagePullSecrets overrides format: %+v", overrides)
-	}
-
-	overrides["spec"].(map[string]interface{})["imagePullSecrets"] = append(overrides["spec"].(map[string]interface{})["imagePullSecrets"].([]interface{}), newImagePullSecret)
-	return overrides, nil
+	return nil
 }
 
 func templateOverrides(line, podName, containerName string) string {
 	result := strings.ReplaceAll(line, "%container_name%", containerName)
 	return strings.ReplaceAll(result, "%pod_name%", podName)
+}
+
+func cleanPodManifest(podJsonManifest []byte) ([]byte, error) {
+	var pod map[string]interface{}
+	if err := json.Unmarshal(podJsonManifest, &pod); err != nil {
+		return nil, fmt.Errorf("error unmarshaling pod json manifest: %w", err)
+	}
+
+	if pod["spec"].(map[string]interface{})["containers"] != nil {
+		return podJsonManifest, nil
+	}
+
+	delete(pod["spec"].(map[string]interface{}), "containers")
+	if result, err := json.Marshal(pod); err != nil {
+		return nil, fmt.Errorf("error marshaling cleaned pod json manifest: %w", err)
+	} else {
+		return result, nil
+	}
 }
