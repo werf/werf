@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.101](https://www.github.com/werf/werf/compare/v1.2.100...v1.2.101) (2022-05-16)
+
+
+### Features
+
+* **stapel-to-buildah:** allow buildah to build stapel images with shell builder ([27a1d49](https://www.github.com/werf/werf/commit/27a1d497af3e6d70181aa923a949c803318bc73b))
+
+
+### Bug Fixes
+
+* panic when --cache-repo used ([ec2ed93](https://www.github.com/werf/werf/commit/ec2ed932d128086bc3f61198486c3f379f1948fc))
+* panic when --secondary-repo or --cache-repo used ([c59f1f9](https://www.github.com/werf/werf/commit/c59f1f9102a0fba364ecaee430a662c9a68c9e6d))
+* **stapel-to-buildah:** fix cleanup parent-id issue for images built with buildah ([56e90e2](https://www.github.com/werf/werf/commit/56e90e25d67daaa5edc46818880a11f1e477b58e))
+
 ### [1.2.100](https://www.github.com/werf/werf/compare/v1.2.99...v1.2.100) (2022-05-13)
 
 
