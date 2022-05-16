@@ -466,6 +466,15 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 			}
 		} else {
 			logboek.Context(ctx).Info().LogF("Cache repo image %s exists locally, will not perform fetch\n", stageImage.Name())
+
+			stageDesc, err := getStageDescription(ctx, m.ProjectName, *stageID, stagesStorage, nil, getStageDescriptionOptions{WithLocalManifestCache: true})
+			if err != nil {
+				return nil, fmt.Errorf("error getting stage %s description from %s: %w", stageID.String(), m.FinalStagesStorage.String(), err)
+			}
+			if stageDesc == nil {
+				return nil, ErrStageNotFound
+			}
+			stageImage.SetStageDescription(stageDesc)
 		}
 
 		if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, stageImage.Name()); err != nil {
