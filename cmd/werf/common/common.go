@@ -966,7 +966,7 @@ func GetCacheStagesStorageList(containerBackend container_backend.ContainerBacke
 	var res []storage.StagesStorage
 
 	for _, address := range GetCacheStagesStorage(cmdData) {
-		repoData := NewRepoData("cache-repo", RepoDataOptions{})
+		repoData := NewRepoData("cache-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
 		storage, err := repoData.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
@@ -989,7 +989,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 	}
 
 	for _, address := range GetSecondaryStagesStorage(cmdData) {
-		repoData := NewRepoData("secondary-repo", RepoDataOptions{})
+		repoData := NewRepoData("secondary-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
 		storage, err := repoData.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
