@@ -17,9 +17,9 @@ import (
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 )
 
-func NewWerfChartStub(ctx context.Context) *WerfChartStub {
+func NewWerfChartStub(ctx context.Context, ignoreInvalidAnnotationsAndLabels bool) *WerfChartStub {
 	return &WerfChartStub{
-		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
+		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, ignoreInvalidAnnotationsAndLabels),
 		ChartExtenderContextData:              helpers.NewChartExtenderContextData(ctx),
 	}
 }

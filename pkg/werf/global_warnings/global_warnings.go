@@ -14,7 +14,10 @@ import (
 
 const LastMultiwerfVersion = "1.5.0"
 
-var GlobalWarningLines []string
+var (
+	GlobalWarningLines     []string
+	SuppressGlobalWarnings bool
+)
 
 func PrintGlobalWarnings(ctx context.Context) {
 	for _, line := range GlobalWarningLines {
@@ -78,5 +81,8 @@ func PostponeMultiwerfNotUpToDateWarning() {
 }
 
 func printGlobalWarningLn(ctx context.Context, line string) {
+	if SuppressGlobalWarnings {
+		return
+	}
 	logboek.Context(ctx).Error().LogF("WARNING: %s\n", line)
 }

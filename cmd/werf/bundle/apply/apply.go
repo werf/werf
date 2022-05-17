@@ -185,8 +185,10 @@ func runApply() error {
 	}
 
 	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.BundleOptions{
-		ExtraAnnotations: userExtraAnnotations,
-		ExtraLabels:      userExtraLabels,
+		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{IgnoreInvalidAnnotationsAndLabels: true},
+		IgnoreInvalidAnnotationsAndLabels: true,
+		ExtraAnnotations:                  userExtraAnnotations,
+		ExtraLabels:                       userExtraLabels,
 	})
 	if err != nil {
 		return err

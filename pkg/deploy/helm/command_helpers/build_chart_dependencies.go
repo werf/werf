@@ -18,10 +18,11 @@ import (
 )
 
 type BuildChartDependenciesOptions struct {
-	Keyring     string
-	SkipUpdate  bool
-	Verify      downloader.VerificationStrategy
-	LoadOptions *loader.LoadOptions
+	Keyring                           string
+	SkipUpdate                        bool
+	Verify                            downloader.VerificationStrategy
+	LoadOptions                       *loader.LoadOptions
+	IgnoreInvalidAnnotationsAndLabels bool
 }
 
 func BuildChartDependenciesInDir(ctx context.Context, chartFile, chartLockFile *chart.ChartExtenderBufferedFile, targetDir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts BuildChartDependenciesOptions) error {

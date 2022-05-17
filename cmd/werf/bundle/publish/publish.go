@@ -327,8 +327,9 @@ func runPublish(ctx context.Context) error {
 	}
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
-		ExtraAnnotations: userExtraAnnotations,
-		ExtraLabels:      userExtraLabels,
+		ExtraAnnotations:                  userExtraAnnotations,
+		ExtraLabels:                       userExtraLabels,
+		IgnoreInvalidAnnotationsAndLabels: true,
 	})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {

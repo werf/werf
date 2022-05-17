@@ -203,7 +203,9 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{})
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
+		IgnoreInvalidAnnotationsAndLabels: true,
+	})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
 		return err
