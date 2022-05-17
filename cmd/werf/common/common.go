@@ -1434,7 +1434,7 @@ func SetupPlatform(cmdData *CmdData, cmd *cobra.Command) {
 		}
 	}
 
-	cmd.Flags().StringVarP(cmdData.Platform, "platform", "", defaultValue, "Enable platform emulation when building images with werf. The only supported option for now is linux/amd64.")
+	cmd.Flags().StringVarP(cmdData.Platform, "platform", "", defaultValue, "Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].")
 }
 
 func GetContext() context.Context {

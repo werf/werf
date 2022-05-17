@@ -17,6 +17,7 @@ import (
 	"github.com/containers/buildah/define"
 	"github.com/containers/buildah/docker"
 	"github.com/containers/buildah/imagebuildah"
+	"github.com/containers/buildah/pkg/parse"
 	"github.com/containers/common/libimage"
 	"github.com/containers/image/v5/manifest"
 	imgstor "github.com/containers/image/v5/storage"
@@ -62,6 +63,8 @@ type NativeBuildah struct {
 	Runtime                   libimage.Runtime
 	DefaultSystemContext      imgtypes.SystemContext
 	DefaultCommonBuildOptions define.CommonBuildOptions
+
+	platforms []struct{ OS, Arch, Variant string }
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
@@ -93,6 +96,21 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		OCIInsecureSkipTLSVerify:          b.Insecure,
 		DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
 		DockerDaemonInsecureSkipTLSVerify: b.Insecure,
+	}
+
+	if opts.Platform != "" {
+		os, arch, variant, err := parse.Platform(opts.Platform)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse platform %q: %w", opts.Platform, err)
+		}
+
+		b.DefaultSystemContext.OSChoice = os
+		b.DefaultSystemContext.ArchitectureChoice = arch
+		b.DefaultSystemContext.VariantChoice = variant
+
+		b.platforms = []struct{ OS, Arch, Variant string }{
+			{os, arch, variant},
+		}
 	}
 
 	b.DefaultCommonBuildOptions = define.CommonBuildOptions{
@@ -177,6 +195,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []by
 		Target:              opts.Target,
 		MaxPullPushRetries:  MaxPullPushRetries,
 		PullPushRetryDelay:  PullPushRetryDelay,
+		Platforms:           b.platforms,
 	}
 
 	errLog := &bytes.Buffer{}
@@ -287,8 +306,34 @@ func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) err
 		PullPolicy:          define.PullIfNewer,
 	}
 
-	if _, err := buildah.Pull(ctx, ref, pullOpts); err != nil {
+	imageID, err := buildah.Pull(ctx, ref, pullOpts)
+	if err != nil {
 		return fmt.Errorf("error pulling image %q: %w", ref, err)
+	}
+
+	imageInspect, err := b.Inspect(ctx, imageID)
+	if err != nil {
+		return fmt.Errorf("unable to inspect pulled image %q: %w", imageID, err)
+	}
+
+	platformMismatch := false
+	if b.DefaultSystemContext.OSChoice != "" && b.DefaultSystemContext.OSChoice != imageInspect.OCIv1.OS {
+		platformMismatch = true
+	}
+	if b.DefaultSystemContext.ArchitectureChoice != "" && b.DefaultSystemContext.ArchitectureChoice != imageInspect.OCIv1.Architecture {
+		platformMismatch = true
+	}
+	if b.DefaultSystemContext.VariantChoice != "" && b.DefaultSystemContext.VariantChoice != imageInspect.OCIv1.Variant {
+		platformMismatch = true
+	}
+
+	if platformMismatch {
+		imagePlatform := fmt.Sprintf("%s/%s/%s", imageInspect.OCIv1.OS, imageInspect.OCIv1.Architecture, imageInspect.OCIv1.Variant)
+		expectedPlatform := fmt.Sprintf("%s/%s", b.DefaultSystemContext.OSChoice, b.DefaultSystemContext.ArchitectureChoice)
+		if b.DefaultSystemContext.VariantChoice != "" {
+			expectedPlatform = fmt.Sprintf("%s/%s", expectedPlatform, b.DefaultSystemContext.VariantChoice)
+		}
+		return fmt.Errorf("image platform mismatch: image uses %s, expecting %s platform", imagePlatform, expectedPlatform)
 	}
 
 	return nil
