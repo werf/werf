@@ -117,12 +117,15 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 				Isolation:     buildahIsolation,
 				StorageDriver: storageDriver,
 			},
+			NativeModeOpts: buildah.NativeModeOpts{
+				Platform: *cmdData.Platform,
+			},
 		})
 		if err != nil {
 			return nil, ctx, fmt.Errorf("unable to get buildah client: %w", err)
 		}
 
-		return wrapContainerBackend(container_backend.NewBuildahBackend(b, filepath.Join(werf.GetServiceDir(), "tmp", "buildah"))), ctx, nil
+		return wrapContainerBackend(container_backend.NewBuildahBackend(b, container_backend.BuildahBackendOptions{TmpDir: filepath.Join(werf.GetServiceDir(), "tmp", "buildah")})), ctx, nil
 	}
 
 	newCtx, err := InitProcessDocker(ctx, cmdData)

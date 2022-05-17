@@ -123,7 +123,9 @@ type CommonBuildahOpts struct {
 	Insecure      bool
 }
 
-type NativeModeOpts struct{}
+type NativeModeOpts struct {
+	Platform string
+}
 
 type DockerWithFuseModeOpts struct{}
 

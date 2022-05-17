@@ -25,16 +25,16 @@ import (
 )
 
 type BuildahBackend struct {
-	TmpDir  string
 	buildah buildah.Buildah
+	BuildahBackendOptions
 }
 
-type BuildahImage struct {
-	Image LegacyImageInterface
+type BuildahBackendOptions struct {
+	TmpDir string
 }
 
-func NewBuildahBackend(buildah buildah.Buildah, tmpDir string) *BuildahBackend {
-	return &BuildahBackend{buildah: buildah, TmpDir: tmpDir}
+func NewBuildahBackend(buildah buildah.Buildah, opts BuildahBackendOptions) *BuildahBackend {
+	return &BuildahBackend{buildah: buildah, BuildahBackendOptions: opts}
 }
 
 func (runtime *BuildahBackend) HasStapelBuildSupport() bool {
