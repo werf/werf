@@ -31,11 +31,12 @@ import (
 )
 
 type WerfChartOptions struct {
-	SecretValueFiles           []string
-	ExtraAnnotations           map[string]string
-	ExtraLabels                map[string]string
-	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
-	DisableSecrets             bool
+	SecretValueFiles                  []string
+	ExtraAnnotations                  map[string]string
+	ExtraLabels                       map[string]string
+	BuildChartDependenciesOpts        command_helpers.BuildChartDependenciesOptions
+	DisableSecrets                    bool
+	IgnoreInvalidAnnotationsAndLabels bool
 }
 
 func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretsManager *secrets_manager.SecretsManager, chartDir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts WerfChartOptions) *WerfChart {
@@ -49,7 +50,7 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 		GiterminismManager: giterminismManager,
 		SecretsManager:     secretsManager,
 
-		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil),
+		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, opts.IgnoreInvalidAnnotationsAndLabels),
 
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
@@ -394,5 +395,9 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 		}
 	}
 
-	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClient, BundleOptions{BuildChartDependenciesOpts: wc.BuildChartDependenciesOpts})
+	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClient, BundleOptions{
+		BuildChartDependenciesOpts:        wc.BuildChartDependenciesOpts,
+		IgnoreInvalidAnnotationsAndLabels: wc.extraAnnotationsAndLabelsPostRenderer.IgnoreInvalidAnnotationsAndLabels,
+	},
+	)
 }

@@ -376,9 +376,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
-		SecretValueFiles: common.GetSecretValues(&commonCmdData),
-		ExtraAnnotations: userExtraAnnotations,
-		ExtraLabels:      userExtraLabels,
+		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
+		ExtraAnnotations:                  userExtraAnnotations,
+		ExtraLabels:                       userExtraLabels,
+		IgnoreInvalidAnnotationsAndLabels: true,
 	})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {

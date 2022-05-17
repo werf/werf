@@ -20,6 +20,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
@@ -186,8 +187,10 @@ func runRender(ctx context.Context) error {
 	}
 
 	bundle, err := chart_extender.NewBundle(ctx, bundleDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.BundleOptions{
-		ExtraAnnotations: userExtraAnnotations,
-		ExtraLabels:      userExtraLabels,
+		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{IgnoreInvalidAnnotationsAndLabels: false},
+		IgnoreInvalidAnnotationsAndLabels: false,
+		ExtraAnnotations:                  userExtraAnnotations,
+		ExtraLabels:                       userExtraLabels,
 	})
 	if err != nil {
 		return err

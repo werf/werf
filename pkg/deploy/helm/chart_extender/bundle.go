@@ -24,9 +24,10 @@ import (
 )
 
 type BundleOptions struct {
-	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
-	ExtraAnnotations           map[string]string
-	ExtraLabels                map[string]string
+	BuildChartDependenciesOpts        command_helpers.BuildChartDependenciesOptions
+	ExtraAnnotations                  map[string]string
+	ExtraLabels                       map[string]string
+	IgnoreInvalidAnnotationsAndLabels bool
 }
 
 func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts BundleOptions) (*Bundle, error) {
@@ -39,7 +40,7 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
 		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
 	}
 
-	extraAnnotationsAndLabelsPostRenderer := helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil)
+	extraAnnotationsAndLabelsPostRenderer := helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, opts.IgnoreInvalidAnnotationsAndLabels)
 
 	if dataMap, err := readBundleJsonMap(filepath.Join(bundle.Dir, "extra_annotations.json")); err != nil {
 		return nil, err

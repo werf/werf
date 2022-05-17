@@ -2,8 +2,10 @@ package helm
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -14,6 +16,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var WerfRuntimeAnnotations = map[string]string{
@@ -22,16 +25,31 @@ var WerfRuntimeAnnotations = map[string]string{
 
 var WerfRuntimeLabels = map[string]string{}
 
-func NewExtraAnnotationsAndLabelsPostRenderer(extraAnnotations, extraLabels map[string]string) *ExtraAnnotationsAndLabelsPostRenderer {
+func NewExtraAnnotationsAndLabelsPostRenderer(extraAnnotations, extraLabels map[string]string, ignoreInvalidAnnotationsAndLabels bool) *ExtraAnnotationsAndLabelsPostRenderer {
 	return &ExtraAnnotationsAndLabelsPostRenderer{
-		ExtraAnnotations: extraAnnotations,
-		ExtraLabels:      extraLabels,
+		ExtraAnnotations:                  extraAnnotations,
+		ExtraLabels:                       extraLabels,
+		IgnoreInvalidAnnotationsAndLabels: ignoreInvalidAnnotationsAndLabels,
+		globalWarnings:                    &defaultGlobalWarnings{},
 	}
 }
 
 type ExtraAnnotationsAndLabelsPostRenderer struct {
-	ExtraAnnotations map[string]string
-	ExtraLabels      map[string]string
+	ExtraAnnotations                  map[string]string
+	ExtraLabels                       map[string]string
+	IgnoreInvalidAnnotationsAndLabels bool
+
+	globalWarnings globalWarnings
+}
+
+type defaultGlobalWarnings struct{}
+
+func (gw *defaultGlobalWarnings) GlobalWarningLn(ctx context.Context, msg string) {
+	global_warnings.GlobalWarningLn(ctx, msg)
+}
+
+type globalWarnings interface {
+	GlobalWarningLn(ctx context.Context, msg string)
 }
 
 func replaceNodeByKey(node *yaml_v3.Node, key string, value *yaml_v3.Node) {
@@ -82,6 +100,17 @@ func findNodeByKey(node *yaml_v3.Node, key string) *yaml_v3.Node {
 	return nil
 }
 
+func dereferenceAliasNode(node *yaml_v3.Node) (*yaml_v3.Node, error) {
+	dereferencedNode, err := createNode(map[string]interface{}{})
+	if err != nil {
+		return nil, err
+	}
+
+	dereferencedNode.Content = append(dereferencedNode.Content, node.Alias.Content...)
+
+	return dereferencedNode, nil
+}
+
 func getMapNode(docNode *yaml_v3.Node) *yaml_v3.Node {
 	if docNode.Kind == yaml_v3.DocumentNode {
 		if len(docNode.Content) > 0 {
@@ -94,13 +123,110 @@ func getMapNode(docNode *yaml_v3.Node) *yaml_v3.Node {
 	return nil
 }
 
-func createNode(v interface{}) *yaml_v3.Node {
+func createNode(v interface{}) (*yaml_v3.Node, error) {
 	newNode := &yaml_v3.Node{}
 	if err := newNode.Encode(v); err != nil {
-		logboek.Warn().LogF("Unable to encode map %#v into yaml node: %s\n", v, err)
-		return nil
+		return nil, fmt.Errorf("unable to encode value %#v into yaml node: %w", v, err)
 	}
-	return newNode
+	return newNode, nil
+}
+
+func appendToNode(node *yaml_v3.Node, data interface{}) (*yaml_v3.Node, error) {
+	newNode, err := createNode(data)
+	if err != nil {
+		return nil, err
+	}
+
+	node.Content = append(node.Content, newNode.Content...)
+	return node, nil
+}
+
+func validateStringNode(node *yaml_v3.Node) error {
+	var v interface{}
+	if err := node.Decode(&v); err != nil {
+		return fmt.Errorf("unable to decode value %q: %w", node.Value, err)
+	}
+	if _, ok := v.(string); !ok {
+		return fmt.Errorf("invalid node %q: expected string, got %s", node.Value, reflect.TypeOf(v).String())
+	}
+	return nil
+}
+
+func validateKeyAndValue(keyNode, valueNode *yaml_v3.Node) (errors []error) {
+	keyErr := validateStringNode(keyNode)
+	if keyErr != nil {
+		errors = append(errors, keyErr)
+	}
+
+	var valueErr error
+	if valueNode.Kind == yaml_v3.AliasNode {
+		valueErr = validateStringNode(valueNode.Alias)
+	} else {
+		valueErr = validateStringNode(valueNode)
+	}
+	if valueErr != nil {
+		errors = append(errors, valueErr)
+	}
+
+	return
+}
+
+func validateMapStringStringNode(node *yaml_v3.Node) ([]*yaml_v3.Node, []error) {
+	content := node.Content
+	end := len(content)
+
+	var validValues []*yaml_v3.Node
+	var errors []error
+
+	for pos := 0; pos < end; pos += 2 {
+		keyNode := content[pos]
+		valueNode := content[pos+1]
+
+		if keyNode.Tag == "!!merge" && valueNode.Kind == yaml_v3.AliasNode {
+			for pos := 0; pos < len(valueNode.Alias.Content); pos += 2 {
+				keyNode := valueNode.Alias.Content[pos]
+				valueNode := valueNode.Alias.Content[pos+1]
+
+				newErrs := validateKeyAndValue(keyNode, valueNode)
+				if len(newErrs) > 0 {
+					errors = append(errors, newErrs...)
+				} else {
+					validValues = append(validValues, keyNode, valueNode)
+				}
+			}
+
+			continue
+		}
+
+		newErrs := validateKeyAndValue(keyNode, valueNode)
+		if len(newErrs) > 0 {
+			errors = append(errors, newErrs...)
+		} else {
+			validValues = append(validValues, keyNode, valueNode)
+		}
+	}
+
+	return validValues, errors
+}
+
+func appendExtraData(node *yaml_v3.Node, key string, data interface{}) error {
+	if targetNode := findNodeByKey(node, key); targetNode != nil {
+		if targetNode.Kind == yaml_v3.AliasNode {
+			dereferencedTargetNode, err := dereferenceAliasNode(targetNode)
+			if err != nil {
+				return err
+			}
+
+			appendToNode(dereferencedTargetNode, data)
+			replaceNodeByKey(node, key, dereferencedTargetNode)
+		} else {
+			appendToNode(targetNode, data)
+		}
+	} else {
+		appendToNode(node, map[string]interface{}{key: data})
+	}
+
+	return nil
 }
 
 func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
@@ -161,65 +287,45 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 			fmt.Printf("Unpacket obj annotations: %#v\n", obj.GetAnnotations())
 		}
 
-		if obj.IsList() && len(extraAnnotations) > 0 {
-			logboek.Warn().LogF("werf annotations won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind\n", obj.GetKind())
-		} else if len(extraAnnotations) > 0 {
-			if objMapNode := getMapNode(&objNode); objMapNode != nil {
-				if metadataNode := findNodeByKey(objMapNode, "metadata"); metadataNode != nil {
-					if annotationsNode := findNodeByKey(metadataNode, "annotations"); annotationsNode != nil {
-						if annotationsNode.Kind == yaml_v3.AliasNode {
-							if newMetadataAnnotationsNode := createNode(map[string]interface{}{"annotations": map[string]string{}}); newMetadataAnnotationsNode != nil {
-								if newAnnotationsNode := findNodeByKey(newMetadataAnnotationsNode, "annotations"); newAnnotationsNode != nil {
-									newAnnotationsNode.Content = append(newAnnotationsNode.Content, annotationsNode.Alias.Content...)
+		if objMapNode := getMapNode(&objNode); objMapNode != nil {
+			if metadataNode := findNodeByKey(objMapNode, "metadata"); metadataNode != nil {
 
-									if newExtraAnnotationsNode := createNode(extraAnnotations); newExtraAnnotationsNode != nil {
-										newAnnotationsNode.Content = append(newAnnotationsNode.Content, newExtraAnnotationsNode.Content...)
-									}
-								}
-								replaceNodeByKey(metadataNode, "annotations", newMetadataAnnotationsNode)
-							}
-						} else {
-							if newExtraAnnotationsNode := createNode(extraAnnotations); newExtraAnnotationsNode != nil {
-								annotationsNode.Content = append(annotationsNode.Content, newExtraAnnotationsNode.Content...)
-							}
-						}
-					} else {
-						if newMetadataAnnotationsNode := createNode(map[string]interface{}{"annotations": extraAnnotations}); newMetadataAnnotationsNode != nil {
-							metadataNode.Content = append(metadataNode.Content, newMetadataAnnotationsNode.Content...)
-						}
+				if obj.IsList() && len(extraAnnotations) > 0 {
+					pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf annotations won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind", obj.GetKind()))
+				} else if len(extraAnnotations) > 0 {
+					if err := appendExtraData(metadataNode, "annotations", extraAnnotations); err != nil {
+						pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf annotations won't be applied to the %s/%s: an error have occured during annotations injection: %s\n", strings.ToLower(obj.GetKind()), obj.GetName(), err))
 					}
 				}
-			}
-		}
 
-		if obj.IsList() && len(extraLabels) > 0 {
-			logboek.Warn().LogF("werf labels won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind\n", obj.GetKind())
-		} else if len(extraLabels) > 0 {
-			if objMapNode := getMapNode(&objNode); objMapNode != nil {
-				if metadataNode := findNodeByKey(objMapNode, "metadata"); metadataNode != nil {
-					if labelsNode := findNodeByKey(metadataNode, "labels"); labelsNode != nil {
-						if labelsNode.Kind == yaml_v3.AliasNode {
-							if newMetadataLabelsNode := createNode(map[string]interface{}{"labels": map[string]string{}}); newMetadataLabelsNode != nil {
-								if newLabelsNode := findNodeByKey(newMetadataLabelsNode, "labels"); newLabelsNode != nil {
-									newLabelsNode.Content = append(newLabelsNode.Content, labelsNode.Alias.Content...)
-
-									if newExtraLabelsNode := createNode(extraLabels); newExtraLabelsNode != nil {
-										newLabelsNode.Content = append(newLabelsNode.Content, newExtraLabelsNode.Content...)
-									}
-								}
-								replaceNodeByKey(metadataNode, "labels", newMetadataLabelsNode)
-							}
-						} else {
-							if newExtraLabelsNode := createNode(extraLabels); newExtraLabelsNode != nil {
-								labelsNode.Content = append(labelsNode.Content, newExtraLabelsNode.Content...)
-							}
-						}
-					} else {
-						if newMetadataLabelsNode := createNode(map[string]interface{}{"labels": extraLabels}); newMetadataLabelsNode != nil {
-							metadataNode.Content = append(metadataNode.Content, newMetadataLabelsNode.Content...)
-						}
+				if obj.IsList() && len(extraLabels) > 0 {
+					pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf labels won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind", obj.GetKind()))
+				} else if len(extraLabels) > 0 {
+					if err := appendExtraData(metadataNode, "labels", extraLabels); err != nil {
+						pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf labels won't be applied to the %s/%s: an error have occured during labels injection: %s\n", strings.ToLower(obj.GetKind()), obj.GetName(), err))
 					}
 				}
+
+				if annotationsNode := findNodeByKey(metadataNode, "annotations"); annotationsNode != nil {
+					validNodes, errors := validateMapStringStringNode(annotationsNode)
+					for _, err := range errors {
+						pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("%s/%s annotations validation: %s", strings.ToLower(obj.GetKind()), obj.GetName(), err.Error()))
+					}
+					if pr.IgnoreInvalidAnnotationsAndLabels {
+						annotationsNode.Content = validNodes
+					}
+				}
+
+				if labelsNode := findNodeByKey(metadataNode, "labels"); labelsNode != nil {
+					validNodes, errors := validateMapStringStringNode(labelsNode)
+					for _, err := range errors {
+						pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("%s/%s labels validation: %s\n", strings.ToLower(obj.GetKind()), obj.GetName(), err.Error()))
+					}
+					if pr.IgnoreInvalidAnnotationsAndLabels {
+						labelsNode.Content = validNodes
+					}
+				}
+
 			}
 		}
 
@@ -234,13 +340,13 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 
 			if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
 				fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifest BEGIN\n")
-				fmt.Printf("%s\n", modifiedManifestContent.String())
+				fmt.Printf("%s", modifiedManifestContent.String())
 				fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifest END\n")
 			}
 		}
 	}
 
-	modifiedManifests := bytes.NewBufferString(strings.Join(splitModifiedManifests, "\n---\n"))
+	modifiedManifests := bytes.NewBufferString(strings.Join(splitModifiedManifests, "---\n"))
 	if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
 		fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifests RESULT BEGIN\n")
 		fmt.Printf("%s\n", modifiedManifests.String())

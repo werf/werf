@@ -58,6 +58,10 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := common.GetContext()
 
+			global_warnings.SuppressGlobalWarnings = true
+			if *commonCmdData.LogVerbose || *commonCmdData.LogDebug {
+				global_warnings.SuppressGlobalWarnings = false
+			}
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
@@ -331,9 +335,10 @@ func runRender(ctx context.Context) error {
 	}
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, helm_v3.Settings, helmRegistryClientHandler, chart_extender.WerfChartOptions{
-		SecretValueFiles: common.GetSecretValues(&commonCmdData),
-		ExtraAnnotations: userExtraAnnotations,
-		ExtraLabels:      userExtraLabels,
+		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
+		ExtraAnnotations:                  userExtraAnnotations,
+		ExtraLabels:                       userExtraLabels,
+		IgnoreInvalidAnnotationsAndLabels: false,
 	})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {

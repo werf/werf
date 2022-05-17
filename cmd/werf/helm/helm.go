@@ -43,11 +43,11 @@ func NewCmd() *cobra.Command {
 
 	ctx := common.GetContext()
 
-	wc := chart_extender.NewWerfChartStub(ctx)
+	wc := chart_extender.NewWerfChartStub(ctx, false)
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender:               wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfChartStub(ctx) },
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfChartStub(ctx, false) },
 	}
 
 	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
