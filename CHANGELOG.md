@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.103](https://www.github.com/werf/werf/compare/v1.2.102...v1.2.103) (2022-05-18)
+
+
+### Bug Fixes
+
+* **git:** fix error "unable to clone repo: reference delta not found" ([1733ccd](https://www.github.com/werf/werf/commit/1733ccd28910cdb6156fc46bf07c909aa51468bf))
+* **helm:** prevent bug with pre-upgrade helm hooks, which was used from the previous release revision ([18570d3](https://www.github.com/werf/werf/commit/18570d33a76a262562851f44bc4ffbdfc0b9e95b))
+* **post-renderer:** non-strict labels and annotations validation in werf's post-renderer ([18dd510](https://www.github.com/werf/werf/commit/18dd510bd33f708bc6385b1a0513ee5e0f38079b))
+
 ### [1.2.102](https://www.github.com/werf/werf/compare/v1.2.101...v1.2.102) (2022-05-18)
 
 
