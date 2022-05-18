@@ -62,6 +62,28 @@ outerLoop:
 	return resultList
 }
 
+func FilterSlice[V any](slice []V, filterFunc func(i int, val V) bool) []V {
+	var result []V
+	for i, val := range slice {
+		if filterFunc(i, val) {
+			result = append(result, val)
+		}
+	}
+
+	return result
+}
+
+// Returns nil if no match.
+func FirstMatchInSliceIndex[V any](slice []V, matchFunc func(i int, val V) bool) *int {
+	for i := 0; i < len(slice); i++ {
+		if matchFunc(i, slice[i]) {
+			return &i
+		}
+	}
+
+	return nil
+}
+
 func AddNewStringsToStringArray(list []string, elmsToAdd ...string) []string {
 outerLoop:
 	for _, elmToAdd := range elmsToAdd {
