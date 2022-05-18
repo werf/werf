@@ -14,14 +14,11 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 {{ header }} Examples
 
 ```shell
-  # Run specified image
-  $ werf kube-run --repo test/test application
-
   # Run interactive shell in the image
   $ werf kube-run --repo test/test -it -- sh
 
   # Run image with specified command
-  $ werf kube-run --repo test/test -- /app/run.sh
+  $ werf kube-run --repo test/test application -- /app/run.sh
 ```
 
 {{ header }} Options
@@ -43,6 +40,13 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --copy-from-dir=[]
+            Copy dir from container to local machine after execution (default $WERF_COPY_FROM_DIR). 
+            Example: "/from/dir:to".
+      --copy-from-file=[]
+            Copy file from container to local machine after execution (default                      
+            $WERF_COPY_FROM_FILE). WARNING: parent directory will be copied to a temporary volume,  
+            which might affect performance. Example: "/from/file:to".
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -66,7 +70,8 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --env=''
             Use specified environment (default $WERF_ENV)
       --extra-options=''
-            Pass extra options to "kubectl run" command (default $WERF_EXTRA_OPTIONS)
+            Pass extra options to "kubectl run" command, which will create a Pod (default           
+            $WERF_EXTRA_OPTIONS)
       --final-repo=''
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=''
