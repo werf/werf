@@ -37,18 +37,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-      - name: Set up Go 1.18
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.18
-        id: go
-
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev
         if: matrix.os == 'ubuntu-latest'
 
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+        id: go
 
       - name: Prepare environment
         run: ./scripts/ci/git.sh
@@ -64,17 +64,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.18
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
-      id: go
-
     - name: Install werf build dependencies
       run: sudo apt-get install -y libbtrfs-dev
 
     - name: Checkout code
       uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Compile integration tests binaries
       run: |
@@ -130,12 +130,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.18
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
-      id: go
-
     - name: Install werf build dependencies
       run: sudo apt-get install -y libbtrfs-dev
 
@@ -148,6 +142,12 @@ jobs:
       with:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''ansible.test'''
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration default tests binaries
       uses: actions/download-artifact@master
@@ -188,17 +188,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.18
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
-      id: go
-
     - name: Install werf build dependencies
       run: sudo apt-get install -y libbtrfs-dev
 
     - name: Checkout code
       uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration k8s_per_version tests binaries
       uses: actions/download-artifact@master
@@ -290,17 +290,17 @@ jobs:
       WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
     steps:
 
-    - name: Set up Go 1.18
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
-      id: go
-
     - name: Install werf build dependencies
       run: sudo apt-get install -y libbtrfs-dev
 
     - name: Checkout code
       uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration k8s_per_version_and_container_registry_per_implementation tests binaries
       uses: actions/download-artifact@master

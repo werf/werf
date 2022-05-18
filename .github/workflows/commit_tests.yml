@@ -13,13 +13,13 @@ jobs:
     env:
       GOFLAGS: -mod=readonly
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.18
-
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
 
       - name: Prepare environment
         run: |
@@ -37,18 +37,18 @@ jobs:
     env:
       GOFLAGS: -mod=readonly
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.18
-
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
 
       - name: Prepare environment
         run: |
           sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.43.0
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
 
       - name: Lint
         run: |

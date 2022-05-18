@@ -11,14 +11,14 @@ jobs:
     name: Publish werf release
     runs-on: [self-hosted, linux, builder]
     steps:
-    - name: Set up Go 1.18
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
-      id: go
-
     - name: Checkout code
       uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Publish release
       run: |
