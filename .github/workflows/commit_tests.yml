@@ -48,7 +48,7 @@ jobs:
       - name: Prepare environment
         run: |
           sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.43.0
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
 
       - name: Lint
         run: |
