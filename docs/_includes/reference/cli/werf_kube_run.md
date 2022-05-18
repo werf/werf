@@ -40,13 +40,12 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
-      --copy-from-dir=[]
-            Copy dir from container to local machine after execution (default $WERF_COPY_FROM_DIR). 
-            Example: "/from/dir:to".
-      --copy-from-file=[]
-            Copy file from container to local machine after execution (default                      
-            $WERF_COPY_FROM_FILE). WARNING: parent directory will be copied to a temporary volume,  
-            which might affect performance. Example: "/from/file:to".
+      --copy-from=[]
+            Copy file/dir from container to local machine after execution (default                  
+            $WERF_COPY_FROM). Example: "/from/file:to".
+      --copy-to=[]
+            Copy file/dir from local machine to container after execution (default $WERF_COPY_TO).  
+            Example: "from:/to/file".
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
