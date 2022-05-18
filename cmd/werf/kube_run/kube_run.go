@@ -16,7 +16,6 @@ import (
 	config2 "github.com/containers/image/v5/pkg/docker/config"
 	imgtypes "github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
-	"github.com/werf/werf/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -41,6 +40,7 @@ import (
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
@@ -57,15 +57,15 @@ type cmdDataType struct {
 	ImageName       string
 	Overrides       string
 	RunExtraOptions string
-	CopyFromFile    []string
-	CopyFromDir     []string
+	CopyFrom        []string
+	CopyTo          []string
 
 	registryCredsFound bool
 }
 
-type copyFrom struct {
-	From string
-	To   string
+type copyFromTo struct {
+	Src string
+	Dst string
 }
 
 var (
@@ -131,12 +131,12 @@ func NewCmd() *cobra.Command {
 				}
 			}
 
-			if err := validateCopyFromFile(); err != nil {
-				return fmt.Errorf("error validating --copy-from-file: %w", err)
+			if err := validateCopyFrom(); err != nil {
+				return fmt.Errorf("error validating --copy-from: %w", err)
 			}
 
-			if err := validateCopyFromDir(); err != nil {
-				return fmt.Errorf("error validating --copy-from-dir: %w", err)
+			if err := validateCopyTo(); err != nil {
+				return fmt.Errorf("error validating --copy-to: %w", err)
 			}
 
 			return runMain(ctx)
@@ -191,8 +191,8 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.Interactive, "interactive", "i", common.GetBoolEnvironmentDefaultFalse("WERF_INTERACTIVE"), "Enable interactive mode (default $WERF_INTERACTIVE or false if not specified)")
 	cmd.Flags().BoolVarP(&cmdData.AllocateTty, "tty", "t", common.GetBoolEnvironmentDefaultFalse("WERF_TTY"), "Allocate a TTY (default $WERF_TTY or false if not specified)")
 	cmd.Flags().BoolVarP(&cmdData.AutoPullSecret, "auto-pull-secret", "", common.GetBoolEnvironmentDefaultTrue("WERF_AUTO_PULL_SECRET"), "Automatically create docker config secret in the namespace and plug it via pod's imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if not specified)")
-	cmd.Flags().StringArrayVarP(&cmdData.CopyFromFile, "copy-from-file", "", []string{}, "Copy file from container to local machine after execution (default $WERF_COPY_FROM_FILE). WARNING: parent directory will be copied to a temporary volume, which might affect performance. Example: \"/from/file:to\".")
-	cmd.Flags().StringArrayVarP(&cmdData.CopyFromDir, "copy-from-dir", "", []string{}, "Copy dir from container to local machine after execution (default $WERF_COPY_FROM_DIR). Example: \"/from/dir:to\".")
+	cmd.Flags().StringArrayVarP(&cmdData.CopyFrom, "copy-from", "", []string{}, "Copy file/dir from container to local machine after execution (default $WERF_COPY_FROM). Example: \"/from/file:to\".")
+	cmd.Flags().StringArrayVarP(&cmdData.CopyTo, "copy-to", "", []string{}, "Copy file/dir from local machine to container after execution (default $WERF_COPY_TO). Example: \"from:/to/file\".")
 
 	return cmd
 }
@@ -437,19 +437,19 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 				return fmt.Errorf("error waiting for Pod readiness: %w", err)
 			}
 
+			for _, copyTo := range getCopyTo() {
+				if err := copyToPod(ctx, namespace, pod, pod, copyTo, commonArgs); err != nil {
+					return fmt.Errorf("error copying to Pod: %w", err)
+				}
+			}
+
 			if err := execCommandInPod(ctx, namespace, pod, pod, cmdData.Command, commonArgs); err != nil {
 				return fmt.Errorf("error running command in Pod: %w", err)
 			}
 
-			for _, copyFromFile := range getCopyFromFile() {
-				if err := copyFromPod(ctx, namespace, pod, pod, copyFromFile, commonArgs); err != nil {
-					return fmt.Errorf("error copying file from: %w", err)
-				}
-			}
-
-			for _, copyFromDir := range getCopyFromDir() {
-				if err := copyFromPod(ctx, namespace, pod, pod, copyFromDir, commonArgs); err != nil {
-					return fmt.Errorf("error copying dir from: %w", err)
+			for _, copyFrom := range getCopyFrom() {
+				if err := copyFromPod(ctx, namespace, pod, pod, copyFrom, commonArgs); err != nil {
+					return fmt.Errorf("error copying from Pod: %w", err)
 				}
 			}
 
@@ -521,7 +521,7 @@ func createKubectlRunArgs(pod string, image string, secret string, extraArgs []s
 
 	args = append(args, extraArgs...)
 
-	if overrides, err := generateOverrides(pod, image, secret); err != nil {
+	if overrides, err := generateOverrides(secret); err != nil {
 		return nil, fmt.Errorf("error generating --overrides: %w", err)
 	} else if overrides != nil {
 		args = append(args, "--overrides", string(overrides), "--override-type", "strategic")
@@ -538,10 +538,8 @@ func createKubectlRunArgs(pod string, image string, secret string, extraArgs []s
 }
 
 // Can return nil overrides.
-func generateOverrides(pod, image, secret string) ([]byte, error) {
+func generateOverrides(secret string) ([]byte, error) {
 	if cmdData.Overrides == "" &&
-		len(getCopyFromFile()) == 0 &&
-		len(getCopyFromDir()) == 0 &&
 		(!cmdData.AutoPullSecret || !cmdData.registryCredsFound) {
 		return nil, nil
 	}
@@ -667,11 +665,11 @@ func isPodReady(namespace string, pod string, extraArgs []string) (bool, error) 
 	}
 }
 
-func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom copyFrom, extraArgs []string) error {
-	logboek.Context(ctx).LogF("Copying %q from pod %q in namespace %q to %q ...\n", copyFrom.From, pod, namespace, copyFrom.To)
+func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom copyFromTo, extraArgs []string) error {
+	logboek.Context(ctx).LogF("Copying %q from pod %q in namespace %q to %q ...\n", copyFrom.Src, pod, namespace, copyFrom.Dst)
 
 	args := []string{
-		"cp", fmt.Sprint(namespace, "/", pod, ":", copyFrom.From), copyFrom.To, "-c", container,
+		"cp", fmt.Sprint(namespace, "/", pod, ":", copyFrom.Src), copyFrom.Dst, "-c", container,
 	}
 
 	args = append(args, extraArgs...)
@@ -684,7 +682,30 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 	}
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error copying %q from pod %s/%s: %w", copyFrom.From, namespace, pod, err)
+		return fmt.Errorf("error copying %q from pod %s/%s: %w", copyFrom.Src, namespace, pod, err)
+	}
+
+	return nil
+}
+
+func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom copyFromTo, extraArgs []string) error {
+	logboek.Context(ctx).LogF("Copying %q to %q in pod %q in namespace %q ...\n", copyFrom.Src, copyFrom.Dst, pod, namespace)
+
+	args := []string{
+		"cp", copyFrom.Src, fmt.Sprint(namespace, "/", pod, ":", copyFrom.Dst), "-c", container,
+	}
+
+	args = append(args, extraArgs...)
+
+	cmd := util.ExecKubectlCmd(args...)
+
+	if *commonCmdData.DryRun {
+		fmt.Println(cmd.String())
+		return nil
+	}
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("error copying %q to pod %s/%s: %w", copyFrom.Src, namespace, pod, err)
 	}
 
 	return nil
@@ -937,87 +958,75 @@ func templateOverrides(line, podName, containerName string) string {
 	return strings.ReplaceAll(result, "%pod_name%", podName)
 }
 
-func validateCopyFromFile() error {
-	rawCopyFrom := getCopyFromFileRaw()
+func validateCopyFrom() error {
+	rawCopyFrom := getCopyFromRaw()
 
-	for _, cf := range rawCopyFrom {
-		parts := strings.Split(cf, ":")
+	for _, copyFrom := range rawCopyFrom {
+		parts := strings.Split(copyFrom, ":")
 		if len(parts) != 2 {
-			return fmt.Errorf("wrong format: %s", cf)
+			return fmt.Errorf("wrong format: %s", copyFrom)
 		}
 
-		src := cleanCopyFromPodPath(parts[0])
+		src := cleanCopyPodPath(parts[0])
 		dst, err := cleanCopyFromLocalPath(parts[1], path.Base(src))
 		if err != nil {
 			return fmt.Errorf("error cleaning destination path: %w", err)
 		}
 
 		if strings.TrimSpace(src) == "" || strings.TrimSpace(dst) == "" {
-			return fmt.Errorf("invalid value: %s", cf)
+			return fmt.Errorf("invalid value: %s", copyFrom)
 		}
 
 		if !path.IsAbs(src) {
-			return fmt.Errorf("invalid value %q: source should be an absolute path", cf)
-		}
-
-		if src == "/" {
-			return fmt.Errorf("invalid value %q: source root is not a file", cf)
+			return fmt.Errorf("invalid value %q: source should be an absolute path", copyFrom)
 		}
 	}
 
 	return nil
 }
 
-func validateCopyFromDir() error {
-	rawCopyFrom := getCopyFromDirRaw()
+func validateCopyTo() error {
+	rawCopyTo := getCopyToRaw()
 
-	for _, cf := range rawCopyFrom {
-		parts := strings.Split(cf, ":")
+	for _, copyTo := range rawCopyTo {
+		parts := strings.Split(copyTo, ":")
 		if len(parts) != 2 {
-			return fmt.Errorf("wrong format: %s", cf)
+			return fmt.Errorf("wrong format: %s", copyTo)
 		}
 
-		src := cleanCopyFromPodPath(parts[0])
-		dst, err := cleanCopyFromLocalPath(parts[1], path.Base(src))
+		src, err := cleanCopyToLocalPath(parts[0])
 		if err != nil {
-			return fmt.Errorf("error cleaning destination path: %w", err)
+			return fmt.Errorf("error cleaning source path: %w", err)
 		}
+		dst := cleanCopyPodPath(parts[1])
 
 		if strings.TrimSpace(src) == "" || strings.TrimSpace(dst) == "" {
-			return fmt.Errorf("invalid value: %s", cf)
+			return fmt.Errorf("invalid value: %s", copyTo)
 		}
 
-		if !path.IsAbs(src) {
-			return fmt.Errorf("invalid value %q: source should be an absolute path", cf)
-		}
-
-		if src == "/" {
-			return fmt.Errorf("invalid value %q: source / is not allowed", cf)
-		}
-
-		if path.Base(src) == "/" {
-			return fmt.Errorf("invalid value %q: source file can't be from root directory", cf)
+		if !path.IsAbs(dst) {
+			return fmt.Errorf("invalid value %q: destination should be an absolute path", copyTo)
 		}
 	}
 
 	return nil
 }
 
-func getCopyFromFile() []copyFrom {
-	rawCopyFrom := getCopyFromFileRaw()
+func getCopyFrom() []copyFromTo {
+	rawCopyFrom := getCopyFromRaw()
 
-	var result []copyFrom
+	var result []copyFromTo
 	for _, rawcf := range rawCopyFrom {
 		parts := strings.Split(rawcf, ":")
-		src := cleanCopyFromPodPath(parts[0])
+		src := cleanCopyPodPath(parts[0])
 		dst, err := cleanCopyFromLocalPath(parts[1], path.Base(src))
 		if err != nil {
-			panic("error cleaning destination path shouldn't happen")
+			panic("error cleaning destination path")
 		}
 
-		cf := copyFrom{
-			From: src,
-			To:   dst,
+		cf := copyFromTo{
+			Src: src,
+			Dst: dst,
 		}
 
 		result = append(result, cf)
@@ -1026,30 +1035,30 @@ func getCopyFromFile() []copyFrom {
 	return result
 }
 
-func getCopyFromDir() []copyFrom {
-	rawCopyFrom := getCopyFromDirRaw()
+func getCopyTo() []copyFromTo {
+	rawCopyTo := getCopyToRaw()
 
-	var result []copyFrom
-	for _, rawcf := range rawCopyFrom {
-		parts := strings.Split(rawcf, ":")
-		src := cleanCopyFromPodPath(parts[0])
-		dst, err := cleanCopyFromLocalPath(parts[1], path.Base(src))
+	var result []copyFromTo
+	for _, rawct := range rawCopyTo {
+		parts := strings.Split(rawct, ":")
+		src, err := cleanCopyToLocalPath(parts[0])
 		if err != nil {
-			panic("error cleaning destination path shouldn't happen")
+			panic("error cleaning source path")
+		}
+		dst := cleanCopyPodPath(parts[1])
+
+		ct := copyFromTo{
+			Src: src,
+			Dst: dst,
 		}
 
-		cf := copyFrom{
-			From: src,
-			To:   dst,
-		}
-
-		result = append(result, cf)
+		result = append(result, ct)
 	}
 
 	return result
 }
 
-func cleanCopyFromPodPath(rawPath string) string {
+func cleanCopyPodPath(rawPath string) string {
 	return filepath.ToSlash(filepath.Clean(rawPath))
 }
 
@@ -1071,10 +1080,22 @@ func cleanCopyFromLocalPath(rawPath, srcBaseName string) (string, error) {
 	return rawPath, nil
 }
 
-func getCopyFromFileRaw() []string {
-	return append(common.PredefinedValuesByEnvNamePrefix("WERF_COPY_FROM_FILE_"), cmdData.CopyFromFile...)
+func cleanCopyToLocalPath(rawPath string) (string, error) {
+	rawPath = filepath.Clean(util.ExpandPath(rawPath))
+
+	var err error
+	rawPath, err = filepath.Abs(rawPath)
+	if err != nil {
+		return "", fmt.Errorf("error converting path %q to an absolute path: %w", rawPath, err)
+	}
+
+	return rawPath, nil
 }
 
-func getCopyFromDirRaw() []string {
-	return append(common.PredefinedValuesByEnvNamePrefix("WERF_COPY_FROM_DIR_"), cmdData.CopyFromDir...)
+func getCopyFromRaw() []string {
+	return append(common.PredefinedValuesByEnvNamePrefix("WERF_COPY_FROM_"), cmdData.CopyFrom...)
+}
+
+func getCopyToRaw() []string {
+	return append(common.PredefinedValuesByEnvNamePrefix("WERF_COPY_TO_"), cmdData.CopyTo...)
 }
