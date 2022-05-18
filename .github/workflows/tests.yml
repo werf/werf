@@ -37,10 +37,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-      - name: Set up Go 1.17
+      - name: Set up Go 1.18
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
         id: go
 
       - name: Install werf build dependencies
@@ -64,10 +64,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.17
+    - name: Set up Go 1.18
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17
+        go-version: 1.18
       id: go
 
     - name: Install werf build dependencies
@@ -130,10 +130,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.17
+    - name: Set up Go 1.18
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17
+        go-version: 1.18
       id: go
 
     - name: Install werf build dependencies
@@ -188,10 +188,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.17
+    - name: Set up Go 1.18
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17
+        go-version: 1.18
       id: go
 
     - name: Install werf build dependencies
@@ -290,10 +290,10 @@ jobs:
       WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
     steps:
 
-    - name: Set up Go 1.17
+    - name: Set up Go 1.18
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17
+        go-version: 1.18
       id: go
 
     - name: Install werf build dependencies
