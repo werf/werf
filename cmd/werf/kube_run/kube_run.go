@@ -92,7 +92,11 @@ func NewCmd() *cobra.Command {
   $ werf kube-run --repo test/test -it -- sh
 
   # Run image with specified command
-  $ werf kube-run --repo test/test application -- /app/run.sh`,
+  $ werf kube-run --repo test/test application -- /app/run.sh
+
+  # Run multiple commands
+  $ werf kube-run --repo test/test application -- sh -euc 'test -d /tmp && touch /tmp/file'
+`,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
 		},
@@ -521,7 +525,7 @@ func createKubectlRunArgs(pod string, image string, secret string, extraArgs []s
 
 	args = append(args, extraArgs...)
 
-	if overrides, err := generateOverrides(secret); err != nil {
+	if overrides, err := generateOverrides(pod, secret); err != nil {
 		return nil, fmt.Errorf("error generating --overrides: %w", err)
 	} else if overrides != nil {
 		args = append(args, "--overrides", string(overrides), "--override-type", "strategic")
@@ -531,25 +535,19 @@ func createKubectlRunArgs(pod string, image string, secret string, extraArgs []s
 		args = append(args, strings.Fields(cmdData.RunExtraOptions)...)
 	}
 
-	args = append(args, "--")
-	args = append(args, "sh", "-euc", "until [ -f /tmp/werf-kube-run-quit ]; do sleep 1; done")
-
 	return args, nil
 }
 
 // Can return nil overrides.
-func generateOverrides(secret string) ([]byte, error) {
-	if cmdData.Overrides == "" &&
-		(!cmdData.AutoPullSecret || !cmdData.registryCredsFound) {
-		return nil, nil
-	}
-
+func generateOverrides(container, secret string) ([]byte, error) {
 	codec := runtime.NewCodec(scheme.DefaultJSONEncoder(), scheme.Codecs.UniversalDeserializer())
 
 	podOverrides := &corev1.Pod{}
 	if err := runtime.DecodeInto(codec, []byte(cmdData.Overrides), podOverrides); err != nil {
 		return nil, fmt.Errorf("error decoding --overrides: %w", err)
 	}
+
+	createMainContainer(podOverrides, container)
 
 	if cmdData.AutoPullSecret && cmdData.registryCredsFound {
 		if err := addImagePullSecret(secret, podOverrides); err != nil {
@@ -568,6 +566,27 @@ func generateOverrides(secret string) ([]byte, error) {
 	}
 
 	return overrides, nil
+}
+
+func createMainContainer(pod *corev1.Pod, container string) {
+	if util.FirstMatchInSliceIndex(pod.Spec.Containers, func(i int, val corev1.Container) bool {
+		return val.Name == container
+	}) == nil {
+		pod.Spec.Containers = append(pod.Spec.Containers, corev1.Container{Name: container})
+	}
+
+	pod.Spec.Containers[getContainerIndex(pod, container)].Command = []string{
+		"sh", "-euc",
+	}
+	pod.Spec.Containers[getContainerIndex(pod, container)].Args = []string{
+		"until [ -f /tmp/werf-kube-run-quit ]; do sleep 1; done",
+	}
+}
+
+func getContainerIndex(pod *corev1.Pod, container string) int {
+	return *util.FirstMatchInSliceIndex(pod.Spec.Containers, func(i int, val corev1.Container) bool {
+		return val.Name == container
+	})
 }
 
 func cleanPodManifest(podJsonManifest []byte) ([]byte, error) {
