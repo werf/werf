@@ -18,14 +18,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
 #    - name: Install upx (ubuntu-latest)
 #      run: sudo apt-get install upx
@@ -106,14 +106,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download unit tests binaries
       uses: actions/download-artifact@master
@@ -160,21 +160,21 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
 
     - name: Checkout code (git history as fixtures for tests)
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -275,14 +275,14 @@ jobs:
 
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -347,14 +347,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration k8s tests binaries
       uses: actions/download-artifact@master
@@ -430,11 +430,11 @@ jobs:
 #      id: go
 #
 #    - name: Checkout code
-#      uses: actions/checkout@v2
+#      uses: actions/checkout@v3
 #      if: matrix.extra-find-args != '! -name ''git.test*'' ! -name ''guides.test*'' ! -name ''ansible.test*'''
 #
 #    - name: Checkout code (git history as fixtures for tests)
-#      uses: actions/checkout@v2
+#      uses: actions/checkout@v3
 #      with:
 #        fetch-depth: 0
 #      if: matrix.extra-find-args == '! -name ''git.test*'' ! -name ''guides.test*'' ! -name ''ansible.test*'''
@@ -511,7 +511,7 @@ jobs:
 #      id: go
 #
 #    - name: Checkout code
-#      uses: actions/checkout@v2
+#      uses: actions/checkout@v3
 #
 #    - name: Download integration k8s tests binaries
 #      uses: actions/download-artifact@master
@@ -598,14 +598,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download coverage artifact
       uses: actions/download-artifact@master

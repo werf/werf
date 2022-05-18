@@ -30,14 +30,14 @@ jobs:
     if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.id == 1745044226) # run tests label
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Compile tests binaries
       run: |
@@ -91,14 +91,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download unit tests binaries
       uses: actions/download-artifact@master
@@ -132,21 +132,21 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
 
     - name: Checkout code (git history as fixtures for tests)
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration tests binaries
       uses: actions/download-artifact@master
@@ -188,14 +188,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
-
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration k8s tests binaries
       uses: actions/download-artifact@master
