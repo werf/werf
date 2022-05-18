@@ -13,13 +13,13 @@ jobs:
     env:
       GOFLAGS: -mod=readonly
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.18
-
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
 
       - name: Prepare environment
         run: |
@@ -37,13 +37,13 @@ jobs:
     env:
       GOFLAGS: -mod=readonly
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.18
-
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
 
       - name: Prepare environment
         run: |
