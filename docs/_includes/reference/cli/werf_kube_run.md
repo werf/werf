@@ -19,6 +19,10 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 
   # Run image with specified command
   $ werf kube-run --repo test/test application -- /app/run.sh
+
+  # Run multiple commands
+  $ werf kube-run --repo test/test application -- sh -euc 'test -d /tmp && touch /tmp/file'
+
 ```
 
 {{ header }} Options
