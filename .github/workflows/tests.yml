@@ -37,7 +37,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Compile tests binaries
       run: |
@@ -98,7 +98,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download unit tests binaries
       uses: actions/download-artifact@master
@@ -139,11 +139,11 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
 
     - name: Checkout code (git history as fixtures for tests)
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''guides.test'' ! -name ''ansible.test'''
@@ -195,7 +195,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download integration k8s tests binaries
       uses: actions/download-artifact@master

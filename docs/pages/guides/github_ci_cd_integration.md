@@ -55,13 +55,13 @@ First of all, you need to define a template — the general part of the deployme
 >
 {% include /guides/github_ci_cd_integration/build_and_publish_note.md %}
 
-First of all, you have to perform a `Checkout code` step — add the source code of an application. It is the initial step of a job. When using the werf builder (as you know, the incremental building is its notable feature), it is not enough to have a so-called `shallow clone` with a single commit that the action `actions/checkout@v2` creates when used with no parameters specified. 
+First of all, you have to perform a `Checkout code` step — add the source code of an application. It is the initial step of a job. When using the werf builder (as you know, the incremental building is its notable feature), it is not enough to have a so-called `shallow clone` with a single commit that the action `actions/checkout@v3` creates when used with no parameters specified. 
 werf generates stages on the basis of the git history. So, if there is no history, then each build would run without previously built images. Therefore, it is essential to use the `fetch-depth: 0` parameter to access the entire history when building, publishing (`werf build-and-publish`), deploying (`werf deploy`), and running (`werf run`). In other words, for all commands that stages use.
 
 {% raw %}
 ```yaml
 - name: Checkout code
-  uses: actions/checkout@v2
+  uses: actions/checkout@v3
   with:
     fetch-depth: 0
 ```
@@ -360,11 +360,11 @@ Options for rolling back changes in production:
 
 First of all, you need to perform a code checkout - add the source code of an application. It is the initial step of a job.
 
-Most cleaning policies in werf are based on git primitives (commit, branch, and tag), so by using the action `actions/checkout@v2` without additional parameters, you risk accidentally deleting images. We recommend you to use the following steps for cleanup to go smoothly:
+Most cleaning policies in werf are based on git primitives (commit, branch, and tag), so by using the action `actions/checkout@v3` without additional parameters, you risk accidentally deleting images. We recommend you to use the following steps for cleanup to go smoothly:
 
 ```yaml
 - name: Checkout code
-  uses: actions/checkout@v2
+  uses: actions/checkout@v3
   
 - name: Fetch all history for all tags and branches
   run: git fetch --prune --unshallow
