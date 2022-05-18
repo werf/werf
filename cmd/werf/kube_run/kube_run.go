@@ -191,8 +191,8 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.Interactive, "interactive", "i", common.GetBoolEnvironmentDefaultFalse("WERF_INTERACTIVE"), "Enable interactive mode (default $WERF_INTERACTIVE or false if not specified)")
 	cmd.Flags().BoolVarP(&cmdData.AllocateTty, "tty", "t", common.GetBoolEnvironmentDefaultFalse("WERF_TTY"), "Allocate a TTY (default $WERF_TTY or false if not specified)")
 	cmd.Flags().BoolVarP(&cmdData.AutoPullSecret, "auto-pull-secret", "", common.GetBoolEnvironmentDefaultTrue("WERF_AUTO_PULL_SECRET"), "Automatically create docker config secret in the namespace and plug it via pod's imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if not specified)")
-	cmd.Flags().StringArrayVarP(&cmdData.CopyFrom, "copy-from", "", []string{}, "Copy file/dir from container to local machine after execution (default $WERF_COPY_FROM). Example: \"/from/file:to\".")
-	cmd.Flags().StringArrayVarP(&cmdData.CopyTo, "copy-to", "", []string{}, "Copy file/dir from local machine to container after execution (default $WERF_COPY_TO). Example: \"from:/to/file\".")
+	cmd.Flags().StringArrayVarP(&cmdData.CopyFrom, "copy-from", "", []string{}, "Copy file/dir from container to local machine after user command execution (default $WERF_COPY_FROM). Example: \"/from/file:to\".")
+	cmd.Flags().StringArrayVarP(&cmdData.CopyTo, "copy-to", "", []string{}, "Copy file/dir from local machine to container before user command execution (default $WERF_COPY_TO). Example: \"from:/to/file\".")
 
 	return cmd
 }
