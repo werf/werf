@@ -65,6 +65,16 @@ Run tests in built image `frontend_image` in Kubernetes Pod:
 werf kube-run frontend_image --repo ghcr.io/group/project -- npm test
 ```
 
+Run tests in Pod, but copy file with secret env vars into container before running the command:
+```
+werf kube-run frontend_image --repo ghcr.io/group/project --copy-to ".env:/app/.env" -- npm run e2e-tests
+```
+
+Run tests in Pod and get the coverage report:
+```
+werf kube-run frontend_image --repo ghcr.io/group/project --copy-from "/app/report:." -- go test -coverprofile report ./...
+```
+
 Run default command of built image in Kubernetes in a Pod with CPU requests set:
 
 ```
