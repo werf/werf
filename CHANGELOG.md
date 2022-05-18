@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.102](https://www.github.com/werf/werf/compare/v1.2.101...v1.2.102) (2022-05-18)
+
+
+### Features
+
+* **kube-run:** --copy-from-file and --copy-from-dir opts ([dcfa982](https://www.github.com/werf/werf/commit/dcfa9828ae65ca253416439a2623a2fb21fa2d68))
+* **kube-run:** add --copy-to; replace --copy-from-[file|dir] with --copy-from ([231ccbc](https://www.github.com/werf/werf/commit/231ccbc8e228597c7d0fde0c78fedb27adb67fec))
+
+
+### Bug Fixes
+
+* **kube-run:** ignore image CMD ([98bfc7e](https://www.github.com/werf/werf/commit/98bfc7efd1acc2ceab183e8418d041ab0ac68904))
+
 ### [1.2.101](https://www.github.com/werf/werf/compare/v1.2.100...v1.2.101) (2022-05-16)
 
 
