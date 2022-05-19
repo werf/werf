@@ -294,7 +294,7 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 					pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf annotations won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind", obj.GetKind()))
 				} else if len(extraAnnotations) > 0 {
 					if err := appendExtraData(metadataNode, "annotations", extraAnnotations); err != nil {
-						pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf annotations won't be applied to the %s/%s: an error have occured during annotations injection: %s\n", strings.ToLower(obj.GetKind()), obj.GetName(), err))
+						pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf annotations won't be applied to the %s/%s: an error have occurred during annotations injection: %s\n", strings.ToLower(obj.GetKind()), obj.GetName(), err))
 					}
 				}
 
@@ -302,7 +302,7 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 					pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf labels won't be applied to *List resource Kinds, including %s. We advise to replace *List resources with multiple separate resources of the same Kind", obj.GetKind()))
 				} else if len(extraLabels) > 0 {
 					if err := appendExtraData(metadataNode, "labels", extraLabels); err != nil {
-						pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf labels won't be applied to the %s/%s: an error have occured during labels injection: %s\n", strings.ToLower(obj.GetKind()), obj.GetName(), err))
+						pr.globalWarnings.GlobalWarningLn(context.Background(), fmt.Sprintf("werf labels won't be applied to the %s/%s: an error have occurred during labels injection: %s\n", strings.ToLower(obj.GetKind()), obj.GetName(), err))
 					}
 				}
 
