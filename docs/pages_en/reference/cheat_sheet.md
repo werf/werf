@@ -8,13 +8,13 @@ toc: false
 
 Build an image and deploy it to production:
 
-```
+```shell
 werf converge --repo ghcr.io/group/project --env production
 ```
 
 Build an image and deploy it to the default environment, but use custom image tags:
 
-```
+```shell
 werf converge --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
 ```
 
@@ -28,32 +28,33 @@ Running most of the commands will first cause the missing images to be rebuilt. 
 
 Set default values for werf commands and log in to the container registry based on GitLab environment variables:
 
-```
+```shell
 . $(werf ci-env gitlab --as-file) 
 ```
+
 ### Building, tagging, and publishing images
 
 Build images using the container registry:
 
-```
+```shell
 werf build --repo ghcr.io/group/project
 ```
 
 Build images and attach custom tags to them in addition to content-based tags:
 
-```
+```shell
 werf build --repo ghcr.io/group/project --add-custom-tag latest --add-custom-tag 1.2.1
 ```
 
 Build and store the final images in a separate registry deployed in the Kubernetes cluster:
 
-```
+```shell
 werf build --repo ghcr.io/group/project --final-repo fast-in-cluster-registry.cluster/group/project
 ```
 
 Build images using the container registry (or local storage if needed) and export them to another container registry:
 
-```
+```shell
 werf export --repo ghcr.io/group/project --tag ghcr.io/group/otherproject/%image%:latest
 ```
 
@@ -61,23 +62,25 @@ werf export --repo ghcr.io/group/project --tag ghcr.io/group/otherproject/%image
 
 Use the following command to run tests in the previously built `frontend_image` in the Kubernetes Pod:
 
-```
+```shell
 werf kube-run frontend_image --repo ghcr.io/group/project -- npm test
 ```
 
 Run tests in Pod, but copy file with secret env vars into container before running the command:
-```
+
+```shell
 werf kube-run frontend_image --repo ghcr.io/group/project --copy-to ".env:/app/.env" -- npm run e2e-tests
 ```
 
 Run tests in Pod and get the coverage report:
-```
+
+```shell
 werf kube-run frontend_image --repo ghcr.io/group/project --copy-from "/app/report:." -- go test -coverprofile report ./...
 ```
 
 The command below executes the default command of the built image in the Kubernetes Pod with the CPU requests set:
 
-```
+```shell
 werf kube-run frontend_image --repo ghcr.io/group/project --overrides='{"spec":{"containers":[{"name": "%container_name%", "resources":{"requests":{"cpu":"100m"}}}]}}'
 ```
 
@@ -87,13 +90,13 @@ Generally, to run some integration tests (e2e, acceptance, security, etc.) you w
 
 Running integration tests using converge:
 
-```
+```shell
 werf converge --repo ghcr.io/group/project --env integration
 ```
 
 Running integration tests using converge to prepare the environment and kube-run to run a one-off task:
 
-```
+```shell
 werf converge --repo ghcr.io/group/project --env integration_infra
 werf kube-run --repo ghcr.io/group/project --env integration -- npm run acceptance-tests
 ```
@@ -104,13 +107,13 @@ Use werf bundles to prepare release artifacts that can be tested or deployed lat
 
 Using a semver tag that is compatible with the Helm OCI chart:
 
-```
+```shell
 werf bundle publish --repo ghcr.io/group/project --tag 1.0.0
 ```
 
 Using an arbitrary symbolic tag:
 
-```
+```shell
 werf bundle publish --repo ghcr.io/group/project --tag latest
 ```
 
@@ -118,19 +121,19 @@ werf bundle publish --repo ghcr.io/group/project --tag latest
 
 Building and deploying the application to production:
 
-```
+```shell
 werf converge --skip-build --repo ghcr.io/group/project --env production
 ```
 
 Deploying the application you built in the previous step and attaching a custom tag to it:
 
-```
+```shell
 werf converge --skip-build --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
 ```
 
 Deploying the previously published bundle with the 1.0.0 tag to production:
 
-```
+```shell
 werf bundle apply --repo ghcr.io/group/project --env production --tag 1.0.0
 ```
 
@@ -140,41 +143,42 @@ Most commands have the `--dev` flag, which is usually what you need for local de
 
 Rendering and showing manifests:
 
-```
+```shell
 werf render --dev
 ```
 
 Building an image and starting the interactive shell in a container with a failed stage in case of failure:
 
-```
+```shell
 werf build --dev [--follow] --introspect-error
 ```
 
 Building an image, running it in a Kubernetes Pod, and executing the command in it:
 
-```
+```shell
 werf kube-run --dev [--follow] --repo ghcr.io/group/project frontend -- npm lint
 ```
 
 Starting an interactive shell in a container in a Kubernetes Pod for the specified image:
 
-```
+```shell
 werf kube-run --dev --repo ghcr.io/group/project -it frontend -- bash
 ```
 
 Building an image and deploying it to a dev cluster (can be local):
 
-```
+```shell
 werf converge --dev [--follow] --repo ghcr.io/group/project
 ```
 
 Building an image and deploying it to a dev cluster; using stages from the secondary read-only registry to speed up the build:
 
-```
+```shell
 werf converge --dev [--follow] --repo ghcr.io/group/project --secondary-repo ghcr.io/group/otherproject
 ```
 
 Running the "docker-compose up" command with the forwarded image names:
-```
+
+```shell
 werf compose up --dev [--follow]
 ```
