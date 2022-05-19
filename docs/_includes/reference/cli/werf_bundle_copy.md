@@ -48,8 +48,7 @@ werf bundle copy [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --platform=''
-            Enable platform emulation when building images with werf. The only supported option for 
-            now is linux/amd64.
+            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --skip-tls-verify-registry=false

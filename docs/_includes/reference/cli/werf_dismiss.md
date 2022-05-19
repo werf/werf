@@ -163,8 +163,7 @@ werf dismiss [options]
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --platform=''
-            Enable platform emulation when building images with werf. The only supported option for 
-            now is linux/amd64.
+            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].
       --release=''
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)

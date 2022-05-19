@@ -92,8 +92,7 @@ werf ci-env CI_SYSTEM [options]
   -o, --output-file-path=''
             Write to custom file (default $WERF_OUTPUT_FILE_PATH).
       --platform=''
-            Enable platform emulation when building images with werf. The only supported option for 
-            now is linux/amd64.
+            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].
       --shell=''
             Set to cmdexe, powershell or use the default behaviour that is compatible with any unix 
             shell (default $WERF_SHELL).
