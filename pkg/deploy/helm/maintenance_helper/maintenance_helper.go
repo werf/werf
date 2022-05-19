@@ -174,6 +174,8 @@ func (helper *MaintenanceHelper) CreateHelm3ReleaseMetadataFromHelm2Release(ctx 
 		return fmt.Errorf("cannot create helm 3 release %q metadata from helm 2 release %q metadata: %w", release, releaseData.Release.Name, err)
 	}
 
+	rls.Namespace = namespace
+
 	if err := helper.v3ActionConfig.Releases.Create(rls); err != nil {
 		return fmt.Errorf("error saving helm 3 release %q into storage: %w", release, err)
 	}
