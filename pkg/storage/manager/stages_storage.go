@@ -426,7 +426,7 @@ type getStageDescriptionOptions struct {
 func (m *StagesStorageManager) getStageDescription(ctx context.Context, stageID image.StageID, opts getStageDescriptionOptions) (*image.StageDescription, error) {
 	stageImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Signature, stageID.UniqueID)
 
-	if opts.WithManifestCache {
+	if opts.WithManifestCache && !IsManifestCacheDisabled() {
 		logboek.Context(ctx).Debug().LogF("Getting image %s info from manifest cache...\n", stageImageName)
 		if imgInfo, err := image.CommonManifestCache.GetImageInfo(ctx, m.StagesStorage.String(), stageImageName); err != nil {
 			return nil, fmt.Errorf("error getting image %s info from manifest cache: %s", stageImageName, err)
@@ -458,9 +458,11 @@ func (m *StagesStorageManager) getStageDescription(ctx context.Context, stageID 
 	} else if err != nil {
 		return nil, fmt.Errorf("error getting signature %q uniqueID %d stage info from %s: %s", stageID.Signature, stageID.UniqueID, m.StagesStorage.String(), err)
 	} else if stageDesc != nil {
-		logboek.Context(ctx).Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)
-		if err := image.CommonManifestCache.StoreImageInfo(ctx, m.StagesStorage.String(), stageDesc.Info); err != nil {
-			return nil, fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageName, err)
+		if !IsManifestCacheDisabled() {
+			logboek.Context(ctx).Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)
+			if err := image.CommonManifestCache.StoreImageInfo(ctx, m.StagesStorage.String(), stageDesc.Info); err != nil {
+				return nil, fmt.Errorf("error storing image %s info into manifest cache: %s", stageImageName, err)
+			}
 		}
 
 		return stageDesc, nil

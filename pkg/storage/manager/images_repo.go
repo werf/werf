@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/werf/logboek"
@@ -25,26 +26,35 @@ func newImagesRepoManager(imagesRepo storage.ImagesRepo) *ImagesRepoManager {
 }
 
 func (m *ImagesRepoManager) GetRepoImage(ctx context.Context, imageName, tag string) (*image.Info, error) {
+	if IsManifestCacheDisabled() {
+		return m.ImagesRepo.GetRepoImage(ctx, imageName, tag)
+	}
+
+	return m.getRepoImageWithCache(ctx, imageName, tag)
+}
+
+func (m *ImagesRepoManager) getRepoImageWithCache(ctx context.Context, imageName, tag string) (*image.Info, error) {
 	fullImageName := m.ImagesRepo.ImageRepositoryNameWithTag(imageName, tag)
 	imageInfo, err := image.CommonManifestCache.GetImageInfo(ctx, m.ImagesRepo.String(), fullImageName)
 	if err != nil {
 		return nil, fmt.Errorf("get image manifest from cache failed: %s", err)
 	}
 
-	if imageInfo == nil {
-		logboek.Context(ctx).Info().LogF("Not found %s image info in manifest cache (CACHE MISS)\n", fullImageName)
-		imageInfo, err = m.ImagesRepo.GetRepoImage(ctx, imageName, tag)
-		if err != nil {
-			return nil, err
-		}
-
-		if label, ok := imageInfo.Labels[image.WerfTagStrategyLabel]; ok && label == string(tag_strategy.StagesSignature) {
-			if err := image.CommonManifestCache.StoreImageInfo(ctx, m.ImagesRepo.String(), imageInfo); err != nil {
-				return nil, fmt.Errorf("store image manifest into cache failed: %s", err)
-			}
-		}
-	} else {
+	if imageInfo != nil {
 		logboek.Context(ctx).Info().LogF("Got image %s info from manifest cache (CACHE HIT)\n", fullImageName)
+		return imageInfo, nil
+	}
+
+	logboek.Context(ctx).Info().LogF("Not found %s image info in manifest cache (CACHE MISS)\n", fullImageName)
+	imageInfo, err = m.ImagesRepo.GetRepoImage(ctx, imageName, tag)
+	if err != nil {
+		return nil, err
+	}
+
+	if label, ok := imageInfo.Labels[image.WerfTagStrategyLabel]; ok && label == string(tag_strategy.StagesSignature) {
+		if err := image.CommonManifestCache.StoreImageInfo(ctx, m.ImagesRepo.String(), imageInfo); err != nil {
+			return nil, fmt.Errorf("store image manifest into cache failed: %s", err)
+		}
 	}
 
 	return imageInfo, nil
@@ -138,4 +148,8 @@ func (m *ImagesRepoManager) ForEachDeleteRepoImage(ctx context.Context, repoImag
 		err := m.ImagesRepo.DeleteRepoImage(ctx, repoImage)
 		return f(repoImage, err)
 	})
+}
+
+func IsManifestCacheDisabled() bool {
+	return os.Getenv("WERF_DISABLE_MANIFEST_CACHE") == "1"
 }
