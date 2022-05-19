@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.1.33](https://www.github.com/werf/werf/compare/v1.1.32...v1.1.33) (2022-05-19)
+
+
+### Features
+
+* **cleanup:** add env WERF_DISABLE_MANIFEST_CACHE to disable manifest cache ([c8a4a7c](https://www.github.com/werf/werf/commit/c8a4a7c6e31cf5d69842e5dc990c9b32c341183f))
+
 ### [1.1.32](https://www.github.com/werf/werf/compare/v1.1.31...v1.1.32) (2022-05-11)
 
 
