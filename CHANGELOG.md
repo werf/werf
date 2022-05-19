@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.104](https://www.github.com/werf/werf/compare/v1.2.103...v1.2.104) (2022-05-19)
+
+
+### Features
+
+* **cross-platform-builds:** basic support of --platform=OS/ARCH[/VARIANT] parameter for buildah builder ([276fc0f](https://www.github.com/werf/werf/commit/276fc0ff1bf1e2137d490f8018ebae78ece4fa66))
+
+
+### Bug Fixes
+
+* **migrate2to3:** new target namespace not respected in new Release ([985e241](https://www.github.com/werf/werf/commit/985e241384779fba176d08ff7401aa397f6813fb))
+* warning message misspeling fix ([15c2dbb](https://www.github.com/werf/werf/commit/15c2dbba532df8ce3afa0e02ed1a40d8dfa4d612))
+
 ### [1.2.103](https://www.github.com/werf/werf/compare/v1.2.102...v1.2.103) (2022-05-18)
 
 
