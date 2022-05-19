@@ -180,8 +180,7 @@ werf bundle publish [options]
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
       --platform=''
-            Enable platform emulation when building images with werf. The only supported option for 
-            now is linux/amd64.
+            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''

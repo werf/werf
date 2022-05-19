@@ -112,8 +112,7 @@ werf managed-images ls [options]
             more info https://werf.io/documentation/advanced/giterminism.html, default              
             $WERF_LOOSE_GITERMINISM)
       --platform=''
-            Enable platform emulation when building images with werf. The only supported option for 
-            now is linux/amd64.
+            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''
