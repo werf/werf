@@ -19,14 +19,14 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.os }}", builder]
     steps:
 
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version-file: go.mod
       id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v3
 
     # To compress werf_with_coverage binary for macOS
     # This fixes related with monkey patching panic (panic: permission denied [recovered])
@@ -106,14 +106,14 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     steps:
 
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version-file: go.mod
       id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v3
 
     - name: Download unit tests binaries
       uses: actions/download-artifact@master
@@ -162,12 +162,6 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     steps:
 
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version-file: go.mod
-      id: go
-
     - name: Checkout code
       uses: actions/checkout@v3
       if: matrix.extra-find-args != '! -name ''git.test'' ! -name ''ansible.test'''
@@ -177,6 +171,12 @@ jobs:
       with:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test'' ! -name ''ansible.test'''
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration default tests binaries
       uses: actions/download-artifact@master
@@ -278,14 +278,14 @@ jobs:
 
     steps:
 
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version-file: go.mod
       id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v3
 
     - name: Download integration container_registry_per_implementation tests binaries
       uses: actions/download-artifact@master
@@ -353,14 +353,14 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     steps:
 
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version-file: go.mod
       id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v3
 
     - name: Download integration k8s_per_version tests binaries
       uses: actions/download-artifact@master
@@ -463,14 +463,14 @@ jobs:
       WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
     steps:
 
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version-file: go.mod
       id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v3
 
     - name: Download integration k8s_per_version_and_container_registry_per_implementation tests binaries
       uses: actions/download-artifact@master
@@ -555,12 +555,6 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.os }}-latest"]
     steps:
 
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version-file: go.mod
-      id: go
-
     - name: Checkout code
       uses: actions/checkout@v3
       if: matrix.extra-find-args != '! -name ''git.test*'' ! -name ''ansible.test*'''
@@ -570,6 +564,12 @@ jobs:
       with:
         fetch-depth: 0
       if: matrix.extra-find-args == '! -name ''git.test*'' ! -name ''ansible.test*'''
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+      id: go
 
     - name: Download integration default tests binaries
       uses: actions/download-artifact@master
@@ -637,14 +637,14 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.os }}-latest"]
     steps:
 
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version-file: go.mod
       id: go
-
-    - name: Checkout code
-      uses: actions/checkout@v3
 
     - name: Download integration k8s_per_version tests binaries
       uses: actions/download-artifact@master
