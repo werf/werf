@@ -50,6 +50,15 @@ jobs:
           go-version-file: go.mod
         id: go
 
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Prepare environment
         run: ./scripts/ci/git.sh
         shell: bash
@@ -75,6 +84,15 @@ jobs:
       with:
         go-version-file: go.mod
       id: go
+
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
 
     - name: Compile integration tests binaries
       run: |
