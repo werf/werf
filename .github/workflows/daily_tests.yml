@@ -27,6 +27,15 @@ jobs:
         go-version-file: go.mod
       id: go
 
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
     # To compress werf_with_coverage binary for macOS
     # This fixes related with monkey patching panic (panic: permission denied [recovered])
     - name: Install upx (macOS)
