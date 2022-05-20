@@ -14,9 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
-#        os: [ubuntu, macOS, windows]
-    runs-on: [self-hosted, "${{ matrix.os }}", builder]
+        os: [ ubuntu ]
+    runs-on: ${{ matrix.os }}-latest
     steps:
 
     - name: Checkout code
