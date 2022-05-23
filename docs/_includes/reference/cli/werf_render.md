@@ -98,6 +98,9 @@ werf render [options]
             contains .git in the current or parent directories)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --hooks-status-progress-period=5
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --include-crds=true
@@ -128,6 +131,14 @@ werf render [options]
             dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
             dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
             dockerInstructions, dockerfile
+      --kube-config=''
+            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
+            $KUBECONFIG)
+      --kube-config-base64=''
+            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
+            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
+      --kube-context=''
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -169,6 +180,9 @@ werf render [options]
       --release=''
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
+      --releases-history-max=0
+            Max releases to keep in release storage. Can be set by environment variable             
+            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''
@@ -257,6 +271,9 @@ werf render [options]
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
             https://werf.io/documentation/reference/toolbox/ssh.html
+      --status-progress-period=5
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.
             
