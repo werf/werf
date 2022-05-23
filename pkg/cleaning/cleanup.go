@@ -236,7 +236,7 @@ func (m *cleanupManager) deployedDockerImagesNames(ctx context.Context) ([]strin
 	for _, contextClient := range m.KubernetesContextClients {
 		if err := logboek.Context(ctx).LogProcessInline("Getting deployed docker images (context %s)", contextClient.ContextName).
 			DoError(func() error {
-				kubernetesClientDeployedDockerImagesNames, err := allow_list.DeployedDockerImages(contextClient.Client, m.KubernetesNamespaceRestrictionByContext[contextClient.ContextName])
+				kubernetesClientDeployedDockerImagesNames, err := allow_list.DeployedDockerImages(ctx, contextClient.Client, m.KubernetesNamespaceRestrictionByContext[contextClient.ContextName])
 				if err != nil {
 					return fmt.Errorf("cannot get deployed imagesStageList: %w", err)
 				}

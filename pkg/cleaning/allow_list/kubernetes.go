@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/werf/logboek"
 )
 
-func DeployedDockerImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]string, error) {
+func DeployedDockerImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]string, error) {
 	var deployedDockerImages []string
 
 	images, err := getPodsImages(kubernetesClient, kubernetesNamespace)
@@ -60,7 +64,7 @@ func DeployedDockerImages(kubernetesClient kubernetes.Interface, kubernetesNames
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getJobsImages(kubernetesClient, kubernetesNamespace)
+	images, err = getJobsImages(ctx, kubernetesClient, kubernetesNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Jobs images: %w", err)
 	}
@@ -203,14 +207,30 @@ func getCronJobsImages(kubernetesClient kubernetes.Interface, kubernetesNamespac
 	return images, nil
 }
 
-func getJobsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]string, error) {
+func getJobsImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.BatchV1().Jobs(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.BatchV1().Jobs(kubernetesNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
+FindActiveJobs:
 	for _, job := range list.Items {
+		for _, c := range job.Status.Conditions {
+			switch c.Type {
+			case batchv1.JobComplete:
+				if c.Status == corev1.ConditionTrue {
+					logboek.Context(ctx).Debug().LogF("Ignore complete job/%s: images in this resource are not used anymore and can be safely removed\n", job.Name)
+					continue FindActiveJobs
+				}
+			case batchv1.JobFailed:
+				if c.Status == corev1.ConditionTrue {
+					logboek.Context(ctx).Debug().LogF("Ignore failed job/%s: images in this resource are not used anymore and can be safely removed\n", job.Name)
+					continue FindActiveJobs
+				}
+			}
+		}
+
 		for _, container := range append(
 			job.Spec.Template.Spec.Containers,
 			job.Spec.Template.Spec.InitContainers...,
