@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -19,7 +18,6 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config/deploy_params"
-	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
@@ -95,6 +93,14 @@ func NewCmd() *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
+
+	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
+	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -209,6 +215,8 @@ func runRender(ctx context.Context) error {
 			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
+
+	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
 
 	namespace, err := deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
 	if err != nil {
@@ -379,8 +387,8 @@ func runRender(ctx context.Context) error {
 		wc.SetServiceValues(vals)
 	}
 
-	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, nil, namespace, helm_v3.Settings, helmRegistryClientHandler, actionConfig, helm.InitActionConfigOptions{}); err != nil {
+	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClientHandler)
+	if err != nil {
 		return err
 	}
 
