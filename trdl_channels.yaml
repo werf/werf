@@ -30,7 +30,7 @@ groups:
     - name: beta
       version: 1.2.105
     - name: ea
-      version: 1.2.83+fix3
+      version: 1.2.105
     - name: stable
       version: 1.2.80+fix5
     - name: rock-solid
