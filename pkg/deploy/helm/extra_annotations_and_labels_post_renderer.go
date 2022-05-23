@@ -147,7 +147,12 @@ func validateStringNode(node *yaml_v3.Node) error {
 		return fmt.Errorf("unable to decode value %q: %w", node.Value, err)
 	}
 	if _, ok := v.(string); !ok {
-		return fmt.Errorf("invalid node %q: expected string, got %s", node.Value, reflect.TypeOf(v).String())
+		typeOf := reflect.TypeOf(v)
+		if typeOf != nil {
+			return fmt.Errorf("invalid node %q: expected string, got %s", node.Value, reflect.TypeOf(v).String())
+		} else {
+			return fmt.Errorf("invalid node %q: expected string, got null value", node.Value)
+		}
 	}
 	return nil
 }
