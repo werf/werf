@@ -60,19 +60,19 @@ werf export --repo ghcr.io/group/project --tag ghcr.io/group/otherproject/%image
 
 ### Running one-off tasks (unit-tests, lints, one-time jobs)
 
-Use the following command to run tests in the previously built `frontend_image` in the Kubernetes Pod:
+Use the following command to run the tests in the previously built `frontend_image` in the Kubernetes Pod:
 
 ```shell
 werf kube-run frontend_image --repo ghcr.io/group/project -- npm test
 ```
 
-Run tests in Pod, but copy file with secret env vars into container before running the command:
+Run the tests in a Pod, but copy the file with the secret env variables to a container before executing the command:
 
 ```shell
 werf kube-run frontend_image --repo ghcr.io/group/project --copy-to ".env:/app/.env" -- npm run e2e-tests
 ```
 
-Run tests in Pod and get the coverage report:
+Run the tests in a Pod and get the coverage report:
 
 ```shell
 werf kube-run frontend_image --repo ghcr.io/group/project --copy-from "/app/report:." -- go test -coverprofile report ./...
