@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.105](https://www.github.com/werf/werf/compare/v1.2.104...v1.2.105) (2022-05-23)
+
+
+### Bug Fixes
+
+* **post-renderer:** fix null value validation panic in annotations and labels ([5d80460](https://www.github.com/werf/werf/commit/5d80460a3bf3d86927dde49535b10eb1a3492c1b))
+
 ### [1.2.104](https://www.github.com/werf/werf/compare/v1.2.103...v1.2.104) (2022-05-19)
 
 
