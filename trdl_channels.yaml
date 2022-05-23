@@ -16,9 +16,9 @@ groups:
     - name: alpha
       version: 1.1.33
     - name: beta
-      version: 1.1.33 # WERF_DISABLE_MANIFEST_CACHE
+      version: 1.1.33
     - name: ea
-      version: 1.1.32 # override images if related stages are lost
+      version: 1.1.33 # WERF_DISABLE_MANIFEST_CACHE
     - name: stable
       version: 1.1.31
     - name: rock-solid
