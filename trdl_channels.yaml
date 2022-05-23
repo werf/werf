@@ -26,11 +26,11 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.104 # feat: kube-run --copy-to/from options + fixes for helm, go-git, migrate2to3
+      version: 1.2.105 # feat: kube-run --copy-to/from options + fixes for helm, go-git, migrate2to3
     - name: beta
-      version: 1.2.104
+      version: 1.2.105
     - name: ea
-      version: 1.2.104
+      version: 1.2.105
     - name: stable
       version: 1.2.80+fix5
     - name: rock-solid
