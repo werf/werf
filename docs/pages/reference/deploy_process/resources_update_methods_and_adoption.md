@@ -133,6 +133,8 @@ NOTE that `WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adoption
 
 #### Three way merge patches and adoption
 
+**NOTE** In the 1.1 version it is possible to adopt resource only into the release, which was successfully deployed into the cluster. It is impossible to adopt a resource into the release during this release first installation. This is related to the limitations of release storage mechanics used in the helm 2. This problem was fixed in the helm 3 and werf 1.2. So in 1.1 version to adopt resource one must first successfully deploy release without this resource, then perform adoption procedure as described below.
+
 Three way merge patches are always used when adopting already existing resource into the release (`WERF_THREE_WAY_MERGE_MODE` setting does not affect resources adopter).
 
 **NOTE** After adoption live resource manifest may not fully match resource manifest in the chart. In the cases when additional fields are defined in the live resource — these fields will not be deleted and stay in the live resource version.
