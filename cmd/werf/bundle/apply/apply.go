@@ -22,6 +22,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
@@ -80,6 +81,8 @@ func NewCmd() *cobra.Command {
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd)
+	common.SetupSecretValues(&commonCmdData, cmd)
+	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
@@ -184,7 +187,10 @@ func runApply() error {
 		userExtraAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 	}
 
-	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.BundleOptions{
+	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
+
+	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClientHandle, secretsManager, chart_extender.BundleOptions{
+		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
 		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{IgnoreInvalidAnnotationsAndLabels: true},
 		IgnoreInvalidAnnotationsAndLabels: true,
 		ExtraAnnotations:                  userExtraAnnotations,

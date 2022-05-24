@@ -20,24 +20,29 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers/secrets"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 )
 
 type BundleOptions struct {
+	SecretValueFiles                  []string
 	BuildChartDependenciesOpts        command_helpers.BuildChartDependenciesOptions
 	ExtraAnnotations                  map[string]string
 	ExtraLabels                       map[string]string
 	IgnoreInvalidAnnotationsAndLabels bool
 }
 
-func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts BundleOptions) (*Bundle, error) {
+func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, secretsManager *secrets_manager.SecretsManager, opts BundleOptions) (*Bundle, error) {
 	bundle := &Bundle{
 		Dir:                            dir,
+		SecretValueFiles:               opts.SecretValueFiles,
 		HelmEnvSettings:                helmEnvSettings,
 		RegistryClient:                 registryClient,
 		BuildChartDependenciesOpts:     opts.BuildChartDependenciesOpts,
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
+		secretsManager:                 secretsManager,
 	}
 
 	extraAnnotationsAndLabelsPostRenderer := helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, opts.IgnoreInvalidAnnotationsAndLabels)
@@ -67,13 +72,16 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
  */
 type Bundle struct {
 	Dir                        string
+	SecretValueFiles           []string
 	HelmChart                  *chart.Chart
 	HelmEnvSettings            *cli.EnvSettings
 	RegistryClient             *registry.Client
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
+	secretsManager                        *secrets_manager.SecretsManager
 
+	*secrets.SecretsRuntimeData
 	*helpers.ChartExtenderServiceValuesData
 	*helpers.ChartExtenderContextData
 }
@@ -93,11 +101,27 @@ func (bundle *Bundle) ChainPostRenderer(postRenderer postrender.PostRenderer) po
 // ChartCreated method for the chart.Extender interface
 func (bundle *Bundle) ChartCreated(c *chart.Chart) error {
 	bundle.HelmChart = c
+	bundle.SecretsRuntimeData = secrets.NewSecretsRuntimeData()
 	return nil
 }
 
 // ChartLoaded method for the chart.Extender interface
 func (bundle *Bundle) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
+	if bundle.secretsManager != nil {
+		wd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("unable to get current working dir: %w", err)
+		}
+
+		if err := bundle.SecretsRuntimeData.DecodeAndLoadSecrets(bundle.ChartExtenderContext, files, bundle.Dir, wd, bundle.secretsManager, secrets.DecodeAndLoadSecretsOptions{
+			LoadFromLocalFilesystem:    true,
+			CustomSecretValueFiles:     bundle.SecretValueFiles,
+			WithoutDefaultSecretValues: true,
+		}); err != nil {
+			return fmt.Errorf("error decoding secrets: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -110,8 +134,21 @@ func (bundle *Bundle) ChartDependenciesLoaded() error {
 func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
 	vals := make(map[string]interface{})
 
+	debugPrintValues(bundle.ChartExtenderContext, "service", bundle.ServiceValues)
 	chartutil.CoalesceTables(vals, bundle.ServiceValues)
+
+	if debugSecretValues() {
+		debugPrintValues(bundle.ChartExtenderContext, "secret", bundle.SecretsRuntimeData.DecodedSecretValues)
+	}
+	chartutil.CoalesceTables(vals, bundle.SecretsRuntimeData.DecodedSecretValues)
+
+	debugPrintValues(bundle.ChartExtenderContext, "input", inputVals)
 	chartutil.CoalesceTables(vals, inputVals)
+
+	if debugSecretValues() {
+		// Only print all values with secrets when secret values debug enabled
+		debugPrintValues(bundle.ChartExtenderContext, "all", vals)
+	}
 
 	data, err := yaml.Marshal(vals)
 	logboek.Context(bundle.ChartExtenderContext).Debug().LogF("-- Bundle.MakeValues result (err=%v):\n%s\n---\n", err, data)

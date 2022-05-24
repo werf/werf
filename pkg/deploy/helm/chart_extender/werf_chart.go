@@ -395,9 +395,8 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 		}
 	}
 
-	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClient, BundleOptions{
+	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClient, wc.SecretsManager, BundleOptions{
 		BuildChartDependenciesOpts:        wc.BuildChartDependenciesOpts,
 		IgnoreInvalidAnnotationsAndLabels: wc.extraAnnotationsAndLabelsPostRenderer.IgnoreInvalidAnnotationsAndLabels,
-	},
-	)
+	})
 }
