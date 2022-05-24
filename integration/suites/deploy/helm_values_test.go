@@ -5,11 +5,12 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"sigs.k8s.io/yaml"
+
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/test/pkg/utils"
 	"github.com/werf/werf/test/pkg/utils/liveexec"
-	"sigs.k8s.io/yaml"
 )
 
 func getValues(params ...string) map[string]interface{} {
