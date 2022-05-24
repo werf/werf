@@ -60,6 +60,8 @@ werf bundle apply [options]
       --hooks-status-progress-period=5
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --ignore-secret-key=false
+            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
@@ -125,6 +127,11 @@ werf bundle apply [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --secret-values=[]
+            Specify helm secret values in a YAML file (can specify multiple).
+            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
+            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
+            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
