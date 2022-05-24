@@ -26,17 +26,21 @@ func NewSecretsRuntimeData() *SecretsRuntimeData {
 }
 
 type DecodeAndLoadSecretsOptions struct {
-	GiterminismManager      giterminism_manager.Interface
-	CustomSecretValueFiles  []string
-	LoadFromLocalFilesystem bool
+	GiterminismManager         giterminism_manager.Interface
+	CustomSecretValueFiles     []string
+	LoadFromLocalFilesystem    bool
+	WithoutDefaultSecretValues bool
 }
 
 func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.Context, loadedChartFiles []*chart.ChartExtenderBufferedFile, chartDir, secretsWorkingDir string, secretsManager *secrets_manager.SecretsManager, opts DecodeAndLoadSecretsOptions) error {
 	secretDirFiles := GetSecretDirFiles(loadedChartFiles)
 
 	var loadedSecretValuesFiles []*chart.ChartExtenderBufferedFile
-	if defaultSecretValues := GetDefaultSecretValuesFile(chartDir, loadedChartFiles); defaultSecretValues != nil {
-		loadedSecretValuesFiles = append(loadedSecretValuesFiles, defaultSecretValues)
+
+	if !opts.WithoutDefaultSecretValues {
+		if defaultSecretValues := GetDefaultSecretValuesFile(chartDir, loadedChartFiles); defaultSecretValues != nil {
+			loadedSecretValuesFiles = append(loadedSecretValuesFiles, defaultSecretValues)
+		}
 	}
 
 	for _, customSecretValuesFileName := range opts.CustomSecretValueFiles {

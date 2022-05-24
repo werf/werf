@@ -186,7 +186,7 @@ func runRender(ctx context.Context) error {
 		userExtraAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 	}
 
-	bundle, err := chart_extender.NewBundle(ctx, bundleDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.BundleOptions{
+	bundle, err := chart_extender.NewBundle(ctx, bundleDir, helm_v3.Settings, helmRegistryClientHandle, nil, chart_extender.BundleOptions{
 		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{IgnoreInvalidAnnotationsAndLabels: false},
 		IgnoreInvalidAnnotationsAndLabels: false,
 		ExtraAnnotations:                  userExtraAnnotations,
