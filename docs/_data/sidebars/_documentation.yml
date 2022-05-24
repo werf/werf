@@ -76,6 +76,9 @@ entries:
                   - title: Annotating and labeling of chart resources
                     url: /advanced/helm/deploy_process/annotating_and_labeling.html
 
+                  - title: Resources adoption
+                    url: /advanced/helm/deploy_process/resources_adoption.html
+
               - title: Releases
                 f:
                   - title: Release
@@ -293,6 +296,9 @@ entries:
 
                   - title: Аннотации и лейблы для ресурсов чарта
                     url: /advanced/helm/deploy_process/annotating_and_labeling.html
+
+                  - title: Принятие ресурсов в релиз
+                    url: /advanced/helm/deploy_process/resources_adoption.html
 
               - title: Релизы
                 f:
