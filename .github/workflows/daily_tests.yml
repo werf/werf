@@ -18,6 +18,9 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     steps:
 
+    - name: Install werf build dependencies
+      run: sudo apt-get install -y libbtrfs-dev
+
     - name: Checkout code
       uses: actions/checkout@v3
 
