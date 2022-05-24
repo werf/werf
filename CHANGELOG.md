@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.1.34](https://www.github.com/werf/werf/compare/v1.1.33...v1.1.34) (2022-05-24)
+
+
+### Bug Fixes
+
+* **docs:** Add 1.1 adoption notice about release existance ([2f81633](https://www.github.com/werf/werf/commit/2f8163399caa0eebece0d66442f9bb9c3eaef5c7))
+
 ### [1.1.33](https://www.github.com/werf/werf/compare/v1.1.32...v1.1.33) (2022-05-19)
 
 
