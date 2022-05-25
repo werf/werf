@@ -1,5 +1,20 @@
 # Changelog
 
+### [1.2.106](https://www.github.com/werf/werf/compare/v1.2.105...v1.2.106) (2022-05-25)
+
+
+### Features
+
+* **bundles:** --secret-values option for werf-bundle-apply command ([2daea2b](https://www.github.com/werf/werf/commit/2daea2b52c9f10806b093ed770b3cd6f1b28b296))
+* **cleanup:** optimize cleanup deployed resources images scanning regarding Jobs ([b7edaa3](https://www.github.com/werf/werf/commit/b7edaa3290132a644689c4cd4af4565112976f05))
+* **docs:** New article about resources adoption ([5ab8f26](https://www.github.com/werf/werf/commit/5ab8f2604e432eff5137d1151c78521d417e3002))
+
+
+### Bug Fixes
+
+* **cleanup:** fix cleanup not using in-cluster kube config when using in-cluster mode ([967a6aa](https://www.github.com/werf/werf/commit/967a6aa649c41752945987620e8f25b1d884fcff))
+* **render:** support for --kube-context param when --validate option used ([91869a8](https://www.github.com/werf/werf/commit/91869a8379035994e32d582c91647e68d34590c4))
+
 ### [1.2.105](https://www.github.com/werf/werf/compare/v1.2.104...v1.2.105) (2022-05-23)
 
 
