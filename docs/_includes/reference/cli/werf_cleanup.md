@@ -160,7 +160,8 @@ werf cleanup [options]
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
       --platform=''
-            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].
+            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+            ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''
