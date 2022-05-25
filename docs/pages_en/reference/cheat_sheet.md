@@ -6,13 +6,13 @@ toc: false
 
 ## Building and deploying with a single command
 
-Build an image and deploy it to production:
+Build images and deploy application to production:
 
 ```shell
 werf converge --repo ghcr.io/group/project --env production
 ```
 
-Build an image and deploy it to the default environment, but use custom image tags:
+Build images and deploy application to the default environment, but use custom image tags:
 
 ```shell
 werf converge --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
@@ -122,10 +122,10 @@ werf bundle publish --repo ghcr.io/group/project --tag latest
 Building and deploying the application to production:
 
 ```shell
-werf converge --skip-build --repo ghcr.io/group/project --env production
+werf converge --repo ghcr.io/group/project --env production
 ```
 
-Deploying the application you built in the previous step and attaching a custom tag to it:
+Deploying the application you built in the previous step and using a custom tag:
 
 ```shell
 werf converge --skip-build --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
@@ -135,6 +135,16 @@ Deploying the previously published bundle with the 1.0.0 tag to production:
 
 ```shell
 werf bundle apply --repo ghcr.io/group/project --env production --tag 1.0.0
+```
+
+### Cleaning up a container registry
+
+> The procedure must run on schedule. Otherwise, the number of images and werf metadata can significantly increase the size of the registry and the time it takes to complete operations
+
+Perform a secure cleanup procedure for outdated images and werf metadata from the container registry, taking into account the user's cleanup policies and images running in the K8s cluster:
+
+```shell
+werf cleanup --repo ghcr.io/group/project
 ```
 
 ## Local development
