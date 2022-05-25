@@ -6,13 +6,13 @@ toc: false
 
 ## Сборка и развертывание одной командой
 
-Собрать образ и развернуть его в production:
+Собрать образы и развернуть приложение в production:
 
 ```shell
 werf converge --repo ghcr.io/group/project --env production
 ```
 
-Собрать образ с кастомными тегами и развернуть его в окружение по умолчанию:
+Собрать образы с кастомными тегами и развернуть приложение в окружение по умолчанию:
 
 ```shell
 werf converge --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
@@ -24,9 +24,9 @@ werf converge --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
 
 При выполнении большинства команд сначала будут пересобраны недостающие образы. Пересборку можно пропустить, применив флаг `--skip-build`. Убедитесь, что необходимые образы собраны заранее с помощью команды `werf build`.
 
-### Интеграция с CI-системой (в настоящее время поддерживаются потоки на базе GitLab и GitHub)
+### Интеграция с CI-системой (в настоящее время поддерживаются GitLab и GitHub Workflows)
 
-Задать значения по умолчанию для команд werf и войти в реестр контейнеров, заданный в переменных окружения GitLab:
+Задать значения по умолчанию для команд werf и выполнить авторизацию в реестр контейнеров, используя переменные окружения GitLab:
 
 ```shell
 . $(werf ci-env gitlab --as-file) 
@@ -52,7 +52,7 @@ werf build --repo ghcr.io/group/project --add-custom-tag latest --add-custom-tag
 werf build --repo ghcr.io/group/project --final-repo fast-in-cluster-registry.cluster/group/project
 ```
 
-Собрать образы с использованием реестра контейнеров (или локального хранилища) и экспортировать их в другой реестр контейнеров:
+Собрать образы с использованием реестра контейнеров (можно использовать локальное хранилище) и экспортировать их в другой реестр контейнеров:
 
 ```shell
 werf export --repo ghcr.io/group/project --tag ghcr.io/group/otherproject/%image%:latest
@@ -72,13 +72,13 @@ werf kube-run frontend_image --repo ghcr.io/group/project -- npm test
 werf kube-run frontend_image --repo ghcr.io/group/project --copy-to ".env:/app/.env" -- npm run e2e-tests
 ```
 
-Запустить тесты в Pod'е с выдачей отчета о покрытии:
+Запустить тесты в Pod'е Kubernetes и скачать отчет о покрытии тестов из контейнера после завершения:
 
 ```shell
 werf kube-run frontend_image --repo ghcr.io/group/project --copy-from "/app/report:." -- go test -coverprofile report ./...
 ```
 
-Выполнить команду по умолчанию собранного образа в Pod'е Kubernetes с заданными CPU requests:
+Запустить команду по умолчанию собранного образа в Pod'е Kubernetes с заданными CPU requests:
 
 ```shell
 werf kube-run frontend_image --repo ghcr.io/group/project --overrides='{"spec":{"containers":[{"name": "%container_name%", "resources":{"requests":{"cpu":"100m"}}}]}}'
@@ -122,10 +122,10 @@ werf bundle publish --repo ghcr.io/group/project --tag latest
 Собрать и развернуть приложение в production:
 
 ```shell
-werf converge --skip-build --repo ghcr.io/group/project --env production
+werf converge --repo ghcr.io/group/project --env production
 ```
 
-Развернуть приложение, собранное на предыдущем шаге, и добавить к нему кастомный тег:
+Развернуть приложение, собранное на предыдущем шаге, и использовать кастомный тег вместо тега по умолчанию на основе содержимого:
 
 ```shell
 werf converge --skip-build --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
@@ -135,6 +135,16 @@ werf converge --skip-build --repo ghcr.io/group/project --use-custom-tag "%image
 
 ```shell
 werf bundle apply --repo ghcr.io/group/project --env production --tag 1.0.0
+```
+
+### Очистка реестра контейнеров
+
+> Процедура должна запускаться по расписанию. Иначе количество образов и метаданных werf может значительно увеличить занимаемый размер реестра и время выполнения операций
+
+Выполнить безопасную процедуру очистки неактуальных образов и метаданных werf из реестра контейнеров с учётом пользовательских политик очистки и запущенных в K8s-кластере образов:
+
+```shell
+werf cleanup --repo ghcr.io/group/project
 ```
 
 ## Локальная разработка
