@@ -128,7 +128,8 @@ werf export [IMAGE_NAME...] [options]
             more info https://werf.io/documentation/advanced/giterminism.html, default              
             $WERF_LOOSE_GITERMINISM)
       --platform=''
-            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].
+            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+            ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''

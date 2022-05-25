@@ -222,7 +222,8 @@ werf converge --repo registry.mydomain.com/web --env production
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
       --platform=''
-            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].
+            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+            ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --release=''
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
@@ -329,7 +330,7 @@ werf converge --repo registry.mydomain.com/web --env production
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
   -t, --timeout=0
-            Resources tracking timeout in seconds
+            Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-custom-tag=''

@@ -176,7 +176,8 @@ werf render [options]
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
       --platform=''
-            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT].
+            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+            ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --release=''
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
