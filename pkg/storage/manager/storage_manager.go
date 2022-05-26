@@ -383,17 +383,19 @@ func doFetchStage(ctx context.Context, projectName string, stagesStorage storage
 }
 
 func copyStageIntoStagesStorage(ctx context.Context, projectName string, stageID image.StageID, img container_backend.LegacyImageInterface, stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend) error {
+	newImg := img.GetCopy()
+
 	targetStagesStorageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
 
-	if err := containerBackend.RenameImage(ctx, img, targetStagesStorageImageName, false); err != nil {
+	if err := containerBackend.RenameImage(ctx, newImg, targetStagesStorageImageName, false); err != nil {
 		return fmt.Errorf("unable to rename image %s to %s: %w", img.Name(), targetStagesStorageImageName, err)
 	}
 
-	if err := stagesStorage.StoreImage(ctx, img); err != nil {
+	if err := stagesStorage.StoreImage(ctx, newImg); err != nil {
 		return fmt.Errorf("unable to store stage %s into the cache stages storage %s: %w", stageID.String(), stagesStorage.String(), err)
 	}
 
-	if err := storeStageDescriptionIntoLocalManifestCache(ctx, projectName, stageID, stagesStorage, convertStageDescriptionForStagesStorage(img.GetStageDescription(), stagesStorage)); err != nil {
+	if err := storeStageDescriptionIntoLocalManifestCache(ctx, projectName, stageID, stagesStorage, convertStageDescriptionForStagesStorage(newImg.GetStageDescription(), stagesStorage)); err != nil {
 		return fmt.Errorf("error storing stage %s description into local manifest cache: %w", targetStagesStorageImageName, err)
 	}
 

@@ -29,6 +29,19 @@ func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerBack
 	return stage
 }
 
+func (i *LegacyStageImage) GetCopy() LegacyImageInterface {
+	ni := NewLegacyStageImage(i.fromImage, i.name, i.ContainerBackend)
+
+	if info := i.GetInfo(); info != nil {
+		ni.SetInfo(info)
+	}
+	if desc := i.GetStageDescription(); desc != nil {
+		ni.SetStageDescription(desc)
+	}
+
+	return ni
+}
+
 func (i *LegacyStageImage) BuilderContainer() LegacyBuilderContainer {
 	return &LegacyStageImageBuilderContainer{i}
 }

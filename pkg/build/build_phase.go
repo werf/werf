@@ -800,20 +800,21 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 
 		// use newly built image
 		newStageImageName, uniqueID := phase.Conveyor.StorageManager.GenerateStageUniqueID(stg.GetDigest(), stages)
-		stageImageObj := phase.Conveyor.GetStageImage(stageImage.Image.Name())
-		phase.Conveyor.UnsetStageImage(stageImageObj.Image.Name())
-		stageImageObj.Image.SetName(newStageImageName)
-		phase.Conveyor.SetStageImage(stageImageObj)
+		phase.Conveyor.UnsetStageImage(stageImage.Image.Name())
+		stageImage.Image.SetName(newStageImageName)
+		phase.Conveyor.SetStageImage(stageImage)
 
 		if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 			if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, stageImage.Image); err != nil {
 				return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			}
+
 			if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.projectName(), stg.GetDigest(), uniqueID); err != nil {
 				return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			} else {
-				stageImageObj.Image.SetStageDescription(desc)
+				stageImage.Image.SetStageDescription(desc)
 			}
+
 			return nil
 		}); err != nil {
 			return err
@@ -824,7 +825,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 		if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerBackend); err != nil {
 			return fmt.Errorf("unable to copy stage %s into cache storages: %w", stageImage.Image.GetStageDescription().StageID.String(), err)
 		}
-
 		return nil
 	}
 }
