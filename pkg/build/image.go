@@ -126,7 +126,7 @@ func (i *Image) SetupBaseImage(c *Conveyor) {
 	if i.baseImageImageName != "" {
 		i.baseImageType = StageAsBaseImage
 		i.stageAsBaseImage = c.GetImage(i.baseImageImageName).GetLastNonEmptyStage()
-		i.baseImage = c.GetOrCreateStageImage(nil, i.stageAsBaseImage.GetStageImage().Image.Name())
+		i.baseImage = i.stageAsBaseImage.GetStageImage()
 	} else {
 		i.baseImageType = ImageFromRegistryAsBaseImage
 		i.baseImage = c.GetOrCreateStageImage(nil, i.baseImageName)

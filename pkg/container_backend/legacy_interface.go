@@ -37,6 +37,8 @@ type LegacyImageInterface interface {
 
 	SetStageDescription(stage *image.StageDescription)
 	GetStageDescription() *image.StageDescription
+
+	GetCopy() LegacyImageInterface
 }
 
 type LegacyContainer interface {
