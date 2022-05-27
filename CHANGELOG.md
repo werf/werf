@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.107](https://www.github.com/werf/werf/compare/v1.2.106...v1.2.107) (2022-05-27)
+
+
+### Bug Fixes
+
+* **cache-repo:** panic when using cache repo and fromImage directive ([3ceb622](https://www.github.com/werf/werf/commit/3ceb622860d7bffe3e66db7e353faad87b04a6f5))
+* **cache-repo:** panic when using cache-repo and building images existing in cache ([1c97593](https://www.github.com/werf/werf/commit/1c97593dbd0da919cae9f3825f333fd2d863094c))
+
 ### [1.2.106](https://www.github.com/werf/werf/compare/v1.2.105...v1.2.106) (2022-05-25)
 
 
