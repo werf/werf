@@ -1,5 +1,5 @@
 ---
-title: Cheat sheet
+title: Шпаргалка
 permalink: reference/cheat_sheet.html
 toc: false
 ---
