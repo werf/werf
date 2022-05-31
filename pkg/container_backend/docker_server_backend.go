@@ -78,6 +78,12 @@ func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, opts.ContextTar, cliArgs...)
 }
 
+// ShouldCleanupDockerfileImage for docker-server backend we should cleanup image built from dockerfrom tagged with tempID
+// which is implementation detail of the BuildDockerfile.
+func (runtime *DockerServerBackend) ShouldCleanupDockerfileImage() bool {
+	return true
+}
+
 func (runtime *DockerServerBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
