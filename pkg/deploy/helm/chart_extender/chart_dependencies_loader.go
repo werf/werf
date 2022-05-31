@@ -74,6 +74,15 @@ func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadata
 			}
 			defer werf.ReleaseHostLock(lock)
 
+			switch _, err := os.Stat(depsDir); {
+			case os.IsNotExist(err):
+			case err != nil:
+				return fmt.Errorf("error accessing %s: %w", depsDir, err)
+			default:
+				// at the time we have acquired a lock the target directory was created
+				return nil
+			}
+
 			tmpDepsDir := fmt.Sprintf("%s.tmp.%s", depsDir, uuid.NewV4().String())
 
 			buildChartDependenciesOpts.LoadOptions = &loader.LoadOptions{
