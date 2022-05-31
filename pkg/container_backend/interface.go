@@ -58,6 +58,7 @@ type ContainerBackend interface {
 	String() string
 
 	// Legacy
+	ShouldCleanupDockerfileImage() bool
 	RefreshImageObject(ctx context.Context, img LegacyImageInterface) error
 	PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error
 	RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error

@@ -183,19 +183,23 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 
 func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	buildOpts := define.BuildOptions{
-		Isolation:           define.Isolation(b.Isolation),
-		Runtime:             DefaultRuntime,
-		Args:                opts.BuildArgs,
-		SignaturePolicyPath: b.SignaturePolicyPath,
-		ReportWriter:        opts.LogWriter,
-		OutputFormat:        buildah.Dockerv2ImageManifest,
-		SystemContext:       &b.DefaultSystemContext,
-		ConfigureNetwork:    define.NetworkEnabled,
-		CommonBuildOpts:     &b.DefaultCommonBuildOptions,
-		Target:              opts.Target,
-		MaxPullPushRetries:  MaxPullPushRetries,
-		PullPushRetryDelay:  PullPushRetryDelay,
-		Platforms:           b.platforms,
+		Isolation:               define.Isolation(b.Isolation),
+		Runtime:                 DefaultRuntime,
+		Args:                    opts.BuildArgs,
+		SignaturePolicyPath:     b.SignaturePolicyPath,
+		ReportWriter:            opts.LogWriter,
+		OutputFormat:            buildah.Dockerv2ImageManifest,
+		SystemContext:           &b.DefaultSystemContext,
+		ConfigureNetwork:        define.NetworkEnabled,
+		CommonBuildOpts:         &b.DefaultCommonBuildOptions,
+		Target:                  opts.Target,
+		MaxPullPushRetries:      MaxPullPushRetries,
+		PullPushRetryDelay:      PullPushRetryDelay,
+		Platforms:               b.platforms,
+		Layers:                  true,
+		RemoveIntermediateCtrs:  true,
+		ForceRmIntermediateCtrs: false,
+		NoCache:                 false,
 	}
 
 	errLog := &bytes.Buffer{}
@@ -350,8 +354,8 @@ func (b *NativeBuildah) Rm(ctx context.Context, ref string, opts RmOpts) error {
 
 func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	_, rmiErrors := b.Runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
-		Force:   opts.Force,
-		Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
+		Force: opts.Force,
+		//Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
 	})
 
 	var multiErr *multierror.Error

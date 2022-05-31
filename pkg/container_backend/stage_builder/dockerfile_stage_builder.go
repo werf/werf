@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/werf/logboek"
+
 	"github.com/werf/werf/pkg/container_backend"
 )
 
@@ -60,13 +62,17 @@ func (b *DockerfileStageBuilder) Build(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error building dockerfile with %s: %w", b.ContainerBackend.String(), err)
 	}
-
 	b.Image.SetBuiltID(builtID)
 
 	return nil
 }
 
 func (b *DockerfileStageBuilder) Cleanup(ctx context.Context) error {
+	if !b.ContainerBackend.ShouldCleanupDockerfileImage() {
+		return nil
+	}
+
+	logboek.Context(ctx).Info().LogF("Cleanup built dockerfile image %q\n", b.Image.BuiltID())
 	if err := b.ContainerBackend.Rmi(ctx, b.Image.BuiltID(), container_backend.RmiOpts{}); err != nil {
 		return fmt.Errorf("unable to remove built dockerfile image %q: %w", b.Image.BuiltID(), err)
 	}
