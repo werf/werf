@@ -55,23 +55,23 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.2.107"
+          "version": "v1.2.108"
         },
         {
           "name": "beta",
-          "version": "v1.2.107"
+          "version": "v1.2.108"
         },
         {
           "name": "ea",
-          "version": "v1.2.105"
+          "version": "v1.2.107"
         },
         {
           "name": "stable",
-          "version": "v1.2.80+fix5"
+          "version": "v1.2.80+fix7"
         },
         {
           "name": "rock-solid",
-          "version": "v1.2.80+fix5"
+          "version": "v1.2.80+fix7"
         }
       ]
     }
