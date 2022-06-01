@@ -32,6 +32,6 @@ groups:
     - name: ea
       version: 1.2.107 # https://github.com/werf/werf/pull/4499
     - name: stable
-      version: 1.2.80+fix7
+      version: 1.2.80+fix5
     - name: rock-solid
-      version: 1.2.80+fix7
+      version: 1.2.80+fix5
