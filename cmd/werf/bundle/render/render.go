@@ -225,6 +225,7 @@ func runRender(ctx context.Context) error {
 	}
 
 	helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, output, helm_v3.TemplateCmdOptions{
+		StagesSplitter:    helm.StagesSplitter{},
 		ChainPostRenderer: bundle.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),

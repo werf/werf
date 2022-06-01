@@ -65,7 +65,9 @@ func NewCmd() *cobra.Command {
 	common.SetupInsecureHelmDependencies(&_commonCmdData, cmd)
 
 	cmd.AddCommand(
-		helm_v3.NewUninstallCmd(actionConfig, os.Stdout, helm_v3.UninstallCmdOptions{}),
+		helm_v3.NewUninstallCmd(actionConfig, os.Stdout, helm_v3.UninstallCmdOptions{
+			StagesSplitter: helm.StagesSplitter{},
+		}),
 		helm_v3.NewDependencyCmd(actionConfig, os.Stdout),
 		helm_v3.NewGetCmd(actionConfig, os.Stdout),
 		helm_v3.NewHistoryCmd(actionConfig, os.Stdout),
@@ -73,7 +75,9 @@ func NewCmd() *cobra.Command {
 		helm_v3.NewListCmd(actionConfig, os.Stdout),
 		NewTemplateCmd(actionConfig, wc),
 		helm_v3.NewRepoCmd(os.Stdout),
-		helm_v3.NewRollbackCmd(actionConfig, os.Stdout),
+		helm_v3.NewRollbackCmd(actionConfig, os.Stdout, helm_v3.RollbackCmdOptions{
+			StagesSplitter: helm.StagesSplitter{},
+		}),
 		NewInstallCmd(actionConfig, wc),
 		NewUpgradeCmd(actionConfig, wc),
 		helm_v3.NewCreateCmd(os.Stdout),

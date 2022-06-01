@@ -19,4 +19,6 @@ const (
 	ShowEventsAnnoName = "werf.io/show-service-messages"
 
 	ReplicasOnCreationAnnoName = "werf.io/replicas-on-creation"
+
+	StageWeightAnnoName = "werf.io/weight"
 )

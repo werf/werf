@@ -9,6 +9,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
@@ -18,6 +19,7 @@ var upgradeCmdData common.CmdData
 
 func NewUpgradeCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
 	cmd, _ := helm_v3.NewUpgradeCmd(actionConfig, os.Stdout, helm_v3.UpgradeCmdOptions{
+		StagesSplitter:    helm.StagesSplitter{},
 		ChainPostRenderer: wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &upgradeCmdData)

@@ -23,6 +23,7 @@ import (
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config/deploy_params"
 	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
@@ -446,6 +447,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.OutStream(), helm_v3.UpgradeCmdOptions{
+		StagesSplitter:    helm.StagesSplitter{},
 		ChainPostRenderer: wc.ChainPostRenderer,
 		ValueOpts:         valueOpts,
 		CreateNamespace:   common.NewBool(true),
@@ -525,6 +527,7 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 		}
 
 		helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, ioutil.Discard, helm_v3.TemplateCmdOptions{
+			StagesSplitter:    helm.StagesSplitter{},
 			ChainPostRenderer: chainPostRenderer,
 			ValueOpts:         valueOpts,
 			Validate:          common.NewBool(true),
