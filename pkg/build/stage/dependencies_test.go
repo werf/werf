@@ -15,7 +15,7 @@ var _ = Describe("DependenciesStage", func() {
 		func(data TestDependencies) {
 			ctx := context.Background()
 
-			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")), data.Dependencies)
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), data.Dependencies)
 			containerBackend := NewContainerBackendMock()
 
 			stage := newDependenciesStage(nil, GetConfigDependencies(data.Dependencies), "example-stage", &NewBaseStageOptions{
