@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.108](https://www.github.com/werf/werf/compare/v1.2.107...v1.2.108) (2022-06-01)
+
+
+### Features
+
+* **buildah:** update buildah to v1.26.1 ([bf1f2d0](https://www.github.com/werf/werf/commit/bf1f2d0bcba888ed62cea3497ca557b4a6d8cf99))
+
+
+### Bug Fixes
+
+* **buildah:** buildah Dockerfile builder was not using layers cache ([8d9326d](https://www.github.com/werf/werf/commit/8d9326d7c8f325efce01765c64f8e907deaa6069))
+* **dockerfile:** support RUN with --mount from another stage ([ebd544a](https://www.github.com/werf/werf/commit/ebd544a302b66d7210eea69179ac829a7b2abd02))
+* **helm:** fix 'error preparing chart dependencies... file exists' ([3f32bf0](https://www.github.com/werf/werf/commit/3f32bf08125daac73fbc5905f726976e3b814d04))
+
 ### [1.2.107](https://www.github.com/werf/werf/compare/v1.2.106...v1.2.107) (2022-05-27)
 
 
