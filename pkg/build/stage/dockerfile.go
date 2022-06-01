@@ -474,11 +474,19 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ con
 		}
 
 		for _, cmd := range stage.Commands {
-			copyCmd, ok := cmd.(*instructions.CopyCommand)
-			if ok && copyCmd.From != "" {
-				relatedStageIndex, err := strconv.Atoi(copyCmd.From)
+			switch typedCmd := cmd.(type) {
+			case *instructions.CopyCommand:
+				relatedStageIndex, err := strconv.Atoi(typedCmd.From)
 				if err == nil && relatedStageIndex < len(stagesDependencies) {
 					stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
+				}
+
+			case *instructions.RunCommand:
+				for _, mount := range instructions.GetMounts(typedCmd) {
+					relatedStageIndex, err := strconv.Atoi(mount.From)
+					if err == nil && relatedStageIndex < len(stagesDependencies) {
+						stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
+					}
 				}
 			}
 		}
