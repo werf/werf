@@ -3,6 +3,8 @@ package stage
 import (
 	"context"
 
+	"github.com/werf/werf/pkg/path_matcher"
+
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/gomega"
 
@@ -105,15 +107,29 @@ func (c *ConveyorStub) GiterminismManager() giterminism_manager.Interface {
 	return c.giterminismManager
 }
 
+type GiterminismInspectorStub struct {
+	giterminism_manager.Inspector
+}
+
+func NewGiterminismInspectorStub() *GiterminismInspectorStub {
+	return &GiterminismInspectorStub{}
+}
+
+func (inspector *GiterminismInspectorStub) InspectBuildContextFiles(ctx context.Context, matcher path_matcher.PathMatcher) error {
+	return nil
+}
+
 type GiterminismManagerStub struct {
 	giterminism_manager.Interface
 
+	inspector    giterminism_manager.Inspector
 	localGitRepo git_repo.GitRepo
 }
 
-func NewGiterminismManagerStub(localGitRepo git_repo.GitRepo) *GiterminismManagerStub {
+func NewGiterminismManagerStub(localGitRepo git_repo.GitRepo, inspector giterminism_manager.Inspector) *GiterminismManagerStub {
 	return &GiterminismManagerStub{
 		localGitRepo: localGitRepo,
+		inspector:    inspector,
 	}
 }
 
@@ -135,6 +151,10 @@ func (manager *GiterminismManagerStub) HeadCommit() string {
 	return commit
 }
 
+func (manager *GiterminismManagerStub) Inspector() giterminism_manager.Inspector {
+	return manager.inspector
+}
+
 type LocalGitRepoStub struct {
 	git_repo.GitRepo
 
@@ -153,6 +173,10 @@ func (repo *LocalGitRepoStub) HeadCommitHash(ctx context.Context) (string, error
 
 func (repo *LocalGitRepoStub) GetOrCreateArchive(ctx context.Context, opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
 	return NewGitRepoArchiveStub(), nil
+}
+
+func (repo *LocalGitRepoStub) GetOrCreateChecksum(ctx context.Context, opts git_repo.ChecksumOptions) (string, error) {
+	return repo.headCommitHash, nil
 }
 
 type GitRepoArchiveStub struct {

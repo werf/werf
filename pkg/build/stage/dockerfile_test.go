@@ -64,7 +64,7 @@ var _ = Describe("DockerfileStage", func() {
 		func(data TestDockerfileDependencies) {
 			ctx := context.Background()
 
-			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")), data.TestDependencies.Dependencies)
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), data.TestDependencies.Dependencies)
 			containerBackend := NewContainerBackendMock()
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(data.Dockerfile)
@@ -289,7 +289,7 @@ RUN echo hello
 
 			ctx := context.Background()
 
-			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")), nil)
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), nil)
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
 
@@ -301,6 +301,54 @@ RUN echo hello
 
 			err := stage.FetchDependencies(ctx, conveyor, containerBackend, dockerRegistry)
 			Expect(IsErrInvalidBaseImage(err)).To(BeTrue())
+		})
+	})
+
+	When("Dockerfile uses run with mount from another stage", func() {
+		It("should change dockerfile stage digest when base stage context has changed", func() {
+			dockerfile := []byte(`
+FROM alpnie:latest AS build
+WORKDIR /usr/local/test_project
+COPY . .
+RUN mkdir -p dist && \
+    cp -v main.py dist/prog.py
+
+FROM alpine:latest
+RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr/test_project/dist \
+    cp -v /usr/test_project/dist/prog.py /usr/local/bin/prog
+`)
+
+			ctx := context.Background()
+
+			gitRepoStub := NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")
+
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(gitRepoStub, NewGiterminismInspectorStub()), nil)
+
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
+
+			stage := newTestDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
+
+			containerBackend := NewContainerBackendMock()
+
+			img := NewLegacyImageStub()
+			stageBuilder := stage_builder.NewStageBuilder(containerBackend, nil, img)
+			stageImage := &StageImage{
+				Image:   img,
+				Builder: stageBuilder,
+			}
+
+			{
+				digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage)
+				Expect(err).To(Succeed())
+				Expect(digest).To(Equal("65d219096bc3718c101995b00584d700de791027f2e2ca00635e428932478a1c"))
+			}
+
+			gitRepoStub.headCommitHash = "23a0884072c0d31b7c42dfaa7f0772cbfa33ec75"
+			{
+				digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage)
+				Expect(err).To(Succeed())
+				Expect(digest).To(Equal("beb818f2c49f6501194c72449aff59e80be61b405ef39581b01dbf68da927609"))
+			}
 		})
 	})
 })
