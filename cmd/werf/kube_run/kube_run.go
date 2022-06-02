@@ -776,7 +776,7 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	}
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error exec'ing into pod %s/%s: %w", namespace, pod, err)
+		return fmt.Errorf("error running command %q in pod %s/%s: %w", cmd, namespace, pod, err)
 	}
 
 	return nil
