@@ -355,7 +355,7 @@ func (b *NativeBuildah) Rm(ctx context.Context, ref string, opts RmOpts) error {
 func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	_, rmiErrors := b.Runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
 		Force: opts.Force,
-		//Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
+		// Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
 	})
 
 	var multiErr *multierror.Error

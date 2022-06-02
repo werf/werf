@@ -441,24 +441,22 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 				return fmt.Errorf("error waiting for Pod readiness: %w", err)
 			}
 
+			defer stopContainer(ctx, namespace, pod, pod, commonArgs)
+
 			for _, copyTo := range getCopyTo() {
 				if err := copyToPod(ctx, namespace, pod, pod, copyTo, commonArgs); err != nil {
 					return fmt.Errorf("error copying to Pod: %w", err)
 				}
 			}
 
+			defer func() {
+				for _, copyFrom := range getCopyFrom() {
+					copyFromPod(ctx, namespace, pod, pod, copyFrom, commonArgs)
+				}
+			}()
+
 			if err := execCommandInPod(ctx, namespace, pod, pod, cmdData.Command, commonArgs); err != nil {
 				return fmt.Errorf("error running command in Pod: %w", err)
-			}
-
-			for _, copyFrom := range getCopyFrom() {
-				if err := copyFromPod(ctx, namespace, pod, pod, copyFrom, commonArgs); err != nil {
-					return fmt.Errorf("error copying from Pod: %w", err)
-				}
-			}
-
-			if err := stopContainer(ctx, namespace, pod, pod, commonArgs); err != nil {
-				return fmt.Errorf("error stopping main container: %w", err)
 			}
 
 			return nil
@@ -684,7 +682,7 @@ func isPodReady(namespace string, pod string, extraArgs []string) (bool, error) 
 	}
 }
 
-func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom copyFromTo, extraArgs []string) error {
+func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom copyFromTo, extraArgs []string) {
 	logboek.Context(ctx).LogF("Copying %q from pod %q in namespace %q to %q ...\n", copyFrom.Src, pod, namespace, copyFrom.Dst)
 
 	args := []string{
@@ -697,14 +695,12 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
-		return nil
+		return
 	}
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error copying %q from pod %s/%s: %w", copyFrom.Src, namespace, pod, err)
+		logboek.Context(ctx).Warn().LogF("Error copying %q from pod %s/s: %s\n", copyFrom.Src, namespace, pod, err)
 	}
-
-	return nil
 }
 
 func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom copyFromTo, extraArgs []string) error {
@@ -730,7 +726,7 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 	return nil
 }
 
-func stopContainer(ctx context.Context, namespace, pod, container string, extraArgs []string) error {
+func stopContainer(ctx context.Context, namespace, pod, container string, extraArgs []string) {
 	logboek.Context(ctx).LogF("Stopping container %q in pod %q in namespace %q ...\n", container, pod, namespace)
 
 	args := []string{
@@ -744,13 +740,12 @@ func stopContainer(ctx context.Context, namespace, pod, container string, extraA
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
-		return nil
+		return
 	}
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error stopping service container %s/%s/%s for copying files: %w", namespace, pod, container, err)
+		logboek.Context(ctx).Warn().LogF("Error stopping service container %s/%s/%s for copying files: %s\n", namespace, pod, container, err)
 	}
-	return nil
 }
 
 func execCommandInPod(ctx context.Context, namespace, pod, container string, command, extraArgs []string) error {
