@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.109](https://www.github.com/werf/werf/compare/v1.2.108...v1.2.109) (2022-06-02)
+
+
+### Bug Fixes
+
+* **kube-run:** --copy-from skipped if command failed ([8f595ec](https://www.github.com/werf/werf/commit/8f595ec87a8673aa2f00a433cc50248cc20fdc80))
+* **kube-run:** better log message when command failed ([6551c8e](https://www.github.com/werf/werf/commit/6551c8e30c08ea585e61dd7d816844f845c08052))
+
 ### [1.2.108](https://www.github.com/werf/werf/compare/v1.2.107...v1.2.108) (2022-06-01)
 
 
