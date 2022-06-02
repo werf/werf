@@ -3,8 +3,6 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/path_matcher"
-
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/gomega"
 
@@ -13,6 +11,7 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/path_matcher"
 )
 
 type LegacyImageStub struct {

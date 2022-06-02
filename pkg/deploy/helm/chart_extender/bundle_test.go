@@ -7,11 +7,10 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
-
 	"helm.sh/helm/v3/pkg/chart"
+
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 )
 
 var _ = Describe("Bundle", func() {
