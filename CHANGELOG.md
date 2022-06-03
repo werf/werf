@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.110](https://www.github.com/werf/werf/compare/v1.2.109...v1.2.110) (2022-06-03)
+
+
+### Features
+
+* deploy in multiple stages; improve 3way merge ([9a8d3ee](https://www.github.com/werf/werf/commit/9a8d3ee4fb261bfa231aa76748667f45aa3afe9d))
+
 ### [1.2.109](https://www.github.com/werf/werf/compare/v1.2.108...v1.2.109) (2022-06-02)
 
 
