@@ -9,6 +9,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 )
 
@@ -16,6 +17,7 @@ var templateCmdData common.CmdData
 
 func NewTemplateCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
 	cmd, _ := helm_v3.NewTemplateCmd(actionConfig, os.Stdout, helm_v3.TemplateCmdOptions{
+		StagesSplitter:    helm.StagesSplitter{},
 		ChainPostRenderer: wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &templateCmdData)

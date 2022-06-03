@@ -216,6 +216,7 @@ func runApply() error {
 	}
 
 	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.Context(ctx).OutStream(), helm_v3.UpgradeCmdOptions{
+		StagesSplitter:    helm.StagesSplitter{},
 		ChainPostRenderer: bundle.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),

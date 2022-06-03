@@ -229,6 +229,7 @@ func runDismiss(ctx context.Context) error {
 	}
 
 	helmUninstallCmd := helm_v3.NewUninstallCmd(actionConfig, logboek.Context(ctx).OutStream(), helm_v3.UninstallCmdOptions{
+		StagesSplitter:  helm.StagesSplitter{},
 		DeleteNamespace: &cmdData.WithNamespace,
 		DeleteHooks:     &cmdData.WithHooks,
 	})

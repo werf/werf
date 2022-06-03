@@ -18,6 +18,7 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config/deploy_params"
+	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
@@ -412,6 +413,7 @@ func runRender(ctx context.Context) error {
 	}
 
 	templateOpts := helm_v3.TemplateCmdOptions{
+		StagesSplitter:    helm.StagesSplitter{},
 		ChainPostRenderer: wc.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),
