@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"github.com/mitchellh/copystructure"
@@ -196,25 +194,7 @@ func (wc *WerfChart) MakeBundleValues(chrt *chart.Chart, inputVals map[string]in
 
 // SetupTemplateFuncs method for the chart.Extender interface
 func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
-	funcMap["werf_secret_file"] = func(secretRelativePath string) (string, error) {
-		if path.IsAbs(secretRelativePath) {
-			return "", fmt.Errorf("expected relative secret file path, given path %v", secretRelativePath)
-		}
-
-		decodedData, ok := wc.SecretsRuntimeData.DecodedSecretFilesData[secretRelativePath]
-
-		if !ok {
-			var secretFiles []string
-			for key := range wc.SecretsRuntimeData.DecodedSecretFilesData {
-				secretFiles = append(secretFiles, key)
-			}
-
-			return "", fmt.Errorf("secret file %q not found, you may use one of the following: %q", secretRelativePath, strings.Join(secretFiles, "', '"))
-		}
-
-		return decodedData, nil
-	}
-
+	helpers.SetupWerfSecretFile(wc.SecretsRuntimeData, funcMap)
 	helpers.SetupIncludeWrapperFuncs(funcMap)
 	helpers.SetupWerfImageDeprecationFunc(wc.ChartExtenderContext, funcMap)
 }
