@@ -75,7 +75,7 @@ func main() {
 }
 
 func constructRootCmd() *cobra.Command {
-	if filepath.Base(os.Args[0]) == "helm" || os.Getenv("WERF_HELM3_MODE") == "1" {
+	if filepath.Base(os.Args[0]) == "helm" || helm.IsHelm3Mode() {
 		return helm.NewCmd()
 	}
 
