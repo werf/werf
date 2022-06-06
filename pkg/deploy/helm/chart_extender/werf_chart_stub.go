@@ -114,9 +114,7 @@ func (wc *WerfChartStub) MakeValues(inputVals map[string]interface{}) (map[strin
 
 // SetupTemplateFuncs method for the chart.Extender interface
 func (wc *WerfChartStub) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
-	funcMap["werf_secret_file"] = func(secretRelativePath string) (string, error) {
-		return "stub_data", nil
-	}
+	helpers.SetupWerfSecretFile(wc.SecretsRuntimeData, funcMap)
 	helpers.SetupIncludeWrapperFuncs(funcMap)
 	helpers.SetupWerfImageDeprecationFunc(wc.ChartExtenderContext, funcMap)
 }
