@@ -32,6 +32,10 @@ import (
 
 var _commonCmdData common.CmdData
 
+func IsHelm3Mode() bool {
+	return os.Getenv("WERF_HELM3_MODE") == "1"
+}
+
 func NewCmd() *cobra.Command {
 	var namespace string
 	actionConfig := new(action.Configuration)
@@ -99,7 +103,19 @@ func NewCmd() *cobra.Command {
 		helm_v3.NewRegistryCmd(actionConfig, os.Stdout),
 	)
 
-	helm_v3.LoadPlugins(cmd, os.Stdout)
+	if IsHelm3Mode() {
+		helm_v3.LoadPlugins(cmd, os.Stdout)
+	} else {
+		func() {
+			saveArgs := os.Args
+			os.Args = os.Args[1:]
+			defer func() {
+				os.Args = saveArgs
+			}()
+
+			helm_v3.LoadPlugins(cmd, os.Stdout)
+		}()
+	}
 
 	commandsQueue := []*cobra.Command{cmd}
 	for len(commandsQueue) > 0 {
@@ -110,7 +126,11 @@ func NewCmd() *cobra.Command {
 
 		if cmd.Runnable() {
 			oldRunE := cmd.RunE
+			cmd.RunE = nil
+
 			oldRun := cmd.Run
+			cmd.Run = nil
+
 			cmd.RunE = func(cmd *cobra.Command, args []string) error {
 				// NOTE: Common init block for all runnable commands.
 
@@ -160,13 +180,11 @@ func NewCmd() *cobra.Command {
 					ReleasesHistoryMax: *_commonCmdData.ReleasesHistoryMax,
 				})
 
-				if oldRun != nil {
-					oldRun(cmd, args)
-					return nil
-				} else {
+				if oldRunE != nil {
 					if err := oldRunE(cmd, args); err != nil {
-						errValue := reflect.ValueOf(err)
-						if errValue.Kind() == reflect.Struct {
+						if helm_v3.IsPluginError(err) {
+							return err
+						} else if errValue := reflect.ValueOf(err); errValue.Kind() == reflect.Struct {
 							if !errValue.IsZero() {
 								codeValue := errValue.FieldByName("code")
 								if codeValue.IsValid() && !codeValue.IsZero() {
@@ -179,7 +197,13 @@ func NewCmd() *cobra.Command {
 					}
 
 					return nil
+				} else if oldRun != nil {
+					oldRun(cmd, args)
+					return nil
+				} else {
+					panic(fmt.Sprintf("unexpected command %q, please report bug to the https://github.com/werf/werf", cmd.Name()))
 				}
+
 			}
 		}
 	}
