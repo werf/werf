@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.111](https://www.github.com/werf/werf/compare/v1.2.110...v1.2.111) (2022-06-07)
+
+
+### Features
+
+* **dismiss:** dont fail if no release found ([6f79a18](https://www.github.com/werf/werf/commit/6f79a186b747f8096611a2ad6440a35084f72699))
+
+
+### Bug Fixes
+
+* **dismiss:** --with-namespace created empty namespace if release already uninstalled ([7c1ab9b](https://www.github.com/werf/werf/commit/7c1ab9bc8ccdfabd468bcb2538d04eab37a8a5a1))
+* **helm:** fix werf_secret_file not working in werf helm template command ([b2cec4b](https://www.github.com/werf/werf/commit/b2cec4b20a4f929b5ed729f6bf2ba271da5d2af7))
+* **helm:** plugins positional arguments not passed properly ([98f9003](https://www.github.com/werf/werf/commit/98f90034ec8fcb059acf57c527d250aa49d99983))
+
 ### [1.2.110](https://www.github.com/werf/werf/compare/v1.2.109...v1.2.110) (2022-06-03)
 
 
