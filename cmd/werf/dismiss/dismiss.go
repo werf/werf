@@ -187,10 +187,12 @@ func runDismiss(ctx context.Context) error {
 	}
 
 	var lockManager *lock_manager.LockManager
-	if m, err := lock_manager.NewLockManager(namespace); err != nil {
-		return fmt.Errorf("unable to create lock manager: %w", err)
-	} else {
-		lockManager = m
+	if !cmdData.WithNamespace {
+		if m, err := lock_manager.NewLockManager(namespace); err != nil {
+			return fmt.Errorf("unable to create lock manager: %w", err)
+		} else {
+			lockManager = m
+		}
 	}
 
 	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
