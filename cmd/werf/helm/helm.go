@@ -203,7 +203,6 @@ func NewCmd() *cobra.Command {
 				} else {
 					panic(fmt.Sprintf("unexpected command %q, please report bug to the https://github.com/werf/werf", cmd.Name()))
 				}
-
 			}
 		}
 	}
