@@ -26,11 +26,11 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.110 # stages; 3w merge improvements: https://github.com/werf/werf/releases/tag/v1.2.110
+      version: 1.2.111 # https://github.com/werf/werf/releases/tag/v1.2.111
     - name: beta
       version: 1.2.109
     - name: ea
-      version: 1.2.109 # https://github.com/werf/werf/pull/4510
+      version: 1.2.109 # https://github.com/werf/werf/releases/tag/v1.2.109
     - name: stable
       version: 1.2.80+fix5
     - name: rock-solid
