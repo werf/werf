@@ -26,7 +26,7 @@ groups:
  - name: "1.2"
    channels:
     - name: alpha
-      version: 1.2.111 # https://github.com/werf/werf/releases/tag/v1.2.111
+      version: 1.2.112 # https://github.com/werf/werf/releases/tag/v1.2.112
     - name: beta
       version: 1.2.109
     - name: ea
