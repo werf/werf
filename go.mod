@@ -59,7 +59,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/copy-recurse v0.2.4
-	github.com/werf/kubedog v0.6.5-0.20220524172024-3d978f3318f0
+	github.com/werf/kubedog v0.6.5-0.20220608151530-2555924b0ce9
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.5.4
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
