@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.112](https://www.github.com/werf/werf/compare/v1.2.111...v1.2.112) (2022-06-08)
+
+
+### Bug Fixes
+
+* **export-values:** propagate result of export-values to all parent charts Values ([12a0b54](https://www.github.com/werf/werf/commit/12a0b543f2245cbfdd55a6a75fb174711985cf43))
+
 ### [1.2.111](https://www.github.com/werf/werf/compare/v1.2.110...v1.2.111) (2022-06-07)
 
 
