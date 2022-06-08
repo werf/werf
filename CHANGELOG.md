@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.113](https://www.github.com/werf/werf/compare/v1.2.112...v1.2.113) (2022-06-08)
+
+
+### Bug Fixes
+
+* **helm:** `unable to recognize "": no matches for kind "..." in version "..."` errors when base64 kubeconfig used ([90678ec](https://www.github.com/werf/werf/commit/90678ecc132503f70d60e53ce79b9688f033e6a0))
+
 ### [1.2.112](https://www.github.com/werf/werf/compare/v1.2.111...v1.2.112) (2022-06-08)
 
 
