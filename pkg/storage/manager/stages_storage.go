@@ -334,7 +334,7 @@ func (m *StagesStorageManager) GetStagesBySignature(ctx context.Context, stageNa
 		return cacheStages, nil
 	}
 
-	logboek.Context(ctx).Default().LogF(
+	logboek.Context(ctx).Info().LogF(
 		"Stage %s cache by signature %s is not exists in the stages storage cache: will request fresh stages from stages storage and set stages storage cache by signature %s\n",
 		stageName, stageSig, stageSig,
 	)
@@ -376,7 +376,7 @@ func (m *StagesStorageManager) atomicGetStagesBySignatureWithStagesStorageCacheS
 	}
 
 	var stageIDs []image.StageID
-	if err := logboek.Context(ctx).Default().LogProcess("Get %s stages by signature %s from stages storage", stageName, stageSig).
+	if err := logboek.Context(ctx).Info().LogProcess("Get %s stages by signature %s from stages storage", stageName, stageSig).
 		DoError(func() error {
 			var err error
 			stageIDs, err = m.StagesStorage.GetStagesIDsBySignature(ctx, m.ProjectName, stageSig)
