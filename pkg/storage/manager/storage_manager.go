@@ -53,7 +53,7 @@ type StorageManagerInterface interface {
 	GetStagesStorage() storage.StagesStorage
 	GetFinalStagesStorage() storage.StagesStorage
 	GetSecondaryStagesStorageList() []storage.StagesStorage
-	GetImageInfoGetter(imageName string, stg stage.Interface) *image.InfoGetter
+	GetImageInfoGetter(imageName string, stg stage.Interface, opts image.InfoGetterOptions) *image.InfoGetter
 
 	EnableParallel(parallelTasksLimit int)
 	MaxNumberOfWorkers() int
@@ -176,21 +176,16 @@ func (m *StorageManager) GetSecondaryStagesStorageList() []storage.StagesStorage
 	return m.SecondaryStagesStorageList
 }
 
-func (m *StorageManager) GetImageInfoGetter(imageName string, stg stage.Interface) *image.InfoGetter {
+func (m *StorageManager) GetImageInfoGetter(imageName string, stg stage.Interface, opts image.InfoGetterOptions) *image.InfoGetter {
 	stageID := stg.GetStageImage().Image.GetStageDescription().StageID
 	info := stg.GetStageImage().Image.GetStageDescription().Info
 
 	if m.FinalStagesStorage != nil {
 		finalImageName := m.FinalStagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
-		_, tag := image.ParseRepositoryAndTag(finalImageName)
-		return image.NewInfoGetter(imageName, finalImageName, tag)
+		return image.NewInfoGetter(imageName, finalImageName, opts)
 	}
 
-	return image.NewInfoGetter(
-		imageName,
-		info.Name,
-		info.Tag,
-	)
+	return image.NewInfoGetter(imageName, info.Name, opts)
 }
 
 func (m *StorageManager) InitCache(ctx context.Context) error {
@@ -395,7 +390,7 @@ func copyStageIntoStagesStorage(ctx context.Context, projectName string, stageID
 		return fmt.Errorf("unable to store stage %s into the cache stages storage %s: %w", stageID.String(), stagesStorage.String(), err)
 	}
 
-	if err := storeStageDescriptionIntoLocalManifestCache(ctx, projectName, stageID, stagesStorage, convertStageDescriptionForStagesStorage(newImg.GetStageDescription(), stagesStorage)); err != nil {
+	if err := storeStageDescriptionIntoLocalManifestCache(ctx, projectName, stageID, stagesStorage, ConvertStageDescriptionForStagesStorage(newImg.GetStageDescription(), stagesStorage)); err != nil {
 		return fmt.Errorf("error storing stage %s description into local manifest cache: %w", targetStagesStorageImageName, err)
 	}
 
@@ -500,7 +495,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 		// }
 
 		// TODO(buildah): check no bugs introduced by removing of following calls
-		// if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, convertStageDescriptionForStagesStorage(cacheDockerImage.Image.GetStageDescription(), m.StagesStorage)); err != nil {
+		// if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, ConvertStageDescriptionForStagesStorage(cacheDockerImage.Image.GetStageDescription(), m.StagesStorage)); err != nil {
 		if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, cacheImg.GetStageDescription()); err != nil {
 			return fmt.Errorf("error storing stage %s description into local manifest cache: %w", primaryImageName, err)
 		}
@@ -863,7 +858,7 @@ func storeStageDescriptionIntoLocalManifestCache(ctx context.Context, projectNam
 	return nil
 }
 
-func convertStageDescriptionForStagesStorage(stageDesc *image.StageDescription, stagesStorage storage.StagesStorage) *image.StageDescription {
+func ConvertStageDescriptionForStagesStorage(stageDesc *image.StageDescription, stagesStorage storage.StagesStorage) *image.StageDescription {
 	return &image.StageDescription{
 		StageID: &image.StageID{
 			Digest:   stageDesc.StageID.Digest,
@@ -901,7 +896,7 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 				return nil, fmt.Errorf("error getting stage %s description from the local manifest cache: %w", stageID.String(), err)
 			}
 			if stageDesc != nil {
-				return convertStageDescriptionForStagesStorage(stageDesc, stagesStorage), nil
+				return ConvertStageDescriptionForStagesStorage(stageDesc, stagesStorage), nil
 			}
 		}
 
@@ -926,7 +921,7 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 				}
 			}
 
-			return convertStageDescriptionForStagesStorage(stageDesc, stagesStorage), nil
+			return ConvertStageDescriptionForStagesStorage(stageDesc, stagesStorage), nil
 		}
 	}
 

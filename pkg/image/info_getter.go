@@ -1,16 +1,32 @@
 package image
 
+import "fmt"
+
+type (
+	CustomTagFunc func(string, string) string
+	ExportTagFunc func(string, string) string
+)
+
 type InfoGetter struct {
 	WerfImageName string
+	Repo          string
 	Tag           string
-	Name          string
+
+	InfoGetterOptions
 }
 
-func NewInfoGetter(imageName string, name, tag string) *InfoGetter {
+type InfoGetterOptions struct {
+	CustomTagFunc CustomTagFunc
+}
+
+func NewInfoGetter(imageName string, ref string, opts InfoGetterOptions) *InfoGetter {
+	repo, tag := ParseRepositoryAndTag(ref)
+
 	return &InfoGetter{
-		WerfImageName: imageName,
-		Name:          name,
-		Tag:           tag,
+		WerfImageName:     imageName,
+		Repo:              repo,
+		Tag:               tag,
+		InfoGetterOptions: opts,
 	}
 }
 
@@ -23,9 +39,12 @@ func (d *InfoGetter) GetWerfImageName() string {
 }
 
 func (d *InfoGetter) GetName() string {
-	return d.Name
+	return fmt.Sprintf("%s:%s", d.Repo, d.GetTag())
 }
 
 func (d *InfoGetter) GetTag() string {
+	if d.CustomTagFunc != nil {
+		return d.CustomTagFunc(d.WerfImageName, d.Tag)
+	}
 	return d.Tag
 }

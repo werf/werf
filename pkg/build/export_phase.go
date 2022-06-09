@@ -6,6 +6,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+	"github.com/werf/werf/pkg/image"
 )
 
 type ExportPhase struct {
@@ -14,7 +15,7 @@ type ExportPhase struct {
 }
 
 type ExportPhaseOptions struct {
-	ExportTagFuncList []ExportTagFunc
+	ExportTagFuncList []image.ExportTagFunc
 }
 
 func NewExportPhase(c *Conveyor, opts ExportPhaseOptions) *ExportPhase {

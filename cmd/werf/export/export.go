@@ -234,7 +234,7 @@ func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 	})
 }
 
-func getTagFuncList(imageNameList, tagTemplateList []string) ([]build.ExportTagFunc, error) {
+func getTagFuncList(imageNameList, tagTemplateList []string) ([]image.ExportTagFunc, error) {
 	templateName := "--tag"
 	tmpl := template.New(templateName).Delims("%", "%")
 	tmpl = tmpl.Funcs(map[string]interface{}{
@@ -244,7 +244,7 @@ func getTagFuncList(imageNameList, tagTemplateList []string) ([]build.ExportTagF
 		"image_content_based_tag": func() string { return "%[4]s" },
 	})
 
-	var tagFuncList []build.ExportTagFunc
+	var tagFuncList []image.ExportTagFunc
 	for _, tagTemplate := range tagTemplateList {
 		tagFunc, err := getExportTagFunc(tmpl, templateName, imageNameList, tagTemplate)
 		if err != nil {
@@ -257,7 +257,7 @@ func getTagFuncList(imageNameList, tagTemplateList []string) ([]build.ExportTagF
 	return tagFuncList, nil
 }
 
-func getExportTagFunc(tmpl *template.Template, templateName string, imageNameList []string, tagTemplate string) (build.ExportTagFunc, error) {
+func getExportTagFunc(tmpl *template.Template, templateName string, imageNameList []string, tagTemplate string) (image.ExportTagFunc, error) {
 	tmpl, err := tmpl.Parse(tagTemplate)
 	if err != nil {
 		return nil, err
@@ -269,7 +269,7 @@ func getExportTagFunc(tmpl *template.Template, templateName string, imageNameLis
 	}
 
 	tagOrFormat := buf.String()
-	var tagFunc build.ExportTagFunc
+	var tagFunc image.ExportTagFunc
 	tagFunc = func(imageName string, contentBasedTag string) string {
 		if strings.ContainsRune(tagOrFormat, '%') {
 			return fmt.Sprintf(tagOrFormat, imageName, slug.Slug(imageName), slug.DockerTag(imageName), contentBasedTag)

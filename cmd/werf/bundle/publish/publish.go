@@ -277,6 +277,10 @@ func runPublish(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
+		if err != nil {
+			return err
+		}
 
 		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
@@ -306,7 +310,7 @@ func runPublish(ctx context.Context) error {
 				}
 			}
 
-			imagesInfoGetters = c.GetImageInfoGetters()
+			imagesInfoGetters = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
 
 			return nil
 		}); err != nil {
@@ -339,11 +343,6 @@ func runPublish(ctx context.Context) error {
 		return err
 	}
 
-	useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
-	if err != nil {
-		return err
-	}
-
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
 		return fmt.Errorf("getting HEAD commit hash failed: %w", err)
@@ -355,10 +354,9 @@ func runPublish(ctx context.Context) error {
 	}
 
 	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
-		Env:           *commonCmdData.Environment,
-		CustomTagFunc: useCustomTagFunc,
-		CommitHash:    headHash,
-		CommitDate:    headTime,
+		Env:        *commonCmdData.Environment,
+		CommitHash: headHash,
+		CommitDate: headTime,
 	}); err != nil {
 		return fmt.Errorf("error creating service values: %w", err)
 	} else {
