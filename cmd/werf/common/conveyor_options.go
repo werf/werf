@@ -11,6 +11,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/storage"
 )
@@ -78,7 +79,7 @@ func GetBuildOptions(commonCmdData *CmdData, giterminismManager giterminism_mana
 	return buildOptions, nil
 }
 
-func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) ([]build.CustomTagFunc, error) {
+func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) ([]image.CustomTagFunc, error) {
 	tagOptionValues := getCustomTagOptionValues(commonCmdData)
 	if len(tagOptionValues) == 0 {
 		return nil, nil
@@ -101,7 +102,7 @@ func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism
 		"image_content_based_tag": func() string { return "%[4]s" },
 	})
 
-	var tagFuncList []build.CustomTagFunc
+	var tagFuncList []image.CustomTagFunc
 	for _, optionValue := range tagOptionValues {
 		tmpl, err := tmpl.Parse(optionValue)
 		if err != nil {
@@ -145,7 +146,7 @@ func getCustomTagFuncList(commonCmdData *CmdData, giterminismManager giterminism
 	return tagFuncList, nil
 }
 
-func GetUseCustomTagFunc(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) (build.CustomTagFunc, error) {
+func GetUseCustomTagFunc(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) (image.CustomTagFunc, error) {
 	customTagFuncList, err := getCustomTagFuncList(commonCmdData, giterminismManager, werfConfig)
 	if err != nil {
 		return nil, err

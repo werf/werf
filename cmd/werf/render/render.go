@@ -286,6 +286,10 @@ func runRender(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
+			useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
+			if err != nil {
+				return err
+			}
 
 			storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
@@ -315,7 +319,7 @@ func runRender(ctx context.Context) error {
 					}
 				}
 
-				imagesInfoGetters = c.GetImageInfoGetters()
+				imagesInfoGetters = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
 
 				return nil
 			}); err != nil {
@@ -357,11 +361,6 @@ func runRender(ctx context.Context) error {
 		return err
 	}
 
-	useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
-	if err != nil {
-		return err
-	}
-
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
 		return fmt.Errorf("getting HEAD commit hash failed: %w", err)
@@ -379,7 +378,6 @@ func runRender(ctx context.Context) error {
 		StubImagesNames:          stubImagesNames,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
-		CustomTagFunc:            useCustomTagFunc,
 		CommitHash:               headHash,
 		CommitDate:               headTime,
 	}); err != nil {

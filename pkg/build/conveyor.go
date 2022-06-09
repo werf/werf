@@ -27,6 +27,7 @@ import (
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -307,7 +308,7 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 }
 
 type ShouldBeBuiltOptions struct {
-	CustomTagFuncList []CustomTagFunc
+	CustomTagFuncList []image.CustomTagFunc
 }
 
 func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) error {
@@ -336,13 +337,13 @@ func (c *Conveyor) FetchLastImageStage(ctx context.Context, imageName string) er
 	return c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
 }
 
-func (c *Conveyor) GetImageInfoGetters() (images []*imagePkg.InfoGetter) {
+func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) (images []*imagePkg.InfoGetter) {
 	for _, img := range c.images {
 		if img.isArtifact {
 			continue
 		}
 
-		getter := c.StorageManager.GetImageInfoGetter(img.name, img.GetLastNonEmptyStage())
+		getter := c.StorageManager.GetImageInfoGetter(img.name, img.GetLastNonEmptyStage(), opts)
 		images = append(images, getter)
 	}
 
