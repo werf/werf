@@ -41,8 +41,9 @@ func NewCmd() *cobra.Command {
 	actionConfig := new(action.Configuration)
 
 	cmd := &cobra.Command{
-		Use:   "helm",
-		Short: "Manage application deployment with helm",
+		Use:          "helm",
+		Short:        "Manage application deployment with helm",
+		SilenceUsage: true,
 	}
 
 	ctx := common.GetContext()
@@ -206,6 +207,9 @@ func NewCmd() *cobra.Command {
 			}
 		}
 	}
+
+	cmd.PersistentFlags().ParseErrorsWhitelist.UnknownFlags = true
+	cmd.PersistentFlags().Parse(os.Args[1:])
 
 	return cmd
 }
