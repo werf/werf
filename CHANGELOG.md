@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.114](https://www.github.com/werf/werf/compare/v1.2.113...v1.2.114) (2022-06-10)
+
+
+### Bug Fixes
+
+* **custom-tags:** support custom tags for --final-repo images ([e785c87](https://www.github.com/werf/werf/commit/e785c87d79ff1fcf35eb766abb5462e019bc7403))
+* **helm:** fix 'werf helm *' commands to correctly initialize namespace; fix output ([f7faaa7](https://www.github.com/werf/werf/commit/f7faaa7970798081c26e82d171beef3b6d1ebff4))
+
 ### [1.2.113](https://www.github.com/werf/werf/compare/v1.2.112...v1.2.113) (2022-06-08)
 
 
