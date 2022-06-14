@@ -247,7 +247,7 @@ func runRender(ctx context.Context) error {
 	logboek.LogOptionalLn()
 
 	var imagesInfoGetters []*image.InfoGetter
-	var imagesRepository string
+	var imagesRepo string
 	var isStub bool
 	var stubImagesNames []string
 
@@ -293,7 +293,7 @@ func runRender(ctx context.Context) error {
 
 			storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-			imagesRepository = storageManager.StagesStorage.String()
+			imagesRepo = storageManager.GetServiceValuesRepo()
 
 			conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
 			if err != nil {
@@ -328,7 +328,7 @@ func runRender(ctx context.Context) error {
 
 			logboek.LogOptionalLn()
 		} else {
-			imagesRepository = "REPO"
+			imagesRepo = "REPO"
 			isStub = true
 
 			for _, img := range werfConfig.StapelImages {
@@ -371,7 +371,7 @@ func runRender(ctx context.Context) error {
 		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
-	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
 		IsStub:                   isStub,

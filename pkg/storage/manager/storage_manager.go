@@ -176,6 +176,13 @@ func (m *StorageManager) GetSecondaryStagesStorageList() []storage.StagesStorage
 	return m.SecondaryStagesStorageList
 }
 
+func (m *StorageManager) GetServiceValuesRepo() string {
+	if m.FinalStagesStorage != nil {
+		return m.FinalStagesStorage.String()
+	}
+	return m.StagesStorage.String()
+}
+
 func (m *StorageManager) GetImageInfoGetter(imageName string, stg stage.Interface, opts image.InfoGetterOptions) *image.InfoGetter {
 	stageID := stg.GetStageImage().Image.GetStageDescription().StageID
 	info := stg.GetStageImage().Image.GetStageDescription().Info

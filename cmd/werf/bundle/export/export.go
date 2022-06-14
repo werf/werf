@@ -224,7 +224,7 @@ func runExport(ctx context.Context) error {
 	logboek.LogOptionalLn()
 
 	var imagesInfoGetters []*image.InfoGetter
-	var imagesRepository string
+	var imagesRepo string
 
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
@@ -258,7 +258,7 @@ func runExport(ctx context.Context) error {
 
 		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-		imagesRepository = storageManager.GetStagesStorage().String()
+		imagesRepo = storageManager.GetServiceValuesRepo()
 
 		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
 		if err != nil {
@@ -322,7 +322,7 @@ func runExport(ctx context.Context) error {
 		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
-	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Env:        *commonCmdData.Environment,
 		CommitHash: headHash,
 		CommitDate: headTime,

@@ -270,7 +270,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	var imagesInfoGetters []*image.InfoGetter
-	var imagesRepository string
+	var imagesRepo string
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
 		stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
 		if err != nil {
@@ -304,7 +304,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-		imagesRepository = storageManager.StagesStorage.String()
+		imagesRepo = storageManager.GetServiceValuesRepo()
 
 		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
 		if err != nil {
@@ -404,7 +404,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
-	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
