@@ -66,7 +66,6 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
-	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -117,9 +116,6 @@ func runRender(ctx context.Context) error {
 	case cmdData.BundleDir != "":
 		if *commonCmdData.Repo.Address != "" {
 			return fmt.Errorf("only one of --bundle-dir or --repo should be specified, but both provided")
-		}
-		if *commonCmdData.FinalRepo.Address != "" {
-			return fmt.Errorf("only one of --bundle-dir or --final-repo should be specified, but both provided")
 		}
 
 		isLocal = true

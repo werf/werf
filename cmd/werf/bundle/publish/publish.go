@@ -239,7 +239,11 @@ func runPublish(ctx context.Context) error {
 
 	logboek.LogOptionalLn()
 
-	repoAddress, err := commonCmdData.Repo.GetAddress()
+	stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
+	if err != nil {
+		return err
+	}
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -253,14 +257,6 @@ func runPublish(ctx context.Context) error {
 	var imagesRepo string
 
 	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
-		stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
-		if err != nil {
-			return err
-		}
-		finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
-		if err != nil {
-			return err
-		}
 		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err
@@ -401,5 +397,12 @@ func runPublish(ctx context.Context) error {
 		return fmt.Errorf("unable to create bundle: %w", err)
 	}
 
-	return bundles.Publish(ctx, bundle, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlesRegistryClient)
+	var bundleRepo string
+	if finalStagesStorage != nil {
+		bundleRepo = finalStagesStorage.Address()
+	} else {
+		bundleRepo = stagesStorage.Address()
+	}
+
+	return bundles.Publish(ctx, bundle, fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient)
 }
