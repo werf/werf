@@ -51,7 +51,6 @@ func NewCmd() *cobra.Command {
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
-	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
