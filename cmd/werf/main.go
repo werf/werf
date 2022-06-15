@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -70,6 +72,9 @@ func main() {
 	rootCmd := constructRootCmd()
 
 	if err := rootCmd.Execute(); err != nil {
+		if helm_v3.IsPluginError(err) {
+			common.TerminateWithError(err.Error(), helm_v3.PluginErrorCode(err))
+		}
 		common.TerminateWithError(err.Error(), 1)
 	}
 }

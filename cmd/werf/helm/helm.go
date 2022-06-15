@@ -3,7 +3,6 @@ package helm
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -108,11 +107,13 @@ func NewCmd() *cobra.Command {
 		helm_v3.LoadPlugins(cmd, os.Stdout)
 	} else {
 		func() {
-			saveArgs := os.Args
-			os.Args = os.Args[1:]
-			defer func() {
-				os.Args = saveArgs
-			}()
+			if len(os.Args) > 1 {
+				saveArgs := os.Args
+				os.Args = os.Args[1:]
+				defer func() {
+					os.Args = saveArgs
+				}()
+			}
 
 			helm_v3.LoadPlugins(cmd, os.Stdout)
 		}()
@@ -144,8 +145,8 @@ func NewCmd() *cobra.Command {
 					return err
 				}
 
-				// FIXME: setup namespace env var for helm diff plugin
 				os.Setenv("WERF_HELM3_MODE", "1")
+				os.Setenv("HELM_NAMESPACE", namespace)
 
 				ctx := common.GetContext()
 
@@ -182,22 +183,7 @@ func NewCmd() *cobra.Command {
 				})
 
 				if oldRunE != nil {
-					if err := oldRunE(cmd, args); err != nil {
-						if helm_v3.IsPluginError(err) {
-							return err
-						} else if errValue := reflect.ValueOf(err); errValue.Kind() == reflect.Struct {
-							if !errValue.IsZero() {
-								codeValue := errValue.FieldByName("code")
-								if codeValue.IsValid() && !codeValue.IsZero() {
-									os.Exit(int(codeValue.Int()))
-								}
-							}
-						}
-
-						return err
-					}
-
-					return nil
+					return oldRunE(cmd, args)
 				} else if oldRun != nil {
 					oldRun(cmd, args)
 					return nil
@@ -208,8 +194,10 @@ func NewCmd() *cobra.Command {
 		}
 	}
 
-	cmd.PersistentFlags().ParseErrorsWhitelist.UnknownFlags = true
-	cmd.PersistentFlags().Parse(os.Args[1:])
+	if len(os.Args) > 1 {
+		cmd.PersistentFlags().ParseErrorsWhitelist.UnknownFlags = true
+		cmd.PersistentFlags().Parse(os.Args[1:])
+	}
 
 	return cmd
 }
