@@ -124,7 +124,6 @@ require (
 	github.com/containernetworking/plugins v1.1.1 // indirect
 	github.com/containers/libtrust v0.0.0-20200511145503-9c3a6c22cd9a // indirect
 	github.com/containers/ocicrypt v1.1.4-0.20220428134531-566b808bdf6f // indirect
-	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -155,7 +154,6 @@ require (
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
-	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -309,6 +307,6 @@ replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 
 replace github.com/deislabs/oras => github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8
 
-replace helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20220518201025-6ee75d933ee9
+replace helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20220615113954-0b6997066b61
 
 replace github.com/go-git/go-git/v5 => github.com/ZauberNerd/go-git/v5 v5.4.3-0.20220315170230-29ec1bc1e5db
