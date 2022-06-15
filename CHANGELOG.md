@@ -1,5 +1,15 @@
 # Changelog
 
+### [1.2.115](https://www.github.com/werf/werf/compare/v1.2.114...v1.2.115) (2022-06-15)
+
+
+### Bug Fixes
+
+* **bundles:** cleanup --final-repo param usage in bundles ([4d77117](https://www.github.com/werf/werf/commit/4d771175eeee0eaa26689a869d83644e44da94c8))
+* **docs:** add info about published rock-solid images ([9b09593](https://www.github.com/werf/werf/commit/9b09593dfa847aafff59b3e2865396d3807f07e3))
+* **final-repo:** service values .Values.werf.repo should use --final-repo instead of --repo ([e0562f6](https://www.github.com/werf/werf/commit/e0562f6a6c1dc2662e02c8b30523affb6a2e2ce6))
+* **helm:** fix werf panic and helm plugins with error codes ([a39a1a0](https://www.github.com/werf/werf/commit/a39a1a0b87c1fd96c8620aab5e0f34f12ab52996))
+
 ### [1.2.114](https://www.github.com/werf/werf/compare/v1.2.113...v1.2.114) (2022-06-10)
 
 
