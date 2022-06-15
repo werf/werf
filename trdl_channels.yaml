@@ -32,6 +32,6 @@ groups:
     - name: ea
       version: 1.2.109+fix1 # https://github.com/werf/werf/releases/tag/v1.2.109+fix1
     - name: stable
-      version: 1.2.109+fix1 # https://github.com/werf/werf/releases/tag/v1.2.109+fix1
+      version: 1.2.80+fix5
     - name: rock-solid
       version: 1.2.80+fix5
