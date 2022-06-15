@@ -1,7 +1,7 @@
 project: werf-in-image
 configVersion: 1
 {{- $_ := set $ "Groups" (list "1.2") }}
-{{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable") }}
+{{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable" "rock-solid") }}
 
 ---
 image: trdl
