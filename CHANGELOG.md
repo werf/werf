@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.116](https://www.github.com/werf/werf/compare/v1.2.115...v1.2.116) (2022-06-16)
+
+
+### Features
+
+* **external-deps:** external dependencies for release resources ([73e6bcc](https://www.github.com/werf/werf/commit/73e6bcca54570c97b398a035fb60ae9af85e894c))
+* **external-deps:** external dependencies now available for `werf helm` ([c968c08](https://www.github.com/werf/werf/commit/c968c08ddc05bcd546ff07482a8a67447809d645))
+
 ### [1.2.115](https://www.github.com/werf/werf/compare/v1.2.114...v1.2.115) (2022-06-15)
 
 
