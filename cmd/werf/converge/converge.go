@@ -444,14 +444,9 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	stagesExternalDepsGenerator, err := helm.NewStagesExternalDepsGenerator(actionConfig.RESTClientGetter)
-	if err != nil {
-		return fmt.Errorf("error creating external deps generator: %w", err)
-	}
-
 	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.OutStream(), helm_v3.UpgradeCmdOptions{
 		StagesSplitter:              helm.NewStagesSplitter(),
-		StagesExternalDepsGenerator: stagesExternalDepsGenerator,
+		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter),
 		ChainPostRenderer:           wc.ChainPostRenderer,
 		ValueOpts:                   valueOpts,
 		CreateNamespace:             common.NewBool(true),

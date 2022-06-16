@@ -13,33 +13,49 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
-func NewStagesExternalDepsGenerator(restClient action.RESTClientGetter) (*StagesExternalDepsGenerator, error) {
-	mapper, err := restClient.ToRESTMapper()
-	if err != nil {
-		return nil, fmt.Errorf("error getting REST mapper: %w", err)
-	}
-
-	discoveryClient, err := restClient.ToDiscoveryClient()
-	if err != nil {
-		return nil, fmt.Errorf("error getting discovery client: %w", err)
-	}
-
-	gvkBuilder := NewGVKBuilder(scheme.Scheme, restmapper.NewShortcutExpander(mapper, discoveryClient))
-
+func NewStagesExternalDepsGenerator(restClient *action.RESTClientGetter) *StagesExternalDepsGenerator {
 	return &StagesExternalDepsGenerator{
+		restClient:   restClient,
 		metaAccessor: metadataAccessor,
 		scheme:       scheme.Scheme,
-		gvkBuilder:   gvkBuilder,
-	}, nil
+	}
 }
 
 type StagesExternalDepsGenerator struct {
+	restClient   *action.RESTClientGetter
 	gvkBuilder   externaldeps.GVKBuilder
 	metaAccessor meta.MetadataAccessor
 	scheme       *runtime.Scheme
+	initialized  bool
+}
+
+func (s *StagesExternalDepsGenerator) init() error {
+	if s.initialized {
+		return nil
+	}
+
+	mapper, err := (*s.restClient).ToRESTMapper()
+	if err != nil {
+		return fmt.Errorf("error getting REST mapper: %w", err)
+	}
+
+	discoveryClient, err := (*s.restClient).ToDiscoveryClient()
+	if err != nil {
+		return fmt.Errorf("error getting discovery client: %w", err)
+	}
+
+	s.gvkBuilder = NewGVKBuilder(scheme.Scheme, restmapper.NewShortcutExpander(mapper, discoveryClient))
+
+	s.initialized = true
+
+	return nil
 }
 
 func (s *StagesExternalDepsGenerator) Generate(stages stages.SortedStageList) error {
+	if err := s.init(); err != nil {
+		return fmt.Errorf("error initializing external dependencies generator: %w", err)
+	}
+
 	for _, stage := range stages {
 		if err := stage.DesiredResources.Visit(func(resInfo *resource.Info, err error) error {
 			if err != nil {

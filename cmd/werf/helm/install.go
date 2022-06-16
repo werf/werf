@@ -19,9 +19,8 @@ var installCmdData common.CmdData
 
 func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
 	cmd, helmAction := helm_v3.NewInstallCmd(actionConfig, os.Stdout, helm_v3.InstallCmdOptions{
-		StagesSplitter: helm.NewStagesSplitter(),
-		// TODO: actionConfig.RESTClientGetter not initialized at this point, but we need it.
-		StagesExternalDepsGenerator: nil,
+		StagesSplitter:              helm.NewStagesSplitter(),
+		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter),
 		ChainPostRenderer:           wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &installCmdData)
