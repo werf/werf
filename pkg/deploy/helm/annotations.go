@@ -21,4 +21,7 @@ const (
 	ReplicasOnCreationAnnoName = "werf.io/replicas-on-creation"
 
 	StageWeightAnnoName = "werf.io/weight"
+
+	ExternalDependencyResourceAnnoName  = "external-dependency.werf.io/resource"
+	ExternalDependencyNamespaceAnnoName = "external-dependency.werf.io/namespace"
 )

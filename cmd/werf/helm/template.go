@@ -17,8 +17,10 @@ var templateCmdData common.CmdData
 
 func NewTemplateCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
 	cmd, _ := helm_v3.NewTemplateCmd(actionConfig, os.Stdout, helm_v3.TemplateCmdOptions{
-		StagesSplitter:    helm.StagesSplitter{},
-		ChainPostRenderer: wc.ChainPostRenderer,
+		StagesSplitter: helm.NewStagesSplitter(),
+		// TODO: actionConfig.RESTClientGetter not initialized at this point, but we need it.
+		StagesExternalDepsGenerator: nil,
+		ChainPostRenderer:           wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &templateCmdData)
 

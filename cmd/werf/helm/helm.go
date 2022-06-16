@@ -70,7 +70,7 @@ func NewCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		helm_v3.NewUninstallCmd(actionConfig, os.Stdout, helm_v3.UninstallCmdOptions{
-			StagesSplitter: helm.StagesSplitter{},
+			StagesSplitter: helm.NewStagesSplitter(),
 		}),
 		helm_v3.NewDependencyCmd(actionConfig, os.Stdout),
 		helm_v3.NewGetCmd(actionConfig, os.Stdout),
@@ -80,7 +80,9 @@ func NewCmd() *cobra.Command {
 		NewTemplateCmd(actionConfig, wc),
 		helm_v3.NewRepoCmd(os.Stdout),
 		helm_v3.NewRollbackCmd(actionConfig, os.Stdout, helm_v3.RollbackCmdOptions{
-			StagesSplitter: helm.StagesSplitter{},
+			StagesSplitter: helm.NewStagesSplitter(),
+			// TODO: actionConfig.RESTClientGetter not initialized at this point, but we need it.
+			StagesExternalDepsGenerator: nil,
 		}),
 		NewInstallCmd(actionConfig, wc),
 		NewUpgradeCmd(actionConfig, wc),

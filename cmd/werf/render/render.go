@@ -411,7 +411,7 @@ func runRender(ctx context.Context) error {
 	}
 
 	templateOpts := helm_v3.TemplateCmdOptions{
-		StagesSplitter:    helm.StagesSplitter{},
+		StagesSplitter:    helm.NewStagesSplitter(),
 		ChainPostRenderer: wc.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),
