@@ -8,6 +8,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/host_cleaning"
@@ -76,6 +77,8 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 	common.SetupPlatform(&commonCmdData, cmd)
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", common.GetBoolEnvironmentDefaultFalse("WERF_FORCE"), "Force deletion of images which are being used by some containers (default $WERF_FORCE)")
 
@@ -83,7 +86,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 }
 
 func runCleanup(ctx context.Context) error {
-	_, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -117,9 +120,15 @@ func runCleanup(ctx context.Context) error {
 
 	logboek.LogOptionalLn()
 
+	cleanupDockerServer := false
+	if _, match := containerBackend.(*container_backend.DockerServerBackend); match {
+		cleanupDockerServer = true
+	}
+
 	hostCleanupOptions := host_cleaning.HostCleanupOptions{
-		DryRun: *commonCmdData.DryRun,
-		Force:  cmdData.Force,
+		DryRun:              *commonCmdData.DryRun,
+		Force:               cmdData.Force,
+		CleanupDockerServer: cleanupDockerServer,
 		AllowedDockerStorageVolumeUsagePercentage:       commonCmdData.AllowedDockerStorageVolumeUsage,
 		AllowedDockerStorageVolumeUsageMarginPercentage: commonCmdData.AllowedDockerStorageVolumeUsageMargin,
 		AllowedLocalCacheVolumeUsagePercentage:          commonCmdData.AllowedLocalCacheVolumeUsage,
