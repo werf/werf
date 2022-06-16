@@ -444,15 +444,21 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
+	stagesExternalDepsGenerator, err := helm.NewStagesExternalDepsGenerator(actionConfig.RESTClientGetter)
+	if err != nil {
+		return fmt.Errorf("error creating external deps generator: %w", err)
+	}
+
 	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.OutStream(), helm_v3.UpgradeCmdOptions{
-		StagesSplitter:    helm.StagesSplitter{},
-		ChainPostRenderer: wc.ChainPostRenderer,
-		ValueOpts:         valueOpts,
-		CreateNamespace:   common.NewBool(true),
-		Install:           common.NewBool(true),
-		Wait:              common.NewBool(true),
-		Atomic:            common.NewBool(cmdData.AutoRollback),
-		Timeout:           common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
+		StagesSplitter:              helm.NewStagesSplitter(),
+		StagesExternalDepsGenerator: stagesExternalDepsGenerator,
+		ChainPostRenderer:           wc.ChainPostRenderer,
+		ValueOpts:                   valueOpts,
+		CreateNamespace:             common.NewBool(true),
+		Install:                     common.NewBool(true),
+		Wait:                        common.NewBool(true),
+		Atomic:                      common.NewBool(cmdData.AutoRollback),
+		Timeout:                     common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
 	})
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
@@ -525,7 +531,7 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 		}
 
 		helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, ioutil.Discard, helm_v3.TemplateCmdOptions{
-			StagesSplitter:    helm.StagesSplitter{},
+			StagesSplitter:    helm.NewStagesSplitter(),
 			ChainPostRenderer: chainPostRenderer,
 			ValueOpts:         valueOpts,
 			Validate:          common.NewBool(true),

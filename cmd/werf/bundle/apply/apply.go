@@ -214,9 +214,15 @@ func runApply() error {
 		ChartExtender: bundle,
 	}
 
+	stagesExternalDepsGenerator, err := helm.NewStagesExternalDepsGenerator(actionConfig.RESTClientGetter)
+	if err != nil {
+		return fmt.Errorf("error creating external deps generator: %w", err)
+	}
+
 	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.Context(ctx).OutStream(), helm_v3.UpgradeCmdOptions{
-		StagesSplitter:    helm.StagesSplitter{},
-		ChainPostRenderer: bundle.ChainPostRenderer,
+		StagesSplitter:              helm.NewStagesSplitter(),
+		StagesExternalDepsGenerator: stagesExternalDepsGenerator,
+		ChainPostRenderer:           bundle.ChainPostRenderer,
 		ValueOpts: &values.Options{
 			ValueFiles:   common.GetValues(&commonCmdData),
 			StringValues: common.GetSetString(&commonCmdData),

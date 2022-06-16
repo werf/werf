@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/kubectl/pkg/scheme"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/kubedog/pkg/tracker"
@@ -61,7 +61,7 @@ func extractSpecReplicas(specReplicas *int32) int {
 	return 1
 }
 
-func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resources helm_kube.ResourceList, timeout time.Duration) error {
+func (waiter *ResourcesWaiter) Wait(ctx context.Context, resources helm_kube.ResourceList, timeout time.Duration) error {
 	if os.Getenv("WERF_DISABLE_RESOURCES_WAITER") == "1" {
 		return nil
 	}
@@ -189,7 +189,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, namespace string, resou
 
 	// NOTE: use context from resources-waiter object here, will be changed in helm 3
 	logboek.Context(ctx).LogOptionalLn()
-	return logboek.Context(ctx).LogProcess("Waiting for release resources to become ready").
+	return logboek.Context(ctx).LogProcess("Waiting for resources to become ready").
 		DoError(func() error {
 			return multitrack.Multitrack(kube.Client, specs, multitrack.MultitrackOptions{
 				StatusProgressPeriod: waiter.StatusProgressPeriod,
@@ -361,7 +361,7 @@ mainLoop:
 	return multitrackSpec, nil
 }
 
-func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, namespace string, resources helm_kube.ResourceList, timeout time.Duration) error {
+func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, resources helm_kube.ResourceList, timeout time.Duration) error {
 	if waiter.KubeInitializer != nil {
 		if err := waiter.KubeInitializer.Init(ctx); err != nil {
 			return fmt.Errorf("kube initializer failed: %w", err)

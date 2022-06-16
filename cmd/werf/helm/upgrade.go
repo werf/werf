@@ -19,8 +19,10 @@ var upgradeCmdData common.CmdData
 
 func NewUpgradeCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
 	cmd, _ := helm_v3.NewUpgradeCmd(actionConfig, os.Stdout, helm_v3.UpgradeCmdOptions{
-		StagesSplitter:    helm.StagesSplitter{},
-		ChainPostRenderer: wc.ChainPostRenderer,
+		StagesSplitter: helm.NewStagesSplitter(),
+		// TODO: actionConfig.RESTClientGetter not initialized at this point, but we need it.
+		StagesExternalDepsGenerator: nil,
+		ChainPostRenderer:           wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &upgradeCmdData)
 
