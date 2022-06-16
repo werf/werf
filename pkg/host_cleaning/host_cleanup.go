@@ -26,8 +26,9 @@ type HostCleanupOptions struct {
 	AllowedLocalCacheVolumeUsageMarginPercentage    *uint
 	DockerServerStoragePath                         *string
 
-	DryRun bool
-	Force  bool
+	CleanupDockerServer bool
+	DryRun              bool
+	Force               bool
 }
 
 type AutoHostCleanupOptions struct {
@@ -137,17 +138,21 @@ func RunHostCleanup(ctx context.Context, options HostCleanupOptions) error {
 		return err
 	}
 
-	dockerServerStoragePath, err := getDockerServerStoragePath(ctx, options.DockerServerStoragePath)
-	if err != nil {
-		return fmt.Errorf("error getting local docker server storage path: %w", err)
+	if options.CleanupDockerServer {
+		dockerServerStoragePath, err := getDockerServerStoragePath(ctx, options.DockerServerStoragePath)
+		if err != nil {
+			return fmt.Errorf("error getting local docker server storage path: %w", err)
+		}
+
+		return logboek.Context(ctx).Default().LogProcess("Running GC for local docker server").DoError(func() error {
+			if err := RunGCForLocalDockerServer(ctx, allowedDockerStorageVolumeUsagePercentage, allowedDockerStorageVolumeUsageMarginPercentage, dockerServerStoragePath, options.Force, options.DryRun); err != nil {
+				return fmt.Errorf("local docker server GC failed: %w", err)
+			}
+			return nil
+		})
 	}
 
-	return logboek.Context(ctx).Default().LogProcess("Running GC for local docker server").DoError(func() error {
-		if err := RunGCForLocalDockerServer(ctx, allowedDockerStorageVolumeUsagePercentage, allowedDockerStorageVolumeUsageMarginPercentage, dockerServerStoragePath, options.Force, options.DryRun); err != nil {
-			return fmt.Errorf("local docker server GC failed: %w", err)
-		}
-		return nil
-	})
+	return nil
 }
 
 func ShouldRunAutoHostCleanup(ctx context.Context, options HostCleanupOptions) (bool, error) {

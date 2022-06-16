@@ -7,12 +7,18 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/host_cleaning"
 )
 
-func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData) error {
+func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend container_backend.ContainerBackend) error {
 	if *cmdData.DisableAutoHostCleanup {
 		return nil
+	}
+
+	cleanupDockerServer := false
+	if _, match := containerBackend.(*container_backend.DockerServerBackend); match {
+		cleanupDockerServer = true
 	}
 
 	if *cmdData.AllowedDockerStorageVolumeUsageMargin >= *cmdData.AllowedDockerStorageVolumeUsage {
@@ -25,8 +31,9 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData) error {
 
 	return host_cleaning.RunAutoHostCleanup(ctx, host_cleaning.AutoHostCleanupOptions{
 		HostCleanupOptions: host_cleaning.HostCleanupOptions{
-			DryRun: false,
-			Force:  false,
+			DryRun:              false,
+			Force:               false,
+			CleanupDockerServer: cleanupDockerServer,
 			AllowedDockerStorageVolumeUsagePercentage:       cmdData.AllowedDockerStorageVolumeUsage,
 			AllowedDockerStorageVolumeUsageMarginPercentage: cmdData.AllowedDockerStorageVolumeUsageMargin,
 			AllowedLocalCacheVolumeUsagePercentage:          cmdData.AllowedLocalCacheVolumeUsage,
