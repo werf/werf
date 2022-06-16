@@ -80,9 +80,8 @@ func NewCmd() *cobra.Command {
 		NewTemplateCmd(actionConfig, wc),
 		helm_v3.NewRepoCmd(os.Stdout),
 		helm_v3.NewRollbackCmd(actionConfig, os.Stdout, helm_v3.RollbackCmdOptions{
-			StagesSplitter: helm.NewStagesSplitter(),
-			// TODO: actionConfig.RESTClientGetter not initialized at this point, but we need it.
-			StagesExternalDepsGenerator: nil,
+			StagesSplitter:              helm.NewStagesSplitter(),
+			StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter),
 		}),
 		NewInstallCmd(actionConfig, wc),
 		NewUpgradeCmd(actionConfig, wc),
