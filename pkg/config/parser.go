@@ -141,7 +141,7 @@ func GetDefaultProjectName(ctx context.Context, giterminismManager giterminism_m
 	return slug.Project(name), nil
 }
 
-func writeWerfConfigRender(werfConfigRenderContent string, werfConfigRenderPath string) error {
+func writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath string) error {
 	werfConfigRenderFile, err := os.OpenFile(werfConfigRenderPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func writeWerfConfigRender(werfConfigRenderContent string, werfConfigRenderPath 
 	return nil
 }
 
-func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([]*doc, error) {
+func splitByDocs(werfConfigRenderContent, werfConfigRenderPath string) ([]*doc, error) {
 	var docs []*doc
 	var line int
 	for _, docContent := range splitContent([]byte(werfConfigRenderContent)) {
@@ -253,7 +253,7 @@ func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, g
 	})
 }
 
-func addTemplate(tmpl *template.Template, templateName string, templateContent string) error {
+func addTemplate(tmpl *template.Template, templateName, templateContent string) error {
 	extraTemplate := tmpl.New(templateName)
 	_, err := extraTemplate.Parse(templateContent)
 	return err

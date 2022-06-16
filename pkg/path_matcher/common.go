@@ -9,7 +9,7 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func matchGlobs(pathPart string, globs []string) (inProgressGlobs []string, matchedGlobs []string) {
+func matchGlobs(pathPart string, globs []string) (inProgressGlobs, matchedGlobs []string) {
 	for _, glob := range globs {
 		inProgressGlob, matchedGlob := matchGlob(pathPart, glob)
 		if inProgressGlob != "" {
@@ -22,7 +22,7 @@ func matchGlobs(pathPart string, globs []string) (inProgressGlobs []string, matc
 	return
 }
 
-func matchGlob(pathPart string, glob string) (inProgressGlob, matchedGlob string) {
+func matchGlob(pathPart, glob string) (inProgressGlob, matchedGlob string) {
 	globParts := util.SplitFilepath(glob)
 	isMatched, err := doublestar.PathMatch(globParts[0], pathPart)
 	if err != nil {

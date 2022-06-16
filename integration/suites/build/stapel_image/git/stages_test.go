@@ -547,7 +547,7 @@ func checkResultedFilesChecksum() {
 	)
 }
 
-func createAndCommitFile(dirPath string, filename string, contentSize int) {
+func createAndCommitFile(dirPath, filename string, contentSize int) {
 	newFilePath := filepath.Join(dirPath, filename)
 	newFileData := []byte(utils.GetRandomString(contentSize))
 	utils.WriteFile(newFilePath, newFileData)
@@ -555,7 +555,7 @@ func createAndCommitFile(dirPath string, filename string, contentSize int) {
 	addAndCommitFile(dirPath, filename, "Add file "+filename)
 }
 
-func addFile(dirPath string, filename string) {
+func addFile(dirPath, filename string) {
 	utils.RunSucceedCommand(
 		dirPath,
 		"git",
@@ -563,7 +563,7 @@ func addFile(dirPath string, filename string) {
 	)
 }
 
-func addAndCommitFile(dirPath string, filename string, commitMsg string) {
+func addAndCommitFile(dirPath, filename, commitMsg string) {
 	addFile(dirPath, filename)
 
 	utils.RunSucceedCommand(

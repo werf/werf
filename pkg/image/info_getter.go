@@ -19,7 +19,7 @@ type InfoGetterOptions struct {
 	CustomTagFunc CustomTagFunc
 }
 
-func NewInfoGetter(imageName string, ref string, opts InfoGetterOptions) *InfoGetter {
+func NewInfoGetter(imageName, ref string, opts InfoGetterOptions) *InfoGetter {
 	repo, tag := ParseRepositoryAndTag(ref)
 
 	return &InfoGetter{

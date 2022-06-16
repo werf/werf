@@ -80,7 +80,7 @@ func oneOrNone(conditions []bool) bool {
 	return true
 }
 
-func InterfaceToStringArray(stringOrStringArray interface{}, configSection interface{}, doc *doc) ([]string, error) {
+func InterfaceToStringArray(stringOrStringArray, configSection interface{}, doc *doc) ([]string, error) {
 	if stringOrStringArray == nil {
 		return []string{}, nil
 	} else if val, ok := stringOrStringArray.(string); ok {

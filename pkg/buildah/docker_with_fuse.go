@@ -128,7 +128,7 @@ func (b *DockerWithFuseBuildah) RunCommand(ctx context.Context, container string
 	return err
 }
 
-func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error) {
+func (b *DockerWithFuseBuildah) FromCommand(ctx context.Context, container, image string, opts FromCommandOpts) (string, error) {
 	container, _, err := b.runBuildah(ctx, []string{}, []string{
 		"from", fmt.Sprintf("--tls-verify=%s", strconv.FormatBool(!b.Insecure)), "--name", container, "--shm-size", DefaultShmSize,
 		"--signature-policy", b.SignaturePolicyPath, "--quiet", "--isolation", b.Isolation.String(), "--format", "docker", image,
@@ -204,7 +204,7 @@ func (b *DockerWithFuseBuildah) Config(ctx context.Context, container string, op
 	return err
 }
 
-func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs []string, buildahArgs []string, logWriter io.Writer) (string, string, error) {
+func (b *DockerWithFuseBuildah) runBuildah(ctx context.Context, dockerArgs, buildahArgs []string, logWriter io.Writer) (string, string, error) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 

@@ -25,7 +25,7 @@ func GetTmpArchivePath() string {
 	return filepath.Join(GetTmpDir(), uuid.NewV4().String())
 }
 
-func GetContextAddFilesPaths(projectDir string, contextDir string, contextAddFiles []string) ([]string, error) {
+func GetContextAddFilesPaths(projectDir, contextDir string, contextAddFiles []string) ([]string, error) {
 	var addFilePaths []string
 	for _, addFile := range contextAddFiles {
 		addFilePath := filepath.Join(projectDir, contextDir, addFile)
@@ -56,7 +56,7 @@ func GetContextAddFilesPaths(projectDir string, contextDir string, contextAddFil
 	return util.UniqStrings(addFilePaths), nil
 }
 
-func ContextAddFilesChecksum(ctx context.Context, projectDir string, contextDir string, contextAddFiles []string, matcher path_matcher.PathMatcher) (string, error) {
+func ContextAddFilesChecksum(ctx context.Context, projectDir, contextDir string, contextAddFiles []string, matcher path_matcher.PathMatcher) (string, error) {
 	addFilePaths, err := GetContextAddFilesPaths(projectDir, contextDir, contextAddFiles)
 	if err != nil {
 		return "", err
@@ -112,7 +112,7 @@ func ContextAddFilesChecksum(ctx context.Context, projectDir string, contextDir 
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func AddContextAddFilesToContextArchive(ctx context.Context, originalArchivePath string, projectDir string, contextDir string, contextAddFiles []string) (string, error) {
+func AddContextAddFilesToContextArchive(ctx context.Context, originalArchivePath, projectDir, contextDir string, contextAddFiles []string) (string, error) {
 	destinationArchivePath := GetTmpArchivePath()
 
 	pathsToExcludeFromSourceArchive := contextAddFiles

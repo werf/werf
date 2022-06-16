@@ -673,7 +673,7 @@ func makeRepoImportMetadataName(repoAddress, importSourceID string) string {
 	return fmt.Sprintf(RepoImportMetadata_ImageNameFormat, repoAddress, importSourceID)
 }
 
-func groupImageMetadataTagsByImageName(ctx context.Context, imageNameOrManagedImageList []string, tags []string, imageTagPrefix string) (map[string]map[string][]string, map[string]map[string][]string, error) {
+func groupImageMetadataTagsByImageName(ctx context.Context, imageNameOrManagedImageList, tags []string, imageTagPrefix string) (map[string]map[string][]string, map[string]map[string][]string, error) {
 	imageMetadataIDImageNameOrManagedImageName := map[string]string{}
 	for _, imageNameOrManagedImageName := range imageNameOrManagedImageList {
 		imageMetadataIDImageNameOrManagedImageName[getImageMetadataID(imageNameOrManagedImageName)] = imageNameOrManagedImageName

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/werf/werf/pkg/slug"
 	"helm.sh/helm/v3/pkg/phases/stages/externaldeps"
+
+	"github.com/werf/werf/pkg/slug"
 )
 
 func NewExternalDepsAnnotationsParser() *ExternalDepsAnnotationsParser {
@@ -122,8 +123,7 @@ func (s *ExternalDepsAnnotationsParser) validateResourceAnnotation(key, value st
 		}
 	}
 
-	switch valueElems[1] {
-	case "":
+	if valueElems[1] == "" {
 		return fmt.Errorf("in annotation %q resource name can't be empty", key)
 	}
 

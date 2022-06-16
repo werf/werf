@@ -45,7 +45,7 @@ var _ = Describe("InfoGetter", func() {
 				ImageName: "backend",
 				Ref:       "myregistry.domain.com/group/project:abcd",
 				Opts: InfoGetterOptions{
-					CustomTagFunc: func(werfImageName string, tag string) string {
+					CustomTagFunc: func(werfImageName, tag string) string {
 						return fmt.Sprintf("%s-%s", werfImageName, tag)
 					},
 				},

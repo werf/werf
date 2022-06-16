@@ -270,7 +270,7 @@ func getExportTagFunc(tmpl *template.Template, templateName string, imageNameLis
 
 	tagOrFormat := buf.String()
 	var tagFunc image.ExportTagFunc
-	tagFunc = func(imageName string, contentBasedTag string) string {
+	tagFunc = func(imageName, contentBasedTag string) string {
 		if strings.ContainsRune(tagOrFormat, '%') {
 			return fmt.Sprintf(tagOrFormat, imageName, slug.Slug(imageName), slug.DockerTag(imageName), contentBasedTag)
 		} else {

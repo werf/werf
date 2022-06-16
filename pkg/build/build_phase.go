@@ -22,7 +22,6 @@ import (
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/storage"
@@ -44,7 +43,7 @@ type BuildOptions struct {
 	ReportFormat ReportFormat
 
 	SkipImageMetadataPublication bool
-	CustomTagFuncList            []image.CustomTagFunc
+	CustomTagFuncList            []imagePkg.CustomTagFunc
 }
 
 type IntrospectOptions struct {
@@ -249,7 +248,7 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 	}
 
 	var customTagStorage storage.StagesStorage
-	var customTagStage *image.StageDescription
+	var customTagStage *imagePkg.StageDescription
 	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
 		customTagStorage = phase.Conveyor.StorageManager.GetFinalStagesStorage()
 		customTagStage = manager.ConvertStageDescriptionForStagesStorage(img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription(), phase.Conveyor.StorageManager.GetFinalStagesStorage())
@@ -326,11 +325,11 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 		})
 }
 
-func (phase *BuildPhase) addCustomImageTagsToStagesStorage(ctx context.Context, imageName string, stageDesc *image.StageDescription, stagesStorage storage.StagesStorage) error {
+func (phase *BuildPhase) addCustomImageTagsToStagesStorage(ctx context.Context, imageName string, stageDesc *imagePkg.StageDescription, stagesStorage storage.StagesStorage) error {
 	return addCustomImageTags(ctx, stagesStorage, imageName, stageDesc, phase.CustomTagFuncList)
 }
 
-func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage, imageName string, stageDesc *image.StageDescription, customTagFuncList []image.CustomTagFunc) error {
+func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage, imageName string, stageDesc *imagePkg.StageDescription, customTagFuncList []imagePkg.CustomTagFunc) error {
 	if len(customTagFuncList) == 0 {
 		return nil
 	}
@@ -351,7 +350,7 @@ func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage
 		})
 }
 
-func addCustomImageTag(ctx context.Context, stagesStorage storage.StagesStorage, stageDesc *image.StageDescription, tag string) error {
+func addCustomImageTag(ctx context.Context, stagesStorage storage.StagesStorage, stageDesc *imagePkg.StageDescription, tag string) error {
 	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 		DoError(func() error {
 			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {
@@ -364,7 +363,7 @@ func addCustomImageTag(ctx context.Context, stagesStorage storage.StagesStorage,
 		})
 }
 
-func (phase *BuildPhase) checkCustomImageTagsExistence(ctx context.Context, imageName string, stageDesc *image.StageDescription, stagesStorage storage.StagesStorage) error {
+func (phase *BuildPhase) checkCustomImageTagsExistence(ctx context.Context, imageName string, stageDesc *imagePkg.StageDescription, stagesStorage storage.StagesStorage) error {
 	if len(phase.CustomTagFuncList) == 0 {
 		return nil
 	}

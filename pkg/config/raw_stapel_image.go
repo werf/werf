@@ -157,7 +157,7 @@ func (c *rawStapelImage) validateStapelImageDirective(image *StapelImage) (err e
 	return nil
 }
 
-func (c *rawStapelImage) toShellDirectiveByCommandAndStage(command string, stage string) (shell *Shell) {
+func (c *rawStapelImage) toShellDirectiveByCommandAndStage(command, stage string) (shell *Shell) {
 	shell = &Shell{}
 	switch stage {
 	case "beforeInstall":

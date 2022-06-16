@@ -209,7 +209,7 @@ func slug(data string, maxSize int) string {
 	return consistentUniqSlug
 }
 
-func cropSluggedData(data string, hash string, maxSize int) string {
+func cropSluggedData(data, hash string, maxSize int) string {
 	var index int
 	maxLength := maxSize - len(hash) - len(slugSeparator)
 	if len(data) > maxLength {

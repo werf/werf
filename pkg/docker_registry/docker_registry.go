@@ -91,7 +91,7 @@ func (o *DockerRegistryOptions) defaultOptions() defaultImplementationOptions {
 	}}
 }
 
-func NewDockerRegistry(repositoryAddress string, implementation string, options DockerRegistryOptions) (Interface, error) {
+func NewDockerRegistry(repositoryAddress, implementation string, options DockerRegistryOptions) (Interface, error) {
 	dockerRegistry, err := newDockerRegistry(repositoryAddress, implementation, options)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func NewDockerRegistry(repositoryAddress string, implementation string, options 
 	return dockerRegistryWithCache, nil
 }
 
-func newDockerRegistry(repositoryAddress string, implementation string, options DockerRegistryOptions) (Interface, error) {
+func newDockerRegistry(repositoryAddress, implementation string, options DockerRegistryOptions) (Interface, error) {
 	if err := ValidateRepositoryReference(repositoryAddress); err != nil {
 		return nil, err
 	}

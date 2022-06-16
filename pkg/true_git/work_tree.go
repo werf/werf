@@ -23,7 +23,7 @@ type WithWorkTreeOptions struct {
 	HasSubmodules bool
 }
 
-func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir string, commit string, opts WithWorkTreeOptions, f func(workTreeDir string) error) error {
+func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, opts WithWorkTreeOptions, f func(workTreeDir string) error) error {
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		var err error
 
@@ -51,7 +51,7 @@ func withWorkTreeCacheLock(ctx context.Context, workTreeCacheDir string, f func(
 	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
 }
 
-func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir string, commit string, withSubmodules bool) (string, error) {
+func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules bool) (string, error) {
 	if err := os.MkdirAll(workTreeCacheDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("unable to create dir %s: %w", workTreeCacheDir, err)
 	}
@@ -208,7 +208,7 @@ InvalidDotGit:
 	return "", ErrInvalidDotGit
 }
 
-func switchWorkTree(ctx context.Context, repoDir, workTreeDir string, commit string, withSubmodules bool) error {
+func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, withSubmodules bool) error {
 	_, err := os.Stat(workTreeDir)
 	switch {
 	case os.IsNotExist(err):

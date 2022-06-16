@@ -45,7 +45,7 @@ type imageMetadata struct {
 	isNonexistentStage bool
 }
 
-func (m *Manager) getOrCreateImageMetadata(imageName string, stageID string) *imageMetadata {
+func (m *Manager) getOrCreateImageMetadata(imageName, stageID string) *imageMetadata {
 	for _, im := range m.imageMetadataList {
 		if im.imageName == imageName && im.stageID == stageID {
 			return im
@@ -58,7 +58,7 @@ func (m *Manager) getOrCreateImageMetadata(imageName string, stageID string) *im
 	return im
 }
 
-func (m *Manager) newImageMetadata(imageName string, stageID string) *imageMetadata {
+func (m *Manager) newImageMetadata(imageName, stageID string) *imageMetadata {
 	return &imageMetadata{imageName: imageName, stageID: stageID, isNonexistentStage: !m.IsStageExist(stageID)}
 }
 

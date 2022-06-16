@@ -7,7 +7,7 @@ import (
 	"github.com/werf/werf/test/pkg/utils/liveexec"
 )
 
-func SetGitRepoState(workTreeDir, repoDir string, commitMessage string) error {
+func SetGitRepoState(workTreeDir, repoDir, commitMessage string) error {
 	if err := liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, []string{"init", workTreeDir, "--separate-git-dir", repoDir}...); err != nil {
 		return fmt.Errorf("unable to init git repo %s with work tree %s: %w", repoDir, workTreeDir, err)
 	}

@@ -88,7 +88,7 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 	return newCommit, nil
 }
 
-func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir string, sourceCommit string, branchName string) error {
+func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, sourceCommit, branchName string) error {
 	branchListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "branch", "--list", branchName)
 	if err := branchListCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git branch list command failed: %w", err)
@@ -128,7 +128,7 @@ func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir str
 	return nil
 }
 
-func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, sourceCommit string, serviceBranchHeadCommit string, globExcludeList []string) (bool, error) {
+func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, serviceBranchHeadCommit string, globExcludeList []string) (bool, error) {
 	if len(globExcludeList) == 0 || serviceBranchHeadCommit == sourceCommit {
 		return false, nil
 	}
@@ -161,7 +161,7 @@ func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWork
 	return true, nil
 }
 
-func checkNewChangesInSourceWorktreeDir(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, globExcludeList []string) (bool, error) {
+func checkNewChangesInSourceWorktreeDir(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string, globExcludeList []string) (bool, error) {
 	output, err := runGitAddCmd(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList, true)
 	if err != nil {
 		return false, err
@@ -170,12 +170,12 @@ func checkNewChangesInSourceWorktreeDir(ctx context.Context, sourceWorktreeDir s
 	return len(output.Bytes()) != 0, nil
 }
 
-func addNewChangesInServiceWorktreeDir(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, globExcludeList []string) error {
+func addNewChangesInServiceWorktreeDir(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string, globExcludeList []string) error {
 	_, err := runGitAddCmd(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList, false)
 	return err
 }
 
-func runGitAddCmd(ctx context.Context, sourceWorktreeDir string, serviceWorktreeDir string, globExcludeList []string, dryRun bool) (*bytes.Buffer, error) {
+func runGitAddCmd(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string, globExcludeList []string, dryRun bool) (*bytes.Buffer, error) {
 	gitAddArgs := []string{
 		"--work-tree",
 		sourceWorktreeDir,
@@ -214,7 +214,7 @@ func runGitAddCmd(ctx context.Context, sourceWorktreeDir string, serviceWorktree
 	return addCmd.OutBuf, nil
 }
 
-func commitNewChangesInServiceBranch(ctx context.Context, serviceWorktreeDir string, branchName string) (string, error) {
+func commitNewChangesInServiceBranch(ctx context.Context, serviceWorktreeDir, branchName string) (string, error) {
 	commitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "commit", "--no-verify", "-m", time.Now().String())
 	if err := commitCmd.Run(ctx); err != nil {
 		return "", fmt.Errorf("git commit command failed: %w", err)

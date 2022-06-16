@@ -34,7 +34,7 @@ func CheckContainerDirectory(werfBinPath, projectPath, containerDirPath string, 
 	RunSucceedContainerCommandWithStapel(werfBinPath, projectPath, []string{}, []string{cmd})
 }
 
-func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string, extraDockerOptions []string, cmds []string) {
+func RunSucceedContainerCommandWithStapel(werfBinPath, projectPath string, extraDockerOptions, cmds []string) {
 	container, err := stapel.GetOrCreateContainer(context.Background())
 	Ω(err).ShouldNot(HaveOccurred())
 
@@ -66,7 +66,7 @@ func RunSucceedContainerCommandWithStapel(werfBinPath string, projectPath string
 	Ω(err).ShouldNot(HaveOccurred(), errorDesc)
 }
 
-func CheckContainerFileCommand(containerDirPath string, directory bool, exist bool) string {
+func CheckContainerFileCommand(containerDirPath string, directory, exist bool) string {
 	var cmd string
 	var flag string
 

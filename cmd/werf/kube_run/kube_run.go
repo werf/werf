@@ -510,7 +510,7 @@ func createPod(ctx context.Context, namespace, pod, image, secret string, extraA
 	return nil
 }
 
-func createKubectlRunArgs(pod string, image string, secret string, extraArgs []string) ([]string, error) {
+func createKubectlRunArgs(pod, image, secret string, extraArgs []string) ([]string, error) {
 	args := []string{
 		"run",
 		pod,
@@ -639,7 +639,7 @@ func waitPodReadiness(ctx context.Context, namespace, pod string, extraArgs []st
 	}
 }
 
-func getPodPhase(namespace string, pod string, extraArgs []string) (corev1.PodPhase, error) {
+func getPodPhase(namespace, pod string, extraArgs []string) (corev1.PodPhase, error) {
 	args := []string{
 		"get", "pod", "--template", "{{.status.phase}}", pod,
 	}
@@ -658,7 +658,7 @@ func getPodPhase(namespace string, pod string, extraArgs []string) (corev1.PodPh
 	return corev1.PodPhase(strings.TrimSpace(stdout.String())), nil
 }
 
-func isPodReady(namespace string, pod string, extraArgs []string) (bool, error) {
+func isPodReady(namespace, pod string, extraArgs []string) (bool, error) {
 	args := []string{
 		"get", "pod", "--template", "{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}", pod,
 	}
@@ -907,7 +907,7 @@ func isNamespaceExist(ctx context.Context, namespace string) (bool, error) {
 	return false, nil
 }
 
-func isPodExist(ctx context.Context, pod string, namespace string) (bool, error) {
+func isPodExist(ctx context.Context, pod, namespace string) (bool, error) {
 	if matchedPods, err := kube.Client.CoreV1().Pods(namespace).List(ctx, v1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", pod).String(),
 	}); err != nil {
@@ -919,7 +919,7 @@ func isPodExist(ctx context.Context, pod string, namespace string) (bool, error)
 	return false, nil
 }
 
-func isSecretExist(ctx context.Context, secret string, namespace string) (bool, error) {
+func isSecretExist(ctx context.Context, secret, namespace string) (bool, error) {
 	if matchedSecrets, err := kube.Client.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("metadata.name", secret).String(),
 	}); err != nil {

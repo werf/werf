@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string, gitDir string) (bool, error) {
+func IsAncestor(ctx context.Context, ancestorCommit, descendantCommit, gitDir string) (bool, error) {
 	mergeBaseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: gitDir}, "merge-base", "--is-ancestor", ancestorCommit, descendantCommit)
 	if err := mergeBaseCmd.Run(ctx); err != nil {
 		var errExit *exec.ExitError

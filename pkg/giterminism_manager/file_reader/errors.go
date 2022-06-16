@@ -89,7 +89,7 @@ func (r FileReader) NewUncommittedFilesError(relPaths ...string) error {
 	return r.uncommittedErrorBase(errorMsg, strings.Join(formatFilePathList(relPaths), " "))
 }
 
-func (r FileReader) uncommittedErrorBase(errorMsg string, gitAddArg string) error {
+func (r FileReader) uncommittedErrorBase(errorMsg, gitAddArg string) error {
 	if r.sharedOptions.Dev() {
 		errorMsg = fmt.Sprintf(`%s
 

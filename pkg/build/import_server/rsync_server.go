@@ -28,7 +28,7 @@ type RsyncServer struct {
 	AuthUser, AuthPassword string
 }
 
-func RunRsyncServer(ctx context.Context, dockerImageName string, tmpDir string) (*RsyncServer, error) {
+func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir string) (*RsyncServer, error) {
 	logboek.Context(ctx).Debug().LogF("RunRsyncServer for docker image %q\n", dockerImageName)
 
 	srv := &RsyncServer{

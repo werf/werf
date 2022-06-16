@@ -27,7 +27,6 @@ import (
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/image"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -308,7 +307,7 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 }
 
 type ShouldBeBuiltOptions struct {
-	CustomTagFuncList []image.CustomTagFunc
+	CustomTagFuncList []imagePkg.CustomTagFunc
 }
 
 func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) error {
