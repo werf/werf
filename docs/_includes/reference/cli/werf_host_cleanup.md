@@ -69,6 +69,8 @@ werf host cleanup [options]
             Force deletion of images which are being used by some containers (default $WERF_FORCE)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --insecure-registry=false
+            Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -97,6 +99,9 @@ werf host cleanup [options]
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
   -N, --project-name=''
             Set a specific project name (default $WERF_PROJECT_NAME)
+      --skip-tls-verify-registry=false
+            Skip TLS certificate validation when accessing a registry (default                      
+            $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

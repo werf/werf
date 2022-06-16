@@ -14,7 +14,7 @@ Use &#34;kubectl api-resources&#34; for a complete list of supported resources.
 {{ header }} Syntax
 
 ```shell
-werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file|custom-columns-file|custom-columns|wide] (TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]
+werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide] (TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]
 ```
 
 {{ header }} Examples
@@ -85,7 +85,7 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
             print headers).
   -o, --output=''
             Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide See    
+            |jsonpath|jsonpath-as-json|jsonpath-file|custom-columns-file|custom-columns|wide See    
             custom columns [https://kubernetes.io/docs/reference/kubectl/overview/#custom-columns], 
             golang template [http://golang.org/pkg/text/template/#pkg-overview] and jsonpath        
             template [https://kubernetes.io/docs/reference/kubectl/jsonpath/].
