@@ -118,9 +118,24 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 		if err != nil {
 			return nil, fmt.Errorf("unable to get werf docker images: %w", err)
 		}
-		images = append(images, imgs...)
+
+		// Do not remove stages-storage=:local images, because this is primary stages storage data,
+		// and it can only be cleaned by the werf-cleanup command
+	ExcludeLocalV1_2StagesStorage:
+		for _, img := range imgs {
+			projectName := img.Labels[image.WerfLabel]
+
+			for _, ref := range img.RepoTags {
+				if strings.HasPrefix(ref, fmt.Sprintf("%s:", projectName)) {
+					continue ExcludeLocalV1_2StagesStorage
+				}
+			}
+
+			images = append(images, img)
+		}
 	}
 
+	// Process legacy v1.1 images
 	{
 		filterSet := filters.NewArgs()
 		filterSet.Add("label", image.WerfLabel)
@@ -131,10 +146,11 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 			return nil, fmt.Errorf("unable to get werf v1.1 legacy docker images: %w", err)
 		}
 
+		// Do not remove stages-storage=:local images, because this is primary stages storage data,
+		// and it can only be cleaned by the werf-cleanup command
 	ExcludeLocalV1_1StagesStorage:
 		for _, img := range imgs {
 			for _, ref := range img.RepoTags {
-				// Do not remove stages-storage=:local images, because this is primary stages storage data, and it can only be cleaned by the werf-cleanup command
 				if strings.HasPrefix(ref, "werf-stages-storage/") {
 					continue ExcludeLocalV1_1StagesStorage
 				}
@@ -361,9 +377,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 			logboek.Context(ctx).Warn().LogF("WARNING: Werf tries to maintain host clean by deleting:\n")
 			logboek.Context(ctx).Warn().LogF("WARNING:  - old unused files from werf caches (which are stored in the ~/.werf/local_cache);\n")
 			logboek.Context(ctx).Warn().LogF("WARNING:  - old temporary service files /tmp/werf-project-data-* and /tmp/werf-config-render-*;\n")
-			logboek.Context(ctx).Warn().LogF("WARNING:  - least recently used werf images.\n")
-			logboek.Context(ctx).Warn().LogF("WARNING:\n")
-			logboek.Context(ctx).Warn().LogF("WARNING: Werf-host-cleanup procedure of v1.2 werf version will not cleanup --stages-storage=:local stages of v1.1 werf version, because this is primary stages storage data, and it can only be cleaned by the regular per-project werf-cleanup command with git-history based algorithm.\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:  - least recently used werf images except local stages storage images (images built with 'werf build' without '--repo' param, or with '--stages-storage=:local' param for the werf v1.1).\n")
 			logboek.Context(ctx).Warn().LogOptionalLn()
 		}
 
