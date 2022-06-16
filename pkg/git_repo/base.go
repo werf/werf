@@ -257,7 +257,7 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 	return true, nil
 }
 
-func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, workTreeCacheDir string, fromCommit, toCommit string) (string, error) {
+func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, workTreeCacheDir, fromCommit, toCommit string) (string, error) {
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return "", err
 	} else {
@@ -397,7 +397,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 }
 
-func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir string, commit string) (bool, error) {
+func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir, commit string) (bool, error) {
 	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return false, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
@@ -570,7 +570,7 @@ initCommitRepoHandle:
 	return nil
 }
 
-func (repo *Base) GetCommitTreeEntry(ctx context.Context, commit string, path string) (*ls_tree.LsTreeEntry, error) {
+func (repo *Base) GetCommitTreeEntry(ctx context.Context, commit, path string) (*ls_tree.LsTreeEntry, error) {
 	lsTreeResult, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
 		PathScope: path,
 		AllFiles:  false,
@@ -584,7 +584,7 @@ func (repo *Base) GetCommitTreeEntry(ctx context.Context, commit string, path st
 	return entry, nil
 }
 
-func (repo *Base) IsCommitTreeEntryExist(ctx context.Context, commit string, relPath string) (exist bool, err error) {
+func (repo *Base) IsCommitTreeEntryExist(ctx context.Context, commit, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsCommitTreeEntryExist %q %q", commit, relPath).
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -603,7 +603,7 @@ func (repo *Base) IsCommitTreeEntryExist(ctx context.Context, commit string, rel
 	return
 }
 
-func (repo *Base) isTreeEntryExist(ctx context.Context, commit string, relPath string) (bool, error) {
+func (repo *Base) isTreeEntryExist(ctx context.Context, commit, relPath string) (bool, error) {
 	entry, err := repo.GetCommitTreeEntry(ctx, commit, relPath)
 	if err != nil {
 		return false, err
@@ -612,7 +612,7 @@ func (repo *Base) isTreeEntryExist(ctx context.Context, commit string, relPath s
 	return !entry.Mode.IsMalformed(), nil
 }
 
-func (repo *Base) IsCommitTreeEntryDirectory(ctx context.Context, commit string, relPath string) (isDirectory bool, err error) {
+func (repo *Base) IsCommitTreeEntryDirectory(ctx context.Context, commit, relPath string) (isDirectory bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsCommitTreeEntryDirectory %q %q", commit, relPath).
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -631,7 +631,7 @@ func (repo *Base) IsCommitTreeEntryDirectory(ctx context.Context, commit string,
 	return
 }
 
-func (repo *Base) isCommitTreeEntryDirectory(ctx context.Context, commit string, relPath string) (bool, error) {
+func (repo *Base) isCommitTreeEntryDirectory(ctx context.Context, commit, relPath string) (bool, error) {
 	entry, err := repo.GetCommitTreeEntry(ctx, commit, relPath)
 	if err != nil {
 		return false, err
@@ -640,7 +640,7 @@ func (repo *Base) isCommitTreeEntryDirectory(ctx context.Context, commit string,
 	return entry.Mode == filemode.Dir || entry.Mode == filemode.Submodule, nil
 }
 
-func (repo *Base) ReadCommitTreeEntryContent(ctx context.Context, commit string, relPath string) ([]byte, error) {
+func (repo *Base) ReadCommitTreeEntryContent(ctx context.Context, commit, relPath string) ([]byte, error) {
 	lsTreeResult, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
 		PathScope: relPath,
 		AllFiles:  false,
@@ -799,7 +799,7 @@ func (repo *Base) resolveAndCheckCommitFilePath(ctx context.Context, commit, pat
 	return repo.resolveCommitFilePath(ctx, commit, path, 0, checkSymlinkTargetFunc)
 }
 
-func (repo *Base) checkCommitFileMode(ctx context.Context, commit string, path string, expectedFileModeList []filemode.FileMode) (bool, error) {
+func (repo *Base) checkCommitFileMode(ctx context.Context, commit, path string, expectedFileModeList []filemode.FileMode) (bool, error) {
 	resolvedPath, err := repo.ResolveCommitFilePath(ctx, commit, path)
 	if err != nil {
 		if IsTreeEntryNotFoundInRepoErr(err) {
@@ -900,7 +900,7 @@ func (repo *Base) readCommitFile(ctx context.Context, commit, path string) ([]by
 	return repo.ReadCommitTreeEntryContent(ctx, commit, resolvedPath)
 }
 
-func (repo *Base) IsAnyCommitTreeEntriesMatched(ctx context.Context, commit string, pathScope string, pathMatcher path_matcher.PathMatcher, allFiles bool) (bool, error) {
+func (repo *Base) IsAnyCommitTreeEntriesMatched(ctx context.Context, commit, pathScope string, pathMatcher path_matcher.PathMatcher, allFiles bool) (bool, error) {
 	result, err := repo.lsTreeResult(ctx, commit, LsTreeOptions{
 		PathScope:   pathScope,
 		PathMatcher: pathMatcher,
@@ -913,7 +913,7 @@ func (repo *Base) IsAnyCommitTreeEntriesMatched(ctx context.Context, commit stri
 	return !result.IsEmpty(), nil
 }
 
-func (repo *Base) WalkCommitFiles(ctx context.Context, commit string, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error {
+func (repo *Base) WalkCommitFiles(ctx context.Context, commit, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error {
 	if !pathMatcher.IsDirOrSubmodulePathMatched(dir) {
 		return nil
 	}
@@ -983,7 +983,7 @@ func (repo *Base) WalkCommitFiles(ctx context.Context, commit string, dir string
 
 // ListCommitFilesWithGlob returns the list of files by the glob, follows symlinks.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
-func (repo *Base) ListCommitFilesWithGlob(ctx context.Context, commit string, dir string, glob string) (files []string, err error) {
+func (repo *Base) ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string) (files []string, err error) {
 	var prefixWithoutPatterns string
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
 	dirOrFileWithGlobPrefix := filepath.Join(dir, prefixWithoutPatterns)

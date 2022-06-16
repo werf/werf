@@ -184,7 +184,7 @@ func (api *gitHubApi) deleteContainerPackage(ctx context.Context, url, token str
 	return nil, nil
 }
 
-func (api *gitHubApi) doRequest(ctx context.Context, method string, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
+func (api *gitHubApi) doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
 	resp, respBody, err := doRequest(ctx, method, url, body, options)
 	if err != nil {
 		if resp != nil && resp.Header.Get("Retry-After") != "" {

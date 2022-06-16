@@ -6,10 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/build"

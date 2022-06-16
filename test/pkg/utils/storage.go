@@ -10,7 +10,7 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
-func NewStagesStorage(stagesStorageAddress string, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.StagesStorage {
+func NewStagesStorage(stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.StagesStorage {
 	if stagesStorageAddress == storage.LocalStorageAddress {
 		return storage.NewDockerServerStagesStorage(&container_backend.DockerServerBackend{})
 	} else {

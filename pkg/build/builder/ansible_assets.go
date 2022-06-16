@@ -214,6 +214,6 @@ func mkdirP(path string) error {
 	return os.MkdirAll(path, os.FileMode(0o775))
 }
 
-func writeFile(path string, content string) error {
+func writeFile(path, content string) error {
 	return ioutil.WriteFile(path, []byte(content), os.FileMode(0o664))
 }

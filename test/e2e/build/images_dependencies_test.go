@@ -23,7 +23,7 @@ func werfRun(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) 
 	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, utils.WerfBinArgs(append([]string{"run"}, extraArgs...)...)...)
 }
 
-func werfStageImage(dir string, imageName string) (string, string) {
+func werfStageImage(dir, imageName string) (string, string) {
 	res := utils.SucceedCommandOutputString(
 		dir,
 		SuiteData.WerfBinPath,
@@ -33,7 +33,7 @@ func werfStageImage(dir string, imageName string) (string, string) {
 	return image.ParseRepositoryAndTag(strings.TrimSpace(res))
 }
 
-func werfRunOutput(dir string, imageName string, shellCommand string) string {
+func werfRunOutput(dir, imageName, shellCommand string) string {
 	handlingOutput := false
 
 	var output []string

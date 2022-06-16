@@ -44,7 +44,7 @@ type ServiceValuesOptions struct {
 	DockerConfigPath         string
 }
 
-func GetServiceValues(ctx context.Context, projectName string, repo string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	globalInfo := map[string]interface{}{
 		"werf": map[string]interface{}{
 			"name":    projectName,

@@ -22,7 +22,7 @@ type BuildStapelStageOptionsInterface interface {
 	AddCommands(commands ...string) BuildStapelStageOptionsInterface
 
 	AddDataArchive(archive io.ReadCloser, archiveType ArchiveType, to string) BuildStapelStageOptionsInterface
-	RemoveData(removeType RemoveType, paths []string, keepParentDirs []string) BuildStapelStageOptionsInterface
+	RemoveData(removeType RemoveType, paths, keepParentDirs []string) BuildStapelStageOptionsInterface
 	AddDependencyImport(imageName, fromPath, toPath string, includePaths, excludePaths []string, owner, group string) BuildStapelStageOptionsInterface
 }
 
@@ -164,7 +164,7 @@ func (opts *BuildStapelStageOptions) AddDataArchive(archive io.ReadCloser, archi
 	return opts
 }
 
-func (opts *BuildStapelStageOptions) RemoveData(removeType RemoveType, paths []string, keepParentDirs []string) BuildStapelStageOptionsInterface {
+func (opts *BuildStapelStageOptions) RemoveData(removeType RemoveType, paths, keepParentDirs []string) BuildStapelStageOptionsInterface {
 	opts.RemoveDataSpecs = append(opts.RemoveDataSpecs, RemoveDataSpec{
 		Type:           removeType,
 		Paths:          paths,

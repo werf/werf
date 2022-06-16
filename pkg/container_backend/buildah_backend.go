@@ -131,7 +131,7 @@ fi
 `, strings.Join(scriptCommands, "\n")))
 }
 
-func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, buildVolumes []string, commands []string) error {
+func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, buildVolumes, commands []string) error {
 	hostScriptPath := filepath.Join(runtime.TmpDir, fmt.Sprintf("script-%s.sh", uuid.New().String()))
 	if err := os.WriteFile(hostScriptPath, makeScript(commands), os.FileMode(0o555)); err != nil {
 		return fmt.Errorf("unable to write script file %q: %w", hostScriptPath, err)
@@ -685,7 +685,7 @@ func getUIDAndGID(userNameOrUID, groupNameOrGID, fsRoot string) (*uint32, *uint3
 }
 
 // Returns nil pointer if username/UID is empty string.
-func getUID(userNameOrUID string, fsRoot string) (*uint32, error) {
+func getUID(userNameOrUID, fsRoot string) (*uint32, error) {
 	var uid *uint32
 	if userNameOrUID != "" {
 		if parsed, err := strconv.ParseUint(userNameOrUID, 10, 32); errors.Is(err, strconv.ErrSyntax) {
@@ -705,7 +705,7 @@ func getUID(userNameOrUID string, fsRoot string) (*uint32, error) {
 }
 
 // Returns nil pointer if groupname/GID is empty string.
-func getGID(groupNameOrGID string, fsRoot string) (*uint32, error) {
+func getGID(groupNameOrGID, fsRoot string) (*uint32, error) {
 	var gid *uint32
 	if groupNameOrGID != "" {
 		if parsed, err := strconv.ParseUint(groupNameOrGID, 10, 32); errors.Is(err, strconv.ErrSyntax) {
@@ -724,7 +724,7 @@ func getGID(groupNameOrGID string, fsRoot string) (*uint32, error) {
 	return gid, nil
 }
 
-func getUIDFromUserName(user string, etcPasswdPath string) (uint32, error) {
+func getUIDFromUserName(user, etcPasswdPath string) (uint32, error) {
 	passwd, err := os.Open(etcPasswdPath)
 	if err != nil {
 		return 0, fmt.Errorf("error opening passwd file: %w", err)
@@ -754,7 +754,7 @@ func getUIDFromUserName(user string, etcPasswdPath string) (uint32, error) {
 	return 0, fmt.Errorf("could not find UID for user %q in passwd file %q", user, etcPasswdPath)
 }
 
-func getGIDFromGroupName(group string, etcGroupPath string) (uint32, error) {
+func getGIDFromGroupName(group, etcGroupPath string) (uint32, error) {
 	etcGroup, err := os.Open(etcGroupPath)
 	if err != nil {
 		return 0, fmt.Errorf("error opening group file: %w", err)

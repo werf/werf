@@ -59,7 +59,7 @@ func CreateArchive(archivePath string, f func(tw *tar.Writer) error) error {
 	return f(tw)
 }
 
-func CopyFileIntoTar(tw *tar.Writer, tarEntryName string, filePath string) error {
+func CopyFileIntoTar(tw *tar.Writer, tarEntryName, filePath string) error {
 	stat, err := os.Lstat(filePath)
 	if err != nil {
 		return fmt.Errorf("unable to stat file %q: %w", filePath, err)

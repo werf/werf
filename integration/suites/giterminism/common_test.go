@@ -60,7 +60,7 @@ func fileCreateOrAppend(relPath, content string) {
 	Ω(f.Close()).ShouldNot(HaveOccurred())
 }
 
-func symlinkFileCreateOrModify(relPath string, link string) {
+func symlinkFileCreateOrModify(relPath, link string) {
 	relPath = filepath.ToSlash(relPath)
 	link = filepath.ToSlash(link)
 
@@ -73,7 +73,7 @@ func symlinkFileCreateOrModify(relPath string, link string) {
 	)
 }
 
-func symlinkFileCreateOrModifyAndAdd(relPath string, link string) {
+func symlinkFileCreateOrModifyAndAdd(relPath, link string) {
 	relPath = filepath.ToSlash(relPath)
 	link = filepath.ToSlash(link)
 
@@ -100,7 +100,7 @@ func symlinkFileCreateOrModifyAndAdd(relPath string, link string) {
 	)
 }
 
-func getLinkTo(linkFile string, targetPath string) string {
+func getLinkTo(linkFile, targetPath string) string {
 	target, err := filepath.Rel(filepath.Dir(linkFile), targetPath)
 	if err != nil {
 		panic(err)

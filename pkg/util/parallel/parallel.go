@@ -108,7 +108,7 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 	return err
 }
 
-func workersHandlerLiveOutput(ctx context.Context, workers []*bufWorker, taskResultDoneCh chan *bufWorkerTaskResult, taskResultFailedCh chan *bufWorkerTaskResult, quitCh chan bool, workerDoneCh chan *bufWorker) error {
+func workersHandlerLiveOutput(ctx context.Context, workers []*bufWorker, taskResultDoneCh, taskResultFailedCh chan *bufWorkerTaskResult, quitCh chan bool, workerDoneCh chan *bufWorker) error {
 workerLoop:
 	for _, currentWorker := range workers {
 		for {
@@ -158,7 +158,7 @@ workerLoop:
 	return nil
 }
 
-func workersHandlerStandard(ctx context.Context, workers []*bufWorker, taskResultDoneCh chan *bufWorkerTaskResult, taskResultFailedCh chan *bufWorkerTaskResult, quitCh chan bool, workerDoneCh chan *bufWorker) error {
+func workersHandlerStandard(ctx context.Context, workers []*bufWorker, taskResultDoneCh, taskResultFailedCh chan *bufWorkerTaskResult, quitCh chan bool, workerDoneCh chan *bufWorker) error {
 	var workerDoneCounter int
 	for {
 		select {

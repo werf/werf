@@ -10,7 +10,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/bundles/registry"
 )
 
-func Pull(ctx context.Context, bundleRef string, destDir string, bundlesRegistryClient *registry.Client) error {
+func Pull(ctx context.Context, bundleRef, destDir string, bundlesRegistryClient *registry.Client) error {
 	r, err := registry.ParseReference(bundleRef)
 	if err != nil {
 		return err

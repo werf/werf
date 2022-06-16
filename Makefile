@@ -41,8 +41,8 @@ unit-tests:
 	CGO_ENABLED=1 go test -v -compiler gc -ldflags="-linkmode external -extldflags=-static" -tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build" github.com/werf/werf/pkg/...
 
 fmt:
-	gci -w -local github.com/werf/ pkg/ cmd/ test/
-	gofumpt -w cmd/ pkg/ test/ integration/
+	gci write -s Standard -s Default -s 'Prefix(github.com/werf)' pkg/ cmd/ test/ integration/
+	gofumpt -extra -w cmd/ pkg/ test/ integration/
 
 lint:
 	golangci-lint run ./... --build-tags="dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build"

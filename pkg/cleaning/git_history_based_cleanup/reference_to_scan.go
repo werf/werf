@@ -306,11 +306,11 @@ func applyImagesPerReference(policyBranchesRefs []*ReferenceToScan, imagesPerRef
 	}
 }
 
-func referencesOr(refs1 []*ReferenceToScan, refs2 []*ReferenceToScan) []*ReferenceToScan {
+func referencesOr(refs1, refs2 []*ReferenceToScan) []*ReferenceToScan {
 	return mergeReferences(refs1, refs2)
 }
 
-func referencesAnd(refs1 []*ReferenceToScan, refs2 []*ReferenceToScan) []*ReferenceToScan {
+func referencesAnd(refs1, refs2 []*ReferenceToScan) []*ReferenceToScan {
 	var result []*ReferenceToScan
 
 outerLoop:
@@ -352,7 +352,7 @@ func filterReferencesByLast(refs []*ReferenceToScan, last int) []*ReferenceToSca
 	return refs[:last]
 }
 
-func mergeReferences(refs1 []*ReferenceToScan, refs2 []*ReferenceToScan) []*ReferenceToScan {
+func mergeReferences(refs1, refs2 []*ReferenceToScan) []*ReferenceToScan {
 	result := refs2
 
 outerLoop:

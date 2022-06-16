@@ -22,7 +22,7 @@ type Result struct {
 	submodulesResults      []*SubmoduleResult
 }
 
-func NewResult(commit string, repositoryFullFilepath string, lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult) *Result {
+func NewResult(commit, repositoryFullFilepath string, lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult) *Result {
 	return &Result{
 		commit:                 commit,
 		repositoryFullFilepath: repositoryFullFilepath,

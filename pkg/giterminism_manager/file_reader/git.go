@@ -147,7 +147,7 @@ func (r FileReader) ResolveAndCheckCommitFilePath(ctx context.Context, relPath s
 	return r.sharedOptions.LocalGitRepo().ResolveAndCheckCommitFilePath(ctx, r.sharedOptions.HeadCommit(), r.projectDirRelativePathToWorkTreeRelativePath(relPath), checkSymlinkTargetFunc)
 }
 
-func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir string, pattern string) (files []string, err error) {
+func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir, pattern string) (files []string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ListCommitFilesWithGlob %q %q", dir, pattern).
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -170,7 +170,7 @@ func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir string, pat
 	return
 }
 
-func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir string, pattern string) ([]string, error) {
+func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir, pattern string) ([]string, error) {
 	list, err := r.sharedOptions.LocalGitRepo().ListCommitFilesWithGlob(ctx, r.sharedOptions.HeadCommit(), r.projectDirRelativePathToWorkTreeRelativePath(dir), pattern)
 	if err != nil {
 		return nil, err

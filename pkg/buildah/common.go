@@ -96,7 +96,7 @@ type Buildah interface {
 	Push(ctx context.Context, ref string, opts PushOpts) error
 	BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error)
 	RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error
-	FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error)
+	FromCommand(ctx context.Context, container, image string, opts FromCommandOpts) (string, error)
 	Pull(ctx context.Context, ref string, opts PullOpts) error
 	Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error)
 	Rm(ctx context.Context, ref string, opts RmOpts) error

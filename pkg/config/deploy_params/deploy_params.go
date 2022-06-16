@@ -11,7 +11,7 @@ import (
 	"github.com/werf/werf/pkg/slug"
 )
 
-func GetHelmRelease(releaseOption string, environmentOption string, namespace string, werfConfig *config.WerfConfig) (string, error) {
+func GetHelmRelease(releaseOption, environmentOption, namespace string, werfConfig *config.WerfConfig) (string, error) {
 	if releaseOption != "" {
 		err := slug.ValidateHelmRelease(releaseOption)
 		if err != nil {
@@ -60,7 +60,7 @@ func GetHelmRelease(releaseOption string, environmentOption string, namespace st
 	return renderedRelease, nil
 }
 
-func GetKubernetesNamespace(namespaceOption string, environmentOption string, werfConfig *config.WerfConfig) (string, error) {
+func GetKubernetesNamespace(namespaceOption, environmentOption string, werfConfig *config.WerfConfig) (string, error) {
 	if namespaceOption != "" {
 		err := slug.ValidateKubernetesNamespace(namespaceOption)
 		if err != nil {
@@ -107,7 +107,7 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	return renderedNamespace, nil
 }
 
-func renderDeployParamTemplate(templateName, templateText string, environmentOption string, extraData map[string]string, werfConfig *config.WerfConfig) (string, error) {
+func renderDeployParamTemplate(templateName, templateText, environmentOption string, extraData map[string]string, werfConfig *config.WerfConfig) (string, error) {
 	tmpl := template.New(templateName).Delims("[[", "]]")
 
 	funcMap := sprig.TxtFuncMap()

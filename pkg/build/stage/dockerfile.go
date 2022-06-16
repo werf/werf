@@ -147,7 +147,7 @@ func (ds *DockerStages) resolveDockerMetaArgs(resolvedDependenciesArgsHash map[s
 }
 
 // addDockerMetaArg function sets --build-arg value or resolved meta ARG value
-func (ds *DockerStages) resolveDockerMetaArg(key, value string, resolvedDockerMetaArgsHash map[string]string, resolvedDependenciesArgsHash map[string]string) (string, string, error) {
+func (ds *DockerStages) resolveDockerMetaArg(key, value string, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string) (string, string, error) {
 	resolvedKey, err := ds.ShlexProcessWordWithMetaArgs(key, resolvedDockerMetaArgsHash)
 	if err != nil {
 		return "", "", err
@@ -200,7 +200,7 @@ func resolveDependenciesArgsHash(dependencies []*config.Dependency, c Conveyor) 
 }
 
 // resolveDockerStageArg function sets dependency arg value, or --build-arg value, or resolved dockerfile stage ARG value, or resolved meta ARG value (if stage ARG value is empty)
-func (ds *DockerStages) resolveDockerStageArg(dockerStageID int, key, value string, resolvedDockerMetaArgsHash map[string]string, resolvedDependenciesArgsHash map[string]string) (string, string, error) {
+func (ds *DockerStages) resolveDockerStageArg(dockerStageID int, key, value string, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string) (string, string, error) {
 	resolvedKey, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, key)
 	if err != nil {
 		return "", "", err
@@ -501,7 +501,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ con
 	return util.Sha256Hash(dockerfileStageDependencies...), nil
 }
 
-func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash map[string]string, resolvedDependenciesArgsHash map[string]string, dockerStageID int, cmd interface{}, isOnbuildInstruction bool, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, cmd interface{}, isOnbuildInstruction, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
 	var dependencies []string
 	var onBuildDependencies []string
 
@@ -666,7 +666,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	return dependencies, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash map[string]string, resolvedDependenciesArgsHash map[string]string, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
+func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
 	p, err := parser.Parse(bytes.NewReader([]byte(expression)))
 	if err != nil {
 		return nil, nil, err

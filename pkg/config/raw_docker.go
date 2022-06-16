@@ -86,7 +86,7 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 	return docker, nil
 }
 
-func prepareCommand(stringOrArray interface{}, configSection interface{}, doc *doc) (cmd string, err error) {
+func prepareCommand(stringOrArray, configSection interface{}, doc *doc) (cmd string, err error) {
 	if stringOrArray != nil {
 		if val, ok := stringOrArray.(string); ok {
 			cmd = val

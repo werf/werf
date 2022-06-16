@@ -277,7 +277,7 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 	return nil
 }
 
-func (b *NativeBuildah) FromCommand(ctx context.Context, container string, image string, opts FromCommandOpts) (string, error) {
+func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string, opts FromCommandOpts) (string, error) {
 	builder, err := buildah.NewBuilder(ctx, b.Store, buildah.BuilderOptions{
 		FromImage:           image,
 		Container:           container,
