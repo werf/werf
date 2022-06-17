@@ -9,10 +9,10 @@ import (
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
 	"github.com/werf/werf/pkg/tmp_manager"
-	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -21,7 +21,7 @@ type HostPurgeOptions struct {
 	RmContainersThatUseWerfImages bool
 }
 
-func HostPurge(ctx context.Context, options HostPurgeOptions) error {
+func HostPurge(ctx context.Context, containerBackend container_backend.ContainerBackend, options HostPurgeOptions) error {
 	commonOptions := CommonOptions{
 		RmiForce:                      true,
 		RmForce:                       true,
@@ -68,12 +68,12 @@ func HostPurge(ctx context.Context, options HostPurgeOptions) error {
 		return err
 	}
 
-	if err := tmp_manager.Purge(ctx, commonOptions.DryRun); err != nil {
+	if err := tmp_manager.Purge(ctx, commonOptions.DryRun, containerBackend); err != nil {
 		return fmt.Errorf("tmp files purge failed: %w", err)
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Running werf home data purge").DoError(func() error {
-		return purgeHomeWerfFiles(ctx, commonOptions.DryRun)
+		return purgeHomeWerfFiles(ctx, commonOptions.DryRun, containerBackend)
 	}); err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func deleteStapel(ctx context.Context, dryRun bool) error {
 	return nil
 }
 
-func purgeHomeWerfFiles(ctx context.Context, dryRun bool) error {
+func purgeHomeWerfFiles(ctx context.Context, dryRun bool, containerBackend container_backend.ContainerBackend) error {
 	pathsToRemove := []string{werf.GetServiceDir(), werf.GetLocalCacheDir(), werf.GetSharedContextDir()}
 
 	for _, path := range pathsToRemove {
@@ -119,6 +119,6 @@ func purgeHomeWerfFiles(ctx context.Context, dryRun bool) error {
 
 		return nil
 	} else {
-		return util.RemoveHostDirsWithLinuxContainer(ctx, werf.GetHomeDir(), pathsToRemove)
+		return containerBackend.RemoveHostDirs(ctx, werf.GetHomeDir(), pathsToRemove)
 	}
 }

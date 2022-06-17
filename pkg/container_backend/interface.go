@@ -57,6 +57,9 @@ type ContainerBackend interface {
 	HasStapelBuildSupport() bool
 	String() string
 
+	// TODO: Util method for cleanup, which possibly should be avoided in the future
+	RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error
+
 	// Legacy
 	ShouldCleanupDockerfileImage() bool
 	RefreshImageObject(ctx context.Context, img LegacyImageInterface) error

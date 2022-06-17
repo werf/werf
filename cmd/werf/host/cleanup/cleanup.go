@@ -137,5 +137,5 @@ func runCleanup(ctx context.Context) error {
 		DockerServerStoragePath:                         commonCmdData.DockerServerStoragePath,
 	}
 
-	return host_cleaning.RunHostCleanup(ctx, hostCleanupOptions)
+	return host_cleaning.RunHostCleanup(ctx, containerBackend, hostCleanupOptions)
 }

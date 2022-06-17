@@ -122,3 +122,11 @@ func (runtime *PerfCheckContainerBackend) RemoveImage(ctx context.Context, img L
 func (runtime *PerfCheckContainerBackend) String() string {
 	return runtime.ContainerBackend.String()
 }
+
+func (runtime *PerfCheckContainerBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) (resErr error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.RemoveHostDirs %q %v", mountDir, dirs).
+		Do(func() {
+			resErr = runtime.ContainerBackend.RemoveHostDirs(ctx, mountDir, dirs)
+		})
+	return
+}

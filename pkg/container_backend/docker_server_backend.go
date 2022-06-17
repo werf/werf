@@ -12,6 +12,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/util"
 )
 
 type DockerServerBackend struct{}
@@ -239,4 +240,22 @@ func (runtime *DockerServerBackend) TagImageByName(ctx context.Context, img Lega
 
 func (runtime *DockerServerBackend) String() string {
 	return "local-docker-server"
+}
+
+func (runtime *DockerServerBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
+	var containerDirs []string
+	for _, dir := range dirs {
+		containerDirs = append(containerDirs, util.ToLinuxContainerPath(dir))
+	}
+
+	args := []string{
+		"--rm",
+		"--volume", fmt.Sprintf("%s:%s", mountDir, util.ToLinuxContainerPath(mountDir)),
+		"alpine",
+		"rm", "-rf",
+	}
+
+	args = append(args, containerDirs...)
+
+	return docker.CliRun(ctx, args...)
 }

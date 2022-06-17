@@ -102,7 +102,7 @@ func runReset(ctx context.Context) error {
 	if projectName == "" {
 		logboek.LogOptionalLn()
 		hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force}
-		if err := host_cleaning.HostPurge(ctx, hostPurgeOptions); err != nil {
+		if err := host_cleaning.HostPurge(ctx, containerBackend, hostPurgeOptions); err != nil {
 			return err
 		}
 	} else {

@@ -59,7 +59,7 @@ func (runtime *BuildahBackend) createContainers(ctx context.Context, images []st
 	var res []*containerDesc
 
 	for _, img := range images {
-		containerID := fmt.Sprintf("werf-stage-build-%s", uuid.New().String())
+		containerID := fmt.Sprintf("werf-%s", uuid.New().String())
 
 		_, err := runtime.buildah.FromCommand(ctx, containerID, img, buildah.FromCommandOpts(runtime.getBuildahCommonOpts(ctx, true)))
 		if err != nil {
@@ -176,7 +176,7 @@ func (runtime *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 	}
 	defer func() {
 		if err := runtime.removeContainers(ctx, []*containerDesc{container}); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal dependency container: %s\n", err)
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal dependency container %q: %s\n", container.Name, err)
 		}
 	}()
 
@@ -641,6 +641,34 @@ func (runtime *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageI
 
 func (runtime *BuildahBackend) String() string {
 	return "buildah-runtime"
+}
+
+func (runtime *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
+	var container *containerDesc
+	if c, err := runtime.createContainers(ctx, []string{"alpine"}); err != nil {
+		return fmt.Errorf("unable to create container based on alpine: %w", err)
+	} else {
+		container = c[0]
+	}
+	defer func() {
+		if err := runtime.removeContainers(ctx, []*containerDesc{container}); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal container %q: %s\n", container.Name, err)
+		}
+	}()
+	var containerDirs []string
+	for _, dir := range dirs {
+		containerDirs = append(containerDirs, util.ToLinuxContainerPath(dir))
+	}
+
+	return runtime.buildah.RunCommand(ctx, container.Name, append([]string{"rm", "-rf"}, containerDirs...), buildah.RunCommandOpts{
+		Mounts: []specs.Mount{
+			{
+				Type:        "bind",
+				Source:      mountDir,
+				Destination: util.ToLinuxContainerPath(mountDir),
+			},
+		},
+	})
 }
 
 func parseVolume(volume string) (string, string, error) {

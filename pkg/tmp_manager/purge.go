@@ -10,15 +10,15 @@ import (
 	"strings"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/werf"
 )
 
-func Purge(ctx context.Context, dryRun bool) error {
-	return logboek.Context(ctx).LogProcess("Running purge for tmp data").DoError(func() error { return purge(ctx, dryRun) })
+func Purge(ctx context.Context, dryRun bool, containerBackend container_backend.ContainerBackend) error {
+	return logboek.Context(ctx).LogProcess("Running purge for tmp data").DoError(func() error { return purge(ctx, dryRun, containerBackend) })
 }
 
-func purge(ctx context.Context, dryRun bool) error {
+func purge(ctx context.Context, dryRun bool, containerBackend container_backend.ContainerBackend) error {
 	tmpFiles, err := ioutil.ReadDir(werf.GetTmpDir())
 	if err != nil {
 		return fmt.Errorf("unable to list tmp files in %s: %w", werf.GetTmpDir(), err)
@@ -50,7 +50,7 @@ func purge(ctx context.Context, dryRun bool) error {
 					}
 				}
 			} else {
-				if err := util.RemoveHostDirsWithLinuxContainer(ctx, werf.GetTmpDir(), projectDirsToRemove); err != nil {
+				if err := containerBackend.RemoveHostDirs(ctx, werf.GetTmpDir(), projectDirsToRemove); err != nil {
 					errors = append(errors, fmt.Errorf("unable to remove tmp projects dirs %s: %w", strings.Join(projectDirsToRemove, ", "), err))
 				}
 			}
