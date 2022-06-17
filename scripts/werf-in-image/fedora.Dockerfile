@@ -14,4 +14,6 @@ RUN mkdir -p /home/build/.local/share/containers
 VOLUME /home/build/.local/share/containers
 
 WORKDIR /home/build
+
+ENV WERF_CONTAINERIZED=yes
 ENV WERF_BUILDAH_MODE=auto
