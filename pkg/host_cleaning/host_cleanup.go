@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/tmp_manager"
 )
@@ -113,9 +114,9 @@ func RunAutoHostCleanup(ctx context.Context, options AutoHostCleanupOptions) err
 	return nil
 }
 
-func RunHostCleanup(ctx context.Context, options HostCleanupOptions) error {
+func RunHostCleanup(ctx context.Context, containerBackend container_backend.ContainerBackend, options HostCleanupOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error {
-		if err := tmp_manager.RunGC(ctx, options.DryRun); err != nil {
+		if err := tmp_manager.RunGC(ctx, options.DryRun, containerBackend); err != nil {
 			return fmt.Errorf("tmp files GC failed: %w", err)
 		}
 		return nil
@@ -164,25 +165,31 @@ func ShouldRunAutoHostCleanup(ctx context.Context, options HostCleanupOptions) (
 		return true, nil
 	}
 
-	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
-	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
+	if options.CleanupDockerServer {
+		allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
+		allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
 
-	shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsagePercentage)
-	if err != nil {
-		return false, fmt.Errorf("failed to check git repo GC: %w", err)
-	}
-	if shouldRun {
-		return true, nil
+		shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsagePercentage)
+		if err != nil {
+			return false, fmt.Errorf("failed to check git repo GC: %w", err)
+		}
+		if shouldRun {
+			return true, nil
+		}
+
+		dockerServerStoragePath, err := getDockerServerStoragePath(ctx, options.DockerServerStoragePath)
+		if err != nil {
+			return false, fmt.Errorf("error getting local docker server storage path: %w", err)
+		}
+
+		shouldRun, err = ShouldRunAutoGCForLocalDockerServer(ctx, allowedDockerStorageVolumeUsagePercentage, dockerServerStoragePath)
+		if err != nil {
+			return false, fmt.Errorf("failed to check local docker server host cleaner GC: %w", err)
+		}
+		if shouldRun {
+			return true, nil
+		}
 	}
 
-	dockerServerStoragePath, err := getDockerServerStoragePath(ctx, options.DockerServerStoragePath)
-	if err != nil {
-		return false, fmt.Errorf("error getting local docker server storage path: %w", err)
-	}
-
-	shouldRun, err = ShouldRunAutoGCForLocalDockerServer(ctx, allowedDockerStorageVolumeUsagePercentage, dockerServerStoragePath)
-	if err != nil {
-		return false, fmt.Errorf("failed to check local docker server host cleaner GC: %w", err)
-	}
-	return shouldRun, nil
+	return false, nil
 }

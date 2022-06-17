@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -79,7 +79,7 @@ func ShouldRunAutoGC() (bool, error) {
 	return false, nil
 }
 
-func RunGC(ctx context.Context, dryRun bool) error {
+func RunGC(ctx context.Context, dryRun bool, containerBackend container_backend.ContainerBackend) error {
 	projectDirsToRemove := []string{}
 	pathsToRemove := []string{}
 
@@ -118,7 +118,7 @@ func RunGC(ctx context.Context, dryRun bool) error {
 					}
 				}
 			} else {
-				if err := util.RemoveHostDirsWithLinuxContainer(ctx, werf.GetTmpDir(), projectDirsToRemove); err != nil {
+				if err := containerBackend.RemoveHostDirs(ctx, werf.GetTmpDir(), projectDirsToRemove); err != nil {
 					removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %w", strings.Join(projectDirsToRemove, ", "), err))
 				}
 			}
