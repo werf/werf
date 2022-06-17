@@ -229,6 +229,7 @@ func runApply() error {
 		Wait:            common.NewBool(true),
 		Atomic:          common.NewBool(cmdData.AutoRollback),
 		Timeout:         common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
+		IgnorePending:   common.NewBool(true),
 	})
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
