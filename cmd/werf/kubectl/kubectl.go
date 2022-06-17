@@ -14,6 +14,7 @@ import (
 
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/tmp_manager"
+	util2 "github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -49,7 +50,7 @@ func NewCmd() *cobra.Command {
 
 	skipTlsVerifyRegistryFlag := kubectlCmd.Flag("insecure-skip-tls-verify")
 	skipTlsVerifyRegistryFlag.Usage = "If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)"
-	if isSkipTlsVerifyRegistry := common.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_REGISTRY"); isSkipTlsVerifyRegistry {
+	if isSkipTlsVerifyRegistry := util2.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_REGISTRY"); isSkipTlsVerifyRegistry {
 		if err := kubectlCmd.Flags().Set("insecure-skip-tls-verify", "true"); err != nil {
 			util.CheckErr(fmt.Errorf("unable to set insecure-skip-tls-verify flag for kubectl: %w", err))
 		}

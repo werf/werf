@@ -14,6 +14,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
@@ -72,7 +73,7 @@ werf cr login --insecure-registry registry.example.com`,
 
 	cmd.Flags().StringVarP(&cmdData.Username, "username", "u", os.Getenv("WERF_USERNAME"), "Use specified username for login (default $WERF_USERNAME)")
 	cmd.Flags().StringVarP(&cmdData.Password, "password", "p", os.Getenv("WERF_PASSWORD"), "Use specified password for login (default $WERF_PASSWORD)")
-	cmd.Flags().BoolVarP(&cmdData.PasswordStdin, "password-stdin", "", common.GetBoolEnvironmentDefaultFalse("WERF_PASSWORD_STDIN"), "Read password from stdin for login (default $WERF_PASSWORD_STDIN)")
+	cmd.Flags().BoolVarP(&cmdData.PasswordStdin, "password-stdin", "", util.GetBoolEnvironmentDefaultFalse("WERF_PASSWORD_STDIN"), "Read password from stdin for login (default $WERF_PASSWORD_STDIN)")
 
 	return cmd
 }

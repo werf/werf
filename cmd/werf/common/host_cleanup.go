@@ -9,6 +9,7 @@ import (
 
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/host_cleaning"
+	"github.com/werf/werf/pkg/util"
 )
 
 func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend container_backend.ContainerBackend) error {
@@ -45,7 +46,7 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend 
 
 func SetupDisableAutoHostCleanup(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DisableAutoHostCleanup = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisableAutoHostCleanup, "disable-auto-host-cleanup", "", GetBoolEnvironmentDefaultFalse("WERF_DISABLE_AUTO_HOST_CLEANUP"), "Disable auto host cleanup procedure in main werf commands like werf-build, werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)")
+	cmd.Flags().BoolVarP(cmdData.DisableAutoHostCleanup, "disable-auto-host-cleanup", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_AUTO_HOST_CLEANUP"), "Disable auto host cleanup procedure in main werf commands like werf-build, werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)")
 }
 
 func SetupAllowedDockerStorageVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
