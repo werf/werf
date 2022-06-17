@@ -124,7 +124,7 @@ func (b *DockerWithFuseBuildah) BuildFromDockerfile(ctx context.Context, dockerf
 }
 
 func (b *DockerWithFuseBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
-	_, _, err := b.runBuildah(ctx, []string{}, append([]string{"run", "--isolation", b.Isolation.String(), "--runtime", DefaultRuntime, container}, command...), opts.LogWriter)
+	_, _, err := b.runBuildah(ctx, []string{}, append([]string{"run", "--isolation", b.Isolation.String(), container}, command...), opts.LogWriter)
 	return err
 }
 
