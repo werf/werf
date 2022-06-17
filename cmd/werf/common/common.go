@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -139,7 +137,7 @@ func GetLongCommandDescription(text string) string {
 
 func SetupSetDockerConfigJsonValue(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SetDockerConfigJsonValue = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SetDockerConfigJsonValue, "set-docker-config-json-value", "", GetBoolEnvironmentDefaultFalse("WERF_SET_DOCKER_CONFIG_JSON_VALUE"), "Shortcut to set current docker config into the .Values.dockerconfigjson")
+	cmd.Flags().BoolVarP(cmdData.SetDockerConfigJsonValue, "set-docker-config-json-value", "", util.GetBoolEnvironmentDefaultFalse("WERF_SET_DOCKER_CONFIG_JSON_VALUE"), "Shortcut to set current docker config into the .Values.dockerconfigjson")
 }
 
 func SetupGitWorkTree(cmdData *CmdData, cmd *cobra.Command) {
@@ -185,12 +183,12 @@ func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LooseGiterminism = new(bool)
-	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://werf.io/documentation/advanced/giterminism.html, default $WERF_LOOSE_GITERMINISM)")
+	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://werf.io/documentation/advanced/giterminism.html, default $WERF_LOOSE_GITERMINISM)")
 }
 
 func setupDev(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dev = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", GetBoolEnvironmentDefaultFalse("WERF_DEV"), `Enable development mode (default $WERF_DEV).
+	cmd.Flags().BoolVarP(cmdData.Dev, "dev", "", util.GetBoolEnvironmentDefaultFalse("WERF_DEV"), `Enable development mode (default $WERF_DEV).
 The mode allows working with project files without doing redundant commits during debugging and development`)
 }
 
@@ -275,13 +273,13 @@ func GetReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.WithoutKube = new(bool)
-	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_WITHOUT_KUBE)")
+	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_WITHOUT_KUBE)")
 }
 
 func SetupKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KeepStagesBuiltWithinLastNHours = new(uint64)
 
-	envValue, err := GetUint64EnvVar("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
+	envValue, err := util.GetUint64EnvVar("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
 	if err != nil {
 		TerminateWithError(err.Error(), 1)
 	}
@@ -294,29 +292,6 @@ func SetupKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) 
 	}
 
 	cmd.Flags().Uint64VarP(cmdData.KeepStagesBuiltWithinLastNHours, "keep-stages-built-within-last-n-hours", "", defaultValue, "Keep stages that were built within last hours (default $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or 2)")
-}
-
-func PredefinedValuesByEnvNamePrefix(envNamePrefix string, envNamePrefixesToExcept ...string) []string {
-	var result []string
-
-	env := os.Environ()
-	sort.Strings(env)
-
-environLoop:
-	for _, keyValue := range env {
-		parts := strings.SplitN(keyValue, "=", 2)
-		if strings.HasPrefix(parts[0], envNamePrefix) {
-			for _, exceptEnvNamePrefix := range envNamePrefixesToExcept {
-				if strings.HasPrefix(parts[0], exceptEnvNamePrefix) {
-					continue environLoop
-				}
-			}
-
-			result = append(result, parts[1])
-		}
-	}
-
-	return result
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
@@ -365,7 +340,7 @@ func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func GetFirstExistingKubeConfigEnvVar() string {
-	return GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG")
+	return util.GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG")
 }
 
 func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {
@@ -374,17 +349,7 @@ func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func GetFirstExistingKubeConfigBase64EnvVar() string {
-	return GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64")
-}
-
-func GetFirstExistingEnvVarAsString(envNames ...string) string {
-	for _, envName := range envNames {
-		if v := os.Getenv(envName); v != "" {
-			return v
-		}
-	}
-
-	return ""
+	return util.GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64")
 }
 
 func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
@@ -453,7 +418,7 @@ func SetupStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
 func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ReleasesHistoryMax = new(int)
 
-	defaultValueP, err := GetIntEnvVar("WERF_RELEASES_HISTORY_MAX")
+	defaultValueP, err := util.GetIntEnvVar("WERF_RELEASES_HISTORY_MAX")
 	if err != nil {
 		TerminateWithError(fmt.Sprintf("bad WERF_RELEASES_HISTORY_MAX value: %s", err), 1)
 	}
@@ -475,13 +440,13 @@ func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 func statusProgressPeriodDefaultValue() *int64 {
 	defaultValue := int64(5)
 
-	v, err := GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD_SECONDS")
+	v, err := util.GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD_SECONDS")
 	if err != nil {
 		TerminateWithError(err.Error(), 1)
 	}
 
 	if v == nil {
-		v, err = GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD")
+		v, err = util.GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD")
 		if err != nil {
 			TerminateWithError(err.Error(), 1)
 		}
@@ -514,13 +479,13 @@ func SetupHooksStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
 func hooksStatusProgressPeriodDefaultValue() *int64 {
 	defaultValue := statusProgressPeriodDefaultValue()
 
-	v, err := GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS")
+	v, err := util.GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS")
 	if err != nil {
 		TerminateWithError(err.Error(), 1)
 	}
 
 	if v == nil {
-		v, err = GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD")
+		v, err = util.GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD")
 		if err != nil {
 			TerminateWithError(err.Error(), 1)
 		}
@@ -537,7 +502,7 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 
 func SetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.InsecureHelmDependencies = new(bool)
-	cmd.Flags().BoolVarP(cmdData.InsecureHelmDependencies, "insecure-helm-dependencies", "", GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), "Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)")
+	cmd.Flags().BoolVarP(cmdData.InsecureHelmDependencies, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), "Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)")
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -546,7 +511,7 @@ func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	cmdData.InsecureRegistry = new(bool)
-	cmd.Flags().BoolVarP(cmdData.InsecureRegistry, "insecure-registry", "", GetBoolEnvironmentDefaultFalse("WERF_INSECURE_REGISTRY"), "Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)")
+	cmd.Flags().BoolVarP(cmdData.InsecureRegistry, "insecure-registry", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_REGISTRY"), "Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)")
 }
 
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -555,12 +520,12 @@ func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	cmdData.SkipTlsVerifyRegistry = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
+	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DryRun = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DryRun, "dry-run", "", GetBoolEnvironmentDefaultFalse("WERF_DRY_RUN"), "Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)")
+	cmd.Flags().BoolVarP(cmdData.DryRun, "dry-run", "", util.GetBoolEnvironmentDefaultFalse("WERF_DRY_RUN"), "Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)")
 }
 
 func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
@@ -608,7 +573,7 @@ func setupLogDebug(cmdData *CmdData, cmd *cobra.Command) {
 		"WERF_DEBUG",
 	} {
 		if os.Getenv(envName) != "" {
-			defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			defaultValue = util.GetBoolEnvironmentDefaultFalse(envName)
 			break
 		}
 	}
@@ -657,9 +622,9 @@ func setupLogQuiet(cmdData *CmdData, cmd *cobra.Command, isDefaultQuiet bool) {
 	} {
 		if os.Getenv(envName) != "" {
 			if defaultValue {
-				defaultValue = GetBoolEnvironmentDefaultTrue(envName)
+				defaultValue = util.GetBoolEnvironmentDefaultTrue(envName)
 			} else {
-				defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+				defaultValue = util.GetBoolEnvironmentDefaultFalse(envName)
 			}
 
 			break
@@ -693,7 +658,7 @@ func setupLogVerbose(cmdData *CmdData, cmd *cobra.Command) {
 		"WERF_VERBOSE",
 	} {
 		if os.Getenv(envName) != "" {
-			defaultValue = GetBoolEnvironmentDefaultFalse(envName)
+			defaultValue = util.GetBoolEnvironmentDefaultFalse(envName)
 			break
 		}
 	}
@@ -721,7 +686,7 @@ func setupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
 
 	var defaultValue bool
 	if os.Getenv("WERF_LOG_PRETTY") != "" {
-		defaultValue = GetBoolEnvironmentDefaultFalse("WERF_LOG_PRETTY")
+		defaultValue = util.GetBoolEnvironmentDefaultFalse("WERF_LOG_PRETTY")
 	} else {
 		defaultValue = true
 	}
@@ -769,7 +734,7 @@ Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.h
 
 func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.IgnoreSecretKey = new(bool)
-	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
+	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
 }
 
 func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
@@ -779,7 +744,7 @@ func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command, defaultValue int
 
 func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Parallel = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Parallel, "parallel", "p", GetBoolEnvironmentDefaultTrue("WERF_PARALLEL"), "Run in parallel (default $WERF_PARALLEL or true)")
+	cmd.Flags().BoolVarP(cmdData.Parallel, "parallel", "p", util.GetBoolEnvironmentDefaultTrue("WERF_PARALLEL"), "Run in parallel (default $WERF_PARALLEL or true)")
 }
 
 func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
@@ -789,7 +754,7 @@ func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command, defaultValue 
 
 func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogProjectDir = new(bool)
-	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", GetBoolEnvironmentDefaultFalse("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
+	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
 }
 
 func SetupIntrospectAfterError(cmdData *CmdData, cmd *cobra.Command) {
@@ -816,17 +781,17 @@ STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "
 
 func SetupSkipBuild(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SkipBuild = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipBuild, "skip-build", "Z", GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "Disable building of docker images, cached images in the repo should exist in the repo if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)")
+	cmd.Flags().BoolVarP(cmdData.SkipBuild, "skip-build", "Z", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "Disable building of docker images, cached images in the repo should exist in the repo if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)")
 }
 
 func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StubTags = new(bool)
-	cmd.Flags().BoolVarP(cmdData.StubTags, "stub-tags", "", GetBoolEnvironmentDefaultFalse("WERF_STUB_TAGS"), "Use stubs instead of real tags (default $WERF_STUB_TAGS)")
+	cmd.Flags().BoolVarP(cmdData.StubTags, "stub-tags", "", util.GetBoolEnvironmentDefaultFalse("WERF_STUB_TAGS"), "Use stubs instead of real tags (default $WERF_STUB_TAGS)")
 }
 
 func SetupFollow(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Follow = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Follow, "follow", "", GetBoolEnvironmentDefaultFalse("WERF_FOLLOW"), `Enable follow mode (default $WERF_FOLLOW).
+	cmd.Flags().BoolVarP(cmdData.Follow, "follow", "", util.GetBoolEnvironmentDefaultFalse("WERF_FOLLOW"), `Enable follow mode (default $WERF_FOLLOW).
 The mode allows restarting the command on a new commit.
 In development mode (--dev), werf restarts the command on any changes (including untracked files) in the git repository worktree`)
 }
@@ -840,90 +805,24 @@ func allStagesNames() []string {
 	return stageNames
 }
 
-func GetBoolEnvironmentDefaultFalse(environmentName string) bool {
-	switch os.Getenv(environmentName) {
-	case "1", "true", "yes":
-		return true
-	default:
-		return false
-	}
-}
-
-func GetBoolEnvironmentDefaultTrue(environmentName string) bool {
-	switch os.Getenv(environmentName) {
-	case "0", "false", "no":
-		return false
-	default:
-		return true
-	}
-}
-
-func getInt64EnvVar(varName string) (*int64, error) {
-	if v := os.Getenv(varName); v != "" {
-		vInt, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("bad %s variable value %q: %w", varName, v, err)
-		}
-
-		res := new(int64)
-		*res = vInt
-
-		return res, nil
-	}
-
-	return nil, nil
-}
-
 func GetIntEnvVarStrict(varName string) *int64 {
-	valP, err := GetIntEnvVar(varName)
+	valP, err := util.GetIntEnvVar(varName)
 	if err != nil {
 		TerminateWithError(fmt.Sprintf("bad %s value: %s", varName, err), 1)
 	}
 	return valP
-}
-
-func GetIntEnvVar(varName string) (*int64, error) {
-	if v := os.Getenv(varName); v != "" {
-		vInt, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("bad %s variable value %q: %w", varName, v, err)
-		}
-
-		res := new(int64)
-		*res = vInt
-
-		return res, nil
-	}
-
-	return nil, nil
 }
 
 func GetUint64EnvVarStrict(varName string) *uint64 {
-	valP, err := GetUint64EnvVar(varName)
+	valP, err := util.GetUint64EnvVar(varName)
 	if err != nil {
 		TerminateWithError(fmt.Sprintf("bad %s value: %s", varName, err), 1)
 	}
 	return valP
 }
 
-func GetUint64EnvVar(varName string) (*uint64, error) {
-	if v := os.Getenv(varName); v != "" {
-		vUint, err := strconv.ParseUint(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("bad %s variable value %q: %w", varName, v, err)
-		}
-
-		res := new(uint64)
-		*res = vUint
-
-		return res, nil
-	}
-
-	return nil, nil
-}
-
 func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
-	v, err := getInt64EnvVar("WERF_PARALLEL_TASKS_LIMIT")
+	v, err := util.GetInt64EnvVar("WERF_PARALLEL_TASKS_LIMIT")
 	if err != nil {
 		return 0, err
 	}
@@ -1177,51 +1076,51 @@ func GetNamespace(cmdData *CmdData) string {
 }
 
 func GetDevIgnore(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_DEV_IGNORE_"), *cmdData.DevIgnore...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_DEV_IGNORE_"), *cmdData.DevIgnore...)
 }
 
 func GetSSHKey(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_SSH_KEY_"), *cmdData.SSHKeys...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SSH_KEY_"), *cmdData.SSHKeys...)
 }
 
 func GetAddLabels(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), *cmdData.AddLabels...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), *cmdData.AddLabels...)
 }
 
 func GetAddAnnotations(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
 }
 
 func getAddCustomTag(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
 }
 
 func GetSet(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"), *cmdData.Set...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"), *cmdData.Set...)
 }
 
 func GetSetString(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), *cmdData.SetString...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), *cmdData.SetString...)
 }
 
 func GetSetFile(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), *cmdData.SetFile...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), *cmdData.SetFile...)
 }
 
 func GetValues(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), *cmdData.Values...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), *cmdData.Values...)
 }
 
 func GetSecretValues(cmdData *CmdData) []string {
-	return append(PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), *cmdData.SecretValues...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), *cmdData.SecretValues...)
 }
 
 func GetRequiredRelease(cmdData *CmdData) (string, error) {
@@ -1346,7 +1245,7 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 
 		logboek.Streams().SetWidth(int(value))
 	} else {
-		pInt64, err := getInt64EnvVar("WERF_LOG_TERMINAL_WIDTH")
+		pInt64, err := util.GetInt64EnvVar("WERF_LOG_TERMINAL_WIDTH")
 		if err != nil {
 			return err
 		}
@@ -1416,7 +1315,7 @@ func TerminateWithError(errMsg string, exitCode int) {
 
 func SetupVirtualMerge(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.VirtualMerge = new(bool)
-	cmd.Flags().BoolVarP(cmdData.VirtualMerge, "virtual-merge", "", GetBoolEnvironmentDefaultFalse("WERF_VIRTUAL_MERGE"), "Enable virtual/ephemeral merge commit mode when building current application state ($WERF_VIRTUAL_MERGE by default)")
+	cmd.Flags().BoolVarP(cmdData.VirtualMerge, "virtual-merge", "", util.GetBoolEnvironmentDefaultFalse("WERF_VIRTUAL_MERGE"), "Enable virtual/ephemeral merge commit mode when building current application state ($WERF_VIRTUAL_MERGE by default)")
 }
 
 func SetupPlatform(cmdData *CmdData, cmd *cobra.Command) {
