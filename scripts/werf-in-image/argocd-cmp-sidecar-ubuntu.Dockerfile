@@ -18,6 +18,8 @@ RUN mkdir -p /home/argocd/.local/share/containers
 VOLUME /home/argocd/.local/share/containers
 
 WORKDIR /home/argocd
+
+ENV WERF_CONTAINERIZED=yes
 ENV WERF_BUILDAH_MODE=auto
 
 ENTRYPOINT ["/var/run/argocd/argocd-cmp-server"]
