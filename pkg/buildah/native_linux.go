@@ -184,7 +184,6 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
 	buildOpts := define.BuildOptions{
 		Isolation:               define.Isolation(b.Isolation),
-		Runtime:                 DefaultRuntime,
 		Args:                    opts.BuildArgs,
 		SignaturePolicyPath:     b.SignaturePolicyPath,
 		ReportWriter:            opts.LogWriter,
@@ -250,7 +249,6 @@ func (b *NativeBuildah) Umount(ctx context.Context, container string, opts Umoun
 func (b *NativeBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
 	runOpts := buildah.RunOptions{
 		Isolation:        define.Isolation(b.Isolation),
-		Runtime:          DefaultRuntime,
 		Args:             opts.Args,
 		Mounts:           opts.Mounts,
 		ConfigureNetwork: define.NetworkEnabled,
