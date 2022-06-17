@@ -8,6 +8,19 @@ import (
 	"strings"
 )
 
+func GetBoolEnvironment(environmentName string) *bool {
+	switch os.Getenv(environmentName) {
+	case "1", "true", "yes":
+		t := true
+		return &t
+	case "0", "false", "no":
+		f := false
+		return &f
+	}
+
+	return nil
+}
+
 func GetBoolEnvironmentDefaultFalse(environmentName string) bool {
 	switch os.Getenv(environmentName) {
 	case "1", "true", "yes":

@@ -38,6 +38,11 @@ func ToLinuxContainerPath(path string) string {
 }
 
 func IsInContainer() bool {
+	werfContainerized := GetBoolEnvironment("WERF_CONTAINERIZED")
+	if werfContainerized != nil {
+		return *werfContainerized
+	}
+
 	// Docker-daemon
 	if isInContainer, err := RegularFileExists("/.dockerenv"); err == nil && isInContainer {
 		return true
