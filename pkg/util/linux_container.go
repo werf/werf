@@ -48,9 +48,19 @@ func IsInContainer() bool {
 		return true
 	}
 
+	cgroupsData, err := os.ReadFile("/proc/1/cgroup")
+	if err != nil {
+		return false
+	}
+
 	// containerd without Docker-daemon
-	if cgroupsData, err := os.ReadFile("/proc/1/cgroup"); err == nil &&
-		strings.Contains(string(cgroupsData), "/cri-containerd-") {
+	if strings.Contains(string(cgroupsData), "/cri-containerd-") ||
+		strings.Contains(string(cgroupsData), "/containerd") {
+		return true
+	}
+
+	// If in Kubernetes
+	if strings.Contains(string(cgroupsData), "/kubepods") {
 		return true
 	}
 
