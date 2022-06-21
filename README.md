@@ -90,18 +90,6 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 - Clean up local and Docker registry by enforcing customizable policies.
 - Keep images that are being used in the Kubernetes cluster. werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
 
-### Coming soon
-
-- Developing applications locally with werf [#1940](https://github.com/werf/werf/issues/1940).
-- (Kaniko-like) building in the userspace that does not require Docker daemon [#1618](https://github.com/werf/werf/issues/1618).
-- ~3-way-merge~ [#1616](https://github.com/werf/werf/issues/1616).
-- ~Content-based tagging~ [#1184](https://github.com/werf/werf/issues/1184).
-- ~Support for the most Docker registry implementations~ [#2199](https://github.com/werf/werf/issues/2199).
-- ~Parallel image builds~ [#2200](https://github.com/werf/werf/issues/2200).
-- ~Proven approaches and recipes for the most popular CI systems~ [#1617](https://github.com/werf/werf/issues/1617).
-- ~Distributed builds with the shared Docker registry~ [#1614](https://github.com/werf/werf/issues/1614).
-- ~Support for Helm 3~ [#1606](https://github.com/werf/werf/issues/1606).
-
 ## Production ready
 
 werf is a mature, reliable tool you can trust. [Read about release channels](https://werf.io/about/release_channels.html).
