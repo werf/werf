@@ -9,13 +9,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strings"
 
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/yaml.v2"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -84,9 +82,9 @@ func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, workingD
 
 		if !bytes.Equal(data, newData) {
 			if values {
-				newEncodedData, err = prepareResultValuesData(data, encodedData, newData, newEncodedData)
+				newEncodedData, err = secret.MergeEncodedYaml(data, newData, encodedData, newEncodedData)
 				if err != nil {
-					return err
+					return fmt.Errorf("unable to merge changed values of encoded yaml: %w", err)
 				}
 			}
 
@@ -218,117 +216,4 @@ func editor() (string, []string, error) {
 	}
 
 	return "", editorArgs, fmt.Errorf("editor not detected")
-}
-
-func prepareResultValuesData(data, encodedData, newData, newEncodedData []byte) ([]byte, error) {
-	dataConfig, err := unmarshalYaml(data)
-	if err != nil {
-		return nil, err
-	}
-
-	encodeDataConfig, err := unmarshalYaml(encodedData)
-	if err != nil {
-		return nil, err
-	}
-
-	newDataConfig, err := unmarshalYaml(newData)
-	if err != nil {
-		return nil, err
-	}
-
-	newEncodedDataConfig, err := unmarshalYaml(newEncodedData)
-	if err != nil {
-		return nil, err
-	}
-
-	resultEncodedDataConfig, err := mergeYamlEncodedData(dataConfig, encodeDataConfig, newDataConfig, newEncodedDataConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	resultEncodedData, err := yaml.Marshal(&resultEncodedDataConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return resultEncodedData, nil
-}
-
-func unmarshalYaml(data []byte) (yaml.MapSlice, error) {
-	config := make(yaml.MapSlice, 0)
-	err := yaml.UnmarshalStrict(data, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
-}
-
-func mergeYamlEncodedData(d, eD, newD, newED interface{}) (interface{}, error) {
-	dType := reflect.TypeOf(d)
-	newDType := reflect.TypeOf(newD)
-
-	if dType != newDType {
-		return newED, nil
-	}
-
-	switch newD := newD.(type) {
-	case yaml.MapSlice:
-		newDMapSlice := newD
-		dMapSlice := d.(yaml.MapSlice)
-		resultMapSlice := make(yaml.MapSlice, len(newDMapSlice))
-
-		findDMapItemByKey := func(key interface{}) (int, *yaml.MapItem) {
-			for ind, elm := range dMapSlice {
-				if elm.Key == key {
-					return ind, &elm
-				}
-			}
-
-			return 0, nil
-		}
-
-		for ind, elm := range newDMapSlice {
-			newEDMapItem := newED.(yaml.MapSlice)[ind]
-			resultMapItem := newEDMapItem
-
-			dInd, dElm := findDMapItemByKey(elm.Key)
-			if dElm != nil {
-				eDMapItem := eD.(yaml.MapSlice)[dInd]
-				result, err := mergeYamlEncodedData(dMapSlice[dInd], eDMapItem, newDMapSlice[ind], newEDMapItem)
-				if err != nil {
-					return nil, err
-				}
-
-				resultMapItem = result.(yaml.MapItem)
-			}
-
-			resultMapSlice[ind] = resultMapItem
-		}
-
-		return resultMapSlice, nil
-	case yaml.MapItem:
-		var resultMapItem yaml.MapItem
-		newDMapItem := newD
-		newEDMapItem := newED.(yaml.MapItem)
-		dMapItem := d.(yaml.MapItem)
-		eDMapItem := eD.(yaml.MapItem)
-
-		resultMapItem.Key = newDMapItem.Key
-
-		resultValue, err := mergeYamlEncodedData(dMapItem.Value, eDMapItem.Value, newDMapItem.Value, newEDMapItem.Value)
-		if err != nil {
-			return nil, err
-		}
-
-		resultMapItem.Value = resultValue
-
-		return resultMapItem, nil
-	default:
-		if !reflect.DeepEqual(d, newD) {
-			return newED, nil
-		} else {
-			return eD, nil
-		}
-	}
 }
