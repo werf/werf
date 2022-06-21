@@ -1,5 +1,22 @@
 # Changelog
 
+### [1.2.117](https://www.github.com/werf/werf/compare/v1.2.116...v1.2.117) (2022-06-21)
+
+
+### Features
+
+* **buildah:** $WERF_CONTAINERIZED will override in container detection ([5766e6a](https://www.github.com/werf/werf/commit/5766e6a0fa6bc5400190805e6708d70ae3b3f10a))
+* **buildah:** container runtime autodetection ([695ae97](https://www.github.com/werf/werf/commit/695ae97dfc28c23763257b20223f6de3b8758abb))
+* **secrets:** preserve comments, order and aliases in the secrets edit commands ([5bc6092](https://www.github.com/werf/werf/commit/5bc6092cf16346fa3e1984959b9571978ad1cc30))
+
+
+### Bug Fixes
+
+* **buildah:** improve whether we are in container detection ([532a002](https://www.github.com/werf/werf/commit/532a002494963a024d34fb550a8126dd7d4f4933))
+* **host-cleanup:** do not remove v1.2 local storage images ([9702026](https://www.github.com/werf/werf/commit/9702026a2e8b9834520ce08ada399faf5ca8d51c))
+* **host-cleanup:** host cleanup not working in buildah mode ([cb51e32](https://www.github.com/werf/werf/commit/cb51e3255601756a82143387f656e7d4670b0cab))
+* **host-cleanup:** run host cleanup without docker-server in buildah mode ([f1b1403](https://www.github.com/werf/werf/commit/f1b140316c7868e8a7bc12a52531603449d7cff3))
+
 ### [1.2.116](https://www.github.com/werf/werf/compare/v1.2.115...v1.2.116) (2022-06-16)
 
 
