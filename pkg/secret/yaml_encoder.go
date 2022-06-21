@@ -1,9 +1,10 @@
 package secret
 
 import (
+	"bytes"
 	"fmt"
 
-	"gopkg.in/yaml.v2"
+	yaml_v3 "gopkg.in/yaml.v3"
 )
 
 // YamlEncoder is an Encoder compatible object with additional helpers to work with yaml data: EncryptYamlData and DecryptYamlData
@@ -38,7 +39,7 @@ func (s *YamlEncoder) Encrypt(data []byte) ([]byte, error) {
 }
 
 func (s *YamlEncoder) EncryptYamlData(data []byte) ([]byte, error) {
-	resultData, err := doYamlData(s.generateFunc, data)
+	resultData, err := doYamlDataV2(s.generateFunc, data)
 	if err != nil {
 		return nil, fmt.Errorf("encryption failed: check encryption key and data: %w", err)
 	}
@@ -60,7 +61,7 @@ func (s *YamlEncoder) Decrypt(data []byte) ([]byte, error) {
 }
 
 func (s *YamlEncoder) DecryptYamlData(data []byte) ([]byte, error) {
-	resultData, err := doYamlData(s.extractFunc, data)
+	resultData, err := doYamlDataV2(s.extractFunc, data)
 	if err != nil {
 		if IsExtractDataError(err) {
 			return nil, fmt.Errorf("decryption failed: check data `%s`: %w", string(data), err)
@@ -72,74 +73,87 @@ func (s *YamlEncoder) DecryptYamlData(data []byte) ([]byte, error) {
 	return resultData, nil
 }
 
-func doYamlData(doFunc func([]byte) ([]byte, error), data []byte) ([]byte, error) {
-	config := make(yaml.MapSlice, 0)
-	err := yaml.UnmarshalStrict(data, &config)
-	if err != nil {
-		return nil, err
+func doYamlDataV2(doFunc func([]byte) ([]byte, error), data []byte) ([]byte, error) {
+	var config yaml_v3.Node
+
+	if err := yaml_v3.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal config data: %w", err)
 	}
 
-	resultConfig, err := doYamlValueSecret(doFunc, config)
+	resultConfig, err := doYamlValueSecretV2(doFunc, &config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to process config secrets: %w", err)
 	}
 
-	resultData, err := yaml.Marshal(resultConfig)
-	if err != nil {
-		return nil, err
+	var resultData bytes.Buffer
+
+	yamlEncoder := yaml_v3.NewEncoder(&resultData)
+	yamlEncoder.SetIndent(2)
+	if err := yamlEncoder.Encode(resultConfig); err != nil {
+		return nil, fmt.Errorf("unable to marshal modified config data: %w", err)
 	}
 
-	return resultData, nil
+	return resultData.Bytes(), nil
 }
 
-func doYamlValueSecret(doFunc func([]byte) ([]byte, error), data interface{}) (interface{}, error) {
-	switch data := data.(type) {
-	case yaml.MapSlice:
-		result := make(yaml.MapSlice, len(data))
-		for ind, elm := range data {
-			result[ind].Key = elm.Key
-			resultValue, err := doYamlValueSecret(doFunc, elm.Value)
+func doYamlValueSecretV2(doFunc func([]byte) ([]byte, error), node *yaml_v3.Node) (*yaml_v3.Node, error) {
+	switch node.Kind {
+	case yaml_v3.DocumentNode:
+		for pos := 0; pos < len(node.Content); pos += 1 {
+			newValueNode, err := doYamlValueSecretV2(doFunc, node.Content[pos])
+			if err != nil {
+				return nil, fmt.Errorf("unable to process document key %d: %w", pos, err)
+			}
+			node.Content[pos] = newValueNode
+		}
+
+	case yaml_v3.MappingNode:
+		for pos := 0; pos < len(node.Content); pos += 2 {
+			keyNode := node.Content[pos]
+			valueNode := node.Content[pos+1]
+			newValueNode, err := doYamlValueSecretV2(doFunc, valueNode)
+			if err != nil {
+				return nil, fmt.Errorf("unable to process map key %q: %w", keyNode.Value, err)
+			}
+			node.Content[pos+1] = newValueNode
+		}
+
+	case yaml_v3.SequenceNode:
+		for pos := 0; pos < len(node.Content); pos += 1 {
+			newValueNode, err := doYamlValueSecretV2(doFunc, node.Content[pos])
+			if err != nil {
+				return nil, fmt.Errorf("unable to process array key %d: %w", pos, err)
+			}
+			node.Content[pos] = newValueNode
+		}
+
+	case yaml_v3.AliasNode:
+		newAliasNode, err := doYamlValueSecretV2(doFunc, node.Alias)
+		if err != nil {
+			return nil, fmt.Errorf("unable to process an alias node %q: %w", node.Value, err)
+		}
+		node.Alias = newAliasNode
+
+	case yaml_v3.ScalarNode:
+		if node.ShortTag() == "!!str" {
+			var value string
+
+			if err := node.Decode(&value); err != nil {
+				return nil, fmt.Errorf("unable to decode string value %q: %w", node.Value, err)
+			}
+
+			newValue, err := doFunc([]byte(value))
 			if err != nil {
 				return nil, err
 			}
 
-			result[ind].Value = resultValue
-		}
-
-		return result, nil
-	case yaml.MapItem:
-		var result yaml.MapItem
-
-		result.Key = data.Key
-
-		resultValue, err := doYamlValueSecret(doFunc, data.Value)
-		if err != nil {
-			return nil, err
-		}
-
-		result.Value = resultValue
-
-		return result, nil
-	case []interface{}:
-		var result []interface{}
-		for _, elm := range data {
-			resultElm, err := doYamlValueSecret(doFunc, elm)
-			if err != nil {
-				return nil, err
+			if err := node.Encode(string(newValue)); err != nil {
+				return nil, fmt.Errorf("unable to encode string value %q: %w", string(newValue), err)
 			}
-
-			result = append(result, resultElm)
 		}
-
-		return result, nil
-	default:
-		result, err := doFunc([]byte(fmt.Sprintf("%v", data)))
-		if err != nil {
-			return nil, err
-		}
-
-		return string(result), nil
 	}
+
+	return node, nil
 }
 
 func doNothing(data []byte) ([]byte, error) { return data, nil }
