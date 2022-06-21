@@ -14,7 +14,7 @@ ___
 
 **werf** is a solution for implementing efficient and consistent software delivery to Kubernetes. It covers the entire life cycle of CI/CD and related artifacts, gluing commonly used tools (Git, Docker, Helm, K8s) and facilitating best practices.
 
-* werf builds Docker images using Dockerfiles or an alternative fast built-in builder based on the custom syntax. It also deletes unused images from the Docker registry.
+* werf builds Docker images using Dockerfiles or an alternative fast built-in builder based on the custom syntax. It also deletes unused images from the container registry.
 * werf deploys your application to Kubernetes using a chart in the Helm-compatible format with handy customizations and improved rollout tracking mechanism, error detection, and log output.
 
 werf is not a complete CI/CD solution, but a tool for creating pipelines that can be embedded into any existing CI/CD system. It literally "connects the dots" to bring these practices into your application. We consider it a new generation of high-level CI/CD tools.
@@ -42,7 +42,7 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
 
 ## Features
 
-- Full application lifecycle management: build and publish images, deploy an application to Kubernetes, and remove unused images based on policies.
+- Full application lifecycle management: build and publish images, run tests, deploy an application to Kubernetes, and remove unused images based on policies.
 - The description of all rules for building and deploying an application (that may have any number of components) is stored in a single Git repository along with the source code (Single Source Of Truth).
 - Build images using Dockerfiles.
 - Alternatively, werf provides a custom builder tool with support for custom syntax, Ansible, and incremental rebuilds based on Git history.
@@ -65,7 +65,6 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
   - Reduce image size by detaching source data and building tools.
 - Build one image on top of another based on the same config.
 - Debugging tools for inspecting the build process.
-- Detailed output.
 
 ### Deploying
 
@@ -79,21 +78,16 @@ werf is not a complete CI/CD solution, but a tool for creating pipelines that ca
   - Debug problems effortlessly without unnecessary kubectl invocations.
 - Prompt CI pipeline failure in case of a problem (i.e. fail fast).
   - Instant detection of resource failures during the deployment process without having to wait for a timeout.
-- Full compatibility with Helm 2.
-- Ability to limit user permissions using RBAC definition when deploying an application (Tiller is compiled into werf and is run under the ID of the outside user that carries out the deployment).
-- Parallel builds on a single host (using file locks).
-- Distributed parallel deploys (coming soon) [#1620](https://github.com/werf/werf/issues/1620).
-- Сontinuous delivery of images with permanent tags (e.g., when using a branch-based tagging strategy).
+- Full compatibility with Helm.
 
 ### Cleaning up
 
-- Clean up local and Docker registry by enforcing customizable policies.
+- Clean up container registry by enforcing customizable policies.
 - Keep images that are being used in the Kubernetes cluster. werf scans the following kinds of objects: Pod, Deployment, ReplicaSet, StatefulSet, DaemonSet, Job, CronJob, ReplicationController.
 
 ## Production ready
 
 werf is a mature, reliable tool you can trust. [Read about release channels](https://werf.io/about/release_channels.html).
-
 
 ## Documentation
 
