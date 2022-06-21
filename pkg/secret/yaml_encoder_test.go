@@ -1,22 +1,64 @@
 package secret
 
 import (
-	"bytes"
-	"testing"
+	"fmt"
+	"strings"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-type EncoderMock struct{}
+var _ = Describe("YamlEncoder", func() {
+	DescribeTable("encode then decode of yaml config should result in the same yaml config",
+		func(originalData string) {
+			enc := NewYamlEncoder(&EncoderMock{})
 
-func (s *EncoderMock) Encrypt(data []byte) ([]byte, error) {
-	return []byte("encoded data"), nil
-}
+			fmt.Printf("Original data:\n%s\n---\n", strings.TrimSpace(string(originalData)))
 
-func (s *EncoderMock) Decrypt(data []byte) ([]byte, error) {
-	return []byte("data"), nil
-}
+			encodedData, err := enc.EncryptYamlData([]byte(originalData))
+			Expect(err).To(Succeed())
 
-func TestYamlEncoder_doYamlData(t *testing.T) {
-	valuesData := []byte(`image:
+			fmt.Printf("Encoded data:\n%s\n---\n", strings.TrimSpace(string(encodedData)))
+
+			resultData, err := enc.DecryptYamlData(encodedData)
+			Expect(err).To(Succeed())
+
+			fmt.Printf("Decoded data:\n%s\n---\n", strings.TrimSpace(string(resultData)))
+
+			Expect(strings.TrimSpace(originalData)).To(Equal(strings.TrimSpace(string(resultData))), fmt.Sprintf("\n[EXPECTED]\n%q\n[GOT]\n%q\n", originalData, resultData))
+		},
+
+		Entry("simple yaml", `a: one`),
+
+		Entry("yaml with anchors", `
+common_values: &common-values
+  key1: value1
+  key2:
+    aa: bb
+    cc: dd
+  key3:
+    - one
+    - two
+    - three
+# Example list
+common_list: &common-list
+  - name: one
+    value: xxx
+  - name: two
+    value: yyy
+    # Some comment with indent
+values:
+  # Include common values
+  !!merge <<: *common-values
+  key4: value4
+  # include common list
+  key5: *common-list
+`),
+
+		Entry("null yaml", `null`),
+
+		Entry("complex yaml", `
+image:
   repository: data
   tag: data
   pullPolicy: data
@@ -30,9 +72,9 @@ func TestYamlEncoder_doYamlData(t *testing.T) {
     type: data
     externalPort: data
     ports:
-    - name: data
-      protocol: data
-      containerPort: data
+      - name: data
+        protocol: data
+        containerPort: data
   ingress:
     enabled: data
     annotations: data
@@ -50,21 +92,17 @@ func TestYamlEncoder_doYamlData(t *testing.T) {
   nodeSelector: {}
   tolerations: []
   affinity: {}
-`)
+`),
+	)
+})
 
-	enc := NewYamlEncoder(&EncoderMock{})
+type EncoderMock struct{}
 
-	encodedData, err := enc.EncryptYamlData(valuesData)
-	if err != nil {
-		t.Fatal(err)
-	}
+func (s *EncoderMock) Encrypt(data []byte) ([]byte, error) {
+	return []byte(fmt.Sprintf("encoded: %s", data)), nil
+}
 
-	resultData, err := enc.DecryptYamlData(encodedData)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !bytes.Equal(valuesData, resultData) {
-		t.Errorf("\n[EXPECTED]\n%s\n[GOT]\n%s\n", string(valuesData), string(resultData))
-	}
+func (s *EncoderMock) Decrypt(data []byte) ([]byte, error) {
+	decodedData := []byte(strings.TrimPrefix(string(data), "encoded: "))
+	return decodedData, nil
 }
