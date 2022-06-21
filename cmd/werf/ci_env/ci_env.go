@@ -226,6 +226,13 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	writeHeader(w, "DEPLOY", true)
 	writeEnv(w, "WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"), false)
 
+	var releaseChannel string
+	trdlUseWerfGroupChannel := os.Getenv("TRDL_USE_WERF_GROUP_CHANNEL")
+	if trdlUseWerfGroupChannel != "" {
+		releaseChannel = fmt.Sprintf("werf.io/release-channel=%s", trdlUseWerfGroupChannel)
+	}
+	writeEnv(w, "WERF_ADD_ANNOTATION_WERF_RELEASE_CHANNEL", releaseChannel, false)
+
 	var projectGit string
 	ciProjectUrlEnv := os.Getenv("CI_PROJECT_URL")
 	if ciProjectUrlEnv != "" {
@@ -311,6 +318,14 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	writeEnv(w, "WERF_REPO", defaultRepo, false)
 
 	writeHeader(w, "DEPLOY", true)
+
+	var releaseChannel string
+	trdlUseWerfGroupChannel := os.Getenv("TRDL_USE_WERF_GROUP_CHANNEL")
+	if trdlUseWerfGroupChannel != "" {
+		releaseChannel = fmt.Sprintf("werf.io/release-channel=%s", trdlUseWerfGroupChannel)
+	}
+	writeEnv(w, "WERF_ADD_ANNOTATION_WERF_RELEASE_CHANNEL", releaseChannel, false)
+
 	var projectGit string
 	if ciGithubOwnerWithProject != "" {
 		projectGit = fmt.Sprintf("project.werf.io/git=%s", fmt.Sprintf("https://github.com/%s", ciGithubOwnerWithProject))
