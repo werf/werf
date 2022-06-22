@@ -71,8 +71,6 @@ type GitRepo interface {
 	TagCommit(ctx context.Context, tag string) (string, error)
 	WalkCommitFiles(ctx context.Context, commit, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error
 
-	GetCommitSubmodules(ctx context.Context, commit string) error
-
 	StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (list []string, err error)
 	ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error
 }
