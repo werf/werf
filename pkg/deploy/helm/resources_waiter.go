@@ -20,6 +20,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/resource"
@@ -184,6 +185,7 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, resources helm_kube.Res
 			if spec != nil {
 				specs.Canaries = append(specs.Canaries, *spec)
 			}
+		case *unstructured.Unstructured:
 		}
 	}
 
