@@ -225,7 +225,31 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 
 	var desc *true_git.PatchDescriptor
 	if hasSubmodules {
+		var retryCount int
+
+	TryCreatePatch:
 		desc, err = true_git.PatchWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.PatchOptions(opts))
+
+		if true_git.IsCommitsNotPresentError(err) && retryCount == 0 {
+			logboek.Context(ctx).Default().LogF("Detected not present commits when creating patch: %s\n", err)
+			logboek.Context(ctx).Default().LogF("Will switch worktree to original commit %q and retry\n", opts.FromCommit)
+
+			if err := fileHandler.Truncate(0); err != nil {
+				return nil, fmt.Errorf("unable to truncate file %s: %w", tmpFile, err)
+			}
+			if _, err := fileHandler.Seek(0, 0); err != nil {
+				return nil, fmt.Errorf("unable to reset file %s: %w", tmpFile, err)
+			}
+
+			if err := true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.FromCommit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(workTreeDir string) error {
+				return nil
+			}); err != nil {
+				return nil, fmt.Errorf("unable to switch worktree to commit %q: %w", opts.FromCommit, err)
+			}
+
+			retryCount++
+			goto TryCreatePatch
+		}
 	} else {
 		desc, err = true_git.Patch(ctx, fileHandler, gitDir, true_git.PatchOptions(opts))
 	}

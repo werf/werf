@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +13,12 @@ import (
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
+
+var ErrCommitsNotPresent = errors.New("commits not present")
+
+func IsCommitsNotPresentError(err error) bool {
+	return err != nil && strings.HasSuffix(err.Error(), ErrCommitsNotPresent.Error())
+}
 
 func makeDiffParser(out io.Writer, pathScope string, pathMatcher path_matcher.PathMatcher, fileRenames map[string]string) *diffParser {
 	return &diffParser{
@@ -379,7 +386,7 @@ func (p *diffParser) handleModifyFilePathB(line string) error {
 func (p *diffParser) handleSubmoduleLine(line string) error {
 	p.state = unrecognized
 	if strings.HasSuffix(line, " (commits not present)") {
-		return fmt.Errorf("cannot handle \"commits not present\" in git diff line %q, check specified submodule commits are correct", line)
+		return fmt.Errorf("cannot handle git diff line %q, check specified commits are correct: %w", line, ErrCommitsNotPresent)
 	}
 	return nil
 }
