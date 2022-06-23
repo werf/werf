@@ -59,6 +59,7 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 type cleanupManager struct {
 	stageManager stage_manager.Manager
 
+	checksumSourceImageIDs       map[string][]string
 	nonexistentImportMetadataIDs []string
 
 	ProjectName                             string
@@ -709,6 +710,8 @@ FilterOutFinalStages:
 }
 
 func (m *cleanupManager) initImportsMetadata(ctx context.Context, stageDescriptionList []*image.StageDescription) error {
+	m.checksumSourceImageIDs = map[string][]string{}
+
 	importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName, storage.WithCache())
 	if err != nil {
 		return err
@@ -731,13 +734,22 @@ func (m *cleanupManager) initImportsMetadata(ctx context.Context, stageDescripti
 			return nil
 		}
 
+		importSourceID := metadata.ImportSourceID
+		sourceImageID := metadata.SourceImageID
+		checksum := metadata.Checksum
+
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		sourceImageID := metadata.SourceImageID
-		importSourceID := metadata.ImportSourceID
 		stage := findStageByImageID(stageDescriptionList, sourceImageID)
-		if stage == nil {
+		if stage != nil {
+			sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
+			if !ok {
+				sourceImageIDs = []string{}
+			}
+
+			m.checksumSourceImageIDs[checksum] = append(sourceImageIDs, sourceImageID)
+		} else {
 			m.nonexistentImportMetadataIDs = append(m.nonexistentImportMetadataIDs, importSourceID)
 		}
 
@@ -804,6 +816,19 @@ func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDe
 		currentStage = findStageByImageID(stages, currentStage.Info.ParentID)
 		if currentStage == nil {
 			break
+		}
+	}
+
+	for label, checksum := range stage.Info.Labels {
+		if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
+			sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
+			if ok {
+				for _, sourceImageID := range sourceImageIDs {
+					var excludedImportStages []*image.StageDescription
+					stages, excludedImportStages = m.excludeStageAndRelativesByImageID(stages, sourceImageID)
+					excludedStages = append(excludedStages, excludedImportStages...)
+				}
+			}
 		}
 	}
 
