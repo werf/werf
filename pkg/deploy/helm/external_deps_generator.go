@@ -7,17 +7,13 @@ import (
 	"helm.sh/helm/v3/pkg/phases/stages"
 	"helm.sh/helm/v3/pkg/phases/stages/externaldeps"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/restmapper"
 )
 
 func NewStagesExternalDepsGenerator(restClient *action.RESTClientGetter) *StagesExternalDepsGenerator {
 	return &StagesExternalDepsGenerator{
 		restClient:   restClient,
 		metaAccessor: metadataAccessor,
-		scheme:       scheme.Scheme,
 	}
 }
 
@@ -25,7 +21,6 @@ type StagesExternalDepsGenerator struct {
 	restClient   *action.RESTClientGetter
 	gvkBuilder   externaldeps.GVKBuilder
 	metaAccessor meta.MetadataAccessor
-	scheme       *runtime.Scheme
 	initialized  bool
 }
 
@@ -39,12 +34,7 @@ func (s *StagesExternalDepsGenerator) init() error {
 		return fmt.Errorf("error getting REST mapper: %w", err)
 	}
 
-	discoveryClient, err := (*s.restClient).ToDiscoveryClient()
-	if err != nil {
-		return fmt.Errorf("error getting discovery client: %w", err)
-	}
-
-	s.gvkBuilder = NewGVKBuilder(scheme.Scheme, restmapper.NewShortcutExpander(mapper, discoveryClient))
+	s.gvkBuilder = NewGVKBuilder(mapper)
 
 	s.initialized = true
 
@@ -94,7 +84,7 @@ func (s *StagesExternalDepsGenerator) resourceExternalDepsFromAnnotations(annota
 	}
 
 	for _, extDep := range extDepsList {
-		if err := extDep.GenerateInfo(s.gvkBuilder, s.scheme, s.metaAccessor); err != nil {
+		if err := extDep.GenerateInfo(s.gvkBuilder, s.metaAccessor); err != nil {
 			return nil, fmt.Errorf("error generating Info for external dependency: %w", err)
 		}
 	}
