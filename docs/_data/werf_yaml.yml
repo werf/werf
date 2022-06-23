@@ -102,6 +102,11 @@ sections:
               en: The minimum number of hours that must elapse since the image is built
               ru: Минимальное количество часов, которое должно пройти с момента сборки образа
             default: "2"
+          - name: disableImportChecksumBasedPolicy
+            value: "bool"
+            description:
+              en: Disable cleanup policy that allows you to not delete import images that are associated with used import checksums
+              ru: Отключить политику очистки, которая позволяет не удалять импорт-образы, которые связаны с используемыми чексуммами импортов
           - name: keepPolicies
             description:
               en: Set of policies to select relevant images using the Git history

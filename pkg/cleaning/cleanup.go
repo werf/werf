@@ -819,14 +819,16 @@ func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDe
 		}
 	}
 
-	for label, checksum := range stage.Info.Labels {
-		if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-			sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
-			if ok {
-				for _, sourceImageID := range sourceImageIDs {
-					var excludedImportStages []*image.StageDescription
-					stages, excludedImportStages = m.excludeStageAndRelativesByImageID(stages, sourceImageID)
-					excludedStages = append(excludedStages, excludedImportStages...)
+	if !m.ConfigMetaCleanup.DisableImportChecksumBasedPolicy {
+		for label, checksum := range stage.Info.Labels {
+			if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
+				sourceImageIDs, ok := m.checksumSourceImageIDs[checksum]
+				if ok {
+					for _, sourceImageID := range sourceImageIDs {
+						var excludedImportStages []*image.StageDescription
+						stages, excludedImportStages = m.excludeStageAndRelativesByImageID(stages, sourceImageID)
+						excludedStages = append(excludedStages, excludedImportStages...)
+					}
 				}
 			}
 		}

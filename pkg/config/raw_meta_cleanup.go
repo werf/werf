@@ -11,6 +11,7 @@ type rawMetaCleanup struct {
 	DisableKubernetesBasedPolicy       bool                        `yaml:"disableKubernetesBasedPolicy,omitempty"`
 	DisableGitHistoryBasedPolicy       bool                        `yaml:"disableGitHistoryBasedPolicy,omitempty"`
 	DisableBuiltWithinLastNHoursPolicy bool                        `yaml:"disableBuiltWithinLastNHoursPolicy,omitempty"`
+	DisableImportChecksumBasedPolicy   bool                        `yaml:"disableImportChecksumBasedPolicy,omitempty"`
 	KeepPolicies                       []*rawMetaCleanupKeepPolicy `yaml:"keepPolicies,omitempty"`
 	KeepImagesBuiltWithinLastNHours    *uint64                     `yaml:"keepImagesBuiltWithinLastNHours,omitempty"`
 
@@ -192,6 +193,7 @@ func (c *rawMetaCleanup) toMetaCleanup() MetaCleanup {
 
 	metaCleanup.DisableKubernetesBasedPolicy = c.DisableKubernetesBasedPolicy
 	metaCleanup.DisableBuiltWithinLastNHoursPolicy = c.DisableBuiltWithinLastNHoursPolicy
+	metaCleanup.DisableImportChecksumBasedPolicy = c.DisableImportChecksumBasedPolicy
 	metaCleanup.DisableGitHistoryBasedPolicy = c.DisableGitHistoryBasedPolicy
 
 	for _, policy := range c.KeepPolicies {
