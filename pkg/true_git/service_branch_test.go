@@ -31,6 +31,13 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			"-c", "init.defaultBranch=main",
 			"init",
 		)
+
+		utils.RunSucceedCommand(
+			sourceWorkTreeDir,
+			"git",
+			"checkout", "-b", "main",
+		)
+
 		gitDir = filepath.Join(sourceWorkTreeDir, ".git")
 
 		utils.RunSucceedCommand(

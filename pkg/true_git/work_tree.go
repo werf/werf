@@ -212,7 +212,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 	_, err := os.Stat(workTreeDir)
 	switch {
 	case os.IsNotExist(err):
-		wtAddCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "add", "--force", "--detach", workTreeDir, commit)
+		wtAddCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "add", "--force", "--force", "--detach", workTreeDir, commit)
 		if err = wtAddCmd.Run(ctx); err != nil {
 			return fmt.Errorf("git worktree add command failed: %w", err)
 		}
