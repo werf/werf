@@ -37,6 +37,7 @@ type LegacyImageInterface interface {
 
 	SetStageDescription(stage *image.StageDescription)
 	GetStageDescription() *image.StageDescription
+	SetCommitChangeOptions(opts LegacyCommitChangeOptions)
 
 	GetCopy() LegacyImageInterface
 }

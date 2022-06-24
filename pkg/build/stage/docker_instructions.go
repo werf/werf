@@ -30,8 +30,14 @@ type DockerInstructionsStage struct {
 	instructions *config.Docker
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
+func (s *DockerInstructionsStage) GetDependencies(_ context.Context, c Conveyor, backend container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	var args []string
+
+	// FIXME: add to digest if option set, keep current compatible digest otherwise
+
+	if c.UseLegacyStapelBuilder(backend) && s.instructions.ExactValues {
+		args = append(args, "exact-values:::")
+	}
 
 	args = append(args, s.instructions.Volume...)
 	args = append(args, s.instructions.Expose...)
@@ -61,6 +67,10 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 }
 
 func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
+	if c.UseLegacyStapelBuilder(cr) {
+		stageImage.Image.SetCommitChangeOptions(container_backend.LegacyCommitChangeOptions{ExactValues: s.instructions.ExactValues})
+	}
+
 	if err := s.BaseStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
