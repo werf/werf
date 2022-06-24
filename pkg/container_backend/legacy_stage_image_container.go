@@ -40,7 +40,7 @@ func (c *LegacyStageImageContainer) Name() string {
 }
 
 func (c *LegacyStageImageContainer) UserCommitChanges() []string {
-	return c.commitChangeOptions.toCommitChanges()
+	return c.commitChangeOptions.toCommitChanges(c.image.commitChangeOptions)
 }
 
 func (c *LegacyStageImageContainer) UserRunCommands() []string {
@@ -201,13 +201,13 @@ func (c *LegacyStageImageContainer) prepareIntrospectOptions(ctx context.Context
 	return c.prepareRunOptions(ctx)
 }
 
-func (c *LegacyStageImageContainer) prepareCommitChanges(ctx context.Context) ([]string, error) {
+func (c *LegacyStageImageContainer) prepareCommitChanges(ctx context.Context, opts LegacyCommitChangeOptions) ([]string, error) {
 	commitOptions, err := c.prepareCommitOptions(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	commitChanges, err := commitOptions.prepareCommitChanges(ctx)
+	commitChanges, err := commitOptions.prepareCommitChanges(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -324,10 +324,12 @@ func IsStartContainerErr(err error) bool {
 func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) {
 	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
-	commitChanges, err := c.prepareCommitChanges(ctx)
+	commitChanges, err := c.prepareCommitChanges(ctx, c.image.commitChangeOptions)
 	if err != nil {
 		return "", err
 	}
+
+	fmt.Printf("!!! LegacyStageImageContainer.commit Changes:%#v\n", commitChanges)
 
 	commitOptions := types.ContainerCommitOptions{Changes: commitChanges}
 	id, err := docker.ContainerCommit(ctx, c.name, commitOptions)

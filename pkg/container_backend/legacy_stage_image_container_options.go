@@ -3,13 +3,20 @@ package container_backend
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/hashicorp/go-version"
 
 	"github.com/werf/werf/pkg/docker"
 )
 
+type LegacyCommitChangeOptions struct {
+	ExactValues bool
+}
+
 type LegacyStageImageContainerOptions struct {
+	dockerServerVersion string
+
 	Volume      []string
 	VolumesFrom []string
 	Expose      []string
@@ -132,6 +139,19 @@ func (co *LegacyStageImageContainerOptions) merge(co2 *LegacyStageImageContainer
 	return mergedCo
 }
 
+func getKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func sortStrings(arr []string) []string {
+	sort.Strings(arr)
+	return arr
+}
+
 func (co *LegacyStageImageContainerOptions) toRunArgs() ([]string, error) {
 	var args []string
 
@@ -143,12 +163,12 @@ func (co *LegacyStageImageContainerOptions) toRunArgs() ([]string, error) {
 		args = append(args, fmt.Sprintf("--volumes-from=%s", volumesFrom))
 	}
 
-	for key, value := range co.Env {
-		args = append(args, fmt.Sprintf("--env=%s=%v", key, value))
+	for _, k := range sortStrings(getKeys(co.Env)) {
+		args = append(args, fmt.Sprintf("--env=%s=%v", k, co.Env[k]))
 	}
 
-	for key, value := range co.Label {
-		args = append(args, fmt.Sprintf("--label=%s=%v", key, value))
+	for _, k := range sortStrings(getKeys(co.Label)) {
+		args = append(args, fmt.Sprintf("--label=%s=%v", k, co.Label[k]))
 	}
 
 	if co.User != "" {
@@ -166,23 +186,23 @@ func (co *LegacyStageImageContainerOptions) toRunArgs() ([]string, error) {
 	return args, nil
 }
 
-func (co *LegacyStageImageContainerOptions) toCommitChanges() []string {
+func (co *LegacyStageImageContainerOptions) toCommitChanges(opts LegacyCommitChangeOptions) []string {
 	var args []string
 
 	for _, volume := range co.Volume {
-		args = append(args, fmt.Sprintf("VOLUME %s", volume))
+		args = append(args, fmt.Sprintf("VOLUME %s", escapeVolume(volume, opts.ExactValues)))
 	}
 
 	for _, expose := range co.Expose {
-		args = append(args, fmt.Sprintf("EXPOSE %s", expose))
+		args = append(args, fmt.Sprintf("EXPOSE %s", defaultEscape(expose, opts.ExactValues)))
 	}
 
-	for key, value := range co.Env {
-		args = append(args, fmt.Sprintf("ENV %s=%v", key, value))
+	for _, k := range sortStrings(getKeys(co.Env)) {
+		args = append(args, fmt.Sprintf("ENV %s=%s", k, defaultEscape(co.Env[k], opts.ExactValues)))
 	}
 
-	for key, value := range co.Label {
-		args = append(args, fmt.Sprintf("LABEL %s=%v", key, value))
+	for _, k := range sortStrings(getKeys(co.Label)) {
+		args = append(args, fmt.Sprintf("LABEL %s=%s", k, defaultEscape(co.Label[k], opts.ExactValues)))
 	}
 
 	if co.Cmd != "" {
@@ -208,23 +228,25 @@ func (co *LegacyStageImageContainerOptions) toCommitChanges() []string {
 	return args
 }
 
-func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Context) ([]string, error) {
+func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Context, opts LegacyCommitChangeOptions) ([]string, error) {
 	var args []string
 
+	fmt.Printf("-- LegacyStageImageContainerOptions.prepareCommitChanges opts.ExactValues=%v\n", opts.ExactValues)
+
 	for _, volume := range co.Volume {
-		args = append(args, fmt.Sprintf("VOLUME %s", volume))
+		args = append(args, fmt.Sprintf("VOLUME %s", escapeVolume(volume, opts.ExactValues)))
 	}
 
 	for _, expose := range co.Expose {
-		args = append(args, fmt.Sprintf("EXPOSE %s", expose))
+		args = append(args, fmt.Sprintf("EXPOSE %s", defaultEscape(expose, opts.ExactValues)))
 	}
 
-	for key, value := range co.Env {
-		args = append(args, fmt.Sprintf("ENV %s=%v", key, value))
+	for _, k := range sortStrings(getKeys(co.Env)) {
+		args = append(args, fmt.Sprintf("ENV %s=%s", k, defaultEscape(co.Env[k], opts.ExactValues)))
 	}
 
-	for key, value := range co.Label {
-		args = append(args, fmt.Sprintf("LABEL %s=%v", key, value))
+	for _, k := range sortStrings(getKeys(co.Label)) {
+		args = append(args, fmt.Sprintf("LABEL %s=%s", k, defaultEscape(co.Label[k], opts.ExactValues)))
 	}
 
 	if co.Workdir != "" {
@@ -240,7 +262,7 @@ func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Con
 	if co.Entrypoint != "" {
 		entrypoint = co.Entrypoint
 	} else {
-		entrypoint, err = getEmptyEntrypointInstructionValue(ctx)
+		entrypoint, err = getEmptyEntrypointInstructionValue(ctx, co.dockerServerVersion)
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %w", err)
 		}
@@ -261,13 +283,20 @@ func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Con
 	return args, nil
 }
 
-func getEmptyEntrypointInstructionValue(ctx context.Context) (string, error) {
-	v, err := docker.ServerVersion(ctx)
-	if err != nil {
-		return "", err
+func getEmptyEntrypointInstructionValue(ctx context.Context, dockerServerVersion string) (string, error) {
+	var rawServerVersion string
+
+	if dockerServerVersion == "" {
+		v, err := docker.ServerVersion(ctx)
+		if err != nil {
+			return "", fmt.Errorf("unable to query docker server version: %w", err)
+		}
+		rawServerVersion = v.Version
+	} else {
+		rawServerVersion = dockerServerVersion
 	}
 
-	serverVersion, err := version.NewVersion(v.Version)
+	serverVersion, err := version.NewVersion(rawServerVersion)
 	if err != nil {
 		return "", err
 	}
@@ -282,4 +311,27 @@ func getEmptyEntrypointInstructionValue(ctx context.Context) (string, error) {
 	}
 
 	return "[\"\"]", nil
+}
+
+// FIXME: remove escaping in 2.0 or 1.3
+func escapeVolume(volume string, exactValues bool) string {
+	if exactValues {
+		return fmt.Sprintf("[%s]", quoteValue(volume))
+	}
+	return volume
+}
+
+func defaultEscape(value string, exactValues bool) string {
+	return doEscape(value, exactValues, quoteValue)
+}
+
+func doEscape(value string, exactValues bool, escaper func(string) string) string {
+	if exactValues {
+		return escaper(value)
+	}
+	return value
+}
+
+func quoteValue(value string) string {
+	return fmt.Sprintf("%q", value)
 }

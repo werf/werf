@@ -15,10 +15,11 @@ import (
 
 type LegacyStageImage struct {
 	*legacyBaseImage
-	fromImage  *LegacyStageImage
-	container  *LegacyStageImageContainer
-	buildImage *legacyBaseImage
-	builtID    string
+	fromImage           *LegacyStageImage
+	container           *LegacyStageImageContainer
+	buildImage          *legacyBaseImage
+	builtID             string
+	commitChangeOptions LegacyCommitChangeOptions
 }
 
 func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerBackend ContainerBackend) *LegacyStageImage {
@@ -40,6 +41,10 @@ func (i *LegacyStageImage) GetCopy() LegacyImageInterface {
 	}
 
 	return ni
+}
+
+func (i *LegacyStageImage) SetCommitChangeOptions(opts LegacyCommitChangeOptions) {
+	i.commitChangeOptions = opts
 }
 
 func (i *LegacyStageImage) BuilderContainer() LegacyBuilderContainer {

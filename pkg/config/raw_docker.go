@@ -16,6 +16,8 @@ type rawDocker struct {
 	Entrypoint  interface{}       `yaml:"ENTRYPOINT,omitempty"`
 	HealthCheck string            `yaml:"HEALTHCHECK,omitempty"`
 
+	ExactValues bool `yaml:"exactValues,omitempty"`
+
 	rawStapelImage *rawStapelImage `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
@@ -76,6 +78,7 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 	}
 
 	docker.HealthCheck = c.HealthCheck
+	docker.ExactValues = c.ExactValues
 
 	docker.raw = c
 

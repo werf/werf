@@ -11,6 +11,8 @@ type Docker struct {
 	Entrypoint  string
 	HealthCheck string
 
+	ExactValues bool
+
 	raw *rawDocker
 }
 
