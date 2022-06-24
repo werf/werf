@@ -39,6 +39,59 @@ var _ = Describe("Work tree helpers", func() {
 		})
 	})
 
+	When("side worktree was previously added and locked", func() {
+		When("no submodules are used", func() {
+			var mainWtDir, sideWtDir string
+
+			BeforeEach(func() {
+				mainWtDir = filepath.Join(SuiteData.TestDirPath, "main-wt")
+				sideWtDir = filepath.Join(SuiteData.TestDirPath, "side-wt")
+
+				Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
+
+				utils.RunSucceedCommand(
+					mainWtDir,
+					"git",
+					"-c", "init.defaultBranch=main",
+					"init",
+				)
+
+				utils.RunSucceedCommand(
+					mainWtDir,
+					"git",
+					"checkout", "-b", "main",
+				)
+
+				utils.RunSucceedCommand(
+					mainWtDir,
+					"git",
+					"commit", "--allow-empty", "-m", "Initial commit",
+				)
+
+				utils.RunSucceedCommand(
+					mainWtDir,
+					"git", "worktree", "add", sideWtDir,
+				)
+
+				utils.RunSucceedCommand(
+					mainWtDir,
+					"git", "worktree", "lock", sideWtDir,
+				)
+
+				err := os.RemoveAll(sideWtDir)
+				Expect(err).To(Succeed())
+			})
+
+			It("should replace worktree without errors", func() {
+				ctx := context.Background()
+
+				commit := getHeadCommit(ctx, mainWtDir)
+
+				Expect(switchWorkTree(ctx, mainWtDir, sideWtDir, commit, false)).To(Succeed())
+			})
+		})
+	})
+
 	Describe("verifyWorkTreeConsistency", func() {
 		var mainWtDir, sideWtDir string
 		BeforeEach(func() {
@@ -52,6 +105,12 @@ var _ = Describe("Work tree helpers", func() {
 				"git",
 				"-c", "init.defaultBranch=main",
 				"init",
+			)
+
+			utils.RunSucceedCommand(
+				mainWtDir,
+				"git",
+				"checkout", "-b", "main",
 			)
 
 			utils.RunSucceedCommand(
@@ -84,3 +143,17 @@ var _ = Describe("Work tree helpers", func() {
 		})
 	})
 })
+
+func getHeadCommit(ctx context.Context, repoDir string) string {
+	refs, err := ShowRef(ctx, repoDir)
+	Expect(err).To(Succeed())
+
+	for _, ref := range refs.Refs {
+		if ref.IsHEAD {
+			return ref.Commit
+		}
+	}
+
+	Expect(fmt.Errorf("head commit not found")).NotTo(HaveOccurred())
+	return ""
+}

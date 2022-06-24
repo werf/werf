@@ -28,6 +28,12 @@ var _ = Describe("Git command", func() {
 		utils.RunSucceedCommand(
 			gitRepoPath,
 			"git",
+			"checkout", "-b", "main",
+		)
+
+		utils.RunSucceedCommand(
+			gitRepoPath,
+			"git",
 			"commit", "--allow-empty", "-m", "Initial commit",
 		)
 
