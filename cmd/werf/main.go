@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -52,8 +53,13 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
+	common.InitTelemetry(ctx)
+
 	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
 	if err != nil {
+		common.ShutdownTelemetry(ctx, 1)
 		common.TerminateWithError(err.Error(), 1)
 	}
 	if shouldTerminate {
@@ -65,6 +71,7 @@ func main() {
 	logrus.StandardLogger().SetOutput(logboek.OutStream())
 
 	if err := process_exterminator.Init(); err != nil {
+		common.ShutdownTelemetry(ctx, 1)
 		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)
 	}
 
@@ -72,9 +79,12 @@ func main() {
 
 	if err := rootCmd.Execute(); err != nil {
 		if helm_v3.IsPluginError(err) {
+			common.ShutdownTelemetry(ctx, helm_v3.PluginErrorCode(err))
 			common.TerminateWithError(err.Error(), helm_v3.PluginErrorCode(err))
+		} else {
+			common.ShutdownTelemetry(ctx, 1)
+			common.TerminateWithError(err.Error(), 1)
 		}
-		common.TerminateWithError(err.Error(), 1)
 	}
 }
 

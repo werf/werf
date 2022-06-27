@@ -62,3 +62,8 @@ build-images:
 clean:
 	rm -f $$GOPATH/bin/werf
 	rm -f $$GOPATH/buildah-test
+
+.PHOME: local-telemetry
+local-telemetry:
+	cd scripts/local-telemetry ; docker-compose down
+	cd scripts/local-telemetry ; docker-compose up -d
