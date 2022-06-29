@@ -33,8 +33,6 @@ type DockerInstructionsStage struct {
 func (s *DockerInstructionsStage) GetDependencies(_ context.Context, c Conveyor, backend container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	var args []string
 
-	// FIXME: add to digest if option set, keep current compatible digest otherwise
-
 	if c.UseLegacyStapelBuilder(backend) && s.instructions.ExactValues {
 		args = append(args, "exact-values:::")
 	}
