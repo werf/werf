@@ -3,7 +3,10 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"os"
 	"runtime"
+
+	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/util"
@@ -11,10 +14,16 @@ import (
 )
 
 const (
-	URL = "http://localhost:4318/v1/metrics"
+	MetricsURL = "http://localhost:4318/v1/metrics"
+	TracesURL  = "http://localhost:4318/v1/traces"
 )
 
-var metrics *Metrics
+var (
+	executionID string
+	projectID   string
+	command     string
+	metrics     *Metrics
+)
 
 func ChangeMetrics(changeFunc func(metrics *Metrics)) {
 	if !IsEnabled() {
@@ -28,6 +37,10 @@ func Init(ctx context.Context) error {
 		return nil
 	}
 
+	executionID = uuid.New().String()
+	projectID = "26a38bba-51ed-4f93-8104-e6f51a5454ef"
+	command = fmt.Sprintf("%v", os.Args)
+
 	metrics = &Metrics{
 		Version: werf.Version,
 		Command: "TODO",
@@ -35,8 +48,8 @@ func Init(ctx context.Context) error {
 		Arch:    runtime.GOARCH,
 	}
 
-	if err := SetupController(ctx, URL); err != nil {
-		return fmt.Errorf("unable to setup telemetry controller for url %q: %w", URL, err)
+	if err := SetupTraceExporter(ctx, TracesURL); err != nil {
+		return fmt.Errorf("unable to setup telemetry traces exporter for url %q: %w", TracesURL, err)
 	}
 
 	return nil
@@ -47,16 +60,12 @@ func Shutdown(ctx context.Context) error {
 		return nil
 	}
 
-	if err := metrics.WriteOpenTelemetry(ctx, ctrl.Meter("werf")); err != nil {
-		return fmt.Errorf("unable to write open telemetry data: %w", err)
+	if err := traceExporter.Shutdown(ctx); err != nil {
+		return fmt.Errorf("unable to shutdown trace exporter: %w", err)
 	}
 
-	if err := ctrl.Collect(ctx); err != nil {
-		return fmt.Errorf("otel controller collection failed: %w", err)
-	}
-
-	if err := exporter.Export(ctx, ctrl.Resource(), ctrl); err != nil {
-		return fmt.Errorf("unable to export telemetry: %w", err)
+	if err := tracerProvider.Shutdown(ctx); err != nil {
+		return fmt.Errorf("unable to shutdown trace provider: %w", err)
 	}
 
 	logboek.Context(ctx).Debug().LogF("Telemetry collection done\n")

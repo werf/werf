@@ -3,12 +3,20 @@ receivers:
     protocols:
       http:
 
-exporters:
-  prometheus:
-    endpoint: "0.0.0.0:8889"
-
 processors:
   batch:
+
+exporters:
+  telemetrywerfio:
+    dsn: tcp://clickhouse:9000?database=default
+    timeout: 5s
+    sending_queue:
+      queue_size: 100
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
 
 service:
   telemetry:
@@ -16,7 +24,7 @@ service:
       level: "debug"
 
   pipelines:
-    metrics:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [prometheus]
+    traces:
+      receivers: [ otlp ]
+      processors: [ batch ]
+      exporters: [ telemetrywerfio ]

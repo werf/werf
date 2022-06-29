@@ -14,28 +14,28 @@ import (
 )
 
 var (
-	ctrl     *controller.Controller
-	exporter *otlpmetric.Exporter
+	ctrl           *controller.Controller
+	metricExporter *otlpmetric.Exporter
 )
 
-func SetupController(ctx context.Context, url string) error {
+func SetupMetricExporter(ctx context.Context, url string) error {
 	{
-		e, err := NewExporter(url)
+		e, err := NewMetricExporter(url)
 		if err != nil {
-			return fmt.Errorf("unable to create telemetry exporter: %w", err)
+			return fmt.Errorf("unable to create telemetry metric exporter: %w", err)
 		}
-		exporter = e
+		metricExporter = e
 	}
-	ctrl = NewController(exporter)
+	ctrl = NewController(metricExporter)
 
-	if err := exporter.Start(ctx); err != nil {
-		return fmt.Errorf("error starting telemetry exporter: %w", err)
+	if err := metricExporter.Start(ctx); err != nil {
+		return fmt.Errorf("error starting telemetry metric exporter: %w", err)
 	}
 
 	return nil
 }
 
-func NewExporter(url string) (*otlpmetric.Exporter, error) {
+func NewMetricExporter(url string) (*otlpmetric.Exporter, error) {
 	urlObj, err := neturl.Parse(url)
 	if err != nil {
 		return nil, fmt.Errorf("bad url: %w", err)
