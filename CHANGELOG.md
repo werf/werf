@@ -1,5 +1,20 @@
 # Changelog
 
+### [1.2.118](https://www.github.com/werf/werf/compare/v1.2.117...v1.2.118) (2022-06-29)
+
+
+### Features
+
+* **telemetry:** basic telemetry client and local setup ([6dcbd3e](https://www.github.com/werf/werf/commit/6dcbd3e7d8d108636510a3f22752ddbd5031f31f))
+
+
+### Bug Fixes
+
+* **docker-instructions:** exactOptionValues option to fix docker-server backend options evaluation ([9b3dbf9](https://www.github.com/werf/werf/commit/9b3dbf97b5b7e9e8f3dde1b8966b43d106b08f03))
+* **external-deps:** use Unstructured instead of builtin types ([afbb5b4](https://www.github.com/werf/werf/commit/afbb5b4f96b22e07c570a1c6a233b9addc93cebc))
+* **git-worktree:** ignore existing locked service worktree when re-adding ([7775193](https://www.github.com/werf/werf/commit/7775193d1a7f01ebf93a28b361b10be47d146563))
+* **submodules:** auto handle "commits not present" patch creation error ([91a829b](https://www.github.com/werf/werf/commit/91a829b341fe3da2064f8e3e25d3394783089c2e))
+
 ### [1.2.117](https://www.github.com/werf/werf/compare/v1.2.116...v1.2.117) (2022-06-21)
 
 
