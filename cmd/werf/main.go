@@ -50,12 +50,15 @@ import (
 	"github.com/werf/werf/cmd/werf/synchronization"
 	"github.com/werf/werf/cmd/werf/version"
 	"github.com/werf/werf/pkg/process_exterminator"
+	"github.com/werf/werf/pkg/telemetry"
 )
 
 func main() {
 	ctx := context.Background()
 
 	common.InitTelemetry(ctx)
+
+	telemetry.MessageEvent(ctx, "command started")
 
 	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
 	if err != nil {
