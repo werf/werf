@@ -30,7 +30,7 @@ groups:
     - name: beta
       version: 1.2.117 # https://github.com/werf/werf/releases/tag/v1.2.117
     - name: ea
-      version: 1.2.109+fix2 # https://github.com/werf/werf/releases/tag/v1.2.109+fix2
+      version: 1.2.115 # https://github.com/werf/werf/releases/tag/v1.2.115
     - name: stable
       version: 1.2.109+fix2 # https://github.com/werf/werf/releases/tag/v1.2.109+fix2
     - name: rock-solid
