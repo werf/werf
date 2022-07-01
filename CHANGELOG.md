@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.119](https://www.github.com/werf/werf/compare/v1.2.118...v1.2.119) (2022-07-01)
+
+
+### Features
+
+* **telemetry:** experiments with opentelemetry, traces and clickhouse storage ([2e404a9](https://www.github.com/werf/werf/commit/2e404a963be263498244a473418c025f5646ef10))
+
+
+### Bug Fixes
+
+* **secrets:** panic and incorrect behaviour during secrets edit ([289400d](https://www.github.com/werf/werf/commit/289400d3aec3794dc310942fb81d0b3423843753))
+
 ### [1.2.118](https://www.github.com/werf/werf/compare/v1.2.117...v1.2.118) (2022-06-29)
 
 
