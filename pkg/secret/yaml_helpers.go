@@ -41,6 +41,9 @@ func MergeEncodedYaml(oldData, newData, oldEncodedData, newEncodedData []byte) (
 }
 
 func MergeEncodedYamlNode(oldConfig, newConfig, oldEncodedConfig, newEncodedConfig *yaml_v3.Node) (*yaml_v3.Node, error) {
+	if oldConfig == nil {
+		return newEncodedConfig, nil
+	}
 	if newConfig.Kind != oldConfig.Kind {
 		return newEncodedConfig, nil
 	}
@@ -48,7 +51,12 @@ func MergeEncodedYamlNode(oldConfig, newConfig, oldEncodedConfig, newEncodedConf
 	switch newEncodedConfig.Kind {
 	case yaml_v3.DocumentNode:
 		for pos := 0; pos < len(newEncodedConfig.Content); pos += 1 {
-			newValueNode, err := MergeEncodedYamlNode(oldConfig.Content[pos], newConfig.Content[pos], oldEncodedConfig.Content[pos], newEncodedConfig.Content[pos])
+			newEncodedValue := newEncodedConfig.Content[pos]
+			newValue := newConfig.Content[pos]
+			oldEncodedValue := getSubNodeByIndex(oldEncodedConfig, pos)
+			oldValue := getSubNodeByIndex(oldConfig, pos)
+
+			newValueNode, err := MergeEncodedYamlNode(oldValue, newValue, oldEncodedValue, newEncodedValue)
 			if err != nil {
 				return nil, fmt.Errorf("unable to process document key %d: %w", pos, err)
 			}
@@ -57,7 +65,14 @@ func MergeEncodedYamlNode(oldConfig, newConfig, oldEncodedConfig, newEncodedConf
 
 	case yaml_v3.MappingNode:
 		for pos := 0; pos < len(newEncodedConfig.Content); pos += 2 {
-			newValueNode, err := MergeEncodedYamlNode(oldConfig.Content[pos+1], newConfig.Content[pos+1], oldEncodedConfig.Content[pos+1], newEncodedConfig.Content[pos+1])
+			newKey := newEncodedConfig.Content[pos]
+
+			newEncodedValue := newEncodedConfig.Content[pos+1]
+			newValue := newConfig.Content[pos+1]
+			oldEncodedValue := getSubNodeByKey(oldEncodedConfig, newKey.Value)
+			oldValue := getSubNodeByKey(oldConfig, newKey.Value)
+
+			newValueNode, err := MergeEncodedYamlNode(oldValue, newValue, oldEncodedValue, newEncodedValue)
 			if err != nil {
 				return nil, fmt.Errorf("unable to process map key %q: %w", newEncodedConfig.Content[pos].Value, err)
 			}
@@ -66,7 +81,12 @@ func MergeEncodedYamlNode(oldConfig, newConfig, oldEncodedConfig, newEncodedConf
 
 	case yaml_v3.SequenceNode:
 		for pos := 0; pos < len(newEncodedConfig.Content); pos += 1 {
-			newValueNode, err := MergeEncodedYamlNode(oldConfig.Content[pos], newConfig.Content[pos], oldEncodedConfig.Content[pos], newEncodedConfig.Content[pos])
+			newEncodedValue := newEncodedConfig.Content[pos]
+			newValue := newConfig.Content[pos]
+			oldEncodedValue := getSubNodeByIndex(oldEncodedConfig, pos)
+			oldValue := getSubNodeByIndex(oldConfig, pos)
+
+			newValueNode, err := MergeEncodedYamlNode(oldValue, newValue, oldEncodedValue, newEncodedValue)
 			if err != nil {
 				return nil, fmt.Errorf("unable to process array key %d: %w", pos, err)
 			}
@@ -88,4 +108,21 @@ func MergeEncodedYamlNode(oldConfig, newConfig, oldEncodedConfig, newEncodedConf
 	}
 
 	return newEncodedConfig, nil
+}
+
+func getSubNodeByIndex(node *yaml_v3.Node, ind int) *yaml_v3.Node {
+	if ind < len(node.Content) {
+		return node.Content[ind]
+	}
+	return nil
+}
+
+func getSubNodeByKey(node *yaml_v3.Node, rawKey string) *yaml_v3.Node {
+	for i := 0; i < len(node.Content); i += 2 {
+		k, v := node.Content[i], node.Content[i+1]
+		if k.Value == rawKey {
+			return v
+		}
+	}
+	return nil
 }

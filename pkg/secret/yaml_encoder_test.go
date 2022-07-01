@@ -28,7 +28,14 @@ var _ = Describe("YamlEncoder", func() {
 			Expect(strings.TrimSpace(originalData)).To(Equal(strings.TrimSpace(string(resultData))), fmt.Sprintf("\n[EXPECTED]\n%q\n[GOT]\n%q\n", originalData, resultData))
 		},
 
-		Entry("simple yaml", `a: one`),
+		Entry("simple yaml", `
+a: one
+bbb:
+  url: http://service:3441/bbb
+postgresql:
+  password:
+    _default: "1234"
+`),
 
 		Entry("yaml with anchors", `
 common_values: &common-values
