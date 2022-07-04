@@ -34,9 +34,14 @@ func NewTelemetryWerfIO(url string) (*TelemetryWerfIO, error) {
 	}
 
 	return &TelemetryWerfIO{
-		tracerProvider: sdktrace.NewTracerProvider(sdktrace.WithSyncer(e)),
-		traceExporter:  e,
-		executionID:    uuid.New().String(),
+		tracerProvider: sdktrace.NewTracerProvider(
+			sdktrace.WithBatcher(e,
+				sdktrace.WithBatchTimeout(0),
+				sdktrace.WithExportTimeout(3*time.Second),
+			),
+		),
+		traceExporter: e,
+		executionID:   uuid.New().String(),
 	}, nil
 }
 

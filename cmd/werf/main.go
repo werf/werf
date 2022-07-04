@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -75,7 +74,7 @@ func getFullCommandName(cmd *cobra.Command) string {
 }
 
 func main() {
-	ctx := context.Background()
+	ctx := common.GetContext()
 
 	common.InitTelemetry(ctx)
 
@@ -138,6 +137,8 @@ func main() {
 			common.TerminateWithError(err.Error(), 1)
 		}
 	}
+
+	common.ShutdownTelemetry(ctx, 0)
 }
 
 func constructRootCmd() *cobra.Command {

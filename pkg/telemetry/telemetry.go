@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"go.opentelemetry.io/otel"
+
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -20,7 +22,11 @@ func GetTelemetryWerfIO() TelemetryWerfIOInterface {
 	return telemetrywerfio
 }
 
-func Init(ctx context.Context) error {
+type TelemetryOptions struct {
+	ErrorHandlerFunc func(err error)
+}
+
+func Init(ctx context.Context, opts TelemetryOptions) error {
 	if !IsEnabled() {
 		return nil
 	}
@@ -31,7 +37,21 @@ func Init(ctx context.Context) error {
 		telemetrywerfio = t
 	}
 
+	otel.SetErrorHandler(&callFuncErrorHandler{f: opts.ErrorHandlerFunc})
+
+	if err := telemetrywerfio.Start(ctx); err != nil {
+		return fmt.Errorf("unable to start telemetry.werf.io exporter: %w", err)
+	}
+
 	return nil
+}
+
+type callFuncErrorHandler struct{ f func(error) }
+
+func (h *callFuncErrorHandler) Handle(err error) {
+	if h.f != nil {
+		h.f(err)
+	}
 }
 
 func Shutdown(ctx context.Context) error {
