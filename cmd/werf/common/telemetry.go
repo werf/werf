@@ -2,21 +2,32 @@ package common
 
 import (
 	"context"
+	"fmt"
+	"os"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/telemetry"
+	"github.com/werf/werf/pkg/util"
 )
 
 func InitTelemetry(ctx context.Context) {
-	// TODO: append error to the ~/.werf/telemetry_errors.log
-	if err := telemetry.Init(ctx); err != nil {
-		logboek.Context(ctx).Debug().LogF("Telemetry: init error: %s\n", err)
+	if err := telemetry.Init(ctx, telemetry.TelemetryOptions{
+		ErrorHandlerFunc: func(err error) {
+			logTelemetryError(ctx, err.Error())
+		},
+	}); err != nil {
+		logTelemetryError(ctx, fmt.Sprintf("unable to init: %s", err))
 	}
 }
 
 func ShutdownTelemetry(ctx context.Context, exitCode int) {
-	// TODO: append error to the ~/.werf/telemetry_errors.log
 	if err := telemetry.Shutdown(ctx); err != nil {
-		logboek.Context(ctx).Debug().LogF("Telemetry: shutdown error: %s\n", err)
+		logTelemetryError(ctx, fmt.Sprintf("unable to shutdown: %s", err))
 	}
+}
+
+func logTelemetryError(ctx context.Context, msg string) {
+	if !util.GetBoolEnvironmentDefaultFalse("WERF_TELEMETRY_LOGS") {
+		return
+	}
+	fmt.Fprintf(os.Stderr, "Telemetry error: %s\n", msg)
 }
