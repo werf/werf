@@ -1,17 +1,6 @@
 package telemetry
 
-import (
-	"context"
-	"fmt"
-	neturl "net/url"
-	"time"
-
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
-	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
-	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
-	"go.opentelemetry.io/otel/sdk/metric/selector/simple"
-)
+/* Metric exporter initialization example
 
 var (
 	ctrl           *controller.Controller
@@ -70,3 +59,34 @@ func NewController(exporter *otlpmetric.Exporter) *controller.Controller {
 		controller.WithPushTimeout(5*time.Second),
 	)
 }
+*/
+
+/* Metric exporter usage example
+
+type Metrics struct {
+	Version  string
+	Command  string
+	OS       string
+	Arch     string
+	ExitCode int
+}
+
+func (m *Metrics) WriteOpenTelemetry(ctx context.Context, meter metric.Meter) error {
+	labels := []attribute.KeyValue{
+		attribute.String("version", m.Version),
+		attribute.String("command", m.Command),
+		attribute.String("os", m.OS),
+		attribute.String("arch", m.Arch),
+		attribute.Int("exit_code", m.ExitCode),
+	}
+
+	runCounter, err := meter.SyncInt64().Counter("runs", instrument.WithDescription("werf runs counter"))
+	if err != nil {
+		return fmt.Errorf("unable to record runs counter: %w", err)
+	}
+	runCounter.Add(ctx, 1, labels...)
+	logboek.Context(ctx).Debug().LogF("Telemetry: incremented runs counter: %#v\n", runCounter)
+
+	return nil
+}
+*/
