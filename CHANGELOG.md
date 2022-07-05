@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.120](https://www.github.com/werf/werf/compare/v1.2.119...v1.2.120) (2022-07-05)
+
+
+### Features
+
+* **kubedog:** generic resources tracking ([93ed2e5](https://www.github.com/werf/werf/commit/93ed2e524436dda75289f6b34ff0a16bb963fb86))
+
 ### [1.2.119](https://www.github.com/werf/werf/compare/v1.2.118...v1.2.119) (2022-07-01)
 
 
