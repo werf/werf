@@ -444,7 +444,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.OutStream(), helm_v3.UpgradeCmdOptions{
 		StagesSplitter:              helm.NewStagesSplitter(),
-		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter),
+		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),
 		ChainPostRenderer:           wc.ChainPostRenderer,
 		ValueOpts:                   valueOpts,
 		CreateNamespace:             common.NewBool(true),
