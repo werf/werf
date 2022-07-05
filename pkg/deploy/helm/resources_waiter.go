@@ -17,7 +17,6 @@ import (
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	appsv1beta2 "k8s.io/api/apps/v1beta2"
 	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -28,8 +27,10 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/kubedog/pkg/tracker"
+	"github.com/werf/kubedog/pkg/tracker/resid"
 	"github.com/werf/kubedog/pkg/trackers/elimination"
 	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack"
+	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack/generic"
 	"github.com/werf/logboek"
 )
 
@@ -171,12 +172,6 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, resources helm_kube.Res
 			if spec != nil {
 				specs.Jobs = append(specs.Jobs, *spec)
 			}
-		case *v1.ReplicationController:
-		case *extensions.ReplicaSet:
-		case *appsv1beta2.ReplicaSet:
-		case *appsv1.ReplicaSet:
-		case *v1.PersistentVolumeClaim:
-		case *v1.Service:
 		case *flaggerv1beta1.Canary:
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 1, defaultPerReplica: 0}, "canary")
 			if err != nil {
@@ -185,7 +180,26 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, resources helm_kube.Res
 			if spec != nil {
 				specs.Canaries = append(specs.Canaries, *spec)
 			}
-		case *unstructured.Unstructured:
+		default:
+			obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(v.Object)
+			if err != nil {
+				return fmt.Errorf("error converting object to unstructured: %w", err)
+			}
+
+			object := unstructured.Unstructured{
+				Object: obj,
+			}
+
+			resourceID := resid.NewResourceID(object.GetName(), object.GroupVersionKind(), resid.NewResourceIDOptions{
+				Namespace: object.GetNamespace(),
+			})
+
+			if spec, err := makeGenericSpec(ctx, resourceID, waiter.StatusProgressPeriod, timeout, object.GetAnnotations()); err != nil {
+				logboek.Context(ctx).Warn().LogLn()
+				logboek.Context(ctx).Warn().LogF("WARNING %s\n", err)
+			} else if spec != nil {
+				specs.Generics = append(specs.Generics, spec)
+			}
 		}
 	}
 
@@ -199,6 +213,9 @@ func (waiter *ResourcesWaiter) Wait(ctx context.Context, resources helm_kube.Res
 					Timeout:      timeout,
 					LogsFromTime: waiter.LogsFromTime,
 				},
+				DynamicClient:   kube.DynamicClient,
+				DiscoveryClient: kube.CachedDiscoveryClient,
+				Mapper:          kube.Mapper,
 			})
 		})
 }
@@ -363,6 +380,53 @@ mainLoop:
 	return multitrackSpec, nil
 }
 
+func makeGenericSpec(ctx context.Context, resID *resid.ResourceID, statusProgressPeriod, timeout time.Duration, annotations map[string]string) (*generic.Spec, error) {
+	genericSpec := &generic.Spec{
+		ResourceID:           resID,
+		Timeout:              timeout,
+		StatusProgressPeriod: statusProgressPeriod,
+	}
+
+mainLoop:
+	for annoName, annoValue := range annotations {
+		invalidAnnoValueError := fmt.Errorf("%s annotation %s with invalid value %s", resID, annoName, annoValue)
+
+		switch annoName {
+		case ShowEventsAnnoName:
+			boolValue, err := strconv.ParseBool(annoValue)
+			if err != nil {
+				return nil, fmt.Errorf("%s: bool expected: %w", invalidAnnoValueError, err)
+			}
+
+			genericSpec.ShowServiceMessages = boolValue
+		case TrackTerminationModeAnnoName:
+			trackTerminationModeValue := generic.TrackTerminationMode(annoValue)
+			values := []generic.TrackTerminationMode{generic.WaitUntilResourceReady, generic.NonBlocking}
+			for _, value := range values {
+				if value == trackTerminationModeValue {
+					genericSpec.TrackTerminationMode = trackTerminationModeValue
+					continue mainLoop
+				}
+			}
+
+			return nil, fmt.Errorf("%w: choose one of %v", invalidAnnoValueError, values)
+		case FailModeAnnoName:
+			failModeValue := generic.FailMode(annoValue)
+			values := []generic.FailMode{generic.IgnoreAndContinueDeployProcess, generic.FailWholeDeployProcessImmediately, generic.HopeUntilEndOfDeployProcess}
+			for _, value := range values {
+				if value == failModeValue {
+					genericSpec.FailMode = failModeValue
+					continue mainLoop
+				}
+			}
+
+			return nil, fmt.Errorf("%w: choose one of %v", invalidAnnoValueError, values)
+		}
+	}
+
+	return genericSpec, nil
+}
+
 func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, resources helm_kube.ResourceList, timeout time.Duration) error {
 	if waiter.KubeInitializer != nil {
 		if err := waiter.KubeInitializer.Init(ctx); err != nil {
@@ -374,6 +438,7 @@ func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, resources he
 		name := info.Name
 		kind := info.Mapping.GroupVersionKind.Kind
 
+		// TODO: should this work with all resources, not just Jobs?
 		switch value := asVersioned(info).(type) {
 		case *batchv1.Job:
 			specs := multitrack.MultitrackSpecs{}
@@ -394,6 +459,9 @@ func (waiter *ResourcesWaiter) WatchUntilReady(ctx context.Context, resources he
 							Timeout:      timeout,
 							LogsFromTime: waiter.LogsFromTime,
 						},
+						DynamicClient:   kube.DynamicClient,
+						DiscoveryClient: kube.CachedDiscoveryClient,
+						Mapper:          kube.Mapper,
 					})
 				})
 

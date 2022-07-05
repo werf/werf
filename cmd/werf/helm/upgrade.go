@@ -17,10 +17,10 @@ import (
 
 var upgradeCmdData common.CmdData
 
-func NewUpgradeCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
+func NewUpgradeCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub, namespace *string) *cobra.Command {
 	cmd, _ := helm_v3.NewUpgradeCmd(actionConfig, os.Stdout, helm_v3.UpgradeCmdOptions{
 		StagesSplitter:              helm.NewStagesSplitter(),
-		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter),
+		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, namespace),
 		ChainPostRenderer:           wc.ChainPostRenderer,
 	})
 	SetupRenderRelatedWerfChartParams(cmd, &upgradeCmdData)

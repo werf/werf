@@ -9,11 +9,15 @@ import (
 	"github.com/werf/werf/pkg/slug"
 )
 
-func NewExternalDepsAnnotationsParser() *ExternalDepsAnnotationsParser {
-	return &ExternalDepsAnnotationsParser{}
+func NewExternalDepsAnnotationsParser(defaultNamespace string) *ExternalDepsAnnotationsParser {
+	return &ExternalDepsAnnotationsParser{
+		defaultNamespace: defaultNamespace,
+	}
 }
 
-type ExternalDepsAnnotationsParser struct{}
+type ExternalDepsAnnotationsParser struct {
+	defaultNamespace string
+}
 
 func (s *ExternalDepsAnnotationsParser) Parse(annotations map[string]string) (externaldeps.ExternalDependencyList, error) {
 	extDeps, err := s.parseResourceAnnotations(annotations)
@@ -70,6 +74,12 @@ func (s *ExternalDepsAnnotationsParser) parseNamespaceAnnotations(extDeps extern
 				extDep.Namespace = annoVal
 				break
 			}
+		}
+	}
+
+	for _, extDep := range extDeps {
+		if extDep.Namespace == "" {
+			extDep.Namespace = s.defaultNamespace
 		}
 	}
 

@@ -10,18 +10,21 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 )
 
-func NewStagesExternalDepsGenerator(restClient *action.RESTClientGetter) *StagesExternalDepsGenerator {
+func NewStagesExternalDepsGenerator(restClient *action.RESTClientGetter, defaultNamespace *string) *StagesExternalDepsGenerator {
 	return &StagesExternalDepsGenerator{
-		restClient:   restClient,
-		metaAccessor: metadataAccessor,
+		defaultNamespace: defaultNamespace,
+		restClient:       restClient,
+		metaAccessor:     metadataAccessor,
 	}
 }
 
 type StagesExternalDepsGenerator struct {
-	restClient   *action.RESTClientGetter
-	gvkBuilder   externaldeps.GVKBuilder
-	metaAccessor meta.MetadataAccessor
-	initialized  bool
+	defaultNamespace *string
+	restClient       *action.RESTClientGetter
+	mapper           meta.RESTMapper
+	gvkBuilder       externaldeps.GVKBuilder
+	metaAccessor     meta.MetadataAccessor
+	initialized      bool
 }
 
 func (s *StagesExternalDepsGenerator) init() error {
@@ -33,6 +36,7 @@ func (s *StagesExternalDepsGenerator) init() error {
 	if err != nil {
 		return fmt.Errorf("error getting REST mapper: %w", err)
 	}
+	s.mapper = mapper
 
 	s.gvkBuilder = NewGVKBuilder(mapper)
 
@@ -74,7 +78,7 @@ func (s *StagesExternalDepsGenerator) Generate(stages stages.SortedStageList) er
 }
 
 func (s *StagesExternalDepsGenerator) resourceExternalDepsFromAnnotations(annotations map[string]string) (externaldeps.ExternalDependencyList, error) {
-	extDepsList, err := NewExternalDepsAnnotationsParser().Parse(annotations)
+	extDepsList, err := NewExternalDepsAnnotationsParser(*s.defaultNamespace).Parse(annotations)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing external dependencies annotations: %w", err)
 	}
@@ -84,7 +88,7 @@ func (s *StagesExternalDepsGenerator) resourceExternalDepsFromAnnotations(annota
 	}
 
 	for _, extDep := range extDepsList {
-		if err := extDep.GenerateInfo(s.gvkBuilder, s.metaAccessor); err != nil {
+		if err := extDep.GenerateInfo(s.gvkBuilder, s.metaAccessor, s.mapper); err != nil {
 			return nil, fmt.Errorf("error generating Info for external dependency: %w", err)
 		}
 	}
