@@ -18,9 +18,9 @@ groups:
     - name: beta
       version: 1.1.34
     - name: ea
-      version: 1.1.34 # WERF_DISABLE_MANIFEST_CACHE + adoption docs upd.
+      version: 1.1.34
     - name: stable
-      version: 1.1.31
+      version: 1.1.34 # WERF_DISABLE_MANIFEST_CACHE + adoption docs upd.
     - name: rock-solid
       version: 1.1.31 # fix WERF_KUBECONFIG_BASE64
  - name: "1.2"
@@ -30,13 +30,13 @@ groups:
     - name: beta
       version: 1.2.119
     - name: ea
-      version: 1.2.117
+      version: 1.2.117+fix1
     - name: stable
       version: 1.2.115
- #      candidates:
- #        - 1.2.117      # 12.07
+ #    candidates:
+ #    - 1.2.117+fix1 # 12.07
     - name: rock-solid
       version: 1.2.80+fix5
-#      candidates:
-#        - 1.2.109+fix2 # 12.07
-#        - 1.2.115      # 19.07
+#     candidates:
+#     - 1.2.109+fix2 # 12.07
+#     - 1.2.115      # 19.07
