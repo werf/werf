@@ -329,8 +329,6 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 		return "", err
 	}
 
-	fmt.Printf("!!! LegacyStageImageContainer.commit Changes:%#v\n", commitChanges)
-
 	commitOptions := types.ContainerCommitOptions{Changes: commitChanges}
 	id, err := docker.ContainerCommit(ctx, c.name, commitOptions)
 	if err != nil {
