@@ -82,20 +82,14 @@ func (t *TelemetryWerfIO) SetProjectID(projectID string) {
 }
 
 func (t *TelemetryWerfIO) CommandStarted(ctx context.Context) {
-	eventType := "CommandStarted"
-
 	trc := t.getTracer()
-	_, span := trc.Start(ctx, eventType)
+
+	_, span := trc.Start(ctx, "telemetry.werf.io")
 	span.SetAttributes(attribute.Key("ts").Int64(time.Now().UnixMilli()))
 	span.SetAttributes(attribute.Key("executionID").String(t.executionID))
 	span.SetAttributes(attribute.Key("projectID").String(t.projectID))
 	span.SetAttributes(attribute.Key("command").String(t.command))
-	span.SetAttributes(attribute.Key("eventType").String(eventType))
-	span.SetAttributes(attribute.Key("data").String("{}"))
+	span.SetAttributes(attribute.Key("eventType").String("CommandStarted"))
+	span.SetAttributes(attribute.Key("data").String(`{}`))
 	span.End()
-
-	// data, err := json.Marshal(map[string]interface{}{"message": msg})
-	// if err != nil {
-	// 	return fmt.Errorf("unable to marshal message data: %w", err)
-	// }
 }
