@@ -231,8 +231,6 @@ func (co *LegacyStageImageContainerOptions) toCommitChanges(opts LegacyCommitCha
 func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Context, opts LegacyCommitChangeOptions) ([]string, error) {
 	var args []string
 
-	fmt.Printf("-- LegacyStageImageContainerOptions.prepareCommitChanges opts.ExactValues=%v\n", opts.ExactValues)
-
 	for _, volume := range co.Volume {
 		args = append(args, fmt.Sprintf("VOLUME %s", escapeVolume(volume, opts.ExactValues)))
 	}
