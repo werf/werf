@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.121](https://www.github.com/werf/werf/compare/v1.2.120...v1.2.121) (2022-07-06)
+
+
+### Features
+
+* **helm:** track Helm hooks of any kind ([86ba23f](https://www.github.com/werf/werf/commit/86ba23f94fd19a7d43f2d8e26a4b087e656c12b0))
+
+
+### Bug Fixes
+
+* **kubedog:** non-blocking mode didn't work ([0cc6882](https://www.github.com/werf/werf/commit/0cc68826ed57aff660ceae676f63ddcd6d23487a))
+
 ### [1.2.120](https://www.github.com/werf/werf/compare/v1.2.119...v1.2.120) (2022-07-05)
 
 
