@@ -113,7 +113,7 @@ func main() {
 			cmd.Run = nil
 
 			cmd.RunE = func(cmd *cobra.Command, args []string) error {
-				telemetry.GetTelemetryWerfIO().SetCommand(getFullCommandName(cmd))
+				telemetry.GetTelemetryWerfIO().SetCommand(ctx, getFullCommandName(cmd))
 				telemetry.GetTelemetryWerfIO().CommandStarted(ctx)
 
 				if oldRunE != nil {
