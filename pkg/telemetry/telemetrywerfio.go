@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,28 +13,38 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const (
+	spanName = "telemetry.werf.io"
+)
+
 type TelemetryWerfIOInterface interface {
-	SetProjectID(projectID string)
-	SetCommand(command string)
+	SetProjectID(ctx context.Context, projectID string)
+	SetCommand(ctx context.Context, command string)
 	CommandStarted(ctx context.Context)
 }
 
 type TelemetryWerfIO struct {
-	tracerProvider *sdktrace.TracerProvider
-	traceExporter  *otlptrace.Exporter
+	handleErrorFunc func(err error)
+	tracerProvider  *sdktrace.TracerProvider
+	traceExporter   *otlptrace.Exporter
 
 	executionID string
 	projectID   string
 	command     string
 }
 
-func NewTelemetryWerfIO(url string) (*TelemetryWerfIO, error) {
+type TelemetryWerfIOOptions struct {
+	HandleErrorFunc func(err error)
+}
+
+func NewTelemetryWerfIO(url string, opts TelemetryWerfIOOptions) (*TelemetryWerfIO, error) {
 	e, err := NewTraceExporter(url)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create telemetry trace exporter: %w", err)
 	}
 
 	return &TelemetryWerfIO{
+		handleErrorFunc: opts.HandleErrorFunc,
 		tracerProvider: sdktrace.NewTracerProvider(
 			sdktrace.WithBatcher(e,
 				sdktrace.WithBatchTimeout(0),
@@ -45,7 +56,6 @@ func NewTelemetryWerfIO(url string) (*TelemetryWerfIO, error) {
 	}, nil
 }
 
-// TODO: start background procedure
 func (t *TelemetryWerfIO) Start(ctx context.Context) error {
 	if err := t.traceExporter.Start(ctx); err != nil {
 		return fmt.Errorf("error starting telemetry trace exporter: %w", err)
@@ -73,23 +83,42 @@ func (t *TelemetryWerfIO) getTracer() trace.Tracer {
 	return t.tracerProvider.Tracer("telemetry.werf.io")
 }
 
-func (t *TelemetryWerfIO) SetCommand(command string) {
+func (t *TelemetryWerfIO) SetCommand(ctx context.Context, command string) {
 	t.command = command
 }
 
-func (t *TelemetryWerfIO) SetProjectID(projectID string) {
+func (t *TelemetryWerfIO) SetProjectID(ctx context.Context, projectID string) {
 	t.projectID = projectID
 }
 
 func (t *TelemetryWerfIO) CommandStarted(ctx context.Context) {
+	t.sendEvent(ctx, CommandStartedEvent, nil)
+}
+
+func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, data interface{}) error {
 	trc := t.getTracer()
 
-	_, span := trc.Start(ctx, "telemetry.werf.io")
-	span.SetAttributes(attribute.Key("ts").Int64(time.Now().UnixMilli()))
+	_, span := trc.Start(ctx, spanName)
+
+	ts := time.Now().UnixMilli()
+
+	span.SetAttributes(attribute.Key("ts").Int64(ts))
 	span.SetAttributes(attribute.Key("executionID").String(t.executionID))
 	span.SetAttributes(attribute.Key("projectID").String(t.projectID))
 	span.SetAttributes(attribute.Key("command").String(t.command))
-	span.SetAttributes(attribute.Key("eventType").String("CommandStarted"))
-	span.SetAttributes(attribute.Key("data").String(`{}`))
+	span.SetAttributes(attribute.Key("eventType").String(string(eventType)))
+
+	rawData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("unable to marshal event data: %w", err)
+	}
+
+	span.SetAttributes(attribute.Key("data").String(string(rawData)))
 	span.End()
+
+	if IsLogsEnabled() {
+		fmt.Printf("Telemetry: sent event: ts=%d executionID=%q projectID=%q command=%q eventType=%q data=%q\n", ts, t.executionID, t.projectID, t.command, string(eventType), string(rawData))
+	}
+
+	return nil
 }

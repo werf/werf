@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	TracesURL = "http://localhost:4318/v1/traces"
+	TracesURL = "https://telemetry.werf.io/v1/traces"
 )
 
 var telemetrywerfio *TelemetryWerfIO
@@ -31,7 +31,9 @@ func Init(ctx context.Context, opts TelemetryOptions) error {
 		return nil
 	}
 
-	if t, err := NewTelemetryWerfIO(TracesURL); err != nil {
+	if t, err := NewTelemetryWerfIO(TracesURL, TelemetryWerfIOOptions{
+		HandleErrorFunc: opts.ErrorHandlerFunc,
+	}); err != nil {
 		return fmt.Errorf("unable to setup telemetry.werf.io exporter: %w", err)
 	} else {
 		telemetrywerfio = t
@@ -63,4 +65,8 @@ func Shutdown(ctx context.Context) error {
 
 func IsEnabled() bool {
 	return util.GetBoolEnvironmentDefaultFalse("WERF_TELEMETRY")
+}
+
+func IsLogsEnabled() bool {
+	return util.GetBoolEnvironmentDefaultFalse("WERF_TELEMETRY_LOGS")
 }

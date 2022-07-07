@@ -7,7 +7,6 @@ services:
 
   otel-collector:
     image: ghcr.io/werf/telemetrywerfio-collector:dev
-    # image: otel/opentelemetry-collector-contrib-dev:latest
     command:
       - "--config=/etc/otel-collector-config.yaml"
       - "--set=service.telemetry.logs.level=DEBUG"

@@ -8,7 +8,7 @@ processors:
 
 exporters:
   telemetrywerfio:
-    dsn: tcp://clickhouse:9000?database=default
+    dsn: clickhouse://clickhouse:9000/default
     timeout: 5s
     sending_queue:
       queue_size: 100
@@ -16,7 +16,7 @@ exporters:
       enabled: true
       initial_interval: 5s
       max_interval: 30s
-      max_elapsed_time: 300s
+      max_elapsed_time: 30s
 
 service:
   telemetry:
