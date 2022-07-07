@@ -1,0 +1,37 @@
+name: 🪲 Bug
+description: Submit a bug report
+body:
+  - type: checkboxes
+    attributes:
+      label: "Before proceeding"
+      options:
+        - label: "I didn't find a similar [issue](https://github.com/werf/werf/issues)"
+          required: true
+  - type: input
+    attributes:
+      label: Version
+      placeholder: "1.2.3"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: How to reproduce
+      placeholder: |
+        1. In this environment...
+        2. With this configuration...
+        3. Run '...'
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Result
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional information

@@ -1,0 +1,20 @@
+name: 💡 Feature
+description: Submit a feature request or suggestion
+body:
+  - type: checkboxes
+    attributes:
+      label: "Before proceeding"
+      options:
+        - label: "I didn't find a similar [issue](https://github.com/werf/werf/issues)"
+          required: true
+  - type: textarea
+    attributes:
+      label: Problem
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Solution (if you have one)
+  - type: textarea
+    attributes:
+      label: Additional information

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+- name: 💬 Telegram channel [EN]
+  url: https://t.me/werf_io
+  about: Ask a question
+- name: 💬 Telegram channel [RU]
+  url: https://t.me/werf_ru
+  about: Ask a question
+- name: 💬 Discussions
+  url: https://github.com/werf/werf/discussions/categories/general
+  about: Ask a question
