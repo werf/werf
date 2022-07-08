@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.122](https://www.github.com/werf/werf/compare/v1.2.121...v1.2.122) (2022-07-08)
+
+
+### Bug Fixes
+
+* remove LegacyStageImageContainer accidental debug messages ([e70d8b6](https://www.github.com/werf/werf/commit/e70d8b6f6740ad2d61d9089ecdb9dc4c855eeb52))
+
 ### [1.2.121](https://www.github.com/werf/werf/compare/v1.2.120...v1.2.121) (2022-07-06)
 
 
