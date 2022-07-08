@@ -37,7 +37,13 @@ sidebar: documentation
  - `werf converge` самостоятельно собирает и публикует в container registry недостающие образы.
  - `werf build` также может быть использована на стадии `prebuild` в CI/CD pipeline вместо `werf build-and-publish`.
 
-## 3. Измените Helm-шаблоны
+## 3. Используйте параметр `--repo` вместо параметров `--stages-storage` и `--images-repo`
+
+Команда `werf converge` хранит и собираемые образы и их стадии в container registry. Для указания хранилища, которое будет использоваться для хранения образов и стадий, теперь необходимо указать один параметр `--repo` вместо двух используемых ранее ранее в v1.1 `--stages-storage` и `--images-repo`. Подробнее об этом параметре можно прочитать [в changelog'е](https://ru.werf.io/documentation/v1.2/whats_new_in_v1_2/changelog.html#werf-%D0%B2%D1%81%D0%B5%D0%B3%D0%B4%D0%B0-%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D1%82-%D1%81%D1%82%D0%B0%D0%B4%D0%B8%D0%B8-%D0%B2-container-registry).
+
+Аналогично и с переменными окружения, используемыми ранее: вместо `WERF_STAGES_STORAGE` и `WERF_IMAGES_REPO` теперь используется одна переменная `WERF_REPO`.
+
+## 4. Измените Helm-шаблоны
 
  Вместо `werf_container_image` используйте `.Values.werf.image.IMAGE_NAME`:
  {% raw %}
@@ -62,7 +68,7 @@ sidebar: documentation
 
    > **ВАЖНО!** При использовании данной аннотации необходимо удалить явное определение поля `spec.replicas`, [больше информации в changelog]({{ "/whats_new_in_v1_2/changelog.html#конфигурация" | true_relative_url }}).
 
-## 4. Используйте `.helm/Chart.lock` для сабчартов
+## 5. Используйте `.helm/Chart.lock` для сабчартов
 
  В соответствии [с режимом гитерминизма]({{ "/whats_new_in_v1_2/changelog.html#гитерминизм" | true_relative_url  }}) werf не позволяет держать некоммитнутую директорию `.helm/charts/`. Для использования сабчартов необходимо определить `dependencies` в `.helm/Chart.yaml` следующим способом:
 
@@ -87,11 +93,11 @@ sidebar: documentation
 
  werf автоматически скачает указанные сабчарты в кеш и загрузит файлы сабчартов во время команды `werf converge` (и других высокоуровневых командах, которые используют Helm-чарт). Больше информации доступно [в документации]({{ "advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}).
 
-## 5. Используйте очистку на основе истории Git
+## 6. Используйте очистку на основе истории Git
 
  Удалите опцию `--git-history-based-cleanup-v1.2` — теперь поведение `werf cleanup` по умолчанию совпадает с поведением v1.1 с данной опцией. Больше информации по изменению [в changelog]({{ "/whats_new_in_v1_2/changelog.html#очистка" | true_relative_url }}) и [в статье про cleanup]({{ "/advanced/cleanup.html" | true_relative_url }}).
 
-## 6. Определите используемые переменные окружения в `werf-giterminism.yaml`
+## 7. Определите используемые переменные окружения в `werf-giterminism.yaml`
 
 > **ЗАМЕЧАНИЕ!** На самом деле использование переменных окружения в `werf.yaml` не рекомендуется (за исключением редких случаев), больше информации [в статье]({{ "/advanced/giterminism.html" | true_relative_url }}).
 
@@ -107,13 +113,13 @@ config:
       - ENV_VAR2
 ```
 
-## 7. Скоректируйте конфигурационный файл `werf.yaml`
+## 8. Скоректируйте конфигурационный файл `werf.yaml`
 
  1. Замените относительные пути для включения дополнительных шаблонов с {% raw %}{{ include ".werf/templates/1.tmpl" . }}{% endraw %} на {% raw %}{{ include "templates/1.tmpl" . }}{% endraw %}.
  1. Переименуйте `fromImageArtifact` в `fromArtifact`.
     > **ЗАМЕЧАНИЕ!** Не обязательно, но желательно заменить `artifact` и `fromArtifact` на `image` и `fromImage` в данном случае. [Заметка про запрет использования `fromArtifact` в changelog]({{ "/whats_new_in_v1_2/changelog.html#werfyaml" | true_relative_url }}).
 
-## 8. Исправьте определение нестандартной директории чарта `.helm` в `werf.yaml`
+## 9. Исправьте определение нестандартной директории чарта `.helm` в `werf.yaml`
 
 Вместо опции `--helm-chart-dir` используйте директиву `deploy.helmChartDir` файла `werf.yaml` следующим образом:
 
@@ -132,7 +138,7 @@ deploy:
   - Все относительные пути, указанные в `werf.yaml`, будут рассчитаны относительно той директории, где лежит `werf.yaml`.
   - Абсолютные пути, указанные в директиве `git.add`, так и остаются абсолютными путями относительно корня Git-репозитория независимо от положения `werf.yaml` внутри этого репозитория.
 
-## 9. Мигрируйте на Helm 3
+## 10. Мигрируйте на Helm 3
 
 werf v1.2 [осуществляет автоматическую миграцию существующего релиза с Helm 2 на Helm 3]({{ "/whats_new_in_v1_2/changelog.html#helm-3" | true_relative_url }}).
 

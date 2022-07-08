@@ -33,7 +33,13 @@ Commands changes (for reference):
  - `werf converge` will build and publish needed images by itself, if not built already.
  - You may use `werf build` command in `prebuild` CI/CD pipeline stage instead of `werf build-and-publish` command.
 
-## 3. Change Helm templates
+## 3. Use the `--repo` parameter instead of the `--stages-storage` and `--images-repo` parameters
+
+The `werf converge` command stores both the collected images and their stages in the container registry. To specify the storage to be used for storing images and stages, you now need to specify one parameter `--repo` instead of the two previously used in v1.1 `--stages-storage` and `--images-repo`. You can read more about this parameter [in changelog](https://werf.io/documentation/v1.2/whats_new_in_v1_2/changelog.html#always-store-image-stages-in-the-container-registry).
+
+Similarly with the environment variables used earlier: instead of `WERF_STAGES_STORAGE` and `WERF_IMAGES_REPO`, one variable `WERF_REPO` is now used.
+
+## 4. Change Helm templates
 
  Use `.Values.werf.image.IMAGE_NAME` instead of `werf_container_image` as follows:
 
@@ -59,7 +65,7 @@ Helm templates changes (for reference):
 
    > **IMPORTANT!** Remove `spec.replicas` field, more info [in the changelog]({{ "/whats_new_in_v1_2/changelog.html#configuration" | true_relative_url }}).
 
-## 4. Use `.helm/Chart.lock` for subcharts
+## 5. Use `.helm/Chart.lock` for subcharts
 
  Due to [giterminism]({{ "/whats_new_in_v1_2/changelog.html#giterminism" | true_relative_url  }}) werf does not allow uncommitted `.helm/charts` dir. To use subcharts specify dependencies in the `.helm/Chart.yaml` like that:
 
@@ -82,11 +88,11 @@ Next, follow these steps:
 
  werf will automatically download subcharts into the cache and load subchart files in `werf converge` command (and other toplevel commands which require helm chart). More info [in the docs]({{ "advanced/helm/configuration/chart_dependencies.html" | true_relative_url }}).
 
-## 5. Cleanup by Git history
+## 6. Cleanup by Git history
 
 Remove `--git-history-based-cleanup-v1.2` option for a cleanup. werf always uses git-history cleanup in the v1.2. More info [in the changelog]({{ "/whats_new_in_v1_2/changelog.html#cleanup" | true_relative_url }}) and [in the cleanup article]({{ "/advanced/cleanup.html" | true_relative_url }}).
 
-## 6. Define environment variables in `werf-giterminism.yaml`
+## 7. Define environment variables in `werf-giterminism.yaml`
 
 > **NOTE!** It is not recommended to use environment variables in the `werf.yaml`, more info [in the article]({{ "/advanced/giterminism.html" | true_relative_url }}).
 
@@ -102,13 +108,13 @@ config:
       - ENV_VAR2
 ```
 
-## 7. Adjust `werf.yaml` configuration
+## 8. Adjust `werf.yaml` configuration
 
  1. Change relative include paths from {% raw %}{{ include ".werf/templates/1.tmpl" . }}{% endraw %} to {% raw %}{{ include "templates/1.tmpl" . }}{% endraw %}.
  1. Rename `fromImageArtifact` to `fromArtifact`.
     > **NOTICE!** It is not required, but better to change `artifact` and `fromArtifact` to `image` and `fromImage` in such case. See [deprecation note in the changelog]({{ "/whats_new_in_v1_2/changelog.html#werfyaml" | true_relative_url }}).
 
-## 8. Define custom `.helm` chart dir in the `werf.yaml`
+## 9. Define custom `.helm` chart dir in the `werf.yaml`
 
 `--helm-chart-dir` has been removed, use `deploy.helmChartDir` directive in `werf.yaml` like follows:
 
@@ -127,7 +133,7 @@ Consider using different layout for your project: werf v1.2 supports multiple `w
   - All relative paths specified in the `werf.yaml` should be adjusted to the subfolder where `werf.yaml` stored.
   - Absolute paths specified with `git.add` directive should use absolute paths from the root of the git repo (these paths settings are compatible with 1.1).
 
-## 9. Migrate to helm 3
+## 10. Migrate to helm 3
 
  werf v1.2 [performs migration of existing Helm 2 release to helm 3 automatically]({{ "/whats_new_in_v1_2/changelog.html#helm-3" | true_relative_url }}).
  > Helm 2 release should have the same name as newly used helm 3 release.
