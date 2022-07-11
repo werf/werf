@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -11,8 +12,9 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "generate-secret-key",
 		DisableFlagsInUseLine: true,
 		Short:                 "Generate hex encryption key",
@@ -31,7 +33,7 @@ For further usage, the encryption key should be saved in $WERF_SECRET_KEY or .we
 
 			return runGenerateSecretKey()
 		},
-	}
+	})
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -13,13 +14,13 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
-func (repoData *RepoData) CreateDockerRegistry(insecureRegistry, skipTlsVerifyRegistry bool) (docker_registry.Interface, error) {
+func (repoData *RepoData) CreateDockerRegistry(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool) (docker_registry.Interface, error) {
 	addr, err := repoData.GetAddress()
 	if err != nil {
 		return nil, err
 	}
 
-	cr := repoData.GetContainerRegistry()
+	cr := repoData.GetContainerRegistry(ctx)
 	if err := ValidateRepoContainerRegistry(cr); err != nil {
 		return nil, err
 	}
@@ -33,7 +34,7 @@ func (repoData *RepoData) CreateDockerRegistry(insecureRegistry, skipTlsVerifyRe
 	return dockerRegistry, nil
 }
 
-func (repoData *RepoData) CreateStagesStorage(containerBackend container_backend.ContainerBackend, insecureRegistry, skipTlsVerifyRegistry bool) (storage.StagesStorage, error) {
+func (repoData *RepoData) CreateStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, insecureRegistry, skipTlsVerifyRegistry bool) (storage.StagesStorage, error) {
 	addr, err := repoData.GetAddress()
 	if err != nil {
 		return nil, err
@@ -42,7 +43,7 @@ func (repoData *RepoData) CreateStagesStorage(containerBackend container_backend
 	if addr == storage.LocalStorageAddress {
 		return storage.NewDockerServerStagesStorage(containerBackend.(*container_backend.DockerServerBackend)), nil
 	} else {
-		dockerRegistry, err := repoData.CreateDockerRegistry(insecureRegistry, skipTlsVerifyRegistry)
+		dockerRegistry, err := repoData.CreateDockerRegistry(ctx, insecureRegistry, skipTlsVerifyRegistry)
 		if err != nil {
 			return nil, err
 		}
@@ -87,7 +88,7 @@ func (d *RepoData) GetAddress() (string, error) {
 	return addr, nil
 }
 
-func (d *RepoData) GetContainerRegistry() string {
+func (d *RepoData) GetContainerRegistry(ctx context.Context) string {
 	if d.OnlyAddress {
 		return ""
 	}
@@ -97,7 +98,7 @@ func (d *RepoData) GetContainerRegistry() string {
 		return *d.ContainerRegistry
 	case *d.Implementation != "":
 		repoNameUpper := strings.ToUpper(strings.ReplaceAll(d.Name, "-", "_"))
-		logboek.Context(GetContext()).Warn().LogLn("DEPRECATION WARNING: The option --%s-implementation ($WERF_%s_IMPLEMENTATION) is renamed to --%s-container-registry ($WERF_%s_CONTAINER_REGISTRY) and will be removed in v1.3!", d.Name, repoNameUpper, d.Name, repoNameUpper)
+		logboek.Context(ctx).Warn().LogLn("DEPRECATION WARNING: The option --%s-implementation ($WERF_%s_IMPLEMENTATION) is renamed to --%s-container-registry ($WERF_%s_CONTAINER_REGISTRY) and will be removed in v1.3!", d.Name, repoNameUpper, d.Name, repoNameUpper)
 		return *d.Implementation
 	default:
 		return ""
@@ -148,12 +149,12 @@ func (repoData *RepoData) SetupCmd(cmd *cobra.Command) {
 	repoData.SetupQuayTokenForRepoData(cmd, makeOpt("quay-token"), []string{makeEnvVar("QUAY_TOKEN")})
 }
 
-func MergeRepoData(repoDataArr ...*RepoData) *RepoData {
+func MergeRepoData(ctx context.Context, repoDataArr ...*RepoData) *RepoData {
 	res := &RepoData{}
 
 	for _, repoData := range repoDataArr {
-		if res.GetContainerRegistry() == "" {
-			value := repoData.GetContainerRegistry()
+		if res.GetContainerRegistry(ctx) == "" {
+			value := repoData.GetContainerRegistry(ctx)
 			res.ContainerRegistry = &value
 		}
 		if res.DockerHubUsername == nil || *res.DockerHubUsername == "" {

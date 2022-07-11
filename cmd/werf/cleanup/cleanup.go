@@ -23,8 +23,9 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
 		Short:                 "Cleanup project images in the container registry",
@@ -35,7 +36,7 @@ The command works according to special rules called cleanup policies, which the 
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, converge and host cleanup.`),
 		Example: `  $ werf cleanup --repo registry.mydomain.com/myproject/werf`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
@@ -49,7 +50,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 				return runCleanup(ctx)
 			})
 		},
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -192,11 +193,11 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 
 		return err
 	}
-	stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -209,11 +210,11 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 	if err != nil {
 		return err
 	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerBackend, &commonCmdData)
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerBackend, &commonCmdData)
+	cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}

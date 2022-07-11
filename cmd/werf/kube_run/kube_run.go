@@ -82,8 +82,9 @@ type dockerAuthJson struct {
 	IdentityToken string `json:"identitytoken,omitempty"`
 }
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
 		Short:                 "Run container for project image in Kubernetes",
 		Long:                  common.GetLongCommandDescription(`Run container in Kubernetes for specified project image from werf.yaml (build if needed)`),
@@ -101,7 +102,7 @@ func NewCmd() *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
@@ -145,7 +146,7 @@ func NewCmd() *cobra.Command {
 
 			return runMain(ctx)
 		},
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -348,11 +349,11 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		return fmt.Errorf("image %q is not defined in werf.yaml", logging.ImageLogName(imageName, false))
 	}
 
-	stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -364,11 +365,11 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 	if err != nil {
 		return err
 	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerBackend, &commonCmdData)
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerBackend, &commonCmdData)
+	cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}

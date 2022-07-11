@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -17,8 +18,9 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "graph [IMAGE_NAME...]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Print dependency graph for images in werf.yaml",
@@ -43,7 +45,7 @@ func NewCmd() *cobra.Command {
       - app1
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -84,7 +86,7 @@ func NewCmd() *cobra.Command {
 				return err
 			}
 
-			_, werfConfig, err := config.GetWerfConfig(common.GetContext(), customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, configOpts)
+			_, werfConfig, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, configOpts)
 			if err != nil {
 				return err
 			}
@@ -102,7 +104,7 @@ func NewCmd() *cobra.Command {
 			fmt.Println(strings.TrimSpace(string(data)))
 			return nil
 		},
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)

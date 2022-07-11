@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -74,7 +75,7 @@ func getFullCommandName(cmd *cobra.Command) string {
 }
 
 func main() {
-	ctx := common.GetContext()
+	ctx := common.GetContextWithLogger()
 
 	common.InitTelemetry(ctx)
 
@@ -96,7 +97,7 @@ func main() {
 		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)
 	}
 
-	rootCmd := constructRootCmd()
+	rootCmd := constructRootCmd(ctx)
 
 	commandsQueue := []*cobra.Command{rootCmd}
 	for len(commandsQueue) > 0 {
@@ -141,12 +142,12 @@ func main() {
 	common.ShutdownTelemetry(ctx, 0)
 }
 
-func constructRootCmd() *cobra.Command {
+func constructRootCmd(ctx context.Context) *cobra.Command {
 	if filepath.Base(os.Args[0]) == "helm" || helm.IsHelm3Mode() {
-		return helm.NewCmd()
+		return helm.NewCmd(ctx)
 	}
 
-	rootCmd := &cobra.Command{
+	rootCmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "werf",
 		Short: "werf helps to implement and support Continuous Integration and Continuous Delivery",
 		Long: common.GetLongCommandDescription(`werf helps to implement and support Continuous Integration and Continuous Delivery.
@@ -154,57 +155,57 @@ func constructRootCmd() *cobra.Command {
 Find more information at https://werf.io`),
 		SilenceUsage:  true,
 		SilenceErrors: true,
-	}
+	})
 
 	groups := &templates.CommandGroups{}
 	*groups = append(*groups, templates.CommandGroups{
 		{
 			Message: "Delivery commands",
 			Commands: []*cobra.Command{
-				converge.NewCmd(),
-				dismiss.NewCmd(),
-				bundleCmd(),
+				converge.NewCmd(ctx),
+				dismiss.NewCmd(ctx),
+				bundleCmd(ctx),
 			},
 		},
 		{
 			Message: "Cleaning commands",
 			Commands: []*cobra.Command{
-				cleanup.NewCmd(),
-				purge.NewCmd(),
+				cleanup.NewCmd(ctx),
+				purge.NewCmd(ctx),
 			},
 		},
 		{
 			Message: "Helper commands",
 			Commands: []*cobra.Command{
-				ci_env.NewCmd(),
-				build.NewCmd(),
-				export.NewExportCmd(),
-				run.NewCmd(),
-				kube_run.NewCmd(),
-				dockerComposeCmd(),
-				slugify.NewCmd(),
-				render.NewCmd(),
+				ci_env.NewCmd(ctx),
+				build.NewCmd(ctx),
+				export.NewExportCmd(ctx),
+				run.NewCmd(ctx),
+				kube_run.NewCmd(ctx),
+				dockerComposeCmd(ctx),
+				slugify.NewCmd(ctx),
+				render.NewCmd(ctx),
 			},
 		},
 		{
 			Message: "Low-level management commands",
 			Commands: []*cobra.Command{
-				configCmd(),
-				managedImagesCmd(),
-				hostCmd(),
-				helm.NewCmd(),
-				crCmd(),
-				kubectl.NewCmd(),
+				configCmd(ctx),
+				managedImagesCmd(ctx),
+				hostCmd(ctx),
+				helm.NewCmd(ctx),
+				crCmd(ctx),
+				kubectl.NewCmd(ctx),
 			},
 		},
 		{
 			Message: "Other commands",
 			Commands: []*cobra.Command{
-				synchronization.NewCmd(),
-				completion.NewCmd(rootCmd),
-				version.NewCmd(),
-				docs.NewCmd(groups),
-				stageCmd(),
+				synchronization.NewCmd(ctx),
+				completion.NewCmd(ctx, rootCmd),
+				version.NewCmd(ctx),
+				docs.NewCmd(ctx, groups),
+				stageCmd(ctx),
 			},
 		},
 	}...)
@@ -215,100 +216,100 @@ Find more information at https://werf.io`),
 	return rootCmd
 }
 
-func dockerComposeCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func dockerComposeCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "compose",
 		Short: "Work with docker-compose",
-	}
+	})
 	cmd.AddCommand(
-		compose.NewConfigCmd(),
-		compose.NewRunCmd(),
-		compose.NewUpCmd(),
-		compose.NewDownCmd(),
+		compose.NewConfigCmd(ctx),
+		compose.NewRunCmd(ctx),
+		compose.NewUpCmd(ctx),
+		compose.NewDownCmd(ctx),
 	)
 
 	return cmd
 }
 
-func crCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func crCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "cr",
 		Short: "Work with container registry: authenticate, list and remove images, etc.",
-	}
+	})
 	cmd.AddCommand(
-		cr_login.NewCmd(),
-		cr_logout.NewCmd(),
+		cr_login.NewCmd(ctx),
+		cr_logout.NewCmd(ctx),
 	)
 
 	return cmd
 }
 
-func bundleCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func bundleCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "bundle",
 		Short: "Work with werf bundles: publish bundles into container registry and deploy bundles into Kubernetes cluster",
-	}
+	})
 	cmd.AddCommand(
-		bundle_publish.NewCmd(),
-		bundle_apply.NewCmd(),
-		bundle_export.NewCmd(),
-		bundle_download.NewCmd(),
-		bundle_render.NewCmd(),
-		bundle_copy.NewCmd(),
+		bundle_publish.NewCmd(ctx),
+		bundle_apply.NewCmd(ctx),
+		bundle_export.NewCmd(ctx),
+		bundle_download.NewCmd(ctx),
+		bundle_render.NewCmd(ctx),
+		bundle_copy.NewCmd(ctx),
 	)
 
 	return cmd
 }
 
-func configCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func configCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "config",
 		Short: "Work with werf.yaml",
-	}
+	})
 	cmd.AddCommand(
-		config_render.NewCmd(),
-		config_list.NewCmd(),
-		config_graph.NewCmd(),
+		config_render.NewCmd(ctx),
+		config_list.NewCmd(ctx),
+		config_graph.NewCmd(ctx),
 	)
 
 	return cmd
 }
 
-func managedImagesCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func managedImagesCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "managed-images",
 		Short: "Work with managed images which will be preserved during cleanup procedure",
-	}
+	})
 	cmd.AddCommand(
-		managed_images_add.NewCmd(),
-		managed_images_ls.NewCmd(),
-		managed_images_rm.NewCmd(),
+		managed_images_add.NewCmd(ctx),
+		managed_images_ls.NewCmd(ctx),
+		managed_images_rm.NewCmd(ctx),
 	)
 
 	return cmd
 }
 
-func stageCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func stageCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:    "stage",
 		Hidden: true,
-	}
+	})
 	cmd.AddCommand(
-		stage_image.NewCmd(),
+		stage_image.NewCmd(ctx),
 	)
 
 	return cmd
 }
 
-func hostCmd() *cobra.Command {
-	hostCmd := &cobra.Command{
+func hostCmd(ctx context.Context) *cobra.Command {
+	hostCmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "host",
 		Short: "Work with werf cache and data of all projects on the host machine",
-	}
+	})
 
 	hostCmd.AddCommand(
-		host_cleanup.NewCmd(),
-		host_purge.NewCmd(),
+		host_cleanup.NewCmd(ctx),
+		host_purge.NewCmd(ctx),
 	)
 
 	return hostCmd

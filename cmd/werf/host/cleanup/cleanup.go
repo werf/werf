@@ -26,8 +26,9 @@ var cmdData struct {
 	Force bool
 }
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "cleanup",
 		Short: "Cleanup old unused werf cache and data of all projects on host machine",
 		Long: common.GetLongCommandDescription(`Cleanup old unused werf cache and data of all projects on host machine.
@@ -58,7 +59,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 				return common.LogRunningTime(func() error { return runCleanup(ctx) })
 			})
 		},
-	}
+	})
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})

@@ -1,6 +1,7 @@
 package slugify
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -15,8 +16,9 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "slugify STRING",
 		DisableFlagsInUseLine: true,
 		Short:                 "Print slugged string by specified format",
@@ -54,7 +56,7 @@ func NewCmd() *cobra.Command {
 
 			return nil
 		},
-	}
+	})
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 

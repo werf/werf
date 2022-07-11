@@ -25,7 +25,7 @@ func NewTemplateCmd(actionConfig *action.Configuration, wc *chart_extender.WerfC
 
 	oldRunE := cmd.RunE
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		ctx := common.GetContext()
+		ctx := cmd.Context()
 
 		if err := InitRenderRelatedWerfChartParams(ctx, &templateCmdData, wc); err != nil {
 			return fmt.Errorf("unable to init werf chart: %w", err)

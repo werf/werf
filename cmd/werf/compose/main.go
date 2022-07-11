@@ -47,8 +47,8 @@ type composeCmdData struct {
 	ComposeCommandArgs    []string
 }
 
-func NewConfigCmd() *cobra.Command {
-	return newCmd("config", &newCmdOptions{
+func NewConfigCmd(ctx context.Context) *cobra.Command {
+	return newCmd(ctx, "config", &newCmdOptions{
 		Use: "config [IMAGE_NAME...] [options] [--docker-compose-options=\"OPTIONS\"] [--docker-compose-command-options=\"OPTIONS\"]",
 		Example: `  # Render compose file
   $ werf compose config --repo localhost:5000/test --quiet
@@ -69,8 +69,8 @@ func NewConfigCmd() *cobra.Command {
 	})
 }
 
-func NewRunCmd() *cobra.Command {
-	return newCmd("run", &newCmdOptions{
+func NewRunCmd(ctx context.Context) *cobra.Command {
+	return newCmd(ctx, "run", &newCmdOptions{
 		Use: "run [IMAGE_NAME...] [options] [--docker-compose-options=\"OPTIONS\"] [--docker-compose-command-options=\"OPTIONS\"] -- SERVICE [COMMAND] [ARGS...]",
 		Example: `  # Print docker-compose command without executing
   $ werf compose run --docker-compose-options="-f docker-compose-test.yml" --docker-compose-command-options="-e TOKEN=123" --dry-run --quiet -- test
@@ -82,8 +82,8 @@ func NewRunCmd() *cobra.Command {
 	})
 }
 
-func NewUpCmd() *cobra.Command {
-	return newCmd("up", &newCmdOptions{
+func NewUpCmd(ctx context.Context) *cobra.Command {
+	return newCmd(ctx, "up", &newCmdOptions{
 		Use: "up [IMAGE_NAME...] [options] [--docker-compose-options=\"OPTIONS\"] [--docker-compose-command-options=\"OPTIONS\"] [--] [SERVICE...]",
 		Example: `  # Run docker-compose up with forwarded image names
   $ werf compose up
@@ -100,8 +100,8 @@ func NewUpCmd() *cobra.Command {
 	})
 }
 
-func NewDownCmd() *cobra.Command {
-	return newCmd("down", &newCmdOptions{
+func NewDownCmd(ctx context.Context) *cobra.Command {
+	return newCmd(ctx, "down", &newCmdOptions{
 		Use: "down [IMAGE_NAME...] [options] [--docker-compose-options=\"OPTIONS\"] [--docker-compose-command-options=\"OPTIONS\"]",
 		Example: `  # Run docker-compose down with forwarded image names
   $ werf compose down
@@ -115,7 +115,7 @@ func NewDownCmd() *cobra.Command {
 	})
 }
 
-func newCmd(composeCmdName string, options *newCmdOptions) *cobra.Command {
+func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) *cobra.Command {
 	var cmdData composeCmdData
 	var commonCmdData common.CmdData
 
@@ -153,7 +153,8 @@ services:
 `
 
 	long = common.GetLongCommandDescription(long)
-	cmd := &cobra.Command{
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   options.Use,
 		Short:                 short,
 		Long:                  long,
@@ -163,7 +164,8 @@ services:
 		},
 		Example: options.Example,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
+
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
@@ -194,7 +196,7 @@ services:
 
 			return runMain(ctx, composeCmdName, cmdData, commonCmdData, options.FollowSupport)
 		},
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -387,11 +389,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -403,11 +405,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	if err != nil {
 		return err
 	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerBackend, &commonCmdData)
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerBackend, &commonCmdData)
+	cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}

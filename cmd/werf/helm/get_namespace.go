@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -15,20 +16,23 @@ import (
 
 var getNamespaceCmdData common.CmdData
 
-func NewGetNamespaceCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewGetNamespaceCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &getNamespaceCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "get-namespace",
 		DisableFlagsInUseLine: true,
 		Short:                 "Print Kubernetes Namespace that will be used in current configuration with specified params",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&getNamespaceCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
 
-			return runGetNamespace()
+			return runGetNamespace(ctx)
 		},
-	}
+	})
 
 	common.SetupDir(&getNamespaceCmdData, cmd)
 	common.SetupGitWorkTree(&getNamespaceCmdData, cmd)
@@ -47,9 +51,7 @@ func NewGetNamespaceCmd() *cobra.Command {
 	return cmd
 }
 
-func runGetNamespace() error {
-	ctx := common.GetContext()
-
+func runGetNamespace(ctx context.Context) error {
 	if err := werf.Init(*getNamespaceCmdData.TmpDir, *getNamespaceCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -72,7 +74,7 @@ func runGetNamespace() error {
 		return err
 	}
 
-	_, werfConfig, err := common.GetRequiredWerfConfig(common.GetContext(), &getNamespaceCmdData, giterminismManager, common.GetWerfConfigOptions(&getNamespaceCmdData, false))
+	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &getNamespaceCmdData, giterminismManager, common.GetWerfConfigOptions(&getNamespaceCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}

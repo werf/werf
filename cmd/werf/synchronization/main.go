@@ -1,6 +1,7 @@
 package synchronization
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -36,14 +37,17 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "synchronization",
 		Short:                 "Run synchronization server",
 		Long:                  common.GetLongCommandDescription(`Run synchronization server`),
 		DisableFlagsInUseLine: true,
 		Annotations:           map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -51,9 +55,9 @@ func NewCmd() *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(runSynchronization)
+			return common.LogRunningTime(func() error { return runSynchronization(ctx) })
 		},
-	}
+	})
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
@@ -80,9 +84,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runSynchronization() error {
-	ctx := common.GetContext()
-
+func runSynchronization(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}

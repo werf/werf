@@ -1,6 +1,7 @@
 package apply
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,8 +36,9 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "apply",
 		Short:                 "Apply bundle into Kubernetes",
 		Long:                  common.GetLongCommandDescription(`Take latest bundle from the specified container registry using specified version tag or version mask and apply it as a helm chart into Kubernetes cluster.`),
@@ -45,7 +47,9 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.GetContext())
+			ctx := cmd.Context()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -54,9 +58,9 @@ func NewCmd() *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(runApply)
+			return common.LogRunningTime(func() error { return runApply(ctx) })
 		},
-	}
+	})
 
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
@@ -102,9 +106,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runApply() error {
-	ctx := common.GetContext()
-
+func runApply(ctx context.Context) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {

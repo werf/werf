@@ -16,8 +16,9 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "edit FILE_PATH",
 		DisableFlagsInUseLine: true,
 		Short:                 "Edit or create new secret file",
@@ -29,6 +30,8 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -38,9 +41,9 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 				return err
 			}
 
-			return runSecretEdit(common.GetContext(), args[0])
+			return runSecretEdit(ctx, args[0])
 		},
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})

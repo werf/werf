@@ -27,8 +27,9 @@ var cmdData struct {
 	PasswordStdin bool
 }
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "login registry",
 		Short: "Login into remote registry",
 		Long:  common.GetLongCommandDescription(`Login into remote registry`),
@@ -42,7 +43,7 @@ werf cr login -p token registry.example.com
 werf cr login --insecure-registry registry.example.com`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
@@ -64,7 +65,7 @@ werf cr login --insecure-registry registry.example.com`,
 				InsecureRegistry: *commonCmdData.InsecureRegistry,
 			})
 		},
-	}
+	})
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)

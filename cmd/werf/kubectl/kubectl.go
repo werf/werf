@@ -23,7 +23,7 @@ var (
 	configFlags   *genericclioptions.ConfigFlags
 )
 
-func NewCmd() *cobra.Command {
+func NewCmd(ctx context.Context) *cobra.Command {
 	configFlags = genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 
 	kubectlCmd := cmd.NewDefaultKubectlCommandWithArgs(cmd.KubectlOptions{
@@ -66,7 +66,9 @@ func wrapPreRun(kubectlCmd *cobra.Command) {
 	case kubectlCmd.PersistentPreRunE != nil:
 		oldFunc := kubectlCmd.PersistentPreRunE
 		kubectlCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-			if err := prePreRun(); err != nil {
+			ctx := cmd.Context()
+
+			if err := prePreRun(ctx); err != nil {
 				return err
 			}
 			return oldFunc(cmd, args)
@@ -74,14 +76,18 @@ func wrapPreRun(kubectlCmd *cobra.Command) {
 	case kubectlCmd.PersistentPreRun != nil:
 		oldFunc := kubectlCmd.PersistentPreRun
 		kubectlCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-			if err := prePreRun(); err != nil {
+			ctx := cmd.Context()
+
+			if err := prePreRun(ctx); err != nil {
 				util.CheckErr(err)
 			}
 			oldFunc(cmd, args)
 		}
 	default:
 		kubectlCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-			if err := prePreRun(); err != nil {
+			ctx := cmd.Context()
+
+			if err := prePreRun(ctx); err != nil {
 				return err
 			}
 			return nil
@@ -89,9 +95,7 @@ func wrapPreRun(kubectlCmd *cobra.Command) {
 	}
 }
 
-func prePreRun() error {
-	ctx := common.GetContext()
-
+func prePreRun(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
