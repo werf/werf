@@ -7,6 +7,9 @@ toc: false
 
 This article contains description of annotations which control werf resource operations and tracking of resources during deploy process. Annotations should be configured in the chart templates.
 
+ - [`werf.io/weight`](#resource-weight) — defines weight of the resource, which will affect deployment order of resources.
+ - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — wait for specified external dependency to be well and ready until the annotated resource can be deployed.
+ - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — specify namespace for external dependency.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — defines number of replicas that should be set only when creating resource initially (useful for HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — defines a condition when werf should stop tracking of the resource.
  - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occurred after failures threshold has been reached for the resource during deploy process.
@@ -20,6 +23,40 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/show-service-messages`](#show-service-messages) — enable additional logging of Kubernetes related service messages for resource.
 
 More info about chart templates and other stuff is available in the [helm chapter]({{ "advanced/helm/overview.html" | true_relative_url }}).
+
+## Resource weight
+
+`werf.io/weight: "NUM"`
+
+Example: \
+`werf.io/weight: "10"` \
+`werf.io/weight: "-10"`
+
+Can be a positive number, negative number, or a zero. Value passed as a string. If not specified, then `weight` is set to 0. Works only for non-hook resources. For Hooks use `helm.sh/hook-weight`, which works almost the same.
+
+Sets resource weight, which defines order of resources deployment. Resources grouped by their weight, then groups deployed sequentially, from groups with the lowest weight to the highest. Next batch of resources won't be deployed until previous group is deployed successfully.
+
+More info: [deployment order]({{ "/advanced/helm/deploy_process/deployment_order.html" | true_relative_url }})
+
+## External dependency resource
+
+`<any-name>.external-dependency.werf.io/resource: type[.version.group]/name`
+
+Example: \
+`secret.external-dependency.werf.io/resource: secret/config` \
+`someapp.external-dependency.werf.io/resource: deployments.v1.apps/app`
+
+Sets external dependency for a resource. The annotated resource won't be deployed until the external dependency is created and ready.
+
+More info: [external dependencies]({{ "/advanced/helm/deploy_process/external_dependencies.html" | true_relative_url }})
+
+## External dependency namespace
+
+`<any-name>.external-dependency.werf.io/namespace: name`
+
+Sets namespace for an external dependency specified with [external dependency resource](#external-dependency-resource) annotation. `<any-name>` prefix must be the same as on external dependency resource annotation.
+
+More info: [external dependencies]({{ "/advanced/helm/deploy_process/external_dependencies.html" | true_relative_url }})
 
 ## Replicas on creation
 
