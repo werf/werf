@@ -38,8 +38,9 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "ci-env CI_SYSTEM",
 		DisableFlagsInUseLine: true,
 		Short:                 "Generate werf environment variables for specified CI system",
@@ -57,7 +58,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
   $ FOR /F "tokens=*" %g IN ('werf ci-env gitlab --as-file --shell cmdexe') do (SET WERF_CI_ENV_SCRIPT_PATH=%g)
   $ %WERF_CI_ENV_SCRIPT_PATH%`,
 		RunE: runCIEnv,
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -86,9 +87,9 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 }
 
 func runCIEnv(cmd *cobra.Command, args []string) error {
-	logboek.SetAcceptedLevel(level.Error)
+	ctx := cmd.Context()
 
-	ctx := common.GetContext()
+	logboek.SetAcceptedLevel(level.Error)
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)

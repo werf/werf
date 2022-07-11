@@ -25,8 +25,9 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "build [IMAGE_NAME...]",
 		Short: "Build images",
 		Example: `  # Build images, built stages will be placed locally
@@ -50,7 +51,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
@@ -65,7 +66,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 				return runMain(ctx, args)
 			})
 		},
-	}
+	}))
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -211,11 +212,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	stagesStorage, err := common.GetStagesStorage(containerBackend, &commonCmdData)
+	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(containerBackend, &commonCmdData)
+	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -228,11 +229,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	if err != nil {
 		return err
 	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(stagesStorage, containerBackend, &commonCmdData)
+	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(containerBackend, &commonCmdData)
+	cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}

@@ -24,8 +24,9 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "encrypt",
 		DisableFlagsInUseLine: true,
 		Short:                 "Encrypt data",
@@ -42,14 +43,16 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
 
-			return runSecretEncrypt(common.GetContext())
+			return runSecretEncrypt(ctx)
 		},
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})

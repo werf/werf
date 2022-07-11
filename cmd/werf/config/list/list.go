@@ -1,6 +1,7 @@
 package list
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -19,20 +20,23 @@ var (
 	}
 )
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "list",
 		DisableFlagsInUseLine: true,
 		Short:                 "List image and artifact names defined in werf.yaml",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
 
-			return run()
+			return run(ctx)
 		},
-	}
+	})
 
 	cmd.Flags().BoolVarP(&cmdData.imagesOnly, "images-only", "", false, "Show image names without artifacts")
 
@@ -52,9 +56,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func run() error {
-	ctx := common.GetContext()
-
+func run(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -77,7 +79,7 @@ func run() error {
 		return err
 	}
 
-	_, werfConfig, err := common.GetRequiredWerfConfig(common.GetContext(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
+	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {
 		return err
 	}

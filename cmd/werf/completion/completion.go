@@ -1,6 +1,7 @@
 package completion
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -15,8 +16,8 @@ var cmdData struct {
 
 const zshCompdef = "compdef _werf werf\n"
 
-func NewCmd(rootCmd *cobra.Command) *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context, rootCmd *cobra.Command) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "completion",
 		DisableFlagsInUseLine: true,
 		Short:                 "Generate bash completion scripts",
@@ -45,7 +46,7 @@ func NewCmd(rootCmd *cobra.Command) *cobra.Command {
 				return fmt.Errorf("provided shell %q not supported", cmdData.Shell)
 			}
 		},
-	}
+	})
 
 	var defaultShell string
 	if os.Getenv("WERF_SHELL") != "" {

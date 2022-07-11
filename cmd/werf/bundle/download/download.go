@@ -1,6 +1,7 @@
 package download
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -20,8 +21,9 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "download",
 		Short:                 "Download published bundle into directory",
 		Long:                  common.GetLongCommandDescription(`Take latest bundle from the specified container registry using specified version tag or version mask and unpack it into provided directory (or into directory named as a resulting chart in the current working directory).`),
@@ -30,7 +32,9 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.GetContext())
+			ctx := cmd.Context()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -39,9 +43,9 @@ func NewCmd() *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(runDownload)
+			return common.LogRunningTime(func() error { return runDownload(ctx) })
 		},
-	}
+	})
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
@@ -65,9 +69,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runDownload() error {
-	ctx := common.GetContext()
-
+func runDownload(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}

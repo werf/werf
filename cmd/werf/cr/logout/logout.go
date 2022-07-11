@@ -16,14 +16,15 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "logout registry",
 		Short:                 "Logout from a remote registry",
 		Long:                  common.GetLongCommandDescription(`Logout from a remote registry`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
@@ -41,7 +42,7 @@ func NewCmd() *cobra.Command {
 				DockerConfigDir: *commonCmdData.DockerConfig,
 			})
 		},
-	}
+	})
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 	common.SetupLogOptions(&commonCmdData, cmd)

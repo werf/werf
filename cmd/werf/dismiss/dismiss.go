@@ -34,8 +34,9 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "dismiss",
 		Short: "Delete application from Kubernetes",
 		Long: common.GetLongCommandDescription(`Delete application from Kubernetes.
@@ -55,7 +56,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
   $ werf dismiss --release myrelease --namespace myns`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
@@ -69,7 +70,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 				return runDismiss(ctx)
 			})
 		},
-	}
+	})
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)

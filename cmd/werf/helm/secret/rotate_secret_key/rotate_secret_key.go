@@ -23,8 +23,9 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Regenerate secret files with new secret key",
@@ -41,14 +42,16 @@ Command will extract data with the old key, generate new secret data and rewrite
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfOldSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
 
-			return runRotateSecretKey(common.GetContext(), cmd, args...)
+			return runRotateSecretKey(ctx, cmd, args...)
 		},
-	}
+	})
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})

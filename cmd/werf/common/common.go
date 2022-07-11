@@ -30,99 +30,6 @@ import (
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
-type CmdData struct {
-	GitWorkTree        *string
-	ProjectName        *string
-	Dir                *string
-	ConfigPath         *string
-	ConfigTemplatesDir *string
-	TmpDir             *string
-	HomeDir            *string
-	SSHKeys            *[]string
-
-	HelmChartDir                     *string
-	Environment                      *string
-	Release                          *string
-	Namespace                        *string
-	AddAnnotations                   *[]string
-	AddLabels                        *[]string
-	KubeContext                      *string
-	KubeConfig                       *string
-	KubeConfigBase64                 *string
-	KubeConfigPathMergeList          *[]string
-	StatusProgressPeriodSeconds      *int64
-	HooksStatusProgressPeriodSeconds *int64
-	ReleasesHistoryMax               *int
-
-	SetDockerConfigJsonValue *bool
-	Set                      *[]string
-	SetString                *[]string
-	Values                   *[]string
-	SetFile                  *[]string
-	SecretValues             *[]string
-	IgnoreSecretKey          *bool
-
-	Repo      *RepoData
-	FinalRepo *RepoData
-
-	SecondaryStagesStorage *[]string
-	CacheStagesStorage     *[]string
-
-	SkipBuild *bool
-	StubTags  *bool
-
-	AddCustomTag *[]string
-	UseCustomTag *string
-
-	Synchronization    *string
-	Parallel           *bool
-	ParallelTasksLimit *int64
-
-	DockerConfig                    *string
-	InsecureRegistry                *bool
-	SkipTlsVerifyRegistry           *bool
-	InsecureHelmDependencies        *bool
-	DryRun                          *bool
-	KeepStagesBuiltWithinLastNHours *uint64
-	WithoutKube                     *bool
-
-	LooseGiterminism *bool
-	Dev              *bool
-	DevIgnore        *[]string
-	DevBranch        *string
-
-	IntrospectBeforeError *bool
-	IntrospectAfterError  *bool
-	StagesToIntrospect    *[]string
-
-	Follow *bool
-
-	LogDebug         *bool
-	LogPretty        *bool
-	LogVerbose       *bool
-	LogQuiet         *bool
-	LogColorMode     *string
-	LogProjectDir    *bool
-	LogTerminalWidth *int64
-
-	ReportPath   *string
-	ReportFormat *string
-
-	VirtualMerge *bool
-
-	ScanContextNamespaceOnly *bool
-
-	// Host storage cleanup options
-	DisableAutoHostCleanup                *bool
-	DockerServerStoragePath               *string
-	AllowedDockerStorageVolumeUsage       *uint
-	AllowedDockerStorageVolumeUsageMargin *uint
-	AllowedLocalCacheVolumeUsage          *uint
-	AllowedLocalCacheVolumeUsageMargin    *uint
-
-	Platform *string
-}
-
 const (
 	CleaningCommandsForceOptionDescription = "First remove containers that use werf docker images which are going to be deleted"
 	StubRepoAddress                        = "stub/repository"
@@ -840,7 +747,7 @@ func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) 
 	return storage.NewDockerServerStagesStorage(containerBackend.(*container_backend.DockerServerBackend))
 }
 
-func GetStagesStorage(containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
 	if _, match := containerBackend.(*container_backend.BuildahBackend); match {
 		addr, err := cmdData.Repo.GetAddress()
 		if err != nil {
@@ -851,24 +758,24 @@ func GetStagesStorage(containerBackend container_backend.ContainerBackend, cmdDa
 			return nil, fmt.Errorf(`"--repo" should be specified and not equal ":local" for Buildah container backend`)
 		}
 	}
-	return cmdData.Repo.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+	return cmdData.Repo.CreateStagesStorage(ctx, containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
-func GetOptionalFinalStagesStorage(containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
 	if *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
-	return cmdData.FinalRepo.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+	return cmdData.FinalRepo.CreateStagesStorage(ctx, containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
-func GetCacheStagesStorageList(containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
+func GetCacheStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
 	for _, address := range GetCacheStagesStorage(cmdData) {
 		repoData := NewRepoData("cache-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
-		storage, err := repoData.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+		storage, err := repoData.CreateStagesStorage(ctx, containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create cache stages storage in %s: %w", address, err)
 		}
@@ -878,7 +785,7 @@ func GetCacheStagesStorageList(containerBackend container_backend.ContainerBacke
 	return res, nil
 }
 
-func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
+func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
 	if dockerBackend, matched := containerBackend.(*container_backend.DockerServerBackend); matched {
@@ -891,7 +798,7 @@ func GetSecondaryStagesStorageList(stagesStorage storage.StagesStorage, containe
 		repoData := NewRepoData("secondary-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
-		storage, err := repoData.CreateStagesStorage(containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+		storage, err := repoData.CreateStagesStorage(ctx, containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create secondary stages storage in %s: %w", address, err)
 		}
@@ -1009,12 +916,12 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_m
 		return nil, err
 	}
 
-	headCommit, err := localGitRepo.HeadCommitHash(GetContext())
+	headCommit, err := localGitRepo.HeadCommitHash(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return giterminism_manager.NewManager(GetContext(), workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
+	return giterminism_manager.NewManager(ctx, workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		Dev:              *cmdData.Dev,
 	})
@@ -1336,7 +1243,7 @@ func SetupPlatform(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.Platform, "platform", "", defaultValue, "Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT] ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)")
 }
 
-func GetContext() context.Context {
+func GetContextWithLogger() context.Context {
 	return logboek.NewContext(context.Background(), logboek.DefaultLogger())
 }
 

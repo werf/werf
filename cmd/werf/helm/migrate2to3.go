@@ -63,20 +63,23 @@ func setupHelm2ReleaseStorageType(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&migrate2ToCmdData.Helm2ReleaseStorageType, "helm2-release-storage-type", "", defaultValue, fmt.Sprintf("Helm w storage driver to use. One of %[1]q or %[2]q, defaults to $WERF_HELM2_RELEASE_STORAGE_TYPE, or $WERF_HELM_RELEASE_STORAGE_TYPE, or %[1]q)", "configmap", "secret"))
 }
 
-func NewMigrate2To3Cmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewMigrate2To3Cmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &migrate2To3CommonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "migrate2to3",
 		DisableFlagsInUseLine: true,
 		Short:                 "Start a migration of your existing helm 2 release to helm 3",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&migrate2To3CommonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
 
-			return runMigrate2To3(common.GetContext())
+			return runMigrate2To3(ctx)
 		},
-	}
+	})
 
 	common.SetupTmpDir(&migrate2To3CommonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&migrate2To3CommonCmdData, cmd, common.SetupHomeDirOptions{})

@@ -21,8 +21,9 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "encrypt [FILE_PATH]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Encrypt values file data",
@@ -34,6 +35,8 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 		Example: `  # Encrypt and save result in file
   $ werf helm secret values encrypt test.yaml -o .helm/secret-values.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -45,7 +48,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 				filePath = args[0]
 			}
 
-			if err := runSecretEncrypt(common.GetContext(), filePath); err != nil {
+			if err := runSecretEncrypt(ctx, filePath); err != nil {
 				if strings.HasSuffix(err.Error(), secret_common.ExpectedFilePathOrPipeError().Error()) {
 					common.PrintHelp(cmd)
 				}
@@ -55,7 +58,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 
 			return nil
 		},
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})

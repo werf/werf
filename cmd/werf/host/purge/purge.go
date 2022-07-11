@@ -24,8 +24,9 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "purge",
 		Short: "Purge werf images, cache and other data for all projects on host machine",
 		Long: common.GetLongCommandDescription(`Purge werf images, cache and other data for all projects on host machine.
@@ -41,7 +42,7 @@ The data include:
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
@@ -53,7 +54,7 @@ WARNING: Do not run this command during any other werf command is working on the
 
 			return common.LogRunningTime(func() error { return runReset(ctx) })
 		},
-	}
+	})
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})

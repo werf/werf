@@ -21,8 +21,9 @@ var CmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "decrypt [FILE_PATH]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Decrypt secret file data",
@@ -38,6 +39,8 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
@@ -49,7 +52,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 				filePath = args[0]
 			}
 
-			if err := runSecretDecrypt(common.GetContext(), filePath); err != nil {
+			if err := runSecretDecrypt(ctx, filePath); err != nil {
 				if strings.HasSuffix(err.Error(), secret_common.ExpectedFilePathOrPipeError().Error()) {
 					common.PrintHelp(cmd)
 				}
@@ -59,7 +62,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
 
 			return nil
 		},
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})

@@ -1,6 +1,7 @@
 package copy
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -22,8 +23,9 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "copy",
 		Short:                 "Copy published bundle into another location",
 		Long:                  common.GetLongCommandDescription(`Take latest bundle from the specified container registry using specified version tag and copy it either into a different tag within the same container registry or into another container registry.`),
@@ -32,7 +34,9 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer global_warnings.PrintGlobalWarnings(common.GetContext())
+			ctx := cmd.Context()
+
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -41,9 +45,9 @@ func NewCmd() *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(runCopy)
+			return common.LogRunningTime(func() error { return runCopy(ctx) })
 		},
-	}
+	})
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
@@ -73,9 +77,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runCopy() error {
-	ctx := common.GetContext()
-
+func runCopy(ctx context.Context) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -98,7 +100,7 @@ func runCopy() error {
 		return fmt.Errorf("--to=ADDRESS param required")
 	}
 
-	fromRegistry, err := cmdData.Repo.CreateDockerRegistry(*commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
+	fromRegistry, err := cmdData.Repo.CreateDockerRegistry(ctx, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
 	if err != nil {
 		return fmt.Errorf("error creating container registry accessor for repo %s: %w", *cmdData.Repo.Address, err)
 	}

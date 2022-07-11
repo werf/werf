@@ -54,7 +54,7 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 		return
 	}
 
-	ctx := GetContext()
+	ctx := GetContextWithLogger()
 	doPrintWarning := false
 	kubeConfigEnv := os.Getenv("KUBECONFIG")
 	switch {

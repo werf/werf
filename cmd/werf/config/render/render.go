@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -15,13 +16,14 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "render [IMAGE_NAME...]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Render werf.yaml",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := common.GetContext()
+			ctx := cmd.Context()
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -62,9 +64,9 @@ func NewCmd() *cobra.Command {
 				return err
 			}
 
-			return config.RenderWerfConfig(common.GetContext(), customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, args, giterminismManager, configOpts)
+			return config.RenderWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, args, giterminismManager, configOpts)
 		},
-	}
+	})
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)

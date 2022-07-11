@@ -1,6 +1,7 @@
 package docs
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,8 +14,9 @@ import (
 
 var commonCmdData common.CmdData
 
-func NewCmd(cmdGroups *templates.CommandGroups) *cobra.Command {
-	cmd := &cobra.Command{
+func NewCmd(ctx context.Context, cmdGroups *templates.CommandGroups) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "docs",
 		DisableFlagsInUseLine: true,
 		Short:                 "Generate documentation as markdown",
@@ -55,7 +57,7 @@ func NewCmd(cmdGroups *templates.CommandGroups) *cobra.Command {
 
 			return nil
 		},
-	}
+	})
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupDir(&commonCmdData, cmd)

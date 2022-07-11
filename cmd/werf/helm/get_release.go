@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -15,20 +16,23 @@ import (
 
 var getReleaseCmdData common.CmdData
 
-func NewGetReleaseCmd() *cobra.Command {
-	cmd := &cobra.Command{
+func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
+	ctx = common.NewContextWithCmdData(ctx, &getReleaseCmdData)
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "get-release",
 		DisableFlagsInUseLine: true,
 		Short:                 "Print Helm Release name that will be used in current configuration with specified params",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
 			if err := common.ProcessLogOptions(&getReleaseCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
 
-			return runGetRelease()
+			return runGetRelease(ctx)
 		},
-	}
+	})
 
 	common.SetupDir(&getReleaseCmdData, cmd)
 	common.SetupGitWorkTree(&getReleaseCmdData, cmd)
@@ -48,9 +52,7 @@ func NewGetReleaseCmd() *cobra.Command {
 	return cmd
 }
 
-func runGetRelease() error {
-	ctx := common.GetContext()
-
+func runGetRelease(ctx context.Context) error {
 	if err := werf.Init(*getReleaseCmdData.TmpDir, *getReleaseCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -73,7 +75,7 @@ func runGetRelease() error {
 		return err
 	}
 
-	_, werfConfig, err := common.GetRequiredWerfConfig(common.GetContext(), &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
+	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
