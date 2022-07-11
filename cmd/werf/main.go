@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -54,26 +53,6 @@ import (
 	"github.com/werf/werf/pkg/telemetry"
 )
 
-func getFullCommandName(cmd *cobra.Command) string {
-	commandParts := []string{cmd.Name()}
-	c := cmd
-	for {
-		p := c.Parent()
-		if p == nil {
-			break
-		}
-		commandParts = append(commandParts, p.Name())
-		c = p
-	}
-
-	var p []string
-	for i := 0; i < len(commandParts); i++ {
-		p = append(p, commandParts[len(commandParts)-i-1])
-	}
-
-	return strings.Join(p, " ")
-}
-
 func main() {
 	ctx := common.GetContextWithLogger()
 
@@ -99,35 +78,7 @@ func main() {
 
 	rootCmd := constructRootCmd(ctx)
 
-	commandsQueue := []*cobra.Command{rootCmd}
-	for len(commandsQueue) > 0 {
-		cmd := commandsQueue[0]
-		commandsQueue = commandsQueue[1:]
-
-		commandsQueue = append(commandsQueue, cmd.Commands()...)
-
-		if cmd.Runnable() {
-			oldRunE := cmd.RunE
-			cmd.RunE = nil
-
-			oldRun := cmd.Run
-			cmd.Run = nil
-
-			cmd.RunE = func(cmd *cobra.Command, args []string) error {
-				telemetry.GetTelemetryWerfIO().SetCommand(ctx, getFullCommandName(cmd))
-				telemetry.GetTelemetryWerfIO().CommandStarted(ctx)
-
-				if oldRunE != nil {
-					return oldRunE(cmd, args)
-				} else if oldRun != nil {
-					oldRun(cmd, args)
-					return nil
-				} else {
-					panic(fmt.Sprintf("unexpected command %q, please report bug to the https://github.com/werf/werf", cmd.Name()))
-				}
-			}
-		}
-	}
+	setupTelemetryInit(rootCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		if helm_v3.IsPluginError(err) {
@@ -313,4 +264,40 @@ func hostCmd(ctx context.Context) *cobra.Command {
 	)
 
 	return hostCmd
+}
+
+func setupTelemetryInit(rootCmd *cobra.Command) {
+	commandsQueue := []*cobra.Command{rootCmd}
+
+	for len(commandsQueue) > 0 {
+		cmd := commandsQueue[0]
+		commandsQueue = commandsQueue[1:]
+
+		commandsQueue = append(commandsQueue, cmd.Commands()...)
+
+		if cmd.Runnable() {
+			oldRunE := cmd.RunE
+			cmd.RunE = nil
+
+			oldRun := cmd.Run
+			cmd.Run = nil
+
+			cmd.RunE = func(cmd *cobra.Command, args []string) error {
+				if err := common.TelemetryPreRun(cmd, args); err != nil {
+					if telemetry.IsLogsEnabled() {
+						fmt.Fprintf(os.Stderr, "Telemetry error: %s\n", err)
+					}
+				}
+
+				if oldRunE != nil {
+					return oldRunE(cmd, args)
+				} else if oldRun != nil {
+					oldRun(cmd, args)
+					return nil
+				} else {
+					panic(fmt.Sprintf("unexpected command %q, please report bug to the https://github.com/werf/werf", cmd.Name()))
+				}
+			}
+		}
+	}
 }
