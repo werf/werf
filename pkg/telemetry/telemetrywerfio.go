@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"runtime"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,10 +13,13 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/werf/werf/pkg/werf"
 )
 
 const (
-	spanName = "telemetry.werf.io"
+	spanName      = "telemetry.werf.io"
+	schemaVersion = 1
 )
 
 type TelemetryWerfIOInterface interface {
@@ -95,7 +100,21 @@ func (t *TelemetryWerfIO) CommandStarted(ctx context.Context) {
 	t.sendEvent(ctx, CommandStartedEvent, nil)
 }
 
-func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, data interface{}) error {
+func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
+	attributes := map[string]interface{}{
+		"version": werf.Version,
+		"os":      runtime.GOOS,
+		"arch":    runtime.GOARCH,
+	}
+
+	if val := os.Getenv("TRDL_USE_WERF_GROUP_CHANNEL"); val != "" {
+		attributes["groupChannel"] = val
+	}
+
+	return attributes
+}
+
+func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, eventData interface{}) error {
 	trc := t.getTracer()
 
 	_, span := trc.Start(ctx, spanName)
@@ -106,18 +125,26 @@ func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, da
 	span.SetAttributes(attribute.Key("executionID").String(t.executionID))
 	span.SetAttributes(attribute.Key("projectID").String(t.projectID))
 	span.SetAttributes(attribute.Key("command").String(t.command))
+
+	rawAttributes, err := json.Marshal(t.getAttributes())
+	if err != nil {
+		return fmt.Errorf("unable to marshal attributes: %w", err)
+	}
+	span.SetAttributes(attribute.Key("attributes").String(string(rawAttributes)))
+
 	span.SetAttributes(attribute.Key("eventType").String(string(eventType)))
 
-	rawData, err := json.Marshal(data)
+	rawEventData, err := json.Marshal(eventData)
 	if err != nil {
 		return fmt.Errorf("unable to marshal event data: %w", err)
 	}
+	span.SetAttributes(attribute.Key("eventData").String(string(rawEventData)))
+	span.SetAttributes(attribute.Key("schemaVersion").Int64(schemaVersion))
 
-	span.SetAttributes(attribute.Key("data").String(string(rawData)))
 	span.End()
 
 	if IsLogsEnabled() {
-		fmt.Printf("Telemetry: sent event: ts=%d executionID=%q projectID=%q command=%q eventType=%q data=%q\n", ts, t.executionID, t.projectID, t.command, string(eventType), string(rawData))
+		fmt.Printf("Telemetry: sent event: ts=%d executionID=%q projectID=%q command=%q attributes=%q eventType=%q eventData=%q schemaVersion=%d\n", ts, t.executionID, t.projectID, t.command, string(rawAttributes), string(eventType), string(rawEventData), schemaVersion)
 	}
 
 	return nil
