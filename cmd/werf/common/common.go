@@ -890,14 +890,7 @@ func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.Wer
 	}
 }
 
-func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_manager.Interface, error) {
-	workingDir := GetWorkingDir(cmdData)
-
-	gitWorkTree, err := GetGitWorkTree(ctx, cmdData, workingDir)
-	if err != nil {
-		return nil, err
-	}
-
+func OpenGitRepo(ctx context.Context, cmdData *CmdData, workingDir, gitWorkTree string) (*git_repo.Local, error) {
 	isWorkingDirInsideGitWorkTree := util.IsSubpathOfBasePath(gitWorkTree, workingDir)
 	areWorkingDirAndGitWorkTreeTheSame := gitWorkTree == workingDir
 	if !(isWorkingDirInsideGitWorkTree || areWorkingDirAndGitWorkTreeTheSame) {
@@ -911,7 +904,18 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_m
 		openLocalRepoOptions.ServiceBranchOptions.GlobExcludeList = GetDevIgnore(cmdData)
 	}
 
-	localGitRepo, err := git_repo.OpenLocalRepo(GetContext(), "own", gitWorkTree, openLocalRepoOptions)
+	return git_repo.OpenLocalRepo(ctx, "own", gitWorkTree, openLocalRepoOptions)
+}
+
+func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_manager.Interface, error) {
+	workingDir := GetWorkingDir(cmdData)
+
+	gitWorkTree, err := GetGitWorkTree(ctx, cmdData, workingDir)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get git work tree: %w", err)
+	}
+
+	localGitRepo, err := OpenGitRepo(ctx, cmdData, workingDir, gitWorkTree)
 	if err != nil {
 		return nil, err
 	}
@@ -946,7 +950,23 @@ func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (s
 		return util.GetAbsoluteFilepath(workTree), nil
 	}
 
+	if res, err := LookupGitWorkTree(ctx, workingDir); err != nil {
+		return "", fmt.Errorf("unable to lookup git work tree from wd %q: %w", workingDir, err)
+	} else if res != "" {
+		return res, nil
+	}
+
 	return "", fmt.Errorf("werf requires a git work tree for the project to exist: unable to find a valid .git in the current directory %q or parent directories, you may also specify git work tree explicitly with --git-work-tree option (or WERF_GIT_WORK_TREE env var)", util.GetAbsoluteFilepath("."))
+}
+
+func LookupGitWorkTree(ctx context.Context, workingDir string) (string, error) {
+	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree(ctx, workingDir); err != nil {
+		return "", err
+	} else if found {
+		return util.GetAbsoluteFilepath(workTree), nil
+	}
+
+	return "", nil
 }
 
 func GetWorkingDir(cmdData *CmdData) string {

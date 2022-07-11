@@ -15,7 +15,11 @@ func NewContextWithCmdData(ctx context.Context, cmdData *CmdData) context.Contex
 }
 
 func GetCmdDataFromContext(ctx context.Context) *CmdData {
-	return ctx.Value(cmdDataContextKey).(*CmdData)
+	data, ok := ctx.Value(cmdDataContextKey).(*CmdData)
+	if !ok {
+		return nil
+	}
+	return data
 }
 
 func SetCommandContext(ctx context.Context, cmd *cobra.Command) *cobra.Command {
