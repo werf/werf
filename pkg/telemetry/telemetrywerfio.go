@@ -106,7 +106,6 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 		"os":      runtime.GOOS,
 		"arch":    runtime.GOARCH,
 	}
-
 	if val := os.Getenv("TRDL_USE_WERF_GROUP_CHANNEL"); val != "" {
 		attributes["groupChannel"] = val
 	}
@@ -116,7 +115,6 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 
 func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, eventData interface{}) error {
 	trc := t.getTracer()
-
 	_, span := trc.Start(ctx, spanName)
 
 	ts := time.Now().UnixMilli()
