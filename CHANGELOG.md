@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.123](https://www.github.com/werf/werf/compare/v1.2.122...v1.2.123) (2022-07-11)
+
+
+### Features
+
+* **telemetry:** use new telemetry with updated schema and projectID ([cf784f7](https://www.github.com/werf/werf/commit/cf784f7c36979e53ace77fda72c96caa85c7d2fe))
+
 ### [1.2.122](https://www.github.com/werf/werf/compare/v1.2.121...v1.2.122) (2022-07-08)
 
 
