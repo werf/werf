@@ -30,6 +30,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/config/deploy_params"
 	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -154,6 +155,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
+	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddLabels(&commonCmdData, cmd)
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
@@ -334,6 +337,18 @@ func runMain(ctx context.Context) error {
 func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.WerfConfig, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface) error {
 	projectName := werfConfig.Meta.Project
 
+	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	userExtraAnnotations = util.MergeMaps(userExtraAnnotations, helm.WerfRuntimeAnnotations)
+
+	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
+	if err != nil {
+		return err
+	}
+	userExtraLabels = util.MergeMaps(userExtraLabels, helm.WerfRuntimeLabels)
+
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
@@ -434,7 +449,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 
 	return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 		return common.WithoutTerminationSignalsTrap(func() error {
-			if err := createPod(ctx, namespace, pod, image, secret, commonArgs); err != nil {
+			if err := createPod(ctx, namespace, pod, image, secret, commonArgs, userExtraAnnotations, userExtraLabels); err != nil {
 				return fmt.Errorf("error creating Pod: %w", err)
 			}
 
@@ -489,10 +504,10 @@ func createCommonKubectlArgs(namespace string) ([]string, error) {
 	return commonArgs, nil
 }
 
-func createPod(ctx context.Context, namespace, pod, image, secret string, extraArgs []string) error {
+func createPod(ctx context.Context, namespace, pod, image, secret string, extraArgs []string, extraAnnos, extraLabels map[string]string) error {
 	logboek.Context(ctx).LogF("Running pod %q in namespace %q ...\n", pod, namespace)
 
-	args, err := createKubectlRunArgs(pod, image, secret, extraArgs)
+	args, err := createKubectlRunArgs(pod, image, secret, extraArgs, extraAnnos, extraLabels)
 	if err != nil {
 		return fmt.Errorf("error creating kubectl run args: %w", err)
 	}
@@ -511,7 +526,7 @@ func createPod(ctx context.Context, namespace, pod, image, secret string, extraA
 	return nil
 }
 
-func createKubectlRunArgs(pod, image, secret string, extraArgs []string) ([]string, error) {
+func createKubectlRunArgs(pod, image, secret string, extraArgs []string, extraAnnos, extraLabels map[string]string) ([]string, error) {
 	args := []string{
 		"run",
 		pod,
@@ -524,7 +539,7 @@ func createKubectlRunArgs(pod, image, secret string, extraArgs []string) ([]stri
 
 	args = append(args, extraArgs...)
 
-	if overrides, err := generateOverrides(pod, secret); err != nil {
+	if overrides, err := generateOverrides(pod, secret, extraAnnos, extraLabels); err != nil {
 		return nil, fmt.Errorf("error generating --overrides: %w", err)
 	} else if overrides != nil {
 		args = append(args, "--overrides", string(overrides), "--override-type", "strategic")
@@ -538,7 +553,7 @@ func createKubectlRunArgs(pod, image, secret string, extraArgs []string) ([]stri
 }
 
 // Can return nil overrides.
-func generateOverrides(container, secret string) ([]byte, error) {
+func generateOverrides(container, secret string, extraAnnos, extraLabels map[string]string) ([]byte, error) {
 	codec := runtime.NewCodec(scheme.DefaultJSONEncoder(), scheme.Codecs.UniversalDeserializer())
 
 	podOverrides := &corev1.Pod{}
@@ -547,6 +562,9 @@ func generateOverrides(container, secret string) ([]byte, error) {
 	}
 
 	createMainContainer(podOverrides, container)
+
+	addAnnotations(extraAnnos, podOverrides)
+	addLabels(extraLabels, podOverrides)
 
 	if cmdData.AutoPullSecret && cmdData.registryCredsFound {
 		if err := addImagePullSecret(secret, podOverrides); err != nil {
@@ -950,6 +968,14 @@ func getDockerConfigCredentials(ref string) (reference.Named, imgtypes.DockerAut
 	}
 
 	return namedRef, dockerAuthConf, nil
+}
+
+func addAnnotations(annotations map[string]string, podOverrides *corev1.Pod) {
+	podOverrides.Annotations = util.MergeMaps(annotations, podOverrides.Annotations)
+}
+
+func addLabels(labels map[string]string, podOverrides *corev1.Pod) {
+	podOverrides.Labels = util.MergeMaps(labels, podOverrides.Labels)
 }
 
 func addImagePullSecret(secret string, podOverrides *corev1.Pod) error {
