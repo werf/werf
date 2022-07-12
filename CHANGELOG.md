@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.124](https://www.github.com/werf/werf/compare/v1.2.123...v1.2.124) (2022-07-12)
+
+
+### Features
+
+* **helm:** split long templating errors over multiple lines ([6af7192](https://www.github.com/werf/werf/commit/6af71924b0621ddd09af741a3361739c3edafc0b))
+* **kube-run:** --add-annotations/labels + pass service annotations ([ba2fc7c](https://www.github.com/werf/werf/commit/ba2fc7cf9b11128df3b4874e98ce144e053ccaa0))
+
+
+### Bug Fixes
+
+* **secrets:** compatible behaviour of secret values edit command with previous versions ([89cbef5](https://www.github.com/werf/werf/commit/89cbef50c9861c9e4468562267239506d4a8eaa5))
+
 ### [1.2.123](https://www.github.com/werf/werf/compare/v1.2.122...v1.2.123) (2022-07-11)
 
 
