@@ -576,7 +576,6 @@ github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfc
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
-github.com/cpuguy83/go-md2man/v2 v2.0.1 h1:r/myEWzV9lfsM1tFLgDyu0atFtJ1fXn261LKYj/3DxU=
 github.com/cpuguy83/go-md2man/v2 v2.0.1/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/cpuguy83/go-md2man/v2 v2.0.2 h1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
@@ -1918,7 +1917,6 @@ github.com/spf13/cobra v1.1.1/go.mod h1:WnodtKOvamDL/PwE2M4iKs8aMDBZ5Q5klgD3qfVJ
 github.com/spf13/cobra v1.1.3/go.mod h1:pGADOWyqRD/YMrPZigI/zbliZ2wVD/23d+is3pSWzOo=
 github.com/spf13/cobra v1.2.1/go.mod h1:ExllRjgxM/piMAM+3tAZvg8fsklGAf3tPfi+i8t68Nk=
 github.com/spf13/cobra v1.3.0/go.mod h1:BrRVncBjOJa/eUcVVm9CE+oC6as8k+VYr4NY7WCi9V4=
-github.com/spf13/cobra v1.4.0 h1:y+wJpx64xcgO1V+RcnwW0LEHxTKRi2ZDPSBjWnrg88Q=
 github.com/spf13/cobra v1.4.0/go.mod h1:Wo4iy3BUC+X2Fybo0PDqwJIv3dNRiZLHQymsfxlB84g=
 github.com/spf13/cobra v1.5.0 h1:X+jTBEBqF0bHN+9cSMgmfuvv2VHJ9ezmFNf9Y/XstYU=
 github.com/spf13/cobra v1.5.0/go.mod h1:dWXEIy2H428czQCjInthrTRUg7yKbok+2Qi/yBIJoUM=
@@ -2049,14 +2047,12 @@ github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59b
 github.com/weppos/publicsuffix-go v0.4.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
 github.com/weppos/publicsuffix-go v0.5.0 h1:rutRtjBJViU/YjcI5d80t4JAVvDltS6bciJg2K1HrLU=
 github.com/weppos/publicsuffix-go v0.5.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
-github.com/werf/3p-helm/v3 v3.0.0-20220705094850-89100634721a h1:Irr95zPrQQct+/+i8pILpWPsiemi1MXwOQaccRaOKqI=
-github.com/werf/3p-helm/v3 v3.0.0-20220705094850-89100634721a/go.mod h1:NxtE2KObf2PrzDl6SIamPFPKyAqWi10iWuvKlQn/Yao=
+github.com/werf/3p-helm/v3 v3.0.0-20220712150402-be76c7408fd8 h1:2fB2j5DEP/KZw0F4zYxq10q+etKclvpIG6r52g1DwJQ=
+github.com/werf/3p-helm/v3 v3.0.0-20220712150402-be76c7408fd8/go.mod h1:NxtE2KObf2PrzDl6SIamPFPKyAqWi10iWuvKlQn/Yao=
 github.com/werf/copy-recurse v0.2.4 h1:kEyGUKhgS8WdEOjInNQKgk4lqPWzP2AgR27F3dcGsVc=
 github.com/werf/copy-recurse v0.2.4/go.mod h1:KVHSQ90p19xflWW0B7BJhLBwmSbEtuxIaBnjlUYRPhk=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f h1:81YscYTF9mmTf0ULOsCmm42YWQp+qWDzWi1HjWniZrg=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
-github.com/werf/kubedog v0.7.0 h1:Gvxo2YjTLQchyZf0IcNZ2kvq/rjW2wT+1TXcgsiZ11Y=
-github.com/werf/kubedog v0.7.0/go.mod h1:MIvQv19uLxcZMwATRE4sOtfUy36o99oBqmlXPk30U+A=
 github.com/werf/kubedog v0.7.1 h1:EKMAHNBKSp8XBVI171Btj7HVXr05EvujtwvGV0NzyUw=
 github.com/werf/kubedog v0.7.1/go.mod h1:MIvQv19uLxcZMwATRE4sOtfUy36o99oBqmlXPk30U+A=
 github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea h1:R5tJUhL5a3YfHTrHWyuAdJW3h//fmONrpHJjjAZ79e4=
