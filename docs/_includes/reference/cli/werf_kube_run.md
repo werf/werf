@@ -28,6 +28,17 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 {{ header }} Options
 
 ```shell
+      --add-annotation=[]
+            Add annotation to deploying resources (can specify multiple).
+            Format: annoName=annoValue.
+            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
+            $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
+            $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
+      --add-label=[]
+            Add label to deploying resources (can specify multiple).
+            Format: labelName=labelValue.
+            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
+            $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --auto-pull-secret=true
             Automatically create docker config secret in the namespace and plug it via pod`s        
             imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if 
