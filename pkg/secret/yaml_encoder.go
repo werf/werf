@@ -39,7 +39,7 @@ func (s *YamlEncoder) Encrypt(data []byte) ([]byte, error) {
 }
 
 func (s *YamlEncoder) EncryptYamlData(data []byte) ([]byte, error) {
-	resultData, err := doYamlDataV2(s.generateFunc, data)
+	resultData, err := doYamlDataV2(s.generateFunc, data, encryptYamlMode)
 	if err != nil {
 		return nil, fmt.Errorf("encryption failed: check encryption key and data: %w", err)
 	}
@@ -61,7 +61,7 @@ func (s *YamlEncoder) Decrypt(data []byte) ([]byte, error) {
 }
 
 func (s *YamlEncoder) DecryptYamlData(data []byte) ([]byte, error) {
-	resultData, err := doYamlDataV2(s.extractFunc, data)
+	resultData, err := doYamlDataV2(s.extractFunc, data, decryptYamlMode)
 	if err != nil {
 		if IsExtractDataError(err) {
 			return nil, fmt.Errorf("decryption failed: check data `%s`: %w", string(data), err)
@@ -73,14 +73,14 @@ func (s *YamlEncoder) DecryptYamlData(data []byte) ([]byte, error) {
 	return resultData, nil
 }
 
-func doYamlDataV2(doFunc func([]byte) ([]byte, error), data []byte) ([]byte, error) {
+func doYamlDataV2(doFunc func([]byte) ([]byte, error), data []byte, mode yamlProcessorMode) ([]byte, error) {
 	var config yaml_v3.Node
 
 	if err := yaml_v3.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal config data: %w", err)
 	}
 
-	resultConfig, err := doYamlValueSecretV2(doFunc, &config)
+	resultConfig, err := doYamlValueSecretV2(doFunc, &config, mode)
 	if err != nil {
 		return nil, fmt.Errorf("unable to process config secrets: %w", err)
 	}
@@ -96,11 +96,18 @@ func doYamlDataV2(doFunc func([]byte) ([]byte, error), data []byte) ([]byte, err
 	return resultData.Bytes(), nil
 }
 
-func doYamlValueSecretV2(doFunc func([]byte) ([]byte, error), node *yaml_v3.Node) (*yaml_v3.Node, error) {
+type yamlProcessorMode int
+
+const (
+	decryptYamlMode yamlProcessorMode = iota
+	encryptYamlMode
+)
+
+func doYamlValueSecretV2(doFunc func([]byte) ([]byte, error), node *yaml_v3.Node, mode yamlProcessorMode) (*yaml_v3.Node, error) {
 	switch node.Kind {
 	case yaml_v3.DocumentNode:
 		for pos := 0; pos < len(node.Content); pos += 1 {
-			newValueNode, err := doYamlValueSecretV2(doFunc, node.Content[pos])
+			newValueNode, err := doYamlValueSecretV2(doFunc, node.Content[pos], mode)
 			if err != nil {
 				return nil, fmt.Errorf("unable to process document key %d: %w", pos, err)
 			}
@@ -111,7 +118,7 @@ func doYamlValueSecretV2(doFunc func([]byte) ([]byte, error), node *yaml_v3.Node
 		for pos := 0; pos < len(node.Content); pos += 2 {
 			keyNode := node.Content[pos]
 			valueNode := node.Content[pos+1]
-			newValueNode, err := doYamlValueSecretV2(doFunc, valueNode)
+			newValueNode, err := doYamlValueSecretV2(doFunc, valueNode, mode)
 			if err != nil {
 				return nil, fmt.Errorf("unable to process map key %q: %w", keyNode.Value, err)
 			}
@@ -120,7 +127,7 @@ func doYamlValueSecretV2(doFunc func([]byte) ([]byte, error), node *yaml_v3.Node
 
 	case yaml_v3.SequenceNode:
 		for pos := 0; pos < len(node.Content); pos += 1 {
-			newValueNode, err := doYamlValueSecretV2(doFunc, node.Content[pos])
+			newValueNode, err := doYamlValueSecretV2(doFunc, node.Content[pos], mode)
 			if err != nil {
 				return nil, fmt.Errorf("unable to process array key %d: %w", pos, err)
 			}
@@ -128,27 +135,61 @@ func doYamlValueSecretV2(doFunc func([]byte) ([]byte, error), node *yaml_v3.Node
 		}
 
 	case yaml_v3.AliasNode:
-		newAliasNode, err := doYamlValueSecretV2(doFunc, node.Alias)
+		newAliasNode, err := doYamlValueSecretV2(doFunc, node.Alias, mode)
 		if err != nil {
 			return nil, fmt.Errorf("unable to process an alias node %q: %w", node.Value, err)
 		}
 		node.Alias = newAliasNode
 
 	case yaml_v3.ScalarNode:
-		if node.ShortTag() == "!!str" {
-			var value string
+		switch mode {
+		case decryptYamlMode:
+			switch node.ShortTag() {
+			case "!!null":
+			// ignore
 
-			if err := node.Decode(&value); err != nil {
-				return nil, fmt.Errorf("unable to decode string value %q: %w", node.Value, err)
+			case "!!str":
+				var value string
+
+				if err := node.Decode(&value); err != nil {
+					return nil, fmt.Errorf("unable to decode string value %q: %w", node.Value, err)
+				}
+
+				newValue, err := doFunc([]byte(value))
+				if err != nil {
+					return nil, err
+				}
+
+				if err := node.Encode(string(newValue)); err != nil {
+					return nil, fmt.Errorf("unable to encode string value %q: %w", string(newValue), err)
+				}
+			default:
+				return nil, fmt.Errorf("unable to decode non string value %q: expected encoded value as hex string", node.Value)
 			}
 
-			newValue, err := doFunc([]byte(value))
-			if err != nil {
-				return nil, err
-			}
+		case encryptYamlMode:
+			// FIXME: support all types, by node.ShortTag()
 
-			if err := node.Encode(string(newValue)); err != nil {
-				return nil, fmt.Errorf("unable to encode string value %q: %w", string(newValue), err)
+			switch node.ShortTag() {
+			case "!!null":
+			// ignore
+
+			default:
+				var value interface{}
+
+				if err := node.Decode(&value); err != nil {
+					return nil, fmt.Errorf("unable to decode string value %q: %w", node.Value, err)
+				}
+
+				// FIXME: this is compatibility mode with previous werf version
+				newValue, err := doFunc([]byte(fmt.Sprintf("%v", value)))
+				if err != nil {
+					return nil, err
+				}
+
+				if err := node.Encode(string(newValue)); err != nil {
+					return nil, fmt.Errorf("unable to encode string value %q: %w", string(newValue), err)
+				}
 			}
 		}
 	}
