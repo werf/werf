@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.126](https://www.github.com/werf/werf/compare/v1.2.125...v1.2.126) (2022-07-13)
+
+
+### Bug Fixes
+
+* **bundles:** --secret-values option for bundle-render command ([f722ec9](https://www.github.com/werf/werf/commit/f722ec99d6594700e85b6d91acc4cb91030aed04))
+
 ### [1.2.125](https://www.github.com/werf/werf/compare/v1.2.124...v1.2.125) (2022-07-13)
 
 
