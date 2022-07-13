@@ -3,6 +3,8 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
 
 	"go.opentelemetry.io/otel"
 
@@ -13,7 +15,10 @@ const (
 	TracesURL = "https://telemetry.werf.io/v1/traces"
 )
 
-var telemetrywerfio *TelemetryWerfIO
+var (
+	telemetrywerfio *TelemetryWerfIO
+	logFile         *os.File
+)
 
 func GetTelemetryWerfIO() TelemetryWerfIOInterface {
 	if telemetrywerfio == nil {
@@ -29,6 +34,14 @@ type TelemetryOptions struct {
 func Init(ctx context.Context, opts TelemetryOptions) error {
 	if !IsEnabled() {
 		return nil
+	}
+
+	if path := os.Getenv("WERF_TELEMETRY_LOG_FILE"); path != "" {
+		f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
+		if err != nil {
+			return fmt.Errorf("unable to open log file %q: %w", path, err)
+		}
+		logFile = f
 	}
 
 	if t, err := NewTelemetryWerfIO(TracesURL, TelemetryWerfIOOptions{
@@ -60,6 +73,14 @@ func Shutdown(ctx context.Context) error {
 	if !IsEnabled() {
 		return nil
 	}
+	if telemetrywerfio == nil {
+		return nil
+	}
+
+	if logFile != nil {
+		defer logFile.Close()
+	}
+
 	return telemetrywerfio.Shutdown(ctx)
 }
 
@@ -67,6 +88,9 @@ func IsEnabled() bool {
 	return util.GetBoolEnvironmentDefaultFalse("WERF_TELEMETRY")
 }
 
-func IsLogsEnabled() bool {
-	return util.GetBoolEnvironmentDefaultFalse("WERF_TELEMETRY_LOGS")
+func LogF(f string, args ...interface{}) {
+	if logFile == nil {
+		return
+	}
+	fmt.Fprintf(logFile, "[%d][%s] Telemetry: %s\n", os.Getpid(), time.Now(), fmt.Sprintf(f, args...))
 }

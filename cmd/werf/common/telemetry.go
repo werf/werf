@@ -3,7 +3,6 @@ package common
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -14,41 +13,49 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
+var telemetryIgnoreCommands = []string{
+	"werf version",
+	"werf synchronization",
+	"werf completion",
+}
+
 func InitTelemetry(ctx context.Context) {
 	if err := telemetry.Init(ctx, telemetry.TelemetryOptions{
 		ErrorHandlerFunc: func(err error) {
 			if err == nil {
 				return
 			}
-			logTelemetryError(err.Error())
+
+			telemetry.LogF("error: %s", err)
 		},
 	}); err != nil {
-		logTelemetryError(fmt.Sprintf("unable to init: %s", err))
+		telemetry.LogF("error: %s", err)
 	}
 }
 
 func ShutdownTelemetry(ctx context.Context, exitCode int) {
 	if err := telemetry.Shutdown(ctx); err != nil {
-		logTelemetryError(fmt.Sprintf("unable to shutdown: %s", err))
+		telemetry.LogF("unable to shutdown: %s", err)
 	}
-}
-
-func logTelemetryError(msg string) {
-	if !telemetry.IsLogsEnabled() {
-		return
-	}
-	fmt.Fprintf(os.Stderr, "Telemetry error: %s\n", msg)
 }
 
 func TelemetryPreRun(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
-	telemetry.GetTelemetryWerfIO().SetCommand(ctx, getTelemetryCommand(cmd))
+	command := getTelemetryCommand(cmd)
+
+	for _, c := range telemetryIgnoreCommands {
+		if command == c {
+			return nil
+		}
+	}
+
+	InitTelemetry(ctx)
+
+	telemetry.GetTelemetryWerfIO().SetCommand(ctx, command)
 
 	if projectID, err := getTelemetryProjectID(ctx); err != nil {
-		if telemetry.IsLogsEnabled() {
-			fmt.Fprintf(os.Stderr, "Telemetry error: %s\n", err)
-		}
+		telemetry.LogF("error: %s", err)
 	} else {
 		telemetry.GetTelemetryWerfIO().SetProjectID(ctx, projectID)
 	}
@@ -84,9 +91,7 @@ func getTelemetryProjectID(ctx context.Context) (string, error) {
 	}
 
 	if repo, err := getTelemetryLocalRepo(ctx, workingDir, gitWorkTree); err != nil {
-		if telemetry.IsLogsEnabled() {
-			fmt.Fprintf(os.Stderr, "Telemetry: unable to open local repo: %s\n", err)
-		}
+		telemetry.LogF("unable to detect projectID: unable to open local repo: %s", err)
 	} else {
 		url, err := repo.RemoteOriginUrl(ctx)
 		if err != nil {
@@ -100,9 +105,8 @@ func getTelemetryProjectID(ctx context.Context) (string, error) {
 
 		hashParts := []string{ep.Protocol, ep.Host, fmt.Sprintf("%d", ep.Port), ep.Path}
 
-		if telemetry.IsLogsEnabled() {
-			fmt.Fprintf(os.Stderr, "Telemetry: calculate projectID based on repo origin url\n")
-		}
+		telemetry.LogF("calculate projectID based on repo origin url")
+
 		projectID = util.Sha256Hash(hashParts...)
 	}
 

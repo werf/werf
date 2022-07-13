@@ -56,11 +56,8 @@ import (
 func main() {
 	ctx := common.GetContextWithLogger()
 
-	common.InitTelemetry(ctx)
-
 	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
 	if err != nil {
-		common.ShutdownTelemetry(ctx, 1)
 		common.TerminateWithError(err.Error(), 1)
 	}
 	if shouldTerminate {
@@ -72,7 +69,6 @@ func main() {
 	logrus.StandardLogger().SetOutput(logboek.OutStream())
 
 	if err := process_exterminator.Init(); err != nil {
-		common.ShutdownTelemetry(ctx, 1)
 		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)
 	}
 
@@ -284,9 +280,7 @@ func setupTelemetryInit(rootCmd *cobra.Command) {
 
 			cmd.RunE = func(cmd *cobra.Command, args []string) error {
 				if err := common.TelemetryPreRun(cmd, args); err != nil {
-					if telemetry.IsLogsEnabled() {
-						fmt.Fprintf(os.Stderr, "Telemetry error: %s\n", err)
-					}
+					telemetry.LogF("error: %s\n", err)
 				}
 
 				if oldRunE != nil {
