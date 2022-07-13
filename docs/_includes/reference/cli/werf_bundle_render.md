@@ -48,6 +48,8 @@ werf bundle render [options]
             Use specified environment (default $WERF_ENV)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --ignore-secret-key=false
+            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --include-crds=true
             Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)
       --insecure-helm-dependencies=false
@@ -107,6 +109,11 @@ werf bundle render [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --secret-values=[]
+            Specify helm secret values in a YAML file (can specify multiple).
+            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
+            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
+            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
