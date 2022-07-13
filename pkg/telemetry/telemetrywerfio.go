@@ -52,8 +52,8 @@ func NewTelemetryWerfIO(url string, opts TelemetryWerfIOOptions) (*TelemetryWerf
 		handleErrorFunc: opts.HandleErrorFunc,
 		tracerProvider: sdktrace.NewTracerProvider(
 			sdktrace.WithBatcher(e,
-				sdktrace.WithBatchTimeout(0),
-				sdktrace.WithExportTimeout(3*time.Second),
+				sdktrace.WithBatchTimeout(1*time.Millisecond), // send all available events immediately
+				sdktrace.WithExportTimeout(1000*time.Millisecond),
 			),
 		),
 		traceExporter: e,
@@ -62,6 +62,7 @@ func NewTelemetryWerfIO(url string, opts TelemetryWerfIOOptions) (*TelemetryWerf
 }
 
 func (t *TelemetryWerfIO) Start(ctx context.Context) error {
+	LogF("start trace exporter")
 	if err := t.traceExporter.Start(ctx); err != nil {
 		return fmt.Errorf("error starting telemetry trace exporter: %w", err)
 	}
@@ -69,17 +70,24 @@ func (t *TelemetryWerfIO) Start(ctx context.Context) error {
 }
 
 func (t *TelemetryWerfIO) Shutdown(ctx context.Context) error {
+	LogF("start shutdown")
+
+	LogF("flush trace provider")
 	if err := t.tracerProvider.ForceFlush(ctx); err != nil {
 		return fmt.Errorf("unable to force flush tracer provider: %w", err)
 	}
 
+	LogF("shutdown trace exporter")
 	if err := t.traceExporter.Shutdown(ctx); err != nil {
 		return fmt.Errorf("unable to shutdown trace exporter: %w", err)
 	}
 
+	LogF("shutdown trace provider")
 	if err := t.tracerProvider.Shutdown(ctx); err != nil {
 		return fmt.Errorf("unable to shutdown trace provider: %w", err)
 	}
+
+	LogF("shutdown complete")
 
 	return nil
 }
@@ -117,6 +125,8 @@ func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, ev
 	trc := t.getTracer()
 	_, span := trc.Start(ctx, spanName)
 
+	LogF("start sending event")
+
 	ts := time.Now().UnixMilli()
 
 	span.SetAttributes(attribute.Key("ts").Int64(ts))
@@ -138,12 +148,9 @@ func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, ev
 	}
 	span.SetAttributes(attribute.Key("eventData").String(string(rawEventData)))
 	span.SetAttributes(attribute.Key("schemaVersion").Int64(schemaVersion))
-
 	span.End()
 
-	if IsLogsEnabled() {
-		fmt.Printf("Telemetry: sent event: ts=%d executionID=%q projectID=%q command=%q attributes=%q eventType=%q eventData=%q schemaVersion=%d\n", ts, t.executionID, t.projectID, t.command, string(rawAttributes), string(eventType), string(rawEventData), schemaVersion)
-	}
+	LogF("sent event: ts=%d executionID=%q projectID=%q command=%q attributes=%q eventType=%q eventData=%q schemaVersion=%d", ts, t.executionID, t.projectID, t.command, string(rawAttributes), string(eventType), string(rawEventData), schemaVersion)
 
 	return nil
 }
