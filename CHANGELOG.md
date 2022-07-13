@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.127](https://www.github.com/werf/werf/compare/v1.2.126...v1.2.127) (2022-07-13)
+
+
+### Features
+
+* **helm:** skip templating if plain text with no templates passed to `tpl` ([c1e00e4](https://www.github.com/werf/werf/commit/c1e00e4563f1d0dd3d7df9e6768cb884657daa5a))
+
 ### [1.2.126](https://www.github.com/werf/werf/compare/v1.2.125...v1.2.126) (2022-07-13)
 
 
