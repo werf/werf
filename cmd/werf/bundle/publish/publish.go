@@ -117,6 +117,7 @@ Published into container registry bundle can be rolled out by the "werf bundle" 
 	common.SetupReportFormat(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
+	common.SetupAddCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
