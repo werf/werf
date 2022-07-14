@@ -3,9 +3,9 @@ title: External dependencies
 permalink: advanced/helm/deploy_process/external_dependencies.html
 ---
 
-If you want to make one release resource depend on another you can change its [deployment order]({{ "/advanced/helm/deploy_process/deployment_order.html" | true_relative_url }}) to make the latter deploy only after the former is deployed successfully. But what if we want to make a release resource depend on a resource that is not managed as part of our release, or even not managed by werf at all (e.g. created by some operator)?
+To make one release resource dependent on another, you can change its [deployment order]({{ "/advanced/helm/deploy_process/deployment_order.html" | true_relative_url }}) so that the dependent one is deployed after the primary one has been successfully deployed. But what if you want a release resource to depend on a resource that is not part of that release or is not even managed by werf (e.g., created by some operator)?
 
-[`<name>.external-dependency.werf.io/resource`]({{ "/reference/deploy_annotations.html#external-dependency-resource" | true_relative_url }}) annotation can define an external dependency on another resource. Until the defined external dependency is created and ready, the annotated resource will not be deployed.
+In this case, the [`<name>.external-dependency.werf.io/resource`]({{ "/reference/deploy_annotations.html#external-dependency-resource" | true_relative_url }}) annotation can help you set the dependency on an external resource. The annotated resource will not be deployed until the defined external dependency is created and ready.
 
 Example:
 ```yaml
