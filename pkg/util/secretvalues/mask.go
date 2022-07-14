@@ -15,7 +15,12 @@ func ExtractSecretValuesFromMap(data map[string]interface{}) []string {
 		var elemI interface{}
 		elemI, queue = queue[0], queue[1:]
 
-		switch reflect.TypeOf(elemI).Kind() {
+		elemType := reflect.TypeOf(elemI)
+		if elemType == nil {
+			continue
+		}
+
+		switch elemType.Kind() {
 		case reflect.Slice, reflect.Array:
 			elem := reflect.ValueOf(elemI)
 			for i := 0; i < elem.Len(); i++ {
