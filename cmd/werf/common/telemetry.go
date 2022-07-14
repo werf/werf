@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/telemetry"
@@ -34,6 +35,8 @@ func InitTelemetry(ctx context.Context) {
 }
 
 func ShutdownTelemetry(ctx context.Context, exitCode int) {
+	telemetry.GetTelemetryWerfIO().CommandExited(ctx, exitCode)
+
 	if err := telemetry.Shutdown(ctx); err != nil {
 		telemetry.LogF("unable to shutdown: %s", err)
 	}
@@ -51,8 +54,27 @@ func TelemetryPreRun(cmd *cobra.Command, args []string) error {
 	}
 
 	InitTelemetry(ctx)
-
 	telemetry.GetTelemetryWerfIO().SetCommand(ctx, command)
+
+	var commandOptions []telemetry.CommandOption
+	for _, fs := range []*flag.FlagSet{cmd.Flags(), cmd.PersistentFlags(), cmd.LocalFlags(), cmd.InheritedFlags()} {
+		fs.VisitAll(func(f *flag.Flag) {
+			if !f.Changed {
+				return
+			}
+
+			for _, opt := range commandOptions {
+				if opt.Name == f.Name {
+					return
+				}
+			}
+
+			commandOptions = append(commandOptions, telemetry.CommandOption{
+				Name: f.Name,
+			})
+		})
+	}
+	telemetry.GetTelemetryWerfIO().SetCommandOptions(ctx, commandOptions)
 
 	if projectID, err := getTelemetryProjectID(ctx); err != nil {
 		telemetry.LogF("error: %s", err)

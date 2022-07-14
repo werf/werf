@@ -25,7 +25,17 @@ const (
 type TelemetryWerfIOInterface interface {
 	SetProjectID(ctx context.Context, projectID string)
 	SetCommand(ctx context.Context, command string)
+	SetCommandOptions(ctx context.Context, options []CommandOption)
+
 	CommandStarted(ctx context.Context)
+	CommandExited(ctx context.Context, exitCode int)
+}
+
+type CommandOption struct {
+	Name  string `json:"name"`
+	AsCli bool   `json:"asCli"`
+	AsEnv bool   `json:"asEnv"`
+	Count int    `json:"count"`
 }
 
 type TelemetryWerfIO struct {
@@ -33,9 +43,10 @@ type TelemetryWerfIO struct {
 	tracerProvider  *sdktrace.TracerProvider
 	traceExporter   *otlptrace.Exporter
 
-	executionID string
-	projectID   string
-	command     string
+	executionID    string
+	projectID      string
+	command        string
+	commandOptions []CommandOption
 }
 
 type TelemetryWerfIOOptions struct {
@@ -53,7 +64,7 @@ func NewTelemetryWerfIO(url string, opts TelemetryWerfIOOptions) (*TelemetryWerf
 		tracerProvider: sdktrace.NewTracerProvider(
 			sdktrace.WithBatcher(e,
 				sdktrace.WithBatchTimeout(1*time.Millisecond), // send all available events immediately
-				sdktrace.WithExportTimeout(1000*time.Millisecond),
+				sdktrace.WithExportTimeout(800*time.Millisecond),
 			),
 		),
 		traceExporter: e,
@@ -100,12 +111,20 @@ func (t *TelemetryWerfIO) SetCommand(ctx context.Context, command string) {
 	t.command = command
 }
 
+func (t *TelemetryWerfIO) SetCommandOptions(ctx context.Context, options []CommandOption) {
+	t.commandOptions = options
+}
+
 func (t *TelemetryWerfIO) SetProjectID(ctx context.Context, projectID string) {
 	t.projectID = projectID
 }
 
 func (t *TelemetryWerfIO) CommandStarted(ctx context.Context) {
-	t.sendEvent(ctx, CommandStartedEvent, nil)
+	t.sendEvent(ctx, NewCommandStarted(t.commandOptions))
+}
+
+func (t *TelemetryWerfIO) CommandExited(ctx context.Context, exitCode int) {
+	t.sendEvent(ctx, NewCommandExited(exitCode))
 }
 
 func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
@@ -121,7 +140,7 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 	return attributes
 }
 
-func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, eventData interface{}) error {
+func (t *TelemetryWerfIO) sendEvent(ctx context.Context, event Event) error {
 	trc := t.getTracer()
 	_, span := trc.Start(ctx, spanName)
 
@@ -140,9 +159,9 @@ func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, ev
 	}
 	span.SetAttributes(attribute.Key("attributes").String(string(rawAttributes)))
 
-	span.SetAttributes(attribute.Key("eventType").String(string(eventType)))
+	span.SetAttributes(attribute.Key("eventType").String(string(event.GetType())))
 
-	rawEventData, err := json.Marshal(eventData)
+	rawEventData, err := json.Marshal(event.GetData())
 	if err != nil {
 		return fmt.Errorf("unable to marshal event data: %w", err)
 	}
@@ -150,7 +169,7 @@ func (t *TelemetryWerfIO) sendEvent(ctx context.Context, eventType EventType, ev
 	span.SetAttributes(attribute.Key("schemaVersion").Int64(schemaVersion))
 	span.End()
 
-	LogF("sent event: ts=%d executionID=%q projectID=%q command=%q attributes=%q eventType=%q eventData=%q schemaVersion=%d", ts, t.executionID, t.projectID, t.command, string(rawAttributes), string(eventType), string(rawEventData), schemaVersion)
+	LogF("sent event: ts=%d executionID=%q projectID=%q command=%q attributes=%q eventType=%q eventData=%q schemaVersion=%d", ts, t.executionID, t.projectID, t.command, string(rawAttributes), string(event.GetType()), string(rawEventData), schemaVersion)
 
 	return nil
 }
