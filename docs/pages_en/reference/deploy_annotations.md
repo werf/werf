@@ -7,9 +7,9 @@ toc: false
 
 This article contains description of annotations which control werf resource operations and tracking of resources during deploy process. Annotations should be configured in the chart templates.
 
- - [`werf.io/weight`](#resource-weight) — defines weight of the resource, which will affect deployment order of resources.
- - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — wait for specified external dependency to be well and ready until the annotated resource can be deployed.
- - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — specify namespace for external dependency.
+ - [`werf.io/weight`](#resource-weight) — defines the weight of the resource, which will affect the order in which the resources are deployed.
+ - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — wait for specified external dependency to be up and running, and only then proceed to deploy the annotated resource.
+ - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — specify the namespace for the external dependency.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — defines number of replicas that should be set only when creating resource initially (useful for HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — defines a condition when werf should stop tracking of the resource.
  - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occurred after failures threshold has been reached for the resource during deploy process.
