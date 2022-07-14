@@ -56,7 +56,7 @@ More info: [external dependencies]({{ "/advanced/helm/deploy_process/external_de
 
 `<any-name>.external-dependency.werf.io/namespace: name`
 
-Sets namespace for an external dependency specified with [external dependency resource](#external-dependency-resource) annotation. `<any-name>` prefix must be the same as on external dependency resource annotation.
+Sets the namespace for the external dependency specified by the [external dependency resource](#external-dependency-resource) annotation. The `<any-name>` prefix must be the same as in the annotation of the external dependency resource.
 
 More info: [external dependencies]({{ "/advanced/helm/deploy_process/external_dependencies.html" | true_relative_url }})
 
