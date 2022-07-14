@@ -3,11 +3,11 @@ title: Deployment order
 permalink: advanced/helm/deploy_process/deployment_order.html
 ---
 
-By default, all resources have [`werf.io/weight: 0`]({{ "/reference/deploy_annotations.html#resource-weight" | true_relative_url }}), thus will be applied and tracked concurrently. If you want to specify the order in which resources will be applied and tracked you can specify different weights for your resources.
+By default, resources are applied and tracked simultaneously because they all have the same initial ([werf.io/weight: 0]({{ "/reference/deploy_annotations.html#resource-weight" | true_relative_url }})) (which means that you haven't changed it or deliberately set it to "0"). However, you can change the order in which resources are applied and tracked by setting different weights for them.
 
-Before deployment phase resources are grouped based on their weight, then the group with the lowest associated weight is applied to the cluster and tracked until resources in this group are ready. After all resources in group are successfully deployed, the deployment of the resources with the next lowest weight is started. This continues until all release resources are deployed.
+Before the deployment phase, werf groups the resources based on their weight, then applies the group with the lowest associated weight and waits until the resources from that group are ready. After all the resources from that group have been successfully deployed, werf proceeds to deploy the resources from the group with the next lowest weight. The process continues until all release resources have been deployed.
 
-> "werf.io/weight" will work only for non-Hook resources. For Hooks use "helm.sh/hook-weight".
+> Note that "werf.io/weight" works only for non-Hook resources. For Hooks, use "helm.sh/hook-weight".
 
 Let's look at the example:
 ```yaml
