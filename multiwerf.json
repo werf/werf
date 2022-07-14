@@ -59,15 +59,15 @@
         },
         {
           "name": "beta",
-          "version": "v1.2.123"
+          "version": "v1.2.126"
         },
         {
           "name": "ea",
-          "version": "v1.2.122"
+          "version": "v1.2.123+fix1"
         },
         {
           "name": "stable",
-          "version": "v1.2.117+fix1"
+          "version": "v1.2.117+fix2"
         },
         {
           "name": "rock-solid",

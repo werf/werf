@@ -28,15 +28,15 @@ groups:
     - name: alpha
       version: 1.2.126
     - name: beta
-      version: 1.2.123
+      version: 1.2.126
     - name: ea
-      version: 1.2.122
+      version: 1.2.123+fix1
     - name: stable
-      version: 1.2.117+fix1
+      version: 1.2.117+fix2
  #    candidates:
- #    - 1.2.122       # 19.07
+ #    - 1.2.122+fix1  # 19.07
     - name: rock-solid
       version: 1.2.109+fix2
 #     candidates:
 #     - 1.2.115       # 19.07
-#     - 1.2.117+fix1  # 26.07
+#     - 1.2.117+fix2  # 26.07
