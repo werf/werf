@@ -32,9 +32,11 @@ Example: \
 `werf.io/weight: "10"` \
 `werf.io/weight: "-10"`
 
-Can be a positive number, negative number, or a zero. Value passed as a string. If not specified, then `weight` is set to 0. Works only for non-hook resources. For Hooks use `helm.sh/hook-weight`, which works almost the same.
+- Can be a positive number, a negative number, or a zero. 
+- Value is passed as a string. If omitted, the `weight` is set to 0 by default. 
+- Works for non-Hook resources only. For Hooks, use `helm.sh/hook-weight`, which works almost the same.
 
-Sets resource weight, which defines order of resources deployment. Resources grouped by their weight, then groups deployed sequentially, from groups with the lowest weight to the highest. Next batch of resources won't be deployed until previous group is deployed successfully.
+This parameter sets the weight of the resources, defining the order in which they are deployed. First, werf groups resources according to their weight and then sequentially deploys them, starting with the group with the lowest weight. In this case, werf will not proceed to deploy the next batch of resources until the previous group has been successfully deployed.
 
 More info: [deployment order]({{ "/advanced/helm/deploy_process/deployment_order.html" | true_relative_url }})
 
