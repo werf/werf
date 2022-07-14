@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.128](https://www.github.com/werf/werf/compare/v1.2.127...v1.2.128) (2022-07-14)
+
+
+### Features
+
+* **telemetry:** anonimized cli options usage, exit-code event, tune timeouts ([3402424](https://www.github.com/werf/werf/commit/340242453ceb906d814dcfb31d76ab4b95318e1d))
+* **telemetry:** fix telemetry lags; telemetry logs; ignore commands list ([9a2310f](https://www.github.com/werf/werf/commit/9a2310f97941e651730fd5f72823580e3210d983))
+
 ### [1.2.127](https://www.github.com/werf/werf/compare/v1.2.126...v1.2.127) (2022-07-13)
 
 
