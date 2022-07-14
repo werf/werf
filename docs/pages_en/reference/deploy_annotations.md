@@ -48,7 +48,7 @@ Example: \
 `secret.external-dependency.werf.io/resource: secret/config` \
 `someapp.external-dependency.werf.io/resource: deployments.v1.apps/app`
 
-Sets external dependency for a resource. The annotated resource won't be deployed until the external dependency is created and ready.
+Sets the external dependency for the resource. The annotated resource won't be deployed until the external dependency has been created and ready.
 
 More info: [external dependencies]({{ "/advanced/helm/deploy_process/external_dependencies.html" | true_relative_url }})
 
