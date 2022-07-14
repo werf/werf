@@ -55,7 +55,7 @@ metadata:
     werf.io/weight: "30"
 ```
 
-This will deploy the database and wait until it's ready, then perform the migrations, and only then deploy the application and its service.
+In the above example, werf will first deploy the database and wait for it to become ready, then run migrations and wait for them to complete, and then deploy the application and the related service.
 
 Reference:
 * [`werf.io/weight`]({{ "/reference/deploy_annotations.html#resource-weight" | true_relative_url }})
