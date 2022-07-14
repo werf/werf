@@ -28,7 +28,7 @@ metadata:
   name: app
 ```
 
-All of these resources will be deployed simultaneously, since they have default weight 0. But what if we need to deploy database before migrations run and also do not run the app until migrations finished? Try this:
+All of the above resources will be deployed simultaneously because they all have the same default weight (0). But what if the database must be deployed before migrations, and the application should only start after the migrations are completed? Well, there is a solution to this problem! Try this:
 ```yaml
 kind: StatefulSet
 metadata:
