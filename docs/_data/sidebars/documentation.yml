@@ -738,8 +738,14 @@ entries:
                   - title: Steps
                     url: /advanced/helm/deploy_process/steps.html
 
+                  - title: Deployment order
+                    url: /advanced/helm/deploy_process/deployment_order.html
+
                   - title: Helm hooks
                     url: /advanced/helm/deploy_process/helm_hooks.html
+
+                  - title: External dependencies
+                    url: /advanced/helm/deploy_process/external_dependencies.html
 
                   - title: Annotating and labeling of chart resources
                     url: /advanced/helm/deploy_process/annotating_and_labeling.html
