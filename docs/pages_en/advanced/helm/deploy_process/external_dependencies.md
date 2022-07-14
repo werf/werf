@@ -16,9 +16,9 @@ metadata:
     secret.external-dependency.werf.io/resource: secret/dynamic-vault-secret
 ```
 
-In this example the `app` deployment will not be deployed and will wait until Secret `dynamic-vault-secret` is created. Lets assume that `dynamic-vault-secret` is created by the operator from your Vault instance and is not managed by werf.
+In the example above, werf will wait for the `dynamic-vault-secret` to be created before proceeding to deploy the `app` deployment. We assume that `dynamic-vault-secret` is created by the operator from your Vault instance and is not managed by werf.
 
-Another example:
+Let's take a look at another example:
 ```yaml
 kind: Deployment
 metadata:
