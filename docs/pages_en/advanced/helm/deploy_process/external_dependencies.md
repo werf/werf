@@ -28,7 +28,7 @@ metadata:
     service2.external-dependency.werf.io/namespace: service2-production
 ```
 
-Here the deployment of `service1` will not be started until deployment `service2` in another namespace is well and ready. `service2` deployment might be deployed as part of another werf release, or not be deployed by werf at all, but managed using different CI/CD software.
+Here, werf will not start deploying `service1` until the deployment of `service2` in another namespace has been successfully completed. Note that `service2` can either be deployed as part of another werf release or be managed by some other CI/CD software (i.e., outside of werf's control).
 
 Reference:
 * [`<name>.external-dependency.werf.io/resource`]({{ "/reference/deploy_annotations.html#external-dependency-resource" | true_relative_url }})
