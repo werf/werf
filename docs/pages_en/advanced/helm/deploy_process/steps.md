@@ -12,7 +12,7 @@ When running the `werf converge` command, werf starts the deployment process tha
 
 ## Resource tracking
 
-werf uses the [kubedog library](https://github.com/werf/kubedog) to track resources. Tracking behaviour can be configured for each resource using [resource annotations]({{ "/reference/deploy_annotations.html" | true_relative_url }}), which should be set in the chart templates.
+werf uses the [kubedog library](https://github.com/werf/kubedog) to track resources. Tracking behavior can be configured for each resource by setting [resource annotations]({{ "/reference/deploy_annotations.html" | true_relative_url }}) in the chart templates.
 
 ## Multiple Kubernetes clusters
 
