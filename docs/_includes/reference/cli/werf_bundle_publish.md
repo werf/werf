@@ -25,6 +25,15 @@ werf bundle publish [options]
             Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
+      --add-custom-tag=[]
+            Set tag alias for the content-based tag.
+            The alias may contain the following shortcuts:
+            - %image%, %image_slug% or %image_safe_slug% to use the image name (necessary if there  
+            is more than one image in the werf config);
+            - %image_content_based_tag% to use a content-based tag.
+            For cleaning custom tags and associated content-based tag are treated as one.
+            Also can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g.                                   
+            $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2")
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
