@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.129](https://www.github.com/werf/werf/compare/v1.2.128...v1.2.129) (2022-07-15)
+
+
+### Features
+
+* **custom-tag:** add custom tags params for converge and bundle-publish ([4cc2802](https://www.github.com/werf/werf/commit/4cc2802e02c17878f5589b49bcc032293f8c968e))
+* **kubedog:** show Ready resources only once ([d8281b8](https://www.github.com/werf/werf/commit/d8281b86f04c2a085507349e394235eaacc1c2bd))
+
 ### [1.2.128](https://www.github.com/werf/werf/compare/v1.2.127...v1.2.128) (2022-07-14)
 
 
