@@ -6,6 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"gopkg.in/yaml.v2"
 )
 
 var _ = Describe("YamlEncoder", func() {
@@ -101,6 +102,78 @@ image:
   affinity: {}
 `),
 	)
+
+	// TODO: support restoring of original type during decode
+	It("should encode integer, bool, float, timestamp and binary as string, then convert to string during decode", func() {
+		originalData := `
+mystring: value
+mybool: !!bool true
+myint: !!int 32
+myfloat: !!float 64.5
+mytime: !!timestamp 2022-07-15 20:33:23.34
+mybinary: !binary |
+  R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5
+  OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/+
+  +f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLC
+  AgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+`
+
+		expectEncoded := `
+mystring: 'encoded: value'
+mybool: 'encoded: true'
+myint: 'encoded: 32'
+myfloat: 'encoded: 64.5'
+mytime: 'encoded: 2022-07-15 20:33:23.34 +0000 UTC'
+mybinary: |
+  encoded: R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5
+  OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/+
+  +f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLC
+  AgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+`
+
+		expectDecoded := `
+mystring: value
+mybool: "true"
+myint: "32"
+myfloat: "64.5"
+mytime: 2022-07-15 20:33:23.34 +0000 UTC
+mybinary: |
+  R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5
+  OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/+
+  +f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLC
+  AgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+`
+
+		enc := NewYamlEncoder(&EncoderMock{})
+
+		fmt.Printf("Original data:\n%s\n---\n", strings.TrimSpace(string(originalData)))
+
+		encodedData, err := enc.EncryptYamlData([]byte(originalData))
+		Expect(err).To(Succeed())
+
+		fmt.Printf("Encoded data:\n%s\n---\n", strings.TrimSpace(string(encodedData)))
+		fmt.Printf("Expect encoded data:\n%s\n---\n", strings.TrimSpace(string(expectEncoded)))
+
+		Expect(strings.TrimSpace(string(encodedData))).To(Equal(strings.TrimSpace(string(expectEncoded))))
+
+		resultData, err := enc.DecryptYamlData(encodedData)
+		Expect(err).To(Succeed())
+
+		fmt.Printf("Decoded data:\n%s\n---\n", strings.TrimSpace(string(resultData)))
+		fmt.Printf("Expect decoded data:\n%s\n---\n", strings.TrimSpace(string(expectDecoded)))
+
+		Expect(strings.TrimSpace(expectDecoded)).To(Equal(strings.TrimSpace(string(resultData))), fmt.Sprintf("\n[EXPECTED]\n%q\n[GOT]\n%q\n", originalData, resultData))
+
+		var resultDataMap map[string]interface{}
+		Expect(yaml.Unmarshal(resultData, &resultDataMap)).To(Succeed())
+
+		fmt.Printf("Decoded data map: %#v\n", resultDataMap)
+
+		for _, k := range []string{"mystring", "myint", "myfloat", "mytime", "mybinary"} {
+			_, isStr := resultDataMap[k].(string)
+			Expect(isStr).To(BeTrue())
+		}
+	})
 })
 
 type EncoderMock struct{}
