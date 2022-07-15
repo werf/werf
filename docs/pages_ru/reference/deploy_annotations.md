@@ -6,7 +6,10 @@ toc: false
 
 Данная статья содержит описание аннотаций, которые меняют поведение механизма отслеживания ресурсов в процессе выката с помощью werf. Все аннотации должны быть объявлены в шаблонах чарта.
 
-- [`werf.io/replicas-on-creation`](#replicas-on-creation) — задаёт количество реплик, которое должно быть установлено при первичном создании ресурса (полезно при использовании HPA).
+ - [`werf.io/weight`](#resource-weight) — задает вес ресурса, который определяет порядок развертывания ресурсов.
+ - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — дождаться, пока указанная внешняя зависимость будет запущена, и только после этого приступить к развертыванию аннотированного ресурса.
+ - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — задать пространство имен для внешней зависимости.
+ - [`werf.io/replicas-on-creation`](#replicas-on-creation) — задаёт количество реплик, которое должно быть установлено при первичном создании ресурса (полезно при использовании HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — определяет условие при котором werf остановит отслеживание ресурса.
  - [`werf.io/fail-mode`](#fail-mode) — определяет как werf обработает ресурс в состоянии ошибки. Ресурс в свою очередь перейдет в состояние ошибки после превышения порога допустимых ошибок, обнаруженных при отслеживании этого ресурса в процессе выката.
  - [`werf.io/failures-allowed-per-replica`](#failures-allowed-per-replica) — определяет порог ошибок, обнаруживаемых при отслеживании этого ресурса в процессе выката, после превышения которого ресурс перейдет в состояние ошибки. werf обработает это состояние в соответствии с настройкой [fail mode](#fail-mode).
@@ -19,6 +22,40 @@ toc: false
  - [`werf.io/show-service-messages`](#show-service-messages) — включить вывод сервисных сообщений и событий Kubernetes для данного ресурса.
 
 Больше информации о том, что такое чарт, шаблоны и пр. доступно в [главе про Helm]({{ "advanced/helm/overview.html" | true_relative_url }}).
+
+## Resource weight
+
+`werf.io/weight: "NUM"`
+
+Пример: \
+`werf.io/weight: "10"` \
+`werf.io/weight: "-10"`
+
+Может быть положительным числом, отрицательным числом или нулем. Значение передается в виде строки. По умолчанию `weight` имеет значение 0. Работает только для ресурсов, не относящихся к хукам. Для хуков используйте `helm.sh/hook-weight`, логика работы которого почти такая же.
+
+Этот параметр задает вес ресурсов, определяя порядок их развертывания. Сначала werf группирует ресурсы в соответствии с их весом, а затем последовательно развертывает их, начиная с группы с наименьшим весом. В этом случае werf не будет приступать к развертыванию следующей группы ресурсов, пока развертывание предыдущей не завершено успешно.
+
+Дополнительная информация доступна в разделе [Порядок развертывания]({{ "/advanced/helm/deploy_process/deployment_order.html" | true_relative_url }}).
+
+## External dependency resource
+
+`<any-name>.external-dependency.werf.io/resource: type[.version.group]/name`
+
+Пример: \
+`secret.external-dependency.werf.io/resource: secret/config` \
+`someapp.external-dependency.werf.io/resource: deployments.v1.apps/app`
+
+Задает внешнюю зависимость для ресурса. Ресурс с аннотацией будет развернут только после создания и готовности внешней зависимости.
+
+Дополнительная информация доступна в разделе [Внешние зависимости]({{ "/advanced/helm/deploy_process/external_dependencies.html" | true_relative_url }}).
+
+## External dependency namespace
+
+`<any-name>.external-dependency.werf.io/namespace: name`
+
+Указывает пространство имен для внешней зависимости, заданной [соответствующей аннотацией](#external-dependency-resource). Префикс `<any-name>` должен быть таким же, как у аннотации, определяющей внешнюю зависимость.
+
+Дополнительная информация доступна в разделе [Внешние зависимости]({{ "/advanced/helm/deploy_process/external_dependencies.html" | true_relative_url }}).
 
 ## Replicas on creation
 
