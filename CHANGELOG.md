@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.131](https://www.github.com/werf/werf/compare/v1.2.130...v1.2.131) (2022-07-18)
+
+
+### Bug Fixes
+
+* **kubedog:** 3way merge patches had missing fields ([870c4e3](https://www.github.com/werf/werf/commit/870c4e3abfb1e315c215221c28f64be3cbed3d38))
+
 ### [1.2.130](https://www.github.com/werf/werf/compare/v1.2.129...v1.2.130) (2022-07-18)
 
 
