@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.132](https://www.github.com/werf/werf/compare/v1.2.131...v1.2.132) (2022-07-18)
+
+
+### Features
+
+* **helm:** werf.io/no-activity-timeout annotation ([7b84ea0](https://www.github.com/werf/werf/commit/7b84ea057b8acb7d060344b2893c10878b4987e8))
+* **telemetry:** added CommandExited durationMs field ([7d7c71a](https://www.github.com/werf/werf/commit/7d7c71a4ad63de03ea34dd627c44b5d354f02c37))
+
+
+### Bug Fixes
+
+* **kubedog:** increase default NoActivityTimeout to 4min ([7a6aa6f](https://www.github.com/werf/werf/commit/7a6aa6f2b7ec3d19fe55bd56197209b261b414b1))
+
 ### [1.2.131](https://www.github.com/werf/werf/compare/v1.2.130...v1.2.131) (2022-07-18)
 
 
