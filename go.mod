@@ -59,7 +59,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/copy-recurse v0.2.4
-	github.com/werf/kubedog v0.8.0
+	github.com/werf/kubedog v0.9.0
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.5.4
 	go.opentelemetry.io/otel v1.7.1-0.20220624212736-ef6c0da0de3b
