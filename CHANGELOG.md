@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.130](https://www.github.com/werf/werf/compare/v1.2.129...v1.2.130) (2022-07-18)
+
+
+### Features
+
+* **kubedog:** improve progress status + fix Job Duration not changed ([a8ce29b](https://www.github.com/werf/werf/commit/a8ce29b50a6e91de33281841a67fa6e02079afeb))
+
 ### [1.2.129](https://www.github.com/werf/werf/compare/v1.2.128...v1.2.129) (2022-07-15)
 
 
