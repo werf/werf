@@ -11,6 +11,8 @@ const (
 
 	IgnoreReadinessProbeFailsForPrefix = "werf.io/ignore-readiness-probe-fails-for-"
 
+	NoActivityTimeoutName = "werf.io/no-activity-timeout"
+
 	SkipLogsAnnoName              = "werf.io/skip-logs"
 	SkipLogsForContainersAnnoName = "werf.io/skip-logs-for-containers"
 	ShowLogsOnlyForContainers     = "werf.io/show-logs-only-for-containers"

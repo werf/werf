@@ -297,6 +297,15 @@ mainLoop:
 			}
 
 			return nil, fmt.Errorf("%w: choose one of %v", invalidAnnoValueError, values)
+		case NoActivityTimeoutName:
+			noActivityTimeout, err := time.ParseDuration(annoValue)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", invalidAnnoValueError, err)
+			} else if noActivityTimeout.Seconds() < 1 {
+				return nil, fmt.Errorf("%w: can't be less than 1 second", invalidAnnoValueError)
+			}
+
+			genericSpec.NoActivityTimeout = &noActivityTimeout
 		}
 	}
 
