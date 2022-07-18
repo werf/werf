@@ -31,18 +31,12 @@ type TelemetryWerfIOInterface interface {
 	CommandExited(ctx context.Context, exitCode int)
 }
 
-type CommandOption struct {
-	Name  string `json:"name"`
-	AsCli bool   `json:"asCli"`
-	AsEnv bool   `json:"asEnv"`
-	Count int    `json:"count"`
-}
-
 type TelemetryWerfIO struct {
 	handleErrorFunc func(err error)
 	tracerProvider  *sdktrace.TracerProvider
 	traceExporter   *otlptrace.Exporter
 
+	startedAt      time.Time
 	executionID    string
 	projectID      string
 	command        string
@@ -69,6 +63,7 @@ func NewTelemetryWerfIO(url string, opts TelemetryWerfIOOptions) (*TelemetryWerf
 		),
 		traceExporter: e,
 		executionID:   uuid.New().String(),
+		startedAt:     time.Now(),
 	}, nil
 }
 
@@ -124,7 +119,8 @@ func (t *TelemetryWerfIO) CommandStarted(ctx context.Context) {
 }
 
 func (t *TelemetryWerfIO) CommandExited(ctx context.Context, exitCode int) {
-	t.sendEvent(ctx, NewCommandExited(exitCode))
+	duration := time.Now().Sub(t.startedAt)
+	t.sendEvent(ctx, NewCommandExited(exitCode, int64(duration/time.Millisecond)))
 }
 
 func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
@@ -161,7 +157,7 @@ func (t *TelemetryWerfIO) sendEvent(ctx context.Context, event Event) error {
 
 	span.SetAttributes(attribute.Key("eventType").String(string(event.GetType())))
 
-	rawEventData, err := json.Marshal(event.GetData())
+	rawEventData, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("unable to marshal event data: %w", err)
 	}

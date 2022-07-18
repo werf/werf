@@ -9,30 +9,32 @@ const (
 
 type Event interface {
 	GetType() EventType
-	GetData() interface{}
+}
+
+type CommandOption struct {
+	Name  string `json:"name"`
+	AsCli bool   `json:"asCli"`
+	AsEnv bool   `json:"asEnv"`
+	Count int    `json:"count"`
 }
 
 func NewCommandStarted(commandOptions []CommandOption) *CommandStarted {
-	return &CommandStarted{commandOptions: commandOptions}
+	return &CommandStarted{CommandOptions: commandOptions}
 }
 
 type CommandStarted struct {
-	commandOptions []CommandOption
+	CommandOptions []CommandOption `json:"commandOptions,omitempty"`
 }
 
 func (e *CommandStarted) GetType() EventType { return CommandStartedEvent }
-func (e *CommandStarted) GetData() interface{} {
-	if len(e.commandOptions) > 0 {
-		return map[string]interface{}{"commandOptions": e.commandOptions}
-	}
-	return nil
-}
 
-func NewCommandExited(exitCode int) *CommandExited { return &CommandExited{exitCode: exitCode} }
+func NewCommandExited(exitCode int, durationMs int64) *CommandExited {
+	return &CommandExited{ExitCode: exitCode, DurationMs: durationMs}
+}
 
 type CommandExited struct {
-	exitCode int
+	ExitCode   int   `json:"exitCode"`
+	DurationMs int64 `json:"durationMs"`
 }
 
-func (e *CommandExited) GetType() EventType   { return CommandExitedEvent }
-func (e *CommandExited) GetData() interface{} { return map[string]interface{}{"exitCode": e.exitCode} }
+func (e *CommandExited) GetType() EventType { return CommandExitedEvent }
