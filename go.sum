@@ -2047,8 +2047,8 @@ github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59b
 github.com/weppos/publicsuffix-go v0.4.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
 github.com/weppos/publicsuffix-go v0.5.0 h1:rutRtjBJViU/YjcI5d80t4JAVvDltS6bciJg2K1HrLU=
 github.com/weppos/publicsuffix-go v0.5.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
-github.com/werf/3p-helm/v3 v3.0.0-20220713122606-27cb04c89cdb h1:WGvd88GQkSr1Vu4FpVDhholWK2s7ZEbYQm3ujdKirrw=
-github.com/werf/3p-helm/v3 v3.0.0-20220713122606-27cb04c89cdb/go.mod h1:NxtE2KObf2PrzDl6SIamPFPKyAqWi10iWuvKlQn/Yao=
+github.com/werf/3p-helm/v3 v3.0.0-20220718123145-564bda55b0dd h1:rf0XzNhkO5jegMo32mbhHoH0ZKNRG37VxLdW2FlY604=
+github.com/werf/3p-helm/v3 v3.0.0-20220718123145-564bda55b0dd/go.mod h1:NxtE2KObf2PrzDl6SIamPFPKyAqWi10iWuvKlQn/Yao=
 github.com/werf/copy-recurse v0.2.4 h1:kEyGUKhgS8WdEOjInNQKgk4lqPWzP2AgR27F3dcGsVc=
 github.com/werf/copy-recurse v0.2.4/go.mod h1:KVHSQ90p19xflWW0B7BJhLBwmSbEtuxIaBnjlUYRPhk=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f h1:81YscYTF9mmTf0ULOsCmm42YWQp+qWDzWi1HjWniZrg=
