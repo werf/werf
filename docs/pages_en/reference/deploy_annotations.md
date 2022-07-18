@@ -15,6 +15,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occurred after failures threshold has been reached for the resource during deploy process.
  - [`werf.io/failures-allowed-per-replica`](#failures-allowed-per-replica) — defines a threshold of failures after which resource will be considered as failed and werf will handle this situation using [fail mode](#fail-mode).
  - [`werf.io/ignore-readiness-probe-fails-for-CONTAINER_NAME`](#ignore-readiness-probe-failures-for-container) — override automatically calculated ignore period during which readiness probe failures will not mark resource as failed.
+ - [`werf.io/no-activity-timeout`](#no-activity-timeout) — change inactivity period after which the resource will be marked as failed.
  - [`werf.io/log-regex`](#log-regex) — specifies a template for werf to show only those log lines of the resource that fit the specified regex template.
  - [`werf.io/log-regex-for-CONTAINER_NAME`](#log-regex-for-container) — specifies a template for werf to show only those log lines of the resource container that fit the specified regex template.
  - [`werf.io/skip-logs`](#skip-logs) — completely disable logs printing for the resource.
@@ -111,10 +112,24 @@ default, the ignore period is automatically calculated based on readiness probe 
 if `failureThreshold: 1` specified in the probe configuration then the first received failed probe will fail the
 rollout, regardless of ignore period.
 
-The value format is as specified here: https://pkg.go.dev/time#ParseDuration
+The value format is specified [here](https://pkg.go.dev/time#ParseDuration).
 
 Example:
 `"werf.io/ignore-readiness-probe-fails-for-backend": "20s"`
+
+## No activity timeout
+
+`werf.io/no-activity-timeout: "TIME"`
+
+Default: `4m`
+
+Example: \
+`werf.io/no-activity-timeout: "8m30s"` \
+`werf.io/no-activity-timeout: "90s"`
+
+If no new events or resource updates received in `TIME` then the resource will be marked as failed.
+
+The value format is specified [here](https://pkg.go.dev/time#ParseDuration).
 
 ## Log regex
 

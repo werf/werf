@@ -14,6 +14,7 @@ toc: false
  - [`werf.io/fail-mode`](#fail-mode) — определяет как werf обработает ресурс в состоянии ошибки. Ресурс в свою очередь перейдет в состояние ошибки после превышения порога допустимых ошибок, обнаруженных при отслеживании этого ресурса в процессе выката.
  - [`werf.io/failures-allowed-per-replica`](#failures-allowed-per-replica) — определяет порог ошибок, обнаруживаемых при отслеживании этого ресурса в процессе выката, после превышения которого ресурс перейдет в состояние ошибки. werf обработает это состояние в соответствии с настройкой [fail mode](#fail-mode).
  - [`werf.io/ignore-readiness-probe-fails-for-CONTAINER_NAME`](#ignore-readiness-probe-failures-for-container) — переопределить высчитываемый автоматически период, в течение которого неуспешные readiness-пробы будут игнорироваться и не будут переводить ресурс в состояние ошибки.
+ - [`werf.io/no-activity-timeout`](#no-activity-timeout) — переопределить период неактивности, по истечении которого ресурс перейдет в состояние ошибки.
  - [`werf.io/log-regex`](#log-regex) — показывать в логах только те строки вывода ресурса, которые подходят под указанный шаблон.
  - [`werf.io/log-regex-for-CONTAINER_NAME`](#log-regex-for-container) — показывать в логах только те строки вывода для указанного контейнера, которые подходят под указанный шаблон.
  - [`werf.io/skip-logs`](#skip-logs) — выключить логирование вывода для ресурса.
@@ -108,10 +109,24 @@ readiness-проб автоматически вычисляется на осн
 readiness-пробы указано `failureThreshold: 1`, тогда первая же неудачная readiness-проба переведет ресурс в состояние
 ошибки, независимо от периода игнорирования.
 
-Формат записи значения описан здесь: https://pkg.go.dev/time#ParseDuration
+Формат записи значения описан [здесь](https://pkg.go.dev/time#ParseDuration).
 
 Пример:
 `"werf.io/ignore-readiness-probe-fails-for-backend": "20s"`
+
+## No activity timeout
+
+`werf.io/no-activity-timeout: "TIME"`
+
+По умолчанию: `4m`
+
+Пример: \
+`werf.io/no-activity-timeout: "8m30s"` \
+`werf.io/no-activity-timeout: "90s"`
+
+При отсутствии новых событий и обновлений ресурса в течение `TIME` ресурс перейдет в состояние ошибки.
+
+Формат записи значения описан [здесь](https://pkg.go.dev/time#ParseDuration).
 
 ## Log regex
 
