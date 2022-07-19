@@ -358,6 +358,10 @@ func asVersioned(info *resource.Info) runtime.Object {
 }
 
 func (waiter *ResourcesWaiter) WaitUntilDeleted(ctx context.Context, specs []*helm_kube.ResourcesWaiterDeleteResourceSpec, timeout time.Duration) error {
+	if len(specs) == 0 {
+		return nil
+	}
+
 	if waiter.KubeInitializer != nil {
 		if err := waiter.KubeInitializer.Init(ctx); err != nil {
 			return fmt.Errorf("kube initializer failed: %w", err)
