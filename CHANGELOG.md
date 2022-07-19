@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.134](https://www.github.com/werf/werf/compare/v1.2.133...v1.2.134) (2022-07-19)
+
+
+### Bug Fixes
+
+* revert "feat: tpl performance improved" ([a8d4b58](https://www.github.com/werf/werf/commit/a8d4b58fd1052bb07f80f46892a2304de9955eef))
+
 ### [1.2.133](https://www.github.com/werf/werf/compare/v1.2.132...v1.2.133) (2022-07-19)
 
 
