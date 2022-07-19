@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.133](https://www.github.com/werf/werf/compare/v1.2.132...v1.2.133) (2022-07-19)
+
+
+### Bug Fixes
+
+* **helm:** skip delete if unmatched resource ownership metadata ([ab416ba](https://www.github.com/werf/werf/commit/ab416bab534d63382715ba30b861bb10c64ce56b))
+
 ### [1.2.132](https://www.github.com/werf/werf/compare/v1.2.131...v1.2.132) (2022-07-18)
 
 
