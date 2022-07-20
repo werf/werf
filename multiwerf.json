@@ -55,19 +55,19 @@
       "channels": [
         {
           "name": "alpha",
-          "version": "v1.2.134"
+          "version": "v1.2.135"
         },
         {
           "name": "beta",
-          "version": "v1.2.134"
+          "version": "v1.2.135"
         },
         {
           "name": "ea",
-          "version": "v1.2.123+fix1"
+          "version": "v1.2.123+fix2"
         },
         {
           "name": "stable",
-          "version": "v1.2.117+fix2"
+          "version": "v1.2.122+fix2"
         },
         {
           "name": "rock-solid",
