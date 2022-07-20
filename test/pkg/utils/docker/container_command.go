@@ -15,7 +15,15 @@ import (
 )
 
 func init() {
-	if err := docker.Init(context.Background(), "", true, true, ""); err != nil {
+	var platform string
+	for _, envName := range []string{"WERF_PLATFORM", "DOCKER_DEFAULT_PLATFORM"} {
+		platform = os.Getenv(envName)
+		if platform != "" {
+			break
+		}
+	}
+
+	if err := docker.Init(context.Background(), "", true, true, platform); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "init werf docker failed: %s\n", err)
 		os.Exit(1)
 	}
