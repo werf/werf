@@ -106,6 +106,38 @@ var _ = Describe("Stapel imports", func() {
 				}
 			}
 		})
+
+		It("should import artifacts from directory to which the symlink points", func() {
+			for stepInd := 1; stepInd <= 2; stepInd++ {
+				stepID := fmt.Sprintf("00%d", stepInd)
+				stepDir := utils.FixturePath("imports_app_3", stepID)
+				SuiteData.CommitProjectWorktree(SuiteData.ProjectName, stepDir, stepID)
+
+				Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+
+				expectedStepFileContent := fmt.Sprintf("VERSION_%d\n", stepInd)
+				destFilePath := "/dir/file"
+				Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", destFilePath)).To(ContainSubstring(expectedStepFileContent))
+			}
+		})
+
+		It("should import symlink file", func() {
+			By("Check the symlink is added")
+			var lastStageImageNameAfterFirstBuild string
+			{
+				SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("imports_app_4", "001"), "001")
+				Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+				Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "readlink", "/file")).To(ContainSubstring("/app/file"))
+				lastStageImageNameAfterFirstBuild = utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "app")
+			}
+
+			By("Check nothing happens when the file to which the symlink points is changed")
+			{
+				Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+				lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "app")
+				Expect(lastStageImageNameAfterFirstBuild).To(BeEquivalentTo(lastStageImageNameAfterSecondBuild))
+			}
+		})
 	})
 
 	Context("caching by import source checksum", func() {
