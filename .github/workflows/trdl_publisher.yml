@@ -8,7 +8,7 @@ on:
       - trdl_channels.yaml
 
 jobs:
-  release:
+  publish:
     name: Publish release channels using trdl server
     runs-on: ubuntu-latest
     steps:
@@ -23,7 +23,7 @@ jobs:
 
   deploy_channels_cm_prod:
     name: Deploy multiwerf.json and trdl_channels.yaml to production
-    needs: release
+    needs: publish
     runs-on: tfprod-werf
     steps:
     - name: Checkout code
@@ -42,7 +42,7 @@ jobs:
 
   publish_werf_images:
     name: Publish images with werf by trdl group and channel
-    needs: release
+    needs: publish
     runs-on: tfprod-werf
     steps:
     - name: Checkout code
@@ -73,7 +73,7 @@ jobs:
     name: Notification
     if: always()
     needs:
-      - release
+      - publish
       - deploy_channels_cm_prod
       - publish_werf_images
     runs-on: ubuntu-latest
