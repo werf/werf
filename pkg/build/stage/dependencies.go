@@ -325,7 +325,7 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 }
 
 func generateChecksumCommand(from string, includePaths, excludePaths []string, resultChecksumPath string) string {
-	findCommandParts := append([]string{}, stapel.FindBinPath(), from, "-type", "f")
+	findCommandParts := append([]string{}, stapel.FindBinPath(), "-H", from, "-type", "f")
 
 	var nameIncludeArgs []string
 	for _, includePath := range includePaths {
