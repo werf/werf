@@ -1,0 +1,18 @@
+project: none
+configVersion: 1
+---
+artifact: artifact
+from: ubuntu:18.04
+shell:
+  setup:
+    - mkdir -p /app
+    - echo VERSION_1 > /app/file
+    - ln -s /app /link_dir
+---
+image: app
+from: alpine
+import:
+  - artifact: artifact
+    add: /link_dir
+    to: /dir
+    after: install
