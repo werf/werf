@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.137](https://www.github.com/werf/werf/compare/v1.2.136...v1.2.137) (2022-07-21)
+
+
+### Bug Fixes
+
+* **kubedog:** generic tracker: improve logging + few possible fixes ([b93b1fe](https://www.github.com/werf/werf/commit/b93b1fead3d571be70c56f1b35c9f8773f180f9f))
+
 ### [1.2.136](https://www.github.com/werf/werf/compare/v1.2.135...v1.2.136) (2022-07-21)
 
 
