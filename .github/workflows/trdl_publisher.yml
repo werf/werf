@@ -4,7 +4,6 @@ on:
     branches:
       - multiwerf
     paths:
-      - multiwerf.json
       - trdl_channels.yaml
 
 jobs:
