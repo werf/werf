@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.136](https://www.github.com/werf/werf/compare/v1.2.135...v1.2.136) (2022-07-21)
+
+
+### Bug Fixes
+
+* **stapel:** importing of symlink that points to directory does not work properly ([835260f](https://www.github.com/werf/werf/commit/835260f07bf43d79ccc0d5943907bbc2be32fdfd))
+* **test:** init werf docker failed on macOS ([8306b57](https://www.github.com/werf/werf/commit/8306b572edadb4f8583c5d098457c21ba1e07c35))
+
 ### [1.2.135](https://www.github.com/werf/werf/compare/v1.2.134...v1.2.135) (2022-07-20)
 
 
