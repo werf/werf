@@ -887,6 +887,9 @@ entries:
               - title: Stapel image
                 url: /internals/development/stapel_image.html
 
+          - title: Telemetry
+            url: /internals/telemetry.html
+
       - title: What's new in v1.2
         f:
 
@@ -1107,6 +1110,9 @@ entries:
 
               - title: Образ Stapel
                 url: /internals/development/stapel_image.html
+
+          - title: Телеметрия
+            url: /internals/telemetry.html
 
       - title: Что нового в v1.2
         f:

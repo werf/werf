@@ -7,45 +7,56 @@ permalink: internals/telemetry.html
 
 Они помогают понять, как используется werf, и бросить силы на улучшение нужных функций.
 
-На текущий момент телеметрия по умолчанию выключена. Управление осуществляется с помощью переменной окружения `WERF_TELEMETRY`.
-
-Для того, чтобы включить телеметрию и помочь нам улучшить werf, просто задайте ей значение `1`:
-
-```shell
-export WERF_TELEMETRY=1
-```
-
-Для выключения установите ее значение в `0`:
-
-```shell
-export WERF_TELEMETRY=0
-```
-
 > В ближайшее время планируется включить телеметрию по умолчанию, а выключение сделать опциональным по желанию пользователя.
 
 ## Пример передаваемых данных и их расшифровка
 
 Ниже приведены примеры передаваемых данных:
 
+```json
+{
+  "ts": 1658231825280,
+  "executionID": "2f75d020-684e-4224-9013-35e95e1b7721",
+  "projectID": "b4c2d019070529344a6967d8c73d578101c6554fcdcae3d00bb93a9692523cb1",
+  "command": "werf converge",
+  "attributes": {
+    "arch": "amd64",
+    "os": "linux",
+    "version": "dev"
+  },
+  "eventType": "CommandStarted",
+  "eventData": {
+    "commandOptions": [
+      {
+        "name": "repo",
+        "asCli": false,
+        "asEnv": false,
+        "count": 0
+      }
+    ]
+  },
+  "schemaVersion": 1
+}
 ```
-ts=1658231825280
-executionID="2f75d020-684e-4224-9013-35e95e1b7721"
-projectID="b4c2d019070529344a6967d8c73d578101c6554fcdcae3d00bb93a9692523cb1"
-command="werf converge"
-attributes={"arch":"amd64","os":"linux","version":"dev"}"
-eventType="CommandStarted"
-eventData={"commandOptions":[{"name":"repo","asCli":false,"asEnv":false,"count":0}]}
-schemaVersion=1
-```
-```
-ts=1658231836102
-executionID="2f75d020-684e-4224-9013-35e95e1b7721"
-projectID="b4c2d019070529344a6967d8c73d578101c6554fcdcae3d00bb93a9692523cb1"
-command="werf converge"
-attributes={"arch":"amd64","os":"linux","version":"dev"}
-eventType="CommandExited"
-eventData="{"exitCode":0,"durationMs":10827}"
-schemaVersion=1
+
+```json
+{
+  "ts": 1658231836102,
+  "executionID": "2f75d020-684e-4224-9013-35e95e1b7721",
+  "projectID": "b4c2d019070529344a6967d8c73d578101c6554fcdcae3d00bb93a9692523cb1",
+  "command": "werf converge",
+  "attributes": {
+    "arch": "amd64",
+    "os": "linux",
+    "version": "dev"
+  },
+  "eventType": "CommandExited",
+  "eventData": {
+    "exitCode": 0,
+    "durationMs": 10827
+  },
+  "schemaVersion": 1
+}
 ```
 
 Здесь передаются следующие данные об использовании:
@@ -72,3 +83,11 @@ schemaVersion=1
 ## Выгрузка отчета телеметрии
 
 Мы доверяем нашим пользователям и хотим, чтобы они так же доверяли нам, поэтому сделали все максимально прозрачно. Используя переменную окружения `WERF_TELEMETRY_LOG_FILE`, можно задать путь к лог-файлу, куда будут складываться все данные, передаваемые телеметрией.
+
+## Отключение телеметрии
+
+Пользователь может отключить телеметрию с помощью переменной окружения `WERF_TELEMETRY`. Для отключения необходимо выставить значение в `0`:
+
+```shell
+export WERF_TELEMETRY=0
+``` 
