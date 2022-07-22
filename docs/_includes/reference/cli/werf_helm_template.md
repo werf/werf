@@ -40,6 +40,8 @@ werf helm template [NAME] [CHART] [flags] [options]
             verify certificates of HTTPS-enabled servers using this CA bundle
       --cert-file=''
             identify HTTPS client using this SSL certificate file
+      --cleanup-on-fail=false
+            allow deletion of new resources created in this installation when install fails
       --create-namespace=false
             create the release namespace if not present
       --dependency-update=false
