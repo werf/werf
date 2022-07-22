@@ -21,7 +21,7 @@ jobs:
         vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
 
   deploy_channels_cm_prod:
-    name: Deploy multiwerf.json and trdl_channels.yaml to production
+    name: Deploy trdl_channels.yaml to production
     needs: publish
     runs-on: tfprod-werf
     steps:
