@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.138](https://www.github.com/werf/werf/compare/v1.2.137...v1.2.138) (2022-07-22)
+
+
+### Bug Fixes
+
+* **helm:** CleanupOnFail imrovements ([ec749a1](https://www.github.com/werf/werf/commit/ec749a1b480eb8087db902d7b3915e4bc5b8dab4))
+
 ### [1.2.137](https://www.github.com/werf/werf/compare/v1.2.136...v1.2.137) (2022-07-21)
 
 
