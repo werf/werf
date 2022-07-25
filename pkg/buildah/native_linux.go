@@ -117,6 +117,10 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		ShmSize: DefaultShmSize,
 	}
 
+	if ulimit := os.Getenv("WERF_BUILDAH_ULIMIT"); ulimit != "" {
+		b.DefaultCommonBuildOptions.Ulimit = strings.Split(ulimit, ",")
+	}
+
 	imgstor.Transport.SetStore(b.Store)
 	runtime, err := libimage.RuntimeFromStore(b.Store, &libimage.RuntimeOptions{
 		SystemContext: &b.DefaultSystemContext,
