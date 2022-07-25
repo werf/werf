@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.139](https://www.github.com/werf/werf/compare/v1.2.138...v1.2.139) (2022-07-25)
+
+
+### Features
+
+* **buildah:** auto Buildah Ulimits from current user ulimits ([28d4d28](https://www.github.com/werf/werf/commit/28d4d28b42a076f496d9227382a37dd24ef79027))
+* **buildah:** configurable Ulimit via `$WERF_BUILDAH_ULIMIT` ([734963a](https://www.github.com/werf/werf/commit/734963a4301b120a3a8d1e09402ac98df79fc306))
+
 ### [1.2.138](https://www.github.com/werf/werf/compare/v1.2.137...v1.2.138) (2022-07-22)
 
 
