@@ -10,7 +10,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/containers/buildah"
@@ -113,12 +115,20 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		}
 	}
 
-	b.DefaultCommonBuildOptions = define.CommonBuildOptions{
-		ShmSize: DefaultShmSize,
+	var ulimit []string
+	if ulmt := os.Getenv("WERF_BUILDAH_ULIMIT"); ulmt != "" {
+		ulimit = strings.Split(ulmt, ",")
+	} else {
+		rlimits, err := currentRlimits()
+		if err != nil {
+			return nil, fmt.Errorf("error getting current rlimits: %w", err)
+		}
+		ulimit = rlimitsToBuildahUlimits(rlimits)
 	}
 
-	if ulimit := os.Getenv("WERF_BUILDAH_ULIMIT"); ulimit != "" {
-		b.DefaultCommonBuildOptions.Ulimit = strings.Split(ulimit, ",")
+	b.DefaultCommonBuildOptions = define.CommonBuildOptions{
+		ShmSize: DefaultShmSize,
+		Ulimit:  ulimit,
 	}
 
 	imgstor.Transport.SetStore(b.Store)
@@ -631,4 +641,48 @@ func newHealthConfigFromString(healthcheck string) (*docker.HealthConfig, error)
 	}
 
 	return healthConfig, nil
+}
+
+func currentRlimits() (map[int]*syscall.Rlimit, error) {
+	result := map[int]*syscall.Rlimit{
+		syscall.RLIMIT_CORE:   {},
+		syscall.RLIMIT_CPU:    {},
+		syscall.RLIMIT_DATA:   {},
+		syscall.RLIMIT_FSIZE:  {},
+		syscall.RLIMIT_NOFILE: {},
+		syscall.RLIMIT_STACK:  {},
+	}
+
+	for k, v := range result {
+		if err := syscall.Getrlimit(k, v); err != nil {
+			return nil, fmt.Errorf("error getting rlimit: %w", err)
+		}
+	}
+
+	return result, nil
+}
+
+func rlimitsToBuildahUlimits(rlimits map[int]*syscall.Rlimit) []string {
+	rlimitToBuildahUlimitFn := func(rlimitKey int, buildahKey string) string {
+		rlimitUintToStrFn := func(val uint64) string {
+			if int64(val) < 0 {
+				return strconv.FormatInt(int64(val), 10)
+			} else {
+				return strconv.FormatUint(val, 10)
+			}
+		}
+
+		cur := rlimitUintToStrFn(rlimits[rlimitKey].Cur)
+		max := rlimitUintToStrFn(rlimits[rlimitKey].Max)
+		return fmt.Sprintf("%s=%s:%s", buildahKey, cur, max)
+	}
+
+	return []string{
+		rlimitToBuildahUlimitFn(syscall.RLIMIT_CORE, "core"),
+		rlimitToBuildahUlimitFn(syscall.RLIMIT_CPU, "cpu"),
+		rlimitToBuildahUlimitFn(syscall.RLIMIT_DATA, "data"),
+		rlimitToBuildahUlimitFn(syscall.RLIMIT_FSIZE, "fsize"),
+		rlimitToBuildahUlimitFn(syscall.RLIMIT_NOFILE, "nofile"),
+		rlimitToBuildahUlimitFn(syscall.RLIMIT_STACK, "stack"),
+	}
 }
