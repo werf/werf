@@ -6,6 +6,7 @@ type GitDataEntry interface {
 	GetPaths() []string
 	GetSize() uint64
 	GetLastAccessAt() time.Time
+	GetCacheBasePath() string
 }
 
 type GitDataLruSort []GitDataEntry

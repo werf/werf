@@ -12,9 +12,10 @@ import (
 )
 
 type GitWorktreeDesc struct {
-	Path         string
-	LastAccessAt time.Time
-	Size         uint64
+	Path          string
+	LastAccessAt  time.Time
+	Size          uint64
+	CacheBasePath string
 }
 
 func (entry *GitWorktreeDesc) GetPaths() []string {
@@ -27,6 +28,10 @@ func (entry *GitWorktreeDesc) GetSize() uint64 {
 
 func (entry *GitWorktreeDesc) GetLastAccessAt() time.Time {
 	return entry.LastAccessAt
+}
+
+func (entry *GitWorktreeDesc) GetCacheBasePath() string {
+	return entry.CacheBasePath
 }
 
 func GetExistingGitWorktrees(cacheVersionRoot string) ([]*GitWorktreeDesc, error) {
@@ -65,9 +70,10 @@ func GetExistingGitWorktrees(cacheVersionRoot string) ([]*GitWorktreeDesc, error
 			}
 
 			res = append(res, &GitWorktreeDesc{
-				Path:         worktreePath,
-				Size:         size,
-				LastAccessAt: lastAccessAt,
+				Path:          worktreePath,
+				Size:          size,
+				LastAccessAt:  lastAccessAt,
+				CacheBasePath: dir,
 			})
 		}
 	}

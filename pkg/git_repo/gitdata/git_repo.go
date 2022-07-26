@@ -12,9 +12,10 @@ import (
 )
 
 type GitRepoDesc struct {
-	Path         string
-	LastAccessAt time.Time
-	Size         uint64
+	Path          string
+	LastAccessAt  time.Time
+	Size          uint64
+	CacheBasePath string
 }
 
 func (entry *GitRepoDesc) GetPaths() []string {
@@ -27,6 +28,10 @@ func (entry *GitRepoDesc) GetSize() uint64 {
 
 func (entry *GitRepoDesc) GetLastAccessAt() time.Time {
 	return entry.LastAccessAt
+}
+
+func (entry *GitRepoDesc) GetCacheBasePath() string {
+	return entry.CacheBasePath
 }
 
 func GetExistingGitRepos(cacheVersionRoot string) ([]*GitRepoDesc, error) {
@@ -64,9 +69,10 @@ func GetExistingGitRepos(cacheVersionRoot string) ([]*GitRepoDesc, error) {
 		}
 
 		res = append(res, &GitRepoDesc{
-			Path:         repoPath,
-			Size:         size,
-			LastAccessAt: lastAccessAt,
+			Path:          repoPath,
+			Size:          size,
+			LastAccessAt:  lastAccessAt,
+			CacheBasePath: cacheVersionRoot,
 		})
 	}
 

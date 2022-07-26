@@ -11,10 +11,11 @@ import (
 )
 
 type GitPatchDesc struct {
-	MetadataPath string
-	PatchPath    string
-	Metadata     *PatchMetadata
-	Size         uint64
+	MetadataPath  string
+	PatchPath     string
+	Metadata      *PatchMetadata
+	Size          uint64
+	CacheBasePath string
 }
 
 func (entry *GitPatchDesc) GetPaths() []string {
@@ -27,6 +28,10 @@ func (entry *GitPatchDesc) GetSize() uint64 {
 
 func (entry *GitPatchDesc) GetLastAccessAt() time.Time {
 	return time.Unix(entry.Metadata.LastAccessTimestamp, 0)
+}
+
+func (entry *GitPatchDesc) GetCacheBasePath() string {
+	return entry.CacheBasePath
 }
 
 func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {

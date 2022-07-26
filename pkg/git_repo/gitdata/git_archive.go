@@ -11,10 +11,11 @@ import (
 )
 
 type GitArchiveDesc struct {
-	MetadataPath string
-	ArchivePath  string
-	Metadata     *ArchiveMetadata
-	Size         uint64
+	MetadataPath  string
+	ArchivePath   string
+	Metadata      *ArchiveMetadata
+	Size          uint64
+	CacheBasePath string
 }
 
 func (entry *GitArchiveDesc) GetPaths() []string {
@@ -27,6 +28,10 @@ func (entry *GitArchiveDesc) GetSize() uint64 {
 
 func (entry *GitArchiveDesc) GetLastAccessAt() time.Time {
 	return time.Unix(entry.Metadata.LastAccessTimestamp, 0)
+}
+
+func (entry *GitArchiveDesc) GetCacheBasePath() string {
+	return entry.CacheBasePath
 }
 
 func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) {
@@ -84,7 +89,7 @@ func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) 
 					continue
 				}
 
-				desc := &GitArchiveDesc{MetadataPath: path}
+				desc := &GitArchiveDesc{MetadataPath: path, CacheBasePath: cacheVersionRoot}
 				res = append(res, desc)
 
 				if data, err := ioutil.ReadFile(path); err != nil {
