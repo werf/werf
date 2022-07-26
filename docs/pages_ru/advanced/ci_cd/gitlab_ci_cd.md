@@ -478,7 +478,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
+    - werf cr login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
   tags: [werf]
@@ -606,7 +606,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
+    - werf cr login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
   tags: [werf]
@@ -704,7 +704,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
+    - werf cr login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
   tags: [werf]
@@ -802,7 +802,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
+    - werf cr login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
   tags: [werf]
@@ -898,7 +898,7 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
+    - werf cr login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_REPO}
     - werf cleanup
   only: [schedules]
   tags: [werf]
