@@ -3,72 +3,91 @@ title: Telemetry
 permalink: internals/telemetry.html
 ---
 
-Чтобы работать над улучшением функций werf и направлять разработку в правильное русло, мы собираем анонимные данные об использовании. Эти данные никак не привязываются к пользователям и не содержат никакой персонализированной информации.
+We collect anonymous usage data to improve werf's features and steer its development in the right direction.  This data is not associated with users in any way and does not contain any personal information.
 
-Они помогают понять, как используется werf, и бросить силы на улучшение нужных функций.
+It help us figure out how werf is used and focus on improving the features that are most needed.
 
-На текущий момент телеметрия по умолчанию выключена. Управление осуществляется с помощью переменной окружения `WERF_TELEMETRY`.
+> Telemetry will be enabled by default in upcoming releases, and the user will have the option to disable it if they wish.
 
-Для того, чтобы включить телеметрию и помочь нам улучшить werf, просто задайте ей значение `1`:
+## Example of the data werf transmits and its breakdown
 
-```shell
-export WERF_TELEMETRY=1
+Below are examples of the data werf transmits:
+
+```json
+{
+  "ts": 1658231825280,
+  "executionID": "2f75d020-684e-4224-9013-35e95e1b7721",
+  "projectID": "b4c2d019070529344a6967d8c73d578101c6554fcdcae3d00bb93a9692523cb1",
+  "command": "werf converge",
+  "attributes": {
+    "arch": "amd64",
+    "os": "linux",
+    "version": "dev"
+  },
+  "eventType": "CommandStarted",
+  "eventData": {
+    "commandOptions": [
+      {
+        "name": "repo",
+        "asCli": false,
+        "asEnv": false,
+        "count": 0
+      }
+    ]
+  },
+  "schemaVersion": 1
+}
 ```
 
-Для выключения установите ее значение в `0`:
-
-```shell
-export WERF_TELEMETRY=0
+```json
+{
+  "ts": 1658231836102,
+  "executionID": "2f75d020-684e-4224-9013-35e95e1b7721",
+  "projectID": "b4c2d019070529344a6967d8c73d578101c6554fcdcae3d00bb93a9692523cb1",
+  "command": "werf converge",
+  "attributes": {
+    "arch": "amd64",
+    "os": "linux",
+    "version": "dev"
+  },
+  "eventType": "CommandExited",
+  "eventData": {
+    "exitCode": 0,
+    "durationMs": 10827
+  },
+  "schemaVersion": 1
+}
 ```
 
-> В ближайшее время планируется включить телеметрию по умолчанию, а выключение сделать опциональным по желанию пользователя.
-
-## Пример передаваемых данных и их расшифровка
-
-Ниже приведены примеры передаваемых данных:
-
-```
-ts=1658231825280
-executionID="2f75d020-684e-4224-9013-35e95e1b7721"
-projectID="b4c2d019070529344a6967d8c73d578101c6554fcdcae3d00bb93a9692523cb1"
-command="werf converge"
-attributes={"arch":"amd64","os":"linux","version":"dev"}"
-eventType="CommandStarted"
-eventData={"commandOptions":[{"name":"repo","asCli":false,"asEnv":false,"count":0}]}
-schemaVersion=1
-```
-```
-ts=1658231836102
-executionID="2f75d020-684e-4224-9013-35e95e1b7721"
-projectID="b4c2d019070529344a6967d8c73d578101c6554fcdcae3d00bb93a9692523cb1"
-command="werf converge"
-attributes={"arch":"amd64","os":"linux","version":"dev"}
-eventType="CommandExited"
-eventData="{"exitCode":0,"durationMs":10827}"
-schemaVersion=1
-```
-
-Здесь передаются следующие данные об использовании:
+In the examples above, the following usage data is sent:
 
 * `ts` — timestamp;
 * `executionID` — UUID;
-* `projectID` — контрольная сумма (SHA-256) от git origin URL проекта;
-* `command` — название выполняемой команды werf;
-* `attributes` — атрибуты окружения:
+* `projectID` — checksum (SHA-256) of the git origin URL of the project;
+* `command` — the name of werf command to be executed;
+* `attributes` — environment attributes:
   * `os`;
   * `arch`;
   * `trdl group-channel`;
   * `werf version`.
-* `eventType` — тип события:
+* `eventType` — type of event:
   * `CommandStarted`;
   * `CommandExited`;
-* `eventData` — данные события, включают в себя:
+* `eventData` — event data that includes:
   * exit code;
-  * длительность работы команды;
-  * имена используемых опций.
+  * command running time;
+  * the names of the options used.
 
-Вы можете сами убедиться в том, что мы собираем только обезличенную информацию, как указано в примере выше. Для этого см. исходные код werf, отвечающий за телеметрию: файлы [event.go](https://github.com/werf/werf/blob/main/pkg/telemetry/event.go) и [telemetrywerfio.go](https://github.com/werf/werf/blob/main/pkg/telemetry/telemetrywerfio.go) пакета [telemetry](https://github.com/werf/werf/tree/main/pkg/telemetry).
+We collect only anonymized information, as shown in the examples above. You can see this for yourself by analyzing the werf source code for telemetry, namely the [event.go](https://github.com/werf/werf/blob/main/pkg/telemetry/event.go) and [telemetrywerfio.go](https://github.com/werf/werf/blob/main/pkg/telemetry/telemetrywerfio.go) files of the [telemetry](https://github.com/werf/werf/tree/main/pkg/telemetry) package.
 
-## Выгрузка отчета телеметрии
+## Configuring the telemetry log file
 
-Мы доверяем нашим пользователям и хотим, чтобы они так же доверяли нам, поэтому сделали все максимально прозрачно. Используя переменную окружения `WERF_TELEMETRY_LOG_FILE`, можно задать путь к лог-файлу, куда будут складываться все данные, передаваемые телеметрией.
+We trust our users and want them to trust us, so we tried to make the process as transparent as possible. Use the `WERF_TELEMETRY_LOG_FILE` environment variable to specify the path to the log file where all telemetry data will be stored.
+
+## Disabling telemetry
+
+You can disable telemetry by setting the `WERF_TELEMETRY` environment variable to `0`:
+
+```shell
+export WERF_TELEMETRY=0
+``` 
