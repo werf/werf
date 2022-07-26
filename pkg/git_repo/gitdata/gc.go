@@ -207,9 +207,8 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	var freedBytes uint64
 	for _, entry := range gitDataEntries {
 		for _, path := range entry.GetPaths() {
-			logboek.Context(ctx).LogF("Removing %s\n", path)
-
-			if err := RemovePathWithEmptyParentDirsInsideScope(werf.GetLocalCacheDir(), path); err != nil {
+			logboek.Context(ctx).LogF("Removing %q inside scope %q\n", path, entry.GetCacheBasePath())
+			if err := RemovePathWithEmptyParentDirsInsideScope(entry.GetCacheBasePath(), path); err != nil {
 				return fmt.Errorf("unable to remove %q: %w", path, err)
 			}
 		}
@@ -260,6 +259,8 @@ func RemovePathWithEmptyParentDirsInsideScope(scopeDir, path string) error {
 }
 
 func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions []string) error {
+	logboek.Context(ctx).Debug().LogF("wipeCacheDirs %q\n", cacheRootDir)
+
 	if _, err := os.Stat(cacheRootDir); os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
@@ -275,13 +276,24 @@ WipeCacheDirs:
 	for _, finfo := range dirs {
 		for _, keepCacheVersion := range keepCacheVersions {
 			if finfo.Name() == keepCacheVersion {
+				logboek.Context(ctx).Debug().LogF("wipeCacheDirs in %q: keep cache version %q\n", cacheRootDir, keepCacheVersion)
 				continue WipeCacheDirs
 			}
 		}
 
-		path := filepath.Join(cacheRootDir, finfo.Name())
-		if err := os.RemoveAll(path); err != nil {
-			return fmt.Errorf("unable to remove %q: %w", path, err)
+		versionedCacheDir := filepath.Join(cacheRootDir, finfo.Name())
+		subdirs, err := ioutil.ReadDir(versionedCacheDir)
+		if err != nil {
+			return fmt.Errorf("error reading dir %q: %w", versionedCacheDir, err)
+		}
+
+		for _, cacheFile := range subdirs {
+			path := filepath.Join(versionedCacheDir, cacheFile.Name())
+
+			logboek.Context(ctx).Debug().LogF("wipeCacheDirs in %q: removing %q\n", cacheRootDir, path)
+			if err := os.RemoveAll(path); err != nil {
+				return fmt.Errorf("unable to remove %q: %w", path, err)
+			}
 		}
 	}
 
