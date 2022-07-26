@@ -19,6 +19,10 @@ type DockerRegistryOptions struct {
 	HarborUsername        string
 	HarborPassword        string
 	QuayToken             string
+	SelectelAccount       string
+	SelectelVPC           string
+	SelectelUsername      string
+	SelectelPassword      string
 }
 
 func (o *DockerRegistryOptions) awsEcrOptions() awsEcrOptions {
@@ -84,6 +88,18 @@ func (o *DockerRegistryOptions) quayOptions() quayOptions {
 	}
 }
 
+func (o *DockerRegistryOptions) selectelOptions() selectelOptions {
+	return selectelOptions{
+		defaultImplementationOptions: o.defaultOptions(),
+		selectelCredentials: selectelCredentials{
+			username: o.SelectelUsername,
+			password: o.SelectelPassword,
+			account:  o.SelectelAccount,
+			vpc:      o.SelectelVPC,
+		},
+	}
+}
+
 func (o *DockerRegistryOptions) defaultOptions() defaultImplementationOptions {
 	return defaultImplementationOptions{apiOptions{
 		InsecureRegistry:      o.InsecureRegistry,
@@ -123,6 +139,8 @@ func newDockerRegistry(repositoryAddress, implementation string, options DockerR
 		return newHarbor(options.harborOptions())
 	case QuayImplementationName:
 		return newQuay(options.quayOptions())
+	case SelectelImplementationName:
+		return newSelectel(options.selectelOptions())
 	case DefaultImplementationName:
 		return newDefaultImplementation(options.defaultOptions())
 	default:
@@ -202,6 +220,10 @@ func detectImplementation(accountOrRepositoryAddress string) (string, error) {
 			name:     QuayImplementationName,
 			patterns: quayPatterns,
 		},
+		{
+			name:     SelectelImplementationName,
+			patterns: selectelPatterns,
+		},
 	} {
 		for _, pattern := range service.patterns {
 			matched, err := regexp.MatchString(pattern, parsedResource.RegistryStr())
@@ -229,5 +251,6 @@ func ImplementationList() []string {
 		GitLabRegistryImplementationName,
 		HarborImplementationName,
 		QuayImplementationName,
+		SelectelImplementationName,
 	}
 }
