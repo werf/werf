@@ -1,6 +1,7 @@
 package render
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -305,19 +306,24 @@ func runRender(ctx context.Context) error {
 			defer conveyorWithRetry.Terminate()
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+				buf := new(bytes.Buffer)
+				bufLogger := logboek.NewLogger(buf, buf)
+				ctxWithBufLogger := logboek.NewContext(ctx, bufLogger)
+
+				var buildErr error
 				if *commonCmdData.SkipBuild {
 					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
 					if err != nil {
 						return err
 					}
 
-					if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
-						return err
-					}
+					buildErr = c.ShouldBeBuilt(ctxWithBufLogger, shouldBeBuiltOptions)
 				} else {
-					if err := c.Build(ctx, buildOptions); err != nil {
-						return err
-					}
+					buildErr = c.Build(ctxWithBufLogger, buildOptions)
+				}
+				if buildErr != nil {
+					fmt.Println(buf.String())
+					return buildErr
 				}
 
 				imagesInfoGetters = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
