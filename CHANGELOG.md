@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.140](https://www.github.com/werf/werf/compare/v1.2.139...v1.2.140) (2022-07-26)
+
+
+### Features
+
+* **render:** print build log if failed ([8007487](https://www.github.com/werf/werf/commit/8007487fb168851d5b2aae957a3ac0156926f912))
+
+
+### Bug Fixes
+
+* **render:** live output in verbose/debug mode does not work properly ([5032780](https://www.github.com/werf/werf/commit/50327800cda0a2be39b8d68bdf70147965368426))
+
 ### [1.2.139](https://www.github.com/werf/werf/compare/v1.2.138...v1.2.139) (2022-07-25)
 
 
