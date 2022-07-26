@@ -35,7 +35,6 @@ groups:
       version: 1.2.122+fix2
  #    candidates:
     - name: rock-solid
-      version: 1.2.115
+      version: 1.2.117+fix2
 #     candidates:
-#     - 1.2.117+fix2  # 26.07
 #     - 1.2.122+fix2  # 02.08
