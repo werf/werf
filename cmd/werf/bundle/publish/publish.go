@@ -171,7 +171,7 @@ func runPublish(ctx context.Context) error {
 		return err
 	}
 
-	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug}); err != nil {
+	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *commonCmdData.LogDebug}); err != nil {
 		return err
 	}
 
