@@ -16,6 +16,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli/values"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config/deploy_params"
@@ -306,24 +307,32 @@ func runRender(ctx context.Context) error {
 			defer conveyorWithRetry.Terminate()
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-				buf := new(bytes.Buffer)
-				bufLogger := logboek.NewLogger(buf, buf)
-				ctxWithBufLogger := logboek.NewContext(ctx, bufLogger)
+				buildFunc := func(ctx context.Context) error {
+					if *commonCmdData.SkipBuild {
+						shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
+						if err != nil {
+							return err
+						}
 
-				var buildErr error
-				if *commonCmdData.SkipBuild {
-					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
-					if err != nil {
-						return err
+						return c.ShouldBeBuilt(ctx, shouldBeBuiltOptions)
 					}
 
-					buildErr = c.ShouldBeBuilt(ctxWithBufLogger, shouldBeBuiltOptions)
-				} else {
-					buildErr = c.Build(ctxWithBufLogger, buildOptions)
+					return c.Build(ctx, buildOptions)
 				}
-				if buildErr != nil {
-					fmt.Println(buf.String())
-					return buildErr
+
+				if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
+					if err := buildFunc(ctx); err != nil {
+						return err
+					}
+				} else {
+					buf := new(bytes.Buffer)
+					bufLogger := logboek.NewLogger(buf, buf)
+					ctxWithBufLogger := logboek.NewContext(ctx, bufLogger)
+
+					if err := buildFunc(ctxWithBufLogger); err != nil {
+						fmt.Println(buf.String())
+						return err
+					}
 				}
 
 				imagesInfoGetters = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
