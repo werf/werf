@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.141](https://www.github.com/werf/werf/compare/v1.2.140...v1.2.141) (2022-07-27)
+
+
+### Bug Fixes
+
+* **local-cache-cleanup:** more correct GC for ~/.local_cache/git_* data ([e93bb73](https://www.github.com/werf/werf/commit/e93bb73d046a4642005f0d3d306b837ed32e68fd))
+
 ### [1.2.140](https://www.github.com/werf/werf/compare/v1.2.139...v1.2.140) (2022-07-26)
 
 
