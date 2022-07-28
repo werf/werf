@@ -317,6 +317,6 @@ replace k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 
 replace github.com/deislabs/oras => github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8
 
-replace helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20220722115215-a2c3886045b8
+replace helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20220728132109-25b0efef4652
 
 replace github.com/go-git/go-git/v5 => github.com/ZauberNerd/go-git/v5 v5.4.3-0.20220315170230-29ec1bc1e5db
