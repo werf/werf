@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.142](https://www.github.com/werf/werf/compare/v1.2.141...v1.2.142) (2022-07-28)
+
+
+### Features
+
+* `tpl` performance improved ([bc28f48](https://www.github.com/werf/werf/commit/bc28f48de36838d7af5e132c0ddd54c8443d9d8a))
+
 ### [1.2.141](https://www.github.com/werf/werf/compare/v1.2.140...v1.2.141) (2022-07-27)
 
 
