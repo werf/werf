@@ -28,7 +28,7 @@ groups:
     - name: alpha
       version: 1.2.140
     - name: beta
-      version: 1.2.139
+      version: 1.2.140
     - name: ea
       version: 1.2.138
     - name: stable
