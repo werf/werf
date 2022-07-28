@@ -139,3 +139,30 @@ func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, t
 	return "", resp, fmt.Errorf("unexpected selectel api response body: %s", string(respBody))
 
 }
+
+func (api *selectelApi) getTags(ctx context.Context, hostname, registryId, repository, token string) ([]string, *http.Response, error) {
+	u, err := neturl.Parse("https://" + hostname + "/api/v1")
+	if err != nil {
+		return nil, nil, err
+	}
+	u.Path = path.Join(u.Path, "repositories", repository, "tags")
+
+	resp, respBody, err := doRequest(ctx, http.MethodGet, u.String(), nil, doRequestOptions{
+		Headers: map[string]string{
+			"Accept":       "application/json",
+			"X-Auth-Token": token,
+		},
+		AcceptedCodes: []int{http.StatusOK},
+	})
+
+	if err != nil {
+		return nil, resp, err
+	}
+
+	tagsBodyJson := []string{}
+	if err := json.Unmarshal(respBody, &tagsBodyJson); err != nil {
+		return nil, resp, err
+	}
+
+	return tagsBodyJson, resp, nil
+}

@@ -73,6 +73,10 @@ func (r *selectel) DeleteRepoImage(ctx context.Context, repoImage *image.Info) e
 	return r.deleteRepoImage(ctx, repoImage)
 }
 
+func (r *selectel) Tags(ctx context.Context, reference string, _ ...Option) ([]string, error) {
+	return r.tags(ctx, reference)
+}
+
 func (r *selectel) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	token, err := r.getToken(ctx)
 	if err != nil {
@@ -119,6 +123,30 @@ func (r *selectel) deleteRepo(ctx context.Context, reference string) error {
 	}
 
 	return nil
+}
+
+func (r *selectel) tags(ctx context.Context, reference string) ([]string, error) {
+	token, err := r.getToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	registryID, err := r.getRegistryId(ctx, reference)
+	if err != nil {
+		return nil, err
+	}
+
+	hostname, _, repository, err := r.parseReference(reference)
+	if err != nil {
+		return nil, err
+	}
+
+	tags, resp, err := r.selectelApi.getTags(ctx, hostname, registryID, repository, token)
+	if err != nil {
+		return nil, r.handleFailedApiResponse(resp, err)
+	}
+
+	return tags, nil
 }
 
 func (r *selectel) getToken(ctx context.Context) (string, error) {
