@@ -30,7 +30,7 @@ groups:
     - name: beta
       version: 1.2.141
     - name: ea
-      version: 1.2.138
+      version: 1.2.137
     - name: stable
       version: 1.2.122+fix2
 #     candidates:
