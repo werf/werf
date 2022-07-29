@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.144](https://www.github.com/werf/werf/compare/v1.2.143...v1.2.144) (2022-07-29)
+
+
+### Bug Fixes
+
+* **kubedog:** generic: ignore jsonpath errs on Condition search ([2c2b772](https://www.github.com/werf/werf/commit/2c2b77294bb626a16fa37de3f91fe04d1ef1e9e2))
+
 ### [1.2.143](https://www.github.com/werf/werf/compare/v1.2.142...v1.2.143) (2022-07-29)
 
 
