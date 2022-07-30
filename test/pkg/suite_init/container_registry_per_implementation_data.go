@@ -63,7 +63,8 @@ func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Con
 		case docker_registry.IsAzureCrRepositoryNotFoundErr(err),
 			docker_registry.IsDockerHubRepositoryNotFoundErr(err),
 			docker_registry.IsHarborRepositoryNotFoundErr(err),
-			docker_registry.IsQuayRepositoryNotFoundErr(err):
+			docker_registry.IsQuayRepositoryNotFoundErr(err),
+			docker_registry.IsSelectelRepositoryNotFoundErr(err):
 		default:
 			Ω(err).Should(Succeed())
 		}

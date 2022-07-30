@@ -11,23 +11,40 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
+const SelectelImplementationName = "selectel"
+
 const (
-	SelectelImplementationName          = "selectel"
-	SelectelRepositoryNotFoundErrPrefix = "Selectel repository not found: "
+	selectelUnauthorizedErrPrefix       = "Selectel registry unauthorized: "
+	selectelRepositoryNotFoundErrPrefix = "Selectel repository not found: "
 )
+
+const ()
 
 var selectelPatterns = []string{"^cr.selcloud.ru"}
 
-type SelectelRepositoryNotFoundErr apiError
+type (
+	SelectelUnauthorizedErr       apiError
+	SelectelRepositoryNotFoundErr apiError
+)
 
 func NewSelectelRepositoryNotFoundErr(err error) SelectelRepositoryNotFoundErr {
 	return SelectelRepositoryNotFoundErr{
-		error: errors.New(SelectelRepositoryNotFoundErrPrefix + err.Error()),
+		error: errors.New(selectelRepositoryNotFoundErrPrefix + err.Error()),
 	}
 }
 
 func IsSelectelRepositoryNotFoundErr(err error) bool {
-	return strings.Contains(err.Error(), SelectelRepositoryNotFoundErrPrefix)
+	return strings.Contains(err.Error(), selectelRepositoryNotFoundErrPrefix)
+}
+
+func NewSelectelUnauthorizedErr(err error) SelectelUnauthorizedErr {
+	return SelectelUnauthorizedErr{
+		error: errors.New(selectelUnauthorizedErrPrefix + err.Error()),
+	}
+}
+
+func IsSelectelUnauthorizedErr(err error) bool {
+	return strings.Contains(err.Error(), selectelUnauthorizedErrPrefix)
 }
 
 type selectel struct {
@@ -78,12 +95,7 @@ func (r *selectel) Tags(ctx context.Context, reference string, _ ...Option) ([]s
 }
 
 func (r *selectel) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
-	token, err := r.getToken(ctx)
-	if err != nil {
-		return err
-	}
-
-	registryID, err := r.getRegistryId(ctx, repoImage.Repository)
+	token, registryID, err := r.getCredentials(ctx, repoImage.Repository)
 	if err != nil {
 		return err
 	}
@@ -102,12 +114,7 @@ func (r *selectel) deleteRepoImage(ctx context.Context, repoImage *image.Info) e
 }
 
 func (r *selectel) deleteRepo(ctx context.Context, reference string) error {
-	token, err := r.getToken(ctx)
-	if err != nil {
-		return err
-	}
-
-	registryID, err := r.getRegistryId(ctx, reference)
+	token, registryID, err := r.getCredentials(ctx, reference)
 	if err != nil {
 		return err
 	}
@@ -126,12 +133,7 @@ func (r *selectel) deleteRepo(ctx context.Context, reference string) error {
 }
 
 func (r *selectel) tags(ctx context.Context, reference string) ([]string, error) {
-	token, err := r.getToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	registryID, err := r.getRegistryId(ctx, reference)
+	token, registryID, err := r.getCredentials(ctx, reference)
 	if err != nil {
 		return nil, err
 	}
@@ -147,6 +149,20 @@ func (r *selectel) tags(ctx context.Context, reference string) ([]string, error)
 	}
 
 	return tags, nil
+}
+
+func (r *selectel) getCredentials(ctx context.Context, reference string) (string, string, error) {
+	token, err := r.getToken(ctx)
+	if err != nil {
+		return "", "", err
+	}
+
+	registryID, err := r.getRegistryId(ctx, reference)
+	if err != nil {
+		return "", "", err
+	}
+
+	return token, registryID, nil
 }
 
 func (r *selectel) getToken(ctx context.Context) (string, error) {
@@ -192,16 +208,16 @@ func (r *selectel) getRegistryId(ctx context.Context, reference string) (string,
 func (r *selectel) handleFailedApiResponse(resp *http.Response, err error) error {
 	switch resp.StatusCode {
 	case http.StatusUnauthorized:
-		return NewDockerHubUnauthorizedErr(err)
+		return NewSelectelUnauthorizedErr(err)
 	case http.StatusNotFound:
-		return NewDockerHubRepositoryNotFoundErr(err)
+		return NewSelectelRepositoryNotFoundErr(err)
 	}
 
 	return nil
 }
 
 func (r *selectel) String() string {
-	return DockerHubImplementationName
+	return SelectelImplementationName
 }
 
 func (r *selectel) parseReference(reference string) (string, string, string, error) {
