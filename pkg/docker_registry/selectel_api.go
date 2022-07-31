@@ -19,17 +19,29 @@ func newSelectelApi() selectelApi {
 	return selectelApi{}
 }
 
-func (api *selectelApi) deleteRepository(ctx context.Context, hostname, registryId, repository, token string) (*http.Response, error) {
+func (api *selectelApi) makeApiUrl(hostname, registryId string, pathParts ...string) (string, error) {
 	u, err := neturl.Parse("https://" + hostname + "/api/v1")
+	if err != nil {
+		return "", err
+	}
+
+	parts := append([]string{u.Path}, pathParts...)
+	u.Path = path.Join(parts...)
+
+	if registryId != "" {
+		q := u.Query()
+		q.Set("registryId", registryId)
+		u.RawQuery = q.Encode()
+	}
+
+	return u.String(), nil
+}
+
+func (api *selectelApi) deleteRepository(ctx context.Context, hostname, registryId, repository, token string) (*http.Response, error) {
+	url, err := api.makeApiUrl(hostname, registryId, "repositories", repository)
 	if err != nil {
 		return nil, err
 	}
-
-	u.Path = path.Join(u.Path, "repositories", repository)
-	q := u.Query()
-	q.Set("registryId", registryId)
-	u.RawQuery = q.Encode()
-	url := u.String()
 
 	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
@@ -43,16 +55,10 @@ func (api *selectelApi) deleteRepository(ctx context.Context, hostname, registry
 }
 
 func (api *selectelApi) deleteReference(ctx context.Context, hostname, registryId, repository, reference, token string) (*http.Response, error) {
-	u, err := neturl.Parse("https://" + hostname + "/api/v1")
+	url, err := api.makeApiUrl(hostname, registryId, "repositories", repository, reference)
 	if err != nil {
 		return nil, err
 	}
-
-	u.Path = path.Join(u.Path, "repositories", repository, reference)
-	q := u.Query()
-	q.Set("registryId", registryId)
-	u.RawQuery = q.Encode()
-	url := u.String()
 
 	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
@@ -107,12 +113,12 @@ func (api *selectelApi) getToken(ctx context.Context, username, password, accoun
 }
 
 func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, token string) (string, *http.Response, error) {
-	u, err := neturl.Parse("https://" + hostname + "/api/v1/registries")
+	url, err := api.makeApiUrl(hostname, "")
 	if err != nil {
 		return "", nil, err
 	}
 
-	resp, respBody, err := doRequest(ctx, http.MethodGet, u.String(), nil, doRequestOptions{
+	resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":       "application/json",
 			"X-Auth-Token": token,
@@ -145,13 +151,12 @@ func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, t
 }
 
 func (api *selectelApi) getTags(ctx context.Context, hostname, registryId, repository, token string) ([]string, *http.Response, error) {
-	u, err := neturl.Parse("https://" + hostname + "/api/v1")
+	url, err := api.makeApiUrl(hostname, registryId, "repositories", repository, "tags")
 	if err != nil {
 		return nil, nil, err
 	}
-	u.Path = path.Join(u.Path, "repositories", repository, "tags")
 
-	resp, respBody, err := doRequest(ctx, http.MethodGet, u.String(), nil, doRequestOptions{
+	resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":       "application/json",
 			"X-Auth-Token": token,
