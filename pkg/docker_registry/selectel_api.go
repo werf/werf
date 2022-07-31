@@ -113,7 +113,7 @@ func (api *selectelApi) getToken(ctx context.Context, username, password, accoun
 }
 
 func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, token string) (string, *http.Response, error) {
-	url, err := api.makeApiUrl(hostname, "")
+	url, err := api.makeApiUrl(hostname, "", "registries")
 	if err != nil {
 		return "", nil, err
 	}
