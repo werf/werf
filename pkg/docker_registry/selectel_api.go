@@ -72,16 +72,19 @@ func (api *selectelApi) deleteReference(ctx context.Context, hostname, registryI
 }
 
 func (api *selectelApi) getToken(ctx context.Context, username, password, account, vpc, vpcID string) (string, error) {
+	var scope gophercloud.AuthScope
 
-	identityUrl := "https://api.selvpc.ru/identity/v3"
+	const identityUrl = "https://api.selvpc.ru/identity/v3"
 
-	scope := gophercloud.AuthScope{
-		DomainName: account,
-	}
 	if vpcID != "" {
-		scope.ProjectID = vpcID
+		scope = gophercloud.AuthScope{
+			ProjectID: vpcID,
+		}
 	} else {
-		scope.ProjectName = vpc
+		scope = gophercloud.AuthScope{
+			ProjectName: vpc,
+			DomainName:  account,
+		}
 	}
 
 	authOptions := gophercloud.AuthOptions{
@@ -148,30 +151,4 @@ func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, t
 
 	return "", resp, fmt.Errorf("unexpected selectel api response body: %s", string(respBody))
 
-}
-
-func (api *selectelApi) getTags(ctx context.Context, hostname, registryId, repository, token string) ([]string, *http.Response, error) {
-	url, err := api.makeApiUrl(hostname, registryId, "repositories", repository, "tags")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
-		Headers: map[string]string{
-			"Accept":       "application/json",
-			"X-Auth-Token": token,
-		},
-		AcceptedCodes: []int{http.StatusOK},
-	})
-
-	if err != nil {
-		return nil, resp, err
-	}
-
-	tagsBodyJson := []string{}
-	if err := json.Unmarshal(respBody, &tagsBodyJson); err != nil {
-		return nil, resp, err
-	}
-
-	return tagsBodyJson, resp, nil
 }
