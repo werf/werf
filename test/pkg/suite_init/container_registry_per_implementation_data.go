@@ -207,6 +207,11 @@ func makeContainerRegistryImplementationDockerRegistryOptions(implementationName
 			implementationCode,
 		)
 
+		vpcIDEnvName := fmt.Sprintf(
+			"WERF_TEST_%s_VPC_ID",
+			implementationCode,
+		)
+
 		return docker_registry.DockerRegistryOptions{
 			InsecureRegistry:      false,
 			SkipTlsVerifyRegistry: false,
@@ -214,6 +219,7 @@ func makeContainerRegistryImplementationDockerRegistryOptions(implementationName
 			SelectelPassword:      utils.GetRequiredEnv(passwordEnvName),
 			SelectelAccount:       utils.GetRequiredEnv(accountEnvName),
 			SelectelVPC:           utils.GetRequiredEnv(vpcEnvName),
+			SelectelVPCID:         utils.GetRequiredEnv(vpcIDEnvName),
 		}
 	default:
 		return docker_registry.DockerRegistryOptions{

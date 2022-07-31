@@ -66,6 +66,7 @@ type RepoData struct {
 	QuayToken         *string
 	SelectelAccount   *string
 	SelectelVPC       *string
+	SelectelVPCID     *string
 	SelectelUsername  *string
 	SelectelPassword  *string
 
@@ -159,6 +160,7 @@ func (repoData *RepoData) SetupCmd(cmd *cobra.Command) {
 	repoData.SetupSelectelPasswordForRepoData(cmd, makeOpt("selectel-password"), []string{makeEnvVar("SELECTEL_PASSWORD")})
 	repoData.SetupSelectelAccountForRepoData(cmd, makeOpt("selectel-account"), []string{makeEnvVar("SELECTEL_ACCOUNT")})
 	repoData.SetupSelectelVPCForRepoData(cmd, makeOpt("selectel-vpc"), []string{makeEnvVar("SELECTEL_VPC")})
+	repoData.SetupSelectelVPCIDForRepoData(cmd, makeOpt("selectel-vpc-id"), []string{makeEnvVar("SELECTEL_VPC_ID")})
 }
 
 func MergeRepoData(ctx context.Context, repoDataArr ...*RepoData) *RepoData {
@@ -200,6 +202,9 @@ func MergeRepoData(ctx context.Context, repoDataArr ...*RepoData) *RepoData {
 			res.SelectelAccount = repoData.SelectelAccount
 		}
 		if res.SelectelVPC == nil || *res.SelectelVPC == "" {
+			res.SelectelVPC = repoData.SelectelVPC
+		}
+		if res.SelectelVPCID == nil || *res.SelectelVPCID == "" {
 			res.SelectelVPC = repoData.SelectelVPC
 		}
 	}
@@ -375,6 +380,19 @@ func (repoData *RepoData) SetupSelectelVPCForRepoData(cmd *cobra.Command, paramN
 	repoData.SelectelVPC = new(string)
 	cmd.Flags().StringVarP(
 		repoData.SelectelVPC,
+		paramName,
+		"",
+		getDefaultValueByParamEnvNames(paramEnvNames),
+		usage,
+	)
+}
+
+func (repoData *RepoData) SetupSelectelVPCIDForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {
+	usage := fmt.Sprintf("%s Selectel VPC ID (default %s)", repoData.Name, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+
+	repoData.SelectelVPCID = new(string)
+	cmd.Flags().StringVarP(
+		repoData.SelectelVPCID,
 		paramName,
 		"",
 		getDefaultValueByParamEnvNames(paramEnvNames),

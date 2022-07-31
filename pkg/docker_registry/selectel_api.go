@@ -65,13 +65,17 @@ func (api *selectelApi) deleteReference(ctx context.Context, hostname, registryI
 	return resp, err
 }
 
-func (api *selectelApi) getToken(ctx context.Context, username, password, account, vpc string) (string, error) {
+func (api *selectelApi) getToken(ctx context.Context, username, password, account, vpc, vpcID string) (string, error) {
 
 	identityUrl := "https://api.selvpc.ru/identity/v3"
 
 	scope := gophercloud.AuthScope{
-		DomainName:  account,
-		ProjectName: vpc,
+		DomainName: account,
+	}
+	if vpcID != "" {
+		scope.ProjectID = vpcID
+	} else {
+		scope.ProjectName = vpc
 	}
 
 	authOptions := gophercloud.AuthOptions{

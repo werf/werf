@@ -18,8 +18,6 @@ const (
 	selectelRepositoryNotFoundErrPrefix = "Selectel repository not found: "
 )
 
-const ()
-
 var selectelPatterns = []string{"^cr.selcloud.ru"}
 
 type (
@@ -64,6 +62,7 @@ type selectelCredentials struct {
 	password string
 	account  string
 	vpc      string
+	vpcID    string
 	token    string
 }
 
@@ -157,7 +156,7 @@ func (r *selectel) getCredentials(ctx context.Context, reference string) (string
 		return "", "", err
 	}
 
-	registryID, err := r.getRegistryId(ctx, reference)
+	registryID, err := r.getRegistryId(ctx, token, reference)
 	if err != nil {
 		return "", "", err
 	}
@@ -170,7 +169,7 @@ func (r *selectel) getToken(ctx context.Context) (string, error) {
 		return r.selectelCredentials.token, nil
 	}
 
-	token, err := r.selectelApi.getToken(ctx, r.selectelCredentials.username, r.selectelCredentials.password, r.selectelCredentials.account, r.selectelCredentials.vpc)
+	token, err := r.selectelApi.getToken(ctx, r.selectelCredentials.username, r.selectelCredentials.password, r.selectelCredentials.account, r.selectelCredentials.vpc, r.selectelCredentials.vpcID)
 	if err != nil {
 		return "", err
 	}
@@ -180,14 +179,9 @@ func (r *selectel) getToken(ctx context.Context) (string, error) {
 	return r.selectelCredentials.token, nil
 }
 
-func (r *selectel) getRegistryId(ctx context.Context, reference string) (string, error) {
+func (r *selectel) getRegistryId(ctx context.Context, token, reference string) (string, error) {
 	if r.selectelRegistryId != "" {
 		return r.selectelRegistryId, nil
-	}
-
-	token, err := r.getToken(ctx)
-	if err != nil {
-		return "", err
 	}
 
 	hostname, registry, _, err := r.parseReference(reference)

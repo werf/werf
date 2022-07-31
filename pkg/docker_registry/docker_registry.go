@@ -21,6 +21,7 @@ type DockerRegistryOptions struct {
 	QuayToken             string
 	SelectelAccount       string
 	SelectelVPC           string
+	SelectelVPCID         string
 	SelectelUsername      string
 	SelectelPassword      string
 }
@@ -96,6 +97,7 @@ func (o *DockerRegistryOptions) selectelOptions() selectelOptions {
 			password: o.SelectelPassword,
 			account:  o.SelectelAccount,
 			vpc:      o.SelectelVPC,
+			vpcID:    o.SelectelVPCID,
 		},
 	}
 }
