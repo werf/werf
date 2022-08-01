@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	"github.com/alessio/shellescape"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	"gopkg.in/yaml.v3"
 
 	"github.com/werf/werf/test/pkg/utils"

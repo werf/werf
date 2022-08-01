@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/test/pkg/utils"
 )
@@ -23,7 +23,7 @@ func MakeTestSuiteEntrypointFunc(description string, opts TestSuiteEntrypointFun
 			os.Exit(1)
 		}
 
-		gomega.RegisterFailHandler(ginkgo.Fail)
-		ginkgo.RunSpecs(t, description)
+		RegisterFailHandler(Fail)
+		RunSpecs(t, description)
 	}
 }

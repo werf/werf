@@ -3,7 +3,7 @@ package git_test
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/werf/werf/test/pkg/suite_init"
 	"github.com/werf/werf/test/pkg/utils"
@@ -21,7 +21,7 @@ func TestSuite(t *testing.T) {
 
 var SuiteData suite_init.SuiteData
 
-var _ = ginkgo.AfterEach(func() {
+var _ = AfterEach(func() {
 	utils.RunSucceedCommand(
 		SuiteData.TestDirPath,
 		SuiteData.WerfBinPath,

@@ -209,7 +209,7 @@ jobs:
 
         ./scripts/ci/git.sh
 
-        go install github.com/onsi/ginkgo/ginkgo@latest
+        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -333,7 +333,7 @@ jobs:
         ./scripts/ci/git.sh
         ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.implementation }}
 
-        go install github.com/onsi/ginkgo/ginkgo@latest
+        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -342,7 +342,7 @@ jobs:
     - name: Test
       run: |
         test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p --flakeAttempts=3 -keepGoing --focus="\[${{ matrix.implementation }}\]" $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p --flake-attempts=3 --keep-going --focus="\[${{ matrix.implementation }}\]" $test_binaries
       shell: bash
 
     - name: Upload coverage artifact
@@ -393,7 +393,7 @@ jobs:
 
         ./scripts/ci/git.sh
 
-        go install github.com/onsi/ginkgo/ginkgo@latest
+        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -407,7 +407,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration -type f -name '*.test')
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p --keep-going $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
@@ -523,7 +523,7 @@ jobs:
         ./scripts/ci/integration_tests_registries_login.sh quay
         ./scripts/ci/integration_tests_registries_login.sh github
 
-        go install github.com/onsi/ginkgo/ginkgo@latest
+        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -537,7 +537,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration -type f -name '*.test')
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p --flakeAttempts=3 -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p --flake-attempts=3 --keep-going $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
@@ -600,13 +600,6 @@ jobs:
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
-        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-        git clone https://github.com/werf/ginkgo.git fork
-        cd fork/ginkgo
-        go build .
-        mv ginkgo $GITHUB_WORKSPACE
-        cd $GITHUB_WORKSPACE
-
         chmod +x werf_with_coverage
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
         for test_binary in $test_binaries; do chmod +x $test_binary; done
@@ -618,14 +611,14 @@ jobs:
     - name: Test (macOS)
       run: |
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p --keep-going $test_binaries
       shell: bash
       if: matrix.os == 'macOS'
 
     - name: Test (windows)
       run: |
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \) ${{ matrix.extra-find-args }})
-        WERF_DISABLE_AUTO_HOST_CLEANUP=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p -keepGoing $test_binaries
+        WERF_DISABLE_AUTO_HOST_CLEANUP=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p --keep-going $test_binaries
       shell: bash
       if: matrix.os == 'windows'
 
@@ -675,13 +668,6 @@ jobs:
         mkdir -p $WERF_TEST_COVERAGE_DIR
         echo WERF_TEST_COVERAGE_DIR=$WERF_TEST_COVERAGE_DIR >> $GITHUB_ENV
 
-        # regular ginkgo CLI (onsi/ginkgo) cannot run pre-compiled test package on windows (https://github.com/onsi/ginkgo/issues/529)
-        git clone https://github.com/werf/ginkgo.git fork
-        cd fork/ginkgo
-        go build .
-        mv ginkgo $GITHUB_WORKSPACE
-        cd $GITHUB_WORKSPACE
-
         chmod +x werf_with_coverage
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
         for test_binary in $test_binaries; do chmod +x $test_binary; done
@@ -698,7 +684,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p --keep-going $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
@@ -710,7 +696,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration -type f \( -name '*.test' -or -name '*.test.exe' \))
-        WERF_DISABLE_AUTO_HOST_CLEANUP=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p -keepGoing $test_binaries
+        WERF_DISABLE_AUTO_HOST_CLEANUP=1 WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf_with_coverage ginkgo -p --keep-going $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}

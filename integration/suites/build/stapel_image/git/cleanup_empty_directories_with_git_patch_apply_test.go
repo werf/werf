@@ -7,8 +7,7 @@ import (
 	"runtime"
 
 	"github.com/alessio/shellescape"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/werf/werf/test/pkg/utils"
 	utilsDocker "github.com/werf/werf/test/pkg/utils/docker"

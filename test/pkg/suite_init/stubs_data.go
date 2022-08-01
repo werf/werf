@@ -1,7 +1,7 @@
 package suite_init
 
 import (
-	"github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	"github.com/prashantv/gostub"
 )
 
@@ -18,7 +18,7 @@ func NewStubsData() *StubsData {
 }
 
 func SetupStubs(stubs *gostub.Stubs) bool {
-	return ginkgo.AfterEach(func() {
+	return AfterEach(func() {
 		stubs.Reset()
 	})
 }

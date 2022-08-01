@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/test/pkg/utils"
 )
@@ -23,14 +23,14 @@ func NewTmpDirData() *TmpDirData {
 }
 
 func SetupTmpDir(tmpDir, testDirPath *string) bool {
-	ginkgo.BeforeEach(func() {
+	BeforeEach(func() {
 		*tmpDir = utils.GetTempDir()
 		*testDirPath = *tmpDir
 	})
 
-	ginkgo.AfterEach(func() {
+	AfterEach(func() {
 		err := os.RemoveAll(*tmpDir)
-		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	return true
@@ -44,7 +44,7 @@ func (data *TmpDirData) CommitProjectWorktree(projectName, worktreeFixtureDir, c
 	worktreeDir := data.GetProjectWorktree(projectName)
 	repoDir := filepath.Join(data.TestDirPath, fmt.Sprintf("%s.repo", projectName))
 
-	gomega.Expect(os.RemoveAll(worktreeDir)).To(gomega.Succeed())
+	Expect(os.RemoveAll(worktreeDir)).To(Succeed())
 	utils.CopyIn(worktreeFixtureDir, worktreeDir)
-	gomega.Expect(utils.SetGitRepoState(worktreeDir, repoDir, commitMessage)).To(gomega.Succeed())
+	Expect(utils.SetGitRepoState(worktreeDir, repoDir, commitMessage)).To(Succeed())
 }

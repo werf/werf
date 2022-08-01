@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	"github.com/prashantv/gostub"
 )
 
@@ -19,7 +19,7 @@ func NewK8sDockerRegistryData(projectNameData *ProjectNameData, stubsData *Stubs
 }
 
 func SetupK8sDockerRegistryRepo(repo, projectName *string, stubs *gostub.Stubs) bool {
-	return ginkgo.BeforeEach(func() {
+	return BeforeEach(func() {
 		*repo = fmt.Sprintf("%s/%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), *projectName)
 		stubs.SetEnv("WERF_REPO", *repo)
 	})

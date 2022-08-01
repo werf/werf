@@ -2,7 +2,7 @@ package docker_registry
 
 import (
 	"github.com/google/go-containerregistry/pkg/name"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
