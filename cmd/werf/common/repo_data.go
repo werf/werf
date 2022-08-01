@@ -206,7 +206,7 @@ func MergeRepoData(ctx context.Context, repoDataArr ...*RepoData) *RepoData {
 			res.SelectelVPC = repoData.SelectelVPC
 		}
 		if res.SelectelVPCID == nil || *res.SelectelVPCID == "" {
-			res.SelectelVPC = repoData.SelectelVPC
+			res.SelectelVPCID = repoData.SelectelVPCID
 		}
 	}
 
