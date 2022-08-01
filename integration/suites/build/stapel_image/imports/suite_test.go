@@ -3,7 +3,7 @@ package imports_test
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/werf/werf/test/pkg/suite_init"
 )
@@ -26,6 +26,6 @@ var (
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 )
 
-var _ = ginkgo.BeforeEach(func() {
+var _ = BeforeEach(func() {
 	SuiteData.Stubs.SetEnv("WERF_DISABLE_AUTO_HOST_CLEANUP", "1")
 })

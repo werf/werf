@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	"github.com/prashantv/gostub"
 
 	"github.com/werf/werf/pkg/slug"
@@ -24,7 +24,7 @@ func NewProjectNameData(stubsData *StubsData) *ProjectNameData {
 }
 
 func SetupProjectName(projectName *string, stubs *gostub.Stubs) bool {
-	return ginkgo.BeforeEach(func() {
+	return BeforeEach(func() {
 		*projectName = GenerateUniqProjectName()
 		stubs.SetEnv("WERF_PROJECT_NAME", *projectName)
 	})

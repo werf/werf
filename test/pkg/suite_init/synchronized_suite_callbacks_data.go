@@ -1,7 +1,7 @@
 package suite_init
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 )
 
 type SynchronizedSuiteCallbacksData struct {

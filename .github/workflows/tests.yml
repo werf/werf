@@ -183,7 +183,7 @@ jobs:
       run: |
         ./scripts/ci/git.sh
 
-        go install github.com/onsi/ginkgo/ginkgo@latest
+        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
 
         chmod +x werf
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -192,7 +192,7 @@ jobs:
     - name: Test
       run: |
         test_binaries=$(find integration -type f -name '*.test' ${{ matrix.extra-find-args }})
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ginkgo -p -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ginkgo -p --keepGoing $test_binaries
       shell: bash
 
   integration_k8s_per_version_tests:
@@ -234,7 +234,7 @@ jobs:
       run: |
         ./scripts/ci/git.sh
 
-        go install github.com/onsi/ginkgo/ginkgo@latest
+        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
 
         find integration -type f -name '*.test' -exec chmod +x {} \;
 
@@ -249,7 +249,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration -type f -name '*.test')
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ginkgo -p -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ginkgo -p --keep-going $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
@@ -356,7 +356,7 @@ jobs:
         ./scripts/ci/integration_tests_registries_login.sh quay
         ./scripts/ci/integration_tests_registries_login.sh github
 
-        go install github.com/onsi/ginkgo/ginkgo@latest
+        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
 
         find integration -type f -name '*.test' -exec chmod +x {} \;
 
@@ -371,7 +371,7 @@ jobs:
       run: |
         source ./scripts/ci/integration_k8s_tests_before_hook.sh
         test_binaries=$(find integration -type f -name '*.test')
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ginkgo -p --flakeAttempts=3 -keepGoing $test_binaries
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/werf ginkgo -p --flake-attempts=3 --keep-going $test_binaries
       shell: bash
       env:
         WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
