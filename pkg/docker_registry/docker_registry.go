@@ -142,7 +142,15 @@ func newDockerRegistry(repositoryAddress, implementation string, options DockerR
 	case QuayImplementationName:
 		return newQuay(options.quayOptions())
 	case SelectelImplementationName:
-		return newSelectel(options.selectelOptions())
+		selectelCR, errCR := newSelectel(options.selectelOptions())
+		_, _, repository, err := selectelCR.parseReference(repositoryAddress)
+		if err != nil {
+			return nil, err
+		}
+		if repository == "" {
+			return nil, fmt.Errorf("%s implementation is buggy. Add repository to WERF_REPO variable. Example: %s/project", implementation, repositoryAddress)
+		}
+		return selectelCR, errCR
 	case DefaultImplementationName:
 		return newDefaultImplementation(options.defaultOptions())
 	default:
