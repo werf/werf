@@ -4,13 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"math/rand"
 	"net/http"
 	neturl "net/url"
 	"path"
+	"strconv"
+	"time"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
+	"github.com/werf/logboek"
+	parallelConstant "github.com/werf/werf/pkg/util/parallel/constant"
 )
 
 type selectelApi struct{}
@@ -43,7 +49,7 @@ func (api *selectelApi) deleteRepository(ctx context.Context, hostname, registry
 		return nil, err
 	}
 
-	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := api.doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":       "application/json",
 			"X-Auth-Token": token,
@@ -60,7 +66,7 @@ func (api *selectelApi) deleteReference(ctx context.Context, hostname, registryI
 		return nil, err
 	}
 
-	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := api.doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":       "application/json",
 			"X-Auth-Token": token,
@@ -121,7 +127,7 @@ func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, t
 		return "", nil, err
 	}
 
-	resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
+	resp, respBody, err := api.doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":       "application/json",
 			"X-Auth-Token": token,
@@ -151,4 +157,38 @@ func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, t
 
 	return "", resp, fmt.Errorf("unexpected selectel api response body: %s", string(respBody))
 
+}
+
+func (api *selectelApi) doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
+	resp, respBody, err := doRequest(ctx, method, url, body, options)
+	if err != nil {
+		if resp != nil && resp.Header.Get("Retry-After") != "" {
+			secondsString := resp.Header.Get("Retry-After")
+			seconds, err := strconv.Atoi(secondsString)
+			if err == nil {
+				sleepSeconds := seconds + rand.Intn(15) + 5
+				workerId := ctx.Value(parallelConstant.CtxBackgroundTaskIDKey)
+				if workerId != nil {
+					logboek.Context(ctx).Warn().LogF(
+						"WARNING: Rate limit error occurred. Waiting for %d before retrying request... (worker %d).\nThe --parallel ($WERF_PARALLEL) and --parallel-tasks-limit ($WERF_PARALLEL_TASKS_LIMIT) options can be used to regulate parallel tasks.\n",
+						sleepSeconds,
+						workerId.(int),
+					)
+					logboek.Context(ctx).Warn().LogLn()
+				} else {
+					logboek.Context(ctx).Warn().LogF(
+						"WARNING: Rate limit error occurred. Waiting for %d before retrying request...\n",
+						sleepSeconds,
+					)
+				}
+
+				time.Sleep(time.Second * time.Duration(sleepSeconds))
+				return api.doRequest(ctx, method, url, body, options)
+			}
+		}
+
+		return resp, respBody, err
+	}
+
+	return resp, respBody, nil
 }
