@@ -128,6 +128,7 @@ func (d *RepoData) GetDockerRegistryOptions(insecureRegistry, skipTlsVerifyRegis
 		opts.SelectelPassword = *d.SelectelPassword
 		opts.SelectelAccount = *d.SelectelAccount
 		opts.SelectelVPC = *d.SelectelVPC
+		opts.SelectelVPCID = *d.SelectelVPCID
 	}
 
 	return opts
