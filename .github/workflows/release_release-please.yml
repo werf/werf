@@ -50,6 +50,8 @@ jobs:
 
   notify:
     if: failure()
-    uses: ./.github/workflows/_final_notification.yml
     needs: release-please
-    secrets: inherit
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}

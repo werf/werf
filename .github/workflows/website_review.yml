@@ -1,4 +1,4 @@
-name: Review website
+name: "Website: Deploy to Review"
 on:
   pull_request:
     types: [labeled, synchronize]

@@ -77,9 +77,11 @@ jobs:
 
   notify:
     if: always()
-    uses: ./.github/workflows/_final_notification.yml
     needs:
     - publish
     - deploy_channels_cm_prod
     - publish_werf_images
-    secrets: inherit
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}

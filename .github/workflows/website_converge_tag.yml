@@ -1,4 +1,4 @@
-name: Converge documentation
+name: "Website: Deploy a Tag"
 on:
   push:
     tags:
@@ -65,3 +65,11 @@ jobs:
         WERF_LOG_VERBOSE: "on"
         WERF_KUBE_CONTEXT: dev
         WERF_SET_GITHUB_REF: "global.github_ref=${{ github.ref }}"
+
+  notify:
+    needs: converge
+    if: always()
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}

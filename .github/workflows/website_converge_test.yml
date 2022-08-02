@@ -1,4 +1,4 @@
-name: Test website
+name: "Website: Deploy a branch to Test"
 on:
   pull_request:
     types: [labeled, synchronize]
@@ -9,7 +9,7 @@ env:
 
 jobs:
 
-  converge_test_doc:
+  converge:
     name: Converge documentation to Test
     if: github.event.label.name == 'test docs' || contains( github.event.pull_request.labels.*.name, 'test docs' )
     runs-on: tfprod-werf
