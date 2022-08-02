@@ -159,6 +159,36 @@ func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, t
 
 }
 
+func (api *selectelApi) getTags(ctx context.Context, hostname, registryId, repository, token string) ([]string, *http.Response, error) {
+	url, err := api.makeApiUrl(hostname, registryId, "repositories", repository, "tags")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
+		Headers: map[string]string{
+			"Accept":       "application/json",
+			"X-Auth-Token": token,
+		},
+		AcceptedCodes: []int{http.StatusOK, http.StatusNotFound},
+	})
+
+	if err != nil {
+		return nil, resp, err
+	}
+
+	tagsBodyJson := []string{}
+	if resp.StatusCode == http.StatusNotFound {
+		return tagsBodyJson, resp, nil
+	}
+
+	if err := json.Unmarshal(respBody, &tagsBodyJson); err != nil {
+		return nil, resp, err
+	}
+
+	return tagsBodyJson, resp, nil
+}
+
 func (api *selectelApi) doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
 	resp, respBody, err := doRequest(ctx, method, url, body, options)
 	if err != nil {
