@@ -1,5 +1,10 @@
 name: Website Deployment
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - trdl_channels.yaml
   repository_dispatch:
     types: [site-deploy]
 
@@ -14,5 +19,5 @@ jobs:
       run: |
         curl -X POST \
              -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
-             -F "ref=main" \
+             -F "ref=master" \
              ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
