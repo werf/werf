@@ -2,7 +2,7 @@ name: Trdl publisher
 on:
   push:
     branches:
-      - multiwerf
+      - main
     paths:
       - trdl_channels.yaml
 

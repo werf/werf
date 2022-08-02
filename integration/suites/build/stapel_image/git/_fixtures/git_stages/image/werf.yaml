@@ -1,0 +1,7 @@
+project: none
+configVersion: 1
+---
+image: image
+from: ubuntu
+git:
+- to: /app

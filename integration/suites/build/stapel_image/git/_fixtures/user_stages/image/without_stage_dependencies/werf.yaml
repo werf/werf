@@ -1,0 +1,12 @@
+project: none
+configVersion: 1
+---
+image: image
+from: ubuntu
+git:
+- to: /app
+shell:
+  beforeInstall: date
+  install: date
+  beforeSetup: date
+  setup: date

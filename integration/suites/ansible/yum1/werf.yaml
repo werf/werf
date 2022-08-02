@@ -1,0 +1,11 @@
+configVersion: 1
+project: none
+---
+image: centos-7
+from: centos:7
+ansible:
+  install:
+  - name: "Install a package using yum"
+    yum:
+      name: httpd
+      state: latest

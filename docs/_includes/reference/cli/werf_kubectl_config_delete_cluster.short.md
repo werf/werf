@@ -1,0 +1,1 @@
+delete the specified cluster from the kubeconfig

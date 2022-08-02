@@ -1,0 +1,22 @@
+project: ansible-apt-key1
+configVersion: 1
+---
+image: ~
+from: ubuntu:18.04
+ansible:
+  beforeInstall:
+  - name: Install ca-certificates
+    apt:
+      name: ca-certificates
+      state: present
+      update_cache: yes
+  install:
+  - name: Setup apt repository
+    apt_repository:
+      repo: "deb http://repo.yandex.ru/clickhouse/deb/stable main/"
+      state: present
+      update_cache: true
+  - name: Install package from new repository
+    apt:
+      name: clickhouse-client
+      state: present

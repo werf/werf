@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy4
+  annotations:
+    "werf.io/failures-allowed-per-replica": "0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: mydeploy4
+  template:
+    metadata:
+      labels:
+        service: mydeploy4
+    spec:
+      initContainers:
+      - name: init
+        command: [ "true" ]
+        image: ubuntu:18.04
+      containers:
+      - name: main
+        command: [ "tail", "-f", "/dev/null" ]
+        image: ubuntu:18.04
+        startupProbe:
+          exec:
+            command: [ "false" ]
+          failureThreshold: 1
+      - name: never-fails
+        command: [ "tail", "-f", "/dev/null" ]
+        image: ubuntu:18.04
+        startupProbe:
+          exec:
+            command: [ "true" ]
+        readinessProbe:
+          exec:
+            command: [ "true" ]
+        livenessProbe:
+          exec:
+            command: [ "true" ]

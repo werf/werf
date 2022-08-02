@@ -1,0 +1,1 @@
+print the list of flags inherited by all commands

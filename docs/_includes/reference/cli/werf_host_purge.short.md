@@ -1,0 +1,1 @@
+purge werf images, cache and other data for all projects on host machine

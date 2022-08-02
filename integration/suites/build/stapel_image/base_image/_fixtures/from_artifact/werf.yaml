@@ -1,0 +1,9 @@
+project: none
+configVersion: 1
+---
+image: app
+fromArtifact: fromArtifact
+---
+artifact: fromArtifact
+from: alpine
+fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}

@@ -1,0 +1,22 @@
+project: none
+configVersion: 1
+---
+image: ~
+from: python:alpine
+ansible:
+  install:
+  - file:
+      path: /app
+      state: directory
+      mode: 0755
+  - name: Prepare main page
+    copy:
+      content:
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <h2>Congratulations!</h2>
+            <img src="https://flant.com/images/logo_en.png" style="max-height:100%;" height="76">
+          </body>
+        </html>
+      dest: /app/index.html

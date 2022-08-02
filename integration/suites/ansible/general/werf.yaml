@@ -1,0 +1,46 @@
+configVersion: 1
+project: ansible-general
+{{- range $_, $fromImg := (list "alpine" "ubuntu" "centos") }}
+---
+image: {{ $fromImg }}-test
+from: {{ $fromImg }}
+ansible:
+  install:
+  - name: download archive
+    get_url:
+      url: https://dl.google.com/go/go1.13.src.tar.gz
+      dest: /tmp/go.tar.gz
+  - name: check unarchive tar
+    unarchive:
+      src: /tmp/go.tar.gz
+      dest: /tmp
+  - name: check unarchive zip
+    unarchive:
+      src: https://github.com/werf/werf/archive/v1.0.4-beta.7.zip
+      dest: /tmp
+      remote_src: yes
+  - name: check groupadd
+    group:
+      name: testgroup
+      state: present
+  - name: check useradd
+    user:
+      name: testuser
+      comment: Test User
+      uid: "1040"
+      group: testgroup
+  - name: Copy using inline content
+    copy:
+      content: |
+        HELLO
+        WORLD
+      dest: /MYFILE
+  - name: Replace
+    replace:
+      path: /MYFILE
+      regexp: HELLO
+      replace: GOODBYE
+      owner: "300"
+      group: "300"
+      mode: "0755"
+{{- end }}

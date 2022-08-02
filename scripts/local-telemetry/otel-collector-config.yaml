@@ -1,0 +1,30 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+
+processors:
+  batch:
+
+exporters:
+  telemetrywerfio:
+    dsn: clickhouse://clickhouse:9000/default
+    timeout: 5s
+    sending_queue:
+      queue_size: 100
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 30s
+
+service:
+  telemetry:
+    logs:
+      level: "debug"
+
+  pipelines:
+    traces:
+      receivers: [ otlp ]
+      processors: [ batch ]
+      exporters: [ telemetrywerfio ]

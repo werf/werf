@@ -1,0 +1,1 @@
+create a new chart with the given name

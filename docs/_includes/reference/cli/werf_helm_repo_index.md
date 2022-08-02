@@ -1,0 +1,71 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
+
+Read the current directory and generate an index file based on the charts found.
+
+This tool is used for creating an &#39;index.yaml&#39; file for a chart repository. To
+set an absolute URL to the charts, use &#39;--url&#39; flag.
+
+To merge the generated index with an existing index file, use the &#39;--merge&#39;
+flag. In this case, the charts found in the current directory will be merged
+into the existing index, with local charts taking priority over existing charts.
+
+
+{{ header }} Syntax
+
+```shell
+werf helm repo index [DIR] [flags] [options]
+```
+
+{{ header }} Options
+
+```shell
+      --merge=''
+            merge the generated index into the given index
+      --url=''
+            url of chart repository
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --kube-config=''
+            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
+            $KUBECONFIG)
+      --kube-config-base64=''
+            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
+            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
+      --kube-context=''
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --log-color-mode='auto'
+            Set log color mode.
+            Supported on, off and auto (based on the stdout’s file descriptor referring to a        
+            terminal) modes.
+            Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-debug=false
+            Enable debug (default $WERF_LOG_DEBUG).
+      --log-pretty=true
+            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
+            true).
+      --log-quiet=false
+            Disable explanatory output (default $WERF_LOG_QUIET).
+      --log-terminal-width=-1
+            Set log terminal width.
+            Defaults to:
+            * $WERF_LOG_TERMINAL_WIDTH
+            * interactive terminal width or 140
+      --log-verbose=false
+            Enable verbose output (default $WERF_LOG_VERBOSE).
+  -n, --namespace=''
+            namespace scope for this request
+      --status-progress-period=5
+            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
+            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
+```
+

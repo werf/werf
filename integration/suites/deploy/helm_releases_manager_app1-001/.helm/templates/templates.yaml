@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy1
+  labels:
+    service: mydeploy1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: mydeploy1
+  template:
+    metadata:
+      labels:
+        service: mydeploy1
+    spec:
+      containers:
+      - name: main
+        command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
+        image: ubuntu:18.04

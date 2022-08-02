@@ -1,0 +1,1 @@
+create a resource from a file or from stdin

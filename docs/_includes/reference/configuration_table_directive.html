@@ -1,0 +1,108 @@
+{% assign directive = include.directive %}
+
+{% if include.directiveClasses %}
+{% assign directiveClasses = include.directiveClasses %}
+{% else %}
+{% assign directiveClasses = '' | split: '' %}
+{% endif %}
+
+{% if include.directiveCollapsedClasses %}
+{% assign directiveCollapsedClasses = include.directiveCollapsedClasses %}
+{% else %}
+{% assign directiveCollapsedClasses = '' | split: '' %}
+{% endif %}
+
+{% assign directiveIDParts = '' | split: '' %}
+{% assign directiveIDParts = directiveIDParts | concat: directiveClasses %}
+{% if include.elmIndex %}
+{% assign directiveIDParts = directiveIDParts | push: include.elmIndex %}
+{% endif %}
+{% assign directiveIDParts = directiveIDParts | push: directive.name %}
+{% assign directiveID = directiveIDParts | join: "-" %}
+
+{% assign directiveClasses = directiveClasses | push: directiveID %}
+
+{% if directive.collapsible and (directive.directives or directive.directiveList) %}
+{% assign shouldAddBtn = true %}
+{% assign directiveCollapsedClass = "collapsed" | append: "-" | append: directiveID | append: "-" | append: include.indent %}
+{% else %}
+{% assign shouldAddBtn = false %}
+{% endif %}
+{% assign tableLineCounter = "tableLineCounter" | increment_shared_counter %}
+
+<tr id="{{ directiveID }}" class="directive {{ directiveClasses | join: ' ' }} {{ directiveCollapsedClasses | join: ' ' }}">
+    <td><a class="line-number-anchor" href="#L{{ tableLineCounter }}" id="L{{ tableLineCounter }}">{{ tableLineCounter }}</a></td>
+    <td>
+        {% for i in (2..include.indent) %}&nbsp;&nbsp;{% endfor %}
+        {%- if include.isElm and include.elmIndex == 1 %}-&nbsp;{% elsif include.isAttr or include.isElm %}&nbsp;&nbsp;{% endif -%}
+
+        <span style="color: #66d9ef;">{{ directive.name }}</span>:
+
+        {%- if directive.value %} <span style="color: #a6e22e;">{{ directive.value | escape }}</span>{% endif -%}
+        {%- if directive.required %} <span class="required" data-toggle="tooltip" title="Required">!</span>{% endif -%}
+    </td>
+    <td class="comment">
+        <span>
+            #
+            {% if page.lang == "en" %}
+            {% assign defaultText = "default" %}
+            {% assign moreDetailsText = "More details" %}
+            {% assign moreDetailsHereText = "here" %}
+            {% elsif page.lang == "ru" %}
+            {% assign defaultText = "значение по умолчанию" %}
+            {% assign moreDetailsText = "Подробнее" %}
+            {% assign moreDetailsHereText = "здесь" %}
+            {% endif %}
+
+            {{ directive.description | get_lang_field_or_raise_error | escape }}
+            {%- if directive.default %} ({{ defaultText }} <code class="language-plaintext highlighter-rouge">{{ directive.default | escape }}</code>){% endif -%}
+            {% for link in (directive.detailsCustomLinks | get_lang_field_or_raise_error) %}
+            {%- if link.anchor %}. <a href="{{ link.anchor }}">{{ link.text }}</a>
+            {%- elsif link.article %}. <a href="{{ link.article | true_relative_url }}">{{ link.text }}</a>
+            {%- elsif link.link %}. <a href="{{ link.link }}">{{ link.text }}</a>{% endif -%}
+            {% endfor %}
+            {%- if (directive.detailsAnchor | get_lang_field_or_raise_error) %}. {{ moreDetailsText }} <a href="{{ directive.detailsAnchor | get_lang_field_or_raise_error }}">{{ moreDetailsHereText }}</a>
+            {%- elsif (directive.detailsArticle | get_lang_field_or_raise_error)%}. {{ moreDetailsText }} <a href="{{ directive.detailsArticle | get_lang_field_or_raise_error | true_relative_url }}">{{ moreDetailsHereText }}</a>
+            {%- elsif directive.detailsLink %}. {{ moreDetailsText }} <a href="{{ directive.detailsLink }}">{{ moreDetailsHereText }}</a>{% endif -%}
+        </span>
+    </td>
+</tr>
+
+{% if shouldAddBtn %}
+<tr class="dots {{ directiveID }} {{ directiveClasses | join: ' ' }} {{ directiveCollapsedClasses | join: ' ' }} {% unless directive.isCollapsedByDefault %}collapsed-dots{% endunless %}">
+    <td>
+        <span id="{{ directiveID }}-btn" class="btn" data-toggle="tooltip" title="Expand"></span>
+    </td>
+    <td colspan="2">...</td>
+</tr>
+<script>
+$( "#{{ directiveID }}-btn" ).click(function() {
+    $(this).toggleClass('active');
+    $( "tr.{{ directiveID }}:not(#{{ directiveID }})" ).toggleClass("{{ directiveCollapsedClass }}");
+});
+</script>
+{% endif %}
+
+{% if directive.isCollapsedByDefault %}
+{% assign directiveCollapsedClasses = directiveCollapsedClasses | push: directiveCollapsedClass %}
+{% endif %}
+
+{%- if directive.directives %}
+{% for directive in directive.directives %}
+{% assign nestedElmIndent = include.indent | plus: 1 %}
+{% assign nestedDirectiveClasses = directiveClasses %}
+{% assign nestedDirectiveCollapsedClasses = directiveCollapsedClasses %}
+{% include reference/configuration_table_directive.html directive=directive indent=nestedElmIndent isAttr=true directiveClasses=nestedDirectiveClasses directiveCollapsedClasses=nestedDirectiveCollapsedClasses %}
+{% assign directiveClasses = nestedDirectiveClasses %}
+{% assign directiveCollapsedClasses = nestedDirectiveCollapsedClasses %}
+{% endfor %}
+{% elsif directive.directiveList %}
+{% for directive in directive.directiveList %}
+{% assign nestedElmIndent = include.indent | plus: 1 %}
+{% assign nestedDirectiveClasses = directiveClasses %}
+{% assign nestedDirectiveCollapsedClasses = directiveCollapsedClasses %}
+{% include reference/configuration_table_directive.html directive=directive indent=nestedElmIndent isElm=true elmIndex=forloop.index directiveClasses=nestedDirectiveClasses directiveCollapsedClasses=nestedDirectiveCollapsedClasses %}
+{% assign directiveClasses = nestedDirectiveClasses %}
+{% assign directiveCollapsedClasses = nestedDirectiveCollapsedClasses %}
+{% endfor %}
+{% endif -%}

@@ -1,0 +1,17 @@
+configVersion: 1
+project: ansible-yarn
+---
+image: ~
+from: node:lts-alpine3.15
+git:
+- add: /
+  to: /app
+ansible:
+  install:
+  - name: Install packages based on package.json.
+    yarn:
+      path: /app
+  - name: Update all packages in package.json to their latest version.
+    yarn:
+      path: /app
+      state: latest

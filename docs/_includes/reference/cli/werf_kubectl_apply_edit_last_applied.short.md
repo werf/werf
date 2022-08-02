@@ -1,0 +1,1 @@
+edit latest last-applied-configuration annotations of a resource/object

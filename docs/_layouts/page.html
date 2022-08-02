@@ -1,0 +1,100 @@
+---
+layout: sidebar
+---
+<div class="docs">
+    {%- if page.editme_button %}
+    <div class="btn-group editme">
+        <a href="#" class="btn btn_o" id="editme_link" target="_blank">
+            <span class="btn__icon btn__icon_github"></span>
+            Source
+        </a>
+    </div>
+    <script>
+        $(document).ready(function(){
+            let version = encodeURIComponent(getDocVersionFromPage());
+            if (version.length > 0) {
+                let needCheckURL = false;
+                let pageURL = 'https://github.com{{ site.github_repo_path }}/blob/' + version + '/docs/{{ page.path }}';
+                let checkURL = 'https://api.github.com/repos{{ site.github_repo_path }}/contents/docs/{{ page.path }}?ref=' + version;
+                let $link = $('#editme_link');
+                if (needCheckURL) {
+                    checkURLExist(checkURL, function (success) {
+                        if (success) {
+                            success && $link.prop('href', pageURL).removeClass('hidden');
+                        }
+                    });
+                } else {
+                    $link.prop('href', pageURL).removeClass('hidden');
+                }
+            }
+        });
+    </script>
+    {%- endif %}
+
+    {% unless page.without_auto_heading %}
+    <h1 class="docs__title">{{ page.title }}</h1>
+    {% endunless %}
+
+    {%- if page.single_lang == true %}
+      {%- include no-language-warning.html %}
+    {%- endif %}
+
+    {%- if page.simple_map == true %}
+
+    <script>
+        $(document).ready ( function(){
+            $('.box{{page.box_number}}').addClass('active');
+        });
+    </script>
+
+    {%- include custom/{{page.map_name}}.html %}
+
+    {%- elsif page.complex_map == true %}
+
+    <script>
+        $(document).ready ( function(){
+            $('.modalButton{{page.box_number}}').addClass('active');
+        });
+    </script>
+
+    {%- include custom/{{page.map_name}}.html %}
+
+    {%- endif %}
+
+    <div class="post-content">
+
+    {%- if page.directive_summary %}
+    {%- include directive_summary.html directive=page.directive_summary %}
+    {%- endif %}
+
+        {%- unless page.toc == false %}
+        {%- include toc.html %}
+        {%- endunless %}
+
+        {%- unless jekyll.environment == "production" %}
+
+        {%- endunless %}
+
+    {{content}}
+
+        <div class="tags">
+            {%- if page.tags != null %}
+            <b>Tags: </b>
+            {%- assign projectTags = site.data.tags.allowed-tags %}
+            {%- for tag in page.tags %}
+            {%- if projectTags contains tag %}
+            <a href="{{ "tag_" | append: tag | append: ".html" }}" class="btn btn-default navbar-btn cursorNorm" role="button">{{page.tagName}}{{tag}}</a>
+            {%- endif %}
+            {%- endfor %}
+            {%- endif %}
+        </div>
+
+        {%- if site.disqus %}
+    {%- include disqus.html %}
+        {%- endif %}
+
+    </div>
+
+    {{site.data.alerts.hr_shaded}}
+
+</div>

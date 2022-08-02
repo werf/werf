@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  en:
+    image: $WERF_ASSETS_DOCKER_IMAGE_NAME
+    working_dir: "/srv/jekyll-data"
+    environment:
+      JEKYLL_ENV: "dev"
+    command: bash -c "
+      chmod -R o+w /srv/jekyll-data/ &&
+      jekyll serve --disable-disk-cache --config _config.yml --destination /tmp/_site -P 80"
+    volumes:
+      - "./:/srv/jekyll-data/"
+  ru:
+    image: $WERF_ASSETS_DOCKER_IMAGE_NAME
+    working_dir: "/srv/jekyll-data"
+    environment:
+      JEKYLL_ENV: "dev"
+    command: bash -c "
+      chmod -R o+w /srv/jekyll-data/ &&
+      jekyll serve --config _config.yml,_config_ru.yml --destination /tmp/_site -P 80"
+    volumes:
+      - "./:/srv/jekyll-data/"
+    depends_on:
+      - en
+
+  front:
+    image: nginx:latest
+    volumes:
+      - ".werf/nginx-dev.conf:/etc/nginx/nginx.conf:ro"
+    ports:
+      - "80:80"
+    depends_on:
+      - ru
+      - en

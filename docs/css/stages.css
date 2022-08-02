@@ -1,0 +1,74 @@
+/* colors */
+div.stage-base { background-color: #cfe2f3; }
+
+div.dependencies {
+  background-color: #6fa8dc;
+}
+
+div.stage {
+  background-color: #efefef;
+}
+
+div.dependencies > div {
+  background-color: #9fc5e8;
+}
+
+div.werf-config div.highlight {
+  background: none;
+}
+
+/* display */
+div.stage > div.stage-body { display: flex; }
+div.stage > div.stage-body > div { display: inline-block; }
+
+div.stage > div.stage-body > div.werf-config div > span {
+  display: block
+}
+.hidden { display: none }
+
+/* margin and padding */
+div.werf-config pre.highlight {
+  margin: 0;
+}
+
+div.stage > div.stage-body > div {
+  padding: 20px;
+}
+
+div.werf-config > div, div.dependencies > div {
+  margin: 22px 0;
+}
+
+div.dependencies > div {
+  margin: 8px;
+  padding: 4px 14px;
+}
+
+div.references > ul {
+  margin: 5px 0;
+}
+
+div.references > ul > li {
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* other */
+div.stage-base {
+  width: 45%
+}
+
+div.werf-config {
+  float: right;
+  width: 55%;
+}
+
+div.stage-base > p {
+  font-weight: bold;
+  margin: 0;
+}
+
+div.stage-body, div.stage-body div.dependencies {
+  border: 1px solid;
+}

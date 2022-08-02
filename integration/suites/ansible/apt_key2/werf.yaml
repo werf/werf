@@ -1,0 +1,36 @@
+# NOTE: Examples has been taken from the apt_key module doc page:
+# NOTE: https://docs.ansible.com/ansible/latest/modules/apt_key_module.html#apt-key-module
+
+project: ansible-apt-key2
+configVersion: 1
+---
+image: ~
+from: ubuntu:18.04
+ansible:
+  install:
+  - name: Add an apt key by id from a keyserver
+    apt_key:
+      keyserver: keyserver.ubuntu.com
+      id: "36A1D7869245C8950F966E92D8576A8BA88D21E9"
+  - name: Add an Apt signing key, uses whichever key is at the URL
+    apt_key:
+      url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+      state: present
+  - name: Download some key.asc
+    get_url:
+      url: "https://ossec.github.io/files/OSSEC-ARCHIVE-KEY.asc"
+      dest: /tmp/key.asc
+  - name: Add a key from a file on the Ansible server.
+    apt_key:
+      data: {{`"{{ lookup('file', '/tmp/key.asc') }}"`}}
+      state: present
+  - name: Add an Apt signing key to a specific keyring file
+    apt_key:
+      id: "5E61B217265DA9807A23C5FF4DFAB270CAA96DFA"
+      url: "https://ftp-master.debian.org/keys/archive-key-10-security.asc"
+      keyring: /etc/apt/trusted.gpg.d/debian.gpg
+  - name: Add elasticsearch key
+    apt_key:
+      id: "46095ACC8548582C1A2699A9D27D666CD88E42B4"
+      url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+      state: present

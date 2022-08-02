@@ -1,0 +1,6 @@
+project: none
+configVersion: 1
+---
+image: ~
+fromLatest: {{ env "FROM_LATEST" }}
+from: {{ env "FROM_IMAGE" }}

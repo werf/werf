@@ -1,0 +1,40 @@
+project: none
+configVersion: 1
+---
+artifact: artifact
+from: ubuntu:18.04
+shell:
+  setup:
+    - mkdir -p /artifact/a/b/c
+    - echo VERSION_1 > /artifact/a/b/c/added_file1
+    - echo VERSION_1 > /artifact/a/b/c/added_file2
+    - echo VERSION_1 > /artifact/a/b/c/not_added_file3
+    - echo VERSION_1 > /artifact/a/b/c/not_added_file4
+---
+image: app
+from: alpine
+import:
+  - artifact: artifact
+    add: /artifact/a/b/c
+    includePaths:
+      - added_file1
+      - added_file2
+    to: /dest1
+    before: install
+  - artifact: artifact
+    add: /artifact/a/b/c
+    excludePaths:
+      - not_added_file3
+      - not_added_file4
+    to: /dest2
+    after: install
+  - artifact: artifact
+    add: /artifact/a/b/c
+    includePaths:
+      - added_file1
+      - added_file2
+    excludePaths:
+      - not_added_file3
+      - not_added_file4
+    to: /dest3
+    before: setup

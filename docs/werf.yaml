@@ -1,0 +1,69 @@
+project: werfio-ng
+configVersion: 1
+
+---
+image: assets
+from: jekyll/builder:4.2.0
+fromCacheVersion: 20220110
+ansible:
+  install:
+  - shell: |
+      export PATH=/usr/jekyll/bin/:$PATH
+      gem update bundler
+  - name: "Install Dependencies"
+    shell: bundle install
+    args:
+      executable: /bin/bash
+      chdir: /app/docs
+  beforeSetup:
+  - file:
+      path: "{{`{{ item }}`}}"
+      state: directory
+      mode: 0777
+    with_items:
+    - /app/_site/main/
+    - /app/_site/ru/
+  - shell: |
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/ --config /app/docs/_config.yml
+      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml
+    args:
+      executable: /bin/bash
+      chdir: /app/docs
+git:
+- add: /docs
+  to: /app/docs
+  owner: jekyll
+  group: jekyll
+  includePaths:
+    - _data
+    - _includes
+    - _layouts
+    - _plugins
+    - css
+    - images
+    - pages_ru
+    - pages_en
+    - ssi
+    - _config.yml
+    - _config_ru.yml
+    - Gemfile
+    - Gemfile.lock
+    - "*.xml"
+  stageDependencies:
+    install: ['Gemfile','Gemfile.lock']
+    beforeSetup: '**/*'
+---
+image: web
+from: nginx:stable-alpine
+ansible:
+  setup:
+  - name: "Setup /etc/nginx/nginx.conf"
+    copy:
+      content: |
+{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
+import:
+- image: assets
+  add: /app/_site
+  to: /app
+  before: setup

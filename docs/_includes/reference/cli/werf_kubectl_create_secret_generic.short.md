@@ -1,0 +1,1 @@
+create a secret from a local file, directory, or literal value

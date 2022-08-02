@@ -1,0 +1,1 @@
+apply a configuration to a resource by file name or stdin

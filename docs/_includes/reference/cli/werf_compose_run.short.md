@@ -1,0 +1,1 @@
+run docker-compose run command with forwarded image names

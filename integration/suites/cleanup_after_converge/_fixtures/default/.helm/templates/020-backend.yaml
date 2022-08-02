@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-backend
+  labels:
+    service: {{ .Chart.Name }}-backend
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      service: {{ .Chart.Name }}-backend
+  template:
+    metadata:
+      labels:
+        service: {{ .Chart.Name }}-backend
+    spec:
+      imagePullSecrets:
+      - name: registrysecret
+      containers:
+      - name: backend
+        workingDir: /app
+        command: [ "python3", "-m", "http.server", "8080" ]
+        image: {{ .Values.werf.image.backend }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-backend
+spec:
+  clusterIP: None
+  selector:
+    service: {{ .Chart.Name }}-backend
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP

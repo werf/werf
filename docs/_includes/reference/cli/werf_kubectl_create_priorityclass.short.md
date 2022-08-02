@@ -1,0 +1,1 @@
+create a priority class with the specified name

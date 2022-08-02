@@ -1,0 +1,1 @@
+replace a resource by file name or stdin

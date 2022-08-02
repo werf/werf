@@ -1,0 +1,1 @@
+update resource requests/limits on objects with pod templates

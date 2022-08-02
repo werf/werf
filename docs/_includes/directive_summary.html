@@ -1,0 +1,43 @@
+{% assign directive = site.data.directive_summary[site.site_lang][include.directive] %}
+
+<div class="summary">
+<a class="google-drawings" href="{{ directive.link | true_relative_url }}" data-featherlight="image">
+    <img src="{{ directive.preview_link | true_relative_url }}" alt="{{ directive.link_alt }}">
+</a>
+
+{%- if directive.yaml %}
+{% capture data %}
+```yaml
+{{ directive.yaml -}}
+```
+{% endcapture %}
+{{ data | markdownify }}
+{%- endif %}
+
+{%- if directive.yamls %}
+<div class="tabs">
+{% for yaml in directive.yamls %}
+<a href="javascript:void(0)" class="tabs__btn{% if forloop.index == 1 %} active{% endif %}" onclick="openTab(event, 'tabs__btn', 'tabs__content', '{{ yaml.name }}_tab')">{{ yaml.name | capitalize }}</a>
+{% endfor %}
+</div>
+
+{% for yaml in directive.yamls %}
+<div id="{{ yaml.name }}_tab" class="tabs__content{% if forloop.index == 1 %} active{% endif %}">
+{% capture data %}
+```yaml
+{{ yaml.data -}}
+```
+{% endcapture %}
+{{ data | markdownify }}
+</div>
+{% endfor %}
+{%- endif %}
+
+{%- if directive.extra %}
+<strong>{{ directive.extra.text }}</strong>
+
+<a class="google-drawings" href="{{ directive.extra.link | true_relative_url }}" data-featherlight="image">
+    <img src="{{ directive.extra.preview_link | true_relative_url }}" alt="{{ directive.extra.text }}">
+</a>
+{%- endif %}
+</div>

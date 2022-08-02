@@ -1,0 +1,1 @@
+search for charts in the Artifact Hub or your own hub instance

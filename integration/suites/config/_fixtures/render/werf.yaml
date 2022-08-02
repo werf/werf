@@ -1,0 +1,34 @@
+{{- $base_image := "ubuntu" -}}
+
+project: none
+configVersion: 1.0
+---
+image: image_a
+from: {{ $base_image }}
+git:
+- to: /app
+ansible:
+  beforeInstall:
+{{- include "(component) ruby" . }}
+---
+image: image_b
+from: {{ $base_image }}
+ansible:
+  beforeInstall:
+{{- include "(component) ruby" . }}
+
+{{- define "(component) ruby" }}
+    - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - get_url:
+        url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
+        dest: /tmp/rvm-installer
+    - name: "Install rvm"
+      command: bash -e /tmp/rvm-installer
+    - name: "Install ruby 2.3.4"
+      raw: bash -lec {{`{{ item | quote }}`}}
+      with_items:
+        - rvm install 2.3.4
+        - rvm use --default 2.3.4
+        - gem install bundler --no-ri --no-rdoc
+        - rvm cleanup all
+{{- end }}

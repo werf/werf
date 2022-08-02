@@ -1,0 +1,23 @@
+configVersion: 1
+project: ansible-become-user
+---
+image: ~
+from: ubuntu:18.04
+ansible:
+  install:
+  - group:
+      name: testgroup
+      state: present
+  - user:
+      name: testuser
+      comment: Test User
+      uid: "1040"
+      group: testgroup
+  - shell: |
+      set -e
+      env
+      id
+    args:
+      executable: /bin/bash
+    become: yes
+    become_user: testuser

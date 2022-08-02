@@ -5,6 +5,8 @@ on:
       - multiwerf
     paths:
       - trdl_channels.yaml
+  repository_dispatch:
+    types: [site-deploy]
 
 jobs:
 

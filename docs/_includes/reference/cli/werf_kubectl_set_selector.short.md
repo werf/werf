@@ -1,0 +1,1 @@
+set the selector on a resource

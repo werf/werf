@@ -1,0 +1,1 @@
+print the client and server version information

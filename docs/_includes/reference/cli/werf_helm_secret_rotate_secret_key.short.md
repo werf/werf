@@ -1,0 +1,1 @@
+regenerate secret files with new secret key

@@ -1,0 +1,33 @@
+name: Delayed Issue Closing
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  issue_comment:
+    types:
+      - created
+  issues:
+    types:
+      - labeled
+  pull_request_target:
+    types:
+      - labeled
+  workflow_dispatch:
+
+jobs:
+  issue-manager:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: tiangolo/issue-manager@0.4.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config: >
+            {
+                "solved": {
+                    "delay": "604800",
+                    "message": "Seems the issue was solved. Closing after 7 days of inactivity.",
+                    "remove_label_on_comment": true,
+                    "remove_label_on_close": true
+                }
+            }
+

@@ -1,0 +1,1 @@
+cleanup old unused werf cache and data of all projects on host machine

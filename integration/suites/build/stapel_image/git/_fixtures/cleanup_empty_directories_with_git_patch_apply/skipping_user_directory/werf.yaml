@@ -1,0 +1,9 @@
+project: none
+configVersion: 1
+---
+image: ~
+from: alpine
+git:
+- to: /app
+shell:
+  install: mkdir -p /app/dir/dir_created_by_user

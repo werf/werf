@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy1
+  labels:
+    service: mydeploy1
+  annotations:
+    "werf.io/show-service-messages": "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: mydeploy1
+  template:
+    metadata:
+      labels:
+        service: mydeploy1
+    spec:
+      containers:
+      - name: main
+        command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
+        image: ubuntu:18.04
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: myhook
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: main
+        image: ubuntu:18.04
+        command: [ "/bin/bash", "-lec", "for i in {1..3}; do date; sleep 1; done" ]

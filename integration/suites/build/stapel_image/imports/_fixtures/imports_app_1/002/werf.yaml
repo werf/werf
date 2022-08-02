@@ -1,0 +1,44 @@
+project: none
+configVersion: 1
+---
+artifact: myartifact
+from: ubuntu:18.04
+shell:
+  setup:
+  - mkdir -p /myartifact/a/b/c
+  - touch /myartifact/file
+  - echo GOGOGO > /myartifact/file
+  - touch /myartifact/a/b/FILE
+  - echo FILE > /myartifact/a/b/FILE
+  - touch /myartifact/a/b/c/fffilel
+---
+image: ~
+from: alpine
+import:
+- artifact: myartifact
+  add: /myartifact/a/b/FILE
+  to: /usr/local
+  after: install
+- artifact: myartifact
+  add: /myartifact/a/b/FILE
+  to: /usr/locallll
+  after: install
+- artifact: myartifact
+  add: /myartifact/
+  to: /usr/newlocal
+  after: install
+- artifact: myartifact
+  add: /myartifact
+  to: /usr/share
+  after: install
+- artifact: myartifact
+  add: /myartifact/file-no-such-file
+  to: /file2
+  after: install
+- artifact: myartifact
+  add: /myartifact/file
+  to: /file
+  after: install
+shell:
+  beforeInstall:
+  - apk add bash

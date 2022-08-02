@@ -1,0 +1,1 @@
+print dependency graph for images in werf.yaml

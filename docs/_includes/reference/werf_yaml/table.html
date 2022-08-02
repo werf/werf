@@ -1,0 +1,57 @@
+<link rel="stylesheet" type="text/css" href="/css/configuration-table.css" />
+
+<div class="werf-configuration-table">
+    <table aria-hidden=true>
+        {{ "tableLineCounter" | reset_shared_counter }}
+        {% for section in site.data.werf_yaml.sections %}
+            <tr id="{{ section.id }}" class="section {{ section.id }}">
+                {%- assign tableLineCounter = "tableLineCounter" | increment_shared_counter %}
+                <td><a class="line-number-anchor" href="#L{{ tableLineCounter }}" id="L{{ tableLineCounter }}">{{ tableLineCounter }}</a></td>
+                <td>
+                    ---
+                </td>
+                <td class="comment">
+                    # {{ section.description | get_lang_field_or_raise_error }}
+                </td>
+            </tr>
+            <tr class="dots {{ section.id }} {% unless section.isCollapsedByDefault %}collapsed-dots{% endunless %}">
+                <td>
+                    <span id="{{ section.id }}-btn" class="btn" data-toggle="tooltip" title="Expand"></span>
+                </td>
+                <td colspan="2">...</td>
+            </tr>
+
+            {% assign sectionCollapsedClass = "collapsed" | append: "-" | append: section.id %}
+
+            {% for directive in section.directives %}
+            {% assign directiveClasses = '' | split: '' %}
+            {% assign directiveClasses = directiveClasses | push: section.id %}
+            {% assign directiveCollapsedClasses = '' | split: '' %}
+            {% if section.isCollapsedByDefault %}
+            {% assign directiveCollapsedClasses = directiveCollapsedClasses | push: sectionCollapsedClass %}
+            {% endif %}
+            {% include reference/configuration_table_directive.html directive=directive directiveClasses=directiveClasses directiveCollapsedClasses=directiveCollapsedClasses %}
+            {% endfor %}
+
+            <script>
+                $( "#{{ section.id }}-btn" ).click(function() {
+                    $(this).toggleClass('active');
+                    $( "tr.{{ section.id }}:not(#{{ section.id }})" ).toggleClass("{{ sectionCollapsedClass }}");
+                });
+            </script>
+        {% endfor %}
+
+        <script>
+            var search_triggered = false;
+            $(window).keydown(function(e) {
+                if (!search_triggered && (e.keyCode == 70 && ( e.ctrlKey || e.metaKey ))) {
+                    search_triggered = true;
+                    $('.werf-yaml-table tr').removeClass (function (index, className) {
+                        return (className.match (/(^|\s)collapsed-\S+/g) || []).join(' ');
+                    });
+                    $('.werf-yaml-table tr.dots').hide();
+                }
+            })
+        </script>
+    </table>
+</div>

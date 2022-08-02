@@ -1,0 +1,1 @@
+generate an index file given a directory containing packaged charts

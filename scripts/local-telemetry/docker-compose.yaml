@@ -1,0 +1,28 @@
+version: "3"
+
+networks:
+  otel-clickhouse:
+
+services:
+
+  otel-collector:
+    image: ghcr.io/werf/telemetrywerfio-collector:dev
+    command:
+      - "--config=/etc/otel-collector-config.yaml"
+      - "--set=service.telemetry.logs.level=DEBUG"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4318:4318" # OTLP HTTP receiver
+    depends_on:
+      - clickhouse
+    networks:
+      - otel-clickhouse
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    networks:
+      - otel-clickhouse

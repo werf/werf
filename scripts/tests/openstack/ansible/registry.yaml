@@ -1,0 +1,71 @@
+  - name: Add Docker and Kubernetes GPG keys for apt
+    apt_key:
+      url: "{{ item }}"
+      state: present
+    loop:
+    - "https://download.docker.com/linux/ubuntu/gpg"
+
+  - name: Add Docker apt repo
+    apt_repository:
+      repo: "{{ item }}"
+    loop:
+    - "deb https://download.docker.com/linux/ubuntu {{ ansible_facts.distribution_release }} stable"
+    - "ppa:certbot/certbot"
+
+  - name: Install HWE kernel
+    apt:
+      name: "{{ packages }}"
+      cache_valid_time: 3600
+    vars:
+      packages:
+      - "linux-generic-hwe-18.04"
+      - "linux-headers-generic-hwe-18.04"
+      - "linux-image-generic-hwe-18.04"
+    notify: reboot
+
+  - name: Install a list of packages
+    apt:
+      name: "{{ packages }}"
+      cache_valid_time: 3600
+    vars:
+      packages:
+      - "docker.io=18.09.*"
+      - "bash-completion"
+      - "certbot"
+
+  - name: Install docker-compose
+    get_url:
+      url: https://github.com/docker/compose/releases/download/1.24.1/docker-compose-Linux-x86_64
+      dest: /usr/local/bin/docker-compose
+      mode: +x
+
+  - name: Generate LE certificate
+    shell: certbot certonly --standalone --preferred-challenges http --non-interactive  --staple-ocsp --agree-tos -m wertf@notify.flant.com -d {{ domain }}; cd /etc/letsencrypt/live/{{ domain }}; cat cert.pem chain.pem > domain.crt; cat privkey.pem > domain.key ; chmod 777 domain.*; ls -lah /etc/letsencrypt/live/
+
+  - name: Add cron for LE certificate
+    copy:
+      dest: /etc/cron.d/le
+      content: >
+        SHELL=/bin/sh
+        PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+        30 2 * * 1 root /usr/bin/certbot renew >> /var/log/letsencrypt-renew.log && cd /etc/letsencrypt/live/{{ domain }} && cp privkey.pem domain.key && cat cert.pem chain.pem > domain.crt && chmod 777 domain.*
+
+  - name: Create folder for htpasswd
+    file:
+      path: /mnt/docker-registry
+      state: directory
+  - name: Generate htpasswd
+    shell: docker run --entrypoint htpasswd registry:latest -Bbn {{ docker_registry_user }} {{ docker_registry_pass }} > /mnt/docker-registry/passfile
+
+  - name: Create docker-compose file
+    template:
+      src: templates/registry.yaml.j2
+      dest: /root/docker-compose.yml
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Run docker registry
+    shell: docker-compose up -d
+    args:
+      chdir: /root/

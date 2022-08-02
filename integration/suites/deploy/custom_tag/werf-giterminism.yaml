@@ -1,0 +1,7 @@
+giterminismConfigVersion: 1
+cli:
+  allowCustomTags: true
+config:
+  goTemplateRendering:
+    allowEnvVariables:
+      - FROM_CACHE_VERSION

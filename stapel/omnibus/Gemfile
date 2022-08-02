@@ -1,0 +1,5 @@
+source 'https://rubygems.org'
+
+gem 'omnibus'
+gem 'omnibus-software', github: 'chef/omnibus-software', branch: 'main'
+gem 'thor', '~> 0.20.3'

@@ -1,0 +1,1 @@
+provides utilities for interacting with plugins

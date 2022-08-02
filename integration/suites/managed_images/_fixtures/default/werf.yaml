@@ -1,0 +1,17 @@
+project: none
+configVersion: 1
+---
+image: a
+from: alpine
+fromCacheVersion: a
+---
+image: b
+from: alpine
+fromCacheVersion: b
+---
+image: c
+from: alpine
+fromCacheVersion: c
+---
+artifact: d
+from: alpine

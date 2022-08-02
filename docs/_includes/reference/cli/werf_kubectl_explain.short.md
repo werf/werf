@@ -1,0 +1,1 @@
+get documentation for a resource

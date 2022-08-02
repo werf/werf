@@ -1,0 +1,37 @@
+project: none
+configVersion: 1
+
+---
+image: image
+from: ubuntu
+git:
+
+# Dirs:
+- add: /dir
+  to: /renamed_again_dir1
+- add: /dir
+  to: /new_dir2/renamed_again_dir
+- add: /dir/dir
+  to: /new_dir3/renamed_again_dir
+- add: /dir/dir
+  to: /renamed_again_dir4
+
+# Files:
+- add: /file
+  to: /renamed_again_file
+- add: /dir/file
+  to: /renamed_again_file2
+- add: /file
+  to: /new_dir7/renamed_again_file
+- add: /dir/file
+  to: /new_dir8/renamed_again_file
+
+# Symlinks:
+- add: /symlink
+  to: /renamed_again_symlink
+- add: /dir/symlink
+  to: /renamed_again_symlink2
+- add: /symlink
+  to: /new_dir11/renamed_again_symlink
+- add: /dir/symlink
+  to: /new_dir12/renamed_again_symlink

@@ -1,0 +1,1 @@
+build a kustomization target from a directory or URL.

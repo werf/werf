@@ -1,0 +1,19 @@
+project: none
+configVersion: 1
+---
+image: ~
+fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
+from: alpine
+shell:
+  beforeInstall: touch /mount/test
+  install:
+    - number=$(cat /mount/test)
+    - echo $((number + 1)) > /mount/test
+  beforeSetup:
+    - number=$(cat /mount/test)
+    - echo $((number + 1)) > /mount/test
+  setup:
+    - echo "Result number is $(cat /mount/test)"
+mount:
+- from: build_dir
+  to: /mount

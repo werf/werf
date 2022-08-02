@@ -1,0 +1,10 @@
+.git
+
+pkg/**/*.go
+!**/*_test.go
+
+!README_ru.md
+**/*.md
+!README.md
+
+docs

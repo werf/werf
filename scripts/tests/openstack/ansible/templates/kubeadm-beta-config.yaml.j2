@@ -1,0 +1,15 @@
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: ClusterConfiguration
+kubernetesVersion: v{{ kubernetes_full_version.stdout }}
+apiServer:
+  certSANs:
+  - {{ kubernetes_domain | regex_replace('^(.+)\.$','\\1') }}
+networking:
+  podSubnet: "10.244.0.0/16"
+  serviceSubnet: "192.168.0.0/16"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+clusterDNS:
+- 192.168.0.10
+resolvConf: /run/systemd/resolve/resolv.conf

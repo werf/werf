@@ -1,0 +1,11 @@
+configVersion: 1
+project: ansible-yum2
+---
+image: centos-8
+from: centos:8
+ansible:
+  install:
+  - name: "Install a package using yum with dnf"
+    yum:
+      name: httpd
+      state: latest

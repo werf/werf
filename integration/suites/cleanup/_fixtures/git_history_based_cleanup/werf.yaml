@@ -1,0 +1,102 @@
+  {{ $policySetNumber := env "CLEANUP_POLICY_SET_NUMBER" }}
+
+project: none
+configVersion: 1
+  {{ with (eq $policySetNumber "1") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: test
+      imagesPerReference:
+        last: -1
+  {{ end }}
+  {{ with (eq $policySetNumber "2") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: test
+      imagesPerReference:
+        last: 0
+  {{ end }}
+  {{ with (eq $policySetNumber "3") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: test
+      imagesPerReference:
+        in: 24h
+  {{ end }}
+  {{ with (eq $policySetNumber "4") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: test
+        limit:
+          in: 12h
+  {{ end }}
+  {{ with (eq $policySetNumber "5") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: /.*/
+        limit:
+          in: 12h
+          last: 1
+          operator: Or
+  {{ end }}
+  {{ with (eq $policySetNumber "6") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: /.*/
+        limit:
+          in: 12h
+          last: 1
+          operator: And
+  {{ end }}
+  {{ with (eq $policySetNumber "7") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: test
+      imagesPerReference:
+        in: 12h
+        last: 1
+        operator: Or
+  {{ end }}
+  {{ with (eq $policySetNumber "8") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: test
+      imagesPerReference:
+        in: 12h
+        last: 1
+        operator: And
+  {{ end }}
+  {{ with (eq $policySetNumber "9") }}
+cleanup:
+  keepPolicies:
+    - references:
+        branch: /.*/
+      imagesPerReference:
+        last: 1
+  {{ end }}
+
+---
+image: image
+from: alpine
+fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
+shell:
+  setup: date
+import:
+  - artifact: artifact
+    add: /artifact
+    to: /artifact
+    before: setup
+---
+artifact: artifact
+from: alpine
+fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
+shell:
+  install: echo "123" > /artifact

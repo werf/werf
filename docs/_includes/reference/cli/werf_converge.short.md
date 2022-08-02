@@ -1,0 +1,1 @@
+build and push images, then deploy application into Kubernetes

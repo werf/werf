@@ -1,0 +1,1 @@
+work with werf bundles: publish bundles into container registry and deploy bundles into Kubernetes cluster

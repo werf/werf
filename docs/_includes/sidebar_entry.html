@@ -1,0 +1,28 @@
+{%- assign entry = include.entry %}
+{%- assign folder_entry_class = include.folder_entry_class %}
+{%- assign item_entry_class = include.item_entry_class %}
+
+{%- if entry.hot == true %}
+    {%- assign item_entry_class = item_entry_class | append: ' sidebar__item_hot' %}
+{%- endif %}
+
+{%- if entry.f %}
+<li class="{{ folder_entry_class }}">
+    <a href="#">{{ entry.title }}{{ entry.url }}</a>
+    <ul class="sidebar__submenu">
+        {%- for entry in entry.f %}
+        {% include sidebar_entry.html entry=entry folder_entry_class="sidebar__submenu-item sidebar__submenu-item_parent" item_entry_class="sidebar__submenu-item" %}
+        {%- endfor %}
+    </ul>
+</li>
+{%- elsif entry.external_url %}
+<li class="{{ item_entry_class }}"><a href="{{ entry.external_url }}" target="_blank">{{entry.title}}</a></li>
+{%- elsif page.url == entry.url %}
+<li class="{{ item_entry_class }} active"><a href="{{ entry.url | true_relative_url }}">{{entry.title}}</a></li>
+{%- else %}
+    {%- if page.name == '404.md' %}
+    <li class="{{ item_entry_class }}"><a data-proofer-ignore href="{{ site.canonical_url_prefix }}{{ entry.url | relative_url }}">{{entry.title}}</a></li>
+    {% else %}
+    <li class="{{ item_entry_class }}"><a href="{{ entry.url | true_relative_url }}">{{entry.title}}</a></li>
+    {%- endif %}
+{%- endif %}

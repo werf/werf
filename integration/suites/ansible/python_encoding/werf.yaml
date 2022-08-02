@@ -1,0 +1,53 @@
+configVersion: 1
+project: ansible-python-encoding
+---
+image: ubuntu-python3
+from: ubuntu:18.04
+git:
+{{ include "appGit" . }}
+ansible:
+  beforeInstall:
+  - name: Install python3
+    apt:
+      name: python3
+      state: present
+      update_cache: yes
+  - name: Install pip3
+    apt:
+      name: python3-pip
+      state: present
+  install:
+{{ tuple . "python3" | include "installRequirements" }}
+{{ tuple . "python3" | include "runScript" }}
+---
+image: alpine-python3
+from: python:3-alpine
+git:
+{{ include "appGit" . }}
+ansible:
+  install:
+{{ tuple . "python3" | include "installRequirements" }}
+{{ tuple . "python3" | include "runScript" }}
+
+{{ define "appGit" }}
+- add: /
+  to: /app
+{{ end }}
+
+{{ define "installRequirements" }}
+{{ $pythonBin := index . 1 }}
+  - name: Python requirements develop.txt
+    shell: |
+      {{ $pythonBin }} -m pip install -q -r develop.txt
+    args:
+      chdir: /app
+{{ end }}
+
+{{ define "runScript" }}
+{{ $pythonBin := index . 1 }}
+  - name: Run script with utf8 chars
+    shell: |
+      {{ $pythonBin }} script.py
+    args:
+      chdir: /app
+{{ end }}

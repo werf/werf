@@ -1,0 +1,30 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mycm
+data:
+  testkey: testvalue
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mydeploy
+  template:
+    metadata:
+      labels:
+        app: mydeploy
+    spec:
+      initContainers:
+      - name: init
+        image: alpine
+        command: [ "aaa" ]
+      containers:
+      - name: mydeploy
+        image: alpine
+        command: [ "/bin/sh", "-ec", "exit 1"]

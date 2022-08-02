@@ -1,0 +1,1 @@
+purge all project images in the container registry

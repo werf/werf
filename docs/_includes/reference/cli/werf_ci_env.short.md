@@ -1,0 +1,1 @@
+generate werf environment variables for specified CI system
