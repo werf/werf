@@ -30,10 +30,11 @@ groups:
     - name: beta
       version: 1.2.143
     - name: ea
-      version: 1.2.137
+      version: 1.2.143
     - name: stable
       version: 1.2.138
 #     candidates:
+#     - 1.2.143      # 09.08
     - name: rock-solid
       version: 1.2.122+fix2
 #     candidates:
