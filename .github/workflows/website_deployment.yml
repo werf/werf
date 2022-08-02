@@ -2,7 +2,7 @@ name: Website Deployment
 on:
   push:
     branches:
-      - multiwerf
+      - main
     paths:
       - trdl_channels.yaml
   repository_dispatch:
