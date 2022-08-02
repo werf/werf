@@ -32,9 +32,9 @@ groups:
     - name: ea
       version: 1.2.137
     - name: stable
-      version: 1.2.122+fix2
+      version: 1.2.138
 #     candidates:
-#     - 1.2.138       # 02.08
     - name: rock-solid
       version: 1.2.122+fix2
 #     candidates:
+#     - 1.2.138      # 16.08
