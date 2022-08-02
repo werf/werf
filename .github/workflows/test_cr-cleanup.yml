@@ -70,6 +70,8 @@ jobs:
 
   notify:
     if: always()
-    uses: ./.github/workflows/_final_notification.yml
     needs: cr-cleanup
-    secrets: inherit
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}

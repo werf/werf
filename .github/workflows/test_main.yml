@@ -64,11 +64,13 @@ jobs:
 
   notify:
     if: (github.event_name == 'pull_request' && failure()) || (github.event_name != 'pull_request' && always())
-    uses: ./.github/workflows/_final_notification.yml
     needs:
     - unlabel
     - integration_main
     - integration_git
     - integration_ansible
     - integration_per-k8s
-    secrets: inherit
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}

@@ -36,6 +36,8 @@ jobs:
 
   notify:
     if: github.event_name == 'schedule' && always()
-    uses: ./.github/workflows/_final_notification.yml
     needs: manage
-    secrets: inherit
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}

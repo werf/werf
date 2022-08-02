@@ -79,8 +79,10 @@ jobs:
 
   notify:
     if: failure()
-    uses: ./.github/workflows/_final_notification.yml
     needs:
     - check_cli_and_readme_partials
     - check_broken_links
-    secrets: inherit
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}

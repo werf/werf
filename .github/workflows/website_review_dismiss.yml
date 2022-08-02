@@ -1,4 +1,4 @@
-name: Review env Dismiss
+name: "Website: Dismiss Review"
 on:
   pull_request:
     types: [closed, unlabeled]
