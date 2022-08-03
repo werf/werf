@@ -3,7 +3,7 @@ title: How it works
 permalink: advanced/ci_cd/run_in_container/how_it_works.html
 ---
 
-werf currently supports building images _with the Docker server_ or _without the Docker server_ (in experimental mode).  This page contains information applicable only to the experimental mode _without the Docker server_. For now, only the Dockerfile image builder is available for this mode. The Stapel image builder will be available soon.
+> NOTICE: werf supports building images _with the Docker server_ or _with Buildah_. This page contains information applicable only to the mode _with Buildah_. Buildah supports building either Dockerfile images or stapel images.
 
 General info on how to enable Buildah in werf is available on the [Buildah mode page]({{ "/advanced/buildah_mode.html" | true_relative_url }}).
 
