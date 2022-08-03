@@ -3,11 +3,11 @@ title: Use Docker container
 permalink: advanced/ci_cd/run_in_container/use_docker_container.html
 ---
 
-> NOTICE: werf currently supports building images _with the Docker server_ or _without the Docker server_ (in experimental mode). Building images without the Docker server is still experimental, however, it is the only recommended mode.
+> NOTICE: werf supports building images _with the Docker server_ or _with Buildah_. This page contains information applicable only to the mode _with Buildah_. Buildah supports building either Dockerfile images or stapel images.
 
-## Build images without the Docker server (NEW!)
+## Build images with Buildah (recommended)
 
-> NOTICE: For now, only the Dockerfile image builder is available for this type of builds. The Stapel image builder will be available soon.
+This method supports building Dockerfile images or stapel images.
 
 There is an official image with werf 1.2 for this method (1.1 is not supported): `registry.werf.io/werf/werf`.
 
@@ -48,7 +48,7 @@ docker run \
 
 ### Local Docker server
 
-This method supports building Dockerfile images or Stapel images.
+This method supports building Dockerfile images or stapel images.
 
 Below is an example of a command that does this:
 
@@ -65,7 +65,7 @@ For this method, build your own Docker image using werf.
 
 ### Remote Docker server
 
-This method only supports building Dockerfile images. Stapel images are not supported because the Stapel image builder uses mounts from the host system to Docker images.
+This method only supports building Dockerfile images. Stapel images are not supported because the stapel image builder uses mounts from the host system to Docker images.
 
 The easiest way to use a remote Docker server inside a Docker container is Docker-in-Docker (dind).
 

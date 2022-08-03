@@ -3,7 +3,7 @@ title: Use GitLab CI/CD with Docker executor
 permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_docker_executor.html
 ---
 
-> NOTICE: werf currently supports building images _with the Docker server_ or _without the Docker server_ (in experimental mode). This page contains information applicable only to the experimental mode _without the Docker server_. For now, only the Dockerfile image builder is available for this mode. The Stapel image builder will be available soon.
+> NOTICE: werf supports building images _with the Docker server_ or _with Buildah_. This page contains information applicable only to the mode _with Buildah_. Buildah supports building either Dockerfile images or stapel images.
 
 ## 1. Configure GitLab rinner for Kubernetes
 
