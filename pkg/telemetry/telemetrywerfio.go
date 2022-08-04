@@ -136,7 +136,7 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 
 	{
 		if isCI := util.GetBoolEnvironmentDefaultFalse("CI"); isCI {
-			attributes["CI"] = true
+			attributes["ci"] = true
 		}
 		if isGitlabCI := util.GetBoolEnvironmentDefaultFalse("GITLAB_CI"); isGitlabCI {
 			attributes["ciName"] = "gitlab"
