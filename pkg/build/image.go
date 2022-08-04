@@ -35,6 +35,7 @@ type Image struct {
 	contentDigest     string
 	isArtifact        bool
 	isDockerfileImage bool
+	rebuilt           bool
 
 	baseImageType    BaseImageType
 	stageAsBaseImage stage.Interface
@@ -120,6 +121,14 @@ func (i *Image) GetName() string {
 
 func (i *Image) GetLogName() string {
 	return i.LogName()
+}
+
+func (i *Image) SetRebuilt(rebuilt bool) {
+	i.rebuilt = rebuilt
+}
+
+func (i *Image) GetRebuilt() bool {
+	return i.rebuilt
 }
 
 func (i *Image) SetupBaseImage(c *Conveyor) {

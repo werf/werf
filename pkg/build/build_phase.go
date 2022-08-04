@@ -150,6 +150,7 @@ type ReportImageRecord struct {
 	DockerImageID     string
 	DockerImageDigest string
 	DockerImageName   string
+	Rebuilt           bool
 }
 
 func (phase *BuildPhase) Name() string {
@@ -181,6 +182,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 			DockerImageID:     desc.Info.ID,
 			DockerImageDigest: desc.Info.RepoDigest,
 			DockerImageName:   desc.Info.Name,
+			Rebuilt:           img.GetRebuilt(),
 		})
 	}
 
@@ -817,6 +819,8 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 			} else {
 				stageImage.Image.SetStageDescription(desc)
 			}
+
+			img.SetRebuilt(true)
 
 			return nil
 		}); err != nil {
