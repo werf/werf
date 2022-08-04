@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.146](https://www.github.com/werf/werf/compare/v1.2.145...v1.2.146) (2022-08-04)
+
+
+### Bug Fixes
+
+* **build:** no imagename in error in image `from` directive ([0974f3a](https://www.github.com/werf/werf/commit/0974f3ad6c302d5309f90970cdbafa0c477c15f1))
+* **helm:** panic on error when applying resources ([c94cef5](https://www.github.com/werf/werf/commit/c94cef5f38ea603e19f243cb34fb857af881c3d6))
+
 ### [1.2.145](https://www.github.com/werf/werf/compare/v1.2.144...v1.2.145) (2022-08-04)
 
 
