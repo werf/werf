@@ -56,11 +56,13 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --copy-from=[]
-            Copy file/dir from container to local machine after user command execution (default     
-            $WERF_COPY_FROM). Example: "/from/file:to".
+            Copy file/dir from container to local machine after user command execution. Example:    
+            "/from/file:to". Can be specified multiple times. Can also be defined with              
+            "$WERF_COPY_FROM_*", e.g. "WERF_COPY_FROM_1=from:to".
       --copy-to=[]
-            Copy file/dir from local machine to container before user command execution (default    
-            $WERF_COPY_TO). Example: "from:/to/file".
+            Copy file/dir from local machine to container before user command execution. Example:   
+            "from:/to/file". Can be specified multiple times. Can also be defined with              
+            "$WERF_COPY_TO_*", e.g. "WERF_COPY_TO_1=from:to".
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
