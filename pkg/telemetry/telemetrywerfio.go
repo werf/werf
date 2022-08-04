@@ -14,6 +14,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -131,6 +132,36 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 	}
 	if val := os.Getenv("TRDL_USE_WERF_GROUP_CHANNEL"); val != "" {
 		attributes["groupChannel"] = val
+	}
+
+	{
+		if isCI := util.GetBoolEnvironmentDefaultFalse("CI"); isCI {
+			attributes["CI"] = true
+		}
+		if isGitlabCI := util.GetBoolEnvironmentDefaultFalse("GITLAB_CI"); isGitlabCI {
+			attributes["ciName"] = "gitlab"
+		}
+		if val := os.Getenv("JENKINS_URL"); val != "" {
+			attributes["ciName"] = "jenkins"
+		}
+		if isTravis := util.GetBoolEnvironmentDefaultFalse("TRAVIS"); isTravis {
+			attributes["ciName"] = "travis"
+		}
+		if isGithubActions := util.GetBoolEnvironmentDefaultFalse("GITHUB_ACTIONS"); isGithubActions {
+			attributes["ciName"] = "github-actions"
+		}
+		if isCircleCI := util.GetBoolEnvironmentDefaultFalse("CIRCLECI"); isCircleCI {
+			attributes["ciName"] = "circleci"
+		}
+		if val := os.Getenv("TEAMCITY_VERSION"); val != "" {
+			attributes["ciName"] = "teamcity"
+		}
+		if isBuddy := util.GetBoolEnvironmentDefaultFalse("BUDDY"); isBuddy {
+			attributes["ciName"] = "buddy"
+		}
+		if val := os.Getenv("GO_SERVER_URL"); val != "" {
+			attributes["ciName"] = "gocd"
+		}
 	}
 
 	return attributes
