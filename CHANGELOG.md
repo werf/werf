@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.145](https://www.github.com/werf/werf/compare/v1.2.144...v1.2.145) (2022-08-04)
+
+
+### Features
+
+* **telemetry:** add attributes related to the usage inside CI-systems ([ec02e33](https://www.github.com/werf/werf/commit/ec02e3379a1350eaa51d7326a27e0ea3d4eaa58c))
+
+
+### Bug Fixes
+
+* **helm:** properly initialize all slice structs ([07b1e42](https://www.github.com/werf/werf/commit/07b1e42f647b093760def883613ef6e66c1547d8))
+
 ### [1.2.144](https://www.github.com/werf/werf/compare/v1.2.143...v1.2.144) (2022-07-29)
 
 
