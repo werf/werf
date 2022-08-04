@@ -2,15 +2,22 @@ name: Do release PR or GitHub release
 on:
   push:
     branches:
-    - 1.1
+    - "main"
+    - "[0-9]+.[0-9]+.[0-9]+*"
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
+
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
+
     - uses: werf/third-party-release-please-action@werf
       with:
-        default-branch: 1.1
+        default-branch: ${{ steps.extract_branch.outputs.branch }}
         release-type: go
         bump-minor-pre-major: true
         bump-patch-for-minor-pre-major: true
