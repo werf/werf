@@ -17,7 +17,7 @@ func NewStagesSplitter() *StagesSplitter {
 type StagesSplitter struct{}
 
 func (s *StagesSplitter) Split(resources kube.ResourceList) (stages.SortedStageList, error) {
-	var stageList stages.SortedStageList
+	stageList := stages.SortedStageList{}
 
 	if err := resources.Visit(func(resInfo *resource.Info, err error) error {
 		if err != nil {

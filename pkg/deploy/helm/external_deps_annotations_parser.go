@@ -34,7 +34,7 @@ func (s *ExternalDepsAnnotationsParser) Parse(annotations map[string]string) (ex
 }
 
 func (s *ExternalDepsAnnotationsParser) parseResourceAnnotations(annotations map[string]string) (externaldeps.ExternalDependencyList, error) {
-	var externalDependencyList externaldeps.ExternalDependencyList
+	externalDependencyList := externaldeps.ExternalDependencyList{}
 	for annoKey, annoVal := range annotations {
 		annoKey, annoVal = s.normalizeAnnotation(annoKey, annoVal)
 
