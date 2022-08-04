@@ -22,7 +22,9 @@ Below are examples of the data werf transmits:
   "attributes": {
     "arch": "amd64",
     "os": "linux",
-    "version": "dev"
+    "version": "dev",
+    "CI": true,
+    "ciName": "gitlab"
   },
   "eventType": "CommandStarted",
   "eventData": {
@@ -48,7 +50,9 @@ Below are examples of the data werf transmits:
   "attributes": {
     "arch": "amd64",
     "os": "linux",
-    "version": "dev"
+    "version": "dev",
+    "ci": true,
+    "ciName": "gitlab"
   },
   "eventType": "CommandExited",
   "eventData": {
@@ -69,7 +73,9 @@ In the examples above, the following usage data is sent:
   * `os`;
   * `arch`;
   * `trdl group-channel`;
-  * `werf version`.
+  * `werf version`;
+  * `ci` — whether CI-system is used;
+  * `ciName` — detected name of CI/CD system (gitlab, github-actions, etc.).
 * `eventType` — type of event:
   * `CommandStarted`;
   * `CommandExited`;

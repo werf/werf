@@ -22,7 +22,9 @@ permalink: internals/telemetry.html
   "attributes": {
     "arch": "amd64",
     "os": "linux",
-    "version": "dev"
+    "version": "dev",
+    "ci": true,
+    "ciName": "gitlab"
   },
   "eventType": "CommandStarted",
   "eventData": {
@@ -48,7 +50,9 @@ permalink: internals/telemetry.html
   "attributes": {
     "arch": "amd64",
     "os": "linux",
-    "version": "dev"
+    "version": "dev",
+    "ci": true,
+    "ciName": "gitlab"
   },
   "eventType": "CommandExited",
   "eventData": {
@@ -70,6 +74,8 @@ permalink: internals/telemetry.html
   * `arch`;
   * `trdl group-channel`;
   * `werf version`.
+  * `ci` — используется ли CI/CD система;
+  * `ciName` — имя используемой CI/CD системы (gitlab, github-actions, и т.п.).
 * `eventType` — тип события:
   * `CommandStarted`;
   * `CommandExited`;
