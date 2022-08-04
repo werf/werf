@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.3](https://www.github.com/werf/werf/compare/v1.1.34...v1.2.3) (2022-08-04)
+
+
+### Miscellaneous Chores
+
+* release 1.2.3+fix ([53ac10d](https://www.github.com/werf/werf/commit/53ac10d3151e9128c585997c034ad44fe4f071e7))
+
 ### [1.1.34](https://www.github.com/werf/werf/compare/v1.1.33...v1.1.34) (2022-05-24)
 
 
