@@ -239,6 +239,8 @@ func (c *WerfConfig) validateImportImage(i *Import) error {
 				imageName = image.Name
 			case *ImageFromDockerfile:
 				imageName = image.Name
+			default:
+				imageName = i.ImageName
 			}
 
 			return newDetailedConfigError(fmt.Sprintf("no such image `%s`!", imageName), i.raw, i.raw.rawStapelImage.doc)
