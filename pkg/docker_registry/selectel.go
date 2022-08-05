@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
+
 	"github.com/werf/werf/pkg/image"
 )
 

@@ -15,6 +15,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
+
 	"github.com/werf/logboek"
 	parallelConstant "github.com/werf/werf/pkg/util/parallel/constant"
 )
@@ -134,7 +135,6 @@ func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, t
 		},
 		AcceptedCodes: []int{http.StatusOK},
 	})
-
 	if err != nil {
 		return "", resp, err
 	}
@@ -156,7 +156,6 @@ func (api *selectelApi) getRegistryId(ctx context.Context, hostname, registry, t
 	}
 
 	return "", resp, fmt.Errorf("unexpected selectel api response body: %s", string(respBody))
-
 }
 
 func (api *selectelApi) getTags(ctx context.Context, hostname, registryId, repository, token string) ([]string, *http.Response, error) {
@@ -172,7 +171,6 @@ func (api *selectelApi) getTags(ctx context.Context, hostname, registryId, repos
 		},
 		AcceptedCodes: []int{http.StatusOK, http.StatusNotFound},
 	})
-
 	if err != nil {
 		return nil, resp, err
 	}

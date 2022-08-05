@@ -91,7 +91,7 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --final-repo-container-registry=''
             Choose final-repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay.
+            github, gitlab, harbor, quay, selectel.
             Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
             repo address).
       --final-repo-docker-hub-password=''
@@ -108,6 +108,16 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
       --final-repo-quay-token=''
             final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
+      --final-repo-selectel-account=''
+            final-repo Selectel account (default $WERF_FINAL_REPO_SELECTEL_ACCOUNT)
+      --final-repo-selectel-password=''
+            final-repo Selectel password (default $WERF_FINAL_REPO_SELECTEL_PASSWORD)
+      --final-repo-selectel-username=''
+            final-repo Selectel username (default $WERF_FINAL_REPO_SELECTEL_USERNAME)
+      --final-repo-selectel-vpc=''
+            final-repo Selectel VPC (default $WERF_FINAL_REPO_SELECTEL_VPC)
+      --final-repo-selectel-vpc-id=''
+            final-repo Selectel VPC ID (default $WERF_FINAL_REPO_SELECTEL_VPC_ID)
       --follow=false
             Enable follow mode (default $WERF_FOLLOW).
             The mode allows restarting the command on a new commit.
@@ -172,7 +182,7 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --repo-container-registry=''
             Choose repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay.
+            github, gitlab, harbor, quay, selectel.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
       --repo-docker-hub-password=''
@@ -189,6 +199,16 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --repo-selectel-account=''
+            repo Selectel account (default $WERF_REPO_SELECTEL_ACCOUNT)
+      --repo-selectel-password=''
+            repo Selectel password (default $WERF_REPO_SELECTEL_PASSWORD)
+      --repo-selectel-username=''
+            repo Selectel username (default $WERF_REPO_SELECTEL_USERNAME)
+      --repo-selectel-vpc=''
+            repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
+      --repo-selectel-vpc-id=''
+            repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
       --rm=true
             Remove pod and other created resources after command completion (default $WERF_RM or    
             true if not specified)
