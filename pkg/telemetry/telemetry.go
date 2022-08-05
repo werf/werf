@@ -85,7 +85,7 @@ func Shutdown(ctx context.Context) error {
 }
 
 func IsEnabled() bool {
-	return util.GetBoolEnvironmentDefaultFalse("WERF_TELEMETRY")
+	return util.GetBoolEnvironmentDefaultTrue("WERF_TELEMETRY")
 }
 
 func LogF(f string, args ...interface{}) {
