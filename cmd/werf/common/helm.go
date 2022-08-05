@@ -12,6 +12,7 @@ import (
 	"github.com/werf/logboek"
 	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/util"
 )
 
 func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*registry.Client, error) {
@@ -24,12 +25,14 @@ func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*
 
 func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bundles_registry.Client, error) {
 	debug := logboek.Context(ctx).Debug().IsAccepted()
-	insecure := *commonCmdData.InsecureHelmDependencies
+	insecure := util.GetBoolEnvironmentDefaultFalse("WERF_BUNDLE_INSECURE_REGISTRY")
+	skipTlsVerify := util.GetBoolEnvironmentDefaultFalse("WERF_BUNDLE_SKIP_TLS_VERIFY_REGISTRY")
 	out := logboek.Context(ctx).OutStream()
 
 	return bundles_registry.NewClient(
 		bundles_registry.ClientOptDebug(debug),
 		bundles_registry.ClientOptInsecure(insecure),
+		bundles_registry.ClientOptSkipTlsVerify(skipTlsVerify),
 		bundles_registry.ClientOptWriter(out),
 	)
 }

@@ -48,8 +48,9 @@ const (
 type (
 	// Client works with OCI-compliant registries and local Helm chart cache
 	Client struct {
-		debug    bool
-		insecure bool
+		debug         bool
+		insecure      bool
+		skipTlsVerify bool
 		// path to repository config file e.g. ~/.docker/config.json
 		credentialsFile string
 		out             io.Writer
@@ -91,7 +92,7 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 	}
 	if client.resolver == nil {
 		httpClient := http.DefaultClient
-		if client.insecure {
+		if client.skipTlsVerify {
 			httpClient.Transport = &http.Transport{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true,
