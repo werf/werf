@@ -73,3 +73,9 @@ func ClientOptInsecure(insecure bool) ClientOption {
 		client.insecure = insecure
 	}
 }
+
+func ClientOptSkipTlsVerify(skipTlsVerify bool) ClientOption {
+	return func(client *Client) {
+		client.skipTlsVerify = skipTlsVerify
+	}
+}
