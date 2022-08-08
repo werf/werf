@@ -110,6 +110,6 @@ You can use the following options (or their respective environment variables) to
 
 **Known limitations**
 
-1) Sometimes Selectel drop connection with VPC ID. Try to use VPC name.
-2) Werf can lie layers to the root of Container registry. But CR api have limitations, so you can not remove this layers with api.
-3) Low API rate-limit. It can cause cleanup problems with rapid development.
+1) Sometimes, Selectel drop connection with VPC ID. Try to use the VPC name instead.
+2) CR API has limitations, so you can not remove layers from the root of the container registry.
+3) Low API rate limit. It can cause cleanup problems with rapid development
