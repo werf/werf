@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.150](https://www.github.com/werf/werf/compare/v1.2.149...v1.2.150) (2022-08-08)
+
+
+### Bug Fixes
+
+* **buildah:** original ENTRYPOINT/CMD lost on build ([1eebc64](https://www.github.com/werf/werf/commit/1eebc6416ba6f8468c615a7dc435d997f3279569))
+
 ### [1.2.149](https://www.github.com/werf/werf/compare/v1.2.148...v1.2.149) (2022-08-08)
 
 
