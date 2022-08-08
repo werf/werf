@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.147](https://www.github.com/werf/werf/compare/v1.2.146...v1.2.147) (2022-08-08)
+
+
+### Features
+
+* **build:** add report Image.NAME.Rebuilt field ([be6fba7](https://www.github.com/werf/werf/commit/be6fba79ead32409cf85185323a9bad616cd40af))
+
 ### [1.2.146](https://www.github.com/werf/werf/compare/v1.2.145...v1.2.146) (2022-08-04)
 
 
