@@ -12,7 +12,7 @@ env:
 vars:
   version: "0.0.0"
   os: '{{OS}}'
-  arch: '{{ARCH | replace "arm" "arm64"}}'
+  arch: '{{ternary "arm64" ARCH (eq ARCH "arm")}}'
   binariesExt: '{{if (eq .targetOS "windows")}}.exe{{end}}'
   binaryName: 'werf{{.binariesExt}}'
   devBinary: './bin/{{.binaryName}}'
@@ -353,13 +353,15 @@ tasks:
 
   compose:up:local-telemetry:
     desc: "Up local telemetry dev server."
+    dir: ./scripts/local-telemetry
     cmds:
-    - cd ./scripts/local-telemetry; docker-compose {{.CLI_ARGS}} up -d
+    - docker-compose {{.CLI_ARGS}} up -d
 
   compose:down:local-telemetry:
     desc: "Down local telemetry dev server."
+    dir: ./scripts/local-telemetry
     cmds:
-    - cd ./scripts/local-telemetry; docker-compose {{.CLI_ARGS}} down
+    - docker-compose {{.CLI_ARGS}} down
 
   clean:
     desc: "Clean all temporary files and build artifacts."
