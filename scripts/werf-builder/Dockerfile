@@ -1,4 +1,4 @@
-FROM golang:1.18-bullseye
+FROM --platform=linux/amd64 golang:1.18-bullseye
 
 ENV DEBIAN_FRONTEND=noninteractive
 
