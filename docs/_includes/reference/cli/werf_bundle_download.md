@@ -51,7 +51,7 @@ werf bundle download [options]
       --repo-container-registry=''
             Choose repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay.
+            github, gitlab, harbor, quay, selectel.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
       --repo-docker-hub-password=''
@@ -68,6 +68,16 @@ werf bundle download [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=''
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --repo-selectel-account=''
+            repo Selectel account (default $WERF_REPO_SELECTEL_ACCOUNT)
+      --repo-selectel-password=''
+            repo Selectel password (default $WERF_REPO_SELECTEL_PASSWORD)
+      --repo-selectel-username=''
+            repo Selectel username (default $WERF_REPO_SELECTEL_USERNAME)
+      --repo-selectel-vpc=''
+            repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
+      --repo-selectel-vpc-id=''
+            repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

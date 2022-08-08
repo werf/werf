@@ -63,7 +63,8 @@ func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Con
 		case docker_registry.IsAzureCrRepositoryNotFoundErr(err),
 			docker_registry.IsDockerHubRepositoryNotFoundErr(err),
 			docker_registry.IsHarborRepositoryNotFoundErr(err),
-			docker_registry.IsQuayRepositoryNotFoundErr(err):
+			docker_registry.IsQuayRepositoryNotFoundErr(err),
+			docker_registry.IsSelectelRepositoryNotFoundErr(err):
 		default:
 			Ω(err).Should(Succeed())
 		}
@@ -194,6 +195,31 @@ func makeContainerRegistryImplementationDockerRegistryOptions(implementationName
 			InsecureRegistry:      false,
 			SkipTlsVerifyRegistry: false,
 			QuayToken:             utils.GetRequiredEnv(tokenEnvName),
+		}
+	case docker_registry.SelectelImplementationName:
+		accountEnvName := fmt.Sprintf(
+			"WERF_TEST_%s_ACCOUNT",
+			implementationCode,
+		)
+
+		vpcEnvName := fmt.Sprintf(
+			"WERF_TEST_%s_VPC",
+			implementationCode,
+		)
+
+		vpcIDEnvName := fmt.Sprintf(
+			"WERF_TEST_%s_VPC_ID",
+			implementationCode,
+		)
+
+		return docker_registry.DockerRegistryOptions{
+			InsecureRegistry:      false,
+			SkipTlsVerifyRegistry: false,
+			SelectelUsername:      utils.GetRequiredEnv(usernameEnvName),
+			SelectelPassword:      utils.GetRequiredEnv(passwordEnvName),
+			SelectelAccount:       utils.GetRequiredEnv(accountEnvName),
+			SelectelVPC:           utils.GetRequiredEnv(vpcEnvName),
+			SelectelVPCID:         utils.GetRequiredEnv(vpcIDEnvName),
 		}
 	default:
 		return docker_registry.DockerRegistryOptions{

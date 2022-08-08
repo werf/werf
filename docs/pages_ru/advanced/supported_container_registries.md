@@ -24,6 +24,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 | _Nexus_                                   | **ок** |   **не проверялся**   |                   **ок**                       |
 | _Quay_                                    | **ок** | **не поддерживается** |                   **ок**                       |
 | _Yandex Container Registry_               | **ок** |         **ок**        |                   **ок**                       |
+| _Selectel CRaaS_                          | **ok** |   **не проверялся**   |       [***ok**](#selectel-craas)               |
 
 ## Авторизация
 
@@ -94,3 +95,20 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 При удалении тегов werf использует _GitLab Container Registry API_ или _Docker Registry API_ в зависимости от версии GitLab.
 
 > Для удаления тега прав временного токена CI-задания (`$CI_JOB_TOKEN`) недостаточно, поэтому пользователю необходимо создать специальный токен в разделе Access Token (в секции Scope необходимо выбрать `api`) и [выполнить авторизацию](#авторизация) с ним 
+
+### Selectel CRaaS
+
+При очистке werf использует [_Selectel CR API_](https://developers.selectel.ru/docs/selectel-cloud-platform/craas_api/), поэтому при очистке container registry необходимо определить _username/password_, _account_ and _vpc_ or _vpcID_.
+
+Для того, чтобы задать параметры, следует использовать следующие опции или соответствующие им переменные окружения:
+- `--repo-selectel-username`
+- `--repo-selectel-password`
+- `--repo-selectel-account`
+- `--repo-selectel-vpc` or
+- `--repo-selectel-vpc-id`
+
+**Известные прлоблемы**
+
+1) Иногда Selectel не отдаёт токен при использовании VPC ID. Попробуйте использовать имя VPC.
+2) CR API не позволяет удалять теги, которые хранятся в корне registry.
+3) Небольшой лимит запросов в API. При активной разработке могут быть проблемы с очисткой.

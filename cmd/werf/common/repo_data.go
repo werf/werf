@@ -64,6 +64,11 @@ type RepoData struct {
 	HarborUsername    *string
 	HarborPassword    *string
 	QuayToken         *string
+	SelectelAccount   *string
+	SelectelVPC       *string
+	SelectelVPCID     *string
+	SelectelUsername  *string
+	SelectelPassword  *string
 
 	RepoDataOptions
 }
@@ -119,6 +124,11 @@ func (d *RepoData) GetDockerRegistryOptions(insecureRegistry, skipTlsVerifyRegis
 		opts.HarborUsername = *d.HarborUsername
 		opts.HarborPassword = *d.HarborPassword
 		opts.QuayToken = *d.QuayToken
+		opts.SelectelUsername = *d.SelectelUsername
+		opts.SelectelPassword = *d.SelectelPassword
+		opts.SelectelAccount = *d.SelectelAccount
+		opts.SelectelVPC = *d.SelectelVPC
+		opts.SelectelVPCID = *d.SelectelVPCID
 	}
 
 	return opts
@@ -147,6 +157,11 @@ func (repoData *RepoData) SetupCmd(cmd *cobra.Command) {
 	repoData.SetupHarborUsernameForRepoData(cmd, makeOpt("harbor-username"), []string{makeEnvVar("HARBOR_USERNAME")})
 	repoData.SetupHarborPasswordForRepoData(cmd, makeOpt("harbor-password"), []string{makeEnvVar("HARBOR_PASSWORD")})
 	repoData.SetupQuayTokenForRepoData(cmd, makeOpt("quay-token"), []string{makeEnvVar("QUAY_TOKEN")})
+	repoData.SetupSelectelUsernameForRepoData(cmd, makeOpt("selectel-username"), []string{makeEnvVar("SELECTEL_USERNAME")})
+	repoData.SetupSelectelPasswordForRepoData(cmd, makeOpt("selectel-password"), []string{makeEnvVar("SELECTEL_PASSWORD")})
+	repoData.SetupSelectelAccountForRepoData(cmd, makeOpt("selectel-account"), []string{makeEnvVar("SELECTEL_ACCOUNT")})
+	repoData.SetupSelectelVPCForRepoData(cmd, makeOpt("selectel-vpc"), []string{makeEnvVar("SELECTEL_VPC")})
+	repoData.SetupSelectelVPCIDForRepoData(cmd, makeOpt("selectel-vpc-id"), []string{makeEnvVar("SELECTEL_VPC_ID")})
 }
 
 func MergeRepoData(ctx context.Context, repoDataArr ...*RepoData) *RepoData {
@@ -177,6 +192,21 @@ func MergeRepoData(ctx context.Context, repoDataArr ...*RepoData) *RepoData {
 		}
 		if res.QuayToken == nil || *res.QuayToken == "" {
 			res.QuayToken = repoData.QuayToken
+		}
+		if res.SelectelUsername == nil || *res.SelectelUsername == "" {
+			res.SelectelUsername = repoData.SelectelUsername
+		}
+		if res.SelectelPassword == nil || *res.SelectelPassword == "" {
+			res.SelectelPassword = repoData.SelectelPassword
+		}
+		if res.SelectelAccount == nil || *res.SelectelAccount == "" {
+			res.SelectelAccount = repoData.SelectelAccount
+		}
+		if res.SelectelVPC == nil || *res.SelectelVPC == "" {
+			res.SelectelVPC = repoData.SelectelVPC
+		}
+		if res.SelectelVPCID == nil || *res.SelectelVPCID == "" {
+			res.SelectelVPCID = repoData.SelectelVPCID
 		}
 	}
 
@@ -299,6 +329,71 @@ func (repoData *RepoData) SetupHarborPasswordForRepoData(cmd *cobra.Command, par
 	repoData.HarborPassword = new(string)
 	cmd.Flags().StringVarP(
 		repoData.HarborPassword,
+		paramName,
+		"",
+		getDefaultValueByParamEnvNames(paramEnvNames),
+		usage,
+	)
+}
+
+func (repoData *RepoData) SetupSelectelUsernameForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {
+	usage := fmt.Sprintf("%s Selectel username (default %s)", repoData.Name, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+
+	repoData.SelectelUsername = new(string)
+	cmd.Flags().StringVarP(
+		repoData.SelectelUsername,
+		paramName,
+		"",
+		getDefaultValueByParamEnvNames(paramEnvNames),
+		usage,
+	)
+}
+
+func (repoData *RepoData) SetupSelectelPasswordForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {
+	usage := fmt.Sprintf("%s Selectel password (default %s)", repoData.Name, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+
+	repoData.SelectelPassword = new(string)
+	cmd.Flags().StringVarP(
+		repoData.SelectelPassword,
+		paramName,
+		"",
+		getDefaultValueByParamEnvNames(paramEnvNames),
+		usage,
+	)
+}
+
+func (repoData *RepoData) SetupSelectelAccountForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {
+	usage := fmt.Sprintf("%s Selectel account (default %s)", repoData.Name, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+
+	repoData.SelectelAccount = new(string)
+	cmd.Flags().StringVarP(
+		repoData.SelectelAccount,
+		paramName,
+		"",
+		getDefaultValueByParamEnvNames(paramEnvNames),
+		usage,
+	)
+}
+
+func (repoData *RepoData) SetupSelectelVPCForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {
+	usage := fmt.Sprintf("%s Selectel VPC (default %s)", repoData.Name, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+
+	repoData.SelectelVPC = new(string)
+	cmd.Flags().StringVarP(
+		repoData.SelectelVPC,
+		paramName,
+		"",
+		getDefaultValueByParamEnvNames(paramEnvNames),
+		usage,
+	)
+}
+
+func (repoData *RepoData) SetupSelectelVPCIDForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {
+	usage := fmt.Sprintf("%s Selectel VPC ID (default %s)", repoData.Name, strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+
+	repoData.SelectelVPCID = new(string)
+	cmd.Flags().StringVarP(
+		repoData.SelectelVPCID,
 		paramName,
 		"",
 		getDefaultValueByParamEnvNames(paramEnvNames),

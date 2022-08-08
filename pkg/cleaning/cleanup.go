@@ -887,6 +887,12 @@ You should specify a token with delete:packages and read:packages scopes to remo
 Check --repo-github-token option.
 Be aware that the token provided to GitHub Actions workflow is not enough to remove package versions.
 Read more details here https://werf.io/documentation/v1.2/advanced/supported_container_registries.html#github-packages`, err)
+	case docker_registry.IsSelectelUnauthorizedErr(err):
+		return fmt.Errorf(`%w
+
+You should specify Serectel cloud container registry (cr) credentials: username, password, account and VPC to remove tags with Selectel CR API.
+Check --repo-selectel-username, --repo-selectel-password, --repo-selectel-account and --repo-selectel-vpc or --repo-selectel-vpc-id options.
+Read more details here https://werf.io/documentation/v1.2/advanced/supported_container_registries.html#selectel-craas`, err)
 	default:
 		if storage.IsImageDeletionFailedDueToUsingByContainerErr(err) {
 			return err
