@@ -21,7 +21,7 @@ permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_kubernetes_exec
 
 Для подключения устройства `/dev/fuse` в контейнерах под управлением werf необходим плагин [fuse device](https://github.com/kuberenetes-learning-group/fuse-device-plugin):
 
-```
+```yaml
 # werf-fuse-device-plugin-ds.yaml
 apiVersion: apps/v1
 kind: DaemonSet
@@ -55,13 +55,13 @@ spec:
 
 Примените приведенный выше манифест плагина в пространстве имен `kube-system`:
 
-```
+```shell
 kubectl -n kube-system apply -f werf-fuse-device-plugin-ds.yaml
 ```
 
 Также давайте создадим политику LimitRange с тем, чтобы Pod'ы, создаваемые в некотором пространстве имен, имели доступ к `/dev/fuse`:
 
-```
+```yaml
 # enable-fuse-limit-range.yaml
 apiVersion: v1
 kind: LimitRange
@@ -77,7 +77,7 @@ spec:
 
 Создайте пространство имен `gitlab-ci` и примените манифест LimitRange в этом пространстве имен (позже мы настроим раннер GitLab на использование этого пространства имен при создании Pod'ов для выполнения CI-заданий):
 
-```
+```shell
 kubectl create namespace gitlab-ci
 kubectl apply -f enable-fuse-pod-limit-range.yaml
 ```

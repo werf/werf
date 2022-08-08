@@ -21,7 +21,7 @@ permalink: advanced/ci_cd/run_in_container/use_kubernetes.html
 
 Для подключения устройства `/dev/fuse` в контейнерах под управлением werf необходим плагин [Fuse device](https://github.com/kuberenetes-learning-group/fuse-device-plugin):
 
-```
+```yaml
 # werf-fuse-device-plugin-ds.yaml
 apiVersion: apps/v1
 kind: DaemonSet
@@ -55,7 +55,7 @@ spec:
 
 Примените приведенный выше манифест плагина в пространстве имен `kube-system`:
 
-```
+```shell
 kubectl -n kube-system apply -f werf-fuse-device-plugin-ds.yaml
 ```
 

@@ -21,7 +21,7 @@ No additional actions are required.
 
 The [fuse device plugin](https://github.com/kuberenetes-learning-group/fuse-device-plugin) is one of the ways to enable the `/dev/fuse` device in containers with werf:
 
-```
+```yaml
 # werf-fuse-device-plugin-ds.yaml
 apiVersion: apps/v1
 kind: DaemonSet
@@ -55,13 +55,13 @@ spec:
 
 Apply the above plugin manifest to the `kube-system` namespace:
 
-```
+```shell
 kubectl -n kube-system apply -f werf-fuse-device-plugin-ds.yaml
 ```
 
 Let's also create a LimitRange policy so that Pods created in some namespace have access to `/dev/fuse`:
 
-```
+```yaml
 # enable-fuse-limit-range.yaml
 apiVersion: v1
 kind: LimitRange
@@ -77,7 +77,7 @@ spec:
 
 Create a `gitlab-ci` namespace and apply the LimitRange manifest in that namespace (we will later configure the GitLab runner to use that namespace when creating Pods for running CI jobs):
 
-```
+```shell
 kubectl create namespace gitlab-ci
 kubectl apply -f enable-fuse-pod-limit-range.yaml
 ```

@@ -21,7 +21,7 @@ No additional actions are required.
 
 The [fuse device plugin](https://github.com/kuberenetes-learning-group/fuse-device-plugin) is required to enable the `/dev/fuse` device in werf containers:
 
-```
+```yaml
 # werf-fuse-device-plugin-ds.yaml
 apiVersion: apps/v1
 kind: DaemonSet
@@ -55,7 +55,7 @@ spec:
 
 Apply the above plugin manifest to the `kube-system` namespace:
 
-```
+```shell
 kubectl -n kube-system apply -f werf-fuse-device-plugin-ds.yaml
 ```
 
