@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.148](https://www.github.com/werf/werf/compare/v1.2.147...v1.2.148) (2022-08-08)
+
+
+### Features
+
+* add Selectel CR support ([2090cd9](https://www.github.com/werf/werf/commit/2090cd9457d6157cf530d53876bdd32d97715228))
+
 ### [1.2.147](https://www.github.com/werf/werf/compare/v1.2.146...v1.2.147) (2022-08-08)
 
 
