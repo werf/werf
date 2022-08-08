@@ -9,13 +9,14 @@ on:
       - 'README_ru.md'
 
 env:
+  DEBIAN_FRONTEND: "noninteractive"
   GOPATH: ${{ github.workspace }}/go
 
 jobs:
 
   check_cli_and_readme_partials:
     name: Check CLI and README partials
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev
@@ -26,30 +27,22 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
+          cache: true
           go-version-file: go.mod
 
-      - name: Setup Golang caches
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-golang-
+      - name: Install Task
+        uses: arduino/setup-task@v1
 
       - name: Test
         run: |
           ./scripts/ci/git.sh
-          ./scripts/ci/go-test.sh ./integration/suites/docs
+          task -p test:go-test paths="./integration/suites/docs"
 
   check_links:
     name: Check broken links
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
-      matrix:
-        lang: [ru, en]
     steps:
 
       - name: Checkout code
@@ -58,26 +51,20 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
+          cache: true
           go-version-file: go.mod
 
-      - name: Setup Golang caches
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-golang-
+      - name: Install Task
+        uses: arduino/setup-task@v1
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check links
-        run: make docs_check_broken_links_${{ matrix.lang }}
+        run: task -p doc:check-broken-links
         env:
           WERF_REPO: "ghcr.io/${{ github.repository_owner }}/werfio"

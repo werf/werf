@@ -9,7 +9,7 @@ on:
 jobs:
   publish:
     name: Publish release channels using trdl server
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Publish
       uses: werf/trdl-vault-actions/publish@main
@@ -50,14 +50,14 @@ jobs:
         fetch-depth: 0
 
     - name: Login to werf registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         registry: ${{ secrets.WERF_REGISTRY_SERVER }}
         username: ${{ secrets.WERF_REGISTRY_USERNAME }}
         password: ${{ secrets.WERF_REGISTRY_PASSWORD }}
 
     - name: Login to ghcr.io
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         registry: ghcr.io
         username: ${{ secrets.WERF_IN_IMAGE_REPO_LOGIN }}
@@ -75,7 +75,7 @@ jobs:
       - publish
       - deploy_channels_cm_prod
       - publish_werf_images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
 
       - uses: technote-space/workflow-conclusion-action@v2

@@ -113,6 +113,11 @@ You're also welcome to:
   <a href="https://thenewstack.io/werf-automates-kubernetes-based-gitops-workflows-from-the-command-line/" title="WERF Automates Kubernetes-based GitOps from the Command Line"><img alt="Scheme" src="https://raw.githubusercontent.com/werf/werf/main/docs/images/thenewstack.svg" height="54px"></a>
 </p>
 
+## Development
+
+1. Install [go-task](https://taskfile.dev/installation/).
+2. `task -l`
+
 ## License
 
 Apache License 2.0, see [LICENSE](LICENSE).

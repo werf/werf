@@ -12,8 +12,6 @@
 /stapel/*/omnibus/.bundle
 /stapel/*/werf-stapel-toolchain.tar
 
-/release-build
-
 /pkg/build/builder/ansible/pylogger.h
 /pkg/build/builder/ansible/pylogger.so
 *.pyc
@@ -39,3 +37,7 @@ buildah-test
 
 *.DS_Store
 ._*
+
+/Taskfile.ya?ml
+/build
+/dist
