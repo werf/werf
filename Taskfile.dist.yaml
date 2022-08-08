@@ -333,8 +333,8 @@ tasks:
     cmds:
     - task: _image:build
       vars:
-        path: scripts/werf-builder/Dockerfile
-        name:
+        dfilePath: scripts/werf-builder/Dockerfile
+        imageName:
           sh: "echo registry-write.werf.io/werf/builder:$(git rev-parse HEAD)"
 
   _image:push:
@@ -348,8 +348,8 @@ tasks:
     cmds:
     - task: _image:push
       vars:
-        name:
-          sh: "echo registry-write.werf.io/werf/builder:$(git rev-parse HEAD)."
+        imageName:
+          sh: "echo registry-write.werf.io/werf/builder:$(git rev-parse HEAD)"
 
   compose:up:local-telemetry:
     desc: "Up local telemetry dev server."
