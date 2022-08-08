@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.149](https://www.github.com/werf/werf/compare/v1.2.148...v1.2.149) (2022-08-08)
+
+
+### Miscellaneous Chores
+
+* release v1.2.149 ([042d690](https://www.github.com/werf/werf/commit/042d6905c97d677beb012f35485aec7265c53e61))
+
 ### [1.2.148](https://www.github.com/werf/werf/compare/v1.2.148...v1.2.148) (2022-08-08)
 
 
