@@ -1,23 +1,24 @@
 name: Tests
+
 on:
   pull_request:
     types: [labeled]
   repository_dispatch:
     types: [tests]
+
 env:
-  GO111MODULE: on
+  DEBIAN_FRONTEND: "noninteractive"
 
 jobs:
 
   unlabel:
     name: Label taking off
     if: github.event_name == 'pull_request' && github.event.label.name == 'run tests'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
 
-    - uses: actions/github-script@v1
+    - uses: actions/github-script@v6
       with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
         script: >
           github.issues.removeLabel({
             issue_number: context.issue.number,
@@ -33,13 +34,13 @@ jobs:
       fail-fast: false
       matrix:
 #        os: [ubuntu-latest, macOS-latest, windows-latest]
-        os: [ubuntu-latest]
+        os: [ ubuntu-22.04 ]
     runs-on: ${{ matrix.os }}
     steps:
 
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-22.04'
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -47,30 +48,22 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
+          cache: true
           go-version-file: go.mod
-        id: go
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+      - name: Install Task
+        uses: arduino/setup-task@v1
 
       - name: Prepare environment
         run: ./scripts/ci/git.sh
-        shell: bash
 
       - name: Test
-        run: ./scripts/ci/go-test.sh ./pkg/... ./cmd/...
-        shell: bash
+        run: task -p test:unit
 
   precompiled_tests_binaries:
     name: Precompiled tests binaries
     if: github.event_name == 'repository_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'run tests')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
 
     - name: Install werf build dependencies
@@ -82,17 +75,11 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
+        cache: true
         go-version-file: go.mod
-      id: go
 
-    - uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+    - name: Install Task
+      uses: arduino/setup-task@v1
 
     - name: Compile integration tests binaries
       run: |
@@ -103,7 +90,7 @@ jobs:
       shell: bash
 
     - name: Compile tests werf binary
-      run: GOBIN=$PWD make werf
+      run: task -p build
 
     - name: Upload integration default tests binaries
       uses: actions/upload-artifact@master
@@ -133,7 +120,7 @@ jobs:
       uses: actions/upload-artifact@master
       with:
         name: "ubuntu_werf_binary"
-        path: werf
+        path: ./bin/werf
 
   integration_default_tests:
     name: Integration default tests
@@ -145,7 +132,7 @@ jobs:
         - "-name 'git.test'"
         - "-name 'ansible.test'"
         - "! -name 'git.test' ! -name 'ansible.test'"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
 
     - name: Install werf build dependencies
@@ -164,8 +151,8 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
+        cache: true
         go-version-file: go.mod
-      id: go
 
     - name: Download integration default tests binaries
       uses: actions/download-artifact@master
@@ -183,7 +170,7 @@ jobs:
       run: |
         ./scripts/ci/git.sh
 
-        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
+        go install github.com/onsi/ginkgo/v2/ginkgo
 
         chmod +x werf
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -203,7 +190,7 @@ jobs:
       fail-fast: false
       matrix:
         k8s_version: [1.19]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
 
     - name: Install werf build dependencies
@@ -215,8 +202,8 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
+        cache: true
         go-version-file: go.mod
-      id: go
 
     - name: Download integration k8s_per_version tests binaries
       uses: actions/download-artifact@master
@@ -234,7 +221,7 @@ jobs:
       run: |
         ./scripts/ci/git.sh
 
-        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
+        go install github.com/onsi/ginkgo/v2/ginkgo
 
         find integration -type f -name '*.test' -exec chmod +x {} \;
 
@@ -264,7 +251,7 @@ jobs:
       fail-fast: false
       matrix:
         k8s_version: [1.19]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
       WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
@@ -317,8 +304,8 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
+        cache: true
         go-version-file: go.mod
-      id: go
 
     - name: Download integration k8s_per_version_and_container_registry_per_implementation tests binaries
       uses: actions/download-artifact@master
@@ -356,7 +343,7 @@ jobs:
         ./scripts/ci/integration_tests_registries_login.sh quay
         ./scripts/ci/integration_tests_registries_login.sh github
 
-        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
+        go install github.com/onsi/ginkgo/v2/ginkgo
 
         find integration -type f -name '*.test' -exec chmod +x {} \;
 

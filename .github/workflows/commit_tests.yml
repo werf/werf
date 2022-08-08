@@ -5,13 +5,15 @@ on:
     paths:
     - '.github/workflows/commit_tests.yml'
     - '**/*.go'
+    - 'go.mod'
+
+env:
+  DEBIAN_FRONTEND: "noninteractive"
 
 jobs:
   unit-test:
     name: Unit testing
-    runs-on: ubuntu-latest
-    env:
-      GOFLAGS: -mod=readonly
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -19,23 +21,24 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
+          cache: true
           go-version-file: go.mod
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
 
       - name: Prepare environment
         run: |
-          sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev
-          git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
+          sudo apt-get -y update && sudo apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev
+          ./scripts/ci/git.sh
 
       - name: Tests
         run: |
-          make unit-tests
+          task -p test:unit
 
   lint:
     name: Lint
-    runs-on: ubuntu-latest
-    env:
-      GOFLAGS: -mod=readonly
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -43,14 +46,18 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
+          cache: true
           go-version-file: go.mod
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
 
       - name: Prepare environment
         run: |
-          sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev
+          sudo apt-get -y update && sudo apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
 
       - name: Lint
         run: |
-          make lint
+          task -p lint
 

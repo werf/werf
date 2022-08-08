@@ -1,15 +1,17 @@
-FROM golang:1.18.2-bullseye
+FROM golang:1.18-bullseye
 
-RUN apt-get update && \
-    apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev parallel && \
-    rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get -y update && \
+    apt-get -y install gcc-aarch64-linux-gnu libbtrfs-dev &&  \
+    curl -sSLO https://github.com/go-task/task/releases/download/v3.14.1/task_linux_amd64.deb && \
+    apt-get -y install ./task_linux_amd64.deb && \
+    rm -rf ./task_linux_amd64.deb /var/cache/apt/* /var/lib/apt/lists/* /var/log/*
 
 ADD cmd /.werf-deps/cmd
 ADD pkg /.werf-deps/pkg
-ADD go.mod /.werf-deps/go.mod
-ADD go.sum /.werf-deps/go.sum
-ADD scripts /.werf-deps/scripts
+ADD go.mod go.sum Taskfile.dist.yaml /.werf-deps/
 
 RUN cd /.werf-deps && \
-    ./scripts/build_release_v3.sh base && \
+    task -p build:dist:all version=base && \
     rm -rf /.werf-deps
