@@ -2,6 +2,8 @@ package stage
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"sort"
 
 	"github.com/werf/werf/pkg/config"
@@ -85,17 +87,43 @@ func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, 
 		imageCommitChangeOptions.AddWorkdir(s.instructions.Workdir)
 		imageCommitChangeOptions.AddHealthCheck(s.instructions.HealthCheck)
 	} else {
-		stageImage.Builder.StapelStageBuilder().
-			AddVolumes(s.instructions.Volume).
+		builder := stageImage.Builder.StapelStageBuilder()
+
+		builder.AddVolumes(s.instructions.Volume).
 			AddExpose(s.instructions.Expose).
 			AddEnvs(s.instructions.Env).
 			AddLabels(s.instructions.Label).
-			SetCmd([]string{s.instructions.Cmd}).
-			SetEntrypoint([]string{s.instructions.Entrypoint}).
 			SetUser(s.instructions.User).
 			SetWorkdir(s.instructions.Workdir).
 			SetHealthcheck(s.instructions.HealthCheck)
+
+		if ep, err := CmdOrEntrypointStringToSlice(s.instructions.Entrypoint); err != nil {
+			return fmt.Errorf("error converting ENTRYPOINT from string to slice: %w", err)
+		} else {
+			builder.SetEntrypoint(ep)
+		}
+
+		if cmd, err := CmdOrEntrypointStringToSlice(s.instructions.Cmd); err != nil {
+			return fmt.Errorf("error converting CMD from string to slice: %w", err)
+		} else {
+			builder.SetCmd(cmd)
+		}
 	}
 
 	return nil
+}
+
+func CmdOrEntrypointStringToSlice(cmdOrEntrypoint string) ([]string, error) {
+	var result []string
+	if len(cmdOrEntrypoint) > 0 {
+		if string(cmdOrEntrypoint[0]) == "[" && string(cmdOrEntrypoint[len(cmdOrEntrypoint)-1]) == "]" {
+			if err := json.Unmarshal([]byte(cmdOrEntrypoint), &result); err != nil {
+				return nil, fmt.Errorf("error parsing to the JSON array: %w", err)
+			}
+		} else {
+			result = []string{cmdOrEntrypoint}
+		}
+	}
+
+	return result, nil
 }
