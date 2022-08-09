@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.151](https://www.github.com/werf/werf/compare/v1.2.150...v1.2.151) (2022-08-09)
+
+
+### Bug Fixes
+
+* **helm:** resource Group ignored when checking whether the same resource ([68b7594](https://www.github.com/werf/werf/commit/68b75945d68e6e736fd23459b70273b80ec288b3))
+
 ### [1.2.150](https://www.github.com/werf/werf/compare/v1.2.149...v1.2.150) (2022-08-08)
 
 
