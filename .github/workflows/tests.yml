@@ -55,7 +55,9 @@ jobs:
         uses: arduino/setup-task@v1
 
       - name: Prepare environment
-        run: ./scripts/ci/git.sh
+        run: |
+          ./scripts/ci/git.sh
+          task -p deps:install:ginkgo
 
       - name: Test
         run: task -p test:unit
@@ -173,7 +175,7 @@ jobs:
       run: |
         ./scripts/ci/git.sh
 
-        task deps:install:ginkgo
+        task -p deps:install:ginkgo
 
         chmod +x werf
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -227,7 +229,7 @@ jobs:
       run: |
         ./scripts/ci/git.sh
 
-        task deps:install:ginkgo
+        task -p deps:install:ginkgo
 
         find integration -type f -name '*.test' -exec chmod +x {} \;
 
@@ -352,7 +354,7 @@ jobs:
         ./scripts/ci/integration_tests_registries_login.sh quay
         ./scripts/ci/integration_tests_registries_login.sh github
 
-        task deps:install:ginkgo
+        task -p deps:install:ginkgo
 
         find integration -type f -name '*.test' -exec chmod +x {} \;
 
