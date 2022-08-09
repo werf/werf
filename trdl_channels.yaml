@@ -1,41 +1,41 @@
 groups:
- - name: "1.0"
-   channels:
-    - name: alpha
-      version: 1.0.13+fix9
-    - name: beta
-      version: 1.0.13+fix9
-    - name: ea
-      version: 1.0.13+fix9
-    - name: stable
-      version: 1.0.13+fix9
-    - name: rock-solid
-      version: 1.0.13+fix9
- - name: "1.1"
-   channels:
-    - name: alpha
-      version: 1.1.34
-    - name: beta
-      version: 1.1.34
-    - name: ea
-      version: 1.1.34
-    - name: stable
-      version: 1.1.34
-    - name: rock-solid
-      version: 1.1.34
- - name: "1.2"
-   channels:
-    - name: alpha
-      version: 1.2.150
-    - name: beta
-      version: 1.2.149
-    - name: ea
-      version: 1.2.146
-    - name: stable
-      version: 1.2.140+fix2
-#     candidates:
-#     - 1.2.143      # 09.08
-    - name: rock-solid
-      version: 1.2.122+fix2
-#     candidates:
-#     - 1.2.138      # 16.08
+  - name: "1.0"
+    channels:
+      - name: alpha
+        version: 1.0.13+fix9
+      - name: beta
+        version: 1.0.13+fix9
+      - name: ea
+        version: 1.0.13+fix9
+      - name: stable
+        version: 1.0.13+fix9
+      - name: rock-solid
+        version: 1.0.13+fix9
+  - name: "1.1"
+    channels:
+      - name: alpha
+        version: 1.1.34
+      - name: beta
+        version: 1.1.34
+      - name: ea
+        version: 1.1.34
+      - name: stable
+        version: 1.1.34
+      - name: rock-solid
+        version: 1.1.34
+  - name: "1.2"
+    channels:
+      - name: alpha
+        version: 1.2.150
+      - name: beta
+        version: 1.2.149
+      - name: ea
+        version: 1.2.146
+      - name: stable
+        version: 1.2.140+fix2
+#        candidates:
+#          - 1.2.143      # 09.08
+      - name: rock-solid
+        version: 1.2.122+fix2
+#        candidates:
+#          - 1.2.138      # 16.08
