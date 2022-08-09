@@ -27,9 +27,20 @@ vars:
   goReleaseLDFlags: "-s -w -X github.com/werf/werf/pkg/werf.Version={{.version}}"
 
 tasks:
+  _format-and-build:
+    cmds:
+    - task: format
+    - task: build
+
+  _format-and-lint:
+    cmds:
+    - task: format
+    - task: lint
+
   default:
     deps:
-    - build
+    - _format-and-build
+    - _format-and-lint
 
   _build:cgo:dev: &build_cgo_dev
     cmds:
@@ -227,6 +238,7 @@ tasks:
 
   format:
     desc: 'Run all code formatters. Important vars: "paths".'
+    run: once
     cmds:
     - task: format:gci
     - task: format:gofumpt
