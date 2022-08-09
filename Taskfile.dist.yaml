@@ -383,3 +383,8 @@ tasks:
     desc: "Clean built release binaries."
     cmds:
     - rm -rf ./dist
+
+  deps:install:ginkgo:
+    desc: "Install ginkgo binary."
+    cmds:
+    - go install {{.CLI_ARGS}} github.com/onsi/ginkgo/v2/ginkgo@{{.version | default "v2.1.4"}}
