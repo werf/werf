@@ -188,7 +188,7 @@ tasks:
       CGO_ENABLED: "0"
 
   test:go-test: &test_go_test
-    desc: 'Run go-test. Important vars: "paths".'
+    desc: 'Run raw "go test". Important vars: "paths".'
     cmds:
     - task: _test:go-test:{{ternary "cgo" "go" (eq .os "linux")}}
       vars:
@@ -252,10 +252,10 @@ tasks:
     - golangci-lint run {{.CLI_ARGS}} {{.paths | default "./..."}}
 
   doc:
-    desc: "Run all docs formatters and linters."
+    desc: "Run all docs generators, formatters and linters."
     cmds:
     - task: doc:gen
-    - task: doc:check-broken-links:all
+    - task: doc:check-broken-links
 
   doc:gen:
     desc: "Regenerate docs."
@@ -287,13 +287,13 @@ tasks:
   _github:dispatch:
     cmds:
     - |
-      echo curl -sSL 'https://api.github.com/repos/werf/werf/dispatches' \
+      curl -sSL 'https://api.github.com/repos/werf/werf/dispatches' \
         -H 'Content-Type: application/json' \
         -H 'Accept: application/vnd.github.everest-preview+json' \
         -H "Authorization: token {{if not .githubToken }}{{fail "githubToken variable required"}}{{end}}{{.githubToken}}" \
-        --data-raw '{ \
-          "event_type": "{{.eventType}}", \
-          "client_payload": "{{.clientPayload | default "{}"}}" \
+        --data-raw '{
+          "event_type": "{{.eventType}}",
+          "client_payload": {{.clientPayload | default "{}"}}
         }' {{.CLI_ARGS}}
 
   trigger:tests:
@@ -366,9 +366,9 @@ tasks:
   clean:
     desc: "Clean all temporary files and build artifacts."
     deps:
-    - clean:binaries:all
+    - clean:binaries:
 
-  clean:binaries:all:
+  clean:binaries:
     desc: "Clean all built binaries."
     deps:
     - clean:binaries:dev
@@ -387,4 +387,23 @@ tasks:
   deps:install:ginkgo:
     desc: "Install ginkgo binary."
     cmds:
-    - go install {{.CLI_ARGS}} github.com/onsi/ginkgo/v2/ginkgo@{{.version | default "v2.1.4"}}
+    - go install {{.CLI_ARGS}} github.com/onsi/ginkgo/v2/ginkgo@{{.ginkgoVersion | default "v2.1.4"}}
+
+  _git:fetch:
+    run: once
+    cmds:
+    - git fetch
+
+  sign:
+    desc: 'Sign last version tag + origin/main and push signatures. Important vars: "refs".'
+    deps:
+    - _git:fetch
+    cmds:
+    - git signatures pull {{.CLI_ARGS}}
+    - |
+      for ref in {{.refs | default "$(git tag --sort=v:refname | tail -n1) origin/main"}}; do
+        echo Signing $ref...
+        git signatures add {{.CLI_ARGS}} $ref
+        git signatures show {{.CLI_ARGS}} $ref
+      done
+    - git signatures push {{.CLI_ARGS}}
