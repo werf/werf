@@ -32,6 +32,6 @@ groups:
       - name: ea
         version: 1.2.146
       - name: stable
-        version: 1.2.140+fix2
+        version: 1.2.146
       - name: rock-solid
         version: 1.2.140+fix2
