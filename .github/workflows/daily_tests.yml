@@ -208,7 +208,7 @@ jobs:
 
         ./scripts/ci/git.sh
 
-        task deps:install:ginkgo
+        task -p deps:install:ginkgo
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -335,7 +335,7 @@ jobs:
         ./scripts/ci/git.sh
         ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.implementation }}
 
-        task deps:install:ginkgo
+        task -p deps:install:ginkgo
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -398,7 +398,7 @@ jobs:
 
         ./scripts/ci/git.sh
 
-        task deps:install:ginkgo
+        task -p deps:install:ginkgo
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;
@@ -531,7 +531,7 @@ jobs:
         ./scripts/ci/integration_tests_registries_login.sh quay
         ./scripts/ci/integration_tests_registries_login.sh github
 
-        task deps:install:ginkgo
+        task -p deps:install:ginkgo
 
         chmod +x werf_with_coverage
         find integration -type f -name '*.test' -exec chmod +x {} \;

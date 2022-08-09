@@ -206,35 +206,34 @@ tasks:
         paths: "{{.paths}}"
 
   test:unit:
-    <<: *test_go_test
     desc: 'Run unit tests. Important vars: "paths".'
-    vars:
-      paths: '{{.paths | default "./pkg/... ./cmd/..."}}'
+    cmds:
+    - ginkgo -p -r {{.CLI_ARGS}} {{.paths | default "./pkg/... ./cmd/..."}}
 
   test:integration:
     desc: 'Run integration tests. Important vars: "paths".'
     cmds:
-    - ginkgo -r {{.CLI_ARGS}} {{.paths | default "integration/suites"}}
+    - ginkgo -p -r {{.CLI_ARGS}} {{.paths | default "integration/suites"}}
 
   test:e2e:
     desc: 'Run all e2e tests. Important vars: "paths".'
     cmds:
-    - ginkgo -r {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
+    - ginkgo -p -r {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
 
   test:e2e:simple:
     desc: 'Run e2e tests tagged "simple". Important vars: "paths".'
     cmds:
-    - ginkgo -r --label-filter=simple {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
+    - ginkgo -p -r --label-filter=simple {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
 
   test:e2e:complex:
     desc: 'Run e2e tests tagged "complex". Important vars: "paths".'
     cmds:
-    - ginkgo -r --label-filter=complex {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
+    - ginkgo -p -r --label-filter=complex {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
 
   test:e2e:extra:
     desc: 'Run e2e tests not tagged "simple" or "complex". Important vars: "paths".'
     cmds:
-    - ginkgo -r --label-filter="!complex && !simple" {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
+    - ginkgo -p -r --label-filter="!complex && !simple" {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
 
   format:
     desc: 'Run all code formatters. Important vars: "paths".'
