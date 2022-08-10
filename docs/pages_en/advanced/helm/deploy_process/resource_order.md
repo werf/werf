@@ -40,7 +40,7 @@ kind: Job
 metadata:
   name: db-migration
   annotations:
-    werf.io/weight: "-2"
+    werf.io/weight: "-1"
 ---
 kind: Deployment
 metadata:
