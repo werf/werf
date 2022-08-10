@@ -220,7 +220,7 @@ func CreateScript(path string, commands []string) error {
 	}
 
 	var scriptLines []string
-	scriptLines = append(scriptLines, fmt.Sprintf("#!%s -e", BashBinPath()))
+	scriptLines = append(scriptLines, "#!")
 	scriptLines = append(scriptLines, "")
 	scriptLines = append(scriptLines, commands...)
 	scriptData := []byte(strings.Join(scriptLines, "\n") + "\n")
