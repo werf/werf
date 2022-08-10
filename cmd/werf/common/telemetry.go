@@ -120,19 +120,39 @@ func getTelemetryProjectID(ctx context.Context) (string, error) {
 			return "", fmt.Errorf("unable to get repo origin url: %w", err)
 		}
 
-		ep, err := transport.NewEndpoint(url)
+		hash, err := hashOriginUrl(url)
 		if err != nil {
-			return "", fmt.Errorf("bad repo origin url %q: %w", url, err)
+			return "", fmt.Errorf("unable to hash origin url: %w", err)
 		}
 
-		hashParts := []string{ep.Protocol, ep.Host, fmt.Sprintf("%d", ep.Port), ep.Path}
-
 		telemetry.LogF("calculate projectID based on repo origin url")
-
-		projectID = util.Sha256Hash(hashParts...)
+		projectID = hash
 	}
 
 	return projectID, nil
+}
+
+func hashOriginUrl(url string) (string, error) {
+	ep, err := transport.NewEndpoint(url)
+	if err != nil {
+		return "", fmt.Errorf("bad repo origin url %q: %w", url, err)
+	}
+
+	var formatPath string
+	{
+		formatPath = ep.Path
+
+		paramsIndex := strings.Index(formatPath, "?")
+		if paramsIndex > -1 {
+			formatPath = formatPath[:paramsIndex]
+		}
+
+		formatPath = strings.TrimPrefix(formatPath, "/")
+		formatPath = strings.TrimSuffix(formatPath, ".git")
+	}
+
+	hashParts := []string{ep.Host, formatPath}
+	return util.Sha256Hash(hashParts...), nil
 }
 
 func getTelemetryLocalRepo(ctx context.Context, workingDir, gitWorkTree string) (*git_repo.Local, error) {
