@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.152](https://www.github.com/werf/werf/compare/v1.2.151...v1.2.152) (2022-08-10)
+
+
+### Bug Fixes
+
+* **stapel:** custom LD_LIBRARY_PATH in the base image might lead to failed builds ([a06a5fc](https://www.github.com/werf/werf/commit/a06a5fc644f02a5f9a22b77e0851355914e6acc1))
+
 ### [1.2.151](https://www.github.com/werf/werf/compare/v1.2.150...v1.2.151) (2022-08-09)
 
 
