@@ -20,7 +20,7 @@ import (
 
 const (
 	spanName      = "telemetry.werf.io"
-	schemaVersion = 1
+	schemaVersion = 2
 )
 
 type TelemetryWerfIOInterface interface {
