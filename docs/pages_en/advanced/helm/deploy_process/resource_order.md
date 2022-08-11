@@ -34,25 +34,21 @@ kind: StatefulSet
 metadata:
   name: postgres
   annotations:
-    werf.io/weight: "10"
+    werf.io/weight: "-2"
 ---
 kind: Job
 metadata:
   name: db-migration
   annotations:
-    werf.io/weight: "20"
+    werf.io/weight: "-1"
 ---
 kind: Deployment
 metadata:
   name: app
-  annotations:
-    werf.io/weight: "30"
 ---
 kind: Service
 metadata:
   name: app
-  annotations:
-    werf.io/weight: "30"
 ```
 
 In the above example, werf will first deploy the database and wait for it to become ready, then run migrations and wait for them to complete, and then deploy the application and the related service.
