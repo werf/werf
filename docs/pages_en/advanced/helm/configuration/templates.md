@@ -71,6 +71,8 @@ spec:
 ```
 {% endraw %}
 
+If the image name contains a hyphen (`-`), then the entry should look like this: {% raw %}`image: '{{ index .Values.werf.image "IMAGE-NAME" }}'`{% endraw %}.
+
 ## Builtin templates and params
 
 {% raw %}
