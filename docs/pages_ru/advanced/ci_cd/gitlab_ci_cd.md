@@ -130,8 +130,6 @@ Build and Publish:
   stage: deploy
   script:
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-  dependencies:
-    - Build and Publish
   except: [schedules]
   tags: [werf]
 ```
@@ -189,8 +187,6 @@ Stop Review:
     action: stop
   variables:
     GIT_STRATEGY: none
-  dependencies:
-    - Review
   only: [merge_requests]
   when: manual
   tags: [werf]
@@ -244,8 +240,6 @@ Stop Review:
     action: stop
   variables:
     GIT_STRATEGY: none
-  dependencies:
-    - Review
   only: [merge_requests]
   when: manual
   tags: [werf]
@@ -282,8 +276,6 @@ Stop Review:
     action: stop
   variables:
     GIT_STRATEGY: none
-  dependencies:
-    - Review
   only: [merge_requests]
   when: manual
   tags: [werf]
@@ -323,8 +315,6 @@ Review:
   artifacts:
     paths:
       - werf.yaml
-  dependencies:
-    - Build and Publish
   only: [merge_requests]
   tags: [werf]
 
@@ -337,8 +327,6 @@ Stop Review:
     action: stop
   variables:
     GIT_STRATEGY: none
-  dependencies:
-    - Review
   only: [merge_requests]
   when: manual
   tags: [werf]
@@ -543,8 +531,6 @@ Build and Publish:
   stage: deploy
   script:
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-  dependencies:
-    - Build and Publish
   tags: [werf]
 
 Review:
@@ -568,8 +554,6 @@ Review:
   artifacts:
     paths:
       - werf.yaml
-  dependencies:
-    - Build and Publish
   only: [merge_requests]
   tags: [werf]
 
@@ -582,8 +566,6 @@ Stop Review:
     action: stop
   variables:
     GIT_STRATEGY: none
-  dependencies:
-    - Review
   only: [merge_requests]
   when: manual
   tags: [werf]
@@ -653,8 +635,6 @@ Build and Publish:
   stage: deploy
   script:
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-  dependencies:
-    - Build and Publish
   except: [schedules]
   tags: [werf]
 
@@ -680,8 +660,6 @@ Stop Review:
     action: stop
   variables:
     GIT_STRATEGY: none
-  dependencies:
-    - Review
   only: [merge_requests]
   when: manual
   tags: [werf]
@@ -751,8 +729,6 @@ Build and Publish:
   stage: deploy
   script:
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-  dependencies:
-    - Build and Publish
   except: [schedules]
   tags: [werf]
 
@@ -778,8 +754,6 @@ Stop Review:
     action: stop
   variables:
     GIT_STRATEGY: none
-  dependencies:
-    - Review
   only: [merge_requests]
   when: manual
   tags: [werf]
@@ -848,8 +822,6 @@ Build and Publish:
   stage: deploy
   script:
     - werf converge --skip-build --set "env_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-  dependencies:
-    - Build and Publish
   except: [schedules]
   tags: [werf]
 
@@ -875,8 +847,6 @@ Stop Review:
     action: stop
   variables:
     GIT_STRATEGY: none
-  dependencies:
-    - Review
   only: [merge_requests]
   when: manual
   tags: [werf]
