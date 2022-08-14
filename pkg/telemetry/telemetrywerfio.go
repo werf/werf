@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -167,6 +169,31 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 		}
 		if val := os.Getenv("GO_SERVER_URL"); val != "" {
 			attributes["ciName"] = "gocd"
+		}
+	}
+
+	// add extra attributes
+	{
+		env := os.Environ()
+		sort.Strings(env)
+		for _, keyValue := range env {
+			parts := strings.SplitN(keyValue, "=", 2)
+			if strings.HasPrefix(parts[0], "WERF_TELEMETRY_EXTRA_ATTRIBUTE_") {
+				valueParts := strings.SplitN(parts[1], "=", 2)
+
+				attrKey := valueParts[0]
+				attrVal := valueParts[1]
+
+				// ignore reserved name
+				{
+					_, ok := attributes[attrKey]
+					if ok {
+						continue
+					}
+				}
+
+				attributes[attrKey] = attrVal
+			}
 		}
 	}
 
