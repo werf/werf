@@ -44,7 +44,7 @@ func Init(ctx context.Context, opts TelemetryOptions) error {
 		logFile = f
 	}
 
-	if t, err := NewTelemetryWerfIO(TracesURL, TelemetryWerfIOOptions{
+	if t, err := NewTelemetryWerfIO(GetTraceUrl(), TelemetryWerfIOOptions{
 		HandleErrorFunc: opts.ErrorHandlerFunc,
 	}); err != nil {
 		return fmt.Errorf("unable to setup telemetry.werf.io exporter: %w", err)
@@ -82,6 +82,14 @@ func Shutdown(ctx context.Context) error {
 	}
 
 	return telemetrywerfio.Shutdown(ctx)
+}
+
+func GetTraceUrl() string {
+	if url := os.Getenv("WERF_TELEMETRY_TRACE_URL"); url != "" {
+		return url
+	}
+
+	return TracesURL
 }
 
 func IsEnabled() bool {
