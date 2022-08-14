@@ -1,8 +1,10 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -76,6 +78,12 @@ func TelemetryPreRun(cmd *cobra.Command, args []string) error {
 	}
 	telemetry.GetTelemetryWerfIO().SetCommandOptions(ctx, commandOptions)
 
+	if userID, err := getTelemetryUserID(ctx); err != nil {
+		telemetry.LogF("error: %s", err)
+	} else {
+		telemetry.GetTelemetryWerfIO().SetUserID(ctx, userID)
+	}
+
 	if projectID, err := getTelemetryProjectID(ctx); err != nil {
 		telemetry.LogF("error: %s", err)
 	} else {
@@ -85,6 +93,35 @@ func TelemetryPreRun(cmd *cobra.Command, args []string) error {
 	telemetry.GetTelemetryWerfIO().CommandStarted(ctx)
 
 	return nil
+}
+
+func getTelemetryUserID(_ context.Context) (string, error) {
+	macAddress, err := getMACAddress()
+	if err != nil {
+		return "", fmt.Errorf("unable to get mac address: %w", err)
+	}
+
+	return util.Sha256Hash(macAddress), nil
+}
+
+func getMACAddress() (string, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+
+	for _, i := range interfaces {
+		if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
+			// skip locally administered addresses
+			if i.HardwareAddr[0]&2 == 2 {
+				continue
+			}
+
+			return i.HardwareAddr.String(), nil
+		}
+	}
+
+	return "", nil
 }
 
 func getTelemetryProjectID(ctx context.Context) (string, error) {

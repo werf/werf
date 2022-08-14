@@ -24,6 +24,7 @@ const (
 )
 
 type TelemetryWerfIOInterface interface {
+	SetUserID(ctx context.Context, projectID string)
 	SetProjectID(ctx context.Context, projectID string)
 	SetCommand(ctx context.Context, command string)
 	SetCommandOptions(ctx context.Context, options []CommandOption)
@@ -39,6 +40,7 @@ type TelemetryWerfIO struct {
 
 	startedAt      time.Time
 	executionID    string
+	userID         string
 	projectID      string
 	command        string
 	commandOptions []CommandOption
@@ -109,6 +111,10 @@ func (t *TelemetryWerfIO) SetCommand(ctx context.Context, command string) {
 
 func (t *TelemetryWerfIO) SetCommandOptions(ctx context.Context, options []CommandOption) {
 	t.commandOptions = options
+}
+
+func (t *TelemetryWerfIO) SetUserID(_ context.Context, userID string) {
+	t.userID = userID
 }
 
 func (t *TelemetryWerfIO) SetProjectID(ctx context.Context, projectID string) {
@@ -190,6 +196,7 @@ func (t *TelemetryWerfIO) sendEvent(ctx context.Context, event Event) error {
 		attributes = []attribute.KeyValue{
 			attribute.Key("ts").Int64(ts),
 			attribute.Key("executionID").String(t.executionID),
+			attribute.Key("userID").String(t.userID),
 			attribute.Key("projectID").String(t.projectID),
 			attribute.Key("command").String(t.command),
 			attribute.Key("eventType").String(string(event.GetType())),
