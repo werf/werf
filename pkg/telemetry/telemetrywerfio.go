@@ -168,35 +168,62 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 }
 
 func (t *TelemetryWerfIO) sendEvent(ctx context.Context, event Event) error {
+	LogF("start sending event")
+
 	trc := t.getTracer()
 	_, span := trc.Start(ctx, spanName)
 
-	LogF("start sending event")
+	var attributes []attribute.KeyValue
+	{
+		ts := time.Now().UnixMilli()
 
-	ts := time.Now().UnixMilli()
+		rawAttributes, err := json.Marshal(t.getAttributes())
+		if err != nil {
+			return fmt.Errorf("unable to marshal attributes: %w", err)
+		}
 
-	span.SetAttributes(attribute.Key("ts").Int64(ts))
-	span.SetAttributes(attribute.Key("executionID").String(t.executionID))
-	span.SetAttributes(attribute.Key("projectID").String(t.projectID))
-	span.SetAttributes(attribute.Key("command").String(t.command))
+		rawEventData, err := json.Marshal(event)
+		if err != nil {
+			return fmt.Errorf("unable to marshal event data: %w", err)
+		}
 
-	rawAttributes, err := json.Marshal(t.getAttributes())
-	if err != nil {
-		return fmt.Errorf("unable to marshal attributes: %w", err)
+		attributes = []attribute.KeyValue{
+			attribute.Key("ts").Int64(ts),
+			attribute.Key("executionID").String(t.executionID),
+			attribute.Key("projectID").String(t.projectID),
+			attribute.Key("command").String(t.command),
+			attribute.Key("eventType").String(string(event.GetType())),
+			attribute.Key("eventData").String(string(rawEventData)),
+			attribute.Key("attributes").String(string(rawAttributes)),
+			attribute.Key("schemaVersion").Int64(schemaVersion),
+		}
 	}
-	span.SetAttributes(attribute.Key("attributes").String(string(rawAttributes)))
 
-	span.SetAttributes(attribute.Key("eventType").String(string(event.GetType())))
-
-	rawEventData, err := json.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("unable to marshal event data: %w", err)
-	}
-	span.SetAttributes(attribute.Key("eventData").String(string(rawEventData)))
-	span.SetAttributes(attribute.Key("schemaVersion").Int64(schemaVersion))
+	span.SetAttributes(attributes...)
 	span.End()
 
-	LogF("sent event: ts=%d executionID=%q projectID=%q command=%q attributes=%q eventType=%q eventData=%q schemaVersion=%d", ts, t.executionID, t.projectID, t.command, string(rawAttributes), string(event.GetType()), string(rawEventData), schemaVersion)
+	var attributesString string
+	{
+		for i, attr := range attributes {
+			if i != 0 {
+				attributesString += ", "
+			}
+
+			var valueFormat string
+			{
+				if attr.Value.Type() == attribute.STRING {
+					valueFormat = "=%q"
+				} else {
+					valueFormat = "=%v"
+				}
+			}
+
+			attributesString += fmt.Sprintf("%s", attr.Key)
+			attributesString += fmt.Sprintf(valueFormat, attr.Value.AsInterface())
+		}
+	}
+
+	LogF("sent event: %s", attributesString)
 
 	return nil
 }
