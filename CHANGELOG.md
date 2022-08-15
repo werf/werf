@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.155](https://www.github.com/werf/werf/compare/v1.2.154...v1.2.155) (2022-08-15)
+
+
+### Miscellaneous Chores
+
+* release v1.2.155 ([c4d14d3](https://www.github.com/werf/werf/commit/c4d14d39a0f8bafaad81717c71a7f236c3ccc380))
+
 ### [1.2.154](https://www.github.com/werf/werf/compare/v1.2.153...v1.2.154) (2022-08-14)
 
 
