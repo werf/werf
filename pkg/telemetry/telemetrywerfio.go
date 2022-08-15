@@ -174,27 +174,20 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 
 	// add extra attributes
 	{
+		extraAttributes := map[string]interface{}{}
 		env := os.Environ()
 		sort.Strings(env)
 		for _, keyValue := range env {
 			parts := strings.SplitN(keyValue, "=", 2)
 			if strings.HasPrefix(parts[0], "WERF_TELEMETRY_EXTRA_ATTRIBUTE_") {
 				valueParts := strings.SplitN(parts[1], "=", 2)
-
 				attrKey := valueParts[0]
 				attrVal := valueParts[1]
-
-				// ignore reserved name
-				{
-					_, ok := attributes[attrKey]
-					if ok {
-						continue
-					}
-				}
-
-				attributes[attrKey] = attrVal
+				extraAttributes[attrKey] = attrVal
 			}
 		}
+
+		attributes["extra"] = extraAttributes
 	}
 
 	return attributes
