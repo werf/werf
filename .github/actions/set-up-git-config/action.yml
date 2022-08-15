@@ -1,0 +1,9 @@
+name: Set up git config
+runs:
+  using: composite
+  steps:
+  - name: Set up git config
+    run: |
+      git config --global user.name "borya"
+      git config --global user.email "borya@flant.com"
+    shell: bash

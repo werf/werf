@@ -1,0 +1,87 @@
+name: Run regular integration tests
+
+on:
+  workflow_call:
+    inputs:
+      packages:
+        description: Comma-separated package paths to test
+        required: true
+        type: string
+      excludePackages:
+        description: Comma-separated package paths to exclude from testing
+        type: string
+      coverage:
+        description: Collect and upload coverage reports
+        default: false
+        type: boolean
+      linuxAmd64Runner:
+        description: Runner for Linux amd64 tests
+        default: ubuntu-22.04
+        type: string
+      fetchDepth:
+        description: Git checkout fetch depth
+        default: 1
+        type: number
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DEBIAN_FRONTEND: "noninteractive"
+
+jobs:
+  _:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ${{ inputs.linuxAmd64Runner }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+    - name: Install werf build dependencies
+      run: sudo apt-get install -y libbtrfs-dev
+
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: ${{ inputs.fetchDepth }}
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        cache: true
+        go-version-file: go.mod
+
+    - name: Install Task
+      uses: arduino/setup-task@v1
+
+    - name: Set up prebuilt werf test binary
+      uses: ./.github/actions/set-up-prebuilt-werf-test-binary
+      with:
+        coverage: ${{ inputs.coverage }}
+        coverageDirSuffix: ${{ matrix.os }}
+
+    - name: Set up git config
+      uses: ./.github/actions/set-up-git-config
+
+    - name: Install ginkgo
+      run: task -p deps:install:ginkgo
+
+    - name: Test
+      run: |
+        if ${{ inputs.coverage }}; then
+          task -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going --skip-package '${{ inputs.excludePackages }}'
+          mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
+        else
+          task -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 -v --keep-going --skip-package '${{ inputs.excludePackages }}'
+        fi
+        echo loadavg: $(cat /proc/loadavg)
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@master
+      if: ${{ inputs.coverage }}
+      with:
+        name: coverage
+        path: coverage

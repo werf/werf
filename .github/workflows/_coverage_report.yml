@@ -1,0 +1,69 @@
+name: Create and upload final coverage report
+
+on:
+  workflow_call:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DEBIAN_FRONTEND: "noninteractive"
+
+jobs:
+  _:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+
+    - name: Download coverage artifact
+      uses: actions/download-artifact@master
+      with:
+        name: coverage
+        path: coverage
+
+    - name: Download Code Climate test-reporter
+      run: |
+        curl -sSL https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 --output reporter
+        chmod +x ./reporter
+
+    - name: Install gocovmerge
+      run: go install github.com/wadey/gocovmerge@latest
+
+      # FIXME: determine problems with coverage records and remove seds
+    - name: Merge coverage files into one
+      run: |
+        find coverage -type f -exec \
+          sed -i -e "s|/home/ubuntu/actions-runner/_work/werf/werf|github.com/werf/werf|g" {} +
+
+        find coverage -type f -exec \
+          sed -i -e "s|/home/runner/actions-runner/_work/werf/werf|github.com/werf/werf|g" {} +
+
+        find coverage -type f -exec \
+          sed -i -e "s|/home/runner/work/werf/werf|github.com/werf/werf|g" {} +
+
+        find coverage -type f -exec \
+          sed -i -e "s|/Users/runner/runners/[0-9.]*/work/werf/werf|github.com/werf/werf|g" {} +
+
+        find coverage -type f -exec \
+          sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/werf/werf/cmd/werf/main.go|g' {} +
+
+        coverage_files=$(find coverage -name '*.out')
+        gocovmerge ${coverage_files[@]} > coverage.out
+
+    - name: Format and upload coverage report
+      run: |
+        export GIT_BRANCH="${GITHUB_REF:11}"
+        export GIT_COMMIT_SHA="$GITHUB_SHA"
+
+        ./reporter format-coverage -t=gocov -p=github.com/werf/werf/ coverage.out
+        ./reporter upload-coverage
+      env:
+        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}

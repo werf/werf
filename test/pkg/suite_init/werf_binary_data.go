@@ -27,6 +27,7 @@ func ComputeWerfBinPath() []byte {
 	if werfBinPath == "" {
 		var err error
 
+		// TODO: get rid of these hardcoded build instructions?
 		if runtime.GOOS == "linux" {
 			werfBinPath, err = gexec.BuildWithEnvironment("github.com/werf/werf/cmd/werf", []string{"CGO_ENABLED=1"}, "-compiler", "gc", "-ldflags", "-linkmode external -extldflags=-static", "-tags", "dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build")
 		} else {

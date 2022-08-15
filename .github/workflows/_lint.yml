@@ -1,0 +1,36 @@
+name: Run lint
+
+on:
+  workflow_call:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DEBIAN_FRONTEND: "noninteractive"
+
+lint:
+  name: Lint
+  runs-on: ubuntu-22.04
+  steps:
+  - name: Install build dependencies
+    run: sudo apt-get install -y libbtrfs-dev
+
+  - name: Checkout code
+    uses: actions/checkout@v3
+
+  - name: Set up Go
+    uses: actions/setup-go@v3
+    with:
+      cache: true
+      go-version-file: go.mod
+
+  - name: Install Task
+    uses: arduino/setup-task@v1
+
+  - name: Install golangci-lint
+    run: task -p deps:install:golangci-lint
+
+  - name: Lint
+    run: task -o group -p lint

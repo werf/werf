@@ -1,64 +1,26 @@
-name: Commit tests
+name: test:pr
 
 on:
-  push:
+  pull_request:
     paths:
-    - '.github/workflows/commit_tests.yml'
+    - '.github'
     - '**/*.go'
     - 'go.mod'
-
-env:
-  DEBIAN_FRONTEND: "noninteractive"
+  repository_dispatch:
+    types: [test:pr]
+  workflow_dispatch:
 
 jobs:
-  unit-test:
-    name: Unit testing
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          cache: true
-          go-version-file: go.mod
-
-      - name: Install Task
-        uses: arduino/setup-task@v1
-
-      - name: Prepare environment
-        run: |
-          sudo apt-get -y update && sudo apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev
-          ./scripts/ci/git.sh
-          task -p deps:install:ginkgo
-
-      - name: Tests
-        run: |
-          task -p test:unit
-
   lint:
-    name: Lint
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    uses: ./.github/workflows/_lint.yml
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          cache: true
-          go-version-file: go.mod
+  unit:
+    uses: ./.github/workflows/_test_unit.yml
 
-      - name: Install Task
-        uses: arduino/setup-task@v1
-
-      - name: Prepare environment
-        run: |
-          sudo apt-get -y update && sudo apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
-
-      - name: Lint
-        run: |
-          task -p lint
-
+  notify:
+    if: failure()
+    uses: ./.github/workflows/_final_notification.yml
+    needs:
+    - lint
+    - unit
+    secrets: inherit

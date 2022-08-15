@@ -1,18 +1,21 @@
-name: Tests Cleanup
+name: test:cr-cleanup
 
 on:
   schedule:
   - cron:  '0 6 * * *'
   repository_dispatch:
-    types: [tests_cleaner]
+    types: [test:cr-cleanup]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
 
 env:
   DEBIAN_FRONTEND: "noninteractive"
 
 jobs:
-
-  docker_registries_cleaner:
-    name: Docker registries cleaner
+  cr-cleanup:
     strategy:
       fail-fast: false
       matrix:
@@ -31,13 +34,13 @@ jobs:
       WERF_TEST_DOCKERHUB_USERNAME: ${{ secrets.WERF_TEST_DOCKERHUB_USERNAME }}
       WERF_TEST_QUAY_TOKEN: ${{ secrets.WERF_TEST_QUAY_TOKEN }}
       WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
+    timeout-minutes: 60
     steps:
-
     - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Setup (common)
-      run: sudo apt-get -y update && apt-get install -y jq
+      run: sudo apt-get install -y jq
 
     - name: Setup (acr)
       uses: azure/login@v1
@@ -64,3 +67,9 @@ jobs:
 
     - name: Cleanup
       run: ./scripts/ci/integration_tests_registries_cleaner.sh ${{ matrix.implementation }}
+
+  notify:
+    if: always()
+    uses: ./.github/workflows/_final_notification.yml
+    needs: cr-cleanup
+    secrets: inherit
