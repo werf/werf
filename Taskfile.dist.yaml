@@ -286,6 +286,11 @@ tasks:
         paths: '{{.paths | default "./test/e2e"}}'
         labelFilter: '{{.labelFilter | default "!complex && !simple"}}'
 
+  verify:binaries:dist:all:
+    desc: 'Verify that the distributable binaries are built and have correct platform/arch. Important vars: "version".'
+    cmds:
+    - ./scripts/verify-dist-binaries.sh {{.version}}
+
   format:
     desc: 'Run all code formatters. Important vars: "paths".'
     run: once
