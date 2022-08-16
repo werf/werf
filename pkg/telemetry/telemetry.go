@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 const (
@@ -93,7 +94,9 @@ func GetTraceUrl() string {
 }
 
 func IsEnabled() bool {
-	return util.GetBoolEnvironmentDefaultTrue("WERF_TELEMETRY")
+	isDevVersion := werf.Version == "dev" || werf.Version == "0.0.0"
+	envVal := util.GetBoolEnvironmentDefaultFalse("WERF_TELEMETRY")
+	return envVal || !isDevVersion
 }
 
 func LogF(f string, args ...interface{}) {
