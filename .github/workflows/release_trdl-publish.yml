@@ -6,7 +6,7 @@ on:
     paths:
       - trdl_channels.yaml
   repository_dispatch:
-    types: [release:trdl-publish]
+    types: ["release:trdl-publish"]
   workflow_dispatch:
 
 defaults:

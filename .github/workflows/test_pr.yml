@@ -7,7 +7,7 @@ on:
     - '**/*.go'
     - 'go.mod'
   repository_dispatch:
-    types: [test:pr]
+    types: ["test:pr"]
   workflow_dispatch:
 
 jobs:

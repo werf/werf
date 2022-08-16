@@ -11,7 +11,7 @@ on:
   pull_request:
     types: [labeled]
   repository_dispatch:
-    types: [test:main]
+    types: ["test:main"]
   workflow_dispatch:
 
 jobs:

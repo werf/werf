@@ -9,7 +9,7 @@ on:
       - 'README.md'
       - 'README_ru.md'
   repository_dispatch:
-    types: [docs:validate]
+    types: ["docs:validate"]
   workflow_dispatch:
 
 defaults:
