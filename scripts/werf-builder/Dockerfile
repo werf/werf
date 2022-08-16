@@ -11,6 +11,7 @@ RUN apt-get -y update && \
 ADD cmd /.werf-deps/cmd
 ADD pkg /.werf-deps/pkg
 ADD go.mod go.sum Taskfile.dist.yaml /.werf-deps/
+ADD scripts /.werf-deps/scripts
 
 RUN cd /.werf-deps && \
     task -o group -p build:dist:all version=base && \
