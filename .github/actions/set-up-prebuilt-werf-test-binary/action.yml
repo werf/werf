@@ -25,7 +25,7 @@ runs:
     shell: bash
 
   - name: Create WERF_TEST_COVERAGE_DIR
-    if: ${{ inputs.coverage }}
+    if: inputs.coverage == 'true'
     run: |
       mkdir -p "$WERF_TEST_COVERAGE_DIR"
     shell: bash
