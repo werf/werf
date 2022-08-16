@@ -17,7 +17,7 @@ jobs:
       with:
         vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
         project-name: werf
-        git-tag: ${{ github.event.ref }}
+        git-tag: ${{ github.ref_name }}
         vault-auth-method: approle
         vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
         vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
