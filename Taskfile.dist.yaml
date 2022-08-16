@@ -13,11 +13,8 @@ vars:
   os: '{{OS}}'
   arch: '{{ternary "arm64" ARCH (eq ARCH "arm")}}'
   mode: '{{ternary "cgo" "go" (eq .os "linux")}}'
-  binariesExt: '{{if (eq .targetOS "windows")}}.exe{{end}}'
-  binaryName: 'werf{{.binariesExt}}'
-  binaryWithCoverageName: 'werf-with-coverage{{.binariesExt}}'
-  devBinary: './bin/{{.binaryName}}'
-  withCoverageBinary: './bin/{{.binaryWithCoverageName}}'
+  devBinary: './bin/werf{{if (eq .targetOS "windows")}}.exe{{end}}'
+  withCoverageBinary: './bin/werf-with-coverage{{if (eq .targetOS "windows")}}.exe{{end}}'
   package: "github.com/werf/werf/cmd/werf"
 
   cgoTags: "dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build"
@@ -46,7 +43,7 @@ tasks:
 
   _build:cgo:dev: &build_cgo_dev
     cmds:
-    - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/{{.binaryName}}"
+    - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "1"
@@ -57,12 +54,12 @@ tasks:
   _build:cgo:dist:
     <<: *build_cgo_dev
     cmds:
-    - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/{{.binaryName}}"
+    - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -compiler gc -ldflags="{{.cgoReleaseLDFlags}}" -tags="{{.cgoTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
 
   _build:go:dev: &build_go_dev
     cmds:
-    - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/{{.binaryName}}"
+    - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "0"
@@ -72,7 +69,7 @@ tasks:
   _build:go:dist:
     <<: *build_go_dev
     cmds:
-    - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/{{.binaryName}}"
+    - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -ldflags="{{.goReleaseLDFlags}}" -tags="{{.goTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
 
   build:
