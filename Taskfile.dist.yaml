@@ -1,7 +1,6 @@
 version: '3'
 
 silent: true
-output: group
 
 env:
   WERF_TEST_K8S_DOCKER_REGISTRY: "localhost:5000"
@@ -13,9 +12,12 @@ vars:
   version: "0.0.0"
   os: '{{OS}}'
   arch: '{{ternary "arm64" ARCH (eq ARCH "arm")}}'
+  mode: '{{ternary "cgo" "go" (eq .os "linux")}}'
   binariesExt: '{{if (eq .targetOS "windows")}}.exe{{end}}'
   binaryName: 'werf{{.binariesExt}}'
+  binaryWithCoverageName: 'werf-with-coverage{{.binariesExt}}'
   devBinary: './bin/{{.binaryName}}'
+  withCoverageBinary: './bin/{{.binaryWithCoverageName}}'
   package: "github.com/werf/werf/cmd/werf"
 
   cgoTags: "dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build"
@@ -186,54 +188,106 @@ tasks:
         targetOS: "windows"
         targetArch: "amd64"
 
+  build-with-coverage:
+    desc: "Build werf binary to run E2E tests with coverage."
+    cmds:
+    - task: test:go-test
+      vars:
+        paths: "cmd/werf/main.go cmd/werf/main_test.go"
+        extraTestGoTestArgs: '-coverpkg=./... -c -o "{{.withCoverageBinary}}"'
+
   _test:go-test:cgo:
     cmds:
-    - go test -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" {{.CLI_ARGS}} {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
+    - go test -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" {{.extraTestGoTestArgs}} {{.CLI_ARGS}} {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
     env:
       CGO_ENABLED: "1"
 
   _test:go-test:go:
     cmds:
-    - go test -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" {{.CLI_ARGS}} {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
+    - go test -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" {{.extraTestGoTestArgs}} {{.CLI_ARGS}} {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
     env:
       CGO_ENABLED: "0"
 
   test:go-test: &test_go_test
     desc: 'Run raw "go test". Important vars: "paths".'
     cmds:
-    - task: _test:go-test:{{ternary "cgo" "go" (eq .os "linux")}}
+    - task: _test:go-test:{{.mode}}
       vars:
         paths: "{{.paths}}"
+        extraTestGoTestArgs: "{{.extraTestGoTestArgs}}"
+
+  _test:ginkgo:cgo:
+    cmds:
+    - |
+      ginkgo -p -r -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" \
+        {{if .labelFilter}}--label-filter={{.labelFilter}}{{end}} {{.CLI_ARGS}} \
+        {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
+    env:
+      CGO_ENABLED: "1"
+
+  _test:ginkgo:go:
+    cmds:
+    - |
+      ginkgo -p -r -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" \
+        {{if .labelFilter}}--label-filter={{.labelFilter}}{{end}} {{.CLI_ARGS}} \
+        {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
+    env:
+      CGO_ENABLED: "0"
+
+  test:ginkgo: &test_ginkgo
+    desc: 'Run raw "ginkgo". Important vars: "paths".'
+    cmds:
+    - task: _test:ginkgo:{{.mode}}
+      vars:
+        paths: "{{.paths}}"
+        labelFilter: "{{.labelFilter}}"
 
   test:unit:
     desc: 'Run unit tests. Important vars: "paths".'
     cmds:
-    - ginkgo -p -r {{.CLI_ARGS}} {{.paths | default "./pkg/... ./cmd/..."}}
+    - task: test:ginkgo
+      vars:
+        paths: '{{.paths | default "./pkg ./cmd"}}'
 
   test:integration:
     desc: 'Run integration tests. Important vars: "paths".'
     cmds:
-    - ginkgo -p -r {{.CLI_ARGS}} {{.paths | default "integration/suites"}}
+    - task: test:ginkgo
+      vars:
+        paths: '{{.paths | default "./integration/suites"}}'
+        labelFilter: '{{.labelFilter}}'
 
   test:e2e:
     desc: 'Run all e2e tests. Important vars: "paths".'
     cmds:
-    - ginkgo -p -r {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
+    - task: test:ginkgo
+      vars:
+        paths: '{{.paths | default "./test/e2e"}}'
+        labelFilter: '{{.labelFilter}}'
 
   test:e2e:simple:
     desc: 'Run e2e tests tagged "simple". Important vars: "paths".'
     cmds:
-    - ginkgo -p -r --label-filter=simple {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
+    - task: test:ginkgo
+      vars:
+        paths: '{{.paths | default "./test/e2e"}}'
+        labelFilter: '{{.labelFilter | default "simple"}}'
 
   test:e2e:complex:
     desc: 'Run e2e tests tagged "complex". Important vars: "paths".'
     cmds:
-    - ginkgo -p -r --label-filter=complex {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
+    - task: test:ginkgo
+      vars:
+        paths: '{{.paths | default "./test/e2e"}}'
+        labelFilter: '{{.labelFilter | default "complex"}}'
 
   test:e2e:extra:
     desc: 'Run e2e tests not tagged "simple" or "complex". Important vars: "paths".'
     cmds:
-    - ginkgo -p -r --label-filter="!complex && !simple" {{.CLI_ARGS}} {{.paths | default "test/e2e"}}
+    - task: test:ginkgo
+      vars:
+        paths: '{{.paths | default "./test/e2e"}}'
+        labelFilter: '{{.labelFilter | default "!complex && !simple"}}'
 
   format:
     desc: 'Run all code formatters. Important vars: "paths".'
@@ -257,10 +311,37 @@ tasks:
     deps:
     - lint:golangci-lint
 
-  lint:golangci-lint:
-    desc: 'Lint with golangci-lint. Important vars: "paths".'
+  lint:golangci-lint:cgo:
+    desc: 'Lint with golangci-lint for cgo. Important vars: "paths".'
     cmds:
-    - golangci-lint run {{.CLI_ARGS}} {{.paths | default "./..."}}
+    - golangci-lint run --build-tags="{{.cgoTags}}" {{.CLI_ARGS}} {{.paths | default "./..."}}
+
+  lint:golangci-lint:go:
+    desc: 'Lint with golangci-lint without cgo. Important vars: "paths".'
+    cmds:
+    - golangci-lint run --build-tags="{{.goTags}}" {{.CLI_ARGS}} {{.paths | default "./..."}}
+
+  _lint:golangci-lint:cgo-and-go:
+    deps:
+    - task: lint:golangci-lint:cgo
+      vars:
+        paths: "{{.paths}}"
+    - task: lint:golangci-lint:go
+      vars:
+        paths: "{{.paths}}"
+
+  _lint:golangci-lint:go:
+    deps:
+    - task: lint:golangci-lint:go
+      vars:
+        paths: "{{.paths}}"
+
+  lint:golangci-lint:
+    desc: 'Lint with golangci-lint (with and without cgo). Important vars: "paths".'
+    deps:
+    - task: _lint:golangci-lint:{{ternary "cgo-and-go" "go" (eq .mode "cgo")}}
+      vars:
+        paths: "{{.paths}}"
 
   doc:
     desc: "Run all docs generators, formatters and linters."
@@ -295,7 +376,8 @@ tasks:
     cmds:
     - ./scripts/docs/check_broken_links.sh main "{{.devBinary}}"
 
-  _github:dispatch:
+  github:dispatch:werf:
+    desc: 'Manually dispatch specified GitHub workflow. Important vars: "eventType", "githubToken".'
     cmds:
     - |
       curl -sSL 'https://api.github.com/repos/werf/werf/dispatches' \
@@ -306,34 +388,6 @@ tasks:
           "event_type": "{{.eventType}}",
           "client_payload": {{.clientPayload | default "{}"}}
         }' {{.CLI_ARGS}}
-
-  trigger:tests:
-    desc: 'Manually trigger GitHub tests workflow. Important vars: "githubToken".'
-    cmds:
-    - task: _github:dispatch
-      vars:
-        eventType: 'tests'
-
-  trigger:daily-tests:
-    desc: 'Manually trigger GitHub daily tests workflow. Important vars: "githubToken".'
-    cmds:
-    - task: _github:dispatch
-      vars:
-        eventType: 'daily_tests'
-
-  trigger:tests-cleaner:
-    desc: 'Manually trigger GitHub tests cleaner workflow. Important vars: "githubToken".'
-    cmds:
-    - task: _github:dispatch
-      vars:
-        eventType: 'tests_cleaner'
-
-  trigger:site-deploy:
-    desc: 'Manually trigger GitHub site deploy workflow. Important vars: "githubToken".'
-    cmds:
-    - task: _github:dispatch
-      vars:
-        eventType: 'site-deploy'
 
   _image:build:
     cmds:
@@ -377,7 +431,7 @@ tasks:
   clean:
     desc: "Clean all temporary files and build artifacts."
     deps:
-    - clean:binaries:
+    - clean:binaries
 
   clean:binaries:
     desc: "Clean all built binaries."
@@ -400,16 +454,15 @@ tasks:
     cmds:
     - go install {{.CLI_ARGS}} github.com/onsi/ginkgo/v2/ginkgo@{{.ginkgoVersion | default "v2.1.4"}}
 
-  _git:fetch:
-    run: once
+  deps:install:golangci-lint:
+    desc: 'Install golangci-lint binary.'
     cmds:
-    - git fetch
+    - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin {{.golangcilintVersion | default "v1.46.2"}}
 
   sign:
     desc: 'Sign last version tag + origin/main and push signatures. Important vars: "refs".'
-    deps:
-    - _git:fetch
     cmds:
+    - git fetch --tags -f
     - git signatures pull {{.CLI_ARGS}}
     - |
       for ref in {{.refs | default "$(git tag --sort=v:refname | tail -n1) origin/main"}}; do

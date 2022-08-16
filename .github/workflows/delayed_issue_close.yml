@@ -1,4 +1,4 @@
-name: Delayed Issue Closing
+name: issues:delayed-auto-close
 
 on:
   schedule:
@@ -12,11 +12,14 @@ on:
   pull_request_target:
     types:
       - labeled
+  repository_dispatch:
+    types: [issues:delayed-auto-close]
   workflow_dispatch:
 
 jobs:
-  issue-manager:
+  manage:
     runs-on: ubuntu-22.04
+    timeout-minutes: 20
     steps:
       - uses: tiangolo/issue-manager@0.4.0
         with:
@@ -31,3 +34,8 @@ jobs:
                 }
             }
 
+  notify:
+    if: github.event_name == 'schedule' && always()
+    uses: ./.github/workflows/_final_notification.yml
+    needs: manage
+    secrets: inherit

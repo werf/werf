@@ -13,5 +13,5 @@ ADD pkg /.werf-deps/pkg
 ADD go.mod go.sum Taskfile.dist.yaml /.werf-deps/
 
 RUN cd /.werf-deps && \
-    task -p build:dist:all version=base && \
+    task -o group -p build:dist:all version=base && \
     rm -rf /.werf-deps

@@ -1,4 +1,4 @@
 docker_image: registry.werf.io/werf/builder:678451c4471c3ca6bfe4e11adbc96b1dcb94ea5d@sha256:88710d7a9c8ba27a52822acccf25f768f933a0d893bb6e2aff817558a6105216
 commands:
-- task -p build:dist:all version={{ .Tag }}
+- task -o group -p build:dist:all version={{ .Tag }}
 - cp -a ./dist/{{ .Tag }}/* /result

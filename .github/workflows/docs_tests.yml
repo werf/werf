@@ -1,22 +1,29 @@
-name: Documentation Validation
+name: docs:validate
+
 on:
-  push:
+  pull_request:
     paths:
-      - '.github/workflows/docs_tests.yml'
+      - '.github'
       - 'cmd/**'
       - 'docs/**'
       - 'README.md'
       - 'README_ru.md'
+  repository_dispatch:
+    types: [docs:validate]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
 
 env:
   DEBIAN_FRONTEND: "noninteractive"
   GOPATH: ${{ github.workspace }}/go
 
 jobs:
-
   check_cli_and_readme_partials:
-    name: Check CLI and README partials
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev
@@ -33,17 +40,18 @@ jobs:
       - name: Install Task
         uses: arduino/setup-task@v1
 
-      - name: Test
-        run: |
-          ./scripts/ci/git.sh
-          task -p test:go-test paths="./integration/suites/docs"
+      - name: Set up git config
+        uses: ./.github/actions/set-up-git-config
 
-  check_links:
-    name: Check broken links
+      - name: Test
+        run: task -p test:go-test paths="./integration/suites/docs"
+
+  check_broken_links:
     runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
+    timeout-minutes: 60
     steps:
+      - name: Install werf build dependencies
+        run: sudo apt-get install -y libbtrfs-dev
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -65,6 +73,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check links
-        run: task -p doc:check-broken-links
+        run: task -o group -p doc:check-broken-links
         env:
           WERF_REPO: "ghcr.io/${{ github.repository_owner }}/werfio"
+
+  notify:
+    if: failure()
+    uses: ./.github/workflows/_final_notification.yml
+    needs:
+    - check_cli_and_readme_partials
+    - check_broken_links
+    secrets: inherit

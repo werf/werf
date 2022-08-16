@@ -19,8 +19,7 @@
 /tests/integration/ansible/**/app
 /tests/integration/three-way-merge/**/main
 /bin
-/tests-coverage
-/precompiled_tests_binaries
+/coverage
 /test/**/*.test
 
 /docs/\.jekyll-cache/
