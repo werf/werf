@@ -135,7 +135,7 @@ jobs:
 
     - name: Upload coverage artifact
       uses: actions/upload-artifact@master
-      if: ${{ inputs.coverage }}
+      if: inputs.coverage == 'true'
       with:
         name: coverage
         path: coverage
