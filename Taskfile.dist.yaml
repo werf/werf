@@ -325,7 +325,7 @@ tasks:
     - golangci-lint run --build-tags="{{.goTags}}" {{.CLI_ARGS}} {{.paths | default "./..."}}
 
   _lint:golangci-lint:cgo-and-go:
-    deps:
+    cmds:
     - task: lint:golangci-lint:cgo
       vars:
         paths: "{{.paths}}"
