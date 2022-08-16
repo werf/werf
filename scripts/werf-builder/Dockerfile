@@ -14,4 +14,5 @@ ADD go.mod go.sum Taskfile.dist.yaml /.werf-deps/
 
 RUN cd /.werf-deps && \
     task -o group -p build:dist:all version=base && \
+    task -p verify:binaries:dist:all version=base && \
     rm -rf /.werf-deps
