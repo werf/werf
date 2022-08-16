@@ -1,4 +1,4 @@
-docker_image: registry.werf.io/werf/builder:678451c4471c3ca6bfe4e11adbc96b1dcb94ea5d@sha256:88710d7a9c8ba27a52822acccf25f768f933a0d893bb6e2aff817558a6105216
+docker_image: registry.werf.io/werf/builder:8e193000e479983d3fc8f44b6cd199f9204d1be0@sha256:21cfd507b8d07e90c44bb9d1bd91679c08d8602729aaf46dfba4a0b4057fb8cd
 commands:
 - task -o group -p build:dist:all version={{ .Tag }}
 - task -p verify:binaries:dist:all version={{ .Tag }}
