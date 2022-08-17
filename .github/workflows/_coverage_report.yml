@@ -1,4 +1,4 @@
-name: Create and upload final coverage report
+name: "zzzyyy(internal workflow)"
 
 on:
   workflow_call:
