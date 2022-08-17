@@ -1,5 +1,4 @@
 name: website:deploy
-
 on:
   push:
     branches:
@@ -9,21 +8,18 @@ on:
   repository_dispatch:
     types: ["website:deploy"]
   workflow_dispatch:
-
 defaults:
   run:
     shell: bash
-
 jobs:
   deploy-prod:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
-    - name: Deploy
-      run: |
-        curl -X POST -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" -F "ref=master" \
-             ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
-
+      - name: Deploy
+        run: |
+          curl -X POST -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" -F "ref=master" \
+               ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
   notify:
     if: always()
     needs: deploy-prod

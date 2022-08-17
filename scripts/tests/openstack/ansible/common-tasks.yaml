@@ -1,66 +1,60 @@
 - name: Add host to /etc/hosts
   shell: echo {{ ansible_default_ipv4.address }} {{ ansible_hostname }} >> /etc/hosts
-
 - name: Add Docker and Kubernetes GPG keys for apt
   apt_key:
     url: "{{ item }}"
     state: present
   loop:
-  - "https://download.docker.com/linux/ubuntu/gpg"
-  - "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-
+    - "https://download.docker.com/linux/ubuntu/gpg"
+    - "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 - name: Add Docker and Kubernetes apt repos
   apt_repository:
     repo: "{{ item }}"
   loop:
-  - "deb https://download.docker.com/linux/ubuntu {{ ansible_facts.distribution_release }} stable"
-  - "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-
+    - "deb https://download.docker.com/linux/ubuntu {{ ansible_facts.distribution_release }} stable"
+    - "deb http://apt.kubernetes.io/ kubernetes-xenial main"
 - name: Install HWE kernel
   apt:
     name: "{{ packages }}"
     cache_valid_time: 3600
   vars:
     packages:
-    - "linux-generic-hwe-18.04"
-    - "linux-headers-generic-hwe-18.04"
-    - "linux-image-generic-hwe-18.04"
+      - "linux-generic-hwe-18.04"
+      - "linux-headers-generic-hwe-18.04"
+      - "linux-image-generic-hwe-18.04"
   notify: reboot
-
 - name: Install a list of packages
   apt:
     name: "{{ packages }}"
     cache_valid_time: 3600
   vars:
     packages:
-    - "kubelet={{ kubernetes_version }}*"
-    - "kubeadm={{ kubernetes_version }}*"
-    - "kubectl={{ kubernetes_version }}*"
-    - "kubernetes-cni=0.7.5-*"
-    - "bash-completion"
-    - "docker.io=18.09.*"
-    - "jq"
-
+      - "kubelet={{ kubernetes_version }}*"
+      - "kubeadm={{ kubernetes_version }}*"
+      - "kubectl={{ kubernetes_version }}*"
+      - "kubernetes-cni=0.7.5-*"
+      - "bash-completion"
+      - "docker.io=18.09.*"
+      - "jq"
 - name: Hold Kubernetes and Docker packages
   dpkg_selections:
     name: "{{ item }}"
     selection: hold
   loop:
-  - "kubelet"
-  - "kubeadm"
-  - "kubectl"
-  - "kubernetes-cni"
-  - "docker.io"
-
+    - "kubelet"
+    - "kubeadm"
+    - "kubectl"
+    - "kubernetes-cni"
+    - "docker.io"
 - name: Install /etc/default/kubelet
   copy:
     content: >
       KUBELET_EXTRA_ARGS=--address={{ ansible_default_ipv4.address }} --node-ip={{ ansible_default_ipv4.address }}
+
     dest: /etc/default/kubelet
     owner: root
     group: root
     mode: '0644'
-
 - name: Install /etc/docker/daemon.json
   copy:
     content: |
@@ -76,4 +70,4 @@
     group: root
     mode: '0644'
   notify:
-  - restart docker
+    - restart docker

@@ -1,10 +1,7 @@
 version: "3"
-
 networks:
   otel-clickhouse:
-
 services:
-
   otel-collector:
     image: ghcr.io/werf/telemetrywerfio-collector:dev
     command:
@@ -18,7 +15,6 @@ services:
       - clickhouse
     networks:
       - otel-clickhouse
-
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     ports:

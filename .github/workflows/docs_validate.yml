@@ -1,5 +1,4 @@
 name: docs:validate
-
 on:
   pull_request:
     paths:
@@ -11,15 +10,12 @@ on:
   repository_dispatch:
     types: ["docs:validate"]
   workflow_dispatch:
-
 defaults:
   run:
     shell: bash
-
 env:
   DEBIAN_FRONTEND: "noninteractive"
   GOPATH: ${{ github.workspace }}/go
-
 jobs:
   check_cli_and_readme_partials:
     runs-on: ubuntu-22.04
@@ -27,61 +23,49 @@ jobs:
     steps:
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev
-
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           cache: true
           go-version-file: go.mod
-
       - name: Install Task
         uses: arduino/setup-task@v1
-
       - name: Set up git config
         uses: ./.github/actions/set-up-git-config
-
       - name: Test
         run: task -p test:go-test paths="./integration/suites/docs"
-
   check_broken_links:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev
-
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           cache: true
           go-version-file: go.mod
-
       - name: Install Task
         uses: arduino/setup-task@v1
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Check links
         run: task -o group -p doc:check-broken-links
         env:
           WERF_REPO: "ghcr.io/${{ github.repository_owner }}/werfio"
-
   notify:
     if: failure()
     needs:
-    - check_cli_and_readme_partials
-    - check_broken_links
+      - check_cli_and_readme_partials
+      - check_broken_links
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}

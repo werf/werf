@@ -1,5 +1,4 @@
 name: issues:delayed-auto-close
-
 on:
   schedule:
     - cron: "0 8 * * *"
@@ -15,7 +14,6 @@ on:
   repository_dispatch:
     types: ["issues:delayed-auto-close"]
   workflow_dispatch:
-
 jobs:
   manage:
     runs-on: ubuntu-22.04
@@ -26,6 +24,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: >
             {
+
                 "solved": {
                     "delay": "604800",
                     "message": "Seems the issue was solved. Closing after 7 days of inactivity.",

@@ -1,12 +1,10 @@
 name: docs:deploy:pr
-
 on:
   pull_request:
     types: [labeled, synchronize]
   repository_dispatch:
     types: ["docs:deploy:pr"]
   workflow_dispatch:
-
 jobs:
   deploy-test:
     if: github.event.label.name == 'trigger:\ docs:deploy:pr' || contains(github.event.pull_request.labels.*.name, 'trigger:\ docs:deploy:pr')
@@ -14,7 +12,6 @@ jobs:
     with:
       env: test
       kubeContext: dev
-
   notify:
     if: failure()
     needs: deploy-test

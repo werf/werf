@@ -1,36 +1,27 @@
 name: "zzzyyy(internal workflow)"
-
 on:
   workflow_call:
-
 defaults:
   run:
     shell: bash
-
 env:
   DEBIAN_FRONTEND: "noninteractive"
-
 jobs:
   _:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
-    - name: Install build dependencies
-      run: sudo apt-get install -y libbtrfs-dev
-
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version-file: go.mod
-
-    - name: Install Task
-      uses: arduino/setup-task@v1
-
-    - name: Install golangci-lint
-      run: task -p deps:install:golangci-lint
-
-    - name: Lint
-      run: task -p lint
+      - name: Install build dependencies
+        run: sudo apt-get install -y libbtrfs-dev
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+      - name: Install Task
+        uses: arduino/setup-task@v1
+      - name: Install golangci-lint
+        run: task -p deps:install:golangci-lint
+      - name: Lint
+        run: task -p lint

@@ -1,33 +1,32 @@
 name: test:main
-
 on:
   push:
     branches:
-    - main
+      - main
     paths:
-    - '.github'
-    - '**/*.go'
-    - 'go.mod'
+      - '.github'
+      - '**/*.go'
+      - 'go.mod'
   pull_request:
     types: [labeled]
   repository_dispatch:
     types: ["test:main"]
   workflow_dispatch:
-
 jobs:
   unlabel:
     if: github.event_name == 'pull_request' && github.event.label.name == 'trigger:\ test:main'
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/github-script@v6
-      with:
-        script: >
-          github.issues.removeLabel({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            name: '${{ github.event.label.name }}'
-          })
+      - uses: actions/github-script@v6
+        with:
+          script: >
+            github.issues.removeLabel({
+
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: '${{ github.event.label.name }}'
+            })
 
   integration_main:
     if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
@@ -35,10 +34,9 @@ jobs:
     with:
       packages: integration/suites
       excludePackages: integration/suites/deploy,integration/suites/cleanup_after_converge,integration/suites/helm/deploy_rollback,integration/suites/bundles,integration/suites/ansible,integration/suites/build/stapel_image/git
-      fetchDepth: 0  # Git history as fixtures for tests.
+      fetchDepth: 0 # Git history as fixtures for tests.
       coverage: true
     secrets: inherit
-
   integration_git:
     if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
     uses: ./.github/workflows/_test_integration_regular.yml
@@ -46,7 +44,6 @@ jobs:
       packages: integration/suites/build/stapel_image/git
       coverage: true
     secrets: inherit
-
   integration_ansible:
     if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
     uses: ./.github/workflows/_test_integration_regular.yml
@@ -54,22 +51,20 @@ jobs:
       packages: integration/suites/ansible
       coverage: true
     secrets: inherit
-
   integration_per-k8s:
     if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
     uses: ./.github/workflows/_test_integration_per-k8s-version.yml
     with:
       coverage: true
     secrets: inherit
-
   notify:
     if: (github.event_name == 'pull_request' && failure()) || (github.event_name != 'pull_request' && always())
     needs:
-    - unlabel
-    - integration_main
-    - integration_git
-    - integration_ansible
-    - integration_per-k8s
+      - unlabel
+      - integration_main
+      - integration_git
+      - integration_ansible
+      - integration_per-k8s
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}

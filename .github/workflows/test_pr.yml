@@ -1,27 +1,23 @@
 name: test:pr
-
 on:
   pull_request:
     paths:
-    - '.github'
-    - '**/*.go'
-    - 'go.mod'
+      - '.github'
+      - '**/*.go'
+      - 'go.mod'
   repository_dispatch:
     types: ["test:pr"]
   workflow_dispatch:
-
 jobs:
   lint:
     uses: ./.github/workflows/_lint.yml
-
   unit:
     uses: ./.github/workflows/_test_unit.yml
-
   notify:
     if: failure()
     needs:
-    - lint
-    - unit
+      - lint
+      - unit
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}

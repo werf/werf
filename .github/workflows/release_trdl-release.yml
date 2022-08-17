@@ -2,26 +2,24 @@ name: release:trdl-release
 on:
   push:
     tags:
-    - 'v[0-9]+.[0-9]+.[0-9]+*'
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
   repository_dispatch:
     types: ["release:trdl-release"]
   workflow_dispatch:
-
 jobs:
   release:
     name: Perform werf release using trdl server
     runs-on: ubuntu-22.04
     steps:
-    - name: Release
-      uses: werf/trdl-vault-actions/release@main
-      with:
-        vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
-        project-name: werf
-        git-tag: ${{ github.ref_name }}
-        vault-auth-method: approle
-        vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
-        vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
-
+      - name: Release
+        uses: werf/trdl-vault-actions/release@main
+        with:
+          vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
+          project-name: werf
+          git-tag: ${{ github.ref_name }}
+          vault-auth-method: approle
+          vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
+          vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
   notify:
     if: always()
     needs: release

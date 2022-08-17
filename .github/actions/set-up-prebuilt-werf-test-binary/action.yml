@@ -10,31 +10,29 @@ inputs:
 runs:
   using: composite
   steps:
-  - name: Set WERF_TEST_* env vars
-    run: |
-      if ${{ inputs.coverage }}; then
-        cat >> "$GITHUB_ENV" <<EOF
-      WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/bin/werf-with-coverage
-      WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/coverage/$GITHUB_JOB/${{ inputs.coverageDirSuffix }}
-      EOF
-      else
-        cat >> "$GITHUB_ENV" <<EOF
-      WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/bin/werf
-      EOF
-      fi
-    shell: bash
-
-  - name: Create WERF_TEST_COVERAGE_DIR
-    if: inputs.coverage == 'true'
-    run: |
-      mkdir -p "$WERF_TEST_COVERAGE_DIR"
-    shell: bash
-
-  - name: Build werf test binary
-    run: |
-      if ${{ inputs.coverage }}; then
-        task -p build-with-coverage
-      else
-        task -p build
-      fi
-    shell: bash
+    - name: Set WERF_TEST_* env vars
+      run: |
+        if ${{ inputs.coverage }}; then
+          cat >> "$GITHUB_ENV" <<EOF
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/bin/werf-with-coverage
+        WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/coverage/$GITHUB_JOB/${{ inputs.coverageDirSuffix }}
+        EOF
+        else
+          cat >> "$GITHUB_ENV" <<EOF
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/bin/werf
+        EOF
+        fi
+      shell: bash
+    - name: Create WERF_TEST_COVERAGE_DIR
+      if: inputs.coverage == 'true'
+      run: |
+        mkdir -p "$WERF_TEST_COVERAGE_DIR"
+      shell: bash
+    - name: Build werf test binary
+      run: |
+        if ${{ inputs.coverage }}; then
+          task -p build-with-coverage
+        else
+          task -p build
+        fi
+      shell: bash

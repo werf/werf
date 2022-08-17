@@ -1,9 +1,8 @@
 stages:
   prod: &PROD
     test1: "default"
-
 apps:
   app1:
     prod:
-      <<: *PROD
+      !!merge <<: *PROD
       test1: "override"

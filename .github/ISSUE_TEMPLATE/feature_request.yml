@@ -1,4 +1,4 @@
-name: 💡 Feature
+name: "\U0001F4A1 Feature"
 description: Submit a feature request or suggestion
 body:
   - type: checkboxes

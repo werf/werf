@@ -5,7 +5,6 @@ run:
     - docs
     - scripts
     - stapel
-
 linters-settings:
   gofumpt:
     extra-rules: true
@@ -20,7 +19,6 @@ linters-settings:
   errorlint:
     comparison: false
     asserts: false
-
 linters:
   disable-all: true
   enable:
@@ -30,7 +28,6 @@ linters:
     - structcheck
     - typecheck
     - varcheck
-
     # Extra linters.
     - asciicheck
     - bidichk

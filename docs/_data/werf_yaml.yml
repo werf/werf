@@ -265,7 +265,7 @@ sections:
           en: "Dependencies images for current image"
           ru: "Образы-зависимости для текущего образа"
         #detailsArticle:
-          #all: "/advanced/building_images_with_stapel/import_directive.html"
+        #all: "/advanced/building_images_with_stapel/import_directive.html"
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
@@ -281,24 +281,23 @@ sections:
             collapsible: false
             isCollapsedByDefault: false
             directiveList:
-            - name: type
-              value: "string"
-              description:
-                en: "Type of image info: ImageName, ImageID, ImageRepo or ImageTag"
-                ru: "Тип импортируемой информации об образе: ImageName, ImageID, ImageRepo или ImageTag"
-            - name: targetBuildArg
-              value: "string"
-              description:
-                en: "Name of build argument which will contain specified type of information about image"
-                ru: "Имя аргумента (Dockerfile build-args), который будет содержать указанный тип информации об образе"
-
+              - name: type
+                value: "string"
+                description:
+                  en: "Type of image info: ImageName, ImageID, ImageRepo or ImageTag"
+                  ru: "Тип импортируемой информации об образе: ImageName, ImageID, ImageRepo или ImageTag"
+              - name: targetBuildArg
+                value: "string"
+                description:
+                  en: "Name of build argument which will contain specified type of information about image"
+                  ru: "Имя аргумента (Dockerfile build-args), который будет содержать указанный тип информации об образе"
   - id: stapel-section
     description:
       en: "Stapel image/artifact section: optional, define as many image sections as you need"
       ru: "Секция Stapel image/artifact: может использоваться произвольное количество секций"
     isCollapsedByDefault: false
     directives:
-      - << : *dockerfile-image-section-image
+      - !!merge <<: *dockerfile-image-section-image
       - name: artifact
         value: "string"
         description:
@@ -778,7 +777,7 @@ sections:
           en: "Dependencies images for current image"
           ru: "Образы-зависимости для текущего образа"
         #detailsArticle:
-          #all: "/advanced/building_images_with_stapel/import_directive.html"
+        #all: "/advanced/building_images_with_stapel/import_directive.html"
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
@@ -804,14 +803,13 @@ sections:
             collapsible: false
             isCollapsedByDefault: false
             directiveList:
-            - name: type
-              value: "string"
-              description:
-                en: "Type of image info: ImageName, ImageID, ImageRepo or ImageTag"
-                ru: "Тип импортируемой информации об образе: ImageName, ImageID, ImageRepo или ImageTag"
-            - name: targetEnv
-              value: "string"
-              description:
-                en: "Name of environment variable which will contain specified type of information about image"
-                ru: "Имя переменной окружения, которая будет содержать указанный тип информации об образе"
-
+              - name: type
+                value: "string"
+                description:
+                  en: "Type of image info: ImageName, ImageID, ImageRepo or ImageTag"
+                  ru: "Тип импортируемой информации об образе: ImageName, ImageID, ImageRepo или ImageTag"
+              - name: targetEnv
+                value: "string"
+                description:
+                  en: "Name of environment variable which will contain specified type of information about image"
+                  ru: "Имя переменной окружения, которая будет содержать указанный тип информации об образе"

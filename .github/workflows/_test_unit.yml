@@ -1,5 +1,4 @@
 name: "zzzyyy(internal workflow)"
-
 on:
   workflow_call:
     inputs:
@@ -11,65 +10,54 @@ on:
         description: Runner for Linux amd64 tests
         default: ubuntu-22.04
         type: string
-
 defaults:
   run:
     shell: bash
-
 env:
   DEBIAN_FRONTEND: "noninteractive"
-
 jobs:
   _:
     strategy:
       fail-fast: false
       matrix:
         os:
-        - ${{ inputs.linuxAmd64Runner }}
+          - ${{ inputs.linuxAmd64Runner }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-    - name: Install werf build dependencies
-      run: sudo apt-get install -y libbtrfs-dev
-
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        cache: true
-        go-version-file: go.mod
-
-    - name: Install Task
-      uses: arduino/setup-task@v1
-
-    - name: Set up prebuilt werf test binary
-      uses: ./.github/actions/set-up-prebuilt-werf-test-binary
-      with:
-        coverage: ${{ inputs.coverage }}
-        coverageDirSuffix: ${{ matrix.os }}
-
-    - name: Set up git config
-      uses: ./.github/actions/set-up-git-config
-
-    # TODO: don't build ginkgo everytime? We need distributable binaries
-    - name: Install ginkgo
-      run: task -p deps:install:ginkgo
-
-    - name: Test
-      run: |
-        if ${{ inputs.coverage }}; then
-          task -p test:unit -- --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going
-          mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
-        else
-          task -p test:unit -- -v --keep-going
-        fi
-        echo loadavg: $(cat /proc/loadavg)
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      if: inputs.coverage == 'true'
-      with:
-        name: coverage
-        path: coverage
+      - name: Install werf build dependencies
+        run: sudo apt-get install -y libbtrfs-dev
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          cache: true
+          go-version-file: go.mod
+      - name: Install Task
+        uses: arduino/setup-task@v1
+      - name: Set up prebuilt werf test binary
+        uses: ./.github/actions/set-up-prebuilt-werf-test-binary
+        with:
+          coverage: ${{ inputs.coverage }}
+          coverageDirSuffix: ${{ matrix.os }}
+      - name: Set up git config
+        uses: ./.github/actions/set-up-git-config
+      # TODO: don't build ginkgo everytime? We need distributable binaries
+      - name: Install ginkgo
+        run: task -p deps:install:ginkgo
+      - name: Test
+        run: |
+          if ${{ inputs.coverage }}; then
+            task -p test:unit -- --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going
+            mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
+          else
+            task -p test:unit -- -v --keep-going
+          fi
+          echo loadavg: $(cat /proc/loadavg)
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@master
+        if: inputs.coverage == 'true'
+        with:
+          name: coverage
+          path: coverage

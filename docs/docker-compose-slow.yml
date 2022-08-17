@@ -1,10 +1,8 @@
 version: "3.9"
-
 services:
   documentation:
     image: $WERF_WEB_DOCKER_IMAGE_NAME
     command: ["nginx", "-g", "daemon off;"]
-
   front:
     image: nginx:latest
     volumes:
@@ -13,4 +11,3 @@ services:
       - "80:80"
     depends_on:
       - documentation
-

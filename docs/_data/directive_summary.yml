@@ -33,83 +33,83 @@ en:
     preview_link: "images/configuration/git_directive1_preview.png"
     link_alt: "Git stages"
     yamls:
-    - name: local
-      data: |
-        git:
-        - add: <absolute path in git repository>
-          to: <absolute path inside image>
-          owner: <owner>
-          group: <group>
-          includePaths:
-          - <path or glob relative to path in add>
-          excludePaths:
-          - <path or glob relative to path in add>
-          stageDependencies:
-            install:
+      - name: local
+        data: |
+          git:
+          - add: <absolute path in git repository>
+            to: <absolute path inside image>
+            owner: <owner>
+            group: <group>
+            includePaths:
             - <path or glob relative to path in add>
-            beforeSetup:
+            excludePaths:
             - <path or glob relative to path in add>
-            setup:
+            stageDependencies:
+              install:
+              - <path or glob relative to path in add>
+              beforeSetup:
+              - <path or glob relative to path in add>
+              setup:
+              - <path or glob relative to path in add>
+      - name: remote
+        data: |
+          git:
+          - url: <git repo url>
+            branch: <branch name>
+            commit: <commit>
+            tag: <tag>
+            add: <absolute path in git repository>
+            to: <absolute path inside image>
+            owner: <owner>
+            group: <group>
+            includePaths:
             - <path or glob relative to path in add>
-    - name: remote
-      data: |
-        git:
-        - url: <git repo url>
-          branch: <branch name>
-          commit: <commit>
-          tag: <tag>
-          add: <absolute path in git repository>
-          to: <absolute path inside image>
-          owner: <owner>
-          group: <group>
-          includePaths:
-          - <path or glob relative to path in add>
-          excludePaths:
-          - <path or glob relative to path in add>
-          stageDependencies:
-            install:
+            excludePaths:
             - <path or glob relative to path in add>
-            beforeSetup:
-            - <path or glob relative to path in add>
-            setup:
-            - <path or glob relative to path in add>
+            stageDependencies:
+              install:
+              - <path or glob relative to path in add>
+              beforeSetup:
+              - <path or glob relative to path in add>
+              setup:
+              - <path or glob relative to path in add>
   shell_and_ansible: &shell_and_ansible
     link: "images/configuration/assembly_instructions1.png"
     preview_link: "images/configuration/assembly_instructions1_preview.png"
     link_alt: "User stages"
     yamls:
-    - name: shell
-      data: |
-        shell:
-          beforeInstall:
-          - <bash command>
-          install:
-          - <bash command>
-          beforeSetup:
-          - <bash command>
-          setup:
-          - <bash command>
-          cacheVersion: <arbitrary string>
-          beforeInstallCacheVersion: <arbitrary string>
-          installCacheVersion: <arbitrary string>
-          beforeSetupCacheVersion: <arbitrary string>
-          setupCacheVersion: <arbitrary string>
-    - name: ansible
-      data: |
-        ansible:
-          beforeInstall:
-          - <task>
-          install:
-          - <task>
-          beforeSetup:
-          - <task>
-          setup:
-          - <task>
-          cacheVersion: <arbitrary string>
-          beforeInstallCacheVersion: <arbitrary string>
-          installCacheVersion: <arbitrary string>
-          beforeSetupCacheVersion: <arbitrary string>
-          setupCacheVersion: <arbitrary string>
+      - name: shell
+        data: |
+          shell:
+            beforeInstall:
+            - <bash command>
+            install:
+            - <bash command>
+            beforeSetup:
+            - <bash command>
+            setup:
+            - <bash command>
+            cacheVersion: <arbitrary string>
+            beforeInstallCacheVersion: <arbitrary string>
+            installCacheVersion: <arbitrary string>
+            beforeSetupCacheVersion: <arbitrary string>
+            setupCacheVersion: <arbitrary string>
+      - name: ansible
+        data: |
+          ansible:
+            beforeInstall:
+            - <task>
+            install:
+            - <task>
+            beforeSetup:
+            - <task>
+            setup:
+            - <task>
+            cacheVersion: <arbitrary string>
+            beforeInstallCacheVersion: <arbitrary string>
+            installCacheVersion: <arbitrary string>
+            beforeSetupCacheVersion: <arbitrary string>
+            setupCacheVersion: <arbitrary string>
     extra: &shell_and_ansible_extra
       text: "Running assembly instructions with git"
       link: "images/configuration/assembly_instructions2.png"
@@ -151,26 +151,26 @@ en:
     link_alt: "Artifact stages"
 ru:
   base_image:
-    << : *base_image
+    !!merge <<: *base_image
     link_alt: "Стадия from"
   docker:
-    << : *docker
+    !!merge <<: *docker
     link_alt: "Стадия dockerInstructions"
   git:
-    << : *git
+    !!merge <<: *git
     link_alt: "Стадии git"
   shell_and_ansible:
-    << : *shell_and_ansible
+    !!merge <<: *shell_and_ansible
     link_alt: "Пользовательские стадии"
     extra:
-      << : *shell_and_ansible_extra
+      !!merge <<: *shell_and_ansible_extra
       text: "Запуск инструкций сборки при изменениях в git-репозитории"
   mount:
-    << : *mount
+    !!merge <<: *mount
     link_alt: "Стадия from"
   import:
-    << : *import
+    !!merge <<: *import
     link_alt: "Стадии импорта"
   artifact:
-    << : *artifact
+    !!merge <<: *artifact
     link_alt: "Стадии артефакта"

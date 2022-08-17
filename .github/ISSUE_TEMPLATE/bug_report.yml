@@ -1,4 +1,4 @@
-name: 🪲 Bug
+name: "\U0001FAB2 Bug"
 description: Submit a bug report
 body:
   - type: checkboxes

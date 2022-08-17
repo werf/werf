@@ -1,5 +1,4 @@
 output: web
-
 topnav_title: werf
 site_title: werf
 company_name: Flant
@@ -11,12 +10,9 @@ site_urls:
   ru: https://ru.werf.io
   en: https://werf.io
 site_description: Consistent delivery tool. Git as a single source of truth. Build, deploy to Kubernetes, stay in sync.
-
 github_repo_path: /werf/werf
-
 assets:
   precompile: ['**/*.*']
-
 social_links:
   ru:
     twitter: https://twitter.com/werf_io
@@ -28,40 +24,33 @@ social_links:
     twitter: https://twitter.com/werf_io
     slack_1: https://slack.cncf.io/
     slack_2: https://cloud-native.slack.com/messages/CHY2THYUU
-
 exclude:
-- .idea/
-- .gitignore
-- .werf/
-- DEVELOPMENT.md
-- docker-compose*.yml
-- Gemfile
-- Gemfile.lock
-- pages_ru/
-- vendor
-- werf.yaml
-
+  - .idea/
+  - .gitignore
+  - .werf/
+  - DEVELOPMENT.md
+  - docker-compose*.yml
+  - Gemfile
+  - Gemfile.lock
+  - pages_ru/
+  - vendor
+  - werf.yaml
 highlighter: rouge
-
 plugins:
-- jekyll-assets
-
+  - jekyll-assets
 markdown: kramdown
 kramdown:
- input: GFM
- hard_wrap: false
- syntax_highlighter: rouge
-
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
 breadcrumbs:
   root:
-    hide: false  # show breadcrumbs on root/home page
+    hide: false # show breadcrumbs on root/home page
     image: false # Show image or title text
   hometext: "Home"
-
 collections:
   tooltips:
     output: false
-
 defaults:
   - scope:
       path: ""
@@ -86,8 +75,6 @@ defaults:
       type: "pages"
     values:
       single_lang: true
-
 timezone: Europe/Moscow
-
 sidebars:
-- documentation
+  - documentation

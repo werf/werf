@@ -3,21 +3,18 @@ company_url: https://flant.ru
 url: https://ru.werf.io
 site_lang: ru
 site_description: Инструмент консистентной доставки. Используем Git как единый источник истины. Собираем, деплоим в Kubernetes, синхронизируем изменения.
-
 exclude:
-- .idea/
-- .gitignore
-- .werf/
-- DEVELOPMENT.md
-- docker-compose*.yml
-- Gemfile
-- Gemfile.lock
-- pages_en/
-- vendor
-- werf.yaml
-
+  - .idea/
+  - .gitignore
+  - .werf/
+  - DEVELOPMENT.md
+  - docker-compose*.yml
+  - Gemfile
+  - Gemfile.lock
+  - pages_en/
+  - vendor
+  - werf.yaml
 include:
-- pages_ru/
-
+  - pages_ru/
 breadcrumbs:
   hometext: "Начало"

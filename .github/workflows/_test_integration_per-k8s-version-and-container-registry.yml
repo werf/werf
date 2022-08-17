@@ -1,5 +1,4 @@
 name: "zzzyyy(internal workflow)"
-
 on:
   workflow_call:
     inputs:
@@ -11,24 +10,21 @@ on:
         description: Runner for Linux amd64 tests
         default: ubuntu-22.04
         type: string
-
 defaults:
   run:
     shell: bash
-
 env:
   DEBIAN_FRONTEND: "noninteractive"
-
 jobs:
   _:
     strategy:
       fail-fast: false
       matrix:
         os:
-        - ${{ inputs.linuxAmd64Runner }}
+          - ${{ inputs.linuxAmd64Runner }}
         k8s:
-        - version: 1.19
-          kubecfg_secret: WERF_TEST_K8S_BASE64_KUBECONFIG_1_19
+          - version: 1.19
+            kubecfg_secret: WERF_TEST_K8S_BASE64_KUBECONFIG_1_19
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     env:
@@ -36,107 +32,89 @@ jobs:
       WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
       WERF_TEST_ACR_REGISTRY: ${{ secrets.WERF_TEST_ACR_REGISTRY }}
       WERF_TEST_ACR_USERNAME: ${{ secrets.WERF_TEST_ACR_USERNAME }}
-
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DEFAULT: 1
       WERF_TEST_DEFAULT_PASSWORD: ${{ secrets.WERF_TEST_DEFAULT_PASSWORD }}
       WERF_TEST_DEFAULT_REGISTRY: ${{ secrets.WERF_TEST_DEFAULT_REGISTRY }}
       WERF_TEST_DEFAULT_USERNAME: ${{ secrets.WERF_TEST_DEFAULT_USERNAME }}
-
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DOCKERHUB: 1
       WERF_TEST_DOCKERHUB_PASSWORD: ${{ secrets.WERF_TEST_DOCKERHUB_PASSWORD }}
       WERF_TEST_DOCKERHUB_REGISTRY: ${{ secrets.WERF_TEST_DOCKERHUB_REGISTRY }}
       WERF_TEST_DOCKERHUB_USERNAME: ${{ secrets.WERF_TEST_DOCKERHUB_USERNAME }}
-
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ECR: 1
       WERF_TEST_ECR_REGISTRY: ${{ secrets.WERF_TEST_ECR_REGISTRY }}
       WERF_TEST_ECR_PASSWORD: ${{ secrets.WERF_TEST_ECR_PASSWORD }}
       WERF_TEST_ECR_USERNAME: ${{ secrets.WERF_TEST_ECR_USERNAME }}
-
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GCR: 1
       WERF_TEST_GCR_BASE64_CONFIG: ${{ secrets.WERF_TEST_GCR_BASE64_CONFIG }}
       WERF_TEST_GCR_REGISTRY: ${{ secrets.WERF_TEST_GCR_REGISTRY }}
-
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_GITHUB: 1
       WERF_TEST_GITHUB_PASSWORD: ${{ secrets.WERF_TEST_GITHUB_PASSWORD }}
       WERF_TEST_GITHUB_REGISTRY: ${{ secrets.WERF_TEST_GITHUB_REGISTRY }}
       WERF_TEST_GITHUB_TOKEN: ${{ secrets.WERF_TEST_GITHUB_TOKEN }}
       WERF_TEST_GITHUB_USERNAME: ${{ secrets.WERF_TEST_GITHUB_USERNAME }}
-
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR: 1
       WERF_TEST_HARBOR_PASSWORD: ${{ secrets.WERF_TEST_HARBOR_PASSWORD }}
       WERF_TEST_HARBOR_REGISTRY: ${{ secrets.WERF_TEST_HARBOR_REGISTRY }}
       WERF_TEST_HARBOR_USERNAME: ${{ secrets.WERF_TEST_HARBOR_USERNAME }}
-
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_QUAY: 0
       WERF_TEST_QUAY_PASSWORD: ${{ secrets.WERF_TEST_QUAY_PASSWORD }}
       WERF_TEST_QUAY_REGISTRY: ${{ secrets.WERF_TEST_QUAY_REGISTRY }}
       WERF_TEST_QUAY_TOKEN: ${{ secrets.WERF_TEST_QUAY_TOKEN }}
       WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
     steps:
-    - name: Install werf build dependencies
-      run: sudo apt-get install -y libbtrfs-dev
-
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        cache: true
-        go-version-file: go.mod
-
-    - name: Install Task
-      uses: arduino/setup-task@v1
-
-    - name: Set up prebuilt werf test binary
-      uses: ./.github/actions/set-up-prebuilt-werf-test-binary
-      with:
-        coverage: ${{ inputs.coverage }}
-        coverageDirSuffix: ${{ matrix.os }}
-
-    - name: Login to ACR
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: Login to ECR
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-
-    - name: Set up git config
-      uses: ./.github/actions/set-up-git-config
-
-    - name: Install ginkgo
-      run: task -p deps:install:ginkgo
-
-    - name: Check containers registry creds
-      run: |
-        for cr in default acr dockerhub ecr gcr harbor quay github; do
-          ./scripts/ci/integration_tests_registries_login.sh $cr
-        done
-
-    - name: Test
-      run: |
-        source ./scripts/ci/integration_k8s_tests_before_hook.sh
-        if ${{ inputs.coverage }}; then
-          task -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going
-          mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
-        else
-          task -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --flake-attempts=3 -v --keep-going
-        fi
-        echo loadavg: $(cat /proc/loadavg)
-      env:
-        WERF_TEST_K8S_BASE64_KUBECONFIG: ${{ secrets[matrix.k8s.kubecfg_secret] }}
-        WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-        WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
-
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      if: inputs.coverage == 'true'
-      with:
-        name: coverage
-        path: coverage
+      - name: Install werf build dependencies
+        run: sudo apt-get install -y libbtrfs-dev
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          cache: true
+          go-version-file: go.mod
+      - name: Install Task
+        uses: arduino/setup-task@v1
+      - name: Set up prebuilt werf test binary
+        uses: ./.github/actions/set-up-prebuilt-werf-test-binary
+        with:
+          coverage: ${{ inputs.coverage }}
+          coverageDirSuffix: ${{ matrix.os }}
+      - name: Login to ACR
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ECR
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      - name: Set up git config
+        uses: ./.github/actions/set-up-git-config
+      - name: Install ginkgo
+        run: task -p deps:install:ginkgo
+      - name: Check containers registry creds
+        run: |
+          for cr in default acr dockerhub ecr gcr harbor quay github; do
+            ./scripts/ci/integration_tests_registries_login.sh $cr
+          done
+      - name: Test
+        run: |
+          source ./scripts/ci/integration_k8s_tests_before_hook.sh
+          if ${{ inputs.coverage }}; then
+            task -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going
+            mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
+          else
+            task -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --flake-attempts=3 -v --keep-going
+          fi
+          echo loadavg: $(cat /proc/loadavg)
+        env:
+          WERF_TEST_K8S_BASE64_KUBECONFIG: ${{ secrets[matrix.k8s.kubecfg_secret] }}
+          WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+          WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+          WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@master
+        if: inputs.coverage == 'true'
+        with:
+          name: coverage
+          path: coverage
