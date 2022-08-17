@@ -317,11 +317,15 @@ tasks:
     desc: 'Lint with golangci-lint for cgo. Important vars: "paths".'
     cmds:
     - golangci-lint run --build-tags="{{.cgoTags}}" {{.CLI_ARGS}} {{.paths | default "./..."}}
+    env:
+      CGO_ENABLED: "1"
 
   lint:golangci-lint:go:
     desc: 'Lint with golangci-lint without cgo. Important vars: "paths".'
     cmds:
     - golangci-lint run --build-tags="{{.goTags}}" {{.CLI_ARGS}} {{.paths | default "./..."}}
+    env:
+      CGO_ENABLED: "0"
 
   _lint:golangci-lint:cgo-and-go:
     cmds:
