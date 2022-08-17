@@ -11,8 +11,10 @@ on:
         type: string
       persistent:
         default: false
-        type: bool
+        required: false
+        type: boolean
       runner:
+        required: false
         default: tfprod-werf
         type: string
 
