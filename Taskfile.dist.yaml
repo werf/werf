@@ -297,6 +297,7 @@ tasks:
     cmds:
     - task: format:gci
     - task: format:gofumpt
+    - task: format:yamlfmt
 
   format:gci:
     desc: 'Format code with gci. Important vars: "paths".'
@@ -307,6 +308,11 @@ tasks:
     desc: 'Format code with gofumpt. Important vars: "paths".'
     cmds:
     - gofumpt -extra -w {{.CLI_ARGS}} {{.paths | default "cmd/ pkg/ test/ integration/"}}
+
+  format:yamlfmt:
+    desc: 'Format yaml files with yamlfmt. Important vars: "paths".'
+    cmds:
+    - yamlfmt -w {{.CLI_ARGS}} {{.paths | default "$(find . -name '*.yaml' -not -name 'werf*.yaml' -not -path '**/templates/**' -or -name '*.yml' -not -path '**/node_modules/**' -not -name '_documentation.yml')"}}
 
   lint:
     desc: 'Run all linters in parallel. Important vars: "paths".'
