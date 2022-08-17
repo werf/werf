@@ -471,6 +471,11 @@ tasks:
     cmds:
     - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin {{.golangcilintVersion | default "v1.46.2"}}
 
+  deps:install:yamlfmt:
+    desc: 'Install yamlfmt binary.'
+    cmds:
+    - go install github.com/UltiRequiem/yamlfmt@{{.yamlfmt | default "v1.3.0"}}
+
   sign:
     desc: 'Sign last version tag + origin/main and push signatures. Important vars: "refs".'
     cmds:
