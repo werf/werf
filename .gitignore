@@ -40,3 +40,4 @@ buildah-test
 /Taskfile.ya?ml
 /build
 /dist
+/.github/actions/get-commit-message/node_modules/

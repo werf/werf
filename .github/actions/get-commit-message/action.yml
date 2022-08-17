@@ -1,10 +1,5 @@
 name: Get commit message
 description: Gets message from commit (and PR)
-
-outputs:
-  message:
-    description: "Commit message"
-    value: ${{ steps.get_commit_message.outputs.message }}
 inputs:
   ignoreTitle:
     description: 'Setting this input to true will exclude the Pull Request title.'
@@ -18,18 +13,9 @@ inputs:
     description: 'Setting this input to true will esclude latest commit message'
     required: false
     default: 'false'
-
+outputs:
+  message:
+    description: "Commit message"
 runs:
-  using: "composite"
-  steps:
-    - name: Retrieve
-      uses: actions/github-script@v5.0.0
-      id: get_commit_message
-      env:
-        ignoreTitle: ${{ inputs.ignoreTitle }}
-        ignoreDescription: ${{ inputs.ignoreDescription }}
-        ignoreLatestCommitMessage: ${{ inputs.ignoreLatestCommitMessage }}
-      with:
-        script: |
-          const script = require('./.github/scripts/get-commit-mesage.js');
-          return await script.run({ github, context, core });
+  using: 'node16'
+  main: 'dist/index.js'
