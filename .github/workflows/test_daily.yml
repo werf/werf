@@ -60,7 +60,6 @@ jobs:
   coverage_report:
     uses: ./.github/workflows/_coverage_report.yml
     needs:
-    - lint
     - unit
     - integration_main
     - integration_git
@@ -72,7 +71,9 @@ jobs:
 
   notify:
     if: always()
-    needs: coverage_report
+    needs:
+    - lint
+    - coverage_report
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
