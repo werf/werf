@@ -1,4 +1,4 @@
-name: Run regular integration tests
+name: "zzzyyy(internal workflow)"
 
 on:
   workflow_call:

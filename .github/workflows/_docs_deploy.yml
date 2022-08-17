@@ -1,4 +1,4 @@
-name: Deploy docs
+name: "zzzyyy(internal workflow)"
 
 on:
   workflow_call:
