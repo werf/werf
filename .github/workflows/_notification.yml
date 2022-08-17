@@ -4,11 +4,13 @@ on:
   workflow_call:
     inputs:
       message:
+        required: false
         default: ''
         type: string
       useCommitMessage:
+        required: false
         default: true
-        type: bool
+        type: boolean
     secrets:
       webhook:
         description: "Slack webhook URL"
@@ -32,11 +34,11 @@ jobs:
     - name: Run workflow status conclusion manager
       uses: technote-space/workflow-conclusion-action@v2
 
-    - if: ${{ inputs.useCommitMessage == 'true' }}
+    - if: ${{ inputs.useCommitMessage }}
       name: Checkout code
       uses: actions/checkout@v3
 
-    - if: ${{ inputs.useCommitMessage == 'true' }}
+    - if: ${{ inputs.useCommitMessage }}
       name: Get commit message
       id: get_commit_message
       uses: ./.github/actions/get-commit-message
