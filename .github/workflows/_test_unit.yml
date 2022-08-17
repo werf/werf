@@ -1,4 +1,4 @@
-name: zzzzz(let it be in the end, internal workflow)
+name: "!test"
 
 on:
   workflow_call:
