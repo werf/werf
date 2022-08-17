@@ -24,7 +24,6 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        cache: true
         go-version-file: go.mod
 
     - name: Install Task
@@ -34,4 +33,4 @@ jobs:
       run: task -p deps:install:golangci-lint
 
     - name: Lint
-      run: task -o group -p lint
+      run: task -p lint
