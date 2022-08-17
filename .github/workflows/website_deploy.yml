@@ -1,4 +1,5 @@
-name: "Website: run external deploy"
+name: website:deploy
+
 on:
   push:
     branches:
@@ -6,25 +7,26 @@ on:
     paths:
       - trdl_channels.yaml
   repository_dispatch:
-    types: [site-deploy]
+    types: ["website:deploy"]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-
-  deploy:
-    name: Deploy
+  deploy-prod:
     runs-on: ubuntu-22.04
+    timeout-minutes: 10
     steps:
-
-    - name: Deploy website to production
+    - name: Deploy
       run: |
-        curl -X POST \
-             -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
-             -F "ref=master" \
+        curl -X POST -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" -F "ref=master" \
              ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
 
   notify:
-    needs: deploy
     if: always()
+    needs: deploy-prod
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
