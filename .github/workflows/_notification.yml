@@ -4,13 +4,11 @@ on:
   workflow_call:
     inputs:
       message:
-        required: false
         default: ''
         type: string
       useCommitMessage:
-        required: false
         default: true
-        type: string
+        type: bool
     secrets:
       webhook:
         description: "Slack webhook URL"
@@ -26,33 +24,30 @@ defaults:
   run:
     shell: bash
 
-env:
-  DEBIAN_FRONTEND: "noninteractive"
-
 jobs:
-  notify:
-    name: Notification
+  _:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
-    - uses: technote-space/workflow-conclusion-action@v2
+    - name: Run workflow status conclusion manager
+      uses: technote-space/workflow-conclusion-action@v2
 
-    - name: Checkout code
+    - if: ${{ inputs.useCommitMessage == 'true' }}
+      name: Checkout code
       uses: actions/checkout@v3
-      if: ${{ inputs.useCommitMessage == 'true' }}
 
-    - name: Get commit message
+    - if: ${{ inputs.useCommitMessage == 'true' }}
+      name: Get commit message
       id: get_commit_message
       uses: ./.github/actions/get-commit-message
-      if: ${{ inputs.useCommitMessage == 'true' }}
       with:
         ignoreTitle: 'true' # Don't use PR title
         ignoreDescription: 'false' # Use the Pull Request description
         ignoreLatestCommitMessage: 'false' # Use the latest commit message content
 
-    - name: Add mentions
+    - if: env.WORKFLOW_CONCLUSION == 'failure'
+      name: Add mentions
       id: msg_mention
-      if: env.WORKFLOW_CONCLUSION == 'failure'
       run: |
         if [ -n "${{ secrets.mentionGroupID }}" ]; then MSG_MENTION_STRING="<!subteam^${{ secrets.mentionGroupID }}>"; fi
         if [ -n "${{ secrets.mentionUserID }}" ]; then MSG_MENTION_STRING="$MSG_MENTION_STRING${MSG_MENTION_STRING:+, }<@${{ secrets.mentionUserID }}>"; fi

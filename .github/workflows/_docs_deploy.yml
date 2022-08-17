@@ -1,0 +1,57 @@
+name: Deploy docs
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        required: true
+        type: string
+      kubeContext:
+        required: true
+        type: string
+      persistent:
+        default: false
+        type: bool
+      runner:
+        default: tfprod-werf
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  _:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 60
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Set dynamic WERF_* env vars
+      run: |
+        if ${{ inputs.persistent }}; then
+          cat >> "$GITHUB_ENV" <<EOF
+        WERF_RELEASE=werfio-$(echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')-${{ inputs.env }}
+        WERF_SET_GITHUB_REF=global.github_ref=${{ github.ref }}
+        EOF
+        else
+          cat >> "$GITHUB_ENV" <<EOF
+        WERF_RELEASE=werfio-documentation-${{ inputs.env }}
+        WERF_SET_GITHUB_REF=global.github_ref=v1.2.3-dev
+        EOF
+        fi
+
+    - name: Deploy
+      uses: werf/actions/converge@v1.2
+      with:
+        env: ${{ inputs.env }}
+      env:
+        WERF_NAMESPACE: werfio-${{ inputs.env }}
+        WERF_DIR: docs
+        WERF_LOG_VERBOSE: on
+        WERF_KUBE_CONTEXT: ${{ inputs.kubeContext }}
+        WERF_SET_ACTIVE_RELEASE: global.active_release=1.2
+        WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio

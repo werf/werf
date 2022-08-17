@@ -1,0 +1,24 @@
+name: docs:deploy:pr
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+  repository_dispatch:
+    types: ["docs:deploy:pr"]
+  workflow_dispatch:
+
+jobs:
+  deploy-test:
+    if: github.event.label.name == 'trigger:\ docs:deploy:pr' || contains(github.event.pull_request.labels.*.name, 'trigger:\ docs:deploy:pr')
+    uses: ./.github/workflows/_docs_deploy.yml
+    with:
+      env: test
+      kubeContext: dev
+
+  notify:
+    if: failure()
+    needs: deploy-test
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}
