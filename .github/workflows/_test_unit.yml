@@ -1,4 +1,4 @@
-name: Run unit tests
+name: zzzzz(let it be in the end, internal workflow)
 
 on:
   workflow_call:
