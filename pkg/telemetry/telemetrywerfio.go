@@ -181,6 +181,12 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 			parts := strings.SplitN(keyValue, "=", 2)
 			if strings.HasPrefix(parts[0], "WERF_TELEMETRY_EXTRA_ATTRIBUTE_") {
 				valueParts := strings.SplitN(parts[1], "=", 2)
+
+				if len(valueParts) != 2 {
+					LogF("env with extra attribute %q is not valid", keyValue)
+					continue
+				}
+
 				attrKey := valueParts[0]
 				attrVal := valueParts[1]
 				extraAttributes[attrKey] = attrVal
