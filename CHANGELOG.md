@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.162](https://www.github.com/werf/werf/compare/v1.2.161...v1.2.162) (2022-08-18)
+
+
+### Bug Fixes
+
+* **stapel:** werf ignores non-zero status code ([cdd3e0a](https://www.github.com/werf/werf/commit/cdd3e0a2d9075b3feffedf980760df99f4e11d03))
+
 ### [1.2.161](https://www.github.com/werf/werf/compare/v1.2.160...v1.2.161) (2022-08-18)
 
 
