@@ -2,24 +2,42 @@ name: test:pr
 
 on:
   pull_request:
-    paths:
-    - '.github'
-    - '**/*.go'
-    - 'go.mod'
   repository_dispatch:
     types: ["test:pr"]
   workflow_dispatch:
 
 jobs:
+  detect-changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    outputs:
+      workflow_proceed: ${{ steps.changes.outputs.workflow_proceed }}
+    steps:
+    - name: Detect changes
+      uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          workflow_proceed:
+            - '.github'
+            - '**/*.go'
+            - 'go.mod'
+
   lint:
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.workflow_proceed == 'true'
+    needs: detect-changes
     uses: ./.github/workflows/_lint.yml
 
   unit:
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.workflow_proceed == 'true'
+    needs: detect-changes
     uses: ./.github/workflows/_test_unit.yml
 
   notify:
-    if: failure()
+    if: (github.event_name != 'pull_request' || needs.detect-changes.outputs.workflow_proceed == 'true') && failure()
     needs:
+    - detect-changes
     - lint
     - unit
     uses: ./.github/workflows/_notification.yml
