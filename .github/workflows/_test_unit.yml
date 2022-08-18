@@ -4,11 +4,9 @@ on:
   workflow_call:
     inputs:
       coverage:
-        description: Collect and upload coverage reports
         default: false
         type: string
       linuxAmd64Runner:
-        description: Runner for Linux amd64 tests
         default: ubuntu-22.04
         type: string
 
