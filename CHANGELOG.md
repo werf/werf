@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.161](https://www.github.com/werf/werf/compare/v1.2.160...v1.2.161) (2022-08-18)
+
+
+### Bug Fixes
+
+* trigger release ([b1d68d5](https://www.github.com/werf/werf/commit/b1d68d549094ee7b6917256a6f75cff445d0b8c7))
+
 ### [1.2.160](https://www.github.com/werf/werf/compare/v1.2.159...v1.2.160) (2022-08-16)
 
 
