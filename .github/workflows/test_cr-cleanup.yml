@@ -42,28 +42,28 @@ jobs:
     - name: Setup (common)
       run: sudo apt-get install -y jq
 
-    - name: Setup (acr)
+    - if: matrix.implementation == 'acr'
+      name: Setup (acr)
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-      if: matrix.implementation == 'acr'
 
-    - name: Setup (ecr)
+    - if: matrix.implementation == 'ecr'
+      name: Setup (ecr)
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-      if: matrix.implementation == 'ecr'
 
-    - name: Setup (gcr)
+    - if: matrix.implementation == 'gcr'
+      name: Setup (gcr)
       uses: google-github-actions/setup-gcloud@v0
       with:
         project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
         service_account_email: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
         service_account_key: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
         export_default_credentials: true
-      if: matrix.implementation == 'gcr'
 
     - name: Cleanup
       run: ./scripts/ci/integration_tests_registries_cleaner.sh ${{ matrix.implementation }}

@@ -1,11 +1,9 @@
 name: Set up prebuilt werf test binary
 inputs:
   coverage:
-    description: Will the coverage be enabled?
     default: false
-    type: boolean
+    type: string
   coverageDirSuffix:
-    description: Coverage reports directory suffix
     type: string
 runs:
   using: composite
@@ -24,10 +22,9 @@ runs:
       fi
     shell: bash
 
-  - name: Create WERF_TEST_COVERAGE_DIR
-    if: inputs.coverage == 'true'
-    run: |
-      mkdir -p "$WERF_TEST_COVERAGE_DIR"
+  - if: inputs.coverage == 'true'
+    name: Create WERF_TEST_COVERAGE_DIR
+    run: mkdir -p "$WERF_TEST_COVERAGE_DIR"
     shell: bash
 
   - name: Build werf test binary

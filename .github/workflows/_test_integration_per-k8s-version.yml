@@ -4,11 +4,9 @@ on:
   workflow_call:
     inputs:
       coverage:
-        description: Collect and upload coverage reports
         default: false
-        type: boolean
+        type: string
       linuxAmd64Runner:
-        description: Runner for Linux amd64 tests
         default: ubuntu-22.04
         type: string
 
@@ -75,9 +73,9 @@ jobs:
         WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
         WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
 
-    - name: Upload coverage artifact
+    - if: inputs.coverage == 'true'
+      name: Upload coverage artifact
       uses: actions/upload-artifact@master
-      if: inputs.coverage == 'true'
       with:
         name: coverage
         path: coverage
