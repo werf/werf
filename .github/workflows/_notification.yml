@@ -1,4 +1,4 @@
-name: "zzzyyy(internal workflow)"
+name: xxxxx(internal)
 
 on:
   workflow_call:
