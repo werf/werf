@@ -9825,7 +9825,7 @@ async function getCommitMessages() {
       break;
     }
     default: {
-      throw new Error(`Event "${context.eventName}" is not supported.`);
+      core.info(`Event "${context.eventName}" is not supported.`);
     }
   }
 
