@@ -11,15 +11,12 @@ on:
         description: Comma-separated package paths to exclude from testing
         type: string
       coverage:
-        description: Collect and upload coverage reports
         default: false
         type: boolean
       linuxAmd64Runner:
-        description: Runner for Linux amd64 tests
         default: ubuntu-22.04
         type: string
       fetchDepth:
-        description: Git checkout fetch depth
         default: 1
         type: number
 
@@ -79,9 +76,9 @@ jobs:
         fi
         echo loadavg: $(cat /proc/loadavg)
 
-    - name: Upload coverage artifact
+    - if: inputs.coverage == 'true'
+      name: Upload coverage artifact
       uses: actions/upload-artifact@master
-      if: inputs.coverage == 'true'
       with:
         name: coverage
         path: coverage

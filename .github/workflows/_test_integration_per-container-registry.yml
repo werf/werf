@@ -4,11 +4,9 @@ on:
   workflow_call:
     inputs:
       coverage:
-        description: Collect and upload coverage reports
         default: false
         type: boolean
       linuxAmd64Runner:
-        description: Runner for Linux amd64 tests
         default: ubuntu-22.04
         type: string
 
@@ -133,9 +131,9 @@ jobs:
         fi
         echo loadavg: $(cat /proc/loadavg)
 
-    - name: Upload coverage artifact
+    - if: inputs.coverage == 'true'
+      name: Upload coverage artifact
       uses: actions/upload-artifact@master
-      if: inputs.coverage == 'true'
       with:
         name: coverage
         path: coverage

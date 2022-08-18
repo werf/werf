@@ -67,9 +67,9 @@ jobs:
         fi
         echo loadavg: $(cat /proc/loadavg)
 
-    - name: Upload coverage artifact
+    - if: inputs.coverage == 'true'
+      name: Upload coverage artifact
       uses: actions/upload-artifact@master
-      if: inputs.coverage == 'true'
       with:
         name: coverage
         path: coverage
