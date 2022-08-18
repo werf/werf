@@ -186,7 +186,6 @@ func (c *LegacyStageImageContainer) prepareServiceRunOptions(ctx context.Context
 	serviceRunOptions.Workdir = "/"
 	serviceRunOptions.Entrypoint = stapel.BashBinPath()
 	serviceRunOptions.User = "0:0"
-	serviceRunOptions.Env["LD_LIBRARY_PATH"] = ""
 
 	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
 	if err != nil {
@@ -249,13 +248,6 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 
 	if len(fromImageInspect.Config.Entrypoint) != 0 {
 		inheritedOptions.Entrypoint = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Entrypoint, "\", \""))
-	}
-
-	for _, e := range fromImageInspect.Config.Env {
-		pair := strings.SplitN(e, "=", 2)
-		if pair[0] == "LD_LIBRARY_PATH" {
-			inheritedOptions.Env[pair[0]] = pair[1]
-		}
 	}
 
 	inheritedOptions.User = fromImageInspect.Config.User
