@@ -7,7 +7,7 @@ on:
         type: string
       useCommitMessage:
         default: true
-        type: boolean
+        type: string
     secrets:
       webhook:
         description: "Slack webhook URL"
@@ -29,11 +29,11 @@ jobs:
     - name: Run workflow status conclusion manager
       uses: technote-space/workflow-conclusion-action@v2
 
-    - if: ${{ inputs.useCommitMessage }}
+    - if: ${{ inputs.useCommitMessage == 'true' }}
       name: Checkout code
       uses: actions/checkout@v3
 
-    - if: ${{ inputs.useCommitMessage }}
+    - if: ${{ inputs.useCommitMessage == 'true' }}
       name: Get commit message
       id: get_commit_message
       uses: ./.github/actions/get-commit-message

@@ -5,7 +5,7 @@ on:
     inputs:
       coverage:
         default: false
-        type: boolean
+        type: string
       linuxAmd64Runner:
         default: ubuntu-22.04
         type: string

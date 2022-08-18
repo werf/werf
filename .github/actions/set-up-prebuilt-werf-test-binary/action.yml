@@ -2,7 +2,7 @@ name: Set up prebuilt werf test binary
 inputs:
   coverage:
     default: false
-    type: boolean
+    type: string
   coverageDirSuffix:
     type: string
 runs:
