@@ -55,25 +55,6 @@ func (c *LegacyStageImageContainer) AddServiceRunCommands(commands ...string) {
 	c.serviceRunCommands = append(c.serviceRunCommands, commands...)
 }
 
-func (c *LegacyStageImageContainer) ServiceRunCommands(ctx context.Context) ([]string, error) {
-	serviceRunCommands := c.serviceRunCommands
-	{
-		fromImageInspect, err := c.getFromImageInspect(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get from image inspect: %w", err)
-		}
-
-		for _, e := range fromImageInspect.Config.Env {
-			pair := strings.SplitN(e, "=", 2)
-			if pair[0] == "LD_LIBRARY_PATH" {
-				serviceRunCommands = append(serviceRunCommands, fmt.Sprintf("export %q", e))
-			}
-		}
-	}
-
-	return serviceRunCommands, nil
-}
-
 func (c *LegacyStageImageContainer) RunOptions() LegacyContainerOptions {
 	return c.runOptions
 }
@@ -86,7 +67,7 @@ func (c *LegacyStageImageContainer) ServiceCommitChangeOptions() LegacyContainer
 	return c.serviceCommitChangeOptions
 }
 
-func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context, runCommand string) ([]string, error) {
+func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]string, error) {
 	var args []string
 	args = append(args, fmt.Sprintf("--name=%s", c.name))
 
@@ -108,31 +89,35 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context, runComma
 	args = append(args, runArgs...)
 	args = append(args, fromImageId)
 	args = append(args, "-ec")
-	args = append(args, runCommand)
+	args = append(args, c.prepareRunCommand())
 
 	return args, nil
 }
 
-func (c *LegacyStageImageContainer) prepareAllRunCommands(ctx context.Context) ([]string, error) {
+func (c *LegacyStageImageContainer) prepareRunCommand() string {
+	return ShelloutPack(strings.Join(c.prepareRunCommands(), " && "))
+}
+
+func (c *LegacyStageImageContainer) prepareRunCommands() []string {
+	runCommands := c.prepareAllRunCommands()
+	if len(runCommands) != 0 {
+		return runCommands
+	} else {
+		return []string{stapel.TrueBinPath()}
+	}
+}
+
+func (c *LegacyStageImageContainer) prepareAllRunCommands() []string {
 	var commands []string
 
 	if debugDockerRunCommand() {
 		commands = append(commands, "set -x")
 	}
 
-	serviceRunCommands, err := c.ServiceRunCommands(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	commands = append(commands, serviceRunCommands...)
+	commands = append(commands, c.serviceRunCommands...)
 	commands = append(commands, c.runCommands...)
 
-	if len(commands) == 0 {
-		return []string{stapel.TrueBinPath()}, nil
-	}
-
-	return commands, nil
+	return commands
 }
 
 func ShelloutPack(command string) string {
@@ -201,7 +186,6 @@ func (c *LegacyStageImageContainer) prepareServiceRunOptions(ctx context.Context
 	serviceRunOptions.Workdir = "/"
 	serviceRunOptions.Entrypoint = stapel.BashBinPath()
 	serviceRunOptions.User = "0:0"
-	serviceRunOptions.Env["LD_LIBRARY_PATH"] = ""
 
 	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
 	if err != nil {
@@ -251,9 +235,11 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 		return nil, fmt.Errorf("unable to reset info for image %s: %w", c.image.fromImage.Name(), err)
 	}
 
-	fromImageInspect, err := c.getFromImageInspect(ctx)
+	dockerServerBackend := c.image.ContainerBackend.(*DockerServerBackend)
+
+	fromImageInspect, err := dockerServerBackend.GetImageInspect(ctx, c.image.fromImage.Name())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get from image inspect: %w", err)
+		return nil, fmt.Errorf("unable to get image inspect: %w", err)
 	}
 
 	if len(fromImageInspect.Config.Cmd) != 0 {
@@ -262,13 +248,6 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 
 	if len(fromImageInspect.Config.Entrypoint) != 0 {
 		inheritedOptions.Entrypoint = fmt.Sprintf("[\"%s\"]", strings.Join(fromImageInspect.Config.Entrypoint, "\", \""))
-	}
-
-	for _, e := range fromImageInspect.Config.Env {
-		pair := strings.SplitN(e, "=", 2)
-		if pair[0] == "LD_LIBRARY_PATH" {
-			inheritedOptions.Env[pair[0]] = pair[1]
-		}
 	}
 
 	inheritedOptions.User = fromImageInspect.Config.User
@@ -280,21 +259,16 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 	return inheritedOptions, nil
 }
 
-func (c *LegacyStageImageContainer) getFromImageInspect(ctx context.Context) (*types.ImageInspect, error) {
-	dockerServerBackend := c.image.ContainerBackend.(*DockerServerBackend)
-	fromImageInspect, err := dockerServerBackend.GetImageInspect(ctx, c.image.fromImage.Name())
-	if err != nil {
-		return nil, err
-	}
-
-	return fromImageInspect, nil
-}
-
-func (c *LegacyStageImageContainer) run(ctx context.Context, runArgs []string) error {
+func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
+	runArgs, err := c.prepareRunArgs(ctx)
+	if err != nil {
+		return err
+	}
+
 	RegisterRunningContainer(c.name, ctx)
-	err := docker.CliRun_LiveOutput(ctx, runArgs...)
+	err = docker.CliRun_LiveOutput(ctx, runArgs...)
 	UnregisterRunningContainer(c.name)
 	if err != nil {
 		return fmt.Errorf("container run failed: %w", err)

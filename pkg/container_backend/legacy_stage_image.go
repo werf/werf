@@ -71,26 +71,23 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 		defer werf.ReleaseHostLock(lock)
 	}
 
-	allRunCommands, err := i.container.prepareAllRunCommands(ctx)
-	if err != nil {
-		return err
-	}
-	allRunCommandsString := strings.Join(allRunCommands, " && ")
-	runCommand := ShelloutPack(allRunCommandsString)
-	runArgs, err := i.container.prepareRunArgs(ctx, runCommand)
-	if err != nil {
-		return err
-	}
-
 	if debugDockerRunCommand() {
+		runArgs, err := i.container.prepareRunArgs(ctx)
+		if err != nil {
+			return err
+		}
+
 		fmt.Printf("Docker run command:\ndocker run %s\n", strings.Join(runArgs, " "))
-		fmt.Printf("Decoded command:\n%s\n", allRunCommandsString)
+
+		if len(i.container.prepareAllRunCommands()) != 0 {
+			fmt.Printf("Decoded command:\n%s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+		}
 	}
 
-	if containerRunErr := i.container.run(ctx, runArgs); containerRunErr != nil {
+	if containerRunErr := i.container.run(ctx); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
-				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", allRunCommandsString)
+				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 
 				if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 					return i.introspectBefore(ctx)
@@ -102,7 +99,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 					return fmt.Errorf("introspect error failed: %w", err)
 				}
 
-				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", allRunCommandsString)
+				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 
 				if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 					return i.Introspect(ctx)
