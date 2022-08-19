@@ -2,6 +2,10 @@ name: xxxxx(internal)
 
 on:
   workflow_call:
+    inputs:
+      forceSkip:
+        default: false
+        type: string
 
 defaults:
   run:
@@ -12,6 +16,7 @@ env:
 
 jobs:
   _:
+    if: inputs.forceSkip == 'false'
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
