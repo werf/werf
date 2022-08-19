@@ -267,6 +267,10 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		Mounts:           opts.Mounts,
 		ConfigureNetwork: define.NetworkEnabled,
 		SystemContext:    &b.DefaultSystemContext,
+		WorkingDir:       opts.WorkingDir,
+		User:             opts.User,
+		Entrypoint:       []string{},
+		Cmd:              []string{},
 	}
 
 	stderr := &bytes.Buffer{}

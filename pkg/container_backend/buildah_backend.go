@@ -157,6 +157,8 @@ func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *con
 
 	if err := runtime.buildah.RunCommand(ctx, container.Name, []string{"sh", destScriptPath}, buildah.RunCommandOpts{
 		CommonOpts: runtime.getBuildahCommonOpts(ctx, false),
+		User:       "0:0",
+		WorkingDir: "/",
 		Mounts:     mounts,
 	}); err != nil {
 		return fmt.Errorf("unable to run commands script: %w", err)
@@ -661,6 +663,8 @@ func (runtime *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir stri
 	}
 
 	return runtime.buildah.RunCommand(ctx, container.Name, append([]string{"rm", "-rf"}, containerDirs...), buildah.RunCommandOpts{
+		User:       "0:0",
+		WorkingDir: "/",
 		Mounts: []specs.Mount{
 			{
 				Type:        "bind",
