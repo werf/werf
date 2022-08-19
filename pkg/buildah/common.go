@@ -53,8 +53,10 @@ type RunMount struct {
 
 type RunCommandOpts struct {
 	CommonOpts
-	Args   []string
-	Mounts []specs.Mount
+	WorkingDir string
+	User       string
+	Args       []string
+	Mounts     []specs.Mount
 }
 
 type RmiOpts struct {
