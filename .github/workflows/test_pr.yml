@@ -8,12 +8,14 @@ on:
 
 jobs:
   detect-changes:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     outputs:
       workflow_proceed: ${{ steps.changes.outputs.workflow_proceed }}
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Detect changes
       uses: dorny/paths-filter@v2
       id: changes
@@ -25,19 +27,20 @@ jobs:
             - 'go.mod'
 
   lint:
-    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.workflow_proceed == 'true'
     needs: detect-changes
     uses: ./.github/workflows/_lint.yml
+    with:
+      forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
 
   unit:
-    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.workflow_proceed == 'true'
     needs: detect-changes
     uses: ./.github/workflows/_test_unit.yml
+    with:
+      forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
 
   notify:
     if: (github.event_name != 'pull_request' || needs.detect-changes.outputs.workflow_proceed == 'true') && failure()
     needs:
-    - detect-changes
     - lint
     - unit
     uses: ./.github/workflows/_notification.yml
