@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.163](https://www.github.com/werf/werf/compare/v1.2.162...v1.2.163) (2022-08-19)
+
+
+### Bug Fixes
+
+* **buildah:** wrong UID/GID/workdir/entrypoint/cmd in stages ([32843f2](https://www.github.com/werf/werf/commit/32843f2898c4fd79c13e552a909418fbf7874608))
+
 ### [1.2.162](https://www.github.com/werf/werf/compare/v1.2.161...v1.2.162) (2022-08-18)
 
 
