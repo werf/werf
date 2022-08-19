@@ -6,8 +6,8 @@ on:
       coverage:
         default: false
         type: string
-      linuxAmd64Runner:
-        default: ubuntu-22.04
+      forceSkip:
+        default: false
         type: string
 
 defaults:
@@ -19,12 +19,8 @@ env:
 
 jobs:
   _:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-        - ${{ inputs.linuxAmd64Runner }}
-    runs-on: ${{ matrix.os }}
+    if: inputs.forceSkip == 'false'
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
     - name: Install werf build dependencies
@@ -46,7 +42,7 @@ jobs:
       uses: ./.github/actions/set-up-prebuilt-werf-test-binary
       with:
         coverage: ${{ inputs.coverage }}
-        coverageDirSuffix: ${{ matrix.os }}
+        coverageDirSuffix: ubuntu-22.04
 
     - name: Set up git config
       uses: ./.github/actions/set-up-git-config
