@@ -3,6 +3,7 @@ package cleanup
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -22,6 +23,10 @@ import (
 )
 
 var commonCmdData common.CmdData
+
+var cmdData struct {
+	ScanContextOnly string
+}
 
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
@@ -83,7 +88,6 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupWithoutKube(&commonCmdData, cmd)
 	common.SetupKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd)
 
@@ -94,6 +98,10 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 	common.SetupPlatform(&commonCmdData, cmd)
+
+	// aliases, but only WERF_SCAN_ONLY_CONTEXT env var is supported
+	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "scan-context-only", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
+	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "kube-context", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
 
 	return cmd
 }
@@ -140,7 +148,7 @@ func runCleanup(ctx context.Context) error {
 		}
 	}()
 
-	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
@@ -234,7 +242,7 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 	var kubernetesContextClients []*kube.ContextClient
 	var kubernetesNamespaceRestrictionByContext map[string]string
 	if !(*commonCmdData.WithoutKube || werfConfig.Meta.Cleanup.DisableKubernetesBasedPolicy) {
-		kubernetesContextClients, err = common.GetKubernetesContextClients(&commonCmdData)
+		kubernetesContextClients, err = common.GetKubernetesContextClients(*commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList, cmdData.ScanContextOnly)
 		if err != nil {
 			return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
 		}
