@@ -138,7 +138,8 @@ werf cleanup [options]
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=''
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
+            Scan for used images only in the specified kube context, scan all contexts from kube    
+            config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -209,6 +210,9 @@ werf cleanup [options]
             in kube-config (or only for the context specified with option --kube-context). When     
             disabled will scan all namespaces in all contexts (or only for the context specified    
             with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)
+      --scan-context-only=''
+            Scan for used images only in the specified kube context, scan all contexts from kube    
+            config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
