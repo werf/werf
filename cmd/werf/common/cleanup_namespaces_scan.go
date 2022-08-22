@@ -15,21 +15,21 @@ func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
 }
 
-func GetKubernetesContextClients(cmdData *CmdData) ([]*kube.ContextClient, error) {
+func GetKubernetesContextClients(configPath, configDataBase64 string, configPathMergeList []string, kubeContext string) ([]*kube.ContextClient, error) {
 	var res []*kube.ContextClient
-	if contextClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{ConfigPath: *cmdData.KubeConfig, ConfigDataBase64: *cmdData.KubeConfigBase64, ConfigPathMergeList: *cmdData.KubeConfigPathMergeList}); err != nil {
+	if contextClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{ConfigPath: configPath, ConfigDataBase64: configDataBase64, ConfigPathMergeList: configPathMergeList}); err != nil {
 		return nil, err
 	} else {
-		if *cmdData.KubeContext != "" {
+		if kubeContext != "" {
 			for _, cc := range contextClients {
-				if cc.ContextName == *cmdData.KubeContext {
+				if cc.ContextName == kubeContext {
 					res = append(res, cc)
 					break
 				}
 			}
 
 			if len(res) == 0 {
-				return nil, fmt.Errorf("cannot find specified kube context %q", *cmdData.KubeContext)
+				return nil, fmt.Errorf("cannot find specified kube context %q", kubeContext)
 			}
 		} else {
 			res = contextClients
