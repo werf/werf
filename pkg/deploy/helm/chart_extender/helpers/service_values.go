@@ -70,9 +70,6 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 	if opts.Env != "" {
 		globalInfo["env"] = opts.Env
 		werfInfo["env"] = opts.Env
-	} else if opts.IsStub {
-		globalInfo["env"] = ""
-		werfInfo["env"] = ""
 	}
 
 	if opts.Namespace != "" {
