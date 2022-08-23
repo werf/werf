@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.164](https://www.github.com/werf/werf/compare/v1.2.163...v1.2.164) (2022-08-23)
+
+
+### Features
+
+* **bundle:** support publishing into insecure registries ([c88eeb3](https://www.github.com/werf/werf/commit/c88eeb318d8162f92f6be2a7bc7cccc5e8371dbb))
+* **converge:** do not require to helm-repo-add repositories ([c527871](https://www.github.com/werf/werf/commit/c527871fc6920585a59c746e837362f4efa296d5))
+
+
+### Bug Fixes
+
+* **cleanup:** ignore WERF_KUBE_CONTEXT env var, support option --scan-only-context ([68677af](https://www.github.com/werf/werf/commit/68677afbaa2b949ea5ecd6fa76b704f33ebb6c1e))
+* **render:** do not set empty env in werf render without repo param ([2c4bdff](https://www.github.com/werf/werf/commit/2c4bdffa816a8c8a5496facec886b4eb9a11b36c))
+
 ### [1.2.163](https://www.github.com/werf/werf/compare/v1.2.162...v1.2.163) (2022-08-19)
 
 
