@@ -1,0 +1,8 @@
+**/.git
+**/.svn
+**/.hg
+_documentation.yml
+documentation.yml
+werf*.yaml
+werf*.yml
+**/templates

@@ -39,3 +39,6 @@ jobs:
 
     - name: Lint
       run: task -p lint
+
+    - name: Install prettier
+      run: task -p deps:install:prettier
