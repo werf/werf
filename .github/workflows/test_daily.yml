@@ -2,7 +2,7 @@ name: test:daily
 
 on:
   schedule:
-  - cron:  '0 8 * * *'
+    - cron: "0 8 * * *"
   repository_dispatch:
     types: ["test:daily"]
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
     with:
       packages: integration/suites
       excludePackages: integration/suites/deploy,integration/suites/cleanup_after_converge,integration/suites/helm/deploy_rollback,integration/suites/bundles,integration/suites/ansible,integration/suites/build/stapel_image/git
-      fetchDepth: 0  # Git history as fixtures for tests.
+      fetchDepth: 0 # Git history as fixtures for tests.
       coverage: true
     secrets: inherit
 
@@ -60,20 +60,20 @@ jobs:
   coverage_report:
     uses: ./.github/workflows/_coverage_report.yml
     needs:
-    - unit
-    - integration_main
-    - integration_git
-    - integration_ansible
-    - integration_per-k8s
-    - integration_per-cr
-    - integration_per-k8s-and-cr
+      - unit
+      - integration_main
+      - integration_git
+      - integration_ansible
+      - integration_per-k8s
+      - integration_per-cr
+      - integration_per-k8s-and-cr
     secrets: inherit
 
   notify:
     if: always()
     needs:
-    - lint
-    - coverage_report
+      - lint
+      - coverage_report
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}

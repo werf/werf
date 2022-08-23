@@ -17,18 +17,18 @@ jobs:
     outputs:
       workflow_proceed: ${{ steps.changes.outputs.workflow_proceed }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Detect changes
-      uses: dorny/paths-filter@v2
-      id: changes
-      with:
-        filters: |
-          workflow_proceed:
-            - '.github'
-            - '**/*.go'
-            - 'go.mod'
+      - name: Detect changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            workflow_proceed:
+              - '.github'
+              - '**/*.go'
+              - 'go.mod'
 
   lint:
     needs: detect-changes
@@ -45,8 +45,8 @@ jobs:
   notify:
     if: (github.event_name != 'pull_request' || needs.detect-changes.outputs.workflow_proceed == 'true') && failure()
     needs:
-    - lint
-    - unit
+      - lint
+      - unit
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}

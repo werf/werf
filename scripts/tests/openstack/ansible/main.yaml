@@ -1,13 +1,13 @@
 ---
 - hosts: kubernetes
   handlers:
-  - import_tasks: common-handlers.yaml
+    - import_tasks: common-handlers.yaml
   tasks:
-  - import_tasks: common-tasks.yaml
-  - import_tasks: master.yaml
+    - import_tasks: common-tasks.yaml
+    - import_tasks: master.yaml
 
 - hosts: registry
   handlers:
-  - import_tasks: common-handlers.yaml
+    - import_tasks: common-handlers.yaml
   tasks:
-  - import_tasks: registry.yaml
+    - import_tasks: registry.yaml

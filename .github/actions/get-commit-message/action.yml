@@ -2,20 +2,20 @@ name: Get commit message
 description: Gets message from commit (and PR)
 inputs:
   ignoreTitle:
-    description: 'Setting this input to true will exclude the Pull Request title.'
+    description: "Setting this input to true will exclude the Pull Request title."
     required: false
-    default: 'true'
+    default: "true"
   ignoreDescription:
-    description: 'Setting this input to true will exclude the Pull Request description.'
+    description: "Setting this input to true will exclude the Pull Request description."
     required: false
-    default: 'true'
+    default: "true"
   ignoreLatestCommitMessage:
-    description: 'Setting this input to true will esclude latest commit message'
+    description: "Setting this input to true will esclude latest commit message"
     required: false
-    default: 'false'
+    default: "false"
 outputs:
   message:
     description: "Commit message"
 runs:
-  using: 'node16'
-  main: 'dist/index.js'
+  using: "node16"
+  main: "dist/index.js"

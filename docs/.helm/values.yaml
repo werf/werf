@@ -8,4 +8,3 @@ resources:
     memory:
       _default: 20M
       production: 50M
-
