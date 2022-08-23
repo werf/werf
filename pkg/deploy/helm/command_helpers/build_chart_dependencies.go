@@ -46,11 +46,12 @@ func BuildChartDependenciesInDir(ctx context.Context, chartFile, chartLockFile *
 	}
 
 	man := &downloader.Manager{
-		Out:        logboek.Context(ctx).OutStream(),
-		ChartPath:  targetDir,
-		Keyring:    opts.Keyring,
-		SkipUpdate: opts.SkipUpdate,
-		Verify:     opts.Verify,
+		Out:               logboek.Context(ctx).OutStream(),
+		ChartPath:         targetDir,
+		Keyring:           opts.Keyring,
+		SkipUpdate:        opts.SkipUpdate,
+		Verify:            opts.Verify,
+		AllowMissingRepos: true,
 
 		Getters:          getter.All(helmEnvSettings),
 		RegistryClient:   registryClient,
