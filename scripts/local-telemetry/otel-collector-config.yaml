@@ -25,6 +25,6 @@ service:
 
   pipelines:
     traces:
-      receivers: [ otlp ]
-      processors: [ batch ]
-      exporters: [ telemetrywerfio ]
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [telemetrywerfio]

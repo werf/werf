@@ -310,67 +310,67 @@ en:
           HEALTHCHECK: <healthcheck>
 ru:
   entries:
-    - << : *dockerfile
+    - <<: *dockerfile
       references:
         - name: "Dockerfile-образ"
           link: "/reference/werf_yaml.html#сборщик-dockerfile"
-    - << : *image_artifact_from
+    - <<: *image_artifact_from
       references:
         - name: "Базовый образ"
           link: "/advanced/building_images_with_stapel/base_image.html"
         - name: "Ускорение сборки и уменьшение размера за счёт маунтов"
           link: "/advanced/building_images_with_stapel/mount_directive.html"
-    - << : *image_artifact_before_install
+    - <<: *image_artifact_before_install
       references:
         - name: "Запуск инструкций сборки"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html"
-    - << : *image_artifact_dependencies_before_install
+    - <<: *image_artifact_dependencies_before_install
       references:
         - name: "Импорт из артефактов и образов"
           link: "/advanced/building_images_with_stapel/import_directive.html"
-    - << : *image_artifact_git_archive
+    - <<: *image_artifact_git_archive
       references:
         - name: "Добавление исходного кода из git-репозиториев"
           link: "/advanced/building_images_with_stapel/git_directive.html"
-    - << : *image_artifact_install
+    - <<: *image_artifact_install
       references:
         - name: "Запуск инструкций сборки"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-изменений-в-git-репозитории"
-    - << : *image_artifact_dependencies_after_install
+    - <<: *image_artifact_dependencies_after_install
       references:
         - name: "Импорт из артефактов и образов"
           link: "/advanced/building_images_with_stapel/import_directive.html"
-    - << : *image_artifact_before_setup
+    - <<: *image_artifact_before_setup
       references:
         - name: "Запуск инструкций сборки"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-изменений-в-git-репозитории"
-    - << : *image_artifact_dependencies_before_setup
+    - <<: *image_artifact_dependencies_before_setup
       references:
         - name: "Импорт из артефактов и образов"
           link: "/advanced/building_images_with_stapel/import_directive.html"
-    - << : *image_artifact_setup
+    - <<: *image_artifact_setup
       references:
         - name: "Запуск инструкций сборки"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
           link: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-изменений-в-git-репозитории"
-    - << : *image_git_cache
+    - <<: *image_git_cache
       references:
         - name: "Подробнее про gitArchive, gitCache, gitLatestPatch"
           link: "/advanced/building_images_with_stapel/git_directive.html#подробнее-про-gitarchive-gitcache-gitlatestpatch"
-    - << : *image_dependencies_after_setup
+    - <<: *image_dependencies_after_setup
       references:
         - name: "Импорт из артефактов и образов"
           link: "/advanced/building_images_with_stapel/import_directive.html"
-    - << : *image_git_latest_patch
+    - <<: *image_git_latest_patch
       references:
         - name: "Подробнее про gitArchive, gitCache, gitLatestPatch"
           link: "/advanced/building_images_with_stapel/git_directive.html#подробнее-про-gitarchive-gitcache-gitlatestpatch"
-    - << : *image_docker_instructions
+    - <<: *image_docker_instructions
       references:
         - name: "Использование Docker-инструкций"
           link: "/advanced/building_images_with_stapel/docker_directive.html"

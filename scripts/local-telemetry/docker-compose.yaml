@@ -4,7 +4,6 @@ networks:
   otel-clickhouse:
 
 services:
-
   otel-collector:
     image: ghcr.io/werf/telemetrywerfio-collector:dev
     command:

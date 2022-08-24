@@ -179,7 +179,6 @@ func GenCliSidebar(cmdGroups templates.CommandGroups, sidebarPath string) error 
 # DO NOT EDIT!
 
 cli: &cli
-
   - title: Overview of command groups
     url: /reference/cli/overview.html
 `)
@@ -188,15 +187,14 @@ cli: &cli
 		indent := 1
 		groupRecord := fmt.Sprintf(`
 %[1]s- title: %[2]s
-%[1]s  f:
-`, strings.Repeat("  ", indent), group.Message)
+%[1]s  f:`, strings.Repeat("  ", indent), group.Message)
 
 		_, err := buf.WriteString(groupRecord)
 		if err != nil {
 			return err
 		}
 
-		indent += 1
+		indent += 2
 		for _, cmd := range group.Commands {
 			if cmd.Hidden {
 				continue
@@ -231,15 +229,14 @@ func genCliSidebar(cmd *cobra.Command, indent int, buf *bytes.Buffer) error {
 	} else {
 		groupRecord := fmt.Sprintf(`
 %[1]s- title: %[2]s
-%[1]s  f:
-`, strings.Repeat("  ", indent), cmd.CommandPath())
+%[1]s  f:`, strings.Repeat("  ", indent), cmd.CommandPath())
 
 		_, err := buf.WriteString(groupRecord)
 		if err != nil {
 			return err
 		}
 
-		indent += 1
+		indent += 2
 		for _, command := range cmd.Commands() {
 			if cmd.Hidden {
 				continue

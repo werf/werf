@@ -3,11 +3,11 @@ name: docs:validate
 on:
   pull_request:
     paths:
-      - '.github'
-      - 'cmd/**'
-      - 'docs/**'
-      - 'README.md'
-      - 'README_ru.md'
+      - ".github"
+      - "cmd/**"
+      - "docs/**"
+      - "README.md"
+      - "README_ru.md"
   repository_dispatch:
     types: ["docs:validate"]
   workflow_dispatch:
@@ -80,8 +80,8 @@ jobs:
   notify:
     if: failure()
     needs:
-    - check_cli_and_readme_partials
-    - check_broken_links
+      - check_cli_and_readme_partials
+      - check_broken_links
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}

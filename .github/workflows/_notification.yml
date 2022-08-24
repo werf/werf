@@ -26,38 +26,38 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
-    - name: Run workflow status conclusion manager
-      uses: technote-space/workflow-conclusion-action@v2
+      - name: Run workflow status conclusion manager
+        uses: technote-space/workflow-conclusion-action@v2
 
-    - if: inputs.useCommitMessage == 'true'
-      name: Checkout code
-      uses: actions/checkout@v3
+      - if: inputs.useCommitMessage == 'true'
+        name: Checkout code
+        uses: actions/checkout@v3
 
-    - if: inputs.useCommitMessage == 'true'
-      name: Get commit message
-      id: get_commit_message
-      uses: ./.github/actions/get-commit-message
-      with:
-        ignoreTitle: 'true' # Don't use PR title
-        ignoreDescription: 'false' # Use the Pull Request description
-        ignoreLatestCommitMessage: 'false' # Use the latest commit message content
+      - if: inputs.useCommitMessage == 'true'
+        name: Get commit message
+        id: get_commit_message
+        uses: ./.github/actions/get-commit-message
+        with:
+          ignoreTitle: "true" # Don't use PR title
+          ignoreDescription: "false" # Use the Pull Request description
+          ignoreLatestCommitMessage: "false" # Use the latest commit message content
 
-    - if: env.WORKFLOW_CONCLUSION == 'failure'
-      name: Add mentions
-      id: msg_mention
-      run: |
-        if [ -n "${{ secrets.mentionGroupID }}" ]; then MSG_MENTION_STRING="<!subteam^${{ secrets.mentionGroupID }}>"; fi
-        if [ -n "${{ secrets.mentionUserID }}" ]; then MSG_MENTION_STRING="$MSG_MENTION_STRING${MSG_MENTION_STRING:+, }<@${{ secrets.mentionUserID }}>"; fi
-        echo "::debug:: Mention string - '$MSG_MENTION_STRING'."
-        echo "::set-output name=content::$MSG_MENTION_STRING"
+      - if: env.WORKFLOW_CONCLUSION == 'failure'
+        name: Add mentions
+        id: msg_mention
+        run: |
+          if [ -n "${{ secrets.mentionGroupID }}" ]; then MSG_MENTION_STRING="<!subteam^${{ secrets.mentionGroupID }}>"; fi
+          if [ -n "${{ secrets.mentionUserID }}" ]; then MSG_MENTION_STRING="$MSG_MENTION_STRING${MSG_MENTION_STRING:+, }<@${{ secrets.mentionUserID }}>"; fi
+          echo "::debug:: Mention string - '$MSG_MENTION_STRING'."
+          echo "::set-output name=content::$MSG_MENTION_STRING"
 
-    - name: Notify
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_WEBHOOK: ${{ secrets.webhook }}
-        SLACK_COLOR: ${{ env.WORKFLOW_CONCLUSION }}
-        SLACK_LINK_NAMES: "true"
-        SLACK_MESSAGE: |
-          ${{ steps.get_commit_message.outputs.message }}
-          ${{ inputs.message }}
-          ${{ steps.msg_mention.outputs.content }}
+      - name: Notify
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.webhook }}
+          SLACK_COLOR: ${{ env.WORKFLOW_CONCLUSION }}
+          SLACK_LINK_NAMES: "true"
+          SLACK_MESSAGE: |
+            ${{ steps.get_commit_message.outputs.message }}
+            ${{ inputs.message }}
+            ${{ steps.msg_mention.outputs.content }}

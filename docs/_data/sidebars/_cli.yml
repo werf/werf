@@ -2,660 +2,623 @@
 # DO NOT EDIT!
 
 cli: &cli
-
   - title: Overview of command groups
     url: /reference/cli/overview.html
 
   - title: Delivery commands
     f:
+      - title: werf converge
+        url: /reference/cli/werf_converge.html
 
-    - title: werf converge
-      url: /reference/cli/werf_converge.html
+      - title: werf dismiss
+        url: /reference/cli/werf_dismiss.html
 
-    - title: werf dismiss
-      url: /reference/cli/werf_dismiss.html
+      - title: werf bundle
+        f:
+          - title: werf bundle apply
+            url: /reference/cli/werf_bundle_apply.html
 
-    - title: werf bundle
-      f:
+          - title: werf bundle copy
+            url: /reference/cli/werf_bundle_copy.html
 
-      - title: werf bundle apply
-        url: /reference/cli/werf_bundle_apply.html
+          - title: werf bundle download
+            url: /reference/cli/werf_bundle_download.html
 
-      - title: werf bundle copy
-        url: /reference/cli/werf_bundle_copy.html
+          - title: werf bundle export
+            url: /reference/cli/werf_bundle_export.html
 
-      - title: werf bundle download
-        url: /reference/cli/werf_bundle_download.html
+          - title: werf bundle publish
+            url: /reference/cli/werf_bundle_publish.html
 
-      - title: werf bundle export
-        url: /reference/cli/werf_bundle_export.html
-
-      - title: werf bundle publish
-        url: /reference/cli/werf_bundle_publish.html
-
-      - title: werf bundle render
-        url: /reference/cli/werf_bundle_render.html
+          - title: werf bundle render
+            url: /reference/cli/werf_bundle_render.html
 
   - title: Cleaning commands
     f:
+      - title: werf cleanup
+        url: /reference/cli/werf_cleanup.html
 
-    - title: werf cleanup
-      url: /reference/cli/werf_cleanup.html
-
-    - title: werf purge
-      url: /reference/cli/werf_purge.html
+      - title: werf purge
+        url: /reference/cli/werf_purge.html
 
   - title: Helper commands
     f:
+      - title: werf ci-env
+        url: /reference/cli/werf_ci_env.html
 
-    - title: werf ci-env
-      url: /reference/cli/werf_ci_env.html
+      - title: werf build
+        url: /reference/cli/werf_build.html
 
-    - title: werf build
-      url: /reference/cli/werf_build.html
+      - title: werf export
+        url: /reference/cli/werf_export.html
 
-    - title: werf export
-      url: /reference/cli/werf_export.html
+      - title: werf run
+        url: /reference/cli/werf_run.html
 
-    - title: werf run
-      url: /reference/cli/werf_run.html
+      - title: werf kube-run
+        url: /reference/cli/werf_kube_run.html
 
-    - title: werf kube-run
-      url: /reference/cli/werf_kube_run.html
+      - title: werf compose
+        f:
+          - title: werf compose config
+            url: /reference/cli/werf_compose_config.html
 
-    - title: werf compose
-      f:
+          - title: werf compose down
+            url: /reference/cli/werf_compose_down.html
 
-      - title: werf compose config
-        url: /reference/cli/werf_compose_config.html
+          - title: werf compose run
+            url: /reference/cli/werf_compose_run.html
 
-      - title: werf compose down
-        url: /reference/cli/werf_compose_down.html
+          - title: werf compose up
+            url: /reference/cli/werf_compose_up.html
 
-      - title: werf compose run
-        url: /reference/cli/werf_compose_run.html
+      - title: werf slugify
+        url: /reference/cli/werf_slugify.html
 
-      - title: werf compose up
-        url: /reference/cli/werf_compose_up.html
-
-    - title: werf slugify
-      url: /reference/cli/werf_slugify.html
-
-    - title: werf render
-      url: /reference/cli/werf_render.html
+      - title: werf render
+        url: /reference/cli/werf_render.html
 
   - title: Low-level management commands
     f:
-
-    - title: werf config
-      f:
-
-      - title: werf config graph
-        url: /reference/cli/werf_config_graph.html
-
-      - title: werf config list
-        url: /reference/cli/werf_config_list.html
-
-      - title: werf config render
-        url: /reference/cli/werf_config_render.html
-
-    - title: werf managed-images
-      f:
-
-      - title: werf managed-images add
-        url: /reference/cli/werf_managed_images_add.html
-
-      - title: werf managed-images ls
-        url: /reference/cli/werf_managed_images_ls.html
-
-      - title: werf managed-images rm
-        url: /reference/cli/werf_managed_images_rm.html
-
-    - title: werf host
-      f:
-
-      - title: werf host cleanup
-        url: /reference/cli/werf_host_cleanup.html
-
-      - title: werf host purge
-        url: /reference/cli/werf_host_purge.html
-
-    - title: werf helm
-      f:
-
-      - title: werf helm create
-        url: /reference/cli/werf_helm_create.html
-
-      - title: werf helm dependency
+      - title: werf config
         f:
+          - title: werf config graph
+            url: /reference/cli/werf_config_graph.html
 
-        - title: werf helm dependency build
-          url: /reference/cli/werf_helm_dependency_build.html
+          - title: werf config list
+            url: /reference/cli/werf_config_list.html
 
-        - title: werf helm dependency list
-          url: /reference/cli/werf_helm_dependency_list.html
+          - title: werf config render
+            url: /reference/cli/werf_config_render.html
 
-        - title: werf helm dependency update
-          url: /reference/cli/werf_helm_dependency_update.html
-
-      - title: werf helm env
-        url: /reference/cli/werf_helm_env.html
-
-      - title: werf helm get
+      - title: werf managed-images
         f:
+          - title: werf managed-images add
+            url: /reference/cli/werf_managed_images_add.html
 
-        - title: werf helm get all
-          url: /reference/cli/werf_helm_get_all.html
+          - title: werf managed-images ls
+            url: /reference/cli/werf_managed_images_ls.html
 
-        - title: werf helm get hooks
-          url: /reference/cli/werf_helm_get_hooks.html
+          - title: werf managed-images rm
+            url: /reference/cli/werf_managed_images_rm.html
 
-        - title: werf helm get manifest
-          url: /reference/cli/werf_helm_get_manifest.html
-
-        - title: werf helm get notes
-          url: /reference/cli/werf_helm_get_notes.html
-
-        - title: werf helm get values
-          url: /reference/cli/werf_helm_get_values.html
-
-      - title: werf helm get-autogenerated-values
-        url: /reference/cli/werf_helm_get_autogenerated_values.html
-
-      - title: werf helm get-namespace
-        url: /reference/cli/werf_helm_get_namespace.html
-
-      - title: werf helm get-release
-        url: /reference/cli/werf_helm_get_release.html
-
-      - title: werf helm history
-        url: /reference/cli/werf_helm_history.html
-
-      - title: werf helm install
-        url: /reference/cli/werf_helm_install.html
-
-      - title: werf helm lint
-        url: /reference/cli/werf_helm_lint.html
-
-      - title: werf helm list
-        url: /reference/cli/werf_helm_list.html
-
-      - title: werf helm migrate2to3
-        url: /reference/cli/werf_helm_migrate2to3.html
-
-      - title: werf helm package
-        url: /reference/cli/werf_helm_package.html
-
-      - title: werf helm plugin
+      - title: werf host
         f:
+          - title: werf host cleanup
+            url: /reference/cli/werf_host_cleanup.html
 
-        - title: werf helm plugin install
-          url: /reference/cli/werf_helm_plugin_install.html
+          - title: werf host purge
+            url: /reference/cli/werf_host_purge.html
 
-        - title: werf helm plugin list
-          url: /reference/cli/werf_helm_plugin_list.html
-
-        - title: werf helm plugin uninstall
-          url: /reference/cli/werf_helm_plugin_uninstall.html
-
-        - title: werf helm plugin update
-          url: /reference/cli/werf_helm_plugin_update.html
-
-      - title: werf helm pull
-        url: /reference/cli/werf_helm_pull.html
-
-      - title: werf helm registry
+      - title: werf helm
         f:
+          - title: werf helm create
+            url: /reference/cli/werf_helm_create.html
 
-        - title: werf helm registry login
-          url: /reference/cli/werf_helm_registry_login.html
+          - title: werf helm dependency
+            f:
+              - title: werf helm dependency build
+                url: /reference/cli/werf_helm_dependency_build.html
 
-        - title: werf helm registry logout
-          url: /reference/cli/werf_helm_registry_logout.html
+              - title: werf helm dependency list
+                url: /reference/cli/werf_helm_dependency_list.html
 
-      - title: werf helm repo
+              - title: werf helm dependency update
+                url: /reference/cli/werf_helm_dependency_update.html
+
+          - title: werf helm env
+            url: /reference/cli/werf_helm_env.html
+
+          - title: werf helm get
+            f:
+              - title: werf helm get all
+                url: /reference/cli/werf_helm_get_all.html
+
+              - title: werf helm get hooks
+                url: /reference/cli/werf_helm_get_hooks.html
+
+              - title: werf helm get manifest
+                url: /reference/cli/werf_helm_get_manifest.html
+
+              - title: werf helm get notes
+                url: /reference/cli/werf_helm_get_notes.html
+
+              - title: werf helm get values
+                url: /reference/cli/werf_helm_get_values.html
+
+          - title: werf helm get-autogenerated-values
+            url: /reference/cli/werf_helm_get_autogenerated_values.html
+
+          - title: werf helm get-namespace
+            url: /reference/cli/werf_helm_get_namespace.html
+
+          - title: werf helm get-release
+            url: /reference/cli/werf_helm_get_release.html
+
+          - title: werf helm history
+            url: /reference/cli/werf_helm_history.html
+
+          - title: werf helm install
+            url: /reference/cli/werf_helm_install.html
+
+          - title: werf helm lint
+            url: /reference/cli/werf_helm_lint.html
+
+          - title: werf helm list
+            url: /reference/cli/werf_helm_list.html
+
+          - title: werf helm migrate2to3
+            url: /reference/cli/werf_helm_migrate2to3.html
+
+          - title: werf helm package
+            url: /reference/cli/werf_helm_package.html
+
+          - title: werf helm plugin
+            f:
+              - title: werf helm plugin install
+                url: /reference/cli/werf_helm_plugin_install.html
+
+              - title: werf helm plugin list
+                url: /reference/cli/werf_helm_plugin_list.html
+
+              - title: werf helm plugin uninstall
+                url: /reference/cli/werf_helm_plugin_uninstall.html
+
+              - title: werf helm plugin update
+                url: /reference/cli/werf_helm_plugin_update.html
+
+          - title: werf helm pull
+            url: /reference/cli/werf_helm_pull.html
+
+          - title: werf helm registry
+            f:
+              - title: werf helm registry login
+                url: /reference/cli/werf_helm_registry_login.html
+
+              - title: werf helm registry logout
+                url: /reference/cli/werf_helm_registry_logout.html
+
+          - title: werf helm repo
+            f:
+              - title: werf helm repo add
+                url: /reference/cli/werf_helm_repo_add.html
+
+              - title: werf helm repo index
+                url: /reference/cli/werf_helm_repo_index.html
+
+              - title: werf helm repo list
+                url: /reference/cli/werf_helm_repo_list.html
+
+              - title: werf helm repo remove
+                url: /reference/cli/werf_helm_repo_remove.html
+
+              - title: werf helm repo update
+                url: /reference/cli/werf_helm_repo_update.html
+
+          - title: werf helm rollback
+            url: /reference/cli/werf_helm_rollback.html
+
+          - title: werf helm search
+            f:
+              - title: werf helm search hub
+                url: /reference/cli/werf_helm_search_hub.html
+
+              - title: werf helm search repo
+                url: /reference/cli/werf_helm_search_repo.html
+
+          - title: werf helm secret
+            f:
+              - title: werf helm secret decrypt
+                url: /reference/cli/werf_helm_secret_decrypt.html
+
+              - title: werf helm secret encrypt
+                url: /reference/cli/werf_helm_secret_encrypt.html
+
+              - title: werf helm secret file
+                f:
+                  - title: werf helm secret file decrypt
+                    url: /reference/cli/werf_helm_secret_file_decrypt.html
+
+                  - title: werf helm secret file edit
+                    url: /reference/cli/werf_helm_secret_file_edit.html
+
+                  - title: werf helm secret file encrypt
+                    url: /reference/cli/werf_helm_secret_file_encrypt.html
+
+              - title: werf helm secret generate-secret-key
+                url: /reference/cli/werf_helm_secret_generate_secret_key.html
+
+              - title: werf helm secret rotate-secret-key
+                url: /reference/cli/werf_helm_secret_rotate_secret_key.html
+
+              - title: werf helm secret values
+                f:
+                  - title: werf helm secret values decrypt
+                    url: /reference/cli/werf_helm_secret_values_decrypt.html
+
+                  - title: werf helm secret values edit
+                    url: /reference/cli/werf_helm_secret_values_edit.html
+
+                  - title: werf helm secret values encrypt
+                    url: /reference/cli/werf_helm_secret_values_encrypt.html
+
+          - title: werf helm show
+            f:
+              - title: werf helm show all
+                url: /reference/cli/werf_helm_show_all.html
+
+              - title: werf helm show chart
+                url: /reference/cli/werf_helm_show_chart.html
+
+              - title: werf helm show crds
+                url: /reference/cli/werf_helm_show_crds.html
+
+              - title: werf helm show readme
+                url: /reference/cli/werf_helm_show_readme.html
+
+              - title: werf helm show values
+                url: /reference/cli/werf_helm_show_values.html
+
+          - title: werf helm status
+            url: /reference/cli/werf_helm_status.html
+
+          - title: werf helm template
+            url: /reference/cli/werf_helm_template.html
+
+          - title: werf helm test
+            url: /reference/cli/werf_helm_test.html
+
+          - title: werf helm uninstall
+            url: /reference/cli/werf_helm_uninstall.html
+
+          - title: werf helm upgrade
+            url: /reference/cli/werf_helm_upgrade.html
+
+          - title: werf helm verify
+            url: /reference/cli/werf_helm_verify.html
+
+          - title: werf helm version
+            url: /reference/cli/werf_helm_version.html
+
+      - title: werf cr
         f:
+          - title: werf cr login
+            url: /reference/cli/werf_cr_login.html
 
-        - title: werf helm repo add
-          url: /reference/cli/werf_helm_repo_add.html
+          - title: werf cr logout
+            url: /reference/cli/werf_cr_logout.html
 
-        - title: werf helm repo index
-          url: /reference/cli/werf_helm_repo_index.html
-
-        - title: werf helm repo list
-          url: /reference/cli/werf_helm_repo_list.html
-
-        - title: werf helm repo remove
-          url: /reference/cli/werf_helm_repo_remove.html
-
-        - title: werf helm repo update
-          url: /reference/cli/werf_helm_repo_update.html
-
-      - title: werf helm rollback
-        url: /reference/cli/werf_helm_rollback.html
-
-      - title: werf helm search
+      - title: werf kubectl
         f:
+          - title: werf kubectl alpha
+            f:
+              - title: werf kubectl alpha events
+                url: /reference/cli/werf_kubectl_alpha_events.html
 
-        - title: werf helm search hub
-          url: /reference/cli/werf_helm_search_hub.html
+          - title: werf kubectl annotate
+            url: /reference/cli/werf_kubectl_annotate.html
 
-        - title: werf helm search repo
-          url: /reference/cli/werf_helm_search_repo.html
+          - title: werf kubectl api-resources
+            url: /reference/cli/werf_kubectl_api_resources.html
 
-      - title: werf helm secret
-        f:
+          - title: werf kubectl api-versions
+            url: /reference/cli/werf_kubectl_api_versions.html
 
-        - title: werf helm secret decrypt
-          url: /reference/cli/werf_helm_secret_decrypt.html
+          - title: werf kubectl apply
+            f:
+              - title: werf kubectl apply edit-last-applied
+                url: /reference/cli/werf_kubectl_apply_edit_last_applied.html
 
-        - title: werf helm secret encrypt
-          url: /reference/cli/werf_helm_secret_encrypt.html
+              - title: werf kubectl apply set-last-applied
+                url: /reference/cli/werf_kubectl_apply_set_last_applied.html
 
-        - title: werf helm secret file
-          f:
+              - title: werf kubectl apply view-last-applied
+                url: /reference/cli/werf_kubectl_apply_view_last_applied.html
 
-          - title: werf helm secret file decrypt
-            url: /reference/cli/werf_helm_secret_file_decrypt.html
+          - title: werf kubectl attach
+            url: /reference/cli/werf_kubectl_attach.html
 
-          - title: werf helm secret file edit
-            url: /reference/cli/werf_helm_secret_file_edit.html
+          - title: werf kubectl auth
+            f:
+              - title: werf kubectl auth can-i
+                url: /reference/cli/werf_kubectl_auth_can_i.html
 
-          - title: werf helm secret file encrypt
-            url: /reference/cli/werf_helm_secret_file_encrypt.html
+              - title: werf kubectl auth reconcile
+                url: /reference/cli/werf_kubectl_auth_reconcile.html
 
-        - title: werf helm secret generate-secret-key
-          url: /reference/cli/werf_helm_secret_generate_secret_key.html
+          - title: werf kubectl autoscale
+            url: /reference/cli/werf_kubectl_autoscale.html
 
-        - title: werf helm secret rotate-secret-key
-          url: /reference/cli/werf_helm_secret_rotate_secret_key.html
+          - title: werf kubectl certificate
+            f:
+              - title: werf kubectl certificate approve
+                url: /reference/cli/werf_kubectl_certificate_approve.html
 
-        - title: werf helm secret values
-          f:
+              - title: werf kubectl certificate deny
+                url: /reference/cli/werf_kubectl_certificate_deny.html
 
-          - title: werf helm secret values decrypt
-            url: /reference/cli/werf_helm_secret_values_decrypt.html
+          - title: werf kubectl cluster-info
+            f:
+              - title: werf kubectl cluster-info dump
+                url: /reference/cli/werf_kubectl_cluster_info_dump.html
 
-          - title: werf helm secret values edit
-            url: /reference/cli/werf_helm_secret_values_edit.html
+          - title: werf kubectl completion
+            url: /reference/cli/werf_kubectl_completion.html
 
-          - title: werf helm secret values encrypt
-            url: /reference/cli/werf_helm_secret_values_encrypt.html
+          - title: werf kubectl config
+            f:
+              - title: werf kubectl config current-context
+                url: /reference/cli/werf_kubectl_config_current_context.html
 
-      - title: werf helm show
-        f:
+              - title: werf kubectl config delete-cluster
+                url: /reference/cli/werf_kubectl_config_delete_cluster.html
 
-        - title: werf helm show all
-          url: /reference/cli/werf_helm_show_all.html
+              - title: werf kubectl config delete-context
+                url: /reference/cli/werf_kubectl_config_delete_context.html
 
-        - title: werf helm show chart
-          url: /reference/cli/werf_helm_show_chart.html
+              - title: werf kubectl config delete-user
+                url: /reference/cli/werf_kubectl_config_delete_user.html
 
-        - title: werf helm show crds
-          url: /reference/cli/werf_helm_show_crds.html
+              - title: werf kubectl config get-clusters
+                url: /reference/cli/werf_kubectl_config_get_clusters.html
 
-        - title: werf helm show readme
-          url: /reference/cli/werf_helm_show_readme.html
+              - title: werf kubectl config get-contexts
+                url: /reference/cli/werf_kubectl_config_get_contexts.html
 
-        - title: werf helm show values
-          url: /reference/cli/werf_helm_show_values.html
+              - title: werf kubectl config get-users
+                url: /reference/cli/werf_kubectl_config_get_users.html
 
-      - title: werf helm status
-        url: /reference/cli/werf_helm_status.html
+              - title: werf kubectl config rename-context
+                url: /reference/cli/werf_kubectl_config_rename_context.html
 
-      - title: werf helm template
-        url: /reference/cli/werf_helm_template.html
+              - title: werf kubectl config set
+                url: /reference/cli/werf_kubectl_config_set.html
 
-      - title: werf helm test
-        url: /reference/cli/werf_helm_test.html
+              - title: werf kubectl config set-cluster
+                url: /reference/cli/werf_kubectl_config_set_cluster.html
 
-      - title: werf helm uninstall
-        url: /reference/cli/werf_helm_uninstall.html
+              - title: werf kubectl config set-context
+                url: /reference/cli/werf_kubectl_config_set_context.html
 
-      - title: werf helm upgrade
-        url: /reference/cli/werf_helm_upgrade.html
+              - title: werf kubectl config set-credentials
+                url: /reference/cli/werf_kubectl_config_set_credentials.html
 
-      - title: werf helm verify
-        url: /reference/cli/werf_helm_verify.html
+              - title: werf kubectl config unset
+                url: /reference/cli/werf_kubectl_config_unset.html
 
-      - title: werf helm version
-        url: /reference/cli/werf_helm_version.html
+              - title: werf kubectl config use-context
+                url: /reference/cli/werf_kubectl_config_use_context.html
 
-    - title: werf cr
-      f:
+              - title: werf kubectl config view
+                url: /reference/cli/werf_kubectl_config_view.html
 
-      - title: werf cr login
-        url: /reference/cli/werf_cr_login.html
+          - title: werf kubectl cordon
+            url: /reference/cli/werf_kubectl_cordon.html
 
-      - title: werf cr logout
-        url: /reference/cli/werf_cr_logout.html
+          - title: werf kubectl cp
+            url: /reference/cli/werf_kubectl_cp.html
 
-    - title: werf kubectl
-      f:
+          - title: werf kubectl create
+            f:
+              - title: werf kubectl create clusterrole
+                url: /reference/cli/werf_kubectl_create_clusterrole.html
 
-      - title: werf kubectl alpha
-        f:
+              - title: werf kubectl create clusterrolebinding
+                url: /reference/cli/werf_kubectl_create_clusterrolebinding.html
 
-        - title: werf kubectl alpha events
-          url: /reference/cli/werf_kubectl_alpha_events.html
+              - title: werf kubectl create configmap
+                url: /reference/cli/werf_kubectl_create_configmap.html
 
-      - title: werf kubectl annotate
-        url: /reference/cli/werf_kubectl_annotate.html
+              - title: werf kubectl create cronjob
+                url: /reference/cli/werf_kubectl_create_cronjob.html
 
-      - title: werf kubectl api-resources
-        url: /reference/cli/werf_kubectl_api_resources.html
+              - title: werf kubectl create deployment
+                url: /reference/cli/werf_kubectl_create_deployment.html
 
-      - title: werf kubectl api-versions
-        url: /reference/cli/werf_kubectl_api_versions.html
+              - title: werf kubectl create ingress
+                url: /reference/cli/werf_kubectl_create_ingress.html
 
-      - title: werf kubectl apply
-        f:
+              - title: werf kubectl create job
+                url: /reference/cli/werf_kubectl_create_job.html
 
-        - title: werf kubectl apply edit-last-applied
-          url: /reference/cli/werf_kubectl_apply_edit_last_applied.html
+              - title: werf kubectl create namespace
+                url: /reference/cli/werf_kubectl_create_namespace.html
 
-        - title: werf kubectl apply set-last-applied
-          url: /reference/cli/werf_kubectl_apply_set_last_applied.html
+              - title: werf kubectl create poddisruptionbudget
+                url: /reference/cli/werf_kubectl_create_poddisruptionbudget.html
 
-        - title: werf kubectl apply view-last-applied
-          url: /reference/cli/werf_kubectl_apply_view_last_applied.html
+              - title: werf kubectl create priorityclass
+                url: /reference/cli/werf_kubectl_create_priorityclass.html
 
-      - title: werf kubectl attach
-        url: /reference/cli/werf_kubectl_attach.html
+              - title: werf kubectl create quota
+                url: /reference/cli/werf_kubectl_create_quota.html
 
-      - title: werf kubectl auth
-        f:
+              - title: werf kubectl create role
+                url: /reference/cli/werf_kubectl_create_role.html
 
-        - title: werf kubectl auth can-i
-          url: /reference/cli/werf_kubectl_auth_can_i.html
+              - title: werf kubectl create rolebinding
+                url: /reference/cli/werf_kubectl_create_rolebinding.html
 
-        - title: werf kubectl auth reconcile
-          url: /reference/cli/werf_kubectl_auth_reconcile.html
+              - title: werf kubectl create secret
+                f:
+                  - title: werf kubectl create secret docker-registry
+                    url: /reference/cli/werf_kubectl_create_secret_docker_registry.html
 
-      - title: werf kubectl autoscale
-        url: /reference/cli/werf_kubectl_autoscale.html
+                  - title: werf kubectl create secret generic
+                    url: /reference/cli/werf_kubectl_create_secret_generic.html
 
-      - title: werf kubectl certificate
-        f:
+                  - title: werf kubectl create secret tls
+                    url: /reference/cli/werf_kubectl_create_secret_tls.html
 
-        - title: werf kubectl certificate approve
-          url: /reference/cli/werf_kubectl_certificate_approve.html
+              - title: werf kubectl create service
+                f:
+                  - title: werf kubectl create service clusterip
+                    url: /reference/cli/werf_kubectl_create_service_clusterip.html
 
-        - title: werf kubectl certificate deny
-          url: /reference/cli/werf_kubectl_certificate_deny.html
+                  - title: werf kubectl create service externalname
+                    url: /reference/cli/werf_kubectl_create_service_externalname.html
 
-      - title: werf kubectl cluster-info
-        f:
+                  - title: werf kubectl create service loadbalancer
+                    url: /reference/cli/werf_kubectl_create_service_loadbalancer.html
 
-        - title: werf kubectl cluster-info dump
-          url: /reference/cli/werf_kubectl_cluster_info_dump.html
+                  - title: werf kubectl create service nodeport
+                    url: /reference/cli/werf_kubectl_create_service_nodeport.html
 
-      - title: werf kubectl completion
-        url: /reference/cli/werf_kubectl_completion.html
+              - title: werf kubectl create serviceaccount
+                url: /reference/cli/werf_kubectl_create_serviceaccount.html
 
-      - title: werf kubectl config
-        f:
+          - title: werf kubectl debug
+            url: /reference/cli/werf_kubectl_debug.html
 
-        - title: werf kubectl config current-context
-          url: /reference/cli/werf_kubectl_config_current_context.html
+          - title: werf kubectl delete
+            url: /reference/cli/werf_kubectl_delete.html
 
-        - title: werf kubectl config delete-cluster
-          url: /reference/cli/werf_kubectl_config_delete_cluster.html
+          - title: werf kubectl describe
+            url: /reference/cli/werf_kubectl_describe.html
 
-        - title: werf kubectl config delete-context
-          url: /reference/cli/werf_kubectl_config_delete_context.html
+          - title: werf kubectl diff
+            url: /reference/cli/werf_kubectl_diff.html
 
-        - title: werf kubectl config delete-user
-          url: /reference/cli/werf_kubectl_config_delete_user.html
+          - title: werf kubectl drain
+            url: /reference/cli/werf_kubectl_drain.html
 
-        - title: werf kubectl config get-clusters
-          url: /reference/cli/werf_kubectl_config_get_clusters.html
+          - title: werf kubectl edit
+            url: /reference/cli/werf_kubectl_edit.html
 
-        - title: werf kubectl config get-contexts
-          url: /reference/cli/werf_kubectl_config_get_contexts.html
+          - title: werf kubectl exec
+            url: /reference/cli/werf_kubectl_exec.html
 
-        - title: werf kubectl config get-users
-          url: /reference/cli/werf_kubectl_config_get_users.html
+          - title: werf kubectl explain
+            url: /reference/cli/werf_kubectl_explain.html
 
-        - title: werf kubectl config rename-context
-          url: /reference/cli/werf_kubectl_config_rename_context.html
+          - title: werf kubectl expose
+            url: /reference/cli/werf_kubectl_expose.html
 
-        - title: werf kubectl config set
-          url: /reference/cli/werf_kubectl_config_set.html
+          - title: werf kubectl get
+            url: /reference/cli/werf_kubectl_get.html
 
-        - title: werf kubectl config set-cluster
-          url: /reference/cli/werf_kubectl_config_set_cluster.html
+          - title: werf kubectl kustomize
+            url: /reference/cli/werf_kubectl_kustomize.html
 
-        - title: werf kubectl config set-context
-          url: /reference/cli/werf_kubectl_config_set_context.html
+          - title: werf kubectl label
+            url: /reference/cli/werf_kubectl_label.html
 
-        - title: werf kubectl config set-credentials
-          url: /reference/cli/werf_kubectl_config_set_credentials.html
+          - title: werf kubectl logs
+            url: /reference/cli/werf_kubectl_logs.html
 
-        - title: werf kubectl config unset
-          url: /reference/cli/werf_kubectl_config_unset.html
+          - title: werf kubectl options
+            url: /reference/cli/werf_kubectl_options.html
 
-        - title: werf kubectl config use-context
-          url: /reference/cli/werf_kubectl_config_use_context.html
+          - title: werf kubectl patch
+            url: /reference/cli/werf_kubectl_patch.html
 
-        - title: werf kubectl config view
-          url: /reference/cli/werf_kubectl_config_view.html
+          - title: werf kubectl plugin
+            f:
+              - title: werf kubectl plugin list
+                url: /reference/cli/werf_kubectl_plugin_list.html
 
-      - title: werf kubectl cordon
-        url: /reference/cli/werf_kubectl_cordon.html
+          - title: werf kubectl port-forward
+            url: /reference/cli/werf_kubectl_port_forward.html
 
-      - title: werf kubectl cp
-        url: /reference/cli/werf_kubectl_cp.html
+          - title: werf kubectl proxy
+            url: /reference/cli/werf_kubectl_proxy.html
 
-      - title: werf kubectl create
-        f:
+          - title: werf kubectl replace
+            url: /reference/cli/werf_kubectl_replace.html
 
-        - title: werf kubectl create clusterrole
-          url: /reference/cli/werf_kubectl_create_clusterrole.html
+          - title: werf kubectl rollout
+            f:
+              - title: werf kubectl rollout history
+                url: /reference/cli/werf_kubectl_rollout_history.html
 
-        - title: werf kubectl create clusterrolebinding
-          url: /reference/cli/werf_kubectl_create_clusterrolebinding.html
+              - title: werf kubectl rollout pause
+                url: /reference/cli/werf_kubectl_rollout_pause.html
 
-        - title: werf kubectl create configmap
-          url: /reference/cli/werf_kubectl_create_configmap.html
+              - title: werf kubectl rollout restart
+                url: /reference/cli/werf_kubectl_rollout_restart.html
 
-        - title: werf kubectl create cronjob
-          url: /reference/cli/werf_kubectl_create_cronjob.html
+              - title: werf kubectl rollout resume
+                url: /reference/cli/werf_kubectl_rollout_resume.html
 
-        - title: werf kubectl create deployment
-          url: /reference/cli/werf_kubectl_create_deployment.html
+              - title: werf kubectl rollout status
+                url: /reference/cli/werf_kubectl_rollout_status.html
 
-        - title: werf kubectl create ingress
-          url: /reference/cli/werf_kubectl_create_ingress.html
+              - title: werf kubectl rollout undo
+                url: /reference/cli/werf_kubectl_rollout_undo.html
 
-        - title: werf kubectl create job
-          url: /reference/cli/werf_kubectl_create_job.html
+          - title: werf kubectl run
+            url: /reference/cli/werf_kubectl_run.html
 
-        - title: werf kubectl create namespace
-          url: /reference/cli/werf_kubectl_create_namespace.html
+          - title: werf kubectl scale
+            url: /reference/cli/werf_kubectl_scale.html
 
-        - title: werf kubectl create poddisruptionbudget
-          url: /reference/cli/werf_kubectl_create_poddisruptionbudget.html
+          - title: werf kubectl set
+            f:
+              - title: werf kubectl set env
+                url: /reference/cli/werf_kubectl_set_env.html
 
-        - title: werf kubectl create priorityclass
-          url: /reference/cli/werf_kubectl_create_priorityclass.html
+              - title: werf kubectl set image
+                url: /reference/cli/werf_kubectl_set_image.html
 
-        - title: werf kubectl create quota
-          url: /reference/cli/werf_kubectl_create_quota.html
+              - title: werf kubectl set resources
+                url: /reference/cli/werf_kubectl_set_resources.html
 
-        - title: werf kubectl create role
-          url: /reference/cli/werf_kubectl_create_role.html
+              - title: werf kubectl set selector
+                url: /reference/cli/werf_kubectl_set_selector.html
 
-        - title: werf kubectl create rolebinding
-          url: /reference/cli/werf_kubectl_create_rolebinding.html
+              - title: werf kubectl set serviceaccount
+                url: /reference/cli/werf_kubectl_set_serviceaccount.html
 
-        - title: werf kubectl create secret
-          f:
+              - title: werf kubectl set subject
+                url: /reference/cli/werf_kubectl_set_subject.html
 
-          - title: werf kubectl create secret docker-registry
-            url: /reference/cli/werf_kubectl_create_secret_docker_registry.html
+          - title: werf kubectl taint
+            url: /reference/cli/werf_kubectl_taint.html
 
-          - title: werf kubectl create secret generic
-            url: /reference/cli/werf_kubectl_create_secret_generic.html
+          - title: werf kubectl top
+            f:
+              - title: werf kubectl top node
+                url: /reference/cli/werf_kubectl_top_node.html
 
-          - title: werf kubectl create secret tls
-            url: /reference/cli/werf_kubectl_create_secret_tls.html
+              - title: werf kubectl top pod
+                url: /reference/cli/werf_kubectl_top_pod.html
 
-        - title: werf kubectl create service
-          f:
+          - title: werf kubectl uncordon
+            url: /reference/cli/werf_kubectl_uncordon.html
 
-          - title: werf kubectl create service clusterip
-            url: /reference/cli/werf_kubectl_create_service_clusterip.html
+          - title: werf kubectl version
+            url: /reference/cli/werf_kubectl_version.html
 
-          - title: werf kubectl create service externalname
-            url: /reference/cli/werf_kubectl_create_service_externalname.html
-
-          - title: werf kubectl create service loadbalancer
-            url: /reference/cli/werf_kubectl_create_service_loadbalancer.html
-
-          - title: werf kubectl create service nodeport
-            url: /reference/cli/werf_kubectl_create_service_nodeport.html
-
-        - title: werf kubectl create serviceaccount
-          url: /reference/cli/werf_kubectl_create_serviceaccount.html
-
-      - title: werf kubectl debug
-        url: /reference/cli/werf_kubectl_debug.html
-
-      - title: werf kubectl delete
-        url: /reference/cli/werf_kubectl_delete.html
-
-      - title: werf kubectl describe
-        url: /reference/cli/werf_kubectl_describe.html
-
-      - title: werf kubectl diff
-        url: /reference/cli/werf_kubectl_diff.html
-
-      - title: werf kubectl drain
-        url: /reference/cli/werf_kubectl_drain.html
-
-      - title: werf kubectl edit
-        url: /reference/cli/werf_kubectl_edit.html
-
-      - title: werf kubectl exec
-        url: /reference/cli/werf_kubectl_exec.html
-
-      - title: werf kubectl explain
-        url: /reference/cli/werf_kubectl_explain.html
-
-      - title: werf kubectl expose
-        url: /reference/cli/werf_kubectl_expose.html
-
-      - title: werf kubectl get
-        url: /reference/cli/werf_kubectl_get.html
-
-      - title: werf kubectl kustomize
-        url: /reference/cli/werf_kubectl_kustomize.html
-
-      - title: werf kubectl label
-        url: /reference/cli/werf_kubectl_label.html
-
-      - title: werf kubectl logs
-        url: /reference/cli/werf_kubectl_logs.html
-
-      - title: werf kubectl options
-        url: /reference/cli/werf_kubectl_options.html
-
-      - title: werf kubectl patch
-        url: /reference/cli/werf_kubectl_patch.html
-
-      - title: werf kubectl plugin
-        f:
-
-        - title: werf kubectl plugin list
-          url: /reference/cli/werf_kubectl_plugin_list.html
-
-      - title: werf kubectl port-forward
-        url: /reference/cli/werf_kubectl_port_forward.html
-
-      - title: werf kubectl proxy
-        url: /reference/cli/werf_kubectl_proxy.html
-
-      - title: werf kubectl replace
-        url: /reference/cli/werf_kubectl_replace.html
-
-      - title: werf kubectl rollout
-        f:
-
-        - title: werf kubectl rollout history
-          url: /reference/cli/werf_kubectl_rollout_history.html
-
-        - title: werf kubectl rollout pause
-          url: /reference/cli/werf_kubectl_rollout_pause.html
-
-        - title: werf kubectl rollout restart
-          url: /reference/cli/werf_kubectl_rollout_restart.html
-
-        - title: werf kubectl rollout resume
-          url: /reference/cli/werf_kubectl_rollout_resume.html
-
-        - title: werf kubectl rollout status
-          url: /reference/cli/werf_kubectl_rollout_status.html
-
-        - title: werf kubectl rollout undo
-          url: /reference/cli/werf_kubectl_rollout_undo.html
-
-      - title: werf kubectl run
-        url: /reference/cli/werf_kubectl_run.html
-
-      - title: werf kubectl scale
-        url: /reference/cli/werf_kubectl_scale.html
-
-      - title: werf kubectl set
-        f:
-
-        - title: werf kubectl set env
-          url: /reference/cli/werf_kubectl_set_env.html
-
-        - title: werf kubectl set image
-          url: /reference/cli/werf_kubectl_set_image.html
-
-        - title: werf kubectl set resources
-          url: /reference/cli/werf_kubectl_set_resources.html
-
-        - title: werf kubectl set selector
-          url: /reference/cli/werf_kubectl_set_selector.html
-
-        - title: werf kubectl set serviceaccount
-          url: /reference/cli/werf_kubectl_set_serviceaccount.html
-
-        - title: werf kubectl set subject
-          url: /reference/cli/werf_kubectl_set_subject.html
-
-      - title: werf kubectl taint
-        url: /reference/cli/werf_kubectl_taint.html
-
-      - title: werf kubectl top
-        f:
-
-        - title: werf kubectl top node
-          url: /reference/cli/werf_kubectl_top_node.html
-
-        - title: werf kubectl top pod
-          url: /reference/cli/werf_kubectl_top_pod.html
-
-      - title: werf kubectl uncordon
-        url: /reference/cli/werf_kubectl_uncordon.html
-
-      - title: werf kubectl version
-        url: /reference/cli/werf_kubectl_version.html
-
-      - title: werf kubectl wait
-        url: /reference/cli/werf_kubectl_wait.html
+          - title: werf kubectl wait
+            url: /reference/cli/werf_kubectl_wait.html
 
   - title: Other commands
     f:
+      - title: werf synchronization
+        url: /reference/cli/werf_synchronization.html
 
-    - title: werf synchronization
-      url: /reference/cli/werf_synchronization.html
+      - title: werf completion
+        url: /reference/cli/werf_completion.html
 
-    - title: werf completion
-      url: /reference/cli/werf_completion.html
-
-    - title: werf version
-      url: /reference/cli/werf_version.html
+      - title: werf version
+        url: /reference/cli/werf_version.html

@@ -15,7 +15,7 @@ site_description: Consistent delivery tool. Git as a single source of truth. Bui
 github_repo_path: /werf/werf
 
 assets:
-  precompile: ['**/*.*']
+  precompile: ["**/*.*"]
 
 social_links:
   ru:
@@ -30,31 +30,31 @@ social_links:
     slack_2: https://cloud-native.slack.com/messages/CHY2THYUU
 
 exclude:
-- .idea/
-- .gitignore
-- .werf/
-- DEVELOPMENT.md
-- docker-compose*.yml
-- Gemfile
-- Gemfile.lock
-- pages_ru/
-- vendor
-- werf.yaml
+  - .idea/
+  - .gitignore
+  - .werf/
+  - DEVELOPMENT.md
+  - docker-compose*.yml
+  - Gemfile
+  - Gemfile.lock
+  - pages_ru/
+  - vendor
+  - werf.yaml
 
 highlighter: rouge
 
 plugins:
-- jekyll-assets
+  - jekyll-assets
 
 markdown: kramdown
 kramdown:
- input: GFM
- hard_wrap: false
- syntax_highlighter: rouge
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
 
 breadcrumbs:
   root:
-    hide: false  # show breadcrumbs on root/home page
+    hide: false # show breadcrumbs on root/home page
     image: false # Show image or title text
   hometext: "Home"
 
@@ -90,4 +90,4 @@ defaults:
 timezone: Europe/Moscow
 
 sidebars:
-- documentation
+  - documentation

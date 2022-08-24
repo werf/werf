@@ -1,21 +1,21 @@
-  - name: Check whether master is already initialized
-    stat:
-      path: /etc/kubernetes/manifests/kube-apiserver.yaml
-    register: initialized
+- name: Check whether master is already initialized
+  stat:
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+  register: initialized
 
-  - name: Get Kubernetes full version
-    shell: "dpkg-query --showformat='${Version}' --show kubeadm | cut -f 1 -d '-'"
-    register: kubernetes_full_version
+- name: Get Kubernetes full version
+  shell: "dpkg-query --showformat='${Version}' --show kubeadm | cut -f 1 -d '-'"
+  register: kubernetes_full_version
 
-  - name: Initialize Kubernetes control plane
-    block:
+- name: Initialize Kubernetes control plane
+  block:
     - name: Template a kubeadm config to /tmp/kubeadm-config.yaml
       template:
         src: templates/kubeadm-beta-config.yaml.j2
         dest: /tmp/kubeadm-config.yaml
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       when: kubernetes_version == "1.13" or kubernetes_version == "1.14" or kubernetes_version == "1.15" or kubernetes_version == "1.16"
 
     - name: Template a kubeadm config to /tmp/kubeadm-config.yaml
@@ -24,7 +24,7 @@
         dest: /tmp/kubeadm-config.yaml
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       when: kubernetes_version == "1.11" or kubernetes_version == "1.12"
 
     - name: Prepull control plane images
@@ -48,50 +48,50 @@
         port: 6443
         timeout: 600
 
-    when: not initialized.stat.exists
+  when: not initialized.stat.exists
 
-  - name: Ensure .kube directory
-    file:
-      state: directory
-      path: "/root/.kube"
-      owner: root
-      group: root
-      mode: '0700'
+- name: Ensure .kube directory
+  file:
+    state: directory
+    path: "/root/.kube"
+    owner: root
+    group: root
+    mode: "0700"
 
-  - name: Copy admin.conf to root's home directory
-    copy:
-      src: /etc/kubernetes/admin.conf
-      dest: /root/.kube/config
-      mode: preserve
-      remote_src: yes
+- name: Copy admin.conf to root's home directory
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    mode: preserve
+    remote_src: yes
 
-  - name: Register autocompletion
-    shell: kubectl completion bash
-    register: kubectl_bash_autocompletion
-    changed_when: False
+- name: Register autocompletion
+  shell: kubectl completion bash
+  register: kubectl_bash_autocompletion
+  changed_when: False
 
-  - name: Insert autocompletion into root's .bashrc
-    blockinfile:
-      path: /root/.bashrc
-      block: |
-        {{ kubectl_bash_autocompletion.stdout }}
+- name: Insert autocompletion into root's .bashrc
+  blockinfile:
+    path: /root/.bashrc
+    block: |
+      {{ kubectl_bash_autocompletion.stdout }}
 
-  - name: Update CoreDNS image
-    shell: kubectl -n kube-system set image deployments.apps/coredns coredns=k8s.gcr.io/coredns:1.6.2
+- name: Update CoreDNS image
+  shell: kubectl -n kube-system set image deployments.apps/coredns coredns=k8s.gcr.io/coredns:1.6.2
 
-  - name: Initialize Kubernetes flannel
-    block:
+- name: Initialize Kubernetes flannel
+  block:
     - name: Template a kubeadm config to /tmp/kube-flannel.yaml
       template:
         src: templates/kube-flannel.yaml.j2
         dest: /tmp/kube-flannel.yaml
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
 
-  - name: Apply kube-flannel
-    shell: kubectl apply -f /tmp/kube-flannel.yaml
+- name: Apply kube-flannel
+  shell: kubectl apply -f /tmp/kube-flannel.yaml
 
-  - name: Remove master taint
-    shell: 'kubectl patch node {{ ansible_hostname }} --type=json -p="[{\"op\": \"remove\", \"path\": \"/spec/taints\"}]"'
-    ignore_errors: yes
+- name: Remove master taint
+  shell: 'kubectl patch node {{ ansible_hostname }} --type=json -p="[{\"op\": \"remove\", \"path\": \"/spec/taints\"}]"'
+  ignore_errors: yes

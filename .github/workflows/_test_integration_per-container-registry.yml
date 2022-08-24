@@ -23,16 +23,16 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - ${{ inputs.linuxAmd64Runner }}
+          - ${{ inputs.linuxAmd64Runner }}
         cr:
-        - acr
-        - default
-        - dockerhub
-        - ecr
-        - gcr
-        - github
-        - harbor
-        - quay
+          - acr
+          - default
+          - dockerhub
+          - ecr
+          - gcr
+          - github
+          - harbor
+          - quay
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     env:
@@ -77,63 +77,63 @@ jobs:
       WERF_TEST_QUAY_TOKEN: ${{ secrets.WERF_TEST_QUAY_TOKEN }}
       WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
     steps:
-    - name: Install werf build dependencies
-      run: sudo apt-get install -y libbtrfs-dev
+      - name: Install werf build dependencies
+        run: sudo apt-get install -y libbtrfs-dev
 
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        cache: true
-        go-version-file: go.mod
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          cache: true
+          go-version-file: go.mod
 
-    - name: Install Task
-      uses: arduino/setup-task@v1
+      - name: Install Task
+        uses: arduino/setup-task@v1
 
-    - name: Set up prebuilt werf test binary
-      uses: ./.github/actions/set-up-prebuilt-werf-test-binary
-      with:
-        coverage: ${{ inputs.coverage }}
-        coverageDirSuffix: ${{ matrix.os }}
+      - name: Set up prebuilt werf test binary
+        uses: ./.github/actions/set-up-prebuilt-werf-test-binary
+        with:
+          coverage: ${{ inputs.coverage }}
+          coverageDirSuffix: ${{ matrix.os }}
 
-    - if: matrix.cr == 'acr'
-      name: Login to ACR
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - if: matrix.cr == 'acr'
+        name: Login to ACR
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - if: matrix.cr == 'ecr'
-      name: Login to ECR
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      - if: matrix.cr == 'ecr'
+        name: Login to ECR
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
-    - name: Set up git config
-      uses: ./.github/actions/set-up-git-config
+      - name: Set up git config
+        uses: ./.github/actions/set-up-git-config
 
-    - name: Install ginkgo
-      run: task -p deps:install:ginkgo
+      - name: Install ginkgo
+        run: task -p deps:install:ginkgo
 
-    - name: Check container registry creds
-      run: ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.cr }}
+      - name: Check container registry creds
+        run: ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.cr }}
 
-    - name: Test
-      run: |
-        if ${{ inputs.coverage }}; then
-          task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going
-          mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
-        else
-          task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 -v --keep-going
-        fi
-        echo loadavg: $(cat /proc/loadavg)
+      - name: Test
+        run: |
+          if ${{ inputs.coverage }}; then
+            task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going
+            mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
+          else
+            task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 -v --keep-going
+          fi
+          echo loadavg: $(cat /proc/loadavg)
 
-    - if: inputs.coverage == 'true'
-      name: Upload coverage artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: coverage
-        path: coverage
+      - if: inputs.coverage == 'true'
+        name: Upload coverage artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: coverage
+          path: coverage
