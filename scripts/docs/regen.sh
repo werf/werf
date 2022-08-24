@@ -28,7 +28,7 @@ EOF
   {
     cat "$sidebar_cli_partial_path"
     echo
-    cat "$sidebar_documentation_partial_path"
+    sed 's/"\#\!\*cli"/*cli/' "$sidebar_documentation_partial_path"
   } >> "$sidebar_documentation_path"
 }
 

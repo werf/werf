@@ -656,7 +656,7 @@ entries:
             url: /reference/deploy_annotations.html
 
           - title: Command line interface
-            f: "#!*cli"
+            f: *cli
 
           - title: Cheat sheet
             url: /reference/cheat_sheet.html
@@ -874,7 +874,7 @@ entries:
             url: /reference/deploy_annotations.html
 
           - title: Интерфейс командной строки
-            f: "#!*cli"
+            f: *cli
 
           - title: Шпаргалка
             url: /reference/cheat_sheet.html
