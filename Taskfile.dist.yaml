@@ -26,20 +26,15 @@ vars:
   goReleaseLDFlags: "-s -w -X github.com/werf/werf/pkg/werf.Version={{.version}}"
 
 tasks:
-  _format-and-build:
-    cmds:
-      - task: format
-      - task: build
-
-  _format-and-lint:
-    cmds:
-      - task: format
-      - task: lint
+  _build-and-lint:
+    deps:
+      - build
+      - lint
 
   default:
-    deps:
-      - _format-and-build
-      - _format-and-lint
+    cmds:
+      - task: format
+      - task: _build-and-lint
 
   _build:cgo:dev: &build_cgo_dev
     cmds:
