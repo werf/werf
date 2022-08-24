@@ -25,9 +25,11 @@ function create_documentation_sidebar() {
 # This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
 
 EOF
-  cat "$sidebar_cli_partial_path" >> "$sidebar_documentation_path"
-  echo -e "\n" >> "$sidebar_documentation_path"
-  cat "$sidebar_documentation_partial_path" >> "$sidebar_documentation_path"
+  {
+    cat "$sidebar_cli_partial_path"
+    echo
+    cat "$sidebar_documentation_partial_path"
+  } >> "$sidebar_documentation_path"
 }
 
 regen
