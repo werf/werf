@@ -34,7 +34,7 @@ func (repoData *RepoData) CreateDockerRegistry(ctx context.Context, insecureRegi
 	return dockerRegistry, nil
 }
 
-func (repoData *RepoData) CreateStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, insecureRegistry, skipTlsVerifyRegistry bool) (storage.StagesStorage, error) {
+func (repoData *RepoData) CreateStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, insecureRegistry, skipTlsVerifyRegistry bool) (storage.PrimaryStagesStorage, error) {
 	addr, err := repoData.GetAddress()
 	if err != nil {
 		return nil, err
