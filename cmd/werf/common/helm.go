@@ -2,8 +2,11 @@ package common
 
 import (
 	"context"
+	"path/filepath"
 	"time"
 
+	"github.com/docker/cli/cli/config"
+	"github.com/docker/docker/pkg/homedir"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/registry"
@@ -17,6 +20,7 @@ import (
 
 func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*registry.Client, error) {
 	return registry.NewClient(
+		registry.ClientOptCredentialsFile(getDockerConfigCredentialsFile(*commonCmdData.DockerConfig)),
 		registry.ClientOptDebug(logboek.Context(ctx).Debug().IsAccepted()),
 		registry.ClientOptInsecure(*commonCmdData.InsecureHelmDependencies),
 		registry.ClientOptWriter(logboek.Context(ctx).OutStream()),
@@ -30,11 +34,20 @@ func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bun
 	out := logboek.Context(ctx).OutStream()
 
 	return bundles_registry.NewClient(
+		bundles_registry.ClientOptCredentialsFile(getDockerConfigCredentialsFile(*commonCmdData.DockerConfig)),
 		bundles_registry.ClientOptDebug(debug),
 		bundles_registry.ClientOptInsecure(insecure),
 		bundles_registry.ClientOptSkipTlsVerify(skipTlsVerify),
 		bundles_registry.ClientOptWriter(out),
 	)
+}
+
+func getDockerConfigCredentialsFile(configDir string) string {
+	if configDir == "" {
+		return filepath.Join(homedir.Get(), ".docker", config.ConfigFileName)
+	} else {
+		return filepath.Join(configDir, config.ConfigFileName)
+	}
 }
 
 func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, namespace string, commonCmdData *CmdData, registryClient *registry.Client) (*action.Configuration, error) {
