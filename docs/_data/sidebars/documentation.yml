@@ -628,7 +628,6 @@ cli: &cli
       - title: werf version
         url: /reference/cli/werf_version.html
 
-
 # This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
 
 entries:
@@ -645,7 +644,6 @@ entries:
 
       - title: Reference
         f:
-
           - title: werf.yaml
             url: /reference/werf_yaml.html
 
@@ -666,7 +664,6 @@ entries:
 
       - title: Advanced
         f:
-
           - title: Giterminism
             url: /advanced/giterminism.html
 
@@ -677,7 +674,6 @@ entries:
 
               - title: Configuration
                 f:
-
                   - title: Chart
                     url: /advanced/helm/configuration/chart.html
 
@@ -741,7 +737,6 @@ entries:
 
           - title: CI/CD
             f:
-
               - title: CI/CD workflow basics
                 url: /advanced/ci_cd/ci_cd_workflow_basics.html
 
@@ -756,7 +751,6 @@ entries:
 
               - title: Run in containers (experimental)
                 f:
-
                   - title: Use Docker container
                     url: /advanced/ci_cd/run_in_container/use_docker_container.html
 
@@ -774,7 +768,6 @@ entries:
 
               - title: werf with ArgoCD (experimental)
                 f:
-
                   - title: CI/CD flow overview
                     url: /advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
 
@@ -786,7 +779,6 @@ entries:
 
           - title: Building images with stapel
             f:
-
               - title: Base image (required)
                 url: /advanced/building_images_with_stapel/base_image.html
 
@@ -810,7 +802,6 @@ entries:
 
           - title: Development and debug
             f:
-
               - title: Stage Introspection
                 url: /advanced/development_and_debug/stage_introspection.html
 
@@ -822,7 +813,6 @@ entries:
 
       - title: Internals
         f:
-
           - title: Stages and storage
             url: /internals/stages_and_storage.html
 
@@ -831,7 +821,6 @@ entries:
 
           - title: How CI/CD integration works
             f:
-
               - title: General overview
                 url: /internals/how_ci_cd_integration_works/general_overview.html
 
@@ -846,7 +835,6 @@ entries:
 
           - title: Development
             f:
-
               - title: Stapel image
                 url: /internals/development/stapel_image.html
 
@@ -855,7 +843,6 @@ entries:
 
       - title: What's new in v1.2
         f:
-
           - title: Changelog
             url: /whats_new_in_v1_2/changelog.html
 
@@ -875,7 +862,6 @@ entries:
 
       - title: Справочник
         f:
-
           - title: werf.yaml
             url: /reference/werf_yaml.html
 
@@ -896,7 +882,6 @@ entries:
 
       - title: Документация продвинутого уровня
         f:
-
           - title: Гитерминизм
             url: /advanced/giterminism.html
 
@@ -907,7 +892,6 @@ entries:
 
               - title: Конфигурация
                 f:
-
                   - title: Чарт
                     url: /advanced/helm/configuration/chart.html
 
@@ -965,7 +949,6 @@ entries:
 
           - title: CI/CD
             f:
-
               - title: Основы организации CI/CD
                 url: /advanced/ci_cd/ci_cd_workflow_basics.html
 
@@ -980,7 +963,6 @@ entries:
 
               - title: Запуск в контейнерах (экспериментальный функционал)
                 f:
-
                   - title: В Docker-контейнере
                     url: /advanced/ci_cd/run_in_container/use_docker_container.html
 
@@ -998,7 +980,6 @@ entries:
 
               - title: GitOps с помощью werf и ArgoCD (экспериментальный функционал)
                 f:
-
                   - title: Обзор процесса CI/CD
                     url: /advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
 
@@ -1010,7 +991,6 @@ entries:
 
           - title: Сборка образов с помощью Stapel
             f:
-
               - title: Базовый образ
                 url: /advanced/building_images_with_stapel/base_image.html
 
@@ -1034,7 +1014,6 @@ entries:
 
           - title: Разработка и отладка
             f:
-
               - title: Интроспекция стадий
                 url: /advanced/development_and_debug/stage_introspection.html
 
@@ -1046,7 +1025,6 @@ entries:
 
       - title: Внутренности
         f:
-
           - title: Стадии и хранилище
             url: /internals/stages_and_storage.html
 
@@ -1055,7 +1033,6 @@ entries:
 
           - title: Как работает интеграция с CI/CD
             f:
-
               - title: Общие сведения
                 url: /internals/how_ci_cd_integration_works/general_overview.html
 
@@ -1070,7 +1047,6 @@ entries:
 
           - title: Для разработчиков
             f:
-
               - title: Образ Stapel
                 url: /internals/development/stapel_image.html
 
@@ -1079,7 +1055,6 @@ entries:
 
       - title: Что нового в v1.2
         f:
-
           - title: Changelog
             url: /whats_new_in_v1_2/changelog.html
 
