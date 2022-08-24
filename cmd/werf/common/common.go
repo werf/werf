@@ -743,11 +743,11 @@ func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
 	}
 }
 
-func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) storage.StagesStorage {
+func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) *storage.DockerServerStagesStorage {
 	return storage.NewDockerServerStagesStorage(containerBackend.(*container_backend.DockerServerBackend))
 }
 
-func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.PrimaryStagesStorage, error) {
 	if _, match := containerBackend.(*container_backend.BuildahBackend); match {
 		addr, err := cmdData.Repo.GetAddress()
 		if err != nil {

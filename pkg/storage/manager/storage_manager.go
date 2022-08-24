@@ -50,7 +50,7 @@ type ForEachDeleteStageOptions struct {
 type StorageManagerInterface interface {
 	InitCache(ctx context.Context) error
 
-	GetStagesStorage() storage.StagesStorage
+	GetStagesStorage() storage.PrimaryStagesStorage
 	GetFinalStagesStorage() storage.StagesStorage
 	GetSecondaryStagesStorageList() []storage.StagesStorage
 	GetImageInfoGetter(imageName string, stg stage.Interface, opts image.InfoGetterOptions) *image.InfoGetter
@@ -95,7 +95,7 @@ Retry:
 	return err
 }
 
-func NewStorageManager(projectName string, stagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage, storageLockManager storage.LockManager) *StorageManager {
+func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage, storageLockManager storage.LockManager) *StorageManager {
 	return &StorageManager{
 		ProjectName:        projectName,
 		StorageLockManager: storageLockManager,
@@ -152,7 +152,7 @@ type StorageManager struct {
 
 	StorageLockManager storage.LockManager
 
-	StagesStorage              storage.StagesStorage
+	StagesStorage              storage.PrimaryStagesStorage
 	FinalStagesStorage         storage.StagesStorage
 	CacheStagesStorageList     []storage.StagesStorage
 	SecondaryStagesStorageList []storage.StagesStorage
@@ -164,7 +164,7 @@ type StorageManager struct {
 	FinalStagesListCache    *StagesList
 }
 
-func (m *StorageManager) GetStagesStorage() storage.StagesStorage {
+func (m *StorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
 	return m.StagesStorage
 }
 
@@ -1028,8 +1028,15 @@ func (m *StorageManager) ForEachDeleteStageCustomTag(ctx context.Context, ids []
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		id := ids[taskId]
-		err := m.StagesStorage.DeleteStageCustomTag(ctx, id)
-		return f(ctx, id, err)
+
+		if err := m.StagesStorage.DeleteStageCustomTag(ctx, id); err != nil {
+			return f(ctx, id, fmt.Errorf("unable to delete stage custom tag: %w", err))
+		}
+		if err := m.StagesStorage.UnregisterStageCustomTag(ctx, id); err != nil {
+			return f(ctx, id, fmt.Errorf("unable to unregister stage custom tag: %w", err))
+		}
+
+		return f(ctx, id, nil)
 	})
 }
 

@@ -296,18 +296,10 @@ func (storage *RepoStagesStorage) CheckStageCustomTag(ctx context.Context, stage
 }
 
 func (storage *RepoStagesStorage) AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
-	if err := storage.addStageCustomTagMetadata(ctx, stageDescription, tag); err != nil {
-		return fmt.Errorf("unable to add stage custom tag metadata: %w", err)
-	}
-
 	return storage.DockerRegistry.TagRepoImage(ctx, stageDescription.Info, tag)
 }
 
 func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag string) error {
-	if err := storage.deleteStageCustomTagMetadata(ctx, tag); err != nil {
-		return fmt.Errorf("unable to delete stage custom tag metadata: %w", err)
-	}
-
 	fullImageName := strings.Join([]string{storage.RepoAddress, tag}, ":")
 	imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
 	if err != nil {
@@ -390,6 +382,20 @@ func (storage *RepoStagesStorage) GetStageCustomTagMetadataIDs(ctx context.Conte
 	}
 
 	return res, nil
+}
+
+func (storage *RepoStagesStorage) RegisterStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+	if err := storage.addStageCustomTagMetadata(ctx, stageDescription, tag); err != nil {
+		return fmt.Errorf("unable to add stage custom tag metadata: %w", err)
+	}
+	return nil
+}
+
+func (storage *RepoStagesStorage) UnregisterStageCustomTag(ctx context.Context, tag string) error {
+	if err := storage.deleteStageCustomTagMetadata(ctx, tag); err != nil {
+		return fmt.Errorf("unable to delete stage custom tag metadata: %w", err)
+	}
+	return nil
 }
 
 func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error {

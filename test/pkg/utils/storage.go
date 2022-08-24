@@ -10,7 +10,7 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
-func NewStagesStorage(stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.StagesStorage {
+func NewStagesStorage(stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.PrimaryStagesStorage {
 	if stagesStorageAddress == storage.LocalStorageAddress {
 		return storage.NewDockerServerStagesStorage(&container_backend.DockerServerBackend{})
 	} else {
@@ -32,7 +32,7 @@ func ManagedImagesCount(ctx context.Context, stagesStorage storage.StagesStorage
 	return len(managedImages)
 }
 
-func CustomTagsMetadataList(ctx context.Context, stagesStorage storage.StagesStorage) []*storage.CustomTagMetadata {
+func CustomTagsMetadataList(ctx context.Context, stagesStorage storage.PrimaryStagesStorage) []*storage.CustomTagMetadata {
 	customTagMetadataIDs, err := stagesStorage.GetStageCustomTagMetadataIDs(ctx)
 	Ω(err).ShouldNot(HaveOccurred())
 

@@ -264,7 +264,7 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 			return err
 		}
 	} else {
-		if err := phase.addCustomImageTagsToStagesStorage(ctx, img.GetName(), customTagStage, customTagStorage); err != nil {
+		if err := phase.addCustomImageTags(ctx, img.GetName(), customTagStage, customTagStorage, phase.Conveyor.StorageManager.GetStagesStorage(), phase.CustomTagFuncList); err != nil {
 			return fmt.Errorf("unable to add custom image tags to stages storage: %w", err)
 		}
 	}
@@ -327,11 +327,7 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 		})
 }
 
-func (phase *BuildPhase) addCustomImageTagsToStagesStorage(ctx context.Context, imageName string, stageDesc *imagePkg.StageDescription, stagesStorage storage.StagesStorage) error {
-	return addCustomImageTags(ctx, stagesStorage, imageName, stageDesc, phase.CustomTagFuncList)
-}
-
-func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage, imageName string, stageDesc *imagePkg.StageDescription, customTagFuncList []imagePkg.CustomTagFunc) error {
+func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName string, stageDesc *imagePkg.StageDescription, stagesStorage storage.StagesStorage, primaryStagesStorage storage.PrimaryStagesStorage, customTagFuncList []imagePkg.CustomTagFunc) error {
 	if len(customTagFuncList) == 0 {
 		return nil
 	}
@@ -343,7 +339,7 @@ func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage
 		DoError(func() error {
 			for _, tagFunc := range customTagFuncList {
 				tag := tagFunc(imageName, stageDesc.Info.Tag)
-				if err := addCustomImageTag(ctx, stagesStorage, stageDesc, tag); err != nil {
+				if err := addCustomImageTag(ctx, stagesStorage, primaryStagesStorage, stageDesc, tag); err != nil {
 					return err
 				}
 			}
@@ -352,11 +348,14 @@ func addCustomImageTags(ctx context.Context, stagesStorage storage.StagesStorage
 		})
 }
 
-func addCustomImageTag(ctx context.Context, stagesStorage storage.StagesStorage, stageDesc *imagePkg.StageDescription, tag string) error {
+func addCustomImageTag(ctx context.Context, stagesStorage storage.StagesStorage, primaryStagesStorage storage.PrimaryStagesStorage, stageDesc *imagePkg.StageDescription, tag string) error {
 	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 		DoError(func() error {
 			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {
-				return err
+				return fmt.Errorf("unable to add stage %s custom tag %s in the storage %s: %w", stageDesc.StageID.String(), tag, stagesStorage.String(), err)
+			}
+			if err := primaryStagesStorage.RegisterStageCustomTag(ctx, stageDesc, tag); err != nil {
+				return fmt.Errorf("unable to register stage %s custom tag %s in the primary storage %s: %w", stageDesc.StageID.String(), tag, primaryStagesStorage.String(), err)
 			}
 
 			logboek.Context(ctx).LogFDetails("  name: %s:%s\n", stageDesc.Info.Repository, tag)

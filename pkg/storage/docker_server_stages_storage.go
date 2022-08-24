@@ -147,6 +147,14 @@ func (storage *DockerServerStagesStorage) GetStageCustomTagMetadataIDs(_ context
 	return nil, nil
 }
 
+func (storage *DockerServerStagesStorage) RegisterStageCustomTag(_ context.Context, _ *image.StageDescription, _ string) error {
+	return nil
+}
+
+func (storage *DockerServerStagesStorage) UnregisterStageCustomTag(_ context.Context, _ string) error {
+	return nil
+}
+
 func (storage *DockerServerStagesStorage) AddManagedImage(_ context.Context, _, _ string) error {
 	return nil
 }
