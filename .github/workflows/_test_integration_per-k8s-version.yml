@@ -27,6 +27,10 @@ jobs:
         k8s:
           - version: 1.19
             kubecfg_secret: WERF_TEST_K8S_BASE64_KUBECONFIG_1_19
+          - version: 1.23
+            kubecfg_secret: WERF_TEST_K8S_BASE64_KUBECONFIG_1_23
+          - version: 1.25
+            kubecfg_secret: WERF_TEST_K8S_BASE64_KUBECONFIG_1_25
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
