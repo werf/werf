@@ -57,6 +57,27 @@ jobs:
       coverage: true
     secrets: inherit
 
+  e2e_simple:
+    uses: ./.github/workflows/_test_e2e_regular.yml
+    with:
+      scope: simple
+      coverage: true
+    secrets: inherit
+
+  e2e_complex:
+    uses: ./.github/workflows/_test_e2e_regular.yml
+    with:
+      scope: complex
+      coverage: true
+    secrets: inherit
+
+  e2e_extra:
+    uses: ./.github/workflows/_test_e2e_regular.yml
+    with:
+      scope: extra
+      coverage: true
+    secrets: inherit
+
   coverage_report:
     uses: ./.github/workflows/_coverage_report.yml
     needs:
@@ -67,6 +88,9 @@ jobs:
       - integration_per-k8s
       - integration_per-cr
       - integration_per-k8s-and-cr
+      - e2e_simple
+      - e2e_complex
+      - e2e_extra
     secrets: inherit
 
   notify:

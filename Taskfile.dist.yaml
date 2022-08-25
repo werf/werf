@@ -212,7 +212,7 @@ tasks:
     cmds:
       - |
         ginkgo {{if eq .parallel "true" }}-p{{end}} -r -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" \
-          {{if .labelFilter}}--label-filter={{.labelFilter}}{{end}} {{.CLI_ARGS}} \
+          {{if .labelFilter}}--label-filter="{{.labelFilter}}"{{end}} {{.CLI_ARGS}} \
           {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
     env:
       CGO_ENABLED: "1"
@@ -223,7 +223,7 @@ tasks:
     cmds:
       - |
         ginkgo {{if eq .parallel "true" }}-p{{end}} -r -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" \
-          {{if .labelFilter}}--label-filter={{.labelFilter}}{{end}} {{.CLI_ARGS}} \
+          {{if .labelFilter}}--label-filter="{{.labelFilter}}"{{end}} {{.CLI_ARGS}} \
           {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
     env:
       CGO_ENABLED: "0"

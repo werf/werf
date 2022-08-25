@@ -42,11 +42,19 @@ jobs:
     with:
       forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
 
+  e2e_simple:
+    needs: detect-changes
+    uses: ./.github/workflows/_test_e2e_regular.yml
+    with:
+      scope: simple
+      forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
+
   notify:
     if: (github.event_name != 'pull_request' || needs.detect-changes.outputs.workflow_proceed == 'true') && failure()
     needs:
       - lint
       - unit
+      - e2e_simple
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
