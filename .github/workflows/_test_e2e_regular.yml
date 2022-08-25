@@ -66,7 +66,7 @@ jobs:
 
       - name: Test
         run: |
-          ${{ inputs.packages }} != "" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
+          [[ ${{ inputs.packages }} != "" ]] && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
           if ${{ inputs.coverage }}; then
             task -p test:e2e:${{ inputs.scope }} $paths -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
             mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
