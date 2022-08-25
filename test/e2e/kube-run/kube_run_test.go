@@ -7,7 +7,7 @@ import (
 	"github.com/werf/werf/test/pkg/werf"
 )
 
-var _ = Describe("kube-run", func() {
+var _ = PDescribe("kube-run", func() {
 	DescribeTable("should succeed/fail and produce expected output",
 		func(kubeRunOpts *werf.KubeRunOptions, outputExpectationsFunc func(out string)) {
 			repoDirname := "repo0"

@@ -1,0 +1,16 @@
+project: test-werf-e2e-build-simple
+configVersion: 1
+
+---
+image: dockerfile
+dockerfile: Dockerfile
+
+---
+image: stapel-shell
+from: ubuntu:22.04
+git:
+  - add: /file
+    to: /file
+shell:
+  setup:
+    - "touch /created-by-setup"

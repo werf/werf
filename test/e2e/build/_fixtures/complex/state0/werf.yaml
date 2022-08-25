@@ -1,0 +1,87 @@
+project: test-werf-e2e-build-complex
+configVersion: 1
+
+---
+image: dockerfile
+context: .
+dockerfile: Dockerfile
+target: result
+network: default
+args:
+  CHANGED_ARG: "was_changed"
+
+---
+image: base-stapel-shell
+from: ubuntu:22.04
+shell:
+  setup:
+  - "echo content > /basefile"
+
+---
+image: stapel-shell
+fromImage: base-stapel-shell
+fromCacheVersion: 1
+mount:
+- from: tmp_dir
+  to: /tmp_dir
+git:
+- url: https://github.com/golang/example
+  commit: 2e68773dfca072cb81f219fc3b97ad34fe9d9f94
+  add: /appengine-hello
+  to: /app
+  owner: 1050
+  group: 1051
+  includePaths:
+  - '**/*.js'
+  - '**/*.html'
+  - 'static/*.css'
+  - 'README.md'
+  excludePaths:
+  - 'static/script.js'
+  stageDependencies:
+    beforeSetup:
+    - "README.md"
+    setup:
+    - "*"
+shell:
+  cacheVersion: 1
+  beforeInstallCacheVersion: 1
+  beforeInstall:
+  - "echo beforeInstall >> /triggered-stages"
+  installCacheVersion: 1
+  install:
+  - "echo install >> /triggered-stages"
+  beforeSetupCacheVersion: 1
+  beforeSetup:
+  - "echo beforeSetup >> /triggered-stages"
+  setupCacheVersion: 1
+  setup:
+  - "echo setup >> /triggered-stages"
+  - "echo content > /tmp_dir/file"
+docker:
+  USER: 0:0
+  WORKDIR: /app
+  VOLUME:
+    - /volume20
+  ENV:
+    ENV_NAME: env-value
+  LABEL:
+    LABEL_NAME: label-value
+  EXPOSE:
+  - "8010/tcp"
+  ENTRYPOINT:
+  - sh
+  - -ec
+  CMD: "sleep infinity"
+  HEALTHCHECK: "CMD echo healthcheck20"
+import:
+- image: base-stapel-shell
+  before: install
+  add: /basefile
+  to: /basefile-imported
+  owner: 1060
+  group: 1061
+  includePaths:
+  - basefile
+  excludePaths:
+  - nothing
