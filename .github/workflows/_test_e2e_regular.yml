@@ -29,12 +29,7 @@ env:
 jobs:
   _:
     if: inputs.forceSkip == 'false'
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-22.04
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
       - name: Install werf build dependencies
@@ -56,7 +51,7 @@ jobs:
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
-          coverageDirSuffix: ${{ matrix.os }}
+          coverageDirSuffix: ubuntu-22.04
 
       - name: Set up git config
         uses: ./.github/actions/set-up-git-config
@@ -66,7 +61,7 @@ jobs:
 
       - name: Test
         run: |
-          [[ ${{ inputs.packages }} != "" ]] && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
+          test -n "${{ inputs.packages }}" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
           if ${{ inputs.coverage }}; then
             task -p test:e2e:${{ inputs.scope }} $paths -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
             mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
