@@ -26,9 +26,14 @@ jobs:
         with:
           filters: |
             workflow_proceed:
-              - '.github'
-              - '**/*.go'
-              - 'go.mod'
+              - "go.mod"
+              - "Taskfile.dist.yaml"
+              - ".github/**"
+              - "cmd/werf/**"
+              - "pkg/**"
+              - "integration/**"
+              - "scripts/**"
+              - "test/**"
 
   lint:
     needs: detect-changes

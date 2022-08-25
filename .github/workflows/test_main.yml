@@ -5,9 +5,14 @@ on:
     branches:
       - main
     paths:
-      - ".github"
-      - "**/*.go"
       - "go.mod"
+      - "Taskfile.dist.yaml"
+      - ".github/**"
+      - "cmd/werf/**"
+      - "pkg/**"
+      - "integration/**"
+      - "scripts/**"
+      - "test/**"
   pull_request:
     types: [labeled]
   repository_dispatch:

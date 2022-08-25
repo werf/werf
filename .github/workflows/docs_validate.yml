@@ -3,11 +3,12 @@ name: docs:validate
 on:
   pull_request:
     paths:
-      - ".github"
-      - "cmd/**"
+      - ".github/**"
+      - "Taskfile.dist.yaml"
+      - "cmd/werf/**"
       - "docs/**"
+      - "scripts/**"
       - "README.md"
-      - "README_ru.md"
   repository_dispatch:
     types: ["docs:validate"]
   workflow_dispatch:
