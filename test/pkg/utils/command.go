@@ -29,6 +29,7 @@ type RunCommandOptions struct {
 	ExtraEnv      []string
 	ToStdin       string
 	ShouldSucceed bool
+	NoStderr      bool
 }
 
 func RunCommandWithOptions(dir, command string, args []string, options RunCommandOptions) ([]byte, error) {
@@ -52,7 +53,14 @@ func RunCommandWithOptions(dir, command string, args []string, options RunComman
 		cmd.Stdin = &b
 	}
 
-	res, err := cmd.CombinedOutput()
+	var res []byte
+	var err error
+	if options.NoStderr {
+		res, err = cmd.Output()
+	} else {
+		res, err = cmd.CombinedOutput()
+	}
+
 	_, _ = GinkgoWriter.Write(res)
 
 	if options.ShouldSucceed {

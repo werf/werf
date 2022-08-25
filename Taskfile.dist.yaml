@@ -211,20 +211,24 @@ tasks:
   _test:ginkgo:cgo:
     cmds:
       - |
-        ginkgo -p -r -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" \
+        ginkgo {{if eq .parallel "true" }}-p{{end}} -r -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" \
           {{if .labelFilter}}--label-filter={{.labelFilter}}{{end}} {{.CLI_ARGS}} \
           {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
     env:
       CGO_ENABLED: "1"
+    vars:
+      parallel: '{{.parallel | default "true"}}'
 
   _test:ginkgo:go:
     cmds:
       - |
-        ginkgo -p -r -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" \
+        ginkgo {{if eq .parallel "true" }}-p{{end}} -r -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" \
           {{if .labelFilter}}--label-filter={{.labelFilter}}{{end}} {{.CLI_ARGS}} \
           {{if not .paths }}{{fail "paths variable required"}}{{end}}{{.paths}}
     env:
       CGO_ENABLED: "0"
+    vars:
+      parallel: '{{.parallel | default "true"}}'
 
   test:ginkgo: &test_ginkgo
     desc: 'Run raw "ginkgo". Important vars: "paths".'
@@ -233,6 +237,7 @@ tasks:
         vars:
           paths: "{{.paths}}"
           labelFilter: "{{.labelFilter}}"
+          parallel: "{{.parallel}}"
 
   test:unit:
     desc: 'Run unit tests. Important vars: "paths".'
@@ -240,6 +245,7 @@ tasks:
       - task: test:ginkgo
         vars:
           paths: '{{.paths | default "./pkg ./cmd"}}'
+          parallel: "{{.parallel}}"
 
   test:integration:
     desc: 'Run integration tests. Important vars: "paths".'
@@ -248,6 +254,7 @@ tasks:
         vars:
           paths: '{{.paths | default "./integration/suites"}}'
           labelFilter: "{{.labelFilter}}"
+          parallel: "{{.parallel}}"
 
   test:e2e:
     desc: 'Run all e2e tests. Important vars: "paths".'
@@ -256,6 +263,7 @@ tasks:
         vars:
           paths: '{{.paths | default "./test/e2e"}}'
           labelFilter: "{{.labelFilter}}"
+          parallel: "{{.parallel}}"
 
   test:e2e:simple:
     desc: 'Run e2e tests tagged "simple". Important vars: "paths".'
@@ -264,6 +272,7 @@ tasks:
         vars:
           paths: '{{.paths | default "./test/e2e"}}'
           labelFilter: '{{.labelFilter | default "simple"}}'
+          parallel: "{{.parallel}}"
 
   test:e2e:complex:
     desc: 'Run e2e tests tagged "complex". Important vars: "paths".'
@@ -272,6 +281,7 @@ tasks:
         vars:
           paths: '{{.paths | default "./test/e2e"}}'
           labelFilter: '{{.labelFilter | default "complex"}}'
+          parallel: "{{.parallel}}"
 
   test:e2e:extra:
     desc: 'Run e2e tests not tagged "simple" or "complex". Important vars: "paths".'
@@ -280,6 +290,7 @@ tasks:
         vars:
           paths: '{{.paths | default "./test/e2e"}}'
           labelFilter: '{{.labelFilter | default "!complex && !simple"}}'
+          parallel: "{{.parallel}}"
 
   verify:binaries:dist:all:
     desc: 'Verify that the distributable binaries are built and have correct platform/arch. Important vars: "version".'
@@ -483,7 +494,7 @@ tasks:
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin {{.golangcilintVersion | default "v1.46.2"}}
 
   deps:install:prettier:
-    desc: "Install pr"
+    desc: "Install prettier."
     cmds:
       - npm install -g prettier
 

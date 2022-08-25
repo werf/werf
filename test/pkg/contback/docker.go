@@ -30,7 +30,7 @@ func (r *DockerBackend) RunSleepingContainer(containerName, image string) {
 func (r *DockerBackend) Exec(containerName string, cmds ...string) {
 	for _, cmd := range cmds {
 		args := r.CommonCliArgs
-		args = append(args, "exec", containerName, "sh", "-ec", cmd)
+		args = append(args, "exec", containerName, "bash", "-o", "pipefail", "-euc", cmd)
 		utils.RunSucceedCommand("/", "docker", args...)
 	}
 }

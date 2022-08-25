@@ -26,8 +26,6 @@ func NewContainerBackend(buildahMode string) (ContainerBackend, error) {
 			return nil, ErrRuntimeUnavailable
 		}
 		return NewNativeBuildahBackend(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
-	case "docker-with-fuse":
-		return NewDockerWithFuseBuildahBackend(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
 	default:
 		panic(fmt.Sprintf("unexpected buildah mode: %s", buildahMode))
 	}

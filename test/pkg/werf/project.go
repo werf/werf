@@ -56,12 +56,7 @@ func (p *Project) Build(opts *BuildOptions) (combinedOut string) {
 	}
 
 	args := append([]string{"build"}, opts.ExtraArgs...)
-	outb, err := iutils.RunCommand(p.GitRepoPath, p.WerfBinPath, args...)
-	if opts.ShouldFail {
-		Expect(err).To(HaveOccurred())
-	} else {
-		Expect(err).NotTo(HaveOccurred())
-	}
+	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)
 }
@@ -113,7 +108,7 @@ func (p *Project) KubeCtl(opts *KubeCtlOptions) string {
 }
 
 func (p *Project) runCommand(opts runCommandOptions) string {
-	outb, err := iutils.RunCommand(p.GitRepoPath, p.WerfBinPath, opts.Args...)
+	outb, err := iutils.RunCommand(p.GitRepoPath, p.WerfBinPath, iutils.WerfBinArgs(opts.Args...)...)
 	if opts.ShouldFail {
 		Expect(err).To(HaveOccurred())
 	} else {

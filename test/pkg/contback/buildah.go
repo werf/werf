@@ -44,7 +44,7 @@ func (r *NativeBuildahBackend) RunSleepingContainer(containerName, image string)
 func (r *NativeBuildahBackend) Exec(containerName string, cmds ...string) {
 	for _, cmd := range cmds {
 		args := r.CommonCliArgs
-		args = append(args, "run", "--isolation", r.Isolation.String(), containerName, "--", "sh", "-ec", cmd)
+		args = append(args, "run", "--isolation", r.Isolation.String(), containerName, "--", "bash", "-o", "pipefail", "-euc", cmd)
 		utils.RunSucceedCommand("/", "buildah", args...)
 	}
 }
@@ -66,11 +66,20 @@ func (r *NativeBuildahBackend) GetImageInspectConfig(image string) (config manif
 
 	args := r.CommonCliArgs
 	args = append(args, "inspect", "--type", "image", image)
-	inspectRaw, err := utils.RunCommand("/", "buildah", args...)
+	inspectRaw, err := utils.RunCommandWithOptions("/", "buildah", args, utils.RunCommandOptions{
+		ShouldSucceed: true,
+		NoStderr:      true,
+	})
 	Expect(err).NotTo(HaveOccurred())
 
 	var inspect BuildahInspect
 	Expect(json.Unmarshal(inspectRaw, &inspect)).To(Succeed())
 
 	return inspect.Docker.Config
+}
+
+type BuildahInspect struct {
+	Docker struct {
+		Config manifest.Schema2Config `json:"config"`
+	} `json:"Docker"`
 }
