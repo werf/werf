@@ -1,0 +1,83 @@
+name: xxxxx(internal)
+
+on:
+  workflow_call:
+    inputs:
+      scope:
+        required: true
+        type: string
+      packages:
+        description: Comma-separated package paths to test
+        type: string
+      excludePackages:
+        description: Comma-separated package paths to exclude from testing
+        type: string
+      coverage:
+        default: false
+        type: string
+      forceSkip:
+        default: false
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DEBIAN_FRONTEND: "noninteractive"
+
+jobs:
+  _:
+    if: inputs.forceSkip == 'false'
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - name: Install werf build dependencies
+        run: sudo apt-get install -y libbtrfs-dev
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          cache: true
+          go-version-file: go.mod
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+
+      - name: Set up prebuilt werf test binary
+        uses: ./.github/actions/set-up-prebuilt-werf-test-binary
+        with:
+          coverage: ${{ inputs.coverage }}
+          coverageDirSuffix: ${{ matrix.os }}
+
+      - name: Set up git config
+        uses: ./.github/actions/set-up-git-config
+
+      - name: Install ginkgo
+        run: task -p deps:install:ginkgo
+
+      - name: Test
+        run: |
+          ${{ inputs.packages }} != "" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
+          if ${{ inputs.coverage }}; then
+            task -p test:e2e:${{ inputs.scope }} $paths -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
+            mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
+          else
+            task -p test:e2e:${{ inputs.scope }} $paths -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+          fi
+          echo loadavg: $(cat /proc/loadavg)
+
+      - if: inputs.coverage == 'true'
+        name: Upload coverage artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: coverage
+          path: coverage

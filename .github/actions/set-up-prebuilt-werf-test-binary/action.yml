@@ -13,7 +13,7 @@ runs:
         if ${{ inputs.coverage }}; then
           cat >> "$GITHUB_ENV" <<EOF
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/bin/werf-with-coverage
-        WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/coverage/$GITHUB_JOB/${{ inputs.coverageDirSuffix }}
+        WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/coverage/$RANDOM$RANDOM/${{ inputs.coverageDirSuffix }}
         EOF
         else
           cat >> "$GITHUB_ENV" <<EOF

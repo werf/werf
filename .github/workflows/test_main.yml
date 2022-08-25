@@ -62,6 +62,13 @@ jobs:
       coverage: true
     secrets: inherit
 
+  e2e_complex:
+    if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
+    uses: ./.github/workflows/_test_e2e_regular.yml
+    with:
+      scope: complex
+    secrets: inherit
+
   notify:
     if: (github.event_name == 'pull_request' && failure()) || (github.event_name != 'pull_request' && always())
     needs:
@@ -70,6 +77,7 @@ jobs:
       - integration_git
       - integration_ansible
       - integration_per-k8s
+      - e2e_complex
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
