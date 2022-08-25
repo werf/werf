@@ -124,10 +124,10 @@ jobs:
       - name: Test
         run: |
           if ${{ inputs.coverage }}; then
-            task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going
+            task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going
             mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
           else
-            task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 -v --keep-going
+            task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --keep-going
           fi
           echo loadavg: $(cat /proc/loadavg)
 

@@ -124,10 +124,10 @@ jobs:
         run: |
           source ./scripts/ci/integration_k8s_tests_before_hook.sh
           if ${{ inputs.coverage }}; then
-            task -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going
+            task -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going
             mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
           else
-            task -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --flake-attempts=3 -v --keep-going
+            task -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --flake-attempts=3 --keep-going
           fi
           echo loadavg: $(cat /proc/loadavg)
         env:

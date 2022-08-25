@@ -54,10 +54,10 @@ jobs:
       - name: Test
         run: |
           if ${{ inputs.coverage }}; then
-            task -p test:unit -- --coverprofile="$(openssl rand -hex 6)-coverage.out" -v --keep-going
+            task -p test:unit -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going
             mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
           else
-            task -p test:unit -- -v --keep-going
+            task -p test:unit -- --keep-going
           fi
           echo loadavg: $(cat /proc/loadavg)
 
