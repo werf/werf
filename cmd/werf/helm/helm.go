@@ -67,6 +67,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupReleasesHistoryMax(&_commonCmdData, cmd)
 	common.SetupLogOptions(&_commonCmdData, cmd)
 	common.SetupInsecureHelmDependencies(&_commonCmdData, cmd)
+	common.SetupDockerConfig(&_commonCmdData, cmd, "")
 
 	cmd.AddCommand(
 		helm_v3.NewUninstallCmd(actionConfig, os.Stdout, helm_v3.UninstallCmdOptions{
