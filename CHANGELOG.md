@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.165](https://www.github.com/werf/werf/compare/v1.2.164...v1.2.165) (2022-08-25)
+
+
+### Bug Fixes
+
+* **custom-tags:** do not store metadata in the --final-repo ([1a780c5](https://www.github.com/werf/werf/commit/1a780c519ef4553693e2a4e5c13945d723432eea))
+* **helm:** use same docker-config as werf uses for helm OCI regsitry related operations ([f9bc4f3](https://www.github.com/werf/werf/commit/f9bc4f3e543374cef76c66acc36fea55a2ca914a))
+
 ### [1.2.164](https://www.github.com/werf/werf/compare/v1.2.163...v1.2.164) (2022-08-23)
 
 
