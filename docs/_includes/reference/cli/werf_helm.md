@@ -8,6 +8,9 @@ Manage application deployment with helm
 {{ header }} Options
 
 ```shell
+      --docker-config=''
+            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
+            ~/.docker (in the order of priority)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --hooks-status-progress-period=5
