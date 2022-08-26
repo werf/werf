@@ -190,7 +190,7 @@ func getReplicaSetsImages(kubernetesClient kubernetes.Interface, kubernetesNames
 
 func getCronJobsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]string, error) {
 	var images []string
-	list, err := kubernetesClient.BatchV1beta1().CronJobs(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.BatchV1().CronJobs(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
