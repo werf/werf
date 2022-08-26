@@ -58,6 +58,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
+	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
