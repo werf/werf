@@ -18,6 +18,9 @@ werf bundle download [options]
 ```shell
   -d, --destination=''
             Download bundle into the provided directory ($WERF_DESTINATION or chart-name by default)
+      --docker-config=''
+            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
+            ~/.docker (in the order of priority)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-helm-dependencies=false
