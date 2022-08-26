@@ -41,7 +41,6 @@ jobs:
       packages: integration/suites
       excludePackages: integration/suites/deploy,integration/suites/cleanup_after_converge,integration/suites/helm/deploy_rollback,integration/suites/bundles,integration/suites/ansible,integration/suites/build/stapel_image/git
       fetchDepth: 0 # Git history as fixtures for tests.
-      coverage: true
     secrets: inherit
 
   integration_git:
@@ -49,7 +48,6 @@ jobs:
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: integration/suites/build/stapel_image/git
-      coverage: true
     secrets: inherit
 
   integration_ansible:
@@ -57,14 +55,11 @@ jobs:
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: integration/suites/ansible
-      coverage: true
     secrets: inherit
 
   integration_per-k8s:
     if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
     uses: ./.github/workflows/_test_integration_per-k8s-version.yml
-    with:
-      coverage: true
     secrets: inherit
 
   e2e_complex:
