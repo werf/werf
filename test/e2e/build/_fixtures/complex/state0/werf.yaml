@@ -15,7 +15,8 @@ image: base-stapel-shell
 from: ubuntu:22.04
 shell:
   setup:
-  - "echo content > /basefile"
+  - "mkdir -p /basedir"
+  - "echo content > /basedir/file"
 
 ---
 image: stapel-shell
@@ -77,11 +78,11 @@ docker:
 import:
 - image: base-stapel-shell
   before: install
-  add: /basefile
-  to: /basefile-imported
+  add: /basedir/
+  to: /basedir-imported/
   owner: 1060
   group: 1061
   includePaths:
-  - basefile
+    - file
   excludePaths:
-  - nothing
+    - nothing
