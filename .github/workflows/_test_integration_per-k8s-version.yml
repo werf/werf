@@ -24,11 +24,9 @@ jobs:
       matrix:
         os:
           - ${{ inputs.linuxAmd64Runner }}
-        k8s:
-          - version: 1.23
-            kubecfg_secret: WERF_TEST_K8S_BASE64_KUBECONFIG_1_23
-          - version: 1.25
-            kubecfg_secret: WERF_TEST_K8S_BASE64_KUBECONFIG_1_25
+        k8s-version:
+          - 1.23
+          - 1.25
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -61,6 +59,7 @@ jobs:
 
       - name: Test
         run: |
+          export WERF_TEST_K8S_BASE64_KUBECONFIG="$(printenv WERF_TEST_K8S_BASE64_KUBECONFIG_$(tr . _ <<< ${{ matrix.k8s-version }}))"
           source ./scripts/ci/integration_k8s_tests_before_hook.sh
           if ${{ inputs.coverage }}; then
             task -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going
@@ -70,7 +69,6 @@ jobs:
           fi
           echo loadavg: $(cat /proc/loadavg)
         env:
-          WERF_TEST_K8S_BASE64_KUBECONFIG: ${{ secrets[matrix.k8s.kubecfg_secret] }}
           WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
           WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
           WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
