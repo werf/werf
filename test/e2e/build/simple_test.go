@@ -65,8 +65,5 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 		Entry("with local repo using Docker", true, "docker"),
 		Entry("with local repo using Native Buildah with rootless isolation", true, "native-rootless"),
 		Entry("with local repo using Native Buildah with chroot isolation", true, "native-chroot"),
-		// TODO: uncomment when buildah allows building without --repo flag
-		// Entry("with local repo using Native Buildah with rootless isolation", false, "native-rootless"),
-		// Entry("with local repo using Native Buildah with chroot isolation", false, "native-chroot"),
 	)
 })

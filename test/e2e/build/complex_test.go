@@ -119,13 +119,13 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 
 					"! test -f /tmp_dir/file",
 
-					"test -f /basefile",
-					"stat -c %u:%g /basefile | diff <(echo 0:0) -",
-					"echo 'content' | diff /basefile -",
+					"test -f /basedir/file",
+					"stat -c %u:%g /basedir/file | diff <(echo 0:0) -",
+					"echo 'content' | diff /basedir/file -",
 
-					"test -f /basefile-imported",
-					"stat -c %u:%g /basefile-imported | diff <(echo 1060:1061) -",
-					"echo 'content' | diff /basefile-imported -",
+					"test -f /basedir-imported/file",
+					"stat -c %u:%g /basedir-imported/file | diff <(echo 1060:1061) -",
+					"echo 'content' | diff /basedir-imported/file -",
 				)
 			}
 
@@ -209,13 +209,13 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 
 					"! test -f /tmp_dir/file",
 
-					"test -f /basefile",
-					"stat -c %u:%g /basefile | diff <(echo 0:0) -",
-					"echo 'content' | diff /basefile -",
+					"test -f /basedir/file",
+					"stat -c %u:%g /basedir/file | diff <(echo 0:0) -",
+					"echo 'content' | diff /basedir/file -",
 
-					"test -f /basefile-imported",
-					"stat -c %u:%g /basefile-imported | diff <(echo 1060:1061) -",
-					"echo 'content' | diff /basefile-imported -",
+					"test -f /basedir-imported/file",
+					"stat -c %u:%g /basedir-imported/file | diff <(echo 1060:1061) -",
+					"echo 'content' | diff /basedir-imported/file -",
 				)
 			}
 		},
@@ -223,8 +223,5 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 		Entry("with local repo using Docker", true, "docker"),
 		Entry("with local repo using Native Buildah with rootless isolation", true, "native-rootless"),
 		Entry("with local repo using Native Buildah with chroot isolation", true, "native-chroot"),
-		// TODO: uncomment when buildah allows building without --repo flag
-		// Entry("with local repo using Native Buildah with rootless isolation", false, "native-rootless"),
-		// Entry("with local repo using Native Buildah with chroot isolation", false, "native-chroot"),
 	)
 })

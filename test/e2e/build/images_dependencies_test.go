@@ -70,7 +70,7 @@ var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
 			ctx := context.Background()
 			containerBackend := container_backend.NewDockerServerBackend()
 
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "_fixtures/images_dependencies-001", "initial commit")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "_fixtures/images_dependencies/state0", "initial commit")
 			Expect(werfBuild(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
 
 			Expect(werfRunOutput(SuiteData.GetProjectWorktree(SuiteData.ProjectName), "stapel", "cat /install/BASE_STAPEL_IMAGE_NAME")).To(BeEmpty())
