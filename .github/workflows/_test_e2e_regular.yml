@@ -32,8 +32,8 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
-      - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
+      - name: Install system dependencies
+        run: sudo apt-get install -y libbtrfs-dev buildah
 
       - name: Checkout code
         uses: actions/checkout@v3
