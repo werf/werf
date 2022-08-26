@@ -1,4 +1,4 @@
-project: test-werf-e2e-build-complex
+project: werf-test-e2e-build-complex
 configVersion: 1
 
 ---

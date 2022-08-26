@@ -12,12 +12,6 @@ on:
       excludePackages:
         description: Comma-separated package paths to exclude from testing
         type: string
-      k8sMajor:
-        default: 1
-        type: string
-      k8sMinor:
-        default: 25
-        type: string
       coverage:
         default: false
         type: string
@@ -36,6 +30,14 @@ env:
 jobs:
   _:
     if: inputs.forceSkip == 'false'
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s-version:
+          - major: 1
+            minor: 23
+          - major: 1
+            minor: 25
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
@@ -78,7 +80,7 @@ jobs:
           fi
           echo loadavg: $(cat /proc/loadavg)
         env:
-          WERF_TEST_K8S_BASE64_KUBECONFIG: ${{ secrets[format('WERF_TEST_K8S_BASE64_KUBECONFIG_{0}_{1}', inputs.k8sMajor, inputs.k8sMinor)] }}
+          WERF_TEST_K8S_BASE64_KUBECONFIG: ${{ secrets[format('WERF_TEST_K8S_BASE64_KUBECONFIG_{0}_{1}', matrix.k8s-version.major, matrix.k8s-version.minor)] }}
           WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
           WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
           WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
