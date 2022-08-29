@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/google/go-containerregistry/pkg/v1/tarball"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker_registry/container_registry_extensions"
@@ -236,37 +238,12 @@ type PushImageOptions struct {
 }
 
 func (api *api) PushImage(ctx context.Context, reference string, opts *PushImageOptions) error {
-	retriesLimit := 5
-
-attemptLoop:
-	for attempt := 1; attempt <= retriesLimit; attempt++ {
-		if err := api.pushImage(ctx, reference, opts); err != nil {
-			for _, substr := range []string{
-				"REDACTED: UNKNOWN",
-				"http2: server sent GOAWAY and closed the connection",
-				"http2: Transport received Server's graceful shutdown GOAWAY",
-			} {
-				if strings.Contains(err.Error(), substr) {
-					seconds := rand.Intn(5) + 1
-
-					msg := fmt.Sprintf("Retrying publishing in %d seconds (%d/%d) ...\n", seconds, attempt, retriesLimit)
-					logboek.Context(ctx).Warn().LogLn(msg)
-
-					time.Sleep(time.Duration(seconds) * time.Second)
-					continue attemptLoop
-				}
-			}
-
-			return err
-		}
-
-		return nil
-	}
-
-	return nil
+	return api.pushWithRetry(ctx, func() error {
+		return api.pushImage(ctx, reference, opts)
+	})
 }
 
-func (api *api) pushImage(_ context.Context, reference string, opts *PushImageOptions) error {
+func (api *api) pushImage(ctx context.Context, reference string, opts *PushImageOptions) error {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", reference, err)
@@ -276,15 +253,9 @@ func (api *api) pushImage(_ context.Context, reference string, opts *PushImageOp
 	if opts != nil {
 		labels = opts.Labels
 	}
-
 	img := container_registry_extensions.NewManifestOnlyImage(labels)
 
-	oldDefaultTransport := http.DefaultTransport
-	http.DefaultTransport = api.getHttpTransport()
-	err = remote.Write(ref, img, remote.WithAuthFromKeychain(authn.DefaultKeychain))
-	http.DefaultTransport = oldDefaultTransport
-
-	if err != nil {
+	if err := api.writeToRemote(ctx, ref, img); err != nil {
 		return fmt.Errorf("write to the remote %s have failed: %w", ref.String(), err)
 	}
 
@@ -386,6 +357,120 @@ func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
 	referenceParts.digest = res[3]
 
 	return referenceParts, nil
+}
+
+func (api *api) PushImageArchive(ctx context.Context, archiveOpener ArchiveOpener, reference string) error {
+	tag, err := name.NewTag(reference, api.parseReferenceOptions()...)
+	if err != nil {
+		return fmt.Errorf("unable to parse reference %q: %w", reference, err)
+	}
+
+	img, err := tarball.Image(archiveOpener.Open, nil)
+	if err != nil {
+		return fmt.Errorf("unable to open tarball image: %w", err)
+	}
+
+	return api.pushWithRetry(ctx, func() error {
+		if err := api.writeToRemote(ctx, tag, img); err != nil {
+			return fmt.Errorf("write to the remote %s have failed: %w", tag.String(), err)
+		}
+		return nil
+	})
+}
+
+func (api *api) pushWithRetry(ctx context.Context, pusher func() error) error {
+	const retriesLimit = 5
+	var err error
+
+attemptLoop:
+	for attempt := 1; attempt <= retriesLimit; attempt++ {
+		err = pusher()
+
+		if err != nil {
+			for _, substr := range []string{
+				"REDACTED: UNKNOWN",
+				"http2: server sent GOAWAY and closed the connection",
+				"http2: Transport received Server's graceful shutdown GOAWAY",
+			} {
+				if strings.Contains(err.Error(), substr) {
+					seconds := rand.Intn(5) + 1
+
+					msg := fmt.Sprintf("Retrying publishing in %d seconds (%d/%d) ...\n", seconds, attempt, retriesLimit)
+					logboek.Context(ctx).Warn().LogLn(msg)
+
+					time.Sleep(time.Duration(seconds) * time.Second)
+					continue attemptLoop
+				}
+			}
+
+			return err
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("retries limit reached: %w", err)
+}
+
+func (api *api) writeToRemote(ctx context.Context, ref name.Reference, img v1.Image) error {
+	oldDefaultTransport := http.DefaultTransport
+	http.DefaultTransport = api.getHttpTransport()
+	defer func() {
+		http.DefaultTransport = oldDefaultTransport
+	}()
+
+	c := make(chan v1.Update, 200)
+
+	go remote.Write(ref, img, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithProgress(c))
+
+	for upd := range c {
+		switch {
+		case upd.Error != nil && errors.Is(upd.Error, io.EOF):
+			logboek.Context(ctx).Debug().LogF("(%d/%d) done pushing image %q\n", upd.Complete, upd.Total, ref.String())
+			return nil
+		case upd.Error != nil:
+			return fmt.Errorf("error pushing image: %w", upd.Error)
+		default:
+			logboek.Context(ctx).Debug().LogF("(%d/%d) pushing image %s is in progress\n", upd.Complete, upd.Total, ref.String())
+		}
+	}
+
+	return nil
+}
+
+func (api *api) PullImageArchive(ctx context.Context, archiveWriter io.Writer, reference string) error {
+	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	if err != nil {
+		return fmt.Errorf("unable to parse reference %q: %w", reference, err)
+	}
+
+	desc, err := remote.Get(ref, api.defaultRemoteOptions()...)
+	if err != nil {
+		return fmt.Errorf("getting reference %q: %w", reference, err)
+	}
+
+	img, err := desc.Image()
+	if err != nil {
+		return fmt.Errorf("unable to resolve image manifest for reference %q: %w", reference, err)
+	}
+
+	c := make(chan v1.Update, 200)
+
+	go tarball.Write(ref, img, archiveWriter, tarball.WithProgress(c))
+
+	for upd := range c {
+		switch {
+		case upd.Error != nil && errors.Is(upd.Error, io.EOF):
+			logboek.Context(ctx).Debug().LogF("(%d/%d) done pulling image %s to archive\n", upd.Complete, upd.Total, reference)
+			return nil
+		case upd.Error != nil:
+			return fmt.Errorf("error receiving image data: %w", upd.Error)
+		default:
+			logboek.Context(ctx).Debug().LogF("(%d/%d) pulling image %s is in progress\n", upd.Complete, upd.Total, reference)
+		}
+	}
+
+	return nil
 }
 
 func ValidateRepositoryReference(reference string) error {

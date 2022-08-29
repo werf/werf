@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"context"
+	"io"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
@@ -19,6 +20,10 @@ type Interface interface {
 	DeleteRepoImage(ctx context.Context, repoImage *image.Info) error
 	PushImage(ctx context.Context, reference string, opts *PushImageOptions) error
 	MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) error
+
+	PushImageArchive(ctx context.Context, archiveOpener ArchiveOpener, reference string) error
+	PullImageArchive(ctx context.Context, archiveWriter io.Writer, reference string) error
+
 	String() string
 
 	parseReferenceParts(reference string) (referenceParts, error)
@@ -26,4 +31,8 @@ type Interface interface {
 
 type ApiInterface interface {
 	GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error)
+}
+
+type ArchiveOpener interface {
+	Open() (io.ReadCloser, error)
 }

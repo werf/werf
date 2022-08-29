@@ -14,6 +14,20 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
+func CreateDockerRegistry(addr string, insecureRegistry, skipTlsVerifyRegistry bool) (docker_registry.Interface, error) {
+	regOpts := docker_registry.DockerRegistryOptions{
+		InsecureRegistry:      insecureRegistry,
+		SkipTlsVerifyRegistry: skipTlsVerifyRegistry,
+	}
+
+	dockerRegistry, err := docker_registry.NewDockerRegistry(addr, "", regOpts)
+	if err != nil {
+		return nil, fmt.Errorf("error creating container registry accessor for repo %q: %w", addr, err)
+	}
+
+	return dockerRegistry, nil
+}
+
 func (repoData *RepoData) CreateDockerRegistry(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool) (docker_registry.Interface, error) {
 	addr, err := repoData.GetAddress()
 	if err != nil {
