@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.166](https://www.github.com/werf/werf/compare/v1.2.165...v1.2.166) (2022-08-29)
+
+
+### Bug Fixes
+
+* **bundles:** fix panic in bundle-download command ([d15d676](https://www.github.com/werf/werf/commit/d15d676c289fc78c7750d5e6036a57ea7b47120f))
+
 ### [1.2.165](https://www.github.com/werf/werf/compare/v1.2.164...v1.2.165) (2022-08-25)
 
 
