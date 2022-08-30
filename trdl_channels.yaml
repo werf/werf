@@ -30,9 +30,9 @@ groups:
       - name: beta
         version: 1.2.166
       - name: ea
-        version: 1.2.162
+        version: 1.2.163
       # - name: pre-stable
-      #   version: 1.2.162
+      #   version: 1.2.163
       - name: stable
         version: 1.2.162
       - name: rock-solid
