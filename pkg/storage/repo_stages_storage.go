@@ -720,13 +720,7 @@ func groupImageMetadataTagsByImageName(ctx context.Context, imageNameOrManagedIm
 			stageIDCommitList = map[string][]string{}
 		}
 
-		commitList, ok := stageIDCommitList[tagStageID]
-		if !ok {
-			commitList = []string{}
-		}
-
-		commitList = append(commitList, tagCommit)
-		stageIDCommitList[tagStageID] = commitList
+		stageIDCommitList[tagStageID] = append(stageIDCommitList[tagStageID], tagCommit)
 		res[imageName] = stageIDCommitList
 	}
 

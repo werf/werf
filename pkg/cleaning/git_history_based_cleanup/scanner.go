@@ -353,7 +353,7 @@ func (s *commitHistoryScanner) scanCommitHistory(ctx context.Context, commit str
 		}
 
 		currentIteration = nextIteration
-		nextIteration = []string{}
+		nextIteration = nil
 	}
 
 	return nil
@@ -381,26 +381,13 @@ outerLoop:
 				}
 
 				isReachedCommit = true
-				reachedCommitList, ok := s.reachedStageIDCommitList[stageID]
-				if !ok {
-					reachedCommitList = []string{}
-				}
-				reachedCommitList = append(reachedCommitList, c)
-				s.reachedStageIDCommitList[stageID] = reachedCommitList
+				s.reachedStageIDCommitList[stageID] = append(s.reachedStageIDCommitList[stageID], c)
 
-				if !ok {
-					logboek.Context(ctx).Info().LogF(
-						"Expected content digest %s was reached on commit %s\n",
-						stageID,
-						commit,
-					)
-				} else {
-					logboek.Context(ctx).Info().LogF(
-						"Expected content digest %s was reached again on another commit %s\n",
-						stageID,
-						commit,
-					)
-				}
+				logboek.Context(ctx).Info().LogF(
+					"Expected content digest %s was reached on commit %s\n",
+					stageID,
+					commit,
+				)
 
 				break
 			}
@@ -470,13 +457,7 @@ func (s *commitHistoryScanner) latestCommitStageIDs() map[*object.Commit][]strin
 		}
 
 		if latestCommitObject != nil {
-			stageIDs, ok := latestCommitStageIDs[latestCommitObject]
-			if !ok {
-				stageIDs = []string{}
-			}
-
-			stageIDs = append(stageIDs, stageID)
-			latestCommitStageIDs[latestCommitObject] = stageIDs
+			latestCommitStageIDs[latestCommitObject] = append(latestCommitStageIDs[latestCommitObject], stageID)
 		}
 	}
 
