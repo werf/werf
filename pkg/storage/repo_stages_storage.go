@@ -779,7 +779,7 @@ func getManagedImageNameFromManagedImageID(managedImageID string) string {
 }
 
 func getImageMetadataID(imageNameOrManagedImageName string) string {
-	return util.MurmurHash(getManagedImageNameByImageNameOrManagedImage(imageNameOrManagedImageName))
+	return util.LegacyMurmurHash(getManagedImageNameByImageNameOrManagedImage(imageNameOrManagedImageName))
 }
 
 func getManagedImageNameByImageNameOrManagedImage(imageNameOrManagedImageName string) string {

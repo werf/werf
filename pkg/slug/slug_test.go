@@ -3,11 +3,7 @@ package slug
 import (
 	"strings"
 	"testing"
-
-	"github.com/werf/werf/pkg/util"
 )
-
-var servicePartSize = len(util.MurmurHash("stub")) + len(slugSeparator)
 
 func TestSlug(t *testing.T) {
 	legacyCaseWithTwoHyphensMaxSize := 48
@@ -36,7 +32,7 @@ func TestSlug(t *testing.T) {
 		{
 			name:   "maxSizeExceeded",
 			data:   strings.Repeat("x", DefaultSlugMaxSize+1),
-			result: strings.Repeat("x", DefaultSlugMaxSize-servicePartSize) + "-27e2f02f",
+			result: strings.Repeat("x", DefaultSlugMaxSize-len("-27e2f02f")) + "-27e2f02f",
 		},
 		{
 			name:    "legacyCaseWithTwoHyphen",
@@ -99,7 +95,7 @@ func TestDockerTag(t *testing.T) {
 		{
 			name:   "maxSizeExceeded",
 			data:   strings.Repeat("x", DockerTagMaxSize+1),
-			result: strings.Repeat("x", DockerTagMaxSize-servicePartSize) + "-8cca70eb",
+			result: strings.Repeat("x", DockerTagMaxSize-len("-8cca70eb")) + "-8cca70eb",
 		},
 	}
 
@@ -153,7 +149,7 @@ func TestHelmRelease(t *testing.T) {
 		{
 			name:   "maxSizeExceeded",
 			data:   strings.Repeat("x", helmReleaseMaxSize+1),
-			result: strings.Repeat("x", helmReleaseMaxSize-servicePartSize) + "-18c5dfb9",
+			result: strings.Repeat("x", helmReleaseMaxSize-len("-18c5dfb9")) + "-18c5dfb9",
 		},
 	}
 
@@ -202,7 +198,7 @@ func TestKubernetesNamespace(t *testing.T) {
 		{
 			name:   "maxSizeExceeded",
 			data:   strings.Repeat("x", kubernetesNamespaceMaxSize+1),
-			result: strings.Repeat("x", kubernetesNamespaceMaxSize-servicePartSize) + "-afd4efcd",
+			result: strings.Repeat("x", kubernetesNamespaceMaxSize-len("-afd4efcd")) + "-afd4efcd",
 		},
 	}
 

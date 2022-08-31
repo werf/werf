@@ -173,7 +173,7 @@ func shouldNotBeSlugged(data string, regexp *regexp.Regexp, maxSize int) bool {
 
 func slug(data string, maxSize int) string {
 	sluggedData := slugify(data)
-	murmurHash := util.MurmurHash(data)
+	murmurHash := util.LegacyMurmurHash(data)
 
 	var slugParts []string
 	if sluggedData != "" {
