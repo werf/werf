@@ -139,14 +139,14 @@ func (m *Manager) InitCustomTagsMetadata(ctx context.Context, storageManager man
 	return nil
 }
 
-func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (stageIDCustomTagList map[string][]string, err error) {
+func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (map[string][]string, error) {
 	stageCustomTagMetadataIDs, err := storageManager.GetStagesStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %w", err)
 	}
 
 	var mutex sync.Mutex
-	stageIDCustomTagList = make(map[string][]string)
+	stageIDCustomTagList := make(map[string][]string)
 	err = storageManager.ForEachGetStageCustomTagMetadata(ctx, stageCustomTagMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error {
 		if err != nil {
 			return err
