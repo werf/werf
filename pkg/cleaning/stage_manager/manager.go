@@ -155,11 +155,6 @@ func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageMa
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		_, ok := stageIDCustomTagList[metadata.StageID]
-		if !ok {
-			stageIDCustomTagList[metadata.StageID] = []string{}
-		}
-
 		stageIDCustomTagList[metadata.StageID] = append(stageIDCustomTagList[metadata.StageID], metadata.Tag)
 
 		return nil
@@ -210,12 +205,7 @@ func (m *Manager) GetImageStageIDCommitListToCleanup() map[string]map[string][]s
 			stageIDCommitList = map[string][]string{}
 		}
 
-		commitList, ok := stageIDCommitList[im.stageID]
-		if !ok {
-			commitList = []string{}
-		}
-
-		stageIDCommitList[im.stageID] = append(commitList, im.commitList...)
+		stageIDCommitList[im.stageID] = append(stageIDCommitList[im.stageID], im.commitList...)
 		result[im.imageName] = stageIDCommitList
 	}
 
@@ -244,11 +234,7 @@ func (m *Manager) GetNonexistentStageIDCommitList(imageName string) map[string][
 			continue
 		}
 
-		commitList, ok := result[im.stageID]
-		if !ok {
-			commitList = []string{}
-		}
-
+		commitList := result[im.stageID]
 		commitList = append(commitList, im.commitList...)
 		commitList = append(commitList, im.commitListToDelete...)
 		result[im.stageID] = commitList
@@ -270,11 +256,7 @@ func (m *Manager) GetStageIDCommitListByNonexistentImage() map[string]map[string
 			stageIDCommitList = map[string][]string{}
 		}
 
-		commitList, ok := stageIDCommitList[im.stageID]
-		if !ok {
-			commitList = []string{}
-		}
-
+		commitList := stageIDCommitList[im.stageID]
 		commitList = append(commitList, im.commitList...)
 		commitList = append(commitList, im.commitListToDelete...)
 		stageIDCommitList[im.stageID] = commitList
@@ -297,12 +279,7 @@ func (m *Manager) GetStageIDNonexistentCommitList(imageName string) map[string][
 			continue
 		}
 
-		commitList, ok := result[im.stageID]
-		if !ok {
-			commitList = []string{}
-		}
-
-		result[im.stageID] = append(commitList, im.commitListToDelete...)
+		result[im.stageID] = append(result[im.stageID], im.commitListToDelete...)
 	}
 
 	return result
