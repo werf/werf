@@ -72,7 +72,7 @@ func (s Index) Checksum() string {
 }
 
 func (s *Index) addToChecksum(a ...string) {
-	s.checksum = util.MurmurHash(append([]string{s.checksum}, a...)...)
+	s.checksum = util.LegacyMurmurHash(append([]string{s.checksum}, a...)...)
 }
 
 type Worktree struct {

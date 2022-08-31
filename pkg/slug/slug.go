@@ -56,24 +56,9 @@ func shouldBeSlugged(data string, slugMaxSize int) bool {
 			return true
 		}
 
-		// data length cannot be equal or less than service part
-		servicePartSize := len(util.MurmurHash("ANY")) + len(slugSeparator)
-		if len(data) <= servicePartSize {
-			return true
-		}
-
 		// data must contain only one sequence
 		if strings.Count(data, "--") != 1 {
 			return true
-		}
-
-		// data must contain sequence in a certain place
-		{
-			firstHyphenInd := len(data) - servicePartSize - 1
-			ind := strings.Index(data, "--")
-			if firstHyphenInd != ind {
-				return true
-			}
 		}
 
 		// data without sequence must be valid
@@ -188,7 +173,7 @@ func shouldNotBeSlugged(data string, regexp *regexp.Regexp, maxSize int) bool {
 
 func slug(data string, maxSize int) string {
 	sluggedData := slugify(data)
-	murmurHash := util.MurmurHash(data)
+	murmurHash := util.LegacyMurmurHash(data)
 
 	var slugParts []string
 	if sluggedData != "" {
