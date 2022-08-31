@@ -44,6 +44,12 @@ func TestSlug(t *testing.T) {
 			maxSize: &legacyCaseWithTwoHyphensMaxSize,
 			result:  "postgres-feature-31981-change-delivery--852739dc",
 		},
+		{
+			name:    "legacyCaseWithTwoHyphen_2",
+			data:    "php_fpm_exporter-monitoring-dev-encrypt-1",
+			maxSize: &legacyCaseWithTwoHyphensMaxSize,
+			result:  "php-fpm-exporter-monitoring-dev-encrypt--83286e5",
+		},
 	}
 
 	for _, test := range tests {
