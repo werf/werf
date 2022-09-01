@@ -32,6 +32,8 @@ werf helm lint PATH [flags] [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --env=''
+            Use specified environment (default $WERF_ENV)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --secret-values=[]
