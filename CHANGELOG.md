@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.168](https://www.github.com/werf/werf/compare/v1.2.167...v1.2.168) (2022-09-01)
+
+
+### Bug Fixes
+
+* **deploy:** fix release-history-max param default value help message ([ff8d11a](https://www.github.com/werf/werf/commit/ff8d11aeba5f097876902a4a3e2b0f50f7331b46))
+
 ### [1.2.167](https://www.github.com/werf/werf/compare/v1.2.166...v1.2.167) (2022-09-01)
 
 
