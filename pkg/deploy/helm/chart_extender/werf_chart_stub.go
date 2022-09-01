@@ -31,6 +31,7 @@ type WerfChartStub struct {
 	SecretValueFiles []string
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
+	stubServiceValuesOverrides            map[string]interface{}
 	stubServiceValues                     map[string]interface{}
 
 	*secrets.SecretsRuntimeData
@@ -105,6 +106,7 @@ func (wc *WerfChartStub) ChartDependenciesLoaded() error {
 // MakeValues method for the chart.Extender interface
 func (wc *WerfChartStub) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
 	vals := make(map[string]interface{})
+	chartutil.CoalesceTables(vals, wc.stubServiceValuesOverrides)
 	chartutil.CoalesceTables(vals, wc.stubServiceValues)
 	chartutil.CoalesceTables(vals, wc.SecretsRuntimeData.DecodedSecretValues)
 	chartutil.CoalesceTables(vals, inputVals)
@@ -137,4 +139,8 @@ func (wc *WerfChartStub) ReadFile(filePath string) (bool, []byte, error) {
 
 func (wc *WerfChartStub) SetStubServiceValues(vals map[string]interface{}) {
 	wc.stubServiceValues = vals
+}
+
+func (wc *WerfChartStub) SetStubServiceValuesOverrides(vals map[string]interface{}) {
+	wc.stubServiceValuesOverrides = vals
 }

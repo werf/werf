@@ -391,6 +391,7 @@ func runRender(ctx context.Context) error {
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
 		IsStub:                   isStub,
+		DisableEnvStub:           true,
 		StubImagesNames:          stubImagesNames,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,

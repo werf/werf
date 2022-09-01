@@ -37,11 +37,20 @@ type ServiceValuesOptions struct {
 	Env             string
 	IsStub          bool
 	StubImagesNames []string
-	CommitHash      string
-	CommitDate      *time.Time
+	// disable env stub used in the werf-render command
+	DisableEnvStub bool
+	CommitHash     string
+	CommitDate     *time.Time
 
 	SetDockerConfigJsonValue bool
 	DockerConfigPath         string
+}
+
+func GetEnvServiceValues(env string) map[string]interface{} {
+	return map[string]interface{}{
+		"werf":   map[string]interface{}{"env": env},
+		"global": map[string]interface{}{"env": env},
+	}
 }
 
 func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
@@ -70,7 +79,7 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 	if opts.Env != "" {
 		globalInfo["env"] = opts.Env
 		werfInfo["env"] = opts.Env
-	} else if opts.IsStub {
+	} else if opts.IsStub && !opts.DisableEnvStub {
 		globalInfo["env"] = ""
 		werfInfo["env"] = ""
 	}
