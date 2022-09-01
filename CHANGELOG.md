@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.167](https://www.github.com/werf/werf/compare/v1.2.166...v1.2.167) (2022-09-01)
+
+
+### Bug Fixes
+
+* **cleanup:** fail on getting manifests for some custom tag metadata ([fa2c72f](https://www.github.com/werf/werf/commit/fa2c72f48bcdfcf32837f667641f85039753b458))
+* **cleanup:** rare panic related to misuse of named return argument ([9fad111](https://www.github.com/werf/werf/commit/9fad1110d2b4854e4e0f1573dd3bb41ed1c2143b))
+* **helm:** restore 'werf helm *' commands behavior for an env value ([528a706](https://www.github.com/werf/werf/commit/528a7064f33aab27a49192ba8497620298b88d26))
+
 ### [1.2.166](https://www.github.com/werf/werf/compare/v1.2.165...v1.2.166) (2022-08-29)
 
 
