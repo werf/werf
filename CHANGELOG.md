@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.169](https://www.github.com/werf/werf/compare/v1.2.168...v1.2.169) (2022-09-02)
+
+
+### Features
+
+* **bundle:** introduce bundle archive format, implement copy command to convert archive to registry and vice versa ([345cdf0](https://www.github.com/werf/werf/commit/345cdf07e4b27abc89f72d4935b56d3acd5dc24d))
+
 ### [1.2.168](https://www.github.com/werf/werf/compare/v1.2.167...v1.2.168) (2022-09-01)
 
 
