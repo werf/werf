@@ -19,6 +19,10 @@ werf bundle copy [options]
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified repos
+      --from=''
+            Source address of the bundle to copy, specify bundle archive using schema               
+            `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
+            `[docker://]REPO:TAG` or without schema.
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-helm-dependencies=false
@@ -51,17 +55,22 @@ werf bundle copy [options]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --repo=''
-            Container registry storage address (default $WERF_REPO)
+            Deprecated param, use --from=ADDR instead. Source address of bundle which should be     
+            copied.
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --tag='latest'
-            Provide from tag version of the bundle to copy ($WERF_TAG or latest by default)
+      --tag=''
+            Deprecated param, use --from=REPO:TAG instead. Provide from tag version of the bundle   
+            to copy ($WERF_TAG or latest by default).
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --to=''
-            Container registry storage address (default $WERF_TO)
+            Destination address of the bundle to copy, specify bundle archive using schema          
+            `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
+            `[docker://]REPO:TAG` or without schema.
       --to-tag=''
-            Provide to tag version of the bundle to copy ($WERF_TO_TAG or same as --tag by default)
+            Deprecated param, use --to=REPO:TAG instead. Provide to tag version of the bundle to    
+            copy ($WERF_TO_TAG or same as --tag by default).
 ```
 
