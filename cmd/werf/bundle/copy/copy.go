@@ -153,8 +153,8 @@ func runCopy(ctx context.Context) error {
 
 		return bundles.Copy(ctx, fromAddr, toAddr, bundles.CopyOptions{
 			BundlesRegistryClient: bundlesRegistryClient,
-			FromRegistry:          fromRegistry,
-			ToRegistry:            toRegistry,
+			FromRegistryClient:    fromRegistry,
+			ToRegistryClient:      toRegistry,
 		})
 	})
 }
