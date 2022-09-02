@@ -4,43 +4,35 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/otiai10/copy"
+	"helm.sh/helm/v3/pkg/chart"
 
-	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
+	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/image"
 )
 
 const (
 	chartArchiveFileName = "chart.tar.gz"
 )
 
-type Bundle interface{}
-
-type BundleArchiveWriter interface {
+type BundleWriter interface {
 	Open() error
 	WriteChartArchive(data []byte) error
 	WriteImageArchive(imageTag string, data []byte) error
 	Save() error
 }
 
-type BundleArchiveReader interface {
+type BundleReader interface {
 	ReadChartArchive() ([]byte, error)
 	GetImageArchiveOpener(imageTag string) *ImageArchiveOpener
 	ReadImageArchive(imageTag string) (*ImageArchiveReadCloser, error)
-}
-
-type RemoteBundle struct {
-	RegistryClient *bundles_registry.Client
-}
-
-func NewRemoteBundle(registryClient *bundles_registry.Client) *RemoteBundle {
-	return &RemoteBundle{
-		RegistryClient: registryClient,
-	}
 }
 
 type BundleArchive struct {
@@ -263,6 +255,97 @@ func (bundle *BundleArchive) ReadImageArchive(imageTag string) (*ImageArchiveRea
 			}), nil
 		}
 	}
+}
+
+func (bundle *BundleArchive) ReadChart(ctx context.Context) (*chart.Chart, error) {
+	chartBytes, err := bundle.ReadChartArchive()
+	if err != nil {
+		return nil, fmt.Errorf("unable to read chart archive: %w", err)
+	}
+
+	ch, err := BytesToChart(chartBytes)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse chart archive from bundle archive: %w", err)
+	}
+
+	return ch, nil
+}
+
+func (bundle *BundleArchive) WriteChart(ctx context.Context, ch *chart.Chart) error {
+	chartBytes, err := ChartToBytes(ch)
+	if err != nil {
+		return fmt.Errorf("unable to dump chart to archive: %w", err)
+	}
+
+	if err := bundle.WriteChartArchive(chartBytes); err != nil {
+		return fmt.Errorf("unable to write chart archive into bundle archive: %w", err)
+	}
+
+	return nil
+}
+
+func (bundle *BundleArchive) CopyTo(ctx context.Context, to BundleAccessor) error {
+	return to.CopyFromArchive(ctx, bundle)
+}
+
+func (bundle *BundleArchive) CopyFromArchive(ctx context.Context, fromArchive *BundleArchive) error {
+	if err := copy.Copy(fromArchive.Path, bundle.Path); err != nil {
+		return fmt.Errorf("unable to copy file %q to %q: %w", fromArchive.Path, bundle.Path, err)
+	}
+	return nil
+}
+
+func (bundle *BundleArchive) CopyFromRemote(ctx context.Context, fromRemote *RemoteBundle) error {
+	ch, err := fromRemote.ReadChart(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to read chart from remote bundle: %w", err)
+	}
+
+	if err := bundle.Open(); err != nil {
+		return fmt.Errorf("unable to open target bundle archive: %w", err)
+	}
+
+	if err := logboek.Context(ctx).LogProcess("Saving bundle %s into archive", fromRemote.RegistryAddress.FullName()).DoError(func() error {
+		return bundle.WriteChart(ctx, ch)
+	}); err != nil {
+		return err
+	}
+
+	if werfVals, ok := ch.Values["werf"].(map[string]interface{}); ok {
+		if imageVals, ok := werfVals["image"].(map[string]interface{}); ok {
+			for imageName, v := range imageVals {
+				if imageRef, ok := v.(string); ok {
+					logboek.Context(ctx).Default().LogFDetails("Saving image %s\n", imageRef)
+
+					_, tag := image.ParseRepositoryAndTag(imageRef)
+
+					// TODO: maybe save into tmp file archive OR read resulting image size from the registry before pulling
+					imageBytes := bytes.NewBuffer(nil)
+					zipper := gzip.NewWriter(imageBytes)
+
+					if err := fromRemote.RegistryClient.PullImageArchive(ctx, zipper, imageRef); err != nil {
+						return fmt.Errorf("error pulling image %q archive: %w", imageRef, err)
+					}
+
+					if err := zipper.Close(); err != nil {
+						return fmt.Errorf("unable to close gzip writer: %w", err)
+					}
+
+					if err := bundle.WriteImageArchive(tag, imageBytes.Bytes()); err != nil {
+						return fmt.Errorf("error writing image %q into bundle archive: %w", imageRef, err)
+					}
+				} else {
+					return fmt.Errorf("unexpected value .Values.werf.image.%s=%v", imageName, v)
+				}
+			}
+		}
+	}
+
+	if err := bundle.Save(); err != nil {
+		return fmt.Errorf("error saving destination bundle archive: %w", err)
+	}
+
+	return nil
 }
 
 type ImageArchiveOpener struct {
