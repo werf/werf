@@ -16,7 +16,9 @@ jobs:
       kubeContext: dev
 
   notify:
-    if: failure()
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false && failure()) ||
+      (github.event_name != 'pull_request' && failure())
     needs: deploy-test
     uses: ./.github/workflows/_notification.yml
     secrets:

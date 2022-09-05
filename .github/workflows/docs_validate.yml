@@ -79,7 +79,9 @@ jobs:
           WERF_REPO: "ghcr.io/${{ github.repository_owner }}/werfio"
 
   notify:
-    if: failure()
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false && failure()) ||
+      (github.event_name != 'pull_request' && failure())
     needs:
       - check_cli_and_readme_partials
       - check_broken_links
