@@ -25,6 +25,10 @@ type FetchOptions struct {
 	RefSpecs  map[string]string
 }
 
+func IsShallowFileChangedSinceWeReadIt(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "shallow file has changed since we read it")
+}
+
 func Fetch(ctx context.Context, path string, options FetchOptions) error {
 	commandArgs := []string{"fetch"}
 

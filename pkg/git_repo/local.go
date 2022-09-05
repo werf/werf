@@ -10,10 +10,12 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/pkg/telemetry"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/true_git/status"
 	"github.com/werf/werf/pkg/util"
@@ -156,29 +158,74 @@ func (repo *Local) SyncWithOrigin(ctx context.Context) error {
 	})
 }
 
-func (repo *Local) FetchOrigin(ctx context.Context) error {
+func (repo *Local) acquireFetchLock(ctx context.Context) (lockgate.LockHandle, error) {
+	_, lock, err := werf.AcquireHostLock(ctx, fmt.Sprintf("local_git_repo.fetch.%s", repo.GitDir), lockgate.AcquireOptions{})
+	return lock, err
+}
+
+func (repo *Local) Unshallow(ctx context.Context) error {
+	if lock, err := repo.acquireFetchLock(ctx); err != nil {
+		return fmt.Errorf("unable to acquire fetch lock: %w", err)
+	} else {
+		defer werf.ReleaseHostLock(lock)
+	}
+
 	isShallow, err := repo.IsShallowClone(ctx)
 	if err != nil {
 		return fmt.Errorf("check shallow clone failed: %w", err)
 	}
+	if !isShallow {
+		return nil
+	}
 
-	remoteOriginUrl, err := repo.RemoteOriginUrl(ctx)
+	err = repo.doFetchOrigin(ctx, true)
 	if err != nil {
-		return fmt.Errorf("get remote origin failed: %w", err)
+		return fmt.Errorf("unable to fetch origin: %w", err)
 	}
 
-	if remoteOriginUrl == "" {
-		return fmt.Errorf("git remote origin was not detected")
+	return nil
+}
+
+func (repo *Local) FetchOrigin(ctx context.Context, opts FetchOptions) error {
+	if lock, err := repo.acquireFetchLock(ctx); err != nil {
+		return fmt.Errorf("unable to acquire fetch lock: %w", err)
+	} else {
+		defer werf.ReleaseHostLock(lock)
 	}
 
+	var unshallow bool
+	if opts.Unshallow {
+		isShallow, err := repo.IsShallowClone(ctx)
+		if err != nil {
+			return fmt.Errorf("check shallow clone failed: %w", err)
+		}
+		unshallow = isShallow
+	}
+
+	return repo.doFetchOrigin(ctx, unshallow)
+}
+
+func (repo *Local) doFetchOrigin(ctx context.Context, unshallow bool) error {
 	return logboek.Context(ctx).Default().LogProcess("Fetching origin").DoError(func() error {
+		remoteOriginUrl, err := repo.RemoteOriginUrl(ctx)
+		if err != nil {
+			return fmt.Errorf("get remote origin failed: %w", err)
+		}
+
+		if remoteOriginUrl == "" {
+			return fmt.Errorf("git remote origin was not detected")
+		}
+
 		fetchOptions := true_git.FetchOptions{
-			Unshallow: isShallow,
+			Unshallow: unshallow,
 			RefSpecs:  map[string]string{"origin": "+refs/heads/*:refs/remotes/origin/*"},
 		}
 
 		if err := true_git.Fetch(ctx, repo.WorkTreeDir, fetchOptions); err != nil {
-			return fmt.Errorf("fetch failed: %w", err)
+			if true_git.IsShallowFileChangedSinceWeReadIt(err) {
+				telemetry.GetTelemetryWerfIO().UnshallowFailed(ctx, err)
+			}
+			return err
 		}
 
 		return nil

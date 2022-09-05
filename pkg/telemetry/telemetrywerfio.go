@@ -33,6 +33,7 @@ type TelemetryWerfIOInterface interface {
 
 	CommandStarted(ctx context.Context)
 	CommandExited(ctx context.Context, exitCode int)
+	UnshallowFailed(ctx context.Context, err error)
 }
 
 type TelemetryWerfIO struct {
@@ -63,7 +64,7 @@ func NewTelemetryWerfIO(url string, opts TelemetryWerfIOOptions) (*TelemetryWerf
 		tracerProvider: sdktrace.NewTracerProvider(
 			sdktrace.WithBatcher(e,
 				sdktrace.WithBatchTimeout(1*time.Millisecond), // send all available events immediately
-				sdktrace.WithExportTimeout(800*time.Millisecond),
+				sdktrace.WithExportTimeout(1300*time.Millisecond),
 			),
 		),
 		traceExporter: e,
@@ -130,6 +131,10 @@ func (t *TelemetryWerfIO) CommandStarted(ctx context.Context) {
 func (t *TelemetryWerfIO) CommandExited(ctx context.Context, exitCode int) {
 	duration := time.Now().Sub(t.startedAt)
 	t.sendEvent(ctx, NewCommandExited(exitCode, int64(duration/time.Millisecond)))
+}
+
+func (t *TelemetryWerfIO) UnshallowFailed(ctx context.Context, err error) {
+	t.sendEvent(ctx, NewUnshallowFailed(err.Error()))
 }
 
 func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
