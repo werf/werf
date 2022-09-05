@@ -70,7 +70,9 @@ jobs:
     secrets: inherit
 
   notify:
-    if: (github.event_name == 'pull_request' && failure()) || (github.event_name != 'pull_request' && always())
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false && failure()) ||
+      (github.event_name != 'pull_request' && always())
     needs:
       - unlabel
       - integration_main
