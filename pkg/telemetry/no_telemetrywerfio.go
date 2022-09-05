@@ -10,3 +10,4 @@ func (t *NoTelemetryWerfIO) SetProjectID(context.Context, string)               
 func (t *NoTelemetryWerfIO) SetCommand(context.Context, string)                 {}
 func (t *NoTelemetryWerfIO) CommandExited(context.Context, int)                 {}
 func (t *NoTelemetryWerfIO) SetCommandOptions(context.Context, []CommandOption) {}
+func (t *NoTelemetryWerfIO) UnshallowFailed(context.Context, error)             {}

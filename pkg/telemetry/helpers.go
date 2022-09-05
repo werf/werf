@@ -25,7 +25,7 @@ func NewTraceExporter(url string) (*otlptrace.Exporter, error) {
 		otlptracehttp.WithEndpoint(urlObj.Host),
 		otlptracehttp.WithURLPath(urlObj.Path),
 		otlptracehttp.WithRetry(otlptracehttp.RetryConfig{Enabled: false}),
-		otlptracehttp.WithTimeout(800*time.Millisecond),
+		otlptracehttp.WithTimeout(1300*time.Millisecond),
 	)
 
 	client := otlptracehttp.NewClient(opts...)

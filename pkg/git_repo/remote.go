@@ -107,7 +107,7 @@ func (repo *Remote) CloneAndFetch(ctx context.Context) error {
 		return nil
 	}
 
-	return repo.FetchOrigin(ctx)
+	return repo.FetchOrigin(ctx, FetchOptions{})
 }
 
 func (repo *Remote) isCloneExists() (bool, error) {
@@ -210,7 +210,11 @@ func (repo *Remote) SyncWithOrigin(ctx context.Context) error {
 	panic("not implemented")
 }
 
-func (repo *Remote) FetchOrigin(ctx context.Context) error {
+func (repo *Remote) Unshallow(ctx context.Context) error {
+	panic("not implemented")
+}
+
+func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 	if repo.IsDryRun {
 		return nil
 	}

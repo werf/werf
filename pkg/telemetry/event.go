@@ -1,10 +1,13 @@
 package telemetry
 
+import "os"
+
 type EventType string
 
 const (
-	CommandStartedEvent EventType = "CommandStarted"
-	CommandExitedEvent  EventType = "CommandExited"
+	CommandStartedEvent  EventType = "CommandStarted"
+	CommandExitedEvent   EventType = "CommandExited"
+	UnshallowFailedEvent EventType = "UnshallowFailed"
 )
 
 type Event interface {
@@ -38,3 +41,19 @@ type CommandExited struct {
 }
 
 func (e *CommandExited) GetType() EventType { return CommandExitedEvent }
+
+func NewUnshallowFailed(errorMessage string) *UnshallowFailed {
+	return &UnshallowFailed{
+		ErrorMessage:        errorMessage,
+		GitlabRunnerVersion: os.Getenv("CI_RUNNER_VERSION"),
+		GitlabServerVersion: os.Getenv("CI_SERVER_VERSION"),
+	}
+}
+
+type UnshallowFailed struct {
+	ErrorMessage        string `json:"errorMessage"`
+	GitlabRunnerVersion string `json:"gitlabRunnerVersion"`
+	GitlabServerVersion string `json:"gitlabServerVersion"`
+}
+
+func (*UnshallowFailed) GetType() EventType { return UnshallowFailedEvent }

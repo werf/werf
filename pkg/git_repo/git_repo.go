@@ -43,7 +43,8 @@ type GitRepo interface {
 	GetWorkTreeDir() string
 	RemoteOriginUrl(_ context.Context) (string, error)
 	IsShallowClone(ctx context.Context) (bool, error)
-	FetchOrigin(ctx context.Context) error
+	FetchOrigin(ctx context.Context, opts FetchOptions) error
+	Unshallow(ctx context.Context) error
 	SyncWithOrigin(ctx context.Context) error
 
 	CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error)
@@ -73,6 +74,10 @@ type GitRepo interface {
 
 	StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (list []string, err error)
 	ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error
+}
+
+type FetchOptions struct {
+	Unshallow bool
 }
 
 type gitRepo interface {

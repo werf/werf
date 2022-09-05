@@ -907,8 +907,8 @@ func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImag
 
 			if isShallowClone {
 				if c.werfConfig.Meta.GitWorktree.GetAllowUnshallow() {
-					if err := localGitRepo.FetchOrigin(ctx); err != nil {
-						return nil, err
+					if err := localGitRepo.Unshallow(ctx); err != nil {
+						return nil, fmt.Errorf("unable to fetch local git repo: %w", err)
 					}
 				} else {
 					logboek.Context(ctx).Warn().LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
