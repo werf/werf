@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.170](https://www.github.com/werf/werf/compare/v1.2.169...v1.2.170) (2022-09-06)
+
+
+### Bug Fixes
+
+* **bundles:** deprecate bundle export/download commands in favor of new copy command abilities ([d49a81f](https://www.github.com/werf/werf/commit/d49a81f645370dda194acab278c1203076524425))
+* **bundles:** refactor bundle copy implementation ([63d13d0](https://www.github.com/werf/werf/commit/63d13d019f0c7359e440a8d45f2914dcb1057f03))
+* **git:** try to prevent unshallow error 'shallow file has changed since we read it' ([e51546c](https://www.github.com/werf/werf/commit/e51546c78b3460700c30823c8f3de0975f4e027b))
+
 ### [1.2.169](https://www.github.com/werf/werf/compare/v1.2.168...v1.2.169) (2022-09-02)
 
 
