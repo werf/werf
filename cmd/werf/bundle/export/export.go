@@ -42,6 +42,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "export",
 		Short:                 "Export bundle",
+		Hidden:                true, // Deprecated command
 		Long:                  common.GetLongCommandDescription(`Export bundle into the provided directory (or into directory named as a resulting chart in the current working directory). werf bundle contains built images defined in the werf.yaml, helm chart, service values which contain built images tags, any custom values and set values params provided during publish invocation, werf service templates and values.`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
@@ -49,6 +50,21 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+
+			logboek.Context(ctx).Warn().LogF("WARNING: werf bundle export is DEPRECATED!\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: To create bundle helm chart directory from your git werf project use following commands:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: \n")
+			logboek.Context(ctx).Warn().LogF("WARNING: 1. Publish bundle into some registry:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:     werf bundle publish --repo REPO --tag TAG\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: \n")
+			logboek.Context(ctx).Warn().LogF("WARNING: 2. Copy published bundle from the registry to bundle archive:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:     werf bundle copy --from REPO:TAG --to archive:PATH_TO_ARCHIVE.tar.gz\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: \n")
+			logboek.Context(ctx).Warn().LogF("WARNING: 3. Unpack bundle archive:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:     tar xf PATH_TO_ARCHIVE.tar.gz\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: \n")
+			logboek.Context(ctx).Warn().LogF("WARNING: 4. Unpack chart archive inside unpacked bundle archive directory:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:     tar xf chart.tar.gz\n")
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
