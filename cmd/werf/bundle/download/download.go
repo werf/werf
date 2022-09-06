@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/deploy/bundles"
 	"github.com/werf/werf/pkg/werf"
@@ -26,6 +27,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "download",
 		Short:                 "Download published bundle into directory",
+		Hidden:                true, // Deprecated command
 		Long:                  common.GetLongCommandDescription(`Take latest bundle from the specified container registry using specified version tag or version mask and unpack it into provided directory (or into directory named as a resulting chart in the current working directory).`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
@@ -33,6 +35,21 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+
+			logboek.Context(ctx).Warn().LogF("WARNING: werf bundle download is DEPRECATED!\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: To download published bundle from the registry and unpack bundle helm chart into directory use following commands:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: \n")
+			logboek.Context(ctx).Warn().LogF("WARNING: 1. Publish bundle into some registry:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:     werf bundle publish --repo REPO --tag TAG\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: \n")
+			logboek.Context(ctx).Warn().LogF("WARNING: 2. Copy published bundle from the registry to bundle archive:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:     werf bundle copy --from REPO:TAG --to archive:PATH_TO_ARCHIVE.tar.gz\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: \n")
+			logboek.Context(ctx).Warn().LogF("WARNING: 3. Unpack bundle archive:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:     tar xf PATH_TO_ARCHIVE.tar.gz\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: \n")
+			logboek.Context(ctx).Warn().LogF("WARNING: 4. Unpack chart archive inside unpacked bundle archive directory:\n")
+			logboek.Context(ctx).Warn().LogF("WARNING:     tar xf chart.tar.gz\n")
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
