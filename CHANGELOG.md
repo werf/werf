@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.169+fix1](https://www.github.com/werf/werf/compare/v1.2.169...v1.2.169+fix1) (2022-09-07)
+
+
+### Bug Fixes
+
+* **telemetry:** repair turn-off telemetry switch ([abeaf5a](https://www.github.com/werf/werf/commit/abeaf5ad5a3ea83ae399ced2f5dda8df5a58c32e))
+
 ### [1.2.169](https://www.github.com/werf/werf/compare/v1.2.168...v1.2.169) (2022-09-02)
 
 
