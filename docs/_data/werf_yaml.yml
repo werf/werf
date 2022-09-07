@@ -656,8 +656,8 @@ sections:
           - name: ENTRYPOINT
             value: "string | [ string, ... ]"
             description:
-              en: "To configure a container that will run as an executable"
-              ru: "Команда по умолчанию, которая будет выполнена при запуске контейнера"
+              en: "To configure a container that will run as an executable. Shell and exec forms are supported"
+              ru: "Команда по умолчанию, которая будет выполнена при запуске контейнера (форма записи shell или exec)"
             detailsLink: "https://docs.docker.com/engine/reference/builder/#entrypoint"
             detailsCustomLinks:
               en:
@@ -667,10 +667,10 @@ sections:
                 - text: "Как сборщик Stapel работает с CMD и ENTRYPOINT"
                   article: "/internals/build_process.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
           - name: CMD
-            value: "string"
+            value: "string | [ string, ... ]"
             description:
-              en: "To provide default arguments for the ENTRYPOINT to configure a container that will run as an executable"
-              ru: "Аргументы по умолчанию для ENTRYPOINT"
+              en: "To provide default arguments for the ENTRYPOINT to configure a container that will run as an executable. Shell and exec forms are supported"
+              ru: "Аргументы по умолчанию для ENTRYPOINT (форма записи shell или exec)"
             detailsLink: "https://docs.docker.com/engine/reference/builder/#cmd"
             detailsCustomLinks:
               en:

@@ -24,7 +24,7 @@ Here is an example of using docker instructions:
 ```yaml
 docker:
   WORKDIR: /app
-  CMD: "['python', './index.py']"
+  CMD: ["python", "./index.py"]
   EXPOSE: '5000'
   ENV:
     TERM: xterm
