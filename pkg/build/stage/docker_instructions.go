@@ -121,7 +121,7 @@ func CmdOrEntrypointStringToSlice(cmdOrEntrypoint string) ([]string, error) {
 				return nil, fmt.Errorf("error parsing to the JSON array: %w", err)
 			}
 		} else {
-			result = []string{cmdOrEntrypoint}
+			result = []string{"/bin/sh", "-c", cmdOrEntrypoint}
 		}
 	}
 
