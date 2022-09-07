@@ -8,17 +8,26 @@ import (
 	"strings"
 )
 
-func GetBoolEnvironment(environmentName string) *bool {
-	switch os.Getenv(environmentName) {
-	case "1", "true", "yes":
-		t := true
-		return &t
-	case "0", "false", "no":
-		f := false
-		return &f
+func LookupBoolEnvironment(environmentName string) (*bool, bool) {
+	value, isSet := os.LookupEnv(environmentName)
+	if !isSet {
+		return nil, false
 	}
 
-	return nil
+	switch value {
+	case "1", "true", "yes":
+		t := true
+		return &t, true
+	case "0", "false", "no":
+		f := false
+		return &f, true
+	}
+	return nil, true
+}
+
+func GetBoolEnvironment(environmentName string) *bool {
+	val, _ := LookupBoolEnvironment(environmentName)
+	return val
 }
 
 func GetBoolEnvironmentDefaultFalse(environmentName string) bool {

@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	TracesURL = "https://telemetry.werf.io/v1/traces"
+	TracesURL    = "https://telemetry.werf.io/v1/traces"
+	TelemetryEnv = "WERF_TELEMETRY"
 )
 
 var (
@@ -94,9 +95,15 @@ func GetTraceUrl() string {
 }
 
 func IsEnabled() bool {
-	isDevVersion := werf.Version == "dev" || werf.Version == "0.0.0"
-	envVal := util.GetBoolEnvironmentDefaultFalse("WERF_TELEMETRY")
-	return envVal || !isDevVersion
+	val, isSet := util.LookupBoolEnvironment(TelemetryEnv)
+	if isSet && val != nil {
+		return *val
+	}
+
+	if werf.Version == "dev" || werf.Version == "0.0.0" {
+		return false
+	}
+	return true
 }
 
 func LogF(f string, args ...interface{}) {
