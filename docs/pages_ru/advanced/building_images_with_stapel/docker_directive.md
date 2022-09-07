@@ -25,7 +25,7 @@ directive_summary: docker
 ```yaml
 docker:
   WORKDIR: /app
-  CMD: ['python', './index.py']
+  CMD: ["python", "./index.py"]
   EXPOSE: '5000'
   ENV:
     TERM: xterm
