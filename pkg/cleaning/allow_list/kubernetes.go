@@ -6,6 +6,7 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -57,7 +58,7 @@ func DeployedDockerImages(ctx context.Context, kubernetesClient kubernetes.Inter
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getCronJobsImages(kubernetesClient, kubernetesNamespace)
+	images, err = getCronJobsImages(ctx, kubernetesClient, kubernetesNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get CronJobs images: %w", err)
 	}
@@ -188,9 +189,44 @@ func getReplicaSetsImages(kubernetesClient kubernetes.Interface, kubernetesNames
 	return images, nil
 }
 
-func getCronJobsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]string, error) {
+func getCronJobsImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]string, error) {
+	images, err := getCronJobsImagesBatchV1(kubernetesClient, kubernetesNamespace)
+	if apierrors.IsNotFound(err) {
+		logboek.Context(ctx).Warn().LogF("\n")
+		logboek.Context(ctx).Warn().LogF("WARNING: Unable to query CronJobs in batch/v1: %s\n", err)
+		logboek.Context(ctx).Warn().LogF("WARNING: Will fallback to CronJobs in batch/v1beta1, which is not officially supported anymore\n")
+
+		if images, fallbackErr := getCronJobsImagesBatchV1beta1(kubernetesClient, kubernetesNamespace); fallbackErr == nil {
+			return images, nil
+		}
+	}
+	return images, err
+}
+
+func getCronJobsImagesBatchV1(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]string, error) {
 	var images []string
+
 	list, err := kubernetesClient.BatchV1().CronJobs(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, cronJob := range list.Items {
+		for _, container := range append(
+			cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers,
+			cronJob.Spec.JobTemplate.Spec.Template.Spec.InitContainers...,
+		) {
+			images = append(images, container.Image)
+		}
+	}
+
+	return images, nil
+}
+
+func getCronJobsImagesBatchV1beta1(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]string, error) {
+	var images []string
+
+	list, err := kubernetesClient.BatchV1beta1().CronJobs(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
