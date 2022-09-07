@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.171](https://www.github.com/werf/werf/compare/v1.2.170...v1.2.171) (2022-09-07)
+
+
+### Bug Fixes
+
+* **buildah:** different processing of CMD/ENTRYPOINT by Stapel and Buildah backend ([97e89b0](https://www.github.com/werf/werf/commit/97e89b0075f35277c3aa2f6b828afe0ed130c984))
+* **cleanup:** fallback to batch/v1beta1 when querying CronJobs for cleanup ([2f53aa4](https://www.github.com/werf/werf/commit/2f53aa4bd212ea0d05c6ec8b65ab75866f95d302))
+* **telemetry:** repair turn-off telemetry switch ([f8559e9](https://www.github.com/werf/werf/commit/f8559e9f3798fcbc553b2b3596ccee637f356dc3))
+
 ### [1.2.170](https://www.github.com/werf/werf/compare/v1.2.169...v1.2.170) (2022-09-06)
 
 
