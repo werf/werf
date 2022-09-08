@@ -334,7 +334,7 @@ func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 	if defaultValueP != nil {
 		defaultValue = int(*defaultValueP)
 	} else {
-		defaultValue = 10
+		defaultValue = 5
 	}
 
 	cmd.Flags().IntVarP(
