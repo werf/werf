@@ -13,5 +13,5 @@ func (i Inspector) InspectCustomTags() error {
 
 	return errors.NewError(`custom tags not allowed by giterminism
 
-The use of --add-custom-tag and --use-custom-tag options might make previous deployments unreproducible and require extra configuration in the helm chart.`)
+The use of --use-custom-tag option might make previous deployments unreproducible and require extra configuration in the helm chart.`)
 }

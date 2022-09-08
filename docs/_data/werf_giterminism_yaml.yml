@@ -13,8 +13,8 @@ directives:
       - name: allowCustomTags
         value: "bool"
         description:
-          en: Allow the use of --add-custom-tag and --use-custom-tag options
-          ru: Разрешить опции --add-custom-tag и --use-custom-tag
+          en: Allow the use of --use-custom-tag option
+          ru: Разрешить опцию --use-custom-tag
   - name: config
     description:
       en: The rules of loosening giterminism for the werf configuration file (werf.yaml)
