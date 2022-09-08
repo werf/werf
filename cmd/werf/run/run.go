@@ -53,7 +53,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Short:                 "Run container for project image",
 		Long:                  common.GetLongCommandDescription(`Run container for specified project image from werf.yaml (build if needed)`),
 		DisableFlagsInUseLine: true,
-		Example: `  # Run specified image
+		Example: `  # Run specified image and remove after execution
   $ werf run application
 
   # Run image with predefined docker run options and command for debug
@@ -105,6 +105,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 					common.PrintHelp(cmd)
 					return fmt.Errorf("shell option cannot be used with other docker run arguments")
 				}
+			} else if len(cmdData.DockerOptions) == 0 {
+				cmdData.DockerOptions = append(cmdData.DockerOptions, "--rm")
 			}
 
 			return runMain(ctx)
