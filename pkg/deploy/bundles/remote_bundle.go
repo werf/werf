@@ -84,7 +84,7 @@ func (bundle *RemoteBundle) CopyTo(ctx context.Context, to BundleAccessor) error
 func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *BundleArchive) error {
 	ch, err := fromArchive.ReadChart(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to read chart from the bundle archive %q: %w", fromArchive.Path, err)
+		return fmt.Errorf("unable to read chart from the bundle archive %q: %w", fromArchive.Reader.String(), err)
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Copy images from bundle archive").DoError(func() error {
@@ -106,7 +106,7 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 							imageArchiveOpener := fromArchive.GetImageArchiveOpener(ref.Tag)
 
 							if err := bundle.RegistryClient.PushImageArchive(ctx, imageArchiveOpener, ref.FullName()); err != nil {
-								return fmt.Errorf("error copying image from bundle archive %q into %q: %w", fromArchive.Path, ref.FullName(), err)
+								return fmt.Errorf("error copying image from bundle archive %q into %q: %w", fromArchive.Reader.String(), ref.FullName(), err)
 							}
 						}
 

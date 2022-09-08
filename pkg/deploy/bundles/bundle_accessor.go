@@ -28,7 +28,7 @@ func NewBundleAccessor(addr *Addr, opts BundleAccessorOptions) BundleAccessor {
 	case addr.RegistryAddress != nil:
 		return NewRemoteBundle(addr.RegistryAddress, opts.BundlesRegistryClient, opts.RegistryClient)
 	case addr.ArchiveAddress != nil:
-		return NewBundleArchive(addr.ArchiveAddress.Path)
+		return NewBundleArchive(NewBundleArchiveFileReader(addr.ArchiveAddress.Path), NewBundleArchiveFileWriter(addr.ArchiveAddress.Path))
 	default:
 		panic(fmt.Sprintf("invalid address given %#v", addr))
 	}
