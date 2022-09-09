@@ -88,10 +88,6 @@ func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, gite
 		return nil, fmt.Errorf("custom tags can only be used with remote storage: --repo=ADDRESS param required")
 	}
 
-	if err := giterminismManager.Inspector().InspectCustomTags(); err != nil {
-		return nil, err
-	}
-
 	templateName := "--add/use-custom-tag"
 	tmpl := template.New(templateName).Delims("%", "%")
 	tmpl = tmpl.Funcs(map[string]interface{}{
@@ -150,9 +146,6 @@ func GetUseCustomTagFunc(commonCmdData *CmdData, giterminismManager giterminism_
 	if *commonCmdData.UseCustomTag != "" {
 		tagOptionValues = []string{*commonCmdData.UseCustomTag}
 	}
-	if len(tagOptionValues) == 0 {
-		return nil, nil
-	}
 
 	customTagFuncList, err := getCustomTagFuncList(tagOptionValues, commonCmdData, giterminismManager, werfConfig)
 	if err != nil {
@@ -161,6 +154,10 @@ func GetUseCustomTagFunc(commonCmdData *CmdData, giterminismManager giterminism_
 
 	if len(customTagFuncList) == 0 {
 		return nil, nil
+	}
+
+	if err := giterminismManager.Inspector().InspectCustomTags(); err != nil {
+		return nil, err
 	}
 
 	if len(customTagFuncList) != 1 {
