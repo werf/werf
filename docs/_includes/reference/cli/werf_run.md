@@ -14,7 +14,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 {{ header }} Examples
 
 ```shell
-  # Run specified image
+  # Run specified image and remove after execution
   $ werf run application
 
   # Run image with predefined docker run options and command for debug
