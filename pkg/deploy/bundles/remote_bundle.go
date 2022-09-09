@@ -128,6 +128,7 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 	}
 
 	ch.Metadata.Name = util.Reverse(strings.SplitN(util.Reverse(bundle.RegistryAddress.Repo), "/", 2)[0])
+	ch.Metadata.Version = bundle.RegistryAddress.Tag
 
 	if err := bundle.WriteChart(ctx, ch); err != nil {
 		return fmt.Errorf("unable to write chart to remote bundle: %w", err)
