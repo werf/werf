@@ -119,15 +119,12 @@ werf:
 
 		fromArchiveReaderStub := NewBundleArchiveStubReader(ch, images)
 		fromArchiveWriterStub := NewBundleArchiveStubWriter()
-
 		from := NewBundleArchive(fromArchiveReaderStub, fromArchiveWriterStub)
 
 		addr, err := ParseAddr("registry.example.com/group/testproject:1.2.3")
 		Expect(err).NotTo(HaveOccurred())
-
 		bundlesRegistryClient := NewBundlesRegistryClientStub()
 		registryClient := NewDockerRegistryStub()
-
 		to := NewRemoteBundle(addr.RegistryAddress, bundlesRegistryClient, registryClient)
 
 		Expect(from.CopyTo(ctx, to)).To(Succeed())
@@ -165,6 +162,80 @@ werf:
 
 			Expect(werfVals["repo"]).To(Equal("registry.example.com/group/testproject"))
 		}
+	})
+
+	It("should copy remote to archive", func() {
+		ctx := context.Background()
+
+		ch := &chart.Chart{
+			Metadata: &chart.Metadata{
+				APIVersion: "v2",
+				Name:       "testproject",
+				Version:    "1.2.3",
+				Type:       "application",
+			},
+			Values: map[string]interface{}{
+				"werf": map[string]interface{}{
+					"image": map[string]interface{}{
+						"image-1": "registry.example.com/group/testproject:tag-1",
+						"image-2": "registry.example.com/group/testproject:tag-2",
+						"image-3": "registry.example.com/group/testproject:tag-3",
+					},
+					"repo": "registry.example.com/group/testproject",
+				},
+			},
+			Files: []*chart.File{
+				{
+					Name: "values.yaml",
+					Data: []byte(`
+werf:
+  image:
+    image-1: registry.example.com/group/testproject:tag-1
+    image-2: registry.example.com/group/testproject:tag-2
+    image-3: registry.example.com/group/testproject:tag-3
+  repo: registry.example.com/group/testproject
+`),
+				},
+			},
+		}
+
+		images := map[string][]byte{
+			"tag-1": []byte(`image-1-bytes`),
+			"tag-2": []byte(`image-2-bytes`),
+			"tag-3": []byte(`image-3-bytes`),
+		}
+
+		addr, err := ParseAddr("registry.example.com/group/testproject:1.2.3")
+		Expect(err).NotTo(HaveOccurred())
+		bundlesRegistryClient := NewBundlesRegistryClientStub()
+		registryClient := NewDockerRegistryStub()
+		from := NewRemoteBundle(addr.RegistryAddress, bundlesRegistryClient, registryClient)
+
+		bundlesRegistryClient.StubCharts[addr.RegistryAddress.FullName()] = ch
+		registryClient.RemoteImages["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
+		registryClient.RemoteImages["registry.example.com/group/testproject:tag-2"] = []byte(`image-2-bytes`)
+		registryClient.RemoteImages["registry.example.com/group/testproject:tag-3"] = []byte(`image-3-bytes`)
+
+		toArchiveReaderStub := NewBundleArchiveStubReader(ch, images)
+		toArchiveWriterStub := NewBundleArchiveStubWriter()
+		to := NewBundleArchive(toArchiveReaderStub, toArchiveWriterStub)
+
+		Expect(from.CopyTo(ctx, to)).To(Succeed())
+		Expect(toArchiveWriterStub.StubChart.Metadata.Name).To(Equal("testproject"))
+		Expect(toArchiveWriterStub.StubChart.Metadata.Version).To(Equal("1.2.3"))
+
+		origImages := ch.Values["werf"].(map[string]interface{})["image"].(map[string]interface{})
+		origRepo := ch.Values["werf"].(map[string]interface{})["repo"].(string)
+		newImages := toArchiveWriterStub.StubChart.Values["werf"].(map[string]interface{})["image"].(map[string]interface{})
+		newRepo := toArchiveWriterStub.StubChart.Values["werf"].(map[string]interface{})["repo"].(string)
+
+		for imageName, v := range origImages {
+			Expect(newImages[imageName]).To(Equal(v))
+		}
+		for imageName, v := range newImages {
+			Expect(origImages[imageName]).To(Equal(v))
+		}
+		Expect(newRepo).To(Equal(origRepo))
 	})
 })
 
