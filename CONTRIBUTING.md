@@ -26,7 +26,7 @@ The first thing we recommend is to check the existing [issues](https://github.co
 5. Build werf:
 
    ```shell
-   task build # The built image will be available in the bin directory.
+   task build # The built werf binary will be available in the bin directory.
    ```
    
 6. Do manual testing.
