@@ -95,11 +95,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				if len(cmdData.DockerOptions) == 0 && len(cmdData.DockerCommand) == 0 {
 					cmdData.DockerOptions = []string{"-ti", "--rm"}
 					if cmdData.Shell {
-						cmdData.DockerCommand = []string{"/bin/sh"}
+						cmdData.DockerOptions = append(cmdData.DockerOptions, "--entrypoint=/bin/sh")
 					}
 
 					if cmdData.Bash {
-						cmdData.DockerCommand = []string{"/bin/bash"}
+						cmdData.DockerOptions = append(cmdData.DockerOptions, "--entrypoint=/bin/bash")
 					}
 				} else {
 					common.PrintHelp(cmd)
