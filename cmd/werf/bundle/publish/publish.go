@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Masterminds/semver"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
@@ -26,7 +25,6 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -371,15 +369,11 @@ func runPublish(ctx context.Context) error {
 		FileValues:   *commonCmdData.SetFile,
 	}
 
-	chartVersion := cmdData.Tag
-	if _, err := semver.NewVersion(chartVersion); err != nil {
-		chartVersion = fmt.Sprintf("0.0.0-%d-%s", time.Now().Unix(), slug.Slug(chartVersion))
-		if _, err := semver.NewVersion(chartVersion); err != nil {
-			fallbackChartVersion := fmt.Sprintf("0.0.0-%d", time.Now().Unix())
-			logboek.Context(ctx).Warn().LogF("Unable to use %q as chart version, will fallback on chart version %q\n", chartVersion, fallbackChartVersion)
-			chartVersion = fallbackChartVersion
-		}
+	sv, err := bundles.BundleTagToChartVersion(ctx, cmdData.Tag, time.Now())
+	if err != nil {
+		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", cmdData.Tag, err)
 	}
+	chartVersion := sv.String()
 
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
 	defer os.RemoveAll(bundleTmpDir)
