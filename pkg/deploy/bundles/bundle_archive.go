@@ -2,7 +2,6 @@ package bundles
 
 import (
 	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -149,14 +148,9 @@ func (bundle *BundleArchive) CopyFromRemote(ctx context.Context, fromRemote *Rem
 
 					// TODO: maybe save into tmp file archive OR read resulting image size from the registry before pulling
 					imageBytes := bytes.NewBuffer(nil)
-					zipper := gzip.NewWriter(imageBytes)
 
-					if err := fromRemote.RegistryClient.PullImageArchive(ctx, zipper, imageRef); err != nil {
+					if err := fromRemote.RegistryClient.PullImageArchive(ctx, imageBytes, imageRef); err != nil {
 						return fmt.Errorf("error pulling image %q archive: %w", imageRef, err)
-					}
-
-					if err := zipper.Close(); err != nil {
-						return fmt.Errorf("unable to close gzip writer: %w", err)
 					}
 
 					if err := bundle.Writer.WriteImageArchive(tag, imageBytes.Bytes()); err != nil {
