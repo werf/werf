@@ -3,6 +3,7 @@ package docs
 import (
 	"bytes"
 	"fmt"
+	"github.com/werf/werf/cmd/werf/converge"
 	"html"
 	"io"
 	"io/ioutil"
@@ -56,7 +57,12 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 	buf := new(bytes.Buffer)
 
 	short := html.EscapeString(cmd.Short)
-	long := html.EscapeString(cmd.Long)
+	var long string
+	if cmd.Short == "Build and push images, then deploy application into Kubernetes" {
+		long = html.EscapeString(converge.GetConvergeDocs().LongMD)
+	} else {
+		long = html.EscapeString(cmd.Long)
+	}
 	if len(long) == 0 {
 		long = short
 	}
