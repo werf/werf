@@ -1,5 +1,16 @@
 # Changelog
 
+### [1.2.172](https://www.github.com/werf/werf/compare/v1.2.171...v1.2.172) (2022-09-12)
+
+
+### Bug Fixes
+
+* **bundles:** bundle copy from archive to remote incorrect values ([e9a2c53](https://www.github.com/werf/werf/commit/e9a2c53887547a7b8136e808653263abacb05dad))
+* **deploy:** lower releases-history-max default to 5 releases (was 10) ([7e2cc3d](https://www.github.com/werf/werf/commit/7e2cc3deb7e457608e27d3b93b6777987356717f))
+* **giterminism:** --add-custom-tag option is not allowed ([8b72dfe](https://www.github.com/werf/werf/commit/8b72dfef1076a8374d89ba9def584095150e6f29))
+* **run:** --bash and --shell depend on image entrypoint ([c2369f6](https://www.github.com/werf/werf/commit/c2369f6041c7db78b5cb9a94640e9b25f23f34f8))
+* **run:** a container is not cleaned up after execution by default ([c04367c](https://www.github.com/werf/werf/commit/c04367c198cb8567164466758be237eb6ad546ed))
+
 ### [1.2.171](https://www.github.com/werf/werf/compare/v1.2.170...v1.2.171) (2022-09-07)
 
 
