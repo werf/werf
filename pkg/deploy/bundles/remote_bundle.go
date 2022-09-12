@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"helm.sh/helm/v3/pkg/chart"
@@ -128,7 +129,12 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 	}
 
 	ch.Metadata.Name = util.Reverse(strings.SplitN(util.Reverse(bundle.RegistryAddress.Repo), "/", 2)[0])
-	ch.Metadata.Version = bundle.RegistryAddress.Tag
+
+	sv, err := BundleTagToChartVersion(ctx, bundle.RegistryAddress.Tag, time.Now())
+	if err != nil {
+		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", bundle.RegistryAddress.Tag, err)
+	}
+	ch.Metadata.Version = sv.String()
 
 	if err := bundle.WriteChart(ctx, ch); err != nil {
 		return fmt.Errorf("unable to write chart to remote bundle: %w", err)
@@ -202,6 +208,12 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 	}
 
 	ch.Metadata.Name = util.Reverse(strings.SplitN(util.Reverse(bundle.RegistryAddress.Repo), "/", 2)[0])
+
+	sv, err := BundleTagToChartVersion(ctx, bundle.RegistryAddress.Tag, time.Now())
+	if err != nil {
+		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", bundle.RegistryAddress.Tag, err)
+	}
+	ch.Metadata.Version = sv.String()
 
 	if err := bundle.WriteChart(ctx, ch); err != nil {
 		return fmt.Errorf("unable to write chart to destination remote bundle: %w", err)

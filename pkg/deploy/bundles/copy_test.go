@@ -236,6 +236,93 @@ werf:
 			Expect(origImages[imageName]).To(Equal(v))
 		}
 		Expect(newRepo).To(Equal(origRepo))
+
+		// TODO: check copied images?
+	})
+
+	It("should copy remote to archive", func() {
+		ctx := context.Background()
+
+		ch := &chart.Chart{
+			Metadata: &chart.Metadata{
+				APIVersion: "v2",
+				Name:       "testproject",
+				Version:    "1.2.3",
+				Type:       "application",
+			},
+			Values: map[string]interface{}{
+				"werf": map[string]interface{}{
+					"image": map[string]interface{}{
+						"image-1": "registry.example.com/group/testproject:tag-1",
+						"image-2": "registry.example.com/group/testproject:tag-2",
+						"image-3": "registry.example.com/group/testproject:tag-3",
+					},
+					"repo": "registry.example.com/group/testproject",
+				},
+			},
+			Files: []*chart.File{
+				{
+					Name: "values.yaml",
+					Data: []byte(`
+		werf:
+		  image:
+		    image-1: registry.example.com/group/testproject:tag-1
+		    image-2: registry.example.com/group/testproject:tag-2
+		    image-3: registry.example.com/group/testproject:tag-3
+		  repo: registry.example.com/group/testproject
+		`),
+				},
+			},
+		}
+
+		bundlesRegistryClient := NewBundlesRegistryClientStub()
+		registryClient := NewDockerRegistryStub()
+
+		fromAddr, err := ParseAddr("registry.example.com/group/testproject:1.2.3")
+		Expect(err).NotTo(HaveOccurred())
+		from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
+		bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
+		registryClient.RemoteImages["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
+		registryClient.RemoteImages["registry.example.com/group/testproject:tag-2"] = []byte(`image-2-bytes`)
+		registryClient.RemoteImages["registry.example.com/group/testproject:tag-3"] = []byte(`image-3-bytes`)
+
+		toAddr, err := ParseAddr("registry2.example.com/group2/testproject2:4.5.6")
+		Expect(err).NotTo(HaveOccurred())
+		to := NewRemoteBundle(toAddr.RegistryAddress, bundlesRegistryClient, registryClient)
+
+		Expect(from.CopyTo(ctx, to)).To(Succeed())
+
+		newCh := bundlesRegistryClient.StubCharts[toAddr.RegistryAddress.FullName()]
+		Expect(newCh).NotTo(BeNil())
+
+		{
+			Expect(newCh.Metadata.Name).To(Equal("testproject2"))
+			Expect(newCh.Metadata.Version).To(Equal("4.5.6"))
+		}
+
+		{
+			origImages := ch.Values["werf"].(map[string]interface{})["image"].(map[string]interface{})
+			newImages := newCh.Values["werf"].(map[string]interface{})["image"].(map[string]interface{})
+
+			for imageName := range origImages {
+				Expect(newImages[imageName]).NotTo(BeNil())
+			}
+			for imageName := range newImages {
+				Expect(origImages[imageName]).NotTo(BeNil())
+			}
+			Expect(newImages["image-1"]).To(Equal("registry2.example.com/group2/testproject2:tag-1"))
+			Expect(newImages["image-2"]).To(Equal("registry2.example.com/group2/testproject2:tag-2"))
+			Expect(newImages["image-3"]).To(Equal("registry2.example.com/group2/testproject2:tag-3"))
+
+			newRepo := newCh.Values["werf"].(map[string]interface{})["repo"].(string)
+			Expect(newRepo).To(Equal("registry2.example.com/group2/testproject2"))
+		}
+
+		{
+			Expect(registryClient.RemoteImages["registry2.example.com/group2/testproject2:tag-1"]).To(Equal([]byte(`image-1-bytes`)))
+			Expect(registryClient.RemoteImages["registry2.example.com/group2/testproject2:tag-2"]).To(Equal([]byte(`image-2-bytes`)))
+			Expect(registryClient.RemoteImages["registry2.example.com/group2/testproject2:tag-3"]).To(Equal([]byte(`image-3-bytes`)))
+		}
 	})
 })
 
