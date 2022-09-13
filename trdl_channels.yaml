@@ -28,14 +28,14 @@ groups:
       - name: alpha
         version: 1.2.172
       - name: beta
-        version: 1.2.169+fix1
+        version: 1.2.172
       - name: ea
-        version: 1.2.163+fix1
+        version: 1.2.169+fix1
       # - name: pre-stable
-      #   version: 1.2.163
+      #   version: 1.2.163+fix1
       - name: stable
         version: 1.2.163+fix1
       # - name: pre-rock-solid
-      #   version: 1.2.162
+      #   version: 1.2.163+fix1
       - name: rock-solid
         version: 1.2.162+fix1
