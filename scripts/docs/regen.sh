@@ -10,7 +10,7 @@ docs_dir="$project_dir/docs"
 
 function regen() {
   # regen CLI partials, pages and sidebar
-  HOME='~' DOCKER_DEFAULT_PLATFORM='' $arg_werf_bin_path docs --dir="$project_dir" --log-terminal-width=100
+  HOME='~' DOCKER_DEFAULT_PLATFORM='' WERF_PLATFORM='' $arg_werf_bin_path docs --dir="$project_dir" --log-terminal-width=100
 }
 
 function create_documentation_sidebar() {
