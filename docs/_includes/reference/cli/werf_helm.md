@@ -49,8 +49,7 @@ Manage application deployment with helm
   -n, --namespace=''
             namespace scope for this request
       --releases-history-max=5
-            Max releases to keep in release storage. Can be set by environment variable             
-            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
+            Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
