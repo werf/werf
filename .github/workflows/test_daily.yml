@@ -16,20 +16,20 @@ jobs:
     with:
       coverage: true
 
-  e2e_simple:
-    uses: ./.github/workflows/_test_e2e_regular.yml
+  e2e_simple_per-k8s-version:
+    uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: simple
     secrets: inherit
 
-  e2e_complex:
-    uses: ./.github/workflows/_test_e2e_regular.yml
+  e2e_complex_per-k8s-version:
+    uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: complex
     secrets: inherit
 
-  e2e_extra:
-    uses: ./.github/workflows/_test_e2e_regular.yml
+  e2e_extra_per-k8s-version:
+    uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: extra
     secrets: inherit
@@ -85,9 +85,9 @@ jobs:
       - integration_per-k8s
       - integration_per-cr
       - integration_per-k8s-and-cr
-      - e2e_simple
-      - e2e_complex
-      - e2e_extra
+      - e2e_simple_per-k8s-version
+      - e2e_complex_per-k8s-version
+      - e2e_extra_per-k8s-version
     secrets: inherit
 
   notify:

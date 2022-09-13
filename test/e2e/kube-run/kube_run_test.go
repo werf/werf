@@ -1,66 +1,72 @@
 package e2e_kube_run_test
 
 import (
+	"os"
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/test/pkg/werf"
 )
 
-var _ = PDescribe("kube-run", func() {
-	DescribeTable("should succeed/fail and produce expected output",
+var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
+	DescribeTable("should",
 		func(kubeRunOpts *werf.KubeRunOptions, outputExpectationsFunc func(out string)) {
+			By("initializing")
+			setupEnv()
 			repoDirname := "repo0"
-			fixtureRelPath := "state0"
+			fixtureRelPath := "simple/state0"
 
-			By("preparing test repo")
+			By("state0: preparing test repo")
 			SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
-			By("execute kube-run")
+			By("state0: execute kube-run")
 			combinedOut := werfProject.KubeRun(kubeRunOpts)
 			outputExpectationsFunc(combinedOut)
 		},
 		Entry(
-			"show output and succeed, running non-interactively",
+			"succeed and produce expected output, running non-interactively",
 			&werf.KubeRunOptions{
-				Command: []string{"sh", "-c", "cat /etc/os-release"},
+				Command: []string{"sh", "-ec", "cat /etc/os-release"},
 				Image:   "main",
 			},
 			func(out string) {
-				Expect(out).To(ContainSubstring("ID=alpine"))
+				Expect(out).To(ContainSubstring("ID=ubuntu"))
 			},
 		),
 		Entry(
-			"show output and succeed, running interactively with TTY",
+			"succeed and produce expected output, running interactively with TTY",
 			&werf.KubeRunOptions{
-				Command: []string{"sh", "-c", "cat /etc/os-release"},
+				Command: []string{"sh", "-ec", "cat /etc/os-release"},
 				Image:   "main",
 				CommonOptions: werf.CommonOptions{
 					ExtraArgs: []string{"-i", "-t"},
 				},
 			},
 			func(out string) {
-				Expect(out).To(ContainSubstring("ID=alpine"))
+				Expect(out).To(ContainSubstring("ID=ubuntu"))
 			},
 		),
 		Entry(
-			"show output and fail, running non-interactively",
+			"fail and produce expected output, running non-interactively",
 			&werf.KubeRunOptions{
-				Command: []string{"sh", "-c", "cat /etc/os-release; exit 1"},
+				Command: []string{"sh", "-ec", "cat /etc/os-release; exit 1"},
 				Image:   "main",
 				CommonOptions: werf.CommonOptions{
 					ShouldFail: true,
 				},
 			},
 			func(out string) {
-				Expect(out).To(ContainSubstring("ID=alpine"))
+				Expect(out).To(ContainSubstring("ID=ubuntu"))
 			},
 		),
 		Entry(
-			"show output and fail, running interactively with TTY",
+			"fail and produce expected output, running interactively with TTY",
 			&werf.KubeRunOptions{
-				Command: []string{"sh", "-c", "cat /etc/os-release; exit 1"},
+				Command: []string{"sh", "-ec", "cat /etc/os-release; exit 1"},
 				Image:   "main",
 				CommonOptions: werf.CommonOptions{
 					ShouldFail: true,
@@ -68,21 +74,20 @@ var _ = PDescribe("kube-run", func() {
 				},
 			},
 			func(out string) {
-				Expect(out).To(ContainSubstring("ID=alpine"))
-			},
-		),
-		Entry(
-			"produce expected --overrides flag, running in dry-run mode",
-			&werf.KubeRunOptions{
-				Command: []string{"hostname"},
-				Image:   "main",
-				CommonOptions: werf.CommonOptions{
-					ExtraArgs: []string{"--dry-run", "--pod=testpod", "--overrides", `{"spec": {"imagePullSecrets": [{"name": "testsecret"}], "nodeName": "testnode"}}`},
-				},
-			},
-			func(out string) {
-				Expect(out).To(ContainSubstring(`{"spec":{"imagePullSecrets":[{"name":"testsecret"},{"name":"testpod"}],"nodeName":"testnode"}}`))
+				Expect(out).To(ContainSubstring("ID=ubuntu"))
 			},
 		),
 	)
 })
+
+func setupEnv() {
+	SuiteData.Stubs.SetEnv("WERF_REPO", strings.Join([]string{os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName}, "/"))
+
+	if util.GetBoolEnvironmentDefaultFalse("WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE") {
+		SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")
+		SuiteData.Stubs.SetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY", "1")
+	} else {
+		SuiteData.Stubs.UnsetEnv("WERF_INSECURE_REGISTRY")
+		SuiteData.Stubs.UnsetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY")
+	}
+}

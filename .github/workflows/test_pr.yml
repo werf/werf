@@ -53,6 +53,7 @@ jobs:
     with:
       scope: simple
       forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
+    secrets: inherit
 
   notify:
     if: |

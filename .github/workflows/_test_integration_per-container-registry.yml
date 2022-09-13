@@ -16,6 +16,7 @@ defaults:
 
 env:
   DEBIAN_FRONTEND: "noninteractive"
+  WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
 
 jobs:
   _:
