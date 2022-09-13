@@ -342,7 +342,7 @@ func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 		"releases-history-max",
 		"",
 		defaultValue,
-		"Max releases to keep in release storage. Can be set by environment variable $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.",
+		"Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)",
 	)
 }
 

@@ -247,8 +247,7 @@ werf converge --repo registry.mydomain.com/web --env production
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
       --releases-history-max=5
-            Max releases to keep in release storage. Can be set by environment variable             
-            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
+            Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''
