@@ -64,6 +64,9 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 	kubeClient.Extender = NewHelmKubeClientExtender()
 
 	actionConfig.RegistryClient = registryClient
+	actionConfig.Log = func(f string, a ...interface{}) {
+		logboek.Context(ctx).Default().LogFDetails(fmt.Sprintf("%s\n", f), a...)
+	}
 
 	return nil
 }

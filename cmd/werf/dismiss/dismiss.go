@@ -2,12 +2,14 @@ package dismiss
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/storage/driver"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -240,10 +242,18 @@ func runDismiss(ctx context.Context) error {
 		DontFailIfNoRelease: &dontFailIfNoRelease,
 	})
 
+	logboek.Context(ctx).Default().LogFDetails("Using namespace: %s\n", namespace)
+	logboek.Context(ctx).Default().LogFDetails("Using release: %s\n", releaseName)
+
 	if cmdData.WithNamespace {
 		// TODO: solve lock release + delete-namespace case
 		return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
 	} else {
+		if _, err := actionConfig.Releases.History(releaseName); errors.Is(err, driver.ErrReleaseNotFound) {
+			logboek.Context(ctx).Default().LogFDetails("No such release %q\n", releaseName)
+			return nil
+		}
+
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 			return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
 		})
