@@ -1,13 +1,16 @@
-package e2e_kube_run_test
+package e2e_converge_test
 
 import (
 	"testing"
 
+	. "github.com/onsi/ginkgo/v2"
+
 	"github.com/werf/werf/test/pkg/suite_init"
+	"github.com/werf/werf/test/pkg/utils"
 )
 
 func TestSuite(t *testing.T) {
-	suite_init.MakeTestSuiteEntrypointFunc("E2E kube-run suite", suite_init.TestSuiteEntrypointFuncOptions{
+	suite_init.MakeTestSuiteEntrypointFunc("E2E converge suite", suite_init.TestSuiteEntrypointFuncOptions{
 		RequiredSuiteTools: []string{"docker", "git"},
 		RequiredSuiteEnvs: []string{
 			"WERF_TEST_K8S_DOCKER_REGISTRY",
@@ -25,4 +28,8 @@ var (
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 
 	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
+
+	_ = AfterEach(func() {
+		utils.RunSucceedCommand("", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
+	})
 )

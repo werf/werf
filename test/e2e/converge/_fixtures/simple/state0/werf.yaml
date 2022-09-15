@@ -1,4 +1,4 @@
-project: werf-test-e2e-kube-run-simple
+project: werf-test-e2e-converge-simple
 configVersion: 1
 
 ---

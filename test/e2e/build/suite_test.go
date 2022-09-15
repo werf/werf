@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/werf/werf/test/pkg/suite_init"
-	iutils "github.com/werf/werf/test/pkg/utils"
+	"github.com/werf/werf/test/pkg/utils"
 	"github.com/werf/werf/test/pkg/utils/docker"
 )
 
@@ -45,6 +45,6 @@ var (
 	})
 
 	_ = AfterEach(func() {
-		iutils.RunSucceedCommand("", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
+		utils.RunSucceedCommand("", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
 	})
 )
