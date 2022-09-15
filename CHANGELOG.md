@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.173](https://www.github.com/werf/werf/compare/v1.2.172...v1.2.173) (2022-09-15)
+
+
+### Bug Fixes
+
+* **dismiss:** rework uninstall-with-namespace procedure ([8657449](https://www.github.com/werf/werf/commit/865744926b9669f794114355944223373fad9951))
+* **helm:** don't rely on resource Group for resources equality matching ([8e52f59](https://www.github.com/werf/werf/commit/8e52f59a19e7a7d2c81bcad966064ba34e6c2667))
+
 ### [1.2.172](https://www.github.com/werf/werf/compare/v1.2.171...v1.2.172) (2022-09-12)
 
 
