@@ -3,6 +3,7 @@ package werf
 import (
 	"encoding/json"
 	"os"
+	"strings"
 
 	. "github.com/onsi/gomega"
 
@@ -20,6 +21,7 @@ func NewProject(werfBinPath, gitRepoPath string) *Project {
 type Project struct {
 	GitRepoPath string
 	WerfBinPath string
+	namespace   string
 }
 
 type CommonOptions struct {
@@ -32,6 +34,10 @@ type BuildOptions struct {
 }
 
 type BuildWithReportOptions struct {
+	CommonOptions
+}
+
+type ConvergeOptions struct {
 	CommonOptions
 }
 
@@ -78,6 +84,17 @@ func (p *Project) BuildWithReport(buildReportPath string, opts *BuildWithReportO
 	return out, buildReport
 }
 
+func (p *Project) Converge(opts *ConvergeOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &ConvergeOptions{}
+	}
+
+	args := append([]string{"converge"}, opts.ExtraArgs...)
+	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	return string(outb)
+}
+
 func (p *Project) KubeRun(opts *KubeRunOptions) string {
 	if opts == nil {
 		opts = &KubeRunOptions{}
@@ -105,6 +122,14 @@ func (p *Project) KubeCtl(opts *KubeCtlOptions) string {
 	args := append([]string{"kubectl"}, opts.ExtraArgs...)
 
 	return p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+}
+
+func (p *Project) Namespace() string {
+	if p.namespace == "" {
+		p.namespace = strings.TrimSpace(p.runCommand(runCommandOptions{Args: []string{"helm", "get-namespace"}}))
+	}
+
+	return p.namespace
 }
 
 func (p *Project) runCommand(opts runCommandOptions) string {
