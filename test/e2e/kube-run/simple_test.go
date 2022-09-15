@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 	DescribeTable("should",
-		func(kubeRunOpts *werf.KubeRunOptions, outputExpectationsFunc func(out string)) {
+		func(kubeRunOpts *werf.KubeRunOptions, expectOutFn func(out string)) {
 			By("initializing")
 			setupEnv()
 			repoDirname := "repo0"
@@ -25,7 +25,7 @@ var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 
 			By("state0: execute kube-run")
 			combinedOut := werfProject.KubeRun(kubeRunOpts)
-			outputExpectationsFunc(combinedOut)
+			expectOutFn(combinedOut)
 		},
 		Entry(
 			"succeed and produce expected output, running non-interactively",

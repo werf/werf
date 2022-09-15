@@ -11,8 +11,6 @@ func TestSuite(t *testing.T) {
 		RequiredSuiteTools: []string{"docker", "git"},
 		RequiredSuiteEnvs: []string{
 			"WERF_TEST_K8S_DOCKER_REGISTRY",
-			"WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME",
-			"WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD",
 		},
 	})(t)
 }
