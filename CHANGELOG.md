@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.174](https://www.github.com/werf/werf/compare/v1.2.173...v1.2.174) (2022-09-16)
+
+
+### Bug Fixes
+
+* **helm:** empty resource annos/labels result in no service annos/labels ([902c5a1](https://www.github.com/werf/werf/commit/902c5a16169a1884ee959a7ac71b974ef5b1f5e4))
+
 ### [1.2.173](https://www.github.com/werf/werf/compare/v1.2.172...v1.2.173) (2022-09-15)
 
 
