@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"strings"
+	"sync"
 
 	. "github.com/onsi/gomega"
 
@@ -21,7 +22,10 @@ func NewProject(werfBinPath, gitRepoPath string) *Project {
 type Project struct {
 	GitRepoPath string
 	WerfBinPath string
-	namespace   string
+
+	namespace string
+	release   string
+	mu        sync.Mutex
 }
 
 type CommonOptions struct {
@@ -125,11 +129,25 @@ func (p *Project) KubeCtl(opts *KubeCtlOptions) string {
 }
 
 func (p *Project) Namespace() string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	if p.namespace == "" {
 		p.namespace = strings.TrimSpace(p.runCommand(runCommandOptions{Args: []string{"helm", "get-namespace"}}))
 	}
 
 	return p.namespace
+}
+
+func (p *Project) Release() string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.release == "" {
+		p.release = strings.TrimSpace(p.runCommand(runCommandOptions{Args: []string{"helm", "get-release"}}))
+	}
+
+	return p.release
 }
 
 func (p *Project) runCommand(opts runCommandOptions) string {

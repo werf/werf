@@ -9,6 +9,7 @@ import (
 
 func setupEnv() {
 	SuiteData.Stubs.SetEnv("WERF_REPO", strings.Join([]string{os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName}, "/"))
+	SuiteData.Stubs.SetEnv("WERF_ENV", "test")
 
 	if util.GetBoolEnvironmentDefaultFalse("WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE") {
 		SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")

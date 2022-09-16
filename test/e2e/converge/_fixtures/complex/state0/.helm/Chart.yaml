@@ -1,0 +1,12 @@
+apiVersion: v2
+name: werf-test-e2e-converge-complex
+version: 0.1.0
+dependencies:
+  - name: hello
+    version: 0.1.0
+    repository: oci://ghcr.io/werf
+  - name: local-chart
+    version: 0.1.0
+    export-values:
+      - parent: werf
+        child: werf
