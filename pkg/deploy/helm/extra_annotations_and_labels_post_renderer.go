@@ -227,6 +227,11 @@ func appendExtraData(node *yaml_v3.Node, key string, data interface{}) error {
 		} else {
 			appendToNode(targetNode, data)
 		}
+
+		if targetNode.Kind != yaml_v3.AliasNode && targetNode.Kind != yaml_v3.MappingNode {
+			targetNode.Kind = yaml_v3.MappingNode
+		}
+		targetNode.Tag = "!!map"
 	} else {
 		appendToNode(node, map[string]interface{}{key: data})
 	}
