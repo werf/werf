@@ -7,7 +7,7 @@ Publish bundle into the container registry. werf bundle contains built images de
 werf.yaml, helm chart, service values which contain built images tags, any custom values and set    
 values params provided during publish invocation, werf addon templates (like werf_image).
 
-Published into container registry bundle can be rolled out by the &#34;werf bundle&#34; command.
+Published into container registry bundle can be rolled out by the "werf bundle" command.
 
 
 {{ header }} Syntax

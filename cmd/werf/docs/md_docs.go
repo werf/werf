@@ -56,17 +56,6 @@ func printEnvironments(buf *bytes.Buffer, cmd *cobra.Command) error {
 func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 	buf := new(bytes.Buffer)
 
-	short := html.EscapeString(cmd.Short)
-	var long string
-	if cmd.Short == "Build and push images, then deploy application into Kubernetes" {
-		long = html.EscapeString(converge.GetConvergeDocs().LongMD)
-	} else {
-		long = html.EscapeString(cmd.Long)
-	}
-	if len(long) == 0 {
-		long = short
-	}
-
 	buf.WriteString(`{% if include.header %}
 {% assign header = include.header %}
 {% else %}
@@ -74,7 +63,7 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 {% endif %}
 `)
 
-	buf.WriteString(replaceLinks(long) + "\n\n")
+	buf.WriteString(replaceLinks(getLongFromCommand(cmd)) + "\n\n")
 
 	if cmd.Runnable() {
 		buf.WriteString("{{ header }} Syntax\n\n")
@@ -355,4 +344,17 @@ func writeShortCommandMarkdownPartial(cmd *cobra.Command, dir string) error {
 	}
 
 	return nil
+}
+
+func getLongFromCommand(cmd *cobra.Command) string {
+	switch cmd.Short {
+	case "Build and push images, then deploy application into Kubernetes":
+		return html.EscapeString(converge.GetConvergeDocs().LongMD)
+	default:
+		if len(cmd.Long) == 0 {
+			return cmd.Short
+		} else {
+			return cmd.Long
+		}
+	}
 }

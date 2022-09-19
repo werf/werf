@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Print the supported API versions on the server, in the form of &#34;group/version&#34;.
+Print the supported API versions on the server, in the form of "group/version".
 
 {{ header }} Syntax
 

@@ -7,11 +7,11 @@ Diff configurations specified by file name or stdin between the current online c
 
  The output is always YAML.
 
- KUBECTL_EXTERNAL_DIFF environment variable can be used to select your own diff command. Users can use external commands with params too, example: KUBECTL_EXTERNAL_DIFF=&#34;colordiff -N -u&#34;
+ KUBECTL_EXTERNAL_DIFF environment variable can be used to select your own diff command. Users can use external commands with params too, example: KUBECTL_EXTERNAL_DIFF="colordiff -N -u"
 
- By default, the &#34;diff&#34; command available in your path will be run with the &#34;-u&#34; (unified diff) and &#34;-N&#34; (treat absent files as empty) options.
+ By default, the "diff" command available in your path will be run with the "-u" (unified diff) and "-N" (treat absent files as empty) options.
 
- Exit status: 0 No differences were found. 1 Differences were found. &gt;1 Kubectl or diff failed with an error.
+ Exit status: 0 No differences were found. 1 Differences were found. >1 Kubectl or diff failed with an error.
 
  Note: KUBECTL_EXTERNAL_DIFF, if used, is expected to follow that convention.
 

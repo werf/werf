@@ -11,7 +11,7 @@ Reconciles rules for RBAC role, role binding, cluster role, and cluster role bin
 
  Existing bindings are updated to include the subjects in the input objects, and remove extra subjects if --remove-extra-subjects is specified.
 
- This is preferred to &#39;apply&#39; for RBAC resources so that semantically-aware merging of rules and subjects is done.
+ This is preferred to 'apply' for RBAC resources so that semantically-aware merging of rules and subjects is done.
 
 {{ header }} Syntax
 

@@ -7,7 +7,7 @@ Specify compute resource requirements (CPU, memory) for any resource that define
 
  For each compute resource, if a limit is specified and a request is omitted, the request will default to the limit.
 
- Possible resources include (case insensitive): Use &#34;kubectl api-resources&#34; for a complete list of supported resources..
+ Possible resources include (case insensitive): Use "kubectl api-resources" for a complete list of supported resources..
 
 {{ header }} Syntax
 

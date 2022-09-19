@@ -5,12 +5,12 @@
 {% endif %}
 Run docker-compose down command with forwarded image names
 
-Image environment name format: $WERF_&lt;FORMATTED_WERF_IMAGE_NAME&gt;_DOCKER_IMAGE_NAME                  
+Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME                  
 ($WERF_DOCKER_IMAGE_NAME for nameless image).
-&lt;FORMATTED_WERF_IMAGE_NAME&gt; is werf image name from werf.yaml modified according to the following   
+<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following   
 rules:
-- all characters are uppercase (app -&gt; APP);
-- charset /- is replaced with _ (DEV/APP-FRONTEND -&gt; DEV_APP_FRONTEND).
+- all characters are uppercase (app -> APP);
+- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND).
 
 If one or more IMAGE_NAME parameters specified, werf will build and forward only these images.
 

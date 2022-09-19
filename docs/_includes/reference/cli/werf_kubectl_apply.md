@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Apply a configuration to a resource by file name or stdin. The resource name must be specified. This resource will be created if it doesn&#39;t exist yet. To use &#39;apply&#39;, always create the resource initially with either &#39;apply&#39; or &#39;create --save-config&#39;.
+Apply a configuration to a resource by file name or stdin. The resource name must be specified. This resource will be created if it doesn't exist yet. To use 'apply', always create the resource initially with either 'apply' or 'create --save-config'.
 
  JSON and YAML formats are accepted.
 

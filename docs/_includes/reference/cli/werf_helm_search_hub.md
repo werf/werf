@@ -16,10 +16,10 @@ query options. For rich query options documentation, see
 [https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20compatible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search](https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20compatible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search)
 
 Previous versions of Helm used an instance of Monocular as the default
-&#39;endpoint&#39;, so for backwards compatibility Artifact Hub is compatible with the
-Monocular search API. Similarly, when setting the &#39;endpoint&#39; flag, the specified
+'endpoint', so for backwards compatibility Artifact Hub is compatible with the
+Monocular search API. Similarly, when setting the 'endpoint' flag, the specified
 endpoint must also be implement a Monocular compatible search API endpoint.
-Note that when specifying a Monocular instance as the &#39;endpoint&#39;, rich queries
+Note that when specifying a Monocular instance as the 'endpoint', rich queries
 are not supported. For API details, see [https://github.com/helm/monocular](https://github.com/helm/monocular)
 
 

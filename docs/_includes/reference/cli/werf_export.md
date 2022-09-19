@@ -10,7 +10,7 @@ The tag may contain the following shortcuts:
 one image in the werf config);
 - %image_content_based_tag% to use a content-based tag.
 All meta-information related to werf is removed from the exported images, and then images are       
-completely under the user&#39;s responsibility
+completely under the user's responsibility
 
 {{ header }} Syntax
 

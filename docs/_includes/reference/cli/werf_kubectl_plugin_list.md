@@ -3,9 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-List all available plugin files on a user&#39;s PATH.
+List all available plugin files on a user's PATH.
 
- Available plugin files are those that are: - executable - anywhere on the user&#39;s PATH - begin with &#34;kubectl-&#34;
+ Available plugin files are those that are: - executable - anywhere on the user's PATH - begin with "kubectl-"
 
 {{ header }} Syntax
 

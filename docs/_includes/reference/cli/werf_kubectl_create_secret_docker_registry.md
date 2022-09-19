@@ -8,9 +8,9 @@ Create a new secret for use with Docker registries.
   Dockercfg secrets are used to authenticate against Docker registries.
   
   When using the Docker command line to push images, you can authenticate to a given registry by running:
-      &#39;$ docker login DOCKER_REGISTRY_SERVER --username=DOCKER_USER --password=DOCKER_PASSWORD --email=DOCKER_EMAIL&#39;.
+      '$ docker login DOCKER_REGISTRY_SERVER --username=DOCKER_USER --password=DOCKER_PASSWORD --email=DOCKER_EMAIL'.
   
- That produces a ~/.dockercfg file that is used by subsequent &#39;docker push&#39; and &#39;docker pull&#39; commands to authenticate to the registry. The email address is optional.
+ That produces a ~/.dockercfg file that is used by subsequent 'docker push' and 'docker pull' commands to authenticate to the registry. The email address is optional.
 
   When creating applications, you may have a Docker registry that requires authentication.  In order for the
   nodes to pull images on your behalf, they must have the credentials.  You can provide this information
