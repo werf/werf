@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/werf/werf/cmd/werf/bundle/export"
+	"github.com/werf/werf/cmd/werf/bundle/publish"
 	"github.com/werf/werf/cmd/werf/converge"
 	"github.com/werf/werf/cmd/werf/dismiss"
 	"html"
@@ -356,6 +357,8 @@ func getLongFromCommand(cmd *cobra.Command) string {
 		return html.EscapeString(dismiss.GetDismissDocs().LongMD)
 	case "Export bundle":
 		return html.EscapeString(export.GetBundleExportDocs().LongMD)
+	case "Publish bundle":
+		return html.EscapeString(publish.GetBundlePublishDocs().LongMD)
 	default:
 		if len(cmd.Long) == 0 {
 			return cmd.Short
