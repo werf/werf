@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/werf/werf/cmd/werf/converge"
+	"github.com/werf/werf/cmd/werf/dismiss"
 	"html"
 	"io"
 	"io/ioutil"
@@ -350,6 +351,8 @@ func getLongFromCommand(cmd *cobra.Command) string {
 	switch cmd.Short {
 	case "Build and push images, then deploy application into Kubernetes":
 		return html.EscapeString(converge.GetConvergeDocs().LongMD)
+	case "Delete application from Kubernetes":
+		return html.EscapeString(dismiss.GetDismissDocs().LongMD)
 	default:
 		if len(cmd.Long) == 0 {
 			return cmd.Short
