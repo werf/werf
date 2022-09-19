@@ -39,13 +39,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "dismiss",
 		Short: "Delete application from Kubernetes",
-		Long: common.GetLongCommandDescription(`Delete application from Kubernetes.
-
-Helm Release will be purged and optionally Kubernetes Namespace.
-
-Environment is a required param for the dismiss by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
-
-Read more info about Helm Release name, Kubernetes Namespace and how to change it: https://werf.io/documentation/advanced/helm/releases/naming.html`),
+		Long:  common.GetLongCommandDescription(GetDismissDocs().Long),
 		Example: `  # Dismiss project named 'myproject' previously deployed app from 'dev' environment; helm release name and namespace will be named as 'myproject-dev'
   $ werf dismiss --env dev
 

@@ -3,10 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Export bundle into the provided directory (or into directory named as a resulting chart in the      
-current working directory). werf bundle contains built images defined in the werf.yaml, helm chart, 
-service values which contain built images tags, any custom values and set values params provided    
-during publish invocation, werf service templates and values.
+Export bundle into the provided directory (or into directory named as a resulting chart in the current working directory). `werf bundle` contains built images defined in the `werf.yaml`, Helm chart, Service values which contain built images tags, any custom values and set values params provided during publish invocation, werf service templates and values.
 
 {{ header }} Syntax
 
