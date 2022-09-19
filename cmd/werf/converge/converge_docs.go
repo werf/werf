@@ -1,12 +1,9 @@
 package converge
 
-type DocsStruct struct {
-	Long   string
-	LongMD string
-}
+import "github.com/werf/werf/cmd/werf/common/docs_struct_templates"
 
-func GetConvergeDocs() DocsStruct {
-	var docs DocsStruct
+func GetConvergeDocs() docs_struct_templates.DocsStruct {
+	var docs docs_struct_templates.DocsStruct
 	docs.Long = `Build and push images, then deploy application into Kubernetes.
 
 The result of converge command is an application deployed into Kubernetes for current git state. Command will create release and wait until all resources of the release will become ready.

@@ -1,12 +1,9 @@
 package dismiss
 
-type DocsStruct struct {
-	Long   string
-	LongMD string
-}
+import "github.com/werf/werf/cmd/werf/common/docs_struct_templates"
 
-func GetDismissDocs() DocsStruct {
-	var docs DocsStruct
+func GetDismissDocs() docs_struct_templates.DocsStruct {
+	var docs docs_struct_templates.DocsStruct
 
 	docs.Long = `Delete application from Kubernetes.
 
