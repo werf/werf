@@ -34,12 +34,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
 		Short:                 "Cleanup project images in the container registry",
-		Long: common.GetLongCommandDescription(`Safely cleanup unused project images in the container registry.
-
-The command works according to special rules called cleanup policies, which the user defines in werf.yaml (https://werf.io/documentation/reference/werf_yaml.html#configuring-cleanup-policies).
-
-It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, converge and host cleanup.`),
-		Example: `  $ werf cleanup --repo registry.mydomain.com/myproject/werf`,
+		Long:                  common.GetLongCommandDescription(GetCleanupDocs().Long),
+		Example:               `  $ werf cleanup --repo registry.mydomain.com/myproject/werf`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
