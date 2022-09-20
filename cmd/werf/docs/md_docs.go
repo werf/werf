@@ -8,6 +8,7 @@ import (
 	"github.com/werf/werf/cmd/werf/cleanup"
 	"github.com/werf/werf/cmd/werf/converge"
 	"github.com/werf/werf/cmd/werf/dismiss"
+	"github.com/werf/werf/cmd/werf/purge"
 	"html"
 	"io"
 	"io/ioutil"
@@ -362,6 +363,8 @@ func getLongFromCommand(cmd *cobra.Command) string {
 		return html.EscapeString(publish.GetBundlePublishDocs().LongMD)
 	case "Cleanup project images in the container registry":
 		return html.EscapeString(cleanup.GetCleanupDocs().LongMD)
+	case "Purge all project images in the container registry":
+		return html.EscapeString(purge.GetPurgeDocs().LongMD)
 	default:
 		if len(cmd.Long) == 0 {
 			return cmd.Short

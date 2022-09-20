@@ -27,9 +27,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "purge",
 		DisableFlagsInUseLine: true,
 		Short:                 "Purge all project images in the container registry",
-		Long: common.GetLongCommandDescription(`Purge all project images in the container registry.
-
-WARNING: Images that are being used in the Kubernetes cluster will also be deleted.`),
+		Long:                  common.GetLongCommandDescription(GetPurgeDocs().Long),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
