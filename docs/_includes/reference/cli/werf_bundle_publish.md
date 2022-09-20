@@ -13,7 +13,7 @@ Published into container registry bundle can be rolled out by the &#34;werf bund
 {{ header }} Syntax
 
 ```shell
-werf bundle publish [options]
+werf bundle publish [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Options
@@ -321,5 +321,9 @@ werf bundle publish [options]
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
+      --without-images=false
+            Disable building of images defined in the werf.yaml (if any) and usage of such images   
+            in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
+            images defined in the werf.yaml by default)
 ```
 
