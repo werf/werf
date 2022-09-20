@@ -1,3 +1,6 @@
+priorityClassName:
+  _default: develop
+  production: production-medium
 host:
   production: werf.io
   dev: werf.dev.flant.com
