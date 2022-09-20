@@ -236,12 +236,22 @@ func ExtractTar(tarFileReader io.Reader, dstDir string) error {
 			if err != nil {
 				return fmt.Errorf("unable to create new file %q while extracting tar: %w", tarEntryPath, err)
 			}
-			defer file.Close()
 
 			_, err = io.Copy(file, tarReader)
 			if err != nil {
-				return err
+				file.Close()
+				return fmt.Errorf("unable to create file %q while extracting tar: %w", tarEntryPath, err)
 			}
+
+			if err := file.Close(); err != nil {
+				return fmt.Errorf("unable to close file %q while extracting tar: %w", tarEntryPath, err)
+			}
+
+			// TODO: set uid/gid from function options
+			// if err := os.Chown(tarEntryPath, tarEntryHeader.Uid, tarEntryHeader.Gid); err != nil {
+			// 	return fmt.Errorf("unable to set owner and group to %d:%d for file %q: %w", tarEntryHeader.Uid, tarEntryHeader.Gid, tarEntryPath, err)
+			// }
+
 		default:
 			return fmt.Errorf("tar entry %q of unexpected type: %b", tarEntryHeader.Name, tarEntryHeader.Typeflag)
 		}

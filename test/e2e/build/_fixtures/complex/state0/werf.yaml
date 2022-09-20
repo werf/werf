@@ -78,8 +78,8 @@ docker:
 import:
 - image: base-stapel-shell
   before: install
-  add: /basedir/
-  to: /basedir-imported/
+  add: /basedir
+  to: /basedir-imported
   owner: 1060
   group: 1061
   includePaths:
