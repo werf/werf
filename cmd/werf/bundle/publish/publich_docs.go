@@ -1,9 +1,11 @@
 package publish
 
-import "github.com/werf/werf/cmd/werf/common/docs_struct_templates"
+import (
+	"github.com/werf/werf/cmd/werf/docs/structs"
+)
 
-func GetBundlePublishDocs() docs_struct_templates.DocsStruct {
-	var docs docs_struct_templates.DocsStruct
+func GetBundlePublishDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
 
 	docs.Long = `Publish bundle into the container registry. werf bundle contains built images defined in the werf.yaml, Helm chart, Service values which contain built images tags, any custom values and set values params provided during publish invocation, werf addon templates (like werf_image).
 

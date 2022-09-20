@@ -1,4 +1,4 @@
-package docs_struct_templates
+package structs
 
 type DocsStruct struct {
 	Long   string
