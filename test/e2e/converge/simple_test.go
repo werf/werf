@@ -15,10 +15,6 @@ import (
 var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 	var repoDirname string
 
-	BeforeEach(func() {
-		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
-	})
-
 	AfterEach(func() {
 		utils.RunSucceedCommand(SuiteData.GetTestRepoPath(repoDirname), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 	})
