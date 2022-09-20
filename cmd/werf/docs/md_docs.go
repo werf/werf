@@ -9,6 +9,7 @@ import (
 	"github.com/werf/werf/cmd/werf/cleanup"
 	"github.com/werf/werf/cmd/werf/converge"
 	"github.com/werf/werf/cmd/werf/dismiss"
+	export2 "github.com/werf/werf/cmd/werf/export"
 	"github.com/werf/werf/cmd/werf/purge"
 	"html"
 	"io"
@@ -368,6 +369,8 @@ func getLongFromCommand(cmd *cobra.Command) string {
 		return html.EscapeString(purge.GetPurgeDocs().LongMD)
 	case "Build images":
 		return html.EscapeString(build.GetBuildDocs().LongMD)
+	case "Export images":
+		return html.EscapeString(export2.GetExportDocs().LongMD)
 	default:
 		if len(cmd.Long) == 0 {
 			return cmd.Short
