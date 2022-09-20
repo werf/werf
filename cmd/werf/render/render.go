@@ -50,7 +50,7 @@ var commonCmdData common.CmdData
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:                   "render",
+		Use:                   "render [IMAGE_NAME...]",
 		Short:                 "Render Kubernetes templates",
 		Long:                  common.GetLongCommandDescription(`Render Kubernetes templates. This command will calculate digests and build (if needed) all images defined in the werf.yaml.`),
 		DisableFlagsInUseLine: true,
@@ -73,9 +73,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(func() error { return runRender(ctx) })
+			return common.LogRunningTime(func() error { return runRender(ctx, common.GetImagesToProcess(args, *commonCmdData.WithoutImages)) })
 		},
 	})
+
+	commonCmdData.SetupWithoutImages(cmd)
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -153,7 +155,7 @@ func getShowOnly() []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...)
 }
 
-func runRender(ctx context.Context) error {
+func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -195,6 +197,9 @@ func runRender(ctx context.Context) error {
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
+	}
+	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+		return err
 	}
 
 	projectName := werfConfig.Meta.Project
@@ -254,7 +259,7 @@ func runRender(ctx context.Context) error {
 	var isStub bool
 	var stubImagesNames []string
 
-	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
+	if !imagesToProcess.WithoutImages && (len(werfConfig.StapelImages)+len(werfConfig.ImagesFromDockerfile) > 0) {
 		addr, err := commonCmdData.Repo.GetAddress()
 		if err != nil {
 			return err
@@ -298,12 +303,12 @@ func runRender(ctx context.Context) error {
 
 			imagesRepo = storageManager.GetServiceValuesRepo()
 
-			conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
+			conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, imagesToProcess, buildOptions)
 			if err != nil {
 				return err
 			}
 
-			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, nil, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
 			defer conveyorWithRetry.Terminate()
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

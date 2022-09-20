@@ -62,7 +62,7 @@ All meta-information related to werf is removed from the exported images, and th
 				return fmt.Errorf("required at least one tag template: use the --tag option to specify templates")
 			}
 
-			return run(ctx, args, tagTemplateList)
+			return run(ctx, common.GetImagesToProcess(args, false), tagTemplateList)
 		},
 	})
 
@@ -110,7 +110,11 @@ It is necessary to use image name shortcut %image% or %image_slug% if multiple i
 	return cmd
 }
 
-func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
+func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplateList []string) error {
+	if imagesToProcess.WithoutImages {
+		return nil
+	}
+
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -167,8 +171,7 @@ func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-
-	if err := werfConfig.CheckThatImagesExist(imagesToProcess); err != nil {
+	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
 		return err
 	}
 
@@ -209,17 +212,23 @@ func run(ctx context.Context, imagesToProcess, tagTemplateList []string) error {
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, imagesToProcess, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData, imagesToProcess))
 	defer conveyorWithRetry.Terminate()
 
 	return conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if len(imagesToProcess) == 0 {
-			for _, img := range werfConfig.GetAllImages() {
-				imagesToProcess = append(imagesToProcess, img.GetName())
+		var imageNameList []string
+
+		if !imagesToProcess.WithoutImages {
+			if imagesToProcess.OnlyImages == nil {
+				for _, img := range werfConfig.GetAllImages() {
+					imageNameList = append(imageNameList, img.GetName())
+				}
+			} else {
+				imageNameList = append(imageNameList, imagesToProcess.OnlyImages...)
 			}
 		}
 
-		tagFuncList, err := getTagFuncList(imagesToProcess, tagTemplateList)
+		tagFuncList, err := getTagFuncList(imageNameList, tagTemplateList)
 		if err != nil {
 			return err
 		}

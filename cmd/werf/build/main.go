@@ -63,7 +63,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				return runMain(ctx, args)
+				return runMain(ctx, common.GetImagesToProcess(args, false))
 			})
 		},
 	}))
@@ -123,7 +123,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	return cmd
 }
 
-func runMain(ctx context.Context, args []string) error {
+func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
@@ -187,24 +187,23 @@ func runMain(ctx context.Context, args []string) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
-			return run(ctx, containerBackend, headCommitGiterminismManager, args)
+			return run(ctx, containerBackend, headCommitGiterminismManager, imagesToProcess)
 		})
 	} else {
-		return run(ctx, containerBackend, giterminismManager, args)
+		return run(ctx, containerBackend, giterminismManager, imagesToProcess)
 	}
 }
 
-func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imagesToProcess []string) error {
+func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imagesToProcess build.ImagesToProcess) error {
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-
-	projectName := werfConfig.Meta.Project
-
-	if err := werfConfig.CheckThatImagesExist(imagesToProcess); err != nil {
+	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
 		return err
 	}
+
+	projectName := werfConfig.Meta.Project
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
@@ -245,14 +244,14 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
+	conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, imagesToProcess, buildOptions)
 	if err != nil {
 		return err
 	}
 
 	logboek.LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, imagesToProcess, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

@@ -11,31 +11,29 @@ import (
 )
 
 type ConveyorWithRetryWrapper struct {
-	WerfConfig          *config.WerfConfig
-	GiterminismManager  giterminism_manager.Interface
-	ImageNamesToProcess []string
-	ProjectDir          string
-	BaseTmpDir          string
-	SshAuthSock         string
-	ContainerBackend    container_backend.ContainerBackend
-	StorageManager      *manager.StorageManager
-	StorageLockManager  storage.LockManager
+	WerfConfig         *config.WerfConfig
+	GiterminismManager giterminism_manager.Interface
+	ProjectDir         string
+	BaseTmpDir         string
+	SshAuthSock        string
+	ContainerBackend   container_backend.ContainerBackend
+	StorageManager     *manager.StorageManager
+	StorageLockManager storage.LockManager
 
 	ConveyorOptions ConveyorOptions
 }
 
-func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
+func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
 	return &ConveyorWithRetryWrapper{
-		WerfConfig:          werfConfig,
-		GiterminismManager:  giterminismManager,
-		ImageNamesToProcess: imageNamesToProcess,
-		ProjectDir:          projectDir,
-		BaseTmpDir:          baseTmpDir,
-		SshAuthSock:         sshAuthSock,
-		ContainerBackend:    containerBackend,
-		StorageManager:      storageManager,
-		StorageLockManager:  storageLockManager,
-		ConveyorOptions:     opts,
+		WerfConfig:         werfConfig,
+		GiterminismManager: giterminismManager,
+		ProjectDir:         projectDir,
+		BaseTmpDir:         baseTmpDir,
+		SshAuthSock:        sshAuthSock,
+		ContainerBackend:   containerBackend,
+		StorageManager:     storageManager,
+		StorageLockManager: storageLockManager,
+		ConveyorOptions:    opts,
 	}
 }
 
@@ -48,7 +46,6 @@ func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f f
 		newConveyor := NewConveyor(
 			wrapper.WerfConfig,
 			wrapper.GiterminismManager,
-			wrapper.ImageNamesToProcess,
 			wrapper.ProjectDir,
 			wrapper.BaseTmpDir,
 			wrapper.SshAuthSock,
