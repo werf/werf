@@ -9,7 +9,7 @@ defined in the werf.yaml.
 {{ header }} Syntax
 
 ```shell
-werf render [options]
+werf render [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Environments
@@ -325,5 +325,9 @@ werf render [options]
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
+      --without-images=false
+            Disable building of images defined in the werf.yaml (if any) and usage of such images   
+            in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
+            images defined in the werf.yaml by default)
 ```
 
