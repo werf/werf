@@ -3,6 +3,7 @@ package docs
 import (
 	"bytes"
 	"fmt"
+	"github.com/werf/werf/cmd/werf/build"
 	"github.com/werf/werf/cmd/werf/bundle/export"
 	"github.com/werf/werf/cmd/werf/bundle/publish"
 	"github.com/werf/werf/cmd/werf/cleanup"
@@ -365,6 +366,8 @@ func getLongFromCommand(cmd *cobra.Command) string {
 		return html.EscapeString(cleanup.GetCleanupDocs().LongMD)
 	case "Purge all project images in the container registry":
 		return html.EscapeString(purge.GetPurgeDocs().LongMD)
+	case "Build images":
+		return html.EscapeString(build.GetBuildDocs().LongMD)
 	default:
 		if len(cmd.Long) == 0 {
 			return cmd.Short

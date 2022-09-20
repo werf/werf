@@ -3,12 +3,11 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Build images that are described in werf.yaml.
+Build images that are described in `werf.yaml`.
 
-The result of build command is built images pushed into the specified repo (or locally if repo is   
-not specified).
+The result of `build` command is built images pushed into the specified repo (or locally if repo is not specified).
 
-If one or more IMAGE_NAME parameters specified, werf will build only these images
+If one or more `IMAGE_NAME` parameters specified, werf will build only these images.
 
 {{ header }} Syntax
 
