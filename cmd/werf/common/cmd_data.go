@@ -1,5 +1,11 @@
 package common
 
+import (
+	"github.com/spf13/cobra"
+
+	"github.com/werf/werf/pkg/util"
+)
+
 type CmdData struct {
 	GitWorkTree        *string
 	ProjectName        *string
@@ -32,8 +38,9 @@ type CmdData struct {
 	SecretValues             *[]string
 	IgnoreSecretKey          *bool
 
-	Repo      *RepoData
-	FinalRepo *RepoData
+	WithoutImages *bool
+	Repo          *RepoData
+	FinalRepo     *RepoData
 
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
@@ -91,4 +98,9 @@ type CmdData struct {
 	AllowedLocalCacheVolumeUsageMargin    *uint
 
 	Platform *string
+}
+
+func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
+	cmdData.WithoutImages = new(bool)
+	cmd.Flags().BoolVarP(cmdData.WithoutImages, "without-images", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_IMAGES"), "Disable building of images defined in the werf.yaml (if any) and usage of such images in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all images defined in the werf.yaml by default)")
 }

@@ -38,18 +38,20 @@ func (c *WerfConfig) CheckThatImagesExist(names []string) error {
 	return nil
 }
 
-func (c *WerfConfig) GetSpecificImages(names []string) ([]ImageInterface, error) {
+func (c *WerfConfig) GetSpecificImages(onlyImages []string, withoutImages bool) ([]ImageInterface, error) {
 	var imageConfigsToProcess []ImageInterface
 
-	if len(names) == 0 {
+	if withoutImages {
+		return nil, nil
+	} else if onlyImages == nil {
 		return c.GetAllImages(), nil
 	}
 
-	if err := c.CheckThatImagesExist(names); err != nil {
+	if err := c.CheckThatImagesExist(onlyImages); err != nil {
 		return nil, err
 	}
 
-	for _, name := range names {
+	for _, name := range onlyImages {
 		var imageToProcess ImageInterface
 		imageToProcess = c.GetImage(name)
 		if imageToProcess == nil {
@@ -352,8 +354,8 @@ func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
 	return nil
 }
 
-func (c *WerfConfig) GroupImagesByIndependentSets(names []string) (sets [][]ImageInterface, err error) {
-	images, err := c.GetSpecificImages(names)
+func (c *WerfConfig) GroupImagesByIndependentSets(onlyImages []string, withoutImages bool) (sets [][]ImageInterface, err error) {
+	images, err := c.GetSpecificImages(onlyImages, withoutImages)
 	if err != nil {
 		return nil, err
 	}
@@ -550,8 +552,8 @@ type imageGraph struct {
 	} `yaml:"dependsOn,omitempty"`
 }
 
-func (c *WerfConfig) GetImageGraphList(names []string) ([]imageGraph, error) {
-	images, err := c.GetSpecificImages(names)
+func (c *WerfConfig) GetImageGraphList(onlyImages []string, withoutImages bool) ([]imageGraph, error) {
+	images, err := c.GetSpecificImages(onlyImages, withoutImages)
 	if err != nil {
 		return nil, err
 	}

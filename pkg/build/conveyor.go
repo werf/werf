@@ -37,8 +37,7 @@ import (
 )
 
 type Conveyor struct {
-	werfConfig          *config.WerfConfig
-	imageNamesToProcess []string
+	werfConfig *config.WerfConfig
 
 	projectDir       string
 	containerWerfDir string
@@ -77,12 +76,13 @@ type ConveyorOptions struct {
 	Parallel                        bool
 	ParallelTasksLimit              int64
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
+
+	ImagesToProcess
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
 	return &Conveyor{
-		werfConfig:          werfConfig,
-		imageNamesToProcess: imageNamesToProcess,
+		werfConfig: werfConfig,
 
 		projectDir:       projectDir,
 		containerWerfDir: "/.werf",
@@ -452,7 +452,7 @@ func (c *Conveyor) determineStages(ctx context.Context) error {
 }
 
 func (c *Conveyor) doDetermineStages(ctx context.Context) error {
-	imageConfigSets, err := c.werfConfig.GroupImagesByIndependentSets(c.imageNamesToProcess)
+	imageConfigSets, err := c.werfConfig.GroupImagesByIndependentSets(c.ConveyorOptions.OnlyImages, c.ConveyorOptions.WithoutImages)
 	if err != nil {
 		return err
 	}

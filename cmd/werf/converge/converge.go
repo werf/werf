@@ -54,7 +54,7 @@ var commonCmdData common.CmdData
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:   "converge",
+		Use:   "converge [IMAGE_NAME...]",
 		Short: "Build and push images, then deploy application into Kubernetes",
 		Long: common.GetLongCommandDescription(`Build and push images, then deploy application into Kubernetes.
 
@@ -82,10 +82,12 @@ werf converge --repo registry.mydomain.com/web --env production`,
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				return runMain(ctx)
+				return runMain(ctx, common.GetImagesToProcess(args, *commonCmdData.WithoutImages))
 			})
 		},
 	})
+
+	commonCmdData.SetupWithoutImages(cmd)
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -169,7 +171,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	return cmd
 }
 
-func runMain(ctx context.Context) error {
+func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
@@ -238,17 +240,20 @@ func runMain(ctx context.Context) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
-			return run(ctx, containerBackend, headCommitGiterminismManager)
+			return run(ctx, containerBackend, headCommitGiterminismManager, imagesToProcess)
 		})
 	} else {
-		return run(ctx, containerBackend, giterminismManager)
+		return run(ctx, containerBackend, giterminismManager, imagesToProcess)
 	}
 }
 
-func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface) error {
+func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imagesToProcess build.ImagesToProcess) error {
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
+	}
+	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+		return err
 	}
 
 	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
@@ -271,7 +276,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepo string
-	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
+
+	if !imagesToProcess.WithoutImages && (len(werfConfig.StapelImages)+len(werfConfig.ImagesFromDockerfile) > 0) {
 		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 		if err != nil {
 			return err
@@ -306,12 +312,12 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 		imagesRepo = storageManager.GetServiceValuesRepo()
 
-		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
+		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, imagesToProcess, buildOptions)
 		if err != nil {
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, nil, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

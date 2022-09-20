@@ -86,12 +86,17 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
+			imagesToProcess := common.GetImagesToProcess(args, false)
+
 			_, werfConfig, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, configOpts)
 			if err != nil {
 				return err
 			}
+			if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+				return err
+			}
 
-			graphList, err := werfConfig.GetImageGraphList(args)
+			graphList, err := werfConfig.GetImageGraphList(imagesToProcess.OnlyImages, imagesToProcess.WithoutImages)
 			if err != nil {
 				return err
 			}
