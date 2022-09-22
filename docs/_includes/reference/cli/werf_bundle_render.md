@@ -154,7 +154,7 @@ werf bundle render [options]
             (default $WERF_VALIDATE)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, 
-            $WERF_VALUES_DB=.helm/values_db.yaml)
+            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,      
+            $WERF_VALUES_2=.helm/values_2.yaml)
 ```
 
