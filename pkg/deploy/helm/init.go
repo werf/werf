@@ -27,9 +27,10 @@ type InitActionConfigOptions struct {
 	HooksStatusProgressPeriod time.Duration
 	KubeConfigOptions         kube.KubeConfigOptions
 	ReleasesHistoryMax        int
+	RegistryClient            *registry.Client
 }
 
-func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, namespace string, envSettings *cli.EnvSettings, registryClient *registry.Client, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
+func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, namespace string, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
 	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{
 		KubeConfigOptions: opts.KubeConfigOptions,
 		Namespace:         namespace,
@@ -63,9 +64,12 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 	kubeClient.ResourcesWaiter = NewResourcesWaiter(kubeInitializer, kubeClient, time.Now(), opts.StatusProgressPeriod, opts.HooksStatusProgressPeriod)
 	kubeClient.Extender = NewHelmKubeClientExtender()
 
-	actionConfig.RegistryClient = registryClient
 	actionConfig.Log = func(f string, a ...interface{}) {
-		logboek.Context(ctx).Default().LogFDetails(fmt.Sprintf("%s\n", f), a...)
+		logboek.Context(ctx).Info().LogFDetails(fmt.Sprintf("%s\n", f), a...)
+	}
+
+	if opts.RegistryClient != nil {
+		actionConfig.RegistryClient = opts.RegistryClient
 	}
 
 	return nil

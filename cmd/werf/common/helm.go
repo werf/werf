@@ -2,11 +2,8 @@ package common
 
 import (
 	"context"
-	"path/filepath"
 	"time"
 
-	"github.com/docker/cli/cli/config"
-	"github.com/docker/docker/pkg/homedir"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/registry"
@@ -15,16 +12,31 @@ import (
 	"github.com/werf/logboek"
 	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/util"
 )
 
-func NewHelmRegistryClientHandle(ctx context.Context, commonCmdData *CmdData) (*registry.Client, error) {
+func NewHelmRegistryClient(ctx context.Context, dockerConfig string, insecureHelmDependencies bool) (*registry.Client, error) {
+	client, err := NewHelmRegistryClientWithoutInit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	InitHelmRegistryClient(client, dockerConfig, insecureHelmDependencies)
+
+	return client, nil
+}
+
+func NewHelmRegistryClientWithoutInit(ctx context.Context) (*registry.Client, error) {
 	return registry.NewClient(
-		registry.ClientOptCredentialsFile(getDockerConfigCredentialsFile(*commonCmdData.DockerConfig)),
 		registry.ClientOptDebug(logboek.Context(ctx).Debug().IsAccepted()),
-		registry.ClientOptInsecure(*commonCmdData.InsecureHelmDependencies),
 		registry.ClientOptWriter(logboek.Context(ctx).OutStream()),
 	)
+}
+
+func InitHelmRegistryClient(registryClient *registry.Client, dockerConfig string, insecureHelmDependencies bool) {
+	registry.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(dockerConfig))(registryClient)
+	registry.ClientOptInsecure(insecureHelmDependencies)(registryClient)
 }
 
 func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bundles_registry.Client, error) {
@@ -34,7 +46,7 @@ func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bun
 	out := logboek.Context(ctx).OutStream()
 
 	return bundles_registry.NewClient(
-		bundles_registry.ClientOptCredentialsFile(getDockerConfigCredentialsFile(*commonCmdData.DockerConfig)),
+		bundles_registry.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)),
 		bundles_registry.ClientOptDebug(debug),
 		bundles_registry.ClientOptInsecure(insecure),
 		bundles_registry.ClientOptSkipTlsVerify(skipTlsVerify),
@@ -42,18 +54,10 @@ func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bun
 	)
 }
 
-func getDockerConfigCredentialsFile(configDir string) string {
-	if configDir == "" {
-		return filepath.Join(homedir.Get(), ".docker", config.ConfigFileName)
-	} else {
-		return filepath.Join(configDir, config.ConfigFileName)
-	}
-}
-
 func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, namespace string, commonCmdData *CmdData, registryClient *registry.Client) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 
-	if err := helm.InitActionConfig(ctx, kubeInitializer, namespace, helm_v3.Settings, registryClient, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, kubeInitializer, namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -63,6 +67,7 @@ func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, 
 			ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
+		RegistryClient:     registryClient,
 	}); err != nil {
 		return nil, err
 	}
