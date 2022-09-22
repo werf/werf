@@ -188,31 +188,33 @@ func (api *selectelApi) getTags(ctx context.Context, hostname, registryId, repos
 }
 
 func (api *selectelApi) doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
+	var seconds int
 	resp, respBody, err := doRequest(ctx, method, url, body, options)
 	if err != nil {
-		if resp != nil && resp.Header.Get("Retry-After") != "" {
-			secondsString := resp.Header.Get("Retry-After")
-			seconds, err := strconv.Atoi(secondsString)
-			if err == nil {
-				sleepSeconds := seconds + rand.Intn(15) + 5
-				workerId := ctx.Value(parallelConstant.CtxBackgroundTaskIDKey)
-				if workerId != nil {
-					logboek.Context(ctx).Warn().LogF(
-						"WARNING: Rate limit error occurred. Waiting for %d before retrying request... (worker %d).\nThe --parallel ($WERF_PARALLEL) and --parallel-tasks-limit ($WERF_PARALLEL_TASKS_LIMIT) options can be used to regulate parallel tasks.\n",
-						sleepSeconds,
-						workerId.(int),
-					)
-					logboek.Context(ctx).Warn().LogLn()
-				} else {
-					logboek.Context(ctx).Warn().LogF(
-						"WARNING: Rate limit error occurred. Waiting for %d before retrying request...\n",
-						sleepSeconds,
-					)
-				}
-
-				time.Sleep(time.Second * time.Duration(sleepSeconds))
-				return api.doRequest(ctx, method, url, body, options)
+		if resp != nil && resp.StatusCode == http.StatusTooManyRequests {
+			if resp.Header.Get("Retry-After") != "" {
+				secondsString := resp.Header.Get("Retry-After")
+				seconds, _ = strconv.Atoi(secondsString)
 			}
+
+			sleepSeconds := seconds + rand.Intn(15) + 5
+			workerId := ctx.Value(parallelConstant.CtxBackgroundTaskIDKey)
+			if workerId != nil {
+				logboek.Context(ctx).Warn().LogF(
+					"WARNING: Rate limit error occurred. Waiting for %d before retrying request... (worker %d).\nThe --parallel ($WERF_PARALLEL) and --parallel-tasks-limit ($WERF_PARALLEL_TASKS_LIMIT) options can be used to regulate parallel tasks.\n",
+					sleepSeconds,
+					workerId.(int),
+				)
+				logboek.Context(ctx).Warn().LogLn()
+			} else {
+				logboek.Context(ctx).Warn().LogF(
+					"WARNING: Rate limit error occurred. Waiting for %d before retrying request...\n",
+					sleepSeconds,
+				)
+			}
+
+			time.Sleep(time.Second * time.Duration(sleepSeconds))
+			return api.doRequest(ctx, method, url, body, options)
 		}
 
 		return resp, respBody, err
