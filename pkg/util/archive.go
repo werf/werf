@@ -208,7 +208,18 @@ ArchiveCopying:
 	return nil
 }
 
-func ExtractTar(tarFileReader io.Reader, dstDir string) error {
+type ExtractTarOptions struct {
+	UID, GID *uint32
+}
+
+func ExtractTar(tarFileReader io.Reader, dstDir string, opts ExtractTarOptions) error {
+	if err := os.MkdirAll(dstDir, os.ModePerm); err != nil {
+		return fmt.Errorf("unable to create dir %q: %w", dstDir, err)
+	}
+	if err := Chown(dstDir, opts.UID, opts.GID); err != nil {
+		return fmt.Errorf("unable to chown dir %q: %w", dstDir, err)
+	}
+
 	tarReader := tar.NewReader(tarFileReader)
 	for {
 		tarEntryHeader, err := tarReader.Next()
@@ -227,6 +238,7 @@ func ExtractTar(tarFileReader io.Reader, dstDir string) error {
 			if err = os.MkdirAll(tarEntryPath, tarEntryFileInfo.Mode()); err != nil {
 				return fmt.Errorf("unable to create new dir %q while extracting tar: %w", tarEntryPath, err)
 			}
+
 		case tar.TypeReg, tar.TypeSymlink, tar.TypeLink, tar.TypeGNULongName, tar.TypeGNULongLink:
 			if err := os.MkdirAll(filepath.Dir(tarEntryPath), os.ModePerm); err != nil {
 				return fmt.Errorf("unable to create new directory %q while extracting tar: %w", filepath.Dir(tarEntryPath), err)
@@ -247,13 +259,34 @@ func ExtractTar(tarFileReader io.Reader, dstDir string) error {
 				return fmt.Errorf("unable to close file %q while extracting tar: %w", tarEntryPath, err)
 			}
 
-			// TODO: set uid/gid from function options
-			// if err := os.Chown(tarEntryPath, tarEntryHeader.Uid, tarEntryHeader.Gid); err != nil {
-			// 	return fmt.Errorf("unable to set owner and group to %d:%d for file %q: %w", tarEntryHeader.Uid, tarEntryHeader.Gid, tarEntryPath, err)
-			// }
-
 		default:
 			return fmt.Errorf("tar entry %q of unexpected type: %b", tarEntryHeader.Name, tarEntryHeader.Typeflag)
+		}
+
+		for _, p := range FilepathsWithParents(tarEntryHeader.Name) {
+			if err := Chown(filepath.Join(dstDir, p), opts.UID, opts.GID); err != nil {
+				return fmt.Errorf("unable to chown file %q: %w", p, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func Chown(path string, uid, gid *uint32) error {
+	if uid != nil || gid != nil {
+		osUid := -1
+		osGid := -1
+
+		if uid != nil {
+			osUid = int(*uid)
+		}
+		if gid != nil {
+			osGid = int(*gid)
+		}
+
+		if err := os.Chown(path, osUid, osGid); err != nil {
+			return fmt.Errorf("unable to set owner and group to %d:%d for file %q: %w", osUid, osGid, path, err)
 		}
 	}
 
