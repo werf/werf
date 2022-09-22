@@ -88,7 +88,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
 		Short:                 "Run container for project image in Kubernetes",
-		Long:                  common.GetLongCommandDescription(`Run container in Kubernetes for specified project image from werf.yaml (build if needed)`),
+		Long:                  common.GetLongCommandDescription(GetKubeRunDocs().Long),
 		DisableFlagsInUseLine: true,
 		Example: `  # Run interactive shell in the image
   $ werf kube-run --repo test/test -it -- sh
