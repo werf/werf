@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -37,7 +38,21 @@ func ExpandPath(path string) string {
 
 func SplitFilepath(path string) (result []string) {
 	path = filepath.FromSlash(path)
+	path = filepath.Clean(path)
+
+	if filepath.IsAbs(path) {
+		p, err := filepath.Rel(string(os.PathSeparator), path)
+		if err != nil {
+			panic(fmt.Sprintf("unable to get relative path for %q", path))
+		}
+		path = p
+	}
+
 	separator := os.PathSeparator
+
+	if path == "." || path == string(separator) {
+		return nil
+	}
 
 	idx := 0
 	if separator == '\\' {
@@ -116,4 +131,15 @@ func GlobPrefixWithoutPatterns(glob string) (string, string) {
 	}
 
 	return prefix, glob
+}
+
+func FilepathsWithParents(path string) []string {
+	var res []string
+	base := ""
+	for _, part := range SplitFilepath(path) {
+		base = filepath.Join(base, part)
+		res = append(res, base)
+	}
+
+	return res
 }

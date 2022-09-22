@@ -98,16 +98,15 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				contRuntime.ExpectCmdsToSucceed(
 					buildReport.Images["stapel-shell"].DockerImageName,
 					"test -f /app/README.md",
-					// TODO: fix buildah: support setting git.owner/group for git-archives
-					// "stat -c %u:%g /app/README.md | diff <(echo 1050:1051) -",
+					"stat -c %u:%g /app/README.md | diff <(echo 1050:1051) -",
 					"grep -qF 'https://cloud.google.com/appengine/docs/go/#Go_tools' /app/README.md",
 
 					"test -f /app/static/index.html",
-					// "stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -",
+					"stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -",
 					"grep -qF '<title>Hello, world</title>' /app/static/index.html",
 
 					"test -f /app/static/style.css",
-					// "stat -c %u:%g /app/static/style.css | diff <(echo 1050:1051) -",
+					"stat -c %u:%g /app/static/style.css | diff <(echo 1050:1051) -",
 					"grep -qF 'text-align: center;' /app/static/style.css",
 
 					"! test -f /app/app.go",
@@ -190,17 +189,17 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				contRuntime.ExpectCmdsToSucceed(
 					buildReport.Images["stapel-shell"].DockerImageName,
 					"test -f /app/README.md",
-					// "stat -c %u:%g /app/README.md | diff <(echo 1050:1051) -",
+					"stat -c %u:%g /app/README.md | diff <(echo 1050:1051) -",
 					"grep -qF 'https://cloud.google.com/sdk/' /app/README.md",
 
 					"test -f /app/static/index.html",
-					// "stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -",
+					"stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -",
 					"grep -qF '<title>Hello, world</title>' /app/static/index.html",
 
 					"! test -f /app/static/style.css",
 
 					"test -f /app/app.go",
-					// "stat -c %u:%g /app/app.go | diff <(echo 1050:1051) -",
+					"stat -c %u:%g /app/app.go | diff <(echo 1050:1051) -",
 					"grep -qF 'package hello' /app/app.go",
 
 					"! test -f /app/static/script.js",

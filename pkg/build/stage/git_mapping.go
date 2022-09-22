@@ -636,7 +636,10 @@ func (gm *GitMapping) PreparePatchForImage(ctx context.Context, c Conveyor, cb c
 		}()
 
 		logboek.Context(ctx).Debug().LogF("Adding git patch data archive with included paths: %v\n", includePaths)
-		stageImage.Builder.StapelStageBuilder().AddDataArchive(patchArchiveReader, archiveType, gm.To)
+		stageImage.Builder.StapelStageBuilder().AddDataArchive(patchArchiveReader, archiveType, gm.To, container_backend.AddDataArchiveOptions{
+			Owner: gm.Owner,
+			Group: gm.Group,
+		})
 
 		logboek.Context(ctx).Debug().LogF("Adding git paths to remove: %v\n", patch.GetPathsToRemove())
 		var pathsToRemove []string
@@ -699,7 +702,10 @@ func (gm *GitMapping) PrepareArchiveForImage(ctx context.Context, c Conveyor, cb
 			return fmt.Errorf("unable to open archive file %q: %w", archive.GetFilePath(), err)
 		}
 
-		stageImage.Builder.StapelStageBuilder().AddDataArchive(f, archiveType, gm.To)
+		stageImage.Builder.StapelStageBuilder().AddDataArchive(f, archiveType, gm.To, container_backend.AddDataArchiveOptions{
+			Owner: gm.Owner,
+			Group: gm.Group,
+		})
 	}
 
 	gm.AddGitCommitToImageLabels(ctx, c, cb, stageImage, commitInfo)

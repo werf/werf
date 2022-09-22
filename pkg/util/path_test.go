@@ -12,13 +12,13 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-type entry struct {
+type expandPathTest struct {
 	path               string
 	expectedPathFormat string
 }
 
 var _ = DescribeTable("expand path",
-	func(e entry) {
+	func(e expandPathTest) {
 		usr, err := user.Current()
 		Ω(err).ShouldNot(HaveOccurred())
 
@@ -28,24 +28,56 @@ var _ = DescribeTable("expand path",
 		expectedPath := fmt.Sprintf(e.expectedPathFormat, usr.HomeDir, wd)
 		Ω(util.ExpandPath(filepath.FromSlash(e.path))).Should(Equal(filepath.FromSlash(expectedPath)))
 	},
-	Entry("~", entry{
+	Entry("~", expandPathTest{
 		path:               "~",
 		expectedPathFormat: "%[1]s",
 	}),
-	Entry("~/", entry{
+	Entry("~/", expandPathTest{
 		path:               "~/",
 		expectedPathFormat: "%[1]s",
 	}),
-	Entry("~/path", entry{
+	Entry("~/path", expandPathTest{
 		path:               "~/path",
 		expectedPathFormat: "%[1]s/path",
 	}),
-	Entry("path", entry{
+	Entry("path", expandPathTest{
 		path:               "path",
 		expectedPathFormat: "%[2]s/path",
 	}),
-	Entry("path1/../path2", entry{
+	Entry("path1/../path2", expandPathTest{
 		path:               "path1/../path2",
 		expectedPathFormat: "%[2]s/path2",
+	}),
+)
+
+type splitPathTest struct {
+	path              string
+	expectedPathParts []string
+}
+
+var _ = DescribeTable("split path",
+	func(t splitPathTest) {
+		parts := util.SplitFilepath(t.path)
+		Expect(parts).To(Equal(t.expectedPathParts))
+	},
+	Entry("root path", splitPathTest{
+		path:              "/",
+		expectedPathParts: nil,
+	}),
+	Entry("unnormalized root path", splitPathTest{
+		path:              "////",
+		expectedPathParts: nil,
+	}),
+	Entry("empty path", splitPathTest{
+		path:              "",
+		expectedPathParts: nil,
+	}),
+	Entry("absolute path", splitPathTest{
+		path:              "/path/to/dir/or/file",
+		expectedPathParts: []string{"path", "to", "dir", "or", "file"},
+	}),
+	Entry("relative path", splitPathTest{
+		path:              "path/to/dir/or/file",
+		expectedPathParts: []string{"path", "to", "dir", "or", "file"},
 	}),
 )
