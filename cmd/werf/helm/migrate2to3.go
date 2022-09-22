@@ -134,13 +134,16 @@ func runMigrate2To3(ctx context.Context) error {
 		ConfigPathMergeList: *migrate2To3CommonCmdData.KubeConfigPathMergeList,
 	}
 
-	helmRegistryClientHandler, err := common.NewHelmRegistryClientHandle(ctx, &migrate2To3CommonCmdData)
+	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *migrate2To3CommonCmdData.DockerConfig, *migrate2To3CommonCmdData.InsecureHelmDependencies)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), targetNamespace, helm_v3.Settings, helmRegistryClientHandler, actionConfig, helm.InitActionConfigOptions{KubeConfigOptions: kubeConfigOptions}); err != nil {
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), targetNamespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
+		KubeConfigOptions: kubeConfigOptions,
+		RegistryClient:    helmRegistryClient,
+	}); err != nil {
 		return err
 	}
 

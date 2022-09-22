@@ -139,7 +139,7 @@ func runApply(ctx context.Context) error {
 
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
-	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
+	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
@@ -150,7 +150,7 @@ func runApply(ctx context.Context) error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), *commonCmdData.Namespace, helm_v3.Settings, helmRegistryClientHandle, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), *commonCmdData.Namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -160,6 +160,7 @@ func runApply(ctx context.Context) error {
 			ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
+		RegistryClient:     helmRegistryClient,
 	}); err != nil {
 		return err
 	}
@@ -190,7 +191,7 @@ func runApply(ctx context.Context) error {
 
 	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
-	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClientHandle, secretsManager, chart_extender.BundleOptions{
+	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClient, secretsManager, chart_extender.BundleOptions{
 		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
 		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{IgnoreInvalidAnnotationsAndLabels: true},
 		IgnoreInvalidAnnotationsAndLabels: true,

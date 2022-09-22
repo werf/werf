@@ -204,12 +204,12 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("getting helm chart dir failed: %w", err)
 	}
 
-	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
+	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
 		IgnoreInvalidAnnotationsAndLabels: true,
 	})
 
@@ -221,7 +221,7 @@ func runDismiss(ctx context.Context) error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, helmRegistryClientHandle, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -230,6 +230,7 @@ func runDismiss(ctx context.Context) error {
 			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
+		RegistryClient:     helmRegistryClient,
 	}); err != nil {
 		return err
 	}
