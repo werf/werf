@@ -11,6 +11,7 @@ import (
 	"github.com/werf/werf/cmd/werf/dismiss"
 	export2 "github.com/werf/werf/cmd/werf/export"
 	"github.com/werf/werf/cmd/werf/purge"
+	"github.com/werf/werf/cmd/werf/run"
 	"html"
 	"io"
 	"io/ioutil"
@@ -371,6 +372,8 @@ func getLongFromCommand(cmd *cobra.Command) string {
 		return html.EscapeString(build.GetBuildDocs().LongMD)
 	case "Export images":
 		return html.EscapeString(export2.GetExportDocs().LongMD)
+	case "Run container for project image":
+		return html.EscapeString(run.GetRunDocs().LongMD)
 	default:
 		if len(cmd.Long) == 0 {
 			return cmd.Short
