@@ -358,6 +358,17 @@ entries:
                   - title: Настройка CI/CD
                     url: /advanced/ci_cd/werf_with_argocd/configure_ci_cd.html
 
+              # - title: Практики оркестрации и выката многокомпонентных приложений (черновик)
+              #   f:
+              #     - title: Обзор
+              #       url: /advanced/ci_cd/multiple_repositories_operation/overview.html
+
+              #     - title: Бандлы
+              #       url: /advanced/ci_cd/multiple_repositories_operation/bundles.html
+
+              #     - title: GitLab CI/CD multiproject pipelines
+              #       url: /advanced/ci_cd/multiple_repositories_operation/gitlab_multiproject_pipelines.html
+
           - title: Сборка образов с помощью Stapel
             f:
               - title: Базовый образ
@@ -391,6 +402,11 @@ entries:
 
           - title: Синхронизация в werf
             url: /advanced/synchronization.html
+
+          # - title: Организация и управление секретами (черновик)
+          #   f:
+          #     - title: Обзор
+          #       url: /advanced/secrets_management/overview.html
 
       - title: Внутренности
         f:

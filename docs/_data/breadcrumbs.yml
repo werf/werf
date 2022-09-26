@@ -29,6 +29,9 @@ en:
   /advanced/ci_cd/werf_with_argocd: &documentation-advanced-ci-cd-werf-with-argocd
     title: werf with ArgoCD
     url: advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
+  /advanced/ci_cd/multiple_repositories_operation: &documentation-advanced-ci-cd-multiple-repositories-operation
+    title: Multiple repositories operation
+    url: advanced/ci_cd/multiple_repositories_operation/overview.html
   /advanced/helm: &documentation-advanced-helm
     title: Helm
     url: advanced/helm/overview.html
@@ -41,6 +44,9 @@ en:
   /advanced/helm/releases: &documentation-advanced-helm-releases
     title: Releases
     url: advanced/helm/releases/release.html
+  /advanced/secrets_management: &documentation-advanced-secrets-management
+    title: Secrets management
+    url: advanced/secrets_management/overview.html
   /internals: &documentation-internals
     title: Internals
     url: internals/build_process.html
@@ -86,6 +92,9 @@ ru:
   /advanced/ci_cd/werf_with_argocd:
     <<: *documentation-advanced-ci-cd-werf-with-argocd
     title: GitOps с помощью werf и ArgoCD
+  /advanced/ci_cd/multiple_repositories_operation:
+    <<: *documentation-advanced-ci-cd-multiple-repositories-operation
+    title: Практики оркестрации и выката многокомпонентных приложений
   /advanced/helm:
     <<: *documentation-advanced-helm
   /advanced/helm/configuration:
@@ -97,6 +106,9 @@ ru:
   /advanced/helm/releases:
     <<: *documentation-advanced-helm-releases
     title: Релизы
+  /advanced/secrets_management:
+    <<: *documentation-advanced-secrets-management
+    title: Организация и управление секретами
   /internals:
     <<: *documentation-internals
     title: Внутренности
