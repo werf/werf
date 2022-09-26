@@ -11,7 +11,7 @@ Show details of a specific resource or group of resources.
   
  will first check for an exact match on TYPE and NAME_PREFIX. If no such resource exists, it will output details for every resource that has a name prefixed with NAME_PREFIX.
 
-Use &#34;kubectl api-resources&#34; for a complete list of supported resources.
+Use "kubectl api-resources" for a complete list of supported resources.
 
 {{ header }} Syntax
 

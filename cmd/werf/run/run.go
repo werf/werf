@@ -51,7 +51,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
 		Short:                 "Run container for project image",
-		Long:                  common.GetLongCommandDescription(`Run container for specified project image from werf.yaml (build if needed)`),
+		Long:                  common.GetLongCommandDescription(GetRunDocs().Long),
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image and remove after execution
   $ werf run application

@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Print slugged string by specified format
+Print slugged string by specified format.
 
 {{ header }} Syntax
 

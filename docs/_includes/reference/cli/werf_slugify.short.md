@@ -1,1 +1,1 @@
-print slugged string by specified format
+print slugged string by specified format.

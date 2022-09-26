@@ -3,8 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Render Kubernetes templates. This command will calculate digests and build (if needed) all images   
-defined in the werf.yaml.
+Render Kubernetes templates. This command will calculate digests and build (if needed) all images defined in the `werf.yaml`.
 
 {{ header }} Syntax
 

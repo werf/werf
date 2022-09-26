@@ -119,38 +119,8 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	var cmdData composeCmdData
 	var commonCmdData common.CmdData
 
-	short := fmt.Sprintf("Run docker-compose %s command with forwarded image names", composeCmdName)
-	long := short
-	long += `
-
-Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME ($WERF_DOCKER_IMAGE_NAME for nameless image).
-<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
-- all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND).
-
-If one or more IMAGE_NAME parameters specified, werf will build and forward only these images.
-
-Given the following werf configuration:
-
-# werf.yaml
-project: x
-configVersion: 1
----
-image: frontend
-dockerfile: frontend.Dockerfile
----
-image: geodata-backend
-dockerfile: backend.Dockerfile
-
-Use described images as follows in your docker compose configuration:
-
-# docker-compose.yaml
-services:
-  frontend:
-    image: $WERF_FRONTEND_DOCKER_IMAGE_NAME
-  backend:
-    image: $WERF_GEODATA_BACKEND_DOCKER_IMAGE_NAME
-`
+	short := fmt.Sprintf("Run docker-compose %s command with forwarded image names.", composeCmdName)
+	long := GetComposeDocs(short).Long
 
 	long = common.GetLongCommandDescription(long)
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)

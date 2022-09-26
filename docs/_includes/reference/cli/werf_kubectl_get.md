@@ -7,9 +7,9 @@ Display one or many resources.
 
  Prints a table of the most important information about the specified resources. You can filter the list using a label selector and the --selector flag. If the desired resource type is namespaced you will only see results in your current namespace unless you pass --all-namespaces.
 
- By specifying the output as &#39;template&#39; and providing a Go template as the value of the --template flag, you can filter the attributes of the fetched resources.
+ By specifying the output as 'template' and providing a Go template as the value of the --template flag, you can filter the attributes of the fetched resources.
 
-Use &#34;kubectl api-resources&#34; for a complete list of supported resources.
+Use "kubectl api-resources" for a complete list of supported resources.
 
 {{ header }} Syntax
 

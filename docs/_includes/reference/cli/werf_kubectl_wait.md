@@ -7,7 +7,7 @@ Experimental: Wait for a specific condition on one or many resources.
 
  The command takes multiple resources and waits until the specified condition is seen in the Status field of every given resource.
 
- Alternatively, the command can wait for the given set of resources to be deleted by providing the &#34;delete&#34; keyword as the value to the --for flag.
+ Alternatively, the command can wait for the given set of resources to be deleted by providing the "delete" keyword as the value to the --for flag.
 
  A successful message will be printed to stdout indicating when the specified condition has been met. You can use -o option to change to output destination.
 

@@ -7,7 +7,7 @@ Update the taints on one or more nodes.
 
   *  A taint consists of a key, value, and effect. As an argument here, it is expressed as key=value:effect.
   *  The key must begin with a letter or number, and may contain letters, numbers, hyphens, dots, and underscores, up to  253 characters.
-  *  Optionally, the key can begin with a DNS subdomain prefix and a single &#39;/&#39;, like example.com/my-app.
+  *  Optionally, the key can begin with a DNS subdomain prefix and a single '/', like example.com/my-app.
   *  The value is optional. If given, it must begin with a letter or number, and may contain letters, numbers, hyphens, dots, and underscores, up to  63 characters.
   *  The effect must be NoSchedule, PreferNoSchedule or NoExecute.
   *  Currently taint can only apply to node.

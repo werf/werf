@@ -9,7 +9,7 @@ Update the annotations on one or more resources.
 
  Attempting to set an annotation that already exists will fail unless --overwrite is set. If --resource-version is specified and does not match the current resource version on the server the command will fail.
 
-Use &#34;kubectl api-resources&#34; for a complete list of supported resources.
+Use "kubectl api-resources" for a complete list of supported resources.
 
 {{ header }} Syntax
 

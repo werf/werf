@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Run container for specified project image from werf.yaml (build if needed)
+Run container for specified project image from `werf.yaml` (build if needed).
 
 {{ header }} Syntax
 

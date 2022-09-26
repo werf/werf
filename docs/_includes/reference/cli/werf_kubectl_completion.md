@@ -16,7 +16,7 @@ Output shell completion code for the specified shell (bash, zsh, fish, or powers
     for windows:
     [https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion)
   
- Note for zsh users: [1] zsh completions are only supported in versions of zsh &gt;= 5.2.
+ Note for zsh users: [1] zsh completions are only supported in versions of zsh >= 5.2.
 
 {{ header }} Syntax
 

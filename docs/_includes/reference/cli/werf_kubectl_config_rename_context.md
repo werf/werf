@@ -9,7 +9,7 @@ Renames a context from the kubeconfig file.
 
  NEW_NAME is the new name you want to set.
 
- Note: If the context being renamed is the &#39;current-context&#39;, this field will also be updated.
+ Note: If the context being renamed is the 'current-context', this field will also be updated.
 
 {{ header }} Syntax
 

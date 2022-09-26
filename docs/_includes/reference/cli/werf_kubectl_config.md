@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Modify kubeconfig files using subcommands like &#34;kubectl config set current-context my-context&#34;
+Modify kubeconfig files using subcommands like "kubectl config set current-context my-context"
 
  The loading order follows these rules:
 

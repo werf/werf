@@ -5,7 +5,7 @@
 {% endif %}
 Purge all project images in the container registry.
 
-WARNING: Images that are being used in the Kubernetes cluster will also be deleted.
+**WARNING**: Images that are being used in the Kubernetes cluster will also be deleted.
 
 {{ header }} Syntax
 

@@ -5,11 +5,11 @@
 {% endif %}
 
 Update gets the latest information about charts from the respective chart repositories.
-Information is cached locally, where it is used by commands like &#39;helm search&#39;.
+Information is cached locally, where it is used by commands like 'helm search'.
 
 You can optionally specify a list of repositories you want to update.
-	$ helm repo update &lt;repo_name&gt; ...
-To update all the repositories, use &#39;helm repo update&#39;.
+	$ helm repo update <repo_name> ...
+To update all the repositories, use 'helm repo update'.
 
 
 {{ header }} Syntax

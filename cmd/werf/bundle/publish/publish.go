@@ -45,10 +45,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "publish [IMAGE_NAME...]",
 		Short: "Publish bundle",
-		Long: common.GetLongCommandDescription(`Publish bundle into the container registry. werf bundle contains built images defined in the werf.yaml, helm chart, service values which contain built images tags, any custom values and set values params provided during publish invocation, werf addon templates (like werf_image).
-
-Published into container registry bundle can be rolled out by the "werf bundle" command.
-`),
+		Long: common.GetLongCommandDescription(GetBundlePublishDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(),

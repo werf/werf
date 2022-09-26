@@ -41,11 +41,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
   # Build images and store/use stages from repo
   $ werf build --repo harbor.company.io/werf`,
-		Long: common.GetLongCommandDescription(`Build images that are described in werf.yaml.
-
-The result of build command is built images pushed into the specified repo (or locally if repo is not specified).
-
-If one or more IMAGE_NAME parameters specified, werf will build only these images`),
+		Long:                  common.GetLongCommandDescription(GetBuildDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),

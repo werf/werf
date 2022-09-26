@@ -5,7 +5,7 @@
 {% endif %}
 Mark the provided resource as paused.
 
- Paused resources will not be reconciled by a controller. Use &#34;kubectl rollout resume&#34; to resume a paused resource. Currently only deployments support being paused.
+ Paused resources will not be reconciled by a controller. Use "kubectl rollout resume" to resume a paused resource. Currently only deployments support being paused.
 
 {{ header }} Syntax
 

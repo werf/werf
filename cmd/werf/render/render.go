@@ -52,7 +52,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "render [IMAGE_NAME...]",
 		Short:                 "Render Kubernetes templates",
-		Long:                  common.GetLongCommandDescription(`Render Kubernetes templates. This command will calculate digests and build (if needed) all images defined in the werf.yaml.`),
+		Long:                  common.GetLongCommandDescription(GetRenderDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
