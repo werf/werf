@@ -3,20 +3,21 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Run docker-compose config command with forwarded image names
+Run `docker-compose config` command with forwarded image names.
 
-Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME                  
-($WERF_DOCKER_IMAGE_NAME for nameless image).
-<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following   
+Image environment name format: `$WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME`:
+* `$WERF_DOCKER_IMAGE_NAME` for nameless image;
+* `<FORMATTED_WERF_IMAGE_NAME>` is werf image name from `werf.yaml` modified according to the following
 rules:
-- all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND).
+  * all characters are uppercase (`app` -&gt; `APP`);
+  * charset `/` - is replaced with `_` (`DEV/APP-FRONTEND` -&gt; `DEV_APP_FRONTEND`).
 
-If one or more IMAGE_NAME parameters specified, werf will build and forward only these images.
+If one or more `IMAGE_NAME` parameters specified, werf will build and forward only these images.
 
 Given the following werf configuration:
 
-# werf.yaml
+## werf.yaml
+```shell
 project: x
 configVersion: 1
 ---
@@ -25,15 +26,18 @@ dockerfile: frontend.Dockerfile
 ---
 image: geodata-backend
 dockerfile: backend.Dockerfile
+```
 
 Use described images as follows in your docker compose configuration:
 
-# docker-compose.yaml
+## docker-compose.yaml
+```shell
 services:
   frontend:
     image: $WERF_FRONTEND_DOCKER_IMAGE_NAME
   backend:
     image: $WERF_GEODATA_BACKEND_DOCKER_IMAGE_NAME
+```
 
 
 {{ header }} Syntax

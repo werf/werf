@@ -7,6 +7,7 @@ import (
 	"github.com/werf/werf/cmd/werf/bundle/export"
 	"github.com/werf/werf/cmd/werf/bundle/publish"
 	"github.com/werf/werf/cmd/werf/cleanup"
+	"github.com/werf/werf/cmd/werf/compose"
 	"github.com/werf/werf/cmd/werf/converge"
 	"github.com/werf/werf/cmd/werf/dismiss"
 	export2 "github.com/werf/werf/cmd/werf/export"
@@ -377,6 +378,14 @@ func getLongFromCommand(cmd *cobra.Command) string {
 		return html.EscapeString(run.GetRunDocs().LongMD)
 	case "Run container for project image in Kubernetes":
 		return html.EscapeString(kube_run.GetKubeRunDocs().LongMD)
+	case "Run docker-compose config command with forwarded image names.":
+		return compose.GetComposeDocs(cmd.Short).LongMD
+	case "Run docker-compose down command with forwarded image names.":
+		return compose.GetComposeDocs(cmd.Short).LongMD
+	case "Run docker-compose run command with forwarded image names.":
+		return compose.GetComposeDocs(cmd.Short).LongMD
+	case "Run docker-compose up command with forwarded image names.":
+		return compose.GetComposeDocs(cmd.Short).LongMD
 	default:
 		if len(cmd.Long) == 0 {
 			return cmd.Short
