@@ -118,8 +118,11 @@ entries:
               - title: GitHub Actions
                 url: /advanced/ci_cd/github_actions.html
 
-              - title: Run in containers (experimental)
+              - title: Run in containers
                 f:
+                  - title: How it works
+                    url: /advanced/ci_cd/run_in_container/how_it_works.html
+
                   - title: Use Docker container
                     url: /advanced/ci_cd/run_in_container/use_docker_container.html
 
@@ -132,10 +135,7 @@ entries:
                   - title: Use GitLab CI/CD with Kubernetes executor
                     url: /advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_kubernetes_executor.html
 
-                  - title: How it works
-                    url: /advanced/ci_cd/run_in_container/how_it_works.html
-
-              - title: werf with ArgoCD (experimental)
+              - title: werf with ArgoCD
                 f:
                   - title: CI/CD flow overview
                     url: /advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
@@ -330,8 +330,11 @@ entries:
               - title: Интеграция с GitHub Actions
                 url: /advanced/ci_cd/github_actions.html
 
-              - title: Запуск в контейнерах (экспериментальный функционал)
+              - title: Запуск в контейнерах
                 f:
+                  - title: Принципы работы
+                    url: /advanced/ci_cd/run_in_container/how_it_works.html
+
                   - title: В Docker-контейнере
                     url: /advanced/ci_cd/run_in_container/use_docker_container.html
 
@@ -344,10 +347,7 @@ entries:
                   - title: В GitLab CI/CD с Kubernetes executor
                     url: /advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_kubernetes_executor.html
 
-                  - title: Принципы работы
-                    url: /advanced/ci_cd/run_in_container/how_it_works.html
-
-              - title: GitOps с помощью werf и ArgoCD (экспериментальный функционал)
+              - title: GitOps с помощью werf и ArgoCD
                 f:
                   - title: Обзор процесса CI/CD
                     url: /advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html

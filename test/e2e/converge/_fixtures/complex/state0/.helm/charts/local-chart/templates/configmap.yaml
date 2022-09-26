@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-chart-config
+data:
+  werfEnv: {{ .Values.werf.env }}
+  option: {{ .Values.option }}

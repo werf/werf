@@ -16,16 +16,17 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
-func GetConveyorOptions(commonCmdData *CmdData) build.ConveyorOptions {
+func GetConveyorOptions(commonCmdData *CmdData, imagesToProcess build.ImagesToProcess) build.ConveyorOptions {
 	return build.ConveyorOptions{
 		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
 			VirtualMerge: *commonCmdData.VirtualMerge,
 		},
+		ImagesToProcess: imagesToProcess,
 	}
 }
 
-func GetConveyorOptionsWithParallel(commonCmdData *CmdData, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
-	conveyorOptions := GetConveyorOptions(commonCmdData)
+func GetConveyorOptionsWithParallel(commonCmdData *CmdData, imagesToProcess build.ImagesToProcess, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
+	conveyorOptions := GetConveyorOptions(commonCmdData, imagesToProcess)
 	conveyorOptions.Parallel = !(buildStagesOptions.ImageBuildOptions.IntrospectAfterError || buildStagesOptions.ImageBuildOptions.IntrospectBeforeError || len(buildStagesOptions.Targets) != 0) && *commonCmdData.Parallel
 
 	parallelTasksLimit, err := GetParallelTasksLimit(commonCmdData)

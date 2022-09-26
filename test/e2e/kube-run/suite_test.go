@@ -11,8 +11,6 @@ func TestSuite(t *testing.T) {
 		RequiredSuiteTools: []string{"docker", "git"},
 		RequiredSuiteEnvs: []string{
 			"WERF_TEST_K8S_DOCKER_REGISTRY",
-			"WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME",
-			"WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD",
 		},
 	})(t)
 }
@@ -25,5 +23,6 @@ var (
 	_ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
+
 	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
 )

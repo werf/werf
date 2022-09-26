@@ -53,14 +53,14 @@ var _ = Describe("Helm releases manager", func() {
 		It("should keep no more than specified number of releases", func() {
 			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "helm_releases_manager_app1-001", "initial commit")
 
-			for i := 0; i < 9; i++ {
+			for i := 0; i < 4; i++ {
 				Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).Should(Succeed())
 			}
-			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(9))
+			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(4))
 
-			for i := 0; i < 5; i++ {
-				Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--releases-history-max=5")).Should(Succeed())
-				Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(5))
+			for i := 0; i < 2; i++ {
+				Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--releases-history-max=2")).Should(Succeed())
+				Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(2))
 			}
 		})
 	})

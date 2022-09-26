@@ -8,7 +8,7 @@ Render Kubernetes templates. This command will calculate digests and build (if n
 {{ header }} Syntax
 
 ```shell
-werf render [options]
+werf render [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Environments
@@ -191,8 +191,7 @@ werf render [options]
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
       --releases-history-max=5
-            Max releases to keep in release storage. Can be set by environment variable             
-            $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.
+            Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''
@@ -320,10 +319,14 @@ werf render [options]
             (default $WERF_VALIDATE)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, 
-            $WERF_VALUES_DB=.helm/values_db.yaml)
+            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,      
+            $WERF_VALUES_2=.helm/values_2.yaml)
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
+      --without-images=false
+            Disable building of images defined in the werf.yaml (if any) and usage of such images   
+            in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
+            images defined in the werf.yaml by default)
 ```
 

@@ -3,6 +3,7 @@ package bundles
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -10,6 +11,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"helm.sh/helm/v3/pkg/chart"
+	"sigs.k8s.io/yaml"
 
 	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/pkg/docker_registry"
@@ -37,7 +39,7 @@ var _ = Describe("Bundle copy", func() {
 						"repo": "REPO",
 					},
 				},
-				Files: []*chart.File{
+				Raw: []*chart.File{
 					{
 						Name: "values.yaml",
 						Data: []byte(`
@@ -96,7 +98,7 @@ werf:
 					"repo": "REPO",
 				},
 			},
-			Files: []*chart.File{
+			Raw: []*chart.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
@@ -131,36 +133,22 @@ werf:
 
 		remoteChart := bundlesRegistryClient.StubCharts[addr.RegistryAddress.FullName()]
 		Expect(remoteChart).NotTo(BeNil())
-		Expect(remoteChart.Metadata.Name).To(Equal("testproject"))
-		Expect(remoteChart.Metadata.Version).To(Equal("1.2.3"))
 
-		origImages := ch.Values["werf"].(map[string]interface{})["image"].(map[string]interface{})
+		VerifyChart(ctx, remoteChart, VerifyChartOptions{
+			ExpectedName:    "testproject",
+			ExpectedVersion: "1.2.3",
+			ExpectedRepo:    "registry.example.com/group/testproject",
+			ExpectedImages: map[string]string{
+				"image-1": "registry.example.com/group/testproject:tag-1",
+				"image-2": "registry.example.com/group/testproject:tag-2",
+				"image-3": "registry.example.com/group/testproject:tag-3",
+			},
+		})
 
-		if werfVals, ok := remoteChart.Values["werf"].(map[string]interface{}); ok {
-			if imageVals, ok := werfVals["image"].(map[string]interface{}); ok {
-				for imageName, v := range imageVals {
-					imageRef, ok := v.(string)
-					Expect(ok).To(BeTrue())
-
-					{
-						// No unknown images in values
-						_, ok := origImages[imageName]
-						Expect(ok).To(BeTrue())
-					}
-
-					ref, err := bundles_registry.ParseReference(imageRef)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(ref.Repo).To(Equal("registry.example.com/group/testproject"))
-				}
-
-				// No lost images
-				for imageName := range origImages {
-					_, ok := imageVals[imageName]
-					Expect(ok).To(BeTrue())
-				}
-			}
-
-			Expect(werfVals["repo"]).To(Equal("registry.example.com/group/testproject"))
+		{
+			Expect(registryClient.ImagesByReference["registry.example.com/group/testproject:tag-1"]).To(Equal([]byte(`image-1-bytes`)))
+			Expect(registryClient.ImagesByReference["registry.example.com/group/testproject:tag-2"]).To(Equal([]byte(`image-2-bytes`)))
+			Expect(registryClient.ImagesByReference["registry.example.com/group/testproject:tag-3"]).To(Equal([]byte(`image-3-bytes`)))
 		}
 	})
 
@@ -184,7 +172,7 @@ werf:
 					"repo": "registry.example.com/group/testproject",
 				},
 			},
-			Files: []*chart.File{
+			Raw: []*chart.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
@@ -199,12 +187,6 @@ werf:
 			},
 		}
 
-		images := map[string][]byte{
-			"tag-1": []byte(`image-1-bytes`),
-			"tag-2": []byte(`image-2-bytes`),
-			"tag-3": []byte(`image-3-bytes`),
-		}
-
 		addr, err := ParseAddr("registry.example.com/group/testproject:1.2.3")
 		Expect(err).NotTo(HaveOccurred())
 		bundlesRegistryClient := NewBundlesRegistryClientStub()
@@ -212,35 +194,40 @@ werf:
 		from := NewRemoteBundle(addr.RegistryAddress, bundlesRegistryClient, registryClient)
 
 		bundlesRegistryClient.StubCharts[addr.RegistryAddress.FullName()] = ch
-		registryClient.RemoteImages["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
-		registryClient.RemoteImages["registry.example.com/group/testproject:tag-2"] = []byte(`image-2-bytes`)
-		registryClient.RemoteImages["registry.example.com/group/testproject:tag-3"] = []byte(`image-3-bytes`)
+		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
+		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-2"] = []byte(`image-2-bytes`)
+		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-3"] = []byte(`image-3-bytes`)
 
-		toArchiveReaderStub := NewBundleArchiveStubReader(ch, images)
+		toArchiveReaderStub := NewBundleArchiveStubReader(ch, nil)
 		toArchiveWriterStub := NewBundleArchiveStubWriter()
 		to := NewBundleArchive(toArchiveReaderStub, toArchiveWriterStub)
 
 		Expect(from.CopyTo(ctx, to)).To(Succeed())
-		Expect(toArchiveWriterStub.StubChart.Metadata.Name).To(Equal("testproject"))
-		Expect(toArchiveWriterStub.StubChart.Metadata.Version).To(Equal("1.2.3"))
 
-		origImages := ch.Values["werf"].(map[string]interface{})["image"].(map[string]interface{})
+		newCh := toArchiveWriterStub.StubChart
+		Expect(newCh).NotTo(BeNil())
+
 		origRepo := ch.Values["werf"].(map[string]interface{})["repo"].(string)
-		newImages := toArchiveWriterStub.StubChart.Values["werf"].(map[string]interface{})["image"].(map[string]interface{})
-		newRepo := toArchiveWriterStub.StubChart.Values["werf"].(map[string]interface{})["repo"].(string)
 
-		for imageName, v := range origImages {
-			Expect(newImages[imageName]).To(Equal(v))
-		}
-		for imageName, v := range newImages {
-			Expect(origImages[imageName]).To(Equal(v))
-		}
-		Expect(newRepo).To(Equal(origRepo))
+		VerifyChart(ctx, newCh, VerifyChartOptions{
+			ExpectedName:    "testproject",
+			ExpectedVersion: "1.2.3",
+			ExpectedRepo:    origRepo,
+			ExpectedImages: map[string]string{
+				"image-1": "registry.example.com/group/testproject:tag-1",
+				"image-2": "registry.example.com/group/testproject:tag-2",
+				"image-3": "registry.example.com/group/testproject:tag-3",
+			},
+		})
 
-		// TODO: check copied images?
+		{
+			Expect(toArchiveWriterStub.ImagesByTag["tag-1"]).To(Equal([]byte(`image-1-bytes`)))
+			Expect(toArchiveWriterStub.ImagesByTag["tag-2"]).To(Equal([]byte(`image-2-bytes`)))
+			Expect(toArchiveWriterStub.ImagesByTag["tag-3"]).To(Equal([]byte(`image-3-bytes`)))
+		}
 	})
 
-	It("should copy remote to archive", func() {
+	It("should copy remote to remote", func() {
 		ctx := context.Background()
 
 		ch := &chart.Chart{
@@ -260,17 +247,17 @@ werf:
 					"repo": "registry.example.com/group/testproject",
 				},
 			},
-			Files: []*chart.File{
+			Raw: []*chart.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
-		werf:
-		  image:
-		    image-1: registry.example.com/group/testproject:tag-1
-		    image-2: registry.example.com/group/testproject:tag-2
-		    image-3: registry.example.com/group/testproject:tag-3
-		  repo: registry.example.com/group/testproject
-		`),
+werf:
+  image:
+    image-1: registry.example.com/group/testproject:tag-1
+    image-2: registry.example.com/group/testproject:tag-2
+    image-3: registry.example.com/group/testproject:tag-3
+  repo: registry.example.com/group/testproject
+`),
 				},
 			},
 		}
@@ -282,9 +269,9 @@ werf:
 		Expect(err).NotTo(HaveOccurred())
 		from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
 		bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
-		registryClient.RemoteImages["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
-		registryClient.RemoteImages["registry.example.com/group/testproject:tag-2"] = []byte(`image-2-bytes`)
-		registryClient.RemoteImages["registry.example.com/group/testproject:tag-3"] = []byte(`image-3-bytes`)
+		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
+		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-2"] = []byte(`image-2-bytes`)
+		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-3"] = []byte(`image-3-bytes`)
 
 		toAddr, err := ParseAddr("registry2.example.com/group2/testproject2:4.5.6")
 		Expect(err).NotTo(HaveOccurred())
@@ -295,33 +282,21 @@ werf:
 		newCh := bundlesRegistryClient.StubCharts[toAddr.RegistryAddress.FullName()]
 		Expect(newCh).NotTo(BeNil())
 
-		{
-			Expect(newCh.Metadata.Name).To(Equal("testproject2"))
-			Expect(newCh.Metadata.Version).To(Equal("4.5.6"))
-		}
+		VerifyChart(ctx, newCh, VerifyChartOptions{
+			ExpectedName:    "testproject2",
+			ExpectedVersion: "4.5.6",
+			ExpectedRepo:    "registry2.example.com/group2/testproject2",
+			ExpectedImages: map[string]string{
+				"image-1": "registry2.example.com/group2/testproject2:tag-1",
+				"image-2": "registry2.example.com/group2/testproject2:tag-2",
+				"image-3": "registry2.example.com/group2/testproject2:tag-3",
+			},
+		})
 
 		{
-			origImages := ch.Values["werf"].(map[string]interface{})["image"].(map[string]interface{})
-			newImages := newCh.Values["werf"].(map[string]interface{})["image"].(map[string]interface{})
-
-			for imageName := range origImages {
-				Expect(newImages[imageName]).NotTo(BeNil())
-			}
-			for imageName := range newImages {
-				Expect(origImages[imageName]).NotTo(BeNil())
-			}
-			Expect(newImages["image-1"]).To(Equal("registry2.example.com/group2/testproject2:tag-1"))
-			Expect(newImages["image-2"]).To(Equal("registry2.example.com/group2/testproject2:tag-2"))
-			Expect(newImages["image-3"]).To(Equal("registry2.example.com/group2/testproject2:tag-3"))
-
-			newRepo := newCh.Values["werf"].(map[string]interface{})["repo"].(string)
-			Expect(newRepo).To(Equal("registry2.example.com/group2/testproject2"))
-		}
-
-		{
-			Expect(registryClient.RemoteImages["registry2.example.com/group2/testproject2:tag-1"]).To(Equal([]byte(`image-1-bytes`)))
-			Expect(registryClient.RemoteImages["registry2.example.com/group2/testproject2:tag-2"]).To(Equal([]byte(`image-2-bytes`)))
-			Expect(registryClient.RemoteImages["registry2.example.com/group2/testproject2:tag-3"]).To(Equal([]byte(`image-3-bytes`)))
+			Expect(registryClient.ImagesByReference["registry2.example.com/group2/testproject2:tag-1"]).To(Equal([]byte(`image-1-bytes`)))
+			Expect(registryClient.ImagesByReference["registry2.example.com/group2/testproject2:tag-2"]).To(Equal([]byte(`image-2-bytes`)))
+			Expect(registryClient.ImagesByReference["registry2.example.com/group2/testproject2:tag-3"]).To(Equal([]byte(`image-3-bytes`)))
 		}
 	})
 })
@@ -348,7 +323,6 @@ func (reader *BundleArchiveStubReader) ReadImageArchive(imageTag string) (*Image
 	if !hasTag {
 		return nil, fmt.Errorf("no image found by tag %q", imageTag)
 	}
-
 	return NewImageArchiveReadCloser(bytes.NewReader(data), func() error { return nil }), nil
 }
 
@@ -414,14 +388,12 @@ func (client *BundlesRegistryClientStub) PushChart(ref *bundles_registry.Referen
 type DockerRegistryStub struct {
 	docker_registry.Interface
 
-	ImagesArchives map[string][]byte
-	RemoteImages   map[string][]byte
+	ImagesByReference map[string][]byte
 }
 
 func NewDockerRegistryStub() *DockerRegistryStub {
 	return &DockerRegistryStub{
-		ImagesArchives: make(map[string][]byte),
-		RemoteImages:   make(map[string][]byte),
+		ImagesByReference: make(map[string][]byte),
 	}
 }
 
@@ -441,13 +413,13 @@ func (registry *DockerRegistryStub) PushImageArchive(ctx context.Context, archiv
 		return fmt.Errorf("unable to close image archive reader: %w", err)
 	}
 
-	registry.ImagesArchives[reference] = buf.Bytes()
+	registry.ImagesByReference[reference] = buf.Bytes()
 
 	return nil
 }
 
 func (registry *DockerRegistryStub) PullImageArchive(ctx context.Context, archiveWriter io.Writer, reference string) error {
-	data, hasImage := registry.RemoteImages[reference]
+	data, hasImage := registry.ImagesByReference[reference]
 	if !hasImage {
 		return fmt.Errorf("image not found")
 	}
@@ -459,11 +431,63 @@ func (registry *DockerRegistryStub) PullImageArchive(ctx context.Context, archiv
 }
 
 func (registry *DockerRegistryStub) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) error {
-	data, hasImage := registry.RemoteImages[sourceReference]
+	data, hasImage := registry.ImagesByReference[sourceReference]
 	if !hasImage {
 		return fmt.Errorf("source image not found")
 	}
 
-	registry.RemoteImages[destinationReference] = data
+	registry.ImagesByReference[destinationReference] = data
 	return nil
+}
+
+type VerifyChartOptions struct {
+	ExpectedName    string
+	ExpectedVersion string
+	ExpectedRepo    string
+	ExpectedImages  map[string]string
+}
+
+func VerifyChart(ctx context.Context, ch *chart.Chart, opts VerifyChartOptions) {
+	Expect(ch.Metadata.Name).To(Equal(opts.ExpectedName))
+	Expect(ch.Metadata.Version).To(Equal(opts.ExpectedVersion))
+
+	werfVals := ch.Values["werf"].(map[string]interface{})
+
+	repoVal := werfVals["repo"].(string)
+	Expect(repoVal).To(Equal(opts.ExpectedRepo))
+
+	imagesVals := werfVals["image"].(map[string]interface{})
+
+	// No excess images in values, only expected
+	for imageName := range imagesVals {
+		Expect(opts.ExpectedImages[imageName]).NotTo(BeNil())
+	}
+	// All expected images are in values
+	for imageName, imageRef := range opts.ExpectedImages {
+		Expect(imagesVals[imageName]).NotTo(BeNil())
+		Expect(imagesVals[imageName].(string)).To(Equal(imageRef))
+	}
+
+	chValues, err := json.Marshal(ch.Values)
+	Expect(err).NotTo(HaveOccurred())
+
+	var valuesFile *chart.File
+	for _, f := range ch.Raw {
+		if f.Name == "values.yaml" {
+			valuesFile = f
+			break
+		}
+	}
+	Expect(valuesFile).NotTo(BeNil())
+
+	var unmarshalledValues map[string]interface{}
+
+	Expect(yaml.Unmarshal(valuesFile.Data, &unmarshalledValues)).To(Succeed())
+
+	remarshalledValues, err := json.Marshal(unmarshalledValues)
+	Expect(err).NotTo(HaveOccurred())
+
+	fmt.Printf("Check chart loaded values:\n%s\n---\n", chValues)
+	fmt.Printf("Check chart values.yaml:\n%s\n---\n", remarshalledValues)
+	Expect(string(chValues)).To(Equal(string(remarshalledValues)))
 }

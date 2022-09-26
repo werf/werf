@@ -20,12 +20,33 @@ type LockManager struct {
 	LockerWithRetry *locker_with_retry.LockerWithRetry
 }
 
+type ConfigMapLocker struct {
+	ConfigMapName, Namespace string
+
+	Locker lockgate.Locker
+}
+
+func NewConfigMapLocker(configMapName, namespace string, locker lockgate.Locker) *ConfigMapLocker {
+	return &ConfigMapLocker{
+		ConfigMapName: configMapName,
+		Namespace:     namespace,
+		Locker:        locker,
+	}
+}
+
+func (locker *ConfigMapLocker) Acquire(lockName string, opts lockgate.AcquireOptions) (bool, lockgate.LockHandle, error) {
+	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, locker.Namespace, locker.ConfigMapName); err != nil {
+		return false, lockgate.LockHandle{}, fmt.Errorf("unable to prepare kubernetes cm/%s in ns/%s: %w", locker.Namespace, locker.ConfigMapName, err)
+	}
+	return locker.Locker.Acquire(lockName, opts)
+}
+
+func (locker *ConfigMapLocker) Release(lock lockgate.LockHandle) error {
+	return locker.Locker.Release(lock)
+}
+
 func NewLockManager(namespace string) (*LockManager, error) {
 	configMapName := "werf-synchronization"
-
-	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName); err != nil {
-		return nil, err
-	}
 
 	locker := distributed_locker.NewKubernetesLocker(
 		kube.DynamicClient, schema.GroupVersionResource{
@@ -34,7 +55,8 @@ func NewLockManager(namespace string) (*LockManager, error) {
 			Resource: "configmaps",
 		}, configMapName, namespace,
 	)
-	lockerWithRetry := locker_with_retry.NewLockerWithRetry(context.Background(), locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
+	cmLocker := NewConfigMapLocker(configMapName, namespace, locker)
+	lockerWithRetry := locker_with_retry.NewLockerWithRetry(context.Background(), cmLocker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
 
 	return &LockManager{
 		Namespace:       namespace,

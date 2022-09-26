@@ -12,6 +12,12 @@ on:
       excludePackages:
         description: Comma-separated package paths to exclude from testing
         type: string
+      k8sMajor:
+        default: 1
+        type: string
+      k8sMinor:
+        default: 25
+        type: string
       coverage:
         default: false
         type: string
@@ -25,6 +31,7 @@ defaults:
 
 env:
   DEBIAN_FRONTEND: "noninteractive"
+  WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
 
 jobs:
   _:
@@ -61,6 +68,7 @@ jobs:
 
       - name: Test
         run: |
+          source ./scripts/ci/integration_k8s_tests_before_hook.sh
           test -n "${{ inputs.packages }}" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
           if ${{ inputs.coverage }}; then
             task -p test:e2e:${{ inputs.scope }} $paths -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
@@ -69,6 +77,11 @@ jobs:
             task -p test:e2e:${{ inputs.scope }} $paths -- --keep-going --skip-package '${{ inputs.excludePackages }}'
           fi
           echo loadavg: $(cat /proc/loadavg)
+        env:
+          WERF_TEST_K8S_BASE64_KUBECONFIG: ${{ secrets[format('WERF_TEST_K8S_BASE64_KUBECONFIG_{0}_{1}', inputs.k8sMajor, inputs.k8sMinor)] }}
+          WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+          WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+          WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
 
       - if: inputs.coverage == 'true'
         name: Upload coverage artifact

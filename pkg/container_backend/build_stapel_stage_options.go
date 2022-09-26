@@ -5,6 +5,10 @@ import (
 	"io"
 )
 
+type AddDataArchiveOptions struct {
+	Owner, Group string
+}
+
 type BuildStapelStageOptionsInterface interface {
 	SetBaseImage(baseImage string) BuildStapelStageOptionsInterface
 
@@ -21,7 +25,7 @@ type BuildStapelStageOptionsInterface interface {
 	AddBuildVolumes(volumes ...string) BuildStapelStageOptionsInterface
 	AddCommands(commands ...string) BuildStapelStageOptionsInterface
 
-	AddDataArchive(archive io.ReadCloser, archiveType ArchiveType, to string) BuildStapelStageOptionsInterface
+	AddDataArchive(archive io.ReadCloser, archiveType ArchiveType, to string, o AddDataArchiveOptions) BuildStapelStageOptionsInterface
 	RemoveData(removeType RemoveType, paths, keepParentDirs []string) BuildStapelStageOptionsInterface
 	AddDependencyImport(imageName, fromPath, toPath string, includePaths, excludePaths []string, owner, group string) BuildStapelStageOptionsInterface
 }
@@ -56,9 +60,10 @@ const (
 )
 
 type DataArchiveSpec struct {
-	Archive io.ReadCloser
-	Type    ArchiveType
-	To      string
+	Archive      io.ReadCloser
+	Type         ArchiveType
+	To           string
+	Owner, Group string
 }
 
 type RemoveType int
@@ -155,11 +160,13 @@ func (opts *BuildStapelStageOptions) AddCommands(commands ...string) BuildStapel
 	return opts
 }
 
-func (opts *BuildStapelStageOptions) AddDataArchive(archive io.ReadCloser, archiveType ArchiveType, to string) BuildStapelStageOptionsInterface {
+func (opts *BuildStapelStageOptions) AddDataArchive(archive io.ReadCloser, archiveType ArchiveType, to string, o AddDataArchiveOptions) BuildStapelStageOptionsInterface {
 	opts.DataArchiveSpecs = append(opts.DataArchiveSpecs, DataArchiveSpec{
 		Archive: archive,
 		Type:    archiveType,
 		To:      to,
+		Owner:   o.Owner,
+		Group:   o.Group,
 	})
 	return opts
 }

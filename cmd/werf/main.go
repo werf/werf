@@ -72,7 +72,11 @@ func main() {
 		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)
 	}
 
-	rootCmd := constructRootCmd(ctx)
+	rootCmd, err := constructRootCmd(ctx)
+	if err != nil {
+		common.ShutdownTelemetry(ctx, 1)
+		common.TerminateWithError(err.Error(), 1)
+	}
 
 	setupTelemetryInit(rootCmd)
 
@@ -89,9 +93,14 @@ func main() {
 	common.ShutdownTelemetry(ctx, 0)
 }
 
-func constructRootCmd(ctx context.Context) *cobra.Command {
+func constructRootCmd(ctx context.Context) (*cobra.Command, error) {
+	helmCmd, err := helm.NewCmd(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to init helm commands: %w", err)
+	}
+
 	if filepath.Base(os.Args[0]) == "helm" || helm.IsHelm3Mode() {
-		return helm.NewCmd(ctx)
+		return helmCmd, nil
 	}
 
 	rootCmd := common.SetCommandContext(ctx, &cobra.Command{
@@ -140,7 +149,7 @@ Find more information at https://werf.io`),
 				configCmd(ctx),
 				managedImagesCmd(ctx),
 				hostCmd(ctx),
-				helm.NewCmd(ctx),
+				helmCmd,
 				crCmd(ctx),
 				kubectl.NewCmd(ctx),
 			},
@@ -160,7 +169,7 @@ Find more information at https://werf.io`),
 
 	templates.ActsAsRootCommand(rootCmd, *groups...)
 
-	return rootCmd
+	return rootCmd, nil
 }
 
 func dockerComposeCmd(ctx context.Context) *cobra.Command {

@@ -187,7 +187,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 	}
 
 	debugJsonData, err := phase.ImagesReport.ToJsonData()
-	logboek.Context(ctx).Debug().LogF("ImagesReport: (err: %s)\n%s", err, debugJsonData)
+	logboek.Context(ctx).Debug().LogF("ImagesReport: (err: %v)\n%s", err, debugJsonData)
 
 	if phase.ReportPath != "" {
 		var data []byte

@@ -1,0 +1,6 @@
+project: werf-test-e2e-kube-run-simple
+configVersion: 1
+
+---
+image: main
+from: ubuntu:22.04

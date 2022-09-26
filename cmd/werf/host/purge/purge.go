@@ -9,6 +9,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/cleaning"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/host_cleaning"
@@ -60,14 +61,12 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 	common.SetupProjectName(&commonCmdData, cmd)
-
 	common.SetupSynchronization(&commonCmdData, cmd)
-
 	common.SetupLogOptions(&commonCmdData, cmd)
-
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
-
 	common.SetupPlatform(&commonCmdData, cmd)
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
@@ -107,6 +106,11 @@ func runReset(ctx context.Context) error {
 			return err
 		}
 	} else {
+		if _, ok := containerBackend.(*container_backend.DockerServerBackend); !ok {
+			logboek.Context(ctx).Warn().LogF("Skip cleaning local storage with buildah backend (not implemented)\n")
+			return nil
+		}
+
 		stagesStorage := common.GetLocalStagesStorage(containerBackend)
 		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 		if err != nil {

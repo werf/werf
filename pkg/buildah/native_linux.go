@@ -31,9 +31,9 @@ import (
 	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/hashicorp/go-multierror"
-	"github.com/mattn/go-shellwords"
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/logboek"
@@ -458,7 +458,7 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 	}
 
 	if opts.Healthcheck != "" {
-		if healthcheck, err := newHealthConfigFromString(opts.Healthcheck); err != nil {
+		if healthcheck, err := newHealthConfigFromString(builder, opts.Healthcheck); err != nil {
 			return fmt.Errorf("error creating HEALTHCHECK: %w", err)
 		} else if healthcheck != nil {
 			builder.SetHealthcheck(healthcheck)
@@ -592,59 +592,36 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	}, nil
 }
 
-// Can return nil pointer to HealthConfig.
-func newHealthConfigFromString(healthcheck string) (*docker.HealthConfig, error) {
+// Can return nil pointer to HealthConfig
+func newHealthConfigFromString(builder *buildah.Builder, healthcheck string) (*docker.HealthConfig, error) {
 	if healthcheck == "" {
 		return nil, nil
 	}
 
-	healthConfig := &docker.HealthConfig{}
-
-	cmd := &cobra.Command{
-		SilenceErrors: true,
-		SilenceUsage:  true,
-		Args:          cobra.ArbitraryArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return nil
-			}
-
-			switch args[0] {
-			case "NONE":
-				healthConfig = &docker.HealthConfig{
-					Test: []string{"NONE"},
-				}
-				return nil
-			case "CMD", "CMD-SHELL":
-				if len(args) == 1 {
-					return fmt.Errorf("HEALTHCHECK %s should have command specified", args[0])
-				}
-				healthConfig.Test = args
-				return nil
-			}
-
-			healthConfig = nil
-			return nil
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.DurationVar(&healthConfig.Interval, "interval", 30*time.Second, "")
-	flags.DurationVar(&healthConfig.Timeout, "timeout", 30*time.Second, "")
-	flags.DurationVar(&healthConfig.StartPeriod, "start-period", 0, "")
-	flags.IntVar(&healthConfig.Retries, "retries", 3, "")
-
-	healthcheckSlice, err := shellwords.Parse(healthcheck)
+	dockerfile, err := parser.Parse(bytes.NewBufferString(fmt.Sprintf("HEALTHCHECK %s", healthcheck)))
 	if err != nil {
-		return nil, fmt.Errorf("error parsing HEALTHCHECK: %w", err)
-	}
-	cmd.SetArgs(healthcheckSlice)
-
-	if err := cmd.Execute(); err != nil {
-		return nil, fmt.Errorf("error parsing HEALTHCHECK: %w", err)
+		return nil, fmt.Errorf("unable to parse healthcheck instruction: %w", err)
 	}
 
-	return healthConfig, nil
+	var healthCheckNode *parser.Node
+	for _, n := range dockerfile.AST.Children {
+		if strings.ToLower(n.Value) == "healthcheck" {
+			healthCheckNode = n
+		}
+	}
+	if healthCheckNode == nil {
+		return nil, fmt.Errorf("no valid healthcheck instruction found, got %q", healthcheck)
+	}
+
+	cmd, err := instructions.ParseCommand(healthCheckNode)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse healthcheck instruction: %w", err)
+	}
+
+	healthcheckcmd := cmd.(*instructions.HealthCheckCommand)
+	healthconfig := (*docker.HealthConfig)(healthcheckcmd.Health)
+
+	return healthconfig, nil
 }
 
 func currentRlimits() (map[int]*syscall.Rlimit, error) {

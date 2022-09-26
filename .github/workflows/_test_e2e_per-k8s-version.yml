@@ -1,0 +1,93 @@
+name: xxxxx(internal)
+
+on:
+  workflow_call:
+    inputs:
+      scope:
+        required: true
+        type: string
+      packages:
+        description: Comma-separated package paths to test
+        type: string
+      excludePackages:
+        description: Comma-separated package paths to exclude from testing
+        type: string
+      coverage:
+        default: false
+        type: string
+      forceSkip:
+        default: false
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DEBIAN_FRONTEND: "noninteractive"
+  WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
+
+jobs:
+  _:
+    if: inputs.forceSkip == 'false'
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s-version:
+          - major: 1
+            minor: 23
+          - major: 1
+            minor: 25
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Install system dependencies
+        run: sudo apt-get install -y libbtrfs-dev buildah
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          cache: true
+          go-version-file: go.mod
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+
+      - name: Set up prebuilt werf test binary
+        uses: ./.github/actions/set-up-prebuilt-werf-test-binary
+        with:
+          coverage: ${{ inputs.coverage }}
+          coverageDirSuffix: ubuntu-22.04
+
+      - name: Set up git config
+        uses: ./.github/actions/set-up-git-config
+
+      - name: Install ginkgo
+        run: task -p deps:install:ginkgo
+
+      - name: Test
+        run: |
+          source ./scripts/ci/integration_k8s_tests_before_hook.sh
+          test -n "${{ inputs.packages }}" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
+          if ${{ inputs.coverage }}; then
+            task -p test:e2e:${{ inputs.scope }} $paths -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
+            mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
+          else
+            task -p test:e2e:${{ inputs.scope }} $paths -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+          fi
+          echo loadavg: $(cat /proc/loadavg)
+        env:
+          WERF_TEST_K8S_BASE64_KUBECONFIG: ${{ secrets[format('WERF_TEST_K8S_BASE64_KUBECONFIG_{0}_{1}', matrix.k8s-version.major, matrix.k8s-version.minor)] }}
+          WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+          WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+          WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+
+      - if: inputs.coverage == 'true'
+        name: Upload coverage artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: coverage
+          path: coverage

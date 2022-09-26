@@ -93,7 +93,7 @@ func (b *BaseBuildah) prepareBuildFromDockerfile(dockerfile []byte, contextTar i
 	}
 
 	if contextTar != nil {
-		if err := util.ExtractTar(contextTar, contextTmpDir); err != nil {
+		if err := util.ExtractTar(contextTar, contextTmpDir, util.ExtractTarOptions{}); err != nil {
 			return "", "", "", fmt.Errorf("unable to extract context tar to tmp context dir: %w", err)
 		}
 	}

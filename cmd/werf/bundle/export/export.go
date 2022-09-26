@@ -40,7 +40,7 @@ var commonCmdData common.CmdData
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:                   "export",
+		Use:                   "export [IMAGE_NAME...]",
 		Short:                 "Export bundle",
 		Hidden:                true, // Deprecated command
 		Long:                  common.GetLongCommandDescription(GetBundleExportDocs().Long),
@@ -76,10 +76,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				return runExport(ctx)
+				return runExport(ctx, common.GetImagesToProcess(args, *commonCmdData.WithoutImages))
 			})
 		},
 	})
+
+	commonCmdData.SetupWithoutImages(cmd)
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -142,7 +144,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func runExport(ctx context.Context) error {
+func runExport(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -195,6 +197,9 @@ func runExport(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
+	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+		return err
+	}
 
 	projectName := werfConfig.Meta.Project
 
@@ -239,7 +244,7 @@ func runExport(ctx context.Context) error {
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepo string
 
-	if len(werfConfig.StapelImages) != 0 || len(werfConfig.ImagesFromDockerfile) != 0 {
+	if !imagesToProcess.WithoutImages && (len(werfConfig.StapelImages)+len(werfConfig.ImagesFromDockerfile) > 0) {
 		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 		if err != nil {
 			return err
@@ -273,12 +278,12 @@ func runExport(ctx context.Context) error {
 
 		imagesRepo = storageManager.GetServiceValuesRepo()
 
-		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, buildOptions)
+		conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, imagesToProcess, buildOptions)
 		if err != nil {
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, nil, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
@@ -307,12 +312,12 @@ func runExport(ctx context.Context) error {
 		logboek.LogOptionalLn()
 	}
 
-	helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &commonCmdData)
+	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClientHandle, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
 		ExtraAnnotations:                  userExtraAnnotations,
 		ExtraLabels:                       userExtraLabels,
 		IgnoreInvalidAnnotationsAndLabels: true,

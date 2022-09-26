@@ -232,6 +232,34 @@ spec:
 `, werf.Version, werf.Version),
 			}),
 
+		Entry("should add builtin and extra annotations and labels into resources manifest with empty annotations and labels",
+			ExtraAnnotationsAndLabelsPostRendererTestData{
+				PostRenderer: NewExtraAnnotationsAndLabelsPostRenderer(
+					map[string]string{"test-annotation-1": "value-1", "test-annotation-2": "value-2"},
+					map[string]string{"test-label-1": "value-1", "test-label-2": "value-2"},
+					false,
+				),
+				Manifest: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+  annotations:
+  name: test
+`,
+				ExpectedManifest: fmt.Sprintf(`apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    test-label-1: value-1
+    test-label-2: value-2
+  annotations:
+    test-annotation-1: value-1
+    test-annotation-2: value-2
+    werf.io/version: %s
+  name: test
+`, werf.Version),
+			}),
+
 		Entry("should add extra annotations into yaml alias node defined by yaml anchor",
 			ExtraAnnotationsAndLabelsPostRendererTestData{
 				PostRenderer: NewExtraAnnotationsAndLabelsPostRenderer(

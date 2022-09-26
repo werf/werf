@@ -1,0 +1,10 @@
+project: werf-test-e2e-converge-complex
+configVersion: 1
+
+---
+image: app1
+from: ubuntu:22.04
+
+---
+image: app2
+from: ubuntu:22.04

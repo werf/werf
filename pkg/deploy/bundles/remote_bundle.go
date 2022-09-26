@@ -8,7 +8,6 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
@@ -128,6 +127,10 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 		return err
 	}
 
+	if err := SaveChartValues(ctx, ch); err != nil {
+		return err
+	}
+
 	ch.Metadata.Name = util.Reverse(strings.SplitN(util.Reverse(bundle.RegistryAddress.Repo), "/", 2)[0])
 
 	sv, err := BundleTagToChartVersion(ctx, bundle.RegistryAddress.Tag, time.Now())
@@ -194,17 +197,8 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 		return err
 	}
 
-	valuesRaw, err := yaml.Marshal(ch.Values)
-	if err != nil {
-		return fmt.Errorf("unable to marshal changed bundle values: %w", err)
-	}
-	logboek.Context(ctx).Debug().LogF("Values after change (%v):\n%s\n---\n", err, valuesRaw)
-
-	for _, f := range ch.Raw {
-		if f.Name == chartutil.ValuesfileName {
-			f.Data = valuesRaw
-			break
-		}
+	if err := SaveChartValues(ctx, ch); err != nil {
+		return err
 	}
 
 	ch.Metadata.Name = util.Reverse(strings.SplitN(util.Reverse(bundle.RegistryAddress.Repo), "/", 2)[0])

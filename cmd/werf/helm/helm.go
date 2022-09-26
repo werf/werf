@@ -36,16 +36,22 @@ func IsHelm3Mode() bool {
 	return os.Getenv("WERF_HELM3_MODE") == "1"
 }
 
-func NewCmd(ctx context.Context) *cobra.Command {
+func NewCmd(ctx context.Context) (*cobra.Command, error) {
 	var namespace string
-	actionConfig := new(action.Configuration)
-
 	ctx = common.NewContextWithCmdData(ctx, &_commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:          "helm",
 		Short:        "Manage application deployment with helm",
 		SilenceUsage: true,
 	})
+
+	registryClient, err := common.NewHelmRegistryClientWithoutInit(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create helm registry client: %w", err)
+	}
+
+	actionConfig := new(action.Configuration)
+	actionConfig.RegistryClient = registryClient
 
 	wc := chart_extender.NewWerfChartStub(ctx, false)
 
@@ -164,14 +170,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 					wc.SetStubServiceValues(vals)
 				}
 
+				common.InitHelmRegistryClient(registryClient, *_commonCmdData.DockerConfig, *_commonCmdData.InsecureHelmDependencies)
+
 				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64, *_commonCmdData.KubeConfigPathMergeList)
 
-				helmRegistryClientHandle, err := common.NewHelmRegistryClientHandle(ctx, &_commonCmdData)
-				if err != nil {
-					return fmt.Errorf("unable to create helm registry client: %w", err)
-				}
-
-				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, helmRegistryClientHandle, actionConfig, helm.InitActionConfigOptions{
+				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 					HooksStatusProgressPeriod: time.Duration(*_commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 					KubeConfigOptions: kube.KubeConfigOptions{
@@ -200,7 +203,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		cmd.PersistentFlags().Parse(os.Args[1:])
 	}
 
-	return cmd
+	return cmd, nil
 }
 
 func secretCmd(ctx context.Context) *cobra.Command {

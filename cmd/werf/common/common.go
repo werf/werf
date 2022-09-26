@@ -342,7 +342,7 @@ func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 		"releases-history-max",
 		"",
 		defaultValue,
-		"Max releases to keep in release storage. Can be set by environment variable $WERF_RELEASES_HISTORY_MAX. By default werf keeps all releases.",
+		"Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)",
 	)
 }
 
@@ -626,7 +626,7 @@ Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,
 func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Values = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple).
-Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_ENV=.helm/values_test.yaml, $WERF_VALUES_DB=.helm/values_db.yaml)`)
+Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`)
 }
 
 func SetupSetFile(cmdData *CmdData, cmd *cobra.Command) {

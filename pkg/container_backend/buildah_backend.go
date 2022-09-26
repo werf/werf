@@ -278,12 +278,19 @@ func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container 
 			return fmt.Errorf("unknown archive type %q", archive.Type)
 		}
 
-		logboek.Context(ctx).Debug().LogF("Apply data archive into %q\n", archive.To)
+		var err error
+		var uid, gid *uint32
+		uid, gid, err = getUIDAndGID(archive.Owner, archive.Group, container.RootMount)
+		if err != nil {
+			return fmt.Errorf("error getting UID/GID: %w", err)
+		}
 
 		logboek.Context(ctx).Debug().LogF("Extracting archive into container path %s\n", archive.To)
-		if err := util.ExtractTar(archive.Archive, extractDestPath); err != nil {
+
+		if err := util.ExtractTar(archive.Archive, extractDestPath, util.ExtractTarOptions{UID: uid, GID: gid}); err != nil {
 			return fmt.Errorf("unable to extract data archive into %s: %w", archive.To, err)
 		}
+
 		if err := archive.Archive.Close(); err != nil {
 			return fmt.Errorf("error closing archive data stream: %w", err)
 		}

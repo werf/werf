@@ -393,7 +393,9 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, []string{imageName}, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData))
+	imagesToProcess := build.NewImagesToProcess([]string{imageName}, false)
+
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData, imagesToProcess))
 	defer conveyorWithRetry.Terminate()
 
 	var image string
