@@ -13,6 +13,7 @@ import (
 	export2 "github.com/werf/werf/cmd/werf/export"
 	"github.com/werf/werf/cmd/werf/kube_run"
 	"github.com/werf/werf/cmd/werf/purge"
+	"github.com/werf/werf/cmd/werf/render"
 	"github.com/werf/werf/cmd/werf/run"
 	"html"
 	"io"
@@ -386,6 +387,8 @@ func getLongFromCommand(cmd *cobra.Command) string {
 		return compose.GetComposeDocs(cmd.Short).LongMD
 	case "Run docker-compose up command with forwarded image names.":
 		return compose.GetComposeDocs(cmd.Short).LongMD
+	case "Render Kubernetes templates":
+		return html.EscapeString(render.GetRenderDocs().LongMD)
 	default:
 		if len(cmd.Long) == 0 {
 			return cmd.Short
