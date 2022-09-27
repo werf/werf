@@ -43,9 +43,9 @@ var commonCmdData common.CmdData
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:   "publish [IMAGE_NAME...]",
-		Short: "Publish bundle",
-		Long: common.GetLongCommandDescription(GetBundlePublishDocs().Long),
+		Use:                   "publish [IMAGE_NAME...]",
+		Short:                 "Publish bundle",
+		Long:                  common.GetLongCommandDescription(GetBundlePublishDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(),
