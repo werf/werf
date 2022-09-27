@@ -385,17 +385,20 @@ func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 
 			copyRec, err := copyrec.New(absFrom, absTo, copyrec.Options{
 				MatchDir: func(path string) (copyrec.DirAction, error) {
+					relPath := util.GetRelativeToBaseFilepath(absFrom, path)
+
 					switch {
-					case pathMatcher.IsPathMatched(path):
+					case pathMatcher.IsPathMatched(relPath):
 						return copyrec.DirMatch, nil
-					case pathMatcher.ShouldGoThrough(path):
+					case pathMatcher.ShouldGoThrough(relPath):
 						return copyrec.DirFallThrough, nil
 					default:
 						return copyrec.DirSkip, nil
 					}
 				},
 				MatchFile: func(path string) (bool, error) {
-					return pathMatcher.IsPathMatched(path), err
+					relPath := util.GetRelativeToBaseFilepath(absFrom, path)
+					return pathMatcher.IsPathMatched(relPath), err
 				},
 				UID: uid,
 				GID: gid,
