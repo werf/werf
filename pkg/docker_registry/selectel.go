@@ -92,7 +92,11 @@ func (r *selectel) DeleteRepoImage(ctx context.Context, repoImage *image.Info) e
 }
 
 func (r *selectel) Tags(ctx context.Context, reference string, _ ...Option) ([]string, error) {
-	return r.tags(ctx, reference)
+	if r.hasExtraCredentials() {
+		return r.tags(ctx, reference)
+	}
+
+	return r.api.tags(ctx, reference)
 }
 
 func (r *selectel) deleteRepoImage(ctx context.Context, repoImage *image.Info) error {
@@ -230,4 +234,12 @@ func (r *selectel) parseReference(reference string) (string, string, string, err
 
 	repository := url.QueryEscape(strings.Join(repositoryParts[1:], "/"))
 	return parsedReference.RegistryStr(), repositoryParts[0], repository, nil
+}
+
+func (r *selectel) hasExtraCredentials() bool {
+	credentials := selectelCredentials(r.selectelCredentials)
+	if credentials.username != "" && credentials.password != "" && credentials.account != "" && (credentials.vpc != "" || credentials.vpcID != "") {
+		return true
+	}
+	return false
 }
