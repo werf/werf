@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.176](https://www.github.com/werf/werf/compare/v1.2.175...v1.2.176) (2022-09-27)
+
+
+### Bug Fixes
+
+* **buildah:** import with rename and include paths not working properly ([4d35fdb](https://www.github.com/werf/werf/commit/4d35fdb589f9bc3da67e886d168548a57e3b0840))
+
 ### [1.2.175](https://www.github.com/werf/werf/compare/v1.2.174...v1.2.175) (2022-09-23)
 
 
