@@ -1,26 +1,18 @@
 package build
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"sync"
-
-	"github.com/gookit/color"
-	"github.com/moby/buildkit/frontend/dockerfile/dockerignore"
-	"github.com/moby/buildkit/frontend/dockerfile/instructions"
-	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
 	"github.com/werf/logboek"
 	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/pkg/build/dockerfile_helpers"
+	"github.com/werf/werf/pkg/build/image"
 	"github.com/werf/werf/pkg/build/import_server"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -28,8 +20,6 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	imagePkg "github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/logging"
-	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/util"
@@ -48,8 +38,7 @@ type Conveyor struct {
 
 	sshAuthSock string
 
-	images    []*Image
-	imageSets [][]*Image
+	imagesTree *image.ImagesTree
 
 	stageImages        map[string]*stage.StageImage
 	giterminismManager giterminism_manager.Interface
@@ -81,7 +70,7 @@ type ConveyorOptions struct {
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
-	return &Conveyor{
+	c := &Conveyor{
 		werfConfig: werfConfig,
 
 		projectDir:       projectDir,
@@ -95,8 +84,6 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 		stageImages:            make(map[string]*stage.StageImage),
 		baseImagesRepoIdsCache: make(map[string]string),
 		baseImagesRepoErrCache: make(map[string]error),
-		images:                 []*Image{},
-		imageSets:              [][]*Image{},
 		remoteGitRepos:         make(map[string]*git_repo.Remote),
 		tmpDir:                 filepath.Join(baseTmpDir, util.GenerateConsistentRandomString(10)),
 		importServers:          make(map[string]import_server.ImportServer),
@@ -110,9 +97,26 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 		serviceRWMutex:   map[string]*sync.RWMutex{},
 		stageDigestMutex: map[string]*sync.Mutex{},
 	}
+
+	c.imagesTree = image.NewImagesTree(werfConfig, image.ImagesTreeOptions{
+		CommonImageOptions: image.CommonImageOptions{
+			Conveyor:           c,
+			GiterminismManager: c.GiterminismManager(),
+			ContainerBackend:   c.ContainerBackend,
+			StorageManager:     c.StorageManager,
+			ProjectDir:         c.projectDir,
+			ProjectName:        c.ProjectName(),
+			ContainerWerfDir:   c.containerWerfDir,
+			TmpDir:             c.tmpDir,
+		},
+		OnlyImages:    opts.OnlyImages,
+		WithoutImages: opts.WithoutImages,
+	})
+
+	return c
 }
 
-func (c *Conveyor) getServiceRWMutex(service string) *sync.RWMutex {
+func (c *Conveyor) GetServiceRWMutex(service string) *sync.RWMutex {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -130,45 +134,45 @@ func (c *Conveyor) UseLegacyStapelBuilder(cr container_backend.ContainerBackend)
 }
 
 func (c *Conveyor) IsBaseImagesRepoIdsCacheExist(key string) bool {
-	c.getServiceRWMutex("BaseImagesRepoIdsCache").RLock()
-	defer c.getServiceRWMutex("BaseImagesRepoIdsCache").RUnlock()
+	c.GetServiceRWMutex("BaseImagesRepoIdsCache").RLock()
+	defer c.GetServiceRWMutex("BaseImagesRepoIdsCache").RUnlock()
 
 	_, exist := c.baseImagesRepoIdsCache[key]
 	return exist
 }
 
 func (c *Conveyor) GetBaseImagesRepoIdsCache(key string) string {
-	c.getServiceRWMutex("BaseImagesRepoIdsCache").RLock()
-	defer c.getServiceRWMutex("BaseImagesRepoIdsCache").RUnlock()
+	c.GetServiceRWMutex("BaseImagesRepoIdsCache").RLock()
+	defer c.GetServiceRWMutex("BaseImagesRepoIdsCache").RUnlock()
 
 	return c.baseImagesRepoIdsCache[key]
 }
 
 func (c *Conveyor) SetBaseImagesRepoIdsCache(key, value string) {
-	c.getServiceRWMutex("BaseImagesRepoIdsCache").Lock()
-	defer c.getServiceRWMutex("BaseImagesRepoIdsCache").Unlock()
+	c.GetServiceRWMutex("BaseImagesRepoIdsCache").Lock()
+	defer c.GetServiceRWMutex("BaseImagesRepoIdsCache").Unlock()
 
 	c.baseImagesRepoIdsCache[key] = value
 }
 
 func (c *Conveyor) IsBaseImagesRepoErrCacheExist(key string) bool {
-	c.getServiceRWMutex("GetBaseImagesRepoErrCache").RLock()
-	defer c.getServiceRWMutex("GetBaseImagesRepoErrCache").RUnlock()
+	c.GetServiceRWMutex("GetBaseImagesRepoErrCache").RLock()
+	defer c.GetServiceRWMutex("GetBaseImagesRepoErrCache").RUnlock()
 
 	_, exist := c.baseImagesRepoErrCache[key]
 	return exist
 }
 
 func (c *Conveyor) GetBaseImagesRepoErrCache(key string) error {
-	c.getServiceRWMutex("GetBaseImagesRepoErrCache").RLock()
-	defer c.getServiceRWMutex("GetBaseImagesRepoErrCache").RUnlock()
+	c.GetServiceRWMutex("GetBaseImagesRepoErrCache").RLock()
+	defer c.GetServiceRWMutex("GetBaseImagesRepoErrCache").RUnlock()
 
 	return c.baseImagesRepoErrCache[key]
 }
 
 func (c *Conveyor) SetBaseImagesRepoErrCache(key string, err error) {
-	c.getServiceRWMutex("BaseImagesRepoErrCache").Lock()
-	defer c.getServiceRWMutex("BaseImagesRepoErrCache").Unlock()
+	c.GetServiceRWMutex("BaseImagesRepoErrCache").Lock()
+	defer c.GetServiceRWMutex("BaseImagesRepoErrCache").Unlock()
 
 	c.baseImagesRepoErrCache[key] = err
 }
@@ -191,8 +195,8 @@ func (c *Conveyor) GetLocalGitRepoVirtualMergeOptions() stage.VirtualMergeOption
 }
 
 func (c *Conveyor) GetImportServer(ctx context.Context, imageName, stageName string) (import_server.ImportServer, error) {
-	c.getServiceRWMutex("ImportServer").Lock()
-	defer c.getServiceRWMutex("ImportServer").Unlock()
+	c.GetServiceRWMutex("ImportServer").Lock()
+	defer c.GetServiceRWMutex("ImportServer").Unlock()
 
 	importServerName := imageName
 	if stageName != "" {
@@ -293,15 +297,15 @@ func (c *Conveyor) GiterminismManager() giterminism_manager.Interface {
 }
 
 func (c *Conveyor) SetRemoteGitRepo(key string, repo *git_repo.Remote) {
-	c.getServiceRWMutex("RemoteGitRepo").Lock()
-	defer c.getServiceRWMutex("RemoteGitRepo").Unlock()
+	c.GetServiceRWMutex("RemoteGitRepo").Lock()
+	defer c.GetServiceRWMutex("RemoteGitRepo").Unlock()
 
 	c.remoteGitRepos[key] = repo
 }
 
 func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
-	c.getServiceRWMutex("RemoteGitRepo").RLock()
-	defer c.getServiceRWMutex("RemoteGitRepo").RUnlock()
+	c.GetServiceRWMutex("RemoteGitRepo").RLock()
+	defer c.GetServiceRWMutex("RemoteGitRepo").RUnlock()
 
 	return c.remoteGitRepos[key]
 }
@@ -337,12 +341,12 @@ func (c *Conveyor) FetchLastImageStage(ctx context.Context, imageName string) er
 }
 
 func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) (images []*imagePkg.InfoGetter) {
-	for _, img := range c.images {
-		if img.isArtifact {
+	for _, img := range c.imagesTree.GetImages() {
+		if img.IsArtifact {
 			continue
 		}
 
-		getter := c.StorageManager.GetImageInfoGetter(img.name, img.GetLastNonEmptyStage(), opts)
+		getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage(), opts)
 		images = append(images, getter)
 	}
 
@@ -352,12 +356,12 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) (images 
 func (c *Conveyor) GetExportedImagesNames() []string {
 	var res []string
 
-	for _, img := range c.images {
-		if img.isArtifact {
+	for _, img := range c.imagesTree.GetImages() {
+		if img.IsArtifact {
 			continue
 		}
 
-		res = append(res, img.name)
+		res = append(res, img.Name)
 	}
 
 	return res
@@ -365,12 +369,12 @@ func (c *Conveyor) GetExportedImagesNames() []string {
 
 func (c *Conveyor) GetImagesEnvArray() []string {
 	var envArray []string
-	for _, img := range c.images {
-		if img.isArtifact {
+	for _, img := range c.imagesTree.GetImages() {
+		if img.IsArtifact {
 			continue
 		}
 
-		envArray = append(envArray, generateImageEnv(img.name, c.GetImageNameForLastImageStage(img.name)))
+		envArray = append(envArray, generateImageEnv(img.Name, c.GetImageNameForLastImageStage(img.Name)))
 	}
 
 	return envArray
@@ -452,57 +456,8 @@ func (c *Conveyor) determineStages(ctx context.Context) error {
 }
 
 func (c *Conveyor) doDetermineStages(ctx context.Context) error {
-	imageConfigSets, err := c.werfConfig.GroupImagesByIndependentSets(c.ConveyorOptions.OnlyImages, c.ConveyorOptions.WithoutImages)
-	if err != nil {
-		return err
-	}
-
-	for _, iteration := range imageConfigSets {
-		var imageSet []*Image
-
-		for _, imageInterfaceConfig := range iteration {
-			var img *Image
-			var imageLogName string
-			var style color.Style
-
-			switch imageConfig := imageInterfaceConfig.(type) {
-			case config.StapelImageInterface:
-				imageLogName = logging.ImageLogProcessName(imageConfig.ImageBaseConfig().Name, imageConfig.IsArtifact())
-				style = ImageLogProcessStyle(imageConfig.IsArtifact())
-			case *config.ImageFromDockerfile:
-				imageLogName = logging.ImageLogProcessName(imageConfig.Name, false)
-				style = ImageLogProcessStyle(false)
-			}
-
-			err := logboek.Context(ctx).Info().LogProcess(imageLogName).
-				Options(func(options types.LogProcessOptionsInterface) {
-					options.Style(style)
-				}).
-				DoError(func() error {
-					var err error
-
-					switch imageConfig := imageInterfaceConfig.(type) {
-					case config.StapelImageInterface:
-						img, err = prepareImageBasedOnStapelImageConfig(ctx, imageConfig, c)
-					case *config.ImageFromDockerfile:
-						img, err = prepareImageBasedOnImageFromDockerfile(ctx, imageConfig, c)
-					}
-
-					if err != nil {
-						return err
-					}
-
-					c.images = append(c.images, img)
-					imageSet = append(imageSet, img)
-
-					return nil
-				})
-			if err != nil {
-				return err
-			}
-		}
-
-		c.imageSets = append(c.imageSets, imageSet)
+	if err := c.imagesTree.Calculate(ctx); err != nil {
+		return fmt.Errorf("unable to calculate images tree: %w", err)
 	}
 
 	return nil
@@ -540,10 +495,10 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 }
 
 func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool) error {
-	if c.Parallel && len(c.images) > 1 {
+	if c.Parallel && len(c.imagesTree.GetImages()) > 1 {
 		return c.doImagesInParallel(ctx, phases, logImages)
 	} else {
-		for _, img := range c.images {
+		for _, img := range c.imagesTree.GetImages() {
 			if err := c.doImage(ctx, img, phases, logImages); err != nil {
 				return err
 			}
@@ -564,17 +519,17 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			options.Style(stylePkg.Highlight())
 		}).
 		Do(func() {
-			for setId := range c.imageSets {
+			for setId := range c.imagesTree.GetImagesSets() {
 				logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
-				for _, img := range c.imageSets[setId] {
+				for _, img := range c.imagesTree.GetImagesSets()[setId] {
 					logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
 				}
 				logboek.Context(ctx).LogOptionalLn()
 			}
 		})
 
-	for setId := range c.imageSets {
-		numberOfTasks := len(c.imageSets[setId])
+	for setId := range c.imagesTree.GetImagesSets() {
+		numberOfTasks := len(c.imagesTree.GetImagesSets()[setId])
 		numberOfWorkers := int(c.ParallelTasksLimit)
 
 		if err := parallel.DoTasks(ctx, numberOfTasks, parallel.DoTasksOptions{
@@ -582,7 +537,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			MaxNumberOfWorkers:         numberOfWorkers,
 			LiveOutput:                 true,
 		}, func(ctx context.Context, taskId int) error {
-			taskImage := c.imageSets[setId][taskId]
+			taskImage := c.imagesTree.GetImagesSets()[setId][taskId]
 
 			var taskPhases []Phase
 			for _, phase := range phases {
@@ -598,7 +553,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 	return nil
 }
 
-func (c *Conveyor) doImage(ctx context.Context, img *Image, phases []Phase, logImages bool) error {
+func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase, logImages bool) error {
 	var imagesLogger types.ManagerInterface
 	if logImages {
 		imagesLogger = logboek.Context(ctx).Default()
@@ -652,27 +607,27 @@ func (c *Conveyor) doImage(ctx context.Context, img *Image, phases []Phase, logI
 		})
 }
 
-func (c *Conveyor) projectName() string {
+func (c *Conveyor) ProjectName() string {
 	return c.werfConfig.Meta.Project
 }
 
 func (c *Conveyor) GetStageImage(name string) *stage.StageImage {
-	c.getServiceRWMutex("StageImages").RLock()
-	defer c.getServiceRWMutex("StageImages").RUnlock()
+	c.GetServiceRWMutex("StageImages").RLock()
+	defer c.GetServiceRWMutex("StageImages").RUnlock()
 
 	return c.stageImages[name]
 }
 
 func (c *Conveyor) UnsetStageImage(name string) {
-	c.getServiceRWMutex("StageImages").Lock()
-	defer c.getServiceRWMutex("StageImages").Unlock()
+	c.GetServiceRWMutex("StageImages").Lock()
+	defer c.GetServiceRWMutex("StageImages").Unlock()
 
 	delete(c.stageImages, name)
 }
 
 func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
-	c.getServiceRWMutex("StageImages").Lock()
-	defer c.getServiceRWMutex("StageImages").Unlock()
+	c.GetServiceRWMutex("StageImages").Lock()
+	defer c.GetServiceRWMutex("StageImages").Unlock()
 
 	c.stageImages[stageImage.Image.Name()] = stageImage
 }
@@ -689,8 +644,8 @@ func (c *Conveyor) GetOrCreateStageImage(fromImage *container_backend.LegacyStag
 	return img
 }
 
-func (c *Conveyor) GetImage(name string) *Image {
-	for _, img := range c.images {
+func (c *Conveyor) GetImage(name string) *image.Image {
+	for _, img := range c.imagesTree.GetImages() {
 		if img.GetName() == name {
 			return img
 		}
@@ -748,10 +703,6 @@ func (c *Conveyor) GetImageIDForImageStage(imageName, stageName string) string {
 	return c.getImageStage(imageName, stageName).GetStageImage().Image.GetStageDescription().Info.ID
 }
 
-func (c *Conveyor) GetImageTmpDir(imageName string) string {
-	return filepath.Join(c.tmpDir, "image", imageName)
-}
-
 func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
 	return c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
 }
@@ -762,532 +713,4 @@ func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, me
 
 func (c *Conveyor) RmImportMetadata(ctx context.Context, projectName, id string) error {
 	return c.StorageManager.GetStagesStorage().RmImportMetadata(ctx, projectName, id)
-}
-
-func prepareImageBasedOnStapelImageConfig(ctx context.Context, imageInterfaceConfig config.StapelImageInterface, c *Conveyor) (*Image, error) {
-	image := &Image{}
-
-	imageBaseConfig := imageInterfaceConfig.ImageBaseConfig()
-	imageName := imageBaseConfig.Name
-	imageArtifact := imageInterfaceConfig.IsArtifact()
-
-	from, fromImageName, fromLatest := getFromFields(imageBaseConfig)
-
-	image.name = imageName
-
-	if from != "" {
-		if err := handleImageFromName(ctx, from, fromLatest, image, c); err != nil {
-			return nil, err
-		}
-	} else {
-		image.baseImageImageName = fromImageName
-	}
-
-	image.isArtifact = imageArtifact
-
-	err := initStages(ctx, image, imageInterfaceConfig, c)
-	if err != nil {
-		return nil, err
-	}
-
-	return image, nil
-}
-
-func handleImageFromName(ctx context.Context, from string, fromLatest bool, image *Image, c *Conveyor) error {
-	image.baseImageName = from
-
-	if fromLatest {
-		if _, err := image.getFromBaseImageIdFromRegistry(ctx, c, image.baseImageName); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, bool) {
-	var from string
-	var fromImageName string
-
-	switch {
-	case imageBaseConfig.From != "":
-		from = imageBaseConfig.From
-	case imageBaseConfig.FromImageName != "":
-		fromImageName = imageBaseConfig.FromImageName
-	case imageBaseConfig.FromArtifactName != "":
-		fromImageName = imageBaseConfig.FromArtifactName
-	}
-
-	return from, fromImageName, imageBaseConfig.FromLatest
-}
-
-func initStages(ctx context.Context, image *Image, imageInterfaceConfig config.StapelImageInterface, c *Conveyor) error {
-	var stages []stage.Interface
-
-	imageBaseConfig := imageInterfaceConfig.ImageBaseConfig()
-	imageName := imageBaseConfig.Name
-	imageArtifact := imageInterfaceConfig.IsArtifact()
-
-	baseStageOptions := &stage.NewBaseStageOptions{
-		ImageName:        imageName,
-		ConfigMounts:     imageBaseConfig.Mount,
-		ImageTmpDir:      c.GetImageTmpDir(imageBaseConfig.Name),
-		ContainerWerfDir: c.containerWerfDir,
-		ProjectName:      c.werfConfig.Meta.Project,
-	}
-
-	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{
-		ScriptsDir:           getImageScriptsDir(imageName, c),
-		ContainerArchivesDir: getImageArchivesContainerDir(c),
-		ContainerScriptsDir:  getImageScriptsContainerDir(c),
-	}
-
-	gitPatchStageOptions := &stage.NewGitPatchStageOptions{
-		ScriptsDir:           getImageScriptsDir(imageName, c),
-		ContainerPatchesDir:  getImagePatchesContainerDir(c),
-		ContainerArchivesDir: getImageArchivesContainerDir(c),
-		ContainerScriptsDir:  getImageScriptsContainerDir(c),
-	}
-
-	gitMappings, err := generateGitMappings(ctx, imageBaseConfig, c)
-	if err != nil {
-		return err
-	}
-
-	gitMappingsExist := len(gitMappings) != 0
-
-	stages = appendIfExist(ctx, stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateBeforeInstallStage(ctx, imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeInstallStage(imageBaseConfig, baseStageOptions))
-
-	if gitMappingsExist {
-		stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
-	}
-
-	stages = appendIfExist(ctx, stages, stage.GenerateInstallStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterInstallStage(imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateBeforeSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeSetupStage(imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterSetupStage(imageBaseConfig, baseStageOptions))
-
-	if !imageArtifact {
-		if gitMappingsExist {
-			stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
-			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
-		}
-
-		stages = appendIfExist(ctx, stages, stage.GenerateDockerInstructionsStage(imageInterfaceConfig.(*config.StapelImage), baseStageOptions))
-	}
-
-	if len(gitMappings) != 0 {
-		logboek.Context(ctx).Info().LogLnDetails("Using git stages")
-
-		for _, s := range stages {
-			s.SetGitMappings(gitMappings)
-		}
-	}
-
-	image.SetStages(stages)
-
-	return nil
-}
-
-func generateGitMappings(ctx context.Context, imageBaseConfig *config.StapelImageBase, c *Conveyor) ([]*stage.GitMapping, error) {
-	var gitMappings []*stage.GitMapping
-
-	if len(imageBaseConfig.Git.Local) != 0 {
-		localGitRepo := c.giterminismManager.LocalGitRepo()
-
-		if !c.werfConfig.Meta.GitWorktree.GetForceShallowClone() {
-			isShallowClone, err := localGitRepo.IsShallowClone(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("check shallow clone failed: %w", err)
-			}
-
-			if isShallowClone {
-				if c.werfConfig.Meta.GitWorktree.GetAllowUnshallow() {
-					if err := localGitRepo.Unshallow(ctx); err != nil {
-						return nil, fmt.Errorf("unable to fetch local git repo: %w", err)
-					}
-				} else {
-					logboek.Context(ctx).Warn().LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
-					logboek.Context(ctx).Warn().LogLn("It is recommended to enable automatic unshallow of the git worktree with gitWorktree.allowUnshallow=true werf.yaml directive (which is enabled by default, http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
-					logboek.Context(ctx).Warn().LogLn("If you still want to use shallow clone, then add gitWorktree.forceShallowClone=true werf.yaml directive (http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
-
-					return nil, fmt.Errorf("shallow git clone is not allowed")
-				}
-			}
-		}
-
-		for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
-			gitMapping, err := gitLocalPathInit(ctx, localGitMappingConfig, imageBaseConfig.Name, c)
-			if err != nil {
-				return nil, err
-			}
-			gitMappings = append(gitMappings, gitMapping)
-		}
-	}
-
-	for _, remoteGitMappingConfig := range imageBaseConfig.Git.Remote {
-		remoteGitRepo := c.GetRemoteGitRepo(remoteGitMappingConfig.Name)
-		if remoteGitRepo == nil {
-			var err error
-			remoteGitRepo, err = git_repo.OpenRemoteRepo(remoteGitMappingConfig.Name, remoteGitMappingConfig.Url)
-			if err != nil {
-				return nil, fmt.Errorf("unable to open remote git repo %s by url %s: %w", remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, err)
-			}
-
-			if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name)).
-				DoError(func() error {
-					return remoteGitRepo.CloneAndFetch(ctx)
-				}); err != nil {
-				return nil, err
-			}
-
-			c.SetRemoteGitRepo(remoteGitMappingConfig.Name, remoteGitRepo)
-		}
-
-		gitMapping, err := gitRemoteArtifactInit(ctx, remoteGitMappingConfig, remoteGitRepo, imageBaseConfig.Name, c)
-		if err != nil {
-			return nil, err
-		}
-		gitMappings = append(gitMappings, gitMapping)
-	}
-
-	var res []*stage.GitMapping
-
-	if len(gitMappings) != 0 {
-		err := logboek.Context(ctx).Info().LogProcess("Initializing git mappings").DoError(func() error {
-			resGitMappings, err := filterAndLogGitMappings(ctx, c, gitMappings)
-			if err != nil {
-				return err
-			}
-
-			res = resGitMappings
-
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return res, nil
-}
-
-func filterAndLogGitMappings(ctx context.Context, c *Conveyor, gitMappings []*stage.GitMapping) ([]*stage.GitMapping, error) {
-	var res []*stage.GitMapping
-
-	for ind, gitMapping := range gitMappings {
-		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name)).DoError(func() error {
-			withTripleIndent := func(f func()) {
-				if logboek.Context(ctx).Info().IsAccepted() {
-					logboek.Context(ctx).Streams().IncreaseIndent()
-					logboek.Context(ctx).Streams().IncreaseIndent()
-					logboek.Context(ctx).Streams().IncreaseIndent()
-				}
-
-				f()
-
-				if logboek.Context(ctx).Info().IsAccepted() {
-					logboek.Context(ctx).Streams().DecreaseIndent()
-					logboek.Context(ctx).Streams().DecreaseIndent()
-					logboek.Context(ctx).Streams().DecreaseIndent()
-				}
-			}
-
-			withTripleIndent(func() {
-				logboek.Context(ctx).Info().LogFDetails("add: %s\n", gitMapping.Add)
-				logboek.Context(ctx).Info().LogFDetails("to: %s\n", gitMapping.To)
-
-				if len(gitMapping.IncludePaths) != 0 {
-					logboek.Context(ctx).Info().LogFDetails("includePaths: %+v\n", gitMapping.IncludePaths)
-				}
-
-				if len(gitMapping.ExcludePaths) != 0 {
-					logboek.Context(ctx).Info().LogFDetails("excludePaths: %+v\n", gitMapping.ExcludePaths)
-				}
-
-				if gitMapping.Commit != "" {
-					logboek.Context(ctx).Info().LogFDetails("commit: %s\n", gitMapping.Commit)
-				}
-
-				if gitMapping.Branch != "" {
-					logboek.Context(ctx).Info().LogFDetails("branch: %s\n", gitMapping.Branch)
-				}
-
-				if gitMapping.Owner != "" {
-					logboek.Context(ctx).Info().LogFDetails("owner: %s\n", gitMapping.Owner)
-				}
-
-				if gitMapping.Group != "" {
-					logboek.Context(ctx).Info().LogFDetails("group: %s\n", gitMapping.Group)
-				}
-
-				if len(gitMapping.StagesDependencies) != 0 {
-					logboek.Context(ctx).Info().LogLnDetails("stageDependencies:")
-
-					for s, values := range gitMapping.StagesDependencies {
-						if len(values) != 0 {
-							logboek.Context(ctx).Info().LogFDetails("  %s: %v\n", s, values)
-						}
-					}
-				}
-			})
-
-			logboek.Context(ctx).Info().LogLn()
-
-			commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
-			if err != nil {
-				return fmt.Errorf("unable to get commit of repo %q: %w", gitMapping.GitRepo().GetName(), err)
-			}
-
-			if commitInfo.VirtualMerge {
-				logboek.Context(ctx).Info().LogFDetails("Commit %s will be used (virtual merge of %s into %s)\n", commitInfo.Commit, commitInfo.VirtualMergeFromCommit, commitInfo.VirtualMergeIntoCommit)
-			} else {
-				logboek.Context(ctx).Info().LogFDetails("Commit %s will be used\n", commitInfo.Commit)
-			}
-
-			res = append(res, gitMapping)
-
-			return nil
-		}); err != nil {
-			return nil, err
-		}
-	}
-
-	return res, nil
-}
-
-func gitRemoteArtifactInit(ctx context.Context, remoteGitMappingConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, imageName string, c *Conveyor) (*stage.GitMapping, error) {
-	gitMapping := baseGitMappingInit(remoteGitMappingConfig.GitLocalExport, imageName, c)
-
-	gitMapping.Tag = remoteGitMappingConfig.Tag
-	gitMapping.Commit = remoteGitMappingConfig.Commit
-	gitMapping.Branch = remoteGitMappingConfig.Branch
-
-	gitMapping.Name = remoteGitMappingConfig.Name
-	gitMapping.SetGitRepo(remoteGitRepo)
-
-	gitMappingTo, err := makeGitMappingTo(ctx, gitMapping, remoteGitMappingConfig.GitLocalExport.GitMappingTo(), c)
-	if err != nil {
-		return nil, fmt.Errorf("unable to make remote git.to mapping for image %q: %w", imageName, err)
-	}
-	gitMapping.To = gitMappingTo
-
-	return gitMapping, nil
-}
-
-func gitLocalPathInit(ctx context.Context, localGitMappingConfig *config.GitLocal, imageName string, c *Conveyor) (*stage.GitMapping, error) {
-	gitMapping := baseGitMappingInit(localGitMappingConfig.GitLocalExport, imageName, c)
-
-	gitMapping.Name = "own"
-	gitMapping.SetGitRepo(c.giterminismManager.LocalGitRepo())
-
-	gitMappingTo, err := makeGitMappingTo(ctx, gitMapping, localGitMappingConfig.GitLocalExport.GitMappingTo(), c)
-	if err != nil {
-		return nil, fmt.Errorf("unable to make local git.to mapping for image %q: %w", imageName, err)
-	}
-	gitMapping.To = gitMappingTo
-
-	return gitMapping, nil
-}
-
-func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conveyor) *stage.GitMapping {
-	var stageDependencies map[stage.StageName][]string
-	if local.StageDependencies != nil {
-		stageDependencies = stageDependenciesToMap(local.StageDependencies)
-	}
-
-	gitMapping := stage.NewGitMapping()
-
-	gitMapping.ContainerPatchesDir = getImagePatchesContainerDir(c)
-	gitMapping.ContainerArchivesDir = getImageArchivesContainerDir(c)
-	gitMapping.ScriptsDir = getImageScriptsDir(imageName, c)
-	gitMapping.ContainerScriptsDir = getImageScriptsContainerDir(c)
-
-	gitMapping.Add = local.GitMappingAdd()
-	gitMapping.ExcludePaths = local.ExcludePaths
-	gitMapping.IncludePaths = local.IncludePaths
-	gitMapping.Owner = local.Owner
-	gitMapping.Group = local.Group
-	gitMapping.StagesDependencies = stageDependencies
-
-	return gitMapping
-}
-
-func makeGitMappingTo(ctx context.Context, gitMapping *stage.GitMapping, gitMappingTo string, c *Conveyor) (string, error) {
-	if gitMappingTo != "/" {
-		return gitMappingTo, nil
-	}
-
-	gitRepoName := gitMapping.GitRepo().GetName()
-	commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
-	if err != nil {
-		return "", fmt.Errorf("unable to get latest commit info for repo %q: %w", gitRepoName, err)
-	}
-
-	if gitMappingAddIsDir, err := gitMapping.GitRepo().IsCommitTreeEntryDirectory(ctx, commitInfo.Commit, gitMapping.Add); err != nil {
-		return "", fmt.Errorf("unable to determine whether git `add: %s` is dir or file for repo %q: %w", gitMapping.Add, gitRepoName, err)
-	} else if !gitMappingAddIsDir {
-		return "", fmt.Errorf("for git repo %q specifying `to: /` when adding a single file from git with `add: %s` is not allowed. Fix this by changing `to: /` to `to: /%s`.", gitRepoName, gitMapping.Add, filepath.Base(gitMapping.Add))
-	}
-
-	return gitMappingTo, nil
-}
-
-func getImagePatchesContainerDir(c *Conveyor) string {
-	return path.Join(c.containerWerfDir, "patch")
-}
-
-func getImageArchivesContainerDir(c *Conveyor) string {
-	return path.Join(c.containerWerfDir, "archive")
-}
-
-func getImageScriptsDir(imageName string, c *Conveyor) string {
-	return filepath.Join(c.tmpDir, imageName, "scripts")
-}
-
-func getImageScriptsContainerDir(c *Conveyor) string {
-	return path.Join(c.containerWerfDir, "scripts")
-}
-
-func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]string {
-	result := map[stage.StageName][]string{
-		stage.Install:     sd.Install,
-		stage.BeforeSetup: sd.BeforeSetup,
-		stage.Setup:       sd.Setup,
-	}
-
-	return result
-}
-
-func appendIfExist(ctx context.Context, stages []stage.Interface, stage stage.Interface) []stage.Interface {
-	if !reflect.ValueOf(stage).IsNil() {
-		logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", stage.Name())
-		return append(stages, stage)
-	}
-
-	return stages
-}
-
-func prepareImageBasedOnImageFromDockerfile(ctx context.Context, imageFromDockerfileConfig *config.ImageFromDockerfile, c *Conveyor) (*Image, error) {
-	img := &Image{}
-	img.name = imageFromDockerfileConfig.Name
-	img.isDockerfileImage = true
-
-	for _, contextAddFile := range imageFromDockerfileConfig.ContextAddFiles {
-		relContextAddFile := filepath.Join(imageFromDockerfileConfig.Context, contextAddFile)
-		absContextAddFile := filepath.Join(c.projectDir, relContextAddFile)
-		exist, err := util.FileExists(absContextAddFile)
-		if err != nil {
-			return nil, fmt.Errorf("unable to check existence of file %s: %w", absContextAddFile, err)
-		}
-
-		if !exist {
-			return nil, fmt.Errorf("contextAddFile %q was not found (the path must be relative to the context %q)", contextAddFile, imageFromDockerfileConfig.Context)
-		}
-	}
-
-	relDockerfilePath := filepath.Join(imageFromDockerfileConfig.Context, imageFromDockerfileConfig.Dockerfile)
-	dockerfileData, err := c.giterminismManager.FileReader().ReadDockerfile(ctx, relDockerfilePath)
-	if err != nil {
-		return nil, err
-	}
-
-	var relDockerignorePath string
-	var dockerignorePatterns []string
-	for _, relContextDockerignorePath := range []string{
-		imageFromDockerfileConfig.Dockerfile + ".dockerignore",
-		".dockerignore",
-	} {
-		relDockerignorePath = filepath.Join(imageFromDockerfileConfig.Context, relContextDockerignorePath)
-		if exist, err := c.giterminismManager.FileReader().IsDockerignoreExistAnywhere(ctx, relDockerignorePath); err != nil {
-			return nil, err
-		} else if exist {
-			dockerignoreData, err := c.giterminismManager.FileReader().ReadDockerignore(ctx, relDockerignorePath)
-			if err != nil {
-				return nil, err
-			}
-
-			r := bytes.NewReader(dockerignoreData)
-			dockerignorePatterns, err = dockerignore.ReadAll(r)
-			if err != nil {
-				return nil, fmt.Errorf("unable to read %q file: %w", relContextDockerignorePath, err)
-			}
-
-			break
-		}
-	}
-
-	dockerignorePathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-		BasePath:             filepath.Join(c.GiterminismManager().RelativeToGitProjectDir(), imageFromDockerfileConfig.Context),
-		DockerignorePatterns: dockerignorePatterns,
-	})
-
-	if !dockerignorePathMatcher.IsPathMatched(relDockerfilePath) {
-		exceptionRule := "!" + imageFromDockerfileConfig.Dockerfile
-		logboek.Context(ctx).Warn().LogLn("WARNING: There is no way to ignore the Dockerfile due to docker limitation when building an image for a compressed context that reads from STDIN.")
-		logboek.Context(ctx).Warn().LogF("WARNING: To hide this message, remove the Dockerfile ignore rule from the %q or add an exception rule %q.\n", relDockerignorePath, exceptionRule)
-
-		dockerignorePatterns = append(dockerignorePatterns, exceptionRule)
-		dockerignorePathMatcher = path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-			BasePath:             filepath.Join(c.GiterminismManager().RelativeToGitProjectDir(), imageFromDockerfileConfig.Context),
-			DockerignorePatterns: dockerignorePatterns,
-		})
-	}
-
-	p, err := parser.Parse(bytes.NewReader(dockerfileData))
-	if err != nil {
-		return nil, err
-	}
-
-	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
-	if err != nil {
-		return nil, err
-	}
-
-	dockerfile_helpers.ResolveDockerStagesFromValue(dockerStages)
-
-	dockerTargetIndex, err := dockerfile_helpers.GetDockerTargetStageIndex(dockerStages, imageFromDockerfileConfig.Target)
-	if err != nil {
-		return nil, err
-	}
-
-	ds := stage.NewDockerStages(
-		dockerStages,
-		util.MapStringInterfaceToMapStringString(imageFromDockerfileConfig.Args),
-		dockerMetaArgs,
-		dockerTargetIndex,
-	)
-
-	baseStageOptions := &stage.NewBaseStageOptions{
-		ImageName:   imageFromDockerfileConfig.Name,
-		ProjectName: c.werfConfig.Meta.Project,
-	}
-
-	dockerfileStage := stage.GenerateDockerfileStage(
-		stage.NewDockerRunArgs(
-			dockerfileData,
-			imageFromDockerfileConfig.Dockerfile,
-			imageFromDockerfileConfig.Target,
-			imageFromDockerfileConfig.Context,
-			imageFromDockerfileConfig.ContextAddFiles,
-			imageFromDockerfileConfig.Args,
-			imageFromDockerfileConfig.AddHost,
-			imageFromDockerfileConfig.Network,
-			imageFromDockerfileConfig.SSH,
-		),
-		ds,
-		stage.NewContextChecksum(dockerignorePathMatcher),
-		baseStageOptions,
-		imageFromDockerfileConfig.Dependencies,
-	)
-
-	img.stages = append(img.stages, dockerfileStage)
-
-	logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())
-
-	return img, nil
 }

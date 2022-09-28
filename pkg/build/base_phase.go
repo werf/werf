@@ -3,6 +3,7 @@ package build
 import (
 	"context"
 
+	"github.com/werf/werf/pkg/build/image"
 	"github.com/werf/werf/pkg/build/stage"
 )
 
@@ -18,18 +19,18 @@ func (phase *BasePhase) AfterImages(_ context.Context) error {
 	return nil
 }
 
-func (phase *BasePhase) BeforeImageStages(_ context.Context, _ *Image) error {
+func (phase *BasePhase) BeforeImageStages(_ context.Context, _ *image.Image) error {
 	return nil
 }
 
-func (phase *BasePhase) OnImageStage(_ context.Context, _ *Image, _ stage.Interface) error {
+func (phase *BasePhase) OnImageStage(_ context.Context, _ *image.Image, _ stage.Interface) error {
 	return nil
 }
 
-func (phase *BasePhase) AfterImageStages(ctx context.Context, img *Image) error {
+func (phase *BasePhase) AfterImageStages(ctx context.Context, img *image.Image) error {
 	return nil
 }
 
-func (phase *BasePhase) ImageProcessingShouldBeStopped(_ context.Context, _ *Image) bool {
+func (phase *BasePhase) ImageProcessingShouldBeStopped(_ context.Context, _ *image.Image) bool {
 	return false
 }

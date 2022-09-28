@@ -18,6 +18,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+	"github.com/werf/werf/pkg/build/image"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
@@ -169,8 +170,8 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 }
 
 func (phase *BuildPhase) createReport(ctx context.Context) error {
-	for _, img := range phase.Conveyor.images {
-		if img.isArtifact {
+	for _, img := range phase.Conveyor.imagesTree.GetImages() {
+		if img.IsArtifact {
 			continue
 		}
 
@@ -213,19 +214,19 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 	return nil
 }
 
-func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *Image) bool {
+func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *image.Image) bool {
 	return false
 }
 
-func (phase *BuildPhase) BeforeImageStages(_ context.Context, img *Image) error {
+func (phase *BuildPhase) BeforeImageStages(_ context.Context, img *image.Image) error {
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
-	img.SetupBaseImage(phase.Conveyor)
+	img.SetupBaseImage()
 
 	return nil
 }
 
-func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error {
+func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *image.Image) error {
 	img.SetLastNonEmptyStage(phase.StagesIterator.PrevNonEmptyStage)
 	img.SetContentDigest(phase.StagesIterator.PrevNonEmptyStage.GetContentDigest())
 
@@ -239,7 +240,7 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 		}
 	}
 
-	if img.isArtifact {
+	if img.IsArtifact {
 		return nil
 	}
 
@@ -272,10 +273,10 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *Image) error
 	return nil
 }
 
-func (phase *BuildPhase) addManagedImage(ctx context.Context, img *Image) error {
+func (phase *BuildPhase) addManagedImage(ctx context.Context, img *image.Image) error {
 	if phase.ShouldAddManagedImageRecord {
 		stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
-		exist, err := stagesStorage.IsManagedImageExist(ctx, phase.Conveyor.projectName(), img.GetName(), storage.WithCache())
+		exist, err := stagesStorage.IsManagedImageExist(ctx, phase.Conveyor.ProjectName(), img.GetName(), storage.WithCache())
 		if err != nil {
 			return fmt.Errorf("unable to check existence of managed image: %w", err)
 		}
@@ -284,15 +285,15 @@ func (phase *BuildPhase) addManagedImage(ctx context.Context, img *Image) error 
 			return nil
 		}
 
-		if err := stagesStorage.AddManagedImage(ctx, phase.Conveyor.projectName(), img.GetName()); err != nil {
-			return fmt.Errorf("unable to add image %q to the managed images of project %q: %w", img.GetName(), phase.Conveyor.projectName(), err)
+		if err := stagesStorage.AddManagedImage(ctx, phase.Conveyor.ProjectName(), img.GetName()); err != nil {
+			return fmt.Errorf("unable to add image %q to the managed images of project %q: %w", img.GetName(), phase.Conveyor.ProjectName(), err)
 		}
 	}
 
 	return nil
 }
 
-func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) error {
+func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *image.Image) error {
 	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Processing image %s git metadata", img.GetName())).
 		DoError(func() error {
 			var commits []string
@@ -311,13 +312,13 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *Image) e
 
 			for _, commit := range commits {
 				stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
-				exist, err := stagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID(), storage.WithCache())
+				exist, err := stagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.ProjectName(), img.GetName(), commit, img.GetStageID(), storage.WithCache())
 				if err != nil {
 					return fmt.Errorf("unable to get image %s metadata by commit %s and stage ID %s: %w", img.GetName(), commit, img.GetStageID(), err)
 				}
 
 				if !exist {
-					if err := stagesStorage.PutImageMetadata(ctx, phase.Conveyor.projectName(), img.GetName(), commit, img.GetStageID()); err != nil {
+					if err := stagesStorage.PutImageMetadata(ctx, phase.Conveyor.ProjectName(), img.GetName(), commit, img.GetStageID()); err != nil {
 						return fmt.Errorf("unable to put image %s metadata by commit %s and stage ID %s: %w", img.GetName(), commit, img.GetStageID(), err)
 					}
 				}
@@ -388,13 +389,13 @@ func (phase *BuildPhase) getPrevNonEmptyStageImageSize() int64 {
 	return 0
 }
 
-func (phase *BuildPhase) OnImageStage(ctx context.Context, img *Image, stg stage.Interface) error {
-	return phase.StagesIterator.OnImageStage(ctx, img, stg, func(img *Image, stg stage.Interface, isEmpty bool) error {
+func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
+	return phase.StagesIterator.OnImageStage(ctx, img, stg, func(img *image.Image, stg stage.Interface, isEmpty bool) error {
 		return phase.onImageStage(ctx, img, stg, isEmpty)
 	})
 }
 
-func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage.Interface, isEmpty bool) error {
+func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg stage.Interface, isEmpty bool) error {
 	if isEmpty {
 		return nil
 	}
@@ -474,7 +475,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *Image, stg stage
 	return nil
 }
 
-func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context.Context, img *Image, stg stage.Interface) (bool, error) {
+func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, error) {
 	foundSuitableStage := false
 
 	storageManager := phase.Conveyor.StorageManager
@@ -482,8 +483,8 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 		// Lock the primary stages storage
 		var stageUnlocked bool
 		var unlockStage func()
-		if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.projectName(), stg.GetDigest()); err != nil {
-			return fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.projectName(), stg.GetDigest(), err)
+		if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.ProjectName(), stg.GetDigest()); err != nil {
+			return fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.ProjectName(), stg.GetDigest(), err)
 		} else {
 			unlockStage = func() {
 				if stageUnlocked {
@@ -545,10 +546,10 @@ ScanSecondaryStagesStorageList:
 	return foundSuitableStage, nil
 }
 
-func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *Image, stg stage.Interface) error {
+func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	switch {
 	case stg.Name() == "from":
-		if err := img.FetchBaseImage(ctx, phase.Conveyor); err != nil {
+		if err := img.FetchBaseImage(ctx); err != nil {
 			return fmt.Errorf("unable to fetch base image %s for stage %s: %w", img.GetBaseImage().Image.Name(), stg.LogDetailedName(), err)
 		}
 	case stg.Name() == "dockerfile":
@@ -567,7 +568,7 @@ func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.Le
 	return stageImage.Image.(*container_backend.LegacyStageImage)
 }
 
-func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg stage.Interface) (bool, func(), error) {
+func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, func(), error) {
 	// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
 	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg))
 	if err != nil {
@@ -614,14 +615,14 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *Image, stg sta
 	return foundSuitableStage, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, nil
 }
 
-func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Image, stg stage.Interface) error {
+func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	logboek.Context(ctx).Debug().LogF("-- BuildPhase.prepareStage %s %s\n", img.LogDetailedName(), stg.LogDetailedName())
 
 	stageImage := stg.GetStageImage()
 
 	serviceLabels := map[string]string{
 		imagePkg.WerfDockerImageName:         stageImage.Image.Name(),
-		imagePkg.WerfLabel:                   phase.Conveyor.projectName(),
+		imagePkg.WerfLabel:                   phase.Conveyor.ProjectName(),
 		imagePkg.WerfVersionLabel:            werf.Version,
 		imagePkg.WerfCacheVersionLabel:       imagePkg.BuildCacheVersion,
 		imagePkg.WerfImageLabel:              "false",
@@ -697,8 +698,8 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *Imag
 	return nil
 }
 
-func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.Interface) error {
-	if !img.isDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
+func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
+	if !img.IsDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
 		_, err := stapel.GetOrCreateContainer(ctx)
 		if err != nil {
 			return fmt.Errorf("get or create stapel container failed: %w", err)
@@ -736,7 +737,7 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *Image, stg stage.I
 	return nil
 }
 
-func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, stg stage.Interface) error {
+func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	stageImage := stg.GetStageImage()
 
 	if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_BUILD"); v != "" {
@@ -768,8 +769,8 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 
 	var stageUnlocked bool
 	var unlockStage func()
-	if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.projectName(), stg.GetDigest()); err != nil {
-		return fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.projectName(), stg.GetDigest(), err)
+	if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.ProjectName(), stg.GetDigest()); err != nil {
+		return fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.ProjectName(), stg.GetDigest(), err)
 	} else {
 		unlockStage = func() {
 			if stageUnlocked {
@@ -813,7 +814,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *Image, 
 				return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			}
 
-			if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.projectName(), stg.GetDigest(), uniqueID); err != nil {
+			if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), stg.GetDigest(), uniqueID); err != nil {
 				return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			} else {
 				stageImage.Image.SetStageDescription(desc)
@@ -882,7 +883,7 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 }
 
 // TODO: move these prints to the after-images hook, print summary over all images
-func (phase *BuildPhase) printShouldBeBuiltError(ctx context.Context, img *Image, stg stage.Interface) {
+func (phase *BuildPhase) printShouldBeBuiltError(ctx context.Context, img *image.Image, stg stage.Interface) {
 	logboek.Context(ctx).Default().LogProcess("Built stages cache check").
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(style.Highlight())
@@ -900,7 +901,7 @@ func (phase *BuildPhase) printShouldBeBuiltError(ctx context.Context, img *Image
 			logboek.Context(ctx).Warn().LogLn("There are some possible reasons:")
 			logboek.Context(ctx).Warn().LogLn()
 
-			if img.isDockerfileImage {
+			if img.IsDockerfileImage {
 				logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `Dockerfile has COPY or ADD instruction which uses non-permanent data that affects stage digest:
 - .git directory which should be excluded with .dockerignore file (https://docs.docker.com/engine/reference/builder/#dockerignore-file)
 - auto-generated file`)
