@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.177](https://www.github.com/werf/werf/compare/v1.2.176...v1.2.177) (2022-10-03)
+
+
+### Features
+
+* **staged-dockerfile:** refactor build package conveyor images tree creation ([9ecb737](https://www.github.com/werf/werf/commit/9ecb7372862d6a9c4ec88762d80c5d35c77ce6ec))
+
+
+### Bug Fixes
+
+* **converge:** feature gate for specific images params in werf-converge (due to compatibility issues) ([78c7c28](https://www.github.com/werf/werf/commit/78c7c286bbf9f873655cfe84a77540a59068645b))
+* **dismiss:** fix --with-namespace not deleting namespace in dismiss command ([f0ef743](https://www.github.com/werf/werf/commit/f0ef743801b7ae57cdff1d48e0e11c2d359cb82a))
+
 ### [1.2.176](https://www.github.com/werf/werf/compare/v1.2.175...v1.2.176) (2022-09-27)
 
 
