@@ -14,6 +14,8 @@ on:
         required: true
       mentionUserID:
         description: "Slack user ID to mention to (e.g. U0A19DD26)"
+      mapSlackUsers:
+        description: 'Mapping of GitHub users to Slack users. Contains lines of the following format: "github_username1:slack_memberID1"'
       mentionGroupID:
         description: "Slack group ID to mention to (e.g. SWS45DQ87)"
 
@@ -45,8 +47,19 @@ jobs:
       - if: env.WORKFLOW_CONCLUSION == 'failure'
         name: Add mentions
         id: msg_mention
+        env:
+          ACTOR_NAME: ${{ github.triggering_actor }}
         run: |
-          if [ -n "${{ secrets.mentionGroupID }}" ]; then MSG_MENTION_STRING="<!subteam^${{ secrets.mentionGroupID }}>"; fi
+          if [ -n "${{ secrets.mapSlackUsers }}" ]; then
+            ACTOR_SLACK_ID=$( echo '${{ secrets.mapSlackUsers }}' | ( grep "^${ACTOR_NAME:-:}": || true) | cut -d: -f2 | head -n 1 )
+            echo "::debug:: ACTOR_SLACK_ID is '${ACTOR_SLACK_ID}'."
+            if [ -n "$ACTOR_SLACK_ID" ]; then
+              MSG_MENTION_STRING="<@${ACTOR_SLACK_ID}>";
+            else
+              echo "Slack ID for ${ACTOR_NAME} was not found."
+            fi
+          fi
+          if [ -n "${{ secrets.mentionGroupID }}" ] && [ -z "${MSG_MENTION_STRING}" ]; then MSG_MENTION_STRING="<!subteam^${{ secrets.mentionGroupID }}>"; fi
           if [ -n "${{ secrets.mentionUserID }}" ]; then MSG_MENTION_STRING="$MSG_MENTION_STRING${MSG_MENTION_STRING:+, }<@${{ secrets.mentionUserID }}>"; fi
           echo "::debug:: Mention string - '$MSG_MENTION_STRING'."
           echo "::set-output name=content::$MSG_MENTION_STRING"

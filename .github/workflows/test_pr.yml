@@ -66,4 +66,5 @@ jobs:
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      mapSlackUsers: ${{ secrets.SLACK_USERS_MAP }}
       webhook: ${{ secrets.SLACK_WEBHOOK }}
