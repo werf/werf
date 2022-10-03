@@ -6,6 +6,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+	build_image "github.com/werf/werf/pkg/build/image"
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -29,8 +30,8 @@ func (phase *ExportPhase) Name() string {
 	return "export"
 }
 
-func (phase *ExportPhase) AfterImageStages(ctx context.Context, img *Image) error {
-	if img.isArtifact {
+func (phase *ExportPhase) AfterImageStages(ctx context.Context, img *build_image.Image) error {
+	if img.IsArtifact {
 		return nil
 	}
 
@@ -41,7 +42,7 @@ func (phase *ExportPhase) AfterImageStages(ctx context.Context, img *Image) erro
 	return nil
 }
 
-func (phase *ExportPhase) exportLastStageImage(ctx context.Context, img *Image) error {
+func (phase *ExportPhase) exportLastStageImage(ctx context.Context, img *build_image.Image) error {
 	if len(phase.ExportTagFuncList) == 0 {
 		return nil
 	}

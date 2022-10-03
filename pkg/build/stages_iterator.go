@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
+	build_image "github.com/werf/werf/pkg/build/image"
 	"github.com/werf/werf/pkg/build/stage"
 )
 
@@ -21,7 +22,7 @@ func NewStagesIterator(conveyor *Conveyor) *StagesIterator {
 	return &StagesIterator{Conveyor: conveyor}
 }
 
-func (iterator *StagesIterator) GetPrevImage(img *Image, stg stage.Interface) *stage.StageImage {
+func (iterator *StagesIterator) GetPrevImage(img *build_image.Image, stg stage.Interface) *stage.StageImage {
 	if stg.Name() == "from" {
 		return img.GetBaseImage()
 	} else if iterator.PrevNonEmptyStage != nil {
@@ -30,7 +31,7 @@ func (iterator *StagesIterator) GetPrevImage(img *Image, stg stage.Interface) *s
 	return nil
 }
 
-func (iterator *StagesIterator) GetPrevBuiltImage(img *Image, stg stage.Interface) *stage.StageImage {
+func (iterator *StagesIterator) GetPrevBuiltImage(img *build_image.Image, stg stage.Interface) *stage.StageImage {
 	if stg.Name() == "from" {
 		return img.GetBaseImage()
 	} else if iterator.PrevBuiltStage != nil {
@@ -39,7 +40,7 @@ func (iterator *StagesIterator) GetPrevBuiltImage(img *Image, stg stage.Interfac
 	return nil
 }
 
-func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *Image, stg stage.Interface, onImageStageFunc func(img *Image, stg stage.Interface, isEmpty bool) error) error {
+func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *build_image.Image, stg stage.Interface, onImageStageFunc func(img *build_image.Image, stg stage.Interface, isEmpty bool) error) error {
 	isEmpty, err := stg.IsEmpty(ctx, iterator.Conveyor, iterator.GetPrevBuiltImage(img, stg)) // FIXME(stapel-to-buildah): use StageImage
 	if err != nil {
 		return fmt.Errorf("error checking stage %s is empty: %w", stg.Name(), err)

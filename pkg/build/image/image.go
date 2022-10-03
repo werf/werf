@@ -1,4 +1,4 @@
-package build
+package image
 
 import (
 	"context"
@@ -12,8 +12,10 @@ import (
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
+	"github.com/werf/werf/pkg/storage/manager"
 )
 
 type BaseImageType string
@@ -23,8 +25,37 @@ const (
 	StageAsBaseImage             BaseImageType = "StageBaseImage"
 )
 
+type CommonImageOptions struct {
+	Conveyor           Conveyor
+	GiterminismManager giterminism_manager.Interface
+	ContainerBackend   container_backend.ContainerBackend
+	StorageManager     manager.StorageManagerInterface
+	ProjectDir         string
+	ProjectName        string
+	ContainerWerfDir   string
+	TmpDir             string
+}
+
+type ImageOptions struct {
+	CommonImageOptions
+	IsArtifact, IsDockerfileImage bool
+}
+
+func NewImage(name string, opts ImageOptions) *Image {
+	return &Image{
+		Name:               name,
+		CommonImageOptions: opts.CommonImageOptions,
+		IsArtifact:         opts.IsArtifact,
+		IsDockerfileImage:  opts.IsDockerfileImage,
+	}
+}
+
 type Image struct {
-	name string
+	CommonImageOptions
+
+	IsArtifact        bool
+	IsDockerfileImage bool
+	Name              string
 
 	baseImageName      string
 	baseImageImageName string
@@ -33,8 +64,6 @@ type Image struct {
 	stages            []stage.Interface
 	lastNonEmptyStage stage.Interface
 	contentDigest     string
-	isArtifact        bool
-	isDockerfileImage bool
 	rebuilt           bool
 
 	baseImageType    BaseImageType
@@ -43,19 +72,19 @@ type Image struct {
 }
 
 func (i *Image) LogName() string {
-	return logging.ImageLogName(i.name, i.isArtifact)
+	return logging.ImageLogName(i.Name, i.IsArtifact)
 }
 
 func (i *Image) LogDetailedName() string {
-	return logging.ImageLogProcessName(i.name, i.isArtifact)
+	return logging.ImageLogProcessName(i.Name, i.IsArtifact)
 }
 
 func (i *Image) LogProcessStyle() color.Style {
-	return ImageLogProcessStyle(i.isArtifact)
+	return ImageLogProcessStyle(i.IsArtifact)
 }
 
 func (i *Image) LogTagStyle() color.Style {
-	return ImageLogTagStyle(i.isArtifact)
+	return ImageLogTagStyle(i.IsArtifact)
 }
 
 func ImageLogProcessStyle(isArtifact bool) color.Style {
@@ -116,7 +145,7 @@ func (i *Image) GetStageID() string {
 }
 
 func (i *Image) GetName() string {
-	return i.name
+	return i.Name
 }
 
 func (i *Image) GetLogName() string {
@@ -131,14 +160,14 @@ func (i *Image) GetRebuilt() bool {
 	return i.rebuilt
 }
 
-func (i *Image) SetupBaseImage(c *Conveyor) {
+func (i *Image) SetupBaseImage() {
 	if i.baseImageImageName != "" {
 		i.baseImageType = StageAsBaseImage
-		i.stageAsBaseImage = c.GetImage(i.baseImageImageName).GetLastNonEmptyStage()
+		i.stageAsBaseImage = i.Conveyor.GetImage(i.baseImageImageName).GetLastNonEmptyStage()
 		i.baseImage = i.stageAsBaseImage.GetStageImage()
 	} else {
 		i.baseImageType = ImageFromRegistryAsBaseImage
-		i.baseImage = c.GetOrCreateStageImage(nil, i.baseImageName)
+		i.baseImage = i.Conveyor.GetOrCreateStageImage(nil, i.baseImageName)
 	}
 }
 
@@ -146,12 +175,10 @@ func (i *Image) GetBaseImage() *stage.StageImage {
 	return i.baseImage
 }
 
-func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
+func (i *Image) FetchBaseImage(ctx context.Context) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
-		containerBackend := c.ContainerBackend
-
-		if info, err := containerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
+		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %w", i.baseImage.Image.Name(), err)
 		} else if info != nil {
 			// TODO: do not use container_backend.LegacyStageImage for base image
@@ -160,7 +187,7 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 				Info:    info,
 			})
 
-			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, c, i.baseImage.Image.Name())
+			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, i.baseImage.Image.Name())
 			if baseImageRepoId == info.ID || err != nil {
 				if err != nil {
 					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Image.Name(), err)
@@ -177,12 +204,12 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
-				return c.ContainerBackend.PullImageFromRegistry(ctx, i.baseImage.Image)
+				return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseImage.Image)
 			}); err != nil {
 			return err
 		}
 
-		info, err := containerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{})
+		info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{})
 		if err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %w", i.baseImage.Image.Name(), err)
 		}
@@ -196,11 +223,7 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 			Info:    info,
 		})
 	case StageAsBaseImage:
-		// TODO: check no bug introduced
-		// if err := c.ContainerBackend.RefreshImageObject(ctx, &container_backend.Image{Image: i.baseImage}); err != nil {
-		//	return err
-		// }
-		if err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, i.stageAsBaseImage); err != nil {
+		if err := i.StorageManager.FetchStage(ctx, i.ContainerBackend, i.stageAsBaseImage); err != nil {
 			return err
 		}
 	default:
@@ -210,18 +233,18 @@ func (i *Image) FetchBaseImage(ctx context.Context, c *Conveyor) error {
 	return nil
 }
 
-func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, c *Conveyor, baseImageName string) (string, error) {
-	c.getServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Lock()
-	defer c.getServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Unlock()
+func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, baseImageName string) (string, error) {
+	i.Conveyor.GetServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Lock()
+	defer i.Conveyor.GetServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Unlock()
 
 	switch {
 	case i.baseImageRepoId != "":
 		return i.baseImageRepoId, nil
-	case c.IsBaseImagesRepoIdsCacheExist(baseImageName):
-		i.baseImageRepoId = c.GetBaseImagesRepoIdsCache(baseImageName)
+	case i.Conveyor.IsBaseImagesRepoIdsCacheExist(baseImageName):
+		i.baseImageRepoId = i.Conveyor.GetBaseImagesRepoIdsCache(baseImageName)
 		return i.baseImageRepoId, nil
-	case c.IsBaseImagesRepoErrCacheExist(baseImageName):
-		return "", c.GetBaseImagesRepoErrCache(baseImageName)
+	case i.Conveyor.IsBaseImagesRepoErrCacheExist(baseImageName):
+		return "", i.Conveyor.GetBaseImagesRepoErrCache(baseImageName)
 	}
 
 	var fetchedBaseRepoImage *image.Info
@@ -230,7 +253,7 @@ func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, c *Conveyor,
 		var fetchImageIdErr error
 		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(ctx, baseImageName)
 		if fetchImageIdErr != nil {
-			c.SetBaseImagesRepoErrCache(baseImageName, fetchImageIdErr)
+			i.Conveyor.SetBaseImagesRepoErrCache(baseImageName, fetchImageIdErr)
 			return fmt.Errorf("can not get base image id from registry (%s): %w", baseImageName, fetchImageIdErr)
 		}
 
@@ -240,7 +263,7 @@ func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, c *Conveyor,
 	}
 
 	i.baseImageRepoId = fetchedBaseRepoImage.ID
-	c.SetBaseImagesRepoIdsCache(baseImageName, i.baseImageRepoId)
+	i.Conveyor.SetBaseImagesRepoIdsCache(baseImageName, i.baseImageRepoId)
 
 	return i.baseImageRepoId, nil
 }
