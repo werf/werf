@@ -26,28 +26,28 @@ groups:
   - name: "1.2"
     channels:
       - name: alpha
-        # posted at: 28.09.2022
-        version: 1.2.175
+        # published at: 04.09.2022
+        version: 1.2.176
 
       - name: beta
-        # posted at: 28.09.2022
-        version: 1.2.175
+        # published at: 28.09.2022
+        version: 1.2.175+fix1
 
       - name: ea
-        # posted at: 28.09.2022
-        version: 1.2.175
+        # published at: 28.09.2022
+        version: 1.2.175+fix1
 
       # - name: pre-stable
       #   version: 1.2.169+fix1
 
       - name: stable
-        # posted at: 28.09.2022
+        # published at: 28.09.2022
         version: 1.2.169+fix1
 
       # - name: pre-rock-solid
-      #   posted at: unknown
+      #   published at: unknown
       #   version: 1.2.163+fix1
 
       - name: rock-solid
-        # posted at: unknown
+        # published at: unknown
         version: 1.2.163+fix1
