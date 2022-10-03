@@ -15,7 +15,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 {{ header }} Syntax
 
 ```shell
-werf converge [IMAGE_NAME...] [options]
+werf converge [options]
 ```
 
 {{ header }} Examples
@@ -375,9 +375,5 @@ werf converge --repo registry.mydomain.com/web --env production
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
-      --without-images=false
-            Disable building of images defined in the werf.yaml (if any) and usage of such images   
-            in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
-            images defined in the werf.yaml by default)
 ```
 
