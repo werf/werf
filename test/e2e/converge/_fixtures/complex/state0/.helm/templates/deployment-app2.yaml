@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: {{ .Values.werf.image.app2 }}
+          image: ubuntu:22.04
           command:
             - sh
             - -ec

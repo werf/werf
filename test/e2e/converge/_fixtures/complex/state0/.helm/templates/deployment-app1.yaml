@@ -13,6 +13,8 @@ spec:
       labels:
         app: app1
     spec:
+      imagePullSecrets:
+        - name: registry
       containers:
         - name: app
           image: {{ .Values.werf.image.app1 | quote }}
