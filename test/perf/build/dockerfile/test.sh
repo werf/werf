@@ -2,7 +2,6 @@
 set -xeuo pipefail
 
 vanilla_build_enabled=0
-docker_with_fuse_build_enabled=0
 native_build_enabled=0
 werf_path="$HOME/go/bin/werf"
 usage="Usage: $(basename "$0") [options] docker_repository
@@ -10,7 +9,6 @@ usage="Usage: $(basename "$0") [options] docker_repository
 Options:
   -e  path to werf executable (default: $werf_path)
   -v  do vanilla build (default: $vanilla_build_enabled)
-  -f  do docker-with-fuse build (default: $docker_with_fuse_build_enabled)
   -n  do native-rootless build (default: $native_build_enabled)
 
 Example:
@@ -33,9 +31,6 @@ while getopts ":vfne:" opt; do
   case ${opt} in
     v)
       vanilla_build_enabled=1
-      ;;
-    f)
-      docker_with_fuse_build_enabled=1
       ;;
     n)
       native_build_enabled=1
@@ -91,12 +86,6 @@ if [[ $vanilla_build_enabled == 1 ]]; then
   echo "Running vanilla werf build"
   "$werf_path" build | tee ../vanilla-build.log
   echo "Finished vanilla werf build"
-fi
-
-if [[ $docker_with_fuse_build_enabled == 1 ]]; then
-  echo "Running docker-with-fuse werf build"
-  WERF_BUILDAH_MODE="docker-with-fuse" "$werf_path" build | tee ../docker-with-fuse-build.log
-  echo "Finished docker-with-fuse werf build"
 fi
 
 if [[ $native_build_enabled == 1 ]]; then

@@ -24,7 +24,7 @@ permalink: advanced/buildah_mode.html
 
 ## Включение Buildah
 
-Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов: `auto`, `native-chroot`, `native-rootless` или `docker-with-fuse`.
+Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов: `auto`, `native-chroot`, `native-rootless`.
 
 * `auto` — автоматический выбор режима в зависимости от платформы и окружения;
 * `native-chroot` работает только в Linux и использует `chroot`-изоляцию для сборочных контейнеров;

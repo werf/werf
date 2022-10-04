@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -38,6 +39,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah/thirdparty"
+	"github.com/werf/werf/pkg/util"
 )
 
 const (
@@ -59,7 +61,14 @@ func NativeProcessStartupHook() bool {
 }
 
 type NativeBuildah struct {
-	BaseBuildah
+	Isolation               thirdparty.Isolation
+	TmpDir                  string
+	InstanceTmpDir          string
+	ConfigTmpDir            string
+	SignaturePolicyPath     string
+	RegistriesConfigPath    string
+	RegistriesConfigDirPath string
+	Insecure                bool
 
 	Store                     storage.Store
 	Runtime                   libimage.Runtime
@@ -70,16 +79,41 @@ type NativeBuildah struct {
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
-	b := &NativeBuildah{}
-
-	baseBuildah, err := NewBaseBuildah(commonOpts.TmpDir, BaseBuildahOpts{
+	b := &NativeBuildah{
 		Isolation: *commonOpts.Isolation,
+		TmpDir:    commonOpts.TmpDir,
 		Insecure:  commonOpts.Insecure,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("unable to create BaseBuildah: %w", err)
 	}
-	b.BaseBuildah = *baseBuildah
+
+	if err := os.MkdirAll(b.TmpDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %q: %w", b.TmpDir, err)
+	}
+
+	var err error
+	b.InstanceTmpDir, err = ioutil.TempDir(b.TmpDir, "instance")
+	if err != nil {
+		return nil, fmt.Errorf("unable to create instance tmp dir: %w", err)
+	}
+
+	b.ConfigTmpDir = filepath.Join(b.InstanceTmpDir, "config")
+	if err := os.MkdirAll(b.ConfigTmpDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %q: %w", b.ConfigTmpDir, err)
+	}
+
+	b.SignaturePolicyPath = filepath.Join(b.ConfigTmpDir, "policy.json")
+	if err := ioutil.WriteFile(b.SignaturePolicyPath, []byte(DefaultSignaturePolicy), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to write file %q: %w", b.SignaturePolicyPath, err)
+	}
+
+	b.RegistriesConfigPath = filepath.Join(b.ConfigTmpDir, "registries.conf")
+	if err := ioutil.WriteFile(b.RegistriesConfigPath, []byte(DefaultRegistriesConfig), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to write file %q: %w", b.RegistriesConfigPath, err)
+	}
+
+	b.RegistriesConfigDirPath = filepath.Join(b.ConfigTmpDir, "registries.conf.d")
+	if err := os.MkdirAll(b.RegistriesConfigDirPath, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create dir %q: %w", b.RegistriesConfigDirPath, err)
+	}
 
 	storeOpts, err := NewNativeStoreOptions(unshare.GetRootlessUID(), *commonOpts.StorageDriver)
 	if err != nil {
@@ -535,6 +569,40 @@ func (b *NativeBuildah) openContainerBuilder(ctx context.Context, container stri
 	}
 
 	return builder, err
+}
+
+func (b *NativeBuildah) NewSessionTmpDir() (string, error) {
+	sessionTmpDir, err := ioutil.TempDir(b.TmpDir, "session")
+	if err != nil {
+		return "", fmt.Errorf("unable to create session tmp dir: %w", err)
+	}
+
+	return sessionTmpDir, nil
+}
+
+func (b *NativeBuildah) prepareBuildFromDockerfile(dockerfile []byte, contextTar io.Reader) (string, string, string, error) {
+	sessionTmpDir, err := b.NewSessionTmpDir()
+	if err != nil {
+		return "", "", "", err
+	}
+
+	dockerfileTmpPath := filepath.Join(sessionTmpDir, "Dockerfile")
+	if err := ioutil.WriteFile(dockerfileTmpPath, dockerfile, os.ModePerm); err != nil {
+		return "", "", "", fmt.Errorf("error writing %q: %w", dockerfileTmpPath, err)
+	}
+
+	contextTmpDir := filepath.Join(sessionTmpDir, "context")
+	if err := os.MkdirAll(contextTmpDir, os.ModePerm); err != nil {
+		return "", "", "", fmt.Errorf("unable to create dir %q: %w", contextTmpDir, err)
+	}
+
+	if contextTar != nil {
+		if err := util.ExtractTar(contextTar, contextTmpDir, util.ExtractTarOptions{}); err != nil {
+			return "", "", "", fmt.Errorf("unable to extract context tar to tmp context dir: %w", err)
+		}
+	}
+
+	return sessionTmpDir, contextTmpDir, dockerfileTmpPath, nil
 }
 
 func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.StoreOptions, error) {

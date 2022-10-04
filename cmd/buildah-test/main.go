@@ -12,13 +12,12 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
 var errUsage = errors.New(`
-    ./buildah-test {auto|native|docker-with-fuse} { dockerfile DOCKERFILE_PATH [CONTEXT_PATH] |
+    ./buildah-test {auto|native} { dockerfile DOCKERFILE_PATH [CONTEXT_PATH] |
                                                     stapel }
 `)
 
@@ -144,7 +143,7 @@ func do(ctx context.Context) error {
 		if len(os.Args) < 2 {
 			return errUsage
 		}
-		mode = buildah.ResolveMode(buildah.Mode(os.Args[1]))
+		mode = buildah.Mode(os.Args[1])
 
 		os.Setenv("BUILDAH_TEST_MODE", string(mode))
 	}
@@ -161,15 +160,7 @@ func do(ctx context.Context) error {
 		return fmt.Errorf("unable to init werf subsystem: %w", err)
 	}
 
-	mode = buildah.ResolveMode(mode)
-
 	fmt.Printf("Using buildah mode: %s\n", mode)
-
-	if mode == buildah.ModeDockerWithFuse {
-		if err := docker.Init(ctx, "", false, false, ""); err != nil {
-			return err
-		}
-	}
 
 	if len(os.Args) < 3 {
 		return errUsage

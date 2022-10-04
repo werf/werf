@@ -48,9 +48,6 @@ func GetBuildahMode() (*buildah.Mode, *thirdparty.Isolation, error) {
 	case "native-chroot":
 		mode = buildah.ModeNative
 		isolation = thirdparty.IsolationChroot
-	case "docker-with-fuse":
-		mode = buildah.ModeDockerWithFuse
-		isolation = thirdparty.IsolationChroot
 	case "default", "auto":
 		mode = buildah.ModeAuto
 		var err error
@@ -95,22 +92,13 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 	}
 
 	if *buildahMode != buildah.ModeDisabled {
-		resolvedMode := buildah.ResolveMode(*buildahMode)
-		if resolvedMode == buildah.ModeDockerWithFuse {
-			newCtx, err := InitProcessDocker(ctx, cmdData)
-			if err != nil {
-				return nil, ctx, fmt.Errorf("unable to init process docker for buildah container backend: %w", err)
-			}
-			ctx = newCtx
-		}
-
 		storageDriver, err := GetBuildahStorageDriver()
 		if err != nil {
 			return nil, ctx, fmt.Errorf("unable to determine buildah container backend storage driver: %w", err)
 		}
 
 		insecure := *cmdData.InsecureRegistry || *cmdData.SkipTlsVerifyRegistry
-		b, err := buildah.NewBuildah(resolvedMode, buildah.BuildahOpts{
+		b, err := buildah.NewBuildah(*buildahMode, buildah.BuildahOpts{
 			CommonBuildahOpts: buildah.CommonBuildahOpts{
 				TmpDir:        filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
 				Insecure:      insecure,
