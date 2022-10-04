@@ -631,7 +631,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 	}
 
 	switch stg.(type) {
-	case *stage.DockerfileStage:
+	case *stage.FullDockerfileStage:
 		var labels []string
 		for key, value := range serviceLabels {
 			labels = append(labels, fmt.Sprintf("%s=%v", key, value))

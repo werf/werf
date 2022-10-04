@@ -11,28 +11,28 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func GenerateDockerInstructionsStage(imageConfig *config.StapelImage, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {
+func GenerateStapelDockerInstructionsStage(imageConfig *config.StapelImage, baseStageOptions *NewBaseStageOptions) *StapelDockerInstructionsStage {
 	if imageConfig.Docker != nil {
-		return newDockerInstructionsStage(imageConfig.Docker, baseStageOptions)
+		return newStapelDockerInstructionsStage(imageConfig.Docker, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newDockerInstructionsStage(instructions *config.Docker, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {
-	s := &DockerInstructionsStage{}
+func newStapelDockerInstructionsStage(instructions *config.Docker, baseStageOptions *NewBaseStageOptions) *StapelDockerInstructionsStage {
+	s := &StapelDockerInstructionsStage{}
 	s.instructions = instructions
 	s.BaseStage = newBaseStage(DockerInstructions, baseStageOptions)
 	return s
 }
 
-type DockerInstructionsStage struct {
+type StapelDockerInstructionsStage struct {
 	*BaseStage
 
 	instructions *config.Docker
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ context.Context, c Conveyor, backend container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
+func (s *StapelDockerInstructionsStage) GetDependencies(_ context.Context, c Conveyor, backend container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	var args []string
 
 	if c.UseLegacyStapelBuilder(backend) && s.instructions.ExactValues {
@@ -66,7 +66,7 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 	return
 }
 
-func (s *DockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
+func (s *StapelDockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
 	if c.UseLegacyStapelBuilder(cr) {
 		stageImage.Image.SetCommitChangeOptions(container_backend.LegacyCommitChangeOptions{ExactValues: s.instructions.ExactValues})
 	}

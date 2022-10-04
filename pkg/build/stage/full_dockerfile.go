@@ -34,12 +34,12 @@ func IsErrInvalidBaseImage(err error) bool {
 	return err != nil && errors.Is(err, ErrInvalidBaseImage)
 }
 
-func GenerateDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions, dependencies []*config.Dependency) *DockerfileStage {
-	return newDockerfileStage(dockerRunArgs, dockerStages, contextChecksum, baseStageOptions, dependencies)
+func GenerateFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions, dependencies []*config.Dependency) *FullDockerfileStage {
+	return newFullDockerfileStage(dockerRunArgs, dockerStages, contextChecksum, baseStageOptions, dependencies)
 }
 
-func newDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions, dependencies []*config.Dependency) *DockerfileStage {
-	s := &DockerfileStage{}
+func newFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions, dependencies []*config.Dependency) *FullDockerfileStage {
+	s := &FullDockerfileStage{}
 	s.DockerRunArgs = dockerRunArgs
 	s.DockerStages = dockerStages
 	s.ContextChecksum = contextChecksum
@@ -49,7 +49,7 @@ func newDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages
 	return s
 }
 
-type DockerfileStage struct {
+type FullDockerfileStage struct {
 	dependencies []*config.Dependency
 
 	*DockerRunArgs
@@ -319,7 +319,7 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *DockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerBackend container_backend.ContainerBackend, dockerRegistry docker_registry.ApiInterface) error {
+func (s *FullDockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerBackend container_backend.ContainerBackend, dockerRegistry docker_registry.ApiInterface) error {
 	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
@@ -411,7 +411,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 
 var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
-func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
+func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
 	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
@@ -501,7 +501,7 @@ func (s *DockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ con
 	return util.Sha256Hash(dockerfileStageDependencies...), nil
 }
 
-func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, cmd interface{}, isOnbuildInstruction, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
+func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, cmd interface{}, isOnbuildInstruction, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
 	var dependencies []string
 	var onBuildDependencies []string
 
@@ -666,7 +666,7 @@ func (s *DockerfileStage) dockerfileInstructionDependencies(ctx context.Context,
 	return dependencies, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
+func (s *FullDockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
 	p, err := parser.Parse(bytes.NewReader([]byte(expression)))
 	if err != nil {
 		return nil, nil, err
@@ -690,7 +690,7 @@ func (s *DockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.C
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
+func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
 	archivePath, err := s.prepareContextArchive(ctx, c.GiterminismManager())
 	if err != nil {
 		return err
@@ -711,7 +711,7 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr conta
 	return nil
 }
 
-func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
+func (s *FullDockerfileStage) prepareContextArchive(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
 	contextPathRelativeToGitWorkTree := s.contextRelativeToGitWorkTree(giterminismManager)
 	contextPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: contextPathRelativeToGitWorkTree})
 
@@ -746,7 +746,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	return archivePath, nil
 }
 
-func (s *DockerfileStage) SetupDockerImageBuilder(b stage_builder.DockerfileBuilderInterface, c Conveyor) error {
+func (s *FullDockerfileStage) SetupDockerImageBuilder(b stage_builder.DockerfileBuilderInterface, c Conveyor) error {
 	b.SetDockerfile(s.dockerfile)
 	b.SetDockerfileCtxRelPath(s.dockerfilePath)
 
@@ -782,7 +782,7 @@ func (s *DockerfileStage) SetupDockerImageBuilder(b stage_builder.DockerfileBuil
 	return nil
 }
 
-func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminismManager giterminism_manager.Interface, wildcards []string, dockerfileLine string) (string, error) {
+func (s *FullDockerfileStage) calculateFilesChecksum(ctx context.Context, giterminismManager giterminism_manager.Interface, wildcards []string, dockerfileLine string) (string, error) {
 	var checksum string
 	var err error
 
@@ -827,7 +827,7 @@ func (s *DockerfileStage) calculateFilesChecksum(ctx context.Context, giterminis
 	return checksum, nil
 }
 
-func (s *DockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, giterminismManager giterminism_manager.Interface, wildcards []string, dockerfileLine string) (string, error) {
+func (s *FullDockerfileStage) calculateFilesChecksumWithGit(ctx context.Context, giterminismManager giterminism_manager.Interface, wildcards []string, dockerfileLine string) (string, error) {
 	contextPathRelativeToGitWorkTree := s.contextRelativeToGitWorkTree(giterminismManager)
 	wildcardsPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
 		BasePath:     contextPathRelativeToGitWorkTree,

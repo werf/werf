@@ -11,7 +11,6 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/build/dockerfile_helpers"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/dockerfile"
@@ -20,12 +19,25 @@ import (
 )
 
 func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, opts CommonImageOptions) (ImagesSets, error) {
-	// TODO: check dockerfile-config mode: use legacy (default) dockerfile mapper or new staged-dockerfile mapper
-	useLegacyMapper := true
+	if dockerfileImageConfig.Staged {
+		relDockerfilePath := filepath.Join(dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
+		dockerfileData, err := opts.GiterminismManager.FileReader().ReadDockerfile(ctx, relDockerfilePath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read dockerfile %s: %w", relDockerfilePath, err)
+		}
 
-	if !useLegacyMapper {
-		// TODO: dockerfileImageConfig to dockerfile.Dockerfile obj
-		return mapDockerfileToImagesSets(ctx, dockerfile.Dockerfile{})
+		d, err := dockerfile.ParseDockerfile(dockerfileData, dockerfile.DockerfileOptions{
+			Target:    dockerfileImageConfig.Target,
+			BuildArgs: util.MapStringInterfaceToMapStringString(dockerfileImageConfig.Args),
+			AddHost:   dockerfileImageConfig.AddHost,
+			Network:   dockerfileImageConfig.Network,
+			SSH:       dockerfileImageConfig.SSH,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
+		}
+
+		return mapDockerfileToImagesSets(ctx, d)
 	}
 
 	img, err := mapLegacyDockerfileToImage(ctx, dockerfileImageConfig, opts)
@@ -40,7 +52,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 	return ret, nil
 }
 
-func mapDockerfileToImagesSets(ctx context.Context, cfg dockerfile.Dockerfile) (ImagesSets, error) {
+func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile) (ImagesSets, error) {
 	var ret ImagesSets
 
 	stagesSets, err := cfg.GroupStagesByIndependentSets(ctx)
@@ -136,9 +148,9 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 		return nil, err
 	}
 
-	dockerfile_helpers.ResolveDockerStagesFromValue(dockerStages)
+	dockerfile.ResolveDockerStagesFromValue(dockerStages)
 
-	dockerTargetIndex, err := dockerfile_helpers.GetDockerTargetStageIndex(dockerStages, dockerfileImageConfig.Target)
+	dockerTargetIndex, err := dockerfile.GetDockerTargetStageIndex(dockerStages, dockerfileImageConfig.Target)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +167,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 		ProjectName: opts.ProjectName,
 	}
 
-	dockerfileStage := stage.GenerateDockerfileStage(
+	dockerfileStage := stage.GenerateFullDockerfileStage(
 		stage.NewDockerRunArgs(
 			dockerfileData,
 			dockerfileImageConfig.Dockerfile,

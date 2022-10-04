@@ -18,6 +18,7 @@ type rawImageFromDockerfile struct {
 	Network         string                 `yaml:"network,omitempty"`
 	SSH             string                 `yaml:"ssh,omitempty"`
 	RawDependencies []*rawDependency       `yaml:"dependencies,omitempty"`
+	Staged          bool                   `yaml:"staged,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -125,6 +126,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 		image.Dependencies = append(image.Dependencies, dependencyDirective)
 	}
 
+	image.Staged = c.Staged
 	image.raw = c
 
 	if err := image.validate(giterminismManager); err != nil {

@@ -9,25 +9,25 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/build/dockerfile_helpers"
 	"github.com/werf/werf/pkg/container_backend/stage_builder"
+	"github.com/werf/werf/pkg/dockerfile"
 	"github.com/werf/werf/pkg/util"
 )
 
-func testDockerfileToDockerStages(dockerfile []byte) ([]instructions.Stage, []instructions.ArgCommand) {
-	p, err := parser.Parse(bytes.NewReader(dockerfile))
+func testDockerfileToDockerStages(dockerfileData []byte) ([]instructions.Stage, []instructions.ArgCommand) {
+	p, err := parser.Parse(bytes.NewReader(dockerfileData))
 	Expect(err).To(Succeed())
 
 	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
 	Expect(err).To(Succeed())
 
-	dockerfile_helpers.ResolveDockerStagesFromValue(dockerStages)
+	dockerfile.ResolveDockerStagesFromValue(dockerStages)
 
 	return dockerStages, dockerMetaArgs
 }
 
-func newTestDockerfileStage(dockerfile []byte, target string, buildArgs map[string]interface{}, dockerStages []instructions.Stage, dockerMetaArgs []instructions.ArgCommand, dependencies []*TestDependency) *DockerfileStage {
-	dockerTargetIndex, err := dockerfile_helpers.GetDockerTargetStageIndex(dockerStages, target)
+func newTestFullDockerfileStage(dockerfileData []byte, target string, buildArgs map[string]interface{}, dockerStages []instructions.Stage, dockerMetaArgs []instructions.ArgCommand, dependencies []*TestDependency) *FullDockerfileStage {
+	dockerTargetIndex, err := dockerfile.GetDockerTargetStageIndex(dockerStages, target)
 	Expect(err).To(Succeed())
 
 	ds := NewDockerStages(
@@ -37,9 +37,9 @@ func newTestDockerfileStage(dockerfile []byte, target string, buildArgs map[stri
 		dockerTargetIndex,
 	)
 
-	return newDockerfileStage(
+	return newFullDockerfileStage(
 		NewDockerRunArgs(
-			dockerfile,
+			dockerfileData,
 			"no-such-path",
 			target,
 			"",
@@ -59,7 +59,7 @@ func newTestDockerfileStage(dockerfile []byte, target string, buildArgs map[stri
 	)
 }
 
-var _ = Describe("DockerfileStage", func() {
+var _ = Describe("FullDockerfileStage", func() {
 	DescribeTable("configuring images dependencies for dockerfile stage",
 		func(data TestDockerfileDependencies) {
 			ctx := context.Background()
@@ -67,9 +67,9 @@ var _ = Describe("DockerfileStage", func() {
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), data.TestDependencies.Dependencies)
 			containerBackend := NewContainerBackendMock()
 
-			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(data.Dockerfile)
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(data.DockerfileData)
 
-			stage := newTestDockerfileStage(data.Dockerfile, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies)
+			stage := newTestFullDockerfileStage(data.DockerfileData, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies)
 
 			img := NewLegacyImageStub()
 			stageBuilder := stage_builder.NewStageBuilder(containerBackend, nil, img)
@@ -89,7 +89,7 @@ var _ = Describe("DockerfileStage", func() {
 
 		Entry("should calculate dockerfile stage digest when no dependencies are set",
 			TestDockerfileDependencies{
-				Dockerfile: []byte(`
+				DockerfileData: []byte(`
 FROM alpine:latest
 RUN echo hello
 `),
@@ -100,7 +100,7 @@ RUN echo hello
 
 		Entry("should not change dockerfile stage digest when dependencies are defined, but build args not used",
 			TestDockerfileDependencies{
-				Dockerfile: []byte(`
+				DockerfileData: []byte(`
 FROM alpine:latest
 RUN echo hello
 `),
@@ -122,7 +122,7 @@ RUN echo hello
 
 		Entry("should change dockerfile stage digest when dependant image build args used in the Dockerfile",
 			TestDockerfileDependencies{
-				Dockerfile: []byte(`
+				DockerfileData: []byte(`
 FROM alpine:latest
 
 ARG IMAGE_ONE_NAME
@@ -154,7 +154,7 @@ RUN echo {"name": "${IMAGE_ONE_NAME}", "repo": "${IMAGE_ONE_REPO}", "tag": "${IM
 
 		Entry("should change dockerfile stage digest when dependant image name changed",
 			TestDockerfileDependencies{
-				Dockerfile: []byte(`
+				DockerfileData: []byte(`
 FROM alpine:latest
 
 ARG IMAGE_ONE_NAME
@@ -186,7 +186,7 @@ RUN echo {"name": "${IMAGE_ONE_NAME}", "repo": "${IMAGE_ONE_REPO}", "tag": "${IM
 
 		Entry("should change dockerfile stage digest when dependant image id changed",
 			TestDockerfileDependencies{
-				Dockerfile: []byte(`
+				DockerfileData: []byte(`
 FROM alpine:latest
 
 ARG IMAGE_ONE_NAME
@@ -218,7 +218,7 @@ RUN echo {"name": "${IMAGE_ONE_NAME}", "repo": "${IMAGE_ONE_REPO}", "tag": "${IM
 
 		Entry("should calculate dockerfile stage digest when no dependencies are set",
 			TestDockerfileDependencies{
-				Dockerfile: []byte(`
+				DockerfileData: []byte(`
 ARG BASE_IMAGE=alpine:latest
 
 FROM ${BASE_IMAGE}
@@ -231,7 +231,7 @@ RUN echo hello
 
 		Entry("should allow usage of dependency image as a base image in the dockerfile",
 			TestDockerfileDependencies{
-				Dockerfile: []byte(`
+				DockerfileData: []byte(`
 ARG BASE_IMAGE=alpine:latest
 
 FROM ${BASE_IMAGE}
@@ -255,7 +255,7 @@ RUN echo hello
 
 		Entry("should change dockerfile stage digest when base dependency image has changed",
 			TestDockerfileDependencies{
-				Dockerfile: []byte(`
+				DockerfileData: []byte(`
 ARG BASE_IMAGE=alpine:latest
 
 FROM ${BASE_IMAGE}
@@ -293,7 +293,7 @@ RUN echo hello
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
 
-			stage := newTestDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
 
 			containerBackend := NewContainerBackendMock()
 
@@ -326,7 +326,7 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
 
-			stage := newTestDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
 
 			containerBackend := NewContainerBackendMock()
 
@@ -354,9 +354,9 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 })
 
 type TestDockerfileDependencies struct {
-	Dockerfile []byte
-	Target     string
-	BuildArgs  map[string]interface{}
+	DockerfileData []byte
+	Target         string
+	BuildArgs      map[string]interface{}
 
 	TestDependencies *TestDependencies
 }
