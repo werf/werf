@@ -43,6 +43,10 @@ type BuildDockerfileOpts struct {
 	Tags                 []string
 }
 
+type BuildDockerfileStageOptions struct {
+	CommonOpts
+}
+
 type ContainerBackend interface {
 	Tag(ctx context.Context, ref, newRef string, opts TagOpts) error
 	Push(ctx context.Context, ref string, opts PushOpts) error
@@ -51,6 +55,7 @@ type ContainerBackend interface {
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
+	BuildDockerfileStage(ctx context.Context, image ImageInterface, contextTar io.ReadCloser, opts BuildDockerfileStageOptions, commands ...any) (string, error)
 	BuildStapelStage(ctx context.Context, opts BuildStapelStageOptions) (string, error)
 	CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (string, error)
 

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -416,6 +417,158 @@ func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	return nil
 }
 
+func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, image ImageInterface, contextTar io.ReadCloser, opts BuildDockerfileStageOptions, commands ...any) (string, error) {
+	var container *containerDesc
+	if c, err := runtime.createContainers(ctx, []string{image.Name()}); err != nil {
+		return "", err
+	} else {
+		container = c[0]
+	}
+	defer func() {
+		if err := runtime.removeContainers(ctx, []*containerDesc{container}); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary build container: %s\n", err)
+		}
+	}()
+	// TODO: cleanup orphan build containers in werf-host-cleanup procedure
+
+	logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
+	if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
+		return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
+	}
+	defer func() {
+		logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
+		if err := runtime.unmountContainers(ctx, []*containerDesc{container}); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
+		}
+	}()
+
+	contextTmpDir, err := runtime.ExtractContext(contextTar)
+	if err != nil {
+		return "", fmt.Errorf("error extracting context: %w", err)
+	}
+	defer func() {
+		if err := os.RemoveAll(contextTmpDir); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary context dir %s: %s\n", contextTmpDir, err)
+		}
+	}()
+
+	logboek.Context(ctx).Debug().LogF("Executing commands for build container %s\n", container.Name)
+	for _, command := range commands {
+		switch cmd := command.(type) {
+		case CommandLabel:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				Labels:     cmd.LabelsAsList(),
+			}); err != nil {
+				return "", fmt.Errorf("error setting labels %v for container %s: %w", cmd.LabelsAsList(), container.Name, err)
+			}
+		case CommandExpose:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				Expose:     cmd.Ports,
+			}); err != nil {
+				return "", fmt.Errorf("error setting exposed ports %v for container %s: %w", cmd.Ports, container.Name, err)
+			}
+		case CommandVolume:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				Volumes:    cmd.Volumes,
+			}); err != nil {
+				return "", fmt.Errorf("error setting volumes %v for container %s: %w", cmd.Volumes, container.Name, err)
+			}
+		case CommandOnBuild:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				OnBuild:    cmd.Instruction,
+			}); err != nil {
+				return "", fmt.Errorf("error setting onbuild %v for container %s: %w", cmd.Instruction, container.Name, err)
+			}
+		case CommandStopSignal:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				StopSignal: cmd.Signal,
+			}); err != nil {
+				return "", fmt.Errorf("error setting stop signal %v for container %s: %w", cmd.Signal, container.Name, err)
+			}
+		case CommandShell:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				Shell:      cmd.Shell,
+			}); err != nil {
+				return "", fmt.Errorf("error setting shell %v for container %s: %w", cmd.Shell, container.Name, err)
+			}
+		case CommandEnv:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				Envs:       cmd.Envs,
+			}); err != nil {
+				return "", fmt.Errorf("error setting envs %v for container %s: %w", cmd.Envs, container.Name, err)
+			}
+		case CommandRun:
+			if err := runtime.buildah.RunCommand(ctx, container.Name, cmd.Command, buildah.RunCommandOpts{
+				// FIXME(ilya-lesikov): should we suppress or not?
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+			}); err != nil {
+				return "", fmt.Errorf("error running command %v for container %s: %w", cmd.Command, container.Name, err)
+			}
+		case CommandCopy:
+			if err := runtime.buildah.Copy(ctx, container.Name, contextTmpDir, cmd.Src, cmd.Dst, buildah.CopyOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				From:       cmd.From,
+			}); err != nil {
+				return "", fmt.Errorf("error copying %v to %s for container %s: %w", cmd.Src, cmd.Dst, container.Name, err)
+			}
+		case CommandAdd:
+			if err := runtime.buildah.Add(ctx, container.Name, cmd.Src, cmd.Dst, buildah.AddOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				ContextDir: contextTmpDir,
+			}); err != nil {
+				return "", fmt.Errorf("error adding %v to %s for container %s: %w", cmd.Src, cmd.Dst, container.Name, err)
+			}
+		case CommandUser:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				User:       cmd.User,
+			}); err != nil {
+				return "", fmt.Errorf("error setting user %s for container %s: %w", cmd.User, container.Name, err)
+			}
+		case CommandWorkdir:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				Workdir:    cmd.Workdir,
+			}); err != nil {
+				return "", fmt.Errorf("error setting workdir %s for container %s: %w", cmd.Workdir, container.Name, err)
+			}
+		case CommandEntrypoint:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				Entrypoint: cmd.Entrypoint,
+			}); err != nil {
+				return "", fmt.Errorf("error setting entrypoint %v for container %s: %w", cmd.Entrypoint, container.Name, err)
+			}
+		case CommandCmd:
+			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+				Cmd:        cmd.Cmd,
+			}); err != nil {
+				return "", fmt.Errorf("error setting cmd %v for container %s: %w", cmd.Cmd, container.Name, err)
+			}
+		default:
+			return "", fmt.Errorf("invalid command type: %T", command)
+		}
+	}
+
+	logboek.Context(ctx).Debug().LogF("Committing build container %s\n", container.Name)
+	imageID, err := runtime.buildah.Commit(ctx, container.Name, buildah.CommitOpts{
+		CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+	})
+	if err != nil {
+		return "", fmt.Errorf("error committing container %s: %w", container.Name, err)
+	}
+
+	return imageID, nil
+}
+
 func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, opts BuildStapelStageOptions) (string, error) {
 	var container *containerDesc
 	if c, err := runtime.createContainers(ctx, []string{opts.BaseImage}); err != nil {
@@ -551,7 +704,7 @@ func (runtime *BuildahBackend) Push(ctx context.Context, ref string, opts PushOp
 	})
 }
 
-func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error) {
+func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileContent []byte, opts BuildDockerfileOpts) (string, error) {
 	buildArgs := make(map[string]string)
 	for _, argStr := range opts.BuildArgs {
 		argParts := strings.SplitN(argStr, "=", 2)
@@ -561,11 +714,35 @@ func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfile [
 		buildArgs[argParts[0]] = argParts[1]
 	}
 
-	return runtime.buildah.BuildFromDockerfile(ctx, dockerfile, buildah.BuildFromDockerfileOpts{
+	contextTmpDir, err := runtime.ExtractContext(opts.ContextTar)
+	if err != nil {
+		return "", fmt.Errorf("error extracting context: %w", err)
+	}
+	defer func() {
+		if err := os.RemoveAll(contextTmpDir); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary context dir %s: %s\n", contextTmpDir, err)
+		}
+	}()
+
+	dockerfile, err := ioutil.TempFile(runtime.TmpDir, "*.Dockerfile")
+	if err != nil {
+		return "", fmt.Errorf("error creating temporary dockerfile: %w", err)
+	}
+
+	if _, err := dockerfile.Write(dockerfileContent); err != nil {
+		return "", fmt.Errorf("error writing temporary dockerfile: %w", err)
+	}
+	defer func() {
+		if err := os.Remove(dockerfile.Name()); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary dockerfile %s: %s\n", dockerfile.Name(), err)
+		}
+	}()
+
+	return runtime.buildah.BuildFromDockerfile(ctx, dockerfile.Name(), buildah.BuildFromDockerfileOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: logboek.Context(ctx).OutStream(),
 		},
-		ContextTar: opts.ContextTar,
+		ContextDir: contextTmpDir,
 		BuildArgs:  buildArgs,
 		Target:     opts.Target,
 	})
@@ -683,6 +860,21 @@ func (runtime *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir stri
 			},
 		},
 	})
+}
+
+func (runtime *BuildahBackend) ExtractContext(contextTar io.Reader) (string, error) {
+	contextTmpDir, err := ioutil.TempDir(runtime.TmpDir, "context")
+	if err != nil {
+		return "", fmt.Errorf("unable to create context tmp dir: %w", err)
+	}
+
+	if contextTar != nil {
+		if err := util.ExtractTar(contextTar, contextTmpDir, util.ExtractTarOptions{}); err != nil {
+			return "", fmt.Errorf("unable to extract context tar to tmp context dir: %w", err)
+		}
+	}
+
+	return contextTmpDir, nil
 }
 
 func parseVolume(volume string) (string, string, error) {

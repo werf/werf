@@ -38,9 +38,13 @@ type CommonOpts struct {
 	LogWriter io.Writer
 }
 
+type BuildFromCommandsOpts struct {
+	CommonOpts
+}
+
 type BuildFromDockerfileOpts struct {
 	CommonOpts
-	ContextTar io.Reader
+	ContextDir string
 	BuildArgs  map[string]string
 	Target     string
 }
@@ -81,6 +85,19 @@ type ConfigOpts struct {
 	User        string
 	Workdir     string
 	Healthcheck string
+	OnBuild     string
+	StopSignal  string
+	Shell       []string
+}
+
+type CopyOpts struct {
+	CommonOpts
+	From string
+}
+
+type AddOpts struct {
+	CommonOpts
+	ContextDir string
 }
 
 type (
@@ -96,7 +113,7 @@ type (
 type Buildah interface {
 	Tag(ctx context.Context, ref, newRef string, opts TagOpts) error
 	Push(ctx context.Context, ref string, opts PushOpts) error
-	BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error)
+	BuildFromDockerfile(ctx context.Context, dockerfile string, opts BuildFromDockerfileOpts) (string, error)
 	RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error
 	FromCommand(ctx context.Context, container, image string, opts FromCommandOpts) (string, error)
 	Pull(ctx context.Context, ref string, opts PullOpts) error
@@ -107,6 +124,8 @@ type Buildah interface {
 	Umount(ctx context.Context, container string, opts UmountOpts) error
 	Commit(ctx context.Context, container string, opts CommitOpts) (string, error)
 	Config(ctx context.Context, container string, opts ConfigOpts) error
+	Copy(ctx context.Context, container, contextDir string, src []string, dst string, opts CopyOpts) error
+	Add(ctx context.Context, container string, src []string, dst string, opts AddOpts) error
 }
 
 type Mode string

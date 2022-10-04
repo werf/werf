@@ -4,6 +4,7 @@ import "github.com/werf/werf/pkg/container_backend"
 
 type StageBuilderInterface interface {
 	StapelStageBuilder() StapelStageBuilderInterface
+	DockerfileBuilder() DockerfileBuilderInterface
 	DockerfileStageBuilder() DockerfileStageBuilderInterface
 	LegacyStapelStageBuilder() LegacyStapelStageBuilderInterface
 }
@@ -13,8 +14,13 @@ type StageBuilder struct {
 	FromImage        container_backend.ImageInterface
 	Image            container_backend.LegacyImageInterface // TODO: use ImageInterface
 
+	dockerfileBuilder      *DockerfileBuilder
 	dockerfileStageBuilder *DockerfileStageBuilder
 	stapelStageBuilder     *StapelStageBuilder
+}
+
+func (stageBuilder *StageBuilder) GetDockerfileBuilderImplementation() *DockerfileBuilder {
+	return stageBuilder.dockerfileBuilder
 }
 
 func (stageBuilder *StageBuilder) GetDockerfileStageBuilderImplementation() *DockerfileStageBuilder {
@@ -44,9 +50,16 @@ func (stageBuilder *StageBuilder) LegacyStapelStageBuilder() LegacyStapelStageBu
 	return NewLegacyStapelStageBuilder(stageBuilder.ContainerBackend, stageBuilder.Image)
 }
 
+func (stageBuilder *StageBuilder) DockerfileBuilder() DockerfileBuilderInterface {
+	if stageBuilder.dockerfileBuilder == nil {
+		stageBuilder.dockerfileBuilder = NewDockerfileBuilder(stageBuilder.ContainerBackend, stageBuilder.Image)
+	}
+	return stageBuilder.dockerfileBuilder
+}
+
 func (stageBuilder *StageBuilder) DockerfileStageBuilder() DockerfileStageBuilderInterface {
 	if stageBuilder.dockerfileStageBuilder == nil {
-		stageBuilder.dockerfileStageBuilder = NewDockerfileStageBuilder(stageBuilder.ContainerBackend, stageBuilder.Image)
+		stageBuilder.dockerfileStageBuilder = NewDockerfileStageBuilder(stageBuilder.ContainerBackend, stageBuilder.FromImage, stageBuilder.Image)
 	}
 	return stageBuilder.dockerfileStageBuilder
 }
