@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 
@@ -111,10 +112,9 @@ type Buildah interface {
 type Mode string
 
 const (
-	ModeAuto           Mode = "auto"
-	ModeDisabled       Mode = "disabled"
-	ModeNative         Mode = "native"
-	ModeDockerWithFuse Mode = "docker-with-fuse"
+	ModeAuto     Mode = "auto"
+	ModeDisabled Mode = "disabled"
+	ModeNative   Mode = "native"
 )
 
 type CommonBuildahOpts struct {
@@ -128,11 +128,8 @@ type NativeModeOpts struct {
 	Platform string
 }
 
-type DockerWithFuseModeOpts struct{}
-
 type BuildahOpts struct {
 	CommonBuildahOpts
-	DockerWithFuseModeOpts
 	NativeModeOpts
 }
 
@@ -154,8 +151,8 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 		opts.CommonBuildahOpts.TmpDir = filepath.Join(werf.GetHomeDir(), "buildah", "tmp")
 	}
 
-	switch ResolveMode(mode) {
-	case ModeNative:
+	switch mode {
+	case ModeNative, ModeAuto:
 		switch runtime.GOOS {
 		case "linux":
 			b, err = NewNativeBuildah(opts.CommonBuildahOpts, opts.NativeModeOpts)
@@ -163,12 +160,7 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 				return nil, fmt.Errorf("unable to create new Buildah instance with mode %q: %w", mode, err)
 			}
 		default:
-			panic("ModeNative can't be used on this OS")
-		}
-	case ModeDockerWithFuse:
-		b, err = NewDockerWithFuseBuildah(opts.CommonBuildahOpts, opts.DockerWithFuseModeOpts)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create new Buildah instance with mode %q: %w", mode, err)
+			panic(fmt.Sprintf("Mode %q can't be used on this OS", mode))
 		}
 	default:
 		return nil, fmt.Errorf("unsupported mode %q", mode)
@@ -178,27 +170,11 @@ func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
 }
 
 func ProcessStartupHook(mode Mode) (bool, error) {
-	switch ResolveMode(mode) {
-	case ModeNative:
+	switch mode {
+	case ModeNative, ModeAuto:
 		return NativeProcessStartupHook(), nil
-	case ModeDockerWithFuse:
-		return false, nil
 	default:
 		return false, fmt.Errorf("unsupported mode %q", mode)
-	}
-}
-
-func ResolveMode(mode Mode) Mode {
-	switch mode {
-	case ModeAuto:
-		switch runtime.GOOS {
-		case "linux":
-			return ModeNative
-		default:
-			return ModeDockerWithFuse
-		}
-	default:
-		return mode
 	}
 }
 
@@ -226,4 +202,44 @@ func GetDefaultIsolation() (thirdparty.Isolation, error) {
 
 func debug() bool {
 	return os.Getenv("WERF_BUILDAH_DEBUG") == "1"
+}
+
+type StoreOptions struct {
+	GraphDriverName    string
+	GraphDriverOptions []string
+}
+
+func GetBasicBuildahCliArgs(driver StorageDriver) ([]string, error) {
+	var result []string
+
+	cliStoreOpts, err := newBuildahCliStoreOptions(driver)
+	if err != nil {
+		return result, fmt.Errorf("unable to get buildah cli store options: %w", err)
+	}
+
+	if cliStoreOpts.GraphDriverName != "" {
+		result = append(result, "--storage-driver", cliStoreOpts.GraphDriverName)
+	}
+
+	if len(cliStoreOpts.GraphDriverOptions) > 0 {
+		result = append(result, "--storage-opt", strings.Join(cliStoreOpts.GraphDriverOptions, ","))
+	}
+
+	return result, nil
+}
+
+func newBuildahCliStoreOptions(driver StorageDriver) (*StoreOptions, error) {
+	var graphDriverOptions []string
+	if driver == StorageDriverOverlay {
+		fuseOpts, err := GetFuseOverlayfsOptions()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get overlay options: %w", err)
+		}
+		graphDriverOptions = append(graphDriverOptions, fuseOpts...)
+	}
+
+	return &StoreOptions{
+		GraphDriverName:    string(driver),
+		GraphDriverOptions: graphDriverOptions,
+	}, nil
 }
