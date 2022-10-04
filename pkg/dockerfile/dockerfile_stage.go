@@ -4,4 +4,7 @@ func NewDockerfileStage() *DockerfileStage {
 	return &DockerfileStage{}
 }
 
-type DockerfileStage struct{}
+type DockerfileStage struct {
+	Dockerfile         *Dockerfile
+	DependenciesStages []*DockerfileStage
+}

@@ -108,7 +108,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
 		}
 
-		stages = appendIfExist(ctx, stages, stage.GenerateDockerInstructionsStage(stapelImageConfig.(*config.StapelImage), baseStageOptions))
+		stages = appendIfExist(ctx, stages, stage.GenerateStapelDockerInstructionsStage(stapelImageConfig.(*config.StapelImage), baseStageOptions))
 	}
 
 	if len(gitMappings) != 0 {

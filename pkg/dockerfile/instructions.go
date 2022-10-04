@@ -1,63 +1,63 @@
-package container_backend
+package dockerfile
 
 import "fmt"
 
-type CommandEnv struct {
+type InstructionEnv struct {
 	Envs map[string]string
 }
 
-type CommandCopy struct {
+type InstructionCopy struct {
 	From string
 	Src  []string
 	Dst  string
 }
 
-type CommandAdd struct {
+type InstructionAdd struct {
 	Src []string
 	Dst string
 }
 
-type CommandRun struct {
+type InstructionRun struct {
 	Command []string
 }
 
-type CommandEntrypoint struct {
+type InstructionEntrypoint struct {
 	Entrypoint []string
 }
 
-type CommandCmd struct {
+type InstructionCmd struct {
 	Cmd []string
 }
 
-type CommandUser struct {
+type InstructionUser struct {
 	User string
 }
 
-type CommandWorkdir struct {
+type InstructionWorkdir struct {
 	Workdir string
 }
 
-type CommandExpose struct {
+type InstructionExpose struct {
 	Ports []string
 }
 
-type CommandVolume struct {
+type InstructionVolume struct {
 	Volumes []string
 }
 
-type CommandOnBuild struct {
+type InstructionOnBuild struct {
 	Instruction string
 }
 
-type CommandStopSignal struct {
+type InstructionStopSignal struct {
 	Signal string
 }
 
-type CommandShell struct {
+type InstructionShell struct {
 	Shell []string
 }
 
-type CommandHealthcheck struct {
+type InstructionHealthcheck struct {
 	Type    HealthcheckType
 	Command string
 }
@@ -70,11 +70,11 @@ var (
 	HealthcheckTypeCmdShell HealthcheckType = "CMD-SHELL"
 )
 
-type CommandLabel struct {
+type InstructionLabel struct {
 	Labels map[string]string
 }
 
-func (c *CommandLabel) LabelsAsList() []string {
+func (c *InstructionLabel) LabelsAsList() []string {
 	var labels []string
 	for k, v := range c.Labels {
 		labels = append(labels, fmt.Sprintf("%s=%s", k, v))

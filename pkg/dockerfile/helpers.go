@@ -1,4 +1,4 @@
-package dockerfile_helpers
+package dockerfile
 
 import (
 	"fmt"

@@ -1,13 +1,60 @@
 package dockerfile
 
-import "context"
+import (
+	"bytes"
+	"context"
+	"fmt"
 
-func NewDockerfile(dockerfile []byte) *Dockerfile {
-	return &Dockerfile{dockerfile: dockerfile}
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	"github.com/moby/buildkit/frontend/dockerfile/parser"
+)
+
+func ParseDockerfile(dockerfile []byte, opts DockerfileOptions) (*Dockerfile, error) {
+	p, err := parser.Parse(bytes.NewReader(dockerfile))
+	if err != nil {
+		return nil, fmt.Errorf("parsing dockerfile data: %w", err)
+	}
+
+	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	if err != nil {
+		return nil, fmt.Errorf("parsing instructions tree: %w", err)
+	}
+
+	// FIXME(staged-dockerfile): is this needed?
+	ResolveDockerStagesFromValue(dockerStages)
+
+	dockerTargetIndex, err := GetDockerTargetStageIndex(dockerStages, opts.Target)
+	if err != nil {
+		return nil, fmt.Errorf("determine target stage: %w", err)
+	}
+
+	return newDockerfile(dockerStages, dockerMetaArgs, dockerTargetIndex, opts), nil
+}
+
+type DockerfileOptions struct {
+	Target    string
+	BuildArgs map[string]string
+	AddHost   []string
+	Network   string
+	SSH       string
+}
+
+func newDockerfile(dockerStages []instructions.Stage, dockerMetaArgs []instructions.ArgCommand, dockerTargetStageIndex int, opts DockerfileOptions) *Dockerfile {
+	return &Dockerfile{
+		DockerfileOptions: opts,
+
+		dockerStages:           dockerStages,
+		dockerMetaArgs:         dockerMetaArgs,
+		dockerTargetStageIndex: dockerTargetStageIndex,
+	}
 }
 
 type Dockerfile struct {
-	dockerfile []byte
+	DockerfileOptions
+
+	dockerStages           []instructions.Stage
+	dockerMetaArgs         []instructions.ArgCommand
+	dockerTargetStageIndex int
 }
 
 func (dockerfile *Dockerfile) GroupStagesByIndependentSets(ctx context.Context) ([][]*DockerfileStage, error) {
