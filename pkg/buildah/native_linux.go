@@ -37,7 +37,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/errgo.v2/fmt/errors"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/pkg/util"
 )
@@ -229,7 +228,7 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 	return nil
 }
 
-func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []byte, opts BuildFromDockerfileOpts) (string, error) {
+func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile string, opts BuildFromDockerfileOpts) (string, error) {
 	buildOpts := define.BuildOptions{
 		Isolation:               define.Isolation(b.Isolation),
 		Args:                    opts.BuildArgs,
@@ -257,20 +256,11 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile []by
 		buildOpts.Err = errLog
 	}
 
-	sessionTmpDir, contextTmpDir, dockerfileTmpPath, err := b.prepareBuildFromDockerfile(dockerfile, opts.ContextTar)
-	if err != nil {
-		return "", fmt.Errorf("error preparing for build from dockerfile: %w", err)
-	}
-	defer func() {
-		if err = os.RemoveAll(sessionTmpDir); err != nil {
-			logboek.Warn().LogF("unable to remove session tmp dir %q: %s\n", sessionTmpDir, err)
-		}
-	}()
-	buildOpts.ContextDirectory = contextTmpDir
+	buildOpts.ContextDirectory = opts.ContextDir
 
-	imageId, _, err := imagebuildah.BuildDockerfiles(ctx, b.Store, buildOpts, dockerfileTmpPath)
+	imageId, _, err := imagebuildah.BuildDockerfiles(ctx, b.Store, buildOpts, dockerfile)
 	if err != nil {
-		return "", fmt.Errorf("unable to build Dockerfile %q:\n%s\n%w", dockerfileTmpPath, errLog.String(), err)
+		return "", fmt.Errorf("unable to build Dockerfile %q:\n%s\n%w", dockerfile, errLog.String(), err)
 	}
 
 	return imageId, nil
@@ -475,6 +465,10 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 		builder.SetPort(expose)
 	}
 
+	if len(opts.Shell) > 0 {
+		builder.SetShell(opts.Shell)
+	}
+
 	if len(opts.Cmd) > 0 {
 		builder.SetCmd(opts.Cmd)
 	}
@@ -499,7 +493,47 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 		}
 	}
 
+	if opts.StopSignal != "" {
+		builder.SetStopSignal(opts.StopSignal)
+	}
+
+	if opts.OnBuild != "" {
+		builder.SetOnBuild(opts.OnBuild)
+	}
+
 	return builder.Save()
+}
+
+func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, src []string, dst string, opts CopyOpts) error {
+	builder, err := b.getBuilderFromContainer(ctx, container)
+	if err != nil {
+		return fmt.Errorf("error getting builder: %w", err)
+	}
+
+	if err := builder.Add(dst, false, buildah.AddAndCopyOptions{
+		PreserveOwnership: false,
+		ContextDir:        contextDir,
+	}, src...); err != nil {
+		return fmt.Errorf("error copying files to %q: %w", dst, err)
+	}
+
+	return nil
+}
+
+func (b *NativeBuildah) Add(ctx context.Context, container string, src []string, dst string, opts AddOpts) error {
+	builder, err := b.getBuilderFromContainer(ctx, container)
+	if err != nil {
+		return fmt.Errorf("error getting builder: %w", err)
+	}
+
+	if err := builder.Add(dst, true, buildah.AddAndCopyOptions{
+		PreserveOwnership: false,
+		ContextDir:        opts.ContextDir,
+	}, src...); err != nil {
+		return fmt.Errorf("error adding files to %q: %w", dst, err)
+	}
+
+	return nil
 }
 
 func (b *NativeBuildah) getImage(ref string) (*libimage.Image, error) {

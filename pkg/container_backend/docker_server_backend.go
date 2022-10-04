@@ -3,6 +3,7 @@ package container_backend
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -77,6 +78,10 @@ func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	}
 
 	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, opts.ContextTar, cliArgs...)
+}
+
+func (runtime *DockerServerBackend) BuildDockerfileStage(ctx context.Context, image ImageInterface, contextTar io.ReadCloser, opts BuildDockerfileStageOptions, commands ...any) (string, error) {
+	panic("not implemented")
 }
 
 // ShouldCleanupDockerfileImage for docker-server backend we should cleanup image built from dockerfrom tagged with tempID

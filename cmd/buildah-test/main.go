@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -81,32 +79,12 @@ func runDockerfile(ctx context.Context, mode buildah.Mode, dockerfilePath, conte
 		return fmt.Errorf("unable to create buildah client: %w", err)
 	}
 
-	dockerfileData, err := os.ReadFile(dockerfilePath)
-	if err != nil {
-		return fmt.Errorf("error reading %q: %w", dockerfilePath, err)
-	}
-
 	errCh := make(chan error, 0)
 	buildDoneCh := make(chan string, 0)
 
-	var contextTar io.Reader
-	if contextDir != "" {
-		contextTar = util.BufferedPipedWriterProcess(func(w io.WriteCloser) {
-			if err := util.WriteDirAsTar((contextDir), w); err != nil {
-				errCh <- fmt.Errorf("unable to write dir %q as tar: %w", contextDir, err)
-				return
-			}
-
-			if err := w.Close(); err != nil {
-				errCh <- fmt.Errorf("unable to close buffered piped writer for context dir %q: %w", contextDir, err)
-				return
-			}
-		})
-	}
-
 	go func() {
-		imageID, err := b.BuildFromDockerfile(ctx, dockerfileData, buildah.BuildFromDockerfileOpts{
-			ContextTar: contextTar,
+		imageID, err := b.BuildFromDockerfile(ctx, dockerfilePath, buildah.BuildFromDockerfileOpts{
+			ContextDir: contextDir,
 			CommonOpts: buildah.CommonOpts{
 				LogWriter: os.Stdout,
 			},

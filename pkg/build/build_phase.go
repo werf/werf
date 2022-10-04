@@ -636,10 +636,10 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		for key, value := range serviceLabels {
 			labels = append(labels, fmt.Sprintf("%s=%v", key, value))
 		}
-		stageImage.Builder.DockerfileStageBuilder().AppendLabels(labels...)
+		stageImage.Builder.DockerfileBuilder().AppendLabels(labels...)
 
 		phase.Conveyor.AppendOnTerminateFunc(func() error {
-			return stageImage.Builder.DockerfileStageBuilder().Cleanup(ctx)
+			return stageImage.Builder.DockerfileBuilder().Cleanup(ctx)
 		})
 
 	default:
@@ -750,7 +750,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	if err := logboek.Context(ctx).Streams().DoErrorWithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
 		switch {
 		case stg.Name() == "dockerfile":
-			return stageImage.Builder.DockerfileStageBuilder().Build(ctx)
+			return stageImage.Builder.DockerfileBuilder().Build(ctx)
 		case phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend):
 			return stageImage.Builder.LegacyStapelStageBuilder().Build(ctx, phase.ImageBuildOptions)
 		default:

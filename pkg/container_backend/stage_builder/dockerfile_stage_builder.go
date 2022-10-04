@@ -3,113 +3,64 @@ package stage_builder
 import (
 	"context"
 	"fmt"
-	"os"
+	"io"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/container_backend"
 )
 
 type DockerfileStageBuilderInterface interface {
-	Build(ctx context.Context) error
-	Cleanup(ctx context.Context) error
-	SetDockerfile(dockerfile []byte)
-	SetDockerfileCtxRelPath(dockerfileCtxRelPath string)
-	SetTarget(target string)
-	AppendBuildArgs(args ...string)
-	AppendAddHost(addHost ...string)
-	SetNetwork(network string)
-	SetSSH(ssh string)
-	AppendLabels(labels ...string)
-	SetContextArchivePath(contextArchivePath string)
+	AppendPreCommands(commands ...any) DockerfileStageBuilderInterface
+	AppendMainCommands(commands ...any) DockerfileStageBuilderInterface
+	AppendPostCommands(commands ...any) DockerfileStageBuilderInterface
+	Build(ctx context.Context, contextTar io.ReadCloser) error
 }
 
 type DockerfileStageBuilder struct {
-	ContainerBackend       container_backend.ContainerBackend
-	Dockerfile             []byte
-	BuildDockerfileOptions container_backend.BuildDockerfileOpts
-	ContextArchivePath     string
+	preCommands  []any
+	mainCommands []any
+	postCommands []any
 
-	Image container_backend.ImageInterface
+	fromImage        container_backend.ImageInterface
+	resultImage      container_backend.ImageInterface
+	containerBackend container_backend.ContainerBackend
 }
 
-func NewDockerfileStageBuilder(containerBackend container_backend.ContainerBackend, image container_backend.ImageInterface) *DockerfileStageBuilder {
-	return &DockerfileStageBuilder{ContainerBackend: containerBackend, Image: image}
+func NewDockerfileStageBuilder(containerBackend container_backend.ContainerBackend, fromImage, resultImage container_backend.ImageInterface) *DockerfileStageBuilder {
+	return &DockerfileStageBuilder{
+		containerBackend: containerBackend,
+		fromImage:        fromImage,
+		resultImage:      resultImage,
+	}
 }
 
-func (b *DockerfileStageBuilder) Build(ctx context.Context) error {
-	// filePathToStdin != "" ??
-
-	if container_backend.Debug() {
-		fmt.Printf("[DOCKER BUILD] context archive path: %s\n", b.ContextArchivePath)
-	}
-
-	contextReader, err := os.Open(b.ContextArchivePath)
-	if err != nil {
-		return fmt.Errorf("unable to open context archive %q: %w", b.ContextArchivePath, err)
-	}
-	defer contextReader.Close()
-
-	opts := b.BuildDockerfileOptions
-	opts.ContextTar = contextReader
-
-	if container_backend.Debug() {
-		fmt.Printf("ContextArchivePath=%q\n", b.ContextArchivePath)
-		fmt.Printf("BiuldDockerfileOptions: %#v\n", opts)
-	}
-
-	builtID, err := b.ContainerBackend.BuildDockerfile(ctx, b.Dockerfile, opts)
-	if err != nil {
-		return fmt.Errorf("error building dockerfile with %s: %w", b.ContainerBackend.String(), err)
-	}
-	b.Image.SetBuiltID(builtID)
-
-	return nil
+func (b *DockerfileStageBuilder) AppendPreCommands(commands ...any) DockerfileStageBuilderInterface {
+	b.preCommands = append(b.preCommands, commands...)
+	return b
 }
 
-func (b *DockerfileStageBuilder) Cleanup(ctx context.Context) error {
-	if !b.ContainerBackend.ShouldCleanupDockerfileImage() {
+func (b *DockerfileStageBuilder) AppendMainCommands(commands ...any) DockerfileStageBuilderInterface {
+	b.mainCommands = append(b.mainCommands, commands...)
+	return b
+}
+
+func (b *DockerfileStageBuilder) AppendPostCommands(commands ...any) DockerfileStageBuilderInterface {
+	b.postCommands = append(b.postCommands, commands...)
+	return b
+}
+
+func (b *DockerfileStageBuilder) Build(ctx context.Context, contextTar io.ReadCloser) error {
+	commands := append(append(b.preCommands, b.mainCommands...), b.postCommands)
+	if len(commands) == 0 {
+		b.resultImage.SetName(b.fromImage.Name())
+		b.resultImage.SetBuiltID(b.fromImage.BuiltID())
 		return nil
 	}
 
-	logboek.Context(ctx).Info().LogF("Cleanup built dockerfile image %q\n", b.Image.BuiltID())
-	if err := b.ContainerBackend.Rmi(ctx, b.Image.BuiltID(), container_backend.RmiOpts{}); err != nil {
-		return fmt.Errorf("unable to remove built dockerfile image %q: %w", b.Image.BuiltID(), err)
+	if builtID, err := b.containerBackend.BuildDockerfileStage(ctx, b.resultImage, contextTar, container_backend.BuildDockerfileStageOptions{}, commands...); err != nil {
+		return fmt.Errorf("error building dockerfile stage: %w", err)
+	} else {
+		b.resultImage.SetBuiltID(builtID)
 	}
+
 	return nil
-}
-
-func (b *DockerfileStageBuilder) SetDockerfile(dockerfile []byte) {
-	b.Dockerfile = dockerfile
-}
-
-func (b *DockerfileStageBuilder) SetDockerfileCtxRelPath(dockerfileCtxRelPath string) {
-	b.BuildDockerfileOptions.DockerfileCtxRelPath = dockerfileCtxRelPath
-}
-
-func (b *DockerfileStageBuilder) SetTarget(target string) {
-	b.BuildDockerfileOptions.Target = target
-}
-
-func (b *DockerfileStageBuilder) AppendBuildArgs(args ...string) {
-	b.BuildDockerfileOptions.BuildArgs = append(b.BuildDockerfileOptions.BuildArgs, args...)
-}
-
-func (b *DockerfileStageBuilder) AppendAddHost(addHost ...string) {
-	b.BuildDockerfileOptions.AddHost = append(b.BuildDockerfileOptions.AddHost, addHost...)
-}
-
-func (b *DockerfileStageBuilder) SetNetwork(network string) {
-	b.BuildDockerfileOptions.Network = network
-}
-
-func (b *DockerfileStageBuilder) SetSSH(ssh string) {
-	b.BuildDockerfileOptions.SSH = ssh
-}
-
-func (b *DockerfileStageBuilder) AppendLabels(labels ...string) {
-	b.BuildDockerfileOptions.Labels = append(b.BuildDockerfileOptions.Labels, labels...)
-}
-
-func (b *DockerfileStageBuilder) SetContextArchivePath(contextArchivePath string) {
-	b.ContextArchivePath = contextArchivePath
 }

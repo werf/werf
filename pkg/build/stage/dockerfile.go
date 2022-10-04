@@ -696,16 +696,16 @@ func (s *DockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr conta
 		return err
 	}
 
-	if err := s.SetupDockerImageBuilder(stageImage.Builder.DockerfileStageBuilder(), c); err != nil {
+	if err := s.SetupDockerImageBuilder(stageImage.Builder.DockerfileBuilder(), c); err != nil {
 		return err
 	}
 
-	stageImage.Builder.DockerfileStageBuilder().SetContextArchivePath(archivePath)
+	stageImage.Builder.DockerfileBuilder().SetContextArchivePath(archivePath)
 
-	stageImage.Builder.DockerfileStageBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
+	stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
 
 	if c.GiterminismManager().Dev() {
-		stageImage.Builder.DockerfileStageBuilder().AppendLabels(fmt.Sprintf("%s=true", image.WerfDevLabel))
+		stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=true", image.WerfDevLabel))
 	}
 
 	return nil
@@ -746,7 +746,7 @@ func (s *DockerfileStage) prepareContextArchive(ctx context.Context, giterminism
 	return archivePath, nil
 }
 
-func (s *DockerfileStage) SetupDockerImageBuilder(b stage_builder.DockerfileStageBuilderInterface, c Conveyor) error {
+func (s *DockerfileStage) SetupDockerImageBuilder(b stage_builder.DockerfileBuilderInterface, c Conveyor) error {
 	b.SetDockerfile(s.dockerfile)
 	b.SetDockerfileCtxRelPath(s.dockerfilePath)
 
