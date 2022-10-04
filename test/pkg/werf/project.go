@@ -2,7 +2,10 @@ package werf
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"os/user"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -148,6 +151,40 @@ func (p *Project) Release() string {
 	}
 
 	return p.release
+}
+
+func (p *Project) CreateNamespace() {
+	if getNsOut := p.KubeCtl(&KubeCtlOptions{
+		CommonOptions: CommonOptions{
+			ExtraArgs: []string{
+				"get", "namespace", "--ignore-not-found", p.Namespace(),
+			},
+		},
+	}); getNsOut != "" {
+		return
+	}
+
+	p.KubeCtl(&KubeCtlOptions{
+		CommonOptions: CommonOptions{
+			ExtraArgs: []string{
+				"create", "namespace", p.Namespace(),
+			},
+		},
+	})
+}
+
+func (p *Project) CreateRegistryPullSecretFromDockerConfig() {
+	user, err := user.Current()
+	Expect(err).NotTo(HaveOccurred())
+
+	p.KubeCtl(&KubeCtlOptions{
+		CommonOptions: CommonOptions{
+			ExtraArgs: []string{
+				"create", "secret", "docker-registry", "registry", "-n", p.Namespace(),
+				"--from-file", fmt.Sprintf(".dockerconfigjson=%s", filepath.Join(user.HomeDir, ".docker", "config.json")),
+			},
+		},
+	})
 }
 
 func (p *Project) runCommand(opts runCommandOptions) string {
