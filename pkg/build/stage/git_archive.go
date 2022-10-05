@@ -18,7 +18,7 @@ type NewGitArchiveStageOptions struct {
 	ContainerScriptsDir  string
 }
 
-func NewGitArchiveStage(gitArchiveStageOptions *NewGitArchiveStageOptions, baseStageOptions *NewBaseStageOptions) *GitArchiveStage {
+func NewGitArchiveStage(gitArchiveStageOptions *NewGitArchiveStageOptions, baseStageOptions *BaseStageOptions) *GitArchiveStage {
 	s := &GitArchiveStage{
 		ArchivesDir:          gitArchiveStageOptions.ArchivesDir,
 		ScriptsDir:           gitArchiveStageOptions.ScriptsDir,

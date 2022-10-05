@@ -34,16 +34,16 @@ func IsErrInvalidBaseImage(err error) bool {
 	return err != nil && errors.Is(err, ErrInvalidBaseImage)
 }
 
-func GenerateFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions, dependencies []*config.Dependency) *FullDockerfileStage {
+func GenerateFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *BaseStageOptions, dependencies []*config.Dependency) *FullDockerfileStage {
 	return newFullDockerfileStage(dockerRunArgs, dockerStages, contextChecksum, baseStageOptions, dependencies)
 }
 
-func newFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *NewBaseStageOptions, dependencies []*config.Dependency) *FullDockerfileStage {
+func newFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *BaseStageOptions, dependencies []*config.Dependency) *FullDockerfileStage {
 	s := &FullDockerfileStage{}
 	s.DockerRunArgs = dockerRunArgs
 	s.DockerStages = dockerStages
 	s.ContextChecksum = contextChecksum
-	s.BaseStage = newBaseStage(Dockerfile, baseStageOptions)
+	s.BaseStage = NewBaseStage(Dockerfile, baseStageOptions)
 	s.dependencies = dependencies
 
 	return s
@@ -499,6 +499,14 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 	}
 
 	return util.Sha256Hash(dockerfileStageDependencies...), nil
+}
+
+func (s *FullDockerfileStage) HasPrevStage() bool {
+	return false
+}
+
+func (s *FullDockerfileStage) IsStapelStage() bool {
+	return false
 }
 
 func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, cmd interface{}, isOnbuildInstruction, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {

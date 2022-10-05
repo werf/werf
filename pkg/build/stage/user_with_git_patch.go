@@ -9,7 +9,7 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *UserWithGitPatchStage {
+func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *UserWithGitPatchStage {
 	s := &UserWithGitPatchStage{}
 	s.UserStage = newUserStage(builder, name, baseStageOptions)
 	s.GitPatchStage = newGitPatchStage(name, gitPatchStageOptions, baseStageOptions)

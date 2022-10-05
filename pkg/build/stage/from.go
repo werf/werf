@@ -14,7 +14,7 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId string, baseStageOptions *NewBaseStageOptions) *FromStage {
+func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId string, baseStageOptions *BaseStageOptions) *FromStage {
 	var baseImageRepoIdOrNone string
 	if imageBaseConfig.FromLatest {
 		baseImageRepoIdOrNone = baseImageRepoId
@@ -30,12 +30,12 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId 
 	return newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, imageBaseConfig.FromCacheVersion, baseStageOptions)
 }
 
-func newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, cacheVersion string, baseStageOptions *NewBaseStageOptions) *FromStage {
+func newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, cacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
 	s := &FromStage{}
 	s.cacheVersion = cacheVersion
 	s.fromImageOrArtifactImageName = fromImageOrArtifactImageName
 	s.baseImageRepoIdOrNone = baseImageRepoIdOrNone
-	s.BaseStage = newBaseStage(From, baseStageOptions)
+	s.BaseStage = NewBaseStage(From, baseStageOptions)
 	return s
 }
 
@@ -45,6 +45,10 @@ type FromStage struct {
 	fromImageOrArtifactImageName string
 	baseImageRepoIdOrNone        string
 	cacheVersion                 string
+}
+
+func (s *FromStage) HasPrevStage() bool {
+	return false
 }
 
 func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_backend.ContainerBackend, prevImage, _ *StageImage) (string, error) {

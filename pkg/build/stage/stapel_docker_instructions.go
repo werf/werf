@@ -11,7 +11,7 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func GenerateStapelDockerInstructionsStage(imageConfig *config.StapelImage, baseStageOptions *NewBaseStageOptions) *StapelDockerInstructionsStage {
+func GenerateStapelDockerInstructionsStage(imageConfig *config.StapelImage, baseStageOptions *BaseStageOptions) *StapelDockerInstructionsStage {
 	if imageConfig.Docker != nil {
 		return newStapelDockerInstructionsStage(imageConfig.Docker, baseStageOptions)
 	}
@@ -19,10 +19,10 @@ func GenerateStapelDockerInstructionsStage(imageConfig *config.StapelImage, base
 	return nil
 }
 
-func newStapelDockerInstructionsStage(instructions *config.Docker, baseStageOptions *NewBaseStageOptions) *StapelDockerInstructionsStage {
+func newStapelDockerInstructionsStage(instructions *config.Docker, baseStageOptions *BaseStageOptions) *StapelDockerInstructionsStage {
 	s := &StapelDockerInstructionsStage{}
 	s.instructions = instructions
-	s.BaseStage = newBaseStage(DockerInstructions, baseStageOptions)
+	s.BaseStage = NewBaseStage(DockerInstructions, baseStageOptions)
 	return s
 }
 

@@ -1,12 +1,26 @@
 package stage_builder
 
-import "github.com/werf/werf/pkg/container_backend"
+import (
+	"context"
+
+	"github.com/werf/werf/pkg/container_backend"
+)
 
 type StageBuilderInterface interface {
 	StapelStageBuilder() StapelStageBuilderInterface
 	DockerfileBuilder() DockerfileBuilderInterface
 	DockerfileStageBuilder() DockerfileStageBuilderInterface
 	LegacyStapelStageBuilder() LegacyStapelStageBuilderInterface
+
+	Build(ctx context.Context, opts container_backend.BuildOptions) error
+}
+
+func NewStageBuilder(containerBackend container_backend.ContainerBackend, fromImage container_backend.ImageInterface, image container_backend.LegacyImageInterface) *StageBuilder {
+	return &StageBuilder{
+		ContainerBackend: containerBackend,
+		FromImage:        fromImage,
+		Image:            image,
+	}
 }
 
 type StageBuilder struct {
@@ -14,9 +28,10 @@ type StageBuilder struct {
 	FromImage        container_backend.ImageInterface
 	Image            container_backend.LegacyImageInterface // TODO: use ImageInterface
 
-	dockerfileBuilder      *DockerfileBuilder
-	dockerfileStageBuilder *DockerfileStageBuilder
-	stapelStageBuilder     *StapelStageBuilder
+	dockerfileBuilder        *DockerfileBuilder
+	dockerfileStageBuilder   *DockerfileStageBuilder
+	stapelStageBuilder       *StapelStageBuilder
+	legacyStapelStageBuilder *LegacyStapelStageBuilder
 }
 
 func (stageBuilder *StageBuilder) GetDockerfileBuilderImplementation() *DockerfileBuilder {
@@ -31,12 +46,8 @@ func (stageBuilder *StageBuilder) GetStapelStageBuilderImplementation() *StapelS
 	return stageBuilder.stapelStageBuilder
 }
 
-func NewStageBuilder(containerBackend container_backend.ContainerBackend, fromImage container_backend.ImageInterface, image container_backend.LegacyImageInterface) *StageBuilder {
-	return &StageBuilder{
-		ContainerBackend: containerBackend,
-		FromImage:        fromImage,
-		Image:            image,
-	}
+func (stageBuilder *StageBuilder) GetLegacyStapelStageBuilderImplmentation() *LegacyStapelStageBuilder {
+	return stageBuilder.legacyStapelStageBuilder
 }
 
 func (stageBuilder *StageBuilder) StapelStageBuilder() StapelStageBuilderInterface {
@@ -47,7 +58,10 @@ func (stageBuilder *StageBuilder) StapelStageBuilder() StapelStageBuilderInterfa
 }
 
 func (stageBuilder *StageBuilder) LegacyStapelStageBuilder() LegacyStapelStageBuilderInterface {
-	return NewLegacyStapelStageBuilder(stageBuilder.ContainerBackend, stageBuilder.Image)
+	if stageBuilder.legacyStapelStageBuilder == nil {
+		stageBuilder.legacyStapelStageBuilder = NewLegacyStapelStageBuilder(stageBuilder.ContainerBackend, stageBuilder.Image)
+	}
+	return stageBuilder.legacyStapelStageBuilder
 }
 
 func (stageBuilder *StageBuilder) DockerfileBuilder() DockerfileBuilderInterface {
@@ -62,4 +76,19 @@ func (stageBuilder *StageBuilder) DockerfileStageBuilder() DockerfileStageBuilde
 		stageBuilder.dockerfileStageBuilder = NewDockerfileStageBuilder(stageBuilder.ContainerBackend, stageBuilder.FromImage, stageBuilder.Image)
 	}
 	return stageBuilder.dockerfileStageBuilder
+}
+
+func (stageBuilder *StageBuilder) Build(ctx context.Context, opts container_backend.BuildOptions) error {
+	switch {
+	case stageBuilder.dockerfileBuilder != nil:
+		return stageBuilder.dockerfileBuilder.Build(ctx)
+	case stageBuilder.dockerfileStageBuilder != nil:
+		return stageBuilder.dockerfileStageBuilder.Build(ctx, opts)
+	case stageBuilder.stapelStageBuilder != nil:
+		return stageBuilder.stapelStageBuilder.Build(ctx, opts)
+	case stageBuilder.legacyStapelStageBuilder != nil:
+		return stageBuilder.legacyStapelStageBuilder.Build(ctx, opts)
+	}
+
+	panic("no builder has been activated yet")
 }

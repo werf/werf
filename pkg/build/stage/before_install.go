@@ -8,7 +8,7 @@ import (
 	"github.com/werf/werf/pkg/container_backend"
 )
 
-func GenerateBeforeInstallStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
+func GenerateBeforeInstallStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) *BeforeInstallStage {
 	b := getBuilder(imageBaseConfig, baseStageOptions)
 	if b != nil && !b.IsBeforeInstallEmpty(ctx) {
 		return newBeforeInstallStage(b, baseStageOptions)
@@ -17,7 +17,7 @@ func GenerateBeforeInstallStage(ctx context.Context, imageBaseConfig *config.Sta
 	return nil
 }
 
-func newBeforeInstallStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
+func newBeforeInstallStage(builder builder.Builder, baseStageOptions *BaseStageOptions) *BeforeInstallStage {
 	s := &BeforeInstallStage{}
 	s.UserStage = newUserStage(builder, BeforeInstall, baseStageOptions)
 	return s

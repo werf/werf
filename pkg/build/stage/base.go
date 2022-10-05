@@ -73,7 +73,7 @@ var AllStages = []StageName{
 	Dockerfile,
 }
 
-type NewBaseStageOptions struct {
+type BaseStageOptions struct {
 	ImageName        string
 	ConfigMounts     []*config.Mount
 	ImageTmpDir      string
@@ -81,7 +81,7 @@ type NewBaseStageOptions struct {
 	ProjectName      string
 }
 
-func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
+func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
 	s := &BaseStage{}
 	s.name = name
 	s.imageName = options.ImageName
@@ -103,6 +103,14 @@ type BaseStage struct {
 	containerWerfDir string
 	configMounts     []*config.Mount
 	projectName      string
+}
+
+func (s *BaseStage) HasPrevStage() bool {
+	return true
+}
+
+func (s *BaseStage) IsStapelStage() bool {
+	return true
 }
 
 func (s *BaseStage) LogDetailedName() string {
