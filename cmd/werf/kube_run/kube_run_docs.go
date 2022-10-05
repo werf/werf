@@ -7,7 +7,7 @@ func GetKubeRunDocs() structs.DocsStruct {
 
 	docs.Long = `Run container in Kubernetes for specified project image from werf.yaml (build if needed).`
 
-	docs.LongMD = "Run container in Kubernetes for specified project image from `werf.yaml` (build if needed)"
+	docs.LongMD = "Run container in Kubernetes for specified project image from `werf.yaml` (build if needed)."
 
 	return docs
 }

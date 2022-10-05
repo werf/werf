@@ -101,6 +101,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 `,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
+			common.DocsLongMD:                  GetKubeRunDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
