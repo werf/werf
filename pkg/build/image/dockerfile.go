@@ -12,6 +12,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/build/stage/dockerfile_instruction"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/dockerfile"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -37,7 +38,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 			return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 		}
 
-		return mapDockerfileToImagesSets(ctx, d)
+		return mapDockerfileToImagesSets(ctx, d, opts)
 	}
 
 	img, err := mapLegacyDockerfileToImage(ctx, dockerfileImageConfig, opts)
@@ -52,7 +53,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 	return ret, nil
 }
 
-func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile) (ImagesSets, error) {
+func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, opts CommonImageOptions) (ImagesSets, error) {
 	var ret ImagesSets
 
 	stagesSets, err := cfg.GroupStagesByIndependentSets(ctx)
@@ -66,6 +67,22 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile) 
 			// TODO(staged-dockerfile): map stages to *Image+build.Stage objects
 			// ret = append(ret, stg.)
 		}
+	}
+
+	{
+		img := NewImage("test", ImageOptions{
+			IsDockerfileImage:  true,
+			CommonImageOptions: opts,
+		})
+
+		img.stages = append(img.stages, dockerfile_instruction.NewRun(&dockerfile.InstructionRun{Command: []string{"ls", "/"}}, nil, false, &stage.BaseStageOptions{
+			ImageName:        img.Name,
+			ImageTmpDir:      img.TmpDir,
+			ContainerWerfDir: img.ContainerWerfDir,
+			ProjectName:      opts.ProjectName,
+		}))
+
+		ret = append(ret, []*Image{img})
 	}
 
 	return ret, nil
@@ -162,7 +179,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 		dockerTargetIndex,
 	)
 
-	baseStageOptions := &stage.NewBaseStageOptions{
+	baseStageOptions := &stage.BaseStageOptions{
 		ImageName:   dockerfileImageConfig.Name,
 		ProjectName: opts.ProjectName,
 	}

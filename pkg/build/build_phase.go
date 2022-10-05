@@ -404,7 +404,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		return fmt.Errorf("unable to fetch dependencies for stage %s: %w", stg.LogDetailedName(), err)
 	}
 
-	if stg.Name() != "from" && stg.Name() != "dockerfile" {
+	if stg.HasPrevStage() {
 		if phase.StagesIterator.PrevNonEmptyStage == nil {
 			panic(fmt.Sprintf("expected PrevNonEmptyStage to be set for image %q stage %s", img.GetName(), stg.Name()))
 		}
@@ -554,7 +554,7 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.
 		}
 	case stg.Name() == "dockerfile":
 		return nil
-	default:
+	case stg.HasPrevStage():
 		return phase.Conveyor.StorageManager.FetchStage(ctx, phase.Conveyor.ContainerBackend, phase.StagesIterator.PrevBuiltStage)
 	}
 
@@ -748,14 +748,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	}
 
 	if err := logboek.Context(ctx).Streams().DoErrorWithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
-		switch {
-		case stg.Name() == "dockerfile":
-			return stageImage.Builder.DockerfileBuilder().Build(ctx)
-		case phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend):
-			return stageImage.Builder.LegacyStapelStageBuilder().Build(ctx, phase.ImageBuildOptions)
-		default:
-			return stageImage.Builder.StapelStageBuilder().Build(ctx, phase.ImageBuildOptions)
-		}
+		return stageImage.Builder.Build(ctx, phase.ImageBuildOptions)
 	}); err != nil {
 		return fmt.Errorf("failed to build image for stage %s with digest %s: %w", stg.Name(), stg.GetDigest(), err)
 	}

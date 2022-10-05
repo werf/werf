@@ -15,7 +15,7 @@ type NewGitPatchStageOptions struct {
 	ContainerScriptsDir  string
 }
 
-func newGitPatchStage(name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GitPatchStage {
+func newGitPatchStage(name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *GitPatchStage {
 	s := &GitPatchStage{
 		ScriptsDir:           gitPatchStageOptions.ScriptsDir,
 		ContainerPatchesDir:  gitPatchStageOptions.ContainerPatchesDir,

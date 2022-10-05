@@ -9,7 +9,7 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func GenerateBeforeSetupStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
+func GenerateBeforeSetupStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *BeforeSetupStage {
 	b := getBuilder(imageBaseConfig, baseStageOptions)
 	if b != nil && !b.IsBeforeSetupEmpty(ctx) {
 		return newBeforeSetupStage(b, gitPatchStageOptions, baseStageOptions)
@@ -18,7 +18,7 @@ func GenerateBeforeSetupStage(ctx context.Context, imageBaseConfig *config.Stape
 	return nil
 }
 
-func newBeforeSetupStage(builder builder.Builder, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
+func newBeforeSetupStage(builder builder.Builder, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *BeforeSetupStage {
 	s := &BeforeSetupStage{}
 	s.UserWithGitPatchStage = newUserWithGitPatchStage(builder, BeforeSetup, gitPatchStageOptions, baseStageOptions)
 	return s

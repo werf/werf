@@ -12,13 +12,15 @@ type DockerfileStageBuilderInterface interface {
 	AppendPreCommands(commands ...any) DockerfileStageBuilderInterface
 	AppendMainCommands(commands ...any) DockerfileStageBuilderInterface
 	AppendPostCommands(commands ...any) DockerfileStageBuilderInterface
-	Build(ctx context.Context, contextTar io.ReadCloser) error
+	SetContext(contextTar io.ReadCloser) DockerfileStageBuilderInterface
+	Build(ctx context.Context, opts container_backend.BuildOptions) error
 }
 
 type DockerfileStageBuilder struct {
 	preCommands  []any
 	mainCommands []any
 	postCommands []any
+	contextTar   io.ReadCloser
 
 	fromImage        container_backend.ImageInterface
 	resultImage      container_backend.ImageInterface
@@ -48,7 +50,12 @@ func (b *DockerfileStageBuilder) AppendPostCommands(commands ...any) DockerfileS
 	return b
 }
 
-func (b *DockerfileStageBuilder) Build(ctx context.Context, contextTar io.ReadCloser) error {
+func (b *DockerfileStageBuilder) SetContext(contextTar io.ReadCloser) DockerfileStageBuilderInterface {
+	b.contextTar = contextTar
+	return b
+}
+
+func (b *DockerfileStageBuilder) Build(ctx context.Context, opts container_backend.BuildOptions) error {
 	commands := append(append(b.preCommands, b.mainCommands...), b.postCommands)
 	if len(commands) == 0 {
 		b.resultImage.SetName(b.fromImage.Name())
@@ -56,7 +63,7 @@ func (b *DockerfileStageBuilder) Build(ctx context.Context, contextTar io.ReadCl
 		return nil
 	}
 
-	if builtID, err := b.containerBackend.BuildDockerfileStage(ctx, b.resultImage, contextTar, container_backend.BuildDockerfileStageOptions{}, commands...); err != nil {
+	if builtID, err := b.containerBackend.BuildDockerfileStage(ctx, b.resultImage, b.contextTar, container_backend.BuildDockerfileStageOptions{}, commands...); err != nil {
 		return fmt.Errorf("error building dockerfile stage: %w", err)
 	} else {
 		b.resultImage.SetBuiltID(builtID)

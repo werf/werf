@@ -7,9 +7,9 @@ import (
 	imagePkg "github.com/werf/werf/pkg/image"
 )
 
-func newGitStage(name StageName, baseStageOptions *NewBaseStageOptions) *GitStage {
+func newGitStage(name StageName, baseStageOptions *BaseStageOptions) *GitStage {
 	s := &GitStage{}
-	s.BaseStage = newBaseStage(name, baseStageOptions)
+	s.BaseStage = NewBaseStage(name, baseStageOptions)
 	return s
 }
 

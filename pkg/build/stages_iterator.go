@@ -47,10 +47,8 @@ func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *build_ima
 	}
 	logboek.Context(ctx).Debug().LogF("%s stage is empty: %v\n", stg.LogDetailedName(), isEmpty)
 
-	if stg.Name() != "from" && stg.Name() != "dockerfile" {
-		if iterator.PrevStage == nil {
-			panic(fmt.Sprintf("expected PrevStage to be set for image %q stage %s!", img.GetName(), stg.Name()))
-		}
+	if stg.HasPrevStage() && iterator.PrevStage == nil {
+		panic(fmt.Sprintf("expected PrevStage to be set for image %q stage %s!", img.GetName(), stg.Name()))
 	}
 
 	if err := onImageStageFunc(img, stg, isEmpty); err != nil {

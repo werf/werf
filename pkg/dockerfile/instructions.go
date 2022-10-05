@@ -21,6 +21,10 @@ type InstructionRun struct {
 	Command []string
 }
 
+func (i *InstructionRun) Name() string {
+	return "RUN"
+}
+
 type InstructionEntrypoint struct {
 	Entrypoint []string
 }

@@ -52,11 +52,11 @@ func getDependencies(imageBaseConfig *config.StapelImageBase, options *getImport
 	return dependencies
 }
 
-func newDependenciesStage(imports []*config.Import, dependencies []*config.Dependency, name StageName, baseStageOptions *NewBaseStageOptions) *DependenciesStage {
+func newDependenciesStage(imports []*config.Import, dependencies []*config.Dependency, name StageName, baseStageOptions *BaseStageOptions) *DependenciesStage {
 	s := &DependenciesStage{}
 	s.imports = imports
 	s.dependencies = dependencies
-	s.BaseStage = newBaseStage(name, baseStageOptions)
+	s.BaseStage = NewBaseStage(name, baseStageOptions)
 	return s
 }
 

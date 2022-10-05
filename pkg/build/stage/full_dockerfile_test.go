@@ -51,7 +51,7 @@ func newTestFullDockerfileStage(dockerfileData []byte, target string, buildArgs 
 		),
 		ds,
 		NewContextChecksum(nil),
-		&NewBaseStageOptions{
+		&BaseStageOptions{
 			ImageName:   "example-image",
 			ProjectName: "example-project",
 		},

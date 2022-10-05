@@ -10,7 +10,7 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBaseStageOptions) builder.Builder {
+func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) builder.Builder {
 	var b builder.Builder
 	extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.ImageTmpDir}
 	if imageBaseConfig.Shell != nil {
@@ -22,10 +22,10 @@ func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *NewBa
 	return b
 }
 
-func newUserStage(builder builder.Builder, name StageName, baseStageOptions *NewBaseStageOptions) *UserStage {
+func newUserStage(builder builder.Builder, name StageName, baseStageOptions *BaseStageOptions) *UserStage {
 	s := &UserStage{}
 	s.builder = builder
-	s.BaseStage = newBaseStage(name, baseStageOptions)
+	s.BaseStage = NewBaseStage(name, baseStageOptions)
 	return s
 }
 
