@@ -67,6 +67,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
   docker run -ti --rm image-stage-test:1ffe83860127e68e893b6aece5b0b7619f903f8492a285c6410371c87018c6a0 /bin/sh`,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
+			common.DocsLongMD:                  GetRunDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

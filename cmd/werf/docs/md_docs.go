@@ -3,7 +3,6 @@ package docs
 import (
 	"bytes"
 	"fmt"
-	"html"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,20 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"mvdan.cc/xurls"
 
-	"github.com/werf/werf/cmd/werf/build"
-	"github.com/werf/werf/cmd/werf/bundle/export"
-	"github.com/werf/werf/cmd/werf/bundle/publish"
-	"github.com/werf/werf/cmd/werf/cleanup"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/cmd/werf/common/templates"
-	"github.com/werf/werf/cmd/werf/compose"
-	"github.com/werf/werf/cmd/werf/converge"
-	"github.com/werf/werf/cmd/werf/dismiss"
-	export2 "github.com/werf/werf/cmd/werf/export"
-	"github.com/werf/werf/cmd/werf/kube_run"
-	"github.com/werf/werf/cmd/werf/purge"
-	"github.com/werf/werf/cmd/werf/render"
-	"github.com/werf/werf/cmd/werf/run"
 )
 
 func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
@@ -358,38 +345,9 @@ func writeShortCommandMarkdownPartial(cmd *cobra.Command, dir string) error {
 }
 
 func getLongFromCommand(cmd *cobra.Command) string {
-	switch cmd.Short {
-	case "Build and push images, then deploy application into Kubernetes":
-		return html.EscapeString(converge.GetConvergeDocs().LongMD)
-	case "Delete application from Kubernetes":
-		return html.EscapeString(dismiss.GetDismissDocs().LongMD)
-	case "Export bundle":
-		return html.EscapeString(export.GetBundleExportDocs().LongMD)
-	case "Publish bundle":
-		return html.EscapeString(publish.GetBundlePublishDocs().LongMD)
-	case "Cleanup project images in the container registry":
-		return html.EscapeString(cleanup.GetCleanupDocs().LongMD)
-	case "Purge all project images in the container registry":
-		return html.EscapeString(purge.GetPurgeDocs().LongMD)
-	case "Build images":
-		return html.EscapeString(build.GetBuildDocs().LongMD)
-	case "Export images":
-		return html.EscapeString(export2.GetExportDocs().LongMD)
-	case "Run container for project image":
-		return html.EscapeString(run.GetRunDocs().LongMD)
-	case "Run container for project image in Kubernetes":
-		return html.EscapeString(kube_run.GetKubeRunDocs().LongMD)
-	case "Run docker-compose config command with forwarded image names.":
-		return compose.GetComposeDocs(cmd.Short).LongMD
-	case "Run docker-compose down command with forwarded image names.":
-		return compose.GetComposeDocs(cmd.Short).LongMD
-	case "Run docker-compose run command with forwarded image names.":
-		return compose.GetComposeDocs(cmd.Short).LongMD
-	case "Run docker-compose up command with forwarded image names.":
-		return compose.GetComposeDocs(cmd.Short).LongMD
-	case "Render Kubernetes templates":
-		return html.EscapeString(render.GetRenderDocs().LongMD)
-	default:
+	if ann, ok := cmd.Annotations[common.DocsLongMD]; ok {
+		return ann
+	} else {
 		if len(cmd.Long) == 0 {
 			return cmd.Short
 		} else {

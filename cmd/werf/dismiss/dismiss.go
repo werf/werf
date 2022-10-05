@@ -51,6 +51,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
   # Dismiss project using specified helm release name and namespace
   $ werf dismiss --release myrelease --namespace myns`,
 		DisableFlagsInUseLine: true,
+		Annotations: map[string]string{
+			common.DocsLongMD: GetDismissDocs().LongMD,
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 

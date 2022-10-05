@@ -131,6 +131,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
+			common.DocsLongMD:                  GetComposeDocs(short).LongMD,
 		},
 		Example: options.Example,
 		RunE: func(cmd *cobra.Command, args []string) error {

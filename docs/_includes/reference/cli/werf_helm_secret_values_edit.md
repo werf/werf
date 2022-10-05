@@ -23,7 +23,7 @@ werf helm secret values edit FILE_PATH [options]
 
 ```shell
   $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
-                    set secret key in CI-system. 
+                    set secret key in CI-system.
                     
                     Secret key also can be defined in files:
                     * ~/.werf/global_secret_key (globally),

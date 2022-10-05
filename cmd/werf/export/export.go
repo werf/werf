@@ -42,6 +42,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
   $ werf export --tag=index.docker.io/company/project:%image%-latest --tag=ghcr.io/company/project/%image%:latest`,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
+			common.DocsLongMD:                  GetExportDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

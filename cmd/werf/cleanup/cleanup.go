@@ -36,6 +36,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Short:                 "Cleanup project images in the container registry",
 		Long:                  common.GetLongCommandDescription(GetCleanupDocs().Long),
 		Example:               `  $ werf cleanup --repo registry.mydomain.com/myproject/werf`,
+		Annotations: map[string]string{
+			common.DocsLongMD: GetCleanupDocs().LongMD,
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 

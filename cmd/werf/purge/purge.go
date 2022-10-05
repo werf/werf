@@ -28,6 +28,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Purge all project images in the container registry",
 		Long:                  common.GetLongCommandDescription(GetPurgeDocs().Long),
+		Annotations: map[string]string{
+			common.DocsLongMD: GetPurgeDocs().LongMD,
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
