@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/werf/werf/pkg/container_backend/build_context"
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -46,7 +47,8 @@ type BuildDockerfileOpts struct {
 type BuildDockerfileStageOptions struct {
 	CommonOpts
 
-	ContextTar io.ReadCloser
+	BuildContext     *build_context.BuildContext
+	ContextTarReader io.ReadCloser
 }
 
 type ContainerBackend interface {
@@ -57,7 +59,7 @@ type ContainerBackend interface {
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
-	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, commands ...any) (string, error)
+	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, *build_context.BuildContext, error)
 	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error)
 	CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (string, error)
 

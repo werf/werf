@@ -1,4 +1,4 @@
-package dockerfile_instruction
+package instruction
 
 import (
 	"context"
@@ -6,26 +6,27 @@ import (
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
+	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/util"
 )
 
 type Run struct {
 	*Base
-	instruction *container_backend.InstructionRun
+	instruction *backend_instruction.Run
 }
 
-func NewRun(instruction *container_backend.InstructionRun, dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
+func NewRun(i *backend_instruction.Run, dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
 	return &Run{
-		Base:        NewBase("RUN", dependencies, hasPrevStage, opts),
-		instruction: instruction,
+		Base:        NewBase(InstructionRun, dependencies, hasPrevStage, opts),
+		instruction: i,
 	}
 }
 
 func (stage *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage) (string, error) {
-	return util.Sha256Hash(stage.instruction.Command...), nil
+	return util.Sha256Hash(append([]string{string(InstructionRun)}, stage.instruction.Command...)...), nil
 }
 
 func (stage *Run) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage) error {
-	stageImage.Builder.DockerfileStageBuilder().AppendMainCommands(stage.instruction)
+	stageImage.Builder.DockerfileStageBuilder().AppendInstruction(stage.instruction)
 	return nil
 }

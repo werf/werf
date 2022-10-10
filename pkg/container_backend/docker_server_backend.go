@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/container_backend/build_context"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
@@ -79,7 +80,7 @@ func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, opts.ContextTar, cliArgs...)
 }
 
-func (runtime *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...any) (string, error) {
+func (runtime *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, *build_context.BuildContext, error) {
 	panic("not implemented")
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/container_backend/build_context"
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -71,10 +72,10 @@ func (runtime *PerfCheckContainerBackend) BuildDockerfile(ctx context.Context, d
 	return
 }
 
-func (runtime *PerfCheckContainerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...any) (resID string, resErr error) {
+func (runtime *PerfCheckContainerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (resID string, resBuildContext *build_context.BuildContext, resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.BuildDockerfile").
 		Do(func() {
-			resID, resErr = runtime.ContainerBackend.BuildDockerfileStage(ctx, baseImage, opts, instructions...)
+			resID, resBuildContext, resErr = runtime.ContainerBackend.BuildDockerfileStage(ctx, baseImage, opts, instructions...)
 		})
 	return
 }

@@ -12,9 +12,9 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/build/stage/dockerfile_instruction"
+	stage_instruction "github.com/werf/werf/pkg/build/stage/instruction"
 	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_backend"
+	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/dockerfile"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
@@ -82,7 +82,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			return nil, fmt.Errorf("unable to create image %q: %w", "test", err)
 		}
 
-		img.stages = append(img.stages, dockerfile_instruction.NewRun(&container_backend.InstructionRun{Command: []string{"ls", "/"}}, nil, false, &stage.BaseStageOptions{
+		img.stages = append(img.stages, stage_instruction.NewRun(backend_instruction.NewRun([]string{"ls", "/"}), nil, false, &stage.BaseStageOptions{
 			ImageName:        img.Name,
 			ImageTmpDir:      img.TmpDir,
 			ContainerWerfDir: img.ContainerWerfDir,
