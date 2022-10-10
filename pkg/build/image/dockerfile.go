@@ -14,6 +14,7 @@ import (
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/build/stage/dockerfile_instruction"
 	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/dockerfile"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
@@ -70,12 +71,18 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 	}
 
 	{
-		img := NewImage("test", ImageOptions{
+		// TODO parse FROM instruction properly, set correct BaseImageReference here
+
+		img, err := NewImage(ctx, "test", ImageFromRegistryAsBaseImage, ImageOptions{
 			IsDockerfileImage:  true,
 			CommonImageOptions: opts,
+			BaseImageReference: "ubuntu:22.04",
 		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to create image %q: %w", "test", err)
+		}
 
-		img.stages = append(img.stages, dockerfile_instruction.NewRun(&dockerfile.InstructionRun{Command: []string{"ls", "/"}}, nil, false, &stage.BaseStageOptions{
+		img.stages = append(img.stages, dockerfile_instruction.NewRun(&container_backend.InstructionRun{Command: []string{"ls", "/"}}, nil, false, &stage.BaseStageOptions{
 			ImageName:        img.Name,
 			ImageTmpDir:      img.TmpDir,
 			ContainerWerfDir: img.ContainerWerfDir,
@@ -89,10 +96,13 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 }
 
 func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, opts CommonImageOptions) (*Image, error) {
-	img := NewImage(dockerfileImageConfig.Name, ImageOptions{
+	img, err := NewImage(ctx, dockerfileImageConfig.Name, NoBaseImage, ImageOptions{
 		CommonImageOptions: opts,
 		IsDockerfileImage:  true,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to create image %q: %w", dockerfileImageConfig.Name, err)
+	}
 
 	for _, contextAddFile := range dockerfileImageConfig.ContextAddFiles {
 		relContextAddFile := filepath.Join(dockerfileImageConfig.Context, contextAddFile)

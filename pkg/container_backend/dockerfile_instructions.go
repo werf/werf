@@ -1,4 +1,4 @@
-package dockerfile
+package container_backend
 
 import "fmt"
 
@@ -19,10 +19,6 @@ type InstructionAdd struct {
 
 type InstructionRun struct {
 	Command []string
-}
-
-func (i *InstructionRun) Name() string {
-	return "RUN"
 }
 
 type InstructionEntrypoint struct {

@@ -72,7 +72,7 @@ var _ = Describe("FullDockerfileStage", func() {
 			stage := newTestFullDockerfileStage(data.DockerfileData, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies)
 
 			img := NewLegacyImageStub()
-			stageBuilder := stage_builder.NewStageBuilder(containerBackend, nil, img)
+			stageBuilder := stage_builder.NewStageBuilder(containerBackend, "", img)
 			stageImage := &StageImage{
 				Image:   img,
 				Builder: stageBuilder,
@@ -331,7 +331,7 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 			containerBackend := NewContainerBackendMock()
 
 			img := NewLegacyImageStub()
-			stageBuilder := stage_builder.NewStageBuilder(containerBackend, nil, img)
+			stageBuilder := stage_builder.NewStageBuilder(containerBackend, "", img)
 			stageImage := &StageImage{
 				Image:   img,
 				Builder: stageBuilder,

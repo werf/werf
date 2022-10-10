@@ -45,6 +45,8 @@ type BuildDockerfileOpts struct {
 
 type BuildDockerfileStageOptions struct {
 	CommonOpts
+
+	ContextTar io.ReadCloser
 }
 
 type ContainerBackend interface {
@@ -55,8 +57,8 @@ type ContainerBackend interface {
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
-	BuildDockerfileStage(ctx context.Context, image ImageInterface, contextTar io.ReadCloser, opts BuildDockerfileStageOptions, commands ...any) (string, error)
-	BuildStapelStage(ctx context.Context, opts BuildStapelStageOptions) (string, error)
+	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, commands ...any) (string, error)
+	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error)
 	CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (string, error)
 
 	HasStapelBuildSupport() bool

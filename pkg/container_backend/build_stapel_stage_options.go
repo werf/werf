@@ -10,8 +10,6 @@ type AddDataArchiveOptions struct {
 }
 
 type BuildStapelStageOptionsInterface interface {
-	SetBaseImage(baseImage string) BuildStapelStageOptionsInterface
-
 	AddLabels(labels map[string]string) BuildStapelStageOptionsInterface
 	AddVolumes(volumes []string) BuildStapelStageOptionsInterface
 	AddExpose(expose []string) BuildStapelStageOptionsInterface
@@ -31,8 +29,6 @@ type BuildStapelStageOptionsInterface interface {
 }
 
 type BuildStapelStageOptions struct {
-	BaseImage string
-
 	Labels      []string
 	Volumes     []string
 	Expose      []string
@@ -89,11 +85,6 @@ type DependencyImportSpec struct {
 	ExcludePaths []string
 	Owner        string
 	Group        string
-}
-
-func (opts *BuildStapelStageOptions) SetBaseImage(baseImage string) BuildStapelStageOptionsInterface {
-	opts.BaseImage = baseImage
-	return opts
 }
 
 func (opts *BuildStapelStageOptions) AddLabels(labels map[string]string) BuildStapelStageOptionsInterface {

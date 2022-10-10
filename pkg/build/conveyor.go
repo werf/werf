@@ -632,16 +632,34 @@ func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
 	c.stageImages[stageImage.Image.Name()] = stageImage
 }
 
-func (c *Conveyor) GetOrCreateStageImage(fromImage *container_backend.LegacyStageImage, name string) *stage.StageImage {
-	if img := c.GetStageImage(name); img != nil {
-		return img
+func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.LegacyStageImage {
+	if stageImage == nil || stageImage.Image == nil {
+		return nil
+	}
+	return stageImage.Image.(*container_backend.LegacyStageImage)
+}
+
+func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *image.Image) *stage.StageImage {
+	if stageImage := c.GetStageImage(name); stageImage != nil {
+		return stageImage
 	}
 
-	i := container_backend.NewLegacyStageImage(fromImage, name, c.ContainerBackend)
-	img := stage.NewStageImage(c.ContainerBackend, fromImage, i)
+	i := container_backend.NewLegacyStageImage(extractLegacyStageImage(prevStageImage), name, c.ContainerBackend)
 
-	c.SetStageImage(img)
-	return img
+	var baseImage string
+	if stg != nil {
+		if stg.HasPrevStage() {
+			baseImage = prevStageImage.Image.Name()
+		} else if stg.IsStapelStage() && stg.Name() == "from" {
+			baseImage = prevStageImage.Image.Name()
+		} else {
+			baseImage = img.GetBaseImageReference()
+		}
+	}
+
+	stageImage := stage.NewStageImage(c.ContainerBackend, baseImage, i)
+	c.SetStageImage(stageImage)
+	return stageImage
 }
 
 func (c *Conveyor) GetImage(name string) *image.Image {

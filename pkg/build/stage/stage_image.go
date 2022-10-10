@@ -10,9 +10,9 @@ type StageImage struct {
 	Builder stage_builder.StageBuilderInterface
 }
 
-func NewStageImage(containerBackend container_backend.ContainerBackend, fromImage container_backend.ImageInterface, image container_backend.LegacyImageInterface) *StageImage {
+func NewStageImage(containerBackend container_backend.ContainerBackend, baseImage string, image container_backend.LegacyImageInterface) *StageImage {
 	return &StageImage{
 		Image:   image,
-		Builder: stage_builder.NewStageBuilder(containerBackend, fromImage, image),
+		Builder: stage_builder.NewStageBuilder(containerBackend, baseImage, image),
 	}
 }

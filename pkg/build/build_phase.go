@@ -451,7 +451,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		}
 
 		// Will build a new stage
-		i := phase.Conveyor.GetOrCreateStageImage(extractLegacyStageImage(phase.StagesIterator.GetPrevImage(img, stg)), uuid.New().String())
+		i := phase.Conveyor.GetOrCreateStageImage(uuid.New().String(), phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 		stg.SetStageImage(i)
 
 		if err := phase.fetchBaseImageForStage(ctx, img, stg); err != nil {
@@ -502,7 +502,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 			if copiedStageDesc, err := storageManager.CopySuitableByDigestStage(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend); err != nil {
 				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetStagesStorage().String(), err)
 			} else {
-				i := phase.Conveyor.GetOrCreateStageImage(extractLegacyStageImage(phase.StagesIterator.GetPrevImage(img, stg)), copiedStageDesc.Info.Name)
+				i := phase.Conveyor.GetOrCreateStageImage(copiedStageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 				i.Image.SetStageDescription(copiedStageDesc)
 				stg.SetStageImage(i)
 
@@ -547,25 +547,14 @@ ScanSecondaryStagesStorageList:
 }
 
 func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
-	switch {
-	case stg.Name() == "from":
-		if err := img.FetchBaseImage(ctx); err != nil {
-			return fmt.Errorf("unable to fetch base image %s for stage %s: %w", img.GetBaseImage().Image.Name(), stg.LogDetailedName(), err)
-		}
-	case stg.Name() == "dockerfile":
-		return nil
-	case stg.HasPrevStage():
+	if stg.HasPrevStage() {
 		return phase.Conveyor.StorageManager.FetchStage(ctx, phase.Conveyor.ContainerBackend, phase.StagesIterator.PrevBuiltStage)
+	} else {
+		if err := img.FetchBaseImage(ctx); err != nil {
+			return fmt.Errorf("unable to fetch base image %s for stage %s: %w", img.GetBaseStageImage().Image.Name(), stg.LogDetailedName(), err)
+		}
 	}
-
 	return nil
-}
-
-func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.LegacyStageImage {
-	if stageImage == nil || stageImage.Image == nil {
-		return nil
-	}
-	return stageImage.Image.(*container_backend.LegacyStageImage)
 }
 
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, func(), error) {
@@ -597,7 +586,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		if stageDesc, err := storageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages); err != nil {
 			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 		} else if stageDesc != nil {
-			i := phase.Conveyor.GetOrCreateStageImage(extractLegacyStageImage(phase.StagesIterator.GetPrevImage(img, stg)), stageDesc.Info.Name)
+			i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 			i.Image.SetStageDescription(stageDesc)
 			stg.SetStageImage(i)
 			foundSuitableStage = true
@@ -630,19 +619,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		imagePkg.WerfStageContentDigestLabel: stg.GetContentDigest(),
 	}
 
-	switch stg.(type) {
-	case *stage.FullDockerfileStage:
-		var labels []string
-		for key, value := range serviceLabels {
-			labels = append(labels, fmt.Sprintf("%s=%v", key, value))
-		}
-		stageImage.Builder.DockerfileBuilder().AppendLabels(labels...)
-
-		phase.Conveyor.AppendOnTerminateFunc(func() error {
-			return stageImage.Builder.DockerfileBuilder().Cleanup(ctx)
-		})
-
-	default:
+	if stg.IsStapelStage() {
 		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
 			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(serviceLabels)
 		} else {
@@ -688,6 +665,19 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		} else {
 			stageImage.Builder.StapelStageBuilder().AddEnvs(commitEnvs)
 		}
+	} else if _, ok := stg.(*stage.FullDockerfileStage); ok {
+		var labels []string
+		for key, value := range serviceLabels {
+			labels = append(labels, fmt.Sprintf("%s=%v", key, value))
+		}
+		stageImage.Builder.DockerfileBuilder().AppendLabels(labels...)
+
+		phase.Conveyor.AppendOnTerminateFunc(func() error {
+			return stageImage.Builder.DockerfileBuilder().Cleanup(ctx)
+		})
+	} else {
+		stageImage.Builder.DockerfileStageBuilder().AppendPostCommands(&container_backend.InstructionLabel{Labels: serviceLabels})
+		// staged dockerfile
 	}
 
 	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)
@@ -789,7 +779,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 				stg.LogDetailedName(), stg.GetDigest(), stageDesc.Info.Name,
 			)
 
-			i := phase.Conveyor.GetOrCreateStageImage(extractLegacyStageImage(phase.StagesIterator.GetPrevImage(img, stg)), stageDesc.Info.Name)
+			i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 			i.Image.SetStageDescription(stageDesc)
 			stg.SetStageImage(i)
 

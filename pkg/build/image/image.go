@@ -23,6 +23,7 @@ type BaseImageType string
 const (
 	ImageFromRegistryAsBaseImage BaseImageType = "ImageFromRegistryBaseImage"
 	StageAsBaseImage             BaseImageType = "StageBaseImage"
+	NoBaseImage                  BaseImageType = "NoBaseImage"
 )
 
 type CommonImageOptions struct {
@@ -39,15 +40,37 @@ type CommonImageOptions struct {
 type ImageOptions struct {
 	CommonImageOptions
 	IsArtifact, IsDockerfileImage bool
+
+	BaseImageReference   string
+	BaseImageName        string
+	FetchLatestBaseImage bool
 }
 
-func NewImage(name string, opts ImageOptions) *Image {
-	return &Image{
+func NewImage(ctx context.Context, name string, baseImageType BaseImageType, opts ImageOptions) (*Image, error) {
+	switch baseImageType {
+	case NoBaseImage, ImageFromRegistryAsBaseImage, StageAsBaseImage:
+	default:
+		panic(fmt.Sprintf("unknown opts.BaseImageType %q", baseImageType))
+	}
+
+	i := &Image{
 		Name:               name,
 		CommonImageOptions: opts.CommonImageOptions,
 		IsArtifact:         opts.IsArtifact,
 		IsDockerfileImage:  opts.IsDockerfileImage,
+
+		baseImageType:      baseImageType,
+		baseImageReference: opts.BaseImageReference,
+		baseImageName:      opts.BaseImageName,
 	}
+
+	if opts.FetchLatestBaseImage {
+		if _, err := i.getFromBaseImageIdFromRegistry(ctx, i.baseImageReference); err != nil {
+			return nil, fmt.Errorf("error fetching base image id from registry: %w", err)
+		}
+	}
+
+	return i, nil
 }
 
 type Image struct {
@@ -57,18 +80,18 @@ type Image struct {
 	IsDockerfileImage bool
 	Name              string
 
-	baseImageName      string
-	baseImageImageName string
-	baseImageRepoId    string
-
 	stages            []stage.Interface
 	lastNonEmptyStage stage.Interface
 	contentDigest     string
 	rebuilt           bool
 
-	baseImageType    BaseImageType
+	baseImageType      BaseImageType
+	baseImageReference string
+	baseImageName      string
+
+	baseImageRepoId  string
+	baseStageImage   *stage.StageImage
 	stageAsBaseImage stage.Interface
-	baseImage        *stage.StageImage
 }
 
 func (i *Image) LogName() string {
@@ -161,37 +184,45 @@ func (i *Image) GetRebuilt() bool {
 }
 
 func (i *Image) SetupBaseImage() {
-	if i.baseImageImageName != "" {
-		i.baseImageType = StageAsBaseImage
-		i.stageAsBaseImage = i.Conveyor.GetImage(i.baseImageImageName).GetLastNonEmptyStage()
-		i.baseImage = i.stageAsBaseImage.GetStageImage()
-	} else {
-		i.baseImageType = ImageFromRegistryAsBaseImage
-		i.baseImage = i.Conveyor.GetOrCreateStageImage(nil, i.baseImageName)
+	switch i.baseImageType {
+	case StageAsBaseImage:
+		i.stageAsBaseImage = i.Conveyor.GetImage(i.baseImageName).GetLastNonEmptyStage()
+		i.baseImageReference = i.stageAsBaseImage.GetStageImage().Image.Name()
+		i.baseStageImage = i.stageAsBaseImage.GetStageImage()
+	case ImageFromRegistryAsBaseImage:
+		i.baseStageImage = i.Conveyor.GetOrCreateStageImage(i.baseImageReference, nil, nil, i)
+	case NoBaseImage:
+	default:
+		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
 	}
 }
 
-func (i *Image) GetBaseImage() *stage.StageImage {
-	return i.baseImage
+// TODO(staged-dockerfile): this is only for compatibility with stapel-builder logic, and this should be unified with new staged-dockerfile logic
+func (i *Image) GetBaseStageImage() *stage.StageImage {
+	return i.baseStageImage
+}
+
+func (i *Image) GetBaseImageReference() string {
+	return i.baseImageReference
 }
 
 func (i *Image) FetchBaseImage(ctx context.Context) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
-		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
-			return fmt.Errorf("unable to inspect local image %s: %w", i.baseImage.Image.Name(), err)
+		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
+			return fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		} else if info != nil {
 			// TODO: do not use container_backend.LegacyStageImage for base image
-			i.baseImage.Image.SetStageDescription(&image.StageDescription{
+			i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
 				StageID: nil, // this is not a stage actually, TODO
 				Info:    info,
 			})
 
-			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, i.baseImage.Image.Name())
+			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, i.baseStageImage.Image.Name())
 			if baseImageRepoId == info.ID || err != nil {
 				if err != nil {
-					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseImage.Image.Name(), err)
-					logboek.Context(ctx).Warn().LogF("WARNING: using existing image %s without pull\n", i.baseImage.Image.Name())
+					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseStageImage.Image.Name(), err)
+					logboek.Context(ctx).Warn().LogF("WARNING: using existing image %s without pull\n", i.baseStageImage.Image.Name())
 					logboek.Context(ctx).Warn().LogOptionalLn()
 				}
 
@@ -199,62 +230,64 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 			}
 		}
 
-		if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseImage.Image.Name()).
+		if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
 			Options(func(options types.LogProcessOptionsInterface) {
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
-				return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseImage.Image)
+				return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
 			}); err != nil {
 			return err
 		}
 
-		info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseImage.Image.Name(), container_backend.GetImageInfoOpts{})
+		info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{})
 		if err != nil {
-			return fmt.Errorf("unable to inspect local image %s: %w", i.baseImage.Image.Name(), err)
+			return fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		}
 
 		if info == nil {
-			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseImage.Image.Name())
+			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseStageImage.Image.Name())
 		}
 
-		i.baseImage.Image.SetStageDescription(&image.StageDescription{
+		i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
 			StageID: nil, // this is not a stage actually, TODO
 			Info:    info,
 		})
+
+		return nil
 	case StageAsBaseImage:
-		if err := i.StorageManager.FetchStage(ctx, i.ContainerBackend, i.stageAsBaseImage); err != nil {
-			return err
-		}
+		return i.StorageManager.FetchStage(ctx, i.ContainerBackend, i.stageAsBaseImage)
+
+	case NoBaseImage:
+		return nil
+
 	default:
 		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
 	}
-
-	return nil
 }
 
-func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, baseImageName string) (string, error) {
-	i.Conveyor.GetServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Lock()
-	defer i.Conveyor.GetServiceRWMutex("baseImagesRepoIdsCache" + baseImageName).Unlock()
+func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, reference string) (string, error) {
+	i.Conveyor.GetServiceRWMutex("baseImagesRepoIdsCache" + reference).Lock()
+	defer i.Conveyor.GetServiceRWMutex("baseImagesRepoIdsCache" + reference).Unlock()
 
 	switch {
 	case i.baseImageRepoId != "":
 		return i.baseImageRepoId, nil
-	case i.Conveyor.IsBaseImagesRepoIdsCacheExist(baseImageName):
-		i.baseImageRepoId = i.Conveyor.GetBaseImagesRepoIdsCache(baseImageName)
+	case i.Conveyor.IsBaseImagesRepoIdsCacheExist(reference):
+		i.baseImageRepoId = i.Conveyor.GetBaseImagesRepoIdsCache(reference)
 		return i.baseImageRepoId, nil
-	case i.Conveyor.IsBaseImagesRepoErrCacheExist(baseImageName):
-		return "", i.Conveyor.GetBaseImagesRepoErrCache(baseImageName)
+	case i.Conveyor.IsBaseImagesRepoErrCacheExist(reference):
+		return "", i.Conveyor.GetBaseImagesRepoErrCache(reference)
 	}
 
 	var fetchedBaseRepoImage *image.Info
-	processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", baseImageName)
+	processMsg := fmt.Sprintf("Trying to get from base image id from registry (%s)", reference)
 	if err := logboek.Context(ctx).Info().LogProcessInline(processMsg).DoError(func() error {
 		var fetchImageIdErr error
-		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(ctx, baseImageName)
+		fetchedBaseRepoImage, fetchImageIdErr = docker_registry.API().GetRepoImage(ctx, reference)
 		if fetchImageIdErr != nil {
-			i.Conveyor.SetBaseImagesRepoErrCache(baseImageName, fetchImageIdErr)
-			return fmt.Errorf("can not get base image id from registry (%s): %w", baseImageName, fetchImageIdErr)
+			i.Conveyor.SetBaseImagesRepoErrCache(reference, fetchImageIdErr)
+			return fmt.Errorf("can not get base image id from registry (%s): %w", reference, fetchImageIdErr)
 		}
 
 		return nil
@@ -263,7 +296,7 @@ func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, baseImageNam
 	}
 
 	i.baseImageRepoId = fetchedBaseRepoImage.ID
-	i.Conveyor.SetBaseImagesRepoIdsCache(baseImageName, i.baseImageRepoId)
+	i.Conveyor.SetBaseImagesRepoIdsCache(reference, i.baseImageRepoId)
 
 	return i.baseImageRepoId, nil
 }

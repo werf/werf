@@ -16,14 +16,14 @@ type StapelStageBuilder struct {
 	container_backend.BuildStapelStageOptions
 
 	ContainerBackend container_backend.ContainerBackend
-	FromImage        container_backend.ImageInterface
+	BaseImage        string
 	Image            container_backend.ImageInterface
 }
 
-func NewStapelStageBuilder(containerBackend container_backend.ContainerBackend, fromImage, image container_backend.ImageInterface) *StapelStageBuilder {
+func NewStapelStageBuilder(containerBackend container_backend.ContainerBackend, baseImage string, image container_backend.ImageInterface) *StapelStageBuilder {
 	return &StapelStageBuilder{
 		ContainerBackend: containerBackend,
-		FromImage:        fromImage,
+		BaseImage:        baseImage,
 		Image:            image,
 	}
 }
@@ -31,9 +31,7 @@ func NewStapelStageBuilder(containerBackend container_backend.ContainerBackend, 
 func (builder *StapelStageBuilder) Build(ctx context.Context, opts container_backend.BuildOptions) error {
 	// TODO: support introspect options
 
-	builder.SetBaseImage(builder.FromImage.Name())
-
-	builtID, err := builder.ContainerBackend.BuildStapelStage(ctx, builder.BuildStapelStageOptions)
+	builtID, err := builder.ContainerBackend.BuildStapelStage(ctx, builder.BaseImage, builder.BuildStapelStageOptions)
 	if err != nil {
 		return fmt.Errorf("error building stapel stage with %s: %w", builder.ContainerBackend.String(), err)
 	}

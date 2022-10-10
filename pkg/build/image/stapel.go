@@ -31,21 +31,27 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 	imageArtifact := stapelImageConfig.IsArtifact()
 	from, fromImageName, fromLatest := getFromFields(imageBaseConfig)
 
-	image := NewImage(imageName, ImageOptions{
+	imageOpts := ImageOptions{
 		CommonImageOptions: opts,
 		IsArtifact:         imageArtifact,
-	})
-
-	if from != "" {
-		if err := handleImageFromName(ctx, from, fromLatest, image); err != nil {
-			return nil, err
-		}
-	} else {
-		image.baseImageImageName = fromImageName
 	}
 
-	err := initStages(ctx, image, metaConfig, stapelImageConfig, opts)
+	var baseImageType BaseImageType
+	if from != "" {
+		baseImageType = ImageFromRegistryAsBaseImage
+		imageOpts.BaseImageReference = from
+		imageOpts.FetchLatestBaseImage = fromLatest
+	} else {
+		baseImageType = StageAsBaseImage
+		imageOpts.BaseImageName = fromImageName
+	}
+
+	image, err := NewImage(ctx, imageName, baseImageType, imageOpts)
 	if err != nil {
+		return nil, fmt.Errorf("unable to create image %q: %w", imageName, err)
+	}
+
+	if err := initStages(ctx, image, metaConfig, stapelImageConfig, opts); err != nil {
 		return nil, err
 	}
 
