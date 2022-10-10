@@ -15,17 +15,17 @@ type StageBuilderInterface interface {
 	Build(ctx context.Context, opts container_backend.BuildOptions) error
 }
 
-func NewStageBuilder(containerBackend container_backend.ContainerBackend, fromImage container_backend.ImageInterface, image container_backend.LegacyImageInterface) *StageBuilder {
+func NewStageBuilder(containerBackend container_backend.ContainerBackend, baseImage string, image container_backend.LegacyImageInterface) *StageBuilder {
 	return &StageBuilder{
 		ContainerBackend: containerBackend,
-		FromImage:        fromImage,
+		BaseImage:        baseImage,
 		Image:            image,
 	}
 }
 
 type StageBuilder struct {
 	ContainerBackend container_backend.ContainerBackend
-	FromImage        container_backend.ImageInterface
+	BaseImage        string
 	Image            container_backend.LegacyImageInterface // TODO: use ImageInterface
 
 	dockerfileBuilder        *DockerfileBuilder
@@ -52,7 +52,7 @@ func (stageBuilder *StageBuilder) GetLegacyStapelStageBuilderImplmentation() *Le
 
 func (stageBuilder *StageBuilder) StapelStageBuilder() StapelStageBuilderInterface {
 	if stageBuilder.stapelStageBuilder == nil {
-		stageBuilder.stapelStageBuilder = NewStapelStageBuilder(stageBuilder.ContainerBackend, stageBuilder.FromImage, stageBuilder.Image)
+		stageBuilder.stapelStageBuilder = NewStapelStageBuilder(stageBuilder.ContainerBackend, stageBuilder.BaseImage, stageBuilder.Image)
 	}
 	return stageBuilder.stapelStageBuilder
 }
@@ -73,7 +73,7 @@ func (stageBuilder *StageBuilder) DockerfileBuilder() DockerfileBuilderInterface
 
 func (stageBuilder *StageBuilder) DockerfileStageBuilder() DockerfileStageBuilderInterface {
 	if stageBuilder.dockerfileStageBuilder == nil {
-		stageBuilder.dockerfileStageBuilder = NewDockerfileStageBuilder(stageBuilder.ContainerBackend, stageBuilder.FromImage, stageBuilder.Image)
+		stageBuilder.dockerfileStageBuilder = NewDockerfileStageBuilder(stageBuilder.ContainerBackend, stageBuilder.BaseImage, stageBuilder.Image)
 	}
 	return stageBuilder.dockerfileStageBuilder
 }

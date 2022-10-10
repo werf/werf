@@ -24,7 +24,7 @@ var _ = Describe("DependenciesStage", func() {
 			})
 
 			img := NewLegacyImageStub()
-			stageBuilder := stage_builder.NewStageBuilder(containerBackend, nil, img)
+			stageBuilder := stage_builder.NewStageBuilder(containerBackend, "", img)
 			stageImage := &StageImage{
 				Image:   img,
 				Builder: stageBuilder,

@@ -6,18 +6,17 @@ import (
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/dockerfile"
 	"github.com/werf/werf/pkg/util"
 )
 
 type Run struct {
 	*Base
-	instruction *dockerfile.InstructionRun
+	instruction *container_backend.InstructionRun
 }
 
-func NewRun(instruction *dockerfile.InstructionRun, dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
+func NewRun(instruction *container_backend.InstructionRun, dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
 	return &Run{
-		Base:        NewBase(stage.StageName(instruction.Name()), dependencies, hasPrevStage, opts),
+		Base:        NewBase("RUN", dependencies, hasPrevStage, opts),
 		instruction: instruction,
 	}
 }

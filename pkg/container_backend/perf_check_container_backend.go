@@ -2,7 +2,6 @@ package container_backend
 
 import (
 	"context"
-	"io"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/image"
@@ -72,18 +71,18 @@ func (runtime *PerfCheckContainerBackend) BuildDockerfile(ctx context.Context, d
 	return
 }
 
-func (runtime *PerfCheckContainerBackend) BuildDockerfileStage(ctx context.Context, image ImageInterface, contextTar io.ReadCloser, opts BuildDockerfileStageOptions, commands ...any) (resID string, resErr error) {
+func (runtime *PerfCheckContainerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...any) (resID string, resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.BuildDockerfile").
 		Do(func() {
-			resID, resErr = runtime.ContainerBackend.BuildDockerfileStage(ctx, image, contextTar, opts, commands)
+			resID, resErr = runtime.ContainerBackend.BuildDockerfileStage(ctx, baseImage, opts, instructions...)
 		})
 	return
 }
 
-func (runtime *PerfCheckContainerBackend) BuildStapelStage(ctx context.Context, opts BuildStapelStageOptions) (resID string, resErr error) {
+func (runtime *PerfCheckContainerBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (resID string, resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.BuildDockerfile").
 		Do(func() {
-			resID, resErr = runtime.ContainerBackend.BuildStapelStage(ctx, opts)
+			resID, resErr = runtime.ContainerBackend.BuildStapelStage(ctx, baseImage, opts)
 		})
 	return
 }

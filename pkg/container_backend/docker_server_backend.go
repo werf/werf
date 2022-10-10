@@ -3,7 +3,6 @@ package container_backend
 import (
 	"context"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -26,7 +25,7 @@ func (runtime *DockerServerBackend) HasStapelBuildSupport() bool {
 	return false
 }
 
-func (runtime *DockerServerBackend) BuildStapelStage(ctx context.Context, opts BuildStapelStageOptions) (string, error) {
+func (runtime *DockerServerBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
 	panic("BuildStapelStage does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
@@ -80,7 +79,7 @@ func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, opts.ContextTar, cliArgs...)
 }
 
-func (runtime *DockerServerBackend) BuildDockerfileStage(ctx context.Context, image ImageInterface, contextTar io.ReadCloser, opts BuildDockerfileStageOptions, commands ...any) (string, error) {
+func (runtime *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...any) (string, error) {
 	panic("not implemented")
 }
 

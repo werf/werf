@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/git_repo"
 )
 
@@ -12,7 +11,7 @@ type Conveyor interface {
 	stage.Conveyor
 
 	GetImage(name string) *Image
-	GetOrCreateStageImage(fromImage *container_backend.LegacyStageImage, name string) *stage.StageImage
+	GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *Image) *stage.StageImage
 
 	IsBaseImagesRepoIdsCacheExist(key string) bool
 	GetBaseImagesRepoIdsCache(key string) string
