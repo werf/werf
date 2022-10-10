@@ -1,4 +1,4 @@
-package dockerfile_instruction
+package instruction
 
 import "github.com/werf/werf/pkg/build/stage"
 

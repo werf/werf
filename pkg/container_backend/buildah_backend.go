@@ -20,6 +20,7 @@ import (
 	copyrec "github.com/werf/copy-recurse"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
+	"github.com/werf/werf/pkg/container_backend/build_context"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
@@ -422,10 +423,22 @@ func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	return nil
 }
 
-func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...any) (string, error) {
+func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, *build_context.BuildContext, error) {
+	buildContext := opts.BuildContext
+	if buildContext == nil {
+		for _, instruction := range instructions {
+			if instruction.UsesBuildContext() {
+				if opts.ContextTarReader == nil {
+					panic(fmt.Sprintf("opts.ContextTarReader needed for %q instruction", instruction.Name()))
+				}
+				buildContext = build_context.NewBuildContext(runtime.TmpDir, opts.ContextTarReader)
+			}
+		}
+	}
+
 	var container *containerDesc
 	if c, err := runtime.createContainers(ctx, []string{baseImage}); err != nil {
-		return "", err
+		return "", nil, err
 	} else {
 		container = c[0]
 	}
@@ -439,7 +452,7 @@ func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 
 	logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
 	if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
-		return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
+		return "", buildContext, fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
 	}
 	defer func() {
 		logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
@@ -448,127 +461,11 @@ func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 		}
 	}()
 
-	var contextTmpDir string
-	if opts.ContextTar != nil {
-		var err error
-
-		// TODO(staged-dockerfile): build-context object param
-		contextTmpDir, err = runtime.ExtractContext(opts.ContextTar)
-		if err != nil {
-			return "", fmt.Errorf("error extracting context: %w", err)
-		}
-
-		defer func() {
-			if err := os.RemoveAll(contextTmpDir); err != nil {
-				logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary context dir %s: %s\n", contextTmpDir, err)
-			}
-		}()
-	}
-
 	logboek.Context(ctx).Debug().LogF("Executing commands for build container %s: %#v\n", container.Name, instructions)
 
-	for _, i := range instructions {
-		switch instruction := i.(type) {
-		case *InstructionLabel:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				Labels:     instruction.LabelsAsList(),
-			}); err != nil {
-				return "", fmt.Errorf("error setting labels %v for container %s: %w", instruction.LabelsAsList(), container.Name, err)
-			}
-		case *InstructionExpose:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				Expose:     instruction.Ports,
-			}); err != nil {
-				return "", fmt.Errorf("error setting exposed ports %v for container %s: %w", instruction.Ports, container.Name, err)
-			}
-		case *InstructionVolume:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				Volumes:    instruction.Volumes,
-			}); err != nil {
-				return "", fmt.Errorf("error setting volumes %v for container %s: %w", instruction.Volumes, container.Name, err)
-			}
-		case *InstructionOnBuild:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				OnBuild:    instruction.Instruction,
-			}); err != nil {
-				return "", fmt.Errorf("error setting onbuild %v for container %s: %w", instruction.Instruction, container.Name, err)
-			}
-		case *InstructionStopSignal:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				StopSignal: instruction.Signal,
-			}); err != nil {
-				return "", fmt.Errorf("error setting stop signal %v for container %s: %w", instruction.Signal, container.Name, err)
-			}
-		case *InstructionShell:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				Shell:      instruction.Shell,
-			}); err != nil {
-				return "", fmt.Errorf("error setting shell %v for container %s: %w", instruction.Shell, container.Name, err)
-			}
-		case *InstructionEnv:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				Envs:       instruction.Envs,
-			}); err != nil {
-				return "", fmt.Errorf("error setting envs %v for container %s: %w", instruction.Envs, container.Name, err)
-			}
-		case *InstructionRun:
-			if err := runtime.buildah.RunCommand(ctx, container.Name, instruction.Command, buildah.RunCommandOpts{
-				// FIXME(ilya-lesikov): should we suppress or not?
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-			}); err != nil {
-				return "", fmt.Errorf("error running command %v for container %s: %w", instruction.Command, container.Name, err)
-			}
-		case *InstructionCopy:
-			if err := runtime.buildah.Copy(ctx, container.Name, contextTmpDir, instruction.Src, instruction.Dst, buildah.CopyOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				From:       instruction.From,
-			}); err != nil {
-				return "", fmt.Errorf("error copying %v to %s for container %s: %w", instruction.Src, instruction.Dst, container.Name, err)
-			}
-		case *InstructionAdd:
-			if err := runtime.buildah.Add(ctx, container.Name, instruction.Src, instruction.Dst, buildah.AddOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				ContextDir: contextTmpDir,
-			}); err != nil {
-				return "", fmt.Errorf("error adding %v to %s for container %s: %w", instruction.Src, instruction.Dst, container.Name, err)
-			}
-		case *InstructionUser:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				User:       instruction.User,
-			}); err != nil {
-				return "", fmt.Errorf("error setting user %s for container %s: %w", instruction.User, container.Name, err)
-			}
-		case *InstructionWorkdir:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				Workdir:    instruction.Workdir,
-			}); err != nil {
-				return "", fmt.Errorf("error setting workdir %s for container %s: %w", instruction.Workdir, container.Name, err)
-			}
-		case *InstructionEntrypoint:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				Entrypoint: instruction.Entrypoint,
-			}); err != nil {
-				return "", fmt.Errorf("error setting entrypoint %v for container %s: %w", instruction.Entrypoint, container.Name, err)
-			}
-		case *InstructionCmd:
-			if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-				CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
-				Cmd:        instruction.Cmd,
-			}); err != nil {
-				return "", fmt.Errorf("error setting cmd %v for container %s: %w", instruction.Cmd, container.Name, err)
-			}
-		default:
-			panic(fmt.Sprintf("invalid command type: %T", i))
+	for _, instruction := range instructions {
+		if err := instruction.Apply(ctx, container.Name, runtime.buildah, runtime.getBuildahCommonOpts(ctx, false), buildContext); err != nil {
+			return "", buildContext, fmt.Errorf("unable to apply instruction %s: %w", instruction.Name(), err)
 		}
 	}
 
@@ -577,10 +474,10 @@ func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 		CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
 	})
 	if err != nil {
-		return "", fmt.Errorf("error committing container %s: %w", container.Name, err)
+		return "", buildContext, fmt.Errorf("error committing container %s: %w", container.Name, err)
 	}
 
-	return imageID, nil
+	return imageID, buildContext, nil
 }
 
 func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
@@ -728,13 +625,14 @@ func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		buildArgs[argParts[0]] = argParts[1]
 	}
 
-	contextTmpDir, err := runtime.ExtractContext(opts.ContextTar)
+	buildContext := build_context.NewBuildContext(runtime.TmpDir, opts.ContextTar)
+	contextTmpDir, err := buildContext.GetContextDir(ctx)
 	if err != nil {
-		return "", fmt.Errorf("error extracting context: %w", err)
+		return "", fmt.Errorf("unable to get context dir: %w", err)
 	}
 	defer func() {
-		if err := os.RemoveAll(contextTmpDir); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary context dir %s: %s\n", contextTmpDir, err)
+		if err := buildContext.Terminate(); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to terminate dockerfile building context: %s\n", err)
 		}
 	}()
 
@@ -874,21 +772,6 @@ func (runtime *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir stri
 			},
 		},
 	})
-}
-
-func (runtime *BuildahBackend) ExtractContext(contextTar io.Reader) (string, error) {
-	contextTmpDir, err := ioutil.TempDir(runtime.TmpDir, "context")
-	if err != nil {
-		return "", fmt.Errorf("unable to create context tmp dir: %w", err)
-	}
-
-	if contextTar != nil {
-		if err := util.ExtractTar(contextTar, contextTmpDir, util.ExtractTarOptions{}); err != nil {
-			return "", fmt.Errorf("unable to extract context tar to tmp context dir: %w", err)
-		}
-	}
-
-	return contextTmpDir, nil
 }
 
 func parseVolume(volume string) (string, string, error) {
