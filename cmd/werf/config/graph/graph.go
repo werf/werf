@@ -23,7 +23,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "graph [IMAGE_NAME...]",
 		DisableFlagsInUseLine: true,
-		Short:                 "Print dependency graph for images in werf.yaml",
+		Short:                 GetGraphDocs().Short,
+		Annotations: map[string]string{
+			common.DocsLongMD: GetGraphDocs().ShortMD,
+		},
 		Example: `  # Print dependency graph
   $ werf config graph
   - image: app1
