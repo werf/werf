@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.179](https://www.github.com/werf/werf/compare/v1.2.178...v1.2.179) (2022-10-11)
+
+
+### Bug Fixes
+
+* **buildah:** git add result in broken symlinks ([4013833](https://www.github.com/werf/werf/commit/4013833ee1524c19910dda0a27293a99669f6f44))
+
 ### [1.2.178](https://www.github.com/werf/werf/compare/v1.2.177...v1.2.178) (2022-10-11)
 
 
