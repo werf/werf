@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Print dependency graph for images in werf.yaml
+Print dependency graph for images in `werf.yaml`.
 
 {{ header }} Syntax
 
