@@ -6,22 +6,19 @@ import (
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend/build_context"
+	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Volume struct {
-	Volumes []string
+	dockerfile_instruction.Volume
 }
 
-func NewVolume(volumes []string) *Volume {
-	return &Volume{Volumes: volumes}
+func NewVolume(i dockerfile_instruction.Volume) *Volume {
+	return &Volume{Volume: i}
 }
 
 func (i *Volume) UsesBuildContext() bool {
 	return false
-}
-
-func (i *Volume) Name() string {
-	return "VOLUME"
 }
 
 func (i *Volume) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContext *build_context.BuildContext) error {

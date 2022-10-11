@@ -6,24 +6,19 @@ import (
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend/build_context"
+	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Copy struct {
-	From string
-	Src  []string
-	Dst  string
+	dockerfile_instruction.Copy
 }
 
-func NewCopy(from string, src []string, dst string) *Copy {
-	return &Copy{From: from, Src: src, Dst: dst}
+func NewCopy(i dockerfile_instruction.Copy) *Copy {
+	return &Copy{Copy: i}
 }
 
 func (i *Copy) UsesBuildContext() bool {
 	return true
-}
-
-func (i *Copy) Name() string {
-	return "COPY"
 }
 
 func (i *Copy) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContext *build_context.BuildContext) error {

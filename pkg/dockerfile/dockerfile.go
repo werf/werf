@@ -46,6 +46,7 @@ func newDockerfile(dockerStages []instructions.Stage, dockerMetaArgs []instructi
 		dockerStages:           dockerStages,
 		dockerMetaArgs:         dockerMetaArgs,
 		dockerTargetStageIndex: dockerTargetStageIndex,
+		nameToIndex:            GetDockerStagesNameToIndexMap(dockerStages),
 	}
 }
 
@@ -55,6 +56,7 @@ type Dockerfile struct {
 	dockerStages           []instructions.Stage
 	dockerMetaArgs         []instructions.ArgCommand
 	dockerTargetStageIndex int
+	nameToIndex            map[string]string
 }
 
 func (dockerfile *Dockerfile) GroupStagesByIndependentSets(ctx context.Context) ([][]*DockerfileStage, error) {

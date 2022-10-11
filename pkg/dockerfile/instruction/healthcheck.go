@@ -1,11 +1,8 @@
 package instruction
 
-import (
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
-)
-
 type Healthcheck struct {
-	dockerfile_instruction.Healthcheck
+	Type    HealthcheckType
+	Command string
 }
 
 type HealthcheckType string
@@ -15,5 +12,3 @@ var (
 	HealthcheckTypeCmd      HealthcheckType = "CMD"
 	HealthcheckTypeCmdShell HealthcheckType = "CMD-SHELL"
 )
-
-// TODO
