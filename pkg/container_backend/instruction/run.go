@@ -6,22 +6,19 @@ import (
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend/build_context"
+	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Run struct {
-	Command []string
+	dockerfile_instruction.Run
 }
 
-func NewRun(command []string) *Run {
-	return &Run{Command: command}
+func NewRun(i dockerfile_instruction.Run) *Run {
+	return &Run{Run: i}
 }
 
 func (i *Run) UsesBuildContext() bool {
 	return false
-}
-
-func (i *Run) Name() string {
-	return "RUN"
 }
 
 func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContext *build_context.BuildContext) error {

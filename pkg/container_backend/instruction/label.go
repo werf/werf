@@ -6,22 +6,19 @@ import (
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend/build_context"
+	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Label struct {
-	Labels map[string]string
+	dockerfile_instruction.Label
 }
 
-func NewLabel(labels map[string]string) *Label {
-	return &Label{Labels: labels}
+func NewLabel(i dockerfile_instruction.Label) *Label {
+	return &Label{Label: i}
 }
 
 func (i *Label) UsesBuildContext() bool {
 	return false
-}
-
-func (i *Label) Name() string {
-	return "LABEL"
 }
 
 func (i *Label) LabelsAsList() []string {

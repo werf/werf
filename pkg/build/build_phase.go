@@ -23,6 +23,7 @@ import (
 	"github.com/werf/werf/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/docker_registry"
+	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/git_repo"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
@@ -677,7 +678,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 			return stageImage.Builder.DockerfileBuilder().Cleanup(ctx)
 		})
 	} else {
-		stageImage.Builder.DockerfileStageBuilder().AppendPostInstruction(backend_instruction.NewLabel(serviceLabels))
+		stageImage.Builder.DockerfileStageBuilder().AppendPostInstruction(backend_instruction.NewLabel(*dockerfile_instruction.NewLabel(serviceLabels)))
 	}
 
 	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)

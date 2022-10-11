@@ -6,22 +6,19 @@ import (
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend/build_context"
+	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type StopSignal struct {
-	Signal string
+	dockerfile_instruction.StopSignal
 }
 
-func NewStopSignal(signal string) *StopSignal {
-	return &StopSignal{Signal: signal}
+func NewStopSignal(i dockerfile_instruction.StopSignal) *StopSignal {
+	return &StopSignal{StopSignal: i}
 }
 
 func (i *StopSignal) UsesBuildContext() bool {
 	return false
-}
-
-func (i *StopSignal) Name() string {
-	return "STOPSIGNAL"
 }
 
 func (i *StopSignal) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContext *build_context.BuildContext) error {

@@ -6,22 +6,19 @@ import (
 
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend/build_context"
+	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type OnBuild struct {
-	Instruction string
+	dockerfile_instruction.OnBuild
 }
 
-func NewOnBuild(instruction string) *OnBuild {
-	return &OnBuild{Instruction: instruction}
+func NewOnBuild(i dockerfile_instruction.OnBuild) *OnBuild {
+	return &OnBuild{OnBuild: i}
 }
 
 func (i *OnBuild) UsesBuildContext() bool {
 	return false
-}
-
-func (i *OnBuild) Name() string {
-	return "ONBUILD"
 }
 
 func (i *OnBuild) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContext *build_context.BuildContext) error {

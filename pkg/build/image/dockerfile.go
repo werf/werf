@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/dockerfile"
+	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
 )
@@ -82,7 +83,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			return nil, fmt.Errorf("unable to create image %q: %w", "test", err)
 		}
 
-		img.stages = append(img.stages, stage_instruction.NewRun(backend_instruction.NewRun([]string{"ls", "/"}), nil, false, &stage.BaseStageOptions{
+		img.stages = append(img.stages, stage_instruction.NewRun(backend_instruction.NewRun(*dockerfile_instruction.NewRun([]string{"ls", "/"})), nil, false, &stage.BaseStageOptions{
 			ImageName:        img.Name,
 			ImageTmpDir:      img.TmpDir,
 			ContainerWerfDir: img.ContainerWerfDir,

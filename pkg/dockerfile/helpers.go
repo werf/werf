@@ -8,7 +8,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 )
 
-func ResolveDockerStagesFromValue(stages []instructions.Stage) {
+func GetDockerStagesNameToIndexMap(stages []instructions.Stage) map[string]string {
 	nameToIndex := make(map[string]string)
 	for i, s := range stages {
 		name := strings.ToLower(s.Name)
@@ -16,7 +16,14 @@ func ResolveDockerStagesFromValue(stages []instructions.Stage) {
 		if name != index {
 			nameToIndex[name] = index
 		}
+	}
+	return nameToIndex
+}
 
+func ResolveDockerStagesFromValue(stages []instructions.Stage) {
+	nameToIndex := GetDockerStagesNameToIndexMap(stages)
+
+	for _, s := range stages {
 		for _, cmd := range s.Commands {
 			switch typedCmd := cmd.(type) {
 			case *instructions.CopyCommand:
