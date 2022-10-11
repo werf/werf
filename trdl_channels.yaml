@@ -26,19 +26,20 @@ groups:
   - name: "1.2"
     channels:
       - name: alpha
-        # published at: 04.09.2022
-        version: 1.2.177
+        # published at: 11.10.2022
+        version: 1.2.178
 
       - name: beta
-        # published at: 28.09.2022
-        version: 1.2.175+fix1
+        # published at: 11.10.2022
+        version: 1.2.177
 
       - name: ea
-        # published at: 28.09.2022
-        version: 1.2.175+fix1
+        # published at: 11.10.2022
+        version: 1.2.177
 
       # - name: pre-stable
-      #   version: 1.2.169+fix1
+      #   published at: 04.10.2022
+      #   version: 1.2.175+fix1
 
       - name: stable
         # published at: 28.09.2022
