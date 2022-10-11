@@ -2,6 +2,7 @@ package compose
 
 import (
 	"fmt"
+
 	"github.com/werf/werf/cmd/werf/docs/structs"
 )
 
