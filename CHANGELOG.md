@@ -1,5 +1,16 @@
 # Changelog
 
+### [1.2.178](https://www.github.com/werf/werf/compare/v1.2.177...v1.2.178) (2022-10-11)
+
+
+### Features
+
+* **buildah:** add low level dockerfile stage builder ([76c98c6](https://www.github.com/werf/werf/commit/76c98c66e08faa5153c9c62af476885936836e83))
+* **staged-dockerfile:** implement full chain of staged dockerfile building only for single instruction (RUN) ([121ac0c](https://www.github.com/werf/werf/commit/121ac0c2c3ad1f4074ed9111880b2789e5b3a61f))
+* **staged-dockerfile:** prepare conveyor, stage and dockerfile parser for new impl ([db8d337](https://www.github.com/werf/werf/commit/db8d3373588a0c19a9415def4245c997574776f9))
+* **staged-dockerfile:** refactored container backend dockerfile builder ([a210944](https://www.github.com/werf/werf/commit/a2109442d3e128593df7989192a969809573f3a5))
+* **staged-dockerfile:** refactored conveyor, debug container backend staged dockerfile builder ([62b2181](https://www.github.com/werf/werf/commit/62b2181cf86e730de5996651c3e7d402dfb6ddc9))
+
 ### [1.2.177](https://www.github.com/werf/werf/compare/v1.2.176...v1.2.177) (2022-10-03)
 
 
