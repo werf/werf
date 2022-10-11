@@ -238,8 +238,7 @@ func ExtractTar(tarFileReader io.Reader, dstDir string, opts ExtractTarOptions) 
 			if err = os.MkdirAll(tarEntryPath, tarEntryFileInfo.Mode()); err != nil {
 				return fmt.Errorf("unable to create new dir %q while extracting tar: %w", tarEntryPath, err)
 			}
-
-		case tar.TypeReg, tar.TypeSymlink, tar.TypeLink, tar.TypeGNULongName, tar.TypeGNULongLink:
+		case tar.TypeBlock, tar.TypeChar, tar.TypeReg, tar.TypeFifo:
 			if err := os.MkdirAll(filepath.Dir(tarEntryPath), os.ModePerm); err != nil {
 				return fmt.Errorf("unable to create new directory %q while extracting tar: %w", filepath.Dir(tarEntryPath), err)
 			}
@@ -248,17 +247,28 @@ func ExtractTar(tarFileReader io.Reader, dstDir string, opts ExtractTarOptions) 
 			if err != nil {
 				return fmt.Errorf("unable to create new file %q while extracting tar: %w", tarEntryPath, err)
 			}
+			defer file.Close()
 
 			_, err = io.Copy(file, tarReader)
 			if err != nil {
-				file.Close()
 				return fmt.Errorf("unable to create file %q while extracting tar: %w", tarEntryPath, err)
 			}
-
-			if err := file.Close(); err != nil {
-				return fmt.Errorf("unable to close file %q while extracting tar: %w", tarEntryPath, err)
+		case tar.TypeLink:
+			if err := os.MkdirAll(filepath.Dir(tarEntryPath), os.ModePerm); err != nil {
+				return fmt.Errorf("unable to create new directory %q while extracting tar: %w", filepath.Dir(tarEntryPath), err)
 			}
 
+			if err := os.Link(tarEntryHeader.Linkname, tarEntryPath); err != nil {
+				return fmt.Errorf("unable to create hard link %q while extracting tar: %w", tarEntryPath, err)
+			}
+		case tar.TypeSymlink:
+			if err := os.MkdirAll(filepath.Dir(tarEntryPath), os.ModePerm); err != nil {
+				return fmt.Errorf("unable to create new directory %q while extracting tar: %w", filepath.Dir(tarEntryPath), err)
+			}
+
+			if err := os.Symlink(tarEntryHeader.Linkname, tarEntryPath); err != nil {
+				return fmt.Errorf("unable to create symlink %q while extracting tar: %w", tarEntryPath, err)
+			}
 		default:
 			return fmt.Errorf("tar entry %q of unexpected type: %b", tarEntryHeader.Name, tarEntryHeader.Typeflag)
 		}
