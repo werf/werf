@@ -119,8 +119,8 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	var cmdData composeCmdData
 	var commonCmdData common.CmdData
 
-	short := fmt.Sprintf("Run docker-compose %s command with forwarded image names.", composeCmdName)
-	long := GetComposeDocs(short).Long
+	short := GetComposeShort(composeCmdName).Short
+	long := GetComposeDocs(GetComposeShort(composeCmdName).Short).Long
 
 	long = common.GetLongCommandDescription(long)
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
@@ -131,7 +131,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
-			common.DocsLongMD:                  GetComposeDocs(short).LongMD,
+			common.DocsLongMD:                  GetComposeDocs(GetComposeShort(composeCmdName).ShortMD).LongMD,
 		},
 		Example: options.Example,
 		RunE: func(cmd *cobra.Command, args []string) error {

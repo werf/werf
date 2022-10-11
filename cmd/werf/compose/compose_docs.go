@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"fmt"
 	"github.com/werf/werf/cmd/werf/docs/structs"
 )
 
@@ -33,7 +34,7 @@ services:
     image: $WERF_GEODATA_BACKEND_DOCKER_IMAGE_NAME
 `
 
-	docs.LongMD = formatShort(short) + "\n\n" +
+	docs.LongMD = short + "\n\n" +
 		"Image environment name format: `$WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME`:\n" +
 		"* `$WERF_DOCKER_IMAGE_NAME` for nameless image;\n" +
 		"* `<FORMATTED_WERF_IMAGE_NAME>` is werf image name from `werf.yaml` modified according to the following\n" +
@@ -66,17 +67,11 @@ services:
 	return docs
 }
 
-func formatShort(short string) string {
-	switch short {
-	case "Run docker-compose config command with forwarded image names.":
-		return "Run `docker-compose config` command with forwarded image names."
-	case "Run docker-compose down command with forwarded image names.":
-		return "Run `docker-compose down` command with forwarded image names."
-	case "Run docker-compose run command with forwarded image names.":
-		return "Run `docker-compose run` command with forwarded image names."
-	case "Run docker-compose up command with forwarded image names.":
-		return "Run `docker-compose up` command with forwarded image names."
-	default:
-		return short
-	}
+func GetComposeShort(composeCmdName string) structs.DocsShortStruct {
+	var shorts structs.DocsShortStruct
+
+	shorts.Short = fmt.Sprintf("Run docker-compose %s command with forwarded image names.", composeCmdName)
+	shorts.ShortMD = fmt.Sprintf("Run `docker-compose %s` command with forwarded image names.", composeCmdName)
+
+	return shorts
 }
