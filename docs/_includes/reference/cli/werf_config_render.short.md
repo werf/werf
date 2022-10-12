@@ -1,1 +1,1 @@
-render werf.yaml
+render werf.yaml.

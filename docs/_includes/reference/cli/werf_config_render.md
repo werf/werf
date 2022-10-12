@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Render werf.yaml
+Render `werf.yaml`.
 
 {{ header }} Syntax
 
