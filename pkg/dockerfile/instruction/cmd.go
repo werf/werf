@@ -1,11 +1,12 @@
 package instruction
 
 type Cmd struct {
-	Cmd []string
+	Cmd          []string
+	PrependShell bool
 }
 
-func NewCmd(cmd []string) *Cmd {
-	return &Cmd{Cmd: cmd}
+func NewCmd(cmd []string, prependShell bool) *Cmd {
+	return &Cmd{Cmd: cmd, PrependShell: prependShell}
 }
 
 func (i *Cmd) Name() string {
