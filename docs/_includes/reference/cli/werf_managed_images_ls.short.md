@@ -1,1 +1,1 @@
-list managed images which will be preserved during cleanup procedure
+list managed images which will be preserved during cleanup procedure.

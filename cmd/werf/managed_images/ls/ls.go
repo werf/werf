@@ -25,7 +25,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "ls",
 		DisableFlagsInUseLine: true,
-		Short:                 "List managed images which will be preserved during cleanup procedure",
+		Short:                 "List managed images which will be preserved during cleanup procedure.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 

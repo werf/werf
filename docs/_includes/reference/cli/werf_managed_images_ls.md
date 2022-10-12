@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-List managed images which will be preserved during cleanup procedure
+List managed images which will be preserved during cleanup procedure.
 
 {{ header }} Syntax
 
