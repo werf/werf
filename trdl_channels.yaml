@@ -27,7 +27,7 @@ groups:
     channels:
       - name: alpha
         # published at: 12.10.2022
-        version: 1.2.179
+        version: 1.2.180
 
       - name: beta
         # published at: 11.10.2022
