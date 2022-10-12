@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/mitchellh/copystructure"
@@ -329,36 +330,47 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 	}
 
 	for _, f := range wc.HelmChart.Templates {
-		p := filepath.Join(destDir, f.Name)
-		dir := filepath.Dir(p)
-
-		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-			return nil, fmt.Errorf("error creating dir %q: %w", dir, err)
-		}
-
-		if err := ioutil.WriteFile(p, append(f.Data, []byte("\n")...), os.ModePerm); err != nil {
-			return nil, fmt.Errorf("unable to write %q: %w", p, err)
+		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
+			return nil, fmt.Errorf("error writing chart template: %w", err)
 		}
 	}
 
 	for _, f := range wc.HelmChart.Files {
-		p := filepath.Join(destDir, f.Name)
-		dir := filepath.Dir(p)
+		if !CheckBundlePathAllowed(f.Name) {
+			continue
+		}
+		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
+			return nil, fmt.Errorf("error writing miscellaneous chart file: %w", err)
+		}
+	}
 
-		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-			return nil, fmt.Errorf("error creating dir %q: %w", dir, err)
+	for _, dep := range wc.HelmChart.Metadata.Dependencies {
+		var depPath string
+
+		switch {
+		case dep.Repository == "":
+			depPath = filepath.Join("charts", dep.Name)
+		case strings.HasPrefix(dep.Repository, "file://"):
+			depPath = strings.TrimPrefix(dep.Repository, "file://")
+		default:
+			continue
 		}
 
-		if err := ioutil.WriteFile(p, append(f.Data, []byte("\n")...), os.ModePerm); err != nil {
-			return nil, fmt.Errorf("unable to write %q: %w", p, err)
+		for _, f := range wc.HelmChart.Raw {
+			if strings.HasPrefix(f.Name, depPath) {
+				if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
+					return nil, fmt.Errorf("error writing subchart file: %w", err)
+				}
+			}
 		}
 	}
 
 	if wc.HelmChart.Schema != nil {
 		schemaFile := filepath.Join(destDir, "values.schema.json")
-		if data, err := json.Marshal(wc.HelmChart.Schema); err != nil {
-			return nil, fmt.Errorf("unable to prepare values.schema.json data: %w", err)
-		} else if err := ioutil.WriteFile(schemaFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
+		if err := writeChartFile(ctx, destDir, "values.schema.json", wc.HelmChart.Schema); err != nil {
+			return nil, fmt.Errorf("error writing chart values schema: %w", err)
+		}
+		if err := ioutil.WriteFile(schemaFile, wc.HelmChart.Schema, os.ModePerm); err != nil {
 			return nil, fmt.Errorf("unable to write %q: %w", schemaFile, err)
 		}
 	}
@@ -379,4 +391,19 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 		BuildChartDependenciesOpts:        wc.BuildChartDependenciesOpts,
 		IgnoreInvalidAnnotationsAndLabels: wc.extraAnnotationsAndLabelsPostRenderer.IgnoreInvalidAnnotationsAndLabels,
 	})
+}
+
+func writeChartFile(ctx context.Context, destDir, fileName string, fileData []byte) error {
+	p := filepath.Join(destDir, fileName)
+	dir := filepath.Dir(p)
+
+	logboek.Context(ctx).Debug().LogF("Writing chart file %q\n", p)
+
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating dir %q: %w", dir, err)
+	}
+	if err := ioutil.WriteFile(p, fileData, os.ModePerm); err != nil {
+		return fmt.Errorf("unable to write %q: %w", p, err)
+	}
+	return nil
 }
