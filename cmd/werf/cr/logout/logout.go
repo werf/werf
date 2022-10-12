@@ -20,8 +20,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "logout registry",
-		Short:                 "Logout from a remote registry",
-		Long:                  common.GetLongCommandDescription(`Logout from a remote registry`),
+		Short:                 "Logout from a remote registry.",
+		Long:                  common.GetLongCommandDescription(`Logout from a remote registry.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

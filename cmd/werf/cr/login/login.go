@@ -31,8 +31,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "login registry",
-		Short: "Login into remote registry",
-		Long:  common.GetLongCommandDescription(`Login into remote registry`),
+		Short: "Login into remote registry.",
+		Long:  common.GetLongCommandDescription(`Login into remote registry.`),
 		Example: `# Login with username and password from command line
 werf cr login -u username -p password registry.example.com
 

@@ -1,1 +1,1 @@
-logout from a remote registry
+logout from a remote registry.

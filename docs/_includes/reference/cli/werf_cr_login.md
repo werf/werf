@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Login into remote registry
+Login into remote registry.
 
 {{ header }} Syntax
 
