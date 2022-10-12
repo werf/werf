@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"helm.sh/helm/v3/pkg/chart"
@@ -222,4 +223,35 @@ func readBundleJsonMap(path string) (map[string]string, error) {
 	} else {
 		return res, nil
 	}
+}
+
+var (
+	AllowedBundleChartFiles = []string{
+		"Chart.yaml",
+		"LICENSE",
+		"README.md",
+		"values.yaml",
+		"values.schema.json",
+	}
+	AllowedBundleChartDirs = []string{
+		"charts/",
+		"crds/",
+		"templates/",
+	}
+)
+
+func CheckBundlePathAllowed(path string) bool {
+	for _, p := range AllowedBundleChartFiles {
+		if p == path {
+			return true
+		}
+	}
+
+	for _, d := range AllowedBundleChartDirs {
+		if strings.HasPrefix(path, d) {
+			return true
+		}
+	}
+
+	return false
 }
