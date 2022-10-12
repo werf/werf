@@ -1,1 +1,1 @@
-login into remote registry
+login into remote registry.
