@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.180](https://www.github.com/werf/werf/compare/v1.2.179...v1.2.180) (2022-10-12)
+
+
+### Bug Fixes
+
+* **bundles:** fix subcharts dependencies not published, and excess files published into the bundle ([fd15ddd](https://www.github.com/werf/werf/commit/fd15dddb43bb62a74198174ef3d2f3d22aabcc94))
+* **helm:** keep all revisions since last succeeded release ([9224014](https://www.github.com/werf/werf/commit/9224014f4e1230bd5863e1a64224a8bc1c8c530c))
+
 ### [1.2.179](https://www.github.com/werf/werf/compare/v1.2.178...v1.2.179) (2022-10-11)
 
 
