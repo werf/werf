@@ -29,19 +29,13 @@ var cmdData struct {
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:   "cleanup",
-		Short: "Cleanup old unused werf cache and data of all projects on host machine",
-		Long: common.GetLongCommandDescription(`Cleanup old unused werf cache and data of all projects on host machine.
-
-The data include:
-* Lost docker containers and images from interrupted builds.
-* Old service tmp dirs, which werf creates during every build, converge and other commands.
-* Local cache:
-  * Remote git clones cache.
-  * Git worktree cache.
-
-It is safe to run this command periodically by automated cleanup job in parallel with other werf commands such as build, converge and cleanup.`),
+		Use:                   "cleanup",
+		Short:                 "Cleanup old unused werf cache and data of all projects on host machine.",
+		Long:                  common.GetLongCommandDescription(GetCleanupDocs().Long),
 		DisableFlagsInUseLine: true,
+		Annotations: map[string]string{
+			common.DocsLongMD: GetCleanupDocs().LongMD,
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 				return fmt.Errorf("initialization error: %w", err)
