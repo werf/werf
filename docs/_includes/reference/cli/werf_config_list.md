@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-List image and artifact names defined in werf.yaml
+List image and artifact names defined in `werf.yaml`.
 
 {{ header }} Syntax
 

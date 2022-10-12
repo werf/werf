@@ -25,7 +25,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "list",
 		DisableFlagsInUseLine: true,
-		Short:                 "List image and artifact names defined in werf.yaml",
+		Short:                 GetListDocs().Short,
+		Annotations: map[string]string{
+			common.DocsLongMD: GetListDocs().ShortMD,
+		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
 
