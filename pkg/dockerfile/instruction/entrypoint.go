@@ -1,11 +1,12 @@
 package instruction
 
 type Entrypoint struct {
-	Entrypoint []string
+	Entrypoint   []string
+	PrependShell bool
 }
 
-func NewEntrypoint(entrypoint []string) *Entrypoint {
-	return &Entrypoint{Entrypoint: entrypoint}
+func NewEntrypoint(entrypoint []string, prependShell bool) *Entrypoint {
+	return &Entrypoint{Entrypoint: entrypoint, PrependShell: prependShell}
 }
 
 func (i *Entrypoint) Name() string {
