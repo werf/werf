@@ -28,20 +28,13 @@ var commonCmdData common.CmdData
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:   "purge",
-		Short: "Purge werf images, cache and other data for all projects on host machine",
-		Long: common.GetLongCommandDescription(`Purge werf images, cache and other data for all projects on host machine.
-
-The data include:
-* Old service tmp dirs, which werf creates during every build, converge and other commands.
-* Local cache:
-  * Remote git clones cache.
-  * Git worktree cache.
-* Shared context:
-  * Mounts which persists between several builds (mounts from build_dir).
-
-WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually.`),
+		Use:                   "purge",
+		Short:                 "Purge werf images, cache and other data for all projects on host machine",
+		Long:                  common.GetLongCommandDescription(GetPurgeDocs().Long),
 		DisableFlagsInUseLine: true,
+		Annotations: map[string]string{
+			common.DocsLongMD: GetPurgeDocs().LongMD,
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
