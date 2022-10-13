@@ -3,9 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
-Env prints out all the environment information in use by Helm.
-
+`env` prints out all the environment information in use by Helm.
 
 {{ header }} Syntax
 

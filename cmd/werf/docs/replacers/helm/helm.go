@@ -11,3 +11,10 @@ func ReplaceHelmCreateDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmEnvDocs(cmd *cobra.Command) *cobra.Command {
+	cmd.Annotations = map[string]string{
+		common.DocsLongMD: GetHelmEnvDocs().LongMD,
+	}
+	return cmd
+}
