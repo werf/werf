@@ -33,3 +33,21 @@ func GetHelmEnvDocs() structs.DocsStruct {
 
 	return docs
 }
+func GetHelmHistoryDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "History prints historical revisions for a given release.\n\n" +
+		"A default maximum of 256 revisions will be returned. Setting `--max` " +
+		"configures the maximum length of the revision list returned.\n\n" +
+		"The historical release set is printed as a formatted table, e.g:\n" +
+		"```\n" +
+		"$ helm history angry-bird\n" +
+		"REVISION    UPDATED                     STATUS          CHART             APP VERSION     DESCRIPTION\n" +
+		"1           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Initial install\n" +
+		"2           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Upgraded successfully\n" +
+		"3           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Rolled back to 2\n" +
+		"4           Mon Oct 3 10:15:13 2016     deployed        alpine-0.1.0      1.0             Upgraded successfully\n" +
+		"```"
+
+	return docs
+}
