@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Print Kubernetes Namespace that will be used in current configuration with specified params
+Print Kubernetes Namespace that will be used in current configuration with specified params.
 
 {{ header }} Syntax
 
