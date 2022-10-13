@@ -2,6 +2,7 @@ package helm
 
 import (
 	"fmt"
+	helm2 "github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -18,11 +19,11 @@ import (
 var installCmdData common.CmdData
 
 func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub, namespace *string) *cobra.Command {
-	cmd, helmAction := helm_v3.NewInstallCmd(actionConfig, os.Stdout, helm_v3.InstallCmdOptions{
+	cmd, helmAction := helm2.ReplaceHelmInstallDocs(helm_v3.NewInstallCmd(actionConfig, os.Stdout, helm_v3.InstallCmdOptions{
 		StagesSplitter:              helm.NewStagesSplitter(),
 		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, namespace),
 		ChainPostRenderer:           wc.ChainPostRenderer,
-	})
+	}))
 	SetupRenderRelatedWerfChartParams(cmd, &installCmdData)
 
 	oldRunE := cmd.RunE
