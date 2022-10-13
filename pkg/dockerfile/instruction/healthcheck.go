@@ -10,13 +10,22 @@ type Healthcheck struct {
 type HealthcheckType string
 
 var (
+	HealthcheckTypeInherit  HealthcheckType = ""
 	HealthcheckTypeNone     HealthcheckType = "NONE"
 	HealthcheckTypeCmd      HealthcheckType = "CMD"
 	HealthcheckTypeCmdShell HealthcheckType = "CMD-SHELL"
 )
 
-func NewHealthcheck(t HealthcheckType, cfg *container.HealthConfig) *Healthcheck {
-	return &Healthcheck{Type: t, Config: cfg}
+func NewHealthcheckType(cfg *container.HealthConfig) HealthcheckType {
+	if len(cfg.Test) == 0 {
+		return HealthcheckTypeInherit
+	} else {
+		return HealthcheckType(cfg.Test[0])
+	}
+}
+
+func NewHealthcheck(cfg *container.HealthConfig) *Healthcheck {
+	return &Healthcheck{Type: NewHealthcheckType(cfg), Config: cfg}
 }
 
 func (i *Healthcheck) Name() string {
