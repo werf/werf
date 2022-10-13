@@ -83,7 +83,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			return nil, fmt.Errorf("unable to create image %q: %w", "test", err)
 		}
 
-		img.stages = append(img.stages, stage_instruction.NewRun(backend_instruction.NewRun(*dockerfile_instruction.NewRun([]string{"ls", "/"}, nil, nil, false)), nil, false, &stage.BaseStageOptions{
+		img.stages = append(img.stages, stage_instruction.NewRun(backend_instruction.NewRun(*dockerfile_instruction.NewRun([]string{"ls", "/"}, false, nil, "", "")), nil, false, &stage.BaseStageOptions{
 			ImageName:        img.Name,
 			ImageTmpDir:      img.TmpDir,
 			ContainerWerfDir: img.ContainerWerfDir,

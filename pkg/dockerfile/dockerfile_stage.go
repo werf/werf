@@ -1,25 +1,10 @@
 package dockerfile
 
-import "github.com/moby/buildkit/frontend/dockerfile/instructions"
-
-func NewDockerfileStage(dockerStage instructions.Stage) *DockerfileStage {
-	return &DockerfileStage{dockerStage: dockerStage}
+func NewDockerfileStage(dockerfile *Dockerfile, instructions []InstructionInterface) *DockerfileStage {
+	return &DockerfileStage{Dockerfile: dockerfile, Instructions: instructions}
 }
 
 type DockerfileStage struct {
-	Dockerfile         *Dockerfile
-	DependenciesStages []*DockerfileStage
-
-	dockerStage instructions.Stage
-}
-
-func (stage *DockerfileStage) GetInstructions() []InstructionInterface {
-	// TODO(staged-dockerfile)
-	// for _, cmd := range stage.dockerStage.Commands {
-	// 	switch typedCmd := cmd.(type) {
-	// 	case *instructions.ArgCommand:
-	// 	}
-	// }
-
-	return nil
+	Dockerfile   *Dockerfile
+	Instructions []InstructionInterface
 }
