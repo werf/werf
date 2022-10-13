@@ -21,7 +21,7 @@ func NewGetNamespaceCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "get-namespace",
 		DisableFlagsInUseLine: true,
-		Short:                 "Print Kubernetes Namespace that will be used in current configuration with specified params",
+		Short:                 "Print Kubernetes Namespace that will be used in current configuration with specified params.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 

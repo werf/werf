@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Print Helm Release name that will be used in current configuration with specified params
+Print Helm Release name that will be used in current configuration with specified params.
 
 {{ header }} Syntax
 

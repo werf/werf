@@ -21,7 +21,7 @@ func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "get-release",
 		DisableFlagsInUseLine: true,
-		Short:                 "Print Helm Release name that will be used in current configuration with specified params",
+		Short:                 "Print Helm Release name that will be used in current configuration with specified params.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
