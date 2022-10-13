@@ -3,21 +3,19 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
 History prints historical revisions for a given release.
 
-A default maximum of 256 revisions will be returned. Setting '--max'
-configures the maximum length of the revision list returned.
+A default maximum of 256 revisions will be returned. Setting `--max` configures the maximum length of the revision list returned.
 
 The historical release set is printed as a formatted table, e.g:
-
-    $ helm history angry-bird
-    REVISION    UPDATED                     STATUS          CHART             APP VERSION     DESCRIPTION
-    1           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Initial install
-    2           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Upgraded successfully
-    3           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Rolled back to 2
-    4           Mon Oct 3 10:15:13 2016     deployed        alpine-0.1.0      1.0             Upgraded successfully
-
+```
+$ helm history angry-bird
+REVISION    UPDATED                     STATUS          CHART             APP VERSION     DESCRIPTION
+1           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Initial install
+2           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Upgraded successfully
+3           Mon Oct 3 10:15:13 2016     superseded      alpine-0.1.0      1.0             Rolled back to 2
+4           Mon Oct 3 10:15:13 2016     deployed        alpine-0.1.0      1.0             Upgraded successfully
+```
 
 {{ header }} Syntax
 
