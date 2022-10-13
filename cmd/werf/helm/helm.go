@@ -3,6 +3,7 @@ package helm
 import (
 	"context"
 	"fmt"
+	helm2 "github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	"os"
 	"time"
 
@@ -92,7 +93,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 		}),
 		NewInstallCmd(actionConfig, wc, &namespace),
 		NewUpgradeCmd(actionConfig, wc, &namespace),
-		helm_v3.NewCreateCmd(os.Stdout),
+		helm2.ReplaceHelmCreateDocs(helm_v3.NewCreateCmd(os.Stdout)),
 		helm_v3.NewEnvCmd(os.Stdout),
 		helm_v3.NewPackageCmd(actionConfig, os.Stdout),
 		helm_v3.NewPluginCmd(os.Stdout),
