@@ -25,3 +25,11 @@ func GetHelmCreateDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmEnvDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "`env` prints out all the environment information in use by Helm."
+
+	return docs
+}
