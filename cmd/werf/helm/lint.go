@@ -2,6 +2,7 @@ package helm
 
 import (
 	"fmt"
+	"github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -16,7 +17,7 @@ import (
 var lintCmdData common.CmdData
 
 func NewLintCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub) *cobra.Command {
-	cmd := helm_v3.NewLintCmd(os.Stdout)
+	cmd := helm.ReplaceHelmLintDocs(helm_v3.NewLintCmd(os.Stdout))
 
 	SetupRenderRelatedWerfChartParams(cmd, &lintCmdData)
 	common.SetupEnvironment(&lintCmdData, cmd)

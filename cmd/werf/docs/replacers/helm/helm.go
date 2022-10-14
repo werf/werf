@@ -33,3 +33,10 @@ func ReplaceHelmInstallDocs(cmd *cobra.Command, client *action.Install) (*cobra.
 	}
 	return cmd, client
 }
+
+func ReplaceHelmLintDocs(cmd *cobra.Command) *cobra.Command {
+	cmd.Annotations = map[string]string{
+		common.DocsLongMD: GetHelmLintDocs().LongMD,
+	}
+	return cmd
+}
