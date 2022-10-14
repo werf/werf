@@ -1,1 +1,1 @@
-start a migration of your existing helm 2 release to helm 3
+start a migration of your existing Helm 2 release to Helm 3.
