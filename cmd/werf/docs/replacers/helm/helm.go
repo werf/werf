@@ -89,3 +89,10 @@ func ReplaceHelmUpgradeDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmVerifyDocs(cmd *cobra.Command) *cobra.Command {
+	cmd.Annotations = map[string]string{
+		common.DocsLongMD: GetHelmVerifyDocs().LongMD,
+	}
+	return cmd
+}
