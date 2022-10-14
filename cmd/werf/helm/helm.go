@@ -92,7 +92,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 			StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),
 		})),
 		NewInstallCmd(actionConfig, wc, &namespace),
-		NewUpgradeCmd(actionConfig, wc, &namespace),
+		helm2.ReplaceHelmUpgradeDocs(NewUpgradeCmd(actionConfig, wc, &namespace)),
 		helm2.ReplaceHelmCreateDocs(helm_v3.NewCreateCmd(os.Stdout)),
 		helm2.ReplaceHelmEnvDocs(helm_v3.NewEnvCmd(os.Stdout)),
 		helm2.ReplaceHelmPackageDocs(helm_v3.NewPackageCmd(actionConfig, os.Stdout)),
