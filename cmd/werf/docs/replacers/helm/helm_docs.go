@@ -238,3 +238,16 @@ func GetHelmUpgradeDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmVerifyDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Verify that the given chart has a valid provenance file.\n\n" +
+		"Provenance files provide cryptographic verification that a chart has not been " +
+		"tampered with, and was packaged by a trusted provider.\n\n" +
+		"This command can be used to verify a local chart. Several other commands provide " +
+		"`--verify` flags that run the same validation. To generate a signed package, use " +
+		"the `helm package --sign` command."
+
+	return docs
+}
