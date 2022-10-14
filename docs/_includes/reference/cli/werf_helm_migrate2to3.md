@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Start a migration of your existing helm 2 release to helm 3
+Start a migration of your existing Helm 2 release to Helm 3.
 
 {{ header }} Syntax
 

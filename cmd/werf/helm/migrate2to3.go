@@ -68,7 +68,7 @@ func NewMigrate2To3Cmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "migrate2to3",
 		DisableFlagsInUseLine: true,
-		Short:                 "Start a migration of your existing helm 2 release to helm 3",
+		Short:                 "Start a migration of your existing Helm 2 release to Helm 3.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
