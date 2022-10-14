@@ -2,8 +2,9 @@ package helm
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/werf/werf/cmd/werf/common"
 	"helm.sh/helm/v3/pkg/action"
+
+	"github.com/werf/werf/cmd/werf/common"
 )
 
 func ReplaceHelmCreateDocs(cmd *cobra.Command) *cobra.Command {

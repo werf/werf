@@ -3,7 +3,6 @@ package helm
 import (
 	"context"
 	"fmt"
-	helm2 "github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	"os"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/cmd/werf/common"
+	helm2 "github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	helm_secret_decrypt "github.com/werf/werf/cmd/werf/helm/secret/decrypt"
 	helm_secret_encrypt "github.com/werf/werf/cmd/werf/helm/secret/encrypt"
 	helm_secret_file_decrypt "github.com/werf/werf/cmd/werf/helm/secret/file/decrypt"
