@@ -68,3 +68,10 @@ func ReplaceHelmRollbackDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmStatusDocs(cmd *cobra.Command) *cobra.Command {
+	cmd.Annotations = map[string]string{
+		common.DocsLongMD: GetHelmStatusDocs().LongMD,
+	}
+	return cmd
+}

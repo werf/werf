@@ -3,17 +3,15 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
-This command shows the status of a named release.
-The status consists of:
-- last deployment time
-- k8s namespace in which the release lives
-- state of the release (can be: unknown, deployed, uninstalled, superseded, failed, uninstalling, pending-install, pending-upgrade or pending-rollback)
-- revision of the release
-- description of the release (can be completion message or error message, need to enable --show-desc)
-- list of resources that this release consists of, sorted by kind
-- details on last test suite run, if applicable
-- additional notes provided by the chart
+This command shows the status of a named release. The status consists of:
+- last deployment time;
+- K8s namespace in which the release lives;
+- state of the release (can be: `unknown`, `deployed`, `uninstalled`, `superseded`, `failed`, `uninstalling`, `pending-install`, `pending-upgrade` or `pending-rollback`);
+- revision of the release;
+- description of the release (can be completion message or error message, need to enable `--show-desc`);
+- list of resources that this release consists of, sorted by kind;
+- details on last test suite run, if applicable;
+- additional notes provided by the chart.
 
 
 {{ header }} Syntax
