@@ -40,7 +40,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 			return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 		}
 
-		return mapDockerfileToImagesSets(ctx, d, opts)
+		return mapDockerfileToImagesSets(ctx, d, dockerfileImageConfig, opts)
 	}
 
 	img, err := mapLegacyDockerfileToImage(ctx, dockerfileImageConfig, opts)
@@ -55,7 +55,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 	return ret, nil
 }
 
-func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, opts CommonImageOptions) (ImagesSets, error) {
+func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, dockerfileImageConfig *config.ImageFromDockerfile, opts CommonImageOptions) (ImagesSets, error) {
 	var ret ImagesSets
 
 	stagesSets, err := cfg.GroupStagesByIndependentSets(ctx)
@@ -75,9 +75,10 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		// TODO parse FROM instruction properly, set correct BaseImageReference here
 
 		img, err := NewImage(ctx, "test", ImageFromRegistryAsBaseImage, ImageOptions{
-			IsDockerfileImage:  true,
-			CommonImageOptions: opts,
-			BaseImageReference: "ubuntu:22.04",
+			IsDockerfileImage:     true,
+			DockerfileImageConfig: dockerfileImageConfig,
+			CommonImageOptions:    opts,
+			BaseImageReference:    "ubuntu:22.04",
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create image %q: %w", "test", err)
@@ -98,8 +99,9 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 
 func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, opts CommonImageOptions) (*Image, error) {
 	img, err := NewImage(ctx, dockerfileImageConfig.Name, NoBaseImage, ImageOptions{
-		CommonImageOptions: opts,
-		IsDockerfileImage:  true,
+		CommonImageOptions:    opts,
+		IsDockerfileImage:     true,
+		DockerfileImageConfig: dockerfileImageConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to create image %q: %w", dockerfileImageConfig.Name, err)
