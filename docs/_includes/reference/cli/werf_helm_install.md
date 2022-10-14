@@ -42,7 +42,7 @@ There are five different ways you can express the chart you want to install:
 4. By absolute URL: `helm install mynginx https://example.com/charts/nginx-1.2.3.tgz`.
 5. By chart reference and repo URL: `helm install --repo https://example.com/charts/ mynginx nginx`.
 
-## CHART REFERENCES
+### Chart references
 A chart reference is a convenient way of referencing a chart in a chart repository.
 
 When you use a chart reference with a repo prefix (`example/mariadb`), Helm will look in the local configuration for a chart repository named 'example', and will then look for achart in that repository whose name is `mariadb`. It will install the latest stable version of that chart until you specify `--devel` flag to also include development version (`alpha`, `beta`, and `release candidate` releases), or supply a version number with the `--version` flag.

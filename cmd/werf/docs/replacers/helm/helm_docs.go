@@ -88,7 +88,7 @@ func GetHelmInstallDocs() structs.DocsStruct {
 		"3. By path to an unpacked chart directory: `helm install mynginx ./nginx`.\n" +
 		"4. By absolute URL: `helm install mynginx https://example.com/charts/nginx-1.2.3.tgz`.\n" +
 		"5. By chart reference and repo URL: `helm install --repo https://example.com/charts/ mynginx nginx`.\n\n" +
-		"## CHART REFERENCES\n" +
+		"### Chart references\n" +
 		"A chart reference is a convenient way of referencing a chart in a chart repository.\n\n" +
 		"When you use a chart reference with a repo prefix (`example/mariadb`), Helm will look in the local " +
 		"configuration for a chart repository named 'example', and will then look for a" +
