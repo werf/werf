@@ -2,7 +2,6 @@ package helm
 
 import (
 	"fmt"
-	helm2 "github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -10,6 +9,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 
 	"github.com/werf/werf/cmd/werf/common"
+	helm2 "github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"

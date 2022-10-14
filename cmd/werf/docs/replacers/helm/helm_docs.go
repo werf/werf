@@ -33,6 +33,7 @@ func GetHelmEnvDocs() structs.DocsStruct {
 
 	return docs
 }
+
 func GetHelmHistoryDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 
