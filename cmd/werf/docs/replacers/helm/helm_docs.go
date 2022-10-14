@@ -112,3 +112,30 @@ func GetHelmLintDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmListDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command lists all of the releases for a specified namespace " +
+		"(uses current namespace context if namespace not specified).\n\n" +
+		"By default, it lists only releases that are deployed or failed. Flags like " +
+		"`--uninstalled` and `--all` will alter this behavior. Such flags can be combined: " +
+		"`--uninstalled --failed`.\n\n" +
+		"By default, items are sorted alphabetically. Use the `-d` flag to sort by " +
+		"release date.\n\n" +
+		"If the `--filter` flag is provided, it will be treated as a filter. Filters are " +
+		"regular expressions (Perl compatible) that are applied to the list of releases. " +
+		"Only items that match the filter will be returned.\n" +
+		"```\n" +
+		"    $ helm list --filter 'ara[a-z]+'\n" +
+		"    NAME                UPDATED                                  CHART\n" +
+		"    maudlin-arachnid    2020-06-18 14:17:46.125134977 +0000 UTC  alpine-0.1.0\n```\n" +
+		"If no results are found, `helm list` will exit `0`, but with no output (or in " +
+		"the case of no `-q` flag, only headers).\n\n" +
+		"By default, up to 256 items may be returned. To limit this, use the `--max` flag. " +
+		"Setting `--max` to `0` will not return all results. Rather, it will return the " +
+		"server's default, which may be much higher than 256. Pairing the `--max` " +
+		"flag with the `--offset` flag allows you to page through results.\n"
+
+	return docs
+}

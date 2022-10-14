@@ -3,31 +3,21 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
 This command lists all of the releases for a specified namespace (uses current namespace context if namespace not specified).
 
-By default, it lists only releases that are deployed or failed. Flags like
-'--uninstalled' and '--all' will alter this behavior. Such flags can be combined:
-'--uninstalled --failed'.
+By default, it lists only releases that are deployed or failed. Flags like `--uninstalled` and `--all` will alter this behavior. Such flags can be combined: `--uninstalled --failed`.
 
-By default, items are sorted alphabetically. Use the '-d' flag to sort by
-release date.
+By default, items are sorted alphabetically. Use the `-d` flag to sort by release date.
 
-If the --filter flag is provided, it will be treated as a filter. Filters are
-regular expressions (Perl compatible) that are applied to the list of releases.
-Only items that match the filter will be returned.
-
+If the `--filter` flag is provided, it will be treated as a filter. Filters are regular expressions (Perl compatible) that are applied to the list of releases. Only items that match the filter will be returned.
+```
     $ helm list --filter 'ara[a-z]+'
     NAME                UPDATED                                  CHART
     maudlin-arachnid    2020-06-18 14:17:46.125134977 +0000 UTC  alpine-0.1.0
+```
+If no results are found, `helm list` will exit `0`, but with no output (or in the case of no `-q` flag, only headers).
 
-If no results are found, 'helm list' will exit 0, but with no output (or in
-the case of no '-q' flag, only headers).
-
-By default, up to 256 items may be returned. To limit this, use the '--max' flag.
-Setting '--max' to 0 will not return all results. Rather, it will return the
-server's default, which may be much higher than 256. Pairing the '--max'
-flag with the '--offset' flag allows you to page through results.
+By default, up to 256 items may be returned. To limit this, use the `--max` flag. Setting `--max` to `0` will not return all results. Rather, it will return the server's default, which may be much higher than 256. Pairing the `--max` flag with the `--offset` flag allows you to page through results.
 
 
 {{ header }} Syntax
