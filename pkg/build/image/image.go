@@ -10,6 +10,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -40,6 +41,7 @@ type CommonImageOptions struct {
 type ImageOptions struct {
 	CommonImageOptions
 	IsArtifact, IsDockerfileImage bool
+	DockerfileImageConfig         *config.ImageFromDockerfile
 
 	BaseImageReference   string
 	BaseImageName        string
@@ -54,10 +56,11 @@ func NewImage(ctx context.Context, name string, baseImageType BaseImageType, opt
 	}
 
 	i := &Image{
-		Name:               name,
-		CommonImageOptions: opts.CommonImageOptions,
-		IsArtifact:         opts.IsArtifact,
-		IsDockerfileImage:  opts.IsDockerfileImage,
+		Name:                  name,
+		CommonImageOptions:    opts.CommonImageOptions,
+		IsArtifact:            opts.IsArtifact,
+		IsDockerfileImage:     opts.IsDockerfileImage,
+		DockerfileImageConfig: opts.DockerfileImageConfig,
 
 		baseImageType:      baseImageType,
 		baseImageReference: opts.BaseImageReference,
@@ -76,9 +79,10 @@ func NewImage(ctx context.Context, name string, baseImageType BaseImageType, opt
 type Image struct {
 	CommonImageOptions
 
-	IsArtifact        bool
-	IsDockerfileImage bool
-	Name              string
+	IsArtifact            bool
+	IsDockerfileImage     bool
+	Name                  string
+	DockerfileImageConfig *config.ImageFromDockerfile
 
 	stages            []stage.Interface
 	lastNonEmptyStage stage.Interface
