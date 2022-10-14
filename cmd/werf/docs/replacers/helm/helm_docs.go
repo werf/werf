@@ -100,3 +100,15 @@ func GetHelmInstallDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmLintDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command takes a path to a chart and runs a series of tests to verify that" +
+		"the chart is well-formed.\n\n" +
+		"If the linter encounters things that will cause the chart to fail installation, " +
+		"it will emit `[ERROR]` messages. If it encounters issues that break with convention " +
+		"or recommendation, it will emit `[WARNING]` messages."
+
+	return docs
+}
