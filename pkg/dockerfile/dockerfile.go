@@ -1,7 +1,7 @@
 package dockerfile
 
 import (
-	"context"
+	"fmt"
 )
 
 type DockerfileOptions struct {
@@ -25,24 +25,25 @@ type Dockerfile struct {
 	Stages []*DockerfileStage
 }
 
-func (df *Dockerfile) GroupStagesByIndependentSets(ctx context.Context) ([][]*DockerfileStage, error) {
-	// FIXME(staged-dockerfile): build real dependencies tree
+func (df *Dockerfile) GetTargetStage() (*DockerfileStage, error) {
+	if df.Target == "" {
+		return df.Stages[len(df.Stages)-1], nil
+	}
 
-	// var res [][]*DockerfileStage
-	// var curLevel []*DockerfileStage
+	for _, s := range df.Stages {
+		if s.StageName == df.Target {
+			return s, nil
+		}
+	}
 
-	// stagesQueue
+	return nil, fmt.Errorf("%s is not a valid target dockerfile stage", df.Target)
+}
 
-	// res = append(res, curLevel)
-
-	// for _, stg := range df.Stages {
-	// 	stg.Dependencies
-	// }
-
-	// var res [][]*DockerfileStage
-	// for _, stg := range df.Stages {
-	// 	res = append(res, []*DockerfileStage{stg})
-	// }
-	// return res, nil
-	return nil, nil
+func (df *Dockerfile) FindStage(name string) *DockerfileStage {
+	for _, s := range df.Stages {
+		if s.StageName == name {
+			return s
+		}
+	}
+	return nil
 }

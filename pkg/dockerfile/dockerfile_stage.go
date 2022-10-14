@@ -8,22 +8,40 @@ import (
 	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
-func NewDockerfileStage(index int, baseName, stageName string, instructions []InstructionInterface, platform string) *DockerfileStage {
+func NewDockerfileStage(index int, baseName, stageName string, instructions []DockerfileStageInstructionInterface, platform string) *DockerfileStage {
 	return &DockerfileStage{BaseName: baseName, StageName: stageName, Instructions: instructions, Platform: platform}
 }
 
 type DockerfileStage struct {
 	Dockerfile   *Dockerfile
 	Dependencies []*DockerfileStage
+	BaseStage    *DockerfileStage
 
 	BaseName     string
 	Index        int
 	StageName    string
 	Platform     string
-	Instructions []InstructionInterface
+	Instructions []DockerfileStageInstructionInterface
 }
 
-func (stage DockerfileStage) LogName() string {
+func (stage *DockerfileStage) AppendDependencyStage(dep *DockerfileStage) {
+	for _, d := range stage.Dependencies {
+		if d.Index == dep.Index {
+			return
+		}
+	}
+	stage.Dependencies = append(stage.Dependencies, dep)
+}
+
+func (stage *DockerfileStage) WerfImageName() string {
+	if stage.HasStageName() {
+		return fmt.Sprintf("dockerfile-stage-%s", stage.StageName)
+	} else {
+		return fmt.Sprintf("dockerfile-stage-%d", stage.Index)
+	}
+}
+
+func (stage *DockerfileStage) LogName() string {
 	if stage.HasStageName() {
 		return stage.StageName
 	} else {
@@ -31,7 +49,7 @@ func (stage DockerfileStage) LogName() string {
 	}
 }
 
-func (stage DockerfileStage) HasStageName() bool {
+func (stage *DockerfileStage) HasStageName() bool {
 	return stage.StageName != ""
 }
 
@@ -45,29 +63,35 @@ func SetupDockerfileStagesDependencies(stages []*DockerfileStage) error {
 
 	for _, stage := range stages {
 		// Base image dependency
-		if dependency, hasKey := stageByName[strings.ToLower(stage.BaseName)]; hasKey {
-			stage.Dependencies = append(stage.Dependencies, dependency)
+		if baseStage, hasKey := stageByName[strings.ToLower(stage.BaseName)]; hasKey {
+			stage.BaseStage = baseStage
+			stage.Dependencies = append(stage.Dependencies, baseStage)
 		}
 
 		for _, instr := range stage.Instructions {
-			switch typedInstr := instr.(type) {
+			switch typedInstr := instr.GetInstructionData().(type) {
 			case *dockerfile_instruction.Copy:
-				if dep := findStageByNameOrIndex(typedInstr.From, stages, stageByName); dep != nil {
-					stage.Dependencies = append(stage.Dependencies, dep)
-				} else {
-					return fmt.Errorf("unable to resolve stage %q instruction %s --from=%q: no such stage", stage.LogName(), instr.Name(), typedInstr.From)
+				if typedInstr.From != "" {
+					if dep := findStageByRef(typedInstr.From, stages, stageByName); dep != nil {
+						stage.AppendDependencyStage(dep)
+						instr.SetDependencyByStageRef(typedInstr.From, dep)
+					} else {
+						return fmt.Errorf("unable to resolve stage %q instruction %s --from=%q: no such stage", stage.LogName(), instr.GetInstructionData().Name(), typedInstr.From)
+					}
 				}
 
 			case *dockerfile_instruction.Run:
 				for _, mount := range typedInstr.Mounts {
 					if mount.From != "" {
-						if dep := findStageByNameOrIndex(mount.From, stages, stageByName); dep != nil {
-							stage.Dependencies = append(stage.Dependencies, dep)
+						if dep := findStageByRef(mount.From, stages, stageByName); dep != nil {
+							stage.AppendDependencyStage(dep)
+							instr.SetDependencyByStageRef(mount.From, dep)
 						} else {
-							return fmt.Errorf("unable to resolve stage %q instruction %s --mount=from=%s: no such stage", stage.LogName(), instr.Name(), mount.From)
+							return fmt.Errorf("unable to resolve stage %q instruction %s --mount=from=%s: no such stage", stage.LogName(), instr.GetInstructionData().Name(), mount.From)
 						}
 					}
 				}
+
 			}
 		}
 	}
@@ -75,7 +99,8 @@ func SetupDockerfileStagesDependencies(stages []*DockerfileStage) error {
 	return nil
 }
 
-func findStageByNameOrIndex(ref string, stages []*DockerfileStage, stageByName map[string]*DockerfileStage) *DockerfileStage {
+// findStageByRef finds stage by stage reference which is stage index or stage name
+func findStageByRef(ref string, stages []*DockerfileStage, stageByName map[string]*DockerfileStage) *DockerfileStage {
 	if stg, found := stageByName[strings.ToLower(ref)]; found {
 		return stg
 	} else if ind, err := strconv.Atoi(ref); err == nil && ind >= 0 && ind < len(stages) {

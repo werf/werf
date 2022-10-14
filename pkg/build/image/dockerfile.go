@@ -14,7 +14,6 @@ import (
 	"github.com/werf/werf/pkg/build/stage"
 	stage_instruction "github.com/werf/werf/pkg/build/stage/instruction"
 	"github.com/werf/werf/pkg/config"
-	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/dockerfile"
 	"github.com/werf/werf/pkg/dockerfile/frontend"
 	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
@@ -60,40 +59,86 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, dockerfileImageConfig *config.ImageFromDockerfile, opts CommonImageOptions) (ImagesSets, error) {
 	var ret ImagesSets
 
-	stagesSets, err := cfg.GroupStagesByIndependentSets(ctx)
+	targetStage, err := cfg.GetTargetStage()
 	if err != nil {
-		return nil, fmt.Errorf("unable to group dockerfile stages by independent sets :%w", err)
+		return nil, fmt.Errorf("unable to get target dockerfile stage: %w", err)
 	}
 
-	for _, set := range stagesSets {
-		for _, stg := range set {
-			_ = stg
-			// TODO(staged-dockerfile): map stages to *Image+build.Stage objects
-			// ret = append(ret, stg.)
-		}
+	queue := []struct {
+		Stage *dockerfile.DockerfileStage
+		Level int
+	}{
+		{Stage: targetStage, Level: 0},
 	}
 
-	{
-		// TODO parse FROM instruction properly, set correct BaseImageReference here
+	appendQueue := func(stage *dockerfile.DockerfileStage, level int) {
+		queue = append(queue, struct {
+			Stage *dockerfile.DockerfileStage
+			Level int
+		}{Stage: stage, Level: level})
+	}
 
-		img, err := NewImage(ctx, "test", ImageFromRegistryAsBaseImage, ImageOptions{
-			IsDockerfileImage:     true,
-			DockerfileImageConfig: dockerfileImageConfig,
-			CommonImageOptions:    opts,
-			BaseImageReference:    "ubuntu:22.04",
-		})
-		if err != nil {
-			return nil, fmt.Errorf("unable to create image %q: %w", "test", err)
+	for len(queue) > 0 {
+		item := queue[0]
+		queue = queue[1:]
+
+		appendImageToCurrentSet := func(img *Image) {
+			if item.Level == len(ret) {
+				ret = append([][]*Image{nil}, ret...)
+			}
+			ret[len(ret)-item.Level-1] = append(ret[len(ret)-item.Level-1], img)
 		}
 
-		img.stages = append(img.stages, stage_instruction.NewRun(backend_instruction.NewRun(*dockerfile_instruction.NewRun([]string{"ls", "/"}, false, nil, "", "")), nil, false, &stage.BaseStageOptions{
-			ImageName:        img.Name,
-			ImageTmpDir:      img.TmpDir,
-			ContainerWerfDir: img.ContainerWerfDir,
-			ProjectName:      opts.ProjectName,
-		}))
+		stg := item.Stage
 
-		ret = append(ret, []*Image{img})
+		var img *Image
+		var err error
+		if baseStg := cfg.FindStage(stg.BaseName); baseStg != nil {
+			img, err = NewImage(ctx, dockerfileImageConfig.Name, StageAsBaseImage, ImageOptions{
+				IsDockerfileImage:     true,
+				DockerfileImageConfig: dockerfileImageConfig,
+				CommonImageOptions:    opts,
+				BaseImageName:         baseStg.WerfImageName(),
+			})
+			if err != nil {
+				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", stg.LogName(), dockerfileImageConfig.Name, err)
+			}
+
+			appendQueue(baseStg, item.Level+1)
+		} else {
+			img, err = NewImage(ctx, dockerfileImageConfig.Name, ImageFromRegistryAsBaseImage, ImageOptions{
+				IsDockerfileImage:     true,
+				DockerfileImageConfig: dockerfileImageConfig,
+				CommonImageOptions:    opts,
+				BaseImageReference:    targetStage.BaseName,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", targetStage.LogName(), dockerfileImageConfig.Name, err)
+			}
+		}
+
+		for ind, instr := range stg.Instructions {
+			switch typedInstr := any(instr).(type) {
+			case *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Run]:
+				isFirstStage := (len(img.stages) == 0)
+
+				img.stages = append(img.stages, stage_instruction.NewRun(stage.StageName(fmt.Sprintf("%d-%s", ind, typedInstr.Data.Name())), typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &stage.BaseStageOptions{
+					ImageName:        img.Name,
+					ImageTmpDir:      img.TmpDir,
+					ContainerWerfDir: img.ContainerWerfDir,
+					ProjectName:      opts.ProjectName,
+				}))
+
+			default:
+				panic(fmt.Sprintf("unsupported instruction type %#v", instr))
+			}
+
+			for _, dep := range instr.GetDependenciesByStageRef() {
+				appendQueue(dep, item.Level+1)
+			}
+		}
+
+		appendImageToCurrentSet(img)
 	}
 
 	return ret, nil
