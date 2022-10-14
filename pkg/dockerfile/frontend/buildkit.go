@@ -1,15 +1,53 @@
 package frontend
 
 import (
+	"bytes"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
 	"github.com/werf/werf/pkg/dockerfile"
 	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
-func DockerfileStageFromBuildkitStage(d *dockerfile.Dockerfile, stage instructions.Stage) (*dockerfile.DockerfileStage, error) {
+func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.DockerfileOptions) (*dockerfile.Dockerfile, error) {
+	p, err := parser.Parse(bytes.NewReader(dockerfileBytes))
+	if err != nil {
+		return nil, fmt.Errorf("parsing dockerfile data: %w", err)
+	}
+
+	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	if err != nil {
+		return nil, fmt.Errorf("parsing instructions tree: %w", err)
+	}
+
+	dockerTargetIndex, err := GetDockerTargetStageIndex(dockerStages, opts.Target)
+	if err != nil {
+		return nil, fmt.Errorf("determine target stage: %w", err)
+	}
+
+	var stages []*dockerfile.DockerfileStage
+	for i, dockerStage := range dockerStages {
+		stages = append(stages, DockerfileStageFromBuildkitStage(i, dockerStage))
+	}
+
+	// TODO(staged-dockerfile): convert meta-args and initialize into Dockerfile obj
+	_ = dockerMetaArgs
+	_ = dockerTargetIndex
+
+	dockerfile.SetupDockerfileStagesDependencies(stages)
+
+	d := dockerfile.NewDockerfile(stages, opts)
+	for _, stage := range d.Stages {
+		stage.Dockerfile = d
+	}
+	return d, nil
+}
+
+func DockerfileStageFromBuildkitStage(index int, stage instructions.Stage) *dockerfile.DockerfileStage {
 	var i []dockerfile.InstructionInterface
 
 	for _, cmd := range stage.Commands {
@@ -56,7 +94,7 @@ func DockerfileStageFromBuildkitStage(d *dockerfile.Dockerfile, stage instructio
 		}
 	}
 
-	return dockerfile.NewDockerfileStage(d, i), nil
+	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, i, stage.Platform)
 }
 
 func extractSrcAndDst(sourcesAndDest instructions.SourcesAndDest) ([]string, string) {
@@ -74,4 +112,57 @@ func extractKeyValuePairsAsMap(pairs instructions.KeyValuePairs) (res map[string
 		res[item.Key] = item.Value
 	}
 	return
+}
+
+func GetDockerStagesNameToIndexMap(stages []instructions.Stage) map[string]int {
+	nameToIndex := make(map[string]int)
+	for i, s := range stages {
+		name := strings.ToLower(s.Name)
+		if name != strconv.Itoa(i) {
+			nameToIndex[name] = i
+		}
+	}
+	return nameToIndex
+}
+
+func ResolveDockerStagesFromValue(stages []instructions.Stage) {
+	nameToIndex := GetDockerStagesNameToIndexMap(stages)
+
+	for _, s := range stages {
+		for _, cmd := range s.Commands {
+			switch typedCmd := cmd.(type) {
+			case *instructions.CopyCommand:
+				if typedCmd.From != "" {
+					from := strings.ToLower(typedCmd.From)
+					if val, ok := nameToIndex[from]; ok {
+						typedCmd.From = strconv.Itoa(val)
+					}
+				}
+
+			case *instructions.RunCommand:
+				for _, mount := range instructions.GetMounts(typedCmd) {
+					if mount.From != "" {
+						from := strings.ToLower(mount.From)
+						if val, ok := nameToIndex[from]; ok {
+							mount.From = strconv.Itoa(val)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func GetDockerTargetStageIndex(dockerStages []instructions.Stage, dockerTargetStage string) (int, error) {
+	if dockerTargetStage == "" {
+		return len(dockerStages) - 1, nil
+	}
+
+	for i, s := range dockerStages {
+		if s.Name == dockerTargetStage {
+			return i, nil
+		}
+	}
+
+	return -1, fmt.Errorf("%s is not a valid target build stage", dockerTargetStage)
 }
