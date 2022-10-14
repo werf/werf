@@ -213,3 +213,28 @@ func GetHelmUninstallDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmUpgradeDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command upgrades a release to a new version of a chart.\n\n" +
+		"The upgrade arguments must be a release and chart. The chart " +
+		"argument can be either: a chart reference(`example/mariadb`), a path to a chart directory, " +
+		"a packaged chart, or a fully qualified URL. For chart references, the latest " +
+		"version will be specified unless the `--version` flag is set.\n\n" +
+		"To override values in a chart, use either the `--values` flag and pass in a file " +
+		"or use the `--set` flag and pass configuration from the command line, to force string " +
+		"values, use `--set-string`. You can use `--set-file` to set individual " +
+		"values from a file when the value itself is too long for the command line " +
+		"or is dynamically generated.\n\n" +
+		"You can specify the `--values`/`-f` flag multiple times. The priority will be given to the " +
+		"last (right-most) file specified. For example, if both `myvalues.yaml` and `override.yaml` " +
+		"contained a key called `Test`, the value set in `override.yaml` would take precedence:\n" +
+		"```\n$ helm upgrade -f myvalues.yaml -f override.yaml redis ./redis\n```\n" +
+		"You can specify the `--set` flag multiple times. The priority will be given to the " +
+		"last (right-most) set specified. For example, if both `bar` and `newbar` values are " +
+		"set for a key called `foo`, the `newbar` value would take precedence:\n" +
+		"```\n$ helm upgrade --set foo=bar --set foo=newbar redis ./redis\n```\n"
+
+	return docs
+}

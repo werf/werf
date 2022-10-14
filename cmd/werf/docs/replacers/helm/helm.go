@@ -82,3 +82,10 @@ func ReplaceHelmUninstallDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmUpgradeDocs(cmd *cobra.Command) *cobra.Command {
+	cmd.Annotations = map[string]string{
+		common.DocsLongMD: GetHelmUpgradeDocs().LongMD,
+	}
+	return cmd
+}
