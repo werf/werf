@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/dockerfile"
+	"github.com/werf/werf/pkg/dockerfile/frontend"
 	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
@@ -29,7 +30,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 			return nil, fmt.Errorf("unable to read dockerfile %s: %w", relDockerfilePath, err)
 		}
 
-		d, err := dockerfile.ParseDockerfile(dockerfileData, dockerfile.DockerfileOptions{
+		d, err := frontend.ParseDockerfileWithBuildkit(dockerfileData, dockerfile.DockerfileOptions{
 			Target:    dockerfileImageConfig.Target,
 			BuildArgs: util.MapStringInterfaceToMapStringString(dockerfileImageConfig.Args),
 			AddHost:   dockerfileImageConfig.AddHost,
@@ -178,9 +179,9 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 		return nil, err
 	}
 
-	dockerfile.ResolveDockerStagesFromValue(dockerStages)
+	frontend.ResolveDockerStagesFromValue(dockerStages)
 
-	dockerTargetIndex, err := dockerfile.GetDockerTargetStageIndex(dockerStages, dockerfileImageConfig.Target)
+	dockerTargetIndex, err := frontend.GetDockerTargetStageIndex(dockerStages, dockerfileImageConfig.Target)
 	if err != nil {
 		return nil, err
 	}

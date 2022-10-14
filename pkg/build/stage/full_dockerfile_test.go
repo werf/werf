@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/container_backend/stage_builder"
-	"github.com/werf/werf/pkg/dockerfile"
+	"github.com/werf/werf/pkg/dockerfile/frontend"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -21,13 +21,13 @@ func testDockerfileToDockerStages(dockerfileData []byte) ([]instructions.Stage, 
 	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
 	Expect(err).To(Succeed())
 
-	dockerfile.ResolveDockerStagesFromValue(dockerStages)
+	frontend.ResolveDockerStagesFromValue(dockerStages)
 
 	return dockerStages, dockerMetaArgs
 }
 
 func newTestFullDockerfileStage(dockerfileData []byte, target string, buildArgs map[string]interface{}, dockerStages []instructions.Stage, dockerMetaArgs []instructions.ArgCommand, dependencies []*TestDependency) *FullDockerfileStage {
-	dockerTargetIndex, err := dockerfile.GetDockerTargetStageIndex(dockerStages, target)
+	dockerTargetIndex, err := frontend.GetDockerTargetStageIndex(dockerStages, target)
 	Expect(err).To(Succeed())
 
 	ds := NewDockerStages(
