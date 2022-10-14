@@ -7,27 +7,25 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
+	"github.com/werf/werf/pkg/dockerfile"
+	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/util"
 )
 
 type Run struct {
-	*Base
-	instruction *backend_instruction.Run
+	*Base[*dockerfile_instruction.Run]
 }
 
-func NewRun(i *backend_instruction.Run, dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
-	return &Run{
-		Base:        NewBase(InstructionRun, dependencies, hasPrevStage, opts),
-		instruction: i,
-	}
+func NewRun(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Run], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
+	return &Run{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	return util.Sha256Hash(append([]string{string(InstructionRun)}, stage.instruction.Command...)...), nil
+	return util.Sha256Hash(append([]string{stage.instruction.Data.Name()}, stage.instruction.Data.Command...)...), nil
 }
 
 func (stage *Run) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	stageImage.Builder.DockerfileStageBuilder().SetBuildContextArchive(buildContextArchive)
-	stageImage.Builder.DockerfileStageBuilder().AppendInstruction(stage.instruction)
+	stageImage.Builder.DockerfileStageBuilder().AppendInstruction(backend_instruction.NewRun(*stage.instruction.Data))
 	return nil
 }

@@ -22,8 +22,8 @@ import (
 type BaseImageType string
 
 const (
-	ImageFromRegistryAsBaseImage BaseImageType = "ImageFromRegistryBaseImage"
-	StageAsBaseImage             BaseImageType = "StageBaseImage"
+	ImageFromRegistryAsBaseImage BaseImageType = "ImageFromRegistryAsBaseImage"
+	StageAsBaseImage             BaseImageType = "StageAsBaseImage"
 	NoBaseImage                  BaseImageType = "NoBaseImage"
 )
 
