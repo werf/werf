@@ -77,9 +77,9 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 	common.SetupDockerConfig(&_commonCmdData, cmd, "")
 
 	cmd.AddCommand(
-		helm_v3.NewUninstallCmd(actionConfig, os.Stdout, helm_v3.UninstallCmdOptions{
+		helm2.ReplaceHelmUninstallDocs(helm_v3.NewUninstallCmd(actionConfig, os.Stdout, helm_v3.UninstallCmdOptions{
 			StagesSplitter: helm.NewStagesSplitter(),
-		}),
+		})),
 		helm_v3.NewDependencyCmd(actionConfig, os.Stdout),
 		helm_v3.NewGetCmd(actionConfig, os.Stdout),
 		helm2.ReplaceHelmHistoryDocs(helm_v3.NewHistoryCmd(actionConfig, os.Stdout)),

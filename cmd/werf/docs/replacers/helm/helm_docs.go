@@ -201,3 +201,15 @@ func GetHelmStatusDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmUninstallDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command takes a release name and uninstalls the release.\n\n" +
+		"It removes all of the resources associated with the last release of the chart " +
+		"as well as the release history, freeing it up for future use.\n\n" +
+		"Use the `--dry-run` flag to see which releases will be uninstalled without actually " +
+		"uninstalling them."
+
+	return docs
+}
