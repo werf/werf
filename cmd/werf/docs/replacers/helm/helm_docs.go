@@ -183,3 +183,21 @@ func GetHelmRollbackDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmStatusDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command shows the status of a named release. " +
+		"The status consists of:\n" +
+		"- last deployment time;\n" +
+		"- K8s namespace in which the release lives;\n" +
+		"- state of the release (can be: `unknown`, `deployed`, `uninstalled`, " +
+		"`superseded`, `failed`, `uninstalling`, `pending-install`, `pending-upgrade` or `pending-rollback`);\n" +
+		"- revision of the release;\n" +
+		"- description of the release (can be completion message or error message, need to enable `--show-desc`);\n" +
+		"- list of resources that this release consists of, sorted by kind;\n" +
+		"- details on last test suite run, if applicable;\n" +
+		"- additional notes provided by the chart.\n"
+
+	return docs
+}
