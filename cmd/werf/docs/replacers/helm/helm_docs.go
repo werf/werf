@@ -155,3 +155,19 @@ func GetHelmPackageDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmPullDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Retrieve a package from a package repository, and download it locally.\n\n" +
+		"This is useful for fetching packages to inspect, modify, or repackage. It can " +
+		"also be used to perform cryptographic verification of a chart without installing " +
+		"the chart.\n\n" +
+		"There are options for unpacking the chart after download. This will create a " +
+		"directory for the chart and uncompress into that directory.\n\n" +
+		"If the `--verify` flag is specified, the requested chart **must** have a provenance " +
+		"file, and **must** pass the verification process. Failure in any part of this will " +
+		"result in an error, and the chart will not be saved locally."
+
+	return docs
+}
