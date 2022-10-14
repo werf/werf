@@ -87,10 +87,10 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 		helm2.ReplaceHelmListDocs(helm_v3.NewListCmd(actionConfig, os.Stdout)),
 		NewTemplateCmd(actionConfig, wc, &namespace),
 		helm_v3.NewRepoCmd(os.Stdout),
-		helm_v3.NewRollbackCmd(actionConfig, os.Stdout, helm_v3.RollbackCmdOptions{
+		helm2.ReplaceHelmRollbackDocs(helm_v3.NewRollbackCmd(actionConfig, os.Stdout, helm_v3.RollbackCmdOptions{
 			StagesSplitter:              helm.NewStagesSplitter(),
 			StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),
-		}),
+		})),
 		NewInstallCmd(actionConfig, wc, &namespace),
 		NewUpgradeCmd(actionConfig, wc, &namespace),
 		helm2.ReplaceHelmCreateDocs(helm_v3.NewCreateCmd(os.Stdout)),
