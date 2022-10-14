@@ -84,7 +84,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 		helm_v3.NewGetCmd(actionConfig, os.Stdout),
 		helm2.ReplaceHelmHistoryDocs(helm_v3.NewHistoryCmd(actionConfig, os.Stdout)),
 		NewLintCmd(actionConfig, wc),
-		helm_v3.NewListCmd(actionConfig, os.Stdout),
+		helm2.ReplaceHelmListDocs(helm_v3.NewListCmd(actionConfig, os.Stdout)),
 		NewTemplateCmd(actionConfig, wc, &namespace),
 		helm_v3.NewRepoCmd(os.Stdout),
 		helm_v3.NewRollbackCmd(actionConfig, os.Stdout, helm_v3.RollbackCmdOptions{
