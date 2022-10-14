@@ -47,3 +47,10 @@ func ReplaceHelmListDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmPackageDocs(cmd *cobra.Command) *cobra.Command {
+	cmd.Annotations = map[string]string{
+		common.DocsLongMD: GetHelmPackageDocs().LongMD,
+	}
+	return cmd
+}

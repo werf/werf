@@ -3,21 +3,15 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
-This command packages a chart into a versioned chart archive file. If a path
-is given, this will look at that path for a chart (which must contain a
-Chart.yaml file) and then package that directory.
+This command packages a chart into a versioned chart archive file. If a path is given, this will look at that path for a chart (which must contain a `Chart.yaml` file) and then package that directory.
 
 Versioned chart archives are used by Helm package repositories.
 
-To sign a chart, use the '--sign' flag. In most cases, you should also
-provide '--keyring path/to/secret/keys' and '--key keyname'.
-
-  $ helm package --sign ./mychart --key mykey --keyring ~/.gnupg/secring.gpg
-
-If '--keyring' is not specified, Helm usually defaults to the public keyring
-unless your environment is otherwise configured.
-
+To sign a chart, use the `--sign` flag. In most cases, you should also provide `--keyring path/to/secret/keys` and `--key keyname`.
+```
+$ helm package --sign ./mychart --key mykey --keyring ~/.gnupg/secring.gpg
+```
+If `--keyring` is not specified, Helm usually defaults to the public keyring unless your environment is otherwise configured.
 
 {{ header }} Syntax
 
