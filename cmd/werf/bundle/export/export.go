@@ -122,6 +122,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSetFile(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd)
 
+	commonCmdData.SetupDisableDefaultValues(cmd)
+
 	common.SetupReportPath(&commonCmdData, cmd)
 	common.SetupReportFormat(&commonCmdData, cmd)
 
@@ -322,6 +324,8 @@ func runExport(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		ExtraAnnotations:                  userExtraAnnotations,
 		ExtraLabels:                       userExtraLabels,
 		IgnoreInvalidAnnotationsAndLabels: true,
+		DisableDefaultValues:              *commonCmdData.DisableDefaultValues,
+		DisableDefaultSecretValues:        true,
 	})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {

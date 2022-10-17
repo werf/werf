@@ -32,6 +32,7 @@ type BundleOptions struct {
 	ExtraAnnotations                  map[string]string
 	ExtraLabels                       map[string]string
 	IgnoreInvalidAnnotationsAndLabels bool
+	DisableDefaultValues              bool
 }
 
 func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, secretsManager *secrets_manager.SecretsManager, opts BundleOptions) (*Bundle, error) {
@@ -44,6 +45,7 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
 		secretsManager:                 secretsManager,
+		DisableDefaultValues:           opts.DisableDefaultValues,
 	}
 
 	extraAnnotationsAndLabelsPostRenderer := helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, opts.IgnoreInvalidAnnotationsAndLabels)
@@ -78,6 +80,7 @@ type Bundle struct {
 	HelmEnvSettings            *cli.EnvSettings
 	RegistryClient             *registry.Client
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
+	DisableDefaultValues       bool
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	secretsManager                        *secrets_manager.SecretsManager
@@ -121,6 +124,12 @@ func (bundle *Bundle) ChartLoaded(files []*chart.ChartExtenderBufferedFile) erro
 		}); err != nil {
 			return fmt.Errorf("error decoding secrets: %w", err)
 		}
+	}
+
+	bundle.HelmChart.Values = nil
+	if bundle.DisableDefaultValues {
+		logboek.Context(bundle.ChartExtenderContext).Info().LogF("Disable default werf chart values\n")
+		bundle.HelmChart.Values = nil
 	}
 
 	return nil

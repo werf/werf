@@ -34,8 +34,9 @@ type WerfChartOptions struct {
 	ExtraAnnotations                  map[string]string
 	ExtraLabels                       map[string]string
 	BuildChartDependenciesOpts        command_helpers.BuildChartDependenciesOptions
-	DisableSecrets                    bool
 	IgnoreInvalidAnnotationsAndLabels bool
+	DisableDefaultValues              bool
+	DisableDefaultSecretValues        bool
 }
 
 func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretsManager *secrets_manager.SecretsManager, chartDir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts WerfChartOptions) *WerfChart {
@@ -44,7 +45,6 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 		SecretValueFiles: opts.SecretValueFiles,
 		HelmEnvSettings:  helmEnvSettings,
 		RegistryClient:   registryClient,
-		DisableSecrets:   opts.DisableSecrets,
 
 		GiterminismManager: giterminismManager,
 		SecretsManager:     secretsManager,
@@ -53,6 +53,9 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
+
+		DisableDefaultValues:       opts.DisableDefaultValues,
+		DisableDefaultSecretValues: opts.DisableDefaultSecretValues,
 	}
 
 	wc.extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
@@ -74,7 +77,8 @@ type WerfChart struct {
 	HelmEnvSettings            *cli.EnvSettings
 	RegistryClient             *registry.Client
 	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
-	DisableSecrets             bool
+	DisableDefaultValues       bool
+	DisableDefaultSecretValues bool
 
 	GiterminismManager giterminism_manager.Interface
 	SecretsManager     *secrets_manager.SecretsManager
@@ -97,9 +101,14 @@ func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
 // ChartLoaded method for the chart.Extender interface
 func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
 	if wc.SecretsManager != nil {
+		if wc.DisableDefaultSecretValues {
+			logboek.Context(wc.ChartExtenderContext).Info().LogF("Disable default werf chart secret values\n")
+		}
+
 		if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.ChartDir, wc.GiterminismManager.ProjectDir(), wc.SecretsManager, secrets.DecodeAndLoadSecretsOptions{
-			GiterminismManager:     wc.GiterminismManager,
-			CustomSecretValueFiles: wc.SecretValueFiles,
+			GiterminismManager:         wc.GiterminismManager,
+			CustomSecretValueFiles:     wc.SecretValueFiles,
+			WithoutDefaultSecretValues: wc.DisableDefaultSecretValues,
 		}); err != nil {
 			return fmt.Errorf("error decoding secrets: %w", err)
 		}
@@ -116,6 +125,11 @@ func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error
 		Name: "templates/_werf_helpers.tpl",
 		Data: []byte(helpers.ChartTemplateHelpers),
 	})
+
+	if wc.DisableDefaultValues {
+		logboek.Context(wc.ChartExtenderContext).Info().LogF("Disable default werf chart values\n")
+		wc.HelmChart.Values = nil
+	}
 
 	return nil
 }
@@ -390,6 +404,7 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClient, wc.SecretsManager, BundleOptions{
 		BuildChartDependenciesOpts:        wc.BuildChartDependenciesOpts,
 		IgnoreInvalidAnnotationsAndLabels: wc.extraAnnotationsAndLabelsPostRenderer.IgnoreInvalidAnnotationsAndLabels,
+		DisableDefaultValues:              wc.DisableDefaultValues,
 	})
 }
 

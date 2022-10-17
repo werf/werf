@@ -30,13 +30,15 @@ type CmdData struct {
 	HooksStatusProgressPeriodSeconds *int64
 	ReleasesHistoryMax               *int
 
-	SetDockerConfigJsonValue *bool
-	Set                      *[]string
-	SetString                *[]string
-	Values                   *[]string
-	SetFile                  *[]string
-	SecretValues             *[]string
-	IgnoreSecretKey          *bool
+	SetDockerConfigJsonValue   *bool
+	Set                        *[]string
+	SetString                  *[]string
+	Values                     *[]string
+	SetFile                    *[]string
+	SecretValues               *[]string
+	IgnoreSecretKey            *bool
+	DisableDefaultValues       *bool
+	DisableDefaultSecretValues *bool
 
 	WithoutImages *bool
 	Repo          *RepoData
@@ -103,4 +105,14 @@ type CmdData struct {
 func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
 	cmdData.WithoutImages = new(bool)
 	cmd.Flags().BoolVarP(cmdData.WithoutImages, "without-images", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_IMAGES"), "Disable building of images defined in the werf.yaml (if any) and usage of such images in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all images defined in the werf.yaml by default)")
+}
+
+func (cmdData *CmdData) SetupDisableDefaultValues(cmd *cobra.Command) {
+	cmdData.DisableDefaultValues = new(bool)
+	cmd.Flags().BoolVarP(cmdData.DisableDefaultValues, "disable-default-values", "", false, `Do not use values from the default .helm/values.yaml file`)
+}
+
+func (cmdData *CmdData) SetupDisableDefaultSecretValues(cmd *cobra.Command) {
+	cmdData.DisableDefaultSecretValues = new(bool)
+	cmd.Flags().BoolVarP(cmdData.DisableDefaultSecretValues, "disable-default-secret-values", "", false, `Do not use secret values from the default .helm/secret-values.yaml file`)
 }
