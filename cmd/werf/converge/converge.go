@@ -155,6 +155,9 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
+	commonCmdData.SetupDisableDefaultValues(cmd)
+	commonCmdData.SetupDisableDefaultSecretValues(cmd)
+
 	common.SetupReportPath(&commonCmdData, cmd)
 	common.SetupReportFormat(&commonCmdData, cmd)
 
@@ -405,6 +408,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		ExtraAnnotations:                  userExtraAnnotations,
 		ExtraLabels:                       userExtraLabels,
 		IgnoreInvalidAnnotationsAndLabels: true,
+		DisableDefaultValues:              *commonCmdData.DisableDefaultValues,
+		DisableDefaultSecretValues:        *commonCmdData.DisableDefaultSecretValues,
 	})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
