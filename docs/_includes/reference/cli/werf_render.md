@@ -64,9 +64,11 @@ werf render [IMAGE_NAME...] [options]
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
       --disable-default-secret-values=false
-            Do not use secret values from the default .helm/secret-values.yaml file
+            Do not use secret values from the default .helm/secret-values.yaml file (default        
+            $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
       --disable-default-values=false
-            Do not use values from the default .helm/values.yaml file
+            Do not use values from the default .helm/values.yaml file (default                      
+            $WERF_DISABLE_DEFAULT_VALUES or false)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
