@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.181](https://www.github.com/werf/werf/compare/v1.2.180...v1.2.181) (2022-10-17)
+
+
+### Features
+
+* added options to disable usage of default values (and secret values) ([49425ee](https://www.github.com/werf/werf/commit/49425ee48e3dcacecdea61d6582a7c246809ba8e))
+* **bundles:** publish .helm/files into bundle ([68c096f](https://www.github.com/werf/werf/commit/68c096fa9c74440529243f8134b46bb9d1615c4b))
+* **staged-dockerfile:** add optional image-from-dockerfile reference into Image obj ([deb0827](https://www.github.com/werf/werf/commit/deb08270ce884f8daa20618b06a8147be6179ff6))
+* **staged-dockerfile:** complete instructions set with all params in the dockerfile parser pkg ([06f122b](https://www.github.com/werf/werf/commit/06f122b06a47552c822c64c0345e3551cbe07e0c))
+* **staged-dockerfile:** Dockerfile and DockerfileStage primitives reworked ([78e2911](https://www.github.com/werf/werf/commit/78e29110ae3cb2e2addabaaa84e9b24408e7d86e))
+* **staged-dockerfile:** implement buidkit frontend instructions to dockerfile instructions conversion ([2bc6c30](https://www.github.com/werf/werf/commit/2bc6c30d4c09b6034c8651adf7fc6828d412467c))
+* **staged-dockerfile:** initialize dockerfile-images with werf.yaml configration section ([186f563](https://www.github.com/werf/werf/commit/186f563fdfcea879032bb849fc907345ac6c7651)), closes [#2215](https://www.github.com/werf/werf/issues/2215)
+* **staged-dockerfile:** move container backend instructions data into dockerfile parser package ([9500967](https://www.github.com/werf/werf/commit/9500967e875f6530ddd23d8b9ce3f6e2a4b37aba))
+
 ### [1.2.180](https://www.github.com/werf/werf/compare/v1.2.179...v1.2.180) (2022-10-12)
 
 
