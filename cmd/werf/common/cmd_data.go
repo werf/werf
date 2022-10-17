@@ -109,10 +109,10 @@ func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
 
 func (cmdData *CmdData) SetupDisableDefaultValues(cmd *cobra.Command) {
 	cmdData.DisableDefaultValues = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisableDefaultValues, "disable-default-values", "", false, `Do not use values from the default .helm/values.yaml file`)
+	cmd.Flags().BoolVarP(cmdData.DisableDefaultValues, "disable-default-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_VALUES"), `Do not use values from the default .helm/values.yaml file (default $WERF_DISABLE_DEFAULT_VALUES or false)`)
 }
 
 func (cmdData *CmdData) SetupDisableDefaultSecretValues(cmd *cobra.Command) {
 	cmdData.DisableDefaultSecretValues = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisableDefaultSecretValues, "disable-default-secret-values", "", false, `Do not use secret values from the default .helm/secret-values.yaml file`)
+	cmd.Flags().BoolVarP(cmdData.DisableDefaultSecretValues, "disable-default-secret-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_SECRET_VALUES"), `Do not use secret values from the default .helm/secret-values.yaml file (default $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)`)
 }
