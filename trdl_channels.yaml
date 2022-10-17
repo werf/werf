@@ -30,8 +30,8 @@ groups:
         version: 1.2.181
 
       - name: beta
-        # published at: 17.10.2022
-        version: 1.2.180
+        # published at: 11.10.2022
+        version: 1.2.178
 
       - name: ea
         # published at: 17.10.2022
