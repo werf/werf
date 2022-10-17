@@ -569,7 +569,11 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 			for _, phase := range phases {
 				logProcess := logboek.Context(ctx).Debug().LogProcess("Phase %s -- BeforeImageStages()", phase.Name())
 				logProcess.Start()
-				if err := phase.BeforeImageStages(ctx, img); err != nil {
+				deferFn, err := phase.BeforeImageStages(ctx, img)
+				if deferFn != nil {
+					defer deferFn()
+				}
+				if err != nil {
 					logProcess.Fail()
 					return fmt.Errorf("phase %s before image %s stages handler failed: %w", phase.Name(), img.GetLogName(), err)
 				}

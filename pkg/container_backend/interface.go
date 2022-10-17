@@ -2,9 +2,7 @@ package container_backend
 
 import (
 	"context"
-	"io"
 
-	"github.com/werf/werf/pkg/container_backend/build_context"
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -33,7 +31,7 @@ type GetImageInfoOpts struct {
 type BuildDockerfileOpts struct {
 	CommonOpts
 
-	ContextTar           io.ReadCloser
+	BuildContextArchive  BuildContextArchiver
 	DockerfileCtxRelPath string // TODO: remove this and instead write the []byte dockerfile to /Dockerfile in the ContextTar inDockerServerBackend.BuildDockerfile().
 	Target               string
 	BuildArgs            []string // {"key1=value1", "key2=value2", ... }
@@ -47,8 +45,7 @@ type BuildDockerfileOpts struct {
 type BuildDockerfileStageOptions struct {
 	CommonOpts
 
-	BuildContext     *build_context.BuildContext
-	ContextTarReader io.ReadCloser
+	BuildContextArchive BuildContextArchiver
 }
 
 type ContainerBackend interface {
@@ -59,7 +56,7 @@ type ContainerBackend interface {
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
-	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, *build_context.BuildContext, error)
+	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error)
 	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error)
 	CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (string, error)
 

@@ -35,15 +35,15 @@ func (s *UserWithGitPatchStage) GetNextStageDependencies(ctx context.Context, c 
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
-	if err := s.BaseStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
+func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	if err := s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
 		return err
 	}
 
 	if isPatchEmpty, err := s.GitPatchStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return err
 	} else if !isPatchEmpty {
-		if err := s.GitPatchStage.prepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
+		if err := s.GitPatchStage.prepareImage(ctx, c, cb, prevBuiltImage, stageImage); err != nil {
 			return err
 		}
 	}

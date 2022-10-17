@@ -46,7 +46,7 @@ func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage 
 	return isEmpty, nil
 }
 
-func (s *GitCacheStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, prevBuiltImage *StageImage) (string, error) {
+func (s *GitCacheStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	patchSize, err := s.gitMappingsPatchSize(ctx, c, prevBuiltImage)
 	if err != nil {
 		return "", err

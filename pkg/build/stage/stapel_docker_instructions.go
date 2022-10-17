@@ -32,10 +32,10 @@ type StapelDockerInstructionsStage struct {
 	instructions *config.Docker
 }
 
-func (s *StapelDockerInstructionsStage) GetDependencies(_ context.Context, c Conveyor, backend container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
+func (s *StapelDockerInstructionsStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
-	if c.UseLegacyStapelBuilder(backend) && s.instructions.ExactValues {
+	if c.UseLegacyStapelBuilder(cb) && s.instructions.ExactValues {
 		args = append(args, "exact-values:::")
 	}
 
@@ -66,16 +66,16 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 	return
 }
 
-func (s *StapelDockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
-	if c.UseLegacyStapelBuilder(cr) {
+func (s *StapelDockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Image.SetCommitChangeOptions(container_backend.LegacyCommitChangeOptions{ExactValues: s.instructions.ExactValues})
 	}
 
-	if err := s.BaseStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
+	if err := s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
 		return err
 	}
 
-	if c.UseLegacyStapelBuilder(cr) {
+	if c.UseLegacyStapelBuilder(cb) {
 		imageCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().CommitChangeOptions()
 		imageCommitChangeOptions.AddVolume(s.instructions.Volume...)
 		imageCommitChangeOptions.AddExpose(s.instructions.Expose...)

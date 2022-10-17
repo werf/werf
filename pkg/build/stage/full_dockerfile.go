@@ -411,7 +411,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 
 var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
-func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
+func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
@@ -507,6 +507,10 @@ func (s *FullDockerfileStage) HasPrevStage() bool {
 
 func (s *FullDockerfileStage) IsStapelStage() bool {
 	return false
+}
+
+func (s *FullDockerfileStage) UsesBuildContext() bool {
+	return true
 }
 
 func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, cmd interface{}, isOnbuildInstruction, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
@@ -698,17 +702,12 @@ func (s *FullDockerfileStage) dockerfileOnBuildInstructionDependencies(ctx conte
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
-	archivePath, err := s.prepareContextArchive(ctx, c.GiterminismManager())
-	if err != nil {
-		return err
-	}
-
+func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	if err := s.SetupDockerImageBuilder(stageImage.Builder.DockerfileBuilder(), c); err != nil {
 		return err
 	}
 
-	stageImage.Builder.DockerfileBuilder().SetContextArchivePath(archivePath)
+	stageImage.Builder.DockerfileBuilder().SetBuildContextArchive(buildContextArchive)
 
 	stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
 
@@ -717,41 +716,6 @@ func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cr c
 	}
 
 	return nil
-}
-
-func (s *FullDockerfileStage) prepareContextArchive(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
-	contextPathRelativeToGitWorkTree := s.contextRelativeToGitWorkTree(giterminismManager)
-	contextPathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: contextPathRelativeToGitWorkTree})
-
-	archive, err := giterminismManager.LocalGitRepo().GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
-		PathScope: contextPathRelativeToGitWorkTree,
-		PathMatcher: path_matcher.NewMultiPathMatcher(
-			contextPathMatcher,
-			s.dockerignorePathMatcher,
-		),
-		Commit: giterminismManager.HeadCommit(),
-	})
-	if err != nil {
-		return "", fmt.Errorf("unable to create archive: %w", err)
-	}
-
-	archivePath := archive.GetFilePath()
-	if len(s.contextAddFiles) != 0 {
-		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFiles to build context archive %s", archivePath).DoError(func() error {
-			sourceArchivePath := archivePath
-			destinationArchivePath, err := context_manager.AddContextAddFilesToContextArchive(ctx, sourceArchivePath, giterminismManager.ProjectDir(), s.context, s.contextAddFiles)
-			if err != nil {
-				return err
-			}
-
-			archivePath = destinationArchivePath
-			return nil
-		}); err != nil {
-			return "", err
-		}
-	}
-
-	return archivePath, nil
 }
 
 func (s *FullDockerfileStage) SetupDockerImageBuilder(b stage_builder.DockerfileBuilderInterface, c Conveyor) error {

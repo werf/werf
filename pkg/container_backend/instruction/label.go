@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/container_backend/build_context"
+	"github.com/werf/werf/pkg/container_backend"
 	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
@@ -29,7 +29,7 @@ func (i *Label) LabelsAsList() []string {
 	return labels
 }
 
-func (i *Label) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContext *build_context.BuildContext) error {
+func (i *Label) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
 	if err := drv.Config(ctx, containerName, buildah.ConfigOpts{CommonOpts: drvOpts, Labels: i.LabelsAsList()}); err != nil {
 		return fmt.Errorf("error setting labels %v for container %s: %w", i.LabelsAsList(), containerName, err)
 	}

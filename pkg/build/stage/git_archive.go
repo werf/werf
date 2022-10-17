@@ -47,7 +47,7 @@ func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, s
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
-func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
+func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		if gitMapping.IsLocal() {
@@ -68,18 +68,18 @@ func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Convey
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
-	if err := s.GitStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
+func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	if err := s.GitStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
 		return err
 	}
 
 	for _, gitMapping := range s.gitMappings {
-		if err := gitMapping.PrepareArchiveForImage(ctx, c, cr, stageImage); err != nil {
+		if err := gitMapping.PrepareArchiveForImage(ctx, c, cb, stageImage); err != nil {
 			return fmt.Errorf("unable to prepare git mapping %s for image stage: %w", gitMapping.Name, err)
 		}
 	}
 
-	if c.UseLegacyStapelBuilder(cr) {
+	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
 		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 	}

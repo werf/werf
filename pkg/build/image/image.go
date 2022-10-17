@@ -171,6 +171,16 @@ func (i *Image) GetStageID() string {
 	return i.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().Info.Tag
 }
 
+func (i *Image) UsesBuildContext() bool {
+	for _, stg := range i.GetStages() {
+		if stg.UsesBuildContext() {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (i *Image) GetName() string {
 	return i.Name
 }

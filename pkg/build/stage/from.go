@@ -51,7 +51,7 @@ func (s *FromStage) HasPrevStage() bool {
 	return false
 }
 
-func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_backend.ContainerBackend, prevImage, _ *StageImage) (string, error) {
+func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
 	if s.cacheVersion != "" {
@@ -75,26 +75,26 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_b
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
+func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()}
-	if c.UseLegacyStapelBuilder(cr) {
+	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {
 		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
 	}
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
-	s.addServiceMountsLabels(serviceMounts, c, cr, stageImage)
-	if !c.UseLegacyStapelBuilder(cr) {
-		if err := s.addServiceMountsVolumes(serviceMounts, c, cr, stageImage, true); err != nil {
+	s.addServiceMountsLabels(serviceMounts, c, cb, stageImage)
+	if !c.UseLegacyStapelBuilder(cb) {
+		if err := s.addServiceMountsVolumes(serviceMounts, c, cb, stageImage, true); err != nil {
 			return fmt.Errorf("error adding mounts volumes: %w", err)
 		}
 	}
 
 	customMounts := s.getCustomMounts(prevBuiltImage)
-	s.addCustomMountLabels(customMounts, c, cr, stageImage)
-	if !c.UseLegacyStapelBuilder(cr) {
-		if err := s.addCustomMountVolumes(customMounts, c, cr, stageImage, true); err != nil {
+	s.addCustomMountLabels(customMounts, c, cb, stageImage)
+	if !c.UseLegacyStapelBuilder(cb) {
+		if err := s.addCustomMountVolumes(customMounts, c, cb, stageImage, true); err != nil {
 			return fmt.Errorf("error adding mounts volumes: %w", err)
 		}
 	}
@@ -104,7 +104,7 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cr container_b
 		mountpoints = append(mountpoints, mountCfg.To)
 	}
 	if len(mountpoints) > 0 {
-		if c.UseLegacyStapelBuilder(cr) {
+		if c.UseLegacyStapelBuilder(cb) {
 			mountpointsStr := strings.Join(mountpoints, " ")
 			stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", stapel.RmBinPath(), mountpointsStr))
 		}

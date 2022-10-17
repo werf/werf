@@ -3,7 +3,6 @@ package stage_builder
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/container_backend"
@@ -20,14 +19,14 @@ type DockerfileBuilderInterface interface {
 	SetNetwork(network string)
 	SetSSH(ssh string)
 	AppendLabels(labels ...string)
-	SetContextArchivePath(contextArchivePath string)
+	SetBuildContextArchive(buildContextArchive container_backend.BuildContextArchiver)
 }
 
 type DockerfileBuilder struct {
 	ContainerBackend       container_backend.ContainerBackend
 	Dockerfile             []byte
 	BuildDockerfileOptions container_backend.BuildDockerfileOpts
-	ContextArchivePath     string
+	BuildContextArchive    container_backend.BuildContextArchiver
 
 	Image container_backend.ImageInterface
 }
@@ -40,20 +39,14 @@ func (b *DockerfileBuilder) Build(ctx context.Context) error {
 	// filePathToStdin != "" ??
 
 	if container_backend.Debug() {
-		fmt.Printf("[DOCKER BUILD] context archive path: %s\n", b.ContextArchivePath)
+		fmt.Printf("[DOCKER BUILD] context archive path: %s\n", b.BuildContextArchive.Path())
 	}
-
-	contextReader, err := os.Open(b.ContextArchivePath)
-	if err != nil {
-		return fmt.Errorf("unable to open context archive %q: %w", b.ContextArchivePath, err)
-	}
-	defer contextReader.Close()
 
 	opts := b.BuildDockerfileOptions
-	opts.ContextTar = contextReader
+	opts.BuildContextArchive = b.BuildContextArchive
 
 	if container_backend.Debug() {
-		fmt.Printf("ContextArchivePath=%q\n", b.ContextArchivePath)
+		fmt.Printf("BuildContextArchive=%q\n", b.BuildContextArchive)
 		fmt.Printf("BiuldDockerfileOptions: %#v\n", opts)
 	}
 
@@ -110,6 +103,6 @@ func (b *DockerfileBuilder) AppendLabels(labels ...string) {
 	b.BuildDockerfileOptions.Labels = append(b.BuildDockerfileOptions.Labels, labels...)
 }
 
-func (b *DockerfileBuilder) SetContextArchivePath(contextArchivePath string) {
-	b.ContextArchivePath = contextArchivePath
+func (b *DockerfileBuilder) SetBuildContextArchive(buildContextArchive container_backend.BuildContextArchiver) {
+	b.BuildContextArchive = buildContextArchive
 }
