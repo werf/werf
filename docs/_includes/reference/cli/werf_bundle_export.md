@@ -74,6 +74,8 @@ werf bundle export [IMAGE_NAME...] [options]
       --disable-auto-host-cleanup=false
             Disable auto host cleanup procedure in main werf commands like werf-build,              
             werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)
+      --disable-default-values=false
+            Do not use values from the default .helm/values.yaml file
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
