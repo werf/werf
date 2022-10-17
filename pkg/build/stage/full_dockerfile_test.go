@@ -78,11 +78,11 @@ var _ = Describe("FullDockerfileStage", func() {
 				Builder: stageBuilder,
 			}
 
-			digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage)
+			digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage, nil)
 			Expect(err).To(Succeed())
 			Expect(digest).To(Equal(data.TestDependencies.ExpectedDigest))
 
-			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage)
+			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)
 			Expect(err).To(Succeed())
 			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.TestDependencies.Dependencies)
 		},
@@ -338,14 +338,14 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 			}
 
 			{
-				digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage)
+				digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage, nil)
 				Expect(err).To(Succeed())
 				Expect(digest).To(Equal("65d219096bc3718c101995b00584d700de791027f2e2ca00635e428932478a1c"))
 			}
 
 			gitRepoStub.headCommitHash = "23a0884072c0d31b7c42dfaa7f0772cbfa33ec75"
 			{
-				digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage)
+				digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage, nil)
 				Expect(err).To(Succeed())
 				Expect(digest).To(Equal("beb818f2c49f6501194c72449aff59e80be61b405ef39581b01dbf68da927609"))
 			}

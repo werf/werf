@@ -30,11 +30,11 @@ var _ = Describe("DependenciesStage", func() {
 				Builder: stageBuilder,
 			}
 
-			digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage)
+			digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage, nil)
 			Expect(err).To(Succeed())
 			Expect(digest).To(Equal(data.ExpectedDigest))
 
-			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage)
+			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)
 			Expect(err).To(Succeed())
 			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.Dependencies)
 		},

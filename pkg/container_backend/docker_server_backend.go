@@ -3,6 +3,7 @@ package container_backend
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -10,7 +11,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/container_backend/build_context"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
@@ -36,8 +36,8 @@ func (runtime *DockerServerBackend) CalculateDependencyImportChecksum(ctx contex
 
 func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
 	switch {
-	case opts.ContextTar == nil:
-		panic(fmt.Sprintf("ContextTar can't be nil: %+v", opts))
+	case opts.BuildContextArchive == nil:
+		panic(fmt.Sprintf("BuildContextArchive can't be nil: %+v", opts))
 	case opts.DockerfileCtxRelPath == "":
 		panic(fmt.Sprintf("DockerfileCtxRelPath can't be empty: %+v", opts))
 	}
@@ -77,10 +77,16 @@ func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		fmt.Printf("[DOCKER BUILD] docker build %s\n", strings.Join(cliArgs, " "))
 	}
 
-	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, opts.ContextTar, cliArgs...)
+	contextReader, err := os.Open(opts.BuildContextArchive.Path())
+	if err != nil {
+		return "", fmt.Errorf("unable to open context archive %q: %w", opts.BuildContextArchive.Path(), err)
+	}
+	defer contextReader.Close()
+
+	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, contextReader, cliArgs...)
 }
 
-func (runtime *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, *build_context.BuildContext, error) {
+func (runtime *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
 	panic("not implemented")
 }
 

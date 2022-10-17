@@ -67,7 +67,7 @@ type DependenciesStage struct {
 	dependencies []*config.Dependency
 }
 
-func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
+func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
 	for ind, elm := range s.imports {
@@ -209,11 +209,11 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 	return nil
 }
 
-func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevImage, stageImage *StageImage) error {
-	if c.UseLegacyStapelBuilder(cr) {
-		return s.prepareImageWithLegacyStapelBuilder(ctx, c, cr, prevImage, stageImage)
+func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	if c.UseLegacyStapelBuilder(cb) {
+		return s.prepareImageWithLegacyStapelBuilder(ctx, c, cb, prevBuiltImage, stageImage)
 	} else {
-		return s.prepareImage(ctx, c, cr, prevImage, stageImage)
+		return s.prepareImage(ctx, c, cb, prevBuiltImage, stageImage)
 	}
 }
 

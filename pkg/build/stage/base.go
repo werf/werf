@@ -134,7 +134,7 @@ func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container
 	return nil
 }
 
-func (s *BaseStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage) (string, error) {
+func (s *BaseStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	panic("method must be implemented!")
 }
 
@@ -246,28 +246,28 @@ func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []
 	return s.selectStageByOldestCreationTimestamp(stages)
 }
 
-func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
+func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
 	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()}
-	if c.UseLegacyStapelBuilder(cr) {
+	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {
 		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
 	}
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
-	s.addServiceMountsLabels(serviceMounts, c, cr, stageImage)
-	if err := s.addServiceMountsVolumes(serviceMounts, c, cr, stageImage, false); err != nil {
+	s.addServiceMountsLabels(serviceMounts, c, cb, stageImage)
+	if err := s.addServiceMountsVolumes(serviceMounts, c, cb, stageImage, false); err != nil {
 		return fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
 	customMounts := s.getCustomMounts(prevBuiltImage)
-	s.addCustomMountLabels(customMounts, c, cr, stageImage)
-	if err := s.addCustomMountVolumes(customMounts, c, cr, stageImage, false); err != nil {
+	s.addCustomMountLabels(customMounts, c, cb, stageImage)
+	if err := s.addCustomMountVolumes(customMounts, c, cb, stageImage, false); err != nil {
 		return fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
@@ -500,6 +500,10 @@ func (s *BaseStage) SetGitMappings(gitMappings []*GitMapping) {
 
 func (s *BaseStage) GetGitMappings() []*GitMapping {
 	return s.gitMappings
+}
+
+func (s *BaseStage) UsesBuildContext() bool {
+	return false
 }
 
 func mergeMounts(a, b map[string][]string) map[string][]string {

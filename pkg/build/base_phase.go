@@ -19,8 +19,8 @@ func (phase *BasePhase) AfterImages(_ context.Context) error {
 	return nil
 }
 
-func (phase *BasePhase) BeforeImageStages(_ context.Context, _ *image.Image) error {
-	return nil
+func (phase *BasePhase) BeforeImageStages(ctx context.Context, img *image.Image) (deferFn func(), err error) {
+	return nil, nil
 }
 
 func (phase *BasePhase) OnImageStage(_ context.Context, _ *image.Image, _ stage.Interface) error {

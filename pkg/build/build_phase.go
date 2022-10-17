@@ -84,6 +84,8 @@ type BuildPhase struct {
 	ShouldAddManagedImageRecord bool
 
 	ImagesReport *ImagesReport
+
+	buildContextArchive container_backend.BuildContextArchiver
 }
 
 const (
@@ -220,12 +222,27 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *im
 	return false
 }
 
-func (phase *BuildPhase) BeforeImageStages(_ context.Context, img *image.Image) error {
+func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image) (deferFn func(), err error) {
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
 	img.SetupBaseImage()
 
-	return nil
+	if img.UsesBuildContext() {
+		phase.buildContextArchive = image.NewBuildContextArchive(phase.Conveyor.giterminismManager, img.TmpDir)
+		if err := phase.buildContextArchive.Create(ctx, container_backend.BuildContextArchiveCreateOptions{
+			DockerfileRelToContextPath: img.DockerfileImageConfig.Dockerfile,
+			ContextGitSubDir:           img.DockerfileImageConfig.Context,
+			ContextAddFiles:            img.DockerfileImageConfig.ContextAddFiles,
+		}); err != nil {
+			return nil, fmt.Errorf("unable to create build context archive: %w", err)
+		}
+
+		deferFn = func() {
+			phase.buildContextArchive.CleanupExtractedDir(ctx)
+		}
+	}
+
+	return deferFn, nil
 }
 
 func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *image.Image) error {
@@ -561,7 +578,7 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.
 
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, func(), error) {
 	// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
-	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg))
+	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg), phase.buildContextArchive)
 	if err != nil {
 		return false, nil, err
 	}
@@ -681,7 +698,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		stageImage.Builder.DockerfileStageBuilder().AppendPostInstruction(backend_instruction.NewLabel(*dockerfile_instruction.NewLabel(serviceLabels)))
 	}
 
-	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage)
+	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage, phase.buildContextArchive)
 	if err != nil {
 		return fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
 	}

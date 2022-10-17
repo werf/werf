@@ -20,7 +20,6 @@ import (
 	copyrec "github.com/werf/copy-recurse"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/container_backend/build_context"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
@@ -423,22 +422,10 @@ func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	return nil
 }
 
-func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, *build_context.BuildContext, error) {
-	buildContext := opts.BuildContext
-	if buildContext == nil {
-		for _, instruction := range instructions {
-			if instruction.UsesBuildContext() {
-				if opts.ContextTarReader == nil {
-					panic(fmt.Sprintf("opts.ContextTarReader needed for %q instruction", instruction.Name()))
-				}
-				buildContext = build_context.NewBuildContext(runtime.TmpDir, opts.ContextTarReader)
-			}
-		}
-	}
-
+func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
 	var container *containerDesc
 	if c, err := runtime.createContainers(ctx, []string{baseImage}); err != nil {
-		return "", nil, err
+		return "", err
 	} else {
 		container = c[0]
 	}
@@ -452,7 +439,7 @@ func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 
 	logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
 	if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
-		return "", buildContext, fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
+		return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
 	}
 	defer func() {
 		logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
@@ -464,8 +451,8 @@ func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 	logboek.Context(ctx).Debug().LogF("Executing commands for build container %s: %#v\n", container.Name, instructions)
 
 	for _, instruction := range instructions {
-		if err := instruction.Apply(ctx, container.Name, runtime.buildah, runtime.getBuildahCommonOpts(ctx, false), buildContext); err != nil {
-			return "", buildContext, fmt.Errorf("unable to apply instruction %s: %w", instruction.Name(), err)
+		if err := instruction.Apply(ctx, container.Name, runtime.buildah, runtime.getBuildahCommonOpts(ctx, false), opts.BuildContextArchive); err != nil {
+			return "", fmt.Errorf("unable to apply instruction %s: %w", instruction.Name(), err)
 		}
 	}
 
@@ -474,10 +461,10 @@ func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 		CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
 	})
 	if err != nil {
-		return "", buildContext, fmt.Errorf("error committing container %s: %w", container.Name, err)
+		return "", fmt.Errorf("error committing container %s: %w", container.Name, err)
 	}
 
-	return imageID, buildContext, nil
+	return imageID, nil
 }
 
 func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
@@ -625,16 +612,10 @@ func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		buildArgs[argParts[0]] = argParts[1]
 	}
 
-	buildContext := build_context.NewBuildContext(runtime.TmpDir, opts.ContextTar)
-	contextTmpDir, err := buildContext.GetContextDir(ctx)
+	buildContextTmpDir, err := opts.BuildContextArchive.ExtractOrGetExtractedDir(ctx)
 	if err != nil {
-		return "", fmt.Errorf("unable to get context dir: %w", err)
+		return "", fmt.Errorf("unable to extract build context: %w", err)
 	}
-	defer func() {
-		if err := buildContext.Terminate(); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to terminate dockerfile building context: %s\n", err)
-		}
-	}()
 
 	dockerfile, err := ioutil.TempFile(runtime.TmpDir, "*.Dockerfile")
 	if err != nil {
@@ -654,7 +635,7 @@ func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: logboek.Context(ctx).OutStream(),
 		},
-		ContextDir: contextTmpDir,
+		ContextDir: buildContextTmpDir,
 		BuildArgs:  buildArgs,
 		Target:     opts.Target,
 	})

@@ -50,7 +50,7 @@ func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuilt
 	return isEmpty, nil
 }
 
-func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, prevBuiltImage *StageImage) (string, error) {
+func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
 	for _, gitMapping := range s.gitMappings {

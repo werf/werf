@@ -22,11 +22,12 @@ func NewRun(i *backend_instruction.Run, dependencies []*config.Dependency, hasPr
 	}
 }
 
-func (stage *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage) (string, error) {
+func (stage *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return util.Sha256Hash(append([]string{string(InstructionRun)}, stage.instruction.Command...)...), nil
 }
 
-func (stage *Run) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage) error {
+func (stage *Run) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	stageImage.Builder.DockerfileStageBuilder().SetBuildContextArchive(buildContextArchive)
 	stageImage.Builder.DockerfileStageBuilder().AppendInstruction(stage.instruction)
 	return nil
 }

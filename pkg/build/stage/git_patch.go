@@ -65,12 +65,12 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Contex
 	return true, nil
 }
 
-func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
-	if err := s.GitStage.PrepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
+func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	if err := s.GitStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
 		return err
 	}
 
-	if err := s.prepareImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
+	if err := s.prepareImage(ctx, c, cb, prevBuiltImage, stageImage); err != nil {
 		return err
 	}
 
