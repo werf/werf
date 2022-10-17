@@ -237,6 +237,7 @@ var (
 		"charts/",
 		"crds/",
 		"templates/",
+		"files/",
 	}
 )
 
