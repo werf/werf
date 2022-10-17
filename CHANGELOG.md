@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.182](https://www.github.com/werf/werf/compare/v1.2.181...v1.2.182) (2022-10-17)
+
+
+### Features
+
+* **staged-dockerfile:** make and extract context archive only once ([9d72ad1](https://www.github.com/werf/werf/commit/9d72ad1edbf4d365987e8fdcc4d8b5122dbb51fd))
+
+
+### Bug Fixes
+
+* **helm:** keep all revisions if no succeeded release ([f321b52](https://www.github.com/werf/werf/commit/f321b52332e582542a90a5080f4b1c77ecf8d037))
+* **staged-dockerfile:** fix docker ignore path matcher ([c4b6cd5](https://www.github.com/werf/werf/commit/c4b6cd515a902f2a098974d7a02dbc498b7ffb54))
+* WERF_DISABLE_DEFAULT_SECRET_VALUES and WERF_DISABLE_DEFAULT_VALUES support for corresponding options ([647700a](https://www.github.com/werf/werf/commit/647700ac82361362600fb09901a259b34881806d))
+
 ### [1.2.181](https://www.github.com/werf/werf/compare/v1.2.180...v1.2.181) (2022-10-17)
 
 
