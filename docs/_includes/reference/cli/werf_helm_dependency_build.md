@@ -3,15 +3,11 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
+Build out the `charts/` directory from the `Chart.lock` file.
 
-Build out the charts/ directory from the Chart.lock file.
+Build is used to reconstruct a chart's dependencies to the state specified in the lock file. This will not re-negotiate dependencies, as `helm dependency update` does.
 
-Build is used to reconstruct a chart's dependencies to the state specified in
-the lock file. This will not re-negotiate dependencies, as 'helm dependency update'
-does.
-
-If no lock file is found, 'helm dependency build' will mirror the behavior
-of 'helm dependency update'.
+If no lock file is found, `helm dependency build` will mirror the behavior of `helm dependency update`.
 
 
 {{ header }} Syntax
