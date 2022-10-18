@@ -104,3 +104,19 @@ func ReplaceHelmVersionDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmDependencyDocs(cmd *cobra.Command) *cobra.Command {
+	for i, c := range cmd.Commands() {
+		switch c.Use {
+		case "build CHART":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmDependencyBuildDocs().LongMD,
+			}
+		case "update CHART":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmDependencyUpdateDocs().LongMD,
+			}
+		}
+	}
+	return cmd
+}

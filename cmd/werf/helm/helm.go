@@ -80,7 +80,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 		helm2.ReplaceHelmUninstallDocs(helm_v3.NewUninstallCmd(actionConfig, os.Stdout, helm_v3.UninstallCmdOptions{
 			StagesSplitter: helm.NewStagesSplitter(),
 		})),
-		helm_v3.NewDependencyCmd(actionConfig, os.Stdout),
+		helm2.ReplaceHelmDependencyDocs(helm_v3.NewDependencyCmd(actionConfig, os.Stdout)),
 		helm_v3.NewGetCmd(actionConfig, os.Stdout),
 		helm2.ReplaceHelmHistoryDocs(helm_v3.NewHistoryCmd(actionConfig, os.Stdout)),
 		NewLintCmd(actionConfig, wc),

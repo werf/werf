@@ -276,3 +276,32 @@ func GetHelmVersionDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmDependencyBuildDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Build out the `charts/` directory from the `Chart.lock` file.\n\n" +
+		"Build is used to reconstruct a chart's dependencies to the state specified in " +
+		"the lock file. This will not re-negotiate dependencies, as `helm dependency update` " +
+		"does.\n\n" +
+		"If no lock file is found, `helm dependency build` will mirror the behavior " +
+		"of `helm dependency update`.\n"
+
+	return docs
+}
+
+func GetHelmDependencyUpdateDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update the on-disk dependencies to mirror `Chart.yaml`.\n\n" +
+		"This command verifies that the required charts, as expressed in `Chart.yaml`, " +
+		"are present in `charts/` and are at an acceptable version. It will pull down " +
+		"the latest charts that satisfy the dependencies, and clean up old dependencies.\n\n" +
+		"On successful update, this will generate a lock file that can be used to " +
+		"rebuild the dependencies to an exact version.\n\n" +
+		"Dependencies are not required to be represented in `Chart.yaml`. For that " +
+		"reason, an update command will not remove charts unless they are (a) present " +
+		"in the `Chart.yaml` file, but (b) at the wrong version.\n"
+
+	return docs
+}
