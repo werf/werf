@@ -3,24 +3,13 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
+Search for Helm charts in the [Artifact Hub]([https://artifacthub.io/](https://artifacthub.io/)) or your own hub instance.
 
-Search for Helm charts in the Artifact Hub or your own hub instance.
+Artifact Hub is a web-based application that enables finding, installing, and publishing packages and configurations for CNCF projects, including publicly available distributed charts Helm charts. It is a Cloud Native Computing Foundation sandbox project.
 
-Artifact Hub is a web-based application that enables finding, installing, and
-publishing packages and configurations for CNCF projects, including publicly
-available distributed charts Helm charts. It is a Cloud Native Computing
-Foundation sandbox project. You can browse the hub at [https://artifacthub.io/](https://artifacthub.io/)
+The `[KEYWORD]` argument accepts either a keyword string, or quoted string of [rich query options]([https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20compatible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search](https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20compatible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search)).
 
-The [KEYWORD] argument accepts either a keyword string, or quoted string of rich
-query options. For rich query options documentation, see
-[https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20compatible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search](https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20compatible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search)
-
-Previous versions of Helm used an instance of Monocular as the default
-'endpoint', so for backwards compatibility Artifact Hub is compatible with the
-Monocular search API. Similarly, when setting the 'endpoint' flag, the specified
-endpoint must also be implement a Monocular compatible search API endpoint.
-Note that when specifying a Monocular instance as the 'endpoint', rich queries
-are not supported. For API details, see [https://github.com/helm/monocular](https://github.com/helm/monocular)
+Previous versions of Helm used an instance of Monocular as the default `endpoint`, so for backwards compatibility Artifact Hub is compatible with the [Monocular]([https://github.com/helm/monocular](https://github.com/helm/monocular)) search API. Similarly, when setting the `endpoint` flag, the specified endpoint must also be implement a Monocular compatible search API endpoint. Note that when specifying a Monocular instance as the `endpoint`, rich queries are not supported.
 
 
 {{ header }} Syntax

@@ -387,3 +387,47 @@ func GetHelmRepoUpdateDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmSearchHubDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Search for Helm charts in the [Artifact Hub](https://artifacthub.io/) " +
+		"or your own hub instance.\n\n" +
+		"Artifact Hub is a web-based application that enables finding, installing, and " +
+		"publishing packages and configurations for CNCF projects, including publicly " +
+		"available distributed charts Helm charts. It is a Cloud Native Computing " +
+		"Foundation sandbox project.\n\n" +
+		"The `[KEYWORD]` argument accepts either a keyword string, or quoted string of [rich " +
+		"query options](https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20com" +
+		"patible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search).\n\n" +
+		"Previous versions of Helm used an instance of Monocular as the default " +
+		"`endpoint`, so for backwards compatibility Artifact Hub is compatible with the " +
+		"[Monocular](https://github.com/helm/monocular) search API. Similarly, when setting " +
+		"the `endpoint` flag, the specified " +
+		"endpoint must also be implement a Monocular compatible search API endpoint. " +
+		"Note that when specifying a Monocular instance as the `endpoint`, rich queries " +
+		"are not supported.\n"
+
+	return docs
+}
+
+func GetHelmSearchRepoDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Search reads through all of the repositories configured on the system, and " +
+		"looks for matches. Search of these repositories uses the metadata stored on " +
+		"the system.\n\n" +
+		"It will display the latest stable versions of the charts found. If you " +
+		"specify the `--devel` flag, the output will include pre-release versions. " +
+		"If you want to search using a version constraint, use `--version`.\n\n" +
+		"Examples:\n" +
+		"```\n# Search for stable release versions matching the keyword 'nginx'\n" +
+		"$ helm search repo nginx\n\n" +
+		"# Search for release versions matching the keyword 'nginx', including pre-release versions\n" +
+		"$ helm search repo nginx --devel\n\n" +
+		"# Search for the latest stable release for nginx-ingress with a major version of 1\n" +
+		"$ helm search repo nginx-ingress --version ^1.0.0\n```\n" +
+		"Repositories are managed with `helm repo` commands.\n"
+
+	return docs
+}
