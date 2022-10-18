@@ -316,4 +316,4 @@ replace github.com/deislabs/oras => github.com/werf/third-party-oras v0.9.1-0.20
 
 replace github.com/go-git/go-git/v5 => github.com/ZauberNerd/go-git/v5 v5.4.3-0.20220315170230-29ec1bc1e5db
 
-replace helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20221012122935-f9a0f085ad91
+replace helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20221017175338-b2224bd154a3
