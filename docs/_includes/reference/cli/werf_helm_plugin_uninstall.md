@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-uninstall one or more Helm plugins
+Uninstall one or more Helm plugins.
 
 {{ header }} Syntax
 

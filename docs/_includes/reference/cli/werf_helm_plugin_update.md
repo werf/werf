@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-update one or more Helm plugins
+Update one or more Helm plugins.
 
 {{ header }} Syntax
 
