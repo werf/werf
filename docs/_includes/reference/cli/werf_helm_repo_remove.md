@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-remove one or more chart repositories
+Remove one or more chart repositories.
 
 {{ header }} Syntax
 
