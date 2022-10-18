@@ -314,3 +314,27 @@ func GetHelmGetHooksDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmPluginListDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "List installed Helm plugins."
+
+	return docs
+}
+
+func GetHelmPluginUninstallDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Uninstall one or more Helm plugins."
+
+	return docs
+}
+
+func GetHelmPluginUpdateDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update one or more Helm plugins."
+
+	return docs
+}

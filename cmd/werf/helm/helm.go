@@ -96,7 +96,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 		helm2.ReplaceHelmCreateDocs(helm_v3.NewCreateCmd(os.Stdout)),
 		helm2.ReplaceHelmEnvDocs(helm_v3.NewEnvCmd(os.Stdout)),
 		helm2.ReplaceHelmPackageDocs(helm_v3.NewPackageCmd(actionConfig, os.Stdout)),
-		helm_v3.NewPluginCmd(os.Stdout),
+		helm2.ReplaceHelmPluginDocs(helm_v3.NewPluginCmd(os.Stdout)),
 		helm2.ReplaceHelmPullDocs(helm_v3.NewPullCmd(actionConfig, os.Stdout)),
 		helm_v3.NewSearchCmd(os.Stdout),
 		helm_v3.NewShowCmd(actionConfig, os.Stdout),

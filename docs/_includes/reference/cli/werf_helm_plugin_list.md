@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-list installed Helm plugins
+List installed Helm plugins.
 
 {{ header }} Syntax
 
