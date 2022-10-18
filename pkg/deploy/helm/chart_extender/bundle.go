@@ -126,7 +126,6 @@ func (bundle *Bundle) ChartLoaded(files []*chart.ChartExtenderBufferedFile) erro
 		}
 	}
 
-	bundle.HelmChart.Values = nil
 	if bundle.DisableDefaultValues {
 		logboek.Context(bundle.ChartExtenderContext).Info().LogF("Disable default werf chart values\n")
 		bundle.HelmChart.Values = nil
