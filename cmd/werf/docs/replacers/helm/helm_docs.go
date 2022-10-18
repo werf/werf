@@ -305,3 +305,12 @@ func GetHelmDependencyUpdateDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmGetHooksDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command downloads hooks for a given release.\n\n" +
+		"Hooks are formatted in YAML and separated by the YAML `---\\n` separator."
+
+	return docs
+}

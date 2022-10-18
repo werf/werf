@@ -81,7 +81,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 			StagesSplitter: helm.NewStagesSplitter(),
 		})),
 		helm2.ReplaceHelmDependencyDocs(helm_v3.NewDependencyCmd(actionConfig, os.Stdout)),
-		helm_v3.NewGetCmd(actionConfig, os.Stdout),
+		helm2.ReplaceHelmGetDocs(helm_v3.NewGetCmd(actionConfig, os.Stdout)),
 		helm2.ReplaceHelmHistoryDocs(helm_v3.NewHistoryCmd(actionConfig, os.Stdout)),
 		NewLintCmd(actionConfig, wc),
 		helm2.ReplaceHelmListDocs(helm_v3.NewListCmd(actionConfig, os.Stdout)),
