@@ -180,3 +180,19 @@ func ReplaceHelmRepoDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmSearchDocs(cmd *cobra.Command) *cobra.Command {
+	for i, c := range cmd.Commands() {
+		switch c.Use {
+		case "hub [KEYWORD]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmSearchHubDocs().LongMD,
+			}
+		case "repo [keyword]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmSearchRepoDocs().LongMD,
+			}
+		}
+	}
+	return cmd
+}
