@@ -120,3 +120,15 @@ func ReplaceHelmDependencyDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmGetDocs(cmd *cobra.Command) *cobra.Command {
+	for i, c := range cmd.Commands() {
+		switch c.Use {
+		case "hooks RELEASE_NAME":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmGetHooksDocs().LongMD,
+			}
+		}
+	}
+	return cmd
+}
