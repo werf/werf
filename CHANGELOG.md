@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.183](https://www.github.com/werf/werf/compare/v1.2.182...v1.2.183) (2022-10-18)
+
+
+### Bug Fixes
+
+* **bundles:** fix bundle-render and bundle-apply commands could not access .Values.werf.images service values ([276dc6b](https://www.github.com/werf/werf/commit/276dc6b902ca7a45cc9eb77935f2272e7d948eec))
+
 ### [1.2.182](https://www.github.com/werf/werf/compare/v1.2.181...v1.2.182) (2022-10-17)
 
 
