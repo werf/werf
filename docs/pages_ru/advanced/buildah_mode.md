@@ -10,29 +10,30 @@ permalink: advanced/buildah_mode.html
 ## Системные требования
 
 Требования к хост-системе для запуска werf в Buildah-режиме без Docker/Kubernetes можно найти в [инструкциях по установке](/installation.html). А для запуска werf в Kubernetes или в Docker-контейнерах требования следующие:
-* Если ваше ядро Linux версии 5.13+ (в некоторых дистрибутивах 5.11+), то убедитесь, что модуль ядра `overlay` загружен с `lsmod | grep overlay`. Если ядро более старое или у вас не получается активировать модуль ядра `overlay`, то установите `fuse-overlayfs`, который обычно доступен в репозиториях вашего дистрибутива. В крайнем случае может быть использован драйвер хранилища `vfs`.
-* Команда `sysctl kernel.unprivileged_userns_clone` должна вернуть `1`. В ином случае выполните:
-  ```shell
-  echo 'kernel.unprivileged_userns_clone = 1' | sudo tee -a /etc/sysctl.conf
-  sudo sysctl -p
-  ```
-* Команда `sysctl user.max_user_namespaces` должна вернуть по меньшей мере `15000`. В ином случае выполните:
-  ```shell
-  echo 'user.max_user_namespaces = 15000' | sudo tee -a /etc/sysctl.conf
-  sudo sysctl -p
-  ```
+* Если ваше ядро Linux версии 5.13+ (в некоторых дистрибутивах 5.11+) **рекомендуется** режим работы через модуль ядра `overlay`:
+    * Убедитесь, что модуль ядра `overlay` загружен с `lsmod | grep overlay`. 
+    * Убедитесь, что настройка ядра `CONFIG_USER_NS=y` включена в вашем ядре с помощью `grep CONFIG_USER_NS /boot/config-VERSION`.
+    * При использовании ядра в debian-системах команда `sysctl kernel.unprivileged_userns_clone` должна вернуть `1`. В ином случае выполните:
+      ```shell
+      echo 'kernel.unprivileged_userns_clone = 1' | sudo tee -a /etc/sysctl.conf
+      sudo sysctl -p
+      ```
+    * Команда `sysctl user.max_user_namespaces` должна вернуть по меньшей мере `15000`. В ином случае выполните:
+      ```shell
+      echo 'user.max_user_namespaces = 15000' | sudo tee -a /etc/sysctl.conf
+      sudo sysctl -p
+      ```
+* Если ядро более старое или у вас не получается активировать модуль ядра `overlay`, то установите `fuse-overlayfs`, который обычно доступен в репозиториях вашего дистрибутива. В крайнем случае может быть использован драйвер хранилища `vfs`.
 
 ## Включение Buildah
 
-Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов: `auto`, `native-chroot`, `native-rootless`.
+Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов: `auto`, `native-chroot`, `native-rootless`. Большинству пользователей для включения режима Buildah достаточно установить `WERF_BUILDAH_MODE=auto`.
 
 * `auto` — автоматический выбор режима в зависимости от платформы и окружения;
 * `native-chroot` работает только в Linux и использует `chroot`-изоляцию для сборочных контейнеров;
 * `native-rootless` работает только в Linux и использует `rootless`-изоляцию для сборочных контейнеров. На этом уровне изоляции werf использует среду выполнения сборочных операций в контейнерах (runc, crun, kata или runsc).
 
-Большинству пользователей для включения экспериментального режима Buildah достаточно установить `WERF_BUILDAH_MODE=auto`.
-
-> ПРИМЕЧАНИЕ: На данный момент Buildah доступен только для пользователей Linux и Windows с включённой подсистемой WSL2. Полная поддержка для пользователей MacOS запланирована, но пока не доступна. Для пользователей MacOS на данный момент предлагается использование виртуальной машины для запуска werf в режиме Buildah.
+> ПРИМЕЧАНИЕ: На данный момент Buildah доступен только для пользователей Linux и Windows с включённой подсистемой WSL2. Для пользователей MacOS на данный момент предлагается использование виртуальной машины для запуска werf в режиме Buildah.
 
 ## Драйвер хранилища
 
