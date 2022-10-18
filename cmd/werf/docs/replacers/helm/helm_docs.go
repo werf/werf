@@ -338,3 +338,52 @@ func GetHelmPluginUpdateDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmRepoAddDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Add a chart repository."
+
+	return docs
+}
+
+func GetHelmRepoIndexDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Read the current directory and generate an index file based on the charts found.\n\n" +
+		"This tool is used for creating an `index.yaml` file for a chart repository. To " +
+		"set an absolute URL to the charts, use `--url` flag.\n\n" +
+		"To merge the generated index with an existing index file, use the `--merge` " +
+		"flag. In this case, the charts found in the current directory will be merged " +
+		"into the existing index, with local charts taking priority over existing charts.\n"
+
+	return docs
+}
+
+func GetHelmRepoListDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "List chart repositories."
+
+	return docs
+}
+
+func GetHelmRepoRemoveDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Remove one or more chart repositories."
+
+	return docs
+}
+
+func GetHelmRepoUpdateDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update gets the latest information about charts from the respective chart repositories. " +
+		"Information is cached locally, where it is used by commands like `helm search`.\n\n" +
+		"You can optionally specify a list of repositories you want to update:\n" +
+		"```\n$ helm repo update <repo_name> ...\n```\n" +
+		"To update all the repositories, use `helm repo update`."
+
+	return docs
+}

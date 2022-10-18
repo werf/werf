@@ -86,7 +86,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 		NewLintCmd(actionConfig, wc),
 		helm2.ReplaceHelmListDocs(helm_v3.NewListCmd(actionConfig, os.Stdout)),
 		NewTemplateCmd(actionConfig, wc, &namespace),
-		helm_v3.NewRepoCmd(os.Stdout),
+		helm2.ReplaceHelmRepoDocs(helm_v3.NewRepoCmd(os.Stdout)),
 		helm2.ReplaceHelmRollbackDocs(helm_v3.NewRollbackCmd(actionConfig, os.Stdout, helm_v3.RollbackCmdOptions{
 			StagesSplitter:              helm.NewStagesSplitter(),
 			StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),

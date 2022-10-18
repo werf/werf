@@ -152,3 +152,31 @@ func ReplaceHelmPluginDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmRepoDocs(cmd *cobra.Command) *cobra.Command {
+	for i, c := range cmd.Commands() {
+		switch c.Use {
+		case "add [NAME] [URL]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmRepoAddDocs().LongMD,
+			}
+		case "index [DIR]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmRepoIndexDocs().LongMD,
+			}
+		case "list":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmRepoListDocs().LongMD,
+			}
+		case "remove [REPO1 [REPO2 ...]]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmRepoRemoveDocs().LongMD,
+			}
+		case "update [REPO1 [REPO2 ...]]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmRepoUpdateDocs().LongMD,
+			}
+		}
+	}
+	return cmd
+}

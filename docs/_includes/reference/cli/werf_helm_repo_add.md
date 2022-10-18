@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-add a chart repository
+Add a chart repository.
 
 {{ header }} Syntax
 
