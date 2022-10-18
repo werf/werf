@@ -29,10 +29,10 @@ groups:
         version: 1.2.182
 
       - name: beta
-        version: 1.2.181
+        version: 1.2.181+fix1
 
       - name: ea
-        version: 1.2.181
+        version: 1.2.181+fix1
 
       # - name: pre-stable
       #   version: 1.2.175+fix1
