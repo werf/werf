@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.176](https://www.github.com/werf/werf/compare/v1.2.175...v1.2.176) (2022-10-18)
+
+
+### Bug Fixes
+
+* **dismiss:** fix --with-namespace not deleting namespace in dismiss command ([5aafa27](https://www.github.com/werf/werf/commit/5aafa27db303aaf63d17c03033434b0b383321dc))
+* **helm:** keep all revisions if no succeeded release and since last succeeded release ([5e3a270](https://www.github.com/werf/werf/commit/5e3a270194ecd7d0928ea1af00e031ab08f76240))
+
 ### [1.2.175](https://www.github.com/werf/werf/compare/v1.2.174...v1.2.175) (2022-09-23)
 
 
