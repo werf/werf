@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 )
 
@@ -18,8 +19,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "generate-secret-key",
 		DisableFlagsInUseLine: true,
 		Short:                 "Generate hex encryption key",
-		Long: common.GetLongCommandDescription(`Generate hex encryption key.
-For further usage, the encryption key should be saved in $WERF_SECRET_KEY or .werf_secret_key file`),
+		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretGenerateSecretKeyDocs().Long),
+		Annotations: map[string]string{
+			common.DocsLongMD: helm.GetHelmSecretGenerateSecretKeyDocs().LongMD,
+		},
 		Example: `  # Export encryption key
   $ export WERF_SECRET_KEY=$(werf helm secret generate-secret-key)
 
