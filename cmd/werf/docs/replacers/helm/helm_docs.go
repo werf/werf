@@ -467,3 +467,27 @@ For further usage, the encryption key should be saved in $WERF_SECRET_KEY or .we
 
 	return docs
 }
+
+func GetHelmSecretRotateSecretKeyDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Regenerate Secret files with new Secret key.
+
+Old key should be specified in the $WERF_OLD_SECRET_KEY.
+New key should reside either in the $WERF_SECRET_KEY or .werf_secret_key file.
+
+Command will extract data with the old key, generate new secret data and rewrite files:
+* standard raw Secret files in the .helm/secret folder;
+* standard secret Values YAML file .helm/secret-values.yaml;
+* additional secret Values YAML files specified with EXTRA_SECRET_VALUES_FILE_PATH params`
+
+	docs.LongMD = "Regenerate Secret files with new Secret key.\n\n" +
+		"Old key should be specified in the `$WERF_OLD_SECRET_KEY`.\n\n" +
+		"New key should reside either in the `$WERF_SECRET_KEY` or `.werf_secret_key file`.\n\n" +
+		"Command will extract data with the old key, generate new Secret data and rewrite files:\n" +
+		"* standard raw Secret files in the `.helm/secret folder`;\n" +
+		"* standard Secret Values YAML file `.helm/secret-values.yaml`;\n" +
+		"* additional Secret Values YAML files specified with `EXTRA_SECRET_VALUES_FILE_PATH` params."
+
+	return docs
+}

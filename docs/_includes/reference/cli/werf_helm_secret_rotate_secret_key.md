@@ -3,15 +3,16 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Regenerate secret files with new secret key.
+Regenerate Secret files with new Secret key.
 
-Old key should be specified in the $WERF_OLD_SECRET_KEY.
-New key should reside either in the $WERF_SECRET_KEY or .werf_secret_key file.
+Old key should be specified in the `$WERF_OLD_SECRET_KEY`.
 
-Command will extract data with the old key, generate new secret data and rewrite files:
-* standard raw secret files in the .helm/secret folder;
-* standard secret values yaml file .helm/secret-values.yaml;
-* additional secret values yaml files specified with EXTRA_SECRET_VALUES_FILE_PATH params
+New key should reside either in the `$WERF_SECRET_KEY` or `.werf_secret_key file`.
+
+Command will extract data with the old key, generate new Secret data and rewrite files:
+* standard raw Secret files in the `.helm/secret folder`;
+* standard Secret Values YAML file `.helm/secret-values.yaml`;
+* additional Secret Values YAML files specified with `EXTRA_SECRET_VALUES_FILE_PATH` params.
 
 {{ header }} Syntax
 
