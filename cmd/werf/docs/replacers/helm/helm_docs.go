@@ -455,3 +455,15 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
 
 	return docs
 }
+
+func GetHelmSecretGenerateSecretKeyDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Generate hex encryption key.
+For further usage, the encryption key should be saved in $WERF_SECRET_KEY or .werf_secret_key file.`
+
+	docs.LongMD = "Generate hex encryption key.\n\n" +
+		"For further usage, the encryption key should be saved in `$WERF_SECRET_KEY` or `.werf_secret_key file`."
+
+	return docs
+}

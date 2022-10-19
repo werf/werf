@@ -4,7 +4,8 @@
 {% assign header = "###" %}
 {% endif %}
 Generate hex encryption key.
-For further usage, the encryption key should be saved in $WERF_SECRET_KEY or .werf_secret_key file
+
+For further usage, the encryption key should be saved in `$WERF_SECRET_KEY` or `.werf_secret_key file`.
 
 {{ header }} Syntax
 
