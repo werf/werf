@@ -563,3 +563,48 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
 
 	return docs
 }
+
+func GetHelmShowAllDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command inspects a chart (directory, file, or URL) and displays all its content " +
+		"(`values.yaml`, `Chart.yaml`, `README`)."
+
+	return docs
+}
+
+func GetHelmShowChartDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command inspects a chart (directory, file, or URL) and displays the contents " +
+		"of the `Chart.yaml` file."
+
+	return docs
+}
+
+func GetHelmShowCRDsDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command inspects a chart (directory, file, or URL) and displays the contents " +
+		"of the CustomResourceDefinition files."
+
+	return docs
+}
+
+func GetHelmShowReadmeDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command inspects a chart (directory, file, or URL) and displays the contents " +
+		"of the README file."
+
+	return docs
+}
+
+func GetHelmShowValuesDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "This command inspects a chart (directory, file, or URL) and displays the contents " +
+		"of the `values.yaml` file."
+
+	return docs
+}
