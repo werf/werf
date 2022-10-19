@@ -196,3 +196,31 @@ func ReplaceHelmSearchDocs(cmd *cobra.Command) *cobra.Command {
 	}
 	return cmd
 }
+
+func ReplaceHelmShowDocs(cmd *cobra.Command) *cobra.Command {
+	for i, c := range cmd.Commands() {
+		switch c.Use {
+		case "all [CHART]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmShowAllDocs().LongMD,
+			}
+		case "chart [CHART]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmShowChartDocs().LongMD,
+			}
+		case "crds [CHART]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmShowCRDsDocs().LongMD,
+			}
+		case "readme [CHART]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmShowReadmeDocs().LongMD,
+			}
+		case "values [CHART]":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmShowValuesDocs().LongMD,
+			}
+		}
+	}
+	return cmd
+}

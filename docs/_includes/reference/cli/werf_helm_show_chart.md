@@ -3,10 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
-This command inspects a chart (directory, file, or URL) and displays the contents
-of the Chart.yaml file
-
+This command inspects a chart (directory, file, or URL) and displays the contents of the `Chart.yaml` file.
 
 {{ header }} Syntax
 

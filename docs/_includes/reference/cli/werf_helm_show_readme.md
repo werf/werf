@@ -3,10 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
-This command inspects a chart (directory, file, or URL) and displays the contents
-of the README file
-
+This command inspects a chart (directory, file, or URL) and displays the contents of the README file.
 
 {{ header }} Syntax
 

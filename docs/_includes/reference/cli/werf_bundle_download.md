@@ -3,9 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Take latest bundle from the specified container registry using specified version tag or version     
-mask and unpack it into provided directory (or into directory named as a resulting chart in the     
-current working directory).
+Take latest bundle from the specified container registry using specified version    
+tag or version mask and unpack it into provided directory (or into directory named  
+as a resulting chart in the current working directory).
 
 {{ header }} Syntax
 
