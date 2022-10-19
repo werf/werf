@@ -491,3 +491,39 @@ Command will extract data with the old key, generate new secret data and rewrite
 
 	return docs
 }
+
+func GetHelmSecretFileDecryptDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Decrypt data from FILE_PATH or pipe.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
+
+	docs.LongMD = "Decrypt data from `FILE_PATH` or pipe.\n\n" +
+		"Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key file`."
+
+	return docs
+}
+
+func GetHelmSecretFileEditDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Edit or create new secret file.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
+
+	docs.LongMD = "Edit or create new secret file.\n\n" +
+		"Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key file`."
+
+	return docs
+}
+
+func GetHelmSecretFileEncryptDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Encrypt data from FILE_PATH or pipe.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
+
+	docs.LongMD = "Encrypt data from `FILE_PATH` or pipe.\n\n" +
+		"Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key file`."
+
+	return docs
+}

@@ -3,8 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Encrypt data from FILE_PATH or pipe.
-Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file
+Encrypt data from `FILE_PATH` or pipe.
+
+Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key file`.
 
 {{ header }} Syntax
 

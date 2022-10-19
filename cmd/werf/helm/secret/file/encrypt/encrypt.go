@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
@@ -27,12 +28,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "encrypt [FILE_PATH]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Encrypt file data",
-		Long: common.GetLongCommandDescription(`Encrypt data from FILE_PATH or pipe.
-Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
+		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretFileEncryptDocs().Long),
 		Example: `  # Encrypt and save result in file
   $ werf helm secret file encrypt tls.crt -o .helm/secret/tls.crt`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
+			common.DocsLongMD: helm.GetHelmSecretFileEncryptDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
