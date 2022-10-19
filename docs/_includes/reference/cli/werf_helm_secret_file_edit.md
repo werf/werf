@@ -4,7 +4,8 @@
 {% assign header = "###" %}
 {% endif %}
 Edit or create new secret file.
-Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file
+
+Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key file`.
 
 {{ header }} Syntax
 
