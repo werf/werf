@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
@@ -22,12 +23,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "edit FILE_PATH",
 		DisableFlagsInUseLine: true,
 		Short:                 "Edit or create new secret values file",
-		Long: common.GetLongCommandDescription(`Edit or create new secret values file.
-Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
+		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretValuesEditDocs().Long),
 		Example: `  # Create/edit existing secret values file
   $ werf helm secret values edit .helm/secret-values.yaml`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
+			common.DocsLongMD: helm.GetHelmSecretValuesEditDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
