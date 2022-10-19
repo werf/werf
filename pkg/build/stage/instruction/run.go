@@ -25,7 +25,5 @@ func (stage *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb cont
 }
 
 func (stage *Run) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	stageImage.Builder.DockerfileStageBuilder().SetBuildContextArchive(buildContextArchive)
-	stageImage.Builder.DockerfileStageBuilder().AppendInstruction(backend_instruction.NewRun(*stage.instruction.Data))
-	return nil
+	return stage.prepareInstruction(ctx, stageImage, buildContextArchive, backend_instruction.NewRun(*stage.instruction.Data))
 }
