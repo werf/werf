@@ -17,13 +17,9 @@ type Run struct {
 }
 
 func NewRun(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Run], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
-	return &Run{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	return &Run{Base: NewBase(name, i, backend_instruction.NewRun(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return util.Sha256Hash(append([]string{stage.instruction.Data.Name()}, stage.instruction.Data.Command...)...), nil
-}
-
-func (stage *Run) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	return stage.prepareInstruction(ctx, stageImage, buildContextArchive, backend_instruction.NewRun(*stage.instruction.Data))
 }

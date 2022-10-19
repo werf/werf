@@ -17,7 +17,7 @@ type Shell struct {
 }
 
 func NewShell(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Shell], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Shell {
-	return &Shell{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	return &Shell{Base: NewBase(name, i, backend_instruction.NewShell(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Shell) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -25,8 +25,4 @@ func (stage *Shell) GetDependencies(ctx context.Context, c stage.Conveyor, cb co
 	args = append(args, stage.instruction.Data.Name())
 	args = append(args, stage.instruction.Data.Shell...)
 	return util.Sha256Hash(args...), nil
-}
-
-func (stage *Shell) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	return stage.Base.prepareInstruction(ctx, stageImage, buildContextArchive, backend_instruction.NewShell(*stage.instruction.Data))
 }

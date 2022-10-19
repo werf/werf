@@ -17,7 +17,7 @@ type User struct {
 }
 
 func NewUser(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.User], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *User {
-	return &User{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	return &User{Base: NewBase(name, i, backend_instruction.NewUser(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stage *User) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -25,8 +25,4 @@ func (stage *User) GetDependencies(ctx context.Context, c stage.Conveyor, cb con
 	args = append(args, stage.instruction.Data.Name())
 	args = append(args, stage.instruction.Data.User)
 	return util.Sha256Hash(args...), nil
-}
-
-func (stage *User) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	return stage.Base.prepareInstruction(ctx, stageImage, buildContextArchive, backend_instruction.NewUser(*stage.instruction.Data))
 }

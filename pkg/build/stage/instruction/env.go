@@ -17,7 +17,7 @@ type Env struct {
 }
 
 func NewEnv(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Env], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Env {
-	return &Env{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	return &Env{Base: NewBase(name, i, backend_instruction.NewEnv(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Env) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -28,8 +28,4 @@ func (stage *Env) GetDependencies(ctx context.Context, c stage.Conveyor, cb cont
 		args = append(args, k, v)
 	}
 	return util.Sha256Hash(args...), nil
-}
-
-func (stage *Env) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	return stage.Base.prepareInstruction(ctx, stageImage, buildContextArchive, backend_instruction.NewEnv(*stage.instruction.Data))
 }

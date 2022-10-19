@@ -118,7 +118,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		}
 
 		for ind, instr := range stg.Instructions {
-			stageName := stage.StageName(fmt.Sprintf("%d-%s", ind, instr.GetInstructionData().Name()))
+			stageName := stage.StageName(fmt.Sprintf("%s%d", instr.GetInstructionData().Name(), ind))
 			isFirstStage := (len(img.stages) == 0)
 			baseStageOptions := &stage.BaseStageOptions{
 				ImageName:        img.Name,

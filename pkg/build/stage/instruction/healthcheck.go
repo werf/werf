@@ -17,7 +17,8 @@ type Healthcheck struct {
 }
 
 func NewHealthcheck(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Healthcheck], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Healthcheck {
-	return &Healthcheck{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	// FIXME(staged-dockerfile): construct backend instruction
+	return &Healthcheck{Base: NewBase(name, i, nil, dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Healthcheck) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -30,9 +31,4 @@ func (stage *Healthcheck) GetDependencies(ctx context.Context, c stage.Conveyor,
 	args = append(args, stage.instruction.Data.Config.StartPeriod.String())
 	args = append(args, fmt.Sprintf("%d", stage.instruction.Data.Config.Retries))
 	return util.Sha256Hash(args...), nil
-}
-
-func (stage *Healthcheck) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	// FIXME(staged-dockerfile): construct backend instruction
-	return stage.Base.prepareInstruction(ctx, stageImage, buildContextArchive, nil)
 }

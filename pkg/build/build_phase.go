@@ -695,6 +695,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 			return stageImage.Builder.DockerfileBuilder().Cleanup(ctx)
 		})
 	} else {
+		stageImage.Builder.DockerfileStageBuilder().SetBuildContextArchive(phase.buildContextArchive)
 		stageImage.Builder.DockerfileStageBuilder().AppendPostInstruction(backend_instruction.NewLabel(*dockerfile_instruction.NewLabel(serviceLabels)))
 	}
 
