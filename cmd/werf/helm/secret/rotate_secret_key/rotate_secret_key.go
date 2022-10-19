@@ -12,6 +12,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
@@ -29,17 +30,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Regenerate secret files with new secret key",
-		Long: common.GetLongCommandDescription(`Regenerate secret files with new secret key.
-
-Old key should be specified in the $WERF_OLD_SECRET_KEY.
-New key should reside either in the $WERF_SECRET_KEY or .werf_secret_key file.
-
-Command will extract data with the old key, generate new secret data and rewrite files:
-* standard raw secret files in the .helm/secret folder;
-* standard secret values yaml file .helm/secret-values.yaml;
-* additional secret values yaml files specified with EXTRA_SECRET_VALUES_FILE_PATH params`),
+		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretRotateSecretKeyDocs().Long),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfOldSecretKey),
+			common.DocsLongMD: helm.GetHelmSecretRotateSecretKeyDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
