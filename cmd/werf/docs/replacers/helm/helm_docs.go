@@ -443,3 +443,15 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
 
 	return docs
 }
+
+func GetHelmSecretEncryptDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Encrypt data from standard input.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
+
+	docs.LongMD = "Encrypt data from standard input.\n\n" +
+		"Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key file`."
+
+	return docs
+}
