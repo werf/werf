@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/cmd/werf/docs/replacers/helm"
 	secret_common "github.com/werf/werf/cmd/werf/helm/secret/common"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
@@ -30,8 +31,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "decrypt",
 		DisableFlagsInUseLine: true,
 		Short:                 "Decrypt data",
-		Long: common.GetLongCommandDescription(`Decrypt data from standard input.
-Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
+		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretDecryptDocs().Long),
 		Example: `  # Decrypt data in interactive mode
   $ werf helm secret decrypt
   Enter secret:
@@ -42,6 +42,7 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
   Tue Jun 26 09:58:10 PDT 1990`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
+			common.DocsLongMD: helm.GetHelmSecretDecryptDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

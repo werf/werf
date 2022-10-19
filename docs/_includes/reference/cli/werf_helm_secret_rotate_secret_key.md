@@ -8,12 +8,10 @@ Regenerate secret files with new secret key.
 Old key should be specified in the $WERF_OLD_SECRET_KEY.
 New key should reside either in the $WERF_SECRET_KEY or .werf_secret_key file.
 
-Command will extract data with the old key, generate new secret data and rewrite   
-files:
+Command will extract data with the old key, generate new secret data and rewrite files:
 * standard raw secret files in the .helm/secret folder;
 * standard secret values yaml file .helm/secret-values.yaml;
-* additional secret values yaml files specified with EXTRA_SECRET_VALUES_FILE_PATH 
-params
+* additional secret values yaml files specified with EXTRA_SECRET_VALUES_FILE_PATH params
 
 {{ header }} Syntax
 
@@ -24,8 +22,8 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
 {{ header }} Environments
 
 ```shell
-  $WERF_SECRET_KEY      Use specified secret key to extract secrets for the        
-                        deploy. Recommended way to set secret key in CI-system.
+  $WERF_SECRET_KEY      Use specified secret key to extract secrets for the deploy. Recommended way 
+                        to set secret key in CI-system.
                         
                         Secret key also can be defined in files:
                         * ~/.werf/global_secret_key (globally),

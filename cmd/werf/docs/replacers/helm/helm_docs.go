@@ -431,3 +431,15 @@ func GetHelmSearchRepoDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetHelmSecretDecryptDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Decrypt data from standard input.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
+
+	docs.LongMD = "Decrypt data from standard input.\n\n" +
+		"Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key file`."
+
+	return docs
+}
