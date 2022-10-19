@@ -18,7 +18,7 @@ type Cmd struct {
 }
 
 func NewCmd(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Cmd], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Cmd {
-	return &Cmd{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	return &Cmd{Base: NewBase(name, i, backend_instruction.NewCmd(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Cmd) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -27,8 +27,4 @@ func (stage *Cmd) GetDependencies(ctx context.Context, c stage.Conveyor, cb cont
 	args = append(args, stage.instruction.Data.Cmd...)
 	args = append(args, fmt.Sprintf("%v", stage.instruction.Data.PrependShell))
 	return util.Sha256Hash(args...), nil
-}
-
-func (stage *Cmd) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	return stage.Base.prepareInstruction(ctx, stageImage, buildContextArchive, backend_instruction.NewCmd(*stage.instruction.Data))
 }

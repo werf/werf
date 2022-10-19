@@ -102,7 +102,7 @@ func extractSrcAndDst(sourcesAndDest instructions.SourcesAndDest) ([]string, str
 		panic(fmt.Sprintf("unexpected buildkit instruction source and destination: %#v", sourcesAndDest))
 	}
 	dst := sourcesAndDest[len(sourcesAndDest)-1]
-	src := sourcesAndDest[0 : len(sourcesAndDest)-2]
+	src := sourcesAndDest[0 : len(sourcesAndDest)-1]
 	return src, dst
 }
 

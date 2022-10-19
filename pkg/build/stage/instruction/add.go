@@ -17,7 +17,7 @@ type Add struct {
 }
 
 func NewAdd(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Add], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Add {
-	return &Add{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	return &Add{Base: NewBase(name, i, backend_instruction.NewAdd(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -28,8 +28,4 @@ func (stage *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb cont
 	args = append(args, stage.instruction.Data.Chown)
 	args = append(args, stage.instruction.Data.Chmod)
 	return util.Sha256Hash(args...), nil
-}
-
-func (stage *Add) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	return stage.Base.prepareInstruction(ctx, stageImage, buildContextArchive, backend_instruction.NewAdd(*stage.instruction.Data))
 }

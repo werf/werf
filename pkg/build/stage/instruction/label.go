@@ -17,7 +17,7 @@ type Label struct {
 }
 
 func NewLabel(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Label], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Label {
-	return &Label{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	return &Label{Base: NewBase(name, i, backend_instruction.NewLabel(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Label) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -28,8 +28,4 @@ func (stage *Label) GetDependencies(ctx context.Context, c stage.Conveyor, cb co
 		args = append(args, k, v)
 	}
 	return util.Sha256Hash(args...), nil
-}
-
-func (stage *Label) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	return stage.Base.prepareInstruction(ctx, stageImage, buildContextArchive, backend_instruction.NewLabel(*stage.instruction.Data))
 }

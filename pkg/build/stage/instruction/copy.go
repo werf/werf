@@ -17,7 +17,7 @@ type Copy struct {
 }
 
 func NewCopy(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Copy], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Copy {
-	return &Copy{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	return &Copy{Base: NewBase(name, i, backend_instruction.NewCopy(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -29,8 +29,4 @@ func (stage *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb con
 	args = append(args, stage.instruction.Data.Chown)
 	args = append(args, stage.instruction.Data.Chmod)
 	return util.Sha256Hash(args...), nil
-}
-
-func (stage *Copy) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	return stage.Base.prepareInstruction(ctx, stageImage, buildContextArchive, backend_instruction.NewCopy(*stage.instruction.Data))
 }

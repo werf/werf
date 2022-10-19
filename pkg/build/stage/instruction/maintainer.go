@@ -16,7 +16,8 @@ type Maintainer struct {
 }
 
 func NewMaintainer(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Maintainer], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Maintainer {
-	return &Maintainer{Base: NewBase(name, i, dependencies, hasPrevStage, opts)}
+	// FIXME(staged-dockerfile): no Maintainer instruction
+	return &Maintainer{Base: NewBase(name, i, nil, dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Maintainer) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -24,9 +25,4 @@ func (stage *Maintainer) GetDependencies(ctx context.Context, c stage.Conveyor, 
 	args = append(args, stage.instruction.Data.Name())
 	args = append(args, stage.instruction.Data.Maintainer)
 	return util.Sha256Hash(args...), nil
-}
-
-func (stage *Maintainer) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	// FIXME(staged-dockerfile): no Maintainer instruction
-	return stage.Base.prepareInstruction(ctx, stageImage, buildContextArchive, nil)
 }
