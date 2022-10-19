@@ -527,3 +527,39 @@ Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
 
 	return docs
 }
+
+func GetHelmSecretValuesDecryptDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Decrypt data from FILE_PATH or pipe.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
+
+	docs.LongMD = "Decrypt data from `FILE_PATH` or pipe.\n\n" +
+		"Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key file`."
+
+	return docs
+}
+
+func GetHelmSecretValuesEditDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Edit or create new secret values file.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
+
+	docs.LongMD = "Edit or create new secret values file.\n\n" +
+		"Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key` file."
+
+	return docs
+}
+
+func GetHelmSecretValuesEncryptDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.Long = `Encrypt data from FILE_PATH or pipe.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file.`
+
+	docs.LongMD = "Encrypt data from `FILE_PATH` or pipe.\n\n" +
+		"Encryption key should be in `$WERF_SECRET_KEY` or `.werf_secret_key file`."
+
+	return docs
+}
