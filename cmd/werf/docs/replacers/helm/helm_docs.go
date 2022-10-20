@@ -391,22 +391,22 @@ func GetHelmRepoUpdateDocs() structs.DocsStruct {
 func GetHelmSearchHubDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 
-	docs.LongMD = "Search for Helm charts in the [Artifact Hub](https://artifacthub.io/) " +
+	docs.LongMD = "Search for Helm charts in the Artifact Hub " +
 		"or your own hub instance.\n\n" +
 		"Artifact Hub is a web-based application that enables finding, installing, and " +
 		"publishing packages and configurations for CNCF projects, including publicly " +
 		"available distributed charts Helm charts. It is a Cloud Native Computing " +
-		"Foundation sandbox project.\n\n" +
-		"The `[KEYWORD]` argument accepts either a keyword string, or quoted string of [rich " +
-		"query options](https://artifacthub.github.io/hub/api/?urls.primaryName=Monocular%20com" +
-		"patible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search).\n\n" +
+		"Foundation sandbox project. You can browse the hub at https://artifacthub.io/.\n\n" +
+		"The `[KEYWORD]` argument accepts either a keyword string, or quoted string of rich " +
+		"query options. For rich query options documentation, see\nhttps://artifacthub.github.io" +
+		"/hub/api/?urls.primaryName=Monocular%20compatible%20search%20API#/Monocular/get_api_chartsvc_v1_charts_search.\n\n" +
 		"Previous versions of Helm used an instance of Monocular as the default " +
 		"`endpoint`, so for backwards compatibility Artifact Hub is compatible with the " +
-		"[Monocular](https://github.com/helm/monocular) search API. Similarly, when setting " +
+		"Monocular search API. Similarly, when setting " +
 		"the `endpoint` flag, the specified " +
 		"endpoint must also be implement a Monocular compatible search API endpoint. " +
 		"Note that when specifying a Monocular instance as the `endpoint`, rich queries " +
-		"are not supported.\n"
+		"are not supported. For API details, see https://github.com/helm/monocular.\n"
 
 	return docs
 }
