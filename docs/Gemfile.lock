@@ -86,7 +86,7 @@ GEM
       rb-inotify (~> 0.9, >= 0.9.10)
     mercenary (0.4.0)
     minitest (5.15.0)
-    nokogiri (1.13.6-x86_64-linux)
+    nokogiri (1.13.9-x86_64-linux)
       racc (~> 1.4)
     parallel (1.21.0)
     pathutil (0.16.2)
@@ -117,6 +117,7 @@ GEM
     zeitwerk (2.5.3)
 
 PLATFORMS
+  x86_64-linux
   x86_64-linux-musl
 
 DEPENDENCIES
