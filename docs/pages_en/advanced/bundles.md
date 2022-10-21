@@ -28,6 +28,49 @@ werf-bundle-publish command consists of:
  - saving of passed [helm chart values]({{ "/advanced/helm/configuration/values.html" | true_relative_url }}) params in the published bundle;
  - saving of passed [annotations and labels]({{ "/advanced/helm/deploy_process/annotating_and_labeling.html" | true_relative_url }}) in the published bundle.
 
+### Bundle structure
+
+Before publication we have a regular chart in werf project, which looks like follows:
+
+```
+.helm/
+  Chart.yaml
+  LICENSE
+  README.md
+  values.yaml
+  values.schema.json
+  templates/
+  crds/
+  charts/
+  files/
+```
+
+Only specified above files and directories will be packaged into bundle during publication by default.
+
+`.helm/files` is conventional directory which should contain configuration files which used in the `.Files.Get` and `.Files.Glob` directives.
+
+`.helm/values.yaml` will be merged with werf's internal service values and another custom values and sets passed to the publish command and then saved into resulting bundle file `values.yaml`. Using of default `.helm/values.yaml` can be disabled with `--disable-default-values` option passed to `werf bundle publish` (in such case resulting bundle `values.yaml` would still exist in the published bundle and contain merged service values and another custom values and sets passwed to the publish command).
+
+Published bundle file structure looks like follows:
+
+```
+Chart.yaml
+LICENSE
+README.md
+values.yaml
+values.schema.json
+templates/
+crds/
+charts/
+files/
+extra_annotations.json
+extra_labels.json
+```
+
+Note `extra_annotations.json` and `extra_labels.json` service werf's files, which used to store default extra annotations and labels that should be appended to each deployed resource when applying bundle with the `werf bundle apply` command.
+
+To download and inspect published bundle use `werf bundle copy --from REPO:TAG --to archive:PATH_TO_ARCHIVE.tar.gz` command.
+
 ### Versioning during publication
 
 User may choose a version of published bundle with `--tag` parameter. By default, bundle published with the `latest` tag.
