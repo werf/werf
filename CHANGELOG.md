@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.184](https://www.github.com/werf/werf/compare/v1.2.183...v1.2.184) (2022-10-21)
+
+
+### Features
+
+* **staged-dockerfile:** basic support of all dockerfile stages at conveyor level ([306ed6c](https://www.github.com/werf/werf/commit/306ed6c10696a2746cf7b14143a5dd4edf07a0c0))
+* **staged-dockerfile:** implement whether stage uses build-context correctly ([2851923](https://www.github.com/werf/werf/commit/2851923135a4926c8ba44b85917d600ad1e03462))
+* **staged-dockerfile:** map dockerfile stages with dependencies to werf internal images ([f5f200e](https://www.github.com/werf/werf/commit/f5f200eaf5bf4e5be1fd4e81ea3040c83bdc2890))
+
+
+### Bug Fixes
+
+* panic when calling SplitFilepath on windows ([78c10d2](https://www.github.com/werf/werf/commit/78c10d2f77828365beddba9b2316340fa468a83b))
+
 ### [1.2.183](https://www.github.com/werf/werf/compare/v1.2.182...v1.2.183) (2022-10-18)
 
 
