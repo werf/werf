@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.182](https://www.github.com/werf/werf/compare/v1.2.181...v1.2.182) (2022-10-21)
+
+
+### Bug Fixes
+
+* **bundles:** fix bundle-render and bundle-apply commands could not access .Values.werf.images service values ([81ec3b1](https://www.github.com/werf/werf/commit/81ec3b196057364b3ae5d66688a0257ff7a26497))
+* **helm:** keep all revisions if no succeeded release ([1ba83ff](https://www.github.com/werf/werf/commit/1ba83ff6a32aacc0f1ee30a1c8584b75ded5d6b7))
+* panic when calling SplitFilepath on windows ([1d9def0](https://www.github.com/werf/werf/commit/1d9def0677f639f39f972b7f0dec7a106c49d203))
+
 ### [1.2.181](https://www.github.com/werf/werf/compare/v1.2.180...v1.2.181) (2022-10-17)
 
 
