@@ -1,3 +1,5 @@
+//go:build !windows
+
 package util_test
 
 import (
@@ -55,7 +57,7 @@ type splitPathTest struct {
 	expectedPathParts []string
 }
 
-var _ = DescribeTable("split path",
+var _ = DescribeTable("split unix path",
 	func(t splitPathTest) {
 		parts := util.SplitFilepath(t.path)
 		Expect(parts).To(Equal(t.expectedPathParts))
@@ -63,6 +65,10 @@ var _ = DescribeTable("split path",
 	Entry("root path", splitPathTest{
 		path:              "/",
 		expectedPathParts: nil,
+	}),
+	Entry("root dir", splitPathTest{
+		path:              "/mydir/",
+		expectedPathParts: []string{"mydir"},
 	}),
 	Entry("unnormalized root path", splitPathTest{
 		path:              "////",

@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"unicode/utf8"
 )
@@ -37,20 +38,27 @@ func ExpandPath(path string) string {
 }
 
 func SplitFilepath(path string) (result []string) {
+	separator := os.PathSeparator
+
 	path = filepath.FromSlash(path)
 	path = filepath.Clean(path)
 
-	if filepath.IsAbs(path) {
-		p, err := filepath.Rel(string(os.PathSeparator), path)
+	if runtime.GOOS == "windows" {
+		sepStr := string(separator)
+		uncRootPath := fmt.Sprintf("%s%s", sepStr, sepStr)
+
+		path = strings.TrimPrefix(path, uncRootPath)
+		path = strings.TrimPrefix(path, sepStr)
+		path = strings.TrimSuffix(path, sepStr)
+	} else if filepath.IsAbs(path) {
+		p, err := filepath.Rel(string(separator), path)
 		if err != nil {
 			panic(fmt.Sprintf("unable to get relative path for %q", path))
 		}
 		path = p
 	}
 
-	separator := os.PathSeparator
-
-	if path == "." || path == string(separator) {
+	if path == "" || path == "." || path == string(separator) {
 		return nil
 	}
 
