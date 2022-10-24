@@ -3,9 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
 This command shows notes provided by the chart of a named release.
-
 
 {{ header }} Syntax
 

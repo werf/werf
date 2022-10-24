@@ -3,11 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
 List all of the dependencies declared in a chart.
 
-This can take chart archives and chart directories as input. It will not alter
-the contents of a chart.
+This can take chart archives and chart directories as input. It will not alter the contents of a chart.
 
 This will produce an error if the chart cannot be loaded.
 
