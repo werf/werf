@@ -42,6 +42,8 @@ func NewSecurityType(security string) SecurityType {
 }
 
 type Run struct {
+	*Base
+
 	Command      []string
 	PrependShell bool
 	Mounts       []*instructions.Mount
@@ -49,8 +51,8 @@ type Run struct {
 	Security     SecurityType
 }
 
-func NewRun(command []string, prependShell bool, mounts []*instructions.Mount, network NetworkType, security SecurityType) *Run {
-	return &Run{Command: command, PrependShell: prependShell, Mounts: mounts, Network: network}
+func NewRun(raw string, command []string, prependShell bool, mounts []*instructions.Mount, network NetworkType, security SecurityType) *Run {
+	return &Run{Base: NewBase(raw), Command: command, PrependShell: prependShell, Mounts: mounts, Network: network}
 }
 
 func (i *Run) Name() string {

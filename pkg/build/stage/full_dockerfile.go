@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -21,6 +20,7 @@ import (
 	"github.com/werf/werf/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/pkg/context_manager"
 	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/dockerfile"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
@@ -758,7 +758,7 @@ func (s *FullDockerfileStage) calculateFilesChecksum(ctx context.Context, giterm
 	var checksum string
 	var err error
 
-	normalizedWildcards := normalizeCopyAddSources(wildcards)
+	normalizedWildcards := dockerfile.NormalizeCopyAddSourcesForPathMatcher(wildcards)
 
 	logProcess := logboek.Context(ctx).Debug().LogProcess("Calculating files checksum (%v) from local git repo", normalizedWildcards)
 	logProcess.Start()
@@ -833,22 +833,6 @@ func (s *FullDockerfileStage) calculateFilesChecksumWithGit(ctx context.Context,
 	}
 
 	return util.Sha256Hash(lsTreeResultChecksum), nil
-}
-
-func normalizeCopyAddSources(wildcards []string) []string {
-	var result []string
-	for _, wildcard := range wildcards {
-		normalizedWildcard := path.Clean(wildcard)
-		if normalizedWildcard == "/" {
-			normalizedWildcard = "."
-		} else if strings.HasPrefix(normalizedWildcard, "/") {
-			normalizedWildcard = strings.TrimPrefix(normalizedWildcard, "/")
-		}
-
-		result = append(result, normalizedWildcard)
-	}
-
-	return result
 }
 
 func dockerfileStageDependenciesDebug() bool {

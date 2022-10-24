@@ -1,11 +1,13 @@
 package instruction
 
 type Maintainer struct {
+	*Base
+
 	Maintainer string
 }
 
-func NewMaintainer(maintainer string) *Maintainer {
-	return &Maintainer{Maintainer: maintainer}
+func NewMaintainer(raw, maintainer string) *Maintainer {
+	return &Maintainer{Base: NewBase(raw), Maintainer: maintainer}
 }
 
 func (i *Maintainer) Name() string {

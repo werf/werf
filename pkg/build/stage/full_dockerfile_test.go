@@ -65,7 +65,7 @@ var _ = Describe("FullDockerfileStage", func() {
 			ctx := context.Background()
 
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), data.TestDependencies.Dependencies)
-			containerBackend := NewContainerBackendMock()
+			containerBackend := NewContainerBackendStub()
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(data.DockerfileData)
 
@@ -295,7 +295,7 @@ RUN echo hello
 
 			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
 
-			containerBackend := NewContainerBackendMock()
+			containerBackend := NewContainerBackendStub()
 
 			dockerRegistry := NewDockerRegistryApiStub()
 
@@ -328,7 +328,7 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 
 			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
 
-			containerBackend := NewContainerBackendMock()
+			containerBackend := NewContainerBackendStub()
 
 			img := NewLegacyImageStub()
 			stageBuilder := stage_builder.NewStageBuilder(containerBackend, "", img)

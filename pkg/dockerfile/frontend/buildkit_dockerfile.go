@@ -54,43 +54,43 @@ func DockerfileStageFromBuildkitStage(index int, stage instructions.Stage) *dock
 		switch typedCmd := cmd.(type) {
 		case *instructions.AddCommand:
 			src, dst := extractSrcAndDst(typedCmd.SourcesAndDest)
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewAdd(src, dst, typedCmd.Chown, typedCmd.Chmod)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewAdd(typedCmd.String(), src, dst, typedCmd.Chown, typedCmd.Chmod)))
 		case *instructions.ArgCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewArg(typedCmd.Args)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewArg(typedCmd.String(), typedCmd.Args)))
 		case *instructions.CmdCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewCmd(typedCmd.CmdLine, typedCmd.PrependShell)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewCmd(typedCmd.String(), typedCmd.CmdLine, typedCmd.PrependShell)))
 		case *instructions.CopyCommand:
 			src, dst := extractSrcAndDst(typedCmd.SourcesAndDest)
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewCopy(typedCmd.From, src, dst, typedCmd.Chown, typedCmd.Chmod)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewCopy(typedCmd.String(), typedCmd.From, src, dst, typedCmd.Chown, typedCmd.Chmod)))
 		case *instructions.EntrypointCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewEntrypoint(typedCmd.CmdLine, typedCmd.PrependShell)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewEntrypoint(typedCmd.String(), typedCmd.CmdLine, typedCmd.PrependShell)))
 		case *instructions.EnvCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewEnv(extractKeyValuePairsAsMap(typedCmd.Env))))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewEnv(typedCmd.String(), extractKeyValuePairsAsMap(typedCmd.Env))))
 		case *instructions.ExposeCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewExpose(typedCmd.Ports)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewExpose(typedCmd.String(), typedCmd.Ports)))
 		case *instructions.HealthCheckCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewHealthcheck(typedCmd.Health)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewHealthcheck(typedCmd.String(), typedCmd.Health)))
 		case *instructions.LabelCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewLabel(extractKeyValuePairsAsMap(typedCmd.Labels))))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewLabel(typedCmd.String(), extractKeyValuePairsAsMap(typedCmd.Labels))))
 		case *instructions.MaintainerCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewMaintainer(typedCmd.Maintainer)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewMaintainer(typedCmd.String(), typedCmd.Maintainer)))
 		case *instructions.OnbuildCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewOnBuild(typedCmd.Expression)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewOnBuild(typedCmd.String(), typedCmd.Expression)))
 		case *instructions.RunCommand:
 			network := dockerfile_instruction.NewNetworkType(instructions.GetNetwork(typedCmd))
 			security := dockerfile_instruction.NewSecurityType(instructions.GetSecurity(typedCmd))
 			mounts := instructions.GetMounts(typedCmd)
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewRun(typedCmd.CmdLine, typedCmd.PrependShell, mounts, network, security)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewRun(typedCmd.String(), typedCmd.CmdLine, typedCmd.PrependShell, mounts, network, security)))
 		case *instructions.ShellCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewShell(typedCmd.Shell)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewShell(typedCmd.String(), typedCmd.Shell)))
 		case *instructions.StopSignalCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewStopSignal(typedCmd.Signal)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewStopSignal(typedCmd.String(), typedCmd.Signal)))
 		case *instructions.UserCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewUser(typedCmd.User)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewUser(typedCmd.String(), typedCmd.User)))
 		case *instructions.VolumeCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewVolume(typedCmd.Volumes)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewVolume(typedCmd.String(), typedCmd.Volumes)))
 		case *instructions.WorkdirCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewWorkdir(typedCmd.Path)))
+			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewWorkdir(typedCmd.String(), typedCmd.Path)))
 		}
 	}
 
