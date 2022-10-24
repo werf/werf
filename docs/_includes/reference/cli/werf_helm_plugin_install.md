@@ -3,9 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
-This command allows you to install a plugin from a url to a VCS repo or a local path.
-
+This command allows you to install a plugin from a URL to a VCS repo or a local path.
 
 {{ header }} Syntax
 

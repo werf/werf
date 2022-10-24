@@ -116,6 +116,10 @@ func ReplaceHelmDependencyDocs(cmd *cobra.Command) *cobra.Command {
 			cmd.Commands()[i].Annotations = map[string]string{
 				common.DocsLongMD: GetHelmDependencyUpdateDocs().LongMD,
 			}
+		case "list CHART":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmDependencyListDocs().LongMD,
+			}
 		}
 	}
 	return cmd
@@ -127,6 +131,22 @@ func ReplaceHelmGetDocs(cmd *cobra.Command) *cobra.Command {
 		case "hooks RELEASE_NAME":
 			cmd.Commands()[i].Annotations = map[string]string{
 				common.DocsLongMD: GetHelmGetHooksDocs().LongMD,
+			}
+		case "all RELEASE_NAME":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmGetAllDocs().LongMD,
+			}
+		case "values RELEASE_NAME":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmGetValuesDocs().LongMD,
+			}
+		case "manifest RELEASE_NAME":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmGetManifestDocs().LongMD,
+			}
+		case "notes RELEASE_NAME":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmGetNotesDocs().LongMD,
 			}
 		}
 	}
@@ -147,6 +167,10 @@ func ReplaceHelmPluginDocs(cmd *cobra.Command) *cobra.Command {
 		case "update <plugin>...":
 			cmd.Commands()[i].Annotations = map[string]string{
 				common.DocsLongMD: GetHelmPluginUpdateDocs().LongMD,
+			}
+		case "install [options] <path|url>...":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmPluginInstallDocs().LongMD,
 			}
 		}
 	}
