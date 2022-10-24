@@ -696,7 +696,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		})
 	} else {
 		stageImage.Builder.DockerfileStageBuilder().SetBuildContextArchive(phase.buildContextArchive)
-		stageImage.Builder.DockerfileStageBuilder().AppendPostInstruction(backend_instruction.NewLabel(*dockerfile_instruction.NewLabel(serviceLabels)))
+		stageImage.Builder.DockerfileStageBuilder().AppendPostInstruction(backend_instruction.NewLabel(*dockerfile_instruction.NewLabel("", serviceLabels)))
 	}
 
 	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage, phase.buildContextArchive)

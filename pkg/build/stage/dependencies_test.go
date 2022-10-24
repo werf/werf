@@ -16,7 +16,7 @@ var _ = Describe("DependenciesStage", func() {
 			ctx := context.Background()
 
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), data.Dependencies)
-			containerBackend := NewContainerBackendMock()
+			containerBackend := NewContainerBackendStub()
 
 			stage := newDependenciesStage(nil, GetConfigDependencies(data.Dependencies), "example-stage", &BaseStageOptions{
 				ImageName:   "example-image",
@@ -270,3 +270,15 @@ var _ = Describe("getDependencies helper", func() {
 		})
 	})
 })
+
+func NewConveyorStubForDependencies(giterminismManager *GiterminismManagerStub, dependencies []*TestDependency) *ConveyorStub {
+	lastStageImageNameByImageName := make(map[string]string)
+	lastStageImageIDByImageName := make(map[string]string)
+
+	for _, dep := range dependencies {
+		lastStageImageNameByImageName[dep.ImageName] = dep.GetDockerImageName()
+		lastStageImageIDByImageName[dep.ImageName] = dep.DockerImageID
+	}
+
+	return NewConveyorStub(giterminismManager, lastStageImageNameByImageName, lastStageImageIDByImageName)
+}

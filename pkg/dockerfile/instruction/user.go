@@ -1,11 +1,13 @@
 package instruction
 
 type User struct {
+	*Base
+
 	User string
 }
 
-func NewUser(user string) *User {
-	return &User{User: user}
+func NewUser(raw, user string) *User {
+	return &User{Base: NewBase(raw), User: user}
 }
 
 func (i *User) Name() string {

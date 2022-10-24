@@ -105,3 +105,14 @@ func (a *BuildContextArchive) CleanupExtractedDir(ctx context.Context) {
 		logboek.Context(ctx).Warn().LogF("WARNING: unable to remove extracted context dir %q: %s", a.extractionDir, err)
 	}
 }
+
+func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
+	dir, err := a.ExtractOrGetExtractedDir(ctx)
+	if err != nil {
+		return "", fmt.Errorf("unable to access context directory: %w", err)
+	}
+
+	_ = dir
+
+	return "", nil
+}

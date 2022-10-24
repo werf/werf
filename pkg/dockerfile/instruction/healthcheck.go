@@ -3,6 +3,8 @@ package instruction
 import "github.com/docker/docker/api/types/container"
 
 type Healthcheck struct {
+	*Base
+
 	// TODO(ilya-lesikov): isn't this should be a part of a Config.Test?
 	Type   HealthcheckType
 	Config *container.HealthConfig
@@ -25,8 +27,8 @@ func NewHealthcheckType(cfg *container.HealthConfig) HealthcheckType {
 	}
 }
 
-func NewHealthcheck(cfg *container.HealthConfig) *Healthcheck {
-	return &Healthcheck{Type: NewHealthcheckType(cfg), Config: cfg}
+func NewHealthcheck(raw string, cfg *container.HealthConfig) *Healthcheck {
+	return &Healthcheck{Base: NewBase(raw), Type: NewHealthcheckType(cfg), Config: cfg}
 }
 
 func (i *Healthcheck) Name() string {

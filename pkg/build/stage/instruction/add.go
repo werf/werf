@@ -2,6 +2,7 @@ package instruction
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -22,10 +23,24 @@ func NewAdd(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dock
 
 func (stage *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
+
 	args = append(args, stage.instruction.Data.Name())
+	args = append(args, stage.instruction.Data.Raw)
 	args = append(args, stage.instruction.Data.Src...)
 	args = append(args, stage.instruction.Data.Dst)
 	args = append(args, stage.instruction.Data.Chown)
 	args = append(args, stage.instruction.Data.Chmod)
+
+	// TODO(staged-dockerfile): support http src and --checksum option: https://docs.docker.com/engine/reference/builder/#verifying-a-remote-file-checksum-add---checksumchecksum-http-src-dest
+	// TODO(staged-dockerfile): support git ref: https://docs.docker.com/engine/reference/builder/#adding-a-git-repository-add-git-ref-dir
+	// TODO(staged-dockerfile): support --keep-git-dir for git: https://docs.docker.com/engine/reference/builder/#adding-a-git-repository-add-git-ref-dir
+	// TODO(staged-dockerfile): support --link
+
+	pathsChecksum, err := buildContextArchive.CalculatePathsChecksum(ctx, stage.instruction.Data.Src)
+	if err != nil {
+		return "", fmt.Errorf("unable to calculate build context paths checksum: %w", err)
+	}
+	args = append(args, fmt.Sprintf("src-checksum=%s", pathsChecksum))
+
 	return util.Sha256Hash(args...), nil
 }
