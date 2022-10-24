@@ -3,10 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
-This command prints a human readable collection of information about the
-notes, hooks, supplied values, and generated manifest file of the given release.
-
+This command prints a human readable collection of information about the notes, hooks, supplied values, and generated manifest file of the given release.
 
 {{ header }} Syntax
 
