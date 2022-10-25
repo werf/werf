@@ -129,6 +129,8 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 
 			var stg stage.Interface
 			switch typedInstr := any(instr).(type) {
+			case *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Arg]:
+				// TODO: implement
 			case *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Add]:
 				stg = stage_instruction.NewAdd(stageName, typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Cmd]:

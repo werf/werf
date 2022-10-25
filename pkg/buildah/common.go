@@ -10,9 +10,11 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/werf/pkg/buildah/thirdparty"
+	"github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -44,6 +46,7 @@ type BuildFromCommandsOpts struct {
 
 type BuildFromDockerfileOpts struct {
 	CommonOpts
+
 	ContextDir string
 	BuildArgs  map[string]string
 	Target     string
@@ -58,46 +61,65 @@ type RunMount struct {
 
 type RunCommandOpts struct {
 	CommonOpts
-	WorkingDir string
-	User       string
-	Args       []string
-	Mounts     []specs.Mount
+
+	ContextDir       string
+	PrependShell     bool
+	Shell            []string
+	AddCapabilities  []string
+	DropCapabilities []string
+	NetworkType      instruction.NetworkType
+	WorkingDir       string
+	User             string
+	Envs             []string
+	Mounts           []instructions.Mount
+	LegacyMounts     []specs.Mount // TODO(ilya-lesikov): migrate to Mounts
 }
 
 type RmiOpts struct {
 	CommonOpts
+
 	Force bool
 }
 
 type CommitOpts struct {
 	CommonOpts
+
 	Image string
 }
 
 type ConfigOpts struct {
 	CommonOpts
-	Labels      []string
-	Volumes     []string
-	Expose      []string
-	Envs        map[string]string
-	Cmd         []string
-	Entrypoint  []string
-	User        string
-	Workdir     string
-	Healthcheck string
-	OnBuild     string
-	StopSignal  string
-	Shell       []string
+
+	Labels                 []string
+	Volumes                []string
+	Expose                 []string
+	Envs                   map[string]string
+	Cmd                    []string
+	CmdPrependShell        bool
+	Entrypoint             []string
+	EntrypointPrependShell bool
+	User                   string
+	Workdir                string
+	Healthcheck            *thirdparty.HealthConfig
+	OnBuild                string
+	StopSignal             string
+	Shell                  []string
+	Maintainer             string
 }
 
 type CopyOpts struct {
 	CommonOpts
-	From string
+
+	Chown string
+	Chmod string
 }
 
 type AddOpts struct {
 	CommonOpts
+
 	ContextDir string
+	Chown      string
+	Chmod      string
 }
 
 type (

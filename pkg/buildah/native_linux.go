@@ -32,12 +32,12 @@ import (
 	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/hashicorp/go-multierror"
-	"github.com/moby/buildkit/frontend/dockerfile/instructions"
-	"github.com/moby/buildkit/frontend/dockerfile/parser"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/werf/pkg/buildah/thirdparty"
+	"github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -45,6 +45,8 @@ const (
 	MaxPullPushRetries = 3
 	PullPushRetryDelay = 2 * time.Second
 )
+
+var DefaultShell = []string{"/bin/sh", "-c"}
 
 func NativeProcessStartupHook() bool {
 	if reexec.Init() {
@@ -285,33 +287,59 @@ func (b *NativeBuildah) Umount(ctx context.Context, container string, opts Umoun
 }
 
 func (b *NativeBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
-	runOpts := buildah.RunOptions{
-		Isolation:        define.Isolation(b.Isolation),
-		Args:             opts.Args,
-		Mounts:           opts.Mounts,
-		ConfigureNetwork: define.NetworkEnabled,
-		SystemContext:    &b.DefaultSystemContext,
-		WorkingDir:       opts.WorkingDir,
-		User:             opts.User,
-		Entrypoint:       []string{},
-		Cmd:              []string{},
-	}
-
-	stderr := &bytes.Buffer{}
-	if opts.LogWriter != nil {
-		runOpts.Stdout = opts.LogWriter
-		runOpts.Stderr = io.MultiWriter(opts.LogWriter, stderr)
-	} else {
-		runOpts.Stderr = stderr
-	}
-
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
+	nsOpts, netPolicy := generateNamespaceOptionsAndNetworkPolicy(opts.NetworkType)
+
+	var stdout, stderr io.Writer
+	stderrBuf := &bytes.Buffer{}
+	if opts.LogWriter != nil {
+		stdout = opts.LogWriter
+		stderr = io.MultiWriter(opts.LogWriter, stderrBuf)
+	} else {
+		stderr = stderrBuf
+	}
+
+	if opts.PrependShell {
+		if len(opts.Shell) > 0 {
+			command = append(opts.Shell, command...)
+		} else if len(builder.Shell()) > 0 {
+			command = append(builder.Shell(), command...)
+		} else {
+			command = append(DefaultShell, command...)
+		}
+	}
+
+	runOpts := buildah.RunOptions{
+		Env:              opts.Envs,
+		ContextDir:       opts.ContextDir,
+		AddCapabilities:  opts.AddCapabilities,
+		DropCapabilities: opts.DropCapabilities,
+		Stdout:           stdout,
+		Stderr:           stderr,
+		NamespaceOptions: nsOpts,
+		ConfigureNetwork: netPolicy,
+		Isolation:        define.Isolation(b.Isolation),
+		SystemContext:    &b.DefaultSystemContext,
+		WorkingDir:       opts.WorkingDir,
+		User:             opts.User,
+		Entrypoint:       []string{},
+		Cmd:              []string{},
+
+		// TODO(ilya-lesikov): implement mounts
+		Secrets:             nil,
+		SSHSources:          nil,
+		Mounts:              opts.LegacyMounts,
+		RunMounts:           nil,
+		StageMountPoints:    nil,
+		ExternalImageMounts: nil,
+	}
+
 	if err := builder.Run(command, runOpts); err != nil {
-		return fmt.Errorf("RunCommand failed:\n%s\n%w", stderr.String(), err)
+		return fmt.Errorf("RunCommand failed:\n%s\n%w", stderrBuf.String(), err)
 	}
 
 	return nil
@@ -453,6 +481,10 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 		}
 	}
 
+	if opts.Maintainer != "" {
+		builder.SetMaintainer(opts.Maintainer)
+	}
+
 	for name, value := range opts.Envs {
 		builder.SetEnv(name, value)
 	}
@@ -470,11 +502,37 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 	}
 
 	if len(opts.Cmd) > 0 {
-		builder.SetCmd(opts.Cmd)
+		var cmd []string
+		if opts.CmdPrependShell {
+			if builder.Shell() != nil {
+				cmd = builder.Shell()
+			} else {
+				cmd = DefaultShell
+			}
+
+			cmd = append(cmd, opts.Cmd...)
+		} else {
+			cmd = opts.Cmd
+		}
+
+		builder.SetCmd(cmd)
 	}
 
 	if len(opts.Entrypoint) > 0 {
-		builder.SetEntrypoint(opts.Entrypoint)
+		var entrypoint []string
+		if opts.EntrypointPrependShell {
+			if builder.Shell() != nil {
+				entrypoint = builder.Shell()
+			} else {
+				entrypoint = DefaultShell
+			}
+
+			entrypoint = append(entrypoint, opts.Entrypoint...)
+		} else {
+			entrypoint = opts.Entrypoint
+		}
+
+		builder.SetEntrypoint(entrypoint)
 	}
 
 	if opts.User != "" {
@@ -485,12 +543,8 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 		builder.SetWorkDir(opts.Workdir)
 	}
 
-	if opts.Healthcheck != "" {
-		if healthcheck, err := newHealthConfigFromString(builder, opts.Healthcheck); err != nil {
-			return fmt.Errorf("error creating HEALTHCHECK: %w", err)
-		} else if healthcheck != nil {
-			builder.SetHealthcheck(healthcheck)
-		}
+	if opts.Healthcheck != nil {
+		builder.SetHealthcheck((*docker.HealthConfig)(opts.Healthcheck))
 	}
 
 	if opts.StopSignal != "" {
@@ -510,10 +564,21 @@ func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, 
 		return fmt.Errorf("error getting builder: %w", err)
 	}
 
+	var absSrc []string
+	for _, s := range src {
+		absSrc = append(absSrc, filepath.Join(contextDir, s))
+	}
+
 	if err := builder.Add(dst, false, buildah.AddAndCopyOptions{
+		Chown:             opts.Chown,
+		Chmod:             opts.Chmod,
 		PreserveOwnership: false,
 		ContextDir:        contextDir,
-	}, src...); err != nil {
+		// TODO(ilya-lesikov): ignore file?
+		Excludes: nil,
+		// TODO(ilya-lesikov): ignore file?
+		IgnoreFile: "",
+	}, absSrc...); err != nil {
 		return fmt.Errorf("error copying files to %q: %w", dst, err)
 	}
 
@@ -526,10 +591,30 @@ func (b *NativeBuildah) Add(ctx context.Context, container string, src []string,
 		return fmt.Errorf("error getting builder: %w", err)
 	}
 
+	var expandedSrc []string
+	for _, s := range src {
+		if strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://") {
+			expandedSrc = append(expandedSrc, s)
+			continue
+		}
+
+		if opts.ContextDir == "" {
+			return fmt.Errorf("context dir is required for adding local files")
+		}
+
+		expandedSrc = append(expandedSrc, filepath.Join(opts.ContextDir, s))
+	}
+
 	if err := builder.Add(dst, true, buildah.AddAndCopyOptions{
+		Chmod:             opts.Chmod,
+		Chown:             opts.Chown,
 		PreserveOwnership: false,
 		ContextDir:        opts.ContextDir,
-	}, src...); err != nil {
+		// TODO(ilya-lesikov): ignore file?
+		Excludes: nil,
+		// TODO(ilya-lesikov): ignore file?
+		IgnoreFile: "",
+	}, expandedSrc...); err != nil {
 		return fmt.Errorf("error adding files to %q: %w", dst, err)
 	}
 
@@ -694,38 +779,6 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	}, nil
 }
 
-// Can return nil pointer to HealthConfig
-func newHealthConfigFromString(builder *buildah.Builder, healthcheck string) (*docker.HealthConfig, error) {
-	if healthcheck == "" {
-		return nil, nil
-	}
-
-	dockerfile, err := parser.Parse(bytes.NewBufferString(fmt.Sprintf("HEALTHCHECK %s", healthcheck)))
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse healthcheck instruction: %w", err)
-	}
-
-	var healthCheckNode *parser.Node
-	for _, n := range dockerfile.AST.Children {
-		if strings.ToLower(n.Value) == "healthcheck" {
-			healthCheckNode = n
-		}
-	}
-	if healthCheckNode == nil {
-		return nil, fmt.Errorf("no valid healthcheck instruction found, got %q", healthcheck)
-	}
-
-	cmd, err := instructions.ParseCommand(healthCheckNode)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse healthcheck instruction: %w", err)
-	}
-
-	healthcheckcmd := cmd.(*instructions.HealthCheckCommand)
-	healthconfig := (*docker.HealthConfig)(healthcheckcmd.Health)
-
-	return healthconfig, nil
-}
-
 func currentRlimits() (map[int]*syscall.Rlimit, error) {
 	result := map[int]*syscall.Rlimit{
 		syscall.RLIMIT_CORE:   {},
@@ -769,3 +822,212 @@ func rlimitsToBuildahUlimits(rlimits map[int]*syscall.Rlimit) []string {
 		rlimitToBuildahUlimitFn(syscall.RLIMIT_STACK, "stack"),
 	}
 }
+
+func generateNamespaceOptionsAndNetworkPolicy(network instruction.NetworkType) (define.NamespaceOptions, define.NetworkConfigurationPolicy) {
+	var netPolicy define.NetworkConfigurationPolicy
+	nsOpts := define.NamespaceOptions{}
+
+	switch network {
+	case instruction.NetworkDefault, "":
+		netPolicy = define.NetworkDefault
+		nsOpts.AddOrReplace(define.NamespaceOption{
+			Name: string(specs.NetworkNamespace),
+		})
+	case instruction.NetworkHost:
+		netPolicy = define.NetworkEnabled
+		nsOpts.AddOrReplace(define.NamespaceOption{
+			Name: string(specs.NetworkNamespace),
+			Host: true,
+		})
+	case instruction.NetworkNone:
+		netPolicy = define.NetworkDisabled
+		nsOpts.AddOrReplace(define.NamespaceOption{
+			Name: string(specs.NetworkNamespace),
+		})
+	default:
+		panic(fmt.Sprintf("unexpected network type: %v", network))
+	}
+
+	return nsOpts, netPolicy
+}
+
+// TODO(ilya-lesikov): implement mounts
+// func generateMounts(mounts []*instructions.Mount, contextDir string) (map[string]*specs.Mount, error) {
+// 	result := map[string]*specs.Mount{}
+//
+// 	for _, mount := range mounts {
+// 		switch mount.Type {
+// 		case instructions.MountTypeBind:
+// 			if m, err := generateBindMount(mount, contextDir); err != nil {
+// 				return nil, fmt.Errorf("error generating bind mount: %w", err)
+// 			} else {
+// 				result[mount.Target] = m
+// 			}
+// 		case instructions.MountTypeCache:
+// 			result[mount.Target] = &specs.Mount{
+// 				Type:        parse.TypeCache,
+// 				Source:      mount.Source,
+// 				Destination: mount.Target,
+// 				Options:     generateMountOptions(mount),
+// 			}
+// 		case instructions.MountTypeTmpfs:
+// 		case instructions.MountTypeSecret:
+// 		case instructions.MountTypeSSH:
+// 		}
+// 	}
+// }
+//
+// func generateBindMount(mount *instructions.Mount, contextDir string) (*specs.Mount, string, error) {
+// 	var mountedImage string
+// 	var source string
+// 	if mount.From != "" && contextDir != "" {
+// 		// FIXME(ilya-lesikov): here also be container mounts and new contextDir:
+// 		// /home/user1/go/pkg/mod/github.com/containers/buildah@v1.26.1/internal/parse/parse.go:117
+// 		source = filepath.Join(contextDir, filepath.Clean(string(filepath.Separator)+mount.Source))
+// 		mountedImage = "" // TODO
+// 	} else {
+// 		if err := parse.ValidateVolumeHostDir(mount.Source); err != nil {
+// 			return nil, "", fmt.Errorf("invalid bind mount source %q: %w", mount.Source, err)
+// 		}
+// 		source = mount.Source
+// 	}
+//
+// 	if err := parse.ValidateVolumeCtrDir(mount.Target); err != nil {
+// 		return nil, "", fmt.Errorf("invalid bind mount target %q: %w", mount.Target, err)
+// 	}
+//
+// 	options := []string{"rbind"}
+//
+// 	if mount.ReadOnly {
+// 		options = append(options, "ro")
+// 	} else {
+// 		options = append(options, "rw")
+// 	}
+//
+// 	var err error
+// 	options, err = parse.ValidateVolumeOpts(options)
+// 	if err != nil {
+// 		return nil, "", fmt.Errorf("invalid bind mount options %v: %w", options, err)
+// 	}
+//
+// 	return &specs.Mount{
+// 		Type:        parse.TypeBind,
+// 		Source:      source,
+// 		Destination: mount.Target,
+// 		Options:     options,
+// 	}, mountedImage, nil
+// }
+//
+// func generateCacheMount(mount *instructions.Mount) (*specs.Mount, error) {
+// 	if err := parse.ValidateVolumeCtrDir(mount.Target); err != nil {
+// 		return nil, fmt.Errorf("invalid cache mount target %q: %w", mount.Target, err)
+// 	}
+//
+// 	options := []string{"bind", "shared"}
+//
+// 	if mount.ReadOnly {
+// 		options = append(options, "ro")
+// 	} else {
+// 		options = append(options, "rw")
+// 	}
+//
+// 	// var mode uint64
+// 	// if mount.Mode != nil {
+// 	// 	mode = *mount.Mode
+// 	// } else {
+// 	// 	mode = 0o755
+// 	// }
+// 	//
+// 	// var uid uint64
+// 	// if mount.UID != nil {
+// 	// 	uid = *mount.UID
+// 	// } else {
+// 	// 	uid = 0
+// 	// }
+// 	//
+// 	// var gid uint64
+// 	// if mount.GID != nil {
+// 	// 	gid = *mount.GID
+// 	// } else {
+// 	// 	gid = 0
+// 	// }
+//
+// 	// TODO(ilya-lesikov): create cache dir/image/stage, example:
+// 	//  /home/user1/go/pkg/mod/github.com/containers/buildah@v1.26.1/internal/parse/parse.go:286
+//
+// 	if mount.CacheSharing == "locked" {
+// 		// TODO(ilya-lesikov): Implement cache access locking
+// 		//  /home/user1/go/pkg/mod/github.com/containers/buildah@v1.26.1/internal/parse/parse.go:335
+// 	}
+//
+// 	var err error
+// 	options, err = parse.ValidateVolumeOpts(options)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("invalid cache mount options %v: %w", options, err)
+// 	}
+//
+// 	return &specs.Mount{
+// 		Type:        parse.TypeBind,
+// 		Source:      mount.Source,
+// 		Destination: mount.Target,
+// 		Options:     options,
+// 	}, nil
+// }
+//
+// func generateTmpFsMount(mount *instructions.Mount) (*specs.Mount, error) {
+// 	if err := parse.ValidateVolumeCtrDir(mount.Target); err != nil {
+// 		return nil, fmt.Errorf("invalid tmpfs mount target %q: %w", mount.Target, err)
+// 	}
+//
+// 	options := []string{"bind", "shared"}
+//
+// 	if mount.ReadOnly {
+// 		options = append(options, "ro")
+// 	} else {
+// 		options = append(options, "rw")
+// 	}
+//
+// 	if mount.Mode != nil {
+// 		options = append(options, fmt.Sprintf("mode=%o", *mount.Mode))
+// 	}
+//
+// 	var err error
+// 	options, err = parse.ValidateVolumeOpts(options)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("invalid tmpfs mount options %v: %w", options, err)
+// 	}
+//
+// 	return &specs.Mount{
+// 		Type:        parse.TypeTmpfs,
+// 		Source:      parse.TypeTmpfs,
+// 		Destination: mount.Target,
+// 		Options:     options,
+// 	}, nil
+// }
+//
+// func getSecretMount(mount *instructions.Mount) (*specs.Mount, error) {
+// 	if err := parse.ValidateVolumeCtrDir(mount.Target); err != nil {
+// 		return nil, fmt.Errorf("invalid secret mount target %q: %w", mount.Target, err)
+// 	}
+//
+// 	options := []string{"bind", "shared"}
+//
+// 	if mount.ReadOnly {
+// 		options = append(options, "ro")
+// 	} else {
+// 		options = append(options, "rw")
+// 	}
+//
+// 	var err error
+// 	options, err = parse.ValidateVolumeOpts(options)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("invalid secret mount options %v: %w", options, err)
+// 	}
+//
+// 	return &specs.Mount{
+// 		Type:        parse.TypeSecret,
+// 		Source:      mount.Source,
+// 		Destination: mount.Target,
+// 		Options:     options,
+// 	}, nil
+// }

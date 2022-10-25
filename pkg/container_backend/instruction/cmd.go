@@ -22,8 +22,13 @@ func (i *Cmd) UsesBuildContext() bool {
 }
 
 func (i *Cmd) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
-	if err := drv.Config(ctx, containerName, buildah.ConfigOpts{CommonOpts: drvOpts, Cmd: i.Cmd.Cmd}); err != nil {
+	if err := drv.Config(ctx, containerName, buildah.ConfigOpts{
+		CommonOpts:      drvOpts,
+		Cmd:             i.Cmd.Cmd,
+		CmdPrependShell: i.PrependShell,
+	}); err != nil {
 		return fmt.Errorf("error setting cmd %v for container %s: %w", i.Cmd, containerName, err)
 	}
+
 	return nil
 }

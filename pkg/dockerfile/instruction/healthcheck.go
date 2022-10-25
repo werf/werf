@@ -3,6 +3,7 @@ package instruction
 import "github.com/docker/docker/api/types/container"
 
 type Healthcheck struct {
+	// TODO(ilya-lesikov): isn't this should be a part of a Config.Test?
 	Type   HealthcheckType
 	Config *container.HealthConfig
 }
