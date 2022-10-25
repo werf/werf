@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/pkg/util"
 )
 
 type rawImageFromDockerfile struct {
@@ -126,7 +127,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 		image.Dependencies = append(image.Dependencies, dependencyDirective)
 	}
 
-	image.Staged = c.Staged
+	image.Staged = c.Staged || util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_STAGED_DOCKERFILE")
 	image.raw = c
 
 	if err := image.validate(giterminismManager); err != nil {

@@ -9,12 +9,22 @@ import (
 	"github.com/werf/werf/test/pkg/werf"
 )
 
+type complexTestOptions struct {
+	BuildahMode                 string
+	WithLocalRepo               bool
+	WithStagedDockerfileBuilder bool
+}
+
 var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 	DescribeTable("should succeed and produce expected image",
-		func(withLocalRepo bool, buildahMode string) {
+		func(testOpts complexTestOptions) {
 			By("initializing")
-			setupEnv(withLocalRepo, buildahMode)
-			contRuntime, err := contback.NewContainerBackend(buildahMode)
+			setupEnv(setupEnvOptions{
+				BuildahMode:               testOpts.BuildahMode,
+				WithLocalRepo:             testOpts.WithLocalRepo,
+				WithForceStagedDockerfile: testOpts.WithStagedDockerfileBuilder,
+			})
+			contRuntime, err := contback.NewContainerBackend(testOpts.BuildahMode)
 			if err == contback.ErrRuntimeUnavailable {
 				Skip(err.Error())
 			} else if err != nil {
@@ -219,9 +229,37 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				)
 			}
 		},
-		Entry("without repo using Docker", false, "docker"),
-		Entry("with local repo using Docker", true, "docker"),
-		Entry("with local repo using Native Buildah with rootless isolation", true, "native-rootless"),
-		Entry("with local repo using Native Buildah with chroot isolation", true, "native-chroot"),
+		Entry("without repo using Docker", complexTestOptions{
+			BuildahMode:                 "docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("with local repo using Docker", complexTestOptions{
+			BuildahMode:                 "docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{
+			BuildahMode:                 "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("with local repo using Native Buildah with chroot isolation", complexTestOptions{
+			BuildahMode:                 "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}),
+		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
+		Entry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", complexTestOptions{
+			BuildahMode:                 "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}),
+		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
+		Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{
+			BuildahMode:                 "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}),
 	)
 })
