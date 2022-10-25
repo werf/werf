@@ -35,9 +35,9 @@ func (stage *DockerfileStage) AppendDependencyStage(dep *DockerfileStage) {
 
 func (stage *DockerfileStage) WerfImageName() string {
 	if stage.HasStageName() {
-		return fmt.Sprintf("dockerfile-stage-%s", stage.StageName)
+		return fmt.Sprintf("stage/%s", stage.StageName)
 	} else {
-		return fmt.Sprintf("dockerfile-stage-%d", stage.Index)
+		return fmt.Sprintf("stage/%d", stage.Index)
 	}
 }
 

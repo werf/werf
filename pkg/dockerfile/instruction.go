@@ -30,6 +30,7 @@ func (i *DockerfileStageInstruction[T]) SetDependencyByStageRef(ref string, dep 
 		if d.Index != dep.Index {
 			panic(fmt.Sprintf("already set instruction dependency %q to stage %d named %q, cannot replace with stage %d named %q, please report a bug", ref, d.Index, d.StageName, dep.Index, dep.StageName))
 		}
+		return
 	}
 	i.DependenciesByStageRef[ref] = dep
 }
