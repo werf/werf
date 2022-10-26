@@ -101,8 +101,19 @@ func extractSrcAndDst(sourcesAndDest instructions.SourcesAndDest) ([]string, str
 	if len(sourcesAndDest) < 2 {
 		panic(fmt.Sprintf("unexpected buildkit instruction source and destination: %#v", sourcesAndDest))
 	}
-	dst := sourcesAndDest[len(sourcesAndDest)-1]
-	src := sourcesAndDest[0 : len(sourcesAndDest)-1]
+
+	// TODO: somehow parse.Parse() and instructions.Parse() do not unquote at least sources,
+	//  maybe that will be fixed in later versions of buildkit? Ref:
+	//  /home/user1/go/pkg/mod/github.com/moby/buildkit@v0.8.2/frontend/dockerfile/instructions/parse.go:143
+	//  /home/user1/go/pkg/mod/github.com/moby/buildkit@v0.8.2/frontend/dockerfile/parser/parser.go:250
+	var src []string
+	for _, s := range sourcesAndDest[0 : len(sourcesAndDest)-1] {
+		s, _ = strconv.Unquote(s)
+		src = append(src, s)
+	}
+
+	dst, _ := strconv.Unquote(sourcesAndDest[len(sourcesAndDest)-1])
+
 	return src, dst
 }
 

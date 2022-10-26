@@ -65,28 +65,35 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 	}
 
 	queue := []struct {
-		Stage *dockerfile.DockerfileStage
-		Level int
+		WerfImageName string
+		Stage         *dockerfile.DockerfileStage
+		Level         int
 	}{
-		{Stage: targetStage, Level: 0},
+		{WerfImageName: dockerfileImageConfig.Name, Stage: targetStage, Level: 0},
 	}
 
-	appendQueue := func(stage *dockerfile.DockerfileStage, level int) {
+	appendQueue := func(werfImageName string, stage *dockerfile.DockerfileStage, level int) {
 		queue = append(queue, struct {
-			Stage *dockerfile.DockerfileStage
-			Level int
-		}{Stage: stage, Level: level})
+			WerfImageName string
+			Stage         *dockerfile.DockerfileStage
+			Level         int
+		}{WerfImageName: werfImageName, Stage: stage, Level: level})
 	}
 
 	for len(queue) > 0 {
 		item := queue[0]
 		queue = queue[1:]
 
-		appendImageToCurrentSet := func(img *Image) {
+		appendImageToCurrentSet := func(newImg *Image) {
 			if item.Level == len(ret) {
 				ret = append([][]*Image{nil}, ret...)
 			}
-			ret[len(ret)-item.Level-1] = append(ret[len(ret)-item.Level-1], img)
+			for _, img := range ret[len(ret)-item.Level-1] {
+				if img.Name == newImg.Name {
+					return
+				}
+			}
+			ret[len(ret)-item.Level-1] = append(ret[len(ret)-item.Level-1], newImg)
 		}
 
 		stg := item.Stage
@@ -94,7 +101,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		var img *Image
 		var err error
 		if baseStg := cfg.FindStage(stg.BaseName); baseStg != nil {
-			img, err = NewImage(ctx, dockerfileImageConfig.Name, StageAsBaseImage, ImageOptions{
+			img, err = NewImage(ctx, item.WerfImageName, StageAsBaseImage, ImageOptions{
 				IsDockerfileImage:     true,
 				DockerfileImageConfig: dockerfileImageConfig,
 				CommonImageOptions:    opts,
@@ -104,9 +111,9 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", stg.LogName(), dockerfileImageConfig.Name, err)
 			}
 
-			appendQueue(baseStg, item.Level+1)
+			appendQueue(baseStg.WerfImageName(), baseStg, item.Level+1)
 		} else {
-			img, err = NewImage(ctx, dockerfileImageConfig.Name, ImageFromRegistryAsBaseImage, ImageOptions{
+			img, err = NewImage(ctx, item.WerfImageName, ImageFromRegistryAsBaseImage, ImageOptions{
 				IsDockerfileImage:     true,
 				DockerfileImageConfig: dockerfileImageConfig,
 				CommonImageOptions:    opts,
@@ -129,6 +136,9 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 
 			var stg stage.Interface
 			switch typedInstr := any(instr).(type) {
+			case *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Arg]:
+				// TODO(staged-dockerfile): support build-args at this level or dockerfile pkg level (?)
+				continue
 			case *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Add]:
 				stg = stage_instruction.NewAdd(stageName, typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Cmd]:
@@ -168,7 +178,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			img.stages = append(img.stages, stg)
 
 			for _, dep := range instr.GetDependenciesByStageRef() {
-				appendQueue(dep, item.Level+1)
+				appendQueue(dep.WerfImageName(), dep, item.Level+1)
 			}
 		}
 

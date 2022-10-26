@@ -7,6 +7,7 @@ import (
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
+	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/dockerfile"
 	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/util"
@@ -17,8 +18,7 @@ type Healthcheck struct {
 }
 
 func NewHealthcheck(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Healthcheck], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Healthcheck {
-	// FIXME(staged-dockerfile): construct backend instruction
-	return &Healthcheck{Base: NewBase(name, i, nil, dependencies, hasPrevStage, opts)}
+	return &Healthcheck{Base: NewBase(name, i, backend_instruction.NewHealthcheck(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stage *Healthcheck) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
