@@ -13,16 +13,20 @@ import (
 )
 
 type User struct {
-	*Base[*dockerfile_instruction.User]
+	*Base[*dockerfile_instruction.User, *backend_instruction.User]
 }
 
 func NewUser(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.User], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *User {
 	return &User{Base: NewBase(name, i, backend_instruction.NewUser(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stage *User) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	var args []string
-	args = append(args, stage.instruction.Data.Name())
-	args = append(args, stage.instruction.Data.User)
+func (stg *User) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
+	if err != nil {
+		return "", err
+	}
+
+	args = append(args, "Instruction", stg.instruction.Data.Name())
+	args = append(args, "User", stg.instruction.Data.User)
 	return util.Sha256Hash(args...), nil
 }

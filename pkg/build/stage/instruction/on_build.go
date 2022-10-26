@@ -13,16 +13,20 @@ import (
 )
 
 type OnBuild struct {
-	*Base[*dockerfile_instruction.OnBuild]
+	*Base[*dockerfile_instruction.OnBuild, *backend_instruction.OnBuild]
 }
 
 func NewOnBuild(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.OnBuild], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *OnBuild {
 	return &OnBuild{Base: NewBase(name, i, backend_instruction.NewOnBuild(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stage *OnBuild) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	var args []string
-	args = append(args, stage.instruction.Data.Name())
-	args = append(args, stage.instruction.Data.Instruction)
+func (stg *OnBuild) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
+	if err != nil {
+		return "", err
+	}
+
+	args = append(args, "Instruction", stg.instruction.Data.Name())
+	args = append(args, "Instruction", stg.instruction.Data.Instruction)
 	return util.Sha256Hash(args...), nil
 }
