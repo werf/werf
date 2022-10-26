@@ -13,19 +13,28 @@ import (
 )
 
 type Label struct {
-	*Base[*dockerfile_instruction.Label]
+	*Base[*dockerfile_instruction.Label, *backend_instruction.Label]
 }
 
 func NewLabel(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Label], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Label {
 	return &Label{Base: NewBase(name, i, backend_instruction.NewLabel(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stage *Label) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	var args []string
-	args = append(args, stage.instruction.Data.Name())
-	// FIXME(staged-dockerfile): sort labels map
-	for k, v := range stage.instruction.Data.Labels {
-		args = append(args, k, v)
+func (stg *Label) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
+	if err != nil {
+		return "", err
 	}
+
+	args = append(args, "Instruction", stg.instruction.Data.Name())
+
+	// FIXME(staged-dockerfile): sort labels map
+	if len(stg.instruction.Data.Labels) > 0 {
+		args = append(args, "Labels")
+		for k, v := range stg.instruction.Data.Labels {
+			args = append(args, k, v)
+		}
+	}
+
 	return util.Sha256Hash(args...), nil
 }

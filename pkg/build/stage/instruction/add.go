@@ -14,33 +14,36 @@ import (
 )
 
 type Add struct {
-	*Base[*dockerfile_instruction.Add]
+	*Base[*dockerfile_instruction.Add, *backend_instruction.Add]
 }
 
 func NewAdd(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Add], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Add {
 	return &Add{Base: NewBase(name, i, backend_instruction.NewAdd(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stage *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	var args []string
+func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
+	if err != nil {
+		return "", err
+	}
 
-	args = append(args, stage.instruction.Data.Name())
-	args = append(args, stage.instruction.Data.Raw)
-	args = append(args, stage.instruction.Data.Src...)
-	args = append(args, stage.instruction.Data.Dst)
-	args = append(args, stage.instruction.Data.Chown)
-	args = append(args, stage.instruction.Data.Chmod)
+	args = append(args, "Instruction", stg.instruction.Data.Name())
+	args = append(args, "Raw", stg.instruction.Data.Raw)
+	args = append(args, append([]string{"Src"}, stg.instruction.Data.Src...)...)
+	args = append(args, "Dst", stg.instruction.Data.Dst)
+	args = append(args, "Chown", stg.instruction.Data.Chown)
+	args = append(args, "Chmod", stg.instruction.Data.Chmod)
+
+	pathsChecksum, err := buildContextArchive.CalculatePathsChecksum(ctx, stg.instruction.Data.Src)
+	if err != nil {
+		return "", fmt.Errorf("unable to calculate build context paths checksum: %w", err)
+	}
+	args = append(args, "SrcChecksum", pathsChecksum)
 
 	// TODO(staged-dockerfile): support http src and --checksum option: https://docs.docker.com/engine/reference/builder/#verifying-a-remote-file-checksum-add---checksumchecksum-http-src-dest
 	// TODO(staged-dockerfile): support git ref: https://docs.docker.com/engine/reference/builder/#adding-a-git-repository-add-git-ref-dir
 	// TODO(staged-dockerfile): support --keep-git-dir for git: https://docs.docker.com/engine/reference/builder/#adding-a-git-repository-add-git-ref-dir
 	// TODO(staged-dockerfile): support --link
-
-	pathsChecksum, err := buildContextArchive.CalculatePathsChecksum(ctx, stage.instruction.Data.Src)
-	if err != nil {
-		return "", fmt.Errorf("unable to calculate build context paths checksum: %w", err)
-	}
-	args = append(args, fmt.Sprintf("src-checksum=%s", pathsChecksum))
 
 	return util.Sha256Hash(args...), nil
 }

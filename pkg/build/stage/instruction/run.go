@@ -13,13 +13,20 @@ import (
 )
 
 type Run struct {
-	*Base[*dockerfile_instruction.Run]
+	*Base[*dockerfile_instruction.Run, *backend_instruction.Run]
 }
 
 func NewRun(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Run], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
 	return &Run{Base: NewBase(name, i, backend_instruction.NewRun(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stage *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	return util.Sha256Hash(append([]string{stage.instruction.Data.Name()}, stage.instruction.Data.Command...)...), nil
+func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
+	if err != nil {
+		return "", err
+	}
+
+	args = append(args, "Instruction", stg.instruction.Data.Name())
+	args = append(args, append([]string{"Command"}, stg.instruction.Data.Command...)...)
+	return util.Sha256Hash(args...), nil
 }

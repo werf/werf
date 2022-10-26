@@ -13,16 +13,20 @@ import (
 )
 
 type Workdir struct {
-	*Base[*dockerfile_instruction.Workdir]
+	*Base[*dockerfile_instruction.Workdir, *backend_instruction.Workdir]
 }
 
 func NewWorkdir(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Workdir], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Workdir {
 	return &Workdir{Base: NewBase(name, i, backend_instruction.NewWorkdir(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stage *Workdir) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	var args []string
-	args = append(args, stage.instruction.Data.Name())
-	args = append(args, stage.instruction.Data.Workdir)
+func (stg *Workdir) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
+	if err != nil {
+		return "", err
+	}
+
+	args = append(args, "Instruction", stg.instruction.Data.Name())
+	args = append(args, "Workdir", stg.instruction.Data.Workdir)
 	return util.Sha256Hash(args...), nil
 }
