@@ -47,7 +47,7 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 	args = append(args, "ExpandedFrom", stg.backendInstruction.From)
 
 	if stg.UsesBuildContext() {
-		if srcChecksum, err := calculateBuildContextGlobsChecksum(ctx, stg.instruction.Data.Src, false, buildContextArchive); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.Src, false); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
 			args = append(args, "SrcChecksum", srcChecksum)
