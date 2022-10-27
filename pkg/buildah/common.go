@@ -110,8 +110,9 @@ type ConfigOpts struct {
 type CopyOpts struct {
 	CommonOpts
 
-	Chown string
-	Chmod string
+	Chown   string
+	Chmod   string
+	Ignores []string
 }
 
 type AddOpts struct {
@@ -120,6 +121,7 @@ type AddOpts struct {
 	ContextDir string
 	Chown      string
 	Chmod      string
+	Ignores    []string
 }
 
 type (

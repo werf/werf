@@ -2,6 +2,7 @@ package instruction
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -44,6 +45,16 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 	args = append(args, "Chown", stg.instruction.Data.Chown)
 	args = append(args, "Chmod", stg.instruction.Data.Chmod)
 	args = append(args, "ExpandedFrom", stg.backendInstruction.From)
+
+	if stg.UsesBuildContext() {
+		if srcChecksum, err := calculateBuildContextGlobsChecksum(ctx, stg.instruction.Data.Src, false, buildContextArchive); err != nil {
+			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
+		} else {
+			args = append(args, "SrcChecksum", srcChecksum)
+		}
+	}
+
+	// TODO(ilya-lesikov): should checksum of files from other image be calculated if --from specified?
 
 	// TODO(staged-dockerfile): support --link option: https://docs.docker.com/engine/reference/builder/#copy---link
 

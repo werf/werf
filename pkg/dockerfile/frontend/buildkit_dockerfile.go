@@ -108,11 +108,17 @@ func extractSrcAndDst(sourcesAndDest instructions.SourcesAndDest) ([]string, str
 	//  /home/user1/go/pkg/mod/github.com/moby/buildkit@v0.8.2/frontend/dockerfile/parser/parser.go:250
 	var src []string
 	for _, s := range sourcesAndDest[0 : len(sourcesAndDest)-1] {
-		s, _ = strconv.Unquote(s)
+		if unquoted, err := strconv.Unquote(s); err == nil {
+			s = unquoted
+		}
+
 		src = append(src, s)
 	}
 
-	dst, _ := strconv.Unquote(sourcesAndDest[len(sourcesAndDest)-1])
+	dst := sourcesAndDest[len(sourcesAndDest)-1]
+	if unquoted, err := strconv.Unquote(dst); err == nil {
+		dst = unquoted
+	}
 
 	return src, dst
 }
