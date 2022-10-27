@@ -8,6 +8,7 @@ import (
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
+	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/werf/pkg/dockerfile"
 	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
@@ -29,9 +30,15 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 		return nil, fmt.Errorf("determine target stage: %w", err)
 	}
 
+	shlex := shell.NewLex(p.EscapeToken)
+
 	var stages []*dockerfile.DockerfileStage
 	for i, dockerStage := range dockerStages {
-		stages = append(stages, DockerfileStageFromBuildkitStage(i, dockerStage))
+		if stage, err := DockerfileStageFromBuildkitStage(i, dockerStage, shlex); err != nil {
+			return nil, fmt.Errorf("error converting buildkit stage to dockerfile stage: %w", err)
+		} else {
+			stages = append(stages, stage)
+		}
 	}
 
 	// TODO(staged-dockerfile): convert meta-args and initialize into Dockerfile obj
@@ -47,10 +54,19 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 	return d, nil
 }
 
-func DockerfileStageFromBuildkitStage(index int, stage instructions.Stage) *dockerfile.DockerfileStage {
+func DockerfileStageFromBuildkitStage(index int, stage instructions.Stage, shlex *shell.Lex) (*dockerfile.DockerfileStage, error) {
 	var i []dockerfile.DockerfileStageInstructionInterface
 
 	for _, cmd := range stage.Commands {
+		if expandable, ok := cmd.(instructions.SupportsSingleWordExpansion); ok {
+			if err := expandable.Expand(func(word string) (string, error) {
+				// FIXME(ilya-lesikov): add envs/buildargs here
+				return shlex.ProcessWord(word, []string{})
+			}); err != nil {
+				return nil, fmt.Errorf("error expanding command %q: %w", cmd.Name(), err)
+			}
+		}
+
 		switch typedCmd := cmd.(type) {
 		case *instructions.AddCommand:
 			src, dst := extractSrcAndDst(typedCmd.SourcesAndDest)
@@ -94,33 +110,15 @@ func DockerfileStageFromBuildkitStage(index int, stage instructions.Stage) *dock
 		}
 	}
 
-	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, i, stage.Platform)
+	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, i, stage.Platform), nil
 }
 
-func extractSrcAndDst(sourcesAndDest instructions.SourcesAndDest) ([]string, string) {
+func extractSrcAndDst(sourcesAndDest instructions.SourcesAndDest) (src []string, dst string) {
 	if len(sourcesAndDest) < 2 {
 		panic(fmt.Sprintf("unexpected buildkit instruction source and destination: %#v", sourcesAndDest))
 	}
 
-	// TODO: somehow parse.Parse() and instructions.Parse() do not unquote at least sources,
-	//  maybe that will be fixed in later versions of buildkit? Ref:
-	//  /home/user1/go/pkg/mod/github.com/moby/buildkit@v0.8.2/frontend/dockerfile/instructions/parse.go:143
-	//  /home/user1/go/pkg/mod/github.com/moby/buildkit@v0.8.2/frontend/dockerfile/parser/parser.go:250
-	var src []string
-	for _, s := range sourcesAndDest[0 : len(sourcesAndDest)-1] {
-		if unquoted, err := strconv.Unquote(s); err == nil {
-			s = unquoted
-		}
-
-		src = append(src, s)
-	}
-
-	dst := sourcesAndDest[len(sourcesAndDest)-1]
-	if unquoted, err := strconv.Unquote(dst); err == nil {
-		dst = unquoted
-	}
-
-	return src, dst
+	return sourcesAndDest[0 : len(sourcesAndDest)-1], sourcesAndDest[len(sourcesAndDest)-1]
 }
 
 func extractKeyValuePairsAsMap(pairs instructions.KeyValuePairs) (res map[string]string) {
