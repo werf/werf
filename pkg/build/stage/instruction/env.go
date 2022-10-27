@@ -27,11 +27,10 @@ func (stg *Env) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	}
 
 	args = append(args, "Instruction", stg.instruction.Data.Name())
-	// FIXME(staged-dockerfile): sort envs
 	if len(stg.instruction.Data.Envs) > 0 {
 		args = append(args, "Envs")
-		for k, v := range stg.instruction.Data.Envs {
-			args = append(args, k, v)
+		for _, k := range util.SortedStringKeys(stg.instruction.Data.Envs) {
+			args = append(args, k, stg.instruction.Data.Envs[k])
 		}
 	}
 	return util.Sha256Hash(args...), nil
