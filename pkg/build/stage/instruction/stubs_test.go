@@ -1,9 +1,23 @@
 package instruction
 
 import (
+	"context"
+	"strings"
+
 	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/container_backend/stage_builder"
+	"github.com/werf/werf/pkg/dockerfile"
+	"github.com/werf/werf/pkg/util"
 )
+
+func NewDockerfileStageInstructionWithDependencyStages[T dockerfile.InstructionDataInterface](data T, dependencyStages []string) *dockerfile.DockerfileStageInstruction[T] {
+	i := dockerfile.NewDockerfileStageInstruction(data)
+	for _, stageName := range dependencyStages {
+		i.SetDependencyByStageRef(stageName, &dockerfile.DockerfileStage{StageName: stageName})
+	}
+	return i
+}
 
 type TestData struct {
 	Stage          stage.Interface
@@ -17,8 +31,17 @@ type TestData struct {
 	BuildContext     *BuildContextStub
 }
 
-func NewTestData(stg stage.Interface, expectedDigest string, files []*FileData) *TestData {
-	conveyor := stage.NewConveyorStub(stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), stage.NewGiterminismInspectorStub()), nil, nil)
+type TestDataOptions struct {
+	Files                                                      []*FileData
+	LastStageImageNameByWerfImage, LastStageImageIDByWerfImage map[string]string
+}
+
+func NewTestData(stg stage.Interface, expectedDigest string, opts TestDataOptions) *TestData {
+	conveyor := stage.NewConveyorStub(
+		stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), stage.NewGiterminismInspectorStub()),
+		opts.LastStageImageNameByWerfImage,
+		opts.LastStageImageIDByWerfImage,
+	)
 	containerBackend := stage.NewContainerBackendStub()
 
 	img := stage.NewLegacyImageStub()
@@ -28,7 +51,7 @@ func NewTestData(stg stage.Interface, expectedDigest string, files []*FileData) 
 		Builder: stageBuilder,
 	}
 
-	buildContext := NewBuildContextStub(files)
+	buildContext := NewBuildContextStub(opts.Files)
 
 	return &TestData{
 		Stage:            stg,
@@ -40,4 +63,41 @@ func NewTestData(stg stage.Interface, expectedDigest string, files []*FileData) 
 		StageImage:       stageImage,
 		BuildContext:     buildContext,
 	}
+}
+
+type BuildContextStub struct {
+	container_backend.BuildContextArchiver
+
+	Files []*FileData
+}
+
+type FileData struct {
+	Name string
+	Data []byte
+}
+
+func NewBuildContextStub(files []*FileData) *BuildContextStub {
+	return &BuildContextStub{Files: files}
+}
+
+func (buildContext *BuildContextStub) CalculateGlobsChecksum(ctx context.Context, globs []string, checkForArchive bool) (string, error) {
+	var args []string
+
+	for _, p := range globs {
+		for _, f := range buildContext.Files {
+			if f.Name == p {
+				args = append(args, string(f.Data))
+				break
+			}
+		}
+
+		for _, f := range buildContext.Files {
+			if strings.HasPrefix(f.Name, p) {
+				args = append(args, string(f.Data))
+				break
+			}
+		}
+	}
+
+	return util.Sha256Hash(args...), nil
 }
