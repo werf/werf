@@ -574,10 +574,7 @@ func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, 
 		Chmod:             opts.Chmod,
 		PreserveOwnership: false,
 		ContextDir:        contextDir,
-		// TODO(ilya-lesikov): ignore file?
-		Excludes: nil,
-		// TODO(ilya-lesikov): ignore file?
-		IgnoreFile: "",
+		Excludes:          opts.Ignores,
 	}, absSrc...); err != nil {
 		return fmt.Errorf("error copying files to %q: %w", dst, err)
 	}
@@ -610,10 +607,7 @@ func (b *NativeBuildah) Add(ctx context.Context, container string, src []string,
 		Chown:             opts.Chown,
 		PreserveOwnership: false,
 		ContextDir:        opts.ContextDir,
-		// TODO(ilya-lesikov): ignore file?
-		Excludes: nil,
-		// TODO(ilya-lesikov): ignore file?
-		IgnoreFile: "",
+		Excludes:          opts.Ignores,
 	}, expandedSrc...); err != nil {
 		return fmt.Errorf("error adding files to %q: %w", dst, err)
 	}

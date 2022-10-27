@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/container_backend"
@@ -69,6 +70,10 @@ func (a *BuildContextArchive) Path() string {
 }
 
 func (a *BuildContextArchive) ExtractOrGetExtractedDir(ctx context.Context) (string, error) {
+	if a.path == "" {
+		panic("extract should not be called before create")
+	}
+
 	if a.extractionDir != "" {
 		return a.extractionDir, nil
 	}
@@ -107,12 +112,25 @@ func (a *BuildContextArchive) CleanupExtractedDir(ctx context.Context) {
 }
 
 func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
+	sort.Strings(paths)
+	paths = util.UniqStrings(paths)
+
 	dir, err := a.ExtractOrGetExtractedDir(ctx)
 	if err != nil {
 		return "", fmt.Errorf("unable to access context directory: %w", err)
 	}
 
-	_ = dir
+	var pathsHashes []string
+	for _, path := range paths {
+		p := filepath.Join(dir, path)
 
-	return "", nil
+		hash, err := util.HashContentsAndPathsRecurse(p)
+		if err != nil {
+			return "", fmt.Errorf("unable to calculate hash: %w", err)
+		}
+
+		pathsHashes = append(pathsHashes, hash)
+	}
+
+	return util.Sha256Hash(pathsHashes...), nil
 }

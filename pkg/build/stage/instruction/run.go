@@ -28,5 +28,8 @@ func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 
 	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, append([]string{"Command"}, stg.instruction.Data.Command...)...)
+
+	// TODO(ilya-lesikov): should bind mount with context as src be counted as dependency?
+
 	return util.Sha256Hash(args...), nil
 }
