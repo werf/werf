@@ -77,7 +77,7 @@ func calculateBuildContextGlobsChecksum(ctx context.Context, fileGlobs []string,
 	var matches []string
 	for _, globStat := range globStats {
 		if globStat.Error != "" {
-			return "", fmt.Errorf("unable to stat glob %q: %w", globStat.Glob, globStat.Error)
+			return "", fmt.Errorf("unable to stat glob %q: %s", globStat.Glob, globStat.Error)
 		}
 
 		for _, match := range globStat.Globbed {
