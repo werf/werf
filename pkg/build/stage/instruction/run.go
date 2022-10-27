@@ -2,6 +2,7 @@ package instruction
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -28,6 +29,32 @@ func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 
 	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, append([]string{"Command"}, stg.instruction.Data.Command...)...)
+	args = append(args, "PrependShell", fmt.Sprintf("%v", stg.instruction.Data.PrependShell))
+	args = append(args, "Network", string(stg.instruction.Data.Network))
+	args = append(args, "Security", string(stg.instruction.Data.Security))
+
+	if len(stg.instruction.Data.Mounts) > 0 {
+		args = append(args, "Mounts")
+		for _, mnt := range stg.instruction.Data.Mounts {
+			args = append(args, "Type", mnt.Type)
+			args = append(args, "From", mnt.From)
+			args = append(args, "Source", mnt.Source)
+			args = append(args, "Target", mnt.Target)
+			args = append(args, "ReadOnly", fmt.Sprintf("%v", mnt.ReadOnly))
+			args = append(args, "CacheID", mnt.CacheID)
+			args = append(args, "CacheSharing", mnt.CacheSharing)
+			args = append(args, "Required", fmt.Sprintf("%v", mnt.Required))
+			if mnt.Mode != nil {
+				args = append(args, "Mode", fmt.Sprintf("%d", *mnt.Mode))
+			}
+			if mnt.UID != nil {
+				args = append(args, "UID", fmt.Sprintf("%d", *mnt.UID))
+			}
+			if mnt.GID != nil {
+				args = append(args, "GID", fmt.Sprintf("%d", *mnt.GID))
+			}
+		}
+	}
 
 	// TODO(ilya-lesikov): should bind mount with context as src be counted as dependency?
 

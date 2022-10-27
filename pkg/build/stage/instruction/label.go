@@ -27,14 +27,11 @@ func (stg *Label) GetDependencies(ctx context.Context, c stage.Conveyor, cb cont
 	}
 
 	args = append(args, "Instruction", stg.instruction.Data.Name())
-
-	// FIXME(staged-dockerfile): sort labels map
 	if len(stg.instruction.Data.Labels) > 0 {
 		args = append(args, "Labels")
-		for k, v := range stg.instruction.Data.Labels {
-			args = append(args, k, v)
+		for _, k := range util.SortedStringKeys(stg.instruction.Data.Labels) {
+			args = append(args, k, stg.instruction.Data.Labels[k])
 		}
 	}
-
 	return util.Sha256Hash(args...), nil
 }
