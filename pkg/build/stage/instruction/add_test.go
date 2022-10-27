@@ -3,25 +3,15 @@ package instruction
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/dockerfile"
 	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
-	"github.com/werf/werf/pkg/util"
 )
 
-var (
-	Entry          = ginkgo.Entry
-	DescribeTable  = ginkgo.DescribeTable
-	XDescribeTable = ginkgo.XDescribeTable
-)
-
-var _ = XDescribeTable("calculating digest and configuring builder",
+var _ = DescribeTable("ADD digest",
 	func(data *TestData) {
 		ctx := context.Background()
 
@@ -42,10 +32,12 @@ var _ = XDescribeTable("calculating digest and configuring builder",
 				ProjectName: "example-project",
 			},
 		),
-		"bf369f0c1d046108f1a7314b086cefe109b8edc01878033eccf41f1ff47e2c73",
-		[]*FileData{
-			{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
-			{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker {}`)},
+		"febdd3676850b1b28161dc2a518495ba8e413b1aab3f28c7121c44c9da7d1212",
+		TestDataOptions{
+			Files: []*FileData{
+				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
+				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker {}`)},
+			},
 		},
 	)),
 
@@ -57,11 +49,13 @@ var _ = XDescribeTable("calculating digest and configuring builder",
 				ProjectName: "example-project",
 			},
 		),
-		"2a9fc5cdddb5443ff19bcc6366a3ad42f2ac8e86a3779dadf0ac34857b3928cb",
-		[]*FileData{
-			{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
-			{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker {}`)},
-			{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+		"7f2ce5be335c61b5117446a3e508af27af1217bab68319a690f0f8d4653bed21",
+		TestDataOptions{
+			Files: []*FileData{
+				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
+				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker {}`)},
+				{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+			},
 		},
 	)),
 
@@ -73,11 +67,13 @@ var _ = XDescribeTable("calculating digest and configuring builder",
 				ProjectName: "example-project",
 			},
 		),
-		"e2c17b3d62eb61470f16544a4ea42b66b37326dc5f10d61b7a9ebab04e53e7a7",
-		[]*FileData{
-			{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
-			{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker {}`)},
-			{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+		"f37bc012a10364919e30f5c6ac1ed9de8d5d32590ecb57564c449d1261439488",
+		TestDataOptions{
+			Files: []*FileData{
+				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
+				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker {}`)},
+				{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+			},
 		},
 	)),
 
@@ -89,11 +85,13 @@ var _ = XDescribeTable("calculating digest and configuring builder",
 				ProjectName: "example-project",
 			},
 		),
-		"cc635522d684dd86345d3a074722ecaf82fd33c33912c6667caea62177ba2540",
-		[]*FileData{
-			{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
-			{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker {}`)},
-			{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+		"4a66595bf3f692d892cc1f5132a21939f681b5e38c59831b0359ba69889f1392",
+		TestDataOptions{
+			Files: []*FileData{
+				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
+				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker {}`)},
+				{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+			},
 		},
 	)),
 
@@ -105,11 +103,13 @@ var _ = XDescribeTable("calculating digest and configuring builder",
 				ProjectName: "example-project",
 			},
 		),
-		"15add63c912f20138ed0eb4a2bb906bc3c3fa70d0d0ac26c7871363484a84c94",
-		[]*FileData{
-			{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
-			{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker2 {}`)},
-			{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+		"c52c2a9ff2aa7054ab1f5c57717775c4e00a3b80d618b8a2aacefeb48b582ac0",
+		TestDataOptions{
+			Files: []*FileData{
+				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
+				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker2 {}`)},
+				{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+			},
 		},
 	)),
 
@@ -121,48 +121,13 @@ var _ = XDescribeTable("calculating digest and configuring builder",
 				ProjectName: "example-project",
 			},
 		),
-		"15b2f0b0d9b569a55f0af7c8326e2d5d8792f5a7df1f8fd4e612034f74a015e1",
-		[]*FileData{
-			{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
-			{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker2 {}`)},
-			{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+		"a067cbedb63b837bc9583487b27ad2f5dcc9d744df03414b9b1436e90e8c514e",
+		TestDataOptions{
+			Files: []*FileData{
+				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
+				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker2 {}`)},
+				{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+			},
 		},
 	)),
 )
-
-type BuildContextStub struct {
-	container_backend.BuildContextArchiver
-
-	Files []*FileData
-}
-
-type FileData struct {
-	Name string
-	Data []byte
-}
-
-func NewBuildContextStub(files []*FileData) *BuildContextStub {
-	return &BuildContextStub{Files: files}
-}
-
-func (buildContext *BuildContextStub) CalculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
-	var args []string
-
-	for _, p := range paths {
-		for _, f := range buildContext.Files {
-			if f.Name == p {
-				args = append(args, string(f.Data))
-				break
-			}
-		}
-
-		for _, f := range buildContext.Files {
-			if strings.HasPrefix(f.Name, p) {
-				args = append(args, string(f.Data))
-				break
-			}
-		}
-	}
-
-	return util.Sha256Hash(args...), nil
-}
