@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containers/buildah/copier"
-
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
@@ -45,7 +43,7 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	}
 
 	if len(fileGlobSrc) > 0 {
-		if srcChecksum, err := calculateBuildContextGlobsChecksum(ctx, fileGlobSrc, true, buildContextArchive); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, fileGlobSrc, true); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
 			args = append(args, "SrcChecksum", srcChecksum)
@@ -58,37 +56,4 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	// TODO(staged-dockerfile): support --link
 
 	return util.Sha256Hash(args...), nil
-}
-
-func calculateBuildContextGlobsChecksum(ctx context.Context, fileGlobs []string, checkForArchives bool, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	contextDir, err := buildContextArchive.ExtractOrGetExtractedDir(ctx)
-	if err != nil {
-		return "", fmt.Errorf("unable to get build context dir: %w", err)
-	}
-
-	globStats, err := copier.Stat(contextDir, contextDir, copier.StatOptions{CheckForArchives: checkForArchives}, fileGlobs)
-	if err != nil {
-		return "", fmt.Errorf("unable to stat globs: %w", err)
-	}
-	if len(globStats) == 0 {
-		return "", fmt.Errorf("no glob matches for globs: %v", fileGlobs)
-	}
-
-	var matches []string
-	for _, globStat := range globStats {
-		if globStat.Error != "" {
-			return "", fmt.Errorf("unable to stat glob %q: %s", globStat.Glob, globStat.Error)
-		}
-
-		for _, match := range globStat.Globbed {
-			matches = append(matches, match)
-		}
-	}
-
-	pathsChecksum, err := buildContextArchive.CalculatePathsChecksum(ctx, matches)
-	if err != nil {
-		return "", fmt.Errorf("unable to calculate build context paths checksum: %w", err)
-	}
-
-	return pathsChecksum, nil
 }

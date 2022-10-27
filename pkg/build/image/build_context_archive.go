@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/containers/buildah/copier"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/context_manager"
@@ -111,7 +113,40 @@ func (a *BuildContextArchive) CleanupExtractedDir(ctx context.Context) {
 	}
 }
 
-func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
+func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs []string, checkForArchives bool) (string, error) {
+	contextDir, err := a.ExtractOrGetExtractedDir(ctx)
+	if err != nil {
+		return "", fmt.Errorf("unable to get build context dir: %w", err)
+	}
+
+	globStats, err := copier.Stat(contextDir, contextDir, copier.StatOptions{CheckForArchives: checkForArchives}, globs)
+	if err != nil {
+		return "", fmt.Errorf("unable to stat globs: %w", err)
+	}
+	if len(globStats) == 0 {
+		return "", fmt.Errorf("no glob matches for globs: %v", globs)
+	}
+
+	var matches []string
+	for _, globStat := range globStats {
+		if globStat.Error != "" {
+			return "", fmt.Errorf("unable to stat glob %q: %s", globStat.Glob, globStat.Error)
+		}
+
+		for _, match := range globStat.Globbed {
+			matches = append(matches, match)
+		}
+	}
+
+	pathsChecksum, err := a.calculatePathsChecksum(ctx, matches)
+	if err != nil {
+		return "", fmt.Errorf("unable to calculate build context paths checksum: %w", err)
+	}
+
+	return pathsChecksum, nil
+}
+
+func (a *BuildContextArchive) calculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
 	sort.Strings(paths)
 	paths = util.UniqStrings(paths)
 
