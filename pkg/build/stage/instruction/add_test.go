@@ -16,11 +16,12 @@ import (
 )
 
 var (
-	Entry         = ginkgo.Entry
-	DescribeTable = ginkgo.DescribeTable
+	Entry          = ginkgo.Entry
+	DescribeTable  = ginkgo.DescribeTable
+	XDescribeTable = ginkgo.XDescribeTable
 )
 
-var _ = DescribeTable("calculating digest and configuring builder",
+var _ = XDescribeTable("calculating digest and configuring builder",
 	func(data *TestData) {
 		ctx := context.Background()
 
