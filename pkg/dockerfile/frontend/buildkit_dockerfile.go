@@ -11,7 +11,6 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/werf/pkg/dockerfile"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.DockerfileOptions) (*dockerfile.Dockerfile, error) {
@@ -34,7 +33,7 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 
 	var stages []*dockerfile.DockerfileStage
 	for i, dockerStage := range dockerStages {
-		if stage, err := DockerfileStageFromBuildkitStage(i, dockerStage, shlex); err != nil {
+		if stage, err := NewDockerfileStageFromBuildkitStage(i, dockerStage, shlex); err != nil {
 			return nil, fmt.Errorf("error converting buildkit stage to dockerfile stage: %w", err)
 		} else {
 			stages = append(stages, stage)
@@ -54,8 +53,8 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 	return d, nil
 }
 
-func DockerfileStageFromBuildkitStage(index int, stage instructions.Stage, shlex *shell.Lex) (*dockerfile.DockerfileStage, error) {
-	var i []dockerfile.DockerfileStageInstructionInterface
+func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, shlex *shell.Lex) (*dockerfile.DockerfileStage, error) {
+	var stageInstructions []dockerfile.DockerfileStageInstructionInterface
 
 	for _, cmd := range stage.Commands {
 		if expandable, ok := cmd.(instructions.SupportsSingleWordExpansion); ok {
@@ -67,66 +66,47 @@ func DockerfileStageFromBuildkitStage(index int, stage instructions.Stage, shlex
 			}
 		}
 
+		var i dockerfile.DockerfileStageInstructionInterface
 		switch typedCmd := cmd.(type) {
 		case *instructions.AddCommand:
-			src, dst := extractSrcAndDst(typedCmd.SourcesAndDest)
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewAdd(typedCmd.String(), src, dst, typedCmd.Chown, typedCmd.Chmod)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.ArgCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewArg(typedCmd.String(), typedCmd.Args)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.CmdCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewCmd(typedCmd.String(), typedCmd.CmdLine, typedCmd.PrependShell)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.CopyCommand:
-			src, dst := extractSrcAndDst(typedCmd.SourcesAndDest)
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewCopy(typedCmd.String(), typedCmd.From, src, dst, typedCmd.Chown, typedCmd.Chmod)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.EntrypointCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewEntrypoint(typedCmd.String(), typedCmd.CmdLine, typedCmd.PrependShell)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.EnvCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewEnv(typedCmd.String(), extractKeyValuePairsAsMap(typedCmd.Env))))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.ExposeCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewExpose(typedCmd.String(), typedCmd.Ports)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.HealthCheckCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewHealthcheck(typedCmd.String(), typedCmd.Health)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.LabelCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewLabel(typedCmd.String(), extractKeyValuePairsAsMap(typedCmd.Labels))))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.MaintainerCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewMaintainer(typedCmd.String(), typedCmd.Maintainer)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.OnbuildCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewOnBuild(typedCmd.String(), typedCmd.Expression)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.RunCommand:
-			network := dockerfile_instruction.NewNetworkType(instructions.GetNetwork(typedCmd))
-			security := dockerfile_instruction.NewSecurityType(instructions.GetSecurity(typedCmd))
-			mounts := instructions.GetMounts(typedCmd)
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewRun(typedCmd.String(), typedCmd.CmdLine, typedCmd.PrependShell, mounts, network, security)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.ShellCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewShell(typedCmd.String(), typedCmd.Shell)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.StopSignalCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewStopSignal(typedCmd.String(), typedCmd.Signal)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.UserCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewUser(typedCmd.String(), typedCmd.User)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.VolumeCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewVolume(typedCmd.String(), typedCmd.Volumes)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		case *instructions.WorkdirCommand:
-			i = append(i, dockerfile.NewDockerfileStageInstruction(dockerfile_instruction.NewWorkdir(typedCmd.String(), typedCmd.Path)))
+			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
 		}
+		stageInstructions = append(stageInstructions, i)
 	}
 
-	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, i, stage.Platform), nil
-}
-
-func extractSrcAndDst(sourcesAndDest instructions.SourcesAndDest) (src []string, dst string) {
-	if len(sourcesAndDest) < 2 {
-		panic(fmt.Sprintf("unexpected buildkit instruction source and destination: %#v", sourcesAndDest))
-	}
-
-	return sourcesAndDest[0 : len(sourcesAndDest)-1], sourcesAndDest[len(sourcesAndDest)-1]
-}
-
-func extractKeyValuePairsAsMap(pairs instructions.KeyValuePairs) (res map[string]string) {
-	res = make(map[string]string)
-	for _, item := range pairs {
-		res[item.Key] = item.Value
-	}
-	return
+	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, stageInstructions, stage.Platform), nil
 }
 
 func GetDockerStagesNameToIndexMap(stages []instructions.Stage) map[string]int {

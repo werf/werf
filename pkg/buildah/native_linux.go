@@ -37,7 +37,6 @@ import (
 	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -817,23 +816,23 @@ func rlimitsToBuildahUlimits(rlimits map[int]*syscall.Rlimit) []string {
 	}
 }
 
-func generateNamespaceOptionsAndNetworkPolicy(network instruction.NetworkType) (define.NamespaceOptions, define.NetworkConfigurationPolicy) {
+func generateNamespaceOptionsAndNetworkPolicy(network string) (define.NamespaceOptions, define.NetworkConfigurationPolicy) {
 	var netPolicy define.NetworkConfigurationPolicy
 	nsOpts := define.NamespaceOptions{}
 
 	switch network {
-	case instruction.NetworkDefault, "":
+	case "default", "":
 		netPolicy = define.NetworkDefault
 		nsOpts.AddOrReplace(define.NamespaceOption{
 			Name: string(specs.NetworkNamespace),
 		})
-	case instruction.NetworkHost:
+	case "host":
 		netPolicy = define.NetworkEnabled
 		nsOpts.AddOrReplace(define.NamespaceOption{
 			Name: string(specs.NetworkNamespace),
 			Host: true,
 		})
-	case instruction.NetworkNone:
+	case "none":
 		netPolicy = define.NetworkDisabled
 		nsOpts.AddOrReplace(define.NamespaceOption{
 			Name: string(specs.NetworkNamespace),

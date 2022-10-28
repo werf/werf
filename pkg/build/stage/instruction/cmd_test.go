@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/dockerfile"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 var _ = DescribeTable("CMD digest",
@@ -25,14 +25,17 @@ var _ = DescribeTable("CMD digest",
 	},
 
 	Entry("CMD basic", NewTestData(
-		NewCmd("CMD", dockerfile.NewDockerfileStageInstruction(
-			dockerfile_instruction.NewCmd("", []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, false)), nil, false,
+		NewCmd("CMD",
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: false}},
+			),
+			nil, false,
 			&stage.BaseStageOptions{
 				ImageName:   "example-image",
 				ProjectName: "example-project",
 			},
 		),
-		"0aa7a4cb09a46c09f5e3f66ebf96ca45162aea10747bad4dd92d269272eede4a",
+		"c52718afd8fe6f79c1039464791418dbca4ac242a48fc1dae0494880fa858c56",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -42,14 +45,17 @@ var _ = DescribeTable("CMD digest",
 	)),
 
 	Entry("CMD with shell", NewTestData(
-		NewCmd("CMD", dockerfile.NewDockerfileStageInstruction(
-			dockerfile_instruction.NewCmd("", []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, true)), nil, false,
+		NewCmd("CMD",
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
+			),
+			nil, false,
 			&stage.BaseStageOptions{
 				ImageName:   "example-image",
 				ProjectName: "example-project",
 			},
 		),
-		"f0c14536daf15ca56863306fdc6763f5b00b2a28f24a7ffb38207d11d28d2adb",
+		"a763588e431e8f3f3ff846898525730ec3d19535328608d9c7b0301345d101f4",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -59,14 +65,17 @@ var _ = DescribeTable("CMD digest",
 	)),
 
 	Entry("CMD with changed context", NewTestData(
-		NewCmd("CMD", dockerfile.NewDockerfileStageInstruction(
-			dockerfile_instruction.NewCmd("", []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, true)), nil, false,
+		NewCmd("CMD",
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
+			),
+			nil, false,
 			&stage.BaseStageOptions{
 				ImageName:   "example-image",
 				ProjectName: "example-project",
 			},
 		),
-		"f0c14536daf15ca56863306fdc6763f5b00b2a28f24a7ffb38207d11d28d2adb",
+		"a763588e431e8f3f3ff846898525730ec3d19535328608d9c7b0301345d101f4",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},

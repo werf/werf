@@ -4,21 +4,22 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/dockerfile"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/util"
 )
 
 type Run struct {
-	*Base[*dockerfile_instruction.Run, *backend_instruction.Run]
+	*Base[*instructions.RunCommand, *backend_instruction.Run]
 }
 
-func NewRun(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Run], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
-	return &Run{Base: NewBase(name, i, backend_instruction.NewRun(*i.Data), dependencies, hasPrevStage, opts)}
+func NewRun(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.RunCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
+	return &Run{Base: NewBase(name, i, backend_instruction.NewRun(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -27,15 +28,19 @@ func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
-	args = append(args, append([]string{"Command"}, stg.instruction.Data.Command...)...)
-	args = append(args, "PrependShell", fmt.Sprintf("%v", stg.instruction.Data.PrependShell))
-	args = append(args, "Network", string(stg.instruction.Data.Network))
-	args = append(args, "Security", string(stg.instruction.Data.Security))
+	network := instructions.GetNetwork(stg.instruction.Data)
+	security := instructions.GetSecurity(stg.instruction.Data)
+	mounts := instructions.GetMounts(stg.instruction.Data)
 
-	if len(stg.instruction.Data.Mounts) > 0 {
+	args = append(args, "Instruction", stg.instruction.Data.Name())
+	args = append(args, append([]string{"Command"}, stg.instruction.Data.CmdLine...)...)
+	args = append(args, "PrependShell", fmt.Sprintf("%v", stg.instruction.Data.PrependShell))
+	args = append(args, "Network", network)
+	args = append(args, "Security", security)
+
+	if len(mounts) > 0 {
 		args = append(args, "Mounts")
-		for _, mnt := range stg.instruction.Data.Mounts {
+		for _, mnt := range mounts {
 			args = append(args, "Type", mnt.Type)
 			args = append(args, "From", mnt.From)
 			args = append(args, "Source", mnt.Source)

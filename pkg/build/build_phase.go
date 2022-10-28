@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -23,7 +24,6 @@ import (
 	"github.com/werf/werf/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/docker_registry"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/git_repo"
 	imagePkg "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/stapel"
@@ -696,7 +696,12 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		})
 	} else {
 		stageImage.Builder.DockerfileStageBuilder().SetBuildContextArchive(phase.buildContextArchive)
-		stageImage.Builder.DockerfileStageBuilder().AppendPostInstruction(backend_instruction.NewLabel(*dockerfile_instruction.NewLabel("", serviceLabels)))
+
+		for k, v := range serviceLabels {
+			stageImage.Builder.DockerfileStageBuilder().AppendPostInstruction(
+				backend_instruction.NewLabel(instructions.NewLabelCommand(k, v, true)),
+			)
+		}
 	}
 
 	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage, phase.buildContextArchive)

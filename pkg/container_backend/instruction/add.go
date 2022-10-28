@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Add struct {
-	dockerfile_instruction.Add
+	*instructions.AddCommand
 }
 
-func NewAdd(i dockerfile_instruction.Add) *Add {
-	return &Add{Add: i}
+func NewAdd(i *instructions.AddCommand) *Add {
+	return &Add{AddCommand: i}
 }
 
 func (i *Add) UsesBuildContext() bool {
@@ -31,13 +32,13 @@ func (i *Add) Apply(ctx context.Context, containerName string, drv buildah.Build
 		}
 	}
 
-	if err := drv.Add(ctx, containerName, i.Src, i.Dst, buildah.AddOpts{
+	if err := drv.Add(ctx, containerName, i.Sources(), i.Dest(), buildah.AddOpts{
 		CommonOpts: drvOpts,
 		ContextDir: contextDir,
 		Chown:      i.Chown,
 		Chmod:      i.Chmod,
 	}); err != nil {
-		return fmt.Errorf("error adding %v to %s for container %s: %w", i.Src, i.Dst, containerName, err)
+		return fmt.Errorf("error adding %v to %s for container %s: %w", i.Sources(), i.Dest(), containerName, err)
 	}
 
 	return nil

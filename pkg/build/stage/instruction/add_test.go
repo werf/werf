@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/dockerfile"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 var _ = DescribeTable("ADD digest",
@@ -25,14 +25,17 @@ var _ = DescribeTable("ADD digest",
 	},
 
 	Entry("ADD basic", NewTestData(
-		NewAdd("ADD", dockerfile.NewDockerfileStageInstruction(
-			dockerfile_instruction.NewAdd("", []string{"src"}, "/app", "1000:1000", "")), nil, false,
+		NewAdd("ADD",
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1000", Chmod: ""},
+			),
+			nil, false,
 			&stage.BaseStageOptions{
 				ImageName:   "example-image",
 				ProjectName: "example-project",
 			},
 		),
-		"febdd3676850b1b28161dc2a518495ba8e413b1aab3f28c7121c44c9da7d1212",
+		"88c31da85ac26ae35d29462c6dc309c2a02997c0de92b4ccee7db2e41be17187",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -42,14 +45,17 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed chown", NewTestData(
-		NewAdd("ADD", dockerfile.NewDockerfileStageInstruction(
-			dockerfile_instruction.NewAdd("", []string{"src"}, "/app", "1000:1001", "")), nil, false,
+		NewAdd("ADD",
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1001", Chmod: ""},
+			),
+			nil, false,
 			&stage.BaseStageOptions{
 				ImageName:   "example-image",
 				ProjectName: "example-project",
 			},
 		),
-		"7f2ce5be335c61b5117446a3e508af27af1217bab68319a690f0f8d4653bed21",
+		"846ef29e994224dd84bf0a5de47b0b3255c8681b8178e8da5611b21547cd182b",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -60,14 +66,17 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed chmod", NewTestData(
-		NewAdd("ADD", dockerfile.NewDockerfileStageInstruction(
-			dockerfile_instruction.NewAdd("", []string{"src"}, "/app", "1000:1001", "0777")), nil, false,
+		NewAdd("ADD",
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1001", Chmod: "0777"},
+			),
+			nil, false,
 			&stage.BaseStageOptions{
 				ImageName:   "example-image",
 				ProjectName: "example-project",
 			},
 		),
-		"f37bc012a10364919e30f5c6ac1ed9de8d5d32590ecb57564c449d1261439488",
+		"cef21e87710631a08edeb176a9487f81ae20171c22ec4537a3dc8fbc67aca868",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -78,14 +87,17 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed sources paths", NewTestData(
-		NewAdd("ADD", dockerfile.NewDockerfileStageInstruction(
-			dockerfile_instruction.NewAdd("", []string{"src", "pom.xml"}, "/app", "1000:1000", "0777")), nil, false,
+		NewAdd("ADD",
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app"}, Chown: "1000:1001", Chmod: "0777"},
+			),
+			nil, false,
 			&stage.BaseStageOptions{
 				ImageName:   "example-image",
 				ProjectName: "example-project",
 			},
 		),
-		"4a66595bf3f692d892cc1f5132a21939f681b5e38c59831b0359ba69889f1392",
+		"97f3f8a240902d73ec9a209f6c8368047b56d9247bdf9da88a40ac5dba925209",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -96,14 +108,17 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed source files", NewTestData(
-		NewAdd("ADD", dockerfile.NewDockerfileStageInstruction(
-			dockerfile_instruction.NewAdd("", []string{"src", "pom.xml"}, "/app", "1000:1000", "0777")), nil, false,
+		NewAdd("ADD",
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app"}, Chown: "1000:1001", Chmod: "0777"},
+			),
+			nil, false,
 			&stage.BaseStageOptions{
 				ImageName:   "example-image",
 				ProjectName: "example-project",
 			},
 		),
-		"c52c2a9ff2aa7054ab1f5c57717775c4e00a3b80d618b8a2aacefeb48b582ac0",
+		"60178e0b174bd1bce1cd29f8132ea84cc7212773b6fce9fad3ddff842d5cf2e0",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
@@ -114,14 +129,17 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed destination path", NewTestData(
-		NewAdd("ADD", dockerfile.NewDockerfileStageInstruction(
-			dockerfile_instruction.NewAdd("", []string{"src", "pom.xml"}, "/app2", "1000:1000", "0777")), nil, false,
+		NewAdd("ADD",
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app2"}, Chown: "1000:1001", Chmod: "0777"},
+			),
+			nil, false,
 			&stage.BaseStageOptions{
 				ImageName:   "example-image",
 				ProjectName: "example-project",
 			},
 		),
-		"a067cbedb63b837bc9583487b27ad2f5dcc9d744df03414b9b1436e90e8c514e",
+		"c1f03d5701951fe9c5836957c753c9486f22e14b2d9291780ae70f288e531e1c",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},

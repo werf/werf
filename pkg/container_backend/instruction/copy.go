@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Copy struct {
-	dockerfile_instruction.Copy
+	*instructions.CopyCommand
 }
 
-func NewCopy(i dockerfile_instruction.Copy) *Copy {
-	return &Copy{Copy: i}
+func NewCopy(i *instructions.CopyCommand) *Copy {
+	return &Copy{CopyCommand: i}
 }
 
 func (i *Copy) UsesBuildContext() bool {
@@ -41,12 +42,12 @@ func (i *Copy) Apply(ctx context.Context, containerName string, drv buildah.Buil
 		}
 	}
 
-	if err := drv.Copy(ctx, containerName, contextDir, i.Src, i.Dst, buildah.CopyOpts{
+	if err := drv.Copy(ctx, containerName, contextDir, i.Sources(), i.Dest(), buildah.CopyOpts{
 		CommonOpts: drvOpts,
 		Chown:      i.Chown,
 		Chmod:      i.Chmod,
 	}); err != nil {
-		return fmt.Errorf("error copying %v to %s for container %s: %w", i.Src, i.Dst, containerName, err)
+		return fmt.Errorf("error copying %v to %s for container %s: %w", i.Sources(), i.Dest(), containerName, err)
 	}
 
 	return nil
