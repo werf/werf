@@ -4,21 +4,22 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/dockerfile"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/util"
 )
 
 type Copy struct {
-	*Base[*dockerfile_instruction.Copy, *backend_instruction.Copy]
+	*Base[*instructions.CopyCommand, *backend_instruction.Copy]
 }
 
-func NewCopy(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*dockerfile_instruction.Copy], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Copy {
-	return &Copy{Base: NewBase(name, i, backend_instruction.NewCopy(*i.Data), dependencies, hasPrevStage, opts)}
+func NewCopy(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.CopyCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Copy {
+	return &Copy{Base: NewBase(name, i, backend_instruction.NewCopy(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Copy) ExpandInstruction(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
@@ -40,17 +41,17 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 
 	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, "From", stg.instruction.Data.From)
-	args = append(args, append([]string{"Src"}, stg.instruction.Data.Src...)...)
-	args = append(args, "Dst", stg.instruction.Data.Dst)
+	args = append(args, append([]string{"Sources"}, stg.instruction.Data.Sources()...)...)
+	args = append(args, "Dest", stg.instruction.Data.Dest())
 	args = append(args, "Chown", stg.instruction.Data.Chown)
 	args = append(args, "Chmod", stg.instruction.Data.Chmod)
 	args = append(args, "ExpandedFrom", stg.backendInstruction.From)
 
 	if stg.UsesBuildContext() {
-		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.Src, false); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.Sources(), false); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
-			args = append(args, "SrcChecksum", srcChecksum)
+			args = append(args, "SourcesChecksum", srcChecksum)
 		}
 	}
 

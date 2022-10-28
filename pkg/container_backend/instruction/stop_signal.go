@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type StopSignal struct {
-	dockerfile_instruction.StopSignal
+	*instructions.StopSignalCommand
 }
 
-func NewStopSignal(i dockerfile_instruction.StopSignal) *StopSignal {
-	return &StopSignal{StopSignal: i}
+func NewStopSignal(i *instructions.StopSignalCommand) *StopSignal {
+	return &StopSignal{StopSignalCommand: i}
 }
 
 func (i *StopSignal) UsesBuildContext() bool {

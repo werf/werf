@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Env struct {
-	dockerfile_instruction.Env
+	*instructions.EnvCommand
 }
 
-func NewEnv(i dockerfile_instruction.Env) *Env {
-	return &Env{Env: i}
+func NewEnv(i *instructions.EnvCommand) *Env {
+	return &Env{EnvCommand: i}
 }
 
 func (i *Env) UsesBuildContext() bool {
@@ -22,8 +23,13 @@ func (i *Env) UsesBuildContext() bool {
 }
 
 func (i *Env) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
-	if err := drv.Config(ctx, containerName, buildah.ConfigOpts{CommonOpts: drvOpts, Envs: i.Envs}); err != nil {
-		return fmt.Errorf("error setting envs %v for container %s: %w", i.Envs, containerName, err)
+	envs := make(map[string]string)
+	for _, item := range i.Env {
+		envs[item.Key] = item.Value
+	}
+
+	if err := drv.Config(ctx, containerName, buildah.ConfigOpts{CommonOpts: drvOpts, Envs: envs}); err != nil {
+		return fmt.Errorf("error setting envs %v for container %s: %w", envs, containerName, err)
 	}
 	return nil
 }

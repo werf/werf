@@ -14,7 +14,6 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/pkg/dockerfile/instruction"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -67,7 +66,7 @@ type RunCommandOpts struct {
 	Shell            []string
 	AddCapabilities  []string
 	DropCapabilities []string
-	NetworkType      instruction.NetworkType
+	NetworkType      string
 	WorkingDir       string
 	User             string
 	Envs             []string

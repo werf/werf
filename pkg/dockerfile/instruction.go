@@ -1,6 +1,8 @@
 package dockerfile
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type InstructionDataInterface interface {
 	Name() string
@@ -11,6 +13,7 @@ type DockerfileStageInstructionInterface interface {
 	GetDependencyByStageRef(ref string) *DockerfileStage
 	GetDependenciesByStageRef() map[string]*DockerfileStage
 	GetInstructionData() InstructionDataInterface
+	// TODO(staged-dockerfile): something like Expand(args, envs map[string]string)
 }
 
 type DockerfileStageInstruction[T InstructionDataInterface] struct {
