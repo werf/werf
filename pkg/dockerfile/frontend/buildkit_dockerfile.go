@@ -24,25 +24,32 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 		return nil, fmt.Errorf("parsing instructions tree: %w", err)
 	}
 
-	dockerTargetIndex, err := GetDockerTargetStageIndex(dockerStages, opts.Target)
-	if err != nil {
-		return nil, fmt.Errorf("determine target stage: %w", err)
-	}
-
 	shlex := shell.NewLex(p.EscapeToken)
+
+	metaArgs, err := processMetaArgs(dockerMetaArgs, opts.BuildArgs, shlex)
+	if err != nil {
+		return nil, fmt.Errorf("unable to process meta args: %w", err)
+	}
 
 	var stages []*dockerfile.DockerfileStage
 	for i, dockerStage := range dockerStages {
-		if stage, err := NewDockerfileStageFromBuildkitStage(i, dockerStage, shlex); err != nil {
+		name, err := shlex.ProcessWordWithMap(dockerStage.BaseName, metaArgs)
+		if err != nil {
+			return nil, fmt.Errorf("unable to expand docker stage base image name %q: %w", dockerStage.BaseName, err)
+		}
+		if name == "" {
+			return nil, fmt.Errorf("expanded docker stage base image name %q to empty string: expected image name", dockerStage.BaseName)
+		}
+		dockerStage.BaseName = name
+
+		// TODO(staged-dockerfile): support meta-args expansion for dockerStage.Platform
+
+		if stage, err := NewDockerfileStageFromBuildkitStage(i, dockerStage, shlex, metaArgs, opts.BuildArgs); err != nil {
 			return nil, fmt.Errorf("error converting buildkit stage to dockerfile stage: %w", err)
 		} else {
 			stages = append(stages, stage)
 		}
 	}
-
-	// TODO(staged-dockerfile): convert meta-args and initialize into Dockerfile obj
-	_ = dockerMetaArgs
-	_ = dockerTargetIndex
 
 	dockerfile.SetupDockerfileStagesDependencies(stages)
 
@@ -53,61 +60,216 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 	return d, nil
 }
 
-func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, shlex *shell.Lex) (*dockerfile.DockerfileStage, error) {
+func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, shlex *shell.Lex, metaArgs, buildArgs map[string]string) (*dockerfile.DockerfileStage, error) {
 	var stageInstructions []dockerfile.DockerfileStageInstructionInterface
 
+	env := map[string]string{}
+	opts := dockerfile.DockerfileStageInstructionOptions{Expander: shlex}
+
 	for _, cmd := range stage.Commands {
-		if expandable, ok := cmd.(instructions.SupportsSingleWordExpansion); ok {
-			if err := expandable.Expand(func(word string) (string, error) {
-				// FIXME(ilya-lesikov): add envs/buildargs here
-				return shlex.ProcessWord(word, []string{})
-			}); err != nil {
-				return nil, fmt.Errorf("error expanding command %q: %w", cmd.Name(), err)
+		var i dockerfile.DockerfileStageInstructionInterface
+
+		switch instrData := cmd.(type) {
+		case *instructions.AddCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.ArgCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+
+				for _, arg := range instr.Data.Args {
+					if inputValue, hasKey := buildArgs[arg.Key]; hasKey {
+						arg.Value = new(string)
+						*arg.Value = inputValue
+					}
+
+					if arg.Value == nil {
+						if mvalue, hasKey := metaArgs[arg.Key]; hasKey {
+							arg.Value = new(string)
+							*arg.Value = mvalue
+						}
+					}
+
+					if arg.Value != nil {
+						env[arg.Key] = *arg.Value
+					}
+				}
+			}
+		case *instructions.CmdCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.CopyCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.EntrypointCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.EnvCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+
+				for _, envKV := range instr.Data.Env {
+					env[envKV.Key] = envKV.Value
+				}
+			}
+		case *instructions.ExposeCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.HealthCheckCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.LabelCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.MaintainerCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.OnbuildCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.RunCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.ShellCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.StopSignalCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.UserCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.VolumeCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
+			}
+		case *instructions.WorkdirCommand:
+			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+				return nil, err
+			} else {
+				i = instr
 			}
 		}
 
-		var i dockerfile.DockerfileStageInstructionInterface
-		switch typedCmd := cmd.(type) {
-		case *instructions.AddCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.ArgCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.CmdCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.CopyCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.EntrypointCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.EnvCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.ExposeCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.HealthCheckCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.LabelCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.MaintainerCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.OnbuildCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.RunCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.ShellCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.StopSignalCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.UserCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.VolumeCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		case *instructions.WorkdirCommand:
-			i = dockerfile.NewDockerfileStageInstruction(typedCmd)
-		}
 		stageInstructions = append(stageInstructions, i)
 	}
 
 	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, stageInstructions, stage.Platform), nil
 }
+
+func createAndExpandInstruction[T dockerfile.InstructionDataInterface](data T, env map[string]string, opts dockerfile.DockerfileStageInstructionOptions) (*dockerfile.DockerfileStageInstruction[T], error) {
+	i := dockerfile.NewDockerfileStageInstruction(data, opts)
+	if err := i.Expand(env); err != nil {
+		return nil, fmt.Errorf("unable to expand instruction %q: %w", i.GetInstructionData().Name(), err)
+	}
+	return i, nil
+}
+
+func processMetaArgs(metaArgs []instructions.ArgCommand, buildArgs map[string]string, shlex *shell.Lex) (map[string]string, error) {
+	var optMetaArgs []instructions.KeyValuePairOptional
+
+	// TODO(staged-dockerfile): need to support builtin BUILD* and TARGET* args
+
+	// platformOpt := buildPlatformOpt(&opt)
+	// optMetaArgs := getPlatformArgs(platformOpt)
+	// for i, arg := range optMetaArgs {
+	// 	optMetaArgs[i] = setKVValue(arg, opt.BuildArgs)
+	// }
+
+	for _, cmd := range metaArgs {
+		for _, metaArg := range cmd.Args {
+			if metaArg.Value != nil {
+				*metaArg.Value, _ = shlex.ProcessWordWithMap(*metaArg.Value, metaArgsToMap(optMetaArgs))
+			}
+			optMetaArgs = append(optMetaArgs, setKVValue(metaArg, buildArgs))
+		}
+	}
+
+	return nil, nil
+}
+
+func metaArgsToMap(metaArgs []instructions.KeyValuePairOptional) map[string]string {
+	m := map[string]string{}
+	for _, arg := range metaArgs {
+		m[arg.Key] = arg.ValueString()
+	}
+	return m
+}
+
+func setKVValue(kvpo instructions.KeyValuePairOptional, values map[string]string) instructions.KeyValuePairOptional {
+	if v, ok := values[kvpo.Key]; ok {
+		kvpo.Value = &v
+	}
+	return kvpo
+}
+
+// TODO(staged-dockerfile)
+//
+// func getPlatformArgs(po *platformOpt) []instructions.KeyValuePairOptional {
+// 	bp := po.buildPlatforms[0]
+// 	tp := po.targetPlatform
+// 	m := map[string]string{
+// 		"BUILDPLATFORM":  platforms.Format(bp),
+// 		"BUILDOS":        bp.OS,
+// 		"BUILDARCH":      bp.Architecture,
+// 		"BUILDVARIANT":   bp.Variant,
+// 		"TARGETPLATFORM": platforms.Format(tp),
+// 		"TARGETOS":       tp.OS,
+// 		"TARGETARCH":     tp.Architecture,
+// 		"TARGETVARIANT":  tp.Variant,
+// 	}
+// 	opts := make([]instructions.KeyValuePairOptional, 0, len(m))
+// 	for k, v := range m {
+// 		s := v
+// 		opts = append(opts, instructions.KeyValuePairOptional{Key: k, Value: &s})
+// 	}
+// 	return opts
+// }
 
 func GetDockerStagesNameToIndexMap(stages []instructions.Stage) map[string]int {
 	nameToIndex := make(map[string]int)

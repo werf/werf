@@ -28,6 +28,7 @@ var _ = DescribeTable("ADD digest",
 		NewAdd("ADD",
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1000", Chmod: ""},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{
@@ -48,6 +49,7 @@ var _ = DescribeTable("ADD digest",
 		NewAdd("ADD",
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1001", Chmod: ""},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{
@@ -69,6 +71,7 @@ var _ = DescribeTable("ADD digest",
 		NewAdd("ADD",
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1001", Chmod: "0777"},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{
@@ -90,6 +93,7 @@ var _ = DescribeTable("ADD digest",
 		NewAdd("ADD",
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app"}, Chown: "1000:1001", Chmod: "0777"},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{
@@ -111,6 +115,7 @@ var _ = DescribeTable("ADD digest",
 		NewAdd("ADD",
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app"}, Chown: "1000:1001", Chmod: "0777"},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{
@@ -132,6 +137,7 @@ var _ = DescribeTable("ADD digest",
 		NewAdd("ADD",
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app2"}, Chown: "1000:1001", Chmod: "0777"},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{

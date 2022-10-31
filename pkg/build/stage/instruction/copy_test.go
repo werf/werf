@@ -30,6 +30,7 @@ var _ = DescribeTable("COPY digest",
 				&instructions.CopyCommand{
 					SourcesAndDest: []string{"src/", "doc/", "/app"},
 				},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{
@@ -53,6 +54,7 @@ var _ = DescribeTable("COPY digest",
 				&instructions.CopyCommand{
 					SourcesAndDest: []string{"src/", "doc/", "/app"},
 				},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{
