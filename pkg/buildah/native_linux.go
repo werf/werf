@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -32,6 +33,7 @@ import (
 	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/hashicorp/go-multierror"
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/errgo.v2/fmt/errors"
@@ -291,30 +293,16 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		return fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
+	contextDir := generateContextDir(opts.ContextDir, opts.RunMounts)
 	nsOpts, netPolicy := generateNamespaceOptionsAndNetworkPolicy(opts.NetworkType)
-
-	var stdout, stderr io.Writer
-	stderrBuf := &bytes.Buffer{}
-	if opts.LogWriter != nil {
-		stdout = opts.LogWriter
-		stderr = io.MultiWriter(opts.LogWriter, stderrBuf)
-	} else {
-		stderr = stderrBuf
-	}
-
-	if opts.PrependShell {
-		if len(opts.Shell) > 0 {
-			command = append(opts.Shell, command...)
-		} else if len(builder.Shell()) > 0 {
-			command = append(builder.Shell(), command...)
-		} else {
-			command = append(DefaultShell, command...)
-		}
-	}
+	globalMounts := generateGlobalMounts(opts.GlobalMounts)
+	runMounts := generateRunMounts(opts.RunMounts)
+	stdout, stderr, stderrBuf := generateStdoutStderr(opts.LogWriter)
+	command = prependShellToCommand(opts.PrependShell, opts.Shell, command, builder)
 
 	runOpts := buildah.RunOptions{
 		Env:              opts.Envs,
-		ContextDir:       opts.ContextDir,
+		ContextDir:       contextDir,
 		AddCapabilities:  opts.AddCapabilities,
 		DropCapabilities: opts.DropCapabilities,
 		Stdout:           stdout,
@@ -327,14 +315,12 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		User:             opts.User,
 		Entrypoint:       []string{},
 		Cmd:              []string{},
-
-		// TODO(ilya-lesikov): implement mounts
-		Secrets:             nil,
-		SSHSources:          nil,
-		Mounts:              opts.LegacyMounts,
-		RunMounts:           nil,
-		StageMountPoints:    nil,
-		ExternalImageMounts: nil,
+		Mounts:           globalMounts,
+		RunMounts:        runMounts,
+		// TODO(ilya-lesikov):
+		Secrets: nil,
+		// TODO(ilya-lesikov):
+		SSHSources: nil,
 	}
 
 	if err := builder.Run(command, runOpts); err != nil {
@@ -844,183 +830,177 @@ func generateNamespaceOptionsAndNetworkPolicy(network string) (define.NamespaceO
 	return nsOpts, netPolicy
 }
 
-// TODO(ilya-lesikov): implement mounts
-// func generateMounts(mounts []*instructions.Mount, contextDir string) (map[string]*specs.Mount, error) {
-// 	result := map[string]*specs.Mount{}
-//
-// 	for _, mount := range mounts {
-// 		switch mount.Type {
-// 		case instructions.MountTypeBind:
-// 			if m, err := generateBindMount(mount, contextDir); err != nil {
-// 				return nil, fmt.Errorf("error generating bind mount: %w", err)
-// 			} else {
-// 				result[mount.Target] = m
-// 			}
-// 		case instructions.MountTypeCache:
-// 			result[mount.Target] = &specs.Mount{
-// 				Type:        parse.TypeCache,
-// 				Source:      mount.Source,
-// 				Destination: mount.Target,
-// 				Options:     generateMountOptions(mount),
-// 			}
-// 		case instructions.MountTypeTmpfs:
-// 		case instructions.MountTypeSecret:
-// 		case instructions.MountTypeSSH:
-// 		}
-// 	}
-// }
-//
-// func generateBindMount(mount *instructions.Mount, contextDir string) (*specs.Mount, string, error) {
-// 	var mountedImage string
-// 	var source string
-// 	if mount.From != "" && contextDir != "" {
-// 		// FIXME(ilya-lesikov): here also be container mounts and new contextDir:
-// 		// /home/user1/go/pkg/mod/github.com/containers/buildah@v1.26.1/internal/parse/parse.go:117
-// 		source = filepath.Join(contextDir, filepath.Clean(string(filepath.Separator)+mount.Source))
-// 		mountedImage = "" // TODO
-// 	} else {
-// 		if err := parse.ValidateVolumeHostDir(mount.Source); err != nil {
-// 			return nil, "", fmt.Errorf("invalid bind mount source %q: %w", mount.Source, err)
-// 		}
-// 		source = mount.Source
-// 	}
-//
-// 	if err := parse.ValidateVolumeCtrDir(mount.Target); err != nil {
-// 		return nil, "", fmt.Errorf("invalid bind mount target %q: %w", mount.Target, err)
-// 	}
-//
-// 	options := []string{"rbind"}
-//
-// 	if mount.ReadOnly {
-// 		options = append(options, "ro")
-// 	} else {
-// 		options = append(options, "rw")
-// 	}
-//
-// 	var err error
-// 	options, err = parse.ValidateVolumeOpts(options)
-// 	if err != nil {
-// 		return nil, "", fmt.Errorf("invalid bind mount options %v: %w", options, err)
-// 	}
-//
-// 	return &specs.Mount{
-// 		Type:        parse.TypeBind,
-// 		Source:      source,
-// 		Destination: mount.Target,
-// 		Options:     options,
-// 	}, mountedImage, nil
-// }
-//
-// func generateCacheMount(mount *instructions.Mount) (*specs.Mount, error) {
-// 	if err := parse.ValidateVolumeCtrDir(mount.Target); err != nil {
-// 		return nil, fmt.Errorf("invalid cache mount target %q: %w", mount.Target, err)
-// 	}
-//
-// 	options := []string{"bind", "shared"}
-//
-// 	if mount.ReadOnly {
-// 		options = append(options, "ro")
-// 	} else {
-// 		options = append(options, "rw")
-// 	}
-//
-// 	// var mode uint64
-// 	// if mount.Mode != nil {
-// 	// 	mode = *mount.Mode
-// 	// } else {
-// 	// 	mode = 0o755
-// 	// }
-// 	//
-// 	// var uid uint64
-// 	// if mount.UID != nil {
-// 	// 	uid = *mount.UID
-// 	// } else {
-// 	// 	uid = 0
-// 	// }
-// 	//
-// 	// var gid uint64
-// 	// if mount.GID != nil {
-// 	// 	gid = *mount.GID
-// 	// } else {
-// 	// 	gid = 0
-// 	// }
-//
-// 	// TODO(ilya-lesikov): create cache dir/image/stage, example:
-// 	//  /home/user1/go/pkg/mod/github.com/containers/buildah@v1.26.1/internal/parse/parse.go:286
-//
-// 	if mount.CacheSharing == "locked" {
-// 		// TODO(ilya-lesikov): Implement cache access locking
-// 		//  /home/user1/go/pkg/mod/github.com/containers/buildah@v1.26.1/internal/parse/parse.go:335
-// 	}
-//
-// 	var err error
-// 	options, err = parse.ValidateVolumeOpts(options)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("invalid cache mount options %v: %w", options, err)
-// 	}
-//
-// 	return &specs.Mount{
-// 		Type:        parse.TypeBind,
-// 		Source:      mount.Source,
-// 		Destination: mount.Target,
-// 		Options:     options,
-// 	}, nil
-// }
-//
-// func generateTmpFsMount(mount *instructions.Mount) (*specs.Mount, error) {
-// 	if err := parse.ValidateVolumeCtrDir(mount.Target); err != nil {
-// 		return nil, fmt.Errorf("invalid tmpfs mount target %q: %w", mount.Target, err)
-// 	}
-//
-// 	options := []string{"bind", "shared"}
-//
-// 	if mount.ReadOnly {
-// 		options = append(options, "ro")
-// 	} else {
-// 		options = append(options, "rw")
-// 	}
-//
-// 	if mount.Mode != nil {
-// 		options = append(options, fmt.Sprintf("mode=%o", *mount.Mode))
-// 	}
-//
-// 	var err error
-// 	options, err = parse.ValidateVolumeOpts(options)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("invalid tmpfs mount options %v: %w", options, err)
-// 	}
-//
-// 	return &specs.Mount{
-// 		Type:        parse.TypeTmpfs,
-// 		Source:      parse.TypeTmpfs,
-// 		Destination: mount.Target,
-// 		Options:     options,
-// 	}, nil
-// }
-//
-// func getSecretMount(mount *instructions.Mount) (*specs.Mount, error) {
-// 	if err := parse.ValidateVolumeCtrDir(mount.Target); err != nil {
-// 		return nil, fmt.Errorf("invalid secret mount target %q: %w", mount.Target, err)
-// 	}
-//
-// 	options := []string{"bind", "shared"}
-//
-// 	if mount.ReadOnly {
-// 		options = append(options, "ro")
-// 	} else {
-// 		options = append(options, "rw")
-// 	}
-//
-// 	var err error
-// 	options, err = parse.ValidateVolumeOpts(options)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("invalid secret mount options %v: %w", options, err)
-// 	}
-//
-// 	return &specs.Mount{
-// 		Type:        parse.TypeSecret,
-// 		Source:      mount.Source,
-// 		Destination: mount.Target,
-// 		Options:     options,
-// 	}, nil
-// }
+func generateRunMounts(mounts []*instructions.Mount) []string {
+	var runMounts []string
+
+	for _, mount := range mounts {
+		var options []string
+
+		switch mount.Type {
+		case instructions.MountTypeBind:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+				fmt.Sprintf("target=%s", mount.Target),
+			)
+			if mount.Source != "" {
+				options = append(options, fmt.Sprintf("source=%s", mount.Source))
+			}
+			if mount.From != "" {
+				options = append(options, fmt.Sprintf("from=%s", mount.From))
+			}
+			if mount.ReadOnly {
+				options = append(options, "ro")
+			} else {
+				options = append(options, "rw")
+			}
+		case instructions.MountTypeCache:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+				fmt.Sprintf("target=%s", mount.Target),
+			)
+			if mount.CacheID != "" {
+				options = append(options, fmt.Sprintf("id=%s", mount.CacheID))
+			}
+			if mount.ReadOnly {
+				options = append(options, "ro")
+			} else {
+				options = append(options, "rw")
+			}
+			if mount.CacheSharing != "" {
+				options = append(options, fmt.Sprintf("sharing=%s", mount.CacheSharing))
+			}
+			if mount.From != "" {
+				options = append(options, fmt.Sprintf("from=%s", mount.From))
+			}
+			if mount.Source != "" {
+				options = append(options, fmt.Sprintf("source=%s", mount.Source))
+			}
+			if mount.Mode != nil {
+				options = append(options, fmt.Sprintf("mode=%d", *mount.Mode))
+			}
+			if mount.UID != nil {
+				options = append(options, fmt.Sprintf("uid=%d", *mount.UID))
+			}
+			if mount.GID != nil {
+				options = append(options, fmt.Sprintf("gid=%d", *mount.GID))
+			}
+		case instructions.MountTypeTmpfs:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+				fmt.Sprintf("target=%s", mount.Target),
+			)
+		case instructions.MountTypeSecret:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+			)
+			if mount.CacheID != "" {
+				options = append(options, fmt.Sprintf("id=%s", mount.CacheID))
+			}
+			if mount.Target != "" {
+				options = append(options, fmt.Sprintf("target=%s", mount.Target))
+			}
+			if mount.Required {
+				options = append(options, "required=true")
+			}
+			if mount.Mode != nil {
+				options = append(options, fmt.Sprintf("mode=%d", *mount.Mode))
+			}
+			if mount.UID != nil {
+				options = append(options, fmt.Sprintf("uid=%d", *mount.UID))
+			}
+			if mount.GID != nil {
+				options = append(options, fmt.Sprintf("gid=%d", *mount.GID))
+			}
+		case instructions.MountTypeSSH:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+			)
+			if mount.CacheID != "" {
+				options = append(options, fmt.Sprintf("id=%s", mount.CacheID))
+			}
+			if mount.Target != "" {
+				options = append(options, fmt.Sprintf("target=%s", mount.Target))
+			}
+			if mount.Required {
+				options = append(options, "required=true")
+			}
+			if mount.Mode != nil {
+				options = append(options, fmt.Sprintf("mode=%d", *mount.Mode))
+			}
+			if mount.UID != nil {
+				options = append(options, fmt.Sprintf("uid=%d", *mount.UID))
+			}
+			if mount.GID != nil {
+				options = append(options, fmt.Sprintf("gid=%d", *mount.GID))
+			}
+		default:
+			panic(fmt.Sprintf("unexpected mount type %q", mount.Type))
+		}
+
+		runMounts = append(runMounts, strings.Join(options, ","))
+	}
+
+	return runMounts
+}
+
+func generateContextDir(rawContextDir string, runMounts []*instructions.Mount) string {
+	usesBuildContext := false
+	for _, mount := range runMounts {
+		if mount.Type == instructions.MountTypeBind && mount.From == "" {
+			usesBuildContext = true
+			break
+		}
+	}
+
+	var contextDir string
+	if !usesBuildContext && rawContextDir == "" {
+		// Buildah API requires ContextDir even if not actually used. In this case we will pass a dummy value.
+		contextDir = strconv.Itoa(rand.Int())
+	} else {
+		contextDir = rawContextDir
+	}
+
+	return contextDir
+}
+
+func generateStdoutStderr(optionalLogWriter io.Writer) (stdout, stderr io.Writer, stderrBuf *bytes.Buffer) {
+	stderrBuf = &bytes.Buffer{}
+	if optionalLogWriter != nil {
+		stdout = optionalLogWriter
+		stderr = io.MultiWriter(optionalLogWriter, stderrBuf)
+	} else {
+		stderr = stderrBuf
+	}
+
+	return stdout, stderr, stderrBuf
+}
+
+func prependShellToCommand(prependShell bool, shell, command []string, builder *buildah.Builder) []string {
+	if !prependShell {
+		return command
+	}
+
+	if len(shell) > 0 {
+		command = append(shell, command...)
+	} else if len(builder.Shell()) > 0 {
+		command = append(builder.Shell(), command...)
+	} else {
+		command = append(DefaultShell, command...)
+	}
+
+	return command
+}
+
+func generateGlobalMounts(rawGlobalMounts []*specs.Mount) []specs.Mount {
+	var globalMounts []specs.Mount
+	for _, mount := range rawGlobalMounts {
+		globalMounts = append(globalMounts, *mount)
+	}
+
+	return globalMounts
+}
