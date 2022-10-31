@@ -28,6 +28,7 @@ var _ = DescribeTable("CMD digest",
 		NewCmd("CMD",
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: false}},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{
@@ -48,6 +49,7 @@ var _ = DescribeTable("CMD digest",
 		NewCmd("CMD",
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{
@@ -68,6 +70,7 @@ var _ = DescribeTable("CMD digest",
 		NewCmd("CMD",
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
+				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
 			&stage.BaseStageOptions{

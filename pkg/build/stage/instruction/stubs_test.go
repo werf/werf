@@ -12,7 +12,7 @@ import (
 )
 
 func NewDockerfileStageInstructionWithDependencyStages[T dockerfile.InstructionDataInterface](data T, dependencyStages []string) *dockerfile.DockerfileStageInstruction[T] {
-	i := dockerfile.NewDockerfileStageInstruction(data)
+	i := dockerfile.NewDockerfileStageInstruction(data, dockerfile.DockerfileStageInstructionOptions{})
 	for _, stageName := range dependencyStages {
 		i.SetDependencyByStageRef(stageName, &dockerfile.DockerfileStage{StageName: stageName})
 	}
