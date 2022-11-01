@@ -1,5 +1,27 @@
 # Changelog
 
+### [1.2.185](https://www.github.com/werf/werf/compare/v1.2.184...v1.2.185) (2022-11-01)
+
+
+### Features
+
+* **staged-dockerfile:** all dockerfile options and instructions /1 ([f0cde50](https://www.github.com/werf/werf/commit/f0cde500b55de4f96b9b47e97bf45bf9a313ad08))
+* **staged-dockerfile:** implement COPY --from stage to image name expansion ([824c5bb](https://www.github.com/werf/werf/commit/824c5bb9c9defb6b9c919aef8db17dd7cda3b9c0)), closes [#2215](https://www.github.com/werf/werf/issues/2215)
+* **staged-dockerfile:** implement global/Run mounts ([42edf1e](https://www.github.com/werf/werf/commit/42edf1e3b3e20b50a23b79dbac7a8e3715d8ed2b))
+* **staged-dockerfile:** refactor calculateBuildContextGlobsChecksum ([e558e1e](https://www.github.com/werf/werf/commit/e558e1e0474a1a4fe272d59884a2241cefceaf63))
+* **staged-dockerfile:** refactor dockerfile, use buidkit instruction structs directly ([e138887](https://www.github.com/werf/werf/commit/e1388878af8617089188722e904a3ac4e3134669))
+* **staged-dockerfile:** refine ADD instruction digest calculation ([2ef3d11](https://www.github.com/werf/werf/commit/2ef3d11dc3dbbcc89b0ed9d4f52a5eb5a872889e))
+* **staged-dockerfile:** refine dockerfile instructions digests calculations ([d15d79f](https://www.github.com/werf/werf/commit/d15d79f2678367decd9b96370664d48fbf8aee5a))
+* **staged-dockerfile:** use contents of Copy/Add sources in checksum ([d20e397](https://www.github.com/werf/werf/commit/d20e39712f8d827479e9c4586724ff932d845660))
+
+
+### Bug Fixes
+
+* **staged-dockerfile:** broken error message ([4dea6b3](https://www.github.com/werf/werf/commit/4dea6b3b99ca7d12c99b29b410b91d9917f7e9b0))
+* **staged-dockerfile:** panics on Healthcheck and Maintainer instructions and no duplicates in images-sets ([2a55266](https://www.github.com/werf/werf/commit/2a552663fad00fb020a272936879fdfbefbeb1bd)), closes [#2215](https://www.github.com/werf/werf/issues/2215)
+* **staged-dockerfile:** proper instruction arguments unescaping ([e767013](https://www.github.com/werf/werf/commit/e767013db72a4aeeaf258ad21c3919dc219dc492))
+* **stapel:** add log line about starting container cleanup ([e8fd1f4](https://www.github.com/werf/werf/commit/e8fd1f479861e955e64374e94ad1d8fec35baebf))
+
 ### [1.2.184](https://www.github.com/werf/werf/compare/v1.2.183...v1.2.184) (2022-10-21)
 
 
