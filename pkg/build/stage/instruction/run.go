@@ -61,7 +61,23 @@ func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 		}
 	}
 
-	// TODO(ilya-lesikov): should bind mount with context as src be counted as dependency?
+	if stg.UsesBuildContext() {
+		var paths []string
+		for _, mnt := range mounts {
+			if mnt.Type != instructions.MountTypeBind || mnt.Source == "" {
+				continue
+			}
+			paths = append(paths, mnt.Source)
+		}
+
+		if len(paths) > 0 {
+			if srcChecksum, err := buildContextArchive.CalculatePathsChecksum(ctx, paths); err != nil {
+				return "", fmt.Errorf("unable to calculate build context paths checksum: %w", err)
+			} else {
+				args = append(args, "SourcesChecksum", srcChecksum)
+			}
+		}
+	}
 
 	return util.Sha256Hash(args...), nil
 }

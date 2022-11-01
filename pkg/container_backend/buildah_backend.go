@@ -152,8 +152,8 @@ func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *con
 
 	destScriptPath := "/.werf/script.sh"
 
-	var mounts []specs.Mount
-	mounts = append(mounts, specs.Mount{
+	var mounts []*specs.Mount
+	mounts = append(mounts, &specs.Mount{
 		Type:        "bind",
 		Source:      hostScriptPath,
 		Destination: destScriptPath,
@@ -169,7 +169,7 @@ func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *con
 		CommonOpts:   runtime.getBuildahCommonOpts(ctx, false),
 		User:         "0:0",
 		WorkingDir:   "/",
-		LegacyMounts: mounts,
+		GlobalMounts: mounts,
 	}); err != nil {
 		return fmt.Errorf("unable to run commands script: %w", err)
 	}
@@ -754,7 +754,7 @@ func (runtime *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir stri
 	return runtime.buildah.RunCommand(ctx, container.Name, append([]string{"rm", "-rf"}, containerDirs...), buildah.RunCommandOpts{
 		User:       "0:0",
 		WorkingDir: "/",
-		LegacyMounts: []specs.Mount{
+		GlobalMounts: []*specs.Mount{
 			{
 				Type:        "bind",
 				Source:      mountDir,
@@ -772,8 +772,8 @@ func parseVolume(volume string) (string, string, error) {
 	return volumeParts[0], volumeParts[1], nil
 }
 
-func makeBuildahMounts(volumes []string) ([]specs.Mount, error) {
-	var mounts []specs.Mount
+func makeBuildahMounts(volumes []string) ([]*specs.Mount, error) {
+	var mounts []*specs.Mount
 
 	for _, volume := range volumes {
 		from, to, err := parseVolume(volume)
@@ -781,7 +781,7 @@ func makeBuildahMounts(volumes []string) ([]specs.Mount, error) {
 			return nil, fmt.Errorf("invalid volume %q: %w", volume, err)
 		}
 
-		mounts = append(mounts, specs.Mount{
+		mounts = append(mounts, &specs.Mount{
 			Type:        "bind",
 			Source:      from,
 			Destination: to,

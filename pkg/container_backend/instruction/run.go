@@ -61,6 +61,7 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 		PrependShell:    i.PrependShell,
 		AddCapabilities: addCapabilities,
 		NetworkType:     i.GetNetwork(),
+		RunMounts:       i.GetMounts(),
 	}); err != nil {
 		return fmt.Errorf("error running command %v for container %s: %w", i.CmdLine, containerName, err)
 	}

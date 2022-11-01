@@ -70,8 +70,10 @@ type RunCommandOpts struct {
 	WorkingDir       string
 	User             string
 	Envs             []string
-	Mounts           []instructions.Mount
-	LegacyMounts     []specs.Mount // TODO(ilya-lesikov): migrate to Mounts
+	// Mounts as allowed to be passed from command line.
+	GlobalMounts []*specs.Mount
+	// Mounts as allowed in Dockerfile RUN --mount option. Have more restrictions than GlobalMounts (e.g. Source of bind-mount can't be outside of ContextDir or container root).
+	RunMounts []*instructions.Mount
 }
 
 type RmiOpts struct {

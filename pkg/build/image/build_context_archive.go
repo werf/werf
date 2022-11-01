@@ -138,7 +138,7 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 		}
 	}
 
-	pathsChecksum, err := a.calculatePathsChecksum(ctx, matches)
+	pathsChecksum, err := a.CalculatePathsChecksum(ctx, matches)
 	if err != nil {
 		return "", fmt.Errorf("unable to calculate build context paths checksum: %w", err)
 	}
@@ -146,7 +146,7 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 	return pathsChecksum, nil
 }
 
-func (a *BuildContextArchive) calculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
+func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
 	sort.Strings(paths)
 	paths = util.UniqStrings(paths)
 

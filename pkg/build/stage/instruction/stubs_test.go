@@ -101,3 +101,18 @@ func (buildContext *BuildContextStub) CalculateGlobsChecksum(ctx context.Context
 
 	return util.Sha256Hash(args...), nil
 }
+
+func (buildContext *BuildContextStub) CalculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
+	var args []string
+
+	for _, p := range paths {
+		for _, f := range buildContext.Files {
+			if f.Name == p {
+				args = append(args, string(f.Data))
+				break
+			}
+		}
+	}
+
+	return util.Sha256Hash(args...), nil
+}
