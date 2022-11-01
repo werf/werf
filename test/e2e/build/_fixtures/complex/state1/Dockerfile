@@ -18,9 +18,6 @@ WORKDIR /
 COPY --from=builder /app /app
 
 RUN touch /created-by-run-state1
-RUN --mount=type=tmpfs,target=/tmpfs touch /tmpfs/created-by-run-state1
-RUN --mount=type=bind,target=/bind,rw touch /bind/created-by-run-state1
-RUN --mount=type=bind,from=builder,target=/bind-from-builder,rw touch /bind-from-builder/created-by-run-state1
 
 ENTRYPOINT ["sh", "-ec"]
 CMD ["tail -f /dev/null"]

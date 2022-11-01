@@ -102,12 +102,6 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"test -f /created-by-run-state0",
 
 					"test -d /volume10/should-exist-in-volume",
-
-					"! test -e /tmpfs",
-
-					"! test -e /bind",
-
-					"! test -e /bind-from-builder",
 				)
 
 				By(`state0: checking "stapel-shell" image content`)
@@ -198,12 +192,6 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"! test -e /helloworld.tgz",
 
 					"test -f /created-by-run-state1",
-
-					"! test -e /tmpfs",
-
-					"! test -e /bind",
-
-					"! test -e /bind-from-builder",
 				)
 
 				By(`state1: checking "stapel-shell" image content`)
