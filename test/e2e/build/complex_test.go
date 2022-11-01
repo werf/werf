@@ -102,6 +102,12 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"test -f /created-by-run-state0",
 
 					"test -d /volume10/should-exist-in-volume",
+
+					"! test -e /tmpfs",
+
+					"! test -e /bind",
+
+					"! test -e /bind-from-builder",
 				)
 
 				By(`state0: checking "stapel-shell" image content`)
@@ -119,15 +125,15 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"stat -c %u:%g /app/static/style.css | diff <(echo 1050:1051) -",
 					"grep -qF 'text-align: center;' /app/static/style.css",
 
-					"! test -f /app/app.go",
+					"! test -e /app/app.go",
 
-					"! test -f /app/static/script.js",
+					"! test -e /app/static/script.js",
 
 					"test -f /triggered-stages",
 					"stat -c %u:%g /triggered-stages | diff <(echo 0:0) -",
 					"echo 'beforeInstall\ninstall\nbeforeSetup\nsetup' | diff /triggered-stages -",
 
-					"! test -f /tmp_dir/file",
+					"! test -e /tmp_dir/file",
 
 					"test -f /basedir/file",
 					"stat -c %u:%g /basedir/file | diff <(echo 0:0) -",
@@ -176,7 +182,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"test -f /app/added/file1",
 					"echo 'file1content-state1' | diff /app/added/file1 -",
 
-					"! test -f /app/added/file2",
+					"! test -e /app/added/file2",
 
 					"test -f /app/added/file3",
 					"echo 'file3content-state1' | diff /app/added/file3 -",
@@ -184,14 +190,20 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"test -f /app/copied/file1",
 					"echo 'file1content-state1' | diff /app/copied/file1 -",
 
-					"! test -f /app/copied/file2",
+					"! test -e /app/copied/file2",
 
 					"test -f /app/copied/file3",
 					"echo 'file3content-state1' | diff /app/copied/file3 -",
 
-					"! test -f /helloworld.tgz",
+					"! test -e /helloworld.tgz",
 
 					"test -f /created-by-run-state1",
+
+					"! test -e /tmpfs",
+
+					"! test -e /bind",
+
+					"! test -e /bind-from-builder",
 				)
 
 				By(`state1: checking "stapel-shell" image content`)
@@ -205,19 +217,19 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -",
 					"grep -qF '<title>Hello, world</title>' /app/static/index.html",
 
-					"! test -f /app/static/style.css",
+					"! test -e /app/static/style.css",
 
 					"test -f /app/app.go",
 					"stat -c %u:%g /app/app.go | diff <(echo 1050:1051) -",
 					"grep -qF 'package hello' /app/app.go",
 
-					"! test -f /app/static/script.js",
+					"! test -e /app/static/script.js",
 
 					"test -f /triggered-stages",
 					"stat -c %u:%g /triggered-stages | diff <(echo 0:0) -",
 					"echo 'beforeInstall\ninstall\nbeforeSetup\nsetup' | diff /triggered-stages -",
 
-					"! test -f /tmp_dir/file",
+					"! test -e /tmp_dir/file",
 
 					"test -f /basedir/file",
 					"stat -c %u:%g /basedir/file | diff <(echo 0:0) -",
