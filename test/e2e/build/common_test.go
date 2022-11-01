@@ -13,12 +13,18 @@ type setupEnvOptions struct {
 func setupEnv(opts setupEnvOptions) {
 	SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.BuildahMode)
 
-	if opts.WithLocalRepo && opts.BuildahMode == "docker" {
+	if opts.WithLocalRepo && (opts.BuildahMode == "vanilla-docker" || opts.BuildahMode == "buildkit-docker") {
 		SuiteData.Stubs.SetEnv("WERF_REPO", strings.Join([]string{SuiteData.RegistryLocalAddress, SuiteData.ProjectName}, "/"))
 	} else if opts.WithLocalRepo {
 		SuiteData.Stubs.SetEnv("WERF_REPO", strings.Join([]string{SuiteData.RegistryInternalAddress, SuiteData.ProjectName}, "/"))
 	} else {
 		SuiteData.Stubs.UnsetEnv("WERF_REPO")
+	}
+
+	if opts.BuildahMode == "buildkit-docker" {
+		SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")
+	} else {
+		SuiteData.Stubs.UnsetEnv("DOCKER_BUILDKIT")
 	}
 
 	if opts.WithLocalRepo {
