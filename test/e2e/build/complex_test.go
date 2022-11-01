@@ -241,13 +241,23 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				)
 			}
 		},
-		Entry("without repo using Docker", complexTestOptions{
-			BuildahMode:                 "docker",
+		Entry("without repo using Vanilla Docker", complexTestOptions{
+			BuildahMode:                 "vanilla-docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
 		}),
-		Entry("with local repo using Docker", complexTestOptions{
-			BuildahMode:                 "docker",
+		Entry("with local repo using Vanilla Docker", complexTestOptions{
+			BuildahMode:                 "vanilla-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("without repo using BuildKit Docker", complexTestOptions{
+			BuildahMode:                 "buildkit-docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("with local repo using BuildKit Docker", complexTestOptions{
+			BuildahMode:                 "buildkit-docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
