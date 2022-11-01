@@ -21,9 +21,6 @@ COPY --from=builder /helloworld.tgz /helloworld.tgz
 
 RUN touch /created-by-run-state0
 RUN mkdir -p /volume10/should-exist-in-volume
-RUN --mount=type=tmpfs,target=/tmpfs touch /tmpfs/created-by-run-state0
-RUN --mount=type=bind,target=/bind,rw touch /bind/created-by-run-state0
-RUN --mount=type=bind,from=builder,target=/bind-from-builder,rw touch /bind-from-builder/created-by-run-state0
 
 ENTRYPOINT ["sh", "-ec"]
 CMD ["tail -f /dev/null"]
