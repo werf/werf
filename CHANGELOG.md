@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.187](https://www.github.com/werf/werf/compare/v1.2.186...v1.2.187) (2022-11-02)
+
+
+### Bug Fixes
+
+* **build:** fix git-patch-* stages mechanics when patches contains binaries ([cfd6b8e](https://www.github.com/werf/werf/commit/cfd6b8e19134f0ee26b324bfc3ed4620540a0ce5))
+
 ### [1.2.186](https://www.github.com/werf/werf/compare/v1.2.185...v1.2.186) (2022-11-02)
 
 
