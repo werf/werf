@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.186](https://www.github.com/werf/werf/compare/v1.2.185...v1.2.186) (2022-11-02)
+
+
+### Features
+
+* **staged-dockerfile:** implement first stage of build-args expansion ([c0de754](https://www.github.com/werf/werf/commit/c0de754946deddce61dc70e85ea5149466ebc86f))
+
+
+### Bug Fixes
+
+* **buildah:** broken build on mac/win ([1118613](https://www.github.com/werf/werf/commit/11186132285bc3e8dedc9f3b0ec83b34b2e6b7c6))
+
 ### [1.2.185](https://www.github.com/werf/werf/compare/v1.2.184...v1.2.185) (2022-11-01)
 
 
