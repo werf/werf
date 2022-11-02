@@ -10,21 +10,21 @@ However, the container registry may have limited support for the _Docker Registr
 
 werf tries to automatically detect the type of container registry using the repository address provided (via the `--repo` option). The user can explicitly specify the container registry using the `--repo-container-registry` option or via the `WERF_REPO_CONTAINER_REGISTRY` environment variable.
 
-|                                           | Build  | Bundles           | Cleanup                                             |
-| -------------------------------------     | :----: | :---------------: | :-------------------------------------------------: |
-| _AWS ECR_                                 | **ok** |         **ok**    |       [***ok**](#aws-ecr)                           |
-| _Azure CR_                                | **ok** |         **ok**    |       [***ok**](#azure-cr)                          |
-| _Default_                                 | **ok** |         **ok**    |         **ok**                                      |
-| _Docker Hub_                              | **ok** | **not supported** |       [***ok**](#docker-hub)                        |
-| _GCR_                                     | **ok** |         **ok**    |         **ok**                                      |
-| _GitHub Packages_                         | **ok** |         **ok**    |       [***ok**](#github-packages)                   |
-| _GitLab Registry_                         | **ok** |         **ok**    |       [***ok**](#gitlab-registry)                   |
-| _Harbor_                                  | **ok** |         **ok**    |         **ok**                                      |
-| _JFrog Artifactory_                       | **ok** |         **ok**    |         **ok**                                      |
-| _Nexus_                                   | **ok** |   **not tested**  |         **ok**                                      |
+|                                           | Build  |      Bundles      | Cleanup                                             |
+| -------------------------------------     | :----: |:-----------------:| :-------------------------------------------------: |
+| _AWS ECR_                                 | **ok** |      **ok**       |       [***ok**](#aws-ecr)                           |
+| _Azure CR_                                | **ok** |      **ok**       |       [***ok**](#azure-cr)                          |
+| _Default_                                 | **ok** |      **ok**       |         **ok**                                      |
+| _Docker Hub_                              | **ok** |      **ok**       |       [***ok**](#docker-hub)                        |
+| _GCR_                                     | **ok** |      **ok**       |         **ok**                                      |
+| _GitHub Packages_                         | **ok** |      **ok**       |       [***ok**](#github-packages)                   |
+| _GitLab Registry_                         | **ok** |      **ok**       |       [***ok**](#gitlab-registry)                   |
+| _Harbor_                                  | **ok** |      **ok**       |         **ok**                                      |
+| _JFrog Artifactory_                       | **ok** |      **ok**       |         **ok**                                      |
+| _Nexus_                                   | **ok** |  **not tested**   |         **ok**                                      |
 | _Quay_                                    | **ok** | **not supported** |         **ok**                                      |
-| _Yandex Container Registry_               | **ok** |         **ok**    |         **ok**                                      |
-| _Selectel CRaaS_                          | **ok** |   **not tested**  |       [***ok**](#selectel-craas)                    |
+| _Yandex Container Registry_               | **ok** |      **ok**       |         **ok**                                      |
+| _Selectel CRaaS_                          | **ok** |  **not tested**   |       [***ok**](#selectel-craas)                    |
 
 ## Authorization
 
