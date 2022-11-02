@@ -101,7 +101,7 @@ type ConfigOpts struct {
 	EntrypointPrependShell bool
 	User                   string
 	Workdir                string
-	Healthcheck            *thirdparty.HealthConfig
+	Healthcheck            *thirdparty.BuildahHealthConfig
 	OnBuild                string
 	StopSignal             string
 	Shell                  []string
