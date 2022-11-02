@@ -5,4 +5,4 @@ package thirdparty
 
 import "github.com/containers/buildah/docker"
 
-type HealthConfig docker.HealthConfig
+type BuildahHealthConfig docker.HealthConfig

@@ -905,8 +905,8 @@ func getGIDFromGroupName(group, etcGroupPath string) (uint32, error) {
 	return 0, fmt.Errorf("could not find GID for group %q in passwd file %q", group, etcGroupPath)
 }
 
-// Can return nil pointer to HealthConfig
-func newHealthConfigFromString(healthcheck string) (*thirdparty.HealthConfig, error) {
+// Can return nil pointer to BuildahHealthConfig
+func newHealthConfigFromString(healthcheck string) (*thirdparty.BuildahHealthConfig, error) {
 	if healthcheck == "" {
 		return nil, nil
 	}
@@ -932,7 +932,7 @@ func newHealthConfigFromString(healthcheck string) (*thirdparty.HealthConfig, er
 	}
 
 	healthcheckcmd := cmd.(*instructions.HealthCheckCommand)
-	healthconfig := (*thirdparty.HealthConfig)(healthcheckcmd.Health)
+	healthconfig := (*thirdparty.BuildahHealthConfig)(healthcheckcmd.Health)
 
 	return healthconfig, nil
 }
