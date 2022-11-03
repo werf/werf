@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	kubectl2 "github.com/werf/werf/cmd/werf/docs/replacers/kubectl"
 	"log"
 	"os"
 	"path/filepath"
@@ -151,7 +152,7 @@ Find more information at https://werf.io`),
 				hostCmd(ctx),
 				helmCmd,
 				crCmd(ctx),
-				kubectl.NewCmd(ctx),
+				kubectl2.ReplaceKubectlDocs(kubectl.NewCmd(ctx)),
 			},
 		},
 		{
