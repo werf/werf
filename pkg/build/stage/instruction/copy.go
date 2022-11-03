@@ -23,6 +23,10 @@ func NewCopy(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*ins
 }
 
 func (stg *Copy) ExpandInstruction(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	if err := stg.Base.ExpandInstruction(ctx, c, cb, prevBuiltImage, stageImage, buildContextArchive); err != nil {
+		return err
+	}
+
 	if stg.instruction.Data.From != "" {
 		if ds := stg.instruction.GetDependencyByStageRef(stg.instruction.Data.From); ds != nil {
 			depStageImageName := c.GetImageNameForLastImageStage(ds.WerfImageName())

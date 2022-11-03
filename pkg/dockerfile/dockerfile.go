@@ -5,11 +5,12 @@ import (
 )
 
 type DockerfileOptions struct {
-	Target    string
-	BuildArgs map[string]string
-	AddHost   []string
-	Network   string
-	SSH       string
+	Target               string
+	BuildArgs            map[string]string
+	DependenciesArgsKeys []string
+	AddHost              []string
+	Network              string
+	SSH                  string
 }
 
 func NewDockerfile(stages []*DockerfileStage, opts DockerfileOptions) *Dockerfile {
