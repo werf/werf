@@ -15,6 +15,7 @@ func TestReplaceHelmCreateDocs(t *testing.T) {
 	cmd := ReplaceHelmCreateDocs(helm_v3.NewCreateCmd(os.Stdout))
 	if ann, ok := cmd.Annotations[common.DocsLongMD]; !ok {
 		t.Error("There is no annotation!")
+	} else {
 		if ann != GetHelmCreateDocs().LongMD {
 			t.Error("The annotation does not match!")
 		}
