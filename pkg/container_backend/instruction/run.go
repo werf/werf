@@ -3,9 +3,11 @@ package instruction
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend"
 )
@@ -54,6 +56,8 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 	if i.GetSecurity() == "insecure" {
 		addCapabilities = []string{"all"}
 	}
+
+	logboek.Context(ctx).Default().LogF("$ %s\n", strings.Join(i.CmdLine, " "))
 
 	if err := drv.RunCommand(ctx, containerName, i.CmdLine, buildah.RunCommandOpts{
 		CommonOpts:      drvOpts,

@@ -54,7 +54,9 @@ func (stg *Base[T, BT]) PrepareImage(ctx context.Context, c stage.Conveyor, cb c
 }
 
 func (stg *Base[T, BT]) ExpandInstruction(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	return nil
+	dependenciesArgs := stage.ResolveDependenciesArgs(stg.dependencies, c)
+	// NOTE: do not skip unset envs during second stage expansion
+	return stg.instruction.Expand(dependenciesArgs, dockerfile.ExpandOptions{SkipUnsetEnv: false})
 }
 
 type InstructionExpander interface {

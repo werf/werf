@@ -225,7 +225,9 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *im
 func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image) (deferFn func(), err error) {
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
-	img.SetupBaseImage()
+	if err := img.SetupBaseImage(); err != nil {
+		return nil, err
+	}
 
 	if img.UsesBuildContext() {
 		phase.buildContextArchive = image.NewBuildContextArchive(phase.Conveyor.giterminismManager, img.TmpDir)
