@@ -585,7 +585,13 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		return false, nil, err
 	}
 
-	stageDigest, err := calculateDigest(ctx, stage.GetLegacyCompatibleStageName(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor)
+	var opts calculateDigestOption
+	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
+		if !stg.HasPrevStage() {
+			opts.BaseImage = img.GetBaseImageReference()
+		}
+	}
+	stageDigest, err := calculateDigest(ctx, stage.GetLegacyCompatibleStageName(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor, opts)
 	if err != nil {
 		return false, nil, err
 	}
@@ -614,7 +620,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		}
 	}
 
-	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor)
+	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOption{})
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
 	}
@@ -861,7 +867,11 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 		})
 }
 
-func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor) (string, error) {
+type calculateDigestOption struct {
+	BaseImage string
+}
+
+func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOption) (string, error) {
 	checksumArgs := []string{imagePkg.BuildCacheVersion, stageName, stageDependencies}
 	if prevNonEmptyStage != nil {
 		prevStageDependencies, err := prevNonEmptyStage.GetNextStageDependencies(ctx, conveyor)
@@ -870,6 +880,10 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		}
 
 		checksumArgs = append(checksumArgs, prevNonEmptyStage.GetDigest(), prevStageDependencies)
+	}
+
+	if opts.BaseImage != "" {
+		checksumArgs = append(checksumArgs, opts.BaseImage)
 	}
 
 	digest := util.Sha3_224Hash(checksumArgs...)
@@ -883,6 +897,11 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 			"prevNonEmptyStage digest",
 			"prevNonEmptyStage dependencies for next stage",
 		}
+
+		if opts.BaseImage != "" {
+			checksumArgsNames = append(checksumArgsNames, "baseImage")
+		}
+
 		for ind, checksumArg := range checksumArgs {
 			logboek.Context(ctx).Debug().LogF("%s => %q\n", checksumArgsNames[ind], checksumArg)
 		}
