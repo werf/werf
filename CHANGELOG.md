@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.188](https://www.github.com/werf/werf/compare/v1.2.187...v1.2.188) (2022-11-07)
+
+
+### Features
+
+* **staged-dockerfile:** support werf images dependencies build-args ([8faf229](https://www.github.com/werf/werf/commit/8faf229ff4cf8523ae995a72bd76762cd4024833))
+
+
+### Bug Fixes
+
+* **staged-dockerfile:** changing FROM base image does not cause rebuilding ([a52991a](https://www.github.com/werf/werf/commit/a52991ae9bf9a83d2b9de11ca11ede3ea95d6297))
+
 ### [1.2.187](https://www.github.com/werf/werf/compare/v1.2.186...v1.2.187) (2022-11-02)
 
 
