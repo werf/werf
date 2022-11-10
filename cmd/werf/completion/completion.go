@@ -32,7 +32,7 @@ func NewCmd(ctx context.Context, rootCmd *cobra.Command) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch cmdData.Shell {
 			case "bash":
-				return rootCmd.GenBashCompletion(os.Stdout)
+				return rootCmd.GenBashCompletionV2(os.Stdout, true)
 			case "zsh":
 				if err := rootCmd.GenZshCompletion(os.Stdout); err != nil {
 					return err
