@@ -60,5 +60,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetApplyViewLastAppliedDocs().LongMD,
 		}
+	case "attach (POD | TYPE/NAME) -c CONTAINER":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetAttachDocs().LongMD,
+		}
 	}
 }

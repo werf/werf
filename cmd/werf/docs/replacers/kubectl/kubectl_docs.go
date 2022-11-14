@@ -118,3 +118,11 @@ func GetApplyViewLastAppliedDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetAttachDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Attach to a process that is already running inside an existing container."
+
+	return docs
+}
