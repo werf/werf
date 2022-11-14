@@ -126,3 +126,39 @@ func GetAttachDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetAuthDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Inspect authorization."
+
+	return docs
+}
+
+func GetAuthCanIDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Check whether an action is allowed.\n\n" +
+		"* `VERB` is a logical Kubernetes API verb like `get`, `list`, `watch`, `delete`, etc.\n" +
+		"* `TYPE` is a Kubernetes resource. Shortcuts and groups will be resolved.\n" +
+		"* `NONRESOURCEURL` is a partial URL that starts with `/`.\n" +
+		"* `NAME` is the name of a particular Kubernetes resource.\n\n" +
+		"This command pairs nicely with impersonation. See `--as global` flag."
+
+	return docs
+}
+
+func GetAuthReconcileDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Reconciles rules for RBAC role, role binding, cluster role, and cluster role binding objects.\n\n" +
+		"Missing objects are created, and the containing namespace is created for namespaced objects, if required.\n\n" +
+		"Existing roles are updated to include the permissions in the input objects, " +
+		"and remove extra permissions if `--remove-extra-permissions` is specified.\n\n" +
+		"Existing bindings are updated to include the subjects in the input objects, " +
+		"and remove extra subjects if `--remove-extra-subjects` is specified.\n\n" +
+		"This is preferred to `apply` for RBAC resources so that semantically-aware " +
+		"merging of rules and subjects is done."
+
+	return docs
+}
