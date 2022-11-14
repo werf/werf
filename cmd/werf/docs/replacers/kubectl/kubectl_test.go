@@ -59,7 +59,12 @@ func checkCmd(cmd *cobra.Command, previuosCmd string) {
 }
 
 func checkText(ann string) bool {
-	if ann != GetAlphaEventsDocs().LongMD {
+	if ann != GetAlphaEventsDocs().LongMD &&
+		ann != GetKubectlDocs().LongMD &&
+		ann != GetAlphaDocs().LongMD &&
+		ann != GetAnnotateDocs().LongMD &&
+		ann != GetApiResourcesDocs().LongMD &&
+		ann != GetApiVersionsDocs().LongMD {
 		return false
 	}
 	return true
