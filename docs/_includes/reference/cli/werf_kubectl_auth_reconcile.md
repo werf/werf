@@ -5,13 +5,13 @@
 {% endif %}
 Reconciles rules for RBAC role, role binding, cluster role, and cluster role binding objects.
 
- Missing objects are created, and the containing namespace is created for namespaced objects, if required.
+Missing objects are created, and the containing namespace is created for namespaced objects, if required.
 
- Existing roles are updated to include the permissions in the input objects, and remove extra permissions if --remove-extra-permissions is specified.
+Existing roles are updated to include the permissions in the input objects, and remove extra permissions if `--remove-extra-permissions` is specified.
 
- Existing bindings are updated to include the subjects in the input objects, and remove extra subjects if --remove-extra-subjects is specified.
+Existing bindings are updated to include the subjects in the input objects, and remove extra subjects if `--remove-extra-subjects` is specified.
 
- This is preferred to 'apply' for RBAC resources so that semantically-aware merging of rules and subjects is done.
+This is preferred to `apply` for RBAC resources so that semantically-aware merging of rules and subjects is done.
 
 {{ header }} Syntax
 

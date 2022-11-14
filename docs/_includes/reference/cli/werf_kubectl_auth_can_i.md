@@ -5,7 +5,12 @@
 {% endif %}
 Check whether an action is allowed.
 
- VERB is a logical Kubernetes API verb like 'get', 'list', 'watch', 'delete', etc. TYPE is a Kubernetes resource. Shortcuts and groups will be resolved. NONRESOURCEURL is a partial URL that starts with "/". NAME is the name of a particular Kubernetes resource. This command pairs nicely with impersonation. See --as global flag.
+* `VERB` is a logical Kubernetes API verb like `get`, `list`, `watch`, `delete`, etc.
+* `TYPE` is a Kubernetes resource. Shortcuts and groups will be resolved.
+* `NONRESOURCEURL` is a partial URL that starts with `/`.
+* `NAME` is the name of a particular Kubernetes resource.
+
+This command pairs nicely with impersonation. See `--as global` flag.
 
 {{ header }} Syntax
 
