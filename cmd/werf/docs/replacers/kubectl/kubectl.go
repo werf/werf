@@ -64,5 +64,17 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetAttachDocs().LongMD,
 		}
+	case "auth":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetAuthDocs().LongMD,
+		}
+	case "can-i VERB [TYPE | TYPE/NAME | NONRESOURCEURL]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetAuthCanIDocs().LongMD,
+		}
+	case "reconcile -f FILENAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetAuthReconcileDocs().LongMD,
+		}
 	}
 }

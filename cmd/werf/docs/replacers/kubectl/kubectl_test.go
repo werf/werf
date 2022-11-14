@@ -69,7 +69,10 @@ func checkText(ann string) bool {
 		ann != GetApplyEditLastAppliedDocs().LongMD &&
 		ann != GetApplySetLastAppliedDocs().LongMD &&
 		ann != GetApplyViewLastAppliedDocs().LongMD &&
-		ann != GetAttachDocs().LongMD {
+		ann != GetAttachDocs().LongMD &&
+		ann != GetAuthDocs().LongMD &&
+		ann != GetAuthCanIDocs().LongMD &&
+		ann != GetAuthReconcileDocs().LongMD {
 		return false
 	}
 	return true
