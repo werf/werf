@@ -3,11 +3,12 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Apply a configuration to a resource by file name or stdin. The resource name must be specified. This resource will be created if it doesn't exist yet. To use 'apply', always create the resource initially with either 'apply' or 'create --save-config'.
+Apply a configuration to a resource by file name or stdin.
+The resource name must be specified. This resource will be created if it doesn't exist yet. To use `apply`, always create the resource initially with either `apply` or `create --save-config`.
 
- JSON and YAML formats are accepted.
+JSON and YAML formats are accepted.
 
- Alpha Disclaimer: the --prune functionality is not yet complete. Do not use unless you are aware of what the current state is. See [https://issues.k8s.io/34274](https://issues.k8s.io/34274).
+Alpha Disclaimer: the `--prune` functionality is not yet complete. Do not use unless you are aware of what the current state is. See [https://issues.k8s.io/34274](https://issues.k8s.io/34274).
 
 {{ header }} Syntax
 
