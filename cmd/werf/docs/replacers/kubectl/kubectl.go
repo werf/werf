@@ -76,5 +76,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetAuthReconcileDocs().LongMD,
 		}
+	case "autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --max=MAXPODS [--cpu-percent=CPU]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetAutoscaleDocs().LongMD,
+		}
 	}
 }
