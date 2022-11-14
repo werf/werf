@@ -24,5 +24,25 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetAlphaEventsDocs().LongMD,
 		}
+	case "kubectl":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetKubectlDocs().LongMD,
+		}
+	case "alpha":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetAlphaDocs().LongMD,
+		}
+	case "annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KEY_N=VAL_N [--resource-version=version]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetAnnotateDocs().LongMD,
+		}
+	case "api-resources":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetApiResourcesDocs().LongMD,
+		}
+	case "api-versions":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetApiVersionsDocs().LongMD,
+		}
 	}
 }
