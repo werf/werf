@@ -44,5 +44,21 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetApiVersionsDocs().LongMD,
 		}
+	case "apply (-f FILENAME | -k DIRECTORY)":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetApplyDocs().LongMD,
+		}
+	case "edit-last-applied (RESOURCE/NAME | -f FILENAME)":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetApplyEditLastAppliedDocs().LongMD,
+		}
+	case "set-last-applied -f FILENAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetApplySetLastAppliedDocs().LongMD,
+		}
+	case "view-last-applied (TYPE [NAME | -l label] | TYPE/NAME | -f FILENAME)":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetApplyViewLastAppliedDocs().LongMD,
+		}
 	}
 }
