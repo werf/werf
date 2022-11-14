@@ -64,7 +64,11 @@ func checkText(ann string) bool {
 		ann != GetAlphaDocs().LongMD &&
 		ann != GetAnnotateDocs().LongMD &&
 		ann != GetApiResourcesDocs().LongMD &&
-		ann != GetApiVersionsDocs().LongMD {
+		ann != GetApiVersionsDocs().LongMD &&
+		ann != GetApplyDocs().LongMD &&
+		ann != GetApplyEditLastAppliedDocs().LongMD &&
+		ann != GetApplySetLastAppliedDocs().LongMD &&
+		ann != GetApplyViewLastAppliedDocs().LongMD {
 		return false
 	}
 	return true

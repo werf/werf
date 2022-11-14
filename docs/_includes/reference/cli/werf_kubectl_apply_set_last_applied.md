@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Set the latest last-applied-configuration annotations by setting it to match the contents of a file. This results in the last-applied-configuration being updated as though 'kubectl apply -f<file> ' was run, without updating any other parts of the object.
+Set the latest `last-applied-configuration` annotations by setting it to match the contents of a file. This results in the `last-applied-configuration` being updated as though `kubectl apply -f <file>` was run, without updating any other parts of the object.
 
 {{ header }} Syntax
 
