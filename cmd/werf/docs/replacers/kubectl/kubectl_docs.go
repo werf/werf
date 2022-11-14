@@ -162,3 +162,15 @@ func GetAuthReconcileDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetAutoscaleDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Creates an autoscaler that automatically chooses and sets the number of pods that run in a " +
+		"Kubernetes cluster.\n\n" +
+		"Looks up a deployment, replica set, stateful set, or replication controller by name and creates an " +
+		"autoscaler that uses the given resource as a reference.\n" +
+		"An autoscaler can automatically increase or decrease number of Pods deployed within the system as needed."
+
+	return docs
+}

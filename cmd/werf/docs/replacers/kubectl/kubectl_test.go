@@ -72,7 +72,8 @@ func checkText(ann string) bool {
 		ann != GetAttachDocs().LongMD &&
 		ann != GetAuthDocs().LongMD &&
 		ann != GetAuthCanIDocs().LongMD &&
-		ann != GetAuthReconcileDocs().LongMD {
+		ann != GetAuthReconcileDocs().LongMD &&
+		ann != GetAutoscaleDocs().LongMD {
 		return false
 	}
 	return true
