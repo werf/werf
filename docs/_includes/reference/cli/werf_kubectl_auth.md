@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Inspect authorization
+Inspect authorization.
 
 {{ header }} Syntax
 
