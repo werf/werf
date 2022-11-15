@@ -5,7 +5,7 @@ permalink: advanced/ci_cd/run_in_container/use_gitlab_ci_cd_with_docker_executor
 
 > NOTICE: werf supports building images _with the Docker server_ or _with Buildah_. This page contains information applicable only to the mode _with Buildah_. Buildah supports building either Dockerfile images or stapel images.
 
-## 1. Configure GitLab rinner for Kubernetes
+## 1. Configure GitLab runner for Kubernetes
 
 Make sure you meet all [system requirements]({{ "advanced/buildah_mode.html#system-requirements" | true_relative_url }}) and select one of the [available operating modes]({{ "advanced/ci_cd/run_in_container/how_it_works.html#modes-of-operation" | true_relative_url }}) (depending on the capabilities of your GitLab runner) and navigate to it.
 
