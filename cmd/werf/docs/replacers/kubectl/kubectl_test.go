@@ -76,7 +76,9 @@ func checkText(ann string) bool {
 		ann != GetAutoscaleDocs().LongMD &&
 		ann != GetCertificateDocs().LongMD &&
 		ann != GetCertificateApproveDocs().LongMD &&
-		ann != GetCertificateDenyDocs().LongMD {
+		ann != GetCertificateDenyDocs().LongMD &&
+		ann != GetClusterInfoDocs().LongMD &&
+		ann != GetClusterInfoDumpDocs().LongMD {
 		return false
 	}
 	return true

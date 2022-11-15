@@ -92,5 +92,13 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetCertificateDenyDocs().LongMD,
 		}
+	case "cluster-info":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetClusterInfoDocs().LongMD,
+		}
+	case "dump":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetClusterInfoDumpDocs().LongMD,
+		}
 	}
 }
