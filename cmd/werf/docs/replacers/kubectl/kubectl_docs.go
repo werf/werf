@@ -174,3 +174,37 @@ func GetAutoscaleDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetCertificateDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Modify certificate resources."
+
+	return docs
+}
+
+func GetCertificateApproveDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Approve a certificate signing request.\n\n" +
+		"kubectl certificate approve allows a cluster admin to approve a certificate " +
+		"signing request (CSR). This action tells a certificate signing controller to " +
+		"issue a certificate to the requestor with the attributes requested in the CSR.\n\n" +
+		"> **SECURITY NOTICE**: Depending on the requested attributes, the issued certificate " +
+		"can potentially grant a requester access to cluster resources or to authenticate " +
+		"as a requested identity. Before approving a CSR, ensure you understand what the " +
+		"signed certificate can do."
+
+	return docs
+}
+
+func GetCertificateDenyDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Deny a certificate signing request.\n\n" +
+		"kubectl certificate deny allows a cluster admin to deny a certificate " +
+		"signing request (CSR). This action tells a certificate signing controller to " +
+		"not to issue a certificate to the requestor."
+
+	return docs
+}
