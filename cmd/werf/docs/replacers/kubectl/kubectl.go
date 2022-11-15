@@ -80,5 +80,17 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetAutoscaleDocs().LongMD,
 		}
+	case "certificate SUBCOMMAND":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCertificateDocs().LongMD,
+		}
+	case "approve (-f FILENAME | NAME)":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCertificateApproveDocs().LongMD,
+		}
+	case "deny (-f FILENAME | NAME)":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCertificateDenyDocs().LongMD,
+		}
 	}
 }
