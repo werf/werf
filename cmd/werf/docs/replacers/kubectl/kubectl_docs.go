@@ -208,3 +208,27 @@ func GetCertificateDenyDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetClusterInfoDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display addresses of the control plane and services with label `kubernetes.io/cluster-service=true`. " +
+		"To further debug and diagnose cluster problems, use `kubectl cluster-info dump`."
+
+	return docs
+}
+
+func GetClusterInfoDumpDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Dump cluster information out suitable for debugging and diagnosing cluster problems. " +
+		"By default, dumps everything to stdout. You can optionally specify a directory with " +
+		"`--output-directory`.  If you specify a directory, Kubernetes will " +
+		"build a set of files in that directory. By default, only dumps things in the current namespace " +
+		"and `kube-system` namespace, but you can switch to a different namespace with the " +
+		"`--namespaces flag`, or specify `--all-namespaces` to dump all namespaces.\n\n" +
+		"The command also dumps the logs of all of the pods in the cluster; these logs are dumped " +
+		"into different directories based on namespace and Pod name."
+
+	return docs
+}
