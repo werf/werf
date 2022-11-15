@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Display addresses of the control plane and services with label [kubernetes.io/cluster-service=true](kubernetes.io/cluster-service=true). To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+Display addresses of the control plane and services with label `[kubernetes.io/cluster-service=true](kubernetes.io/cluster-service=true)`. To further debug and diagnose cluster problems, use `kubectl cluster-info dump`.
 
 {{ header }} Syntax
 
