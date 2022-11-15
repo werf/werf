@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.189](https://www.github.com/werf/werf/compare/v1.2.188...v1.2.189) (2022-11-15)
+
+
+### Features
+
+* **completion:** add fish and powershell support ([b9d0b9d](https://www.github.com/werf/werf/commit/b9d0b9d434ca564ad44204d41ad0b852cc5d7218))
+
 ### [1.2.188](https://www.github.com/werf/werf/compare/v1.2.187...v1.2.188) (2022-11-07)
 
 
