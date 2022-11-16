@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/werf/werf/cmd/werf/common"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/cmd"
 	"k8s.io/kubectl/pkg/cmd/plugin"
 	"os"
@@ -79,7 +80,23 @@ func checkText(ann string) bool {
 		ann != GetCertificateDenyDocs().LongMD &&
 		ann != GetClusterInfoDocs().LongMD &&
 		ann != GetClusterInfoDumpDocs().LongMD &&
-		ann != GetCompletionDocs().LongMD {
+		ann != GetCompletionDocs().LongMD &&
+		ann != GetConfigDocs(clientcmd.NewDefaultPathOptions()).LongMD &&
+		ann != GetConfigCurrentContextDocs().LongMD &&
+		ann != GetConfigDeleteClusterDocs().LongMD &&
+		ann != GetConfigDeleteContextDocs().LongMD &&
+		ann != GetConfigDeleteUserDocs().LongMD &&
+		ann != GetConfigGetClustersDocs().LongMD &&
+		ann != GetConfigGetContextsDocs().LongMD &&
+		ann != GetConfigGetUsersDocs().LongMD &&
+		ann != GetConfigRenameContextDocs().LongMD &&
+		ann != GetConfigSetDocs().LongMD &&
+		ann != GetConfigSetClusterDocs().LongMD &&
+		ann != GetConfigSetContextDocs().LongMD &&
+		ann != GetConfigSetCredentialsDocs().LongMD &&
+		ann != GetConfigUnsetDocs().LongMD &&
+		ann != GetConfigUseContextDocs().LongMD &&
+		ann != GetConfigViewDocs().LongMD {
 		return false
 	}
 	return true

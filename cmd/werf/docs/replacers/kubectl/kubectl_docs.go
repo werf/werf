@@ -1,6 +1,11 @@
 package kubectl
 
-import "github.com/werf/werf/cmd/werf/docs/structs"
+import (
+	"fmt"
+	"github.com/werf/werf/cmd/werf/docs/structs"
+	"k8s.io/client-go/tools/clientcmd"
+	"path"
+)
 
 func GetKubectlDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
@@ -248,6 +253,163 @@ func GetCompletionDocs() structs.DocsStruct {
 		"* for windows: " +
 		"https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion;\n\n" +
 		"> **Note for Zsh users**: Zsh completions are only supported in versions of Zsh >= 5.2."
+
+	return docs
+}
+
+func GetConfigDocs(pathOptions *clientcmd.PathOptions) structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Modify kubeconfig files using subcommands like `kubectl config set current-context my-context`\n\n" +
+		"The loading order follows these rules:\n" +
+		"1. If the --" + pathOptions.ExplicitFileFlag + " flag is set, then only that file is loaded. " +
+		"The flag may only be set once and no merging takes place.\n" +
+		"2. If $" + pathOptions.EnvVar + " environment variable is set, then it is used as a list " +
+		"of paths (normal path delimiting rules for your system). These paths are merged. When a value is " +
+		"modified, it is modified in the file that defines the stanza. When a value is created, it is created " +
+		"in the first file that exists. If no files in the chain exist, then it creates the last file in the list.\n" +
+		"3. Otherwise, " + path.Join("${HOME}", pathOptions.GlobalFileSubpath) + " " +
+		"is used and no merging takes place."
+
+	return docs
+}
+
+func GetConfigCurrentContextDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display the current-context."
+
+	return docs
+}
+
+func GetConfigDeleteClusterDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Delete the specified cluster from the kubeconfig."
+
+	return docs
+}
+
+func GetConfigDeleteContextDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Delete the specified context from the kubeconfig."
+
+	return docs
+}
+
+func GetConfigDeleteUserDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Delete the specified user from the kubeconfig."
+
+	return docs
+}
+
+func GetConfigGetClustersDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display clusters defined in the kubeconfig."
+
+	return docs
+}
+
+func GetConfigGetContextsDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display one or many contexts from the kubeconfig file."
+
+	return docs
+}
+
+func GetConfigGetUsersDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display users defined in the kubeconfig."
+
+	return docs
+}
+
+func GetConfigRenameContextDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Renames a context from the kubeconfig file.\n" +
+		"* `CONTEXT_NAME` is the context name that you want to change.\n" +
+		"* `NEW_NAME` is the new name you want to set.\n\n" +
+		"> **Note**: If the context being renamed is the `current-context`, this field will also be updated."
+
+	return docs
+}
+
+func GetConfigSetDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Set an individual value in a kubeconfig file.\n" +
+		"* `PROPERTY_NAME` is a dot delimited name where each token represents either an attribute " +
+		"name or a map key.  Map keys may not contain dots.\n" +
+		"* `PROPERTY_VALUE` is the new value you want to set. Binary fields such " +
+		"as `certificate-authority-data` expect a base64 encoded string unless the `--set-raw-bytes` flag is used.\n\n" +
+		"Specifying an attribute name that already exists will merge new fields on top of existing values."
+
+	return docs
+}
+
+func GetConfigSetClusterDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Set a cluster entry in kubeconfig.\n\n" +
+		"Specifying a name that already exists will merge new fields on top of existing values for those fields."
+
+	return docs
+}
+
+func GetConfigSetContextDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Set a context entry in kubeconfig.\n\n" +
+		"Specifying a name that already exists will merge new fields on top of existing values for those fields."
+
+	return docs
+}
+
+func GetConfigSetCredentialsDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = fmt.Sprintf("Set a user entry in kubeconfig.\n\n"+
+		"Specifying a name that already exists will merge new fields on top of existing values:\n"+
+		"* Client-certificate flags: `--%v=certfile`, `--%v=keyfile`;\n"+
+		"* Bearer token flags: `--%v=bearer_token`;\n"+
+		"* Basic auth flags: `--%v=basic_user`, `--%v=basic_password`.\n\n"+
+		"Bearer token and basic auth are mutually exclusive.",
+		clientcmd.FlagCertFile, clientcmd.FlagKeyFile, clientcmd.FlagBearerToken,
+		clientcmd.FlagUsername, clientcmd.FlagPassword)
+
+	return docs
+}
+
+func GetConfigUnsetDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Unset an individual value in a kubeconfig file.\n\n" +
+		"`PROPERTY_NAME` is a dot delimited name where each token represents either an attribute name " +
+		"or a map key. Map keys may not contain dots."
+
+	return docs
+}
+
+func GetConfigUseContextDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Set the current-context in a kubeconfig file."
+
+	return docs
+}
+
+func GetConfigViewDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display merged kubeconfig settings or a specified kubeconfig file.\n\n" +
+		"You can use `--output jsonpath={...}` to extract specific values using a jsonpath expression."
 
 	return docs
 }

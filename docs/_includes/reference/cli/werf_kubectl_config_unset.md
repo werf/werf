@@ -5,7 +5,7 @@
 {% endif %}
 Unset an individual value in a kubeconfig file.
 
- PROPERTY_NAME is a dot delimited name where each token represents either an attribute name or a map key.  Map keys may not contain dots.
+`PROPERTY_NAME` is a dot delimited name where each token represents either an attribute name or a map key. Map keys may not contain dots.
 
 {{ header }} Syntax
 
