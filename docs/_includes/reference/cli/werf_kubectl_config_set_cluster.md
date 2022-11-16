@@ -5,7 +5,7 @@
 {% endif %}
 Set a cluster entry in kubeconfig.
 
- Specifying a name that already exists will merge new fields on top of existing values for those fields.
+Specifying a name that already exists will merge new fields on top of existing values for those fields.
 
 {{ header }} Syntax
 

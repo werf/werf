@@ -5,18 +5,12 @@
 {% endif %}
 Set a user entry in kubeconfig.
 
- Specifying a name that already exists will merge new fields on top of existing values.
+Specifying a name that already exists will merge new fields on top of existing values:
+* Client-certificate flags: `--client-certificate=certfile`, `--client-key=keyfile`;
+* Bearer token flags: `--token=bearer_token`;
+* Basic auth flags: `--username=basic_user`, `--password=basic_password`.
 
-  Client-certificate flags:
-  --client-certificate=certfile --client-key=keyfile
-  
-  Bearer token flags:
-    --token=bearer_token
-  
-  Basic auth flags:
-    --username=basic_user --password=basic_password
-  
- Bearer token and basic auth are mutually exclusive.
+Bearer token and basic auth are mutually exclusive.
 
 {{ header }} Syntax
 
