@@ -35,3 +35,10 @@ func ParseUniqueIDAsTimestamp(uniqueID string) (int64, error) {
 		return timestamp, nil
 	}
 }
+
+func (desc *StageDescription) GetCopy() *StageDescription {
+	return &StageDescription{
+		StageID: &StageID{desc.StageID.Digest, desc.StageID.UniqueID},
+		Info:    desc.Info.GetCopy(),
+	}
+}

@@ -36,6 +36,21 @@ func (info *Info) GetCreatedAt() time.Time {
 	return time.Unix(info.CreatedAtUnixNano/1000_000_000, info.CreatedAtUnixNano%1000_000_000)
 }
 
+func (info *Info) GetCopy() *Info {
+	return &Info{
+		Name:              info.Name,
+		Repository:        info.Repository,
+		Tag:               info.Tag,
+		RepoDigest:        info.RepoDigest,
+		OnBuild:           util.CopyArr(info.OnBuild),
+		ID:                info.ID,
+		ParentID:          info.ParentID,
+		Labels:            util.CopyMap(info.Labels),
+		Size:              info.Size,
+		CreatedAtUnixNano: info.CreatedAtUnixNano,
+	}
+}
+
 func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
 	repository, tag := ParseRepositoryAndTag(ref)
 
