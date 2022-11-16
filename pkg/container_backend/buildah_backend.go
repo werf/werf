@@ -697,10 +697,9 @@ func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 		img.SetInfo(info)
 	}
 
-	desc := img.GetStageDescription()
-
-	if desc != nil {
+	if desc := img.GetStageDescription(); desc != nil {
 		repository, tag := image.ParseRepositoryAndTag(newImageName)
+		desc.Info.Name = newImageName
 		desc.Info.Repository = repository
 		desc.Info.Tag = tag
 	}
