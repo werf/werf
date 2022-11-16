@@ -1,8 +1,20 @@
 package kubectl
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/werf/werf/cmd/werf/common"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+const (
+	flagAuthProvider    = "auth-provider"
+	flagAuthProviderArg = "auth-provider-arg"
+
+	flagExecCommand    = "exec-command"
+	flagExecAPIVersion = "exec-api-version"
+	flagExecArg        = "exec-arg"
+	flagExecEnv        = "exec-env"
 )
 
 func ReplaceKubectlDocs(cmd *cobra.Command) *cobra.Command {
@@ -103,6 +115,96 @@ func setNewDocs(cmd *cobra.Command) {
 	case "completion SHELL":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetCompletionDocs().LongMD,
+		}
+	case "config SUBCOMMAND":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigDocs(clientcmd.NewDefaultPathOptions()).LongMD,
+		}
+	case "current-context":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigCurrentContextDocs().LongMD,
+		}
+	case "delete-cluster NAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigDeleteClusterDocs().LongMD,
+		}
+	case "delete-context NAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigDeleteContextDocs().LongMD,
+		}
+	case "delete-user NAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigDeleteUserDocs().LongMD,
+		}
+	case "get-clusters":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigGetClustersDocs().LongMD,
+		}
+	case "get-contexts [(-o|--output=)name)]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigGetContextsDocs().LongMD,
+		}
+	case "get-users":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigGetUsersDocs().LongMD,
+		}
+	case "rename-context CONTEXT_NAME NEW_NAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigRenameContextDocs().LongMD,
+		}
+	case "set PROPERTY_NAME PROPERTY_VALUE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigSetDocs().LongMD,
+		}
+	case fmt.Sprintf("set-cluster NAME [--%v=server] [--%v=path/to/certificate/authority] "+
+		"[--%v=true] [--%v=example.com]", clientcmd.FlagAPIServer, clientcmd.FlagCAFile,
+		clientcmd.FlagInsecure, clientcmd.FlagTLSServerName):
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigSetClusterDocs().LongMD,
+		}
+	case fmt.Sprintf("set-context [NAME | --current] [--%v=cluster_nickname] [--%v=user_nickname] "+
+		"[--%v=namespace]", clientcmd.FlagClusterName, clientcmd.FlagAuthInfoName, clientcmd.FlagNamespace):
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigSetContextDocs().LongMD,
+		}
+	case fmt.Sprintf(
+		"set-credentials NAME [--%v=path/to/certfile] "+
+			"[--%v=path/to/keyfile] "+
+			"[--%v=bearer_token] "+
+			"[--%v=basic_user] "+
+			"[--%v=basic_password] "+
+			"[--%v=provider_name] "+
+			"[--%v=key=value] "+
+			"[--%v=exec_command] "+
+			"[--%v=exec_api_version] "+
+			"[--%v=arg] "+
+			"[--%v=key=value]",
+		clientcmd.FlagCertFile,
+		clientcmd.FlagKeyFile,
+		clientcmd.FlagBearerToken,
+		clientcmd.FlagUsername,
+		clientcmd.FlagPassword,
+		flagAuthProvider,
+		flagAuthProviderArg,
+		flagExecCommand,
+		flagExecAPIVersion,
+		flagExecArg,
+		flagExecEnv,
+	):
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigSetCredentialsDocs().LongMD,
+		}
+	case "unset PROPERTY_NAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigUnsetDocs().LongMD,
+		}
+	case "use-context CONTEXT_NAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigUseContextDocs().LongMD,
+		}
+	case "view":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetConfigViewDocs().LongMD,
 		}
 	}
 }
