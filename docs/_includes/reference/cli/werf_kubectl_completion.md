@@ -3,20 +3,16 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Output shell completion code for the specified shell (bash, zsh, fish, or powershell). The shell code must be evaluated to provide interactive completion of kubectl commands.  This can be done by sourcing it from the .bash_profile.
+Output shell completion code for the specified shell (Bash, Zsh, Fish, or PowerShell).
+The shell code must be evaluated to provide interactive completion of `kubectl` commands. This can be done by sourcing it from the `.bash_profile`.
 
- Detailed instructions on how to do this are available here:
+Detailed instructions on how to do this are available here:
+* for macOS: [https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#enable-shell-autocompletion](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#enable-shell-autocompletion);
+* for linux: [https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion);
 
-    for macOS:
-    [https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#enable-shell-autocompletion](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#enable-shell-autocompletion)
-  
-    for linux:
-    [https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion)
-  
-    for windows:
-    [https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion)
-  
- Note for zsh users: [1] zsh completions are only supported in versions of zsh >= 5.2.
+* for windows: [https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion);
+
+> **Note for Zsh users**: Zsh completions are only supported in versions of Zsh >= 5.2.
 
 {{ header }} Syntax
 
