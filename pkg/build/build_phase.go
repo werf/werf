@@ -177,7 +177,24 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 			continue
 		}
 
-		desc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription()
+		var desc *imagePkg.StageDescription
+		stageImage := img.GetLastNonEmptyStage().GetStageImage()
+		stageID := stageImage.Image.GetStageDescription().StageID
+
+		if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
+			var err error
+			desc, err = phase.Conveyor.StorageManager.GetFinalStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), stageID.Digest, stageID.UniqueID)
+			if err != nil {
+				return fmt.Errorf("unable to get stage %s descriptor from final repo %s: %w", stageID.String(), phase.Conveyor.StorageManager.GetFinalStagesStorage().String(), err)
+			}
+		} else {
+			var err error
+			desc, err = phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), stageID.Digest, stageID.UniqueID)
+			if err != nil {
+				return fmt.Errorf("unable to get stage %s descriptor from primary repo %s: %w", stageID.String(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
+			}
+		}
+
 		phase.ImagesReport.SetImageRecord(img.GetName(), ReportImageRecord{
 			WerfImageName:     img.GetName(),
 			DockerRepo:        desc.Info.Repository,
