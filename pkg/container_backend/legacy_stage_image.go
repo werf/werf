@@ -32,14 +32,11 @@ func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerBack
 
 func (i *LegacyStageImage) GetCopy() LegacyImageInterface {
 	ni := NewLegacyStageImage(i.fromImage, i.name, i.ContainerBackend)
-
-	if info := i.GetInfo(); info != nil {
-		ni.SetInfo(info)
-	}
 	if desc := i.GetStageDescription(); desc != nil {
-		ni.SetStageDescription(desc)
+		ni.SetStageDescription(desc.GetCopy())
+	} else if info := i.GetInfo(); info != nil {
+		ni.SetInfo(info.GetCopy())
 	}
-
 	return ni
 }
 
