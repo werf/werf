@@ -4,12 +4,10 @@
 {% assign header = "###" %}
 {% endif %}
 Renames a context from the kubeconfig file.
+* `CONTEXT_NAME` is the context name that you want to change.
+* `NEW_NAME` is the new name you want to set.
 
- CONTEXT_NAME is the context name that you want to change.
-
- NEW_NAME is the new name you want to set.
-
- Note: If the context being renamed is the 'current-context', this field will also be updated.
+> **Note**: If the context being renamed is the `current-context`, this field will also be updated.
 
 {{ header }} Syntax
 

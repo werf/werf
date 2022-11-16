@@ -5,7 +5,7 @@
 {% endif %}
 Display merged kubeconfig settings or a specified kubeconfig file.
 
- You can use --output jsonpath={...} to extract specific values using a jsonpath expression.
+You can use `--output jsonpath={...}` to extract specific values using a jsonpath expression.
 
 {{ header }} Syntax
 
