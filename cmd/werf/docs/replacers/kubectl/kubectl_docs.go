@@ -232,3 +232,22 @@ func GetClusterInfoDumpDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetCompletionDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Output shell completion code for the specified shell (Bash, Zsh, Fish, or PowerShell).\n" +
+		"The shell code must be evaluated to provide interactive " +
+		"completion of `kubectl` commands. This can be done by sourcing it from " +
+		"the `.bash_profile`.\n\n" +
+		"Detailed instructions on how to do this are available here:\n" +
+		"* for macOS: " +
+		"https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#enable-shell-autocompletion;\n" +
+		"* for linux: " +
+		"https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion;\n\n" +
+		"* for windows: " +
+		"https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion;\n\n" +
+		"> **Note for Zsh users**: Zsh completions are only supported in versions of Zsh >= 5.2."
+
+	return docs
+}

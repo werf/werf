@@ -100,5 +100,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetClusterInfoDumpDocs().LongMD,
 		}
+	case "completion SHELL":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCompletionDocs().LongMD,
+		}
 	}
 }
