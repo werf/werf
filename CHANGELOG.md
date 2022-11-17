@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.190](https://www.github.com/werf/werf/compare/v1.2.189...v1.2.190) (2022-11-17)
+
+
+### Features
+
+* **staged-dockerfile:** support ONBUILD instructions (part 1, preparations) ([8a813b5](https://www.github.com/werf/werf/commit/8a813b52318f06acb83fc44aff215d95c57e8f09)), closes [#2215](https://www.github.com/werf/werf/issues/2215)
+
+
+### Bug Fixes
+
+* **build:** inconsistent report path when final-repo used ([5924702](https://www.github.com/werf/werf/commit/59247021054de511b7a08017a1c039d61fef4b50))
+* **staged-dockerfile:** fix meta args always expands to empty strings ([8f6b562](https://www.github.com/werf/werf/commit/8f6b562786a7ea92d8208bb6181b621c2c9373f9))
+
 ### [1.2.189](https://www.github.com/werf/werf/compare/v1.2.188...v1.2.189) (2022-11-15)
 
 
