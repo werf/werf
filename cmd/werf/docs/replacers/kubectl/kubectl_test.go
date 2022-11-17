@@ -96,7 +96,8 @@ func checkText(ann string) bool {
 		ann != GetConfigSetCredentialsDocs().LongMD &&
 		ann != GetConfigUnsetDocs().LongMD &&
 		ann != GetConfigUseContextDocs().LongMD &&
-		ann != GetConfigViewDocs().LongMD {
+		ann != GetConfigViewDocs().LongMD &&
+		ann != GetCordonDocs().LongMD {
 		return false
 	}
 	return true
