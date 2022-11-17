@@ -421,3 +421,11 @@ func GetCordonDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetCpDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Copy files and directories to and from containers."
+
+	return docs
+}
