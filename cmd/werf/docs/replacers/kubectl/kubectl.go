@@ -206,5 +206,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetConfigViewDocs().LongMD,
 		}
+	case "cordon NODE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCordonDocs().LongMD,
+		}
 	}
 }

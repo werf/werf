@@ -413,3 +413,11 @@ func GetConfigViewDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetCordonDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Mark node as unschedulable."
+
+	return docs
+}
