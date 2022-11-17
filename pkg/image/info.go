@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/werf/pkg/util"
 )
@@ -98,4 +99,20 @@ func ParseRepositoryAndTag(ref string) (string, string) {
 	tag := util.Reverse(parts[0])
 	repository := util.Reverse(parts[1])
 	return repository, tag
+}
+
+func NewImageInfoFromRegistryConfig(ref string, cfg *v1.ConfigFile) *Info {
+	repository, tag := ParseRepositoryAndTag(ref)
+	return &Info{
+		Name:              ref,
+		Repository:        repository,
+		Tag:               tag,
+		Labels:            cfg.Config.Labels,
+		OnBuild:           cfg.Config.OnBuild,
+		CreatedAtUnixNano: cfg.Created.UnixNano(),
+		RepoDigest:        "", // TODO
+		ID:                "", // TODO
+		ParentID:          "", // TODO
+		Size:              0,  // TODO
+	}
 }

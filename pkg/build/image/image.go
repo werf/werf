@@ -201,7 +201,7 @@ func (i *Image) GetRebuilt() bool {
 	return i.rebuilt
 }
 
-func (i *Image) SetupBaseImage() error {
+func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
 	switch i.baseImageType {
 	case StageAsBaseImage:
 		i.stageAsBaseImage = i.Conveyor.GetImage(i.baseImageName).GetLastNonEmptyStage()
@@ -220,6 +220,24 @@ func (i *Image) SetupBaseImage() error {
 	case NoBaseImage:
 	default:
 		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
+	}
+
+	if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
+		switch i.baseImageType {
+		case StageAsBaseImage, ImageFromRegistryAsBaseImage:
+
+			fmt.Printf("-- %s SetupBaseImage %q\n", i.Name, i.baseImageReference)
+
+			info, err := storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
+			if err != nil {
+				return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+			}
+
+			fmt.Printf("-- %s SetupBaseImage %q -> %#v\n", i.Name, i.baseImageReference, info)
+			for _, expression := range info.OnBuild {
+				fmt.Printf(">> %q\n", expression)
+			}
+		}
 	}
 
 	return nil

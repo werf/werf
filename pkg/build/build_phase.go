@@ -242,8 +242,11 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *im
 func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image) (deferFn func(), err error) {
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
-	if err := img.SetupBaseImage(); err != nil {
-		return nil, err
+	if err := img.SetupBaseImage(ctx, phase.Conveyor.StorageManager, manager.StorageOptions{
+		ContainerBackend: phase.Conveyor.ContainerBackend,
+		DockerRegistry:   docker_registry.API(),
+	}); err != nil {
+		return nil, fmt.Errorf("unable to setup base image: %w", err)
 	}
 
 	if img.UsesBuildContext() {
