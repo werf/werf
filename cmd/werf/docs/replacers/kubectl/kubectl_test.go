@@ -97,7 +97,8 @@ func checkText(ann string) bool {
 		ann != GetConfigUnsetDocs().LongMD &&
 		ann != GetConfigUseContextDocs().LongMD &&
 		ann != GetConfigViewDocs().LongMD &&
-		ann != GetCordonDocs().LongMD {
+		ann != GetCordonDocs().LongMD &&
+		ann != GetCpDocs().LongMD {
 		return false
 	}
 	return true

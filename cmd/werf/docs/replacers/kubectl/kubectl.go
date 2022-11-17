@@ -210,5 +210,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetCordonDocs().LongMD,
 		}
+	case "cp <file-spec-src> <file-spec-dest>":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCpDocs().LongMD,
+		}
 	}
 }
