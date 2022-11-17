@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.185](https://www.github.com/werf/werf/compare/v1.2.184...v1.2.185) (2022-11-17)
+
+
+### Bug Fixes
+
+* **build:** inconsistent report path when final-repo used ([4d5fb92](https://www.github.com/werf/werf/commit/4d5fb929af739eb0c8a49123fa01a568bf43580c))
+
 ### [1.2.184](https://www.github.com/werf/werf/compare/v1.2.183...v1.2.184) (2022-10-21)
 
 
