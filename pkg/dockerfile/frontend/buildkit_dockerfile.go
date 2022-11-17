@@ -18,14 +18,14 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 		return nil, fmt.Errorf("parsing dockerfile data: %w", err)
 	}
 
-	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	dockerStages, dockerMetaArgsCommands, err := instructions.Parse(p.AST)
 	if err != nil {
 		return nil, fmt.Errorf("parsing instructions tree: %w", err)
 	}
 
 	expanderFactory := NewShlexExpanderFactory(p.EscapeToken)
 
-	metaArgs, err := resolveMetaArgs(dockerMetaArgs, opts.BuildArgs, opts.DependenciesArgsKeys, expanderFactory)
+	metaArgs, err := resolveMetaArgs(dockerMetaArgsCommands, opts.BuildArgs, opts.DependenciesArgsKeys, expanderFactory)
 	if err != nil {
 		return nil, fmt.Errorf("unable to process meta args: %w", err)
 	}
@@ -233,7 +233,7 @@ func removeDependenciesArgs(args []instructions.KeyValuePairOptional, dependenci
 	return
 }
 
-func resolveMetaArgs(metaArgs []instructions.ArgCommand, buildArgs map[string]string, dependenciesArgsKeys []string, expanderFactory *ShlexExpanderFactory) (map[string]string, error) {
+func resolveMetaArgs(metaArgsCommands []instructions.ArgCommand, buildArgs map[string]string, dependenciesArgsKeys []string, expanderFactory *ShlexExpanderFactory) (map[string]string, error) {
 	var optMetaArgs []instructions.KeyValuePairOptional
 
 	// TODO(staged-dockerfile): need to support builtin BUILD* and TARGET* args
@@ -244,7 +244,7 @@ func resolveMetaArgs(metaArgs []instructions.ArgCommand, buildArgs map[string]st
 	// 	optMetaArgs[i] = setKVValue(arg, opt.BuildArgs)
 	// }
 
-	for _, cmd := range metaArgs {
+	for _, cmd := range metaArgsCommands {
 		for _, metaArg := range cmd.Args {
 			if isDependencyArg(metaArg.Key, dependenciesArgsKeys) {
 				continue
@@ -257,7 +257,7 @@ func resolveMetaArgs(metaArgs []instructions.ArgCommand, buildArgs map[string]st
 		}
 	}
 
-	return nil, nil
+	return metaArgsToMap(optMetaArgs), nil
 }
 
 func metaArgsToMap(metaArgs []instructions.KeyValuePairOptional) map[string]string {
