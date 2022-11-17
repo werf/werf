@@ -16,6 +16,7 @@ import (
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/lrumeta"
@@ -47,6 +48,11 @@ type ForEachDeleteStageOptions struct {
 	storage.FilterStagesAndProcessRelatedDataOptions
 }
 
+type StorageOptions struct {
+	ContainerBackend container_backend.ContainerBackend
+	DockerRegistry   docker_registry.ApiInterface
+}
+
 type StorageManagerInterface interface {
 	InitCache(ctx context.Context) error
 
@@ -58,6 +64,8 @@ type StorageManagerInterface interface {
 	EnableParallel(parallelTasksLimit int)
 	MaxNumberOfWorkers() int
 	GenerateStageUniqueID(digest string, stages []*image.StageDescription) (string, int64)
+
+	GetImageInfo(ctx context.Context, ref string, opts StorageOptions) (*image.Info, error)
 
 	LockStageImage(ctx context.Context, imageName string) error
 	GetStagesByDigest(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error)
@@ -340,6 +348,29 @@ func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEach
 		err := m.StagesStorage.DeleteStage(ctx, stageDescription, options.DeleteImageOptions)
 		return f(ctx, stageDescription, err)
 	})
+}
+
+func (m *StorageManager) GetImageInfo(ctx context.Context, ref string, opts StorageOptions) (*image.Info, error) {
+	info, err := m.getImageInfoFromContainerBackend(ctx, ref, opts.ContainerBackend)
+	if err != nil {
+		return nil, err
+	}
+	if info != nil {
+		return info, err
+	}
+	return m.getImageInfoFromRegistry(ctx, ref, opts.DockerRegistry)
+}
+
+func (m *StorageManager) getImageInfoFromContainerBackend(ctx context.Context, ref string, containerBackend container_backend.ContainerBackend) (*image.Info, error) {
+	return containerBackend.GetImageInfo(ctx, ref, container_backend.GetImageInfoOpts{})
+}
+
+func (m *StorageManager) getImageInfoFromRegistry(ctx context.Context, ref string, dockerRegistry docker_registry.ApiInterface) (*image.Info, error) {
+	cfg, err := dockerRegistry.GetRepoImageConfigFile(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	return image.NewImageInfoFromRegistryConfig(ref, cfg), nil
 }
 
 func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) error {
