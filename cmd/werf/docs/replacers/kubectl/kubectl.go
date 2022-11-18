@@ -206,5 +206,115 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetConfigViewDocs().LongMD,
 		}
+	case "cordon NODE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCordonDocs().LongMD,
+		}
+	case "cp <file-spec-src> <file-spec-dest>":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCpDocs().LongMD,
+		}
+	case "create -f FILENAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateDocs().LongMD,
+		}
+	case "clusterrole NAME --verb=verb --resource=resource.group [--resource-name=resourcename] " +
+		"[--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateClusterRoleDocs().LongMD,
+		}
+	case "clusterrolebinding NAME --clusterrole=NAME [--user=username] [--group=groupname] " +
+		"[--serviceaccount=namespace:serviceaccountname] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateClusterRoleBindingDocs().LongMD,
+		}
+	case "configmap NAME [--from-file=[key=]source] [--from-literal=key1=value1] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateConfigMapDocs().LongMD,
+		}
+	case "cronjob NAME --image=image --schedule='0/5 * * * ?' -- [COMMAND] [args...]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateCronJobDocs().LongMD,
+		}
+	case "deployment NAME --image=image -- [COMMAND] [args...]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateDeploymentDocs().LongMD,
+		}
+	case "ingress NAME --rule=host/path=service:port[,tls[=secret]] ":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateIngressDocs().LongMD,
+		}
+	case "job NAME --image=image [--from=cronjob/name] -- [COMMAND] [args...]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateJobDocs().LongMD,
+		}
+	case "namespace NAME [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateNamespaceDocs().LongMD,
+		}
+	case "poddisruptionbudget NAME --selector=SELECTOR --min-available=N [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreatePodDisruptionBudgetDocs().LongMD,
+		}
+	case "priorityclass NAME --value=VALUE --global-default=BOOL [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreatePriorityClassDocs().LongMD,
+		}
+	case "quota NAME [--hard=key1=value1,key2=value2] [--scopes=Scope1,Scope2] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateQuotaDocs().LongMD,
+		}
+	case "role NAME --verb=verb --resource=resource.group/subresource " +
+		"[--resource-name=resourcename] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateRoleDocs().LongMD,
+		}
+	case "rolebinding NAME --clusterrole=NAME|--role=NAME [--user=username] [--group=groupname] " +
+		"[--serviceaccount=namespace:serviceaccountname] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateRoleBindingDocs().LongMD,
+		}
+	case "secret":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateSecretDocs().LongMD,
+		}
+	case "docker-registry NAME --docker-username=user --docker-password=password " +
+		"--docker-email=email [--docker-server=string] [--from-file=[key=]source] " +
+		"[--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateSecretDockerRegistryDocs().LongMD,
+		}
+	case "generic NAME [--type=string] [--from-file=[key=]source] [--from-literal=key1=value1] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateSecretGenericDocs().LongMD,
+		}
+	case "tls NAME --cert=path/to/cert/file --key=path/to/key/file [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateSecretTLSDocs().LongMD,
+		}
+	case "service":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateServiceDocs().LongMD,
+		}
+	case "clusterip NAME [--tcp=<port>:<targetPort>] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateServiceClusterIPDocs().LongMD,
+		}
+	case "externalname NAME --external-name external.name [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateServiceExternalNameDocs().LongMD,
+		}
+	case "loadbalancer NAME [--tcp=port:targetPort] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateServiceLoadBalancerDocs().LongMD,
+		}
+	case "nodeport NAME [--tcp=port:targetPort] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateServiceNodePortDocs().LongMD,
+		}
+	case "serviceaccount NAME [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateServiceAccountDocs().LongMD,
+		}
 	}
 }
