@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Create a priority class with the specified name, value, globalDefault and description.
+Create a priority class with the specified name, value, `globalDefault` and description.
 
 {{ header }} Syntax
 

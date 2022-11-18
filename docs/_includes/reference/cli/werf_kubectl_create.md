@@ -5,7 +5,7 @@
 {% endif %}
 Create a resource from a file or from stdin.
 
- JSON and YAML formats are accepted.
+JSON and YAML formats are accepted.
 
 {{ header }} Syntax
 
