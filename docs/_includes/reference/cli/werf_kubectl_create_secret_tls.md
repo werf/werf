@@ -5,7 +5,7 @@
 {% endif %}
 Create a TLS secret from the given public/private key pair.
 
- The public/private key pair must exist beforehand. The public key certificate must be .PEM encoded and match the given private key.
+The public/private key pair must exist beforehand. The public key certificate must be `.PEM` encoded and match the given private key.
 
 {{ header }} Syntax
 

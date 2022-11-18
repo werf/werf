@@ -429,3 +429,225 @@ func GetCpDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetCreateDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a resource from a file or from stdin.\n\n" +
+		"JSON and YAML formats are accepted."
+
+	return docs
+}
+
+func GetCreateClusterRoleDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a cluster role."
+
+	return docs
+}
+
+func GetCreateClusterRoleBindingDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a cluster role binding for a particular cluster role."
+
+	return docs
+}
+
+func GetCreateConfigMapDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a config map based on a file, directory, or specified literal value.\n\n" +
+		"A single config map may package one or more key/value pairs.\n\n" +
+		"When creating a config map based on a file, the key will default to the basename of the file, " +
+		"and the value will default to the file content.  If the basename is an invalid key, you may specify " +
+		"an alternate key.\n\n" +
+		"When creating a config map based on a directory, each file whose basename is a valid key in the " +
+		"directory will be packaged into the config map.  Any directory entries except regular files are " +
+		"ignored (e.g. subdirectories, symlinks, devices, pipes, etc)."
+
+	return docs
+}
+
+func GetCreateCronJobDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a cron job with the specified name."
+
+	return docs
+}
+
+func GetCreateDeploymentDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a deployment with the specified name."
+
+	return docs
+}
+
+func GetCreateIngressDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create an ingress with the specified name."
+
+	return docs
+}
+
+func GetCreateJobDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a job with the specified name."
+
+	return docs
+}
+
+func GetCreateNamespaceDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a namespace with the specified name."
+
+	return docs
+}
+
+func GetCreatePodDisruptionBudgetDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a pod disruption budget with the specified name, selector, " +
+		"and desired minimum available pods."
+
+	return docs
+}
+
+func GetCreatePriorityClassDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a priority class with the specified name, value, `globalDefault` and description."
+
+	return docs
+}
+
+func GetCreateQuotaDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a resource quota with the specified name, hard limits, and optional scopes."
+
+	return docs
+}
+
+func GetCreateRoleDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a role with single rule."
+
+	return docs
+}
+
+func GetCreateRoleBindingDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a role binding for a particular role or cluster role."
+
+	return docs
+}
+
+func GetCreateSecretDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a secret using specified subcommand."
+
+	return docs
+}
+
+func GetCreateSecretDockerRegistryDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a new secret for use with Docker registries.\n\n" +
+		"Dockercfg secrets are used to authenticate against Docker registries.\n\n" +
+		"When using the Docker command line to push images, you can authenticate to a given " +
+		"registry by running:\n" +
+		"```\n$ docker login DOCKER_REGISTRY_SERVER --username=DOCKER_USER --password=DOCKER_PASSWORD " +
+		"--email=DOCKER_EMAIL\n```\n" +
+		"That produces a `~/.dockercfg` file that is used by subsequent `docker push` and `docker pull` " +
+		"commands to authenticate to the registry. The email address is optional.\n\n" +
+		"When creating applications, you may have a Docker registry that requires authentication. " +
+		"In order for the nodes to pull images on your behalf, they must have the credentials. " +
+		"You can provide this information by creating a dockercfg secret and attaching it to your service account."
+
+	return docs
+}
+
+func GetCreateSecretGenericDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a secret based on a file, directory, or specified literal value.\n\n" +
+		"A single secret may package one or more key/value pairs.\n\n" +
+		"When creating a secret based on a file, the key will default to the basename of the file, " +
+		"and the value will default to the file content. If the basename is an invalid key or you wish " +
+		"to chose your own, you may specify an alternate key.\n\n" +
+		"When creating a secret based on a directory, each file whose basename is a valid key in " +
+		"the directory will be packaged into the secret. Any directory entries except regular " +
+		"files are ignored (e.g. subdirectories, symlinks, devices, pipes, etc)."
+
+	return docs
+}
+
+func GetCreateSecretTLSDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a TLS secret from the given public/private key pair.\n\n" +
+		"The public/private key pair must exist beforehand. The public key certificate " +
+		"must be `.PEM` encoded and match the given private key."
+
+	return docs
+}
+
+func GetCreateServiceDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a service using a specified subcommand."
+
+	return docs
+}
+
+func GetCreateServiceClusterIPDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a ClusterIP service with the specified name."
+
+	return docs
+}
+
+func GetCreateServiceExternalNameDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create an ExternalName service with the specified name.\n\n" +
+		"ExternalName service references to an external DNS address instead of " +
+		"only pods, which will allow application authors to reference services " +
+		"that exist off platform, on other clusters, or locally."
+	return docs
+}
+
+func GetCreateServiceLoadBalancerDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a LoadBalancer service with the specified name."
+
+	return docs
+}
+
+func GetCreateServiceNodePortDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a NodePort service with the specified name."
+
+	return docs
+}
+
+func GetCreateServiceAccountDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a service account with the specified name."
+
+	return docs
+}
