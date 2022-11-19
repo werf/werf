@@ -3,7 +3,7 @@ title: Принятие ресурсов в релиз
 permalink: advanced/helm/deploy_process/resources_adoption.html
 ---
 
-По умолчанию Helm и werf позволяют управлять лишь теми ресурсами, которые были созданы самим Helm или werf в рамках релиза. При попытке выката чарта с манифестом ресурса, который уже существует в кластере и который был создан не с помощью Helm или werf, тогда возникнет следующая ошибка:
+По умолчанию Helm и werf позволяют управлять лишь теми ресурсами, которые были созданы самим Helm или werf в рамках релиза. При попытке выката чарта с манифестом ресурса, который уже существует в кластере и который был создан не с помощью Helm или werf, возникнет следующая ошибка:
 
 ```
 Error: helm upgrade have failed: UPGRADE FAILED: rendered manifests contain a resource that already exists. Unable to continue with update: KIND NAME in namespace NAMESPACE exists and cannot be imported into the current release: invalid ownership metadata; label validation error: missing key "app.kubernetes.io/managed-by": must be set to "Helm"; annotation validation error: missing key "meta.helm.sh/release-name": must be set to RELEASE_NAME; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to RELEASE_NAMESPACE
