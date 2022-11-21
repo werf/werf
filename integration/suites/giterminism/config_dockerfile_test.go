@@ -175,13 +175,13 @@ config:
 					addDockerfile:                        true,
 					expectedErrSubstring:                 `unable to read dockerfile "Dockerfile": the untracked file "Dockerfile" must be committed`,
 				}),
-				Entry(`config.dockerfile.allowContextAddFiles (Dockerfile) does not cover the untracked dockerfile "Dockerfile" inside context "context"`, entry{
+				Entry(`config.dockerfile.allowUncommitted (Dockerfile) does not cover the untracked dockerfile "Dockerfile" inside context "context"`, entry{
 					configDockerfileAllowUncommittedGlob: "Dockerfile",
 					context:                              "context",
 					addDockerfile:                        true,
 					expectedErrSubstring:                 `unable to read dockerfile "context/Dockerfile": the untracked file "context/Dockerfile" must be committed`,
 				}),
-				Entry(`config.dockerfile.allowContextAddFiles (context/Dockerfile) covers the untracked dockerfile "Dockerfile" inside context "context"`, entry{
+				XEntry(`config.dockerfile.allowUncommitted (context/Dockerfile) covers the untracked dockerfile "Dockerfile" inside context "context"`, entry{
 					configDockerfileAllowUncommittedGlob: "context/Dockerfile",
 					context:                              "context",
 					addDockerfile:                        true,

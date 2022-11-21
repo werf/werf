@@ -3,9 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
 This command downloads a values file for a given release.
-
 
 {{ header }} Syntax
 

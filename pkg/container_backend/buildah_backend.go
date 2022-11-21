@@ -2,6 +2,7 @@ package container_backend
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/md5"
 	"errors"
@@ -15,11 +16,14 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	copyrec "github.com/werf/copy-recurse"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/buildah"
+	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
@@ -148,8 +152,8 @@ func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *con
 
 	destScriptPath := "/.werf/script.sh"
 
-	var mounts []specs.Mount
-	mounts = append(mounts, specs.Mount{
+	var mounts []*specs.Mount
+	mounts = append(mounts, &specs.Mount{
 		Type:        "bind",
 		Source:      hostScriptPath,
 		Destination: destScriptPath,
@@ -162,10 +166,10 @@ func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *con
 	}
 
 	if err := runtime.buildah.RunCommand(ctx, container.Name, []string{"sh", destScriptPath}, buildah.RunCommandOpts{
-		CommonOpts: runtime.getBuildahCommonOpts(ctx, false),
-		User:       "0:0",
-		WorkingDir: "/",
-		Mounts:     mounts,
+		CommonOpts:   runtime.getBuildahCommonOpts(ctx, false),
+		User:         "0:0",
+		WorkingDir:   "/",
+		GlobalMounts: mounts,
 	}); err != nil {
 		return fmt.Errorf("unable to run commands script: %w", err)
 	}
@@ -515,6 +519,11 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 		}
 	}
 
+	healthcheck, err := newHealthConfigFromString(opts.Healthcheck)
+	if err != nil {
+		return "", fmt.Errorf("unable to parse healthcheck %q: %w", opts.Healthcheck, err)
+	}
+
 	logboek.Context(ctx).Debug().LogF("Setting config for build container %q\n", container.Name)
 	if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
 		CommonOpts:  runtime.getBuildahCommonOpts(ctx, true),
@@ -526,7 +535,7 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 		Entrypoint:  opts.Entrypoint,
 		User:        opts.User,
 		Workdir:     opts.Workdir,
-		Healthcheck: opts.Healthcheck,
+		Healthcheck: healthcheck,
 	}); err != nil {
 		return "", fmt.Errorf("unable to set container %q config: %w", container.Name, err)
 	}
@@ -697,10 +706,9 @@ func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 		img.SetInfo(info)
 	}
 
-	desc := img.GetStageDescription()
-
-	if desc != nil {
+	if desc := img.GetStageDescription(); desc != nil {
 		repository, tag := image.ParseRepositoryAndTag(newImageName)
+		desc.Info.Name = newImageName
 		desc.Info.Repository = repository
 		desc.Info.Tag = tag
 	}
@@ -745,7 +753,7 @@ func (runtime *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir stri
 	return runtime.buildah.RunCommand(ctx, container.Name, append([]string{"rm", "-rf"}, containerDirs...), buildah.RunCommandOpts{
 		User:       "0:0",
 		WorkingDir: "/",
-		Mounts: []specs.Mount{
+		GlobalMounts: []*specs.Mount{
 			{
 				Type:        "bind",
 				Source:      mountDir,
@@ -763,8 +771,8 @@ func parseVolume(volume string) (string, string, error) {
 	return volumeParts[0], volumeParts[1], nil
 }
 
-func makeBuildahMounts(volumes []string) ([]specs.Mount, error) {
-	var mounts []specs.Mount
+func makeBuildahMounts(volumes []string) ([]*specs.Mount, error) {
+	var mounts []*specs.Mount
 
 	for _, volume := range volumes {
 		from, to, err := parseVolume(volume)
@@ -772,7 +780,7 @@ func makeBuildahMounts(volumes []string) ([]specs.Mount, error) {
 			return nil, fmt.Errorf("invalid volume %q: %w", volume, err)
 		}
 
-		mounts = append(mounts, specs.Mount{
+		mounts = append(mounts, &specs.Mount{
 			Type:        "bind",
 			Source:      from,
 			Destination: to,
@@ -894,4 +902,36 @@ func getGIDFromGroupName(group, etcGroupPath string) (uint32, error) {
 	}
 
 	return 0, fmt.Errorf("could not find GID for group %q in passwd file %q", group, etcGroupPath)
+}
+
+// Can return nil pointer to BuildahHealthConfig
+func newHealthConfigFromString(healthcheck string) (*thirdparty.BuildahHealthConfig, error) {
+	if healthcheck == "" {
+		return nil, nil
+	}
+
+	dockerfile, err := parser.Parse(bytes.NewBufferString(fmt.Sprintf("HEALTHCHECK %s", healthcheck)))
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse healthcheck instruction: %w", err)
+	}
+
+	var healthCheckNode *parser.Node
+	for _, n := range dockerfile.AST.Children {
+		if strings.ToLower(n.Value) == "healthcheck" {
+			healthCheckNode = n
+		}
+	}
+	if healthCheckNode == nil {
+		return nil, fmt.Errorf("no valid healthcheck instruction found, got %q", healthcheck)
+	}
+
+	cmd, err := instructions.ParseCommand(healthCheckNode)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse healthcheck instruction: %w", err)
+	}
+
+	healthcheckcmd := cmd.(*instructions.HealthCheckCommand)
+	healthconfig := (*thirdparty.BuildahHealthConfig)(healthcheckcmd.Health)
+
+	return healthconfig, nil
 }

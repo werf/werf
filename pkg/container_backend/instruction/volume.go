@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Volume struct {
-	dockerfile_instruction.Volume
+	*instructions.VolumeCommand
 }
 
-func NewVolume(i dockerfile_instruction.Volume) *Volume {
-	return &Volume{Volume: i}
+func NewVolume(i *instructions.VolumeCommand) *Volume {
+	return &Volume{VolumeCommand: i}
 }
 
 func (i *Volume) UsesBuildContext() bool {

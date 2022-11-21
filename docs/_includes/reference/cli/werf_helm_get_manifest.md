@@ -3,13 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-
 This command fetches the generated manifest for a given release.
 
-A manifest is a YAML-encoded representation of the Kubernetes resources that
-were generated from this release's chart(s). If a chart is dependent on other
-charts, those resources will also be included in the manifest.
-
+A manifest is a YAML-encoded representation of the Kubernetes resources that were generated from this release's chart(s). If a chart is dependent on other charts, those resources will also be included in the manifest.
 
 {{ header }} Syntax
 

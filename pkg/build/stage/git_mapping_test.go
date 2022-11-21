@@ -127,7 +127,7 @@ var _ = Describe("GitMapping", func() {
 		func(data BaseCommitForPrevBuiltImageCheckData, checkResultFunc func(string, BaseCommitForPrevBuiltImageCheckData)) {
 			ctx := context.Background()
 			c := NewConveyorStub(stage.VirtualMergeOptions{VirtualMerge: data.IsCurrentCommitVirtualMerge})
-			containerBackend := stage.NewContainerBackendMock()
+			containerBackend := stage.NewContainerBackendStub()
 
 			gitRepo := NewGitRepoStub("own", true, data.CurrentCommit)
 			gitMapping.SetGitRepo(gitRepo)

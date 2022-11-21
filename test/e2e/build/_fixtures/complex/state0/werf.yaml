@@ -9,6 +9,21 @@ target: result
 network: default
 args:
   CHANGED_ARG: "was_changed"
+dependencies:
+- image: stapel-shell
+  imports:
+  - type: ImageName
+    targetBuildArg: STAPEL_SHELL_IMAGE_NAME
+- image: base-stapel-shell
+  imports:
+  - type: ImageName
+    targetBuildArg: BASE_STAPEL_SHELL_IMAGE_NAME
+  - type: ImageID
+    targetBuildArg: BASE_STAPEL_SHELL_IMAGE_ID
+  - type: ImageRepo
+    targetBuildArg: BASE_STAPEL_SHELL_IMAGE_REPO
+  - type: ImageTag
+    targetBuildArg: BASE_STAPEL_SHELL_IMAGE_TAG
 
 ---
 image: base-stapel-shell

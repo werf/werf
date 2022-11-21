@@ -78,18 +78,6 @@ func NewConveyorStub(giterminismManager *GiterminismManagerStub, lastStageImageN
 	}
 }
 
-func NewConveyorStubForDependencies(giterminismManager *GiterminismManagerStub, dependencies []*TestDependency) *ConveyorStub {
-	lastStageImageNameByImageName := make(map[string]string)
-	lastStageImageIDByImageName := make(map[string]string)
-
-	for _, dep := range dependencies {
-		lastStageImageNameByImageName[dep.ImageName] = dep.GetDockerImageName()
-		lastStageImageIDByImageName[dep.ImageName] = dep.DockerImageID
-	}
-
-	return NewConveyorStub(giterminismManager, lastStageImageNameByImageName, lastStageImageIDByImageName)
-}
-
 func (c *ConveyorStub) UseLegacyStapelBuilder(cr container_backend.ContainerBackend) bool {
 	return true
 }
@@ -190,27 +178,27 @@ func (archive *GitRepoArchiveStub) GetFilePath() string {
 	return "no-such-file"
 }
 
-type ContainerBackendMock struct {
+type ContainerBackendStub struct {
 	container_backend.ContainerBackend
 
 	_PulledImages map[string]bool
 }
 
-func NewContainerBackendMock() *ContainerBackendMock {
-	return &ContainerBackendMock{
+func NewContainerBackendStub() *ContainerBackendStub {
+	return &ContainerBackendStub{
 		_PulledImages: make(map[string]bool),
 	}
 }
 
-func (containerBackend *ContainerBackendMock) HasContainerRootMountSupport() bool {
+func (containerBackend *ContainerBackendStub) HasContainerRootMountSupport() bool {
 	return false
 }
 
-func (containerBackend *ContainerBackendMock) GetImageInfo(ctx context.Context, ref string, opts container_backend.GetImageInfoOpts) (*image.Info, error) {
+func (containerBackend *ContainerBackendStub) GetImageInfo(ctx context.Context, ref string, opts container_backend.GetImageInfoOpts) (*image.Info, error) {
 	return nil, nil
 }
 
-func (containerBackend *ContainerBackendMock) Pull(ctx context.Context, ref string, opts container_backend.PullOpts) error {
+func (containerBackend *ContainerBackendStub) Pull(ctx context.Context, ref string, opts container_backend.PullOpts) error {
 	containerBackend._PulledImages[ref] = true
 	return nil
 }

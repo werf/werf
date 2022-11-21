@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Expose struct {
-	dockerfile_instruction.Expose
+	*instructions.ExposeCommand
 }
 
-func NewExpose(i dockerfile_instruction.Expose) *Expose {
-	return &Expose{Expose: i}
+func NewExpose(i *instructions.ExposeCommand) *Expose {
+	return &Expose{ExposeCommand: i}
 }
 
 func (i *Expose) UsesBuildContext() bool {

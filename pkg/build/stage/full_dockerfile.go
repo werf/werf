@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -21,6 +20,7 @@ import (
 	"github.com/werf/werf/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/pkg/context_manager"
 	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/dockerfile"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
@@ -174,31 +174,6 @@ func (ds *DockerStages) resolveDockerMetaArg(key, value string, resolvedDockerMe
 	return resolvedKey, resolvedValue, err
 }
 
-func resolveDependenciesArgsHash(dependencies []*config.Dependency, c Conveyor) map[string]string {
-	resolved := make(map[string]string)
-
-	for _, dep := range dependencies {
-		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
-		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
-		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
-
-		for _, img := range dep.Imports {
-			switch img.Type {
-			case config.ImageRepoImport:
-				resolved[img.TargetBuildArg] = depImageRepo
-			case config.ImageTagImport:
-				resolved[img.TargetBuildArg] = depImageTag
-			case config.ImageNameImport:
-				resolved[img.TargetBuildArg] = depImageName
-			case config.ImageIDImport:
-				resolved[img.TargetBuildArg] = depImageID
-			}
-		}
-	}
-
-	return resolved
-}
-
 // resolveDockerStageArg function sets dependency arg value, or --build-arg value, or resolved dockerfile stage ARG value, or resolved meta ARG value (if stage ARG value is empty)
 func (ds *DockerStages) resolveDockerStageArg(dockerStageID int, key, value string, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string) (string, string, error) {
 	resolvedKey, err := ds.ShlexProcessWordWithStageArgsAndEnvs(dockerStageID, key)
@@ -320,7 +295,7 @@ type dockerfileInstructionInterface interface {
 }
 
 func (s *FullDockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerBackend container_backend.ContainerBackend, dockerRegistry docker_registry.ApiInterface) error {
-	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
+	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
 	if err != nil {
@@ -412,7 +387,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
 func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
+	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
 	if err != nil {
@@ -732,7 +707,7 @@ func (s *FullDockerfileStage) SetupDockerImageBuilder(b stage_builder.Dockerfile
 		}
 	}
 
-	resolvedDependenciesArgsHash := resolveDependenciesArgsHash(s.dependencies, c)
+	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.dependencies, c)
 	if len(resolvedDependenciesArgsHash) > 0 {
 		for key, value := range resolvedDependenciesArgsHash {
 			b.AppendBuildArgs(fmt.Sprintf("%s=%v", key, value))
@@ -758,7 +733,7 @@ func (s *FullDockerfileStage) calculateFilesChecksum(ctx context.Context, giterm
 	var checksum string
 	var err error
 
-	normalizedWildcards := normalizeCopyAddSources(wildcards)
+	normalizedWildcards := dockerfile.NormalizeCopyAddSourcesForPathMatcher(wildcards)
 
 	logProcess := logboek.Context(ctx).Debug().LogProcess("Calculating files checksum (%v) from local git repo", normalizedWildcards)
 	logProcess.Start()
@@ -833,22 +808,6 @@ func (s *FullDockerfileStage) calculateFilesChecksumWithGit(ctx context.Context,
 	}
 
 	return util.Sha256Hash(lsTreeResultChecksum), nil
-}
-
-func normalizeCopyAddSources(wildcards []string) []string {
-	var result []string
-	for _, wildcard := range wildcards {
-		normalizedWildcard := path.Clean(wildcard)
-		if normalizedWildcard == "/" {
-			normalizedWildcard = "."
-		} else if strings.HasPrefix(normalizedWildcard, "/") {
-			normalizedWildcard = strings.TrimPrefix(normalizedWildcard, "/")
-		}
-
-		result = append(result, normalizedWildcard)
-	}
-
-	return result
 }
 
 func dockerfileStageDependenciesDebug() bool {

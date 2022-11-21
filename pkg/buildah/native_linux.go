@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -33,7 +34,7 @@ import (
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/hashicorp/go-multierror"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
-	"github.com/moby/buildkit/frontend/dockerfile/parser"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/errgo.v2/fmt/errors"
 
@@ -45,6 +46,8 @@ const (
 	MaxPullPushRetries = 3
 	PullPushRetryDelay = 2 * time.Second
 )
+
+var DefaultShell = []string{"/bin/sh", "-c"}
 
 func NativeProcessStartupHook() bool {
 	if reexec.Init() {
@@ -285,33 +288,43 @@ func (b *NativeBuildah) Umount(ctx context.Context, container string, opts Umoun
 }
 
 func (b *NativeBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
-	runOpts := buildah.RunOptions{
-		Isolation:        define.Isolation(b.Isolation),
-		Args:             opts.Args,
-		Mounts:           opts.Mounts,
-		ConfigureNetwork: define.NetworkEnabled,
-		SystemContext:    &b.DefaultSystemContext,
-		WorkingDir:       opts.WorkingDir,
-		User:             opts.User,
-		Entrypoint:       []string{},
-		Cmd:              []string{},
-	}
-
-	stderr := &bytes.Buffer{}
-	if opts.LogWriter != nil {
-		runOpts.Stdout = opts.LogWriter
-		runOpts.Stderr = io.MultiWriter(opts.LogWriter, stderr)
-	} else {
-		runOpts.Stderr = stderr
-	}
-
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
+	contextDir := generateContextDir(opts.ContextDir, opts.RunMounts)
+	nsOpts, netPolicy := generateNamespaceOptionsAndNetworkPolicy(opts.NetworkType)
+	globalMounts := generateGlobalMounts(opts.GlobalMounts)
+	runMounts := generateRunMounts(opts.RunMounts)
+	stdout, stderr, stderrBuf := generateStdoutStderr(opts.LogWriter)
+	command = prependShellToCommand(opts.PrependShell, opts.Shell, command, builder)
+
+	runOpts := buildah.RunOptions{
+		Env:              opts.Envs,
+		ContextDir:       contextDir,
+		AddCapabilities:  opts.AddCapabilities,
+		DropCapabilities: opts.DropCapabilities,
+		Stdout:           stdout,
+		Stderr:           stderr,
+		NamespaceOptions: nsOpts,
+		ConfigureNetwork: netPolicy,
+		Isolation:        define.Isolation(b.Isolation),
+		SystemContext:    &b.DefaultSystemContext,
+		WorkingDir:       opts.WorkingDir,
+		User:             opts.User,
+		Entrypoint:       []string{},
+		Cmd:              []string{},
+		Mounts:           globalMounts,
+		RunMounts:        runMounts,
+		// TODO(ilya-lesikov):
+		Secrets: nil,
+		// TODO(ilya-lesikov):
+		SSHSources: nil,
+	}
+
 	if err := builder.Run(command, runOpts); err != nil {
-		return fmt.Errorf("RunCommand failed:\n%s\n%w", stderr.String(), err)
+		return fmt.Errorf("RunCommand failed:\n%s\n%w", stderrBuf.String(), err)
 	}
 
 	return nil
@@ -453,6 +466,10 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 		}
 	}
 
+	if opts.Maintainer != "" {
+		builder.SetMaintainer(opts.Maintainer)
+	}
+
 	for name, value := range opts.Envs {
 		builder.SetEnv(name, value)
 	}
@@ -470,11 +487,37 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 	}
 
 	if len(opts.Cmd) > 0 {
-		builder.SetCmd(opts.Cmd)
+		var cmd []string
+		if opts.CmdPrependShell {
+			if builder.Shell() != nil {
+				cmd = builder.Shell()
+			} else {
+				cmd = DefaultShell
+			}
+
+			cmd = append(cmd, opts.Cmd...)
+		} else {
+			cmd = opts.Cmd
+		}
+
+		builder.SetCmd(cmd)
 	}
 
 	if len(opts.Entrypoint) > 0 {
-		builder.SetEntrypoint(opts.Entrypoint)
+		var entrypoint []string
+		if opts.EntrypointPrependShell {
+			if builder.Shell() != nil {
+				entrypoint = builder.Shell()
+			} else {
+				entrypoint = DefaultShell
+			}
+
+			entrypoint = append(entrypoint, opts.Entrypoint...)
+		} else {
+			entrypoint = opts.Entrypoint
+		}
+
+		builder.SetEntrypoint(entrypoint)
 	}
 
 	if opts.User != "" {
@@ -485,12 +528,8 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 		builder.SetWorkDir(opts.Workdir)
 	}
 
-	if opts.Healthcheck != "" {
-		if healthcheck, err := newHealthConfigFromString(builder, opts.Healthcheck); err != nil {
-			return fmt.Errorf("error creating HEALTHCHECK: %w", err)
-		} else if healthcheck != nil {
-			builder.SetHealthcheck(healthcheck)
-		}
+	if opts.Healthcheck != nil {
+		builder.SetHealthcheck((*docker.HealthConfig)(opts.Healthcheck))
 	}
 
 	if opts.StopSignal != "" {
@@ -510,10 +549,18 @@ func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, 
 		return fmt.Errorf("error getting builder: %w", err)
 	}
 
+	var absSrc []string
+	for _, s := range src {
+		absSrc = append(absSrc, filepath.Join(contextDir, s))
+	}
+
 	if err := builder.Add(dst, false, buildah.AddAndCopyOptions{
+		Chown:             opts.Chown,
+		Chmod:             opts.Chmod,
 		PreserveOwnership: false,
 		ContextDir:        contextDir,
-	}, src...); err != nil {
+		Excludes:          opts.Ignores,
+	}, absSrc...); err != nil {
 		return fmt.Errorf("error copying files to %q: %w", dst, err)
 	}
 
@@ -526,10 +573,27 @@ func (b *NativeBuildah) Add(ctx context.Context, container string, src []string,
 		return fmt.Errorf("error getting builder: %w", err)
 	}
 
+	var expandedSrc []string
+	for _, s := range src {
+		if strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://") {
+			expandedSrc = append(expandedSrc, s)
+			continue
+		}
+
+		if opts.ContextDir == "" {
+			return fmt.Errorf("context dir is required for adding local files")
+		}
+
+		expandedSrc = append(expandedSrc, filepath.Join(opts.ContextDir, s))
+	}
+
 	if err := builder.Add(dst, true, buildah.AddAndCopyOptions{
+		Chmod:             opts.Chmod,
+		Chown:             opts.Chown,
 		PreserveOwnership: false,
 		ContextDir:        opts.ContextDir,
-	}, src...); err != nil {
+		Excludes:          opts.Ignores,
+	}, expandedSrc...); err != nil {
 		return fmt.Errorf("error adding files to %q: %w", dst, err)
 	}
 
@@ -694,38 +758,6 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	}, nil
 }
 
-// Can return nil pointer to HealthConfig
-func newHealthConfigFromString(builder *buildah.Builder, healthcheck string) (*docker.HealthConfig, error) {
-	if healthcheck == "" {
-		return nil, nil
-	}
-
-	dockerfile, err := parser.Parse(bytes.NewBufferString(fmt.Sprintf("HEALTHCHECK %s", healthcheck)))
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse healthcheck instruction: %w", err)
-	}
-
-	var healthCheckNode *parser.Node
-	for _, n := range dockerfile.AST.Children {
-		if strings.ToLower(n.Value) == "healthcheck" {
-			healthCheckNode = n
-		}
-	}
-	if healthCheckNode == nil {
-		return nil, fmt.Errorf("no valid healthcheck instruction found, got %q", healthcheck)
-	}
-
-	cmd, err := instructions.ParseCommand(healthCheckNode)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse healthcheck instruction: %w", err)
-	}
-
-	healthcheckcmd := cmd.(*instructions.HealthCheckCommand)
-	healthconfig := (*docker.HealthConfig)(healthcheckcmd.Health)
-
-	return healthconfig, nil
-}
-
 func currentRlimits() (map[int]*syscall.Rlimit, error) {
 	result := map[int]*syscall.Rlimit{
 		syscall.RLIMIT_CORE:   {},
@@ -768,4 +800,207 @@ func rlimitsToBuildahUlimits(rlimits map[int]*syscall.Rlimit) []string {
 		rlimitToBuildahUlimitFn(syscall.RLIMIT_NOFILE, "nofile"),
 		rlimitToBuildahUlimitFn(syscall.RLIMIT_STACK, "stack"),
 	}
+}
+
+func generateNamespaceOptionsAndNetworkPolicy(network string) (define.NamespaceOptions, define.NetworkConfigurationPolicy) {
+	var netPolicy define.NetworkConfigurationPolicy
+	nsOpts := define.NamespaceOptions{}
+
+	switch network {
+	case "default", "":
+		netPolicy = define.NetworkDefault
+		nsOpts.AddOrReplace(define.NamespaceOption{
+			Name: string(specs.NetworkNamespace),
+		})
+	case "host":
+		netPolicy = define.NetworkEnabled
+		nsOpts.AddOrReplace(define.NamespaceOption{
+			Name: string(specs.NetworkNamespace),
+			Host: true,
+		})
+	case "none":
+		netPolicy = define.NetworkDisabled
+		nsOpts.AddOrReplace(define.NamespaceOption{
+			Name: string(specs.NetworkNamespace),
+		})
+	default:
+		panic(fmt.Sprintf("unexpected network type: %v", network))
+	}
+
+	return nsOpts, netPolicy
+}
+
+func generateRunMounts(mounts []*instructions.Mount) []string {
+	var runMounts []string
+
+	for _, mount := range mounts {
+		var options []string
+
+		switch mount.Type {
+		case instructions.MountTypeBind:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+				fmt.Sprintf("target=%s", mount.Target),
+			)
+			if mount.Source != "" {
+				options = append(options, fmt.Sprintf("source=%s", mount.Source))
+			}
+			if mount.From != "" {
+				options = append(options, fmt.Sprintf("from=%s", mount.From))
+			}
+			if mount.ReadOnly {
+				options = append(options, "ro")
+			} else {
+				options = append(options, "rw")
+			}
+		case instructions.MountTypeCache:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+				fmt.Sprintf("target=%s", mount.Target),
+			)
+			if mount.CacheID != "" {
+				options = append(options, fmt.Sprintf("id=%s", mount.CacheID))
+			}
+			if mount.ReadOnly {
+				options = append(options, "ro")
+			} else {
+				options = append(options, "rw")
+			}
+			if mount.CacheSharing != "" {
+				options = append(options, fmt.Sprintf("sharing=%s", mount.CacheSharing))
+			}
+			if mount.From != "" {
+				options = append(options, fmt.Sprintf("from=%s", mount.From))
+			}
+			if mount.Source != "" {
+				options = append(options, fmt.Sprintf("source=%s", mount.Source))
+			}
+			if mount.Mode != nil {
+				options = append(options, fmt.Sprintf("mode=%d", *mount.Mode))
+			}
+			if mount.UID != nil {
+				options = append(options, fmt.Sprintf("uid=%d", *mount.UID))
+			}
+			if mount.GID != nil {
+				options = append(options, fmt.Sprintf("gid=%d", *mount.GID))
+			}
+		case instructions.MountTypeTmpfs:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+				fmt.Sprintf("target=%s", mount.Target),
+			)
+		case instructions.MountTypeSecret:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+			)
+			if mount.CacheID != "" {
+				options = append(options, fmt.Sprintf("id=%s", mount.CacheID))
+			}
+			if mount.Target != "" {
+				options = append(options, fmt.Sprintf("target=%s", mount.Target))
+			}
+			if mount.Required {
+				options = append(options, "required=true")
+			}
+			if mount.Mode != nil {
+				options = append(options, fmt.Sprintf("mode=%d", *mount.Mode))
+			}
+			if mount.UID != nil {
+				options = append(options, fmt.Sprintf("uid=%d", *mount.UID))
+			}
+			if mount.GID != nil {
+				options = append(options, fmt.Sprintf("gid=%d", *mount.GID))
+			}
+		case instructions.MountTypeSSH:
+			options = append(
+				options,
+				fmt.Sprintf("type=%s", mount.Type),
+			)
+			if mount.CacheID != "" {
+				options = append(options, fmt.Sprintf("id=%s", mount.CacheID))
+			}
+			if mount.Target != "" {
+				options = append(options, fmt.Sprintf("target=%s", mount.Target))
+			}
+			if mount.Required {
+				options = append(options, "required=true")
+			}
+			if mount.Mode != nil {
+				options = append(options, fmt.Sprintf("mode=%d", *mount.Mode))
+			}
+			if mount.UID != nil {
+				options = append(options, fmt.Sprintf("uid=%d", *mount.UID))
+			}
+			if mount.GID != nil {
+				options = append(options, fmt.Sprintf("gid=%d", *mount.GID))
+			}
+		default:
+			panic(fmt.Sprintf("unexpected mount type %q", mount.Type))
+		}
+
+		runMounts = append(runMounts, strings.Join(options, ","))
+	}
+
+	return runMounts
+}
+
+func generateContextDir(rawContextDir string, runMounts []*instructions.Mount) string {
+	usesBuildContext := false
+	for _, mount := range runMounts {
+		if mount.Type == instructions.MountTypeBind && mount.From == "" {
+			usesBuildContext = true
+			break
+		}
+	}
+
+	var contextDir string
+	if !usesBuildContext && rawContextDir == "" {
+		// Buildah API requires ContextDir even if not actually used. In this case we will pass a dummy value.
+		contextDir = strconv.Itoa(rand.Int())
+	} else {
+		contextDir = rawContextDir
+	}
+
+	return contextDir
+}
+
+func generateStdoutStderr(optionalLogWriter io.Writer) (stdout, stderr io.Writer, stderrBuf *bytes.Buffer) {
+	stderrBuf = &bytes.Buffer{}
+	if optionalLogWriter != nil {
+		stdout = optionalLogWriter
+		stderr = io.MultiWriter(optionalLogWriter, stderrBuf)
+	} else {
+		stderr = stderrBuf
+	}
+
+	return stdout, stderr, stderrBuf
+}
+
+func prependShellToCommand(prependShell bool, shell, command []string, builder *buildah.Builder) []string {
+	if !prependShell {
+		return command
+	}
+
+	if len(shell) > 0 {
+		command = append(shell, command...)
+	} else if len(builder.Shell()) > 0 {
+		command = append(builder.Shell(), command...)
+	} else {
+		command = append(DefaultShell, command...)
+	}
+
+	return command
+}
+
+func generateGlobalMounts(rawGlobalMounts []*specs.Mount) []specs.Mount {
+	var globalMounts []specs.Mount
+	for _, mount := range rawGlobalMounts {
+		globalMounts = append(globalMounts, *mount)
+	}
+
+	return globalMounts
 }

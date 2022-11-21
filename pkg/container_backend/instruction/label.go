@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Label struct {
-	dockerfile_instruction.Label
+	*instructions.LabelCommand
 }
 
-func NewLabel(i dockerfile_instruction.Label) *Label {
-	return &Label{Label: i}
+func NewLabel(i *instructions.LabelCommand) *Label {
+	return &Label{LabelCommand: i}
 }
 
 func (i *Label) UsesBuildContext() bool {
@@ -23,8 +24,8 @@ func (i *Label) UsesBuildContext() bool {
 
 func (i *Label) LabelsAsList() []string {
 	var labels []string
-	for k, v := range i.Labels {
-		labels = append(labels, fmt.Sprintf("%s=%s", k, v))
+	for _, item := range i.Labels {
+		labels = append(labels, fmt.Sprintf("%s=%s", item.Key, item.Value))
 	}
 	return labels
 }

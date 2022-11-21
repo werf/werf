@@ -1,5 +1,78 @@
 # Changelog
 
+### [1.2.190](https://www.github.com/werf/werf/compare/v1.2.189...v1.2.190) (2022-11-17)
+
+
+### Features
+
+* **staged-dockerfile:** support ONBUILD instructions (part 1, preparations) ([8a813b5](https://www.github.com/werf/werf/commit/8a813b52318f06acb83fc44aff215d95c57e8f09)), closes [#2215](https://www.github.com/werf/werf/issues/2215)
+
+
+### Bug Fixes
+
+* **build:** inconsistent report path when final-repo used ([5924702](https://www.github.com/werf/werf/commit/59247021054de511b7a08017a1c039d61fef4b50))
+* **staged-dockerfile:** fix meta args always expands to empty strings ([8f6b562](https://www.github.com/werf/werf/commit/8f6b562786a7ea92d8208bb6181b621c2c9373f9))
+
+### [1.2.189](https://www.github.com/werf/werf/compare/v1.2.188...v1.2.189) (2022-11-15)
+
+
+### Features
+
+* **completion:** add fish and powershell support ([b9d0b9d](https://www.github.com/werf/werf/commit/b9d0b9d434ca564ad44204d41ad0b852cc5d7218))
+
+### [1.2.188](https://www.github.com/werf/werf/compare/v1.2.187...v1.2.188) (2022-11-07)
+
+
+### Features
+
+* **staged-dockerfile:** support werf images dependencies build-args ([8faf229](https://www.github.com/werf/werf/commit/8faf229ff4cf8523ae995a72bd76762cd4024833))
+
+
+### Bug Fixes
+
+* **staged-dockerfile:** changing FROM base image does not cause rebuilding ([a52991a](https://www.github.com/werf/werf/commit/a52991ae9bf9a83d2b9de11ca11ede3ea95d6297))
+
+### [1.2.187](https://www.github.com/werf/werf/compare/v1.2.186...v1.2.187) (2022-11-02)
+
+
+### Bug Fixes
+
+* **build:** fix git-patch-* stages mechanics when patches contains binaries ([cfd6b8e](https://www.github.com/werf/werf/commit/cfd6b8e19134f0ee26b324bfc3ed4620540a0ce5))
+
+### [1.2.186](https://www.github.com/werf/werf/compare/v1.2.185...v1.2.186) (2022-11-02)
+
+
+### Features
+
+* **staged-dockerfile:** implement first stage of build-args expansion ([c0de754](https://www.github.com/werf/werf/commit/c0de754946deddce61dc70e85ea5149466ebc86f))
+
+
+### Bug Fixes
+
+* **buildah:** broken build on mac/win ([1118613](https://www.github.com/werf/werf/commit/11186132285bc3e8dedc9f3b0ec83b34b2e6b7c6))
+
+### [1.2.185](https://www.github.com/werf/werf/compare/v1.2.184...v1.2.185) (2022-11-01)
+
+
+### Features
+
+* **staged-dockerfile:** all dockerfile options and instructions /1 ([f0cde50](https://www.github.com/werf/werf/commit/f0cde500b55de4f96b9b47e97bf45bf9a313ad08))
+* **staged-dockerfile:** implement COPY --from stage to image name expansion ([824c5bb](https://www.github.com/werf/werf/commit/824c5bb9c9defb6b9c919aef8db17dd7cda3b9c0)), closes [#2215](https://www.github.com/werf/werf/issues/2215)
+* **staged-dockerfile:** implement global/Run mounts ([42edf1e](https://www.github.com/werf/werf/commit/42edf1e3b3e20b50a23b79dbac7a8e3715d8ed2b))
+* **staged-dockerfile:** refactor calculateBuildContextGlobsChecksum ([e558e1e](https://www.github.com/werf/werf/commit/e558e1e0474a1a4fe272d59884a2241cefceaf63))
+* **staged-dockerfile:** refactor dockerfile, use buidkit instruction structs directly ([e138887](https://www.github.com/werf/werf/commit/e1388878af8617089188722e904a3ac4e3134669))
+* **staged-dockerfile:** refine ADD instruction digest calculation ([2ef3d11](https://www.github.com/werf/werf/commit/2ef3d11dc3dbbcc89b0ed9d4f52a5eb5a872889e))
+* **staged-dockerfile:** refine dockerfile instructions digests calculations ([d15d79f](https://www.github.com/werf/werf/commit/d15d79f2678367decd9b96370664d48fbf8aee5a))
+* **staged-dockerfile:** use contents of Copy/Add sources in checksum ([d20e397](https://www.github.com/werf/werf/commit/d20e39712f8d827479e9c4586724ff932d845660))
+
+
+### Bug Fixes
+
+* **staged-dockerfile:** broken error message ([4dea6b3](https://www.github.com/werf/werf/commit/4dea6b3b99ca7d12c99b29b410b91d9917f7e9b0))
+* **staged-dockerfile:** panics on Healthcheck and Maintainer instructions and no duplicates in images-sets ([2a55266](https://www.github.com/werf/werf/commit/2a552663fad00fb020a272936879fdfbefbeb1bd)), closes [#2215](https://www.github.com/werf/werf/issues/2215)
+* **staged-dockerfile:** proper instruction arguments unescaping ([e767013](https://www.github.com/werf/werf/commit/e767013db72a4aeeaf258ad21c3919dc219dc492))
+* **stapel:** add log line about starting container cleanup ([e8fd1f4](https://www.github.com/werf/werf/commit/e8fd1f479861e955e64374e94ad1d8fec35baebf))
+
 ### [1.2.184](https://www.github.com/werf/werf/compare/v1.2.183...v1.2.184) (2022-10-21)
 
 

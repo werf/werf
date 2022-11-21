@@ -5,17 +5,24 @@ import (
 	"strconv"
 	"strings"
 
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 )
 
-func NewDockerfileStage(index int, baseName, stageName string, instructions []DockerfileStageInstructionInterface, platform string) *DockerfileStage {
-	return &DockerfileStage{BaseName: baseName, StageName: stageName, Instructions: instructions, Platform: platform}
+func NewDockerfileStage(index int, baseName, stageName string, instructions []DockerfileStageInstructionInterface, platform string, expanderFactory ExpanderFactory) *DockerfileStage {
+	return &DockerfileStage{
+		ExpanderFactory: expanderFactory,
+		BaseName:        baseName,
+		StageName:       stageName,
+		Instructions:    instructions,
+		Platform:        platform,
+	}
 }
 
 type DockerfileStage struct {
-	Dockerfile   *Dockerfile
-	Dependencies []*DockerfileStage
-	BaseStage    *DockerfileStage
+	Dockerfile      *Dockerfile
+	Dependencies    []*DockerfileStage
+	BaseStage       *DockerfileStage
+	ExpanderFactory ExpanderFactory
 
 	BaseName     string
 	Index        int
@@ -35,9 +42,9 @@ func (stage *DockerfileStage) AppendDependencyStage(dep *DockerfileStage) {
 
 func (stage *DockerfileStage) WerfImageName() string {
 	if stage.HasStageName() {
-		return fmt.Sprintf("dockerfile-stage-%s", stage.StageName)
+		return fmt.Sprintf("stage/%s", stage.StageName)
 	} else {
-		return fmt.Sprintf("dockerfile-stage-%d", stage.Index)
+		return fmt.Sprintf("stage/%d", stage.Index)
 	}
 }
 
@@ -70,7 +77,7 @@ func SetupDockerfileStagesDependencies(stages []*DockerfileStage) error {
 
 		for _, instr := range stage.Instructions {
 			switch typedInstr := instr.GetInstructionData().(type) {
-			case *dockerfile_instruction.Copy:
+			case *instructions.CopyCommand:
 				if typedInstr.From != "" {
 					if dep := findStageByRef(typedInstr.From, stages, stageByName); dep != nil {
 						stage.AppendDependencyStage(dep)
@@ -80,8 +87,9 @@ func SetupDockerfileStagesDependencies(stages []*DockerfileStage) error {
 					}
 				}
 
-			case *dockerfile_instruction.Run:
-				for _, mount := range typedInstr.Mounts {
+			case *instructions.RunCommand:
+				mounts := instructions.GetMounts(typedInstr)
+				for _, mount := range mounts {
 					if mount.From != "" {
 						if dep := findStageByRef(mount.From, stages, stageByName); dep != nil {
 							stage.AppendDependencyStage(dep)

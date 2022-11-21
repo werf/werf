@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/container_backend"
-	dockerfile_instruction "github.com/werf/werf/pkg/dockerfile/instruction"
 )
 
 type Add struct {
-	dockerfile_instruction.Add
+	*instructions.AddCommand
 }
 
-func NewAdd(i dockerfile_instruction.Add) *Add {
-	return &Add{Add: i}
+func NewAdd(i *instructions.AddCommand) *Add {
+	return &Add{AddCommand: i}
 }
 
 func (i *Add) UsesBuildContext() bool {
@@ -22,13 +23,23 @@ func (i *Add) UsesBuildContext() bool {
 }
 
 func (i *Add) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
-	buildContextTmpDir, err := buildContextArchive.ExtractOrGetExtractedDir(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to extract build context: %w", err)
+	var contextDir string
+	if i.UsesBuildContext() {
+		var err error
+		contextDir, err = buildContextArchive.ExtractOrGetExtractedDir(ctx)
+		if err != nil {
+			return fmt.Errorf("unable to extract build context: %w", err)
+		}
 	}
 
-	if err := drv.Add(ctx, containerName, i.Src, i.Dst, buildah.AddOpts{CommonOpts: drvOpts, ContextDir: buildContextTmpDir}); err != nil {
-		return fmt.Errorf("error adding %v to %s for container %s: %w", i.Src, i.Dst, containerName, err)
+	if err := drv.Add(ctx, containerName, i.Sources(), i.Dest(), buildah.AddOpts{
+		CommonOpts: drvOpts,
+		ContextDir: contextDir,
+		Chown:      i.Chown,
+		Chmod:      i.Chmod,
+	}); err != nil {
+		return fmt.Errorf("error adding %v to %s for container %s: %w", i.Sources(), i.Dest(), containerName, err)
 	}
+
 	return nil
 }

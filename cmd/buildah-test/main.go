@@ -47,7 +47,7 @@ echo STOP
 	defer os.RemoveAll("/tmp/build_stage.sh")
 
 	if err := b.RunCommand(ctx, "mycontainer", []string{"/.werf/build_stage.sh"}, buildah.RunCommandOpts{
-		Mounts: []specs.Mount{
+		GlobalMounts: []*specs.Mount{
 			{
 				Type:        "bind",
 				Source:      "/tmp/build_stage.sh",

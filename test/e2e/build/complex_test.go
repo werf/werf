@@ -9,12 +9,22 @@ import (
 	"github.com/werf/werf/test/pkg/werf"
 )
 
+type complexTestOptions struct {
+	BuildahMode                 string
+	WithLocalRepo               bool
+	WithStagedDockerfileBuilder bool
+}
+
 var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 	DescribeTable("should succeed and produce expected image",
-		func(withLocalRepo bool, buildahMode string) {
+		func(testOpts complexTestOptions) {
 			By("initializing")
-			setupEnv(withLocalRepo, buildahMode)
-			contRuntime, err := contback.NewContainerBackend(buildahMode)
+			setupEnv(setupEnvOptions{
+				BuildahMode:               testOpts.BuildahMode,
+				WithLocalRepo:             testOpts.WithLocalRepo,
+				WithForceStagedDockerfile: testOpts.WithStagedDockerfileBuilder,
+			})
+			contRuntime, err := contback.NewContainerBackend(testOpts.BuildahMode)
 			if err == contback.ErrRuntimeUnavailable {
 				Skip(err.Error())
 			} else if err != nil {
@@ -109,15 +119,15 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"stat -c %u:%g /app/static/style.css | diff <(echo 1050:1051) -",
 					"grep -qF 'text-align: center;' /app/static/style.css",
 
-					"! test -f /app/app.go",
+					"! test -e /app/app.go",
 
-					"! test -f /app/static/script.js",
+					"! test -e /app/static/script.js",
 
 					"test -f /triggered-stages",
 					"stat -c %u:%g /triggered-stages | diff <(echo 0:0) -",
 					"echo 'beforeInstall\ninstall\nbeforeSetup\nsetup' | diff /triggered-stages -",
 
-					"! test -f /tmp_dir/file",
+					"! test -e /tmp_dir/file",
 
 					"test -f /basedir/file",
 					"stat -c %u:%g /basedir/file | diff <(echo 0:0) -",
@@ -166,7 +176,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"test -f /app/added/file1",
 					"echo 'file1content-state1' | diff /app/added/file1 -",
 
-					"! test -f /app/added/file2",
+					"! test -e /app/added/file2",
 
 					"test -f /app/added/file3",
 					"echo 'file3content-state1' | diff /app/added/file3 -",
@@ -174,12 +184,12 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"test -f /app/copied/file1",
 					"echo 'file1content-state1' | diff /app/copied/file1 -",
 
-					"! test -f /app/copied/file2",
+					"! test -e /app/copied/file2",
 
 					"test -f /app/copied/file3",
 					"echo 'file3content-state1' | diff /app/copied/file3 -",
 
-					"! test -f /helloworld.tgz",
+					"! test -e /helloworld.tgz",
 
 					"test -f /created-by-run-state1",
 				)
@@ -195,19 +205,19 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -",
 					"grep -qF '<title>Hello, world</title>' /app/static/index.html",
 
-					"! test -f /app/static/style.css",
+					"! test -e /app/static/style.css",
 
 					"test -f /app/app.go",
 					"stat -c %u:%g /app/app.go | diff <(echo 1050:1051) -",
 					"grep -qF 'package hello' /app/app.go",
 
-					"! test -f /app/static/script.js",
+					"! test -e /app/static/script.js",
 
 					"test -f /triggered-stages",
 					"stat -c %u:%g /triggered-stages | diff <(echo 0:0) -",
 					"echo 'beforeInstall\ninstall\nbeforeSetup\nsetup' | diff /triggered-stages -",
 
-					"! test -f /tmp_dir/file",
+					"! test -e /tmp_dir/file",
 
 					"test -f /basedir/file",
 					"stat -c %u:%g /basedir/file | diff <(echo 0:0) -",
@@ -219,9 +229,47 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				)
 			}
 		},
-		Entry("without repo using Docker", false, "docker"),
-		Entry("with local repo using Docker", true, "docker"),
-		Entry("with local repo using Native Buildah with rootless isolation", true, "native-rootless"),
-		Entry("with local repo using Native Buildah with chroot isolation", true, "native-chroot"),
+		Entry("without repo using Vanilla Docker", complexTestOptions{
+			BuildahMode:                 "vanilla-docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("with local repo using Vanilla Docker", complexTestOptions{
+			BuildahMode:                 "vanilla-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("without repo using BuildKit Docker", complexTestOptions{
+			BuildahMode:                 "buildkit-docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("with local repo using BuildKit Docker", complexTestOptions{
+			BuildahMode:                 "buildkit-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{
+			BuildahMode:                 "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}),
+		Entry("with local repo using Native Buildah with chroot isolation", complexTestOptions{
+			BuildahMode:                 "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}),
+		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
+		Entry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", complexTestOptions{
+			BuildahMode:                 "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}),
+		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
+		Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{
+			BuildahMode:                 "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}),
 	)
 })
