@@ -5,7 +5,7 @@
 {% endif %}
 Create an ExternalName service with the specified name.
 
- ExternalName service references to an external DNS address instead of only pods, which will allow application authors to reference services that exist off platform, on other clusters, or locally.
+ExternalName service references to an external DNS address instead of only pods, which will allow application authors to reference services that exist off platform, on other clusters, or locally.
 
 {{ header }} Syntax
 
