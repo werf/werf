@@ -316,5 +316,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetCreateServiceAccountDocs().LongMD,
 		}
+	case "debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetDebugDocs().LongMD,
+		}
 	}
 }
