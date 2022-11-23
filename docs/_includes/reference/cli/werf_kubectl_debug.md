@@ -5,13 +5,12 @@
 {% endif %}
 Debug cluster resources using interactive debugging containers.
 
- 'debug' provides automation for common debugging tasks for cluster objects identified by resource and name. Pods will be used by default if no resource is specified.
+`debug` provides automation for common debugging tasks for cluster objects identified by resource and name. Pods will be used by default if no resource is specified.
 
- The action taken by 'debug' varies depending on what resource is specified. Supported actions include:
-
-  *  Workload: Create a copy of an existing pod with certain attributes changed, for example changing the image tag to a new version.
-  *  Workload: Add an ephemeral container to an already running pod, for example to add debugging utilities without restarting the pod.
-  *  Node: Create a new pod that runs in the node's host namespaces and can access the node's filesystem.
+The action taken by `debug` varies depending on what resource is specified. Supported actions include:
+* Workload: Create a copy of an existing pod with certain attributes changed, for example changing the image tag to a new version.
+* Workload: Add an ephemeral container to an already running pod, for example to add debugging utilities without restarting the pod.
+* Node: Create a new pod that runs in the node's host namespaces and can access the node's filesystem.
 
 {{ header }} Syntax
 
