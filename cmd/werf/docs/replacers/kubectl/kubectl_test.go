@@ -129,7 +129,8 @@ func checkText(ann string) bool {
 		ann != GetDiffDocs().LongMD &&
 		ann != GetDrainDocs().LongMD &&
 		ann != GetEditDocs().LongMD &&
-		ann != GetExecDocs().LongMD {
+		ann != GetExecDocs().LongMD &&
+		ann != GetExplainDocs().LongMD {
 		return false
 	}
 	return true

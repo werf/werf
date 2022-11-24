@@ -794,3 +794,17 @@ func GetExecDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetExplainDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "List the fields for supported resources.\n\n" +
+		"This command describes the fields associated with each supported API resource. " +
+		"Fields are identified via a simple JSON Path identifier:\n" +
+		"```\n<type>.<fieldName>[.<fieldName>]\n```\n" +
+		"Add the `--recursive` flag to display all of the fields at once without descriptions. " +
+		"Information about each field is retrieved from the server in OpenAPI format.\n\n" +
+		"Use `kubectl api-resources` for a complete list of supported resources."
+
+	return docs
+}
