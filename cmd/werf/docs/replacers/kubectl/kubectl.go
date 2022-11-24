@@ -324,5 +324,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetDeleteDocs().LongMD,
 		}
+	case "describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME)":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetDescribeDocs().LongMD,
+		}
 	}
 }
