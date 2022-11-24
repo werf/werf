@@ -716,3 +716,23 @@ func GetDescribeDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetDiffDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Diff configurations specified by file name or stdin between the current online " +
+		"configuration, and the configuration as it would be if applied.\n\n" +
+		"The output is always YAML.\n\n" +
+		"`KUBECTL_EXTERNAL_DIFF` environment variable can be used to select your own " +
+		"`diff` command. Users can use external commands with params too, example: " +
+		"`KUBECTL_EXTERNAL_DIFF=colordiff -N -u`.\n\n" +
+		"By default, the `diff` command available in your path will be run with the `-u` " +
+		"(unified diff) and `-N` (treat absent files as empty) options.\n\n" +
+		"Exit status:\n" +
+		"* `0` – No differences were found.\n" +
+		"* `1` – Differences were found.\n" +
+		"* `>1` – Kubectl or diff failed with an error.\n" +
+		"**Note**: `KUBECTL_EXTERNAL_DIFF`, if used, is expected to follow that convention."
+
+	return docs
+}
