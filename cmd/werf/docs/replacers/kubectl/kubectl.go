@@ -332,5 +332,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetDiffDocs().LongMD,
 		}
+	case "drain NODE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetDrainDocs().LongMD,
+		}
 	}
 }
