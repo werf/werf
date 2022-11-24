@@ -328,5 +328,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetDescribeDocs().LongMD,
 		}
+	case "diff -f FILENAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetDiffDocs().LongMD,
+		}
 	}
 }
