@@ -5,7 +5,7 @@
 {% endif %}
 List the fields for supported resources.
 
-This command describes the fields associated with each supported API resource. Fields are identified via a simple JSONPath identifier:
+This command describes the fields associated with each supported API resource. Fields are identified via a simple JSON Path identifier:
 ```
 <type>.<fieldName>[.<fieldName>]
 ```
