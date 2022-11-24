@@ -786,3 +786,11 @@ func GetEditDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetExecDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Execute a command in a container."
+
+	return docs
+}
