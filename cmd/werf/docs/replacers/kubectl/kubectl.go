@@ -336,5 +336,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetDrainDocs().LongMD,
 		}
+	case "edit (RESOURCE/NAME | -f FILENAME)":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetEditDocs().LongMD,
+		}
 	}
 }
