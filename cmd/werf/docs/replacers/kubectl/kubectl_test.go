@@ -124,7 +124,8 @@ func checkText(ann string) bool {
 		ann != GetCreateServiceNodePortDocs().LongMD &&
 		ann != GetCreateServiceAccountDocs().LongMD &&
 		ann != GetDebugDocs().LongMD &&
-		ann != GetDeleteDocs().LongMD {
+		ann != GetDeleteDocs().LongMD &&
+		ann != GetDescribeDocs().LongMD {
 		return false
 	}
 	return true
