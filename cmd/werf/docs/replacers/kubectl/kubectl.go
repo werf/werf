@@ -348,5 +348,11 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetExplainDocs().LongMD,
 		}
+	case "expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|SCTP] " +
+		"[--target-port=number-or-name] [--name=name] [--external-ip=external-ip-of-service] " +
+		"[--type=type]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetExposeDocs().LongMD,
+		}
 	}
 }
