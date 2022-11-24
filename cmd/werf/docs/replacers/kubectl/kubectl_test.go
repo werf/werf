@@ -96,7 +96,37 @@ func checkText(ann string) bool {
 		ann != GetConfigSetCredentialsDocs().LongMD &&
 		ann != GetConfigUnsetDocs().LongMD &&
 		ann != GetConfigUseContextDocs().LongMD &&
-		ann != GetConfigViewDocs().LongMD {
+		ann != GetConfigViewDocs().LongMD &&
+		ann != GetCordonDocs().LongMD &&
+		ann != GetCpDocs().LongMD &&
+		ann != GetCreateDocs().LongMD &&
+		ann != GetCreateClusterRoleDocs().LongMD &&
+		ann != GetCreateClusterRoleBindingDocs().LongMD &&
+		ann != GetCreateConfigMapDocs().LongMD &&
+		ann != GetCreateCronJobDocs().LongMD &&
+		ann != GetCreateDeploymentDocs().LongMD &&
+		ann != GetCreateIngressDocs().LongMD &&
+		ann != GetCreateJobDocs().LongMD &&
+		ann != GetCreateNamespaceDocs().LongMD &&
+		ann != GetCreatePodDisruptionBudgetDocs().LongMD &&
+		ann != GetCreatePriorityClassDocs().LongMD &&
+		ann != GetCreateQuotaDocs().LongMD &&
+		ann != GetCreateRoleDocs().LongMD &&
+		ann != GetCreateRoleBindingDocs().LongMD &&
+		ann != GetCreateSecretDocs().LongMD &&
+		ann != GetCreateSecretDockerRegistryDocs().LongMD &&
+		ann != GetCreateSecretGenericDocs().LongMD &&
+		ann != GetCreateSecretTLSDocs().LongMD &&
+		ann != GetCreateServiceDocs().LongMD &&
+		ann != GetCreateServiceClusterIPDocs().LongMD &&
+		ann != GetCreateServiceExternalNameDocs().LongMD &&
+		ann != GetCreateServiceLoadBalancerDocs().LongMD &&
+		ann != GetCreateServiceNodePortDocs().LongMD &&
+		ann != GetCreateServiceAccountDocs().LongMD &&
+		ann != GetDebugDocs().LongMD &&
+		ann != GetDeleteDocs().LongMD &&
+		ann != GetDescribeDocs().LongMD &&
+		ann != GetDiffDocs().LongMD {
 		return false
 	}
 	return true

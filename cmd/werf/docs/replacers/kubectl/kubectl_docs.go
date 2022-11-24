@@ -413,3 +413,326 @@ func GetConfigViewDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetCordonDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Mark node as unschedulable."
+
+	return docs
+}
+
+func GetCpDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Copy files and directories to and from containers."
+
+	return docs
+}
+
+func GetCreateDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a resource from a file or from stdin.\n\n" +
+		"JSON and YAML formats are accepted."
+
+	return docs
+}
+
+func GetCreateClusterRoleDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a cluster role."
+
+	return docs
+}
+
+func GetCreateClusterRoleBindingDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a cluster role binding for a particular cluster role."
+
+	return docs
+}
+
+func GetCreateConfigMapDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a config map based on a file, directory, or specified literal value.\n\n" +
+		"A single config map may package one or more key/value pairs.\n\n" +
+		"When creating a config map based on a file, the key will default to the basename of the file, " +
+		"and the value will default to the file content.  If the basename is an invalid key, you may specify " +
+		"an alternate key.\n\n" +
+		"When creating a config map based on a directory, each file whose basename is a valid key in the " +
+		"directory will be packaged into the config map.  Any directory entries except regular files are " +
+		"ignored (e.g. subdirectories, symlinks, devices, pipes, etc)."
+
+	return docs
+}
+
+func GetCreateCronJobDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a cron job with the specified name."
+
+	return docs
+}
+
+func GetCreateDeploymentDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a deployment with the specified name."
+
+	return docs
+}
+
+func GetCreateIngressDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create an ingress with the specified name."
+
+	return docs
+}
+
+func GetCreateJobDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a job with the specified name."
+
+	return docs
+}
+
+func GetCreateNamespaceDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a namespace with the specified name."
+
+	return docs
+}
+
+func GetCreatePodDisruptionBudgetDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a pod disruption budget with the specified name, selector, " +
+		"and desired minimum available pods."
+
+	return docs
+}
+
+func GetCreatePriorityClassDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a priority class with the specified name, value, `globalDefault` and description."
+
+	return docs
+}
+
+func GetCreateQuotaDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a resource quota with the specified name, hard limits, and optional scopes."
+
+	return docs
+}
+
+func GetCreateRoleDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a role with single rule."
+
+	return docs
+}
+
+func GetCreateRoleBindingDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a role binding for a particular role or cluster role."
+
+	return docs
+}
+
+func GetCreateSecretDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a secret using specified subcommand."
+
+	return docs
+}
+
+func GetCreateSecretDockerRegistryDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a new secret for use with Docker registries.\n\n" +
+		"Dockercfg secrets are used to authenticate against Docker registries.\n\n" +
+		"When using the Docker command line to push images, you can authenticate to a given " +
+		"registry by running:\n" +
+		"```\n$ docker login DOCKER_REGISTRY_SERVER --username=DOCKER_USER --password=DOCKER_PASSWORD " +
+		"--email=DOCKER_EMAIL\n```\n" +
+		"That produces a `~/.dockercfg` file that is used by subsequent `docker push` and `docker pull` " +
+		"commands to authenticate to the registry. The email address is optional.\n\n" +
+		"When creating applications, you may have a Docker registry that requires authentication. " +
+		"In order for the nodes to pull images on your behalf, they must have the credentials. " +
+		"You can provide this information by creating a dockercfg secret and attaching it to your service account."
+
+	return docs
+}
+
+func GetCreateSecretGenericDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a secret based on a file, directory, or specified literal value.\n\n" +
+		"A single secret may package one or more key/value pairs.\n\n" +
+		"When creating a secret based on a file, the key will default to the basename of the file, " +
+		"and the value will default to the file content. If the basename is an invalid key or you wish " +
+		"to chose your own, you may specify an alternate key.\n\n" +
+		"When creating a secret based on a directory, each file whose basename is a valid key in " +
+		"the directory will be packaged into the secret. Any directory entries except regular " +
+		"files are ignored (e.g. subdirectories, symlinks, devices, pipes, etc)."
+
+	return docs
+}
+
+func GetCreateSecretTLSDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a TLS secret from the given public/private key pair.\n\n" +
+		"The public/private key pair must exist beforehand. The public key certificate " +
+		"must be `.PEM` encoded and match the given private key."
+
+	return docs
+}
+
+func GetCreateServiceDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a service using a specified subcommand."
+
+	return docs
+}
+
+func GetCreateServiceClusterIPDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a ClusterIP service with the specified name."
+
+	return docs
+}
+
+func GetCreateServiceExternalNameDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create an ExternalName service with the specified name.\n\n" +
+		"ExternalName service references to an external DNS address instead of " +
+		"only pods, which will allow application authors to reference services " +
+		"that exist off platform, on other clusters, or locally."
+	return docs
+}
+
+func GetCreateServiceLoadBalancerDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a LoadBalancer service with the specified name."
+
+	return docs
+}
+
+func GetCreateServiceNodePortDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a NodePort service with the specified name."
+
+	return docs
+}
+
+func GetCreateServiceAccountDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create a service account with the specified name."
+
+	return docs
+}
+
+func GetDebugDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Debug cluster resources using interactive debugging containers.\n\n" +
+		"`debug` provides automation for common debugging tasks for cluster objects identified by " +
+		"resource and name. Pods will be used by default if no resource is specified.\n\n" +
+		"The action taken by `debug` varies depending on what resource is specified. Supported " +
+		"actions include:\n" +
+		"* Workload: Create a copy of an existing pod with certain attributes changed, " +
+		"for example changing the image tag to a new version.\n" +
+		"* Workload: Add an ephemeral container to an already running pod, for example to add " +
+		"debugging utilities without restarting the pod.\n" +
+		"* Node: Create a new pod that runs in the node's host namespaces and can access " +
+		"the node's filesystem."
+
+	return docs
+}
+
+func GetDeleteDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Delete resources by file names, stdin, resources and names, " +
+		"or by resources and label selector.\n\n" +
+		"JSON and YAML formats are accepted. Only one type of argument may be specified: " +
+		"file names, resources and names, or resources and label selector. Some resources, " +
+		"such as pods, support graceful deletion. These resources define a default period " +
+		"before they are forcibly terminated (the grace period) but you may override that value " +
+		"with the `--grace-period` flag, or pass `--now` to set a grace-period of `1`. Because these " +
+		"resources often represent entities in the cluster, deletion may not be acknowledged " +
+		"immediately. If the node hosting a pod is down or cannot reach the API server, termination " +
+		"may take significantly longer than the grace period. To force delete a resource, you must " +
+		"specify the `--force` flag. **Note**: only a subset of resources support graceful deletion. " +
+		"In absence of the support, the `--grace-period` flag is ignored.\n\n" +
+		"**IMPORTANT**: Force deleting pods does not wait for confirmation that the pod's processes " +
+		"have been terminated, which can leave those processes running until the node detects " +
+		"the deletion and completes graceful deletion. If your processes use shared storage or " +
+		"talk to a remote API and depend on the name of the pod to identify themselves, force " +
+		"deleting those pods may result in multiple processes running on different machines using " +
+		"the same identification which may lead to data corruption or inconsistency. Only force " +
+		"delete pods when you are sure the pod is terminated, or if your application can tolerate " +
+		"multiple copies of the same pod running at once. Also, if you force delete pods, the " +
+		"scheduler may place new pods on those nodes before the node has released those resources " +
+		"and causing those pods to be evicted immediately.\n\n" +
+		"Note that the delete command does NOT do resource version checks, so if someone " +
+		"submits an update to a resource right when you submit a delete, their update will " +
+		"be lost along with the rest of the resource."
+
+	return docs
+}
+
+func GetDescribeDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Show details of a specific resource or group of resources.\n\n" +
+		"Print a detailed description of the selected resources, including related resources " +
+		"such as events or controllers. You may select a single object by name, all objects of " +
+		"that type, provide a name prefix, or label selector. For example: " +
+		"`$ kubectl describe TYPE NAME_PREFIX` will first check for an exact match on " +
+		"`TYPE` and `NAME_PREFIX`. If no such resource exists, it will output details for every " +
+		"resource that has a name prefixed with `NAME_PREFIX`.\n\n" +
+		"Use `kubectl api-resources` for a complete list of supported resources."
+
+	return docs
+}
+
+func GetDiffDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Diff configurations specified by file name or stdin between the current online " +
+		"configuration, and the configuration as it would be if applied.\n\n" +
+		"The output is always YAML.\n\n" +
+		"`KUBECTL_EXTERNAL_DIFF` environment variable can be used to select your own " +
+		"`diff` command. Users can use external commands with params too, example: " +
+		"`KUBECTL_EXTERNAL_DIFF=colordiff -N -u`.\n\n" +
+		"By default, the `diff` command available in your path will be run with the `-u` " +
+		"(unified diff) and `-N` (treat absent files as empty) options.\n\n" +
+		"Exit status:\n" +
+		"* `0` – No differences were found.\n" +
+		"* `1` – Differences were found.\n" +
+		"* `>1` – Kubectl or diff failed with an error.\n" +
+		"**Note**: `KUBECTL_EXTERNAL_DIFF`, if used, is expected to follow that convention."
+
+	return docs
+}
