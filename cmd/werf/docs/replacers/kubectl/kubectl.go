@@ -344,5 +344,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetExecDocs().LongMD,
 		}
+	case "explain RESOURCE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetExplainDocs().LongMD,
+		}
 	}
 }
