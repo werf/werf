@@ -354,5 +354,11 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetExposeDocs().LongMD,
 		}
+	case "get [(-o|--output=)json|yaml|name|go-template|go-template-file|template|templatefile|" +
+		"jsonpath|jsonpath-as-json|jsonpath-file|custom-columns-file|custom-columns|wide] " +
+		"(TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetGetDocs().LongMD,
+		}
 	}
 }
