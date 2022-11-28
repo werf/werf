@@ -396,5 +396,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetProxyDocs().LongMD,
 		}
+	case "replace -f FILENAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetReplaceDocs().LongMD,
+		}
 	}
 }
