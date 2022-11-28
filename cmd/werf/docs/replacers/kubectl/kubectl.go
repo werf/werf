@@ -380,5 +380,13 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetPatchDocs().LongMD,
 		}
+	case "plugin [flags]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetPluginDocs().LongMD,
+		}
+	case "list":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetPluginListDocs().LongMD,
+		}
 	}
 }
