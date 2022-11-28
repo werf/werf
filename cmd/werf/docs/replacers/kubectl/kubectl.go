@@ -368,5 +368,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetLabelDocs().LongMD,
 		}
+	case "logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetLogsDocs().LongMD,
+		}
 	}
 }

@@ -872,3 +872,12 @@ func GetLabelDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetLogsDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Print the logs for a container in a pod or specified resource.\n\n" +
+		"If the pod has only one container, the container name is optional."
+
+	return docs
+}
