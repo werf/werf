@@ -925,3 +925,16 @@ func GetPluginListDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetPortForwardDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Forward one or more local ports to a pod.\n\n" +
+		"Use resource `type`/`name` such as `deployment`/`mydeployment` to select a pod. " +
+		"Resource `type` defaults to `pod` if omitted.\n\n" +
+		"If there are multiple pods matching the criteria, a pod will be selected automatically. " +
+		"The forwarding session ends when the selected pod terminates, and a rerun of the command is needed " +
+		"to resume forwarding."
+
+	return docs
+}
