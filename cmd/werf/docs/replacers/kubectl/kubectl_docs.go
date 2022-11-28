@@ -881,3 +881,11 @@ func GetLogsDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetOptionsDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Print the list of flags inherited by all commands."
+
+	return docs
+}
