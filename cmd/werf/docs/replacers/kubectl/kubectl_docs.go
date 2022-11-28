@@ -938,3 +938,14 @@ func GetPortForwardDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetProxyDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Creates a proxy server or application-level gateway between localhost and " +
+		"the Kubernetes API server. It also allows serving static content over specified " +
+		"HTTP path. All incoming data enters through one port and gets forwarded to " +
+		"the remote Kubernetes API server port, except for the path matching the static content path."
+
+	return docs
+}
