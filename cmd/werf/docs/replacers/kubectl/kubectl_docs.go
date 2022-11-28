@@ -949,3 +949,13 @@ func GetProxyDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetReplaceDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Replace a resource by file name or stdin.\n\n" +
+		"JSON and YAML formats are accepted. If replacing an existing resource, the " +
+		"complete resource spec must be provided. This can be obtained by `$ kubectl get TYPE NAME -o yaml`."
+
+	return docs
+}

@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Print the list of flags inherited by all commands
+Print the list of flags inherited by all commands.
 
 {{ header }} Syntax
 

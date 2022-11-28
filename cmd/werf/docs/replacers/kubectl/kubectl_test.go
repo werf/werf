@@ -141,7 +141,8 @@ func checkText(ann string) bool {
 		ann != GetPluginDocs().LongMD &&
 		ann != GetPluginListDocs().LongMD &&
 		ann != GetPortForwardDocs().LongMD &&
-		ann != GetProxyDocs().LongMD {
+		ann != GetProxyDocs().LongMD &&
+		ann != GetReplaceDocs().LongMD {
 		return false
 	}
 	return true

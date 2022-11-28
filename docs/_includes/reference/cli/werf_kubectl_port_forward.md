@@ -5,9 +5,9 @@
 {% endif %}
 Forward one or more local ports to a pod.
 
- Use resource type/name such as deployment/mydeployment to select a pod. Resource type defaults to 'pod' if omitted.
+Use resource `type`/`name` such as `deployment`/`mydeployment` to select a pod. Resource `type` defaults to `pod` if omitted.
 
- If there are multiple pods matching the criteria, a pod will be selected automatically. The forwarding session ends when the selected pod terminates, and a rerun of the command is needed to resume forwarding.
+If there are multiple pods matching the criteria, a pod will be selected automatically. The forwarding session ends when the selected pod terminates, and a rerun of the command is needed to resume forwarding.
 
 {{ header }} Syntax
 
