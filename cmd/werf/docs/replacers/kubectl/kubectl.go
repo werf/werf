@@ -388,5 +388,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetPluginListDocs().LongMD,
 		}
+	case "port-forward TYPE/NAME [options] [LOCAL_PORT:]REMOTE_PORT [...[LOCAL_PORT_N:]REMOTE_PORT_N]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetPortForwardDocs().LongMD,
+		}
 	}
 }
