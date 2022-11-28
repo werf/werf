@@ -889,3 +889,13 @@ func GetOptionsDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetPatchDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update fields of a resource using strategic merge patch, " +
+		"a JSON merge patch, or a JSON patch.\n\n" +
+		"JSON and YAML formats are accepted."
+
+	return docs
+}

@@ -136,7 +136,8 @@ func checkText(ann string) bool {
 		ann != GetKustomizeDocs().LongMD &&
 		ann != GetLabelDocs().LongMD &&
 		ann != GetLogsDocs().LongMD &&
-		ann != GetOptionsDocs().LongMD {
+		ann != GetOptionsDocs().LongMD &&
+		ann != GetPatchDocs().LongMD {
 		return false
 	}
 	return true

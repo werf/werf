@@ -376,5 +376,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetOptionsDocs().LongMD,
 		}
+	case "patch (-f FILENAME | TYPE NAME) [-p PATCH|--patch-file FILE]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetPatchDocs().LongMD,
+		}
 	}
 }
