@@ -845,3 +845,117 @@ func GetGetDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetKustomizeDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Build a set of KRM resources using a `kustomization.yaml` file. The " +
+		"`DIR` argument must be a path to a directory containing `kustomization.yaml`, or a " +
+		"git repository URL with a path suffix specifying same with respect to the " +
+		"repository root. If `DIR` is omitted, `.` is assumed."
+
+	return docs
+}
+
+func GetLabelDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update the labels on a resource:\n" +
+		"* A label key and value must begin with a letter or number, and may contain letters, " +
+		"numbers, hyphens, dots, and underscores, up to `%[1]d` characters each.\n" +
+		"* Optionally, the key can begin with a DNS subdomain prefix and a single `/`, like " +
+		"`example.com/my-app`.\n" +
+		"* If `--overwrite` is true, then existing labels can be overwritten, otherwise " +
+		"attempting to overwrite a label will result in an error.\n" +
+		"* If `--resource-version` is specified, then updates will use this resource " +
+		"version, otherwise the existing resource-version will be used."
+
+	return docs
+}
+
+func GetLogsDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Print the logs for a container in a pod or specified resource.\n\n" +
+		"If the pod has only one container, the container name is optional."
+
+	return docs
+}
+
+func GetOptionsDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Print the list of flags inherited by all commands."
+
+	return docs
+}
+
+func GetPatchDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update fields of a resource using strategic merge patch, " +
+		"a JSON merge patch, or a JSON patch.\n\n" +
+		"JSON and YAML formats are accepted."
+
+	return docs
+}
+
+func GetPluginDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Provides utilities for interacting with plugins.\n\n" +
+		"Plugins provide extended functionality that is not part of the major " +
+		"command-line distribution. Please refer to the documentation and examples for " +
+		"more information about how write your own plugins.\n\n" +
+		"The easiest way to discover and install plugins is via the kubernetes " +
+		"sub-project krew. To install krew, visit " +
+		"https://krew.sigs.k8s.io/docs/user-guide/setup/install/."
+
+	return docs
+}
+
+func GetPluginListDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "List all available plugin files on a user's `PATH`.\n\n" +
+		"Available plugin files are those that are:\n" +
+		"* executable;\n" +
+		"* anywhere on the user's `PATH`;\n" +
+		"* begin with `kubectl-`."
+
+	return docs
+}
+
+func GetPortForwardDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Forward one or more local ports to a pod.\n\n" +
+		"Use resource `type`/`name` such as `deployment`/`mydeployment` to select a pod. " +
+		"Resource `type` defaults to `pod` if omitted.\n\n" +
+		"If there are multiple pods matching the criteria, a pod will be selected automatically. " +
+		"The forwarding session ends when the selected pod terminates, and a rerun of the command is needed " +
+		"to resume forwarding."
+
+	return docs
+}
+
+func GetProxyDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Creates a proxy server or application-level gateway between localhost and " +
+		"the Kubernetes API server. It also allows serving static content over specified " +
+		"HTTP path. All incoming data enters through one port and gets forwarded to " +
+		"the remote Kubernetes API server port, except for the path matching the static content path."
+
+	return docs
+}
+
+func GetReplaceDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Replace a resource by file name or stdin.\n\n" +
+		"JSON and YAML formats are accepted. If replacing an existing resource, the " +
+		"complete resource spec must be provided. This can be obtained by `$ kubectl get TYPE NAME -o yaml`."
+
+	return docs
+}

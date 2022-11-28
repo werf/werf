@@ -5,7 +5,7 @@
 {% endif %}
 Update fields of a resource using strategic merge patch, a JSON merge patch, or a JSON patch.
 
- JSON and YAML formats are accepted.
+JSON and YAML formats are accepted.
 
 {{ header }} Syntax
 

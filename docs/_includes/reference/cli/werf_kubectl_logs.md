@@ -3,7 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Print the logs for a container in a pod or specified resource. If the pod has only one container, the container name is optional.
+Print the logs for a container in a pod or specified resource.
+
+If the pod has only one container, the container name is optional.
 
 {{ header }} Syntax
 
