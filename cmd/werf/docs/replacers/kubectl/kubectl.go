@@ -372,5 +372,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetLogsDocs().LongMD,
 		}
+	case "options":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetOptionsDocs().LongMD,
+		}
 	}
 }
