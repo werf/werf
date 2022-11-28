@@ -392,5 +392,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetPortForwardDocs().LongMD,
 		}
+	case "proxy [--port=PORT] [--www=static-dir] [--www-prefix=prefix] [--api-prefix=prefix]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetProxyDocs().LongMD,
+		}
 	}
 }
