@@ -845,3 +845,30 @@ func GetGetDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetKustomizeDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Build a set of KRM resources using a `kustomization.yaml` file. The " +
+		"`DIR` argument must be a path to a directory containing `kustomization.yaml`, or a " +
+		"git repository URL with a path suffix specifying same with respect to the " +
+		"repository root. If `DIR` is omitted, `.` is assumed."
+
+	return docs
+}
+
+func GetLabelDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update the labels on a resource:\n" +
+		"* A label key and value must begin with a letter or number, and may contain letters, " +
+		"numbers, hyphens, dots, and underscores, up to `%[1]d` characters each.\n" +
+		"* Optionally, the key can begin with a DNS subdomain prefix and a single `/`, like " +
+		"`example.com/my-app`.\n" +
+		"* If `--overwrite` is true, then existing labels can be overwritten, otherwise " +
+		"attempting to overwrite a label will result in an error.\n" +
+		"* If `--resource-version` is specified, then updates will use this resource " +
+		"version, otherwise the existing resource-version will be used."
+
+	return docs
+}

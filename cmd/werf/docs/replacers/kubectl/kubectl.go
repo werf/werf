@@ -360,5 +360,13 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetGetDocs().LongMD,
 		}
+	case "kustomize DIR":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetKustomizeDocs().LongMD,
+		}
+	case "label [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KEY_N=VAL_N [--resource-version=version]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetLabelDocs().LongMD,
+		}
 	}
 }
