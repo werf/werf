@@ -360,5 +360,45 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetGetDocs().LongMD,
 		}
+	case "kustomize DIR":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetKustomizeDocs().LongMD,
+		}
+	case "label [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KEY_N=VAL_N [--resource-version=version]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetLabelDocs().LongMD,
+		}
+	case "logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetLogsDocs().LongMD,
+		}
+	case "options":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetOptionsDocs().LongMD,
+		}
+	case "patch (-f FILENAME | TYPE NAME) [-p PATCH|--patch-file FILE]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetPatchDocs().LongMD,
+		}
+	case "plugin [flags]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetPluginDocs().LongMD,
+		}
+	case "list":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetPluginListDocs().LongMD,
+		}
+	case "port-forward TYPE/NAME [options] [LOCAL_PORT:]REMOTE_PORT [...[LOCAL_PORT_N:]REMOTE_PORT_N]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetPortForwardDocs().LongMD,
+		}
+	case "proxy [--port=PORT] [--www=static-dir] [--www-prefix=prefix] [--api-prefix=prefix]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetProxyDocs().LongMD,
+		}
+	case "replace -f FILENAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetReplaceDocs().LongMD,
+		}
 	}
 }
