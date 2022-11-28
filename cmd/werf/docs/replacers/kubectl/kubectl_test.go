@@ -132,7 +132,17 @@ func checkText(ann string) bool {
 		ann != GetExecDocs().LongMD &&
 		ann != GetExplainDocs().LongMD &&
 		ann != GetExposeDocs().LongMD &&
-		ann != GetGetDocs().LongMD {
+		ann != GetGetDocs().LongMD &&
+		ann != GetKustomizeDocs().LongMD &&
+		ann != GetLabelDocs().LongMD &&
+		ann != GetLogsDocs().LongMD &&
+		ann != GetOptionsDocs().LongMD &&
+		ann != GetPatchDocs().LongMD &&
+		ann != GetPluginDocs().LongMD &&
+		ann != GetPluginListDocs().LongMD &&
+		ann != GetPortForwardDocs().LongMD &&
+		ann != GetProxyDocs().LongMD &&
+		ann != GetReplaceDocs().LongMD {
 		return false
 	}
 	return true
