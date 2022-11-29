@@ -1,6 +1,6 @@
 FROM fedora:35
 
-RUN dnf -y install fuse-overlayfs git && \
+RUN dnf -y install fuse-overlayfs git openssh-clients && \
     dnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
 # Fix messed up setuid/setgid capabilities.
