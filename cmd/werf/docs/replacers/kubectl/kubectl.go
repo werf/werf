@@ -428,5 +428,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetRolloutRestartDocs().LongMD,
 		}
+	case "run NAME --image=image [--env=\"key=value\"] [--port=port] [--dry-run=server|client] [--overrides=inline-json] [--command] -- [COMMAND] [args...]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRunDocs().LongMD,
+		}
 	}
 }

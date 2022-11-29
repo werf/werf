@@ -1032,3 +1032,11 @@ func GetRolloutRestartDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetRunDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create and run a particular image in a pod."
+
+	return docs
+}

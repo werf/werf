@@ -149,7 +149,8 @@ func checkText(ann string) bool {
 		ann != GetRolloutResumeDocs().LongMD &&
 		ann != GetRolloutUndoDocs().LongMD &&
 		ann != GetRolloutStatusDocs().LongMD &&
-		ann != GetRolloutRestartDocs().LongMD {
+		ann != GetRolloutRestartDocs().LongMD &&
+		ann != GetRunDocs().LongMD {
 		return false
 	}
 	return true
