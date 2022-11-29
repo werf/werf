@@ -98,7 +98,13 @@ kubectl apply -f enable-fuse-pod-limit-range.yaml
   [runners.kubernetes]
     ...
     namespace = "gitlab-ci"
-    pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
+    [runners.kubernetes.pod_annotations]
+      "container.apparmor.security.beta.kubernetes.io/build" = "unconfined"
+    [runners.kubernetes.pod_security_context]
+      fs_group = 1000
+      run_as_group = 1000
+      run_as_non_root = true
+      run_as_user = 1000
 ```
 
 О дополнительных опциях можно узнать из [документации к Kubernetes executor](https://docs.gitlab.com/runner/executors/kubernetes.html).
@@ -132,7 +138,13 @@ kubectl apply -f enable-fuse-pod-limit-range.yaml
   [runners.kubernetes]
     ...
     namespace = "gitlab-ci"
-    pod_annotations = ["container.apparmor.security.beta.kubernetes.io/werf-converge=unconfined"]
+    [runners.kubernetes.pod_annotations]
+      "container.apparmor.security.beta.kubernetes.io/build" = "unconfined"
+    [runners.kubernetes.pod_security_context]
+      fs_group = 1000
+      run_as_group = 1000
+      run_as_non_root = true
+      run_as_user = 1000
 ```
 
 О дополнительных опциях можно узнать из документации к [Kubernetes executor](https://docs.gitlab.com/runner/executors/kubernetes.html).
