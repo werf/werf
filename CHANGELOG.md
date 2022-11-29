@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.191](https://www.github.com/werf/werf/compare/v1.2.190...v1.2.191) (2022-11-29)
+
+
+### Bug Fixes
+
+* fix ssh not available in registry.werf.io/werf images ([5045493](https://www.github.com/werf/werf/commit/50454937890778b2ffe146195c2ccebb505791f6))
+
 ### [1.2.190](https://www.github.com/werf/werf/compare/v1.2.189...v1.2.190) (2022-11-17)
 
 
