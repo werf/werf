@@ -1053,3 +1053,100 @@ func GetScaleDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetSetDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Configure application resources.\n\n" +
+		"These commands help you make changes to existing application resources."
+
+	return docs
+}
+
+func GetSetImageDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update existing container image(s) of resources.\n\n" +
+		"Possible resources include (case insensitive):\n" +
+		"*pod (po)\n," +
+		"* replicationcontroller (rc),\n" +
+		"* deployment (deploy),\n" +
+		"* daemonset (ds),\n" +
+		"* statefulset (sts),\n" +
+		"* cronjob (cj),\n" +
+		"* replicaset (rs)."
+
+	return docs
+}
+
+func GetSetResourceDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Specify compute resource requirements (CPU, memory) for any resource that " +
+		"defines a pod template.  If a pod is successfully scheduled, it is guaranteed the " +
+		"amount of resource requested, but may burst up to its specified limits.\n\n" +
+		"For each compute resource, if a limit is specified and a request is omitted, the " +
+		"request will default to the limit.\n\n" +
+		"Possible resources include (case insensitive): kubectl."
+
+	return docs
+}
+
+func GetSetSelectorDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Set the selector on a resource. Note that the new selector will overwrite " +
+		"the old selector if the resource had one prior to the invocation of `set selector`.\n\n" +
+		"A selector must begin with a letter or number, and may contain letters, numbers, hyphens, " +
+		"dots, and underscores, up to 63 characters. If `--resource-version` is specified, then " +
+		"updates will use this resource version, otherwise the existing resource-version will be used.\n\n" +
+		"**Note**: currently selectors can only be set on Service objects."
+
+	return docs
+}
+
+func GetSetSubjectDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update the user, group, or service account in a role binding or cluster role binding."
+
+	return docs
+}
+
+func GetSetServiceAccountDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update the service account of pod template resources.\n\n" +
+		"Possible resources (case insensitive) can be:\n" +
+		"* replicationcontroller (rc),\n" +
+		"* deployment (deploy),\n" +
+		"* daemonset (ds),\n" +
+		"* job,\n" +
+		"* replicaset (rs),\n" +
+		"* statefulset."
+
+	return docs
+}
+
+func GetSetEnvDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update environment variables on a pod template.\n\n" +
+		"List environment variable definitions in one or more pods, pod templates. " +
+		"Add, update, or remove container environment variable definitions in one or " +
+		"more pod templates (within replication controllers or deployment configurations). " +
+		"View or modify the environment variable definitions on all containers in the " +
+		"specified pods or pod templates, or just those that match a wildcard.\n\n" +
+		"If `--env -` is passed, environment variables can be read from STDIN using the standard env " +
+		"syntax.\n\n" +
+		"Possible resources include (case insensitive):" +
+		"* pod (po),\n" +
+		"* replicationcontroller (rc),\n" +
+		"* deployment (deploy),\n" +
+		"* daemonset (ds),\n" +
+		"* statefulset (sts),\n" +
+		"* cronjob (cj),\n" +
+		" replicaset (rs)."
+
+	return docs
+}
