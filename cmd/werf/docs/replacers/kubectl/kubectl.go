@@ -400,5 +400,33 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetReplaceDocs().LongMD,
 		}
+	case "rollout SUBCOMMAND":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutDocs().LongMD,
+		}
+	case "history (TYPE NAME | TYPE/NAME) [flags]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutHistoryDocs().LongMD,
+		}
+	case "pause RESOURCE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutPauseDocs().LongMD,
+		}
+	case "resume RESOURCE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutResumeDocs().LongMD,
+		}
+	case "undo (TYPE NAME | TYPE/NAME) [flags]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutUndoDocs().LongMD,
+		}
+	case "status (TYPE NAME | TYPE/NAME) [flags]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutStatusDocs().LongMD,
+		}
+	case "restart RESOURCE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutRestartDocs().LongMD,
+		}
 	}
 }
