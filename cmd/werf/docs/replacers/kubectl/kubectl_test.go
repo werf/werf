@@ -151,7 +151,14 @@ func checkText(ann string) bool {
 		ann != GetRolloutStatusDocs().LongMD &&
 		ann != GetRolloutRestartDocs().LongMD &&
 		ann != GetRunDocs().LongMD &&
-		ann != GetScaleDocs().LongMD {
+		ann != GetScaleDocs().LongMD &&
+		ann != GetSetDocs().LongMD &&
+		ann != GetSetImageDocs().LongMD &&
+		ann != GetSetResourceDocs().LongMD &&
+		ann != GetSetSelectorDocs().LongMD &&
+		ann != GetSetSubjectDocs().LongMD &&
+		ann != GetSetServiceAccountDocs().LongMD &&
+		ann != GetSetEnvDocs().LongMD {
 		return false
 	}
 	return true

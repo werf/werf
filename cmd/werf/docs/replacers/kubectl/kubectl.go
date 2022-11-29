@@ -437,5 +437,33 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetScaleDocs().LongMD,
 		}
+	case "set SUBCOMMAND":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetDocs().LongMD,
+		}
+	case "image (-f FILENAME | TYPE NAME) CONTAINER_NAME_1=CONTAINER_IMAGE_1 ... CONTAINER_NAME_N=CONTAINER_IMAGE_N":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetImageDocs().LongMD,
+		}
+	case "resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requests=REQUESTS]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetResourceDocs().LongMD,
+		}
+	case "selector (-f FILENAME | TYPE NAME) EXPRESSIONS [--resource-version=version]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetSelectorDocs().LongMD,
+		}
+	case "subject (-f FILENAME | TYPE NAME) [--user=username] [--group=groupname] [--serviceaccount=namespace:serviceaccountname] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetSubjectDocs().LongMD,
+		}
+	case "serviceaccount (-f FILENAME | TYPE NAME) SERVICE_ACCOUNT":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetServiceAccountDocs().LongMD,
+		}
+	case "env RESOURCE/NAME KEY_1=VAL_1 ... KEY_N=VAL_N":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetEnvDocs().LongMD,
+		}
 	}
 }
