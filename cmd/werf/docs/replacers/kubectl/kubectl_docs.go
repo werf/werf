@@ -959,3 +959,76 @@ func GetReplaceDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetRolloutDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Manage the rollout of a resource.\n\n" +
+		"Valid resource types include:\n" +
+		"* deployments;\n" +
+		"* daemonsets;\n" +
+		"* statefulsets."
+
+	return docs
+}
+
+func GetRolloutHistoryDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "View previous rollout revisions and configurations."
+
+	return docs
+}
+
+func GetRolloutPauseDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Mark the provided resource as paused.\n\n" +
+		"Paused resources will not be reconciled by a controller. " +
+		"Use `kubectl rollout resume` to resume a paused resource. " +
+		"Currently only deployments support being paused."
+
+	return docs
+}
+
+func GetRolloutResumeDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Resume a paused resource.\n\n" +
+		"Paused resources will not be reconciled by a controller. By resuming a " +
+		"resource, we allow it to be reconciled again. " +
+		"Currently only deployments support being resumed."
+
+	return docs
+}
+
+func GetRolloutUndoDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Roll back to a previous rollout."
+
+	return docs
+}
+
+func GetRolloutStatusDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Show the status of the rollout.\n\n" +
+		"By default `rollout status` will watch the status of the latest rollout " +
+		"until it's done. If you don't want to wait for the rollout to finish then " +
+		"you can use `--watch=false`. Note that if a new rollout starts in-between, then " +
+		"`rollout status` will continue watching the latest revision. If you want to " +
+		"pin to a specific revision and abort if it is rolled over by another revision, " +
+		"use `--revision=N` where `N` is the revision you need to watch for."
+
+	return docs
+}
+
+func GetRolloutRestartDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Restart a resource.\n\n" +
+		"Resource rollout will be restarted."
+
+	return docs
+}
