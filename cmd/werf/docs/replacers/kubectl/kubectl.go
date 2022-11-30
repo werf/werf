@@ -481,5 +481,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetTopPodDocs().LongMD,
 		}
+	case "uncordon NODE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetUncordonDocs().LongMD,
+		}
 	}
 }

@@ -1198,3 +1198,11 @@ func GetTopPodDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetUncordonDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Mark node as schedulable."
+
+	return docs
+}
