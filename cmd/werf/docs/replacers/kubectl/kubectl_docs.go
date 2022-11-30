@@ -1068,7 +1068,7 @@ func GetSetImageDocs() structs.DocsStruct {
 
 	docs.LongMD = "Update existing container image(s) of resources.\n\n" +
 		"Possible resources include (case insensitive):\n" +
-		"*pod (po)\n," +
+		"* pod (po),\n" +
 		"* replicationcontroller (rc),\n" +
 		"* deployment (deploy),\n" +
 		"* daemonset (ds),\n" +
@@ -1139,7 +1139,7 @@ func GetSetEnvDocs() structs.DocsStruct {
 		"specified pods or pod templates, or just those that match a wildcard.\n\n" +
 		"If `--env -` is passed, environment variables can be read from STDIN using the standard env " +
 		"syntax.\n\n" +
-		"Possible resources include (case insensitive):" +
+		"Possible resources include (case insensitive):\n" +
 		"* pod (po),\n" +
 		"* replicationcontroller (rc),\n" +
 		"* deployment (deploy),\n" +
