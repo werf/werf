@@ -6,8 +6,8 @@
 Update existing container image(s) of resources.
 
 Possible resources include (case insensitive):
-*pod (po)
-,* replicationcontroller (rc),
+* pod (po),
+* replicationcontroller (rc),
 * deployment (deploy),
 * daemonset (ds),
 * statefulset (sts),
