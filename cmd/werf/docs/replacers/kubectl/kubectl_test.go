@@ -142,7 +142,30 @@ func checkText(ann string) bool {
 		ann != GetPluginListDocs().LongMD &&
 		ann != GetPortForwardDocs().LongMD &&
 		ann != GetProxyDocs().LongMD &&
-		ann != GetReplaceDocs().LongMD {
+		ann != GetReplaceDocs().LongMD &&
+		ann != GetRolloutDocs().LongMD &&
+		ann != GetRolloutHistoryDocs().LongMD &&
+		ann != GetRolloutPauseDocs().LongMD &&
+		ann != GetRolloutResumeDocs().LongMD &&
+		ann != GetRolloutUndoDocs().LongMD &&
+		ann != GetRolloutStatusDocs().LongMD &&
+		ann != GetRolloutRestartDocs().LongMD &&
+		ann != GetRunDocs().LongMD &&
+		ann != GetScaleDocs().LongMD &&
+		ann != GetSetDocs().LongMD &&
+		ann != GetSetImageDocs().LongMD &&
+		ann != GetSetResourceDocs().LongMD &&
+		ann != GetSetSelectorDocs().LongMD &&
+		ann != GetSetSubjectDocs().LongMD &&
+		ann != GetSetServiceAccountDocs().LongMD &&
+		ann != GetSetEnvDocs().LongMD &&
+		ann != GetTaintDocs().LongMD &&
+		ann != GetTopDocs().LongMD &&
+		ann != GetTopNodeDocs().LongMD &&
+		ann != GetTopPodDocs().LongMD &&
+		ann != GetUncordonDocs().LongMD &&
+		ann != GetVersionDocs().LongMD &&
+		ann != GetWaitDocs().LongMD {
 		return false
 	}
 	return true

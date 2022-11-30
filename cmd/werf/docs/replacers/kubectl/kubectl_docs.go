@@ -959,3 +959,272 @@ func GetReplaceDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetRolloutDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Manage the rollout of a resource.\n\n" +
+		"Valid resource types include:\n" +
+		"* deployments;\n" +
+		"* daemonsets;\n" +
+		"* statefulsets."
+
+	return docs
+}
+
+func GetRolloutHistoryDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "View previous rollout revisions and configurations."
+
+	return docs
+}
+
+func GetRolloutPauseDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Mark the provided resource as paused.\n\n" +
+		"Paused resources will not be reconciled by a controller. " +
+		"Use `kubectl rollout resume` to resume a paused resource. " +
+		"Currently only deployments support being paused."
+
+	return docs
+}
+
+func GetRolloutResumeDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Resume a paused resource.\n\n" +
+		"Paused resources will not be reconciled by a controller. By resuming a " +
+		"resource, we allow it to be reconciled again. " +
+		"Currently only deployments support being resumed."
+
+	return docs
+}
+
+func GetRolloutUndoDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Roll back to a previous rollout."
+
+	return docs
+}
+
+func GetRolloutStatusDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Show the status of the rollout.\n\n" +
+		"By default `rollout status` will watch the status of the latest rollout " +
+		"until it's done. If you don't want to wait for the rollout to finish then " +
+		"you can use `--watch=false`. Note that if a new rollout starts in-between, then " +
+		"`rollout status` will continue watching the latest revision. If you want to " +
+		"pin to a specific revision and abort if it is rolled over by another revision, " +
+		"use `--revision=N` where `N` is the revision you need to watch for."
+
+	return docs
+}
+
+func GetRolloutRestartDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Restart a resource.\n\n" +
+		"Resource rollout will be restarted."
+
+	return docs
+}
+
+func GetRunDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Create and run a particular image in a pod."
+
+	return docs
+}
+
+func GetScaleDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Set a new size for a deployment, replica set, replication controller, " +
+		"or stateful set.\n\n" +
+		"Scale also allows users to specify one or more preconditions for the scale action.\n\n" +
+		"If `--current-replicas` or `--resource-version` is specified, it is validated before the " +
+		"scale is attempted, and it is guaranteed that the precondition holds true when the " +
+		"scale is sent to the server."
+
+	return docs
+}
+
+func GetSetDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Configure application resources.\n\n" +
+		"These commands help you make changes to existing application resources."
+
+	return docs
+}
+
+func GetSetImageDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update existing container image(s) of resources.\n\n" +
+		"Possible resources include (case insensitive):\n" +
+		"*pod (po)\n," +
+		"* replicationcontroller (rc),\n" +
+		"* deployment (deploy),\n" +
+		"* daemonset (ds),\n" +
+		"* statefulset (sts),\n" +
+		"* cronjob (cj),\n" +
+		"* replicaset (rs)."
+
+	return docs
+}
+
+func GetSetResourceDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Specify compute resource requirements (CPU, memory) for any resource that " +
+		"defines a pod template.  If a pod is successfully scheduled, it is guaranteed the " +
+		"amount of resource requested, but may burst up to its specified limits.\n\n" +
+		"For each compute resource, if a limit is specified and a request is omitted, the " +
+		"request will default to the limit.\n\n" +
+		"Possible resources include (case insensitive): kubectl."
+
+	return docs
+}
+
+func GetSetSelectorDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Set the selector on a resource. Note that the new selector will overwrite " +
+		"the old selector if the resource had one prior to the invocation of `set selector`.\n\n" +
+		"A selector must begin with a letter or number, and may contain letters, numbers, hyphens, " +
+		"dots, and underscores, up to 63 characters. If `--resource-version` is specified, then " +
+		"updates will use this resource version, otherwise the existing resource-version will be used.\n\n" +
+		"**Note**: currently selectors can only be set on Service objects."
+
+	return docs
+}
+
+func GetSetSubjectDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update the user, group, or service account in a role binding or cluster role binding."
+
+	return docs
+}
+
+func GetSetServiceAccountDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update the service account of pod template resources.\n\n" +
+		"Possible resources (case insensitive) can be:\n" +
+		"* replicationcontroller (rc),\n" +
+		"* deployment (deploy),\n" +
+		"* daemonset (ds),\n" +
+		"* job,\n" +
+		"* replicaset (rs),\n" +
+		"* statefulset."
+
+	return docs
+}
+
+func GetSetEnvDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update environment variables on a pod template.\n\n" +
+		"List environment variable definitions in one or more pods, pod templates. " +
+		"Add, update, or remove container environment variable definitions in one or " +
+		"more pod templates (within replication controllers or deployment configurations). " +
+		"View or modify the environment variable definitions on all containers in the " +
+		"specified pods or pod templates, or just those that match a wildcard.\n\n" +
+		"If `--env -` is passed, environment variables can be read from STDIN using the standard env " +
+		"syntax.\n\n" +
+		"Possible resources include (case insensitive):" +
+		"* pod (po),\n" +
+		"* replicationcontroller (rc),\n" +
+		"* deployment (deploy),\n" +
+		"* daemonset (ds),\n" +
+		"* statefulset (sts),\n" +
+		"* cronjob (cj),\n" +
+		" replicaset (rs)."
+
+	return docs
+}
+
+func GetTaintDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Update the taints on one or more nodes.\n\n" +
+		"* A taint consists of a key, value, and effect. As an argument here, " +
+		"it is expressed as `key=value:effect`.\n" +
+		"* The key must begin with a letter or number, and may contain letters, " +
+		"numbers, hyphens, dots, and underscores, up to 253 characters.\n" +
+		"* Optionally, the key can begin with a DNS subdomain prefix and a single `/`, " +
+		"like `example.com/my-app`.\n" +
+		"* The value is optional. If given, it must begin with a letter or number, " +
+		"and may contain letters, numbers, hyphens, dots, and underscores, up " +
+		"to 63 characters.\n" +
+		"* The effect must be `NoSchedule`, `PreferNoSchedule` or `NoExecute`.\n" +
+		"* Currently taint can only apply to node."
+
+	return docs
+}
+
+func GetTopDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display Resource (CPU/Memory) usage.\n\n" +
+		"The top command allows you to see the resource consumption for nodes or pods.\n\n" +
+		"This command requires Metrics Server to be correctly configured and working on the server."
+
+	return docs
+}
+
+func GetTopNodeDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display resource (CPU/memory) usage of nodes.\n\n" +
+		"The `top-node` command allows you to see the resource consumption of nodes."
+
+	return docs
+}
+
+func GetTopPodDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display resource (CPU/memory) usage of pods.\n\n" +
+		"The `top pod` command allows you to see the resource consumption of pods.\n\n" +
+		"Due to the metrics pipeline delay, they may be unavailable for a few minutes since pod creation."
+
+	return docs
+}
+
+func GetUncordonDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Mark node as schedulable."
+
+	return docs
+}
+
+func GetVersionDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Print the client and server version information for the current context."
+
+	return docs
+}
+
+func GetWaitDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "**Experimental**: Wait for a specific condition on one or many resources.\n\n" +
+		"The command takes multiple resources and waits until the specified condition is seen " +
+		"in the `Status` field of every given resource.\n\n" +
+		"Alternatively, the command can wait for the given set of resources to be deleted " +
+		"by providing the `delete` keyword as the value to the `--for` flag.\n\n" +
+		"A successful message will be printed to stdout indicating when the specified " +
+		"condition has been met. You can use `-o` option to change to output destination."
+
+	return docs
+}

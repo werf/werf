@@ -400,5 +400,99 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetReplaceDocs().LongMD,
 		}
+	case "rollout SUBCOMMAND":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutDocs().LongMD,
+		}
+	case "history (TYPE NAME | TYPE/NAME) [flags]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutHistoryDocs().LongMD,
+		}
+	case "pause RESOURCE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutPauseDocs().LongMD,
+		}
+	case "resume RESOURCE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutResumeDocs().LongMD,
+		}
+	case "undo (TYPE NAME | TYPE/NAME) [flags]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutUndoDocs().LongMD,
+		}
+	case "status (TYPE NAME | TYPE/NAME) [flags]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutStatusDocs().LongMD,
+		}
+	case "restart RESOURCE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRolloutRestartDocs().LongMD,
+		}
+	case "run NAME --image=image [--env=\"key=value\"] [--port=port] [--dry-run=server|client] " +
+		"[--overrides=inline-json] [--command] -- [COMMAND] [args...]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetRunDocs().LongMD,
+		}
+	case "scale [--resource-version=version] [--current-replicas=count] --replicas=COUNT (-f FILENAME | TYPE NAME)":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetScaleDocs().LongMD,
+		}
+	case "set SUBCOMMAND":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetDocs().LongMD,
+		}
+	case "image (-f FILENAME | TYPE NAME) CONTAINER_NAME_1=CONTAINER_IMAGE_1 ... CONTAINER_NAME_N=CONTAINER_IMAGE_N":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetImageDocs().LongMD,
+		}
+	case "resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requests=REQUESTS]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetResourceDocs().LongMD,
+		}
+	case "selector (-f FILENAME | TYPE NAME) EXPRESSIONS [--resource-version=version]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetSelectorDocs().LongMD,
+		}
+	case "subject (-f FILENAME | TYPE NAME) [--user=username] [--group=groupname] [--serviceaccount=namespace:serviceaccountname] [--dry-run=server|client|none]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetSubjectDocs().LongMD,
+		}
+	case "serviceaccount (-f FILENAME | TYPE NAME) SERVICE_ACCOUNT":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetServiceAccountDocs().LongMD,
+		}
+	case "env RESOURCE/NAME KEY_1=VAL_1 ... KEY_N=VAL_N":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetSetEnvDocs().LongMD,
+		}
+	case "taint NODE NAME KEY_1=VAL_1:TAINT_EFFECT_1 ... KEY_N=VAL_N:TAINT_EFFECT_N":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetTaintDocs().LongMD,
+		}
+	case "top":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetTopDocs().LongMD,
+		}
+	case "node [NAME | -l label]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetTopNodeDocs().LongMD,
+		}
+	case "pod [NAME | -l label]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetTopPodDocs().LongMD,
+		}
+	case "uncordon NODE":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetUncordonDocs().LongMD,
+		}
+	case "version":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetVersionDocs().LongMD,
+		}
+	case "wait ([-f FILENAME] | resource.group/resource.name | resource.group " +
+		"[(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'=value]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetWaitDocs().LongMD,
+		}
 	}
 }

@@ -5,7 +5,7 @@
 {% endif %}
 Display resource (CPU/memory) usage of nodes.
 
- The top-node command allows you to see the resource consumption of nodes.
+The `top-node` command allows you to see the resource consumption of nodes.
 
 {{ header }} Syntax
 
