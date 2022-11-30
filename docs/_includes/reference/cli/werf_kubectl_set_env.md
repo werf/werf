@@ -9,7 +9,8 @@ List environment variable definitions in one or more pods, pod templates. Add, u
 
 If `--env -` is passed, environment variables can be read from STDIN using the standard env syntax.
 
-Possible resources include (case insensitive):* pod (po),
+Possible resources include (case insensitive):
+* pod (po),
 * replicationcontroller (rc),
 * deployment (deploy),
 * daemonset (ds),
