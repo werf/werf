@@ -4,12 +4,11 @@
 {% assign header = "###" %}
 {% endif %}
 Manage the rollout of a resource.
-  
- Valid resource types include:
 
-  *  deployments
-  *  daemonsets
-  *  statefulsets
+Valid resource types include:
+* deployments;
+* daemonsets;
+* statefulsets.
 
 {{ header }} Syntax
 
