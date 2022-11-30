@@ -1169,3 +1169,32 @@ func GetTaintDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetTopDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display Resource (CPU/Memory) usage.\n\n" +
+		"The top command allows you to see the resource consumption for nodes or pods.\n\n" +
+		"This command requires Metrics Server to be correctly configured and working on the server."
+
+	return docs
+}
+
+func GetTopNodeDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display resource (CPU/memory) usage of nodes.\n\n" +
+		"The `top-node` command allows you to see the resource consumption of nodes."
+
+	return docs
+}
+
+func GetTopPodDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display resource (CPU/memory) usage of pods.\n\n" +
+		"The `top pod` command allows you to see the resource consumption of pods.\n\n" +
+		"Due to the metrics pipeline delay, they may be unavailable for a few minutes since pod creation."
+
+	return docs
+}
