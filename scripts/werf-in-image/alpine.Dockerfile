@@ -1,6 +1,6 @@
 FROM alpine:3.15
 
-RUN apk add --no-cache fuse-overlayfs git shadow-uidmap libcap openssh-client
+RUN apk add --no-cache fuse-overlayfs git shadow-uidmap libcap
 
 # Fix messed up setuid/setgid capabilities.
 RUN setcap cap_setuid+ep /usr/bin/newuidmap && \

@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND="noninteractive"
 
-RUN apt-get -y update && apt-get -y install fuse-overlayfs git uidmap libcap2-bin openssh-client && \
+RUN apt-get -y update && apt-get -y install fuse-overlayfs git uidmap libcap2-bin && \
     rm -rf /var/cache/apt/* /var/lib/apt/lists/* /var/log/*
 
 # Fix messed up setuid/setgid capabilities.
