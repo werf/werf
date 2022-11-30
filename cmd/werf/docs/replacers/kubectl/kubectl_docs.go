@@ -1214,3 +1214,17 @@ func GetVersionDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetWaitDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "**Experimental**: Wait for a specific condition on one or many resources.\n\n" +
+		"The command takes multiple resources and waits until the specified condition is seen " +
+		"in the `Status` field of every given resource.\n\n" +
+		"Alternatively, the command can wait for the given set of resources to be deleted " +
+		"by providing the `delete` keyword as the value to the `--for` flag.\n\n" +
+		"A successful message will be printed to stdout indicating when the specified " +
+		"condition has been met. You can use `-o` option to change to output destination."
+
+	return docs
+}

@@ -5,13 +5,17 @@
 {% endif %}
 Update environment variables on a pod template.
 
- List environment variable definitions in one or more pods, pod templates. Add, update, or remove container environment variable definitions in one or more pod templates (within replication controllers or deployment configurations). View or modify the environment variable definitions on all containers in the specified pods or pod templates, or just those that match a wildcard.
+List environment variable definitions in one or more pods, pod templates. Add, update, or remove container environment variable definitions in one or more pod templates (within replication controllers or deployment configurations). View or modify the environment variable definitions on all containers in the specified pods or pod templates, or just those that match a wildcard.
 
- If "--env -" is passed, environment variables can be read from STDIN using the standard env syntax.
+If `--env -` is passed, environment variables can be read from STDIN using the standard env syntax.
 
- Possible resources include (case insensitive):
-
-  pod (po), replicationcontroller (rc), deployment (deploy), daemonset (ds), statefulset (sts), cronjob (cj), replicaset (rs)
+Possible resources include (case insensitive):* pod (po),
+* replicationcontroller (rc),
+* deployment (deploy),
+* daemonset (ds),
+* statefulset (sts),
+* cronjob (cj),
+ replicaset (rs).
 
 {{ header }} Syntax
 

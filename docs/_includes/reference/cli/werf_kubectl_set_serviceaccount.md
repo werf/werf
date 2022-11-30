@@ -5,9 +5,13 @@
 {% endif %}
 Update the service account of pod template resources.
 
- Possible resources (case insensitive) can be:
-
- replicationcontroller (rc), deployment (deploy), daemonset (ds), job, replicaset (rs), statefulset
+Possible resources (case insensitive) can be:
+* replicationcontroller (rc),
+* deployment (deploy),
+* daemonset (ds),
+* job,
+* replicaset (rs),
+* statefulset.
 
 {{ header }} Syntax
 

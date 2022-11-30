@@ -5,7 +5,7 @@
 {% endif %}
 Restart a resource.
 
-     Resource rollout will be restarted.
+Resource rollout will be restarted.
 
 {{ header }} Syntax
 
