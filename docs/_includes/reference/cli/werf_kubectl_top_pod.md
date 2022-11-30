@@ -5,9 +5,9 @@
 {% endif %}
 Display resource (CPU/memory) usage of pods.
 
- The 'top pod' command allows you to see the resource consumption of pods.
+The `top pod` command allows you to see the resource consumption of pods.
 
- Due to the metrics pipeline delay, they may be unavailable for a few minutes since pod creation.
+Due to the metrics pipeline delay, they may be unavailable for a few minutes since pod creation.
 
 {{ header }} Syntax
 
