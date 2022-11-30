@@ -485,5 +485,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetUncordonDocs().LongMD,
 		}
+	case "version":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetVersionDocs().LongMD,
+		}
 	}
 }
