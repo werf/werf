@@ -162,7 +162,8 @@ func checkText(ann string) bool {
 		ann != GetTaintDocs().LongMD &&
 		ann != GetTopDocs().LongMD &&
 		ann != GetTopNodeDocs().LongMD &&
-		ann != GetTopPodDocs().LongMD {
+		ann != GetTopPodDocs().LongMD &&
+		ann != GetUncordonDocs().LongMD {
 		return false
 	}
 	return true
