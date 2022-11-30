@@ -1206,3 +1206,11 @@ func GetUncordonDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetVersionDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Print the client and server version information for the current context."
+
+	return docs
+}
