@@ -5,7 +5,7 @@
 {% endif %}
 Configure application resources.
 
- These commands help you make changes to existing application resources.
+These commands help you make changes to existing application resources.
 
 {{ header }} Syntax
 
