@@ -5,7 +5,7 @@
 {% endif %}
 Show the status of the rollout.
 
- By default 'rollout status' will watch the status of the latest rollout until it's done. If you don't want to wait for the rollout to finish then you can use --watch=false. Note that if a new rollout starts in-between, then 'rollout status' will continue watching the latest revision. If you want to pin to a specific revision and abort if it is rolled over by another revision, use --revision=N where N is the revision you need to watch for.
+By default `rollout status` will watch the status of the latest rollout until it's done. If you don't want to wait for the rollout to finish then you can use `--watch=false`. Note that if a new rollout starts in-between, then `rollout status` will continue watching the latest revision. If you want to pin to a specific revision and abort if it is rolled over by another revision, use `--revision=N` where `N` is the revision you need to watch for.
 
 {{ header }} Syntax
 

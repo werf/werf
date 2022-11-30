@@ -489,5 +489,10 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetVersionDocs().LongMD,
 		}
+	case "wait ([-f FILENAME] | resource.group/resource.name | resource.group " +
+		"[(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'=value]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetWaitDocs().LongMD,
+		}
 	}
 }
