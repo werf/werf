@@ -159,7 +159,10 @@ func checkText(ann string) bool {
 		ann != GetSetSubjectDocs().LongMD &&
 		ann != GetSetServiceAccountDocs().LongMD &&
 		ann != GetSetEnvDocs().LongMD &&
-		ann != GetTaintDocs().LongMD {
+		ann != GetTaintDocs().LongMD &&
+		ann != GetTopDocs().LongMD &&
+		ann != GetTopNodeDocs().LongMD &&
+		ann != GetTopPodDocs().LongMD {
 		return false
 	}
 	return true

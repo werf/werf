@@ -469,5 +469,17 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetTaintDocs().LongMD,
 		}
+	case "top":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetTopDocs().LongMD,
+		}
+	case "node [NAME | -l label]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetTopNodeDocs().LongMD,
+		}
+	case "pod [NAME | -l label]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetTopPodDocs().LongMD,
+		}
 	}
 }
