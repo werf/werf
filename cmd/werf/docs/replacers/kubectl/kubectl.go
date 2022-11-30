@@ -465,5 +465,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetSetEnvDocs().LongMD,
 		}
+	case "taint NODE NAME KEY_1=VAL_1:TAINT_EFFECT_1 ... KEY_N=VAL_N:TAINT_EFFECT_N":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetTaintDocs().LongMD,
+		}
 	}
 }
