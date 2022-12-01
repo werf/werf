@@ -8,7 +8,6 @@ import (
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
-	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
 	"github.com/werf/werf/pkg/dockerfile"
 )
@@ -19,21 +18,21 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 		return nil, fmt.Errorf("parsing dockerfile data: %w", err)
 	}
 
-	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	dockerStages, dockerMetaArgsCommands, err := instructions.Parse(p.AST)
 	if err != nil {
 		return nil, fmt.Errorf("parsing instructions tree: %w", err)
 	}
 
-	shlex := shell.NewLex(p.EscapeToken)
+	expanderFactory := NewShlexExpanderFactory(p.EscapeToken)
 
-	metaArgs, err := processMetaArgs(dockerMetaArgs, opts.BuildArgs, shlex)
+	metaArgs, err := resolveMetaArgs(dockerMetaArgsCommands, opts.BuildArgs, opts.DependenciesArgsKeys, expanderFactory)
 	if err != nil {
 		return nil, fmt.Errorf("unable to process meta args: %w", err)
 	}
 
 	var stages []*dockerfile.DockerfileStage
 	for i, dockerStage := range dockerStages {
-		name, err := shlex.ProcessWordWithMap(dockerStage.BaseName, metaArgs)
+		name, err := expanderFactory.GetExpander(dockerfile.ExpandOptions{SkipUnsetEnv: true}).ProcessWordWithMap(dockerStage.BaseName, metaArgs)
 		if err != nil {
 			return nil, fmt.Errorf("unable to expand docker stage base image name %q: %w", dockerStage.BaseName, err)
 		}
@@ -44,7 +43,7 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 
 		// TODO(staged-dockerfile): support meta-args expansion for dockerStage.Platform
 
-		if stage, err := NewDockerfileStageFromBuildkitStage(i, dockerStage, shlex, metaArgs, opts.BuildArgs); err != nil {
+		if stage, err := NewDockerfileStageFromBuildkitStage(i, dockerStage, expanderFactory, metaArgs, opts.BuildArgs, opts.DependenciesArgsKeys); err != nil {
 			return nil, fmt.Errorf("error converting buildkit stage to dockerfile stage: %w", err)
 		} else {
 			stages = append(stages, stage)
@@ -60,11 +59,11 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 	return d, nil
 }
 
-func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, shlex *shell.Lex, metaArgs, buildArgs map[string]string) (*dockerfile.DockerfileStage, error) {
+func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, expanderFactory *ShlexExpanderFactory, metaArgs, buildArgs map[string]string, dependenciesArgsKeys []string) (*dockerfile.DockerfileStage, error) {
 	var stageInstructions []dockerfile.DockerfileStageInstructionInterface
 
 	env := map[string]string{}
-	opts := dockerfile.DockerfileStageInstructionOptions{Expander: shlex}
+	opts := dockerfile.DockerfileStageInstructionOptions{ExpanderFactory: expanderFactory}
 
 	for _, cmd := range stage.Commands {
 		var i dockerfile.DockerfileStageInstructionInterface
@@ -77,6 +76,8 @@ func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, sh
 				i = instr
 			}
 		case *instructions.ArgCommand:
+			instrData.Args = removeDependenciesArgs(instrData.Args, dependenciesArgsKeys)
+
 			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
 				return nil, err
 			} else {
@@ -199,18 +200,40 @@ func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, sh
 		stageInstructions = append(stageInstructions, i)
 	}
 
-	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, stageInstructions, stage.Platform), nil
+	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, stageInstructions, stage.Platform, expanderFactory), nil
 }
 
 func createAndExpandInstruction[T dockerfile.InstructionDataInterface](data T, env map[string]string, opts dockerfile.DockerfileStageInstructionOptions) (*dockerfile.DockerfileStageInstruction[T], error) {
 	i := dockerfile.NewDockerfileStageInstruction(data, opts)
-	if err := i.Expand(env); err != nil {
+
+	// NOTE: skip unset envs during first stage expansion
+	if err := i.Expand(env, dockerfile.ExpandOptions{SkipUnsetEnv: true}); err != nil {
 		return nil, fmt.Errorf("unable to expand instruction %q: %w", i.GetInstructionData().Name(), err)
 	}
+
 	return i, nil
 }
 
-func processMetaArgs(metaArgs []instructions.ArgCommand, buildArgs map[string]string, shlex *shell.Lex) (map[string]string, error) {
+func isDependencyArg(argKey string, dependenciesArgsKeys []string) bool {
+	for _, dep := range dependenciesArgsKeys {
+		if dep == argKey {
+			return true
+		}
+	}
+	return false
+}
+
+func removeDependenciesArgs(args []instructions.KeyValuePairOptional, dependenciesArgsKeys []string) (res []instructions.KeyValuePairOptional) {
+	// NOTE: dependencies will be expanded on the second stage expansion
+	for _, arg := range args {
+		if !isDependencyArg(arg.Key, dependenciesArgsKeys) {
+			res = append(res, arg)
+		}
+	}
+	return
+}
+
+func resolveMetaArgs(metaArgsCommands []instructions.ArgCommand, buildArgs map[string]string, dependenciesArgsKeys []string, expanderFactory *ShlexExpanderFactory) (map[string]string, error) {
 	var optMetaArgs []instructions.KeyValuePairOptional
 
 	// TODO(staged-dockerfile): need to support builtin BUILD* and TARGET* args
@@ -221,16 +244,20 @@ func processMetaArgs(metaArgs []instructions.ArgCommand, buildArgs map[string]st
 	// 	optMetaArgs[i] = setKVValue(arg, opt.BuildArgs)
 	// }
 
-	for _, cmd := range metaArgs {
+	for _, cmd := range metaArgsCommands {
 		for _, metaArg := range cmd.Args {
+			if isDependencyArg(metaArg.Key, dependenciesArgsKeys) {
+				continue
+			}
+
 			if metaArg.Value != nil {
-				*metaArg.Value, _ = shlex.ProcessWordWithMap(*metaArg.Value, metaArgsToMap(optMetaArgs))
+				*metaArg.Value, _ = expanderFactory.GetExpander(dockerfile.ExpandOptions{SkipUnsetEnv: true}).ProcessWordWithMap(*metaArg.Value, metaArgsToMap(optMetaArgs))
 			}
 			optMetaArgs = append(optMetaArgs, setKVValue(metaArg, buildArgs))
 		}
 	}
 
-	return nil, nil
+	return metaArgsToMap(optMetaArgs), nil
 }
 
 func metaArgsToMap(metaArgs []instructions.KeyValuePairOptional) map[string]string {

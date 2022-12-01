@@ -129,7 +129,7 @@ After building a tree of image dependencies, werf splits the assembly process in
 
 ## Buildah
 
-werf supports using Buildah in experimental mode to build images. Only Dockerfile images are supported in this mode for now (we plan to add Stapel support soon).
+werf supports using Buildah in experimental mode to build images.
 
 In this mode, the overall build process remains the same, only the backend container engine and storage are switched from docker-server to buildah.
 

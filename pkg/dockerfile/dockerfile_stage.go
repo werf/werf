@@ -8,14 +8,21 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 )
 
-func NewDockerfileStage(index int, baseName, stageName string, instructions []DockerfileStageInstructionInterface, platform string) *DockerfileStage {
-	return &DockerfileStage{BaseName: baseName, StageName: stageName, Instructions: instructions, Platform: platform}
+func NewDockerfileStage(index int, baseName, stageName string, instructions []DockerfileStageInstructionInterface, platform string, expanderFactory ExpanderFactory) *DockerfileStage {
+	return &DockerfileStage{
+		ExpanderFactory: expanderFactory,
+		BaseName:        baseName,
+		StageName:       stageName,
+		Instructions:    instructions,
+		Platform:        platform,
+	}
 }
 
 type DockerfileStage struct {
-	Dockerfile   *Dockerfile
-	Dependencies []*DockerfileStage
-	BaseStage    *DockerfileStage
+	Dockerfile      *Dockerfile
+	Dependencies    []*DockerfileStage
+	BaseStage       *DockerfileStage
+	ExpanderFactory ExpanderFactory
 
 	BaseName     string
 	Index        int

@@ -30,11 +30,12 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 		}
 
 		d, err := frontend.ParseDockerfileWithBuildkit(dockerfileData, dockerfile.DockerfileOptions{
-			Target:    dockerfileImageConfig.Target,
-			BuildArgs: util.MapStringInterfaceToMapStringString(dockerfileImageConfig.Args),
-			AddHost:   dockerfileImageConfig.AddHost,
-			Network:   dockerfileImageConfig.Network,
-			SSH:       dockerfileImageConfig.SSH,
+			Target:               dockerfileImageConfig.Target,
+			BuildArgs:            util.MapStringInterfaceToMapStringString(dockerfileImageConfig.Args),
+			AddHost:              dockerfileImageConfig.AddHost,
+			Network:              dockerfileImageConfig.Network,
+			SSH:                  dockerfileImageConfig.SSH,
+			DependenciesArgsKeys: stage.GetDependenciesArgsKeys(dockerfileImageConfig.Dependencies),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
@@ -101,10 +102,11 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		var err error
 		if baseStg := cfg.FindStage(stg.BaseName); baseStg != nil {
 			img, err = NewImage(ctx, item.WerfImageName, StageAsBaseImage, ImageOptions{
-				IsDockerfileImage:     true,
-				DockerfileImageConfig: dockerfileImageConfig,
-				CommonImageOptions:    opts,
-				BaseImageName:         baseStg.WerfImageName(),
+				IsDockerfileImage:         true,
+				DockerfileImageConfig:     dockerfileImageConfig,
+				CommonImageOptions:        opts,
+				BaseImageName:             baseStg.WerfImageName(),
+				DockerfileExpanderFactory: stg.ExpanderFactory,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", stg.LogName(), dockerfileImageConfig.Name, err)
@@ -113,13 +115,14 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			appendQueue(baseStg.WerfImageName(), baseStg, item.Level+1)
 		} else {
 			img, err = NewImage(ctx, item.WerfImageName, ImageFromRegistryAsBaseImage, ImageOptions{
-				IsDockerfileImage:     true,
-				DockerfileImageConfig: dockerfileImageConfig,
-				CommonImageOptions:    opts,
-				BaseImageReference:    targetStage.BaseName,
+				IsDockerfileImage:         true,
+				DockerfileImageConfig:     dockerfileImageConfig,
+				CommonImageOptions:        opts,
+				BaseImageReference:        stg.BaseName,
+				DockerfileExpanderFactory: stg.ExpanderFactory,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", targetStage.LogName(), dockerfileImageConfig.Name, err)
+				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", stg.LogName(), dockerfileImageConfig.Name, err)
 			}
 		}
 
@@ -136,7 +139,6 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			var stg stage.Interface
 			switch typedInstr := any(instr).(type) {
 			case *dockerfile.DockerfileStageInstruction[*instructions.ArgCommand]:
-				// TODO(staged-dockerfile): support build-args at this level or dockerfile pkg level (?)
 				continue
 			case *dockerfile.DockerfileStageInstruction[*instructions.AddCommand]:
 				stg = stage_instruction.NewAdd(stageName, typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/werf/pkg/util"
 )
@@ -34,6 +35,21 @@ func (info *Info) SetCreatedAtUnixNano(seconds int64) {
 
 func (info *Info) GetCreatedAt() time.Time {
 	return time.Unix(info.CreatedAtUnixNano/1000_000_000, info.CreatedAtUnixNano%1000_000_000)
+}
+
+func (info *Info) GetCopy() *Info {
+	return &Info{
+		Name:              info.Name,
+		Repository:        info.Repository,
+		Tag:               info.Tag,
+		RepoDigest:        info.RepoDigest,
+		OnBuild:           util.CopyArr(info.OnBuild),
+		ID:                info.ID,
+		ParentID:          info.ParentID,
+		Labels:            util.CopyMap(info.Labels),
+		Size:              info.Size,
+		CreatedAtUnixNano: info.CreatedAtUnixNano,
+	}
 }
 
 func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
@@ -83,4 +99,20 @@ func ParseRepositoryAndTag(ref string) (string, string) {
 	tag := util.Reverse(parts[0])
 	repository := util.Reverse(parts[1])
 	return repository, tag
+}
+
+func NewImageInfoFromRegistryConfig(ref string, cfg *v1.ConfigFile) *Info {
+	repository, tag := ParseRepositoryAndTag(ref)
+	return &Info{
+		Name:              ref,
+		Repository:        repository,
+		Tag:               tag,
+		Labels:            cfg.Config.Labels,
+		OnBuild:           cfg.Config.OnBuild,
+		CreatedAtUnixNano: cfg.Created.UnixNano(),
+		RepoDigest:        "", // TODO
+		ID:                "", // TODO
+		ParentID:          "", // TODO
+		Size:              0,  // TODO
+	}
 }

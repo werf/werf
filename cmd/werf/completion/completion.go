@@ -28,11 +28,17 @@ func NewCmd(ctx context.Context, rootCmd *cobra.Command) *cobra.Command {
 
   # Load zsh completion
   $ autoload -Uz compinit && compinit -C
-  $ source <(%[1]s completion --shell=zsh)`, rootCmd.Name()),
+  $ source <(%[1]s completion --shell=zsh)
+
+  # Load fish completion
+  $ source <(%[1]s completion --shell=fish)
+
+  # Load powershell completion
+  $ %[1]s completion --shell=powershell | Out-String | Invoke-Expression`, rootCmd.Name()),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch cmdData.Shell {
 			case "bash":
-				return rootCmd.GenBashCompletion(os.Stdout)
+				return rootCmd.GenBashCompletionV2(os.Stdout, true)
 			case "zsh":
 				if err := rootCmd.GenZshCompletion(os.Stdout); err != nil {
 					return err
@@ -41,6 +47,10 @@ func NewCmd(ctx context.Context, rootCmd *cobra.Command) *cobra.Command {
 				_, _ = os.Stdout.WriteString(zshCompdef)
 
 				return nil
+			case "fish":
+				return rootCmd.GenFishCompletion(os.Stdout, true)
+			case "powershell":
+				return rootCmd.GenPowerShellCompletion(os.Stdout)
 			default:
 				common.PrintHelp(cmd)
 				return fmt.Errorf("provided shell %q not supported", cmdData.Shell)
@@ -55,7 +65,7 @@ func NewCmd(ctx context.Context, rootCmd *cobra.Command) *cobra.Command {
 		defaultShell = "bash"
 	}
 
-	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", defaultShell, "Set to bash or zsh (default $WERF_SHELL or bash)")
+	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", defaultShell, "Set to bash, zsh, fish or powershell (default $WERF_SHELL or bash)")
 
 	return cmd
 }

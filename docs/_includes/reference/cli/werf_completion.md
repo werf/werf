@@ -22,12 +22,18 @@ werf completion [options]
   # Load zsh completion
   $ autoload -Uz compinit && compinit -C
   $ source <(werf completion --shell=zsh)
+
+  # Load fish completion
+  $ source <(werf completion --shell=fish)
+
+  # Load powershell completion
+  $ werf completion --shell=powershell | Out-String | Invoke-Expression
 ```
 
 {{ header }} Options
 
 ```shell
       --shell='bash'
-            Set to bash or zsh (default $WERF_SHELL or bash)
+            Set to bash, zsh, fish or powershell (default $WERF_SHELL or bash)
 ```
 

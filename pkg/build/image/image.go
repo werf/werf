@@ -13,6 +13,7 @@ import (
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/pkg/dockerfile"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
@@ -43,9 +44,10 @@ type ImageOptions struct {
 	IsArtifact, IsDockerfileImage bool
 	DockerfileImageConfig         *config.ImageFromDockerfile
 
-	BaseImageReference   string
-	BaseImageName        string
-	FetchLatestBaseImage bool
+	BaseImageReference        string
+	BaseImageName             string
+	FetchLatestBaseImage      bool
+	DockerfileExpanderFactory dockerfile.ExpanderFactory
 }
 
 func NewImage(ctx context.Context, name string, baseImageType BaseImageType, opts ImageOptions) (*Image, error) {
@@ -62,9 +64,10 @@ func NewImage(ctx context.Context, name string, baseImageType BaseImageType, opt
 		IsDockerfileImage:     opts.IsDockerfileImage,
 		DockerfileImageConfig: opts.DockerfileImageConfig,
 
-		baseImageType:      baseImageType,
-		baseImageReference: opts.BaseImageReference,
-		baseImageName:      opts.BaseImageName,
+		baseImageType:             baseImageType,
+		baseImageReference:        opts.BaseImageReference,
+		baseImageName:             opts.BaseImageName,
+		dockerfileExpanderFactory: opts.DockerfileExpanderFactory,
 	}
 
 	if opts.FetchLatestBaseImage {
@@ -89,9 +92,10 @@ type Image struct {
 	contentDigest     string
 	rebuilt           bool
 
-	baseImageType      BaseImageType
-	baseImageReference string
-	baseImageName      string
+	baseImageType             BaseImageType
+	baseImageReference        string
+	baseImageName             string
+	dockerfileExpanderFactory dockerfile.ExpanderFactory
 
 	baseImageRepoId  string
 	baseStageImage   *stage.StageImage
@@ -197,18 +201,46 @@ func (i *Image) GetRebuilt() bool {
 	return i.rebuilt
 }
 
-func (i *Image) SetupBaseImage() {
+func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
 	switch i.baseImageType {
 	case StageAsBaseImage:
 		i.stageAsBaseImage = i.Conveyor.GetImage(i.baseImageName).GetLastNonEmptyStage()
 		i.baseImageReference = i.stageAsBaseImage.GetStageImage().Image.Name()
 		i.baseStageImage = i.stageAsBaseImage.GetStageImage()
 	case ImageFromRegistryAsBaseImage:
+		if i.IsDockerfileImage && i.dockerfileExpanderFactory != nil {
+			dependenciesArgs := stage.ResolveDependenciesArgs(i.DockerfileImageConfig.Dependencies, i.Conveyor)
+			ref, err := i.dockerfileExpanderFactory.GetExpander(dockerfile.ExpandOptions{SkipUnsetEnv: false}).ProcessWordWithMap(i.baseImageReference, dependenciesArgs)
+			if err != nil {
+				return fmt.Errorf("unable to expand dockerfile base image reference %q: %w", i.baseImageReference, err)
+			}
+			i.baseImageReference = ref
+		}
 		i.baseStageImage = i.Conveyor.GetOrCreateStageImage(i.baseImageReference, nil, nil, i)
 	case NoBaseImage:
 	default:
 		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
 	}
+
+	if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
+		switch i.baseImageType {
+		case StageAsBaseImage, ImageFromRegistryAsBaseImage:
+
+			fmt.Printf("-- %s SetupBaseImage %q\n", i.Name, i.baseImageReference)
+
+			info, err := storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
+			if err != nil {
+				return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+			}
+
+			fmt.Printf("-- %s SetupBaseImage %q -> %#v\n", i.Name, i.baseImageReference, info)
+			for _, expression := range info.OnBuild {
+				fmt.Printf(">> %q\n", expression)
+			}
+		}
+	}
+
+	return nil
 }
 
 // TODO(staged-dockerfile): this is only for compatibility with stapel-builder logic, and this should be unified with new staged-dockerfile logic

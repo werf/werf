@@ -259,19 +259,17 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
-		// TODO(ilya-lesikov): uncomment after Staged Dockerfile builder finished
-		// // TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		// Entry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", complexTestOptions{
-		// 	BuildahMode:                 "native-rootless",
-		// 	WithLocalRepo:               true,
-		// 	WithStagedDockerfileBuilder: true,
-		// }),
-		// TODO(ilya-lesikov): uncomment after Staged Dockerfile builder finished
-		// // TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		// Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{
-		// 	BuildahMode:                 "native-chroot",
-		// 	WithLocalRepo:               true,
-		// 	WithStagedDockerfileBuilder: true,
-		// }),
+		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
+		Entry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", complexTestOptions{
+			BuildahMode:                 "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}),
+		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
+		Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{
+			BuildahMode:                 "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}),
 	)
 })
