@@ -2,9 +2,11 @@ package kubectl
 
 import (
 	"fmt"
-	"github.com/werf/werf/cmd/werf/docs/structs"
-	"k8s.io/client-go/tools/clientcmd"
 	"path"
+
+	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/werf/werf/cmd/werf/docs/structs"
 )
 
 func GetKubectlDocs() structs.DocsStruct {

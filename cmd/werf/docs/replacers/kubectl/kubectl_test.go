@@ -1,14 +1,16 @@
 package kubectl
 
 import (
+	"os"
+	"testing"
+
 	"github.com/spf13/cobra"
-	"github.com/werf/werf/cmd/werf/common"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/cmd"
 	"k8s.io/kubectl/pkg/cmd/plugin"
-	"os"
-	"testing"
+
+	"github.com/werf/werf/cmd/werf/common"
 )
 
 var (

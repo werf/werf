@@ -2,9 +2,11 @@ package kubectl
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
-	"github.com/werf/werf/cmd/werf/common"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/werf/werf/cmd/werf/common"
 )
 
 const (

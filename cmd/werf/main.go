@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	kubectl2 "github.com/werf/werf/cmd/werf/docs/replacers/kubectl"
 	"log"
 	"os"
 	"path/filepath"
@@ -34,6 +33,7 @@ import (
 	cr_logout "github.com/werf/werf/cmd/werf/cr/logout"
 	"github.com/werf/werf/cmd/werf/dismiss"
 	"github.com/werf/werf/cmd/werf/docs"
+	kubectl2 "github.com/werf/werf/cmd/werf/docs/replacers/kubectl"
 	"github.com/werf/werf/cmd/werf/export"
 	"github.com/werf/werf/cmd/werf/helm"
 	host_cleanup "github.com/werf/werf/cmd/werf/host/cleanup"
