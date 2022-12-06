@@ -5,9 +5,7 @@ permalink: internals/telemetry.html
 
 We collect anonymous usage data to improve werf's features and steer its development in the right direction.  This data is not associated with users in any way and does not contain any personal information.
 
-It help us figure out how werf is used and focus on improving the features that are most needed.
-
-> Telemetry will be enabled by default in upcoming releases, and the user will have the option to disable it if they wish.
+It helps us figure out how werf is used and focus on improving the features that are most needed.
 
 ## Example of the data werf transmits and its breakdown
 
