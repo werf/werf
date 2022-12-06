@@ -898,9 +898,6 @@ entries:
           - title: Гитерминизм
             url: /advanced/giterminism.html
 
-          - title: Организация хранилища стадий
-            url: /advanced/storage_layouts.html
-
           - title: Бандлы
             url: /advanced/bundles.html
 
@@ -998,12 +995,6 @@ entries:
 
       - title: Внутренности
         f:
-          - title: Стадии и хранилище
-            url: /internals/stages_and_storage.html
-
-          - title: Процесс сборки
-            url: /internals/build_process.html
-
           - title: Как работает интеграция с CI/CD
             f:
               - title: Общие сведения
