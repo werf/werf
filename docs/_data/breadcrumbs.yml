@@ -2,6 +2,9 @@ en:
   /documentation: &documentation
     title: Documentation
     url: /index.html
+  /usage: &documentation-usage
+    title: Usage
+    url: /usage/build.html
   /reference: &documentation-reference
     title: Reference
     url: /reference/werf_yaml.html
@@ -66,6 +69,9 @@ ru:
   /documentation:
     <<: *documentation
     title: Документация
+  /usage:
+    <<: *documentation-usage
+    title: Использование
   /reference:
     <<: *documentation-reference
     title: Справочник

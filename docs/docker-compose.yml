@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   en:
-    image: $WERF_ASSETS_DOCKER_IMAGE_NAME
+    image: $WERF_BUILDER_DOCKER_IMAGE_NAME
     working_dir: "/srv/jekyll-data"
     environment:
       JEKYLL_ENV: "dev"
@@ -12,7 +12,7 @@ services:
     volumes:
       - "./:/srv/jekyll-data/"
   ru:
-    image: $WERF_ASSETS_DOCKER_IMAGE_NAME
+    image: $WERF_BUILDER_DOCKER_IMAGE_NAME
     working_dir: "/srv/jekyll-data"
     environment:
       JEKYLL_ENV: "dev"

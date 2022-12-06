@@ -859,6 +859,20 @@ entries:
       - title: Использование в CI/CD системах
         url: /using_with_ci_cd_systems.html
 
+      - title: Использование
+        f:
+          - title: Сборка
+            url: /usage/build.html
+
+          - title: Выкат
+            url: /usage/deploy.html
+
+          - title: Очистка CR
+            url: /usage/cr_cleanup.html
+
+          - title: Автоматическая очистка сборочных узлов
+            url: /usage/host_cleanup.html
+
       - title: Справочник
         f:
           - title: werf.yaml
@@ -884,67 +898,11 @@ entries:
           - title: Гитерминизм
             url: /advanced/giterminism.html
 
-          - title: Helm
-            f:
-              - title: Обзор
-                url: /advanced/helm/overview.html
-
-              - title: Конфигурация
-                f:
-                  - title: Чарт
-                    url: /advanced/helm/configuration/chart.html
-
-                  - title: Шаблоны
-                    url: /advanced/helm/configuration/templates.html
-
-                  - title: Данные (values)
-                    url: /advanced/helm/configuration/values.html
-
-                  - title: Гитерминизм
-                    url: /advanced/helm/configuration/giterminism.html
-
-                  - title: Секреты
-                    url: /advanced/helm/configuration/secrets.html
-
-                  - title: Зависимости чарта
-                    url: /advanced/helm/configuration/chart_dependencies.html
-
-              - title: Процесс деплоя
-                f:
-                  - title: Шаги
-                    url: /advanced/helm/deploy_process/steps.html
-
-                  - title: Helm хуки
-                    url: /advanced/helm/deploy_process/helm_hooks.html
-
-                  - title: Аннотации и лейблы для ресурсов чарта
-                    url: /advanced/helm/deploy_process/annotating_and_labeling.html
-
-                  - title: Принятие ресурсов в релиз
-                    url: /advanced/helm/deploy_process/resources_adoption.html
-
-              - title: Релизы
-                f:
-                  - title: Релиз
-                    url: /advanced/helm/releases/release.html
-
-                  - title: Именование
-                    url: /advanced/helm/releases/naming.html
-
-                  - title: Управление релизами
-                    url: /advanced/helm/releases/manage_releases.html
-
           - title: Организация хранилища стадий
             url: /advanced/storage_layouts.html
 
-          - title: Очистка
-            url: /advanced/cleanup.html
-
           - title: Бандлы
             url: /advanced/bundles.html
-
-          - title: Buildah
-            url: /advanced/buildah_mode.html
 
           - title: CI/CD
             f:
