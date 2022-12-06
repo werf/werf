@@ -4,7 +4,7 @@ en:
     url: /index.html
   /usage: &documentation-usage
     title: Usage
-    url: /usage/build.html
+    url: /usage/configuration.html
   /reference: &documentation-reference
     title: Reference
     url: /reference/werf_yaml.html

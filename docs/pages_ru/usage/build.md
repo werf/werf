@@ -606,3 +606,24 @@ werf может использовать драйвер хранилища `over
 * "rttime": maximum amount of real-time execution between blocking syscalls
 * "sigpending": maximum number of pending signals (ulimit -i)
 * "stack": maximum stack size (ulimit -s)
+
+# Git worktree
+
+Для корректной работы сборщика stapel werf-у требуется полная git-история проекта, чтобы работать в наиболее эффективном режиме. Поэтому по умолчанию werf выполняет fetch истории для текущего git проекта, когда это требуется. Это означает, что werf может автоматически сконвертировать shallow-clone репозитория в полный clone и скачать обновлённый список веток и тегов из origin в процессе очистки образов.
+
+Поведение по умолчанию описывается следующими настройками:
+
+```yaml
+gitWorktree:
+  forceShallowClone: false
+  allowUnshallow: true
+  allowFetchOriginBranchesAndTags: true
+```
+
+Чтобы, например, выключить автоматический unshallow рабочей директории git, необходимы следующие настройки:
+
+```yaml
+gitWorktree:
+  forceShallowClone: true
+  allowUnshallow: false
+```

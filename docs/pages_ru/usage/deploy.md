@@ -951,3 +951,59 @@ werf полностью совместим с уже установленным 
 
 Слагификация имени namespace включена по умолчанию, но может быть отключена указанием параметра [`deploy.namespaceSlug=false`]({{ "/reference/werf_yaml.html#namespace-в-kubernetes" | true_relative_url }}) в файле конфигурации `werf.yaml`.
 
+# Переопределение дефолтного поведения
+
+## Директория helm chart
+
+Директива позволяет указать произвольную директорию до helm чарта проекта, например `.deploy/chart`:
+
+```yaml
+deploy:
+  helmChartDir: .deploy/chart
+```
+
+## Имя релиза
+
+werf позволяет определять пользовательский шаблон имени Helm-релиза, который используется во время [процесса деплоя]({{ "/advanced/helm/releases/naming.html#имя-релиза" | true_relative_url }}) для генерации имени релиза:
+
+```yaml
+project: PROJECT_NAME
+configVersion: 1
+deploy:
+  helmRelease: TEMPLATE
+  helmReleaseSlug: false
+```
+
+В качестве значения для `deploy.helmRelease` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `[[ project ]]`, `[[ env ]]` и `[[ namespace ]]`. Значение шаблона имени релиза по умолчанию: `[[ project ]]-[[ env ]]`.
+
+Можно комбинировать переменные доступные в Go-шаблоне с переменными окружения следующим образом:
+
+{% raw %}
+```yaml
+deploy:
+  helmRelease: >-
+    [[ project ]]-[[ namespace ]]-[[ env ]]-{{ env "HELM_RELEASE_EXTRA" }}
+```
+{% endraw %}
+
+**Замечание** Использование переменной окружения `HELM_RELEASE_EXTRA` в данном случае должно быть явно разрешено в конфиге [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}).
+
+`deploy.helmReleaseSlug` включает или отключает [слагификацию]({{ "/advanced/helm/releases/naming.html#слагификация-имени-релиза" | true_relative_url }}) имени Helm-релиза (включен по умолчанию).
+
+## Namespace в Kubernetes
+
+werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ "/advanced/helm/releases/naming.html#namespace-в-kubernetes" | true_relative_url }}) для генерации имени namespace.
+
+Пользовательский шаблон namespace Kubernetes определяется в секции мета-информации в файле `werf.yaml`:
+
+```yaml
+project: PROJECT_NAME
+configVersion: 1
+deploy:
+  namespace: TEMPLATE
+  namespaceSlug: true|false
+```
+
+В качестве значения для `deploy.namespace` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `project` и `env`. Значение шаблона имени namespace по умолчанию: `[[ project ]]-[[ env ]]`.
+
+`deploy.namespaceSlug` включает или отключает [слагификацию]({{ "/advanced/helm/releases/naming.html#слагификация-namespace-kubernetes" | true_relative_url }}) имени namespace Kubernetes. Включен по умолчанию.

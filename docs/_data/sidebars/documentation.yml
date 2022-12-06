@@ -861,6 +861,9 @@ entries:
 
       - title: Использование
         f:
+          - title: Конфигурация
+            url: /usage/configuration.html
+
           - title: Сборка
             url: /usage/build.html
 
