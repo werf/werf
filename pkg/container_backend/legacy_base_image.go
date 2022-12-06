@@ -8,9 +8,10 @@ import (
 )
 
 type legacyBaseImage struct {
-	name      string
-	info      *image.Info
-	stageDesc *image.StageDescription
+	name           string
+	info           *image.Info
+	stageDesc      *image.StageDescription
+	finalStageDesc *image.StageDescription
 
 	ContainerBackend ContainerBackend
 }
@@ -62,6 +63,14 @@ func (i *legacyBaseImage) SetStageDescription(stageDesc *image.StageDescription)
 
 func (i *legacyBaseImage) GetStageDescription() *image.StageDescription {
 	return i.stageDesc
+}
+
+func (i *legacyBaseImage) SetFinalStageDescription(stageDesc *image.StageDescription) {
+	i.finalStageDesc = stageDesc
+}
+
+func (i *legacyBaseImage) GetFinalStageDescription() *image.StageDescription {
+	return i.finalStageDesc
 }
 
 func (i *legacyBaseImage) IsExistsLocally() bool {
