@@ -22,6 +22,7 @@ type LegacyImageInterface interface {
 	// TODO: should be under a single separate interface
 	Container() LegacyContainer
 	BuilderContainer() LegacyBuilderContainer
+	SetCommitChangeOptions(opts LegacyCommitChangeOptions)
 
 	Build(context.Context, BuildOptions) error
 	SetBuiltID(builtID string)
@@ -37,7 +38,9 @@ type LegacyImageInterface interface {
 
 	SetStageDescription(stage *image.StageDescription)
 	GetStageDescription() *image.StageDescription
-	SetCommitChangeOptions(opts LegacyCommitChangeOptions)
+
+	GetFinalStageDescription() *image.StageDescription
+	SetFinalStageDescription(stage *image.StageDescription)
 
 	GetCopy() LegacyImageInterface
 }
