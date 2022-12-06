@@ -65,6 +65,15 @@
     <!--#include virtual="/includes/footer.html" -->
   </div>
   {%- if site.url == 'https://werf.io' or site.url == 'https://ru.werf.io' %}
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6HXQYKHJ6P"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-6HXQYKHJ6P');
+    </script>
     <!-- Yandex.Metrika counter -->
     <script type="text/javascript" >
       (function (d, w, c) {
