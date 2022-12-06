@@ -33,6 +33,7 @@ import (
 	cr_logout "github.com/werf/werf/cmd/werf/cr/logout"
 	"github.com/werf/werf/cmd/werf/dismiss"
 	"github.com/werf/werf/cmd/werf/docs"
+	kubectl2 "github.com/werf/werf/cmd/werf/docs/replacers/kubectl"
 	"github.com/werf/werf/cmd/werf/export"
 	"github.com/werf/werf/cmd/werf/helm"
 	host_cleanup "github.com/werf/werf/cmd/werf/host/cleanup"
@@ -151,7 +152,7 @@ Find more information at https://werf.io`),
 				hostCmd(ctx),
 				helmCmd,
 				crCmd(ctx),
-				kubectl.NewCmd(ctx),
+				kubectl2.ReplaceKubectlDocs(kubectl.NewCmd(ctx)),
 			},
 		},
 		{

@@ -5,9 +5,9 @@
 {% endif %}
 Specify compute resource requirements (CPU, memory) for any resource that defines a pod template.  If a pod is successfully scheduled, it is guaranteed the amount of resource requested, but may burst up to its specified limits.
 
- For each compute resource, if a limit is specified and a request is omitted, the request will default to the limit.
+For each compute resource, if a limit is specified and a request is omitted, the request will default to the limit.
 
- Possible resources include (case insensitive): Use "kubectl api-resources" for a complete list of supported resources..
+Possible resources include (case insensitive): kubectl.
 
 {{ header }} Syntax
 

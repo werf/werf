@@ -3,9 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-View the latest last-applied-configuration annotations by type/name or file.
+View the latest `last-applied-configuration` annotations by `type`/`name` or file.
 
- The default output will be printed to stdout in YAML format. You can use the -o option to change the output format.
+The default output will be printed to stdout in YAML format. You can use the `-o` option to change the output format.
 
 {{ header }} Syntax
 
