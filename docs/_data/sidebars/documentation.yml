@@ -990,10 +990,5 @@ entries:
               - title: GitHub Actions
                 url: /internals/how_ci_cd_integration_works/github_actions.html
 
-          - title: Для разработчиков
-            f:
-              - title: Образ Stapel
-                url: /internals/development/stapel_image.html
-
           - title: Телеметрия
             url: /internals/telemetry.html
