@@ -879,6 +879,11 @@ entries:
           - title: Автоматическая очистка сборочных узлов
             url: /usage/host_cleanup.html
 
+      - title: Гайды
+        f:
+          - title: По языкам
+            external_url: /guides
+
       - title: Справочник
         f:
           - title: werf.yaml
