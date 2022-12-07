@@ -1,6 +1,6 @@
 ---
 title: Настройка CI/CD
-permalink: advanced/ci_cd/werf_with_argocd/configure_ci_cd.html
+permalink: guides/werf_with_argocd/configure_ci_cd.html
 ---
 
 В данной главе мы расскажем, как настроить отдельные стадии, составляющие [эталонный цикл CI/CD]({{ "advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html#эталонный-цикл-cicd" | true_relative_url }}):

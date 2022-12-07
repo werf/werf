@@ -1,6 +1,6 @@
 ---
 title: Обзор процесса CI/CD
-permalink: advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
+permalink: guides/werf_with_argocd/ci_cd_flow_overview.html
 ---
 
 В данной статье пойдет речь об организации процесса непрерывной доставки и непрерывного развертывания приложения с помощью werf и модели GitOps. Будут рассмотрены следующие вопросы:

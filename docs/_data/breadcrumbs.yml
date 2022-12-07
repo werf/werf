@@ -17,6 +17,9 @@ en:
   /guides/integrations: &documentation-guides-integrations
     title: Integrations
     url: /guides/integrations/gitlab_ci_cd.html
+  /guides/werf_with_argocd: &documentation-guides-werf-with-argocd
+    title: werf with ArgoCD
+    url: guides/werf_with_argocd/ci_cd_flow_overview.html
   /guides/run_in_container: &documentation-run-in-containers
     title: Run in containers
     url: /guides/run_in_container/generic_ci_cd_integration.html
@@ -93,9 +96,12 @@ ru:
   /guides/integrations:
     <<: *documentation-guides-integrations
     title: Интеграции
+  /guides/werf_with_argocd:
+    <<: *documentation-guides-werf-with-argocd
+    title: GitOps с помощью werf и ArgoCD
   /guides/run_in_container:
     <<: *documentation-run-in-containers
-    title: Run in containers
+    title: Запуск в контейнерах
   /advanced:
     <<: *documentation-advanced
     title: Документация продвинутого уровня

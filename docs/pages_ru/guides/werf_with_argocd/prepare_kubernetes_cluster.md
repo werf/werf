@@ -1,6 +1,6 @@
 ---
 title: Подготовка кластера Kubernetes
-permalink: advanced/ci_cd/werf_with_argocd/prepare_kubernetes_cluster.html
+permalink: guides/werf_with_argocd/prepare_kubernetes_cluster.html
 ---
 
 ## 1. Установите ArgoCD с плагином werf

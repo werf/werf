@@ -895,6 +895,17 @@ entries:
               - title: Интеграция с CI/CD-системами
                 url: /guides/integrations/generic_ci_cd_integration.html
 
+          - title: GitOps с помощью werf и ArgoCD
+            f:
+              - title: Обзор процесса CI/CD
+                url: /guides/werf_with_argocd/ci_cd_flow_overview.html
+
+              - title: Подготовка кластера Kubernetes
+                url: /guides/werf_with_argocd/prepare_kubernetes_cluster.html
+
+              - title: Настройка CI/CD
+                url: /guides/werf_with_argocd/configure_ci_cd.html
+
           - title: Запуск в контейнерах
             f:
               - title: Принципы работы
@@ -937,34 +948,3 @@ entries:
 
           - title: Шпаргалка
             url: /reference/cheat_sheet.html
-
-      - title: Документация продвинутого уровня
-        f:
-          - title: CI/CD
-            f:
-              - title: GitOps с помощью werf и ArgoCD
-                f:
-                  - title: Обзор процесса CI/CD
-                    url: /advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
-
-                  - title: Подготовка кластера Kubernetes
-                    url: /advanced/ci_cd/werf_with_argocd/prepare_kubernetes_cluster.html
-
-                  - title: Настройка CI/CD
-                    url: /advanced/ci_cd/werf_with_argocd/configure_ci_cd.html
-
-              # - title: Практики оркестрации и выката многокомпонентных приложений (черновик)
-              #   f:
-              #     - title: Обзор
-              #       url: /advanced/ci_cd/multiple_repositories_operation/overview.html
-
-              #     - title: Бандлы
-              #       url: /advanced/ci_cd/multiple_repositories_operation/bundles.html
-
-              #     - title: GitLab CI/CD multiproject pipelines
-              #       url: /advanced/ci_cd/multiple_repositories_operation/gitlab_multiproject_pipelines.htm
-
-          # - title: Организация и управление секретами (черновик)
-          #   f:
-          #     - title: Обзор
-          #       url: /advanced/secrets_management/overview.html
