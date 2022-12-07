@@ -901,9 +901,6 @@ entries:
 
       - title: Документация продвинутого уровня
         f:
-          - title: Гитерминизм
-            url: /advanced/giterminism.html
-
           - title: CI/CD
             f:
               - title: Основы организации CI/CD
