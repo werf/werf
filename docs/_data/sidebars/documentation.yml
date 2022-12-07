@@ -904,9 +904,6 @@ entries:
           - title: Гитерминизм
             url: /advanced/giterminism.html
 
-          - title: Бандлы
-            url: /advanced/bundles.html
-
           - title: CI/CD
             f:
               - title: Основы организации CI/CD
