@@ -870,6 +870,9 @@ entries:
           - title: Выкат
             url: /usage/deploy.html
 
+          - title: Дистрибьюция
+            url: /usage/distribute.html
+
           - title: Очистка CR
             url: /usage/cr_cleanup.html
 
