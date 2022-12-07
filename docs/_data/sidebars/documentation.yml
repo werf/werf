@@ -988,9 +988,6 @@ entries:
           - title: Поддерживаемые container registries
             url: /advanced/supported_container_registries.html
 
-          - title: Синхронизация в werf
-            url: /advanced/synchronization.html
-
           # - title: Организация и управление секретами (черновик)
           #   f:
           #     - title: Обзор
