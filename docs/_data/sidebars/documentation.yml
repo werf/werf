@@ -858,7 +858,7 @@ entries:
 
       - title: Использование
         f:
-          - title: Конфигурация
+          - title: Конфигурация проекта
             url: /usage/configuration.html
 
           - title: Сборка
@@ -870,14 +870,31 @@ entries:
           - title: Дистрибьюция
             url: /usage/distribute.html
 
-          - title: Очистка CR
-            url: /usage/cr_cleanup.html
+          - title: Очистка
+            url: /usage/cleanup.html
 
-          - title: Автоматическая очистка сборочных узлов
-            url: /usage/host_cleanup.html
-
-          - title: Использование в CI/CD системах
+          - title: Интеграция с CI-системой
             url: /usage/using_with_ci_cd_systems.html
+
+      - title: Справочник
+        f:
+          - title: werf.yaml
+            url: /reference/werf_yaml.html
+
+          - title: Шаблонизатор werf.yaml
+            url: /reference/werf_yaml_template_engine.html
+
+          - title: werf-giterminism.yaml
+            url: /reference/werf_giterminism_yaml.html
+
+          - title: Аннотации для деплоя
+            url: /reference/deploy_annotations.html
+
+          - title: Интерфейс командной строки
+            f: *cli
+
+          - title: Шпаргалка
+            url: /reference/cheat_sheet.html
 
       - title: Гайды
         f:
@@ -929,22 +946,4 @@ entries:
           - title: По языкам
             external_url: /guides.html
 
-      - title: Справочник
-        f:
-          - title: werf.yaml
-            url: /reference/werf_yaml.html
 
-          - title: Шаблонизатор werf.yaml
-            url: /reference/werf_yaml_template_engine.html
-
-          - title: werf-giterminism.yaml
-            url: /reference/werf_giterminism_yaml.html
-
-          - title: Аннотации для деплоя
-            url: /reference/deploy_annotations.html
-
-          - title: Интерфейс командной строки
-            f: *cli
-
-          - title: Шпаргалка
-            url: /reference/cheat_sheet.html
