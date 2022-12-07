@@ -3,7 +3,7 @@ title: Дистрибьюция
 permalink: usage/distribute.html
 ---
 
-## Бандлы
+# Бандлы
 
 Стандартный flow использования werf предполагает запуск команды [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) для выката новой версии приложения в kubernetes. Во время работы [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}):
 - будут собраны недостающие образы в container registry;
