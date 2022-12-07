@@ -881,6 +881,17 @@ entries:
 
       - title: Гайды
         f:
+          - title: Интеграции
+            f:
+              - title: GitLab CI/CD
+                url: /guides/integrations/gitlab_ci_cd.html
+
+              - title: GitHub Actions
+                url: /guides/integrations/github_actions.html
+
+              - title: Интеграция с CI/CD-системами
+                url: /guides/integrations/generic_ci_cd_integration.html
+
           - title: По языкам
             external_url: /guides
 

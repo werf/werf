@@ -1,6 +1,6 @@
 ---
 title: Интеграция с GitHub Actions
-permalink: advanced/ci_cd/github_actions.html
+permalink: guides/integrations/github_actions.html
 author: Sergey Lazarev <sergey.lazarev@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 

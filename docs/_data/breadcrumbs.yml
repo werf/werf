@@ -11,6 +11,12 @@ en:
   /reference/cli: &documentation-reference-cli
     title: Command line interface
     url: /reference/cli/overview.html
+  /guides: &documentation-guides
+    title: Guides
+    url: /guides/integrations/gitlab_ci_cd.html
+  /guides/integrations: &documentation-guides-integrations
+    title: Integrations
+    url: /guides/integrations/gitlab_ci_cd.html
   /advanced: &documentation-advanced
     title: Advanced
     url: /advanced/giterminism.html
@@ -78,6 +84,12 @@ ru:
   /reference/cli:
     <<: *documentation-reference-cli
     title: Интерфейс командной строки
+  /guides:
+    <<: *documentation-guides
+    title: Гайды
+  /guides/integrations:
+    <<: *documentation-guides-integrations
+    title: Интеграции
   /advanced:
     <<: *documentation-advanced
     title: Документация продвинутого уровня
