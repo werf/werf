@@ -892,8 +892,11 @@ entries:
               - title: Интеграция с CI/CD-системами
                 url: /guides/integrations/generic_ci_cd_integration.html
 
+          - title: Как мигрировать с v1.1 на v1.2
+            url: /guides/how_to_migrate_from_v1_1_to_v1_2.html
+
           - title: По языкам
-            external_url: /guides
+            external_url: /guides.html
 
       - title: Справочник
         f:
@@ -921,15 +924,6 @@ entries:
             f:
               - title: Основы организации CI/CD
                 url: /advanced/ci_cd/ci_cd_workflow_basics.html
-
-              - title: Интеграция с CI/CD-системами
-                url: /advanced/ci_cd/generic_ci_cd_integration.html
-
-              - title: Интеграция с GitLab CI/CD
-                url: /advanced/ci_cd/gitlab_ci_cd.html
-
-              - title: Интеграция с GitHub Actions
-                url: /advanced/ci_cd/github_actions.html
 
               - title: Запуск в контейнерах
                 f:
@@ -1003,11 +997,3 @@ entries:
 
           - title: Телеметрия
             url: /internals/telemetry.html
-
-      - title: Что нового в v1.2
-        f:
-          - title: Changelog
-            url: /whats_new_in_v1_2/changelog.html
-
-          - title: Как мигрировать с v1.1 на v1.2
-            url: /whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html

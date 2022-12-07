@@ -1,6 +1,6 @@
 ---
 title: Как мигрировать с v1.1 на v1.2
-permalink: whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2.html
+permalink: guides/how_to_migrate_from_v1_1_to_v1_2.html
 description: How to migrate your application from v1.1 to v1.2
 sidebar: documentation
 ---
