@@ -980,9 +980,6 @@ entries:
               - title: GitHub Actions
                 url: /internals/how_ci_cd_integration_works/github_actions.html
 
-          - title: Интеграция с SSH-агентом
-            url: /internals/integration_with_ssh_agent.html
-
           - title: Для разработчиков
             f:
               - title: Образ Stapel
