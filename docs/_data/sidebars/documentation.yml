@@ -976,8 +976,3 @@ entries:
           #   f:
           #     - title: Обзор
           #       url: /advanced/secrets_management/overview.html
-
-      - title: Внутренности
-        f:
-          - title: Телеметрия
-            url: /internals/telemetry.html
