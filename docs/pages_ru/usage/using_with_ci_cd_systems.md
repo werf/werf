@@ -1,6 +1,6 @@
 ---
 title: Использование в CI/CD системах
-permalink: using_with_ci_cd_systems.html
+permalink: usage/using_with_ci_cd_systems.html
 description: Основы использования werf в рамках различных систем CI/CD
 ---
 

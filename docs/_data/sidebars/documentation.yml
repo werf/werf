@@ -856,9 +856,6 @@ entries:
       - title: Быстрый старт
         url: /quickstart.html
 
-      - title: Использование в CI/CD системах
-        url: /using_with_ci_cd_systems.html
-
       - title: Использование
         f:
           - title: Конфигурация
@@ -878,6 +875,9 @@ entries:
 
           - title: Автоматическая очистка сборочных узлов
             url: /usage/host_cleanup.html
+
+          - title: Использование в CI/CD системах
+            url: /usage/using_with_ci_cd_systems.html
 
       - title: Гайды
         f:
@@ -979,16 +979,5 @@ entries:
 
       - title: Внутренности
         f:
-          - title: Как работает интеграция с CI/CD
-            f:
-              - title: Общие сведения
-                url: /internals/how_ci_cd_integration_works/general_overview.html
-
-              - title: GitLab CI/CD
-                url: /internals/how_ci_cd_integration_works/gitlab_ci_cd.html
-
-              - title: GitHub Actions
-                url: /internals/how_ci_cd_integration_works/github_actions.html
-
           - title: Телеметрия
             url: /internals/telemetry.html
