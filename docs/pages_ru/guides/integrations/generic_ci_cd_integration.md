@@ -1,6 +1,6 @@
 ---
 title: Интеграция с CI/CD-системами
-permalink: guides/integrations/generic_ci_cd_integration.html
+permalink: guides/run_in_container/generic_ci_cd_integration.html
 ---
 
 В настоящий момент официально поддерживается и полностью протестирована работа werf со следующими CI-системами:

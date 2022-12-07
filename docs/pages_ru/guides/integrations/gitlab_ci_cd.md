@@ -1,6 +1,6 @@
 ---
 title: Интеграция с GitLab CI/CD
-permalink: guides/integrations/gitlab_ci_cd.html
+permalink: guides/run_in_container/gitlab_ci_cd.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 

@@ -17,6 +17,9 @@ en:
   /guides/integrations: &documentation-guides-integrations
     title: Integrations
     url: /guides/integrations/gitlab_ci_cd.html
+  /guides/run_in_container: &documentation-run-in-containers
+    title: Run in containers
+    url: /guides/run_in_container/generic_ci_cd_integration.html
   /advanced: &documentation-advanced
     title: Advanced
     url: /advanced/giterminism.html
@@ -90,6 +93,9 @@ ru:
   /guides/integrations:
     <<: *documentation-guides-integrations
     title: Интеграции
+  /guides/run_in_container:
+    <<: *documentation-run-in-containers
+    title: Run in containers
   /advanced:
     <<: *documentation-advanced
     title: Документация продвинутого уровня
