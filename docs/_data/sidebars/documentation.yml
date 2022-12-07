@@ -957,29 +957,6 @@ entries:
               #     - title: GitLab CI/CD multiproject pipelines
               #       url: /advanced/ci_cd/multiple_repositories_operation/gitlab_multiproject_pipelines.html
 
-          - title: Сборка образов с помощью Stapel
-            f:
-              - title: Базовый образ
-                url: /advanced/building_images_with_stapel/base_image.html
-
-              - title: Использование Docker-инструкций
-                url: /advanced/building_images_with_stapel/docker_directive.html
-
-              - title: Добавление исходного кода из git-репозиториев
-                url: /advanced/building_images_with_stapel/git_directive.html
-
-              - title: Запуск инструкций сборки
-                url: /advanced/building_images_with_stapel/assembly_instructions.html
-
-              - title: Ускорение сборки и уменьшение размера за счёт монтирования
-                url: /advanced/building_images_with_stapel/mount_directive.html
-
-              - title: Импорт из артефактов и образов
-                url: /advanced/building_images_with_stapel/import_directive.html
-
-              - title: Артефакты
-                url: /advanced/building_images_with_stapel/artifacts.html
-
           - title: Разработка и отладка
             f:
               - title: Интроспекция стадий
