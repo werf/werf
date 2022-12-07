@@ -962,10 +962,7 @@ entries:
               #       url: /advanced/ci_cd/multiple_repositories_operation/bundles.html
 
               #     - title: GitLab CI/CD multiproject pipelines
-              #       url: /advanced/ci_cd/multiple_repositories_operation/gitlab_multiproject_pipelines.html
-
-          - title: Поддерживаемые container registries
-            url: /advanced/supported_container_registries.html
+              #       url: /advanced/ci_cd/multiple_repositories_operation/gitlab_multiproject_pipelines.htm
 
           # - title: Организация и управление секретами (черновик)
           #   f:
