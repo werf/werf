@@ -867,7 +867,7 @@ entries:
           - title: Выкат
             url: /usage/deploy.html
 
-          - title: Дистрибьюция
+          - title: Дистрибуция
             url: /usage/distribute.html
 
           - title: Очистка

@@ -1,5 +1,5 @@
 ---
-title: Дистрибьюция
+title: Дистрибуция
 permalink: usage/distribute.html
 ---
 
