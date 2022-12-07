@@ -1,6 +1,6 @@
 ---
 title: Основы организации CI/CD
-permalink: advanced/ci_cd/ci_cd_workflow_basics.html
+permalink: guides/ci_cd_workflow_basics.html
 ---
 
 В данной статье рассмотрим основные варианты организации CI/CD, которые можно реализовать с использованием werf.

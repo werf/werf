@@ -881,6 +881,9 @@ entries:
 
       - title: Гайды
         f:
+          - title: Основы организации CI/CD
+            url: /guides/ci_cd_workflow_basics.html
+
           - title: Интеграции
             f:
               - title: GitLab CI/CD
