@@ -9,7 +9,7 @@ The result of converge command is an application deployed into Kubernetes for cu
 
 Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either `--env` or `$WERF_ENV` should be specified for command.
 
-Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: [https://werf.io/documentation/advanced/helm/releases/naming.html]({{ "/advanced/helm/releases/naming.html" | true_relative_url }})
+Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: [https://werf.io/documentation/usage/deploy/releases/naming.html]({{ "/usage/deploy/releases/naming.html" | true_relative_url }})
 
 
 {{ header }} Syntax
@@ -234,8 +234,8 @@ werf converge --repo registry.mydomain.com/web --env production
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/advanced/giterminism.html, default              
-            $WERF_LOOSE_GITERMINISM)
+            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
+            default $WERF_LOOSE_GITERMINISM)
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
