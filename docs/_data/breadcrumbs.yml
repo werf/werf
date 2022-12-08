@@ -2,125 +2,130 @@ en:
   /documentation: &documentation
     title: Documentation
     url: /index.html
+  /usage: &documentation-usage
+    title: Usage
+    url: usage/project_configuration/giterminism.html
+  /usage/project_configuration: &documentation-usage-project_configuration
+    title: Project configuration
+    url: usage/project_configuration/giterminism.html
+  /usage/build: &documentation-usage-build
+    title: Build
+    url: usage/build/build_process.html
+  /usage/build/run_in_containers: &documentation-usage-build-run_in_containers
+    title: Run in containers
+    url: usage/build/run_in_containers/use_docker_container.html
+  /usage/build/building_images_with_stapel: &documentation-usage-build-building_images_with_stapel
+    title: Building images with stapel
+    url: usage/build/building_images_with_stapel/base_image.html
+  /usage/deploy: &documentation-usage-deploy
+    title: Deploy
+    url: usage/deploy/overview.html
+  /usage/deploy/configuration: &documentation-usage-deploy-configuration
+    title: Configuration
+    url: usage/deploy/configuration/templates.html
+  /usage/deploy/deploy_process: &documentation-usage-deploy-deploy_process
+    title: Deploy process
+    url: usage/deploy/deploy_process/steps.html
+  /usage/deploy/releases: &documentation-usage-deploy-releases
+    title: Releases
+    url: usage/deploy/releases/release.html
+  /usage/cleanup: &documentation-usage-cleanup
+    title: Cleanup
+    url: usage/cleanup/cleanup.html
+  /usage/integration_with_ci_cd_systems: &documentation-usage-integration_with_ci_cd_systems
+    title: Integration with CI/CD systems
+    url: usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html
+  /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works: &documentation-usage-integration_with_ci_cd_systems-how_ci_cd_integration_works
+    title: How CI/CD integration works
+    url: usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html
   /reference: &documentation-reference
     title: Reference
     url: /reference/werf_yaml.html
   /reference/cli: &documentation-reference-cli
     title: Command line interface
     url: /reference/cli/overview.html
-  /advanced: &documentation-advanced
-    title: Advanced
-    url: /advanced/giterminism.html
-  /advanced/building_images_with_stapel: &documentation-advanced-building-images-with-stapel
-    title: Building images with stapel
-    url: advanced/building_images_with_stapel/base_image.html
-  /advanced/development_and_debug: &documentation-advanced-development-and-debug
-    title: Development and debug
-    url: advanced/development_and_debug/stage_introspection.html
-  /advanced/configuration: &documentation-advanced-configuration
-    title: Configuration
-    url: advanced/configuration/organizing_configuration.html
-  /advanced/ci_cd: &documentation-advanced-ci-cd
-    title: CI/CD
-    url: advanced/ci_cd/ci_cd_workflow_basics.html
-  /advanced/ci_cd/run_in_container: &documentation-advanced-ci-cd-run-in-container
-    title: Run in containers
-    url: advanced/ci_cd/run_in_container/use_docker_container.html
-  /advanced/ci_cd/werf_with_argocd: &documentation-advanced-ci-cd-werf-with-argocd
-    title: werf with ArgoCD
-    url: advanced/ci_cd/werf_with_argocd/ci_cd_flow_overview.html
-  /advanced/ci_cd/multiple_repositories_operation: &documentation-advanced-ci-cd-multiple-repositories-operation
+  /how_to: &documentation-how_to
+    title: How-to
+    url: how_to/ci_cd_workflow_basics.html
+  /how_to/integration_with_ci_cd_systems: &documentation-guides-integration_with_ci_cd_systems
+    title: Integration with CI/CD systems
+    url: how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html
+  /how_to/integration_with_ci_cd_systems/gitlab_ci_cd: &documentation-guides-integration_with_ci_cd_systems-gitlab_ci_cd
+    title: GitLab CI/CD
+    url: how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html
+  /how_to/integration_with_ci_cd_systems/github_actions: &documentation-guides-integration_with_ci_cd_systems-github_actions
+    title: GitHub Actions
+    url: how_to/integration_with_ci_cd_systems/github_actions/workflows.html
+  /how_to/integration_with_ci_cd_systems/argocd: &documentation-guides-integration_with_ci_cd_systems-argocd
+    title: ArgoCD
+    url: how_to/integration_with_ci_cd_systems/argocd/ci_cd_flow_overview.html
+  /how_to/multiple_repositories_operation: &documentation-guides-multiple_repositories_operation
     title: Multiple repositories operation
-    url: advanced/ci_cd/multiple_repositories_operation/overview.html
-  /advanced/helm: &documentation-advanced-helm
-    title: Helm
-    url: advanced/helm/overview.html
-  /advanced/helm/configuration: &documentation-advanced-helm-configuration
-    title: Configuration
-    url: advanced/helm/configuration/templates.html
-  /advanced/helm/deploy_process: &documentation-advanced-helm-deploy_process
-    title: Deploy process
-    url: advanced/helm/deploy_process/steps.html
-  /advanced/helm/releases: &documentation-advanced-helm-releases
-    title: Releases
-    url: advanced/helm/releases/release.html
-  /advanced/secrets_management: &documentation-advanced-secrets-management
+    url: how_to/multiple_repositories_operation/overview.html
+  /how_to/secrets_management: &documentation-guides-secrets_management
     title: Secrets management
-    url: advanced/secrets_management/overview.html
-  /internals: &documentation-internals
-    title: Internals
-    url: internals/build_process.html
-  /internals/building_of_images: &documentation-internals-building-of-images
-    title: Building of images
-    url: internals/build_process.html
-  /internals/how_ci_cd_integration_works: &documentation-internals-how-ci-cd-integration-works
-    title: How CI/CD integration works
-    url: internals/how_ci_cd_integration_works/general_overview.html
-  /internals/development: &documentation-internals-development
-    title: Development
-    url: internals/development/stapel_image.html
-  /whats_new_in_v1_2: &documentation-whats-new-in-v1-2
-    title: What's new in v1.2
-    url: whats_new_in_v1_2/changelog.html
+    url: how_to/secrets_management/overview.html
 ru:
   /documentation:
     <<: *documentation
     title: Документация
+  /usage:
+    <<: *documentation-usage
+    title: Использование
+  /usage/project_configuration:
+    <<: *documentation-usage-project_configuration
+    title: Конфигурация проекта
+  /usage/build:
+    <<: *documentation-usage-build
+    title: Сборка
+  /usage/build/run_in_containers:
+    <<: *documentation-usage-build-run_in_containers
+    title: Запуск в контейнерах
+  /usage/build/building_images_with_stapel:
+    <<: *documentation-usage-build-building_images_with_stapel
+    title: Сборка образов с помощью Stapel
+  /usage/deploy:
+    <<: *documentation-usage-deploy
+    title: Выкат
+  /usage/deploy/configuration:
+    <<: *documentation-usage-deploy-configuration
+    title: Конфигурация
+  /usage/deploy/deploy_process:
+    <<: *documentation-usage-deploy-deploy_process
+    title: Процесс деплоя
+  /usage/deploy/releases:
+    <<: *documentation-usage-deploy-releases
+    title: Релизы
+  /usage/cleanup:
+    <<: *documentation-usage-cleanup
+    title: Очистка
+  /usage/integration_with_ci_cd_systems:
+    <<: *documentation-usage-integration_with_ci_cd_systems
+    title: Интеграция с CI/CD системами
+  /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works:
+    <<: *documentation-usage-integration_with_ci_cd_systems-how_ci_cd_integration_works
+    title: Как работает интеграция с CI/CD
   /reference:
     <<: *documentation-reference
     title: Справочник
   /reference/cli:
     <<: *documentation-reference-cli
     title: Интерфейс командной строки
-  /advanced:
-    <<: *documentation-advanced
-    title: Документация продвинутого уровня
-  /advanced/building_images_with_stapel:
-    <<: *documentation-advanced-building-images-with-stapel
-    title: Сборка образов с помощью Stapel
-  /advanced/development_and_debug:
-    <<: *documentation-advanced-development-and-debug
-    title: Разработка и отладка
-  /advanced/configuration:
-    <<: *documentation-advanced-configuration
-    title: Конфигурация
-  /advanced/ci_cd:
-    <<: *documentation-advanced-ci-cd
-  /advanced/ci_cd/run_in_container:
-    <<: *documentation-advanced-ci-cd-run-in-container
-    title: Запуск в контейнерах
-  /advanced/ci_cd/werf_with_argocd:
-    <<: *documentation-advanced-ci-cd-werf-with-argocd
-    title: GitOps с помощью werf и ArgoCD
-  /advanced/ci_cd/multiple_repositories_operation:
-    <<: *documentation-advanced-ci-cd-multiple-repositories-operation
+  /how_to:
+    <<: *documentation-how_to
+    title: How-to
+  /how_to/integration_with_ci_cd_systems:
+    <<: *documentation-guides-integration_with_ci_cd_systems
+    title: Интеграция с CI/CD системами
+  /how_to/integration_with_ci_cd_systems/gitlab_ci_cd:
+    <<: *documentation-guides-integration_with_ci_cd_systems-gitlab_ci_cd
+  /how_to/integration_with_ci_cd_systems/github_actions:
+    <<: *documentation-guides-integration_with_ci_cd_systems-github_actions
+  /how_to/integration_with_ci_cd_systems/argocd:
+    <<: *documentation-guides-integration_with_ci_cd_systems-argocd
+  /how_to/multiple_repositories_operation:
+    <<: *documentation-guides-multiple_repositories_operation
     title: Практики оркестрации и выката многокомпонентных приложений
-  /advanced/helm:
-    <<: *documentation-advanced-helm
-  /advanced/helm/configuration:
-    <<: *documentation-advanced-helm-configuration
-    title: Конфигурация
-  /advanced/helm/deploy_process:
-    <<: *documentation-advanced-helm-deploy_process
-    title: Процесс деплоя
-  /advanced/helm/releases:
-    <<: *documentation-advanced-helm-releases
-    title: Релизы
-  /advanced/secrets_management:
-    <<: *documentation-advanced-secrets-management
+  /how_to/secrets_management:
+    <<: *documentation-guides-secrets_management
     title: Организация и управление секретами
-  /internals:
-    <<: *documentation-internals
-    title: Внутренности
-  /internals/building_of_images:
-    <<: *documentation-internals-building-of-images
-    title: Сборка образов
-  /internals/how_ci_cd_integration_works:
-    <<: *documentation-internals-how-ci-cd-integration-works
-    title: Как работает интеграция с CI/CD
-  /internals/development:
-    <<: *documentation-internals-development
-    title: Для разработчиков
-  /whats_new_in_v1_2:
-    <<: *documentation-whats-new-in-v1-2
-    title: Что нового в v1.2

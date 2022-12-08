@@ -12,7 +12,7 @@ werf introduces the so-called giterminism mode. The word is constructed from git
 
 All werf configuration files, helm configuration and application files werf reads from the current commit of the git project directory. There is also so called [dev mode](#follow-and-dev) to simplify local development of werf configuration and local development of an application with werf.
 
-More info [at the page]({{ "/advanced/giterminism.html" | true_relative_url }}).
+More info [at the page]({{ "/usage/project_configuration/giterminism.yaml" | true_relative_url }}).
 
 Introduced new giterminism configuration file [`werf-giterminism.yaml`]({{ "/reference/werf_giterminism_yaml.html" | true_relative_url }}).
 
@@ -199,7 +199,7 @@ Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
 
  - Rename `fromImageArtifact` to `fromArtifact`
      - **CAUTION** `fromImageArtifact/fromArtifact` has also been deprecated and will be removed in the v1.3, it is recommended to use `image` and `fromImage` in such case.
- - Remove the `herebyIAdmitThatFromLatestMightBreakReproducibility` and `herebyIAdmitThatBranchMightBreakReproducibility` directives. Now when using the directives `fromLatest` and `git.branch` you must loosen the [giterminism]({{ "/advanced/giterminism.html" | true_relative_url }}) rules with the corresponding directives in [werf-giterminism.yaml]({{ "/reference/werf_giterminism_yaml.html" | true_relative_url }}).
+ - Remove the `herebyIAdmitThatFromLatestMightBreakReproducibility` and `herebyIAdmitThatBranchMightBreakReproducibility` directives. Now when using the directives `fromLatest` and `git.branch` you must loosen the [giterminism]({{ "/usage/project_configuration/giterminism.yaml" | true_relative_url }}) rules with the corresponding directives in [werf-giterminism.yaml]({{ "/reference/werf_giterminism_yaml.html" | true_relative_url }}).
  - Remove `--helm-chart-dir` option, define helm chart dir in the `werf.yaml`:
 
     ```yaml
