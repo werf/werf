@@ -37,7 +37,7 @@ Among all functions, werf does not support the `expandenv` function and has its 
 
 The `.Env` variable allows organizing configuration for several environments (testing, production, staging, and so on) and switching between them by the `--env=<environment_name>` option.
 
-> In helm templates, there is the `.Values.werf.env` variable that can be used the same way (read more about helm templates [here]({{ "/advanced/helm/configuration/templates.html#environment" | true_relative_url }}))
+> In helm templates, there is the `.Values.werf.env` variable that can be used the same way (read more about helm templates [here]({{ "/usage/deploy/configuration/templates.html#environment" | true_relative_url }}))
 
 ### current commit information
 
@@ -218,7 +218,7 @@ __Syntax__:
 ```
 {% endraw %}
 
-> By default, the use of the `env` function is not allowed by giterminism (read more about it [here]({{ "advanced/giterminism.html" | true_relative_url }}))
+> By default, the use of the `env` function is not allowed by giterminism (read more about it [here]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
 
 ### project files
 
@@ -233,7 +233,7 @@ __Syntax__:
 ```
 {% endraw %}
 
-> By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "advanced/giterminism.html" | true_relative_url }}))
+> By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
 
 ##### Example: how to add a certain file to stapel image without git directive (shell)
 
@@ -287,7 +287,7 @@ __Syntax__:
 ```
 {% endraw %}
 
-> By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "advanced/giterminism.html" | true_relative_url }}))
+> By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
 
 ##### Example: how to add files by a glob to stapel image without git directive (shell)
 
