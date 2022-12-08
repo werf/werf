@@ -101,8 +101,6 @@ editme_button: false
 <div markdown="1">
  - [Building images]({{ "usage/build/build_process.html" | true_relative_url }}) — what image builder and stages are, how stages storage works, what is the synchronization server, other info related to the building process.
  - [How does the CI/CD integration work?]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html" | true_relative_url }}).
- - [Integration with SSH agent]({{ "usage/build/building_images_with_stapel/integration_with_ssh_agent.html" | true_relative_url }}) shows how to integrate ssh-keys with the building process in werf.
- - [Development]({{ "internals/development/stapel_image.html" | true_relative_url }}) — this developers zone contains service/maintenance manuals and other docs written by werf developers and for werf developers. All this information sheds light on how specific werf subsystems work, describes how to keep the subsystem current, how to write and build new code for the werf, etc.
 </div>
         </div>
     </div>
