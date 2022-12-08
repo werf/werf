@@ -476,4 +476,4 @@ _Примечание: для подключения к кластеру Kuberne
 
 ## Что дальше?
 
-Рекомендуем ознакомиться со статьей ["Использование werf с системами CI/CD"](using_with_ci_cd_systems.html) или обратиться к соответствующим [руководствам](/guides.html).
+Рекомендуем ознакомиться со статьей ["Использование werf с системами CI/CD"]({{ "usage/integration_with_ci_cd_systems/using_with_ci_cd_systems.html" | true_relative_url }}) или обратиться к соответствующим [руководствам](/guides.html).
