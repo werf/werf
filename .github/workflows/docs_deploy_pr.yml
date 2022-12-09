@@ -9,7 +9,8 @@ on:
 
 jobs:
   deploy-test:
-    if: github.event.label.name == 'trigger:\ docs:deploy:pr' || contains(github.event.pull_request.labels.*.name, 'trigger:\ docs:deploy:pr')
+    if: |
+      github.event.label.name == 'trigger: docs:deploy:pr' || contains(github.event.pull_request.labels.*.name, 'trigger: docs:deploy:pr')
     uses: ./.github/workflows/_docs_deploy.yml
     with:
       env: test
