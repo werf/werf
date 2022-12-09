@@ -74,6 +74,7 @@ var AllStages = []StageName{
 }
 
 type BaseStageOptions struct {
+	LogName          string
 	ImageName        string
 	ConfigMounts     []*config.Mount
 	ImageTmpDir      string
@@ -84,6 +85,7 @@ type BaseStageOptions struct {
 func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
 	s := &BaseStage{}
 	s.name = name
+	s.logName = options.LogName
 	s.imageName = options.ImageName
 	s.configMounts = options.ConfigMounts
 	s.imageTmpDir = options.ImageTmpDir
@@ -94,6 +96,7 @@ func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
 
 type BaseStage struct {
 	name             StageName
+	logName          string
 	imageName        string
 	digest           string
 	contentDigest    string
@@ -119,11 +122,18 @@ func (s *BaseStage) LogDetailedName() string {
 		imageName = "~"
 	}
 
-	return fmt.Sprintf("%s/%s", imageName, s.Name())
+	return fmt.Sprintf("%s/%s", imageName, s.LogName())
 }
 
 func (s *BaseStage) ImageName() string {
 	return s.imageName
+}
+
+func (s *BaseStage) LogName() string {
+	if s.logName != "" {
+		return s.logName
+	}
+	return string(s.Name())
 }
 
 func (s *BaseStage) Name() StageName {
@@ -164,7 +174,7 @@ func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor)
 		}
 	}
 
-	logboek.Context(ctx).Debug().LogF("Stage %q next stage dependencies: %#v\n", s.Name(), args)
+	logboek.Context(ctx).Debug().LogF("Stage %q next stage dependencies: %#v\n", s.LogName(), args)
 	sort.Strings(args)
 
 	return util.Sha256Hash(args...), nil

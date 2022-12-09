@@ -25,7 +25,7 @@ var _ = DescribeTable("ADD digest",
 	},
 
 	Entry("ADD basic", NewTestData(
-		NewAdd("ADD",
+		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1000", Chmod: ""},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -36,7 +36,7 @@ var _ = DescribeTable("ADD digest",
 				ProjectName: "example-project",
 			},
 		),
-		"88c31da85ac26ae35d29462c6dc309c2a02997c0de92b4ccee7db2e41be17187",
+		"79d3642e997030deb225e0414f0c2d0e3c6681cc036899aaba62895f7e2ac4e3",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -46,7 +46,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed chown", NewTestData(
-		NewAdd("ADD",
+		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1001", Chmod: ""},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -57,7 +57,7 @@ var _ = DescribeTable("ADD digest",
 				ProjectName: "example-project",
 			},
 		),
-		"846ef29e994224dd84bf0a5de47b0b3255c8681b8178e8da5611b21547cd182b",
+		"ccfda65ec4fa8667abe7a54b047a98158d122b39e224929dbb7c33ea466e7f5a",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -68,7 +68,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed chmod", NewTestData(
-		NewAdd("ADD",
+		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1001", Chmod: "0777"},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -79,7 +79,7 @@ var _ = DescribeTable("ADD digest",
 				ProjectName: "example-project",
 			},
 		),
-		"cef21e87710631a08edeb176a9487f81ae20171c22ec4537a3dc8fbc67aca868",
+		"19e86e1145aecd554d7d492add3c6c6ed51b022279f059f6c8c54a4eac9d07f0",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -90,7 +90,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed sources paths", NewTestData(
-		NewAdd("ADD",
+		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app"}, Chown: "1000:1001", Chmod: "0777"},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -101,7 +101,7 @@ var _ = DescribeTable("ADD digest",
 				ProjectName: "example-project",
 			},
 		),
-		"97f3f8a240902d73ec9a209f6c8368047b56d9247bdf9da88a40ac5dba925209",
+		"4d17db1e6926bbe9e4f7b70d18bb055b7735f6bfb6db35452524bde561e8b95f",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -112,7 +112,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed source files", NewTestData(
-		NewAdd("ADD",
+		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app"}, Chown: "1000:1001", Chmod: "0777"},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -123,7 +123,7 @@ var _ = DescribeTable("ADD digest",
 				ProjectName: "example-project",
 			},
 		),
-		"60178e0b174bd1bce1cd29f8132ea84cc7212773b6fce9fad3ddff842d5cf2e0",
+		"372ed0cb6fff0a58e087fa8bf19e1f62a146d3983ca4510c496c452db8a7080e",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
@@ -134,7 +134,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed destination path", NewTestData(
-		NewAdd("ADD",
+		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app2"}, Chown: "1000:1001", Chmod: "0777"},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -145,7 +145,7 @@ var _ = DescribeTable("ADD digest",
 				ProjectName: "example-project",
 			},
 		),
-		"c1f03d5701951fe9c5836957c753c9486f22e14b2d9291780ae70f288e531e1c",
+		"825c66ecb926ed7897fc99f7686ed4fc2a7f8133d6a66860c8755772764d0293",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},

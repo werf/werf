@@ -25,7 +25,7 @@ var _ = DescribeTable("COPY digest",
 	},
 
 	Entry("COPY basic", NewTestData(
-		NewCopy("COPY",
+		NewCopy(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CopyCommand{
 					SourcesAndDest: []string{"src/", "doc/", "/app"},
@@ -38,7 +38,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"35bf3e72310b96b9fc7861ca705b0093935d3d830388dd3ebc47e89dad68151a",
+		"b37df6b6878045c3bf0e9972e4618d6157dfa06bec990a83e0a1881ec12621b1",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -49,7 +49,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY with changed context files", NewTestData(
-		NewCopy("COPY",
+		NewCopy(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CopyCommand{
 					SourcesAndDest: []string{"src/", "doc/", "/app"},
@@ -62,7 +62,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"2df11ae4260a97665e30f69eea0c86057e5a277ade1ad273af1b3a8c85b6a651",
+		"88158fb775544cccd8bd1a345a89bda08434620dda37efe3867df077007602e1",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -73,7 +73,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from stage", NewTestData(
-		NewCopy("COPY",
+		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From:           "base",
@@ -87,7 +87,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"bb6495521017b98b1a6ebd5c24ae8881e2565cd64a09a825ffe7f5208da857e8",
+		"f49fa51e16c8cf0728f1cb9bd2be873555c5825d00cfac406057e6357d9900ed",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:a71052baf9c6ace8171e59a2ae5ea1aede3fb89aa95d160ec354b205-1661868399091",
@@ -96,7 +96,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from changed stage", NewTestData(
-		NewCopy("COPY",
+		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From:           "base",
@@ -110,7 +110,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"60554221561909f478206d108bed14b781c6e642dee87a53b8ef6a961372d887",
+		"a1374babfa54a99e2efa0dc16e0c267395e2adfa6ee66d177ba9813b1745f0fa",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:4930d562bfbee9c931413c826137d49eff6a2e7d39519c1c9488a747-1655913653892",
@@ -119,7 +119,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from same stage, with changed context", NewTestData(
-		NewCopy("COPY",
+		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From:           "base",
@@ -133,7 +133,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"60554221561909f478206d108bed14b781c6e642dee87a53b8ef6a961372d887",
+		"a1374babfa54a99e2efa0dc16e0c267395e2adfa6ee66d177ba9813b1745f0fa",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:4930d562bfbee9c931413c826137d49eff6a2e7d39519c1c9488a747-1655913653892",
@@ -147,7 +147,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from same stage, with changed destination", NewTestData(
-		NewCopy("COPY",
+		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From:           "base",
@@ -161,7 +161,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"987f2b58c05b5b53fa523ac6c25169d9bbf29826f450d541fec0ed69354dbfe2",
+		"834afb3164923c905c25b6238e1366e533d7b65c0e8c1011163131399e200d36",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:4930d562bfbee9c931413c826137d49eff6a2e7d39519c1c9488a747-1655913653892",
@@ -175,7 +175,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from same stage, with changed owner and modes", NewTestData(
-		NewCopy("COPY",
+		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From:           "base",
@@ -191,7 +191,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"7cb785382f1e347e16b87f397ed7ea06b000dc04a7de74b47f583e7cf85db2b5",
+		"919c20233b0060d5726cf23c99c199f6055d0db050bea6f95d29ca3796397912",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:4930d562bfbee9c931413c826137d49eff6a2e7d39519c1c9488a747-1655913653892",
