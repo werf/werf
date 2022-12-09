@@ -17,8 +17,8 @@ type Expose struct {
 	*Base[*instructions.ExposeCommand, *backend_instruction.Expose]
 }
 
-func NewExpose(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.ExposeCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Expose {
-	return &Expose{Base: NewBase(name, i, backend_instruction.NewExpose(i.Data), dependencies, hasPrevStage, opts)}
+func NewExpose(i *dockerfile.DockerfileStageInstruction[*instructions.ExposeCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Expose {
+	return &Expose{Base: NewBase(i, backend_instruction.NewExpose(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Expose) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -27,7 +27,6 @@ func (stg *Expose) GetDependencies(ctx context.Context, c stage.Conveyor, cb con
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, append([]string{"Ports"}, stg.instruction.Data.Ports...)...)
 	return util.Sha256Hash(args...), nil
 }

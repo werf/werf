@@ -18,8 +18,8 @@ type Run struct {
 	*Base[*instructions.RunCommand, *backend_instruction.Run]
 }
 
-func NewRun(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.RunCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
-	return &Run{Base: NewBase(name, i, backend_instruction.NewRun(i.Data), dependencies, hasPrevStage, opts)}
+func NewRun(i *dockerfile.DockerfileStageInstruction[*instructions.RunCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
+	return &Run{Base: NewBase(i, backend_instruction.NewRun(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -32,7 +32,6 @@ func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	security := instructions.GetSecurity(stg.instruction.Data)
 	mounts := instructions.GetMounts(stg.instruction.Data)
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, append([]string{"Command"}, stg.instruction.Data.CmdLine...)...)
 	args = append(args, "PrependShell", fmt.Sprintf("%v", stg.instruction.Data.PrependShell))
 	args = append(args, "Network", network)

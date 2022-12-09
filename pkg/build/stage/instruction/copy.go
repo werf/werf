@@ -18,8 +18,8 @@ type Copy struct {
 	*Base[*instructions.CopyCommand, *backend_instruction.Copy]
 }
 
-func NewCopy(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.CopyCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Copy {
-	return &Copy{Base: NewBase(name, i, backend_instruction.NewCopy(i.Data), dependencies, hasPrevStage, opts)}
+func NewCopy(i *dockerfile.DockerfileStageInstruction[*instructions.CopyCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Copy {
+	return &Copy{Base: NewBase(i, backend_instruction.NewCopy(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Copy) ExpandInstruction(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
@@ -43,7 +43,6 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, "From", stg.instruction.Data.From)
 	args = append(args, append([]string{"Sources"}, stg.instruction.Data.Sources()...)...)
 	args = append(args, "Dest", stg.instruction.Data.Dest())

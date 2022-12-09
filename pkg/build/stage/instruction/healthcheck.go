@@ -18,8 +18,8 @@ type Healthcheck struct {
 	*Base[*instructions.HealthCheckCommand, *backend_instruction.Healthcheck]
 }
 
-func NewHealthcheck(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.HealthCheckCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Healthcheck {
-	return &Healthcheck{Base: NewBase(name, i, backend_instruction.NewHealthcheck(i.Data), dependencies, hasPrevStage, opts)}
+func NewHealthcheck(i *dockerfile.DockerfileStageInstruction[*instructions.HealthCheckCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Healthcheck {
+	return &Healthcheck{Base: NewBase(i, backend_instruction.NewHealthcheck(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Healthcheck) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -28,7 +28,6 @@ func (stg *Healthcheck) GetDependencies(ctx context.Context, c stage.Conveyor, c
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, append([]string{"Test"}, stg.instruction.Data.Health.Test...)...)
 	args = append(args, "Interval", stg.instruction.Data.Health.Interval.String())
 	args = append(args, "Timeout", stg.instruction.Data.Health.Timeout.String())

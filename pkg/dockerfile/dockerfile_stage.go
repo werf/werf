@@ -44,7 +44,7 @@ func (stage *DockerfileStage) WerfImageName() string {
 	if stage.HasStageName() {
 		return fmt.Sprintf("stage/%s", stage.StageName)
 	} else {
-		return fmt.Sprintf("stage/%d", stage.Index)
+		return fmt.Sprintf("stage%d", stage.Index)
 	}
 }
 

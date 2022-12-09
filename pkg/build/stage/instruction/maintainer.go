@@ -17,8 +17,8 @@ type Maintainer struct {
 	*Base[*instructions.MaintainerCommand, *backend_instruction.Maintainer]
 }
 
-func NewMaintainer(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.MaintainerCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Maintainer {
-	return &Maintainer{Base: NewBase(name, i, backend_instruction.NewMaintainer(i.Data), dependencies, hasPrevStage, opts)}
+func NewMaintainer(i *dockerfile.DockerfileStageInstruction[*instructions.MaintainerCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Maintainer {
+	return &Maintainer{Base: NewBase(i, backend_instruction.NewMaintainer(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Maintainer) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -27,7 +27,6 @@ func (stg *Maintainer) GetDependencies(ctx context.Context, c stage.Conveyor, cb
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, "Maintainer", stg.instruction.Data.Maintainer)
 	return util.Sha256Hash(args...), nil
 }
