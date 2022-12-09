@@ -25,7 +25,7 @@ var _ = DescribeTable("CMD digest",
 	},
 
 	Entry("CMD basic", NewTestData(
-		NewCmd("CMD",
+		NewCmd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: false}},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -36,7 +36,7 @@ var _ = DescribeTable("CMD digest",
 				ProjectName: "example-project",
 			},
 		),
-		"c52718afd8fe6f79c1039464791418dbca4ac242a48fc1dae0494880fa858c56",
+		"6c176ed20cfc341dc35111c329a50d33a672556432524e30fe77c794fd19a41f",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -46,7 +46,7 @@ var _ = DescribeTable("CMD digest",
 	)),
 
 	Entry("CMD with shell", NewTestData(
-		NewCmd("CMD",
+		NewCmd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -57,7 +57,7 @@ var _ = DescribeTable("CMD digest",
 				ProjectName: "example-project",
 			},
 		),
-		"a763588e431e8f3f3ff846898525730ec3d19535328608d9c7b0301345d101f4",
+		"1ba4c1cdfa5bce43a107e540d20c7d2655fcaeeba20e6b1f4feac2284a06f27a",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker;`)},
@@ -67,7 +67,7 @@ var _ = DescribeTable("CMD digest",
 	)),
 
 	Entry("CMD with changed context", NewTestData(
-		NewCmd("CMD",
+		NewCmd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -78,7 +78,7 @@ var _ = DescribeTable("CMD digest",
 				ProjectName: "example-project",
 			},
 		),
-		"a763588e431e8f3f3ff846898525730ec3d19535328608d9c7b0301345d101f4",
+		"1ba4c1cdfa5bce43a107e540d20c7d2655fcaeeba20e6b1f4feac2284a06f27a",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},

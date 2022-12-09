@@ -17,8 +17,8 @@ type OnBuild struct {
 	*Base[*instructions.OnbuildCommand, *backend_instruction.OnBuild]
 }
 
-func NewOnBuild(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.OnbuildCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *OnBuild {
-	return &OnBuild{Base: NewBase(name, i, backend_instruction.NewOnBuild(i.Data), dependencies, hasPrevStage, opts)}
+func NewOnBuild(i *dockerfile.DockerfileStageInstruction[*instructions.OnbuildCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *OnBuild {
+	return &OnBuild{Base: NewBase(i, backend_instruction.NewOnBuild(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *OnBuild) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -27,7 +27,6 @@ func (stg *OnBuild) GetDependencies(ctx context.Context, c stage.Conveyor, cb co
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, "Expression", stg.instruction.Data.Expression)
 	return util.Sha256Hash(args...), nil
 }

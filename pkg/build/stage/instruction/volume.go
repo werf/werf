@@ -17,8 +17,8 @@ type Volume struct {
 	*Base[*instructions.VolumeCommand, *backend_instruction.Volume]
 }
 
-func NewVolume(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.VolumeCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Volume {
-	return &Volume{Base: NewBase(name, i, backend_instruction.NewVolume(i.Data), dependencies, hasPrevStage, opts)}
+func NewVolume(i *dockerfile.DockerfileStageInstruction[*instructions.VolumeCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Volume {
+	return &Volume{Base: NewBase(i, backend_instruction.NewVolume(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Volume) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -27,7 +27,6 @@ func (stg *Volume) GetDependencies(ctx context.Context, c stage.Conveyor, cb con
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, append([]string{"Volumes"}, stg.instruction.Data.Volumes...)...)
 	return util.Sha256Hash(args...), nil
 }

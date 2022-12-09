@@ -272,6 +272,9 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *image.Image)
 	if img.IsArtifact {
 		return nil
 	}
+	if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
+		return nil
+	}
 
 	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
 		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerBackend, manager.CopyStageIntoFinalStorageOptions{ShouldBeBuiltMode: phase.ShouldBeBuiltMode}); err != nil {

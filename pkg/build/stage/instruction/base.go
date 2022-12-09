@@ -19,9 +19,9 @@ type Base[T dockerfile.InstructionDataInterface, BT container_backend.Instructio
 	hasPrevStage       bool
 }
 
-func NewBase[T dockerfile.InstructionDataInterface, BT container_backend.InstructionInterface](name stage.StageName, instruction *dockerfile.DockerfileStageInstruction[T], backendInstruction BT, dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Base[T, BT] {
+func NewBase[T dockerfile.InstructionDataInterface, BT container_backend.InstructionInterface](instruction *dockerfile.DockerfileStageInstruction[T], backendInstruction BT, dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Base[T, BT] {
 	return &Base[T, BT]{
-		BaseStage:          stage.NewBaseStage(name, opts),
+		BaseStage:          stage.NewBaseStage(stage.StageName(instruction.Data.Name()), opts),
 		instruction:        instruction,
 		backendInstruction: backendInstruction,
 		dependencies:       dependencies,
