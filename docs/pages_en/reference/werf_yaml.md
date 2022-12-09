@@ -34,7 +34,7 @@ deploy:
 
 ### Release name
 
-werf allows to define a custom release name template, which [used during deploy process]({{ "/advanced/helm/releases/naming.html#release-name" | true_relative_url }}) to generate a release name:
+werf allows to define a custom release name template, which [used during deploy process]({{ "/usage/deploy/releases/naming.html#release-name" | true_relative_url }}) to generate a release name:
 
 ```yaml
 project: PROJECT_NAME
@@ -56,11 +56,11 @@ deploy:
 
 **NOTE**. Usage of the `HELM_RELEASE_EXTRA` environment variable should be allowed explicitly in the [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}) configuration in that case.
 
-`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ "/advanced/helm/releases/naming.html#slugging-the-release-name" | true_relative_url }}) to generated helm release name. Default: `true`.
+`deploy.helmReleaseSlug` defines whether to apply or not [slug]({{ "/usage/deploy/releases/naming.html#slugging-the-release-name" | true_relative_url }}) to generated helm release name. Default: `true`.
 
 ### Kubernetes namespace
 
-werf allows to define a custom Kubernetes namespace template, which [used during deploy process]({{ "/advanced/helm/releases/naming.html#kubernetes-namespace" | true_relative_url }}) to generate a Kubernetes Namespace:
+werf allows to define a custom Kubernetes namespace template, which [used during deploy process]({{ "/usage/deploy/releases/naming.html#kubernetes-namespace" | true_relative_url }}) to generate a Kubernetes Namespace:
 
 ```yaml
 project: PROJECT_NAME
@@ -80,13 +80,13 @@ deploy:
 ```
 {% endraw %}
 
-`deploy.namespaceSlug` defines whether to apply or not [slug]({{ "/advanced/helm/releases/naming.html#slugging-kubernetes-namespace" | true_relative_url }}) to generated kubernetes namespace. Default: `true`.
+`deploy.namespaceSlug` defines whether to apply or not [slug]({{ "/usage/deploy/releases/naming.html#slugging-kubernetes-namespace" | true_relative_url }}) to generated kubernetes namespace. Default: `true`.
 
 ## Cleanup
 
 ### Configuring cleanup policies
 
-The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ "advanced/cleanup.html#cleaning-up-outdated-data" | true_relative_url }}), __images not meeting the criteria of any policy are deleted__.
+The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ "usage/cleanup/cleanup.html#cleaning-up-outdated-data" | true_relative_url }}), __images not meeting the criteria of any policy are deleted__.
 
 Each policy consists of two parts:
 
@@ -299,7 +299,7 @@ The configuration describes the build context that consists of the following fil
 
 The `contextAddFiles` files have a higher priority than the files from the current project git repository commit. When these files are crossing, the user will work with files from the project directory.
 
-> By default, the use of the `contextAddFiles` directive is not allowed by giterminism (read more about it [here]({{ "/advanced/giterminism.html#contextaddfiles" | true_relative_url }}))
+> By default, the use of the `contextAddFiles` directive is not allowed by giterminism (read more about it [here]({{ "/usage/project_configuration/giterminism.html#contextaddfiles" | true_relative_url }}))
 
 ### Stapel builder
 

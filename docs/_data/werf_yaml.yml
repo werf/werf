@@ -265,7 +265,7 @@ sections:
           en: "Dependencies images for current image"
           ru: "Образы-зависимости для текущего образа"
         #detailsArticle:
-          #all: "/advanced/building_images_with_stapel/import_directive.html"
+          #all: "/usage/build/building_images_with_stapel/import_directive.html"
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
@@ -305,50 +305,50 @@ sections:
           en: The unique name for artifact
           ru: Уникальное имя артефакта
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/artifacts.html"
+          all: "/usage/build/building_images_with_stapel/artifacts.html"
       - name: from
         value: "string"
         description:
           en: "The name of a base image"
           ru: Имя и тег базового образа
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/base_image.html#from-fromlatest"
+          all: "/usage/build/building_images_with_stapel/base_image.html#from-fromlatest"
       - name: fromLatest
         value: "bool"
         description:
           en: "To use actual base image without caching"
           ru: Использование актуального базового образа (без кеширования)
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/base_image.html#from-fromlatest"
+          all: "/usage/build/building_images_with_stapel/base_image.html#from-fromlatest"
       - name: fromImage
         value: "string"
         description:
           en: "To use image as base image by image name"
           ru: "Использование образа из werf.yaml в качестве базового"
         detailsArticle:
-          en: "/advanced/building_images_with_stapel/base_image.html#fromimage-and-fromartifact"
-          ru: "/advanced/building_images_with_stapel/base_image.html#fromimage-и-fromartifact"
+          en: "/usage/build/building_images_with_stapel/base_image.html#fromimage-and-fromartifact"
+          ru: "/usage/build/building_images_with_stapel/base_image.html#fromimage-и-fromartifact"
       - name: fromArtifact
         value: "string"
         description:
           en: "To use artifact as base image by artifact name"
           ru: "Использование образа артефакта из werf.yaml в качестве базового"
         detailsArticle:
-          en: "/advanced/building_images_with_stapel/base_image.html#fromimage-and-fromartifact"
-          ru: "/advanced/building_images_with_stapel/base_image.html#fromimage-и-fromartifact"
+          en: "/usage/build/building_images_with_stapel/base_image.html#fromimage-and-fromartifact"
+          ru: "/usage/build/building_images_with_stapel/base_image.html#fromimage-и-fromartifact"
       - name: fromCacheVersion
         value: "string"
         description:
           en: "Cache version"
           ru: "Версия кеша"
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/base_image.html#fromcacheversion"
+          all: "/usage/build/building_images_with_stapel/base_image.html#fromcacheversion"
       - name: git
         description:
           en: "Set of directives to add source files from git repositories (both the project repository and any other)"
           ru: "Набор директив для добавления исходных файлов из git-репозиториев (как репозитория проекта, так и любого другого)"
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/git_directive.html"
+          all: "/usage/build/building_images_with_stapel/git_directive.html"
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
@@ -358,16 +358,16 @@ sections:
               en: "The address of the remote repository"
               ru: "Адрес git-репозитория"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/git_directive.html#working-with-remote-repositories"
-              ru: "/advanced/building_images_with_stapel/git_directive.html#работа-с-удаленными-репозиториями"
+              en: "/usage/build/building_images_with_stapel/git_directive.html#working-with-remote-repositories"
+              ru: "/usage/build/building_images_with_stapel/git_directive.html#работа-с-удаленными-репозиториями"
           - name: branch
             value: "string"
             description:
               en: "The branch name"
               ru: "Имя ветки"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/git_directive.html#syntax-of-a-git-mapping"
-              ru: "/advanced/building_images_with_stapel/git_directive.html#синтаксис"
+              en: "/usage/build/building_images_with_stapel/git_directive.html#syntax-of-a-git-mapping"
+              ru: "/usage/build/building_images_with_stapel/git_directive.html#синтаксис"
           - name: commit
             value: "string"
             description:
@@ -384,55 +384,55 @@ sections:
               en: "A source path in a repository"
               ru: "Исходный путь в репозитории"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/git_directive.html#copying-directories"
-              ru: "/advanced/building_images_with_stapel/git_directive.html#копирование-директорий"
+              en: "/usage/build/building_images_with_stapel/git_directive.html#copying-directories"
+              ru: "/usage/build/building_images_with_stapel/git_directive.html#копирование-директорий"
           - name: to
             value: "string"
             description:
               en: "A destination path in image"
               ru: "Путь назначения в образе"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/git_directive.html#copying-directories"
-              ru: "/advanced/building_images_with_stapel/git_directive.html#копирование-директорий"
+              en: "/usage/build/building_images_with_stapel/git_directive.html#copying-directories"
+              ru: "/usage/build/building_images_with_stapel/git_directive.html#копирование-директорий"
           - name: owner
             value: "string"
             description:
               en: "The name or UID of the owner"
               ru: "Имя или UID владельца"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/git_directive.html#changing-the-owner"
-              ru: "/advanced/building_images_with_stapel/git_directive.html#изменение-владельца"
+              en: "/usage/build/building_images_with_stapel/git_directive.html#changing-the-owner"
+              ru: "/usage/build/building_images_with_stapel/git_directive.html#изменение-владельца"
           - name: group
             value: "string"
             description:
               en: "The name or GID of the owner’s group"
               ru: "Имя или GID группы"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/git_directive.html#changing-the-owner"
-              ru: "/advanced/building_images_with_stapel/git_directive.html#изменение-владельца"
+              en: "/usage/build/building_images_with_stapel/git_directive.html#changing-the-owner"
+              ru: "/usage/build/building_images_with_stapel/git_directive.html#изменение-владельца"
           - name: includePaths
             value: "[ glob, ... ]"
             description:
               en: "Globs for including"
               ru: "Глобы добавления"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/git_directive.html#using-filters"
-              ru: "/advanced/building_images_with_stapel/git_directive.html#использование-фильтров"
+              en: "/usage/build/building_images_with_stapel/git_directive.html#using-filters"
+              ru: "/usage/build/building_images_with_stapel/git_directive.html#использование-фильтров"
           - name: excludePaths
             value: "[ glob, ... ]"
             description:
               en: "Globs for excluding"
               ru: "Глобы исключения"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/git_directive.html#using-filters"
-              ru: "/advanced/building_images_with_stapel/git_directive.html#использование-фильтров"
+              en: "/usage/build/building_images_with_stapel/git_directive.html#using-filters"
+              ru: "/usage/build/building_images_with_stapel/git_directive.html#использование-фильтров"
           - name: stageDependencies
             description:
               en: "The organization of restarting assembly instructions when defined changes occur in the git repository"
               ru: "Настройка перевыполнения сборочных инструкций при изменениях определённых файлов в репозитории"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-changes-in-the-git-repo"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-изменений-в-git-репозитории"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-changes-in-the-git-repo"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-изменений-в-git-репозитории"
             directives:
               - name: install
                 value: "[ glob, ... ]"
@@ -454,7 +454,7 @@ sections:
           en: "Shell assembly instructions"
           ru: "Shell сборочные инструкции"
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/assembly_instructions.html#shell"
+          all: "/usage/build/building_images_with_stapel/assembly_instructions.html#shell"
         collapsible: true
         isCollapsedByDefault: false
         directives:
@@ -464,74 +464,74 @@ sections:
               en: "Commands for beforeInstall stage"
               ru: "Команды для стадии beforeInstall"
             detailsArticle:
-              all: "/advanced/building_images_with_stapel/assembly_instructions.html#shell"
+              all: "/usage/build/building_images_with_stapel/assembly_instructions.html#shell"
           - name: install
             value: "[ string, ... ]"
             description:
               en: "Commands for install stage"
               ru: "Команды для стадии install"
             detailsArticle:
-              all: "/advanced/building_images_with_stapel/assembly_instructions.html#shell"
+              all: "/usage/build/building_images_with_stapel/assembly_instructions.html#shell"
           - name: beforeSetup
             value: "[ string, ... ]"
             description:
               en: "Commands for beforeSetup stage"
               ru: "Команды для стадии beforeSetup"
             detailsArticle:
-              all: "/advanced/building_images_with_stapel/assembly_instructions.html#shell"
+              all: "/usage/build/building_images_with_stapel/assembly_instructions.html#shell"
           - name: setup
             value: "[ string, ... ]"
             description:
               en: "Commands for setup stage"
               ru: "Команды для стадии setup"
             detailsArticle:
-              all: "/advanced/building_images_with_stapel/assembly_instructions.html#shell"
+              all: "/usage/build/building_images_with_stapel/assembly_instructions.html#shell"
           - name: cacheVersion
             value: "string"
             description:
               en: "Common cache version"
               ru: "Общая версия кеша"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
           - name: beforeInstallCacheVersion
             value: "string"
             description:
               en: "Cache version for beforeInstall stage"
               ru: "Версия кеша для стадии beforeInstall"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
           - name: installCacheVersion
             value: "string"
             description:
               en: "Cache version for install stage"
               ru: "Версия кеша для стадии install"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
           - name: beforeSetupCacheVersion
             value: "string"
             description:
               en: "Cache version for beforeSetup stage"
               ru: "Версия кеша для стадии beforeSetup"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
           - name: setupCacheVersion
             value: "string"
             description:
               en: "Cache version for setup stage"
               ru: "Версия кеша для стадии setup"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
       - name: ansible
         description:
           en: "Ansible assembly instructions"
           ru: "Ansible сборочные инструкции"
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
+          all: "/usage/build/building_images_with_stapel/assembly_instructions.html#ansible"
         collapsible: true
         isCollapsedByDefault: false
         directives:
@@ -541,74 +541,74 @@ sections:
               en: "Tasks for beforeInstall stage"
               ru: "Задания для стадии beforeInstall"
             detailsArticle:
-              all: "/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
+              all: "/usage/build/building_images_with_stapel/assembly_instructions.html#ansible"
           - name: install
             value: "[ task, ... ]"
             description:
               en: "Tasks for install stage"
               ru: "Задания для стадии install"
             detailsArticle:
-              all: "/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
+              all: "/usage/build/building_images_with_stapel/assembly_instructions.html#ansible"
           - name: beforeSetup
             value: "[ task, ... ]"
             description:
               en: "Tasks for beforeSetup stage"
               ru: "Задания для стадии beforeSetup"
             detailsArticle:
-              all: "/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
+              all: "/usage/build/building_images_with_stapel/assembly_instructions.html#ansible"
           - name: setup
             value: "[ task, ... ]"
             description:
               en: "Tasks for setup stage"
               ru: "Задания для стадии setup"
             detailsArticle:
-              all: "/advanced/building_images_with_stapel/assembly_instructions.html#ansible"
+              all: "/usage/build/building_images_with_stapel/assembly_instructions.html#ansible"
           - name: cacheVersion
             value: "string"
             description:
               en: "Common cache version"
               ru: "Общая версия кеша"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
           - name: beforeInstallCacheVersion
             value: "string"
             description:
               en: "Cache version for beforeInstall stage"
               ru: "Версия кеша для стадии beforeInstall"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
           - name: installCacheVersion
             value: "string"
             description:
               en: "Cache version for install stage"
               ru: "Версия кеша для стадии install"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
           - name: beforeSetupCacheVersion
             value: "string"
             description:
               en: "Cache version for beforeSetup stage"
               ru: "Версия кеша для стадии beforeSetup"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
           - name: setupCacheVersion
             value: "string"
             description:
               en: "Cache version for setup stage"
               ru: "Версия кеша для стадии setup"
             detailsArticle:
-              en: "/advanced/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
-              ru: "/advanced/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
+              en: "/usage/build/building_images_with_stapel/assembly_instructions.html#dependency-on-the-cacheversion-value"
+              ru: "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-значения-cacheversion"
       - name: docker
         description:
           en: "Set of directives to effect on an image manifest"
           ru: "Набор директив для изменения манифеста образа"
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/docker_directive.html"
+          all: "/usage/build/building_images_with_stapel/docker_directive.html"
         collapsible: true
         isCollapsedByDefault: false
         directives:
@@ -662,10 +662,10 @@ sections:
             detailsCustomLinks:
               en:
                 - text: "How the Stapel builder processes CMD and ENTRYPOINT"
-                  article: "/internals/build_process.html#how-the-stapel-builder-processes-cmd-and-entrypoint"
+                  article: "/usage/build/build_process.html#how-the-stapel-builder-processes-cmd-and-entrypoint"
               ru:
                 - text: "Как сборщик Stapel работает с CMD и ENTRYPOINT"
-                  article: "/internals/build_process.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
+                  article: "/usage/build/build_process.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
           - name: CMD
             value: "string | [ string, ... ]"
             description:
@@ -675,7 +675,7 @@ sections:
             detailsCustomLinks:
               en:
                 - text: "How the Stapel builder processes CMD and ENTRYPOINT"
-                  article: "/internals/build_process.html#how-the-stapel-builder-processes-cmd-and-entrypoint"
+                  article: "/usage/build/build_process.html#how-the-stapel-builder-processes-cmd-and-entrypoint"
               ru:
                 - text: "Как сборщик Stapel работает с CMD и ENTRYPOINT"
                   article: "/internals/build_process"
@@ -690,7 +690,7 @@ sections:
           en: "Mount points"
           ru: "Точки монтирования"
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/mount_directive.html"
+          all: "/usage/build/building_images_with_stapel/mount_directive.html"
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
@@ -714,7 +714,7 @@ sections:
           en: "Imports"
           ru: "Импортирование из образов и артефактов"
         detailsArticle:
-          all: "/advanced/building_images_with_stapel/import_directive.html"
+          all: "/usage/build/building_images_with_stapel/import_directive.html"
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
@@ -778,7 +778,7 @@ sections:
           en: "Dependencies images for current image"
           ru: "Образы-зависимости для текущего образа"
         #detailsArticle:
-          #all: "/advanced/building_images_with_stapel/import_directive.html"
+          #all: "/usage/build/building_images_with_stapel/import_directive.html"
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
