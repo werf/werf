@@ -21,7 +21,8 @@ on:
 
 jobs:
   unlabel:
-    if: github.event_name == 'pull_request' && github.event.label.name == 'trigger:\ test:main'
+    if: |
+      github.event_name == 'pull_request' && github.event.label.name == 'trigger: test:main'
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/github-script@v6
@@ -35,7 +36,8 @@ jobs:
             })
 
   integration_main:
-    if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
+    if: |
+      github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: integration/suites
@@ -44,33 +46,38 @@ jobs:
     secrets: inherit
 
   integration_git:
-    if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
+    if: |
+      github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: integration/suites/build/stapel_image/git
     secrets: inherit
 
   integration_ansible:
-    if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
+    if: |
+      github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: integration/suites/ansible
     secrets: inherit
 
   integration_per-k8s:
-    if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
+    if: |
+      github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
     uses: ./.github/workflows/_test_integration_per-k8s-version.yml
     secrets: inherit
 
   e2e_simple_per-k8s:
-    if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
+    if: |
+      github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: simple
     secrets: inherit
 
   e2e_complex_per-k8s:
-    if: github.event_name != 'pull_request' || github.event.label.name == 'trigger:\ test:main'
+    if: |
+      github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: complex
