@@ -17,8 +17,8 @@ type Label struct {
 	*Base[*instructions.LabelCommand, *backend_instruction.Label]
 }
 
-func NewLabel(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.LabelCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Label {
-	return &Label{Base: NewBase(name, i, backend_instruction.NewLabel(i.Data), dependencies, hasPrevStage, opts)}
+func NewLabel(i *dockerfile.DockerfileStageInstruction[*instructions.LabelCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Label {
+	return &Label{Base: NewBase(i, backend_instruction.NewLabel(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Label) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -27,7 +27,6 @@ func (stg *Label) GetDependencies(ctx context.Context, c stage.Conveyor, cb cont
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	if len(stg.instruction.Data.Labels) > 0 {
 		args = append(args, "Labels")
 		for _, item := range stg.instruction.Data.Labels {

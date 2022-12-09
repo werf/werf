@@ -17,8 +17,8 @@ type User struct {
 	*Base[*instructions.UserCommand, *backend_instruction.User]
 }
 
-func NewUser(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.UserCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *User {
-	return &User{Base: NewBase(name, i, backend_instruction.NewUser(i.Data), dependencies, hasPrevStage, opts)}
+func NewUser(i *dockerfile.DockerfileStageInstruction[*instructions.UserCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *User {
+	return &User{Base: NewBase(i, backend_instruction.NewUser(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *User) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -27,7 +27,6 @@ func (stg *User) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, "User", stg.instruction.Data.User)
 	return util.Sha256Hash(args...), nil
 }

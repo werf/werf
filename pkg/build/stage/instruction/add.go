@@ -19,8 +19,8 @@ type Add struct {
 	*Base[*instructions.AddCommand, *backend_instruction.Add]
 }
 
-func NewAdd(name stage.StageName, i *dockerfile.DockerfileStageInstruction[*instructions.AddCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Add {
-	return &Add{Base: NewBase(name, i, backend_instruction.NewAdd(i.Data), dependencies, hasPrevStage, opts)}
+func NewAdd(i *dockerfile.DockerfileStageInstruction[*instructions.AddCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Add {
+	return &Add{Base: NewBase(i, backend_instruction.NewAdd(i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -29,7 +29,6 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 		return "", err
 	}
 
-	args = append(args, "Instruction", stg.instruction.Data.Name())
 	args = append(args, append([]string{"Sources"}, stg.instruction.Data.Sources()...)...)
 	args = append(args, "Dest", stg.instruction.Data.Dest())
 	args = append(args, "Chown", stg.instruction.Data.Chown)
