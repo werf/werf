@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.192](https://www.github.com/werf/werf/compare/v1.2.191...v1.2.192) (2022-12-12)
+
+
+### Bug Fixes
+
+* **report:** fix panic occured when using final-repo and report ([e62cd78](https://www.github.com/werf/werf/commit/e62cd78ad86c0736c61f5a0b773bc3c77ad2cd27))
+* **staged-dockerfile:** do not store non-target Dockerfile stages in the final-repo ([a0d7838](https://www.github.com/werf/werf/commit/a0d78382d228b64990b863c806486adb44042e25))
+
 ### [1.2.191](https://www.github.com/werf/werf/compare/v1.2.190...v1.2.191) (2022-11-29)
 
 
