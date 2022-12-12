@@ -150,3 +150,91 @@ Let us examine each policy individually:
 1. Keep an image for the last 10 tags (by date of creation).
 2. Keep no more than two images published over the past week, for no more than 10 branches active over the past week.
 3. Keep the 10 latest images for main, staging, and production branches.
+
+## Features of working with different container registries
+
+By default, werf uses the [_Docker Registry API_](https://docs.docker.com/registry/spec/api/) for deleting tags. The user must be authenticated and have a sufficient set of permissions. If the _Docker Registry API_ isn't supported and tags are deleted using the native API, then some additional container registry-specific actions are required on the user's part.
+
+|                             |                             |
+|-----------------------------|:---------------------------:|
+| _AWS ECR_                   |     [***ok**](#aws-ecr)     |
+| _Azure CR_                  |    [***ok**](#azure-cr)     |
+| _Default_                   |           **ok**            |
+| _Docker Hub_                |   [***ok**](#docker-hub)    |
+| _GCR_                       |           **ok**            |
+| _GitHub Packages_           | [***ok**](#github-packages) |
+| _GitLab Registry_           | [***ok**](#gitlab-registry) |
+| _Harbor_                    |           **ok**            |
+| _JFrog Artifactory_         |           **ok**            |
+| _Nexus_                     |           **ok**            |
+| _Quay_                      |           **ok**            |
+| _Yandex Container Registry_ |           **ok**            |
+| _Selectel CRaaS_            | [***ok**](#selectel-craas)  |
+
+werf tries to automatically detect the type of container registry using the repository address provided (via the `--repo` option). The user can explicitly specify the container registry using the `--repo-container-registry` option or via the `WERF_REPO_CONTAINER_REGISTRY` environment variable.
+
+### AWS ECR
+
+werf deletes tags using the _AWS SDK_. Therefore, before performing a cleanup, the user must do **one of** the following:
+
+- [Install and configure the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration) (`aws configure`), or
+- Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
+
+### Azure CR
+
+werf deletes tags using the _Azure CLI_. Therefore, before performing a cleanup, the user must do the following:
+
+- Install the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) (`az`).
+- Perform authorization (`az login`).
+
+> The user must be assigned to one of the following roles: `Owner`, `Contributor`, or `AcrDelete` (learn more about [Azure CR roles and permissions](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-roles))
+
+### Docker Hub
+
+werf uses the _Docker Hub API_ to delete tags, so you need to set either the _token_ or the _username/password_ pair to clean up the container registry.
+
+You can use the following script to get a _token_:
+
+```shell
+HUB_USERNAME=username
+HUB_PASSWORD=password
+HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${HUB_USERNAME}'", "password": "'${HUB_PASSWORD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+```
+
+> You can't use the [personal access token](https://docs.docker.com/docker-hub/access-tokens/) as a _token_ since the deletion of resources is only possible using the user's primary credentials.
+
+You can use the following options (or their respective environment variables) to set the said parameters:
+
+- `--repo-docker-hub-token` or
+- `--repo-docker-hub-username` and `--repo-docker-hub-password`.
+
+### GitHub Packages
+
+When organizing CI/CD pipelines in GitHub Actions, we recommend using [our set of actions](https://github.com/werf/actions) to solve most of the challenges for you.
+
+werf uses the _GitHub API_ to delete tags, so you need to set the _token_ with the appropriate scopes (`read:packages`, `delete:packages`) to clean up the container registry.
+
+You can use the `--repo-github-token` option or the corresponding environment variable to define the token.
+
+### GitLab Registry
+
+werf uses the _GitLab Container Registry API_ or _Docker Registry API_ (depending on the GitLab version) to delete tags.
+
+> Privileges of the temporary CI job token (`$CI_JOB_TOKEN`) are not enough to delete tags. That is why the user have to create a dedicated token in the Access Token section (select the `api` in the Scope section) and [perform authorization](#authorization) using it
+
+### Selectel CRaaS
+
+werf uses the [_Selectel CR API_](https://developers.selectel.ru/docs/selectel-cloud-platform/craas_api/) to delete tags, so you need to set either the _username/password_, _account_ and _vpc_ or _vpcID_ to clean up the container registry.
+
+You can use the following options (or their respective environment variables) to set the said parameters:
+- `--repo-selectel-username`
+- `--repo-selectel-password`
+- `--repo-selectel-account`
+- `--repo-selectel-vpc` or
+- `--repo-selectel-vpc-id`
+
+#### Known limitations
+
+* Sometimes, Selectel drop connection with VPC ID. Try to use the VPC name instead.
+* CR API has limitations, so you can not remove layers from the root of the container registry.
+* Low API rate limit. It can cause cleanup problems with rapid development.
