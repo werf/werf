@@ -1,6 +1,6 @@
 ---
 title: Очистка container registry
-permalink: usage/cleanup/cleanup.html
+permalink: usage/cleanup/cr_cleanup.html
 ---
 
 Команда [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) рассчитана на периодический запуск по расписанию. Удаление производится в соответствии с принятыми политиками очистки и является безопасной процедурой.
@@ -149,3 +149,90 @@ cleanup:
 1. Сохранять по одному образу для 10 последних тегов (по дате создания).
 2. Сохранять по не более чем два образа, опубликованных за последнюю неделю, для не более 10 веток с активностью за последнюю неделю.
 3. Сохранять по 10 образов для веток main, master, staging и production.
+
+## Особенности работы с различными container registries
+
+По умолчанию при удалении тегов werf использует [_Docker Registry API_](https://docs.docker.com/registry/spec/api/) и от пользователя требуется только авторизация с использованием доступов с достаточным набором прав. Если же удаление посредством _Docker Registry API_ не поддерживается и оно реализуется в нативном API container registry, то от пользователя могут потребоваться специфичные для используемого container registry действия.
+
+|                             |                             |
+|-----------------------------|:---------------------------:|
+| _AWS ECR_                   |     [***ок**](#aws-ecr)     |
+| _Azure CR_                  |    [***ок**](#azure-cr)     |
+| _Default_                   |           **ок**            |
+| _Docker Hub_                |   [***ок**](#docker-hub)    |
+| _GCR_                       |           **ок**            |
+| _GitHub Packages_           | [***ок**](#github-packages) |
+| _GitLab Registry_           | [***ок**](#gitlab-registry) |
+| _Harbor_                    |           **ок**            |
+| _JFrog Artifactory_         |           **ок**            |
+| _Nexus_                     |           **ок**            |
+| _Quay_                      |           **ок**            |
+| _Yandex Container Registry_ |           **ок**            |
+| _Selectel CRaaS_            | [***ок**](#selectel-craas)  |
+
+werf пытается автоматически определить используемый container registry, используя заданный адрес репозитория (опция `--repo`). Пользователь может явно задать container registry опцией `--repo-container-registry` или переменной окружения `WERF_REPO_CONTAINER_REGISTRY`.
+
+### AWS ECR
+
+При удалении тегов werf использует _AWS SDK_, поэтому перед очисткой container registry необходимо выполнить **одно из** следующих действий:
+
+- [Установить _AWS CLI_ и выполнить конфигурацию](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration) (`aws configure`) или
+- Определить `AWS_ACCESS_KEY_ID` и `AWS_SECRET_ACCESS_KEY` переменные окружения.
+
+### Azure CR
+
+При удалении тегов werf использует _Azure CLI_, поэтому перед очисткой container registry необходимо выполнить следующие действия:
+
+- Установить [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) (`az`).
+- Выполнить авторизацию (`az login`).
+
+> Пользователю необходимо иметь одну из следующих ролей: `Owner`, `Contributor` или `AcrDelete` (подробнее [Azure CR roles and permissions](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-roles))
+
+### Docker Hub
+
+При удалении тегов werf использует _Docker Hub API_, поэтому при очистке container registry необходимо определить _token_ или _username_ и _password_.
+
+Для получения _token_ можно использовать следующий скрипт:
+
+```shell
+HUB_USERNAME=username
+HUB_PASSWORD=password
+HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${HUB_USERNAME}'", "password": "'${HUB_PASSWORD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+```
+
+> В качестве _token_ нельзя использовать [personal access token](https://docs.docker.com/docker-hub/access-tokens/), т.к. удаление ресурсов возможно только при использовании основных учётных данных пользователя
+
+Для того чтобы задать параметры, следует использовать следующие опции или соответствующие им переменные окружения:
+- `--repo-docker-hub-token` или
+- `--repo-docker-hub-username` и `--repo-docker-hub-password`.
+
+### GitHub Packages
+
+При организации CI/CD в Github Actions мы рекомендуем использовать [наш набор actions](https://github.com/werf/actions), который решит за вас большинство задач.
+
+При удалении тегов werf использует _GitHub API_, поэтому при очистке container registry необходимо определить _token_ с `read:packages` и `delete:packages` scopes.
+
+Для того чтобы задать токен, следует использовать опцию `--repo-github-token` или соответствующую переменную окружения.
+
+### GitLab Registry
+
+При удалении тегов werf использует _GitLab Container Registry API_ или _Docker Registry API_ в зависимости от версии GitLab.
+
+> Для удаления тега прав временного токена CI-задания (`$CI_JOB_TOKEN`) недостаточно, поэтому пользователю необходимо создать специальный токен в разделе Access Token (в секции Scope необходимо выбрать `api`) и [выполнить авторизацию](#авторизация) с ним
+
+### Selectel CRaaS
+
+При очистке werf использует [_Selectel CR API_](https://developers.selectel.ru/docs/selectel-cloud-platform/craas_api/), поэтому при очистке container registry необходимо определить _username/password_, _account_ and _vpc_ or _vpcID_.
+
+Для того чтобы задать параметры, следует использовать следующие опции или соответствующие им переменные окружения:
+- `--repo-selectel-username`
+- `--repo-selectel-password`
+- `--repo-selectel-account`
+- `--repo-selectel-vpc` or
+- `--repo-selectel-vpc-id`
+
+#### Известные проблемы
+
+* Иногда Selectel не отдаёт токен при использовании VPC ID. Попробуйте использовать имя VPC.
+* CR API не позволяет удалять теги, которые хранятся в корне registry.
+* Небольшой лимит запросов в API. При активной разработке могут быть проблемы с очисткой.

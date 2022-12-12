@@ -191,4 +191,19 @@ This bundle apply should check available versions by specified mask `v3.5.*`, se
 
 The [Open Container Initiative (OCI) Image Spec](https://github.com/opencontainers/image-spec) support in the container registry is sufficient to work with bundles.
 
-You can read more about supported container registries in a separate [article]({{ "/usage/cleanup/supported_container_registries.html" | true_relative_url }}).
+|                             |                   |
+|-----------------------------|:-----------------:|
+| _AWS ECR_                   |      **ok**       |
+| _Azure CR_                  |      **ok**       |
+| _Default_                   |      **ok**       |
+| _Docker Hub_                |      **ok**       |
+| _GCR_                       |      **ok**       |
+| _GitHub Packages_           |      **ok**       |
+| _GitLab Registry_           |      **ok**       |
+| _Harbor_                    |      **ok**       |
+| _JFrog Artifactory_         |      **ok**       |
+| _Nexus_                     |  **not tested**   |
+| _Quay_                      | **not supported** |
+| _Yandex Container Registry_ |      **ok**       |
+| _Selectel CRaaS_            |  **not tested**   |
+
