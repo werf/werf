@@ -772,9 +772,6 @@ entries:
               - title: Automatic host cleanup
                 url: /usage/cleanup/host_cleanup.html
 
-              - title: Supported container registries
-                url: /usage/cleanup/supported_container_registries.html
-
           - title: Integration with CI/CD systems
             f:
               - title: How CI/CD integration works
@@ -989,9 +986,6 @@ entries:
 
               - title: Автоматическая очистка хоста
                 url: /usage/cleanup/host_cleanup.html
-
-              - title: Поддерживаемые container registries
-                url: /usage/cleanup/supported_container_registries.html
 
           - title: Интеграция с CI/CD системами
             f:
