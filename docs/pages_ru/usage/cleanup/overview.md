@@ -1,6 +1,6 @@
 ---
-title: Очистка
-permalink: usage/cleanup/cleanup.html
+title: Обзор
+permalink: usage/cleanup/overview.html
 ---
 
 При работе werf сохраняет данные как в container registry, так и на хосте, на котором запускается.
