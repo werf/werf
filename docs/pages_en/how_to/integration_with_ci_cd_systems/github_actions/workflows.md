@@ -376,7 +376,7 @@ Most cleaning policies in werf are based on git primitives (commit, branch, and 
   run: git fetch --prune --unshallow
 ```
   
-werf has an efficient built-in cleanup mechanism to avoid overflowing the container registry and the disk space on the building node with outdated and unused images. You can learn more about the werf's cleanup functionality [here]({{ "usage/cleanup/cleanup.html" | true_relative_url }}).
+werf has an efficient built-in cleanup mechanism to avoid overflowing the container registry and the disk space on the building node with outdated and unused images. You can learn more about the werf's cleanup functionality [here]({{ "usage/cleanup/cr_cleanup.html" | true_relative_url }}).
 
 ## Complete set of configurations for ready-made workflows
 

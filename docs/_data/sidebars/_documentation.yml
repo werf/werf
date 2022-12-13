@@ -133,11 +133,14 @@ entries:
 
           - title: Cleanup
             f:
-              - title: Cleanup
-                url: /usage/cleanup/cleanup.html
+              - title: Overview
+                url: /usage/cleanup/overview.html
 
-              - title: Supported container registries
-                url: /usage/cleanup/supported_container_registries.html
+              - title: Container registry cleanup
+                url: /usage/cleanup/cr_cleanup.html
+
+              - title: Automatic host cleanup
+                url: /usage/cleanup/host_cleanup.html
 
           - title: Integration with CI/CD systems
             f:
@@ -345,11 +348,14 @@ entries:
 
           - title: Очистка
             f:
-              - title: Очистка
-                url: /usage/cleanup/cleanup.html
+              - title: Обзор
+                url: /usage/cleanup/overview.html
 
-              - title: Поддерживаемые container registries
-                url: /usage/cleanup/supported_container_registries.html
+              - title: Очистка container registry
+                url: /usage/cleanup/cr_cleanup.html
+
+              - title: Автоматическая очистка хоста
+                url: /usage/cleanup/host_cleanup.html
 
           - title: Интеграция с CI/CD системами
             f:
