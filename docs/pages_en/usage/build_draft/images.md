@@ -3,4 +3,4 @@ title: Images configuration
 permalink: usage/build_draft/images.html
 ---
 
-<!-- TODO: new content -->
+<!-- TODO: translate pages_ru/usage/build_draft/images.md -->
