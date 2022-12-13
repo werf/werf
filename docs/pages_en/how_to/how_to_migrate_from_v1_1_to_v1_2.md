@@ -93,7 +93,7 @@ Next, follow these steps:
 
 ### 6. Cleanup by Git history
 
-Remove `--git-history-based-cleanup-v1.2` option for a cleanup. werf always uses git-history cleanup in the v1.2. More info [in the changelog]({{ "/guides/changelog.html#cleanup" | true_relative_url }}) and [in the cleanup article]({{ "/usage/cleanup/cleanup.html" | true_relative_url }}).
+Remove `--git-history-based-cleanup-v1.2` option for a cleanup. werf always uses git-history cleanup in the v1.2. More info [in the changelog]({{ "/guides/changelog.html#cleanup" | true_relative_url }}) and [in the cleanup article]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}).
 
 ### 7. Define environment variables in `werf-giterminism.yaml`
 

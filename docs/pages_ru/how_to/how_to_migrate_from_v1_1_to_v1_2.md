@@ -98,7 +98,7 @@ sidebar: documentation
 
 ### 6. Используйте очистку на основе истории Git
 
- Удалите опцию `--git-history-based-cleanup-v1.2` — теперь поведение `werf cleanup` по умолчанию совпадает с поведением v1.1 с данной опцией. Больше информации по изменению [в changelog](#очистка | true_relative_url }}) и [в статье про cleanup]({{ "/usage/cleanup/cleanup.html" | true_relative_url }}).
+Удалите опцию `--git-history-based-cleanup-v1.2` — теперь поведение `werf cleanup` по умолчанию совпадает с поведением v1.1 с данной опцией. Больше информации по изменению [в changelog](#очистка | true_relative_url }}) и [в статье про cleanup]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}).
 
 ### 7. Определите используемые переменные окружения в `werf-giterminism.yaml`
 
