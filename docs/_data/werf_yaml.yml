@@ -75,9 +75,6 @@ sections:
         description:
           en: Settings for cleaning up irrelevant images
           ru: Настройка удаления неактульных образов
-        detailsAnchor:
-          en: "#cleanup"
-          ru: "#очистка"
         collapsible: true
         isCollapsedByDefault: false
         directives:
@@ -106,9 +103,6 @@ sections:
             description:
               en: Set of policies to select relevant images using the Git history
               ru: Набор политик для выборки актуальных образов, используя историю Git
-            detailsAnchor:
-              en: "#configuring-cleanup-policies"
-              ru: "#конфигурация-политик-очистки"
             directiveList:
               - name: references
                 description:
