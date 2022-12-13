@@ -35,7 +35,7 @@ werf's cleanup algorithm uses the fact that the container registry keeps the inf
 
 Once the new commit triggers the build process, werf adds the information that the [stage digest]({{ "usage/build/stages_and_storage.html#stage-digest" | true_relative_url }}) corresponds to a specific commit to the registry (even if the _resulting image_ does not change).
 
-This approach ensures the unbreakable bond between the [stage digest]({{ "usage/build/stages_and_storage.html#stage-digest" | true_relative_url}}) and the git history. Also, it makes it possible to effectively clean up outdated images based on the git state and [selected policies](#user-defined-policies). The algorithm scans the git history and selects relevant images.
+This approach ensures the unbreakable bond between the [stage digest]({{ "usage/build/stages_and_storage.html#stage-digest" | true_relative_url}}) and the git history. Also, it makes it possible to effectively clean up outdated images based on the git state and selected policies. The algorithm scans the git history and selects relevant images.
 
 Information about commits is the only source of truth for the algorithm, so images lacking such information will be deleted.
 
@@ -51,7 +51,7 @@ The `werf managed-images ls|add|rm` family of commands allows the user to edit t
 
 ## Configuring cleanup policies
 
-The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a [cleanup]({{ "usage/cleanup/cleanup.html#cleaning-up-outdated-data" | true_relative_url }}), __images not meeting the criteria of any policy are deleted__.
+The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a cleanup, __images not meeting the criteria of any policy are deleted__.
 
 Each policy consists of two parts:
 
@@ -218,7 +218,7 @@ You can use the `--repo-github-token` option or the corresponding environment va
 
 werf uses the _GitLab Container Registry API_ or _Docker Registry API_ (depending on the GitLab version) to delete tags.
 
-> Privileges of the temporary CI job token (`$CI_JOB_TOKEN`) are not enough to delete tags. That is why the user have to create a dedicated token in the Access Token section (select the `api` in the Scope section) and [perform authorization](#authorization) using it
+> Privileges of the temporary CI job token (`$CI_JOB_TOKEN`) are not enough to delete tags. That is why the user have to create a dedicated token in the Access Token section (select the `api` in the Scope section) and perform authorization using it
 
 ### Selectel CRaaS
 

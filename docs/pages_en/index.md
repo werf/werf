@@ -83,11 +83,10 @@ editme_button: false
 <div markdown="1">
  - [Giterminism]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}) describes how determinism is implemented with git, what limitations it imposes, and why.
  - [Helm]({{ "usage/deploy/overview.html" | true_relative_url }})** describes the deploy essentials: how to configure werf for deploying to Kubernetes, what helm chart and release is. Here you may find the basics of templating Kubernetes resources, algorithms for using built images defined in your `werf.yaml` file during the deploy process and working with secrets, plus other useful stuff. Read this chapter if you want to learn more about organizing the deploy process with werf.
- - [Cleanup]({{ "usage/cleanup/cleanup.html" | true_relative_url }}) explains werf cleanup concepts and main commands to perform cleaning tasks.
+ - [Cleanup]({{ "usage/cleanup/overview.html" | true_relative_url }}) explains werf cleanup concepts and main commands to perform cleaning tasks.
  - [CI/CD]({{ "how_to/ci_cd_workflow_basics.html" | true_relative_url }}) describes main aspects of organizing CI/CD workflows with werf. Here you will learn how to use werf with GitLab CI/CD, GitHub Actions, or any other CI/CD system.
  - [Building images with stapel]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}) introduces werf's custom builder. It currently implements the distributed building algorithm to enable lightning-fast build pipelines with distributed caching and incremental rebuilds based on the Git history of your application.
  - [Development and debug]({{ "usage/build/building_images_with_stapel/stage_introspection.html" | true_relative_url }}) describes debugging build and deploy processes of your application when something goes wrong and provides instructions for setting up a local development environment.
- - [Supported container registries]({{ "usage/cleanup/supported_container_registries.html" | true_relative_url }}) contains information about the peculiarities of using various container registries.
 </div>
         </div>
     </div>
