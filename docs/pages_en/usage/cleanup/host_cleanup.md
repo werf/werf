@@ -5,6 +5,8 @@ permalink: usage/cleanup/host_cleanup.html
 
 The [**werf host cleanup**]({{ "reference/cli/werf_host_cleanup.html" | true_relative_url }}) command cleans up old, unused, outdated data and reduces the cache size for all projects on the host. It uses the space occupied and user settings as a guide.
 
+## Principle of operation
+
 The algorithm automatically decides which data to delete. It consists of the following steps:
 
 - Evaluating the space used on the volume where the local docker server data are located;
@@ -22,12 +24,12 @@ What data can be deleted:
 
 Note that the algorithm of the `werf host cleanup` command separately processes the volume where the local werf cache is stored (`~/.werf/local_cache`) and the volume where the local docker server data are stored (usually at `/var/lib/docker`). If werf cannot find the directory where the data of the local docker server are stored, you can specify the appropriate path explicitly via the `--docker-server-storage-path=/var/lib/docker` parameter (or via the `WERF_DOCKER_SERVER_STORAGE_PATH` environment variable).
 
-By default, werf can automatically clean up the outdated host data as part of any werf command's regular operation. That is why you do not need to invoke the `werf host cleanup` manually or via cron. However, the user can disable auto-cleaning of outdated host data using the `--disable-auto-host-cleanup` parameter (or the respective `WERF_DISABLE_AUTO_HOST_CLEANUP` environment variable). In this case, we recommend adding the `werf host cleanup` command to the list of cron jobs, e.g., as follows:
+## Turning off automatic cleaning
+
+The user can disable auto-cleaning of outdated host data using the `--disable-auto-host-cleanup` parameter (or the respective `WERF_DISABLE_AUTO_HOST_CLEANUP` environment variable). In this case, we recommend adding the `werf host cleanup` command to the list of cron jobs, e.g., as follows:
 
 ```shell
 # /etc/cron.d/werf-host-cleanup
 SHELL=/bin/bash
 */30 * * * * gitlab-runner source ~/.profile ; source $(trdl use werf 1.2 stable) ; werf host cleanup
 ```
-
-By default, without additional parameters, the `werf host cleanup` command cleans up the data of all projects on the host. If invoked with the `--project-name PROJECT` parameter, the command can only clean up images on the local docker server. In this mode, the support for the command is partial.
