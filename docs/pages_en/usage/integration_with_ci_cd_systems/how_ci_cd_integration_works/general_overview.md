@@ -32,7 +32,7 @@ werf ci-env command should provide authorization for all subsequent commands, al
 
 The address of the container registry will also be used as the basis for the `--repo` parameter. Thus, the [`WERF_REPO=CONTAINER_REGISTRY_REPO`](#werf_repo) variable will be set.
 
-Almost all built-in container registries in CI/CD systems have their own peculiarities and therefore werf must know which one it works with (more about the features of the supported container registries [here]({{ "usage/cleanup/supported_container_registries.html" | true_relative_url }})). If the repository address unambiguously determines the container registry, then nothing is additionally required from the user. Otherwise, the container registry should be specified by the `--repo-container-registry` option (`$WERF_REPO_CONTAINER_REGISTRY`). The `werf ci-env` command sets a value for the built-in container registry, if necessary.
+Almost all built-in container registries in CI/CD systems have their own peculiarities and therefore werf must know which one it works with (more about the features of the supported container registries [here]({{ "usage/cleanup/cr_cleanup.html#features-of-working-with-different-container-registries" | true_relative_url }})). If the repository address unambiguously determines the container registry, then nothing is additionally required from the user. Otherwise, the container registry should be specified by the `--repo-container-registry` option (`$WERF_REPO_CONTAINER_REGISTRY`). The `werf ci-env` command sets a value for the built-in container registry, if necessary.
 
 ### CI/CD pipelines integration
 

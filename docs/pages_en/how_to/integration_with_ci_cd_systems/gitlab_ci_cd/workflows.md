@@ -122,7 +122,7 @@ In the simplest case, if an integrated container registry is used, then the auth
 
 As a result of the `werf ci-env` command, a temporary docker config is created. It is used by all the commands in the shell session (including docker). It means that parallel tasks do not overlap when using docker, and the temporary token is preserved (not overwritten) in the configuration.
 
-If you need to authorize using the custom credentials, the `docker login` command must be executed after invoking `werf ci-env` (this [article]({{ "/usage/cleanup/supported_container_registries.html#authorization" | true_relative_url }}) sheds more light on authorization).
+If you need to authorize using the custom credentials, the `docker login` command must be executed after invoking `werf ci-env`.
 
 ## Deploying an application
 
@@ -480,7 +480,7 @@ Cleanup:
 ```
 {% endraw %}
 
-werf has an efficient built-in cleanup mechanism to avoid overflowing the container registry and the building node with outdated and unused images. You can learn more about the werf's cleanup functionality [here]({{ "usage/cleanup/cleanup.html" | true_relative_url }}).
+werf has an efficient built-in cleanup mechanism to avoid overflowing the container registry and the building node with outdated and unused images. You can learn more about the werf's cleanup functionality [here]({{ "usage/cleanup/cr_cleanup.html" | true_relative_url }}).
 
 To use cleanup, you have to create a `Personal Access Token` in GitLab with the necessary permissions. This token will be used for authorization in the container registry before cleanup.
 
