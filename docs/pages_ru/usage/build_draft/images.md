@@ -163,7 +163,7 @@ git:
   to: /app
 ```
 
-Доступно 4 стадии для описания произвольных shell-инструкций, а также директива `git.stageDependencies` для настройки триггеров пересборки этих стадий при изменении соответствующих стадий (см. [подробнее]({{ "/usage/build/building_images_with_stapel/assembly_instructions.html#зависимость-от-изменений-в-git-репозитории" | true_relative_url }})):
+Доступно 4 стадии для описания произвольных shell-инструкций, а также директива `git.stageDependencies` для настройки триггеров пересборки этих стадий при изменении соответствующих стадий (см. [подробнее]({{ "/usage/build_draft/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории" | true_relative_url }})):
 
 ```yaml
 image: app

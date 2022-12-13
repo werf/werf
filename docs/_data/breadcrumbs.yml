@@ -15,6 +15,10 @@ en:
   /usage/build_draft: &documentation-usage-build_draft
     title: Build
     url: usage/build_draft/overview.html
+  # TODO: delete this temporary element
+  /usage/build_draft/stapel: &documentation-usage-build_draft-stapel
+    title: Build
+    url: usage/build_draft/overview.html
   /usage/build/run_in_containers: &documentation-usage-build-run_in_containers
     title: Run in containers
     url: usage/build/run_in_containers/use_docker_container.html
@@ -77,6 +81,10 @@ ru:
   /usage/build_draft:
     <<: *documentation-usage-build_draft
     title: Сборка
+  # TODO: delete this temporary element
+  /usage/build_draft/stapel:
+    <<: *documentation-usage-build_draft-stapel
+    title: Stapel
   /usage/build:
     <<: *documentation-usage-build
     title: Сборка
