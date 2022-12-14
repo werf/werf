@@ -3,6 +3,8 @@ title: С помощью Kubernetes
 permalink: usage/build/run_in_containers/use_kubernetes.html
 ---
 
+<!-- TODO: remove legacy page -->
+
 > ПРИМЕЧАНИЕ: werf поддерживает сборку образов с _использованием Docker-сервера_ или _с использованием Buildah_. Поддерживается сборка как Dockerfile-образов, так и stapel-образов через Buildah.
 
 ## 1. Подготовьте кластер Kubernetes

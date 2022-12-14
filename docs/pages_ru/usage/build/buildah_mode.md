@@ -3,6 +3,8 @@ title: Режим сборки с использованием Buildah
 permalink: usage/build/buildah_mode.html
 ---
 
+<!-- TODO: remove legacy page -->
+
 > ПРИМЕЧАНИЕ: werf поддерживает сборку образов с _использованием Docker-сервера_ или _с использованием Buildah_. Поддерживается сборка как Dockerfile-образов, так и stapel-образов через Buildah.
 
 Для сборки без Docker-сервера werf использует встроенный Buildah в rootless-режиме.
