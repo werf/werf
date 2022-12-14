@@ -275,3 +275,8 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 * Иногда Selectel не отдаёт токен при использовании VPC ID. Попробуйте использовать имя VPC.
 * CR API не позволяет удалять теги, которые хранятся в корне registry.
 * Небольшой лимит запросов в API. При активной разработке могут быть проблемы с очисткой.
+
+## Что дальше
+
+- [Конфигурация очистки в GitLab CI/CD]({{ "/how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html#очистка-образов" | true_relative_url }}).
+- [Конфигурация очистки в GitHub Actions]({{ "/how_to/integration_with_ci_cd_systems/github_actions/workflows.html#очистка-образов" | true_relative_url }}).
