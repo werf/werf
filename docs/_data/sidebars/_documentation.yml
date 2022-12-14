@@ -133,9 +133,6 @@ entries:
 
           - title: Cleanup
             f:
-              - title: Overview
-                url: /usage/cleanup/overview.html
-
               - title: Container registry cleanup
                 url: /usage/cleanup/cr_cleanup.html
 
@@ -348,9 +345,6 @@ entries:
 
           - title: Очистка
             f:
-              - title: Обзор
-                url: /usage/cleanup/overview.html
-
               - title: Очистка container registry
                 url: /usage/cleanup/cr_cleanup.html
 
