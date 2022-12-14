@@ -3,6 +3,8 @@ title: С помощью контейнеров Docker
 permalink: usage/build/run_in_containers/use_docker_container.html
 ---
 
+<!-- TODO: remove legacy page -->
+
 > ПРИМЕЧАНИЕ: werf поддерживает сборку образов с _использованием Docker-сервера_ или _с использованием Buildah_. Поддерживается сборка как Dockerfile-образов, так и stapel-образов через Buildah.
 
 ## Сборка образов с помощью Buildah (рекомендуемый метод)

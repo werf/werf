@@ -4,6 +4,8 @@ permalink: usage/build/building_images_with_stapel/assembly_instructions.html
 directive_summary: shell_and_ansible
 ---
 
+<!-- TODO: remove legacy page -->
+
 ## Пользовательские стадии
 
 ***Пользовательские стадии*** — это [_стадии_]({{ "usage/build/stages_and_storage.html" | true_relative_url }}) со сборочными инструкциями из [конфигурации]({{ "reference/werf_yaml.html#секция-image" | true_relative_url }}). Другими словами — это стадии, конфигурируемые пользователем (существуют также служебные стадии, которые пользователь конфигурировать не может). В настоящее время существует два вида сборочных инструкций: _shell_ и _ansible_.
