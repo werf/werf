@@ -11,6 +11,10 @@ en:
   /usage/build: &documentation-usage-build
     title: Build
     url: usage/build/build_process.html
+  # TODO: delete this temporary element
+  /usage/build_draft: &documentation-usage-build_draft
+    title: Build
+    url: usage/build_draft/overview.html
   /usage/build/run_in_containers: &documentation-usage-build-run_in_containers
     title: Run in containers
     url: usage/build/run_in_containers/use_docker_container.html
@@ -75,6 +79,10 @@ ru:
   /usage/project_configuration:
     <<: *documentation-usage-project_configuration
     title: Конфигурация проекта
+  # TODO: delete this temporary element
+  /usage/build_draft:
+    <<: *documentation-usage-build_draft
+    title: Сборка
   /usage/build:
     <<: *documentation-usage-build
     title: Сборка
