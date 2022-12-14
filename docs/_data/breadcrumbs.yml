@@ -35,7 +35,7 @@ en:
     url: usage/deploy/releases/release.html
   /usage/cleanup: &documentation-usage-cleanup
     title: Cleanup
-    url: usage/cleanup/overview.html
+    url: usage/cleanup/cr_cleanup.html
   /usage/integration_with_ci_cd_systems: &documentation-usage-integration_with_ci_cd_systems
     title: Integration with CI/CD systems
     url: usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html
