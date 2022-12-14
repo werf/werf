@@ -4,6 +4,8 @@ permalink: usage/build/building_images_with_stapel/git_directive.html
 directive_summary: git
 ---
 
+<!-- TODO: remove legacy page -->
+
 ## Что такое git mapping?
 
 ***Git mapping*** определяет, какой файл или папка из Git-репозитория должны быть добавлены в конкретное место образа.

@@ -5,6 +5,8 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: base_image
 ---
 
+<!-- TODO: remove legacy page -->
+
 Пример минимального `werf.yaml`:
 ```yaml
 project: my-project

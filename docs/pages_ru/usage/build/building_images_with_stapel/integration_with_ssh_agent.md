@@ -3,6 +3,8 @@ title: Интеграция с SSH-агентом
 permalink: usage/build/building_images_with_stapel/integration_with_ssh_agent.html
 ---
 
+<!-- TODO: remove legacy page -->
+
 werf необходим ssh-ключ пользователя в следующих случаях:
 
 1. Клонирование удаленного git-репозитория, указанного в файле конфигурации `werf.yaml`.

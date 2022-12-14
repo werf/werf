@@ -3,6 +3,8 @@ title: Процесс сборки
 permalink: usage/build/build_process.html
 ---
 
+<!-- TODO: remove legacy page -->
+
 Сборочный процесс werf для образов, описанных в [werf.yaml]({{ "reference/werf_yaml.html" | true_relative_url }}), подразумевает [последовательную сборку стадий]({{ "usage/build/stages_and_storage.html" | true_relative_url }}#конвеер-стадий) для описанных образов.
 
 Несмотря на то, что [_конвейеры стадий_]({{ "usage/build/stages_and_storage.html#конвеер-стадий" | true_relative_url }}) для Dockerfile-образа, Stapel-образа и Stapel-артефакта отличаются, каждая стадия подчиняется общим правилам [выборки из хранилища](#выборка-стадий), [сохранения](#сохранение-стадий-в-хранилище), а также [работы кеша и блокировок]({{ "usage/build/synchronization.html" | true_relative_url }}) в параллельных запусках.
