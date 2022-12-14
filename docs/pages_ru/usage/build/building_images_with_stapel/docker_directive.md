@@ -5,6 +5,8 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: docker
 ---
 
+<!-- TODO: remove legacy page -->
+
 Инструкции в [Dockerfile](https://docs.docker.com/engine/reference/builder/) можно условно разделить на две группы: сборочные инструкции и инструкции, которые влияют на manifest Docker-образа. 
 Так как werf сборщик использует свой синтаксис для описания сборки, поддерживаются только следующие Dockerfile-инструкции второй группы:
 

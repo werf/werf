@@ -5,6 +5,8 @@ author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@
 directive_summary: mount
 ---
 
+<!-- TODO: remove legacy page -->
+
 Довольно часто бывают случаи, когда при сборке у вас появляются файлы которые нет необходимости оставлять в образе, и их нужно исключить. Например:
 - Большинство пакетных менеджеров создают в системе кэш пакетов и служебных файлов.
   - [APT](https://wiki.debian.org/Apt) хранит список пакетов в директории `/var/lib/apt/lists/`.

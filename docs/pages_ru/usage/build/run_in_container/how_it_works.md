@@ -3,6 +3,8 @@ title: Принципы работы
 permalink: usage/build/run_in_containers/how_it_works.html
 ---
 
+<!-- TODO: remove legacy page -->
+
 > ПРИМЕЧАНИЕ: werf поддерживает сборку образов с _использованием Docker-сервера_ или _с использованием Buildah_. Поддерживается сборка как Dockerfile-образов, так и stapel-образов через Buildah.
 
 Общая информация о том, как включить Buildah в werf, доступна на странице [режима сборки с использованием Buildah]({{ "/usage/build/buildah_mode.html" | true_relative_url }}).
