@@ -23,16 +23,7 @@ en:
     url: usage/build/building_images_with_stapel/base_image.html
   /usage/deploy: &documentation-usage-deploy
     title: Deploy
-    url: usage/deploy/overview.html
-  /usage/deploy/configuration: &documentation-usage-deploy-configuration
-    title: Configuration
-    url: usage/deploy/configuration/templates.html
-  /usage/deploy/deploy_process: &documentation-usage-deploy-deploy_process
-    title: Deploy process
-    url: usage/deploy/deploy_process/steps.html
-  /usage/deploy/releases: &documentation-usage-deploy-releases
-    title: Releases
-    url: usage/deploy/releases/release.html
+    url: usage/deploy/intro.html
   /usage/cleanup: &documentation-usage-cleanup
     title: Cleanup
     url: usage/cleanup/cr_cleanup.html
@@ -94,16 +85,7 @@ ru:
     title: Сборка образов с помощью Stapel
   /usage/deploy:
     <<: *documentation-usage-deploy
-    title: Выкат
-  /usage/deploy/configuration:
-    <<: *documentation-usage-deploy-configuration
-    title: Конфигурация
-  /usage/deploy/deploy_process:
-    <<: *documentation-usage-deploy-deploy_process
-    title: Процесс деплоя
-  /usage/deploy/releases:
-    <<: *documentation-usage-deploy-releases
-    title: Релизы
+    title: Развертывание
   /usage/cleanup:
     <<: *documentation-usage-cleanup
     title: Очистка

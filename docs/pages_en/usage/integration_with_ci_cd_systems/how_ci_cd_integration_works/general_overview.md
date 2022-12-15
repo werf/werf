@@ -44,13 +44,13 @@ The annotation name depends on the selected CI/CD system and is composed as foll
 
 The [`WERF_ADD_ANNOTATION_PROJECT_GIT="project.werf.io/git": URL`](#werf_add_annotation_project_git) environment variable will be set as a result of running the `werf ci-env` command.
 
-Also, werf can automatically pass/set various other *annotations* by analyzing the CI/CD system as well as *custom annotations and labels*; see the [article for more details]({{ "/usage/deploy/deploy_process/annotating_and_labeling.html" | true_relative_url }}).
+Also, werf can automatically pass/set various other *annotations* by analyzing the CI/CD system as well as *custom annotations and labels*.
 
 ### CI/CD configuration integration
 
 There is a concept of the *environment* in CI/CD systems. The environment defines used host nodes, access parameters, information about the Kubernetes cluster connection, job parameters (e.g., environment variables used), and other data. Typical environments are *development*, *staging*, *testing*, *production*, and *review environments* with support for dynamical names.
 
-werf also uses the concept of an *environment name* in the [deploying process]({{ "usage/deploy/configuration/templates.html#environment" | true_relative_url }}).
+werf also uses the concept of an *environment name* in the [deploying process]({{ "usage/deploy/environments.html#environment" | true_relative_url }}).
 
 The `werf ci-env` command identifies the current environment name of the CI/CD system and passes it to all subsequent werf commands automatically. werf prefers the slugged name of the environment if the CI/CD system exports such a name.
 
