@@ -1,6 +1,7 @@
 ---
 title: Annotating and labeling of chart resources
 permalink: usage/deploy/deploy_process/annotating_and_labeling.html
+published: false # TODO: this belongs to ci-env docs
 ---
 
 ## Auto annotations
