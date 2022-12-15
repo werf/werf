@@ -1,6 +1,6 @@
 ---
-title: Именование
-permalink: usage/deploy/releases/naming.html
+title: Разные окружения
+permalink: usage/deploy/environments.html
 ---
 
 ## Окружение
@@ -14,24 +14,33 @@ permalink: usage/deploy/releases/naming.html
 
 Передача имени окружения является обязательной для операции деплоя и должна быть выполнена либо с помощью параметра `--env` либо на основании данных используемой CI/CD системы (читай подробнее про [интеграцию c CI/CD системами]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html#интеграция-с-настройками-cicd" | true_relative_url }})) определиться автоматически.
 
-## Имя релиза
+### Использование окружения в шаблонах
 
-По умолчанию название релиза формируется по шаблону `[[project]]-[[env]]`. Где `[[ project ]]` — имя [проекта]({{ "reference/werf_yaml.html#имя-проекта" | true_relative_url }}), а `[[ env ]]` — имя [окружения](#окружение).
+Текущее окружение werf можно использовать в шаблонах.
 
-Например, для проекта с именем `symfony-demo` будет сформировано следующее имя релиза в зависимости от имени окружения:
-* `symfony-demo-stage` для окружения `stage`;
-* `symfony-demo-test` для окружения `test`;
-* `symfony-demo-prod` для окружения `prod`.
+Например, вы можете использовать его для создания разных шаблонов для разных окружений:
 
-Имя релиза может быть переопределено с помощью параметра `--release NAME` при деплое. В этом случае werf будет использовать указанное имя как есть, без каких либо преобразований и использования шаблонов.
+{% raw %}
 
-Имя релиза также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.helmRelease`]({{ "/reference/werf_yaml.html#имя-релиза" | true_relative_url }}).
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regsecret
+type: kubernetes.io/dockerconfigjson
+data:
+{{ if eq .Values.werf.env "dev" }}
+  .dockerconfigjson: UmVhbGx5IHJlYWxseSByZWVlZWVlZWVlZWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGx5eXl5eXl5eXl5eXl5eXl5eXl5eSBsbGxsbGxsbGxsbGxsbG9vb29vb29vb29vb29vb29vb29vb29vb29vb25ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubmdnZ2dnZ2dnZ2dnZ2dnZ2dnZ2cgYXV0aCBrZXlzCg==
+{{ else }}
+  .dockerconfigjson: {{ .Values.dockerconfigjson }}
+{{ end }}
+```
 
-### Слагификация имени релиза
+{% endraw %}
 
-Сформированное по шаблону имя Helm-релиза слагифицируется, в результате чего получается уникальное имя Helm-релиза.
+Следует обратить внимание, что значение параметра `--env ENV` доступно не только в шаблонах helm, но и [в шаблонах конфигурации `werf.yaml`]({{ "/reference/werf_yaml_template_engine.html#env" | true_relative_url }}).
 
-Слагификация имени Helm-релиза включена по умолчанию, но может быть отключена указанием параметра [`deploy.helmReleaseSlug=false`]({{ "/reference/werf_yaml.html#имя-релиза" | true_relative_url }}) в файле конфигурации `werf.yaml`.
+Больше информации про сервисные значения доступно [в статье про values]({{ "/usage/deploy/values.html" | true_relative_url }}).
 
 ## Namespace в Kubernetes
 
@@ -51,3 +60,8 @@ permalink: usage/deploy/releases/naming.html
 Сформированное по шаблону имя namespace слагифицируется, чтобы удовлетворять требованиям к [DNS именам](https://www.ietf.org/rfc/rfc1035.txt), в результате чего получается уникальное имя namespace в Kubernetes.
 
 Слагификация имени namespace включена по умолчанию, но может быть отключена указанием параметра [`deploy.namespaceSlug=false`]({{ "/reference/werf_yaml.html#namespace-в-kubernetes" | true_relative_url }}) в файле конфигурации `werf.yaml`.
+
+## Работа с несколькими кластерами Kubernetes
+
+В некоторых случаях, необходима работа с несколькими кластерами Kubernetes для разных окружений. Все что вам нужно, это настроить необходимые [контексты](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters) kubectl для доступа к необходимым кластерам и использовать для werf параметр `--kube-context=CONTEXT`, совместно с указанием окружения.
+
