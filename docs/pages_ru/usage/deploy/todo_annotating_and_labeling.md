@@ -1,6 +1,7 @@
 ---
 title: Аннотации и лейблы для ресурсов чарта
 permalink: usage/deploy/deploy_process/annotating_and_labeling.html
+published: false  # TODO: Статья не нужна в деплое
 ---
 
 ## Автоматические аннотации

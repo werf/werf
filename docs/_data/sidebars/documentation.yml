@@ -704,59 +704,29 @@ entries:
 
           - title: Deploy
             f:
-              - title: Overview
-                url: /usage/deploy/overview.html
+              - title: Introduction
+                url: /usage/deploy/intro.html
 
-              - title: Configuration
-                f:
-                  - title: Chart
-                    url: /usage/deploy/configuration/chart.html
+              - title: Charts
+                url: /usage/deploy/charts.html
 
-                  - title: Templates
-                    url: /usage/deploy/configuration/templates.html
+              - title: Templates
+                url: /usage/deploy/templates.html
 
-                  - title: Values
-                    url: /usage/deploy/configuration/values.html
+              - title: Parametrize templates
+                url: /usage/deploy/values.html
 
-                  - title: Giterminism
-                    url: /usage/deploy/configuration/giterminism.html
+              - title: Multiple environments
+                url: /usage/deploy/environments.html
 
-                  - title: Secrets
-                    url: /usage/deploy/configuration/secrets.html
+              - title: Deployment order
+                url: /usage/deploy/deployment_order.html
 
-                  - title: Chart dependencies
-                    url: /usage/deploy/configuration/chart_dependencies.html
+              - title: Resource tracking
+                url: /usage/deploy/tracking.html
 
-              - title: Deploy process
-                f:
-                  - title: Steps
-                    url: /usage/deploy/deploy_process/steps.html
-
-                  - title: Deployment order
-                    url: /usage/deploy/deploy_process/deployment_order.html
-
-                  - title: Helm hooks
-                    url: /usage/deploy/deploy_process/helm_hooks.html
-
-                  - title: External dependencies
-                    url: /usage/deploy/deploy_process/external_dependencies.html
-
-                  - title: Annotating and labeling of chart resources
-                    url: /usage/deploy/deploy_process/annotating_and_labeling.html
-
-                  - title: Resources adoption
-                    url: /usage/deploy/deploy_process/resources_adoption.html
-
-              - title: Releases
-                f:
-                  - title: Release
-                    url: /usage/deploy/releases/release.html
-
-                  - title: Naming
-                    url: /usage/deploy/releases/naming.html
-
-                  - title: Manage releases
-                    url: /usage/deploy/releases/manage_releases.html
+              - title: Release management
+                url: /usage/deploy/releases.html
 
               - title: Bundles
                 url: /usage/deploy/bundles.html
@@ -920,55 +890,31 @@ entries:
                   - title: Интроспекция стадий
                     url: /usage/build/building_images_with_stapel/stage_introspection.html
 
-          - title: Выкат
+          - title: Развертывание
             f:
-              - title: Обзор
-                url: /usage/deploy/overview.html
+              - title: Введение
+                url: /usage/deploy/intro.html
 
-              - title: Конфигурация
-                f:
-                  - title: Чарт
-                    url: /usage/deploy/configuration/chart.html
+              - title: Чарты
+                url: /usage/deploy/charts.html
 
-                  - title: Шаблоны
-                    url: /usage/deploy/configuration/templates.html
+              - title: Шаблоны
+                url: /usage/deploy/templates.html
 
-                  - title: Данные (values)
-                    url: /usage/deploy/configuration/values.html
+              - title: Параметризация шаблонов
+                url: /usage/deploy/values.html
 
-                  - title: Гитерминизм
-                    url: /usage/deploy/configuration/giterminism.html
+              - title: Разные окружения
+                url: /usage/deploy/environments.html
 
-                  - title: Секреты
-                    url: /usage/deploy/configuration/secrets.html
+              - title: Порядок развертывания
+                url: /usage/deploy/deployment_order.html
 
-                  - title: Зависимости чарта
-                    url: /usage/deploy/configuration/chart_dependencies.html
+              - title: Отслеживание ресурсов
+                url: /usage/deploy/tracking.html
 
-              - title: Процесс деплоя
-                f:
-                  - title: Шаги
-                    url: /usage/deploy/deploy_process/steps.html
-
-                  - title: Helm хуки
-                    url: /usage/deploy/deploy_process/helm_hooks.html
-
-                  - title: Аннотации и лейблы для ресурсов чарта
-                    url: /usage/deploy/deploy_process/annotating_and_labeling.html
-
-                  - title: Принятие ресурсов в релиз
-                    url: /usage/deploy/deploy_process/resources_adoption.html
-
-              - title: Релизы
-                f:
-                  - title: Релиз
-                    url: /usage/deploy/releases/release.html
-
-                  - title: Именование
-                    url: /usage/deploy/releases/naming.html
-
-                  - title: Управление релизами
-                    url: /usage/deploy/releases/manage_releases.html
+              - title: Управление релизами
+                url: /usage/deploy/releases.html
 
               - title: Бандлы
                 url: /usage/deploy/bundles.html

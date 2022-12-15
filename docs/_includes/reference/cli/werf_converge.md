@@ -9,7 +9,7 @@ The result of converge command is an application deployed into Kubernetes for cu
 
 Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either `--env` or `$WERF_ENV` should be specified for command.
 
-Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: [https://werf.io/documentation/usage/deploy/releases/naming.html]({{ "/usage/deploy/releases/naming.html" | true_relative_url }})
+Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: [https://werf.io/documentation/usage/deploy/environments.html]({{ "/usage/deploy/environments.html" | true_relative_url }})
 
 
 {{ header }} Syntax

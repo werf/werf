@@ -24,9 +24,9 @@ werf publishes bundles with the [werf-bundle-publish]({{ "/reference/cli/werf_bu
 
 werf-bundle-publish command consists of:
  - building and publishing needed images into the container registry (the same way werf-converge does);
- - publishing of project's [helm chart]({{ "/usage/deploy/configuration/chart.html" | true_relative_url }}) files into the container registry;
- - saving of passed [helm chart values]({{ "/usage/deploy/configuration/values.html" | true_relative_url }}) params in the published bundle;
- - saving of passed [annotations and labels]({{ "/usage/deploy/deploy_process/annotating_and_labeling.html" | true_relative_url }}) in the published bundle.
+ - publishing of project's [helm chart]({{ "/usage/deploy/charts.html" | true_relative_url }}) files into the container registry;
+ - saving of passed [helm chart values]({{ "/usage/deploy/values.html" | true_relative_url }}) params in the published bundle;
+ - saving of passed annotations and labels in the published bundle.
 
 ### Bundle structure
 
@@ -87,7 +87,7 @@ Bundle published into the container registry could be deployed into the kubernet
 
 [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command used to deploy a published bundle version into the kubernetes. This command **does not need a project git directory** to run, because bundle contains all needed files and images to deploy an application. This command accepts params which is analogous to [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command. For `werf bundle apply` you should explicitly specify Helm release name (`--release`) and namespace to be used for deployment (`--namespace`).
 
-[Values for helm chart]({{ "/usage/deploy/configuration/values.html" | true_relative_url }}), [annotations and labels]({{ "/usage/deploy/deploy_process/annotating_and_labeling.html" | true_relative_url }}) which has been passed to the [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command will be united with the values, annotations and labels, which has been passed during publication of the bundle being applied.
+[Values for helm chart]({{ "/usage/deploy/values.html" | true_relative_url }}), annotations and labels which has been passed to the [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command will be united with the values, annotations and labels, which has been passed during publication of the bundle being applied.
 
 ### Deploy as helm chart dependency
 
