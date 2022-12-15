@@ -99,7 +99,7 @@ func ReleaseHostLock(lock lockgate.LockHandle) error {
 func DefaultLockerOnWait(ctx context.Context) func(lockName string, doWait func() error) error {
 	return func(lockName string, doWait func() error) error {
 		logProcessMsg := fmt.Sprintf("Waiting for locked %q", lockName)
-		return logboek.Context(ctx).LogProcessInline(logProcessMsg).DoError(doWait)
+		return logboek.Context(ctx).Info().LogProcessInline(logProcessMsg).DoError(doWait)
 	}
 }
 
