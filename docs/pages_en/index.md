@@ -58,7 +58,7 @@ editme_button: false
             Find a guide suitable for your project (filter by a programming language, framework, CI/CD system, etc.) and deploy your first real application into the Kubernetes cluster with werf.
         </div>
     </div>
-    <!--#include virtual="/how_to/includes/landing-tiles.html" -->
+    <!--#include virtual="/guides/includes/landing-tiles.html" -->
     <div class="overview__title">Reference</div>
     <div class="overview__step">
         <div class="overview__step-title">Use Reference for structured information about werf configuration and commands</div>
