@@ -1,7 +1,46 @@
 ---
-title: Chart dependencies
-permalink: usage/deploy/configuration/chart_dependencies.html
+title: Charts
+permalink: usage/deploy/charts.html
 ---
+
+The chart is a set of configuration files which describe an application. Chart files reside in the `.helm` directory under the root directory of the project:
+
+```
+.helm/
+  templates/
+    <name>.yaml
+    <name>.tpl
+    <some_dir>/
+      <name>.yaml
+      <name>.tpl
+  charts/
+  secret/
+  values.yaml
+  secret-values.yaml
+```
+
+werf chart has an optional `.helm/Chart.yaml` description file, which is fully compatible with [helm`s `Chart.yaml`](https://helm.sh/docs/topics/charts/) and could contain following content:
+
+```yaml
+apiVersion: v2
+name: mychart
+version: 1.0.0
+dependencies:
+ - name: redis
+   version: "12.7.4"
+   repository: "https://charts.bitnami.com/bitnami" 
+```
+
+By default, werf will use [project name]({{ "/reference/werf_yaml.html#project-name" | true_relative_url }}) from the `werf.yaml` as a chart name, and default version is always `1.0.0`. You can redefine this by placing own `.helm/Chart.yaml` with overrides for chart name or version:
+
+```yaml
+name: mychart
+version: 2.4.6
+```
+
+`.helm/Chart.yaml` is also needed to define [chart dependencies]({{ "/usage/deploy/charts.html#dependent-charts" | true_relative_url }}).
+
+## Dependent charts
 
 **Subchart** is a helm chart that included into the current chart as a dependency. werf allows usage of subcharts the same way [as helm](https://helm.sh/docs/topics/charts/). The chart can include arbitrary number of subcharts. Usage of werf project itself as a subchart in another werf project is not supported for now.
 
@@ -9,7 +48,7 @@ Subcharts are placed in the directory `.helm/charts/SUBCHART_DIR`. Each subchart
 
 During deploy process werf will render, create and track all resources of all subcharts.
 
-## Enable subchart for your project
+### Enable subchart for your project
 
  1. Let's include a `redis` as a dependency for our werf chart using `.helm/Chart.yaml` file:
 
@@ -22,7 +61,7 @@ During deploy process werf will render, create and track all resources of all su
          repository: "https://charts.bitnami.com/bitnami"
       ```
 
-     **NOTE** It is not required to define full `Chart.yaml` with name and version fields as for the standard helm. werf will autogenerate chart name and version based on the `werf.yaml` `project` field settings. See more info in the [chart article]({{ "/usage/deploy/configuration/chart.html" | true_relative_url }}).
+     **NOTE** It is not required to define full `Chart.yaml` with name and version fields as for the standard helm. werf will autogenerate chart name and version based on the `werf.yaml` `project` field settings. See more info in the [chart article]({{ "/usage/deploy/charts.html" | true_relative_url }}).
 
  2. Next it is required to generate `.helm/Chart.lock` using `werf helm dependency update` command from the root of the project:
 
@@ -36,9 +75,9 @@ During deploy process werf will render, create and track all resources of all su
 
 Later during deploy process (with [`werf converge` command]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) or [`werf bundle apply` command]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }})), or during templates rendering (with [`werf render` command]({{ "/reference/cli/werf_render.html" | true_relative_url }})) werf will automatically download all dependencies specified in the lock file `.helm/Chart.lock`.
 
-**NOTE** `.helm/Chart.lock` file must be committed into the git repo, more info in the [giterminism article]({{ "/usage/deploy/configuration/giterminism.html#subcharts-and-giterminism" | true_relative_url }}).
+**NOTE** `.helm/Chart.lock` file must be committed into the git repo due to giterminism.
 
-## Dependencies configuration
+### Dependencies configuration
 
 <!-- Move to reference -->
 
@@ -64,7 +103,7 @@ All Chart Repositories that are used in `.helm/Chart.yaml` should be configured 
 
 werf is compatible with Helm settings, so by default `werf helm dependency` and `werf helm repo` commands use settings from **helm home folder**, `~/.helm`. But you can change it with `--helm-home` option. If you do not have **helm home folder** or want to create another one use `werf helm repo init` command to initialize necessary settings and configure default Chart Repositories.
 
-## Passing values to subcharts
+### Passing values to subcharts
 
 To pass values from parent chart to subchart called `mysubchart` user must define following values in the parent chart:
 
@@ -105,7 +144,7 @@ Only values by keys `mysubchart` and `global` will be available in the subchart 
 
 **NOTE** `secret-values.yaml` files from subcharts will not be used during deploy process. Although secret values from main chart and additional secret values from cli params `--secret-values` will be available in the `.Values` as usually.
 
-## Mapping values from parent chart to subcharts
+### Mapping values from parent chart to subcharts
 
 If you want to pass the values available only in the parent chart to subcharts, then there is an `export-values` directive which mimics (with a few differences) functionality of [import-values](https://helm.sh/docs/topics/charts/#importing-child-values-via-dependencies), but instead of passing values from the subchart to the parent chart it does the opposite: it passes values down from the parent chart to the subchart. Usage is as follows:
 
@@ -154,6 +193,6 @@ Which is an equivalent to:
 
 This will export all the keys found in `.Values.exports.somemap` to the root of subchart values.
 
-## Obsolete requirements.yaml and requirements.lock
+### Obsolete requirements.yaml and requirements.lock
 
 An older way of storing dependencies in the `.helm/requirements.yaml` and `.helm/requirements.lock` files is also supported by the werf, but it is recommended to use `.helm/Chart.yaml` and `.helm/Chart.lock` instead. 

@@ -94,7 +94,7 @@ sidebar: documentation
  2. Запустите `werf helm dependency update .helm` для создания файла `.helm/Chart.lock` и директории `.helm/charts/` в локальной файловой системе.
  3. Коммитните `.helm/Chart.lock` в Git-репозиторий проекта.
 
- werf автоматически скачает указанные сабчарты в кеш и загрузит файлы сабчартов во время команды `werf converge` (и других высокоуровневых командах, которые используют Helm-чарт). Больше информации доступно [в документации]({{ "usage/deploy/configuration/chart_dependencies.html" | true_relative_url }}).
+ werf автоматически скачает указанные сабчарты в кеш и загрузит файлы сабчартов во время команды `werf converge` (и других высокоуровневых командах, которые используют Helm-чарт).
 
 ### 6. Используйте очистку на основе истории Git
 
@@ -282,9 +282,9 @@ werf предоставляет следующие команды compose:
 ### Опциональный параметр env
 
 - Для команд `werf converge`, `werf render` and `werf bundle publish` существует параметр `--env`.
-- `--env` [влияет на имя helm релиза и kubernetes namespace]({{ "/usage/deploy/releases/naming.html" | true_relative_url }}) также как в v1.1.
-  - При указании параметра `--env` имя [helm релиза]({{ "/usage/deploy/releases/release.html" | true_relative_url }}) будет сгенерировано по шаблону `[[ project ]]-[[ env ]]` и namespace в kubernetes будет сгенерирован по такому же шаблону `[[ project ]]-[[ env ]]` — так же как в версии v1.1.
-  - Когда параметр `--env` не указан, werf будет использовать шаблон `[[ project ]]` для генерации имени [helm релиза]({{ "/usage/deploy/releases/release.html" | true_relative_url }}) и такой же шаблон `[[ project ]]` для генерации namespace в kubernetes.
+- `--env` [влияет на имя helm релиза и kubernetes namespace]({{ "/usage/deploy/releases.html#имя-релиза" | true_relative_url }}) также как в v1.1.
+  - При указании параметра `--env` имя [helm релиза]({{ "/usage/deploy/releases.html" | true_relative_url }}) будет сгенерировано по шаблону `[[ project ]]-[[ env ]]` и namespace в kubernetes будет сгенерирован по такому же шаблону `[[ project ]]-[[ env ]]` — так же как в версии v1.1.
+  - Когда параметр `--env` не указан, werf будет использовать шаблон `[[ project ]]` для генерации имени [helm релиза]({{ "/usage/deploy/releases.html" | true_relative_url }}) и такой же шаблон `[[ project ]]` для генерации namespace в kubernetes.
 
 ### Новая команда werf-render
 
@@ -314,7 +314,7 @@ werf предоставляет следующие команды compose:
   - Файл `.helm/Chart.yaml` берётся из git репозитория проекта, если он существует.
   - Поле `metadata.name` перезаписывается именем проекта из `werf.yaml`.
   - Поле `metadata.version` устанавливается в `1.0.0`, если оно явно не определено.
-- Добавлено [сервисное значение `.Values.werf.version`]({{ "/usage/deploy/configuration/values.html#сервисные-данные" | true_relative_url }}) с версией утилиты werf, которая используется.
+- Добавлено [сервисное значение `.Values.werf.version`]({{ "/usage/deploy/values.html#сервисные-данные" | true_relative_url }}) с версией утилиты werf, которая используется.
 - Поддерживается установка начального количества реплик, когда активен режим HPA для Deployment и других типов ресурсов. Необходимо установить аннотацию `"werf.io/replicas-on-creation": NUM` и убрать явное определение `spec.replicas` в шаблонах в таком случае.
   - `spec.replicas` переопределяет `werf.io/replicas-on-creation`.
   - Данная аннотация особенно полезна при использовании HPA, [в данной статье описано почему]({{ "/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
@@ -326,7 +326,7 @@ werf предоставляет следующие команды compose:
 - Обычно директория `.helm/charts/` должна быть добавлена в `.gitignore`.
 - Однако werf позволяет хранить зависимые чарты и в директории `.helm/charts`.
   - Данные чарты перезапишут автоматически загруженные по `.helm/Chart.lock` чарты.
-- См. больше информации [по зависимым чартам]({{ "/usage/deploy/configuration/chart_dependencies.html" | true_relative_url }}) и [гитерминизму]({{ "/usage/deploy/configuration/giterminism.html#сабчарты-и-гитерминизм" | true_relative_url }}).
+- См. больше информации [по зависимым чартам]({{ "/usage/deploy/charts.html" | true_relative_url }}).
 
 #### Удалена команда werf-helm-deploy-chart
 
@@ -336,11 +336,11 @@ werf предоставляет следующие команды compose:
 
 - Команда [`werf helm template`]({{ "/reference/cli/werf_helm_template.html" | true_relative_url }}) может быть использована для рендера локальных чартов даже при использовании секретов (функции шаблонов `werf_secret_file`).
 - Файлы секретов полностью поддерживаются командами `werf helm *`.
-- [Дополнительные аннотации и лейблы]({{ "/usage/deploy/deploy_process/annotating_and_labeling.html" | true_relative_url }}) полностью поддерживаются командами `werf helm *` (опции `--add-annotation` и `--add-label`).
+- Дополнительные аннотации и лейблы полностью поддерживаются командами `werf helm *` (опции `--add-annotation` и `--add-label`).
 
 #### Изменён формат сервисных значений
 
-Удалено [сервисное значение]({{ "/usage/deploy/configuration/values.html#сервисные-данные" | true_relative_url }}) `.Values.global.werf.image`, вместо него используется `.Values.werf.image`.
+Удалено [сервисное значение]({{ "/usage/deploy/values.html#сервисные-данные" | true_relative_url }}) `.Values.global.werf.image`, вместо него используется `.Values.werf.image`.
 
 #### Процесс деплоя
 

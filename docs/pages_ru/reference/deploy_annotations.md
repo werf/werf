@@ -22,7 +22,7 @@ toc: false
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — включить логирование вывода только для указанных контейнеров ресурса.
  - [`werf.io/show-service-messages`](#show-service-messages) — включить вывод сервисных сообщений и событий Kubernetes для данного ресурса.
 
-Больше информации о том, что такое чарт, шаблоны и пр. доступно в [главе про Helm]({{ "usage/deploy/overview.html" | true_relative_url }}).
+Больше информации о том, что такое чарт, шаблоны и пр. доступно в [главе про Helm]({{ "usage/deploy/intro.html" | true_relative_url }}).
 
 ## Resource weight
 
@@ -36,7 +36,7 @@ toc: false
 
 Этот параметр задает вес ресурсов, определяя порядок их развертывания. Сначала werf группирует ресурсы в соответствии с их весом, а затем последовательно развертывает их, начиная с группы с наименьшим весом. В этом случае werf не будет приступать к развертыванию следующей группы ресурсов, пока развертывание предыдущей не завершено успешно.
 
-Дополнительная информация доступна в разделе [Порядок развертывания]({{ "/usage/deploy/deploy_process/deployment_order.html" | true_relative_url }}).
+Дополнительная информация доступна в разделе [Порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }}).
 
 ## External dependency resource
 
@@ -48,7 +48,7 @@ toc: false
 
 Задает внешнюю зависимость для ресурса. Ресурс с аннотацией будет развернут только после создания и готовности внешней зависимости.
 
-Дополнительная информация доступна в разделе [Внешние зависимости]({{ "/usage/deploy/deploy_process/external_dependencies.html" | true_relative_url }}).
+Дополнительная информация доступна в разделе [Внешние зависимости]({{ "/usage/deploy/deployment_order.html#внешние-зависимости" | true_relative_url }}).
 
 ## External dependency namespace
 
@@ -56,7 +56,7 @@ toc: false
 
 Указывает пространство имен для внешней зависимости, заданной [соответствующей аннотацией](#external-dependency-resource). Префикс `<any-name>` должен быть таким же, как у аннотации, определяющей внешнюю зависимость.
 
-Дополнительная информация доступна в разделе [Внешние зависимости]({{ "/usage/deploy/deploy_process/external_dependencies.html" | true_relative_url }}).
+Дополнительная информация доступна в разделе [Внешние зависимости]({{ "/usage/deploy/deployment_order.html#внешние-зависимости" | true_relative_url }}).
 
 ## Replicas on creation
 
