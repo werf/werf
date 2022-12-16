@@ -3,11 +3,12 @@ title: CI/CD workflows
 permalink: usage/integration_with_ci_cd_systems/ci_cd_workflows.html
 ---
 
+This article proposes several strategies for the whole workflow, and also discusses rollout options to different environments individually. The workflows are discussed on a principle level without reference to the CI/CD system, while the actual configuration can be found in the instructions:
+
+- [GitLab CI/CD]({{ "/how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html" | true_relative_url }}).
+- [GitHub Actions]({{ "/how_to/integration_with_ci_cd_systems/github_actions/workflows.html" | true_relative_url }}).
+
 ## Ready-made workflow configurations
-
-In this section, we offer the user the selection of ready-made workflow configurations tailored to various use cases. These configurations are made up of the workflow blocks listed above. In the documentation, these ready-made configurations can also be referred to as workflow strategies.
-
-The exact configuration for each type of the CI/CD system you can find in the documentation for that system. For example, GitLab CI/CD: link, GitHub Actions: link.
 
 ### №1 Fast and Furious
 
