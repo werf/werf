@@ -15,29 +15,28 @@ We also recommend you to read one the following guides about configuring the spe
 
 ## Basics
 
-> NOTICE: In the text below, the term "git" can be interpreted as a common name for any version control system. However, werf supports only the Git version control system. We suppose our readers are familiar with the following git-related terms: branch, tag, master, commit, merge, rebase, fast-forward merge, and the git push-force procedure. To fully appreciate this article, readers are advised to get a good understanding of these terms.
-
-### Environment
+### Environments
 
 #### Production
 
 Generally, end users interact with an application in the production environment. It is also the target environment for all application code changes made by application developers.
 
-Also, there are so-called _production-like_ environments. Production-like environments are separate from production but have the same hardware and software configuration, network infrastructure, operating system, software versions, etc. In the real world, there may be some differences, though. Still, each project defines its acceptable risks related to the difference between production-like and production environments. Examples of production-like environments – [staging](#staging) and [testing](#testing) – are provided below.
+#### Production-like
 
-#### Staging
+Production-like environments are separate from production but have the same hardware and software configuration, network infrastructure, operating system, software versions, etc. In the real world, there may be some differences, though. Still, each project defines its acceptable risks related to the difference between production-like and production environments. 
+##### Staging
 
-Staging is a [production-like environment](#production) serving as a playground to examine your application before deploying it to production. Also, staging is the place to test new business functionality by managers, testers, and customers. End users do not interact with the staging environment in any way.
+Staging is an environment serving as a playground to examine your application before deploying it to production. Also, staging is the place to test new business functionality by managers, testers, and customers. End users do not interact with the staging environment in any way.
 
 If your application uses some external services, then staging is the only environment typically (besides the production itself) that uses the same set of external services APIs and versions.
 
-#### Testing
+##### Testing
 
-Testing is a [production-like environment](#production) with the following goal: to reveal problems with the new version of an application that may arise in the production environment. Some long-running application tests may use this environment to perform full-fledged application testing in a production-like environment. The higher the difference between testing and production environments, the higher the risk of deploying a buggy application to the production environment. That's why we recommend making a production-like environment as close as possible to a production one (same software versions, libraries, operating system, IP-addresses and ports, hardware, etc.).
+Testing is an environment with the following goal: to reveal problems with the new version of an application that may arise in the production environment. Some long-running application tests may use this environment to perform full-fledged application testing in a production-like environment. The higher the difference between testing and production environments, the higher the risk of deploying a buggy application to the production environment. That's why we recommend making a production-like environment as close as possible to a production one (same software versions, libraries, operating system, IP-addresses and ports, hardware, etc.).
 
 #### Review
 
-Review is a dynamic (temporary) environment used by application developers to test newly written code and conduct experiments not allowed in [production-like environments](#production).
+Review is a dynamic (temporary) environment used by application developers to test newly written code and conduct experiments not allowed in [production-like environments](#production-like).
 
 It is possible to dynamically create an arbitrary number of review environments (as resources permit). Application developer usually creates and terminates such an environment using a CI/CD system. Also, a review environment could be automatically removed after a period of inactivity.
 
@@ -78,17 +77,9 @@ You can run a pipeline manually by one of the following methods:
  - By assigning a label in a CI/CD system (e.g., GitLab CI/CD or GitHub Actions). A label is usually assigned to/withdrawn from the pull request by the user or automatically by the CI/CD system while the pipeline is running.
    - For example, the user assigns the "run tests" label to his pull request, and the CI/CD system automatically triggers the corresponding pipeline. While this pipeline is running, the "run tests" label is revoked from the pull request. Then the user can assign this label again to restart the process,  and so on.
    - Label serves as an alternative to buttons or is used in cases when the CI/CD system does not support buttons (e.g., GitHub Actions).
-   For review environments, assigning a label by the user is a signal to activate the review environment, and removing it (manually or automatically) is a signal to deactivate it. This option will be discussed in more detail (later) (#automatically-deploy-to-review-using-a-pull-request-manual-triggering).
+   For review environments, assigning a label by the user is a signal to activate the review environment, and removing it (manually or automatically) is a signal to deactivate it.
  - By sending a request to the API of the CI/CD system (for example, via HTTP at a specific url in GitHub Actions).
 
 ### The testing stage
 
 To implement a proper CI/CD, it is critical to automatically get instant feedback when making changes to the project codebase. The testing stage can be divided into two nominal stages: during the primary stage, tests run fast and cover most of the functions; during the secondary stage, tests can run for a prolonged time and verify more aspects of the application. Generally, primary tests are run automatically, and passing them is a prerequisite for changes to be released.
-
-## Further reading
-
-We recommend you to read the guide for your specific CI/CD system:
- - The [GitLab CI/CD]({{ "how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html" | true_relative_url }}) guide.
- - The [GitHub Actions]({{ "how_to/integration_with_ci_cd_systems/github_actions/workflows.html" | true_relative_url }}) guide.
-
-If you want to learn more about how to create a workflow, or no instructions exist for your particular CI/CD system, then you can read the following sections where the [workflow components](#workflow-components-for-various-environments) and [ready-made workflow configurations](#ready-made-workflow-configurations) are defined. After reading them, you will be able to choose a ready-made configuration (or create your own) and implement it for your CI/CD system using werf.
