@@ -136,7 +136,7 @@ func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBase
 	if len(imageBaseConfig.Git.Local) != 0 {
 		localGitRepo := opts.GiterminismManager.LocalGitRepo()
 
-		if metaConfig.GitWorktree.GetForceShallowClone() {
+		if !metaConfig.GitWorktree.GetForceShallowClone() {
 			isShallowClone, err := localGitRepo.IsShallowClone(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("check shallow clone failed: %w", err)
