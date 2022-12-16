@@ -1,5 +1,5 @@
 ---
-title: CI/CD basics
+title: CI/CD workflow basics
 permalink: usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
 ---
 
