@@ -1,5 +1,5 @@
 ---
-title: Основы организации CI/CD
+title: Основы рабочего процесса CI/CD
 permalink: usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
 ---
 
