@@ -3,204 +3,298 @@ title: Чарты
 permalink: usage/deploy/charts.html
 ---
 
-Чарт — набор конфигурационных файлов описывающих приложение. Файлы чарта находятся в папке `.helm`, в корневой папке проекта:
+## Чарт
+
+Чарт в werf это Helm-чарт с некоторыми дополнительными возможностями. А Helm-чарт это распространяемый пакет с Helm-шаблонами, values-файлами и некоторыми метаданными. Из чарта формируются конечные Kubernetes-манифесты для дальнейшего развертывания.
+
+Типичный чарт выглядит следующим образом:
 
 ```
-.helm/
+chartname/
+  charts/                   
+    dependent-chart/
+      # ...
   templates/
-    <name>.yaml
-    <name>.tpl
-    <some_dir>/
-      <name>.yaml
-      <name>.tpl
-  charts/
-  secret/
+    deployment.yaml  
+    _helpers.tpl
+    NOTES.txt
+  crds/
+    crd.yaml
+  secret/                   # Только в werf
+    some-secret-file
   values.yaml
-  secret-values.yaml
+  values.schema.json
+  secret-values.yaml        # Только в werf
+  Chart.yaml
+  Chart.lock
+  README.md
+  LICENSE
+  .helmignore
 ```
 
-Чарт werf может содержать опциональный файл `.helm/Chart.yaml` с описанием чарта, который полностью совместим с [`Chart.yaml`](https://helm.sh/docs/topics/charts/) и может содержать примерно следующее:
+Подробнее:
+
+- `charts/*` — зависимые чарты, чьи Helm-шаблоны/values-файлы используются для формирования манифестов наравне с Helm-шаблонами/values-файлами родительского чарта;
+
+- `templates/*.yaml` — Helm-шаблоны, из которых формируются Kubernetes-манифесты;
+
+- `templates/*.tpl` — файлы с Helm-шаблонами для использования в других Helm-шаблонах. Результат шаблонизации этих файлов игнорируется;
+
+- `templates/NOTES.txt` — werf отображает содержимое этого файла в терминале в конце каждого удачного развертывания;
+
+- `crds/*.yaml` — [Custom Resource Definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#customresourcedefinitions), которые развертываются до развертывания манифестов в `templates`;
+
+- `secret/*` — (только в werf) зашифрованные файлы, расшифрованное содержимое которых можно подставлять в Helm-шаблоны;
+
+- `values.yaml` — файлы с декларативной конфигурацией для использования в Helm-шаблонах. Конфигурация в них может переопределяться переменными окружения, аргументами командной строки или другими values-файлами;
+
+- `values.schema.json` — JSON-схема для валидации `values.yaml`;
+
+- `secret-values.yaml` — (только в werf) зашифрованный файл с декларативной конфигурацией, аналогичный `values.yaml`. Его расшифрованное содержимое объединяется с `values.yaml` во время формирования манифестов;
+
+- `Chart.yaml` — основная конфигурация и метаданные чарта;
+
+- `Chart.lock` — lock-файл, защищающий от нежелательного изменения/обновления зависимых чартов;
+
+- `README.md` — документация чарта;
+
+- `LICENSE` — лицензия чарта;
+
+- `.helmignore` — список файлов в директории чарта, которые не нужно включать в чарт при его публикации.
+
+### Основной чарт
+
+При запуске команд вроде `werf converge` или `werf render` werf по умолчанию использует чарт, лежащий в директории `<корень Git-репозитория>/.helm`. Этот чарт называют основным чартом.
+
+Директорию с основным чартом можно изменить директивой `deploy.helmChartDir` файла `werf.yaml`.
+
+Если в основном чарте нет файла `Chart.yaml`, то werf использует имя проекта из `werf.yaml` в качестве имени чарта и версию чарта `1.0.0`.
+
+Если вы хотите использовать чарт из OCI/HTTP-репозитория вместо локального чарта или разворачивать несколько чартов сразу, то просто укажите интересующие вас чарты как зависимые для основного чарта. Используйте для этого директиву `dependencies` файла `Chart.yaml`.
+
+### Конфигурация чарта
+
+Основной конфигурационный файл чарта — `Chart.yaml`. В нём указываются имя, версия и другие параметры чарта, а также настраиваются зависимые чарты, например:
 
 ```yaml
+# Chart.yaml:
 apiVersion: v2
 name: mychart
 version: 1.0.0
 dependencies:
- - name: redis
-   version: "12.7.4"
-   repository: "https://charts.bitnami.com/bitnami" 
+  - name: nginx
+    version: 1.2.3
+    repository: https://example.com/charts
 ```
 
-По умолчанию werf будет использовать [имя проекта]({{ "/reference/werf_yaml.html#имя-проекта" | true_relative_url }}) из `werf.yaml` в качестве имени чарта. Версия чарта по умолчанию: `1.0.0`. Это можно переопределить создав файл `.helm/Chart.yaml` с явным переопределением имени чарта или его версии:
+### Версия
+
+У чарта должна быть версия согласно стандарту ["Семантическое версионирование 2.0"](https://semver.org/spec/v2.0.0.html). Версия указывается в директиве `version` файла `Chart.yaml`, например:
 
 ```yaml
+# Chart.yaml:
 name: mychart
-version: 2.4.6
+version: 1.2.3
+version: 1.2.3-alpha.1+d2fc5
+version: 1.2.3-anything
 ```
 
-`.helm/Chart.yaml` также требуется для определения [зависимостей чарта]({{ "/usage/deploy/charts.html" | true_relative_url }}).
+## Зависимости от других чартов
 
-## Зависимые чарты
+Чарт может зависеть от других чартов. В таком случае манифесты сформируются и для родительского и для зависимых чартов, после чего объединятся вместе для дальнейшего развертывания. Зависимые чарты настраиваются директивой `dependencies` файла `Chart.yaml`, например:
 
-**Сабчарт** — это helm-чарт, который включён в текущий чарт в качестве зависимости. werf позволяет использование сабчартов тем же способом [как helm](https://helm.sh/docs/topics/charts/). Чарт может включать произвольное количество зависимых сабчартов. Использование проекта werf в качестве сабчарта в другом проекте werf на данный момент не поддерживается.
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend
+  version: "~1.2.3"
+  repository: https://example.com/charts
+```
 
-Сабчарты располагаются в директории `.helm/charts/SUBCHART_DIR`. Каждый сабчарт в директории `SUBCHART_DIR` сам по себе является чартом и имеет схожую файловую структуру (каждый сабчарт может в свою очередь также содержать сабчарт).
+Не рекомендуется указывать зависимые чарты в `requirements.yaml` вместо `Chart.yaml`. Файл `requirements.yaml` устарел.
 
-Во время процесса деплоя werf рендерит, создает и отслеживает все ресурсы всех сабчартов.
+### Name, alias
 
-### Включение сабчарта для проекта
+`name` — оригинальное имя зависимого чарта, указанное разработчиком чарта.
 
-1. Определим зависимость `redis` для нашего werf чарта с помощью файла `.helm/Chart.yaml`:
+Если нужно подключить несколько чартов с одинаковым `name` или подключить один и тот же чарт несколько раз, то используйте директиву `alias`, чтобы поменять имена подключаемых чартов, например:
+
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend
+  alias: main-backend
+- name: backend
+  alias: secondary-backend
+```
+
+### Version
+
+`version` — ограничение подходящих версий зависимого чарта, например:
+
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend
+  version: "1.2.3"   # Использовать 1.2.3
+  version: "~1.2.3"  # Использовать последнюю 1.2.x, но минимум 1.2.3
+  version: "~1"      # Использовать последнюю 1.x.x
+  version: "^1.2.3"  # Использовать последнюю 1.x.x, но минимум 1.2.3
+  version: ">= 1.2.3 < 2.0.0 && != 1.2.4"
+```
+
+Полную справку по синтаксису ограничения версии можно найти [здесь](https://github.com/Masterminds/semver#checking-version-constraints).
+
+### Repository
+
+`repository` — путь к источнику чартов, в котором можно найти указанный зависимый чарт, например:
+
+```yaml
+# Chart.yaml:
+dependencies:  
+- name: mychart
+  # OCI-репозиторий (рекомендуется):
+  repository: oci://example.org/myrepo
+  # HTTP-репозиторий:
+  repository: https://example.org/myrepo
+  # Короткое имя репозитория (если репозиторий добавлен через
+  # `werf helm repo add shortreponame`):
+  repository: alias:myrepo
+  # Короткое имя репозитория (альтернативный синтаксис)
+  repository: "@myrepo"
+  # Локальный чарт из произвольного места:
+  repository: file://../mychart
+  # Для локального чарта из "charts/" репозиторий не указывается:
+  # repository:
+```
+
+### Condition, tags
+
+По умолчанию все зависимые чарты включены. Для произвольного включения/выключения чартов можно использовать директиву `condition`. Пример:
+
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend 
+  # Чарт будет включен, если .Values.backend.enabled == true:
+  condition: backend.enabled  
+```
+
+Также можно использовать директиву `tags` для включения/выключения целых групп чартов сразу. Пример:
+
+```yaml
+# Chart.yaml:
+dependencies:
+# Включить backend, если .Values.tags.app == true:
+- name: backend
+  tags: ["app"]
+# Включить frontend, если .Values.tags.app == true:
+- name: frontend
+  tags: ["app"]
+# Включить database, если .Values.tags.database == true:
+- name: database
+  tags: ["database"]
+```
+
+### Export-values, import-values
+
+`export-values` — (только в werf) автоматический проброс указанных Values из родительского чарта в зависимый. Пример:
+
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend
+  export-values:
+  # Автоматически подставлять .Values.werf в .Values.backend.werf:
+  - parent: werf
+    child: werf
+  # Автоматически подставлять .Values.exports.myMap.* в .Values.backend.*:
+  - parent: exports.myMap
+    child: .
+  # Более короткая форма предыдущего экспорта:  
+  - myMap
+```
+
+`import-values` — автоматический проброс указанных Values из зависимого чарта в родительский, т. е. в обратном направлении. Пример:
+
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend
+  import-values:
+  # Автоматически подставлять .Values.backend.from в .Values.to:
+  - child: from
+    parent: to
+  # Автоматически подставлять .Values.backend.exports.myMap.* в .Values.*:
+  - child: exports.myMap
+    parent: .
+  # Более короткая форма предыдущего импорта:  
+  - myMap
+```
+
+### Добавление/обновление зависимых чартов
+
+Рекомендуемый способ добавления/обновления зависимых чартов:
+
+1. Добавить/обновить конфигурацию зависимого чарта в `Chart.yaml`;
+
+2. При использовании приватного OCI или HTTP-репозитория c зависимым чартом добавьте OCI или HTTP-репозиторий вручную с `werf helm repo add`, указав нужные опции для доступа к ним;
+
+3. Вызовите `werf helm dependency update`, который обновит `Chart.lock`;
+
+4. Закоммитите обновлённые `Chart.yaml` и `Chart.lock` в Git.
+
+Также рекомендуется добавить `.helm/charts/**.tgz` в `.gitignore`.
+
+## Публикация
+
+Рекомендуемый способ публикации чарта — публикация бандла (который по существу и является чартом) в OCI-репозиторий:
+
+1. Разместите чарт в `.helm`;
+
+2. Если ещё нет `werf.yaml`, то создайте его:
    
    ```yaml
-   # .helm/Chart.yaml
-   apiVersion: v2
-   dependencies:
-     - name: redis
-       version: "12.7.4"
-       repository: "https://charts.bitnami.com/bitnami"
+   # werf.yaml:
+   project: mychart
+   configVersion: 1
    ```
-   
-    **ЗАМЕЧАНИЕ.** Необязательно определять полный `Chart.yaml` с именем и версией как для стандартного helm-чарта. werf генерирует имя чарта и версию на основе директивы `project` из файла `werf.yaml`. См. больше информации [в статье про чарты]({{ "/usage/deploy/charts.html" | true_relative_url }}).
 
-2. Далее требуется сгенерировать `.helm/Chart.lock` с помощью команды `werf helm dependency update`.
+3. Опубликуйте содержимое `.helm` как чарт `example.org/charts/mychart:v1.0.0` в виде OCI-образа:
    
    ```shell
-   werf helm dependency update .helm
+   werf bundle publish --repo example.org/charts --tag v1.0.0
    ```
-   
-    Данная команда создаст `.helm/Chart.lock` и скачает все зависимости в директорию `.helm/charts`.
 
-3. Файл `.helm/Chart.lock` следует коммитнуть в git репозиторий, а директорию `.helm/charts` можно добавить в `.gitignore`.
+### Публикация нескольких чартов из одного Git-репозитория
 
-Позднее, во время процесса деплоя (командой [`werf converge`]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) или [`werf bundle apply`]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }})) или рендеринга шаблонов (командой [`werf render`]({{ "/reference/cli/werf_render.html" | true_relative_url }})), werf автоматически скачает все зависимости указанные в lock-файле `.helm/Chart.lock`.
+Разместите `.helm` с содержимым чарта и соответствующий ему `werf.yaml` в отдельную директорию для каждого чарта:
 
-**ЗАМЕЧАНИЕ.** Файл `.helm/Chart.lock` должен быть коммитнут в git репозиторий для гитерминизма.
-
-### Конфигурация зависимостей
-
-<!-- Move to reference -->
-
-Опишем формат зависимостей в файле `.helm/Chart.yaml`.
-
-- `name` — имя чарта, которое должно совпадать с именем (параметр `name`) в файле Chart.yaml соответствующего чарта — зависимости.
-- `version` — версия чарта согласно схеме семантического версионирования, либо диапазон версий.
-- `repository` — URL **репозитория чартов**. Helm ожидает, что добавив `/index.yaml` к URL, он получит список чартов репозитория. Значение `repository` может быть псевдонимом, который в этом случае должен начинаться с префикса `alias:` или `@`.
-
-Файл `.helm/Chart.lock` содержит точные версии прямых зависимостей, версии зависимостей прямых зависимостей и т.д.
-
-Для работы с файлом зависимостей существуют команды `werf helm dependency`, которые упрощают синхронизацию между желаемыми зависимостями и фактическими зависимостями, указанными в папке чарта:
-
-* [werf helm dependency list]({{ "reference/cli/werf_helm_dependency_list.html" | true_relative_url }}) — проверка зависимостей и их статуса.
-* [werf helm dependency update]({{ "reference/cli/werf_helm_dependency_update.html" | true_relative_url }}) — обновление папки `.helm/charts` согласно содержимому файла `.helm/Chart.yaml`.
-* [werf helm dependency build]({{ "reference/cli/werf_helm_dependency_build.html" | true_relative_url }}) — обновление `.helm/charts` согласно содержимому файла `.helm/Chart.lock`.
-
-Все репозитории чартов, используемые в `.helm/Chart.yaml`, должны быть настроены в системе. Для работы с репозиториями чартов можно использовать команды `werf helm repo`:
-
-* [werf helm repo add]({{ "reference/cli/werf_helm_repo_add.html" | true_relative_url }}) — добавление репозитория чартов.
-* [werf helm repo index]({{ "reference/cli/werf_helm_repo_index.html" | true_relative_url }}).
-* [werf helm repo list]({{ "reference/cli/werf_helm_repo_list.html" | true_relative_url }}) — вывод списка существующих репозиториев чартов.
-* [werf helm repo remove]({{ "reference/cli/werf_helm_repo_remove.html" | true_relative_url }}) — удаление репозитория чартов.
-* [werf helm repo update]({{ "reference/cli/werf_helm_repo_update.html" | true_relative_url }}) — обновление локального индекса репозиториев чартов.
-
-werf совместим с настройками Helm, поэтому по умолчанию команды `werf helm dependency` и `werf helm repo` используют настройки из папки конфигурации Helm в домашней папке пользователя, — `~/.helm`. Вы можете указать другую папку с помощью параметра `--helm-home`. Если у вас нет папки `~/.helm` в домашней папке, либо вы хотите создать другую, то вы можете использовать команду `werf helm repo init` для инициализации необходимых настроек и конфигурации репозитория чартов по умолчанию.
-
-### Передача values в сабчарты
-
-Чтобы передать данные из родительского чарта в сабчарт `mysubchart` необходимо определить следующие [values]({{ "/usage/deploy/values.html" | true_relative_url }}) в родительском чарте:
-
-```yaml
-mysubchart:
-  key1:
-    key2:
-    - key3: value
+```
+chart1/
+  .helm/
+  werf.yaml
+chart2/
+  .helm/
+  werf.yaml
 ```
 
-В сабчарте `mysubchart` эти данные можно использовать с помощью обращения к соответствующим параметрам без указания ключа `mysubchart`:
+Теперь опубликуйте каждый чарт по отдельности:
 
-{% raw %}
+```shell
+cd chart1
+werf bundle publish --repo example.org/charts --tag v1.0.0
 
-```yaml
-{{ .Values.key1.key2[0].key3 }}
+cd ../chart2
+werf bundle publish --repo example.org/charts --tag v1.0.0
 ```
 
-{% endraw %}
+### .helmignore
 
-Данные, определенные глобально в ключе верхнего уровня `global`, также доступны в сабчартах:
+Файл `.helmignore`, находящийся в корне чарта, может содержать фильтры по именам файлов, при соответствии которым файлы *не будут добавляться* в чарт при публикации. Формат правил такой же, как и в [.gitignore](https://git-scm.com/docs/gitignore), за исключением:
 
-```yaml
-global:
-  database:
-    mysql:
-      user: user
-      password: password
-```
+- `**` не поддерживается;
 
-Обращаться к ним необходимо как обычно:
+- `!` в начале строки не поддерживается;
 
-{% raw %}
-
-```yaml
-{{ .Values.global.database.mysql.user }}
-```
-
-{% endraw %}
-
-В сабчарте `mysubchart` будут доступны только данные ключей `mysubchart` и `global`.
-
-**ЗАМЕЧАНИЕ** Файлы `secret-values.yaml` сабчартов не будут использоваться во время процесса деплоя, несмотря на то, что данные секретов из главного чарта и данные переданные через параметр `--secret-values` будут доступны через массив `.Values` как обычно.
-
-### Передача динамических values из родительского чарта в сабчарты
-
-Если вы хотите передать values, доступные только в родительском чарте, в сабчарты, то вам поможет директива `export-values`, которая имитирует (с небольшими отличиями) поведение [import-values](https://helm.sh/docs/topics/charts/#importing-child-values-via-dependencies), только вместо передачи values из сабчарта в родительский чарт она делает обратное: передает values в сабчарт из родительского чарта. Пример использования:
-
-```yaml
-# .helm/Chart.yaml
-apiVersion: v2
-dependencies:
-  - name: backend
-    version: 1.0.0
-    export-values:
-    - parent: werf.image.backend
-      child: backend.image
-```
-
-Таким образом мы передадим в сабчарт всё, что доступно в `.Values.werf.image.backend` родительского чарта. В нашем случае это будет строка с репозиторием, именем и тегом образа `backend`, описанного в `werf.yaml`, который может выглядеть так: `example.org/backend/<имя_тега>`. В сабчарте эта строка станет доступна через `.Values.backend.image`:
-
-{% raw %}
-
-```yaml
-# .helm/charts/backend/app.yaml
-...
-spec:
-  template:
-    spec:
-      containers:
-      - name: backend
-        image: {{ .Values.backend.image }}  # Ожидаемый результат: `image: example.org/backend:<имя_тега>`
-```
-
-{% endraw %}
-
-В отличие от YAML-якорей `export-values` будет работать с динамически выставляемыми values (сервисные данные werf), с переданными через командную строку values (`--set` и пр.) и с секретными values.
-
-Также доступна альтернативная укороченная форма `export-values`, которая работает только для словарей (maps):
-
-```yaml
-    export-values:
-    - "someMap"
-```
-
-Это будет эквивалентно следующей полной форме `export-values`:
-
-```yaml
-    export-values:
-    - parent: exports.somemap
-      child: .
-```
-
-Так в корень values сабчарта будут экспортированы все ключи, найденные в словаре `.Values.exports.somemap`.
-
-### Устаревшие файлы requirements.yaml и requirements.lock
-
-Устаревший формат описания зависимостей через файлы `.helm/requirements.yaml` и `.helm/requirements.lock` тоже поддерживается werf. Однако рекомендуется переходить на `.helm/Chart.yaml` и `.helm/Chart.lock`.
+- `.helmignore` не исключает сам себя по умолчанию.
