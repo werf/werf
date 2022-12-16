@@ -66,7 +66,7 @@ docker login registry.mydomain.org/application -u USER -p PASSWORD
 
 ### Configure the destination environment for werf
 
-Typically, an application is deployed into different [environments]({{ "how_to/ci_cd_workflow_basics.html#environment" | true_relative_url }}) (`production`, `staging`, `testing`, etc.).
+Typically, an application is deployed into different [environments]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#environment" | true_relative_url }}) (`production`, `staging`, `testing`, etc.).
 
 werf supports the optional `--env` param (or the `WERF_ENV` environment variable) that specifies the name of the environment in use. This environment name affects the [Kubernetes namespace]({{ "/usage/deploy/environments.html#kubernetes-namespace" | true_relative_url }}) and the [Helm release name]({{ "/usage/deploy/releases.html#release-name" | true_relative_url }}). It is recommended to find out the name of the environment as part of the CI/CD job (for example, using built-in environment variables of your CI/CD system) and set the werf `--env` parameter accordingly.
 
@@ -135,6 +135,6 @@ export WERF_ENABLE_PROCESS_EXTERMINATOR=1
 
 [This section]({{ "reference/deploy_annotations.html" | true_relative_url }}) shows you how to control output during the deploy process.
 
-You can also check out the [CI/CD workflow basics article]({{ "how_to/ci_cd_workflow_basics.html" | true_relative_url }}) that describes setting up your CI/CD workflows in a variety of ways.
+You can also check out the [CI/CD workflow basics article]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html" | true_relative_url }}) that describes setting up your CI/CD workflows in a variety of ways.
 
 You may find a guide suitable for you project in the [guides section](/guides.html). These guides also contain detailed information about setting up specific CI/CD systems.
