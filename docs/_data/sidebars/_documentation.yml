@@ -111,6 +111,9 @@ entries:
 
           - title: Integration with CI/CD systems
             f:
+              - title: CI/CD workflow basics
+                url: /usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
+
               - title: How CI/CD integration works
                 f:
                   - title: General overview
@@ -127,9 +130,6 @@ entries:
 
       - title: How-to
         f:
-          - title: CI/CD workflow basics
-            url: /how_to/ci_cd_workflow_basics.html
-
           - title: Integration with CI/CD systems
             f:
               - title: GitLab CI/CD
@@ -299,6 +299,9 @@ entries:
 
           - title: Интеграция с CI/CD системами
             f:
+              - title: Основы организации CI/CD
+                url: /usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
+
               - title: Как работает интеграция с CI/CD
                 f:
                   - title: Общие сведения
@@ -315,9 +318,6 @@ entries:
 
       - title: How-to
         f:
-          - title: Основы организации CI/CD
-            url: /how_to/ci_cd_workflow_basics.html
-
           - title: Интеграция с CI/CD системами
             f:
               - title: GitLab CI/CD

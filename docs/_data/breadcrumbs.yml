@@ -41,7 +41,7 @@ en:
     url: /reference/cli/overview.html
   /how_to: &documentation-how_to
     title: How-to
-    url: how_to/ci_cd_workflow_basics.html
+    url: how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html
   /how_to/integration_with_ci_cd_systems: &documentation-guides-integration_with_ci_cd_systems
     title: Integration with CI/CD systems
     url: how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html
