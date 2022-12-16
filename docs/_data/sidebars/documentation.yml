@@ -744,6 +744,9 @@ entries:
               - title: CI/CD workflow basics
                 url: /usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
 
+              - title: CI/CD workflows
+                url: /usage/integration_with_ci_cd_systems/ci_cd_workflows.html
+
               - title: How CI/CD integration works
                 f:
                   - title: General overview
@@ -931,6 +934,9 @@ entries:
             f:
               - title: Основы организации CI/CD
                 url: /usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
+
+              - title: Рабочие процессы CI/CD
+                url: /usage/integration_with_ci_cd_systems/ci_cd_workflows.html
 
               - title: Как работает интеграция с CI/CD
                 f:
