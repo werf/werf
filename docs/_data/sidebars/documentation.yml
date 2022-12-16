@@ -932,7 +932,7 @@ entries:
 
           - title: Интеграция с CI/CD системами
             f:
-              - title: Основы организации CI/CD
+              - title: Основы рабочего процесса CI/CD
                 url: /usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
 
               - title: Рабочие процессы CI/CD
