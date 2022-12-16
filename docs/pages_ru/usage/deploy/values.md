@@ -40,6 +40,103 @@ global:
 
 **ЗАМЕЧАНИЕ.** Все values-файлы, включая `.helm/values.yaml` и любые другие файлы, указанные с помощью опций `--values` — все должны быть коммитнуты в git репозиторий проекта согласно гитерминизму.
 
+### Передача values в сабчарты
+
+Чтобы передать данные из родительского чарта в сабчарт `mysubchart` необходимо определить следующие [values]({{ "/usage/deploy/values.html" | true_relative_url }}) в родительском чарте:
+
+```yaml
+mysubchart:
+  key1:
+    key2:
+    - key3: value
+```
+
+В сабчарте `mysubchart` эти данные можно использовать с помощью обращения к соответствующим параметрам без указания ключа `mysubchart`:
+
+{% raw %}
+
+```yaml
+{{ .Values.key1.key2[0].key3 }}
+```
+
+{% endraw %}
+
+Данные, определенные глобально в ключе верхнего уровня `global`, также доступны в сабчартах:
+
+```yaml
+global:
+  database:
+    mysql:
+      user: user
+      password: password
+```
+
+Обращаться к ним необходимо как обычно:
+
+{% raw %}
+
+```yaml
+{{ .Values.global.database.mysql.user }}
+```
+
+{% endraw %}
+
+В сабчарте `mysubchart` будут доступны только данные ключей `mysubchart` и `global`.
+
+**ЗАМЕЧАНИЕ** Файлы `secret-values.yaml` сабчартов не будут использоваться во время процесса деплоя, несмотря на то, что данные секретов из главного чарта и данные переданные через параметр `--secret-values` будут доступны через массив `.Values` как обычно.
+
+### Передача динамических values из родительского чарта в сабчарты
+
+Если вы хотите передать values, доступные только в родительском чарте, в сабчарты, то вам поможет директива `export-values`, которая имитирует (с небольшими отличиями) поведение [import-values](https://helm.sh/docs/topics/charts/#importing-child-values-via-dependencies), только вместо передачи values из сабчарта в родительский чарт она делает обратное: передает values в сабчарт из родительского чарта. Пример использования:
+
+```yaml
+# .helm/Chart.yaml
+apiVersion: v2
+dependencies:
+  - name: backend
+    version: 1.0.0
+    export-values:
+    - parent: werf.image.backend
+      child: backend.image
+```
+
+Таким образом мы передадим в сабчарт всё, что доступно в `.Values.werf.image.backend` родительского чарта. В нашем случае это будет строка с репозиторием, именем и тегом образа `backend`, описанного в `werf.yaml`, который может выглядеть так: `example.org/backend/<имя_тега>`. В сабчарте эта строка станет доступна через `.Values.backend.image`:
+
+{% raw %}
+
+```yaml
+# .helm/charts/backend/app.yaml
+...
+spec:
+  template:
+    spec:
+      containers:
+      - name: backend
+        image: {{ .Values.backend.image }}  # Ожидаемый результат: `image: example.org/backend:<имя_тега>`
+```
+
+{% endraw %}
+
+В отличие от YAML-якорей `export-values` будет работать с динамически выставляемыми values (сервисные данные werf), с переданными через командную строку values (`--set` и пр.) и с секретными values.
+
+Также доступна альтернативная укороченная форма `export-values`, которая работает только для словарей (maps):
+
+```yaml
+    export-values:
+    - "someMap"
+```
+
+Это будет эквивалентно следующей полной форме `export-values`:
+
+```yaml
+    export-values:
+    - parent: exports.somemap
+      child: .
+```
+
+Так в корень values сабчарта будут экспортированы все ключи, найденные в словаре `.Values.exports.somemap`.
+
+
 ### Параметры set
 
 Имеется возможность переопределить значения values и передать новые values через параметры командной строки:
@@ -193,7 +290,7 @@ dependencies:
       child: image.tag
 ```
 
-Больше информации про `export-values` можно найти [здесь]({{ "usage/deploy/charts.html#передача-динамических-values-из-родительского-чарта-в-сабчарты" | true_relative_url }}).
+Больше информации про `export-values` можно найти [здесь]({{ "usage/deploy/values.html#передача-динамических-values-из-родительского-чарта-в-сабчарты" | true_relative_url }}).
 
 ## Итоговое объединение данных
 
